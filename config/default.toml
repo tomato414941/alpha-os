@@ -1,0 +1,31 @@
+[api]
+base_url = "http://localhost:8000"
+timeout = 30
+retry_count = 2
+retry_backoff = 1.0
+
+[generation]
+candidates_per_cycle = 10000
+max_depth = 3
+windows = [5, 10, 20, 30, 60]
+
+[backtest]
+commission_pct = 0.10
+slippage_pct = 0.05
+min_days = 200
+
+[validation]
+oos_sharpe_min = 0.5
+pbo_max = 0.50
+fdr_threshold = 0.05
+n_cv_folds = 5
+embargo_days = 5
+
+[risk]
+target_vol_pct = 15.0
+dd_stage1_pct = 5.0
+dd_stage2_pct = 10.0
+dd_stage3_pct = 15.0
+
+[trading]
+initial_capital = 10000.0
