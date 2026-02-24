@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
 from pathlib import Path
 
@@ -7,6 +8,8 @@ import numpy as np
 import pandas as pd
 
 from alpha_os.data.client import SignalClient
+
+log = logging.getLogger(__name__)
 
 
 class DataStore:
@@ -26,6 +29,13 @@ class DataStore:
         self._conn.commit()
 
     def sync(self, signals: list[str]) -> None:
+        # Warn about stale upstream signals
+        stale = self._client.stale_signals()
+        stale_names = {s["name"] for s in stale}
+        overlap = stale_names & set(signals)
+        if overlap:
+            log.warning("Stale upstream signals: %s", ", ".join(sorted(overlap)))
+
         # Determine per-signal max date for incremental sync
         max_dates: dict[str, str] = {}
         for name in signals:

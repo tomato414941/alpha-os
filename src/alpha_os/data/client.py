@@ -34,9 +34,24 @@ class SignalClient:
     def health(self) -> bool:
         try:
             r = self._get("/health")
-            return r.get("status") == "ok"
+            return r.get("status") in ("ok", "degraded")
         except Exception:
             return False
+
+    def health_detail(self) -> dict:
+        """Return full health status including stale_count and status."""
+        try:
+            return self._get("/health")
+        except Exception:
+            return {"status": "unreachable", "stale_count": -1}
+
+    def stale_signals(self) -> list[dict]:
+        """Return list of stale signals from /health/signals."""
+        try:
+            data = self._get("/health/signals")
+            return data.get("stale_signals", [])
+        except Exception:
+            return []
 
     def get_latest(self, name: str) -> dict | None:
         try:
