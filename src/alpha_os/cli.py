@@ -60,6 +60,7 @@ def _build_parser() -> argparse.ArgumentParser:
     val.add_argument("--asset", type=str, default="NVDA")
     val.add_argument("--days", type=int, default=500)
     val.add_argument("--seed", type=int, default=42)
+    val.add_argument("--live", action="store_true", help="Use real signal-noise data")
     val.add_argument("--config", type=str, default=None)
 
     return parser
@@ -304,15 +305,19 @@ def cmd_validate(args: argparse.Namespace) -> None:
     expr = parse(args.expr)
     print(f"Alpha: {to_string(expr)}")
 
-    # Synthetic data
-    data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+    if args.live:
+        data, n_days = _live_data(features, cfg)
+    else:
+        n_days = args.days
+        data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+
     price_feat = features[0]
     prices = data[price_feat]
 
     # Evaluate
     sig = expr.evaluate(data)
     if isinstance(sig, (int, float, np.floating)):
-        sig = np.full(args.days, float(sig))
+        sig = np.full(n_days, float(sig))
 
     # Purged Walk-Forward CV
     engine = BacktestEngine(
