@@ -14,6 +14,9 @@ from alpha_os.config import Config
 from alpha_os.data.universe import price_signal, MACRO_SIGNALS
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
+from alpha_os.evolution.archive import AlphaArchive
+from alpha_os.evolution.behavior import compute_behavior
+from alpha_os.evolution.gp import GPConfig, GPEvolver
 from alpha_os.validation.purged_cv import purged_walk_forward
 
 
@@ -39,6 +42,16 @@ def _build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--days", type=int, default=500)
     bt.add_argument("--seed", type=int, default=42)
     bt.add_argument("--config", type=str, default=None)
+
+    # evolve
+    evo = sub.add_parser("evolve", help="Evolve alphas via GP + MAP-Elites")
+    evo.add_argument("--pop-size", type=int, default=200)
+    evo.add_argument("--generations", type=int, default=30)
+    evo.add_argument("--asset", type=str, default="NVDA")
+    evo.add_argument("--days", type=int, default=500)
+    evo.add_argument("--top", type=int, default=20)
+    evo.add_argument("--seed", type=int, default=42)
+    evo.add_argument("--config", type=str, default=None)
 
     # validate
     val = sub.add_parser("validate", help="Validate an alpha with purged WF CV")
@@ -172,6 +185,71 @@ def cmd_backtest(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_evolve(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    features = _make_features(args.asset)
+    data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+    price_feat = features[0]
+    prices = data[price_feat]
+
+    engine = BacktestEngine(
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct)
+    )
+
+    def evaluate_fn(expr):
+        try:
+            sig = expr.evaluate(data)
+            sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+            if sig.ndim == 0:
+                sig = np.full(args.days, float(sig))
+            if len(sig) != args.days:
+                return -999.0
+            result = engine.run(sig, prices)
+            return result.sharpe
+        except Exception:
+            return -999.0
+
+    gp_cfg = GPConfig(
+        pop_size=args.pop_size,
+        n_generations=args.generations,
+        max_depth=cfg.generation.max_depth,
+    )
+    evolver = GPEvolver(features, evaluate_fn, config=gp_cfg, seed=args.seed)
+
+    t0 = time.perf_counter()
+    results = evolver.run()
+    evolve_time = time.perf_counter() - t0
+
+    # Fill MAP-Elites archive
+    archive = AlphaArchive()
+    live_signals: list[np.ndarray] = []
+    added = 0
+    for expr, fitness in results:
+        try:
+            sig = expr.evaluate(data)
+            sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+            if sig.ndim == 0:
+                sig = np.full(args.days, float(sig))
+            behavior = compute_behavior(sig, expr, live_signals)
+            if archive.add(expr, fitness, behavior):
+                added += 1
+                live_signals.append(sig)
+        except Exception:
+            continue
+
+    total_time = time.perf_counter() - t0
+    print(f"Evolution: {len(results)} unique alphas in {evolve_time:.2f}s")
+    print(f"Archive: {archive.size}/{archive.capacity} cells filled ({archive.coverage:.1%} coverage)")
+    print(f"Total time: {total_time:.2f}s\n")
+
+    top = archive.best(args.top)
+    print(f"Top {min(args.top, len(top))} alphas by fitness:")
+    print(f"{'Rank':>4}  {'Fitness':>8}  Expression")
+    print("-" * 70)
+    for i, (expr, fit) in enumerate(top):
+        print(f"{i + 1:>4}  {fit:>8.3f}  {to_string(expr)}")
+
+
 def cmd_validate(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
@@ -222,5 +300,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_generate(args)
     elif args.command == "backtest":
         cmd_backtest(args)
+    elif args.command == "evolve":
+        cmd_evolve(args)
     elif args.command == "validate":
         cmd_validate(args)
