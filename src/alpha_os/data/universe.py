@@ -42,6 +42,16 @@ MACRO_SIGNALS = [
     "russell2000",
 ]
 
+EXTRA_SIGNALS = [
+    "earthquake_count",
+    "sunspot_number",
+    "enso_oni",
+    "btc_mempool_size",
+    "btc_hashrate",
+    "github_pushes",
+    "steam_online",
+]
+
 _ALL_ASSETS = {**STOCKS, **CRYPTO}
 
 

@@ -51,6 +51,7 @@ def _build_parser() -> argparse.ArgumentParser:
     evo.add_argument("--days", type=int, default=500)
     evo.add_argument("--top", type=int, default=20)
     evo.add_argument("--seed", type=int, default=42)
+    evo.add_argument("--live", action="store_true", help="Use real signal-noise data")
     evo.add_argument("--config", type=str, default=None)
 
     # validate
@@ -92,6 +93,45 @@ def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np
         prices = 100.0 * np.cumprod(1.0 + returns)
         data[feat] = prices
     return data
+
+
+def _live_data(
+    features: list[str], config: Config,
+) -> tuple[dict[str, np.ndarray], int]:
+    """Fetch real data from signal-noise via DataStore."""
+    from pathlib import Path
+
+    from alpha_os.data.client import SignalClient
+    from alpha_os.data.store import DataStore
+
+    client = SignalClient(
+        base_url=config.api.base_url,
+        timeout=config.api.timeout,
+    )
+    if not client.health():
+        raise RuntimeError(
+            f"signal-noise API unreachable at {config.api.base_url}"
+        )
+
+    db_path = Path("data/alpha_cache.db")
+    store = DataStore(db_path, client)
+
+    print(f"Syncing {len(features)} signals from {config.api.base_url} ...")
+    store.sync(features)
+
+    matrix = store.get_matrix(features)
+    matrix = matrix.dropna()
+    store.close()
+
+    if len(matrix) < 60:
+        raise RuntimeError(
+            f"Insufficient data: {len(matrix)} rows (need >= 60)"
+        )
+
+    data = {col: matrix[col].values for col in matrix.columns}
+    n_days = len(matrix)
+    print(f"Loaded {n_days} daily data points, {len(features)} features")
+    return data, n_days
 
 
 def cmd_generate(args: argparse.Namespace) -> None:
@@ -188,7 +228,13 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 def cmd_evolve(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
-    data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+
+    if args.live:
+        data, n_days = _live_data(features, cfg)
+    else:
+        n_days = args.days
+        data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+
     price_feat = features[0]
     prices = data[price_feat]
 
@@ -201,8 +247,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             sig = expr.evaluate(data)
             sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
             if sig.ndim == 0:
-                sig = np.full(args.days, float(sig))
-            if len(sig) != args.days:
+                sig = np.full(n_days, float(sig))
+            if len(sig) != n_days:
                 return -999.0
             result = engine.run(sig, prices)
             return result.sharpe
@@ -229,7 +275,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             sig = expr.evaluate(data)
             sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
             if sig.ndim == 0:
-                sig = np.full(args.days, float(sig))
+                sig = np.full(n_days, float(sig))
             behavior = compute_behavior(sig, expr, live_signals)
             if archive.add(expr, fitness, behavior):
                 added += 1
