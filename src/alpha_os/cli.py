@@ -231,6 +231,8 @@ def cmd_backtest(args: argparse.Namespace) -> None:
                 continue
             if np.all(np.isnan(sig)):
                 continue
+            if not np.all(np.isfinite(sig)):
+                sig = np.where(np.isfinite(sig), sig, 0.0)
             signals.append(sig)
             valid_alphas.append(expr)
         except Exception:
@@ -253,10 +255,10 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     )
     bt_time = time.perf_counter() - t2
 
-    # Rank by Sharpe
+    # Rank by Sharpe (NaN → bottom)
     ranked = sorted(
         zip(valid_alphas, results),
-        key=lambda x: x[1].sharpe,
+        key=lambda x: x[1].sharpe if np.isfinite(x[1].sharpe) else -999.0,
         reverse=True,
     )
 
@@ -294,13 +296,15 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     def evaluate_fn(expr):
         try:
             sig = expr.evaluate(data)
-            sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+            sig = np.asarray(sig, dtype=float)
             if sig.ndim == 0:
                 sig = np.full(n_days, float(sig))
             if len(sig) != n_days:
                 return -999.0
+            if not np.all(np.isfinite(sig)):
+                sig = np.where(np.isfinite(sig), sig, 0.0)
             result = engine.run(sig, prices)
-            return result.sharpe
+            return result.sharpe if np.isfinite(result.sharpe) else -999.0
         except Exception:
             return -999.0
 
