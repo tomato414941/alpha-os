@@ -86,3 +86,36 @@ class TestPipelineRunner:
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         runner.run()
         assert runner.archive.size > 0
+
+
+class TestEvalWindow:
+    @staticmethod
+    def _make_data(n_days=500, seed=42):
+        rng = np.random.default_rng(seed)
+        features = ["f1", "f2"]
+        data = {f: rng.standard_normal(n_days).cumsum() + 100 for f in features}
+        prices = data["f1"]
+        return features, data, prices
+
+    def test_window_slices_data(self):
+        features, data, prices = self._make_data(500)
+        cfg = PipelineConfig(eval_window_days=200)
+        runner = PipelineRunner(features, data, prices, config=cfg)
+        assert len(runner.prices) == 200
+        for v in runner.data.values():
+            assert len(v) == 200
+        np.testing.assert_array_equal(runner.prices, prices[-200:])
+
+    def test_window_zero_uses_all(self):
+        features, data, prices = self._make_data(500)
+        cfg = PipelineConfig(eval_window_days=0)
+        runner = PipelineRunner(features, data, prices, config=cfg)
+        assert len(runner.prices) == 500
+        np.testing.assert_array_equal(runner.prices, prices)
+
+    def test_window_larger_than_data_uses_all(self):
+        features, data, prices = self._make_data(100)
+        cfg = PipelineConfig(eval_window_days=500)
+        runner = PipelineRunner(features, data, prices, config=cfg)
+        assert len(runner.prices) == 100
+        np.testing.assert_array_equal(runner.prices, prices)

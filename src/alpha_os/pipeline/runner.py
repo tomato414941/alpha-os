@@ -37,6 +37,7 @@ class PipelineConfig:
     slippage_pct: float = 0.05
     n_cv_folds: int = 5
     embargo_days: int = 5
+    eval_window_days: int = 0  # 0 = all data; >0 = trailing N days
 
 
 @dataclass
@@ -63,11 +64,26 @@ class PipelineRunner:
         seed: int = 42,
     ):
         self.features = features
-        self.data = data
-        self.prices = prices
         self.config = config or PipelineConfig()
         self.registry = registry
         self.seed = seed
+
+        # Apply evaluation window
+        window = self.config.eval_window_days
+        if window > 0 and len(prices) > window:
+            self.data = {k: v[-window:] for k, v in data.items()}
+            self.prices = prices[-window:]
+            logger.info("Eval window: using last %d of %d days", window, len(prices))
+        else:
+            self.data = data
+            self.prices = prices
+
+        gate_cfg = self.config.gate or GateConfig()
+        if window > 0 and window < gate_cfg.min_n_days:
+            logger.warning(
+                "eval_window_days=%d < min_n_days=%d — all alphas will fail the n_days gate",
+                window, gate_cfg.min_n_days,
+            )
 
         self.engine = BacktestEngine(
             CostModel(self.config.commission_pct, self.config.slippage_pct)

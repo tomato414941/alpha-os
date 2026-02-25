@@ -31,6 +31,7 @@ class BacktestConfig:
     commission_pct: float = 0.10
     slippage_pct: float = 0.05
     min_days: int = 200
+    eval_window_days: int = 0  # 0 = all data; >0 = trailing N days
 
 
 @dataclass

@@ -13,6 +13,7 @@ windows = [5, 10, 20, 30, 60]
 commission_pct = 0.10
 slippage_pct = 0.05
 min_days = 200
+eval_window_days = 0  # 0 = all data; >0 = trailing N days
 
 [validation]
 oos_sharpe_min = 0.5

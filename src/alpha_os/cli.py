@@ -45,6 +45,8 @@ def _build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--seed", type=int, default=42)
     bt.add_argument("--synthetic", action="store_true",
                     help="Use synthetic random-walk data instead of real data")
+    bt.add_argument("--eval-window", type=int, default=0,
+                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     bt.add_argument("--config", type=str, default=None)
 
     # evolve
@@ -58,6 +60,8 @@ def _build_parser() -> argparse.ArgumentParser:
     evo.add_argument("--seed", type=int, default=42)
     evo.add_argument("--synthetic", action="store_true",
                     help="Use synthetic random-walk data instead of real data")
+    evo.add_argument("--eval-window", type=int, default=0,
+                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     evo.add_argument("--live", action="store_true",
                     help="(deprecated — real data is now the default)")
     evo.add_argument("--config", type=str, default=None)
@@ -71,6 +75,8 @@ def _build_parser() -> argparse.ArgumentParser:
     val.add_argument("--seed", type=int, default=42)
     val.add_argument("--synthetic", action="store_true",
                     help="Use synthetic random-walk data instead of real data")
+    val.add_argument("--eval-window", type=int, default=0,
+                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     val.add_argument("--live", action="store_true",
                     help="(deprecated — real data is now the default)")
     val.add_argument("--config", type=str, default=None)
@@ -127,7 +133,7 @@ def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np
 
 
 def _real_data(
-    features: list[str], config: Config,
+    features: list[str], config: Config, eval_window: int = 0,
 ) -> tuple[dict[str, np.ndarray], int]:
     """Load real data: cache-first, sync from API if available."""
     from alpha_os.data.store import DataStore
@@ -173,6 +179,13 @@ def _real_data(
     data = {col: matrix[col].values for col in matrix.columns}
     n_days = len(matrix)
     print(f"Loaded {n_days} daily data points, {len(features)} features")
+
+    # Apply evaluation window
+    if eval_window > 0 and n_days > eval_window:
+        data = {k: v[-eval_window:] for k, v in data.items()}
+        n_days = eval_window
+        print(f"Eval window: using last {eval_window} days")
+
     return data, n_days
 
 
@@ -213,7 +226,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
         data = _synthetic_data(features, args.days, seed=args.seed + 1000)
         n_days = args.days
     else:
-        data, n_days = _real_data(features, cfg)
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
 
     price_feat = features[0]
     prices = data[price_feat]
@@ -284,7 +297,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
     else:
-        data, n_days = _real_data(features, cfg)
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
 
     price_feat = features[0]
     prices = data[price_feat]
@@ -362,7 +375,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
     else:
-        data, n_days = _real_data(features, cfg)
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
 
     price_feat = features[0]
     prices = data[price_feat]
