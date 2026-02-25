@@ -94,6 +94,12 @@ def _build_parser() -> argparse.ArgumentParser:
     ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
     ppr.add_argument("--schedule", action="store_true", help="Run on interval")
     ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
+    ppr.add_argument("--backfill", action="store_true",
+                     help="Run historical simulation over date range")
+    ppr.add_argument("--start", type=str, default=None,
+                     help="Start date for backfill (ISO format, e.g. 2025-06-01)")
+    ppr.add_argument("--end", type=str, default=None,
+                     help="End date for backfill (ISO format, e.g. 2026-02-25)")
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
@@ -468,10 +474,15 @@ def _print_paper_result(result) -> None:
 
 
 def cmd_paper(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    if args.backfill:
+        _cmd_paper_backfill(args, cfg)
+        return
+
     from alpha_os.paper.trader import PaperTrader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
-    cfg = _load_config(args.config)
     trader = PaperTrader(asset=args.asset, config=cfg)
 
     if args.summary:
@@ -498,6 +509,38 @@ def cmd_paper(args: argparse.Namespace) -> None:
         scheduler.start()
     finally:
         trader.close()
+
+
+def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
+    from alpha_os.paper.simulator import run_backfill
+
+    if not args.start or not args.end:
+        print("Error: --backfill requires --start and --end dates")
+        sys.exit(1)
+
+    print(f"Running backfill simulation: {args.start} to {args.end} ({args.asset})")
+    result = run_backfill(
+        asset=args.asset,
+        config=cfg,
+        start_date=args.start,
+        end_date=args.end,
+    )
+
+    print(f"\nBackfill Simulation: {args.start} to {args.end}")
+    print(f"  Days:       {result.n_days}")
+    print(f"  {'─'*36}")
+    print(f"  Initial:    ${result.initial_capital:,.2f}")
+    print(f"  Final:      ${result.final_value:,.2f}")
+    print(f"  Return:     {result.total_return:+.2%}")
+    print(f"  Sharpe:     {result.sharpe:.3f}")
+    print(f"  Max DD:     {result.max_drawdown:.2%}")
+    print(f"  Trades:     {result.total_trades}")
+    print(f"  Win Rate:   {result.win_rate:.1%}")
+    print(f"  {'─'*36}")
+    if result.best_day[0]:
+        print(f"  Best Day:   {result.best_day[1]:+.2%} ({result.best_day[0]})")
+    if result.worst_day[0]:
+        print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
 
 
 def main(argv: list[str] | None = None) -> None:

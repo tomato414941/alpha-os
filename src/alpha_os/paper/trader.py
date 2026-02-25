@@ -130,10 +130,15 @@ class PaperTrader:
             snapshot.portfolio_value, len(equity_curve),
         )
 
-    def run_cycle(self) -> PaperCycleResult:
-        """Execute one daily paper trading cycle."""
+    def run_cycle(self, simulation_date: str | None = None) -> PaperCycleResult:
+        """Execute one daily paper trading cycle.
+
+        Args:
+            simulation_date: ISO date string for historical simulation.
+                When set, skips API sync and limits data to end=date.
+        """
         t0 = time.perf_counter()
-        today = date.today().isoformat()
+        today = simulation_date or date.today().isoformat()
 
         existing = self.portfolio_tracker.get_snapshot(today)
         if existing is not None:
@@ -151,9 +156,10 @@ class PaperTrader:
                 n_alphas_evaluated=0,
             )
 
-        # 1. Sync data
-        logger.info("Syncing %d signals...", len(self.features))
-        self.store.sync(self.features)
+        # 1. Sync data (skip in simulation mode — use cached data)
+        if simulation_date is None:
+            logger.info("Syncing %d signals...", len(self.features))
+            self.store.sync(self.features)
 
         # 2. Get active alphas
         active = self.registry.list_by_state(AlphaState.ACTIVE)
@@ -167,7 +173,7 @@ class PaperTrader:
         for record in all_alphas:
             try:
                 expr = parse(record.expression)
-                matrix = self.store.get_matrix(self.features)
+                matrix = self.store.get_matrix(self.features, end=today)
                 if len(matrix) < 2:
                     continue
 
@@ -242,7 +248,7 @@ class PaperTrader:
         adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
         # 6. Compute target position and execute
-        matrix = self.store.get_matrix([self.price_signal])
+        matrix = self.store.get_matrix([self.price_signal], end=today)
         current_price = float(matrix[self.price_signal].iloc[-1])
 
         dollar_pos = adjusted * self.initial_capital * self.max_position_pct

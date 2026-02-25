@@ -146,6 +146,12 @@ class PaperPortfolioTracker:
             return None
         return self._row_to_snapshot(row)
 
+    def get_all_snapshots(self) -> list[PortfolioSnapshot]:
+        rows = self._conn.execute(
+            "SELECT * FROM portfolio_snapshots ORDER BY date"
+        ).fetchall()
+        return [self._row_to_snapshot(r) for r in rows]
+
     def get_returns(self) -> list[float]:
         rows = self._conn.execute(
             "SELECT daily_return FROM portfolio_snapshots ORDER BY date"
