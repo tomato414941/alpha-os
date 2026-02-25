@@ -57,6 +57,12 @@ class TradingConfig:
 
 
 @dataclass
+class PaperTradingConfig:
+    max_position_pct: float = 1.0
+    min_trade_usd: float = 10.0
+
+
+@dataclass
 class ForwardTestConfig:
     check_interval: int = 86400
     min_forward_days: int = 30
@@ -71,6 +77,7 @@ class Config:
     validation: ValidationConfig = field(default_factory=ValidationConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
     trading: TradingConfig = field(default_factory=TradingConfig)
+    paper: PaperTradingConfig = field(default_factory=PaperTradingConfig)
     forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
 
     @classmethod
@@ -88,5 +95,6 @@ class Config:
             validation=ValidationConfig(**raw.get("validation", {})),
             risk=RiskConfig(**raw.get("risk", {})),
             trading=TradingConfig(**raw.get("trading", {})),
+            paper=PaperTradingConfig(**raw.get("paper", {})),
             forward=ForwardTestConfig(**raw.get("forward", {})),
         )

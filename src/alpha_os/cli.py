@@ -89,6 +89,14 @@ def _build_parser() -> argparse.ArgumentParser:
     fwd.add_argument("--asset", type=str, default="NVDA")
     fwd.add_argument("--config", type=str, default=None)
 
+    # paper
+    ppr = sub.add_parser("paper", help="Paper trade with adopted alphas")
+    ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    ppr.add_argument("--schedule", action="store_true", help="Run on interval")
+    ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
+    ppr.add_argument("--asset", type=str, default="BTC")
+    ppr.add_argument("--config", type=str, default=None)
+
     return parser
 
 
@@ -445,6 +453,53 @@ def cmd_forward(args: argparse.Namespace) -> None:
         runner.close()
 
 
+def _print_paper_result(result) -> None:
+    print(f"\n{'='*60}")
+    print(f"Paper Trading Cycle: {result.date}")
+    print(f"{'='*60}")
+    print(f"  Signal:     {result.combined_signal:+.4f}")
+    print(f"  Risk Scale: DD={result.dd_scale:.2f} Vol={result.vol_scale:.2f}")
+    print(f"  Trades:     {len(result.fills)}")
+    for f in result.fills:
+        print(f"    {f.side.upper():>4} {f.qty:.6f} {f.symbol} @ ${f.price:,.2f}")
+    print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
+    print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
+    print(f"  Alphas:     {result.n_alphas_active} active, {result.n_alphas_evaluated} evaluated")
+
+
+def cmd_paper(args: argparse.Namespace) -> None:
+    from alpha_os.paper.trader import PaperTrader
+    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    cfg = _load_config(args.config)
+    trader = PaperTrader(asset=args.asset, config=cfg)
+
+    if args.summary:
+        trader.print_status()
+        trader.close()
+        return
+
+    if args.once or not args.schedule:
+        result = trader.run_cycle()
+        _print_paper_result(result)
+        trader.print_status()
+        trader.close()
+        return
+
+    def cycle():
+        result = trader.run_cycle()
+        _print_paper_result(result)
+
+    scheduler = PipelineScheduler(
+        run_fn=cycle,
+        config=SchedulerConfig(interval_seconds=cfg.forward.check_interval),
+    )
+    try:
+        scheduler.start()
+    finally:
+        trader.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -463,3 +518,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_validate(args)
     elif args.command == "forward":
         cmd_forward(args)
+    elif args.command == "paper":
+        cmd_paper(args)

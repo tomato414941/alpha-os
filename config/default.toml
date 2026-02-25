@@ -31,6 +31,10 @@ dd_stage3_pct = 15.0
 [trading]
 initial_capital = 10000.0
 
+[paper]
+max_position_pct = 1.0
+min_trade_usd = 10.0
+
 [forward]
 check_interval = 86400
 min_forward_days = 30
