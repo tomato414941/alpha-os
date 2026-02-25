@@ -66,8 +66,11 @@ class DataStore:
             rows = []
             for _, r in df.iterrows():
                 ts = r["timestamp"]
+                val = r["value"]
+                if pd.isna(ts) or pd.isna(val):
+                    continue
                 date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
-                rows.append((name, date_str, float(r["value"])))
+                rows.append((name, date_str, float(val)))
 
             self._conn.executemany(
                 "INSERT OR REPLACE INTO signals (name, date, value) VALUES (?, ?, ?)",
