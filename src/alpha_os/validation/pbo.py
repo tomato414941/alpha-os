@@ -11,7 +11,6 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..backtest.engine import BacktestEngine
-from ..backtest import metrics
 
 
 @dataclass
@@ -79,34 +78,24 @@ def probability_of_backtest_overfitting(
         is_idx = np.concatenate([np.arange(blocks[b][0], blocks[b][1]) for b in is_blocks])
         oos_idx = np.concatenate([np.arange(blocks[b][0], blocks[b][1]) for b in oos_blocks])
 
-        # Evaluate all strategies IS
-        is_sharpes = np.zeros(n_strategies)
-        for s in range(n_strategies):
-            is_sig = signals[s, is_idx]
-            is_prices = prices[is_idx]
-            if len(is_prices) < 10:
-                continue
-            result = engine.run(is_sig, is_prices)
-            is_sharpes[s] = result.sharpe
+        is_prices = prices[is_idx]
+        oos_prices = prices[oos_idx]
+        if len(is_prices) < 10 or len(oos_prices) < 10:
+            continue
+
+        # Batch evaluate all strategies IS
+        is_results = engine.run_batch(signals[:, is_idx], is_prices)
+        is_sharpes = np.array([r.sharpe for r in is_results])
 
         # Best strategy IS
         best_is = int(np.argmax(is_sharpes))
 
-        # Evaluate best strategy OOS
-        oos_sig = signals[best_is, oos_idx]
-        oos_prices = prices[oos_idx]
-        if len(oos_prices) < 10:
-            continue
-        oos_result = engine.run(oos_sig, oos_prices)
-        oos_sharpe = oos_result.sharpe
-        oos_sharpes.append(oos_sharpe)
+        # Batch evaluate all strategies OOS
+        oos_results = engine.run_batch(signals[:, oos_idx], oos_prices)
+        oos_all_sharpes = np.array([r.sharpe for r in oos_results])
 
-        # Rank of IS-best in OOS
-        oos_all_sharpes = np.zeros(n_strategies)
-        for s in range(n_strategies):
-            sig_s = signals[s, oos_idx]
-            res_s = engine.run(sig_s, oos_prices)
-            oos_all_sharpes[s] = res_s.sharpe
+        oos_sharpe = oos_all_sharpes[best_is]
+        oos_sharpes.append(float(oos_sharpe))
 
         rank_oos = np.sum(oos_all_sharpes <= oos_sharpe) / n_strategies
         # Logit: log(rank / (1 - rank)), clamped
