@@ -5,12 +5,13 @@ from __future__ import annotations
 import argparse
 import sys
 import time
+import warnings
 
 import numpy as np
 
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.config import Config
+from alpha_os.config import Config, DATA_DIR
 from alpha_os.data.universe import price_signal, MACRO_SIGNALS
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
@@ -39,8 +40,11 @@ def _build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--count", type=int, default=5000)
     bt.add_argument("--top", type=int, default=20)
     bt.add_argument("--asset", type=str, default="NVDA")
-    bt.add_argument("--days", type=int, default=500)
+    bt.add_argument("--days", type=int, default=500,
+                    help="Number of days (--synthetic only)")
     bt.add_argument("--seed", type=int, default=42)
+    bt.add_argument("--synthetic", action="store_true",
+                    help="Use synthetic random-walk data instead of real data")
     bt.add_argument("--config", type=str, default=None)
 
     # evolve
@@ -48,19 +52,27 @@ def _build_parser() -> argparse.ArgumentParser:
     evo.add_argument("--pop-size", type=int, default=200)
     evo.add_argument("--generations", type=int, default=30)
     evo.add_argument("--asset", type=str, default="NVDA")
-    evo.add_argument("--days", type=int, default=500)
+    evo.add_argument("--days", type=int, default=500,
+                    help="Number of days (--synthetic only)")
     evo.add_argument("--top", type=int, default=20)
     evo.add_argument("--seed", type=int, default=42)
-    evo.add_argument("--live", action="store_true", help="Use real signal-noise data")
+    evo.add_argument("--synthetic", action="store_true",
+                    help="Use synthetic random-walk data instead of real data")
+    evo.add_argument("--live", action="store_true",
+                    help="(deprecated — real data is now the default)")
     evo.add_argument("--config", type=str, default=None)
 
     # validate
     val = sub.add_parser("validate", help="Validate an alpha with purged WF CV")
     val.add_argument("--expr", type=str, required=True)
     val.add_argument("--asset", type=str, default="NVDA")
-    val.add_argument("--days", type=int, default=500)
+    val.add_argument("--days", type=int, default=500,
+                    help="Number of days (--synthetic only)")
     val.add_argument("--seed", type=int, default=42)
-    val.add_argument("--live", action="store_true", help="Use real signal-noise data")
+    val.add_argument("--synthetic", action="store_true",
+                    help="Use synthetic random-walk data instead of real data")
+    val.add_argument("--live", action="store_true",
+                    help="(deprecated — real data is now the default)")
     val.add_argument("--config", type=str, default=None)
 
     # forward
@@ -90,12 +102,22 @@ def _make_features(asset: str) -> list[str]:
     return [price] + MACRO_SIGNALS
 
 
+def _warn_deprecated_live(args: argparse.Namespace) -> None:
+    if getattr(args, "live", False):
+        warnings.warn(
+            "--live is deprecated. Real data is now the default. "
+            "Use --synthetic for synthetic data.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+
 def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np.ndarray]:
     """Generate synthetic price/signal data for offline testing."""
+    print("[SYNTHETIC] Using synthetic random-walk data — not suitable for real decisions")
     rng = np.random.default_rng(seed)
     data: dict[str, np.ndarray] = {}
-    for i, feat in enumerate(features):
-        # Each feature: random walk with slight drift
+    for feat in features:
         drift = rng.uniform(-0.0005, 0.001)
         vol = rng.uniform(0.005, 0.03)
         returns = rng.normal(drift, vol, n_days)
@@ -104,37 +126,48 @@ def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np
     return data
 
 
-def _live_data(
+def _real_data(
     features: list[str], config: Config,
 ) -> tuple[dict[str, np.ndarray], int]:
-    """Fetch real data from signal-noise via DataStore."""
-    from pathlib import Path
-
-    from alpha_os.data.client import SignalClient
+    """Load real data: cache-first, sync from API if available."""
     from alpha_os.data.store import DataStore
 
-    client = SignalClient(
-        base_url=config.api.base_url,
-        timeout=config.api.timeout,
-    )
-    if not client.health():
-        raise RuntimeError(
-            f"signal-noise API unreachable at {config.api.base_url}"
+    db_path = DATA_DIR / "alpha_cache.db"
+
+    # Try API sync (best-effort)
+    client = None
+    try:
+        from alpha_os.data.client import SignalClient
+        client = SignalClient(
+            base_url=config.api.base_url,
+            timeout=config.api.timeout,
         )
+        if client.health():
+            print(f"Syncing {len(features)} signals from {config.api.base_url} ...")
+        else:
+            print(f"API unavailable at {config.api.base_url} — using cache")
+            client = None
+    except Exception:
+        print("API client unavailable — using cache")
 
-    db_path = Path("data/alpha_cache.db")
     store = DataStore(db_path, client)
-
-    print(f"Syncing {len(features)} signals from {config.api.base_url} ...")
-    store.sync(features)
+    if client is not None:
+        store.sync(features)
 
     matrix = store.get_matrix(features)
+    # Report missing features before dropping NaN
+    missing = [f for f in features if f not in matrix.columns or matrix[f].isna().all()]
+    if missing:
+        print(f"Missing from cache: {', '.join(missing)}")
     matrix = matrix.dropna()
     store.close()
 
     if len(matrix) < 60:
         raise RuntimeError(
-            f"Insufficient data: {len(matrix)} rows (need >= 60)"
+            f"Insufficient data: {len(matrix)} rows (need >= 60). "
+            f"Missing signals: {missing}. "
+            "Run with API access first to populate cache, "
+            "or use --synthetic for testing."
         )
 
     data = {col: matrix[col].values for col in matrix.columns}
@@ -163,6 +196,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
 
 def cmd_backtest(args: argparse.Namespace) -> None:
+    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
     gen = AlphaGenerator(features=features, seed=args.seed)
@@ -174,8 +208,13 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     all_alphas = alphas + templates
     gen_time = time.perf_counter() - t0
 
-    # Synthetic data
-    data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+    # Data source
+    if args.synthetic:
+        data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+        n_days = args.days
+    else:
+        data, n_days = _real_data(features, cfg)
+
     price_feat = features[0]
     prices = data[price_feat]
 
@@ -187,8 +226,8 @@ def cmd_backtest(args: argparse.Namespace) -> None:
         try:
             sig = expr.evaluate(data)
             if isinstance(sig, (int, float, np.floating)):
-                sig = np.full(args.days, float(sig))
-            if len(sig) != args.days:
+                sig = np.full(n_days, float(sig))
+            if len(sig) != n_days:
                 continue
             if np.all(np.isnan(sig)):
                 continue
@@ -235,14 +274,15 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 
 
 def cmd_evolve(args: argparse.Namespace) -> None:
+    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
 
-    if args.live:
-        data, n_days = _live_data(features, cfg)
-    else:
+    if args.synthetic:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+    else:
+        data, n_days = _real_data(features, cfg)
 
     price_feat = features[0]
     prices = data[price_feat]
@@ -306,6 +346,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
+    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
 
@@ -313,11 +354,11 @@ def cmd_validate(args: argparse.Namespace) -> None:
     expr = parse(args.expr)
     print(f"Alpha: {to_string(expr)}")
 
-    if args.live:
-        data, n_days = _live_data(features, cfg)
-    else:
+    if args.synthetic:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+    else:
+        data, n_days = _real_data(features, cfg)
 
     price_feat = features[0]
     prices = data[price_feat]

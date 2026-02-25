@@ -7,7 +7,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from alpha_os.data.client import SignalClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from alpha_os.data.client import SignalClient
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +18,7 @@ log = logging.getLogger(__name__)
 class DataStore:
     """SQLite-backed data cache that syncs from SignalClient."""
 
-    def __init__(self, db_path: Path, client: SignalClient):
+    def __init__(self, db_path: Path, client: SignalClient | None = None):
         self._db_path = db_path
         self._client = client
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,6 +32,10 @@ class DataStore:
         self._conn.commit()
 
     def sync(self, signals: list[str]) -> None:
+        if self._client is None:
+            log.info("No API client configured — skipping sync")
+            return
+
         # Warn about stale upstream signals
         stale = self._client.stale_signals()
         stale_names = {s["name"] for s in stale}
