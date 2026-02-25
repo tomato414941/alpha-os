@@ -442,7 +442,7 @@ def cmd_forward(args: argparse.Namespace) -> None:
         runner.close()
         print(
             f"\nCycle: {result.n_evaluated} evaluated, {result.n_degraded} degraded, "
-            f"{result.n_retired} retired in {result.elapsed:.1f}s"
+            f"{result.n_dormant} dormant, {result.n_revived} revived in {result.elapsed:.1f}s"
         )
         return
 

@@ -192,6 +192,7 @@ def main():
     n_evaluated_total = 0
     n_degraded_total = 0
     n_retired_total = 0
+    n_dormant_total = 0
 
     for alpha_rec in active_alphas:
         aid = alpha_rec.alpha_id
@@ -244,11 +245,15 @@ def main():
                 new_state = lifecycle.evaluate_active(aid, status.rolling_sharpe)
             elif current_state == AlphaState.PROBATION:
                 new_state = lifecycle.evaluate_probation(aid, status.rolling_sharpe)
+            elif current_state == AlphaState.DORMANT:
+                new_state = lifecycle.evaluate_dormant(aid, status.rolling_sharpe)
             else:
                 new_state = current_state
 
-            if new_state == AlphaState.PROBATION:
+            if new_state == AlphaState.PROBATION and current_state == AlphaState.ACTIVE:
                 n_degraded_total += 1
+            elif new_state == AlphaState.DORMANT:
+                n_dormant_total += 1
             elif new_state == AlphaState.RETIRED:
                 n_retired_total += 1
 
@@ -263,10 +268,11 @@ def main():
 
     alive = registry.list_by_state(AlphaState.ACTIVE)
     probation = registry.list_by_state(AlphaState.PROBATION)
+    dormant_list = registry.list_by_state(AlphaState.DORMANT)
     retired = registry.list_by_state(AlphaState.RETIRED)
 
-    print(f"  ACTIVE: {len(alive)} | PROBATION: {len(probation)} | RETIRED: {len(retired)}")
-    print(f"  Degraded: {n_degraded_total} | Retired: {n_retired_total}")
+    print(f"  ACTIVE: {len(alive)} | PROBATION: {len(probation)} | DORMANT: {len(dormant_list)} | RETIRED: {len(retired)}")
+    print(f"  Degraded: {n_degraded_total} | Dormant: {n_dormant_total} | Retired: {n_retired_total}")
 
     tracked_ids = tracker.tracked_alpha_ids()
     if tracked_ids:

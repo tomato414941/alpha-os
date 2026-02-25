@@ -15,6 +15,7 @@ class AlphaState:
     ACTIVE = "active"
     PROBATION = "probation"
     RETIRED = "retired"
+    DORMANT = "dormant"
 
 
 @dataclass

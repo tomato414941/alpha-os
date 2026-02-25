@@ -114,9 +114,11 @@ class TestForwardTracker:
 class TestForwardRunnerIntegration:
     def test_cycle_result_dataclass(self):
         result = ForwardCycleResult(
-            n_evaluated=5, n_degraded=1, n_retired=0, n_restored=0, elapsed=1.23,
+            n_evaluated=5, n_degraded=1, n_retired=0, n_restored=0,
+            n_dormant=1, n_revived=0, elapsed=1.23,
         )
         assert result.n_evaluated == 5
+        assert result.n_dormant == 1
         assert result.elapsed == pytest.approx(1.23)
 
     def test_healthy_alpha_stays_active(self, tmp_path):
@@ -189,7 +191,7 @@ class TestForwardRunnerIntegration:
         tracker.close()
         reg.close()
 
-    def test_probation_to_retired(self, tmp_path):
+    def test_probation_to_dormant(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="dying",
@@ -199,7 +201,7 @@ class TestForwardRunnerIntegration:
         lifecycle = AlphaLifecycle(reg)
 
         new_state = lifecycle.evaluate_probation("dying", live_sharpe=-0.5)
-        assert new_state == AlphaState.RETIRED
+        assert new_state == AlphaState.DORMANT
 
         reg.close()
 

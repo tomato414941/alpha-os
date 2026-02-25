@@ -161,10 +161,12 @@ class PaperTrader:
             logger.info("Syncing %d signals...", len(self.features))
             self.store.sync(self.features)
 
-        # 2. Get active alphas
+        # 2. Get active alphas (dormant included for monitoring, not trading)
         active = self.registry.list_by_state(AlphaState.ACTIVE)
         probation = self.registry.list_by_state(AlphaState.PROBATION)
-        all_alphas = active + probation
+        dormant = self.registry.list_by_state(AlphaState.DORMANT)
+        all_alphas = active + probation + dormant
+        dormant_ids = {r.alpha_id for r in dormant}
 
         # 3. Evaluate each alpha's signal
         alpha_signals: dict[str, float] = {}
@@ -196,7 +198,8 @@ class PaperTrader:
                 signal_yesterday = float(signal_norm[-2])
                 daily_return = signal_yesterday * price_return
 
-                alpha_signals[record.alpha_id] = signal_yesterday
+                if record.alpha_id not in dormant_ids:
+                    alpha_signals[record.alpha_id] = signal_yesterday
                 n_evaluated += 1
 
                 # Record per-alpha forward return
@@ -217,6 +220,10 @@ class PaperTrader:
                     )
                 elif old_state == AlphaState.PROBATION:
                     new_state = self.lifecycle.evaluate_probation(
+                        record.alpha_id, status.rolling_sharpe,
+                    )
+                elif old_state == AlphaState.DORMANT:
+                    new_state = self.lifecycle.evaluate_dormant(
                         record.alpha_id, status.rolling_sharpe,
                     )
                 else:

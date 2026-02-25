@@ -35,11 +35,13 @@ class ForwardCycleResult:
     n_degraded: int
     n_retired: int
     n_restored: int
+    n_dormant: int
+    n_revived: int
     elapsed: float
 
 
 class ForwardRunner:
-    """Run one cycle of forward testing on all ACTIVE + PROBATION alphas."""
+    """Run one cycle of forward testing on all ACTIVE, PROBATION, and DORMANT alphas."""
 
     def __init__(
         self,
@@ -95,12 +97,15 @@ class ForwardRunner:
 
         active = self.registry.list_by_state(AlphaState.ACTIVE)
         probation = self.registry.list_by_state(AlphaState.PROBATION)
-        all_alphas = active + probation
+        dormant = self.registry.list_by_state(AlphaState.DORMANT)
+        all_alphas = active + probation + dormant
 
         n_evaluated = 0
         n_degraded = 0
         n_retired = 0
         n_restored = 0
+        n_dormant = 0
+        n_revived = 0
 
         today = date.today().isoformat()
 
@@ -160,6 +165,10 @@ class ForwardRunner:
                     new_state = self.lifecycle.evaluate_probation(
                         alpha_id, status.rolling_sharpe
                     )
+                elif old_state == AlphaState.DORMANT:
+                    new_state = self.lifecycle.evaluate_dormant(
+                        alpha_id, status.rolling_sharpe
+                    )
                 else:
                     new_state = old_state
 
@@ -169,10 +178,17 @@ class ForwardRunner:
                         reason=f"forward_test: sharpe={status.rolling_sharpe:.3f}, "
                                f"max_dd={status.rolling_max_dd:.3%}",
                     )
-                    if new_state == AlphaState.PROBATION:
+                    if new_state == AlphaState.PROBATION and old_state == AlphaState.ACTIVE:
                         n_degraded += 1
+                    elif new_state == AlphaState.DORMANT:
+                        n_dormant += 1
                     elif new_state == AlphaState.RETIRED:
                         n_retired += 1
+                    elif (
+                        new_state == AlphaState.PROBATION
+                        and old_state == AlphaState.DORMANT
+                    ):
+                        n_revived += 1
                     elif (
                         new_state == AlphaState.ACTIVE
                         and old_state == AlphaState.PROBATION
@@ -199,6 +215,8 @@ class ForwardRunner:
                 "n_degraded": n_degraded,
                 "n_retired": n_retired,
                 "n_restored": n_restored,
+                "n_dormant": n_dormant,
+                "n_revived": n_revived,
                 "elapsed": round(elapsed, 2),
                 "date": today,
             },
@@ -209,6 +227,8 @@ class ForwardRunner:
             n_degraded=n_degraded,
             n_retired=n_retired,
             n_restored=n_restored,
+            n_dormant=n_dormant,
+            n_revived=n_revived,
             elapsed=elapsed,
         )
 

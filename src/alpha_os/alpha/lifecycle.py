@@ -1,4 +1,4 @@
-"""Alpha lifecycle state machine: born → active → probation → retired."""
+"""Alpha lifecycle state machine: born → active → probation → dormant (with revival)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -13,6 +13,7 @@ class LifecycleConfig:
     dsr_pvalue_max: float = 0.05
     probation_sharpe_min: float = 0.3
     correlation_max: float = 0.5
+    dormant_revival_sharpe: float = 0.3
 
 
 class AlphaLifecycle:
@@ -55,7 +56,7 @@ class AlphaLifecycle:
         return AlphaState.ACTIVE
 
     def evaluate_probation(self, alpha_id: str, live_sharpe: float) -> str:
-        """Check if a probation alpha should be retired or restored."""
+        """Check if a probation alpha should go dormant or be restored."""
         record = self.registry.get(alpha_id)
         if record is None:
             raise ValueError(f"Alpha {alpha_id} not found")
@@ -66,9 +67,22 @@ class AlphaLifecycle:
             self.registry.update_state(alpha_id, AlphaState.ACTIVE)
             return AlphaState.ACTIVE
         elif live_sharpe < 0:
-            self.registry.update_state(alpha_id, AlphaState.RETIRED)
-            return AlphaState.RETIRED
+            self.registry.update_state(alpha_id, AlphaState.DORMANT)
+            return AlphaState.DORMANT
         return AlphaState.PROBATION
+
+    def evaluate_dormant(self, alpha_id: str, live_sharpe: float) -> str:
+        """Check if a dormant alpha should revive to probation."""
+        record = self.registry.get(alpha_id)
+        if record is None:
+            raise ValueError(f"Alpha {alpha_id} not found")
+        if record.state != AlphaState.DORMANT:
+            return record.state
+
+        if live_sharpe >= self.config.dormant_revival_sharpe:
+            self.registry.update_state(alpha_id, AlphaState.PROBATION)
+            return AlphaState.PROBATION
+        return AlphaState.DORMANT
 
     def _passes_gate(self, record: AlphaRecord) -> bool:
         cfg = self.config

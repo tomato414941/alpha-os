@@ -146,13 +146,41 @@ class TestAlphaLifecycle:
         state = lc.evaluate_active("a1", live_sharpe=0.8)
         assert state == AlphaState.ACTIVE
 
-    def test_probation_to_retired(self, tmp_path):
+    def test_probation_to_dormant(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.PROBATION,
         ))
         state = lc.evaluate_probation("a1", live_sharpe=-0.5)
-        assert state == AlphaState.RETIRED
+        assert state == AlphaState.DORMANT
+
+    def test_dormant_stays_dormant(self, tmp_path):
+        reg, lc = self._setup(tmp_path)
+        reg.register(AlphaRecord(
+            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
+        ))
+        state = lc.evaluate_dormant("a1", live_sharpe=0.1)
+        assert state == AlphaState.DORMANT
+
+    def test_dormant_to_probation(self, tmp_path):
+        reg, lc = self._setup(tmp_path)
+        reg.register(AlphaRecord(
+            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
+        ))
+        state = lc.evaluate_dormant("a1", live_sharpe=0.4)
+        assert state == AlphaState.PROBATION
+
+    def test_dormant_revival_full_cycle(self, tmp_path):
+        reg, lc = self._setup(tmp_path)
+        reg.register(AlphaRecord(
+            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
+        ))
+        # Step 1: revive to PROBATION
+        state = lc.evaluate_dormant("a1", live_sharpe=0.4)
+        assert state == AlphaState.PROBATION
+        # Step 2: prove itself back to ACTIVE
+        state = lc.evaluate_probation("a1", live_sharpe=0.8)
+        assert state == AlphaState.ACTIVE
 
     def test_probation_to_active(self, tmp_path):
         reg, lc = self._setup(tmp_path)

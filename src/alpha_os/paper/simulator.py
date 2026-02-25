@@ -82,7 +82,7 @@ def run_backfill(
         registry = AlphaRegistry(sim_reg_path)
 
         # Reset all alphas to ACTIVE for simulation
-        all_states = [AlphaState.ACTIVE, AlphaState.PROBATION, AlphaState.RETIRED]
+        all_states = [AlphaState.ACTIVE, AlphaState.PROBATION, AlphaState.RETIRED, AlphaState.DORMANT]
         n_activated = 0
         for state in all_states:
             for record in registry.list_by_state(state):
