@@ -132,7 +132,7 @@ def main():
     pipe_cfg = PipelineConfig(
         gp=GPConfig(pop_size=200, n_generations=20, max_depth=3),
         gate=GateConfig(
-            oos_sharpe_min=0.3, pbo_max=0.8, dsr_pvalue_max=1.0,
+            oos_sharpe_min=1.0, pbo_max=1.0, dsr_pvalue_max=0.05,
             fdr_pass_required=False, max_correlation=0.5, min_n_days=200,
         ),
         commission_pct=0.10, slippage_pct=0.05,

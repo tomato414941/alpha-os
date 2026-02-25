@@ -20,6 +20,7 @@ from ..evolution.gp import GPConfig, GPEvolver
 from ..governance.gates import GateConfig, adoption_gate
 from ..risk.manager import RiskConfig, RiskManager
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
+from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import purged_walk_forward
 
 logger = logging.getLogger(__name__)
@@ -198,23 +199,69 @@ class PipelineRunner:
 
         return validated
 
+    def _compute_batch_pbo(
+        self, validated: list[tuple[Expr, float, float, float]],
+        max_pbo_signals: int = 200,
+    ) -> float:
+        """Compute batch PBO for validated alphas. Returns PBO in [0, 1]."""
+        n_days = len(self.prices)
+        signals = []
+        for expr, fitness, oos_sharpe, dsr_pvalue in validated:
+            try:
+                sig = expr.evaluate(self.data)
+                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                if sig.ndim == 0:
+                    sig = np.full(n_days, float(sig))
+                if len(sig) == n_days:
+                    signals.append(sig)
+            except Exception:
+                continue
+
+        if len(signals) < 2:
+            return 1.0
+
+        # Sample if too many signals (PBO cost scales with n_strategies)
+        if len(signals) > max_pbo_signals:
+            rng = np.random.default_rng(42)
+            indices = rng.choice(len(signals), max_pbo_signals, replace=False)
+            signals = [signals[i] for i in indices]
+
+        sig_matrix = np.array(signals)
+        pbo_result = probability_of_backtest_overfitting(
+            sig_matrix, self.prices, self.engine,
+            n_blocks=10, max_combinations=50,
+        )
+        logger.info(
+            "  Batch PBO: %.3f (%d strategies, %d combinations)",
+            pbo_result.pbo, len(signals), pbo_result.n_combinations,
+        )
+        return pbo_result.pbo
+
     def _adopt(
         self, validated: list[tuple[Expr, float, float, float]]
     ) -> list[tuple[Expr, float]]:
         """Apply governance gates and register adopted alphas."""
         gate_cfg = self.config.gate or GateConfig()
-        adopted = []
 
+        # Compute batch PBO once for all validated alphas
+        batch_pbo = self._compute_batch_pbo(validated)
+
+        # Diagnostic: per-gate pass rates
+        gate_stats: dict[str, int] = {}
+        adopted = []
         for expr, fitness, oos_sharpe, dsr_pvalue in validated:
             result = adoption_gate(
                 oos_sharpe=oos_sharpe,
-                pbo=0.5,  # simplified: would need full PBO computation
+                pbo=batch_pbo,
                 dsr_pvalue=dsr_pvalue,
-                fdr_passed=True,  # simplified: batch FDR done separately
+                fdr_passed=True,
                 avg_correlation=0.0,
                 n_days=len(self.prices),
                 config=gate_cfg,
             )
+            for check_name, passed in result.checks.items():
+                if passed:
+                    gate_stats[check_name] = gate_stats.get(check_name, 0) + 1
             if result.passed:
                 adopted.append((expr, fitness))
                 if self.registry:
@@ -224,6 +271,7 @@ class PipelineRunner:
                         state=AlphaState.ACTIVE,
                         fitness=fitness,
                         oos_sharpe=oos_sharpe,
+                        pbo=batch_pbo,
                         dsr_pvalue=dsr_pvalue,
                     )
                     self.registry.register(record)

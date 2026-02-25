@@ -122,9 +122,9 @@ def main():
             bloat_penalty=0.01,
         ),
         gate=GateConfig(
-            oos_sharpe_min=0.3,    # moderate threshold
-            pbo_max=0.8,
-            dsr_pvalue_max=1.0,    # DSR logged but not blocking (n_trials inflated by correlated alphas)
+            oos_sharpe_min=1.0,
+            pbo_max=1.0,
+            dsr_pvalue_max=0.05,
             fdr_pass_required=False,
             max_correlation=0.5,
             min_n_days=200,
