@@ -56,6 +56,13 @@ class TradingConfig:
 
 
 @dataclass
+class ForwardTestConfig:
+    check_interval: int = 86400
+    min_forward_days: int = 30
+    degradation_window: int = 63
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -63,6 +70,7 @@ class Config:
     validation: ValidationConfig = field(default_factory=ValidationConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
     trading: TradingConfig = field(default_factory=TradingConfig)
+    forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -79,4 +87,5 @@ class Config:
             validation=ValidationConfig(**raw.get("validation", {})),
             risk=RiskConfig(**raw.get("risk", {})),
             trading=TradingConfig(**raw.get("trading", {})),
+            forward=ForwardTestConfig(**raw.get("forward", {})),
         )

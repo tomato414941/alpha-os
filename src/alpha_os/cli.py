@@ -63,6 +63,14 @@ def _build_parser() -> argparse.ArgumentParser:
     val.add_argument("--live", action="store_true", help="Use real signal-noise data")
     val.add_argument("--config", type=str, default=None)
 
+    # forward
+    fwd = sub.add_parser("forward", help="Forward-test adopted alphas on new data")
+    fwd.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    fwd.add_argument("--schedule", action="store_true", help="Run on interval")
+    fwd.add_argument("--summary", action="store_true", help="Print summary and exit")
+    fwd.add_argument("--asset", type=str, default="NVDA")
+    fwd.add_argument("--config", type=str, default=None)
+
     return parser
 
 
@@ -339,6 +347,46 @@ def cmd_validate(args: argparse.Namespace) -> None:
     print(f"\n  Gate (OOS Sharpe >= {cfg.validation.oos_sharpe_min}): {'PASS' if passed else 'FAIL'}")
 
 
+def cmd_forward(args: argparse.Namespace) -> None:
+    from alpha_os.forward.runner import ForwardRunner, ForwardConfig
+    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    cfg = _load_config(args.config)
+    fwd_cfg = ForwardConfig(
+        check_interval=cfg.forward.check_interval,
+        min_forward_days=cfg.forward.min_forward_days,
+        degradation_window=cfg.forward.degradation_window,
+    )
+    runner = ForwardRunner(asset=args.asset, config=cfg, forward_config=fwd_cfg)
+
+    if args.summary:
+        runner.print_summary()
+        runner.close()
+        return
+
+    if args.once or not args.schedule:
+        result = runner.run_cycle()
+        runner.print_summary()
+        runner.close()
+        print(
+            f"\nCycle: {result.n_evaluated} evaluated, {result.n_degraded} degraded, "
+            f"{result.n_retired} retired in {result.elapsed:.1f}s"
+        )
+        return
+
+    def cycle():
+        runner.run_cycle()
+
+    scheduler = PipelineScheduler(
+        run_fn=cycle,
+        config=SchedulerConfig(interval_seconds=fwd_cfg.check_interval),
+    )
+    try:
+        scheduler.start()
+    finally:
+        runner.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -355,3 +403,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_evolve(args)
     elif args.command == "validate":
         cmd_validate(args)
+    elif args.command == "forward":
+        cmd_forward(args)
