@@ -53,6 +53,48 @@ genomes the system can evaluate and maintain.
 The pipeline runs as a continuous cycle: generate candidates, validate
 statistically, adopt survivors, then monitor and demote as edges decay.
 
+## Alpha Expression DSL
+
+Alphas are expressed as S-expression trees over a domain-specific language.
+Each expression maps a dictionary of time-series signals to a single output
+signal (numpy array).
+
+### Node Types (8)
+
+| Type            | Syntax                          | Example                                       |
+| --------------- | ------------------------------- | --------------------------------------------- |
+| Feature         | `name`                          | `btc_ohlcv`                                   |
+| Constant        | `value`                         | `0.5`                                          |
+| UnaryOp         | `(op child)`                    | `(neg btc_ohlcv)`                              |
+| BinaryOp        | `(op left right)`               | `(sub nvda sp500)`                             |
+| RollingOp       | `(op_window child)`             | `(mean_20 btc_ohlcv)`                         |
+| PairRollingOp   | `(op_window left right)`        | `(corr_60 btc_ohlcv sp500)`                   |
+| ConditionalOp   | `(op cond_l cond_r then else)`  | `(if_gt vix_close 30.0 (neg btc) (roc_10 btc))` |
+| LagOp           | `(op_window child)`             | `(lag_5 btc_ohlcv)`                           |
+
+### Operators
+
+- **Unary**: neg, abs, sign, log, zscore
+- **Binary**: add, sub, mul, div, max, min
+- **Rolling**: mean, std, ts_max, ts_min, delta, roc, rank, ema
+- **PairRolling**: corr, cov
+- **Conditional**: if_gt (element-wise: cond_l > cond_r ? then : else)
+- **Lag**: lag (returns x[t-N], first N values are NaN)
+
+### Windows
+
+Allowed window sizes: 5, 10, 20, 30, 60 days.
+
+### Evolution
+
+Expressions evolve via GP (population=200, generations=30):
+- **Crossover** (50%): subtree swap between two parents
+- **Mutation** (30%): swap feature, change window, or replace operator
+- **Selection**: tournament (size=3) with elitism
+- **Bloat control**: fitness penalty of 0.01 × node_count, max depth=3
+- **Quality-diversity**: MAP-Elites archive with 4D behavior descriptor
+  (correlation, holding half-life, turnover, complexity)
+
 ## Key Insight: Adaptive Market Hypothesis
 
 - **Arbitrage decays**: once a pattern is discovered, participants exploit it
