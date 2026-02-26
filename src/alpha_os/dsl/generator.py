@@ -9,6 +9,8 @@ from .tokens import (
     BINARY_OPS,
     ROLLING_OPS,
     PAIR_ROLLING_OPS,
+    CONDITIONAL_OPS,
+    LAG_OPS,
     ALLOWED_WINDOWS,
 )
 from .expr import (
@@ -19,12 +21,16 @@ from .expr import (
     BinaryOp,
     RollingOp,
     PairRollingOp,
+    ConditionalOp,
+    LagOp,
 )
 
 _UNARY_LIST = sorted(UNARY_OPS)
 _BINARY_LIST = sorted(BINARY_OPS)
 _ROLLING_LIST = sorted(ROLLING_OPS)
 _PAIR_ROLLING_LIST = sorted(PAIR_ROLLING_OPS)
+_CONDITIONAL_LIST = sorted(CONDITIONAL_OPS)
+_LAG_LIST = sorted(LAG_OPS)
 
 
 class AlphaGenerator:
@@ -102,13 +108,15 @@ class AlphaGenerator:
 
         if isinstance(target, Feature):
             object.__setattr__(target, "name", self.rng.choice(self.features))
-        elif isinstance(target, (RollingOp, PairRollingOp)):
+        elif isinstance(target, (RollingOp, PairRollingOp, LagOp)):
             new_window = self.rng.choice(self.windows)
             object.__setattr__(target, "window", new_window)
         elif isinstance(target, UnaryOp):
             object.__setattr__(target, "op", self.rng.choice(_UNARY_LIST))
         elif isinstance(target, BinaryOp):
             object.__setattr__(target, "op", self.rng.choice(_BINARY_LIST))
+        elif isinstance(target, ConditionalOp):
+            object.__setattr__(target, "op", self.rng.choice(_CONDITIONAL_LIST))
 
         return expr
 
@@ -121,8 +129,8 @@ class AlphaGenerator:
             return self._random_leaf()
 
         kind = self.rng.choices(
-            ["leaf", "unary", "binary", "rolling", "pair_rolling"],
-            weights=[2, 2, 3, 4, 1],
+            ["leaf", "unary", "binary", "rolling", "pair_rolling", "lag", "conditional"],
+            weights=[2, 2, 3, 4, 1, 2, 1],
         )[0]
 
         if kind == "leaf":
@@ -144,10 +152,24 @@ class AlphaGenerator:
                 self.rng.choice(self.windows),
                 self._random_expr(max_depth - 1),
             )
-        # pair_rolling
-        return PairRollingOp(
-            self.rng.choice(_PAIR_ROLLING_LIST),
-            self.rng.choice(self.windows),
+        if kind == "pair_rolling":
+            return PairRollingOp(
+                self.rng.choice(_PAIR_ROLLING_LIST),
+                self.rng.choice(self.windows),
+                self._random_expr(max_depth - 1),
+                self._random_expr(max_depth - 1),
+            )
+        if kind == "lag":
+            return LagOp(
+                self.rng.choice(_LAG_LIST),
+                self.rng.choice(self.windows),
+                self._random_expr(max_depth - 1),
+            )
+        # conditional
+        return ConditionalOp(
+            self.rng.choice(_CONDITIONAL_LIST),
+            self._random_expr(max_depth - 1),
+            self._random_expr(max_depth - 1),
             self._random_expr(max_depth - 1),
             self._random_expr(max_depth - 1),
         )
@@ -170,4 +192,11 @@ def _collect_nodes(expr: Expr) -> list[Expr]:
     elif isinstance(expr, PairRollingOp):
         nodes.extend(_collect_nodes(expr.left))
         nodes.extend(_collect_nodes(expr.right))
+    elif isinstance(expr, LagOp):
+        nodes.extend(_collect_nodes(expr.child))
+    elif isinstance(expr, ConditionalOp):
+        nodes.extend(_collect_nodes(expr.condition_left))
+        nodes.extend(_collect_nodes(expr.condition_right))
+        nodes.extend(_collect_nodes(expr.then_branch))
+        nodes.extend(_collect_nodes(expr.else_branch))
     return nodes

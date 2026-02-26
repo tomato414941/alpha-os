@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant
+from alpha_os.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant, ConditionalOp, LagOp
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.gp import GPConfig, GPEvolver, _tree_depth, _node_count, crossover
 from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig
@@ -48,6 +48,25 @@ class TestTreeDepth:
         )
         assert _tree_depth(expr) == 2
 
+    def test_lag(self):
+        assert _tree_depth(LagOp("lag", 10, Feature("x"))) == 1
+
+    def test_conditional_flat(self):
+        expr = ConditionalOp(
+            "if_gt", Feature("x"), Feature("y"), Feature("z"), Feature("w")
+        )
+        assert _tree_depth(expr) == 1
+
+    def test_conditional_nested(self):
+        expr = ConditionalOp(
+            "if_gt",
+            RollingOp("mean", 10, Feature("x")),
+            Feature("y"),
+            BinaryOp("add", Feature("z"), Feature("w")),
+            UnaryOp("neg", Feature("a")),
+        )
+        assert _tree_depth(expr) == 2
+
 
 class TestNodeCount:
     def test_leaf(self):
@@ -64,6 +83,15 @@ class TestNodeCount:
             Feature("y"),
         )
         assert _node_count(expr) == 4
+
+    def test_lag(self):
+        assert _node_count(LagOp("lag", 10, Feature("x"))) == 2
+
+    def test_conditional(self):
+        expr = ConditionalOp(
+            "if_gt", Feature("x"), Feature("y"), Feature("z"), Feature("w")
+        )
+        assert _node_count(expr) == 5
 
 
 class TestCrossover:

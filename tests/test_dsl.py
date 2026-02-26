@@ -8,6 +8,8 @@ from alpha_os.dsl import (
     BinaryOp,
     RollingOp,
     PairRollingOp,
+    ConditionalOp,
+    LagOp,
     parse,
     to_string,
     AlphaGenerator,
@@ -61,6 +63,13 @@ class TestRepr:
         )
         assert repr(e) == "(sub (roc_10 nvda) (roc_10 sp500))"
 
+    def test_conditional(self):
+        e = ConditionalOp("if_gt", Feature("x"), Feature("y"), Constant(1.0), Constant(-1.0))
+        assert repr(e) == "(if_gt x y 1.0 -1.0)"
+
+    def test_lag(self):
+        assert repr(LagOp("lag", 5, Feature("x"))) == "(lag_5 x)"
+
 
 # ---------------------------------------------------------------------------
 # Parser round-trip
@@ -80,6 +89,10 @@ class TestParser:
             "(neg (sub (rank_20 nvda) 0.5))",
             "(div nvda sp500)",
             "(ema_30 nvda)",
+            "(lag_10 nvda)",
+            "(lag_5 (roc_10 nvda))",
+            "(if_gt nvda sp500 1.0 -1.0)",
+            "(if_gt (mean_20 nvda) 0.5 nvda (neg sp500))",
         ],
     )
     def test_round_trip(self, s):
@@ -118,6 +131,19 @@ class TestParser:
         assert isinstance(e, PairRollingOp)
         assert e.op == "corr"
         assert e.window == 60
+
+    def test_parse_lag(self):
+        e = parse("(lag_10 nvda)")
+        assert isinstance(e, LagOp)
+        assert e.op == "lag"
+        assert e.window == 10
+
+    def test_parse_conditional(self):
+        e = parse("(if_gt nvda sp500 1.0 -1.0)")
+        assert isinstance(e, ConditionalOp)
+        assert e.op == "if_gt"
+        assert isinstance(e.condition_left, Feature)
+        assert isinstance(e.then_branch, Constant)
 
     def test_parse_error_empty(self):
         with pytest.raises(SyntaxError):
@@ -262,6 +288,23 @@ class TestEvaluation:
         )
         assert np.all(np.isnan(result[:19]))
 
+    def test_lag(self, sample_data):
+        result = LagOp("lag", 10, Feature("nvda")).evaluate(sample_data)
+        assert result.shape == (100,)
+        assert np.all(np.isnan(result[:10]))
+        np.testing.assert_array_equal(result[10:], sample_data["nvda"][:-10])
+
+    def test_conditional(self, sample_data):
+        expr = ConditionalOp(
+            "if_gt", Feature("nvda"), Feature("sp500"), Constant(100.0), Constant(-100.0)
+        )
+        result = expr.evaluate(sample_data)
+        assert result.shape == (100,)
+        expected = np.where(
+            sample_data["nvda"] > sample_data["sp500"], 100.0, -100.0
+        )
+        np.testing.assert_array_equal(result, expected)
+
     def test_nested_expression(self, sample_data):
         # (sub (roc_10 nvda) (roc_10 sp500))
         expr = BinaryOp(
@@ -298,6 +341,14 @@ class TestValidation:
     def test_unknown_pair_rolling_op(self):
         with pytest.raises(ValueError):
             PairRollingOp("bad_op", 10, Feature("x"), Feature("y"))
+
+    def test_unknown_conditional_op(self):
+        with pytest.raises(ValueError):
+            ConditionalOp("bad_op", Feature("x"), Feature("y"), Feature("z"), Feature("w"))
+
+    def test_unknown_lag_op(self):
+        with pytest.raises(ValueError):
+            LagOp("bad_op", 10, Feature("x"))
 
 
 # ---------------------------------------------------------------------------

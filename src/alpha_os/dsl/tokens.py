@@ -12,4 +12,6 @@ UNARY_OPS = {"neg", "abs", "sign", "log", "zscore"}
 BINARY_OPS = {"add", "sub", "mul", "div", "max", "min"}
 ROLLING_OPS = {"mean", "std", "ts_max", "ts_min", "delta", "roc", "rank", "ema"}
 PAIR_ROLLING_OPS = {"corr", "cov"}
+CONDITIONAL_OPS = {"if_gt"}
+LAG_OPS = {"lag"}
 ALLOWED_WINDOWS = [5, 10, 20, 30, 60]

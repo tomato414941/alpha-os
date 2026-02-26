@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from .tokens import UNARY_OPS, BINARY_OPS, ROLLING_OPS, PAIR_ROLLING_OPS
+from .tokens import UNARY_OPS, BINARY_OPS, ROLLING_OPS, PAIR_ROLLING_OPS, CONDITIONAL_OPS, LAG_OPS
 
 
 class Expr:
@@ -130,6 +130,54 @@ class PairRollingOp(Expr):
         return f"({self.op}_{self.window} {self.left!r} {self.right!r})"
 
 
+@dataclass(frozen=True)
+class ConditionalOp(Expr):
+    """Conditional operation: (if_gt cond_left cond_right then_branch else_branch)."""
+
+    op: str
+    condition_left: Expr
+    condition_right: Expr
+    then_branch: Expr
+    else_branch: Expr
+
+    def __post_init__(self) -> None:
+        if self.op not in CONDITIONAL_OPS:
+            raise ValueError(f"Unknown conditional op: {self.op}")
+
+    def evaluate(self, data: dict[str, np.ndarray]) -> np.ndarray:
+        cond_l = self.condition_left.evaluate(data)
+        cond_r = self.condition_right.evaluate(data)
+        then_val = self.then_branch.evaluate(data)
+        else_val = self.else_branch.evaluate(data)
+        return _eval_conditional(self.op, cond_l, cond_r, then_val, else_val)
+
+    def __repr__(self) -> str:
+        return (
+            f"({self.op} {self.condition_left!r} {self.condition_right!r}"
+            f" {self.then_branch!r} {self.else_branch!r})"
+        )
+
+
+@dataclass(frozen=True)
+class LagOp(Expr):
+    """Lag/shift operation: (lag_N child) returns x[t-N]."""
+
+    op: str
+    window: int
+    child: Expr
+
+    def __post_init__(self) -> None:
+        if self.op not in LAG_OPS:
+            raise ValueError(f"Unknown lag op: {self.op}")
+
+    def evaluate(self, data: dict[str, np.ndarray]) -> np.ndarray:
+        x = self.child.evaluate(data)
+        return _eval_lag(self.op, self.window, x)
+
+    def __repr__(self) -> str:
+        return f"({self.op}_{self.window} {self.child!r})"
+
+
 # ---------------------------------------------------------------------------
 # Evaluation helpers (pure NumPy / pandas)
 # ---------------------------------------------------------------------------
@@ -216,3 +264,24 @@ def _eval_pair_rolling(
     if op == "cov":
         return sl.rolling(window, min_periods=window).cov(sr).to_numpy()
     raise ValueError(f"Unknown pair rolling op: {op}")
+
+
+def _eval_conditional(
+    op: str,
+    cond_l: np.ndarray,
+    cond_r: np.ndarray,
+    then_val: np.ndarray,
+    else_val: np.ndarray,
+) -> np.ndarray:
+    if op == "if_gt":
+        return np.where(cond_l > cond_r, then_val, else_val)
+    raise ValueError(f"Unknown conditional op: {op}")
+
+
+def _eval_lag(op: str, window: int, x: np.ndarray) -> np.ndarray:
+    if op == "lag":
+        result = np.empty_like(x, dtype=np.float64)
+        result[:window] = np.nan
+        result[window:] = x[:-window]
+        return result
+    raise ValueError(f"Unknown lag op: {op}")

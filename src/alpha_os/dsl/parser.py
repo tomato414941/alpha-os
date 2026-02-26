@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-from .tokens import UNARY_OPS, BINARY_OPS, ROLLING_OPS, PAIR_ROLLING_OPS
-from .expr import Expr, Feature, Constant, UnaryOp, BinaryOp, RollingOp, PairRollingOp
+from .tokens import UNARY_OPS, BINARY_OPS, ROLLING_OPS, PAIR_ROLLING_OPS, CONDITIONAL_OPS, LAG_OPS
+from .expr import Expr, Feature, Constant, UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 
 
 _TOKEN_RE = re.compile(r"""(\(|\)|[^\s()]+)""")
@@ -84,6 +84,10 @@ def _parse_compound(tokens: list[str], pos: int) -> tuple[Expr, int]:
             child, pos = _parse_expr(tokens, pos)
             pos = _expect(tokens, pos, ")")
             return RollingOp(op_name, window, child), pos
+        if op_name in LAG_OPS:
+            child, pos = _parse_expr(tokens, pos)
+            pos = _expect(tokens, pos, ")")
+            return LagOp(op_name, window, child), pos
         raise SyntaxError(f"Unknown rolling operator: {op_name}")
 
     if op_name in UNARY_OPS:
@@ -96,6 +100,14 @@ def _parse_compound(tokens: list[str], pos: int) -> tuple[Expr, int]:
         right, pos = _parse_expr(tokens, pos)
         pos = _expect(tokens, pos, ")")
         return BinaryOp(op_name, left, right), pos
+
+    if op_name in CONDITIONAL_OPS:
+        cond_left, pos = _parse_expr(tokens, pos)
+        cond_right, pos = _parse_expr(tokens, pos)
+        then_branch, pos = _parse_expr(tokens, pos)
+        else_branch, pos = _parse_expr(tokens, pos)
+        pos = _expect(tokens, pos, ")")
+        return ConditionalOp(op_name, cond_left, cond_right, then_branch, else_branch), pos
 
     raise SyntaxError(f"Unknown operator: {op_name}")
 

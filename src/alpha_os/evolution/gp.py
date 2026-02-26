@@ -24,16 +24,25 @@ class GPConfig:
 
 
 def _tree_depth(expr: Expr) -> int:
-    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp
+    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 
     if isinstance(expr, (UnaryOp,)):
         return 1 + _tree_depth(expr.child)
     if isinstance(expr, RollingOp):
         return 1 + _tree_depth(expr.child)
+    if isinstance(expr, LagOp):
+        return 1 + _tree_depth(expr.child)
     if isinstance(expr, BinaryOp):
         return 1 + max(_tree_depth(expr.left), _tree_depth(expr.right))
     if isinstance(expr, PairRollingOp):
         return 1 + max(_tree_depth(expr.left), _tree_depth(expr.right))
+    if isinstance(expr, ConditionalOp):
+        return 1 + max(
+            _tree_depth(expr.condition_left),
+            _tree_depth(expr.condition_right),
+            _tree_depth(expr.then_branch),
+            _tree_depth(expr.else_branch),
+        )
     return 0
 
 
@@ -44,7 +53,7 @@ def _node_count(expr: Expr) -> int:
 def crossover(parent1: Expr, parent2: Expr, rng: random.Random) -> tuple[Expr, Expr]:
     """Subtree crossover: swap random subtrees between two parents."""
     import copy
-    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp
+    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 
     c1 = copy.deepcopy(parent1)
     c2 = copy.deepcopy(parent2)
@@ -70,7 +79,7 @@ def crossover(parent1: Expr, parent2: Expr, rng: random.Random) -> tuple[Expr, E
 
 def _replace_child(root: Expr, old: Expr, new: Expr) -> None:
     """Replace old subtree with new in root (in-place on frozen dataclass via object.__setattr__)."""
-    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp
+    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 
     if isinstance(root, UnaryOp):
         if root.child is old:
@@ -98,6 +107,25 @@ def _replace_child(root: Expr, old: Expr, new: Expr) -> None:
         else:
             _replace_child(root.left, old, new)
             _replace_child(root.right, old, new)
+    elif isinstance(root, LagOp):
+        if root.child is old:
+            object.__setattr__(root, "child", new)
+        else:
+            _replace_child(root.child, old, new)
+    elif isinstance(root, ConditionalOp):
+        if root.condition_left is old:
+            object.__setattr__(root, "condition_left", new)
+        elif root.condition_right is old:
+            object.__setattr__(root, "condition_right", new)
+        elif root.then_branch is old:
+            object.__setattr__(root, "then_branch", new)
+        elif root.else_branch is old:
+            object.__setattr__(root, "else_branch", new)
+        else:
+            _replace_child(root.condition_left, old, new)
+            _replace_child(root.condition_right, old, new)
+            _replace_child(root.then_branch, old, new)
+            _replace_child(root.else_branch, old, new)
 
 
 class GPEvolver:
