@@ -78,6 +78,29 @@ class DataStore:
             )
         self._conn.commit()
 
+    def import_from_signal_noise(self, source_db: Path, signals: list[str]) -> int:
+        """Bulk-import daily data from signal-noise SQLite DB."""
+        if not source_db.exists():
+            log.warning("signal-noise DB not found: %s", source_db)
+            return 0
+        src = sqlite3.connect(str(source_db))
+        src.execute("ATTACH DATABASE ? AS dst", (str(self._db_path),))
+
+        placeholders = ",".join("?" for _ in signals)
+        # signal-noise stores timestamp as ISO string; extract date part
+        src.execute(
+            f"INSERT OR REPLACE INTO dst.signals (name, date, value) "
+            f"SELECT name, SUBSTR(timestamp, 1, 10), value "
+            f"FROM signals WHERE name IN ({placeholders})",
+            signals,
+        )
+        count = src.execute("SELECT changes()").fetchone()[0]
+        src.commit()
+        src.close()
+        self._conn = sqlite3.connect(str(self._db_path))
+        log.info("Imported %d rows from signal-noise", count)
+        return count
+
     def get_matrix(
         self,
         signals: list[str],

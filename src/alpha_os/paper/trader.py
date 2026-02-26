@@ -15,7 +15,7 @@ from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.client import SignalClient
 from ..data.store import DataStore
-from ..data.universe import price_signal, MACRO_SIGNALS
+from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.executor import Fill
 from ..execution.paper import PaperExecutor
@@ -65,7 +65,13 @@ class PaperTrader:
             self.price_signal = price_signal(asset)
         except KeyError:
             self.price_signal = asset.lower()
-        self.features = [self.price_signal] + MACRO_SIGNALS
+        daily = load_daily_signals()
+        seen = {self.price_signal}
+        self.features = [self.price_signal]
+        for s in daily:
+            if s not in seen:
+                seen.add(s)
+                self.features.append(s)
 
         self.registry = registry or AlphaRegistry()
         self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker()
@@ -158,6 +164,8 @@ class PaperTrader:
 
         # 1. Sync data (skip in simulation mode — use cached data)
         if simulation_date is None:
+            if SIGNAL_NOISE_DB.exists():
+                self.store.import_from_signal_noise(SIGNAL_NOISE_DB, self.features)
             logger.info("Syncing %d signals...", len(self.features))
             self.store.sync(self.features)
 

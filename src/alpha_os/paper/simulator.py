@@ -12,7 +12,7 @@ import numpy as np
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
-from ..data.universe import price_signal, MACRO_SIGNALS
+from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
 from ..risk.manager import RiskConfig as _RiskConfig, RiskManager
@@ -53,9 +53,23 @@ def run_backfill(
         price_sig = price_signal(asset)
     except KeyError:
         price_sig = asset.lower()
-    features = [price_sig] + MACRO_SIGNALS
+    daily = load_daily_signals()
+    seen = {price_sig}
+    features = [price_sig]
+    for s in daily:
+        if s not in seen:
+            seen.add(s)
+            features.append(s)
+
+    # Import from signal-noise DB
+    if SIGNAL_NOISE_DB.exists():
+        store.import_from_signal_noise(SIGNAL_NOISE_DB, features)
 
     matrix = store.get_matrix(features, start=start_date, end=end_date)
+    # Only require price signal; fill NaN for other signals
+    if price_sig in matrix.columns:
+        matrix = matrix[matrix[price_sig].notna()]
+    matrix = matrix.bfill().fillna(0)
     store.close()
 
     if len(matrix) < 2:
@@ -206,7 +220,7 @@ def run_backfill(
             adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
             # Execute trade
-            dollar_pos = adjusted * initial_capital * max_position_pct
+            dollar_pos = adjusted * prev_value * max_position_pct
             target_shares = dollar_pos / current_price if current_price > 0 else 0.0
             if abs(dollar_pos) < min_trade_usd:
                 target_shares = 0.0

@@ -12,7 +12,7 @@ import numpy as np
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR
-from alpha_os.data.universe import price_signal, MACRO_SIGNALS
+from alpha_os.data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.archive import AlphaArchive
@@ -119,7 +119,15 @@ def _make_features(asset: str) -> list[str]:
         price = price_signal(asset)
     except KeyError:
         price = asset.lower()
-    return [price] + MACRO_SIGNALS
+    daily = load_daily_signals()
+    # price signal first, then all daily signals (deduplicated)
+    seen = {price}
+    result = [price]
+    for s in daily:
+        if s not in seen:
+            seen.add(s)
+            result.append(s)
+    return result
 
 
 def _warn_deprecated_live(args: argparse.Namespace) -> None:
@@ -149,12 +157,18 @@ def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np
 def _real_data(
     features: list[str], config: Config, eval_window: int = 0,
 ) -> tuple[dict[str, np.ndarray], int]:
-    """Load real data: cache-first, sync from API if available."""
+    """Load real data: cache-first, import from signal-noise, sync from API."""
     from alpha_os.data.store import DataStore
 
     db_path = DATA_DIR / "alpha_cache.db"
 
-    # Try API sync (best-effort)
+    store = DataStore(db_path)
+
+    # Import from signal-noise DB (fast, local)
+    if SIGNAL_NOISE_DB.exists():
+        store.import_from_signal_noise(SIGNAL_NOISE_DB, features)
+
+    # Try API sync (best-effort, for signals not in signal-noise)
     client = None
     try:
         from alpha_os.data.client import SignalClient
@@ -163,23 +177,29 @@ def _real_data(
             timeout=config.api.timeout,
         )
         if client.health():
-            print(f"Syncing {len(features)} signals from {config.api.base_url} ...")
+            print(f"Syncing from {config.api.base_url} ...")
+            store.sync(features)
         else:
             print(f"API unavailable at {config.api.base_url} — using cache")
-            client = None
     except Exception:
-        print("API client unavailable — using cache")
-
-    store = DataStore(db_path, client)
-    if client is not None:
-        store.sync(features)
+        pass
 
     matrix = store.get_matrix(features)
-    # Report missing features before dropping NaN
-    missing = [f for f in features if f not in matrix.columns or matrix[f].isna().all()]
+
+    # Only require price signal (first feature) to be present
+    price_col = features[0]
+    if price_col in matrix.columns:
+        matrix = matrix[matrix[price_col].notna()]
+
+    # Fill remaining NaN: ffill already done in get_matrix, bfill + 0 for leading
+    matrix = matrix.bfill().fillna(0)
+
+    available = [f for f in features if f in matrix.columns and not (matrix[f] == 0).all()]
+    missing = [f for f in features if f not in available]
     if missing:
-        print(f"Missing from cache: {', '.join(missing)}")
-    matrix = matrix.dropna()
+        print(f"Missing/empty: {len(missing)} signals")
+    print(f"Available: {len(available)} signals")
+
     store.close()
 
     if len(matrix) < 60:

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from alpha_os.data.client import SignalClient
 
 log = logging.getLogger(__name__)
+
+SIGNAL_NOISE_DB = Path.home() / "projects" / "signal-noise" / "data" / "signals.db"
 
 STOCKS: dict[str, str] = {
     "NVDA": "nvda",
@@ -69,6 +73,42 @@ def price_signal(asset: str) -> str:
         if signal == lower:
             return signal
     raise KeyError(f"Unknown asset: {asset}")
+
+
+_daily_signal_cache: list[str] | None = None
+
+
+def load_daily_signals(db_path: Path | None = None) -> list[str]:
+    """Load all daily signal names from signal-noise DB.
+
+    Falls back to MACRO_SIGNALS if DB is unavailable.
+    """
+    global _daily_signal_cache
+    if _daily_signal_cache is not None:
+        return _daily_signal_cache
+
+    path = db_path or SIGNAL_NOISE_DB
+    if not path.exists():
+        log.warning("signal-noise DB not found at %s, using static list", path)
+        _daily_signal_cache = MACRO_SIGNALS
+        return _daily_signal_cache
+
+    try:
+        conn = sqlite3.connect(str(path))
+        cur = conn.execute(
+            "SELECT name FROM signal_meta WHERE interval = 86400 ORDER BY name"
+        )
+        names = [row[0] for row in cur]
+        conn.close()
+        if names:
+            log.info("Loaded %d daily signals from signal-noise", len(names))
+            _daily_signal_cache = names
+            return _daily_signal_cache
+    except Exception as e:
+        log.warning("Failed to read signal-noise DB: %s, using static list", e)
+
+    _daily_signal_cache = MACRO_SIGNALS
+    return _daily_signal_cache
 
 
 def discover_signals(
