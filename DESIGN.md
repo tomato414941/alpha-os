@@ -227,26 +227,69 @@ and volatility targeting (15% annualized).
 
 ### Signal-Noise Integration
 
-Alpha-OS dynamically discovers all daily signals from the signal-noise
-database (456 signals as of 2026-02-26). Signals are bulk-imported into a local SQLite
-cache (`data/alpha_cache.db`) on each run.
+Alpha-OS dynamically discovers all signals from the signal-noise database
+(753 signals across 124 collectors as of 2026-02-26). Signals are
+bulk-imported into a local SQLite cache (`data/alpha_cache.db`) on each run.
 
 - Default: real data from signal-noise DB + local cache
 - API sync when signal-noise is running (localhost:8000)
 - `--synthetic` flag for testing with random walks (clearly labeled)
 - No silent fallback — missing data raises an error
 
-### Data Coverage (alpha_cache.db)
+### Signal Coverage
 
-| Signal          | Days   | Range               |
-| --------------- | ------ | ------------------- |
-| btc_ohlcv       | 2,084  | 2020-06 ~ 2026-02   |
-| vix_close       | 9,129  | 1990-01 ~ 2026-02   |
-| sp500           | 24,653 | 1927-12 ~ 2026-02   |
-| dxy             | 14,004 | 1971-01 ~ 2026-02   |
-| fear_greed      | 2,943  | 2018-02 ~ 2026-02   |
-| gold            | 6,395  | 2000-08 ~ 2026-02   |
-| tsy_yield_10y/2y| 6,288  | 2001-01 ~ 2026-02   |
-| tsy_yield_*     | 1,033  | 2022-01 ~ 2026-02   |
+| Metric               | Count | Notes                              |
+| -------------------- | ----- | ---------------------------------- |
+| Total signals in DB  | 753   | From 124 collectors                |
+| Current (Feb 2026)   | 556   | Actively updated                   |
+| Usable for BTC alpha | 448   | After missing/empty filter         |
+| Missing/broken       | ~70   | Stale collectors or API deprecated |
 
-BTC constrains the intersection to ~2,084 days.
+Signals span diverse frequencies and domains:
+
+| Category          | Examples                          | Frequency   | Count |
+| ----------------- | --------------------------------- | ----------- | ----- |
+| Crypto on-chain   | btc_ohlcv, defi_tvl_*, bc_*       | Daily       | ~50   |
+| Traditional macro | sp500, vix_close, dxy, gold       | Daily       | ~30   |
+| DeFi protocols    | defi_proto_*, defi_sc_*           | Daily       | ~30   |
+| Futures (COT)     | cot_gold_net_c, cot_btc_oi        | Weekly      | ~39   |
+| Economic (IMF)    | imf_gdp_growth_*, imf_inflation_* | Annual      | ~24   |
+| Housing (BIS)     | bis_pp_*, oecd_hpi_*              | Quarterly   | ~60   |
+| Consumer prices   | bls_cpi_*, ecb_hicp_*             | Monthly     | ~25   |
+| Alternative       | wiki_*, gdelt_*, npm_*, so_*      | Daily       | ~120  |
+| Climate/nature    | noaa_*, meteo_*, arctic_*         | Daily/Month | ~50   |
+
+### Missing Data Handling
+
+Non-daily signals (monthly, quarterly, annual) are handled transparently:
+
+1. **`get_matrix()`** pivots all signals onto a common date index
+2. **Forward-fill** (`ffill`) propagates the last known value forward
+3. **Back-fill + zero-fill** handles leading NaN before a signal's first data point
+4. **Price-gated rows**: only dates where the price signal (btc_ohlcv) exists are kept
+
+This means a monthly CPI signal becomes a daily series where the value
+stays constant until the next release — which is how the real world works.
+Signals can appear or disappear without breaking the pipeline.
+
+### BTC Data Window
+
+BTC constrains the effective date range to ~2,089 days (2020-06 ~ 2026-02).
+Signals with longer histories are truncated to this window. Signals starting
+after BTC (e.g. defi_tvl_sui from 2023-05) contribute only partial data,
+with leading values filled as zero.
+
+### GP Evolution Results (2026-02-26, 448 signals)
+
+Full pipeline run (`evolve --asset BTC --pop-size 500 --generations 30`):
+
+- **5,934 unique expressions** generated in 79s
+- **MAP-Elites archive**: 300/10,000 cells (3.0% coverage)
+- **Best Sharpe: 1.49** (with transaction cost model)
+- **Top 20 all use `if_gt`** — conditional templates provide strong seeds
+- Dominant pattern: DeFi regime switching (TUSD supply vs Avalanche TVL)
+  as condition, with alternative signals in then/else branches
+
+Key insight: the diversity of 448 signals enables the GP to discover
+cross-domain regime-switching alphas that would be impossible with a
+handful of traditional signals.
