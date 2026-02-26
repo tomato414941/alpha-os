@@ -14,9 +14,9 @@ class GateResult:
 @dataclass
 class GateConfig:
     oos_sharpe_min: float = 0.5
-    pbo_max: float = 0.50
-    dsr_pvalue_max: float = 0.05
-    fdr_pass_required: bool = True
+    pbo_max: float = 1.0
+    dsr_pvalue_max: float = 1.0   # disabled — lifecycle manages quality
+    fdr_pass_required: bool = False
     max_correlation: float = 0.5
     min_n_days: int = 200
 

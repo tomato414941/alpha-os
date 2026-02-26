@@ -9,8 +9,8 @@ from .registry import AlphaRecord, AlphaRegistry, AlphaState
 @dataclass
 class LifecycleConfig:
     oos_sharpe_min: float = 0.5
-    pbo_max: float = 0.50
-    dsr_pvalue_max: float = 0.05
+    pbo_max: float = 1.0
+    dsr_pvalue_max: float = 1.0
     probation_sharpe_min: float = 0.3
     correlation_max: float = 0.5
     dormant_revival_sharpe: float = 0.3

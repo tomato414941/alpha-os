@@ -1,4 +1,4 @@
-"""Backfill simulator — run paper trading over historical dates."""
+"""Backfill simulator — vectorized paper trading over historical dates."""
 from __future__ import annotations
 
 import logging
@@ -12,11 +12,10 @@ import numpy as np
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
+from ..data.universe import price_signal, MACRO_SIGNALS
+from ..dsl import parse
 from ..execution.paper import PaperExecutor
-from ..forward.tracker import ForwardTracker
-from ..governance.audit_log import AuditLog
-from .tracker import PaperPortfolioTracker
-from .trader import PaperTrader
+from ..risk.manager import RiskConfig as _RiskConfig, RiskManager
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +41,14 @@ def run_backfill(
     end_date: str,
     registry_db: Path | None = None,
 ) -> SimulationResult:
-    """Run paper trading simulation over a historical date range.
+    """Run vectorized paper trading simulation over a historical date range.
 
-    Uses cached data only (no API sync). Requires prior data population
-    via `evolve` or `paper --once`.
+    Pre-computes all alpha signals once on the full dataset, then iterates
+    days using array indexing. This is orders of magnitude faster than
+    calling run_cycle() per day.
     """
-    # Get trading dates from cache
+    # 1. Load full data range
     store = DataStore(DATA_DIR / "alpha_cache.db")
-    from ..data.universe import price_signal, MACRO_SIGNALS
     try:
         price_sig = price_signal(asset)
     except KeyError:
@@ -65,100 +64,204 @@ def run_backfill(
             f"({len(matrix)} rows). Run `evolve` or `paper --once` first."
         )
 
-    trading_dates = [str(d) for d in matrix.index]
-    # Need at least 2 days (previous day for signal)
-    trading_dates = trading_dates[1:]
-    logger.info("Simulation: %d trading days (%s to %s)", len(trading_dates), trading_dates[0], trading_dates[-1])
+    dates = [str(d) for d in matrix.index]
+    data = {col: matrix[col].values for col in matrix.columns}
+    prices = data[price_sig]
+    n_days = len(prices)
+    logger.info("Loaded %d days (%s to %s)", n_days, dates[0], dates[-1])
 
-    # Create isolated environment with temp DBs
+    # 2. Load and reset alphas
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-
-        # Copy registry to temp so we can reset all alphas to ACTIVE
-        # without modifying the real registry
         reg_path = registry_db or DATA_DIR / "alpha_registry.db"
         sim_reg_path = tmp_path / "registry.db"
         shutil.copy2(reg_path, sim_reg_path)
         registry = AlphaRegistry(sim_reg_path)
 
-        # Reset all alphas to ACTIVE for simulation
-        all_states = [AlphaState.ACTIVE, AlphaState.PROBATION, AlphaState.RETIRED, AlphaState.DORMANT]
+        all_states = [AlphaState.ACTIVE, AlphaState.PROBATION,
+                      AlphaState.RETIRED, AlphaState.DORMANT]
         n_activated = 0
         for state in all_states:
             for record in registry.list_by_state(state):
                 if record.state != AlphaState.ACTIVE:
                     registry.update_state(record.alpha_id, AlphaState.ACTIVE)
                     n_activated += 1
-        active = registry.list_by_state(AlphaState.ACTIVE)
-        logger.info(
-            "Simulation registry: %d ACTIVE alphas (%d reactivated)",
-            len(active), n_activated,
-        )
-        if not active:
+        all_records = registry.list_by_state(AlphaState.ACTIVE)
+        n_alphas = len(all_records)
+        logger.info("%d alphas (%d reactivated)", n_alphas, n_activated)
+        if not all_records:
             raise RuntimeError("No alphas in registry. Run `evolve` first.")
 
-        tracker = PaperPortfolioTracker(tmp_path / "paper.db")
-        fwd_tracker = ForwardTracker(tmp_path / "fwd.db")
-        executor = PaperExecutor(initial_cash=config.trading.initial_capital)
-        audit_log = AuditLog(tmp_path / "audit.jsonl")
-        # Reuse the real cache for data
-        data_store = DataStore(DATA_DIR / "alpha_cache.db")
+        # 3. Pre-compute all signals (the key optimization)
+        # signal_matrix[i, d] = normalized signal for alpha i at day d
+        signal_matrix = np.zeros((n_alphas, n_days), dtype=np.float64)
+        valid_mask = np.ones(n_alphas, dtype=bool)
 
-        trader = PaperTrader(
-            asset=asset,
-            config=config,
-            registry=registry,
-            portfolio_tracker=tracker,
-            forward_tracker=fwd_tracker,
-            executor=executor,
-            audit_log=audit_log,
-            store=data_store,
+        for i, record in enumerate(all_records):
+            try:
+                expr = parse(record.expression)
+                sig = expr.evaluate(data)
+                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                if sig.ndim == 0:
+                    sig = np.full(n_days, float(sig))
+                if len(sig) != n_days:
+                    valid_mask[i] = False
+                    continue
+                std = sig.std()
+                if std > 0:
+                    sig = np.clip(sig / std, -1, 1)
+                else:
+                    sig = np.clip(np.sign(sig), -1, 1)
+                signal_matrix[i] = sig
+            except Exception:
+                valid_mask[i] = False
+                continue
+
+        n_valid = int(valid_mask.sum())
+        logger.info("Pre-computed signals: %d/%d valid", n_valid, n_alphas)
+
+        # Pre-compute daily price returns
+        price_returns = np.zeros(n_days)
+        price_returns[1:] = np.diff(prices) / prices[:-1]
+
+        # 4. Simulate day by day — fully vectorized inner loop
+        risk_cfg = _RiskConfig(
+            target_vol=config.risk.target_vol_pct / 100.0,
+            dd_stage1_pct=config.risk.dd_stage1_pct / 100.0,
+            dd_stage2_pct=config.risk.dd_stage2_pct / 100.0,
+            dd_stage3_pct=config.risk.dd_stage3_pct / 100.0,
         )
+        risk_manager = RiskManager(risk_cfg)
+        executor = PaperExecutor(initial_cash=config.trading.initial_capital)
+        initial_capital = config.trading.initial_capital
+        max_position_pct = config.paper.max_position_pct
+        min_trade_usd = config.paper.min_trade_usd
 
-        # Run simulation
-        for i, dt in enumerate(trading_dates):
-            result = trader.run_cycle(simulation_date=dt)
-            if (i + 1) % 50 == 0 or i == len(trading_dates) - 1:
+        # Lifecycle thresholds (inline — no SQLite)
+        probation_sharpe_min = config.validation.oos_sharpe_min
+        demote_sharpe = 0.3
+        dormant_sharpe = 0.0
+        revival_sharpe = 0.3
+        rolling_window = 63
+        min_obs = 20
+
+        # State encoded as int: 0=ACTIVE, 1=PROBATION, 2=DORMANT
+        ST_ACTIVE, ST_PROBATION, ST_DORMANT = 0, 1, 2
+        alpha_state_vec = np.zeros(n_alphas, dtype=np.int8)
+
+        # Pre-compute forward returns matrix
+        returns_mat = np.zeros((n_alphas, n_days), dtype=np.float64)
+        returns_mat[:, 1:] = signal_matrix[:, :-1] * price_returns[np.newaxis, 1:]
+
+        daily_returns_out: list[float] = []
+        daily_dates: list[str] = []
+        total_trades = 0
+
+        for d in range(1, n_days):
+            today = dates[d]
+            current_price = prices[d]
+
+            # Rolling sharpe for all valid alphas (vectorized)
+            window_start = max(0, d - rolling_window)
+            window_len = d - window_start
+
+            if window_len >= min_obs:
+                recent = returns_mat[valid_mask, window_start + 1:d + 1]
+                m = recent.mean(axis=1)
+                s = recent.std(axis=1) + 1e-12
+                rolling_sharpe = m / s * np.sqrt(252)
+            else:
+                rolling_sharpe = np.zeros(int(valid_mask.sum()))
+
+            # State transitions (vectorized, no SQLite)
+            valid_states = alpha_state_vec[valid_mask]
+            new_states = valid_states.copy()
+
+            active_m = valid_states == ST_ACTIVE
+            new_states[active_m & (rolling_sharpe < demote_sharpe)] = ST_PROBATION
+
+            prob_m = valid_states == ST_PROBATION
+            new_states[prob_m & (rolling_sharpe >= probation_sharpe_min)] = ST_ACTIVE
+            new_states[prob_m & (rolling_sharpe < dormant_sharpe)] = ST_DORMANT
+
+            dorm_m = valid_states == ST_DORMANT
+            new_states[dorm_m & (rolling_sharpe >= revival_sharpe)] = ST_PROBATION
+
+            alpha_state_vec[valid_mask] = new_states
+
+            # Combined signal from ACTIVE + PROBATION only
+            trading_mask = valid_mask.copy()
+            trading_mask[valid_mask] &= (new_states == ST_ACTIVE) | (new_states == ST_PROBATION)
+            if trading_mask.any():
+                combined = float(np.clip(np.mean(signal_matrix[trading_mask, d - 1]), -1, 1))
+            else:
+                combined = 0.0
+
+            # Risk adjustment
+            prev_value = executor.portfolio_value
+            risk_manager.update_equity(prev_value)
+            recent_rets = np.array(daily_returns_out[-252:]) if daily_returns_out else np.array([])
+            dd_s = risk_manager.dd_scale
+            vol_s = risk_manager.vol_scale(recent_rets)
+            adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
+
+            # Execute trade
+            dollar_pos = adjusted * initial_capital * max_position_pct
+            target_shares = dollar_pos / current_price if current_price > 0 else 0.0
+            if abs(dollar_pos) < min_trade_usd:
+                target_shares = 0.0
+
+            executor.set_price(price_sig, current_price)
+            fills = executor.rebalance({price_sig: target_shares})
+            total_trades += len(fills)
+
+            # Record daily return
+            portfolio_value = executor.portfolio_value
+            daily_pnl = portfolio_value - prev_value
+            daily_ret = daily_pnl / prev_value if prev_value > 0 else 0.0
+            daily_returns_out.append(daily_ret)
+            daily_dates.append(today)
+
+            if (d % 200 == 0) or d == n_days - 1:
+                n_active = int((alpha_state_vec == ST_ACTIVE).sum())
+                n_dormant = int((alpha_state_vec == ST_DORMANT).sum())
                 logger.info(
-                    "  Day %d/%d (%s): $%.2f (%.2f%%)",
-                    i + 1, len(trading_dates), dt,
-                    result.portfolio_value, result.daily_return * 100,
+                    "  Day %d/%d (%s): $%.2f  active=%d dormant=%d",
+                    d, n_days - 1, today, portfolio_value, n_active, n_dormant,
                 )
 
-        # Collect results
-        summary = tracker.summary()
-        snapshots = tracker.get_all_snapshots()
+        registry.close()
 
-        trader.close()
+    # 5. Compute summary statistics
+    rets = np.array(daily_returns_out)
+    n_sim_days = len(rets)
+    if n_sim_days == 0:
+        raise RuntimeError("No simulation days produced")
 
-    if summary is None:
-        raise RuntimeError("No snapshots produced during simulation")
+    final_value = executor.portfolio_value
+    total_return = (final_value - initial_capital) / initial_capital
+    sharpe = float(np.mean(rets) / (np.std(rets) + 1e-12) * np.sqrt(252))
 
-    # Best/worst days
-    best_date, best_ret = "", 0.0
-    worst_date, worst_ret = "", 0.0
-    wins = 0
-    for snap in snapshots:
-        if snap.daily_return > best_ret:
-            best_ret = snap.daily_return
-            best_date = snap.date
-        if snap.daily_return < worst_ret:
-            worst_ret = snap.daily_return
-            worst_date = snap.date
-        if snap.daily_return > 0:
-            wins += 1
+    cum = np.cumprod(1 + rets)
+    running_max = np.maximum.accumulate(cum)
+    drawdowns = (running_max - cum) / running_max
+    max_dd = float(np.max(drawdowns)) if len(drawdowns) > 0 else 0.0
 
-    win_rate = wins / len(snapshots) if snapshots else 0.0
+    wins = int(np.sum(rets > 0))
+    win_rate = wins / n_sim_days
+
+    best_idx = int(np.argmax(rets))
+    worst_idx = int(np.argmin(rets))
 
     return SimulationResult(
-        n_days=summary.n_days,
-        initial_capital=summary.initial_value,
-        final_value=summary.final_value,
-        total_return=summary.total_return,
-        sharpe=summary.sharpe,
-        max_drawdown=summary.max_drawdown,
-        total_trades=summary.total_trades,
+        n_days=n_sim_days,
+        initial_capital=initial_capital,
+        final_value=final_value,
+        total_return=total_return,
+        sharpe=sharpe,
+        max_drawdown=max_dd,
+        total_trades=total_trades,
         win_rate=win_rate,
-        best_day=(best_date, best_ret),
-        worst_day=(worst_date, worst_ret),
+        best_day=(daily_dates[best_idx], float(rets[best_idx])),
+        worst_day=(daily_dates[worst_idx], float(rets[worst_idx])),
     )

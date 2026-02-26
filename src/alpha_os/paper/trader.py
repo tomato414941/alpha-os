@@ -169,26 +169,35 @@ class PaperTrader:
         dormant_ids = {r.alpha_id for r in dormant}
 
         # 3. Evaluate each alpha's signal
+        matrix = self.store.get_matrix(self.features, end=today)
+        if len(matrix) < 2:
+            logger.warning("Insufficient data for %s (%d rows)", today, len(matrix))
+            return PaperCycleResult(
+                date=today, combined_signal=0.0, dd_scale=1.0,
+                vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
+                n_alphas_active=len(active),
+            )
+
+        data = {col: matrix[col].values for col in matrix.columns}
+        prices_arr = data[self.price_signal]
+        if len(prices_arr) < 2:
+            return PaperCycleResult(
+                date=today, combined_signal=0.0, dd_scale=1.0,
+                vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
+                n_alphas_active=len(active),
+            )
+        price_return = (prices_arr[-1] - prices_arr[-2]) / prices_arr[-2]
+
         alpha_signals: dict[str, float] = {}
         n_evaluated = 0
 
         for record in all_alphas:
             try:
                 expr = parse(record.expression)
-                matrix = self.store.get_matrix(self.features, end=today)
-                if len(matrix) < 2:
-                    continue
-
-                data = {col: matrix[col].values for col in matrix.columns}
                 signal = expr.evaluate(data)
                 signal = np.nan_to_num(np.asarray(signal, dtype=float), nan=0.0)
                 if signal.ndim == 0:
                     signal = np.full(len(matrix), float(signal))
-
-                prices = data[self.price_signal]
-                if len(prices) < 2:
-                    continue
-                price_return = (prices[-1] - prices[-2]) / prices[-2]
 
                 std = signal.std()
                 if std > 0:

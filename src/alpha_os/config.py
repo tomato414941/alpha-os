@@ -37,7 +37,8 @@ class BacktestConfig:
 @dataclass
 class ValidationConfig:
     oos_sharpe_min: float = 0.5
-    pbo_max: float = 0.50
+    pbo_max: float = 1.0
+    dsr_pvalue_max: float = 1.0
     fdr_threshold: float = 0.05
     n_cv_folds: int = 5
     embargo_days: int = 5
