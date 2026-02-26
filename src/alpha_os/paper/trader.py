@@ -21,6 +21,12 @@ from ..execution.executor import Fill
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
+from ..alpha.combiner import (
+    WeightedCombinerConfig,
+    compute_diversity_scores,
+    compute_weights,
+    weighted_combine_scalar,
+)
 from ..risk.manager import RiskManager, RiskConfig
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -111,6 +117,10 @@ class PaperTrader:
             )
             self.store = DataStore(DATA_DIR / "alpha_cache.db", client)
 
+        self._wcfg = WeightedCombinerConfig()
+        self._diversity_cache: dict[str, float] = {}
+        self._diversity_computed = False
+
         self._restore_state()
 
     def _restore_state(self) -> None:
@@ -135,6 +145,47 @@ class PaperTrader:
             "Restored state: $%.2f portfolio, %d days history",
             snapshot.portfolio_value, len(equity_curve),
         )
+
+    def _recompute_diversity(
+        self, data: dict[str, np.ndarray], all_records: list,
+    ) -> None:
+        """Recompute diversity scores from signal matrix."""
+        n_days = len(next(iter(data.values())))
+        signals = []
+        alpha_ids = []
+
+        for record in all_records:
+            try:
+                expr = parse(record.expression)
+                sig = expr.evaluate(data)
+                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                if sig.ndim == 0:
+                    sig = np.full(n_days, float(sig))
+                if len(sig) != n_days:
+                    continue
+                std = sig.std()
+                if std > 0:
+                    sig = np.clip(sig / std, -1, 1)
+                else:
+                    sig = np.clip(np.sign(sig), -1, 1)
+                lookback = min(self._wcfg.corr_lookback, n_days)
+                signals.append(sig[-lookback:])
+                alpha_ids.append(record.alpha_id)
+            except Exception:
+                continue
+
+        if len(signals) < 2:
+            self._diversity_cache = {aid: 1.0 for aid in alpha_ids}
+            self._diversity_computed = True
+            return
+
+        sig_matrix = np.array(signals)
+        diversity = compute_diversity_scores(sig_matrix, chunk_size=self._wcfg.chunk_size)
+        self._diversity_cache = {
+            aid: float(d) for aid, d in zip(alpha_ids, diversity)
+        }
+        self._diversity_computed = True
+        logger.info("Diversity scores computed for %d alphas", len(alpha_ids))
 
     def run_cycle(self, simulation_date: str | None = None) -> PaperCycleResult:
         """Execute one daily paper trading cycle.
@@ -256,10 +307,24 @@ class PaperTrader:
                 logger.warning("Failed to evaluate %s", record.alpha_id, exc_info=True)
                 continue
 
-        # 4. Combine signals
+        # 4. Combine signals with quality × diversity weighting
+        if not self._diversity_computed:
+            self._recompute_diversity(data, all_alphas)
+
         if alpha_signals:
-            values = list(alpha_signals.values())
-            combined = float(np.clip(np.mean(values), -1, 1))
+            alpha_ids = list(alpha_signals.keys())
+            sharpes_list = []
+            diversity_list = []
+            for aid in alpha_ids:
+                status = self.monitor.check(aid)
+                sharpes_list.append(max(status.rolling_sharpe, 0.0))
+                diversity_list.append(self._diversity_cache.get(aid, 1.0))
+
+            sharpes_np = np.array(sharpes_list)
+            diversity_np = np.array(diversity_list)
+            w = compute_weights(sharpes_np, diversity_np, min_weight=self._wcfg.min_weight)
+            weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
+            combined = weighted_combine_scalar(alpha_signals, weights_dict)
         else:
             combined = 0.0
 

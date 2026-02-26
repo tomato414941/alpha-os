@@ -15,6 +15,11 @@ from ..data.store import DataStore
 from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
+from ..alpha.combiner import (
+    WeightedCombinerConfig,
+    compute_diversity_scores,
+    compute_weights,
+)
 from ..risk.manager import RiskConfig as _RiskConfig, RiskManager
 
 logger = logging.getLogger(__name__)
@@ -134,6 +139,13 @@ def run_backfill(
         n_valid = int(valid_mask.sum())
         logger.info("Pre-computed signals: %d/%d valid", n_valid, n_alphas)
 
+        # Diversity scores for weighted combination
+        wcfg = WeightedCombinerConfig()
+        valid_signals = np.nan_to_num(signal_matrix[valid_mask])
+        diversity_scores = compute_diversity_scores(valid_signals, chunk_size=wcfg.chunk_size)
+        last_diversity_day = 0
+        logger.info("Initial diversity scores computed for %d alphas", n_valid)
+
         # Pre-compute daily price returns
         price_returns = np.zeros(n_days)
         price_returns[1:] = np.diff(prices) / prices[:-1]
@@ -203,11 +215,27 @@ def run_backfill(
 
             alpha_state_vec[valid_mask] = new_states
 
-            # Combined signal from ACTIVE + PROBATION only
-            trading_mask = valid_mask.copy()
-            trading_mask[valid_mask] &= (new_states == ST_ACTIVE) | (new_states == ST_PROBATION)
-            if trading_mask.any():
-                combined = float(np.clip(np.mean(signal_matrix[trading_mask, d - 1]), -1, 1))
+            # Recompute diversity periodically (rolling window)
+            if d - last_diversity_day >= wcfg.diversity_recompute_days:
+                lookback = min(wcfg.corr_lookback, d)
+                window_sigs = np.nan_to_num(signal_matrix[valid_mask, d - lookback:d])
+                if window_sigs.shape[1] >= 20:
+                    diversity_scores = compute_diversity_scores(
+                        window_sigs, chunk_size=wcfg.chunk_size,
+                    )
+                    last_diversity_day = d
+
+            # Combined signal from ACTIVE + PROBATION with quality × diversity weights
+            trading_within_valid = (new_states == ST_ACTIVE) | (new_states == ST_PROBATION)
+            if trading_within_valid.any():
+                t_sharpes = rolling_sharpe[trading_within_valid]
+                t_diversity = diversity_scores[trading_within_valid]
+                weights = compute_weights(t_sharpes, t_diversity, min_weight=wcfg.min_weight)
+                trading_mask = valid_mask.copy()
+                trading_mask[valid_mask] &= trading_within_valid
+                combined = float(np.clip(
+                    np.dot(weights, signal_matrix[trading_mask, d - 1]), -1, 1,
+                ))
             else:
                 combined = 0.0
 

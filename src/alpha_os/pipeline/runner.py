@@ -7,7 +7,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..alpha.combiner import CombinerConfig, equal_weight_combine, select_low_correlation
+from ..alpha.combiner import (
+    CombinerConfig,
+    WeightedCombinerConfig,
+    compute_diversity_scores,
+    compute_weights,
+    weighted_combine,
+)
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
@@ -30,7 +36,8 @@ logger = logging.getLogger(__name__)
 class PipelineConfig:
     gp: GPConfig | None = None
     risk: RiskConfig | None = None
-    combiner: CombinerConfig | None = None
+    combiner: CombinerConfig | None = None  # legacy
+    combiner_weighted: WeightedCombinerConfig | None = None
     gate: GateConfig | None = None
     lifecycle: LifecycleConfig | None = None
     commission_pct: float = 0.10
@@ -295,7 +302,7 @@ class PipelineRunner:
         return adopted
 
     def _combine(self, adopted: list[tuple[Expr, float]]) -> np.ndarray:
-        """Build low-correlation combined signal."""
+        """Build combined signal using quality × diversity weighting."""
         n_days = len(self.prices)
         signals = []
         sharpes = []
@@ -317,6 +324,7 @@ class PipelineRunner:
         sig_matrix = np.array(signals)
         sharpe_arr = np.array(sharpes)
 
-        combiner_cfg = self.config.combiner or CombinerConfig()
-        selected = select_low_correlation(sig_matrix, sharpe_arr, config=combiner_cfg)
-        return equal_weight_combine(sig_matrix, selected)
+        wcfg = self.config.combiner_weighted or WeightedCombinerConfig()
+        diversity = compute_diversity_scores(sig_matrix, chunk_size=wcfg.chunk_size)
+        weights = compute_weights(sharpe_arr, diversity, min_weight=wcfg.min_weight)
+        return weighted_combine(sig_matrix, weights)
