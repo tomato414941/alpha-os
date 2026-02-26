@@ -293,3 +293,134 @@ Full pipeline run (`evolve --asset BTC --pop-size 500 --generations 30`):
 Key insight: the diversity of 448 signals enables the GP to discover
 cross-domain regime-switching alphas that would be impossible with a
 handful of traditional signals.
+
+## Live Trading Roadmap
+
+### Goal
+
+Go from paper-only to real BTC trading on Binance with minimal capital,
+then scale up as the system proves itself. Target: first real trade
+within 2 weeks.
+
+### Current State (2026-02-26)
+
+| Capability           | Alpha-OS                        | Trading-Agent                  |
+| -------------------- | ------------------------------- | ------------------------------ |
+| Alpha generation     | Complete (DSL + GP + templates) | —                              |
+| Walk-Forward CV      | Complete (purged 5-fold)        | —                              |
+| Paper trading        | Complete (PaperExecutor + SQLite)| Complete                      |
+| Pre-trade risk       | Complete (DD staging + vol target)| —                            |
+| Binance connection   | None (AlpacaStub only)          | Complete (CCXT, testnet)       |
+| Order execution      | None                            | Complete (book depth, slippage) |
+| Circuit breaker      | None                            | Complete (daily loss, DD, kill) |
+| Position monitor     | None                            | Complete (SL/TP daemon)        |
+| Reconciliation       | None                            | Basic (internal vs exchange)   |
+
+**Conclusion**: Port trading-agent's execution layer into alpha-os.
+
+### Architecture After Integration
+
+```
+Alpha-OS (brain)              trading-agent (hands)
+┌──────────────────┐         ┌──────────────────┐
+│ DSL / GP / Valid. │         │ exchange.py       │ ← CCXT Binance factory
+│ Lifecycle / Combo │         │ order_engine.py   │ ← slippage guard
+│ RiskManager       │         │ circuit_breaker   │ ← daily loss / DD / kill
+│ PaperTrader       │         │ monitor.py        │ ← SL/TP daemon
+│                   │         │ reconciliation    │ ← internal vs exchange
+│ Executor (ABC)    │         └──────────────────┘
+│  ├─ Paper     ✅  │                ↑
+│  ├─ Alpaca    stub│                │
+│  └─ Binance   NEW ├────────────────┘
+└──────────────────┘
+```
+
+`BinanceExecutor` wraps trading-agent's CCXT factory + LiveOrderEngine,
+conforming to alpha-os's `Executor` interface. The rest of alpha-os
+(lifecycle, risk, combination) is unchanged.
+
+### Phases
+
+#### Phase 1: BinanceExecutor (1-2 days)
+
+Create `src/alpha_os/execution/binance.py`:
+
+- Import trading-agent's `exchange.create_spot_exchange()` (CCXT factory)
+- Adapt `LiveOrderEngine` logic to alpha-os `Executor.submit_order()` interface
+- Credentials from `~/.secrets/binance` (env override supported)
+- Testnet mode by default (`testnet=True`)
+
+```
+Executor (ABC)
+├── PaperExecutor    ← existing, unchanged
+├── AlpacaExecutor   ← existing stub, untouched
+└── BinanceExecutor  ← new: CCXT spot + slippage guard
+```
+
+#### Phase 2: Circuit Breaker (1 day)
+
+Create `src/alpha_os/risk/circuit_breaker.py`:
+
+- Port trading-agent's `CircuitBreaker` (daily loss, consecutive losses, max DD)
+- Add kill switch file (`data/KILL_SWITCH`) for emergency stop
+- Integrate into `RiskManager` as a pre-trade check:
+  1. Circuit breaker → halt if tripped
+  2. DD staging → scale position (75% / 50% / 25%)
+  3. Vol targeting → scale to 15% annualized
+
+State persisted to JSON; survives process restart.
+
+#### Phase 3: CLI `live` Command (1 day)
+
+Based on existing `paper` command:
+
+```bash
+# Testnet (default — no real money)
+python3 -m alpha_os live --once --testnet
+
+# Production (real money, explicit flag required)
+python3 -m alpha_os live --once --real --capital 1000
+
+# Scheduled daily execution
+python3 -m alpha_os live --schedule --testnet
+```
+
+Reuses PaperTrader's full cycle (data sync → alpha eval → combination →
+risk adjustment → execution) with BinanceExecutor instead of PaperExecutor.
+
+#### Phase 4: Testnet Validation (1-2 weeks)
+
+Run `live --testnet --schedule` daily on Binance testnet:
+
+- Verify order fills, slippage measurement
+- Trigger circuit breaker intentionally (confirm halt + recovery)
+- Run reconciliation (internal positions vs exchange balance)
+- Monitor: daily P&L, slippage distribution, fill latency
+
+Success criteria: 10 consecutive days without errors or unexpected state.
+
+#### Phase 5: Production (incremental)
+
+| Week | Capital | Gate                                     |
+| ---- | ------- | ---------------------------------------- |
+| 1-2  | $500    | System check. Sharpe > 0 to continue     |
+| 3-4  | $2,000  | Slippage < 20bps, no circuit breaker trip |
+| 5-8  | $5,000  | DD < 10%, stable daily operation          |
+| 9+   | Manual  | Scale at discretion                       |
+
+### Design Decisions
+
+- **Binance spot only** (no futures/leverage) — simpler, lower risk, sufficient for daily rebalance
+- **Daily rebalance** — no intra-day trading. Matches alpha evaluation frequency
+- **Testnet mandatory** — Phase 4 must complete before any real capital
+- **Kill switch file** — `touch data/KILL_SWITCH` halts all trading instantly, even if process is unattended
+- **No Alpaca** — crypto first; stock trading is a future consideration
+- **No dashboard** — CLI logs + SQLite tracker are sufficient for initial operation
+
+### What Is NOT Needed (deferred)
+
+- High-frequency trading — daily rebalance is sufficient
+- Web dashboard — CLI logging and `paper --summary` work fine
+- Automatic capital scaling — manual decision at each gate
+- Multi-exchange — Binance only until system is proven
+- Futures/margin — spot only, no leverage
