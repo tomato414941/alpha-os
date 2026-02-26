@@ -28,7 +28,7 @@ class AlphaLifecycle:
         self.config = config or LifecycleConfig()
 
     def evaluate_born(self, alpha_id: str) -> str:
-        """Evaluate a born alpha for promotion to active or retirement."""
+        """Evaluate a born alpha for promotion to active or rejection."""
         record = self.registry.get(alpha_id)
         if record is None:
             raise ValueError(f"Alpha {alpha_id} not found")
@@ -39,8 +39,8 @@ class AlphaLifecycle:
             self.registry.update_state(alpha_id, AlphaState.ACTIVE)
             return AlphaState.ACTIVE
         else:
-            self.registry.update_state(alpha_id, AlphaState.RETIRED)
-            return AlphaState.RETIRED
+            self.registry.update_state(alpha_id, AlphaState.REJECTED)
+            return AlphaState.REJECTED
 
     def evaluate_active(self, alpha_id: str, live_sharpe: float) -> str:
         """Check if an active alpha should enter probation."""

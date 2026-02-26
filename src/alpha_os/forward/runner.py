@@ -33,7 +33,7 @@ class ForwardConfig:
 class ForwardCycleResult:
     n_evaluated: int
     n_degraded: int
-    n_retired: int
+    n_rejected: int
     n_restored: int
     n_dormant: int
     n_revived: int
@@ -102,7 +102,7 @@ class ForwardRunner:
 
         n_evaluated = 0
         n_degraded = 0
-        n_retired = 0
+        n_rejected = 0
         n_restored = 0
         n_dormant = 0
         n_revived = 0
@@ -182,8 +182,8 @@ class ForwardRunner:
                         n_degraded += 1
                     elif new_state == AlphaState.DORMANT:
                         n_dormant += 1
-                    elif new_state == AlphaState.RETIRED:
-                        n_retired += 1
+                    elif new_state == AlphaState.REJECTED:
+                        n_rejected += 1
                     elif (
                         new_state == AlphaState.PROBATION
                         and old_state == AlphaState.DORMANT
@@ -213,7 +213,7 @@ class ForwardRunner:
             details={
                 "n_evaluated": n_evaluated,
                 "n_degraded": n_degraded,
-                "n_retired": n_retired,
+                "n_rejected": n_rejected,
                 "n_restored": n_restored,
                 "n_dormant": n_dormant,
                 "n_revived": n_revived,
@@ -225,7 +225,7 @@ class ForwardRunner:
         return ForwardCycleResult(
             n_evaluated=n_evaluated,
             n_degraded=n_degraded,
-            n_retired=n_retired,
+            n_rejected=n_rejected,
             n_restored=n_restored,
             n_dormant=n_dormant,
             n_revived=n_revived,

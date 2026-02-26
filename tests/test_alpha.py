@@ -131,7 +131,7 @@ class TestAlphaLifecycle:
             oos_sharpe=0.1, pbo=0.8, dsr_pvalue=0.5,
         ))
         state = lc.evaluate_born("a1")
-        assert state == AlphaState.RETIRED
+        assert state == AlphaState.REJECTED
 
     def test_active_to_probation(self, tmp_path):
         reg, lc = self._setup(tmp_path)

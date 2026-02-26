@@ -14,7 +14,7 @@ class AlphaState:
     BORN = "born"
     ACTIVE = "active"
     PROBATION = "probation"
-    RETIRED = "retired"
+    REJECTED = "rejected"
     DORMANT = "dormant"
 
 

@@ -5,7 +5,7 @@
 Alpha factors are not permanent — they are adaptive organisms.
 No alpha works across all market regimes. The system's strength lies not in
 finding a "golden alpha" but in continuously generating, deploying, and
-retiring alphas as conditions change.
+demoting alphas as conditions change.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ retiring alphas as conditions change.
   Validate (Purged WF-CV, DSR, PBO)
       │
       ▼
-  Adoption Gate ──── fail ──→ RETIRED
+  Adoption Gate ──── fail ──→ REJECTED
       │
       pass
       ▼
@@ -30,7 +30,7 @@ retiring alphas as conditions change.
 ```
 
 The pipeline runs as a continuous cycle: generate candidates, validate
-statistically, adopt survivors, then monitor and retire as edges decay.
+statistically, adopt survivors, then monitor and demote as edges decay.
 
 ## Key Insight: Adaptive Market Hypothesis
 
@@ -47,7 +47,7 @@ The original Adoption Gate required all-history backtesting (OOS Sharpe ≥ 0.5,
 PBO ≤ 0.50, DSR p ≤ 0.05 across the full dataset). This implicitly assumes
 time-invariant alpha — which contradicts the adaptive hypothesis.
 
-**Empirical evidence (2025-02-25)**:
+**Empirical evidence (2025-02-25, with strict gates)**:
 - 5,792 candidate alphas on 2,084 days of BTC data (2020-06 ~ 2026-02).
 - Walk-Forward CV: best OOS Sharpe ≈ 1.1, all 5 folds positive.
 - Deflated Sharpe Ratio: ALL failed (p = 1.0) after multiple-testing correction
@@ -55,6 +55,12 @@ time-invariant alpha — which contradicts the adaptive hypothesis.
 - Interpretation: the gate is correctly rejecting data-mined results, but it
   is also impossible to pass because no single expression works across COVID
   crash, 2021 bull run, 2022 bear, and 2024 ETF rally simultaneously.
+
+**Current state (2026-02-26, with relaxed gates)**:
+- 22,625 candidate alphas generated; 22,622 active, 3 rejected.
+- 456 daily signals from signal-noise database.
+- PBO and DSR thresholds relaxed to ≤ 1.0 (always pass); lifecycle manages
+  quality post-adoption instead.
 
 ## Window-Based Adoption
 
@@ -65,7 +71,7 @@ Replace "full-history gate" with "recent-window gate":
 | Backtest on all available data    | Backtest on trailing N days (e.g. 200)|
 | DSR n_trials = all candidates     | DSR n_trials = candidates per cycle   |
 | PBO on full history               | PBO on recent window                  |
-| Adopt rarely, keep forever        | Adopt frequently, retire quickly      |
+| Adopt rarely, keep forever        | Adopt frequently, demote quickly      |
 
 Trust the exit mechanism (lifecycle); loosen the entrance (gate).
 
@@ -88,7 +94,7 @@ Five states with automatic transitions based on rolling Sharpe (63-day window):
 | Transition             | Condition                    |
 | ---------------------- | ---------------------------- |
 | BORN → ACTIVE          | Passes adoption gate         |
-| BORN → RETIRED         | Fails adoption gate          |
+| BORN → REJECTED        | Fails adoption gate          |
 | ACTIVE → PROBATION     | Rolling Sharpe < 0.3         |
 | PROBATION → ACTIVE     | Rolling Sharpe ≥ 0.5         |
 | PROBATION → DORMANT    | Rolling Sharpe < 0           |
@@ -159,7 +165,7 @@ and volatility targeting (15% annualized).
 ### Signal-Noise Integration
 
 Alpha-OS dynamically discovers all daily signals from the signal-noise
-database (~449 signals). Signals are bulk-imported into a local SQLite
+database (456 signals as of 2026-02-26). Signals are bulk-imported into a local SQLite
 cache (`data/alpha_cache.db`) on each run.
 
 - Default: real data from signal-noise DB + local cache
@@ -169,14 +175,15 @@ cache (`data/alpha_cache.db`) on each run.
 
 ### Data Coverage (alpha_cache.db)
 
-| Signal       | Days   | Range               |
-| ------------ | ------ | ------------------- |
-| btc_ohlcv    | 2,084  | 2020-06 ~ 2026-02   |
-| vix_close    | 9,129  | 1990-01 ~ 2026-02   |
-| sp500        | 24,653 | 1927-12 ~ 2026-02   |
-| dxy          | 14,004 | 1971-01 ~ 2026-02   |
-| fear_greed   | 2,943  | 2018-02 ~ 2026-02   |
-| gold         | 6,395  | 2000-08 ~ 2026-02   |
-| tsy_yield_*  | 6,287  | 2001-01 ~ 2026-02   |
+| Signal          | Days   | Range               |
+| --------------- | ------ | ------------------- |
+| btc_ohlcv       | 2,084  | 2020-06 ~ 2026-02   |
+| vix_close       | 9,129  | 1990-01 ~ 2026-02   |
+| sp500           | 24,653 | 1927-12 ~ 2026-02   |
+| dxy             | 14,004 | 1971-01 ~ 2026-02   |
+| fear_greed      | 2,943  | 2018-02 ~ 2026-02   |
+| gold            | 6,395  | 2000-08 ~ 2026-02   |
+| tsy_yield_10y/2y| 6,288  | 2001-01 ~ 2026-02   |
+| tsy_yield_*     | 1,033  | 2022-01 ~ 2026-02   |
 
 BTC constrains the intersection to ~2,084 days.

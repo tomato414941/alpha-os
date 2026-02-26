@@ -114,7 +114,7 @@ class TestForwardTracker:
 class TestForwardRunnerIntegration:
     def test_cycle_result_dataclass(self):
         result = ForwardCycleResult(
-            n_evaluated=5, n_degraded=1, n_retired=0, n_restored=0,
+            n_evaluated=5, n_degraded=1, n_rejected=0, n_restored=0,
             n_dormant=1, n_revived=0, elapsed=1.23,
         )
         assert result.n_evaluated == 5
