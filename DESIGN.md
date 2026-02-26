@@ -2,10 +2,31 @@
 
 ## Core Philosophy
 
-Alpha factors are not permanent — they are adaptive organisms.
+Alpha factors are not permanent — they are adaptive genomes in an ecosystem.
 No alpha works across all market regimes. The system's strength lies not in
 finding a "golden alpha" but in continuously generating, deploying, and
 demoting alphas as conditions change.
+
+### Biological Metaphor
+
+Each alpha is a genome — not an individual organism, but a complete set of
+instructions that defines a strategy. The full set of alphas forms an
+ecosystem of coexisting genomes that compete for influence.
+
+- **Genome** = one alpha's DSL expression. A self-contained blueprint, not
+  a living thing. Crossover recombines two genomes into offspring.
+- **Ecosystem** = all adopted genomes. The portfolio is the aggregate
+  output of the ecosystem, not any single genome.
+- **Niche** = a region of the strategy space (MAP-Elites). Each niche
+  holds the genome best adapted to it.
+- **Population** = diversity-weighted influence. A strong genome has many
+  individuals (high weight); a weakening genome has fewer. The weight is
+  the population size of that genome in the ecosystem.
+- **DORMANT** = near-extinct. The genome is preserved but its population
+  is effectively zero, ready to recover if conditions return.
+
+What is bounded is the **ecosystem carrying capacity** — the number of
+genomes the system can evaluate and maintain.
 
 ## Architecture
 
