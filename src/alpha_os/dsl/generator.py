@@ -98,6 +98,74 @@ class AlphaGenerator:
                         )
                     )
 
+            # --- if_gt templates ---
+
+            # Trend signal: (if_gt f (lag_d f) 1.0 -1.0)
+            # Price > lagged price = uptrend → long; else short
+            for f in self.features:
+                results.append(
+                    ConditionalOp(
+                        "if_gt",
+                        Feature(f),
+                        LagOp("lag", d, Feature(f)),
+                        Constant(1.0),
+                        Constant(-1.0),
+                    )
+                )
+
+            # Momentum regime: (if_gt (roc_d f1) 0.0 f2 (neg f2))
+            # If f1 has positive momentum, go long f2; else short f2
+            for f1, f2 in pairs:
+                results.append(
+                    ConditionalOp(
+                        "if_gt",
+                        RollingOp("roc", d, Feature(f1)),
+                        Constant(0.0),
+                        Feature(f2),
+                        UnaryOp("neg", Feature(f2)),
+                    )
+                )
+
+            # Mean-reversion regime: (if_gt (rank_d f) 0.5 (neg f) f)
+            # Rank > 0.5 = relatively expensive → short; else long
+            for f in self.features:
+                results.append(
+                    ConditionalOp(
+                        "if_gt",
+                        RollingOp("rank", d, Feature(f)),
+                        Constant(0.5),
+                        UnaryOp("neg", Feature(f)),
+                        Feature(f),
+                    )
+                )
+
+            # --- lag templates ---
+
+            # Lagged spread: (sub (lag_d f1) (lag_d f2))
+            # Spread between two assets d days ago
+            for f1, f2 in pairs:
+                results.append(
+                    BinaryOp(
+                        "sub",
+                        LagOp("lag", d, Feature(f1)),
+                        LagOp("lag", d, Feature(f2)),
+                    )
+                )
+
+            # Lagged momentum: (roc_d2 (lag_d f))
+            # Momentum of past values — captures momentum regime shifts
+            for d2 in self.windows:
+                if d2 >= d:
+                    continue
+                for f in self.features:
+                    results.append(
+                        RollingOp(
+                            "roc",
+                            d2,
+                            LagOp("lag", d, Feature(f)),
+                        )
+                    )
+
         return results
 
     def mutate(self, expr: Expr) -> Expr:
