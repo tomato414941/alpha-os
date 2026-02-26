@@ -10,6 +10,7 @@ dependencies = [
     "scipy>=1.12",
     "deap>=1.4",
     "ribs[all]>=0.7",
+    "ccxt>=4.0",
 ]
 
 [project.optional-dependencies]
