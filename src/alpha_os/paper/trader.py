@@ -27,6 +27,7 @@ from ..alpha.combiner import (
     compute_weights,
     weighted_combine_scalar,
 )
+from ..risk.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from ..risk.manager import RiskManager, RiskConfig
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -61,6 +62,7 @@ class PaperTrader:
         lifecycle: AlphaLifecycle | None = None,
         executor: PaperExecutor | None = None,
         risk_manager: RiskManager | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
         audit_log: AuditLog | None = None,
         store: DataStore | None = None,
     ):
@@ -101,6 +103,7 @@ class PaperTrader:
             dd_stage3_pct=config.risk.dd_stage3_pct / 100.0,
         )
         self.risk_manager = risk_manager or RiskManager(risk_cfg)
+        self.circuit_breaker = circuit_breaker or CircuitBreaker()
 
         self.initial_capital = config.trading.initial_capital
         self.max_position_pct = config.paper.max_position_pct
@@ -211,6 +214,18 @@ class PaperTrader:
                 vol_scale=existing.vol_scale,
                 n_alphas_active=0,
                 n_alphas_evaluated=0,
+            )
+
+        # 0. Circuit breaker check
+        prev_equity = self.executor.portfolio_value
+        self.circuit_breaker.reset_daily(prev_equity)
+        safe, reason = self.circuit_breaker.is_safe_to_trade(prev_equity)
+        if not safe:
+            logger.warning("Circuit breaker tripped: %s", reason)
+            return PaperCycleResult(
+                date=today, combined_signal=0.0, fills=[],
+                portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
+                dd_scale=1.0, vol_scale=1.0, n_alphas_active=0, n_alphas_evaluated=0,
             )
 
         # 1. Sync data (skip in simulation mode — use cached data)
@@ -370,7 +385,10 @@ class PaperTrader:
         self.portfolio_tracker.save_fills(today, fills)
         self.portfolio_tracker.save_alpha_signals(today, alpha_signals)
 
-        # 8. Audit log
+        # 8. Record trade P&L in circuit breaker
+        self.circuit_breaker.record_trade(daily_pnl)
+
+        # 9. Audit log
         for fill in fills:
             self.audit_log.log_trade(
                 "portfolio", fill.symbol, fill.side, fill.qty, fill.price,
