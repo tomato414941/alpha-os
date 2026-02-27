@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from alpha_os.data.client import SignalClient
+    from signal_noise.client import SignalClient
 
 log = logging.getLogger(__name__)
 

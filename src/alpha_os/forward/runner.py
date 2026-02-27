@@ -11,7 +11,7 @@ from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
-from ..data.client import SignalClient
+from signal_noise.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import price_signal, MACRO_SIGNALS
 from ..dsl import parse

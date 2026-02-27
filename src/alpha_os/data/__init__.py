@@ -1,4 +1,5 @@
-from alpha_os.data.client import SignalClient
+from signal_noise.client import SignalClient
+
 from alpha_os.data.store import DataStore
 from alpha_os.data.universe import (
     CRYPTO,

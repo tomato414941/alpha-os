@@ -11,6 +11,7 @@ dependencies = [
     "deap>=1.4",
     "ribs[all]>=0.7",
     "ccxt>=4.0",
+    "signal-noise",
 ]
 
 [project.optional-dependencies]

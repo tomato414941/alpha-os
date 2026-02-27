@@ -180,7 +180,7 @@ def _real_data(
     # Try API sync (best-effort, for signals not in signal-noise)
     client = None
     try:
-        from alpha_os.data.client import SignalClient
+        from signal_noise.client import SignalClient
         client = SignalClient(
             base_url=config.api.base_url,
             timeout=config.api.timeout,
