@@ -5,9 +5,6 @@ import logging
 import random
 from dataclasses import dataclass
 
-import numpy as np
-from deap import base, creator, tools
-
 from ..dsl.expr import Expr
 from ..dsl.generator import AlphaGenerator, _collect_nodes
 
@@ -56,7 +53,6 @@ def _node_count(expr: Expr) -> int:
 def crossover(parent1: Expr, parent2: Expr, rng: random.Random) -> tuple[Expr, Expr]:
     """Subtree crossover: swap random subtrees between two parents."""
     import copy
-    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 
     c1 = copy.deepcopy(parent1)
     c2 = copy.deepcopy(parent2)

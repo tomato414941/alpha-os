@@ -14,7 +14,7 @@ import numpy as np
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR
-from alpha_os.alpha.evaluator import FAILED_FITNESS, EvaluationError
+from alpha_os.alpha.evaluator import FAILED_FITNESS
 from alpha_os.data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator

@@ -9,7 +9,7 @@ from alpha_os.alpha.evaluator import (
     evaluate_expression,
     normalize_signal,
 )
-from alpha_os.dsl.expr import Feature, UnaryOp, Constant
+from alpha_os.dsl.expr import Feature, Constant
 
 
 class TestNormalizeSignal:

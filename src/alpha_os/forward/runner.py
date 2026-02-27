@@ -6,8 +6,6 @@ import time
 from dataclasses import dataclass
 from datetime import date
 
-import numpy as np
-
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig

@@ -1,5 +1,4 @@
 """Tests for forward testing — tracker and runner."""
-from datetime import date
 from unittest.mock import patch
 
 import numpy as np

@@ -14,7 +14,7 @@ from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
-from ..data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
+from ..data.universe import build_feature_list, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
 from ..alpha.combiner import (

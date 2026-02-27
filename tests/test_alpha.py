@@ -1,7 +1,4 @@
 """Tests for alpha registry, lifecycle, combiner, and governance gates."""
-import tempfile
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -24,7 +21,7 @@ from alpha_os.alpha.combiner import (
     weighted_combine,
     weighted_combine_scalar,
 )
-from alpha_os.governance.gates import adoption_gate, GateConfig, GateResult
+from alpha_os.governance.gates import adoption_gate, GateConfig
 
 
 # ---------------------------------------------------------------------------

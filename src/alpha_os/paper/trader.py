@@ -1,7 +1,6 @@
 """Paper trader — connects existing components into a daily paper trading cycle."""
 from __future__ import annotations
 
-import json
 import logging
 import time
 from dataclasses import dataclass
@@ -16,7 +15,7 @@ from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.client import SignalClient
 from ..data.store import DataStore
-from ..data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
+from ..data.universe import build_feature_list, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
@@ -28,7 +27,7 @@ from ..alpha.combiner import (
     compute_weights,
     weighted_combine_scalar,
 )
-from ..risk.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -384,7 +383,7 @@ class Trader:
             print("No paper trading history.")
             return
 
-        print(f"\nPaper Trading Summary")
+        print("\nPaper Trading Summary")
         print("=" * 60)
         print(f"  Period:     {summary.start_date} to {summary.end_date} ({summary.n_days} days)")
         print(f"  Capital:    ${summary.initial_value:,.2f} -> ${summary.final_value:,.2f}")

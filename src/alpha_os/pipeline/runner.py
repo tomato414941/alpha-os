@@ -95,8 +95,6 @@ class PipelineRunner:
     def run(self) -> PipelineResult:
         """Execute full pipeline: evolve → validate → adopt → combine."""
         t0 = time.perf_counter()
-        cfg = self.config
-        n_days = len(self.prices)
 
         # Phase 1: Evolve
         logger.info("Phase 1: Evolving alphas...")
@@ -192,7 +190,7 @@ class PipelineRunner:
                     continue
 
                 # DSR
-                bt = self.engine.run(sig, self.prices)
+                self.engine.run(sig, self.prices)
                 pos = normalize_signal(sig)
                 rets = np.diff(self.prices) / self.prices[:-1]
                 n = min(len(pos) - 1, len(rets))
