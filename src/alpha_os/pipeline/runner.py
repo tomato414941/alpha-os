@@ -8,13 +8,11 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..alpha.combiner import (
-    CombinerConfig,
     WeightedCombinerConfig,
     compute_diversity_scores,
     compute_weights,
     weighted_combine,
 )
-from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
@@ -24,7 +22,6 @@ from ..evolution.archive import AlphaArchive
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
 from ..governance.gates import GateConfig, adoption_gate
-from ..risk.manager import RiskConfig, RiskManager
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import purged_walk_forward
@@ -35,11 +32,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PipelineConfig:
     gp: GPConfig | None = None
-    risk: RiskConfig | None = None
-    combiner: CombinerConfig | None = None  # legacy
     combiner_weighted: WeightedCombinerConfig | None = None
     gate: GateConfig | None = None
-    lifecycle: LifecycleConfig | None = None
     commission_pct: float = 0.10
     slippage_pct: float = 0.05
     n_cv_folds: int = 5
@@ -95,7 +89,6 @@ class PipelineRunner:
         self.engine = BacktestEngine(
             CostModel(self.config.commission_pct, self.config.slippage_pct)
         )
-        self.risk_manager = RiskManager(self.config.risk)
         self.archive = AlphaArchive()
 
     def run(self) -> PipelineResult:
@@ -269,8 +262,6 @@ class PipelineRunner:
         # Compute batch PBO once for all validated alphas
         batch_pbo = self._compute_batch_pbo(validated)
 
-        # Diagnostic: per-gate pass rates
-        gate_stats: dict[str, int] = {}
         adopted = []
         for expr, fitness, oos_sharpe, dsr_pvalue in validated:
             result = adoption_gate(
@@ -282,9 +273,6 @@ class PipelineRunner:
                 n_days=len(self.prices),
                 config=gate_cfg,
             )
-            for check_name, passed in result.checks.items():
-                if passed:
-                    gate_stats[check_name] = gate_stats.get(check_name, 0) + 1
             if result.passed:
                 adopted.append((expr, fitness))
                 if self.registry:
