@@ -44,6 +44,10 @@ class Executor(ABC):
         """Set current price for a symbol. No-op for live executors."""
         pass
 
+    def fetch_ticker_price(self, symbol: str) -> float | None:
+        """Fetch real-time price from exchange. Returns None if unavailable."""
+        return None
+
     @property
     def portfolio_value(self) -> float:
         """Total portfolio value. Subclasses should override for accuracy."""

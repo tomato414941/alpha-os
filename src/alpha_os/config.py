@@ -75,7 +75,7 @@ class PaperTradingConfig:
 
 @dataclass
 class ForwardTestConfig:
-    check_interval: int = 86400
+    check_interval: int = 14400
     min_forward_days: int = 30
     degradation_window: int = 63
 

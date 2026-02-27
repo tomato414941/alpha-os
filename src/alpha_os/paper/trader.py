@@ -1,10 +1,15 @@
-"""Paper trader — connects existing components into a daily paper trading cycle."""
+"""Trader — connects existing components into a trading cycle.
+
+Supports both daily and sub-daily execution. When run multiple times per day,
+uses real-time price from exchange for position sizing and records snapshots
+with datetime keys.
+"""
 from __future__ import annotations
 
 import logging
 import time
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timezone
 
 import numpy as np
 
@@ -33,6 +38,9 @@ from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
 logger = logging.getLogger(__name__)
 
+# Minimum seconds between cycles to prevent duplicate execution
+_MIN_CYCLE_COOLDOWN = 60
+
 
 @dataclass
 class PaperCycleResult:
@@ -49,7 +57,11 @@ class PaperCycleResult:
 
 
 class Trader:
-    """Daily trading orchestrator. Executor determines paper vs live."""
+    """Trading orchestrator. Executor determines paper vs live.
+
+    Supports sub-daily execution: signal evaluation uses daily data,
+    but position sizing uses real-time price from the executor when available.
+    """
 
     def __init__(
         self,
@@ -133,7 +145,7 @@ class Trader:
             self.risk_manager.reset(self.initial_capital)
 
         logger.info(
-            "Restored state: $%.2f portfolio, %d days history",
+            "Restored state: $%.2f portfolio, %d snapshots",
             snapshot.portfolio_value, len(equity_curve),
         )
 
@@ -170,30 +182,44 @@ class Trader:
         logger.info("Diversity scores computed for %d alphas", len(alpha_ids))
 
     def run_cycle(self, simulation_date: str | None = None) -> PaperCycleResult:
-        """Execute one daily paper trading cycle.
+        """Execute one trading cycle.
 
         Args:
             simulation_date: ISO date string for historical simulation.
                 When set, skips API sync and limits data to end=date.
+                Uses date key (daily mode) for backward compatibility.
         """
         t0 = time.perf_counter()
-        today = simulation_date or date.today().isoformat()
+        now = datetime.now(timezone.utc)
+        today_date = simulation_date or date.today().isoformat()
 
-        existing = self.portfolio_tracker.get_snapshot(today)
-        if existing is not None:
-            logger.info("Already traded for %s", today)
-            return PaperCycleResult(
-                date=today,
-                combined_signal=existing.combined_signal,
-                fills=[],
-                portfolio_value=existing.portfolio_value,
-                daily_pnl=existing.daily_pnl,
-                daily_return=existing.daily_return,
-                dd_scale=existing.dd_scale,
-                vol_scale=existing.vol_scale,
-                n_alphas_active=0,
-                n_alphas_evaluated=0,
-            )
+        # Snapshot key: datetime for live cycles, date for simulation
+        if simulation_date:
+            cycle_key = simulation_date
+        else:
+            cycle_key = now.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # Cooldown: skip if last snapshot was too recent
+        last_snapshot = self.portfolio_tracker.get_last_snapshot()
+        if last_snapshot is not None and simulation_date is None:
+            last_recorded = self.portfolio_tracker._conn.execute(
+                "SELECT recorded_at FROM portfolio_snapshots WHERE date = ?",
+                (last_snapshot.date,),
+            ).fetchone()
+            if last_recorded and (time.time() - last_recorded["recorded_at"]) < _MIN_CYCLE_COOLDOWN:
+                logger.info("Cooldown: last cycle was < %ds ago", _MIN_CYCLE_COOLDOWN)
+                return PaperCycleResult(
+                    date=cycle_key,
+                    combined_signal=last_snapshot.combined_signal,
+                    fills=[],
+                    portfolio_value=last_snapshot.portfolio_value,
+                    daily_pnl=last_snapshot.daily_pnl,
+                    daily_return=last_snapshot.daily_return,
+                    dd_scale=last_snapshot.dd_scale,
+                    vol_scale=last_snapshot.vol_scale,
+                    n_alphas_active=0,
+                    n_alphas_evaluated=0,
+                )
 
         # 0. Circuit breaker check
         prev_equity = self.executor.portfolio_value
@@ -202,7 +228,7 @@ class Trader:
         if not safe:
             logger.warning("Circuit breaker tripped: %s", reason)
             return PaperCycleResult(
-                date=today, combined_signal=0.0, fills=[],
+                date=cycle_key, combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0, n_alphas_active=0, n_alphas_evaluated=0,
             )
@@ -224,12 +250,12 @@ class Trader:
         all_alphas = active + probation + dormant
         dormant_ids = {r.alpha_id for r in dormant}
 
-        # 3. Evaluate each alpha's signal
-        matrix = self.store.get_matrix(self.features, end=today)
+        # 3. Evaluate each alpha's signal (uses daily data)
+        matrix = self.store.get_matrix(self.features, end=today_date)
         if len(matrix) < 2:
-            logger.warning("Insufficient data for %s (%d rows)", today, len(matrix))
+            logger.warning("Insufficient data for %s (%d rows)", today_date, len(matrix))
             return PaperCycleResult(
-                date=today, combined_signal=0.0, dd_scale=1.0,
+                date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_alphas_active=len(active),
             )
@@ -238,7 +264,7 @@ class Trader:
         prices_arr = data[self.price_signal]
         if len(prices_arr) < 2:
             return PaperCycleResult(
-                date=today, combined_signal=0.0, dd_scale=1.0,
+                date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_alphas_active=len(active),
             )
@@ -260,9 +286,9 @@ class Trader:
                     alpha_signals[record.alpha_id] = signal_yesterday
                 n_evaluated += 1
 
-                # Record per-alpha forward return
+                # Record per-alpha forward return (daily granularity)
                 self.forward_tracker.record(
-                    record.alpha_id, today, signal_yesterday, daily_return,
+                    record.alpha_id, today_date, signal_yesterday, daily_return,
                 )
 
                 # Monitor + lifecycle
@@ -287,7 +313,7 @@ class Trader:
                 n_failed += 1
 
         if n_failed:
-            logger.info("Paper cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
+            logger.info("Cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
 
         # 4. Combine signals with quality × diversity weighting
         if not self._diversity_computed:
@@ -318,10 +344,17 @@ class Trader:
         vol_s = self.risk_manager.vol_scale(recent_returns)
         adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
-        # 6. Compute target position and execute
-        matrix = self.store.get_matrix([self.price_signal], end=today)
-        current_price = float(matrix[self.price_signal].iloc[-1])
+        # 6. Get execution price: prefer real-time from exchange, fall back to daily close
+        live_price = self.executor.fetch_ticker_price(self.price_signal)
+        if live_price is not None and live_price > 0:
+            current_price = live_price
+            logger.info("Using live price: $%.2f", current_price)
+        else:
+            matrix = self.store.get_matrix([self.price_signal], end=today_date)
+            current_price = float(matrix[self.price_signal].iloc[-1])
+            logger.info("Using daily close: $%.2f", current_price)
 
+        # 7. Compute target position and execute
         dollar_pos = adjusted * self.initial_capital * self.max_position_pct
         target_shares_value = dollar_pos / current_price if current_price > 0 else 0.0
 
@@ -332,13 +365,13 @@ class Trader:
         self.executor.set_price(self.price_signal, current_price)
         fills = self.executor.rebalance(target)
 
-        # 7. Record snapshot
+        # 8. Record snapshot — PnL relative to previous snapshot
         portfolio_value = self.executor.portfolio_value
         daily_pnl = portfolio_value - prev_value
         daily_return = daily_pnl / prev_value if prev_value > 0 else 0.0
 
         snapshot = PortfolioSnapshot(
-            date=today,
+            date=cycle_key,
             cash=self.executor.get_cash(),
             positions=self.executor.all_positions,
             portfolio_value=portfolio_value,
@@ -349,23 +382,23 @@ class Trader:
             vol_scale=vol_s,
         )
         self.portfolio_tracker.save_snapshot(snapshot)
-        self.portfolio_tracker.save_fills(today, fills)
-        self.portfolio_tracker.save_alpha_signals(today, alpha_signals)
+        self.portfolio_tracker.save_fills(cycle_key, fills)
+        self.portfolio_tracker.save_alpha_signals(cycle_key, alpha_signals)
 
-        # 8. Record trade P&L in circuit breaker
+        # 9. Record trade P&L in circuit breaker
         self.circuit_breaker.record_trade(daily_pnl)
 
-        # 9. Audit log
+        # 10. Audit log
         for fill in fills:
             self.audit_log.log_trade(
                 "portfolio", fill.symbol, fill.side, fill.qty, fill.price,
             )
 
         elapsed = time.perf_counter() - t0
-        logger.info("Paper cycle %s: %.2fs, $%.2f", today, elapsed, portfolio_value)
+        logger.info("Cycle %s: %.2fs, $%.2f", cycle_key, elapsed, portfolio_value)
 
         return PaperCycleResult(
-            date=today,
+            date=cycle_key,
             combined_signal=combined,
             fills=fills,
             portfolio_value=portfolio_value,

@@ -229,7 +229,7 @@ class TestForwardRunnerIntegration:
 
     def test_forward_config_defaults(self):
         cfg = ForwardConfig()
-        assert cfg.check_interval == 86400
+        assert cfg.check_interval == 14400
         assert cfg.min_forward_days == 30
         assert cfg.degradation_window == 63
 

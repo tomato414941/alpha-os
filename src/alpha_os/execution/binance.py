@@ -170,6 +170,16 @@ class BinanceExecutor(Executor):
             logger.error("Failed to fetch positions: %s", e)
             return {}
 
+    def fetch_ticker_price(self, symbol: str) -> float | None:
+        """Fetch real-time last price from Binance via CCXT."""
+        market = self._market_symbol(symbol)
+        try:
+            ticker = self._exchange.fetch_ticker(market)
+            return float(ticker["last"])
+        except Exception as e:
+            logger.warning("Failed to fetch ticker for %s: %s", market, e)
+            return None
+
     # ------------------------------------------------------------------
 
     def _market_buy(self, market: str, order: Order) -> Fill | None:

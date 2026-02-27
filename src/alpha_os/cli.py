@@ -89,6 +89,8 @@ def _build_parser() -> argparse.ArgumentParser:
     fwd.add_argument("--once", action="store_true", help="Run one cycle and exit")
     fwd.add_argument("--schedule", action="store_true", help="Run on interval")
     fwd.add_argument("--summary", action="store_true", help="Print summary and exit")
+    fwd.add_argument("--interval", type=int, default=None,
+                     help="Override check_interval in seconds (default: from config)")
     fwd.add_argument("--asset", type=str, default="NVDA")
     fwd.add_argument("--config", type=str, default=None)
 
@@ -97,6 +99,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
     ppr.add_argument("--schedule", action="store_true", help="Run on interval")
     ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
+    ppr.add_argument("--interval", type=int, default=None,
+                     help="Override check_interval in seconds (default: from config)")
     ppr.add_argument("--backfill", action="store_true",
                      help="Run historical simulation over date range")
     ppr.add_argument("--start", type=str, default=None,
@@ -111,6 +115,8 @@ def _build_parser() -> argparse.ArgumentParser:
     liv.add_argument("--once", action="store_true", help="Run one cycle and exit")
     liv.add_argument("--schedule", action="store_true", help="Run on interval")
     liv.add_argument("--summary", action="store_true", help="Print summary and exit")
+    liv.add_argument("--interval", type=int, default=None,
+                     help="Override check_interval in seconds (default: from config)")
     liv.add_argument("--real", action="store_true",
                      help="Use real Binance (default is testnet)")
     liv.add_argument("--capital", type=float, default=10000.0,
@@ -447,8 +453,9 @@ def cmd_forward(args: argparse.Namespace) -> None:
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
     cfg = _load_config(args.config)
+    interval = args.interval or cfg.forward.check_interval
     fwd_cfg = ForwardConfig(
-        check_interval=cfg.forward.check_interval,
+        check_interval=interval,
         min_forward_days=cfg.forward.min_forward_days,
         degradation_window=cfg.forward.degradation_window,
     )
@@ -474,7 +481,7 @@ def cmd_forward(args: argparse.Namespace) -> None:
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
-        config=SchedulerConfig(interval_seconds=fwd_cfg.check_interval),
+        config=SchedulerConfig(interval_seconds=interval),
     )
     try:
         scheduler.start()
@@ -498,6 +505,7 @@ def _print_paper_result(result) -> None:
 
 def cmd_paper(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
+    interval = args.interval or cfg.forward.check_interval
 
     if args.backfill:
         _cmd_paper_backfill(args, cfg)
@@ -526,7 +534,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
-        config=SchedulerConfig(interval_seconds=cfg.forward.check_interval),
+        config=SchedulerConfig(interval_seconds=interval),
     )
     try:
         scheduler.start()
@@ -568,6 +576,7 @@ def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
 
 def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
+    interval = args.interval or cfg.forward.check_interval
     testnet = not args.real
 
     # File logging — date-stamped log in data/logs/
@@ -601,7 +610,7 @@ def cmd_live(args: argparse.Namespace) -> None:
             return
 
     mode = "TESTNET" if testnet else "REAL"
-    print(f"Live trading [{mode}]: asset={args.asset}")
+    print(f"Live trading [{mode}]: asset={args.asset}, interval={interval}s")
 
     # Map alpha-os signal name → Binance market symbol
     signal_name = price_signal(args.asset)
@@ -642,7 +651,7 @@ def cmd_live(args: argparse.Namespace) -> None:
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
-        config=SchedulerConfig(interval_seconds=cfg.forward.check_interval),
+        config=SchedulerConfig(interval_seconds=interval),
     )
     try:
         scheduler.start()

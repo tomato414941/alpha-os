@@ -1,4 +1,8 @@
-"""Paper trading portfolio tracker — SQLite persistence."""
+"""Paper trading portfolio tracker — SQLite persistence.
+
+Supports both date ("2026-02-27") and datetime ("2026-02-27T08:00:00")
+snapshot keys for sub-daily execution.
+"""
 from __future__ import annotations
 
 import json
@@ -15,7 +19,7 @@ from ..execution.executor import Fill
 
 @dataclass
 class PortfolioSnapshot:
-    date: str
+    date: str  # ISO date or datetime string
     cash: float
     positions: dict[str, float]
     portfolio_value: float
@@ -146,6 +150,21 @@ class PaperPortfolioTracker:
             return None
         return self._row_to_snapshot(row)
 
+    def get_previous_day_last_snapshot(self, today_date: str) -> PortfolioSnapshot | None:
+        """Get the most recent snapshot from before the given calendar date.
+
+        Args:
+            today_date: ISO date string (YYYY-MM-DD). Returns the last snapshot
+                        with date < today_date (works with both date and datetime keys).
+        """
+        row = self._conn.execute(
+            "SELECT * FROM portfolio_snapshots WHERE date < ? ORDER BY date DESC LIMIT 1",
+            (today_date,),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_snapshot(row)
+
     def get_all_snapshots(self) -> list[PortfolioSnapshot]:
         rows = self._conn.execute(
             "SELECT * FROM portfolio_snapshots ORDER BY date"
@@ -157,6 +176,23 @@ class PaperPortfolioTracker:
             "SELECT daily_return FROM portfolio_snapshots ORDER BY date"
         ).fetchall()
         return [r["daily_return"] for r in rows]
+
+    def get_daily_returns(self) -> list[float]:
+        """Aggregate returns to daily level (last snapshot per calendar day).
+
+        For Sharpe calculation, use the last snapshot of each day to avoid
+        inflating the number of return observations from sub-daily cycles.
+        """
+        rows = self._conn.execute(
+            """SELECT SUBSTR(date, 1, 10) AS day, daily_return, date
+            FROM portfolio_snapshots ORDER BY date"""
+        ).fetchall()
+        if not rows:
+            return []
+        daily: dict[str, float] = {}
+        for r in rows:
+            daily[r["day"]] = r["daily_return"]
+        return list(daily.values())
 
     def get_equity_curve(self) -> list[tuple[str, float]]:
         rows = self._conn.execute(
@@ -183,7 +219,9 @@ class PaperPortfolioTracker:
         final = last["portfolio_value"]
         total_ret = (final - initial) / initial if initial > 0 else 0.0
 
-        returns = np.array([s["daily_return"] for s in snapshots])
+        # Use daily-level returns for Sharpe to avoid sub-daily inflation
+        daily_returns = self.get_daily_returns()
+        returns = np.array(daily_returns) if daily_returns else np.array([0.0])
         std = float(np.std(returns))
         sharpe = float(np.mean(returns) / std * np.sqrt(252)) if std > 1e-10 else 0.0
 
@@ -192,10 +230,13 @@ class PaperPortfolioTracker:
         dd = (peak - cumulative) / np.where(peak > 0, peak, 1.0)
         max_dd = float(np.max(dd)) if len(dd) > 0 else 0.0
 
+        # Count unique calendar days
+        days_set = {s["date"][:10] for s in snapshots}
+
         return PaperTradingSummary(
-            start_date=first["date"],
-            end_date=last["date"],
-            n_days=len(snapshots),
+            start_date=first["date"][:10],
+            end_date=last["date"][:10],
+            n_days=len(days_set),
             initial_value=initial,
             final_value=final,
             total_return=total_ret,

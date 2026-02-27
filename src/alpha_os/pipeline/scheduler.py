@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SchedulerConfig:
-    interval_seconds: int = 86400  # daily
+    interval_seconds: int = 14400  # 4 hours
     max_runs: int = 0  # 0 = unlimited
     retry_delay: int = 300  # 5 min on failure
 
