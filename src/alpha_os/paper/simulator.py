@@ -22,7 +22,7 @@ from ..alpha.combiner import (
     compute_diversity_scores,
     compute_weights,
 )
-from ..risk.manager import RiskConfig as _RiskConfig, RiskManager
+from ..risk.manager import RiskManager
 
 logger = logging.getLogger(__name__)
 
@@ -143,13 +143,7 @@ def run_backfill(
         price_returns[1:] = np.diff(prices) / prices[:-1]
 
         # 4. Simulate day by day — fully vectorized inner loop
-        risk_cfg = _RiskConfig(
-            target_vol=config.risk.target_vol_pct / 100.0,
-            dd_stage1_pct=config.risk.dd_stage1_pct / 100.0,
-            dd_stage2_pct=config.risk.dd_stage2_pct / 100.0,
-            dd_stage3_pct=config.risk.dd_stage3_pct / 100.0,
-        )
-        risk_manager = RiskManager(risk_cfg)
+        risk_manager = RiskManager(config.risk.to_manager_config())
         executor = PaperExecutor(initial_cash=config.trading.initial_capital)
         initial_capital = config.trading.initial_capital
         max_position_pct = config.paper.max_position_pct

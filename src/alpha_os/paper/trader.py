@@ -29,7 +29,7 @@ from ..alpha.combiner import (
     weighted_combine_scalar,
 )
 from ..risk.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
-from ..risk.manager import RiskManager, RiskConfig
+from ..risk.manager import RiskManager
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
 logger = logging.getLogger(__name__)
@@ -97,13 +97,7 @@ class Trader:
             ),
         )
 
-        risk_cfg = RiskConfig(
-            target_vol=config.risk.target_vol_pct / 100.0,
-            dd_stage1_pct=config.risk.dd_stage1_pct / 100.0,
-            dd_stage2_pct=config.risk.dd_stage2_pct / 100.0,
-            dd_stage3_pct=config.risk.dd_stage3_pct / 100.0,
-        )
-        self.risk_manager = risk_manager or RiskManager(risk_cfg)
+        self.risk_manager = risk_manager or RiskManager(config.risk.to_manager_config())
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
 
         self.initial_capital = config.trading.initial_capital

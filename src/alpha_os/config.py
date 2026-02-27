@@ -51,6 +51,16 @@ class RiskConfig:
     dd_stage2_pct: float = 10.0
     dd_stage3_pct: float = 15.0
 
+    def to_manager_config(self):
+        """Convert user-facing percentages to decimal RiskManagerConfig."""
+        from alpha_os.risk.manager import RiskManagerConfig
+        return RiskManagerConfig(
+            target_vol=self.target_vol_pct / 100.0,
+            dd_stage1_pct=self.dd_stage1_pct / 100.0,
+            dd_stage2_pct=self.dd_stage2_pct / 100.0,
+            dd_stage3_pct=self.dd_stage3_pct / 100.0,
+        )
+
 
 @dataclass
 class TradingConfig:

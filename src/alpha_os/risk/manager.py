@@ -7,7 +7,7 @@ import numpy as np
 
 
 @dataclass
-class RiskConfig:
+class RiskManagerConfig:
     target_vol: float = 0.15
     dd_stage1_pct: float = 0.05
     dd_stage1_scale: float = 0.75
@@ -19,11 +19,15 @@ class RiskConfig:
     lookback_vol: int = 63
 
 
+# Backward compatibility alias
+RiskConfig = RiskManagerConfig
+
+
 class RiskManager:
     """Position-level risk management with DD staged response and vol-targeting."""
 
-    def __init__(self, config: RiskConfig | None = None):
-        self.config = config or RiskConfig()
+    def __init__(self, config: RiskManagerConfig | None = None):
+        self.config = config or RiskManagerConfig()
         self._equity_curve: list[float] = []
         self._peak: float = 0.0
 
