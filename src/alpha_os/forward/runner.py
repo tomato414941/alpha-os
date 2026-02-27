@@ -8,7 +8,7 @@ from datetime import date
 
 import numpy as np
 
-from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
@@ -107,6 +107,7 @@ class ForwardRunner:
         n_restored = 0
         n_dormant = 0
         n_revived = 0
+        n_failed = 0
 
         today = date.today().isoformat()
 
@@ -185,11 +186,14 @@ class ForwardRunner:
                     " [DEGRADED]" if status.is_degraded else "",
                 )
 
-            except Exception:
-                logger.warning("Failed to evaluate %s", alpha_id, exc_info=True)
-                continue
+            except EvaluationError as exc:
+                logger.warning("Failed to evaluate %s: %s", alpha_id, exc)
+                n_failed += 1
 
         elapsed = time.perf_counter() - t0
+
+        if n_failed:
+            logger.info("Forward cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
 
         self.audit_log.log(
             "forward_cycle",
@@ -200,6 +204,7 @@ class ForwardRunner:
                 "n_restored": n_restored,
                 "n_dormant": n_dormant,
                 "n_revived": n_revived,
+                "n_failed": n_failed,
                 "elapsed": round(elapsed, 2),
                 "date": today,
             },

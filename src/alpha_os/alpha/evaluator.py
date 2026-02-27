@@ -14,6 +14,13 @@ from ..dsl.expr import Expr
 
 logger = logging.getLogger(__name__)
 
+# Sentinel fitness for failed evaluations (used by GP and backtest ranking).
+FAILED_FITNESS = -999.0
+
+
+class EvaluationError(Exception):
+    """Raised when an alpha expression cannot be evaluated."""
+
 
 def normalize_signal(signal: np.ndarray) -> np.ndarray:
     """Normalize a raw signal to [-1, 1] via std-scaling.
@@ -34,17 +41,22 @@ def evaluate_expression(
     """Evaluate a DSL expression and sanitize the output.
 
     Returns a 1-D float array of length n_days.
-    Raises ValueError if the result length doesn't match n_days.
+    Raises EvaluationError on any failure (missing feature, length mismatch, etc.).
     """
-    sig = expr.evaluate(data)
-    sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-    if sig.ndim == 0:
-        sig = np.full(n_days, float(sig))
-    if len(sig) != n_days:
-        raise ValueError(
-            f"Signal length {len(sig)} != expected {n_days}"
-        )
-    return sig
+    try:
+        sig = expr.evaluate(data)
+        sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+        if sig.ndim == 0:
+            sig = np.full(n_days, float(sig))
+        if len(sig) != n_days:
+            raise EvaluationError(
+                f"Signal length {len(sig)} != expected {n_days}"
+            )
+        return sig
+    except EvaluationError:
+        raise
+    except Exception as exc:
+        raise EvaluationError(str(exc)) from exc
 
 
 def evaluate_alpha(

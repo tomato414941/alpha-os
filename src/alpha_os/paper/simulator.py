@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_PROBATION, ST_DORMANT
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
@@ -115,9 +115,8 @@ def run_backfill(
                 sig = evaluate_expression(expr, data, n_days)
                 sig = normalize_signal(sig)
                 signal_matrix[i] = sig
-            except Exception:
+            except EvaluationError:
                 valid_mask[i] = False
-                continue
 
         n_valid = int(valid_mask.sum())
         logger.info("Pre-computed signals: %d/%d valid", n_valid, n_alphas)

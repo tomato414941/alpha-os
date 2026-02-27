@@ -14,6 +14,7 @@ import numpy as np
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR
+from alpha_os.alpha.evaluator import FAILED_FITNESS, EvaluationError
 from alpha_os.data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
@@ -307,7 +308,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     # Rank by Sharpe (NaN → bottom)
     ranked = sorted(
         zip(valid_alphas, results),
-        key=lambda x: x[1].sharpe if np.isfinite(x[1].sharpe) else -999.0,
+        key=lambda x: x[1].sharpe if np.isfinite(x[1].sharpe) else FAILED_FITNESS,
         reverse=True,
     )
 
@@ -349,13 +350,13 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             if sig.ndim == 0:
                 sig = np.full(n_days, float(sig))
             if len(sig) != n_days:
-                return -999.0
+                return FAILED_FITNESS
             if not np.all(np.isfinite(sig)):
                 sig = np.where(np.isfinite(sig), sig, 0.0)
             result = engine.run(sig, prices)
-            return result.sharpe if np.isfinite(result.sharpe) else -999.0
+            return result.sharpe if np.isfinite(result.sharpe) else FAILED_FITNESS
         except Exception:
-            return -999.0
+            return FAILED_FITNESS
 
     gp_cfg = GPConfig(
         pop_size=args.pop_size,

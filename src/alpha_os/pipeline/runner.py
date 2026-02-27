@@ -13,7 +13,7 @@ from ..alpha.combiner import (
     compute_weights,
     weighted_combine,
 )
-from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..alpha.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
@@ -144,8 +144,8 @@ class PipelineRunner:
                 sig = evaluate_expression(expr, data, n_days)
                 result = self.engine.run(sig, prices)
                 return result.sharpe
-            except Exception:
-                return -999.0
+            except EvaluationError:
+                return FAILED_FITNESS
 
         gp_cfg = self.config.gp or GPConfig()
         evolver = GPEvolver(self.features, evaluate_fn, config=gp_cfg, seed=self.seed)
@@ -153,14 +153,17 @@ class PipelineRunner:
 
         # Fill archive
         live_signals: list[np.ndarray] = []
+        n_archive_failed = 0
         for expr, fitness in results:
             try:
                 sig = evaluate_expression(expr, data, n_days)
                 behavior = compute_behavior(sig, expr, live_signals)
                 if self.archive.add(expr, fitness, behavior):
                     live_signals.append(sig)
-            except Exception:
-                continue
+            except EvaluationError:
+                n_archive_failed += 1
+        if n_archive_failed:
+            logger.info("  Archive: %d/%d failed evaluation", n_archive_failed, len(results))
 
         return results
 
@@ -172,6 +175,7 @@ class PipelineRunner:
         n_days = len(self.prices)
         n_trials = len(results)
         validated = []
+        n_failed = 0
 
         for expr, fitness in results:
             if fitness <= 0:
@@ -196,8 +200,10 @@ class PipelineRunner:
                 dsr = deflated_sharpe_ratio(strat_rets, n_trials=n_trials)
 
                 validated.append((expr, fitness, cv.oos_sharpe, dsr.p_value))
-            except Exception:
-                continue
+            except EvaluationError:
+                n_failed += 1
+        if n_failed:
+            logger.info("  Validation: %d alphas failed evaluation", n_failed)
 
         return validated
 
@@ -212,7 +218,7 @@ class PipelineRunner:
             try:
                 sig = evaluate_expression(expr, self.data, n_days)
                 signals.append(sig)
-            except Exception:
+            except EvaluationError:
                 continue
 
         if len(signals) < 2:
@@ -282,7 +288,7 @@ class PipelineRunner:
                 sig = evaluate_expression(expr, self.data, n_days)
                 signals.append(sig)
                 sharpes.append(fitness)
-            except Exception:
+            except EvaluationError:
                 continue
 
         if not signals:

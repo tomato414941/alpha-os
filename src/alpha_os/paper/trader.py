@@ -9,7 +9,7 @@ from datetime import date
 
 import numpy as np
 
-from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
@@ -154,7 +154,7 @@ class Trader:
                 lookback = min(self._wcfg.corr_lookback, n_days)
                 signals.append(sig[-lookback:])
                 alpha_ids.append(record.alpha_id)
-            except Exception:
+            except EvaluationError:
                 continue
 
         if len(signals) < 2:
@@ -247,6 +247,7 @@ class Trader:
 
         alpha_signals: dict[str, float] = {}
         n_evaluated = 0
+        n_failed = 0
 
         for record in all_alphas:
             try:
@@ -282,9 +283,12 @@ class Trader:
                         reason=f"paper: sharpe={status.rolling_sharpe:.3f}",
                     )
 
-            except Exception:
-                logger.warning("Failed to evaluate %s", record.alpha_id, exc_info=True)
-                continue
+            except EvaluationError as exc:
+                logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
+                n_failed += 1
+
+        if n_failed:
+            logger.info("Paper cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
 
         # 4. Combine signals with quality × diversity weighting
         if not self._diversity_computed:

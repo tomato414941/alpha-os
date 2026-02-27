@@ -1,6 +1,7 @@
 """GP evolution loop using DEAP + existing DSL Expr trees."""
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass
 
@@ -9,6 +10,8 @@ from deap import base, creator, tools
 
 from ..dsl.expr import Expr
 from ..dsl.generator import AlphaGenerator, _collect_nodes
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -209,15 +212,20 @@ class GPEvolver:
         return unique
 
     def _evaluate_batch(self, exprs: list[Expr]) -> list[float]:
+        from ..alpha.evaluator import FAILED_FITNESS
+
         results = []
+        n_failed = 0
         for expr in exprs:
             try:
                 raw_fitness = self.evaluate_fn(expr)
-                # Bloat penalty
                 penalty = self.config.bloat_penalty * _node_count(expr)
                 results.append(raw_fitness - penalty)
             except Exception:
-                results.append(-999.0)
+                results.append(FAILED_FITNESS)
+                n_failed += 1
+        if n_failed:
+            logger.debug("GP batch: %d/%d evaluations failed", n_failed, len(exprs))
         return results
 
     def _tournament_select(
