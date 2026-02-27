@@ -598,7 +598,13 @@ def cmd_live(args: argparse.Namespace) -> None:
     mode = "TESTNET" if testnet else "REAL"
     print(f"Live trading [{mode}]: asset={args.asset}")
 
-    executor = BinanceExecutor(testnet=testnet)
+    # Map alpha-os signal name → Binance market symbol
+    signal_name = price_signal(args.asset)
+    market_symbol = f"{args.asset}/USDT"
+    symbol_map = {signal_name: market_symbol}
+    print(f"  Symbol map: {signal_name} → {market_symbol}")
+
+    executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
     cb = CircuitBreaker.load()
 
     # Override initial_capital in config for tracking purposes
