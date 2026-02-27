@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
+
 from .registry import AlphaRecord, AlphaRegistry, AlphaState
 
 
@@ -12,8 +14,62 @@ class LifecycleConfig:
     pbo_max: float = 1.0
     dsr_pvalue_max: float = 1.0
     probation_sharpe_min: float = 0.3
+    dormant_sharpe_max: float = 0.0
     correlation_max: float = 0.5
     dormant_revival_sharpe: float = 0.3
+
+
+def compute_transition(state: str, sharpe: float, config: LifecycleConfig) -> str:
+    """Pure function: compute state transition without DB side effects."""
+    if state == AlphaState.ACTIVE:
+        if sharpe < config.probation_sharpe_min:
+            return AlphaState.PROBATION
+        return AlphaState.ACTIVE
+    elif state == AlphaState.PROBATION:
+        if sharpe >= config.oos_sharpe_min:
+            return AlphaState.ACTIVE
+        elif sharpe < config.dormant_sharpe_max:
+            return AlphaState.DORMANT
+        return AlphaState.PROBATION
+    elif state == AlphaState.DORMANT:
+        if sharpe >= config.dormant_revival_sharpe:
+            return AlphaState.PROBATION
+        return AlphaState.DORMANT
+    return state
+
+
+# Vectorized state codes for batch transitions (used by simulator)
+ST_ACTIVE, ST_PROBATION, ST_DORMANT = 0, 1, 2
+
+
+def batch_transitions(
+    states: np.ndarray,
+    sharpes: np.ndarray,
+    config: LifecycleConfig,
+) -> np.ndarray:
+    """Vectorized state transitions for batch simulation.
+
+    Args:
+        states: int8 array (0=ACTIVE, 1=PROBATION, 2=DORMANT)
+        sharpes: float array of rolling Sharpe ratios
+        config: lifecycle thresholds
+
+    Returns:
+        new states array (same dtype as input)
+    """
+    new = states.copy()
+
+    active = states == ST_ACTIVE
+    new[active & (sharpes < config.probation_sharpe_min)] = ST_PROBATION
+
+    prob = states == ST_PROBATION
+    new[prob & (sharpes >= config.oos_sharpe_min)] = ST_ACTIVE
+    new[prob & (sharpes < config.dormant_sharpe_max)] = ST_DORMANT
+
+    dorm = states == ST_DORMANT
+    new[dorm & (sharpes >= config.dormant_revival_sharpe)] = ST_PROBATION
+
+    return new
 
 
 class AlphaLifecycle:
@@ -66,7 +122,7 @@ class AlphaLifecycle:
         if live_sharpe >= self.config.oos_sharpe_min:
             self.registry.update_state(alpha_id, AlphaState.ACTIVE)
             return AlphaState.ACTIVE
-        elif live_sharpe < 0:
+        elif live_sharpe < self.config.dormant_sharpe_max:
             self.registry.update_state(alpha_id, AlphaState.DORMANT)
             return AlphaState.DORMANT
         return AlphaState.PROBATION

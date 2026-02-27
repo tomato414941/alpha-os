@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_PROBATION, ST_DORMANT
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
@@ -154,16 +155,13 @@ def run_backfill(
         max_position_pct = config.paper.max_position_pct
         min_trade_usd = config.paper.min_trade_usd
 
-        # Lifecycle thresholds (inline — no SQLite)
-        probation_sharpe_min = config.validation.oos_sharpe_min
-        demote_sharpe = 0.3
-        dormant_sharpe = 0.0
-        revival_sharpe = 0.3
+        # Lifecycle thresholds from config (single source of truth)
+        lc_cfg = LifecycleConfig(
+            oos_sharpe_min=config.validation.oos_sharpe_min,
+        )
         rolling_window = 63
         min_obs = 20
 
-        # State encoded as int: 0=ACTIVE, 1=PROBATION, 2=DORMANT
-        ST_ACTIVE, ST_PROBATION, ST_DORMANT = 0, 1, 2
         alpha_state_vec = np.zeros(n_alphas, dtype=np.int8)
 
         # Pre-compute forward returns matrix
@@ -190,20 +188,9 @@ def run_backfill(
             else:
                 rolling_sharpe = np.zeros(int(valid_mask.sum()))
 
-            # State transitions (vectorized, no SQLite)
+            # State transitions (vectorized via shared lifecycle logic)
             valid_states = alpha_state_vec[valid_mask]
-            new_states = valid_states.copy()
-
-            active_m = valid_states == ST_ACTIVE
-            new_states[active_m & (rolling_sharpe < demote_sharpe)] = ST_PROBATION
-
-            prob_m = valid_states == ST_PROBATION
-            new_states[prob_m & (rolling_sharpe >= probation_sharpe_min)] = ST_ACTIVE
-            new_states[prob_m & (rolling_sharpe < dormant_sharpe)] = ST_DORMANT
-
-            dorm_m = valid_states == ST_DORMANT
-            new_states[dorm_m & (rolling_sharpe >= revival_sharpe)] = ST_PROBATION
-
+            new_states = batch_transitions(valid_states, rolling_sharpe, lc_cfg)
             alpha_state_vec[valid_mask] = new_states
 
             # Recompute diversity periodically (rolling window)
