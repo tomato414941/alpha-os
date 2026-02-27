@@ -6,7 +6,15 @@ import numpy as np
 import pytest
 
 from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
-from alpha_os.alpha.lifecycle import AlphaLifecycle, LifecycleConfig
+from alpha_os.alpha.lifecycle import (
+    AlphaLifecycle,
+    LifecycleConfig,
+    compute_transition,
+    batch_transitions,
+    ST_ACTIVE,
+    ST_PROBATION,
+    ST_DORMANT,
+)
 from alpha_os.alpha.combiner import (
     select_low_correlation,
     equal_weight_combine,
@@ -198,6 +206,68 @@ class TestAlphaLifecycle:
         reg, lc = self._setup(tmp_path)
         with pytest.raises(ValueError):
             lc.evaluate_born("nonexistent")
+
+    def test_evaluate_dispatches_correctly(self, tmp_path):
+        reg, lc = self._setup(tmp_path)
+        reg.register(AlphaRecord(
+            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
+            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
+        ))
+        state = lc.evaluate("a1", live_sharpe=0.1)
+        assert state == AlphaState.PROBATION
+        assert reg.get("a1").state == AlphaState.PROBATION
+
+
+class TestComputeTransition:
+    def test_active_stays(self):
+        cfg = LifecycleConfig(probation_sharpe_min=0.3)
+        assert compute_transition(AlphaState.ACTIVE, 0.5, cfg) == AlphaState.ACTIVE
+
+    def test_active_to_probation(self):
+        cfg = LifecycleConfig(probation_sharpe_min=0.3)
+        assert compute_transition(AlphaState.ACTIVE, 0.1, cfg) == AlphaState.PROBATION
+
+    def test_probation_to_active(self):
+        cfg = LifecycleConfig(oos_sharpe_min=0.5)
+        assert compute_transition(AlphaState.PROBATION, 0.8, cfg) == AlphaState.ACTIVE
+
+    def test_probation_to_dormant(self):
+        cfg = LifecycleConfig(dormant_sharpe_max=0.0)
+        assert compute_transition(AlphaState.PROBATION, -0.5, cfg) == AlphaState.DORMANT
+
+    def test_dormant_stays(self):
+        cfg = LifecycleConfig(dormant_revival_sharpe=0.3)
+        assert compute_transition(AlphaState.DORMANT, 0.1, cfg) == AlphaState.DORMANT
+
+    def test_dormant_revival(self):
+        cfg = LifecycleConfig(dormant_revival_sharpe=0.3)
+        assert compute_transition(AlphaState.DORMANT, 0.4, cfg) == AlphaState.PROBATION
+
+
+class TestBatchTransitions:
+    def test_vectorized_matches_scalar(self):
+        cfg = LifecycleConfig()
+        states = np.array([ST_ACTIVE, ST_PROBATION, ST_DORMANT], dtype=np.int8)
+        sharpes = np.array([0.1, 0.8, 0.4])
+        new = batch_transitions(states, sharpes, cfg)
+        for i, (s, sh) in enumerate(zip(
+            [AlphaState.ACTIVE, AlphaState.PROBATION, AlphaState.DORMANT],
+            sharpes,
+        )):
+            expected = compute_transition(s, sh, cfg)
+            state_map = {
+                AlphaState.ACTIVE: ST_ACTIVE,
+                AlphaState.PROBATION: ST_PROBATION,
+                AlphaState.DORMANT: ST_DORMANT,
+            }
+            assert new[i] == state_map[expected]
+
+    def test_all_stay(self):
+        cfg = LifecycleConfig()
+        states = np.array([ST_ACTIVE, ST_ACTIVE], dtype=np.int8)
+        sharpes = np.array([1.0, 1.0])
+        new = batch_transitions(states, sharpes, cfg)
+        np.testing.assert_array_equal(new, [ST_ACTIVE, ST_ACTIVE])
 
 
 # ---------------------------------------------------------------------------

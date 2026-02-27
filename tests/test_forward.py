@@ -1,12 +1,19 @@
 """Tests for forward testing — tracker and runner."""
+from datetime import date
+from unittest.mock import patch
+
 import numpy as np
+import pandas as pd
 import pytest
 
 from alpha_os.alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from alpha_os.alpha.monitor import AlphaMonitor, MonitorConfig
 from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
-from alpha_os.forward.runner import ForwardConfig, ForwardCycleResult
+from alpha_os.config import Config
+from alpha_os.data.store import DataStore
+from alpha_os.forward.runner import ForwardConfig, ForwardCycleResult, ForwardRunner
 from alpha_os.forward.tracker import ForwardTracker
+from alpha_os.governance.audit_log import AuditLog
 
 
 # ---------------------------------------------------------------------------
@@ -226,3 +233,95 @@ class TestForwardRunnerIntegration:
         assert cfg.check_interval == 86400
         assert cfg.min_forward_days == 30
         assert cfg.degradation_window == 63
+
+
+# ---------------------------------------------------------------------------
+# ForwardRunner.run_cycle integration test
+# ---------------------------------------------------------------------------
+
+
+class TestForwardRunnerCycle:
+    @staticmethod
+    def _populate_store(store, n_days=100, start="2025-01-01"):
+        rng = np.random.default_rng(42)
+        prices = 100.0 * np.cumprod(1.0 + rng.normal(0.0005, 0.01, n_days))
+        dates = pd.bdate_range(start, periods=n_days)
+        for i, d in enumerate(dates):
+            store._conn.execute(
+                "INSERT INTO signals (name, date, value) VALUES (?, ?, ?)",
+                ("f1", d.strftime("%Y-%m-%d"), float(prices[i])),
+            )
+        store._conn.commit()
+        return dates
+
+    @staticmethod
+    def _make_runner(tmp_path, store, reg):
+        cfg = Config()
+        runner = ForwardRunner(
+            asset="f1", config=cfg,
+            forward_config=ForwardConfig(),
+            registry=reg,
+            tracker=ForwardTracker(db_path=tmp_path / "fwd.db"),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            store=store,
+        )
+        runner.features = ["f1"]
+        runner.price_signal = "f1"
+        return runner
+
+    def test_run_cycle_evaluates_alphas(self, tmp_path):
+        store = DataStore(tmp_path / "cache.db")
+        dates = self._populate_store(store)
+        # Use a date in the middle so matrix has enough rows
+        fake_today = dates[50].date()
+
+        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg.register(AlphaRecord(
+            alpha_id="alpha_f1", expression="f1",
+            state=AlphaState.ACTIVE, oos_sharpe=0.8,
+        ))
+        # Pre-register so start_date is early enough for data
+        tracker = ForwardTracker(db_path=tmp_path / "fwd.db")
+        tracker.register_alpha("alpha_f1", dates[0].strftime("%Y-%m-%d"))
+
+        runner = self._make_runner(tmp_path, store, reg)
+        runner.tracker = tracker
+        with patch("alpha_os.forward.runner.date") as mock_date:
+            mock_date.today.return_value = fake_today
+            result = runner.run_cycle()
+        assert isinstance(result, ForwardCycleResult)
+        assert result.n_evaluated == 1
+        assert result.elapsed > 0
+        runner.close()
+
+    def test_run_cycle_no_alphas(self, tmp_path):
+        store = DataStore(tmp_path / "cache.db")
+        dates = self._populate_store(store, n_days=50)
+        last_date = dates[-1].date()
+
+        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        runner = self._make_runner(tmp_path, store, reg)
+        with patch("alpha_os.forward.runner.date") as mock_date:
+            mock_date.today.return_value = last_date
+            result = runner.run_cycle()
+        assert result.n_evaluated == 0
+        runner.close()
+
+    def test_run_cycle_bad_alpha_counted(self, tmp_path):
+        """An alpha with invalid expression should be counted as failed."""
+        store = DataStore(tmp_path / "cache.db")
+        dates = self._populate_store(store, n_days=50)
+        last_date = dates[-1].date()
+
+        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg.register(AlphaRecord(
+            alpha_id="alpha_bad", expression="(neg missing_feature)",
+            state=AlphaState.ACTIVE, oos_sharpe=0.5,
+        ))
+
+        runner = self._make_runner(tmp_path, store, reg)
+        with patch("alpha_os.forward.runner.date") as mock_date:
+            mock_date.today.return_value = last_date
+            result = runner.run_cycle()
+        assert result.n_evaluated == 0
+        runner.close()
