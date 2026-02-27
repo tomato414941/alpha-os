@@ -432,8 +432,52 @@ class Trader:
         print(f"  Trades:     {summary.total_trades}")
         print(f"  Cash:       ${summary.current_cash:,.2f}")
         if summary.current_positions:
+            # Resolve traded asset ticker (btc_ohlcv → BTC)
+            from ..data.universe import CRYPTO, STOCKS
+            signal_to_asset = {v: k for k, v in {**CRYPTO, **STOCKS}.items()}
+            traded = signal_to_asset.get(self.price_signal, "").upper()
+
+            shown = 0
             for sym, qty in summary.current_positions.items():
-                print(f"  Position:   {sym}: {qty:.6f}")
+                if sym.upper() == traded:
+                    print(f"  Position:   {sym}: {qty:.6f}")
+                    shown += 1
+            hidden = len(summary.current_positions) - shown
+            if hidden > 0:
+                print(f"  ({hidden} other positions hidden)")
+
+    def reconcile(self) -> dict:
+        """Compare internal DB position vs exchange for traded asset."""
+        snapshot = self.portfolio_tracker.get_last_snapshot()
+        if snapshot is None:
+            return {"status": "no_data"}
+
+        from ..data.universe import CRYPTO, STOCKS
+        signal_to_asset = {v: k for k, v in {**CRYPTO, **STOCKS}.items()}
+        asset_ticker = signal_to_asset.get(self.price_signal, self.price_signal)
+
+        internal_qty = snapshot.positions.get(asset_ticker, 0.0)
+        internal_cash = snapshot.cash
+
+        exchange_qty = self.executor.get_position(asset_ticker)
+        exchange_cash = self.executor.get_cash()
+
+        qty_diff = abs(exchange_qty - internal_qty)
+        cash_diff = abs(exchange_cash - internal_cash)
+
+        result = {
+            "date": snapshot.date,
+            "asset": asset_ticker,
+            "internal_qty": internal_qty,
+            "exchange_qty": exchange_qty,
+            "qty_diff": qty_diff,
+            "internal_cash": internal_cash,
+            "exchange_cash": exchange_cash,
+            "cash_diff": cash_diff,
+            "match": qty_diff < 1e-6 and cash_diff < 1.0,
+        }
+        logger.info("Reconciliation: %s", result)
+        return result
 
     def close(self) -> None:
         self.portfolio_tracker.close()

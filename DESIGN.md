@@ -341,7 +341,7 @@ conforming to alpha-os's `Executor` interface. The rest of alpha-os
 
 ### Phases
 
-#### Phase 1: BinanceExecutor (1-2 days)
+#### Phase 1: BinanceExecutor (1-2 days) ✅
 
 Create `src/alpha_os/execution/binance.py`:
 
@@ -357,7 +357,7 @@ Executor (ABC)
 └── BinanceExecutor  ← new: CCXT spot + slippage guard
 ```
 
-#### Phase 2: Circuit Breaker (1 day)
+#### Phase 2: Circuit Breaker (1 day) ✅
 
 Create `src/alpha_os/risk/circuit_breaker.py`:
 
@@ -370,7 +370,7 @@ Create `src/alpha_os/risk/circuit_breaker.py`:
 
 State persisted to JSON; survives process restart.
 
-#### Phase 3: CLI `live` Command (1 day)
+#### Phase 3: CLI `live` Command (1 day) ✅
 
 Based on existing `paper` command:
 

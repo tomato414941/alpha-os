@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 import time
 import warnings
+from datetime import date
 
 import numpy as np
 
@@ -579,6 +581,20 @@ def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     testnet = not args.real
 
+    # File logging — date-stamped log in data/logs/
+    log_dir = DATA_DIR / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"live_{date.today().isoformat()}.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(),
+        ],
+        force=True,
+    )
+
     from alpha_os.execution.binance import BinanceExecutor
     from alpha_os.paper.trader import Trader
     from alpha_os.risk.circuit_breaker import CircuitBreaker
@@ -625,6 +641,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     if args.once or not args.schedule:
         result = trader.run_cycle()
         _print_paper_result(result)
+        trader.reconcile()
         trader.print_status()
         trader.close()
         return
@@ -632,6 +649,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     def cycle():
         result = trader.run_cycle()
         _print_paper_result(result)
+        trader.reconcile()
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
