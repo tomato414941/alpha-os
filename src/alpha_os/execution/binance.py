@@ -127,6 +127,49 @@ class BinanceExecutor(Executor):
             logger.error("Failed to fetch USDT balance: %s", e)
             return 0.0
 
+    @property
+    def portfolio_value(self) -> float:
+        """Total portfolio value from exchange (USDT + marked positions)."""
+        try:
+            balance = self._exchange.fetch_balance()
+            total = float(balance.get("USDT", {}).get("total", 0.0))
+            for asset, amounts in balance.items():
+                if asset in ("USDT", "free", "used", "total", "info"):
+                    continue
+                if not isinstance(amounts, dict):
+                    continue
+                qty = float(amounts.get("total", 0.0))
+                if qty > 1e-8:
+                    try:
+                        market = f"{asset}/USDT"
+                        ticker = self._exchange.fetch_ticker(market)
+                        total += qty * float(ticker["last"])
+                    except Exception:
+                        pass
+            return total
+        except Exception as e:
+            logger.error("Failed to fetch portfolio value: %s", e)
+            return 0.0
+
+    @property
+    def all_positions(self) -> dict[str, float]:
+        """All non-zero positions from exchange."""
+        try:
+            balance = self._exchange.fetch_balance()
+            positions: dict[str, float] = {}
+            for asset, amounts in balance.items():
+                if asset in ("USDT", "free", "used", "total", "info"):
+                    continue
+                if not isinstance(amounts, dict):
+                    continue
+                qty = float(amounts.get("total", 0.0))
+                if qty > 1e-8:
+                    positions[asset] = qty
+            return positions
+        except Exception as e:
+            logger.error("Failed to fetch positions: %s", e)
+            return {}
+
     # ------------------------------------------------------------------
 
     def _market_buy(self, market: str, order: Order) -> Fill | None:

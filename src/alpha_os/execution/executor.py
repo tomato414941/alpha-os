@@ -40,6 +40,25 @@ class Executor(ABC):
     def get_cash(self) -> float:
         ...
 
+    def set_price(self, symbol: str, price: float) -> None:
+        """Set current price for a symbol. No-op for live executors."""
+        pass
+
+    @property
+    def portfolio_value(self) -> float:
+        """Total portfolio value. Subclasses should override for accuracy."""
+        return self.get_cash()
+
+    @property
+    def all_positions(self) -> dict[str, float]:
+        """All current positions. Subclasses should override."""
+        return {}
+
+    @property
+    def all_fills(self) -> list[Fill]:
+        """All recorded fills. Subclasses should override."""
+        return []
+
     def rebalance(self, target_shares: dict[str, float]) -> list[Fill]:
         """Rebalance to target positions, returning list of fills."""
         fills: list[Fill] = []

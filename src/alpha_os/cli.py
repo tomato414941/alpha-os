@@ -103,6 +103,18 @@ def _build_parser() -> argparse.ArgumentParser:
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
+    # live
+    liv = sub.add_parser("live", help="Live trade on Binance (testnet by default)")
+    liv.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    liv.add_argument("--schedule", action="store_true", help="Run on interval")
+    liv.add_argument("--summary", action="store_true", help="Print summary and exit")
+    liv.add_argument("--real", action="store_true",
+                     help="Use real Binance (default is testnet)")
+    liv.add_argument("--capital", type=float, default=10000.0,
+                     help="Initial capital for tracking (default: 10000)")
+    liv.add_argument("--asset", type=str, default="BTC")
+    liv.add_argument("--config", type=str, default=None)
+
     return parser
 
 
@@ -563,6 +575,68 @@ def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
         print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
 
 
+def cmd_live(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    testnet = not args.real
+
+    from alpha_os.execution.binance import BinanceExecutor
+    from alpha_os.paper.trader import Trader
+    from alpha_os.risk.circuit_breaker import CircuitBreaker
+    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    if args.real:
+        print("=" * 60)
+        print("WARNING: REAL TRADING MODE — real money on Binance.")
+        print("Press Ctrl+C within 5 seconds to abort...")
+        print("=" * 60)
+        try:
+            time.sleep(5)
+        except KeyboardInterrupt:
+            print("\nAborted.")
+            return
+
+    mode = "TESTNET" if testnet else "REAL"
+    print(f"Live trading [{mode}]: asset={args.asset}")
+
+    executor = BinanceExecutor(testnet=testnet)
+    cb = CircuitBreaker.load()
+
+    # Override initial_capital in config for tracking purposes
+    cfg.trading.initial_capital = args.capital
+
+    trader = Trader(
+        asset=args.asset,
+        config=cfg,
+        executor=executor,
+        circuit_breaker=cb,
+    )
+
+    if args.summary:
+        trader.print_status()
+        trader.close()
+        return
+
+    if args.once or not args.schedule:
+        result = trader.run_cycle()
+        _print_paper_result(result)
+        trader.print_status()
+        trader.close()
+        return
+
+    def cycle():
+        result = trader.run_cycle()
+        _print_paper_result(result)
+
+    scheduler = PipelineScheduler(
+        run_fn=cycle,
+        config=SchedulerConfig(interval_seconds=cfg.forward.check_interval),
+    )
+    try:
+        scheduler.start()
+    finally:
+        trader.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -583,3 +657,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_forward(args)
     elif args.command == "paper":
         cmd_paper(args)
+    elif args.command == "live":
+        cmd_live(args)

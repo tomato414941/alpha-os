@@ -17,7 +17,7 @@ from ..data.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
 from ..dsl import parse
-from ..execution.executor import Fill
+from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
@@ -48,8 +48,8 @@ class PaperCycleResult:
     n_alphas_evaluated: int
 
 
-class PaperTrader:
-    """Orchestrates daily paper trading by connecting existing components."""
+class Trader:
+    """Daily trading orchestrator. Executor determines paper vs live."""
 
     def __init__(
         self,
@@ -60,7 +60,7 @@ class PaperTrader:
         forward_tracker: ForwardTracker | None = None,
         monitor: AlphaMonitor | None = None,
         lifecycle: AlphaLifecycle | None = None,
-        executor: PaperExecutor | None = None,
+        executor: Executor | None = None,
         risk_manager: RiskManager | None = None,
         circuit_breaker: CircuitBreaker | None = None,
         audit_log: AuditLog | None = None,
@@ -133,8 +133,11 @@ class PaperTrader:
             self.risk_manager.reset(self.initial_capital)
             return
 
-        self.executor._cash = snapshot.cash
-        self.executor._positions = dict(snapshot.positions)
+        # PaperExecutor tracks state in memory; restore from last snapshot.
+        # Live executors query the exchange directly, so skip.
+        if isinstance(self.executor, PaperExecutor):
+            self.executor._cash = snapshot.cash
+            self.executor._positions = dict(snapshot.positions)
 
         equity_curve = self.portfolio_tracker.get_equity_curve()
         if equity_curve:
@@ -434,3 +437,7 @@ class PaperTrader:
         self.forward_tracker.close()
         self.store.close()
         self.registry.close()
+
+
+# Backward compatibility
+PaperTrader = Trader
