@@ -140,6 +140,17 @@ class AlphaLifecycle:
             return AlphaState.PROBATION
         return AlphaState.DORMANT
 
+    def evaluate(self, alpha_id: str, live_sharpe: float) -> str:
+        """Evaluate any alpha regardless of current state. Dispatches to the
+        appropriate state-specific method and updates the registry."""
+        record = self.registry.get(alpha_id)
+        if record is None:
+            raise ValueError(f"Alpha {alpha_id} not found")
+        new_state = compute_transition(record.state, live_sharpe, self.config)
+        if new_state != record.state:
+            self.registry.update_state(alpha_id, new_state)
+        return new_state
+
     def _passes_gate(self, record: AlphaRecord) -> bool:
         cfg = self.config
         return (

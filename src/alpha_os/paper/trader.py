@@ -16,7 +16,7 @@ from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.client import SignalClient
 from ..data.store import DataStore
-from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
+from ..data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
@@ -70,17 +70,8 @@ class Trader:
         self.asset = asset
         self.config = config
 
-        try:
-            self.price_signal = price_signal(asset)
-        except KeyError:
-            self.price_signal = asset.lower()
-        daily = load_daily_signals()
-        seen = {self.price_signal}
-        self.features = [self.price_signal]
-        for s in daily:
-            if s not in seen:
-                seen.add(s)
-                self.features.append(s)
+        self.features = build_feature_list(asset)
+        self.price_signal = self.features[0]
 
         self.registry = registry or AlphaRegistry()
         self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker()
@@ -281,20 +272,9 @@ class Trader:
                 status = self.monitor.check(record.alpha_id)
 
                 old_state = record.state
-                if old_state == AlphaState.ACTIVE:
-                    new_state = self.lifecycle.evaluate_active(
-                        record.alpha_id, status.rolling_sharpe,
-                    )
-                elif old_state == AlphaState.PROBATION:
-                    new_state = self.lifecycle.evaluate_probation(
-                        record.alpha_id, status.rolling_sharpe,
-                    )
-                elif old_state == AlphaState.DORMANT:
-                    new_state = self.lifecycle.evaluate_dormant(
-                        record.alpha_id, status.rolling_sharpe,
-                    )
-                else:
-                    new_state = old_state
+                new_state = self.lifecycle.evaluate(
+                    record.alpha_id, status.rolling_sharpe,
+                )
 
                 if new_state != old_state:
                     self.audit_log.log_state_change(

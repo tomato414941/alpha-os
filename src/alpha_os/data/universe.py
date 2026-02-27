@@ -64,6 +64,22 @@ def all_signals() -> list[str]:
     return list(_ALL_ASSETS.values()) + MACRO_SIGNALS
 
 
+def build_feature_list(asset: str) -> list[str]:
+    """Build deduplicated feature list: price signal first, then all daily signals."""
+    try:
+        price = price_signal(asset)
+    except KeyError:
+        price = asset.lower()
+    daily = load_daily_signals()
+    seen = {price}
+    result = [price]
+    for s in daily:
+        if s not in seen:
+            seen.add(s)
+            result.append(s)
+    return result
+
+
 def price_signal(asset: str) -> str:
     """Return the price signal name for a given asset."""
     if asset in _ALL_ASSETS:

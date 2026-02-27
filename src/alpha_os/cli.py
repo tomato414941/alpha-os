@@ -14,7 +14,7 @@ import numpy as np
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR
-from alpha_os.data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
+from alpha_os.data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.archive import AlphaArchive
@@ -129,19 +129,7 @@ def _load_config(config_path: str | None) -> Config:
 
 def _make_features(asset: str) -> list[str]:
     """Feature names available for alpha generation."""
-    try:
-        price = price_signal(asset)
-    except KeyError:
-        price = asset.lower()
-    daily = load_daily_signals()
-    # price signal first, then all daily signals (deduplicated)
-    seen = {price}
-    result = [price]
-    for s in daily:
-        if s not in seen:
-            seen.add(s)
-            result.append(s)
-    return result
+    return build_feature_list(asset)
 
 
 def _warn_deprecated_live(args: argparse.Namespace) -> None:

@@ -14,7 +14,7 @@ from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
-from ..data.universe import price_signal, load_daily_signals, SIGNAL_NOISE_DB
+from ..data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
 from ..alpha.combiner import (
@@ -56,17 +56,8 @@ def run_backfill(
     """
     # 1. Load full data range
     store = DataStore(DATA_DIR / "alpha_cache.db")
-    try:
-        price_sig = price_signal(asset)
-    except KeyError:
-        price_sig = asset.lower()
-    daily = load_daily_signals()
-    seen = {price_sig}
-    features = [price_sig]
-    for s in daily:
-        if s not in seen:
-            seen.add(s)
-            features.append(s)
+    features = build_feature_list(asset)
+    price_sig = features[0]
 
     # Import from signal-noise DB
     if SIGNAL_NOISE_DB.exists():

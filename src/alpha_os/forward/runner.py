@@ -151,20 +151,9 @@ class ForwardRunner:
                 status = self.monitor.check(alpha_id)
 
                 old_state = record.state
-                if old_state == AlphaState.ACTIVE:
-                    new_state = self.lifecycle.evaluate_active(
-                        alpha_id, status.rolling_sharpe
-                    )
-                elif old_state == AlphaState.PROBATION:
-                    new_state = self.lifecycle.evaluate_probation(
-                        alpha_id, status.rolling_sharpe
-                    )
-                elif old_state == AlphaState.DORMANT:
-                    new_state = self.lifecycle.evaluate_dormant(
-                        alpha_id, status.rolling_sharpe
-                    )
-                else:
-                    new_state = old_state
+                new_state = self.lifecycle.evaluate(
+                    alpha_id, status.rolling_sharpe,
+                )
 
                 if new_state != old_state:
                     self.audit_log.log_state_change(
