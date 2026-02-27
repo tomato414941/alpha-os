@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..alpha.evaluator import evaluate_expression, normalize_signal
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
@@ -119,18 +120,8 @@ def run_backfill(
         for i, record in enumerate(all_records):
             try:
                 expr = parse(record.expression)
-                sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
-                if len(sig) != n_days:
-                    valid_mask[i] = False
-                    continue
-                std = sig.std()
-                if std > 0:
-                    sig = np.clip(sig / std, -1, 1)
-                else:
-                    sig = np.clip(np.sign(sig), -1, 1)
+                sig = evaluate_expression(expr, data, n_days)
+                sig = normalize_signal(sig)
                 signal_matrix[i] = sig
             except Exception:
                 valid_mask[i] = False

@@ -13,6 +13,7 @@ from ..alpha.combiner import (
     compute_weights,
     weighted_combine,
 )
+from ..alpha.evaluator import evaluate_expression, normalize_signal
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
@@ -140,12 +141,7 @@ class PipelineRunner:
 
         def evaluate_fn(expr):
             try:
-                sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
-                if len(sig) != n_days:
-                    return -999.0
+                sig = evaluate_expression(expr, data, n_days)
                 result = self.engine.run(sig, prices)
                 return result.sharpe
             except Exception:
@@ -159,10 +155,7 @@ class PipelineRunner:
         live_signals: list[np.ndarray] = []
         for expr, fitness in results:
             try:
-                sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
+                sig = evaluate_expression(expr, data, n_days)
                 behavior = compute_behavior(sig, expr, live_signals)
                 if self.archive.add(expr, fitness, behavior):
                     live_signals.append(sig)
@@ -184,10 +177,7 @@ class PipelineRunner:
             if fitness <= 0:
                 continue
             try:
-                sig = expr.evaluate(self.data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
+                sig = evaluate_expression(expr, self.data, n_days)
 
                 # Purged WF CV
                 cv = purged_walk_forward(
@@ -199,11 +189,7 @@ class PipelineRunner:
 
                 # DSR
                 bt = self.engine.run(sig, self.prices)
-                pos = sig.copy()
-                std = pos.std()
-                if std > 0:
-                    pos = pos / std
-                pos = np.clip(pos, -1, 1)
+                pos = normalize_signal(sig)
                 rets = np.diff(self.prices) / self.prices[:-1]
                 n = min(len(pos) - 1, len(rets))
                 strat_rets = pos[:n] * rets[:n]
@@ -224,12 +210,8 @@ class PipelineRunner:
         signals = []
         for expr, fitness, oos_sharpe, dsr_pvalue in validated:
             try:
-                sig = expr.evaluate(self.data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
-                if len(sig) == n_days:
-                    signals.append(sig)
+                sig = evaluate_expression(expr, self.data, n_days)
+                signals.append(sig)
             except Exception:
                 continue
 
@@ -297,10 +279,7 @@ class PipelineRunner:
 
         for expr, fitness in adopted:
             try:
-                sig = expr.evaluate(self.data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
+                sig = evaluate_expression(expr, self.data, n_days)
                 signals.append(sig)
                 sharpes.append(fitness)
             except Exception:

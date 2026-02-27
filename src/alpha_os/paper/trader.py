@@ -9,6 +9,7 @@ from datetime import date
 
 import numpy as np
 
+from ..alpha.evaluator import evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
@@ -163,17 +164,8 @@ class Trader:
         for record in all_records:
             try:
                 expr = parse(record.expression)
-                sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
-                if len(sig) != n_days:
-                    continue
-                std = sig.std()
-                if std > 0:
-                    sig = np.clip(sig / std, -1, 1)
-                else:
-                    sig = np.clip(np.sign(sig), -1, 1)
+                sig = evaluate_expression(expr, data, n_days)
+                sig = normalize_signal(sig)
                 lookback = min(self._wcfg.corr_lookback, n_days)
                 signals.append(sig[-lookback:])
                 alpha_ids.append(record.alpha_id)
@@ -274,16 +266,8 @@ class Trader:
         for record in all_alphas:
             try:
                 expr = parse(record.expression)
-                signal = expr.evaluate(data)
-                signal = np.nan_to_num(np.asarray(signal, dtype=float), nan=0.0)
-                if signal.ndim == 0:
-                    signal = np.full(len(matrix), float(signal))
-
-                std = signal.std()
-                if std > 0:
-                    signal_norm = np.clip(signal / std, -1, 1)
-                else:
-                    signal_norm = np.clip(np.sign(signal), -1, 1)
+                signal = evaluate_expression(expr, data, len(matrix))
+                signal_norm = normalize_signal(signal)
                 signal_yesterday = float(signal_norm[-2])
                 daily_return = signal_yesterday * price_return
 

@@ -8,6 +8,7 @@ from datetime import date
 
 import numpy as np
 
+from ..alpha.evaluator import evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
@@ -130,21 +131,14 @@ class ForwardRunner:
                     continue
 
                 data = {col: matrix[col].values for col in matrix.columns}
-                signal = expr.evaluate(data)
-                signal = np.nan_to_num(np.asarray(signal, dtype=float), nan=0.0)
-                if signal.ndim == 0:
-                    signal = np.full(len(matrix), float(signal))
+                signal = evaluate_expression(expr, data, len(matrix))
 
                 prices = data[self.price_signal]
                 if len(prices) < 2:
                     continue
                 price_return = (prices[-1] - prices[-2]) / prices[-2]
 
-                std = signal.std()
-                if std > 0:
-                    signal_norm = np.clip(signal / std, -1, 1)
-                else:
-                    signal_norm = np.clip(np.sign(signal), -1, 1)
+                signal_norm = normalize_signal(signal)
                 signal_yesterday = float(signal_norm[-2])
                 daily_return = signal_yesterday * price_return
 
