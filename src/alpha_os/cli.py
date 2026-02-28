@@ -123,6 +123,12 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Initial capital for tracking (default: 10000)")
     liv.add_argument("--asset", type=str, default="BTC")
     liv.add_argument("--config", type=str, default=None)
+    liv.add_argument("--evolve-interval", type=int, default=86400,
+                     help="Alpha evolution interval in seconds (default: 86400=24h, 0=disable)")
+    liv.add_argument("--pop-size", type=int, default=200,
+                     help="GP population size for evolution")
+    liv.add_argument("--generations", type=int, default=30,
+                     help="GP generations per evolution cycle")
 
     return parser
 
@@ -569,6 +575,76 @@ def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
         print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
 
 
+def _build_pipeline_config(
+    config: Config, pop_size: int, generations: int,
+):
+    """Build PipelineConfig from global Config + CLI args."""
+    from alpha_os.pipeline.runner import PipelineConfig
+    from alpha_os.governance.gates import GateConfig
+
+    return PipelineConfig(
+        gp=GPConfig(
+            pop_size=pop_size,
+            n_generations=generations,
+            max_depth=config.generation.max_depth,
+        ),
+        gate=GateConfig(
+            oos_sharpe_min=config.validation.oos_sharpe_min,
+            pbo_max=config.validation.pbo_max,
+            dsr_pvalue_max=config.validation.dsr_pvalue_max,
+            min_n_days=config.backtest.min_days,
+        ),
+        commission_pct=config.backtest.commission_pct,
+        slippage_pct=config.backtest.slippage_pct,
+        n_cv_folds=config.validation.n_cv_folds,
+        embargo_days=config.validation.embargo_days,
+        eval_window_days=config.backtest.eval_window_days,
+    )
+
+
+def _run_evolution(trader, config: Config, pipeline_config) -> None:
+    """Run alpha evolution using trader's data and registry."""
+    from alpha_os.pipeline.runner import PipelineRunner
+
+    logger = logging.getLogger(__name__)
+
+    # Sync data before evolution
+    try:
+        trader.store.sync(trader.features)
+    except Exception:
+        logger.warning("API sync failed before evolution — using cached data")
+
+    matrix = trader.store.get_matrix(trader.features)
+    if len(matrix) < config.backtest.min_days:
+        logger.warning(
+            "Insufficient data for evolution (%d rows, need %d)",
+            len(matrix), config.backtest.min_days,
+        )
+        return
+
+    matrix = matrix.bfill().fillna(0)
+    data = {col: matrix[col].values for col in matrix.columns}
+    prices = data[trader.price_signal]
+
+    runner = PipelineRunner(
+        features=trader.features,
+        data=data,
+        prices=prices,
+        config=pipeline_config,
+        registry=trader.registry,
+    )
+    result = runner.run()
+    logger.info(
+        "Evolution: %d generated, %d validated, %d adopted (%.1fs)",
+        result.n_generated, result.n_validated, result.n_adopted, result.elapsed,
+    )
+    print(
+        f"Evolution: {result.n_generated} generated, "
+        f"{result.n_validated} validated, {result.n_adopted} adopted "
+        f"({result.elapsed:.1f}s)"
+    )
+
+
 def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     interval = args.interval or cfg.forward.check_interval
@@ -631,7 +707,19 @@ def cmd_live(args: argparse.Namespace) -> None:
         trader.close()
         return
 
+    from alpha_os.alpha.registry import AlphaState
+
+    pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
+
+    def _needs_evolution():
+        active = trader.registry.list_by_state(AlphaState.ACTIVE)
+        probation = trader.registry.list_by_state(AlphaState.PROBATION)
+        return len(active) + len(probation) == 0
+
     if args.once or not args.schedule:
+        if _needs_evolution():
+            print("No alphas in registry — running evolution...")
+            _run_evolution(trader, cfg, pipeline_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
         trader.reconcile()
@@ -639,7 +727,17 @@ def cmd_live(args: argparse.Namespace) -> None:
         trader.close()
         return
 
+    last_evolve = 0.0
+
     def cycle():
+        nonlocal last_evolve
+        now = time.time()
+        evolve_interval = args.evolve_interval
+        if evolve_interval > 0:
+            if _needs_evolution() or (now - last_evolve) >= evolve_interval:
+                print("Running alpha evolution...")
+                _run_evolution(trader, cfg, pipeline_cfg)
+                last_evolve = now
         result = trader.run_cycle()
         _print_paper_result(result)
         trader.reconcile()
