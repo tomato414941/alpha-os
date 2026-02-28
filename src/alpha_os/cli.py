@@ -15,7 +15,7 @@ from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR
 from alpha_os.alpha.evaluator import FAILED_FITNESS
-from alpha_os.data.universe import price_signal, build_feature_list, SIGNAL_NOISE_DB
+from alpha_os.data.universe import price_signal, build_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.archive import AlphaArchive
@@ -171,27 +171,22 @@ def _real_data(
 
     db_path = DATA_DIR / "alpha_cache.db"
 
-    store = DataStore(db_path)
+    from signal_noise.client import SignalClient
+    client = SignalClient(
+        base_url=config.api.base_url,
+        timeout=config.api.timeout,
+    )
+    store = DataStore(db_path, client)
 
-    # Import from signal-noise DB (fast, local)
-    if SIGNAL_NOISE_DB.exists():
-        store.import_from_signal_noise(SIGNAL_NOISE_DB, features)
-
-    # Try API sync (best-effort, for signals not in signal-noise)
-    client = None
+    # Sync from REST API (incremental, best-effort)
     try:
-        from signal_noise.client import SignalClient
-        client = SignalClient(
-            base_url=config.api.base_url,
-            timeout=config.api.timeout,
-        )
         if client.health():
             print(f"Syncing from {config.api.base_url} ...")
             store.sync(features)
         else:
             print(f"API unavailable at {config.api.base_url} — using cache")
     except Exception:
-        pass
+        print("API sync failed — using cache")
 
     matrix = store.get_matrix(features)
 

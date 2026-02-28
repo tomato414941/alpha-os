@@ -20,7 +20,7 @@ from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
-from ..data.universe import build_feature_list, SIGNAL_NOISE_DB
+from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
@@ -235,8 +235,6 @@ class Trader:
 
         # 1. Sync data (skip in simulation mode — use cached data)
         if simulation_date is None:
-            if SIGNAL_NOISE_DB.exists():
-                self.store.import_from_signal_noise(SIGNAL_NOISE_DB, self.features)
             try:
                 logger.info("Syncing %d signals...", len(self.features))
                 self.store.sync(self.features)

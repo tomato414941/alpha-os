@@ -14,7 +14,7 @@ from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR
 from ..data.store import DataStore
-from ..data.universe import build_feature_list, SIGNAL_NOISE_DB
+from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
 from ..alpha.combiner import (
@@ -55,13 +55,20 @@ def run_backfill(
     calling run_cycle() per day.
     """
     # 1. Load full data range
-    store = DataStore(DATA_DIR / "alpha_cache.db")
+    from signal_noise.client import SignalClient
+    client = SignalClient(
+        base_url=config.api.base_url,
+        timeout=config.api.timeout,
+    )
+    store = DataStore(DATA_DIR / "alpha_cache.db", client)
     features = build_feature_list(asset)
     price_sig = features[0]
 
-    # Import from signal-noise DB
-    if SIGNAL_NOISE_DB.exists():
-        store.import_from_signal_noise(SIGNAL_NOISE_DB, features)
+    # Sync from REST API
+    try:
+        store.sync(features)
+    except Exception:
+        logger.warning("API sync failed — using cached data")
 
     matrix = store.get_matrix(features, start=start_date, end=end_date)
     # Only require price signal; fill NaN for other signals
