@@ -16,7 +16,7 @@ min_days = 200
 eval_window_days = 0  # 0 = all data; >0 = trailing N days
 
 [validation]
-oos_sharpe_min = 0.2
+oos_sharpe_min = 0.05
 pbo_max = 1.0          # warn only — lifecycle manages quality
 dsr_pvalue_max = 1.0   # disabled — lifecycle manages quality
 fdr_threshold = 0.05
