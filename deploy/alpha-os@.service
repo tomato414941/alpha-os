@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 User=dev
 WorkingDirectory=/home/dev/projects/alpha-os
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs /home/dev/projects/alpha-os/data/%i/metrics
 ExecStart=/home/dev/projects/alpha-os/scripts/run_schedule.sh %i
 Restart=on-failure
 RestartSec=60
