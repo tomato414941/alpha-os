@@ -424,3 +424,143 @@ Success criteria: 10 consecutive days without errors or unexpected state.
 - Automatic capital scaling — manual decision at each gate
 - Multi-exchange — Binance only until system is proven
 - Futures/margin — spot only, no leverage
+
+## Multi-Asset Expansion Roadmap
+
+### Vision
+
+Alpha-OS's core engine (DSL → GP evolution → validation → lifecycle) is
+asset-agnostic. The same pipeline that discovers BTC alphas can discover
+edges in ETH, SOL, US equities, and beyond. The goal is to expand across
+uncorrelated markets to diversify returns while reusing the same
+infrastructure.
+
+### Asset Universe
+
+Already defined in `data/universe.py`:
+
+| Class         | Assets                                   | Data Source     | Executor     |
+| ------------- | ---------------------------------------- | --------------- | ------------ |
+| Crypto spot   | BTC, ETH, SOL, BNB, XRP, ADA, DOGE       | signal-noise    | Binance      |
+| US equities   | NVDA, AAPL, MSFT, GOOGL, AMZN, META, TSLA, AMD | signal-noise | Alpaca  |
+| Macro signals | VIX, DXY, gold, oil, S&P500, Nasdaq, bonds | signal-noise  | (input only) |
+| Alternative   | earthquake, sunspot, ENSO, mempool, hashrate | signal-noise | (input only) |
+
+Macro and alternative signals are used as **inputs to alpha expressions**,
+not as tradable assets. They improve alpha quality by enabling cross-domain
+regime detection (e.g., `(if_gt vix_close 30.0 (neg btc_ohlcv) (roc_10 btc_ohlcv))`).
+
+### Phase 6: Multi-Crypto (parallel BTC operation)
+
+Run independent alpha-evolution + trading cycles for each crypto asset.
+Each asset gets its own registry, lifecycle, and risk budget.
+
+```
+cron: 0 */4 * * *
+  ├── run_live.sh --asset BTC
+  ├── run_live.sh --asset ETH
+  └── run_live.sh --asset SOL
+```
+
+Implementation:
+- Add per-asset DB isolation (`alpha_registry_ETH.db`, etc.) or
+  asset column in existing tables
+- Extend `run_live.sh` to accept `--asset` parameter
+- Independent testnet validation per asset (10 days each)
+- Capital allocation: equal-weight initially, then risk-parity
+
+Prerequisite: Phase 4 complete for BTC.
+
+### Phase 7: US Equities via Alpaca
+
+Add `AlpacaExecutor` conforming to `Executor` ABC.
+
+| Feature           | Binance (crypto)          | Alpaca (equities)            |
+| ----------------- | ------------------------- | ---------------------------- |
+| Market hours      | 24/7                      | 9:30-16:00 ET (Mon-Fri)     |
+| Settlement        | Instant                   | T+1                         |
+| Commission        | ~0.1%                     | $0                          |
+| Min order         | Varies by pair            | Fractional shares supported |
+| API               | CCXT                      | alpaca-py SDK               |
+
+Implementation:
+- `src/alpha_os/execution/alpaca.py` — replace existing stub
+- Market-hours-aware scheduling (skip weekends/holidays)
+- Separate credentials: `~/.secrets/alpaca`, `~/.secrets/alpaca_real`
+- Paper trading via Alpaca paper endpoint first
+
+Signals already available: NVDA, AAPL, MSFT, GOOGL, AMZN, META, TSLA, AMD
+from signal-noise collectors.
+
+### Phase 8: Crypto Futures (leverage)
+
+Add `BinanceFuturesExecutor` for USDT-M perpetual contracts.
+
+Benefits:
+- Long **and** short positions (current spot is long-only)
+- Leverage (2-5x conservative) amplifies alpha edge
+- Funding rate as additional signal input
+
+Risks:
+- Liquidation risk — requires tighter circuit breaker thresholds
+- Higher complexity in position management
+
+Implementation:
+- CCXT supports Binance Futures (`defaultType: "future"`)
+- Extend `CircuitBreaker` with liquidation-distance check
+- Add funding rate to signal-noise collectors
+- New risk parameter: `max_leverage` in config
+
+Prerequisite: Phase 5 profitable for ≥4 weeks on spot.
+
+### Phase 9: Cross-Asset Strategy
+
+Use correlations between asset classes as alpha inputs:
+
+```
+# Example: BTC alpha using equity and macro signals
+(if_gt (corr_20 sp500 btc_ohlcv) 0.7
+  (roc_10 sp500)           # high correlation → follow equities
+  (neg (roc_10 dxy)))      # low correlation → inverse dollar
+```
+
+Implementation:
+- Portfolio-level capital allocator across strategies
+- Risk-parity weighting: allocate inversely proportional to volatility
+- Cross-asset circuit breaker: halt all if total portfolio DD > threshold
+- Unified daily report across all strategies
+
+### Architecture After Expansion
+
+```
+alpha-os
+├── core/           DSL, GP, backtest, validation (shared)
+├── strategy/
+│   ├── crypto-spot/     BTC, ETH, SOL (Binance)
+│   ├── us-equities/     NVDA, AAPL, ... (Alpaca)
+│   └── crypto-futures/  BTC-PERP (Binance Futures)
+├── execution/
+│   ├── binance.py       Spot executor
+│   ├── binance_futures.py  Futures executor
+│   └── alpaca.py        Equities executor
+├── risk/
+│   ├── circuit_breaker.py  Per-strategy + global
+│   └── allocator.py        Cross-strategy capital allocation
+└── signal-noise         (external) data for all strategies
+```
+
+### Priority Order
+
+| Phase | What                 | Why                                     | Prerequisite        |
+| ----- | -------------------- | --------------------------------------- | ------------------- |
+| 6     | Multi-crypto         | Lowest effort, same infra, diversify    | Phase 4 complete    |
+| 7     | US equities          | Large market, zero commission, data ready | Phase 6 stable   |
+| 8     | Crypto futures       | Short selling, leverage, higher returns | Phase 5 profitable  |
+| 9     | Cross-asset          | Portfolio-level optimization            | Phase 7 stable      |
+
+### What Remains Out of Scope
+
+- **DeFi / on-chain trading** — smart contract risk, MEV, different execution model
+- **Forex** — requires separate broker, 24/5 schedule, different market microstructure
+- **Options** — pricing model complexity beyond GP's current expressiveness
+- **HFT** — daily rebalance is the design choice; sub-minute trading needs different architecture
