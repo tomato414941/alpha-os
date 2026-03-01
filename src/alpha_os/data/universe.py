@@ -55,6 +55,11 @@ EXTRA_SIGNALS = [
 _ALL_ASSETS = {**STOCKS, **CRYPTO}
 
 
+def is_crypto(asset: str) -> bool:
+    """Return True if asset is a cryptocurrency (traded on Binance)."""
+    return asset.upper() in CRYPTO
+
+
 def all_signals() -> list[str]:
     """Return all signal names used for alpha generation."""
     return list(_ALL_ASSETS.values()) + MACRO_SIGNALS

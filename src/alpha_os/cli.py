@@ -15,7 +15,7 @@ from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.alpha.evaluator import FAILED_FITNESS
-from alpha_os.data.universe import price_signal, build_feature_list
+from alpha_os.data.universe import is_crypto, price_signal, build_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.archive import AlphaArchive
@@ -684,23 +684,25 @@ def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
 ):
     """Create trader, circuit breaker, and validator for one asset."""
-    from alpha_os.execution.binance import BinanceExecutor
     from alpha_os.paper.trader import Trader
     from alpha_os.risk.circuit_breaker import CircuitBreaker
 
     adir = asset_data_dir(asset)
-    signal_name = price_signal(asset)
-    market_symbol = f"{asset}/USDT"
-    symbol_map = {signal_name: market_symbol}
-
-    executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
     cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
     cfg.trading.initial_capital = capital
+
+    executor = None
+    if is_crypto(asset):
+        from alpha_os.execution.binance import BinanceExecutor
+        signal_name = price_signal(asset)
+        market_symbol = f"{asset}/USDT"
+        symbol_map = {signal_name: market_symbol}
+        executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
 
     trader = Trader(asset=asset, config=cfg, executor=executor, circuit_breaker=cb)
 
     validator = None
-    if testnet:
+    if testnet and is_crypto(asset):
         from alpha_os.validation.testnet import TestnetValidator
         validator = TestnetValidator(
             state_path=adir / "metrics" / "testnet_validation.json",
