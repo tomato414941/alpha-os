@@ -77,6 +77,8 @@ class PaperPortfolioTracker:
                 qty REAL NOT NULL,
                 price REAL NOT NULL,
                 order_id TEXT NOT NULL,
+                slippage_bps REAL NOT NULL DEFAULT 0.0,
+                latency_ms REAL NOT NULL DEFAULT 0.0,
                 recorded_at REAL NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_fills_date ON paper_fills(date);
@@ -87,6 +89,20 @@ class PaperPortfolioTracker:
                 PRIMARY KEY (date, alpha_id)
             );
         """)
+        self._migrate_fills_columns()
+
+    def _migrate_fills_columns(self) -> None:
+        """Add slippage_bps and latency_ms columns if missing (existing DB migration)."""
+        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(paper_fills)")}
+        if "slippage_bps" not in existing:
+            self._conn.execute(
+                "ALTER TABLE paper_fills ADD COLUMN slippage_bps REAL NOT NULL DEFAULT 0.0"
+            )
+        if "latency_ms" not in existing:
+            self._conn.execute(
+                "ALTER TABLE paper_fills ADD COLUMN latency_ms REAL NOT NULL DEFAULT 0.0"
+            )
+        self._conn.commit()
 
     def save_snapshot(self, snapshot: PortfolioSnapshot) -> None:
         self._conn.execute(
@@ -112,13 +128,15 @@ class PaperPortfolioTracker:
     def save_fills(self, date: str, fills: list[Fill]) -> None:
         now = time.time()
         rows = [
-            (date, f.symbol, f.side, f.qty, f.price, f.order_id, now)
+            (date, f.symbol, f.side, f.qty, f.price, f.order_id,
+             f.slippage_bps, f.latency_ms, now)
             for f in fills
         ]
         self._conn.executemany(
             """INSERT INTO paper_fills
-            (date, symbol, side, qty, price, order_id, recorded_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (date, symbol, side, qty, price, order_id,
+             slippage_bps, latency_ms, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             rows,
         )
         self._conn.commit()
@@ -246,6 +264,40 @@ class PaperPortfolioTracker:
             current_positions=json.loads(last["positions_json"]),
             current_cash=last["cash"],
         )
+
+    def get_slippage_stats(self) -> dict:
+        """Return slippage distribution statistics from all fills."""
+        rows = self._conn.execute(
+            "SELECT slippage_bps FROM paper_fills WHERE slippage_bps > 0 ORDER BY slippage_bps"
+        ).fetchall()
+        if not rows:
+            return {"count": 0, "mean_bps": 0.0, "p50_bps": 0.0, "p95_bps": 0.0, "max_bps": 0.0}
+        values = [r["slippage_bps"] for r in rows]
+        n = len(values)
+        return {
+            "count": n,
+            "mean_bps": sum(values) / n,
+            "p50_bps": values[n // 2],
+            "p95_bps": values[min(int(n * 0.95), n - 1)],
+            "max_bps": values[-1],
+        }
+
+    def get_latency_stats(self) -> dict:
+        """Return fill latency distribution statistics."""
+        rows = self._conn.execute(
+            "SELECT latency_ms FROM paper_fills WHERE latency_ms > 0 ORDER BY latency_ms"
+        ).fetchall()
+        if not rows:
+            return {"count": 0, "mean_ms": 0.0, "p50_ms": 0.0, "p95_ms": 0.0, "max_ms": 0.0}
+        values = [r["latency_ms"] for r in rows]
+        n = len(values)
+        return {
+            "count": n,
+            "mean_ms": sum(values) / n,
+            "p50_ms": values[n // 2],
+            "p95_ms": values[min(int(n * 0.95), n - 1)],
+            "max_ms": values[-1],
+        }
 
     def close(self) -> None:
         self._conn.close()

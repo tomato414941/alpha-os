@@ -40,3 +40,7 @@ min_trade_usd = 10.0
 check_interval = 14400
 min_forward_days = 30
 degradation_window = 63
+
+[testnet]
+target_success_days = 10
+max_acceptable_slippage_bps = 50.0

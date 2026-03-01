@@ -23,6 +23,8 @@ class Fill:
     qty: float
     price: float
     order_id: str = ""
+    slippage_bps: float = 0.0
+    latency_ms: float = 0.0
 
 
 class Executor(ABC):

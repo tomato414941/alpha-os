@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from pathlib import Path
 
 from .executor import Executor, Order, Fill
@@ -206,7 +207,10 @@ class BinanceExecutor(Executor):
         if qty <= 0:
             return None
 
+        t0 = time.perf_counter()
         result = self._exchange.create_market_buy_order(market, qty)
+        latency_ms = (time.perf_counter() - t0) * 1000
+
         filled_price = float(result.get("average", best_ask))
         filled_qty = float(result.get("filled", qty))
 
@@ -220,6 +224,8 @@ class BinanceExecutor(Executor):
             qty=filled_qty,
             price=filled_price,
             order_id=str(result.get("id", "")),
+            slippage_bps=slippage,
+            latency_ms=latency_ms,
         )
 
     def _market_sell(self, market: str, order: Order) -> Fill | None:
@@ -245,7 +251,10 @@ class BinanceExecutor(Executor):
         if qty <= 0:
             return None
 
+        t0 = time.perf_counter()
         result = self._exchange.create_market_sell_order(market, qty)
+        latency_ms = (time.perf_counter() - t0) * 1000
+
         filled_price = float(result.get("average", best_bid))
         filled_qty = float(result.get("filled", qty))
 
@@ -259,4 +268,6 @@ class BinanceExecutor(Executor):
             qty=filled_qty,
             price=filled_price,
             order_id=str(result.get("id", "")),
+            slippage_bps=slippage,
+            latency_ms=latency_ms,
         )

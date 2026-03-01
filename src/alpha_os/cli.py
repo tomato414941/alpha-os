@@ -130,6 +130,14 @@ def _build_parser() -> argparse.ArgumentParser:
     liv.add_argument("--generations", type=int, default=30,
                      help="GP generations per evolution cycle")
 
+    # validate-testnet
+    vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
+    vt.add_argument("--reports", action="store_true", help="Show all daily reports")
+    vt.add_argument("--slippage", action="store_true", help="Show slippage distribution")
+    vt.add_argument("--latency", action="store_true", help="Show fill latency distribution")
+    vt.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
+    vt.add_argument("--config", type=str, default=None)
+
     return parser
 
 
@@ -645,6 +653,23 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
     )
 
 
+def _print_validation_report(report) -> None:
+    print(f"\n--- Testnet Validation Report ({report.date}) ---")
+    print(f"  Cycle OK:       {report.cycle_completed}")
+    print(f"  Recon match:    {report.reconciliation_match}")
+    print(f"  CB halted:      {report.circuit_breaker_halted}")
+    if report.n_fills > 0:
+        print(f"  Fills:          {report.n_fills}")
+        print(f"  Avg slippage:   {report.mean_slippage_bps:.1f} bps")
+        print(f"  Avg latency:    {report.mean_latency_ms:.0f} ms")
+    if report.has_errors:
+        print("  ERRORS:")
+        for e in report.error_details:
+            print(f"    - {e}")
+    else:
+        print("  Status:         OK")
+
+
 def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     interval = args.interval or cfg.forward.check_interval
@@ -716,13 +741,30 @@ def cmd_live(args: argparse.Namespace) -> None:
         probation = trader.registry.list_by_state(AlphaState.PROBATION)
         return len(active) + len(probation) == 0
 
+    # Phase 4 validation (testnet only)
+    validator = None
+    if testnet:
+        from alpha_os.validation.testnet import TestnetValidator
+        validator = TestnetValidator(
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+
+    def _run_validation(result, recon):
+        if validator is None:
+            return
+        report = validator.validate_cycle(result, recon, cb, result.fills)
+        _print_validation_report(report)
+        validator.print_status()
+
     if args.once or not args.schedule:
         if _needs_evolution():
             print("No alphas in registry — running evolution...")
             _run_evolution(trader, cfg, pipeline_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
-        trader.reconcile()
+        recon = trader.reconcile()
+        _run_validation(result, recon)
         trader.print_status()
         trader.close()
         return
@@ -740,7 +782,8 @@ def cmd_live(args: argparse.Namespace) -> None:
                 last_evolve = now
         result = trader.run_cycle()
         _print_paper_result(result)
-        trader.reconcile()
+        recon = trader.reconcile()
+        _run_validation(result, recon)
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
@@ -750,6 +793,59 @@ def cmd_live(args: argparse.Namespace) -> None:
         scheduler.start()
     finally:
         trader.close()
+
+
+def cmd_validate_testnet(args: argparse.Namespace) -> None:
+    import json as _json
+
+    from alpha_os.validation.testnet import TestnetValidator, VALIDATION_REPORT_PATH
+
+    cfg = _load_config(getattr(args, "config", None))
+    validator = TestnetValidator(
+        target_days=cfg.testnet.target_success_days,
+        max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+    )
+
+    if args.reset:
+        validator._state.consecutive_success_days = 0
+        validator._state.passed = False
+        validator._save_state()
+        print("Reset consecutive success counter to 0.")
+        return
+
+    validator.print_status()
+
+    if args.slippage or args.latency:
+        from alpha_os.paper.tracker import PaperPortfolioTracker
+        tracker = PaperPortfolioTracker()
+        if args.slippage:
+            stats = tracker.get_slippage_stats()
+            print(f"\nSlippage Distribution ({stats['count']} fills)")
+            print(f"  Mean:  {stats['mean_bps']:.1f} bps")
+            print(f"  P50:   {stats['p50_bps']:.1f} bps")
+            print(f"  P95:   {stats['p95_bps']:.1f} bps")
+            print(f"  Max:   {stats['max_bps']:.1f} bps")
+        if args.latency:
+            stats = tracker.get_latency_stats()
+            print(f"\nFill Latency Distribution ({stats['count']} fills)")
+            print(f"  Mean:  {stats['mean_ms']:.0f} ms")
+            print(f"  P50:   {stats['p50_ms']:.0f} ms")
+            print(f"  P95:   {stats['p95_ms']:.0f} ms")
+            print(f"  Max:   {stats['max_ms']:.0f} ms")
+        tracker.close()
+
+    if args.reports:
+        if not VALIDATION_REPORT_PATH.exists():
+            print("\nNo reports yet.")
+            return
+        print("\nDaily Reports:")
+        for line in VALIDATION_REPORT_PATH.read_text().splitlines():
+            r = _json.loads(line)
+            status = "OK" if not r["has_errors"] else "ERROR"
+            print(
+                f"  {r['date']} [{status}] PV=${r['portfolio_value']:,.2f} "
+                f"PnL=${r['daily_pnl']:+,.2f} fills={r['n_fills']}"
+            )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -774,3 +870,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_paper(args)
     elif args.command == "live":
         cmd_live(args)
+    elif args.command == "validate-testnet":
+        cmd_validate_testnet(args)

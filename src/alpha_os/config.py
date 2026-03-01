@@ -81,6 +81,12 @@ class ForwardTestConfig:
 
 
 @dataclass
+class TestnetConfig:
+    target_success_days: int = 10
+    max_acceptable_slippage_bps: float = 50.0
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -90,6 +96,7 @@ class Config:
     trading: TradingConfig = field(default_factory=TradingConfig)
     paper: PaperTradingConfig = field(default_factory=PaperTradingConfig)
     forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
+    testnet: TestnetConfig = field(default_factory=TestnetConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -108,4 +115,5 @@ class Config:
             trading=TradingConfig(**raw.get("trading", {})),
             paper=PaperTradingConfig(**raw.get("paper", {})),
             forward=ForwardTestConfig(**raw.get("forward", {})),
+            testnet=TestnetConfig(**raw.get("testnet", {})),
         )
