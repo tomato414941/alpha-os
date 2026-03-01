@@ -84,6 +84,8 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     val.add_argument("--live", action="store_true",
                     help="(deprecated — real data is now the default)")
+    val.add_argument("--layer", type=int, default=3, choices=[2, 3],
+                    help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     val.add_argument("--config", type=str, default=None)
 
     # forward
@@ -94,6 +96,8 @@ def _build_parser() -> argparse.ArgumentParser:
     fwd.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
     fwd.add_argument("--asset", type=str, default="NVDA")
+    fwd.add_argument("--layer", type=int, default=3, choices=[2, 3],
+                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     fwd.add_argument("--config", type=str, default=None)
 
     # paper
@@ -109,6 +113,8 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Start date for backfill (ISO format, e.g. 2025-06-01)")
     ppr.add_argument("--end", type=str, default=None,
                      help="End date for backfill (ISO format, e.g. 2026-02-25)")
+    ppr.add_argument("--tactical", action="store_true",
+                     help="Enable Layer 2 tactical modulation")
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
@@ -430,7 +436,12 @@ def cmd_evolve(args: argparse.Namespace) -> None:
 def cmd_validate(args: argparse.Namespace) -> None:
     _warn_deprecated_live(args)
     cfg = _load_config(args.config)
-    features = _make_features(args.asset)
+    layer = getattr(args, "layer", 3)
+
+    if layer == 2:
+        features = build_hourly_feature_list(args.asset)
+    else:
+        features = _make_features(args.asset)
 
     # Parse expression
     expr = parse(args.expr)
@@ -440,7 +451,9 @@ def cmd_validate(args: argparse.Namespace) -> None:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
     else:
-        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
+        resolution = "1h" if layer == 2 else "1d"
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window,
+                                   resolution=resolution)
 
     price_feat = features[0]
     prices = data[price_feat]
@@ -460,7 +473,8 @@ def cmd_validate(args: argparse.Namespace) -> None:
         embargo=cfg.validation.embargo_days,
     )
 
-    print(f"\nPurged Walk-Forward CV ({cv.n_folds} folds):")
+    layer_label = "hourly" if layer == 2 else "daily"
+    print(f"\nPurged Walk-Forward CV ({layer_label}, {cv.n_folds} folds):")
     print(f"  OOS Sharpe:     {cv.oos_sharpe:>8.3f} +/- {cv.oos_sharpe_std:.3f}")
     print(f"  OOS Return:     {cv.oos_return:>7.1%}")
     print(f"  OOS Max DD:     {cv.oos_max_dd:>7.1%}")
@@ -481,7 +495,10 @@ def cmd_forward(args: argparse.Namespace) -> None:
         min_forward_days=cfg.forward.min_forward_days,
         degradation_window=cfg.forward.degradation_window,
     )
-    runner = ForwardRunner(asset=args.asset, config=cfg, forward_config=fwd_cfg)
+    layer = getattr(args, "layer", 3)
+    resolution = "1h" if layer == 2 else "1d"
+    runner = ForwardRunner(asset=args.asset, config=cfg, forward_config=fwd_cfg,
+                           resolution=resolution)
 
     if args.summary:
         runner.print_summary()
@@ -536,7 +553,12 @@ def cmd_paper(args: argparse.Namespace) -> None:
     from alpha_os.paper.trader import PaperTrader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
-    trader = PaperTrader(asset=args.asset, config=cfg)
+    tactical = None
+    if getattr(args, "tactical", False):
+        from alpha_os.paper.tactical import TacticalTrader
+        tactical = TacticalTrader(asset=args.asset, config=cfg)
+
+    trader = PaperTrader(asset=args.asset, config=cfg, tactical=tactical)
 
     if args.summary:
         trader.print_status()
@@ -544,6 +566,10 @@ def cmd_paper(args: argparse.Namespace) -> None:
         return
 
     if args.once or not args.schedule:
+        if tactical is not None and _needs_evolution_l2(tactical):
+            l2_cfg = _build_l2_pipeline_config(cfg, 200, 30)
+            print("No L2 alphas — running L2 evolution...")
+            _run_l2_evolution(tactical, cfg, l2_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
         trader.print_status()
@@ -551,6 +577,10 @@ def cmd_paper(args: argparse.Namespace) -> None:
         return
 
     def cycle():
+        if tactical is not None and _needs_evolution_l2(tactical):
+            l2_cfg = _build_l2_pipeline_config(cfg, 200, 30)
+            print("No L2 alphas — running L2 evolution...")
+            _run_l2_evolution(tactical, cfg, l2_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
 
