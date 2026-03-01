@@ -15,7 +15,7 @@ from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.alpha.evaluator import FAILED_FITNESS
-from alpha_os.data.universe import is_crypto, price_signal, build_feature_list
+from alpha_os.data.universe import is_crypto, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.archive import AlphaArchive
@@ -67,6 +67,8 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     evo.add_argument("--live", action="store_true",
                     help="(deprecated — real data is now the default)")
+    evo.add_argument("--layer", type=int, default=3, choices=[2, 3],
+                    help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     evo.add_argument("--config", type=str, default=None)
 
     # validate
@@ -182,11 +184,13 @@ def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np
 
 def _real_data(
     features: list[str], config: Config, eval_window: int = 0,
+    resolution: str = "1d",
 ) -> tuple[dict[str, np.ndarray], int]:
     """Load real data: cache-first, import from signal-noise, sync from API."""
     from alpha_os.data.store import DataStore
 
-    db_path = DATA_DIR / "alpha_cache.db"
+    db_name = "alpha_cache_l2.db" if resolution != "1d" else "alpha_cache.db"
+    db_path = DATA_DIR / db_name
 
     from signal_noise.client import SignalClient
     client = SignalClient(
@@ -198,14 +202,14 @@ def _real_data(
     # Sync from REST API (incremental, best-effort)
     try:
         if client.health():
-            print(f"Syncing from {config.api.base_url} ...")
-            store.sync(features)
+            print(f"Syncing from {config.api.base_url} (resolution={resolution}) ...")
+            store.sync(features, resolution=resolution)
         else:
             print(f"API unavailable at {config.api.base_url} — using cache")
     except Exception:
         print("API sync failed — using cache")
 
-    matrix = store.get_matrix(features)
+    matrix = store.get_matrix(features, resolution=resolution)
 
     # Only require price signal (first feature) to be present
     price_col = features[0]
@@ -346,13 +350,18 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 def cmd_evolve(args: argparse.Namespace) -> None:
     _warn_deprecated_live(args)
     cfg = _load_config(args.config)
-    features = _make_features(args.asset)
+    layer = getattr(args, "layer", 3)
+    if layer == 2:
+        features = build_hourly_feature_list(args.asset)
+    else:
+        features = _make_features(args.asset)
 
     if args.synthetic:
         n_days = args.days
         data = _synthetic_data(features, n_days, seed=args.seed + 1000)
     else:
-        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
+        resolution = "1h" if layer == 2 else "1d"
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window, resolution=resolution)
 
     price_feat = features[0]
     prices = data[price_feat]
@@ -405,7 +414,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             continue
 
     total_time = time.perf_counter() - t0
-    print(f"Evolution: {len(results)} unique alphas in {evolve_time:.2f}s")
+    layer_label = f"Layer {layer}" if layer == 2 else "Layer 3"
+    print(f"Evolution ({layer_label}): {len(results)} unique alphas in {evolve_time:.2f}s")
     print(f"Archive: {archive.size}/{archive.capacity} cells filled ({archive.coverage:.1%} coverage)")
     print(f"Total time: {total_time:.2f}s\n")
 

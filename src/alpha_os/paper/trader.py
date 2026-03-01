@@ -34,6 +34,7 @@ from ..alpha.combiner import (
 )
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
+from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ class Trader:
         circuit_breaker: CircuitBreaker | None = None,
         audit_log: AuditLog | None = None,
         store: DataStore | None = None,
+        tactical: TacticalTrader | None = None,
     ):
         self.asset = asset
         self.config = config
@@ -123,6 +125,7 @@ class Trader:
             )
             self.store = DataStore(DATA_DIR / "alpha_cache.db", client)
 
+        self.tactical = tactical
         self._wcfg = WeightedCombinerConfig()
         self._diversity_cache: dict[str, float] = {}
         self._diversity_computed = False
@@ -347,6 +350,18 @@ class Trader:
         dd_s = self.risk_manager.dd_scale
         vol_s = self.risk_manager.vol_scale(recent_returns)
         adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
+
+        # 5b. Tactical modulation (Layer 2)
+        if self.tactical is not None:
+            try:
+                tac = self.tactical.run_cycle(strategic_bias=adjusted)
+                adjusted = tac.combined_signal
+                logger.info(
+                    "Tactical: score=%.3f, combined=%.3f (was %.3f)",
+                    tac.tactical_score, tac.combined_signal, adjusted,
+                )
+            except Exception:
+                logger.warning("Tactical cycle failed — using strategic signal only")
 
         # 6. Get execution price: prefer real-time from exchange, fall back to daily close
         live_price = self.executor.fetch_ticker_price(self.price_signal)
