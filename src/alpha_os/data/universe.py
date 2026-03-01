@@ -52,6 +52,13 @@ EXTRA_SIGNALS = [
     "steam_online",
 ]
 
+HOURLY_SIGNALS = [
+    "funding_rate_btc", "funding_rate_eth", "funding_rate_sol",
+    "liq_ratio_btc_1h", "liq_ratio_eth_1h",
+    "oi_btc_1h", "oi_eth_1h", "oi_sol_1h",
+    "ls_ratio_global_btc", "ls_ratio_top_btc", "ls_position_ratio_btc",
+]
+
 _ALL_ASSETS = {**STOCKS, **CRYPTO}
 
 
@@ -121,6 +128,21 @@ def load_daily_signals() -> list[str]:
 
     _daily_signal_cache = MACRO_SIGNALS
     return _daily_signal_cache
+
+
+def build_hourly_feature_list(asset: str) -> list[str]:
+    """Layer 2 feature list: price signal + hourly derivatives signals."""
+    try:
+        price = price_signal(asset)
+    except KeyError:
+        price = asset.lower()
+    seen = {price}
+    result = [price]
+    for s in HOURLY_SIGNALS:
+        if s not in seen:
+            seen.add(s)
+            result.append(s)
+    return result
 
 
 def discover_signals(
