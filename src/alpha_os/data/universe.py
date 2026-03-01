@@ -57,6 +57,8 @@ HOURLY_SIGNALS = [
     "liq_ratio_btc_1h", "liq_ratio_eth_1h",
     "oi_btc_1h", "oi_eth_1h", "oi_sol_1h",
     "ls_ratio_global_btc", "ls_ratio_top_btc", "ls_position_ratio_btc",
+    "iv_atm_btc_30d", "iv_atm_btc_7d", "iv_skew_btc_7d",
+    "put_call_ratio_btc", "max_pain_btc", "gamma_exposure_btc",
 ]
 
 _ALL_ASSETS = {**STOCKS, **CRYPTO}
