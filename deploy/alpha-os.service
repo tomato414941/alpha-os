@@ -1,0 +1,21 @@
+[Unit]
+Description=Alpha-OS multi-asset trading
+After=network.target
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/logs
+ExecStart=/home/dev/projects/alpha-os/scripts/run_schedule.sh BTC,ETH,SOL,BNB,XRP,ADA,DOGE
+Restart=on-failure
+RestartSec=60
+StandardOutput=append:/home/dev/projects/alpha-os/data/logs/service.log
+StandardError=append:/home/dev/projects/alpha-os/data/logs/service.log
+
+# Graceful shutdown via SIGTERM (PipelineScheduler handles it)
+KillSignal=SIGTERM
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

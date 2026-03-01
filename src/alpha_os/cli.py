@@ -122,6 +122,8 @@ def _build_parser() -> argparse.ArgumentParser:
     liv.add_argument("--capital", type=float, default=10000.0,
                      help="Initial capital for tracking (default: 10000)")
     liv.add_argument("--asset", type=str, default="BTC")
+    liv.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH,SOL)")
     liv.add_argument("--config", type=str, default=None)
     liv.add_argument("--evolve-interval", type=int, default=86400,
                      help="Alpha evolution interval in seconds (default: 86400=24h, 0=disable)")
@@ -671,14 +673,53 @@ def _print_validation_report(report) -> None:
         print("  Status:         OK")
 
 
+def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
+    """Return list of assets from --assets or --asset."""
+    if args.assets:
+        return [a.strip().upper() for a in args.assets.split(",")]
+    return [args.asset.upper()]
+
+
+def _setup_asset_context(
+    asset: str, cfg, testnet: bool, capital: float,
+):
+    """Create trader, circuit breaker, and validator for one asset."""
+    from alpha_os.execution.binance import BinanceExecutor
+    from alpha_os.paper.trader import Trader
+    from alpha_os.risk.circuit_breaker import CircuitBreaker
+
+    adir = asset_data_dir(asset)
+    signal_name = price_signal(asset)
+    market_symbol = f"{asset}/USDT"
+    symbol_map = {signal_name: market_symbol}
+
+    executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
+    cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
+    cfg.trading.initial_capital = capital
+
+    trader = Trader(asset=asset, config=cfg, executor=executor, circuit_breaker=cb)
+
+    validator = None
+    if testnet:
+        from alpha_os.validation.testnet import TestnetValidator
+        validator = TestnetValidator(
+            state_path=adir / "metrics" / "testnet_validation.json",
+            report_path=adir / "metrics" / "testnet_reports.jsonl",
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+
+    return trader, cb, validator
+
+
 def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     interval = args.interval or cfg.forward.check_interval
     testnet = not args.real
+    asset_list = _resolve_asset_list(args)
 
-    # File logging — date-stamped log in data/{ASSET}/logs/
-    adir = asset_data_dir(args.asset)
-    log_dir = adir / "logs"
+    # File logging
+    log_dir = DATA_DIR / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"live_{date.today().isoformat()}.log"
     logging.basicConfig(
@@ -691,9 +732,6 @@ def cmd_live(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.execution.binance import BinanceExecutor
-    from alpha_os.paper.trader import Trader
-    from alpha_os.risk.circuit_breaker import CircuitBreaker
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
     if args.real:
@@ -708,53 +746,35 @@ def cmd_live(args: argparse.Namespace) -> None:
             return
 
     mode = "TESTNET" if testnet else "REAL"
-    print(f"Live trading [{mode}]: asset={args.asset}, interval={interval}s")
+    print(f"Live trading [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
 
-    # Map alpha-os signal name → Binance market symbol
-    signal_name = price_signal(args.asset)
-    market_symbol = f"{args.asset}/USDT"
-    symbol_map = {signal_name: market_symbol}
-    print(f"  Symbol map: {signal_name} → {market_symbol}")
-
-    executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
-    cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
-
-    # Override initial_capital in config for tracking purposes
-    cfg.trading.initial_capital = args.capital
-
-    trader = Trader(
-        asset=args.asset,
-        config=cfg,
-        executor=executor,
-        circuit_breaker=cb,
-    )
+    # Initialize per-asset contexts
+    contexts: dict[str, tuple] = {}
+    for asset in asset_list:
+        trader, cb, validator = _setup_asset_context(
+            asset, cfg, testnet, args.capital,
+        )
+        contexts[asset] = (trader, cb, validator)
+        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
 
     if args.summary:
-        trader.print_status()
-        trader.close()
+        for asset in asset_list:
+            print(f"\n--- {asset} ---")
+            contexts[asset][0].print_status()
+        for trader, _, _ in contexts.values():
+            trader.close()
         return
 
     from alpha_os.alpha.registry import AlphaState
 
     pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
 
-    def _needs_evolution():
+    def _needs_evolution(trader):
         active = trader.registry.list_by_state(AlphaState.ACTIVE)
         probation = trader.registry.list_by_state(AlphaState.PROBATION)
         return len(active) + len(probation) == 0
 
-    # Phase 4 validation (testnet only)
-    validator = None
-    if testnet:
-        from alpha_os.validation.testnet import TestnetValidator
-        validator = TestnetValidator(
-            state_path=adir / "metrics" / "testnet_validation.json",
-            report_path=adir / "metrics" / "testnet_reports.jsonl",
-            target_days=cfg.testnet.target_success_days,
-            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
-        )
-
-    def _run_validation(result, recon):
+    def _run_asset_validation(result, recon, cb, validator):
         if validator is None:
             return
         report = validator.validate_cycle(result, recon, cb, result.fills)
@@ -762,32 +782,40 @@ def cmd_live(args: argparse.Namespace) -> None:
         validator.print_status()
 
     if args.once or not args.schedule:
-        if _needs_evolution():
-            print("No alphas in registry — running evolution...")
-            _run_evolution(trader, cfg, pipeline_cfg)
-        result = trader.run_cycle()
-        _print_paper_result(result)
-        recon = trader.reconcile()
-        _run_validation(result, recon)
-        trader.print_status()
-        trader.close()
+        for asset in asset_list:
+            print(f"\n{'='*40} {asset} {'='*40}")
+            trader, cb, validator = contexts[asset]
+            if _needs_evolution(trader):
+                print(f"No alphas for {asset} — running evolution...")
+                _run_evolution(trader, cfg, pipeline_cfg)
+            result = trader.run_cycle()
+            _print_paper_result(result)
+            recon = trader.reconcile()
+            _run_asset_validation(result, recon, cb, validator)
+            trader.print_status()
+        for trader, _, _ in contexts.values():
+            trader.close()
         return
 
-    last_evolve = 0.0
+    last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
+    logger = logging.getLogger(__name__)
 
     def cycle():
-        nonlocal last_evolve
-        now = time.time()
-        evolve_interval = args.evolve_interval
-        if evolve_interval > 0:
-            if _needs_evolution() or (now - last_evolve) >= evolve_interval:
-                print("Running alpha evolution...")
-                _run_evolution(trader, cfg, pipeline_cfg)
-                last_evolve = now
-        result = trader.run_cycle()
-        _print_paper_result(result)
-        recon = trader.reconcile()
-        _run_validation(result, recon)
+        for asset in asset_list:
+            trader, cb, validator = contexts[asset]
+            logger.info("--- %s cycle start ---", asset)
+            now = time.time()
+            evolve_interval = args.evolve_interval
+            if evolve_interval > 0:
+                if _needs_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
+                    logger.info("Running alpha evolution for %s...", asset)
+                    _run_evolution(trader, cfg, pipeline_cfg)
+                    last_evolve[asset] = now
+            result = trader.run_cycle()
+            _print_paper_result(result)
+            recon = trader.reconcile()
+            _run_asset_validation(result, recon, cb, validator)
+            logger.info("--- %s cycle done ---", asset)
 
     scheduler = PipelineScheduler(
         run_fn=cycle,
@@ -796,7 +824,8 @@ def cmd_live(args: argparse.Namespace) -> None:
     try:
         scheduler.start()
     finally:
-        trader.close()
+        for trader, _, _ in contexts.values():
+            trader.close()
 
 
 def cmd_validate_testnet(args: argparse.Namespace) -> None:
