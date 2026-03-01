@@ -160,6 +160,20 @@ def test_buy_order_no_asks():
     assert fill is None
 
 
+def test_buy_order_insufficient_cash():
+    """Buy should be skipped when available cash is less than order value."""
+    mock_ex = _mock_exchange()
+    # USDT free = $100, but order for 0.1 BTC @ $50000 = $5000
+    mock_ex.fetch_balance.return_value = {
+        "BTC": {"total": 0.0, "free": 0.0},
+        "USDT": {"total": 100.0, "free": 100.0},
+    }
+    ex = _make_executor(mock_ex)
+    fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.1))
+    assert fill is None
+    mock_ex.create_market_buy_order.assert_not_called()
+
+
 def test_buy_order_exceeds_book_depth():
     mock_ex = _mock_exchange()
     # Book depth = 50000*2 + 50010*3 + 50020*5 = 500,130
@@ -227,7 +241,13 @@ def test_submit_order_exchange_exception():
 # ---------------------------------------------------------------------------
 
 def test_rebalance():
-    ex = _make_executor()
+    mock_ex = _mock_exchange()
+    # Ensure enough cash for buy: 0.5 BTC @ ~$50k = $25k
+    mock_ex.fetch_balance.return_value = {
+        "BTC": {"total": 1.5, "free": 1.5},
+        "USDT": {"total": 50000.0, "free": 50000.0},
+    }
+    ex = _make_executor(mock_ex)
     # Current BTC position is 1.5 (from mock).
     # Target 2.0 → buy 0.5.
     fills = ex.rebalance({"BTC": 2.0})

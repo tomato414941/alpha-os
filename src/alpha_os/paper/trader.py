@@ -54,6 +54,7 @@ class PaperCycleResult:
     vol_scale: float
     n_alphas_active: int
     n_alphas_evaluated: int
+    order_failures: int = 0
 
 
 class Trader:
@@ -358,7 +359,7 @@ class Trader:
             logger.info("Using daily close: $%.2f", current_price)
 
         # 7. Compute target position and execute
-        dollar_pos = adjusted * self.initial_capital * self.max_position_pct
+        dollar_pos = adjusted * prev_value * self.max_position_pct
         target_shares_value = dollar_pos / current_price if current_price > 0 else 0.0
 
         if abs(dollar_pos) < self.min_trade_usd:
@@ -366,7 +367,18 @@ class Trader:
 
         target = {self.price_signal: target_shares_value}
         self.executor.set_price(self.price_signal, current_price)
+
+        # Record pre-rebalance positions to detect order failures
+        pre_positions = {sym: self.executor.get_position(sym) for sym in target}
         fills = self.executor.rebalance(target)
+
+        # Count order failures: non-trivial delta expected but no fill produced
+        filled_symbols = {f.symbol for f in fills}
+        order_failures = sum(
+            1 for sym, tgt in target.items()
+            if abs(tgt - pre_positions.get(sym, 0.0)) > 1e-6
+            and sym not in filled_symbols
+        )
 
         # 8. Record snapshot — PnL relative to previous snapshot
         portfolio_value = self.executor.portfolio_value
@@ -411,6 +423,7 @@ class Trader:
             vol_scale=vol_s,
             n_alphas_active=len(active),
             n_alphas_evaluated=n_evaluated,
+            order_failures=order_failures,
         )
 
     def print_status(self) -> None:

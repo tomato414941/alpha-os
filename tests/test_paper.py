@@ -123,6 +123,48 @@ class TestPaperPortfolioTracker:
         tracker.close()
 
 
+class TestPositionSizing:
+    def test_dollar_pos_scales_with_portfolio_value(self, tmp_path):
+        """Position sizing should use current portfolio value, not initial capital."""
+        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.config import Config
+        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.data.store import DataStore
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.governance.audit_log import AuditLog
+
+        cfg = Config()
+        pt = PaperPortfolioTracker(tmp_path / "paper.db")
+
+        # Simulate a grown portfolio: started at $10k, now $50k
+        executor = PaperExecutor(initial_cash=50000.0)
+        trader = PaperTrader(
+            asset="BTC",
+            config=cfg,
+            portfolio_tracker=pt,
+            registry=AlphaRegistry(tmp_path / "reg.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=executor,
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            store=DataStore(tmp_path / "cache.db"),
+        )
+
+        # Verify that position sizing uses prev_value (portfolio_value) not initial_capital
+        adjusted = 0.5
+        prev_value = trader.executor.portfolio_value  # $50,000
+        max_pos = trader.max_position_pct  # 1.0
+
+        expected_dollar_pos = adjusted * prev_value * max_pos  # 0.5 * 50000 * 1.0 = 25000
+        wrong_dollar_pos = adjusted * trader.initial_capital * max_pos  # 0.5 * 10000 * 1.0 = 5000
+
+        assert expected_dollar_pos == 25000.0
+        assert wrong_dollar_pos == 5000.0
+        assert expected_dollar_pos != wrong_dollar_pos
+
+        trader.close()
+
+
 class TestPaperTrader:
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""

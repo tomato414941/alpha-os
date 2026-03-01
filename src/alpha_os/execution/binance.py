@@ -205,6 +205,15 @@ class BinanceExecutor(Executor):
             )
             return None
 
+        # Pre-trade balance check
+        available_cash = self.get_cash()
+        if order_value > available_cash:
+            logger.warning(
+                "Insufficient cash: need $%.2f, have $%.2f for %s, skipping",
+                order_value, available_cash, market,
+            )
+            return None
+
         qty = float(self._exchange.amount_to_precision(market, order.qty))
         if qty <= 0:
             return None

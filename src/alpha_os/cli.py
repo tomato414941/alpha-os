@@ -779,7 +779,10 @@ def cmd_live(args: argparse.Namespace) -> None:
     def _run_asset_validation(result, recon, cb, validator):
         if validator is None:
             return
-        report = validator.validate_cycle(result, recon, cb, result.fills)
+        report = validator.validate_cycle(
+            result, recon, cb, result.fills,
+            order_failures=getattr(result, "order_failures", 0),
+        )
         _print_validation_report(report)
         validator.print_status()
 

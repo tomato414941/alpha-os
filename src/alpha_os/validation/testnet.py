@@ -46,6 +46,8 @@ class DailyReport:
     # Alphas
     n_alphas_active: int = 0
     n_alphas_evaluated: int = 0
+    # Order failures
+    n_order_failures: int = 0
     # Validation result
     has_errors: bool = False
     error_details: list[str] = field(default_factory=list)
@@ -108,6 +110,7 @@ class TestnetValidator:
         circuit_breaker,
         fills: list,
         *,
+        order_failures: int = 0,
         today_override: str | None = None,
     ) -> DailyReport:
         """Run all health checks and produce a daily report."""
@@ -138,6 +141,10 @@ class TestnetValidator:
         if mean_slip > self._max_slippage_bps:
             errors.append(f"Extreme slippage: mean={mean_slip:.1f} bps")
 
+        # Check 4: Order failures
+        if order_failures > 0:
+            errors.append(f"Order failures: {order_failures} orders skipped")
+
         report = DailyReport(
             date=today,
             timestamp=time.time(),
@@ -155,6 +162,7 @@ class TestnetValidator:
             circuit_breaker_reason=circuit_breaker.halt_reason,
             n_alphas_active=cycle_result.n_alphas_active,
             n_alphas_evaluated=cycle_result.n_alphas_evaluated,
+            n_order_failures=order_failures,
             has_errors=len(errors) > 0,
             error_details=errors,
         )

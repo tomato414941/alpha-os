@@ -159,7 +159,7 @@ Five states with automatic transitions based on rolling Sharpe (63-day window):
 | BORN → ACTIVE          | Passes adoption gate         |
 | BORN → REJECTED        | Fails adoption gate          |
 | ACTIVE → PROBATION     | Rolling Sharpe < 0.3         |
-| PROBATION → ACTIVE     | Rolling Sharpe ≥ 0.5         |
+| PROBATION → ACTIVE     | Rolling Sharpe ≥ 0.05        |
 | PROBATION → DORMANT    | Rolling Sharpe < 0           |
 | DORMANT → PROBATION    | Rolling Sharpe ≥ 0.3         |
 
@@ -174,7 +174,7 @@ All criteria must pass for an alpha to be adopted:
 
 | Check         | Threshold | Notes                             |
 | ------------- | --------- | --------------------------------- |
-| OOS Sharpe    | ≥ 0.5     | Purged Walk-Forward CV (5 folds)  |
+| OOS Sharpe    | ≥ 0.05    | Purged Walk-Forward CV (5 folds)  |
 | PBO           | ≤ 1.0     | Batch-computed, warn only         |
 | DSR p-value   | ≤ 1.0     | Disabled — lifecycle manages      |
 | Correlation   | ≤ 0.5     | Avg correlation with live alphas  |

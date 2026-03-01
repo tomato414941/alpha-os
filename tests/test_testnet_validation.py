@@ -190,6 +190,58 @@ class TestDailyReport:
         assert any("zero" in e.lower() for e in report.error_details)
 
 
+class TestOrderFailures:
+    def test_order_failures_produce_error(self, tmp_path):
+        """Order failures should be flagged as errors."""
+        v = TestnetValidator(
+            state_path=tmp_path / "state.json",
+            report_path=tmp_path / "reports.jsonl",
+        )
+        report = v.validate_cycle(
+            _MockCycleResult(), {"match": True}, _mock_cb(), [],
+            order_failures=2,
+            today_override="2026-03-01",
+        )
+        assert report.has_errors is True
+        assert report.n_order_failures == 2
+        assert any("Order failures" in e for e in report.error_details)
+
+    def test_zero_order_failures_no_error(self, tmp_path):
+        """Zero order failures should not produce an error."""
+        v = TestnetValidator(
+            state_path=tmp_path / "state.json",
+            report_path=tmp_path / "reports.jsonl",
+        )
+        report = v.validate_cycle(
+            _MockCycleResult(), {"match": True}, _mock_cb(), [],
+            order_failures=0,
+            today_override="2026-03-01",
+        )
+        assert report.n_order_failures == 0
+        assert not any("Order failures" in e for e in report.error_details)
+
+    def test_order_failures_reset_consecutive_days(self, tmp_path):
+        """Order failures should reset the consecutive success counter."""
+        v = TestnetValidator(
+            state_path=tmp_path / "state.json",
+            report_path=tmp_path / "reports.jsonl",
+        )
+        # Day 1: success
+        v.validate_cycle(
+            _MockCycleResult(), {"match": True}, _mock_cb(), [],
+            today_override="2026-03-01",
+        )
+        assert v.state.consecutive_success_days == 1
+
+        # Day 2: order failure
+        v.validate_cycle(
+            _MockCycleResult(), {"match": True}, _mock_cb(), [],
+            order_failures=1,
+            today_override="2026-03-02",
+        )
+        assert v.state.consecutive_success_days == 0
+
+
 class TestFillFields:
     def test_fill_default_slippage_and_latency(self):
         fill = Fill(symbol="BTC", side="buy", qty=0.1, price=50000)
