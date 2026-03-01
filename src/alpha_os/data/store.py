@@ -22,7 +22,9 @@ class DataStore:
         self._db_path = db_path
         self._client = client
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(db_path))
+        self._conn = sqlite3.connect(str(db_path), timeout=30)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA busy_timeout=30000")
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS signals ("
             "  name TEXT, date TEXT, value REAL,"
