@@ -1,0 +1,20 @@
+[Unit]
+Description=Alpha-OS live trading (%i)
+After=network.target
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStart=/home/dev/projects/alpha-os/scripts/run_schedule.sh %i
+Restart=on-failure
+RestartSec=60
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/service.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/service.log
+
+# Graceful shutdown via SIGTERM (PipelineScheduler handles it)
+KillSignal=SIGTERM
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
