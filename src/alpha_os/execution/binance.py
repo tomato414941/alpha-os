@@ -31,13 +31,14 @@ def _load_secrets(name: str = _SECRETS_FILE) -> dict[str, str]:
     return result
 
 
-def _get_credentials() -> tuple[str, str]:
-    """Return (api_key, secret) from env vars or ~/.secrets/binance."""
+def _get_credentials(testnet: bool = True) -> tuple[str, str]:
+    """Return (api_key, secret) from env vars or ~/.secrets/binance{_real}."""
     api_key = os.environ.get("BINANCE_API_KEY", "")
     secret = os.environ.get("BINANCE_SECRET_KEY", "")
     if api_key and secret:
         return api_key, secret
-    secrets = _load_secrets()
+    secrets_name = _SECRETS_FILE if testnet else f"{_SECRETS_FILE}_real"
+    secrets = _load_secrets(secrets_name)
     api_key = api_key or secrets.get("BINANCE_API_KEY", "")
     secret = secret or secrets.get("BINANCE_SECRET_KEY", "")
     return api_key, secret
@@ -47,12 +48,13 @@ def create_spot_exchange(testnet: bool = True):
     """Create authenticated Binance spot exchange via CCXT."""
     import ccxt
 
-    api_key, secret = _get_credentials()
+    api_key, secret = _get_credentials(testnet=testnet)
+    secrets_file = "binance" if testnet else "binance_real"
     if not api_key or not secret:
         raise ValueError(
             "Binance API credentials not found. "
             "Set BINANCE_API_KEY/BINANCE_SECRET_KEY env vars "
-            "or create ~/.secrets/binance"
+            f"or create ~/.secrets/{secrets_file}"
         )
     exchange = ccxt.binance(
         {
