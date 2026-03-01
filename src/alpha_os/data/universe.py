@@ -96,7 +96,7 @@ _daily_signal_cache: list[str] | None = None
 
 
 def load_daily_signals() -> list[str]:
-    """Load all daily signal names from signal-noise REST API.
+    """Load daily + hourly signal names from signal-noise REST API.
 
     Falls back to MACRO_SIGNALS if API is unavailable.
     """
@@ -110,7 +110,7 @@ def load_daily_signals() -> list[str]:
         signals = client.list_signals()
         names = sorted(
             s["name"] for s in signals
-            if s.get("interval") == 86400
+            if s.get("interval") in (3600, 86400)
         )
         if names:
             log.info("Loaded %d daily signals from API", len(names))
