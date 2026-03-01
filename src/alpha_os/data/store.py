@@ -32,8 +32,17 @@ class DataStore:
             ")"
         )
         self._conn.commit()
+        self._migrate()
 
-    def sync(self, signals: list[str]) -> None:
+    def _migrate(self) -> None:
+        cols = {r[1] for r in self._conn.execute("PRAGMA table_info(signals)")}
+        if "resolution" not in cols:
+            self._conn.execute(
+                "ALTER TABLE signals ADD COLUMN resolution TEXT DEFAULT '1d'"
+            )
+            self._conn.commit()
+
+    def sync(self, signals: list[str], resolution: str = "1d") -> None:
         if self._client is None:
             log.info("No API client configured — skipping sync")
             return
@@ -49,7 +58,9 @@ class DataStore:
         max_dates: dict[str, str] = {}
         for name in signals:
             row = self._conn.execute(
-                "SELECT MAX(date) FROM signals WHERE name = ?", (name,)
+                "SELECT MAX(date) FROM signals WHERE name = ?"
+                " AND COALESCE(resolution, '1d') = ?",
+                (name, resolution),
             ).fetchone()
             if row[0]:
                 max_dates[name] = row[0]
@@ -57,8 +68,10 @@ class DataStore:
         # Use earliest max_date as conservative global since
         global_since = min(max_dates.values()) if max_dates else None
 
+        api_resolution = resolution if resolution != "1d" else None
         batch = self._client.get_batch(
             signals, since=global_since, columns=["timestamp", "value"],
+            resolution=api_resolution,
         )
 
         for name, df in batch.items():
@@ -71,11 +84,15 @@ class DataStore:
                 val = r["value"]
                 if pd.isna(ts) or pd.isna(val):
                     continue
-                date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
-                rows.append((name, date_str, float(val)))
+                if resolution == "1d":
+                    date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
+                else:
+                    date_str = str(ts)
+                rows.append((name, date_str, float(val), resolution))
 
             self._conn.executemany(
-                "INSERT OR REPLACE INTO signals (name, date, value) VALUES (?, ?, ?)",
+                "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
+                " VALUES (?, ?, ?, ?)",
                 rows,
             )
         self._conn.commit()
@@ -85,10 +102,15 @@ class DataStore:
         signals: list[str],
         start: str | None = None,
         end: str | None = None,
+        resolution: str = "1d",
     ) -> pd.DataFrame:
         placeholders = ",".join("?" for _ in signals)
-        query = f"SELECT name, date, value FROM signals WHERE name IN ({placeholders})"
-        params: list[str] = list(signals)
+        query = (
+            f"SELECT name, date, value FROM signals"
+            f" WHERE name IN ({placeholders})"
+            f" AND COALESCE(resolution, '1d') = ?"
+        )
+        params: list[str] = list(signals) + [resolution]
 
         if start:
             query += " AND date >= ?"
