@@ -666,6 +666,86 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
     )
 
 
+def _needs_evolution_l2(tactical) -> bool:
+    """Return True if L2 registry has no active or probation alphas."""
+    from alpha_os.alpha.registry import AlphaState
+    active = tactical.registry.list_by_state(AlphaState.ACTIVE)
+    probation = tactical.registry.list_by_state(AlphaState.PROBATION)
+    return len(active) + len(probation) == 0
+
+
+def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
+    """Build PipelineConfig for L2 hourly alpha evolution."""
+    from alpha_os.pipeline.runner import PipelineConfig
+    from alpha_os.governance.gates import GateConfig
+
+    return PipelineConfig(
+        gp=GPConfig(
+            pop_size=pop_size,
+            n_generations=generations,
+            max_depth=config.generation.max_depth,
+        ),
+        gate=GateConfig(
+            oos_sharpe_min=config.validation.oos_sharpe_min,
+            pbo_max=config.validation.pbo_max,
+            dsr_pvalue_max=config.validation.dsr_pvalue_max,
+            min_n_days=168,  # 7 days * 24 hourly bars
+        ),
+        commission_pct=config.backtest.commission_pct,
+        slippage_pct=config.backtest.slippage_pct,
+        n_cv_folds=config.validation.n_cv_folds,
+        embargo_days=config.validation.embargo_days,
+        eval_window_days=0,
+    )
+
+
+def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
+    """Run L2 hourly alpha evolution using tactical trader's data and registry."""
+    from alpha_os.pipeline.runner import PipelineRunner
+    from alpha_os.data.universe import price_signal
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        tactical.store.sync(tactical.features, resolution=tactical.resolution)
+    except Exception:
+        logger.warning("L2 API sync failed before evolution — using cached data")
+
+    matrix = tactical.store.get_matrix(
+        tactical.features, resolution=tactical.resolution,
+    )
+    min_bars = pipeline_config.gate.min_n_days
+    if len(matrix) < min_bars:
+        logger.warning(
+            "Insufficient L2 data for evolution (%d bars, need %d)",
+            len(matrix), min_bars,
+        )
+        return
+
+    matrix = matrix.bfill().fillna(0)
+    data = {col: matrix[col].values for col in matrix.columns}
+    price_col = price_signal(tactical.asset)
+    prices = data[price_col]
+
+    runner = PipelineRunner(
+        features=tactical.features,
+        data=data,
+        prices=prices,
+        config=pipeline_config,
+        registry=tactical.registry,
+    )
+    result = runner.run()
+    logger.info(
+        "L2 Evolution: %d generated, %d validated, %d adopted (%.1fs)",
+        result.n_generated, result.n_validated, result.n_adopted, result.elapsed,
+    )
+    print(
+        f"L2 Evolution: {result.n_generated} generated, "
+        f"{result.n_validated} validated, {result.n_adopted} adopted "
+        f"({result.elapsed:.1f}s)"
+    )
+
+
 def _print_validation_report(report) -> None:
     print(f"\n--- Testnet Validation Report ({report.date}) ---")
     print(f"  Cycle OK:       {report.cycle_completed}")
@@ -695,6 +775,7 @@ def _setup_asset_context(
 ):
     """Create trader, circuit breaker, and validator for one asset."""
     from alpha_os.paper.trader import Trader
+    from alpha_os.paper.tactical import TacticalTrader
     from alpha_os.risk.circuit_breaker import CircuitBreaker
 
     adir = asset_data_dir(asset)
@@ -709,7 +790,9 @@ def _setup_asset_context(
         symbol_map = {signal_name: market_symbol}
         executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
 
-    trader = Trader(asset=asset, config=cfg, executor=executor, circuit_breaker=cb)
+    tactical = TacticalTrader(asset=asset, config=cfg)
+    trader = Trader(asset=asset, config=cfg, executor=executor,
+                    circuit_breaker=cb, tactical=tactical)
 
     validator = None
     if testnet and is_crypto(asset):
@@ -780,6 +863,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     from alpha_os.alpha.registry import AlphaState
 
     pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
+    l2_pipeline_cfg = _build_l2_pipeline_config(cfg, args.pop_size, args.generations)
 
     def _needs_evolution(trader):
         active = trader.registry.list_by_state(AlphaState.ACTIVE)
@@ -803,6 +887,9 @@ def cmd_live(args: argparse.Namespace) -> None:
             if _needs_evolution(trader):
                 print(f"No alphas for {asset} — running evolution...")
                 _run_evolution(trader, cfg, pipeline_cfg)
+            if trader.tactical is not None and _needs_evolution_l2(trader.tactical):
+                print(f"No L2 alphas for {asset} — running L2 evolution...")
+                _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
             result = trader.run_cycle()
             _print_paper_result(result)
             recon = trader.reconcile()
@@ -813,6 +900,7 @@ def cmd_live(args: argparse.Namespace) -> None:
         return
 
     last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
+    last_evolve_l2: dict[str, float] = {a: 0.0 for a in asset_list}
     logger = logging.getLogger(__name__)
 
     def cycle():
@@ -826,6 +914,11 @@ def cmd_live(args: argparse.Namespace) -> None:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
                     last_evolve[asset] = now
+                if trader.tactical is not None:
+                    if _needs_evolution_l2(trader.tactical) or (now - last_evolve_l2[asset]) >= evolve_interval:
+                        logger.info("Running L2 evolution for %s...", asset)
+                        _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
+                        last_evolve_l2[asset] = now
             result = trader.run_cycle()
             _print_paper_result(result)
             recon = trader.reconcile()

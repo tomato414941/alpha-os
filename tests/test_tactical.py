@@ -128,6 +128,45 @@ class TestWithL2Alphas:
         assert result.combined_signal != 0.0
 
 
+class TestNeedsEvolutionL2:
+    def test_empty_registry_needs_evolution(self, tmp_path):
+        from alpha_os.cli import _needs_evolution_l2
+        cfg = MagicMock()
+        cfg.forward.degradation_window = 63
+        cfg.api.base_url = "http://localhost:8000"
+        cfg.api.timeout = 10
+        reg = AlphaRegistry(db_path=tmp_path / "empty_l2.db")
+        store = DataStore(tmp_path / "l2_cache_empty.db")
+        tactical = TacticalTrader(
+            asset="BTC", config=cfg, registry=reg, store=store,
+        )
+        assert _needs_evolution_l2(tactical) is True
+        store.close()
+        reg.close()
+
+    def test_populated_registry_no_evolution(self, tmp_path):
+        from alpha_os.cli import _needs_evolution_l2
+        cfg = MagicMock()
+        cfg.forward.degradation_window = 63
+        cfg.api.base_url = "http://localhost:8000"
+        cfg.api.timeout = 10
+        reg = AlphaRegistry(db_path=tmp_path / "pop_l2.db")
+        reg.register(AlphaRecord(
+            alpha_id="l2_active",
+            expression="(neg f1)",
+            state=AlphaState.ACTIVE,
+            fitness=0.5,
+            oos_sharpe=0.3,
+        ))
+        store = DataStore(tmp_path / "l2_cache_pop.db")
+        tactical = TacticalTrader(
+            asset="BTC", config=cfg, registry=reg, store=store,
+        )
+        assert _needs_evolution_l2(tactical) is False
+        store.close()
+        reg.close()
+
+
 class TestTraderIntegration:
     def test_trader_without_tactical(self, tmp_path):
         """Verify Trader works without tactical (default None)."""
@@ -157,3 +196,21 @@ class TestTraderIntegration:
         # tactical is None → no L2 modulation
         assert trader.tactical is None
         store.close()
+
+    def test_trader_close_with_tactical(self, tmp_path):
+        """Verify Trader.close() cleans up tactical resources."""
+        from alpha_os.paper.trader import Trader
+        from alpha_os.config import Config
+
+        cfg = Config.load()
+        store = DataStore(tmp_path / "cache.db")
+        l2_reg = AlphaRegistry(db_path=tmp_path / "l2_reg.db")
+        l2_store = DataStore(tmp_path / "l2_cache.db")
+        tactical = TacticalTrader(
+            asset="BTC", config=cfg, registry=l2_reg, store=l2_store,
+        )
+        trader = Trader(
+            asset="BTC", config=cfg, store=store, tactical=tactical,
+        )
+        assert trader.tactical is not None
+        trader.close()  # should not raise

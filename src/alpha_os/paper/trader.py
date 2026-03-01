@@ -509,6 +509,8 @@ class Trader:
         self.forward_tracker.close()
         self.store.close()
         self.registry.close()
+        if self.tactical is not None:
+            self.tactical.close()
 
 
 # Backward compatibility
