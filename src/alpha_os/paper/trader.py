@@ -17,7 +17,7 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
-from ..config import Config, DATA_DIR
+from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -84,10 +84,15 @@ class Trader:
         self.features = build_feature_list(asset)
         self.price_signal = self.features[0]
 
-        self.registry = registry or AlphaRegistry()
-        self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker()
-        self.forward_tracker = forward_tracker or ForwardTracker()
-        self.audit_log = audit_log or AuditLog()
+        adir = asset_data_dir(asset)
+        self.registry = registry or AlphaRegistry(db_path=adir / "alpha_registry.db")
+        self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker(
+            db_path=adir / "paper_trading.db"
+        )
+        self.forward_tracker = forward_tracker or ForwardTracker(
+            db_path=adir / "forward_returns.db"
+        )
+        self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
         mon_cfg = MonitorConfig(rolling_window=config.forward.degradation_window)
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)

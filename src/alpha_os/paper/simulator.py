@@ -12,7 +12,7 @@ import numpy as np
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_PROBATION, ST_DORMANT
 from ..alpha.registry import AlphaRegistry, AlphaState
-from ..config import Config, DATA_DIR
+from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
@@ -92,7 +92,7 @@ def run_backfill(
     # 2. Load and reset alphas
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        reg_path = registry_db or DATA_DIR / "alpha_registry.db"
+        reg_path = registry_db or asset_data_dir(asset) / "alpha_registry.db"
         sim_reg_path = tmp_path / "registry.db"
         shutil.copy2(reg_path, sim_reg_path)
         registry = AlphaRegistry(sim_reg_path)

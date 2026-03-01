@@ -10,7 +10,7 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..alpha.registry import AlphaRegistry, AlphaState
-from ..config import Config, DATA_DIR
+from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import price_signal, MACRO_SIGNALS
@@ -65,9 +65,10 @@ class ForwardRunner:
         self.price_signal = price_sig
         self.features = [price_sig] + MACRO_SIGNALS
 
-        self.registry = registry or AlphaRegistry()
-        self.tracker = tracker or ForwardTracker()
-        self.audit_log = audit_log or AuditLog()
+        adir = asset_data_dir(asset)
+        self.registry = registry or AlphaRegistry(db_path=adir / "alpha_registry.db")
+        self.tracker = tracker or ForwardTracker(db_path=adir / "forward_returns.db")
+        self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
         mon_cfg = MonitorConfig(rolling_window=self.fwd_config.degradation_window)
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)

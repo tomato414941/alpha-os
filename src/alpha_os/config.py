@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import shutil
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +11,55 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 CONFIG_DIR = PROJECT_DIR / "config"
 DATA_DIR = PROJECT_DIR / "data"
+
+_logger = logging.getLogger(__name__)
+
+_BTC_MIGRATED = False
+
+
+def asset_data_dir(asset: str) -> Path:
+    """Return per-asset data directory, creating it if needed."""
+    d = DATA_DIR / asset.upper()
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "metrics").mkdir(exist_ok=True)
+    (d / "logs").mkdir(exist_ok=True)
+    if asset.upper() == "BTC":
+        _maybe_migrate_btc(d)
+    return d
+
+
+def _maybe_migrate_btc(adir: Path) -> None:
+    """One-time migration: move flat data/ files into data/BTC/."""
+    global _BTC_MIGRATED
+    if _BTC_MIGRATED:
+        return
+    _BTC_MIGRATED = True
+
+    flat_files = [
+        "alpha_registry.db",
+        "forward_returns.db",
+        "paper_trading.db",
+        "audit.jsonl",
+    ]
+    metric_files = [
+        "metrics/circuit_breaker.json",
+        "metrics/testnet_validation.json",
+        "metrics/testnet_reports.jsonl",
+    ]
+
+    for f in flat_files:
+        src = DATA_DIR / f
+        dst = adir / f
+        if src.exists() and not dst.exists():
+            shutil.move(str(src), str(dst))
+            _logger.info("Migrated %s → %s", src, dst)
+
+    for f in metric_files:
+        src = DATA_DIR / f
+        dst = adir / f
+        if src.exists() and not dst.exists():
+            shutil.move(str(src), str(dst))
+            _logger.info("Migrated %s → %s", src, dst)
 
 
 @dataclass

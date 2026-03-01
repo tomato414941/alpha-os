@@ -13,7 +13,7 @@ import numpy as np
 
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.config import Config, DATA_DIR
+from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.alpha.evaluator import FAILED_FITNESS
 from alpha_os.data.universe import price_signal, build_feature_list
 from alpha_os.dsl import parse, to_string
@@ -136,6 +136,7 @@ def _build_parser() -> argparse.ArgumentParser:
     vt.add_argument("--slippage", action="store_true", help="Show slippage distribution")
     vt.add_argument("--latency", action="store_true", help="Show fill latency distribution")
     vt.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
+    vt.add_argument("--asset", type=str, default="BTC")
     vt.add_argument("--config", type=str, default=None)
 
     return parser
@@ -675,8 +676,9 @@ def cmd_live(args: argparse.Namespace) -> None:
     interval = args.interval or cfg.forward.check_interval
     testnet = not args.real
 
-    # File logging — date-stamped log in data/logs/
-    log_dir = DATA_DIR / "logs"
+    # File logging — date-stamped log in data/{ASSET}/logs/
+    adir = asset_data_dir(args.asset)
+    log_dir = adir / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"live_{date.today().isoformat()}.log"
     logging.basicConfig(
@@ -715,7 +717,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     print(f"  Symbol map: {signal_name} → {market_symbol}")
 
     executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
-    cb = CircuitBreaker.load()
+    cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
 
     # Override initial_capital in config for tracking purposes
     cfg.trading.initial_capital = args.capital
@@ -746,6 +748,8 @@ def cmd_live(args: argparse.Namespace) -> None:
     if testnet:
         from alpha_os.validation.testnet import TestnetValidator
         validator = TestnetValidator(
+            state_path=adir / "metrics" / "testnet_validation.json",
+            report_path=adir / "metrics" / "testnet_reports.jsonl",
             target_days=cfg.testnet.target_success_days,
             max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
         )
@@ -798,10 +802,15 @@ def cmd_live(args: argparse.Namespace) -> None:
 def cmd_validate_testnet(args: argparse.Namespace) -> None:
     import json as _json
 
-    from alpha_os.validation.testnet import TestnetValidator, VALIDATION_REPORT_PATH
+    from alpha_os.validation.testnet import TestnetValidator
 
     cfg = _load_config(getattr(args, "config", None))
+    adir = asset_data_dir(args.asset)
+    report_path = adir / "metrics" / "testnet_reports.jsonl"
+
     validator = TestnetValidator(
+        state_path=adir / "metrics" / "testnet_validation.json",
+        report_path=report_path,
         target_days=cfg.testnet.target_success_days,
         max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
     )
@@ -817,7 +826,7 @@ def cmd_validate_testnet(args: argparse.Namespace) -> None:
 
     if args.slippage or args.latency:
         from alpha_os.paper.tracker import PaperPortfolioTracker
-        tracker = PaperPortfolioTracker()
+        tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
         if args.slippage:
             stats = tracker.get_slippage_stats()
             print(f"\nSlippage Distribution ({stats['count']} fills)")
@@ -835,11 +844,11 @@ def cmd_validate_testnet(args: argparse.Namespace) -> None:
         tracker.close()
 
     if args.reports:
-        if not VALIDATION_REPORT_PATH.exists():
+        if not report_path.exists():
             print("\nNo reports yet.")
             return
         print("\nDaily Reports:")
-        for line in VALIDATION_REPORT_PATH.read_text().splitlines():
+        for line in report_path.read_text().splitlines():
             r = _json.loads(line)
             status = "OK" if not r["has_errors"] else "ERROR"
             print(

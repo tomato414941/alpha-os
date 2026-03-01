@@ -14,9 +14,11 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
+from ..config import DATA_DIR
+
 logger = logging.getLogger(__name__)
 
-CB_STATE_PATH = Path("data/metrics/circuit_breaker.json")
+CB_STATE_PATH = DATA_DIR / "metrics" / "circuit_breaker.json"
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -49,6 +51,7 @@ class CircuitBreaker:
     """Centralized risk circuit breaker. Checked before every trade cycle."""
 
     config: CircuitBreakerConfig = field(default_factory=CircuitBreakerConfig)
+    _state_path: Path = field(default_factory=lambda: CB_STATE_PATH)
     _daily_start_equity: float = 0.0
     _daily_pnl: float = 0.0
     _consecutive_losses: int = 0
@@ -127,7 +130,7 @@ class CircuitBreaker:
 
     def save(self, path: Path | None = None) -> None:
         """Persist state to JSON."""
-        path = path or CB_STATE_PATH
+        path = path or self._state_path
         data = {
             "daily_start_equity": self._daily_start_equity,
             "daily_pnl": self._daily_pnl,
@@ -148,7 +151,7 @@ class CircuitBreaker:
         """Load state from JSON, or return fresh instance if file missing."""
         config = config or CircuitBreakerConfig()
         path = path or CB_STATE_PATH
-        cb = cls(config=config)
+        cb = cls(config=config, _state_path=path)
         if not path.exists():
             return cb
         try:
