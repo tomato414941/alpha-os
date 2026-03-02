@@ -18,7 +18,7 @@ src/alpha_os/       Main package
   dsl/              S-expression DSL parser, evaluator, GP generator
   execution/        Executor ABC, BinanceExecutor, ExecutionOptimizer
   risk/             Position sizing, circuit breaker
-  trading/          PaperTrader, EventDrivenTrader, TacticalTrader
+  paper/            PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
 tests/              pytest test suite (423 tests)

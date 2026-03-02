@@ -18,9 +18,8 @@ src/alpha_os/
 ├── backtest/     Backtest engine, cost model, metrics
 ├── validation/   Purged Walk-Forward CV, PBO, DSR, FDR
 ├── alpha/        Alpha evaluator, registry, lifecycle, combiner
-├── paper/        Paper trading simulator + tracker
+├── paper/        Paper trading simulator + tracker, EventDrivenTrader, TacticalTrader
 ├── execution/    Trade executors (Paper, Binance), ExecutionOptimizer
-├── trading/      EventDrivenTrader, TacticalTrader
 ├── risk/         Position sizing, drawdown stages, circuit breaker
 ├── data/         DataStore (signal-noise integration, subdaily resolution support)
 ├── forward/      Forward test runner
@@ -62,14 +61,14 @@ python -m alpha_os forward
 # Paper trade
 python -m alpha_os paper --once
 
-# Live trade (testnet)
-python -m alpha_os live --once --testnet --asset BTC
+# Live trade (testnet is default)
+python -m alpha_os live --once --asset BTC
 
 # Event-driven mode (WebSocket, auto-triggers on market events)
-python -m alpha_os live --event-driven --testnet --asset BTC
+python -m alpha_os live --event-driven --asset BTC
 
 # Layer 2 tactical evolution
-python -m alpha_os evolve --layer L2 --generations 30
+python -m alpha_os evolve --layer 2 --generations 30
 
 # Check testnet validation status
 python -m alpha_os validate-testnet
