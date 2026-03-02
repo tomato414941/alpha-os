@@ -91,8 +91,8 @@ class TacticalTrader:
         # 1. Sync hourly data
         try:
             self.store.sync(self.features, resolution=self.resolution)
-        except Exception:
-            logger.warning("L2 API sync failed — using cached data")
+        except Exception as exc:
+            logger.warning("L2 API sync failed — using cached data: %s", exc)
 
         # 2. Get active L2 alphas
         active = self.registry.list_by_state(AlphaState.ACTIVE)

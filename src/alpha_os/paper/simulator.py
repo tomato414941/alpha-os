@@ -67,8 +67,8 @@ def run_backfill(
     # Sync from REST API
     try:
         store.sync(features)
-    except Exception:
-        logger.warning("API sync failed — using cached data")
+    except Exception as exc:
+        logger.warning("API sync failed — using cached data: %s", exc)
 
     matrix = store.get_matrix(features, start=start_date, end=end_date)
     # Only require price signal; fill NaN for other signals

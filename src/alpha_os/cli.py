@@ -216,8 +216,8 @@ def _real_data(
             store.sync(features, resolution=resolution)
         else:
             print(f"API unavailable at {config.api.base_url} — using cache")
-    except Exception:
-        print("API sync failed — using cache")
+    except Exception as exc:
+        print(f"API sync failed — using cache: {exc}")
 
     matrix = store.get_matrix(features, resolution=resolution)
 
@@ -679,8 +679,8 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
     # Sync data before evolution
     try:
         trader.store.sync(trader.features)
-    except Exception:
-        logger.warning("API sync failed before evolution — using cached data")
+    except Exception as exc:
+        logger.warning("API sync failed before evolution — using cached data: %s", exc)
 
     matrix = trader.store.get_matrix(trader.features)
     if len(matrix) < config.backtest.min_days:
@@ -769,8 +769,8 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
 
     try:
         tactical.store.sync(tactical.features, resolution=tactical.resolution)
-    except Exception:
-        logger.warning("L2 API sync failed before evolution — using cached data")
+    except Exception as exc:
+        logger.warning("L2 API sync failed before evolution — using cached data: %s", exc)
 
     matrix = tactical.store.get_matrix(
         tactical.features, resolution=tactical.resolution,

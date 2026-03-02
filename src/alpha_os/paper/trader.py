@@ -251,8 +251,8 @@ class Trader:
             try:
                 logger.info("Syncing %d signals...", len(self.features))
                 self.store.sync(self.features)
-            except Exception:
-                logger.warning("API sync failed — using cached data")
+            except Exception as exc:
+                logger.warning("API sync failed — using cached data: %s", exc)
 
         # 2. Get active alphas (dormant included for monitoring, not trading)
         active = self.registry.list_by_state(AlphaState.ACTIVE)
