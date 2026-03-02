@@ -21,6 +21,8 @@ class GPConfig:
     max_depth: int = 3
     elite_size: int = 5
     bloat_penalty: float = 0.01
+    depth_penalty: float = 0.0
+    similarity_penalty: float = 0.0
 
 
 def _tree_depth(expr: Expr) -> int:
@@ -48,6 +50,65 @@ def _tree_depth(expr: Expr) -> int:
 
 def _node_count(expr: Expr) -> int:
     return len(_collect_nodes(expr))
+
+
+def _ast_signature(expr: Expr) -> set[str]:
+    """Return a set-based AST signature for structure similarity scoring."""
+    from ..dsl.expr import (
+        UnaryOp,
+        BinaryOp,
+        RollingOp,
+        PairRollingOp,
+        ConditionalOp,
+        LagOp,
+        Feature,
+        Constant,
+    )
+
+    sig: set[str] = set()
+
+    def walk(node: Expr, depth: int) -> None:
+        if isinstance(node, UnaryOp):
+            sig.add(f"{depth}:U:{node.op}")
+            walk(node.child, depth + 1)
+        elif isinstance(node, BinaryOp):
+            sig.add(f"{depth}:B:{node.op}")
+            walk(node.left, depth + 1)
+            walk(node.right, depth + 1)
+        elif isinstance(node, RollingOp):
+            sig.add(f"{depth}:R:{node.op}:{node.window}")
+            walk(node.child, depth + 1)
+        elif isinstance(node, PairRollingOp):
+            sig.add(f"{depth}:PR:{node.op}:{node.window}")
+            walk(node.left, depth + 1)
+            walk(node.right, depth + 1)
+        elif isinstance(node, LagOp):
+            sig.add(f"{depth}:L:{node.op}:{node.window}")
+            walk(node.child, depth + 1)
+        elif isinstance(node, ConditionalOp):
+            sig.add(f"{depth}:C:{node.op}")
+            walk(node.condition_left, depth + 1)
+            walk(node.condition_right, depth + 1)
+            walk(node.then_branch, depth + 1)
+            walk(node.else_branch, depth + 1)
+        elif isinstance(node, Feature):
+            sig.add(f"{depth}:F:{node.name}")
+        elif isinstance(node, Constant):
+            sig.add(f"{depth}:K")
+        else:
+            sig.add(f"{depth}:X")
+
+    walk(expr, 0)
+    return sig
+
+
+def _jaccard_similarity(a: set[str], b: set[str]) -> float:
+    if not a and not b:
+        return 1.0
+    union = a | b
+    if not union:
+        return 0.0
+    return len(a & b) / len(union)
 
 
 def crossover(parent1: Expr, parent2: Expr, rng: random.Random) -> tuple[Expr, Expr]:
@@ -142,6 +203,7 @@ class GPEvolver:
         self.evaluate_fn = evaluate_fn
         self.rng = random.Random(seed)
         self.features = features
+        self._signature_memory: list[set[str]] = []
 
     def run(self) -> list[tuple[Expr, float]]:
         """Run GP evolution. Returns list of (expression, fitness) sorted by fitness desc."""
@@ -194,6 +256,7 @@ class GPEvolver:
 
             pop = [e for e, _ in combined[:cfg.pop_size]]
             fitnesses = [f for _, f in combined[:cfg.pop_size]]
+            self._update_signature_memory(pop[: cfg.elite_size])
 
             all_results.extend(combined)
 
@@ -215,7 +278,14 @@ class GPEvolver:
         for expr in exprs:
             try:
                 raw_fitness = self.evaluate_fn(expr)
-                penalty = self.config.bloat_penalty * _node_count(expr)
+                penalty = (
+                    self.config.bloat_penalty * _node_count(expr)
+                    + self.config.depth_penalty * _tree_depth(expr)
+                )
+                if self.config.similarity_penalty > 0:
+                    sig = _ast_signature(expr)
+                    sim = self._max_similarity(sig)
+                    penalty += self.config.similarity_penalty * sim
                 results.append(raw_fitness - penalty)
             except Exception:
                 results.append(FAILED_FITNESS)
@@ -223,6 +293,16 @@ class GPEvolver:
         if n_failed:
             logger.debug("GP batch: %d/%d evaluations failed", n_failed, len(exprs))
         return results
+
+    def _max_similarity(self, signature: set[str]) -> float:
+        if not self._signature_memory:
+            return 0.0
+        return max(_jaccard_similarity(signature, ref) for ref in self._signature_memory)
+
+    def _update_signature_memory(self, exprs: list[Expr]) -> None:
+        if not exprs:
+            return
+        self._signature_memory.extend(_ast_signature(expr) for expr in exprs)
 
     def _tournament_select(
         self, pop: list[Expr], fitnesses: list[float], n: int

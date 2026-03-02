@@ -3,7 +3,15 @@ import numpy as np
 import pytest
 
 from alpha_os.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant, ConditionalOp, LagOp
-from alpha_os.evolution.gp import GPConfig, GPEvolver, _tree_depth, _node_count, crossover
+from alpha_os.evolution.gp import (
+    GPConfig,
+    GPEvolver,
+    _tree_depth,
+    _node_count,
+    _ast_signature,
+    _jaccard_similarity,
+    crossover,
+)
 from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig
 from alpha_os.evolution.behavior import (
     compute_behavior,
@@ -93,6 +101,23 @@ class TestNodeCount:
         assert _node_count(expr) == 5
 
 
+class TestAstSimilarity:
+    def test_signature_not_empty(self):
+        expr = BinaryOp("add", Feature("f1"), Feature("f2"))
+        sig = _ast_signature(expr)
+        assert len(sig) > 0
+
+    def test_jaccard_identical_is_one(self):
+        a = _ast_signature(BinaryOp("add", Feature("f1"), Feature("f2")))
+        b = _ast_signature(BinaryOp("add", Feature("f1"), Feature("f2")))
+        assert _jaccard_similarity(a, b) == pytest.approx(1.0)
+
+    def test_jaccard_different_is_lower(self):
+        a = _ast_signature(BinaryOp("add", Feature("f1"), Feature("f2")))
+        b = _ast_signature(UnaryOp("neg", Feature("f3")))
+        assert _jaccard_similarity(a, b) < 1.0
+
+
 class TestCrossover:
     def test_crossover_returns_two_exprs(self):
         import random
@@ -161,6 +186,27 @@ class TestGPEvolver:
         results = evolver.run()
         for _, fit in results:
             assert fit < 100.0  # penalty should dominate
+
+    def test_depth_penalty(self):
+        cfg = GPConfig(
+            pop_size=10,
+            n_generations=1,
+            bloat_penalty=0.0,
+            depth_penalty=10.0,
+            max_depth=3,
+        )
+        evolver = GPEvolver(FEATURES, self._make_evaluate_fn(), config=cfg, seed=42)
+        results = evolver.run()
+        assert len(results) > 0
+
+    def test_similarity_penalty_uses_memory(self):
+        cfg = GPConfig(pop_size=10, n_generations=1, similarity_penalty=1.0, max_depth=2)
+        evolver = GPEvolver(FEATURES, self._make_evaluate_fn(), config=cfg, seed=42)
+        expr = BinaryOp("add", Feature("f1"), Feature("f2"))
+        evolver._update_signature_memory([expr])
+        fit = evolver._evaluate_batch([expr])[0]
+        raw = self._make_evaluate_fn()(expr)
+        assert fit < raw
 
 
 # ---------------------------------------------------------------------------
