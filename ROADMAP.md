@@ -18,26 +18,40 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 各レイヤーが独立した GP 進化 + ライフサイクルを持ち、
 上位レイヤーの判断を下位が実行する階層構造。
 
-## Current State
+## Current State (2026-03-02)
 
 ### alpha-os
 
-- 日次シグナル評価、4h cron サイクル（実質は日次更新の再実行）
+- 3-Layer architecture: Strategic (日次) / Tactical (時間) / Execution (分)
 - S-expression DSL + GP 進化 + MAP-Elites アーカイブ
-- BinanceExecutor（spot, testnet）、Phase 4 検証中
-- シグナル源: signal-noise の日次 time series（448 本 usable）
+- Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
+- Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
+- EventDrivenTrader（WebSocket イベント駆動 + デバウンス）
+- BinanceExecutor（spot, testnet）+ optimizer 連携
+- シグナル源: signal-noise REST API + WebSocket（日次 + hourly + 1min realtime）
 
 ### signal-noise
 
 - 1,256+ collector、10 domain、asyncio スケジューラ
-- SQLite (WAL mode) + FastAPI REST API
-- Pull-based のみ（WebSocket/SSE なし）
-- 最高頻度は hourly（btc_ohlcv 等の CCXT collector）
-- サブ時間足・リアルタイム基盤は未実装
+- SQLite (WAL mode) + FastAPI REST API + WebSocket (`/ws/signals`)
+- EventBus（in-process pub/sub）
+- StreamingCollector（WebSocket ベース）: orderbook, trade flow, liquidation, funding rate
+- `signals_realtime` テーブル（1分足、30日保持 + 日次ロールアップ）
+- Realtime API（`/signals/{name}/realtime`）
+
+### Phase Status
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1 | **完了** | Tactical Data Layer（hourly collectors, subdaily DataStore, Layer 2 GP）|
+| Phase 2 | **完了** | Event-Driven Architecture（EventBus, WebSocket, StreamingCollector）|
+| Phase 3 | **完了** | Microstructure Layer（orderbook/VPIN, ExecutionOptimizer, DSL templates）|
+| Phase 4 | 未着手 | Options Intelligence（Deribit IV/skew, IV-aware risk scaling）|
+| Phase 5 | 未着手 | Cross-Exchange Intelligence（multi-exchange, lead-lag alpha）|
 
 ---
 
-## Phase 1: Tactical Data Layer — 時間足シグナル
+## Phase 1: Tactical Data Layer — 時間足シグナル ✅ 完了
 
 **目標**: 1h〜8h 周期の情報源を追加し、4h サイクルに実質的な意味を持たせる。
 
@@ -220,7 +234,7 @@ class TacticalTrader:
 
 ---
 
-## Phase 2: Event-Driven Architecture
+## Phase 2: Event-Driven Architecture ✅ 完了
 
 **目標**: ポーリングからイベント駆動へ。cron サイクルではなく、
 市場イベントがトリガーになる実行モデルへ移行。
@@ -316,7 +330,7 @@ class SignalClient:
 
 ---
 
-## Phase 3: Microstructure Layer — 執行最適化
+## Phase 3: Microstructure Layer — 執行最適化 ✅ 完了
 
 **目標**: Layer 1（分足レベル）の情報で執行品質を改善。
 alpha の方向性は Layer 2/3 が決める。Layer 1 は「いつ・どう執行するか」に集中。
@@ -543,38 +557,36 @@ signal-noise                          alpha-os
 ## Implementation Order
 
 ```
-Phase 1 (2-3 weeks)
-├── signal-noise: funding rate collector
-├── signal-noise: liquidation collector
-├── signal-noise: OI + LS ratio collectors
-├── signal-noise: API resolution param
-├── alpha-os: DataStore subdaily support
-├── alpha-os: Layer 2 feature set + GP evolution
-└── Validation: hourly backtest, Layer 2 OOS Sharpe
+Phase 1 ✅ 完了 (2026-02)
+├── signal-noise: funding rate, liquidation, OI, LS ratio collectors
+├── signal-noise: cross-exchange, options signals (hourly)
+├── alpha-os: DataStore subdaily support (resolution param)
+├── alpha-os: Layer 2 feature set (17 hourly signals) + TacticalTrader
+└── alpha-os: validate/forward/paper の L2 対応
 
-Phase 2 (2-3 weeks)
+Phase 2 ✅ 完了 (2026-03)
 ├── signal-noise: EventBus (asyncio Queue)
-├── signal-noise: WebSocket endpoint
+├── signal-noise: WebSocket endpoint (/ws/signals)
 ├── signal-noise: StreamingCollector base class
-├── signal-noise: Binance WS collectors (liquidation, funding)
-├── alpha-os: SignalClient WS support
-├── alpha-os: EventDrivenTrader
-└── Validation: event latency, 24h stability
+├── signal-noise: Binance WS collectors (liquidation, funding rate)
+├── alpha-os: SignalClient WS subscribe
+└── alpha-os: EventDrivenTrader (デバウンス + 4h フォールバック)
 
-Phase 3 (3-4 weeks)
-├── signal-noise: orderbook collector (WS, 1-min agg)
-├── signal-noise: trade flow collector (VPIN)
-├── signal-noise: signals_realtime table + retention
-├── alpha-os: ExecutionOptimizer
-├── alpha-os: Layer 1 DSL + GP evolution
-└── Validation: slippage reduction measurement
+Phase 3 ✅ 完了 (2026-03)
+├── signal-noise: signals_realtime table + 30日保持 + 日次ロールアップ
+├── signal-noise: BinanceOrderbookCollector (imbalance, depth_ratio, spread)
+├── signal-noise: BinanceTradeFlowCollector + VPINCalculator
+├── signal-noise: realtime API + CLI rollup + microstructure category
+├── alpha-os: ExecutionOptimizer (VPIN/spread/imbalance ベース)
+├── alpha-os: BinanceExecutor optimizer 連携
+└── alpha-os: MICROSTRUCTURE_SIGNALS + DSL templates (6 seed expressions)
 
-Phase 4 (2 weeks)
+Phase 4 (未着手)
 ├── signal-noise: Deribit options collector
 ├── alpha-os: IV-aware risk scaling
 └── Validation: risk-adjusted return improvement
 
-Phase 5 (2 weeks)
+Phase 5 (未着手)
 ├── signal-noise: multi-exchange collectors
 ├── alpha-os: cross-exchange alpha
 └── Validation: lead-lag capture rate

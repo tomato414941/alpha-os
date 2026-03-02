@@ -5,13 +5,23 @@
 Autonomous alpha generation + BTC/USDT trading system.
 Python 3.12, S-expression DSL, GP + MAP-Elites evolution, Binance execution.
 
+3-Layer architecture:
+- **Layer 3 (Strategic)**: Daily signals → direction bias (GP evolution on daily DSL)
+- **Layer 2 (Tactical)**: Hourly signals → entry/exit timing (TacticalTrader, 17 hourly features)
+- **Layer 1 (Execution)**: Minute signals → optimal execution (ExecutionOptimizer, VPIN/spread/imbalance)
+
 ## Structure
 
 ```
 src/alpha_os/       Main package
+  data/             DataStore, universe (daily + hourly + microstructure features)
+  dsl/              S-expression DSL parser, evaluator, GP generator
+  execution/        Executor ABC, BinanceExecutor, ExecutionOptimizer
+  risk/             Position sizing, circuit breaker
+  trading/          PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
-tests/              pytest test suite
+tests/              pytest test suite (423 tests)
 data/               Runtime data (SQLite DBs, logs) — gitignored
 ```
 
@@ -34,11 +44,12 @@ python -m alpha_os --help
 
 ## Conventions
 
-- **Dataclasses** for all data structures (Fill, Order, AlphaRecord, etc.)
+- **Dataclasses** for all data structures (Fill, Order, AlphaRecord, ExecutionConfig, etc.)
 - **SQLite** for persistence (alpha_cache.db, alpha_registry.db, paper_trading.db)
 - **S-expression DSL** for alpha expressions: `(neg f1)`, `(ts_mean f2 10)`, `(if_gt f1 f2 f3 f4)`
 - **Executor interface** (`Executor` ABC in `execution/executor.py`) — Paper and Binance implementations
-- **Config** loaded from `config/default.toml` via `Config.load()`
+- **ExecutionOptimizer** — microstructure-aware execution timing (optional, plugs into BinanceExecutor)
+- **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` thresholds)
 
 ## Testing
 
@@ -66,8 +77,11 @@ python -m alpha_os --help
 ## signal-noise Integration
 
 - REST API at `http://127.0.0.1:8000` (same server)
-- `DataStore.sync()` fetches incremental data via `SignalClient`
+- WebSocket at `ws://127.0.0.1:8000/ws/signals` for real-time events
+- `DataStore.sync()` fetches incremental data via `SignalClient` (supports `resolution` param)
 - `alpha_cache.db` caches locally (works offline if API is down)
+- EventDrivenTrader subscribes to signal events via WebSocket
+- ExecutionOptimizer reads realtime microstructure signals via `SignalClient.get_latest()`
 
 ## Deployment
 
