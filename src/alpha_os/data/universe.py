@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -115,9 +116,32 @@ def price_signal(asset: str) -> str:
 _daily_signal_cache: list[str] | None = None
 
 
-def load_daily_signals() -> list[str]:
-    """Load daily + hourly signal names from signal-noise REST API.
+def _interval_filter() -> set[int] | None:
+    """Parse interval filter from env.
 
+    ALPHA_OS_SIGNAL_INTERVALS:
+      - unset / "all" -> include all intervals
+      - comma-separated seconds, e.g. "60,300,3600,86400"
+    """
+    raw = os.getenv("ALPHA_OS_SIGNAL_INTERVALS", "all").strip().lower()
+    if not raw or raw == "all":
+        return None
+    values: set[int] = set()
+    for part in raw.split(","):
+        token = part.strip()
+        if not token:
+            continue
+        try:
+            values.add(int(token))
+        except ValueError:
+            log.warning("Ignoring invalid interval token: %s", token)
+    return values or None
+
+
+def load_daily_signals() -> list[str]:
+    """Load runtime signal names from signal-noise REST API.
+
+    Default includes all available intervals.
     Falls back to MACRO_SIGNALS if API is unavailable.
     """
     global _daily_signal_cache
@@ -126,14 +150,22 @@ def load_daily_signals() -> list[str]:
 
     try:
         from signal_noise.client import SignalClient
-        client = SignalClient(base_url="http://127.0.0.1:8000", timeout=10)
+        base_url = os.getenv("ALPHA_OS_SIGNAL_NOISE_URL", "http://127.0.0.1:8000")
+        client = SignalClient(base_url=base_url, timeout=10)
         signals = client.list_signals()
-        names = sorted(
-            s["name"] for s in signals
-            if s.get("interval") in (3600, 86400)
-        )
+        intervals = _interval_filter()
+        if intervals is None:
+            names = sorted(s["name"] for s in signals)
+        else:
+            names = sorted(
+                s["name"] for s in signals
+                if s.get("interval") in intervals
+            )
         if names:
-            log.info("Loaded %d daily signals from API", len(names))
+            if intervals is None:
+                log.info("Loaded %d signals from API (all intervals)", len(names))
+            else:
+                log.info("Loaded %d signals from API (intervals=%s)", len(names), sorted(intervals))
             _daily_signal_cache = names
             return _daily_signal_cache
     except Exception as e:
