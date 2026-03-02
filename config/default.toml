@@ -63,3 +63,14 @@ min_interval = 900       # 15 min debounce between evaluations
 max_interval = 14400     # 4h timer fallback
 subscribe_pattern = "funding_rate_*,liq_*"
 anomaly_trigger = true
+
+[distributional]
+enabled = false
+window = 63
+min_samples = 20
+tail_sigma = 2.0
+cvar_alpha = 0.05
+max_left_tail_prob = 0.10
+max_cvar_abs = 0.03
+kelly_fraction = 0.50
+max_kelly_leverage = 1.0

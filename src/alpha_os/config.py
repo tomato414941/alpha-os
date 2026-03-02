@@ -163,6 +163,19 @@ class ExecutionTomlConfig:
 
 
 @dataclass
+class DistributionalConfig:
+    enabled: bool = False
+    window: int = 63
+    min_samples: int = 20
+    tail_sigma: float = 2.0
+    cvar_alpha: float = 0.05
+    max_left_tail_prob: float = 0.10
+    max_cvar_abs: float = 0.03
+    kelly_fraction: float = 0.50
+    max_kelly_leverage: float = 1.0
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -176,6 +189,7 @@ class Config:
     event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
     lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
+    distributional: DistributionalConfig = field(default_factory=DistributionalConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -198,4 +212,5 @@ class Config:
             event_driven=EventDrivenConfig(**raw.get("event_driven", {})),
             lifecycle=LifecycleTomlConfig(**raw.get("lifecycle", {})),
             execution=ExecutionTomlConfig(**raw.get("execution", {})),
+            distributional=DistributionalConfig(**raw.get("distributional", {})),
         )

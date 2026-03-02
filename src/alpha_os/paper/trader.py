@@ -356,6 +356,22 @@ class Trader:
         vol_s = self.risk_manager.vol_scale(recent_returns)
         adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
+        # 5a. Optional distribution-aware gate and sizing
+        if self.config.distributional.enabled:
+            gate_ok, dist_scale, dist_stats = self.risk_manager.distributional_adjustment(
+                recent_returns,
+                self.config.distributional,
+            )
+            if gate_ok:
+                adjusted = float(np.clip(adjusted * dist_scale, -1, 1))
+            else:
+                logger.info(
+                    "Distributional gate blocked trade: left_tail=%.3f cvar=%.4f",
+                    dist_stats.left_tail_prob,
+                    dist_stats.cvar,
+                )
+                adjusted = 0.0
+
         # 5b. Tactical modulation (Layer 2)
         if self.tactical is not None:
             try:
