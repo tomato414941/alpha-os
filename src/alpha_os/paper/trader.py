@@ -133,6 +133,7 @@ class Trader:
         self._wcfg = WeightedCombinerConfig()
         self._diversity_cache: dict[str, float] = {}
         self._diversity_computed = False
+        self._diversity_last_computed: float = 0.0
 
         self._restore_state()
 
@@ -355,8 +356,14 @@ class Trader:
             )
 
         # 4. Combine signals with quality × diversity weighting
-        if not self._diversity_computed:
+        diversity_stale = (
+            not self._diversity_computed
+            or (time.time() - self._diversity_last_computed)
+            > self._wcfg.diversity_recompute_days * 86400
+        )
+        if diversity_stale:
             self._recompute_diversity(data, parsed_records)
+            self._diversity_last_computed = time.time()
 
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
