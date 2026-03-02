@@ -79,6 +79,7 @@ def _make_executor(exchange=None):
     executor._symbol_map = {}
     executor._max_slippage_bps = 10.0
     executor._max_book_fraction = 0.1
+    executor._optimizer = None
     return executor
 
 

@@ -434,7 +434,7 @@ class TestMicrostructureTemplates:
         from alpha_os.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
-        assert len(templates) >= 4
+        assert len(templates) == 6
         for expr in templates:
             s = to_string(expr)
             roundtrip = parse(s)
@@ -444,7 +444,77 @@ class TestMicrostructureTemplates:
         from alpha_os.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
-        # First template should be VPIN spike detection
         s = to_string(templates[0])
-        assert "vpin_btc" in s
-        assert "if_gt" in s
+        assert s == "(if_gt vpin_btc 0.7 1.0 0.0)"
+
+    def test_imbalance_momentum_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        s = to_string(templates[1])
+        assert s == "(sub book_imbalance_btc (mean_5 book_imbalance_btc))"
+
+    def test_spread_filter_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        s = to_string(templates[2])
+        assert s == "(if_gt spread_bps_btc 10.0 0.0 1.0)"
+
+    def test_flow_vpin_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        s = to_string(templates[3])
+        assert s == "(mul trade_flow_btc (neg vpin_btc))"
+
+    def test_depth_ratio_divergence_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        s = to_string(templates[4])
+        assert s == "(sub book_depth_ratio_btc (mean_20 book_depth_ratio_btc))"
+
+    def test_large_trade_spike_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        s = to_string(templates[5])
+        assert "large_trade_count_btc" in s
+        assert "trade_flow_btc" in s
+
+    def test_templates_evaluable(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        rng = np.random.default_rng(42)
+        n = 100
+        data = {
+            "vpin_btc": rng.uniform(0, 1, n),
+            "book_imbalance_btc": rng.standard_normal(n) * 0.3,
+            "spread_bps_btc": rng.uniform(1, 20, n),
+            "trade_flow_btc": rng.standard_normal(n) * 10,
+            "book_depth_ratio_btc": rng.uniform(0.5, 2.0, n),
+            "large_trade_count_btc": rng.poisson(5, n).astype(float),
+        }
+        for expr in generate_microstructure_templates():
+            result = expr.evaluate(data)
+            assert isinstance(result, (np.ndarray, np.floating, float))
+
+
+# ---------------------------------------------------------------------------
+# Microstructure feature list
+# ---------------------------------------------------------------------------
+
+class TestMicrostructureFeatureList:
+
+    def test_build_microstructure_feature_list_crypto(self):
+        from alpha_os.data.universe import build_microstructure_feature_list, MICROSTRUCTURE_SIGNALS
+        features = build_microstructure_feature_list("BTC")
+        assert features[0] == "btc_ohlcv"
+        for sig in MICROSTRUCTURE_SIGNALS:
+            assert sig in features
+
+    def test_build_microstructure_feature_list_no_duplicates(self):
+        from alpha_os.data.universe import build_microstructure_feature_list
+        features = build_microstructure_feature_list("BTC")
+        assert len(features) == len(set(features))
