@@ -86,3 +86,63 @@ class AlphaMonitor:
 
     def clear(self, alpha_id: str) -> None:
         self._returns.pop(alpha_id, None)
+
+
+@dataclass
+class RegimeStatus:
+    current_vol_regime: str  # "low", "normal", "high"
+    vol_ratio: float
+    trend_regime: str  # "trending", "mean_reverting", "neutral"
+    drift_score: float  # 0-1, higher = more drift
+
+
+class RegimeDetector:
+    """Detect market regime changes using simple, robust statistics."""
+
+    def __init__(self, short_window: int = 21, long_window: int = 63):
+        self._short = short_window
+        self._long = long_window
+
+    def detect(self, returns: np.ndarray) -> RegimeStatus:
+        if len(returns) < self._long:
+            return RegimeStatus("normal", 1.0, "neutral", 0.0)
+
+        # Volatility regime: short vs long realized vol
+        short_vol = float(np.std(returns[-self._short:]))
+        long_vol = float(np.std(returns[-self._long:]))
+        vol_ratio = short_vol / long_vol if long_vol > 1e-8 else 1.0
+
+        if vol_ratio > 1.5:
+            vol_regime = "high"
+        elif vol_ratio < 0.7:
+            vol_regime = "low"
+        else:
+            vol_regime = "normal"
+
+        # Trend regime: lag-1 autocorrelation
+        r = returns[-self._long:]
+        autocorr = float(np.corrcoef(r[:-1], r[1:])[0, 1])
+        if np.isnan(autocorr):
+            autocorr = 0.0
+        if autocorr > 0.1:
+            trend = "trending"
+        elif autocorr < -0.1:
+            trend = "mean_reverting"
+        else:
+            trend = "neutral"
+
+        # Drift score: KS statistic between first/second half
+        from scipy.stats import ks_2samp
+
+        half = self._long // 2
+        first = returns[-self._long:-half]
+        second = returns[-half:]
+        stat, _ = ks_2samp(first, second)
+        drift_score = float(stat)
+
+        return RegimeStatus(
+            current_vol_regime=vol_regime,
+            vol_ratio=vol_ratio,
+            trend_regime=trend,
+            drift_score=drift_score,
+        )

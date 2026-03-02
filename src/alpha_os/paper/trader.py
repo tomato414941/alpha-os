@@ -15,7 +15,7 @@ import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
-from ..alpha.monitor import AlphaMonitor, MonitorConfig
+from ..alpha.monitor import AlphaMonitor, MonitorConfig, RegimeDetector
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
@@ -383,7 +383,25 @@ class Trader:
         vol_s = self.risk_manager.vol_scale(recent_returns)
         adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
-        # 5a. Optional distribution-aware gate and sizing
+        # 5a. Regime-aware position scaling
+        if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
+            regime = RegimeDetector(
+                short_window=self.config.regime.short_window,
+                long_window=self.config.regime.long_window,
+            ).detect(recent_returns)
+            if regime.drift_score > self.config.regime.drift_threshold:
+                scale = max(
+                    self.config.regime.drift_position_scale_min,
+                    1.0 - regime.drift_score,
+                )
+                adjusted *= scale
+                logger.info(
+                    "Regime drift detected: score=%.3f vol=%s trend=%s, scale=%.2f",
+                    regime.drift_score, regime.current_vol_regime,
+                    regime.trend_regime, scale,
+                )
+
+        # 5b. Optional distribution-aware gate and sizing
         if self.config.distributional.enabled:
             gate_ok, dist_scale, dist_stats = self.risk_manager.distributional_adjustment(
                 recent_returns,
@@ -399,7 +417,7 @@ class Trader:
                 )
                 adjusted = 0.0
 
-        # 5b. Tactical modulation (Layer 2)
+        # 5c. Tactical modulation (Layer 2)
         if self.tactical is not None:
             try:
                 tac = self.tactical.run_cycle(strategic_bias=adjusted)
