@@ -1,16 +1,15 @@
 """Tests for BinanceExecutor — all exchange calls are mocked."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from alpha_os.execution.binance import (
     BinanceExecutor,
     _get_credentials,
     _load_secrets,
 )
-from alpha_os.execution.executor import Order, Fill
+from alpha_os.execution.executor import Order
 
 
 # ---------------------------------------------------------------------------

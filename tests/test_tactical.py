@@ -1,10 +1,9 @@
 """Tests for TacticalTrader (Layer 2 hourly alpha)."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState

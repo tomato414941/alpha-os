@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from alpha_os.execution.executor import Fill
-from alpha_os.validation.testnet import TestnetValidator, DailyReport, ValidationState
+from alpha_os.validation.testnet import TestnetValidator
 
 
 @dataclass

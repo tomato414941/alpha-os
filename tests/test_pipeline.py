@@ -1,6 +1,5 @@
 """Tests for pipeline runner — integration test."""
 import numpy as np
-import pytest
 
 from alpha_os.evolution.gp import GPConfig
 from alpha_os.governance.gates import GateConfig

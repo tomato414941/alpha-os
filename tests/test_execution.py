@@ -1,7 +1,7 @@
 """Tests for execution layer (paper trading, executor interface)."""
 import pytest
 
-from alpha_os.execution.executor import Order, Fill
+from alpha_os.execution.executor import Order
 from alpha_os.execution.paper import PaperExecutor
 
 

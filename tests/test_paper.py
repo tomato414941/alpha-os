@@ -1,7 +1,6 @@
 """Tests for paper trading — tracker persistence and trader orchestration."""
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from alpha_os.execution.executor import Fill

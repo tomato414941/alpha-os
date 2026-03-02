@@ -3,7 +3,6 @@ import numpy as np
 import pytest
 
 from alpha_os.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant, ConditionalOp, LagOp
-from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.gp import GPConfig, GPEvolver, _tree_depth, _node_count, crossover
 from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig
 from alpha_os.evolution.behavior import (

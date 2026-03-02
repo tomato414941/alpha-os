@@ -1,8 +1,6 @@
 """Tests for statistical validation modules (DSR, FDR, PBO)."""
 import numpy as np
-import pytest
 
-from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.validation.deflated_sharpe import (
     DSRResult,

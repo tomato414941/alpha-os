@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
-from alpha_os.config import DATA_DIR
 
 
 @pytest.fixture(autouse=True)

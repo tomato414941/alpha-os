@@ -1,10 +1,9 @@
 """Tests for alpha monitor, audit log, and scheduler."""
 import json
 import numpy as np
-import pytest
 
 from alpha_os.alpha.monitor import AlphaMonitor, MonitorConfig, MonitorStatus
-from alpha_os.governance.audit_log import AuditLog, AuditEvent
+from alpha_os.governance.audit_log import AuditLog
 from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
 

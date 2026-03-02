@@ -1,8 +1,7 @@
 """Tests for the live CLI command, Trader rename, and Phase 4 features."""
 from __future__ import annotations
 
-import io
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -15,7 +14,7 @@ def test_trader_alias():
 
 def test_executor_abc_has_defaults():
     """Executor ABC provides default implementations for optional methods."""
-    from alpha_os.execution.executor import Executor, Order, Fill
+    from alpha_os.execution.executor import Executor
 
     class MinimalExecutor(Executor):
         def submit_order(self, order):
