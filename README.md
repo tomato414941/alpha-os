@@ -78,7 +78,31 @@ python -m alpha_os validate-testnet
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[distributional]` (CVaR/tail gate + Kelly sizing), `[testnet]`.
+
+### Distributional rollout
+
+Start with shadow behavior (metrics only), then enable gate/size control in testnet:
+
+```bash
+# 1) Baseline metrics (distributional disabled)
+python -m alpha_os validate --expr "(neg btc_ohlcv)"
+
+# 2) Enable distributional controls in config/default.toml
+# [distributional]
+# enabled = true
+
+# 3) Run testnet cycle and monitor status
+python -m alpha_os live --once --asset BTC
+python -m alpha_os validate-testnet
+```
+
+Rollback conditions:
+- Consecutive success days stop increasing for 24h+
+- Trade frequency drops to near zero due to over-strict gate
+- OOS CVaR95 worsens materially vs baseline
+
+If any rollback condition is met, set `[distributional].enabled = false` and rerun.
 
 ## Testing
 
