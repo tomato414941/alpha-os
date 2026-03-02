@@ -2,7 +2,7 @@
 
 ## Project
 
-Autonomous alpha generation + BTC/USDT trading system.
+Autonomous alpha generation + multi-asset trading system (crypto, equities, commodities, derivatives, prediction markets).
 Python 3.12, S-expression DSL, GP + MAP-Elites evolution, Binance execution.
 
 3-Layer architecture:

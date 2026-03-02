@@ -414,7 +414,7 @@ Success criteria: 10 consecutive days without errors or unexpected state.
 - **Daily rebalance** — no intra-day trading. Matches alpha evaluation frequency
 - **Testnet mandatory** — Phase 4 must complete before any real capital
 - **Kill switch file** — `touch data/KILL_SWITCH` halts all trading instantly, even if process is unattended
-- **No Alpaca** — crypto first; stock trading is a future consideration
+- **Crypto first** — BTC spot as initial proving ground; equities, commodities, prediction markets to follow
 - **No dashboard** — CLI logs + SQLite tracker are sufficient for initial operation
 
 ### What Is NOT Needed (deferred)
@@ -558,9 +558,40 @@ alpha-os
 | 8     | Crypto futures       | Short selling, leverage, higher returns | Phase 5 profitable  |
 | 9     | Cross-asset          | Portfolio-level optimization            | Phase 7 stable      |
 
-### What Remains Out of Scope
+### Future Asset Classes (not yet implemented)
 
-- **DeFi / on-chain trading** — smart contract risk, MEV, different execution model
-- **Forex** — requires separate broker, 24/5 schedule, different market microstructure
-- **Options** — pricing model complexity beyond GP's current expressiveness
+The core engine (DSL → GP → validation → lifecycle) is asset-agnostic.
+Each new asset class requires: (1) signal-noise collectors, (2) an Executor implementation, (3) asset-specific risk parameters.
+
+#### Tradable — Near-term
+
+| Asset Class | Examples | Executor | Data Readiness |
+|-------------|----------|----------|---------------|
+| REITs / ETFs | VNQ, TLT, GLD, SPY | Alpaca / IBKR | signal-noise に一部あり |
+| Bonds / Fixed Income | 米国債ETF (SHY, IEF, TLT), 社債ETF | Alpaca / IBKR | 利回りシグナル既存 |
+| Commodities (broad) | 金, 銀, プラチナ, 銅, 原油, 天然ガス | 先物 or ETF (GLD, SLV, USO) | 金・原油シグナル既存 |
+| Agricultural | 小麦, トウモロコシ, 大豆, コーヒー | 先物 or ETF (WEAT, CORN) | 要 collector 追加 |
+| Forex | USD/JPY, EUR/USD | OANDA / IBKR | 要 collector 追加 |
+
+#### Tradable — Medium-term
+
+| Asset Class | Examples | Executor | Notes |
+|-------------|----------|----------|-------|
+| Prediction markets | Polymarket, Kalshi | Custom API | バイナリーアウトカム; 独自の DSL 拡張が必要になる可能性 |
+| Options / Derivatives | BTC options (Deribit), 株式オプション | Deribit / IBKR | IV surface, Greeks; Phase 4 で IV シグナルは計画済み |
+| Crypto futures | BTC-PERP, ETH-PERP | Binance Futures | ショート可、レバレッジ; Phase 8 で計画済み |
+| Volatility products | VIX先物, UVXY, SVXY | IBKR / 先物 | VIX シグナル既存; トレード対象としては未 |
+
+#### Exploratory — Long-term
+
+| Asset Class | Examples | Notes |
+|-------------|----------|-------|
+| DeFi / on-chain | DEX swap, lending yield | スマートコントラクトリスク, MEV |
+| Carbon credits | EU ETS, CCA | 新興市場, 流動性限定的 |
+| Sports betting | ブックメーカー API | Polymarket と同構造 |
+| Tokenized RWA | 不動産・債権トークン | 規制・流動性の課題 |
+| Energy markets | 電力先物, ウラン | 専門的な市場構造 |
+
+#### Design Constraint
+
 - **HFT** — daily rebalance is the design choice; sub-minute trading needs different architecture

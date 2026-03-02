@@ -1,9 +1,9 @@
 # alpha-os
 
-Autonomous alpha generation and trading system for crypto (BTC/USDT).
+Autonomous alpha generation and trading system for any asset class — crypto, equities, commodities, derivatives, prediction markets, and beyond.
 3-layer architecture: strategic (daily), tactical (hourly), execution (minute).
 Generates trading signals using genetic programming (GP + MAP-Elites),
-validates them with walk-forward cross-validation, and executes via Binance.
+validates them with walk-forward cross-validation, and executes via pluggable executors (Binance, Alpaca, etc.).
 
 ## Architecture
 
