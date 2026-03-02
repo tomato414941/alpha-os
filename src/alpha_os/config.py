@@ -179,6 +179,22 @@ class DistributionalConfig:
 
 
 @dataclass
+class GateTomlConfig:
+    oos_log_growth_min: float = 0.0
+    oos_cvar_abs_max: float = 0.05
+    oos_tail_hit_rate_max: float = 0.10
+
+
+@dataclass
+class RegimeConfig:
+    enabled: bool = True
+    short_window: int = 21
+    long_window: int = 63
+    drift_threshold: float = 0.3
+    drift_position_scale_min: float = 0.5
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -193,6 +209,8 @@ class Config:
     lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
     distributional: DistributionalConfig = field(default_factory=DistributionalConfig)
+    gate: GateTomlConfig = field(default_factory=GateTomlConfig)
+    regime: RegimeConfig = field(default_factory=RegimeConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -216,4 +234,6 @@ class Config:
             lifecycle=LifecycleTomlConfig(**raw.get("lifecycle", {})),
             execution=ExecutionTomlConfig(**raw.get("execution", {})),
             distributional=DistributionalConfig(**raw.get("distributional", {})),
+            gate=GateTomlConfig(**raw.get("gate", {})),
+            regime=RegimeConfig(**raw.get("regime", {})),
         )
