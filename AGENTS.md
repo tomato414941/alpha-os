@@ -21,7 +21,7 @@ src/alpha_os/       Main package
   paper/            PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
-tests/              pytest test suite (423 tests)
+tests/              pytest test suite (434 tests)
 data/               Runtime data (SQLite DBs, logs) — gitignored
 ```
 
@@ -49,7 +49,8 @@ python -m alpha_os --help
 - **S-expression DSL** for alpha expressions: `(neg f1)`, `(ts_mean f2 10)`, `(if_gt f1 f2 f3 f4)`
 - **Executor interface** (`Executor` ABC in `execution/executor.py`) — Paper and Binance implementations
 - **ExecutionOptimizer** — microstructure-aware execution timing (optional, plugs into BinanceExecutor)
-- **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` thresholds)
+- **Distributional risk controls** (`[distributional]`) — optional CVaR/tail gate + Kelly-based sizing
+- **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` and `[distributional]`)
 
 ## Testing
 

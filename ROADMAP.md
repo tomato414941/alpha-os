@@ -27,6 +27,7 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 - Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
 - Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
 - EventDrivenTrader（WebSocket イベント駆動 + デバウンス）
+- Distributional risk layer（CVaR/left-tail gate + fractional Kelly sizing）
 - BinanceExecutor（spot, testnet）+ optimizer 連携
 - シグナル源: signal-noise REST API + WebSocket（日次 + hourly + 1min realtime）
 
