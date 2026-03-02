@@ -102,15 +102,31 @@ class BinanceExecutor(Executor):
         return symbol
 
     def submit_order(self, order: Order) -> Fill | None:
-        # Check microstructure conditions if optimizer is available
         if self._optimizer is not None:
-            if not self._optimizer.optimal_execution_window(order.side):
+            # Retry up to 3 times if optimizer defers execution
+            for attempt in range(3):
+                if self._optimizer.optimal_execution_window(order.side):
+                    break
                 logger.info(
-                    "Order deferred by optimizer: %s %s %.6f",
-                    order.side, order.symbol, order.qty,
+                    "Order deferred by optimizer (attempt %d/3): %s %s %.6f",
+                    attempt + 1, order.side, order.symbol, order.qty,
                 )
-                return None
+                time.sleep(30)
+            else:
+                logger.warning(
+                    "Optimizer blocked after 3 attempts, executing anyway: %s %s",
+                    order.side, order.symbol,
+                )
 
+            # Split order based on microstructure conditions
+            slices = self._optimizer.split_order(order.qty)
+            if len(slices) > 1:
+                return self._execute_slices(order, slices)
+
+        return self._submit_single(order)
+
+    def _submit_single(self, order: Order) -> Fill | None:
+        """Submit a single order without optimizer checks."""
         market = self._market_symbol(order.symbol)
         try:
             if order.side == "buy":
@@ -123,6 +139,39 @@ class BinanceExecutor(Executor):
         except Exception as e:
             logger.error("Order failed for %s: %s", market, e)
             return None
+
+    def _execute_slices(self, order: Order, slices: list[float]) -> Fill | None:
+        """Execute order in multiple slices, aggregate into a single Fill."""
+        logger.info(
+            "Splitting %s %s into %d slices", order.side, order.symbol, len(slices),
+        )
+        total_qty = 0.0
+        total_cost = 0.0
+        total_latency = 0.0
+        total_slippage = 0.0
+
+        for i, slice_qty in enumerate(slices):
+            slice_order = Order(symbol=order.symbol, side=order.side, qty=slice_qty)
+            fill = self._submit_single(slice_order)
+            if fill is not None:
+                total_qty += fill.qty
+                total_cost += fill.qty * fill.price
+                total_latency += fill.latency_ms
+                total_slippage += fill.slippage_bps * fill.qty
+
+        if total_qty == 0:
+            return None
+
+        avg_price = total_cost / total_qty
+        avg_slippage = total_slippage / total_qty
+        return Fill(
+            symbol=order.symbol,
+            side=order.side,
+            qty=total_qty,
+            price=avg_price,
+            slippage_bps=avg_slippage,
+            latency_ms=total_latency,
+        )
 
     def get_position(self, symbol: str) -> float:
         base = symbol.split("/")[0] if "/" in symbol else symbol
