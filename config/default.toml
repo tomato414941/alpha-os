@@ -45,6 +45,12 @@ degradation_window = 63
 target_success_days = 10
 max_acceptable_slippage_bps = 50.0
 
+[execution]
+imbalance_threshold = 0.1
+vpin_threshold = 0.5
+spread_threshold_bps = 5.0
+max_slices = 5
+
 [event_driven]
 min_interval = 900       # 15 min debounce between evaluations
 max_interval = 14400     # 4h timer fallback

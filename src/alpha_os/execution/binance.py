@@ -83,6 +83,7 @@ class BinanceExecutor(Executor):
         symbol_map: dict[str, str] | None = None,
         max_slippage_bps: float = 10.0,
         max_book_fraction: float = 0.1,
+        optimizer: object | None = None,
     ) -> None:
         self._exchange = create_spot_exchange(testnet=testnet)
         self._testnet = testnet
@@ -91,6 +92,7 @@ class BinanceExecutor(Executor):
         self._symbol_map = symbol_map or {}
         self._max_slippage_bps = max_slippage_bps
         self._max_book_fraction = max_book_fraction
+        self._optimizer = optimizer
 
     def _market_symbol(self, symbol: str) -> str:
         if symbol in self._symbol_map:
@@ -100,6 +102,15 @@ class BinanceExecutor(Executor):
         return symbol
 
     def submit_order(self, order: Order) -> Fill | None:
+        # Check microstructure conditions if optimizer is available
+        if self._optimizer is not None:
+            if not self._optimizer.optimal_execution_window(order.side):
+                logger.info(
+                    "Order deferred by optimizer: %s %s %.6f",
+                    order.side, order.symbol, order.qty,
+                )
+                return None
+
         market = self._market_symbol(order.symbol)
         try:
             if order.side == "buy":
