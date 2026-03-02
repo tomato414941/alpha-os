@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.alpha.monitor import RegimeDetector, RegimeStatus
+from alpha_os.alpha.monitor import RegimeDetector
 
 
 @pytest.fixture
