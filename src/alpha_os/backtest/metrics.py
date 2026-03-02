@@ -46,3 +46,36 @@ def turnover(positions: np.ndarray) -> float:
     if len(positions) < 2:
         return 0.0
     return float(np.abs(np.diff(positions)).mean())
+
+
+def cvar(returns: np.ndarray, alpha: float = 0.05) -> float:
+    """Conditional VaR (expected shortfall) of returns.
+
+    Returns the mean of the worst alpha-fraction outcomes.
+    """
+    if len(returns) == 0:
+        return 0.0
+    a = float(np.clip(alpha, 1e-6, 1.0))
+    n_tail = max(1, int(np.ceil(a * len(returns))))
+    tail = np.partition(np.asarray(returns, dtype=float), n_tail - 1)[:n_tail]
+    return float(np.mean(tail))
+
+
+def expected_log_growth(returns: np.ndarray, annual_factor: float = 252.0) -> float:
+    """Annualized expected log-growth rate."""
+    if len(returns) == 0:
+        return 0.0
+    r = np.asarray(returns, dtype=float)
+    r = np.clip(r, -0.999999, None)
+    return float(np.mean(np.log1p(r)) * annual_factor)
+
+
+def tail_hit_rate(returns: np.ndarray, sigma: float = 2.0) -> float:
+    """Rate of returns breaching mean - sigma * std."""
+    if len(returns) == 0:
+        return 0.0
+    r = np.asarray(returns, dtype=float)
+    mu = float(np.mean(r))
+    sd = float(np.std(r))
+    threshold = mu - sigma * sd
+    return float(np.mean(r < threshold))

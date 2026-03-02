@@ -348,12 +348,16 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     print(f"Pipeline: {len(all_alphas)} generated, {len(signals)} valid, backtested in {total_time:.2f}s")
     print(f"  Generate: {gen_time:.2f}s | Evaluate: {eval_time:.2f}s | Backtest: {bt_time:.2f}s")
     print(f"\nTop {args.top} alphas by Sharpe ratio:")
-    print(f"{'Rank':>4}  {'Sharpe':>8}  {'Return':>8}  {'MaxDD':>8}  {'Turnover':>8}  Expression")
-    print("-" * 90)
+    print(
+        f"{'Rank':>4}  {'Sharpe':>8}  {'Return':>8}  {'MaxDD':>8}  {'CVaR95':>8}  "
+        f"{'TailHit':>8}  {'Turnover':>8}  Expression"
+    )
+    print("-" * 120)
     for i, (expr, res) in enumerate(ranked[: args.top]):
         print(
             f"{i + 1:>4}  {res.sharpe:>8.3f}  {res.annual_return:>7.1%}  "
-            f"{res.max_drawdown:>7.1%}  {res.turnover:>8.3f}  {to_string(expr)}"
+            f"{res.max_drawdown:>7.1%}  {res.cvar_95:>8.3%}  {res.tail_hit_rate:>7.1%}  "
+            f"{res.turnover:>8.3f}  {to_string(expr)}"
         )
 
 
@@ -482,6 +486,9 @@ def cmd_validate(args: argparse.Namespace) -> None:
     print(f"  OOS Sharpe:     {cv.oos_sharpe:>8.3f} +/- {cv.oos_sharpe_std:.3f}")
     print(f"  OOS Return:     {cv.oos_return:>7.1%}")
     print(f"  OOS Max DD:     {cv.oos_max_dd:>7.1%}")
+    print(f"  OOS CVaR95:     {cv.oos_cvar_95:>7.3%}")
+    print(f"  OOS Log Growth: {cv.oos_expected_log_growth:>8.3f}")
+    print(f"  OOS Tail Hit:   {cv.oos_tail_hit_rate:>7.1%}")
     print(f"  Fold Sharpes:   {[f'{s:.3f}' for s in cv.fold_sharpes]}")
 
     passed = cv.oos_sharpe >= cfg.validation.oos_sharpe_min

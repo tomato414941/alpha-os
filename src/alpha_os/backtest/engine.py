@@ -16,6 +16,9 @@ class BacktestResult:
     annual_return: float
     annual_vol: float
     turnover: float
+    cvar_95: float
+    expected_log_growth: float
+    tail_hit_rate: float
     n_days: int
 
 
@@ -49,6 +52,9 @@ class BacktestEngine:
             annual_return=metrics.annual_return(net),
             annual_vol=metrics.annual_volatility(net),
             turnover=metrics.turnover(pos),
+            cvar_95=metrics.cvar(net, alpha=0.05),
+            expected_log_growth=metrics.expected_log_growth(net),
+            tail_hit_rate=metrics.tail_hit_rate(net, sigma=2.0),
             n_days=len(net),
         )
 
@@ -85,6 +91,9 @@ class BacktestEngine:
                 annual_return=metrics.annual_return(r),
                 annual_vol=metrics.annual_volatility(r),
                 turnover=metrics.turnover(p),
+                cvar_95=metrics.cvar(r, alpha=0.05),
+                expected_log_growth=metrics.expected_log_growth(r),
+                tail_hit_rate=metrics.tail_hit_rate(r, sigma=2.0),
                 n_days=len(r),
             ))
         return results

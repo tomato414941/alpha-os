@@ -16,6 +16,9 @@ class CVResult:
     oos_sharpe_std: float
     oos_return: float
     oos_max_dd: float
+    oos_cvar_95: float
+    oos_expected_log_growth: float
+    oos_tail_hit_rate: float
     n_folds: int
     fold_sharpes: list[float]
 
@@ -37,11 +40,11 @@ def purged_walk_forward(
     """
     n = len(prices)
     if n < min_train + embargo + 20:
-        return CVResult(0.0, 0.0, 0.0, 0.0, 0, [])
+        return CVResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, [])
 
     test_size = (n - min_train) // n_folds
     if test_size < 10:
-        return CVResult(0.0, 0.0, 0.0, 0.0, 0, [])
+        return CVResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, [])
 
     fold_sharpes = []
     all_oos_returns = []
@@ -67,7 +70,7 @@ def purged_walk_forward(
         all_oos_returns.extend((pos * oos_rets).tolist())
 
     if not fold_sharpes:
-        return CVResult(0.0, 0.0, 0.0, 0.0, 0, [])
+        return CVResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, [])
 
     all_oos = np.array(all_oos_returns)
     return CVResult(
@@ -75,6 +78,11 @@ def purged_walk_forward(
         oos_sharpe_std=float(np.std(fold_sharpes)),
         oos_return=float(metrics.annual_return(all_oos)) if len(all_oos) > 1 else 0.0,
         oos_max_dd=float(metrics.max_drawdown(all_oos)) if len(all_oos) > 1 else 0.0,
+        oos_cvar_95=float(metrics.cvar(all_oos, alpha=0.05)) if len(all_oos) > 1 else 0.0,
+        oos_expected_log_growth=float(metrics.expected_log_growth(all_oos))
+        if len(all_oos) > 1 else 0.0,
+        oos_tail_hit_rate=float(metrics.tail_hit_rate(all_oos, sigma=2.0))
+        if len(all_oos) > 1 else 0.0,
         n_folds=len(fold_sharpes),
         fold_sharpes=fold_sharpes,
     )

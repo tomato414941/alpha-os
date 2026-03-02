@@ -63,6 +63,20 @@ class TestMetrics:
         s = metrics.sortino_ratio(returns)
         assert s > 0
 
+    def test_cvar_negative_on_loss_tail(self):
+        returns = np.array([-0.10, -0.05, -0.02, 0.01, 0.02])
+        assert metrics.cvar(returns, alpha=0.4) < 0.0
+
+    def test_expected_log_growth_positive_for_positive_returns(self):
+        returns = np.full(252, 0.001)
+        assert metrics.expected_log_growth(returns) > 0.0
+
+    def test_tail_hit_rate_in_range(self):
+        rng = np.random.default_rng(42)
+        returns = rng.normal(0.0, 0.01, 252)
+        thr = metrics.tail_hit_rate(returns, sigma=2.0)
+        assert 0.0 <= thr <= 1.0
+
 
 class TestBacktestEngine:
     def test_run_basic(self):
@@ -73,6 +87,7 @@ class TestBacktestEngine:
         assert isinstance(result, BacktestResult)
         assert result.n_days == 251  # 252 prices -> 251 returns
         assert result.annual_return > 0  # trending up, always long
+        assert 0.0 <= result.tail_hit_rate <= 1.0
 
     def test_run_zero_signal(self):
         prices = np.linspace(100, 120, 100)
@@ -80,6 +95,7 @@ class TestBacktestEngine:
         engine = BacktestEngine()
         result = engine.run(alpha, prices)
         assert result.sharpe == 0.0
+        assert result.expected_log_growth == 0.0
 
     def test_costs_reduce_returns(self):
         prices = np.linspace(100, 110, 100)
