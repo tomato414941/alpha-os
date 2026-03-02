@@ -27,8 +27,11 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 - Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
 - Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
 - EventDrivenTrader（WebSocket イベント駆動 + デバウンス）
-- Distributional risk layer（CVaR/left-tail gate + fractional Kelly sizing）
-- BinanceExecutor（spot, testnet）+ optimizer 連携
+- Distributional risk layer（CVaR/left-tail gate + fractional Kelly sizing）— **デフォルト有効化済み**
+- BinanceExecutor（spot, testnet）+ optimizer 連携 + **注文分割 + リトライ**
+- RegimeDetector（vol/trend/drift 検知 → ポジション自動スケーリング）
+- Adoption gate に log_growth / CVaR / tail_hit_rate チェック統合
+- Feature universe: 1000+ シグナル対応（signal-noise 全 interval 展開）
 - シグナル源: signal-noise REST API + WebSocket（日次 + hourly + 1min realtime）
 
 ### signal-noise
@@ -47,6 +50,7 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 | Phase 1 | **完了** | Tactical Data Layer（hourly collectors, subdaily DataStore, Layer 2 GP）|
 | Phase 2 | **完了** | Event-Driven Architecture（EventBus, WebSocket, StreamingCollector）|
 | Phase 3 | **完了** | Microstructure Layer（orderbook/VPIN, ExecutionOptimizer, DSL templates）|
+| Quant Insights | **完了** | 5つの根本知見適用（distributional gate, regime detection, order splitting）|
 | Phase 4 | 未着手 | Options Intelligence（Deribit IV/skew, IV-aware risk scaling）|
 | Phase 5 | 未着手 | Cross-Exchange Intelligence（multi-exchange, lead-lag alpha）|
 
@@ -449,6 +453,38 @@ Layer 1 専用の GP 進化で、microstructure alpha を発見:
 
 ---
 
+## Quant Insights: 5つの根本知見の適用 ✅ 完了
+
+**目標**: 最新の量的金融研究に基づく5つの根本知見をシステムに適用する。
+
+### 背景
+
+以下の研究を基に、alpha-os の設計を「予測精度の向上」から「意思決定の最適化」へ転換。
+
+1. **予測より意思決定を最適化**: accuracy ではなく expected log growth を主目的に
+2. **単一モデルより頑健設計**: DRO・CVaR制約・分数Kellyで「外れても死なない運用」
+3. **アルファはポートフォリオ入力**: 相関構造込みの重み決定
+4. **実運用はマイクロ構造で決まる**: 約定品質・スリッページが支配的
+5. **戦略は継続学習システム**: 市場非定常性への適応
+
+### 実装内容
+
+| 知見 | 実装 | 対象ファイル |
+|------|------|-------------|
+| 1+2. Log Growth + CVaR | CVResult の全メトリクスを adoption gate に配線、distributional gate 有効化 | `gates.py`, `runner.py`, `default.toml` |
+| 3. 相関考慮 | diversity 再計算タイマー（63日ローリング） | `trader.py` |
+| 4. 執行品質 | BinanceExecutor に split_order 統合 + 3回リトライ | `binance.py` |
+| 5. 継続学習 | RegimeDetector（vol/trend/drift KS検定）→ ドリフト時ポジション縮小 | `monitor.py`, `trader.py` |
+
+### 参考文献
+
+- [Wasserstein-Kelly Portfolios (arXiv:2302.13979)](https://arxiv.org/abs/2302.13979)
+- [Cost-Sensitive DRO Log-Optimal Portfolio (arXiv:2410.23536)](https://arxiv.org/abs/2410.23536)
+- [Optimal Execution with RL (arXiv:2411.06389)](https://arxiv.org/abs/2411.06389)
+- [Proactive Concept Drift (arXiv:2412.08435)](https://arxiv.org/abs/2412.08435)
+
+---
+
 ## Phase 4: Options Intelligence
 
 **目標**: オプション市場のシグナルを取り込む。
@@ -581,6 +617,14 @@ Phase 3 ✅ 完了 (2026-03)
 ├── alpha-os: ExecutionOptimizer (VPIN/spread/imbalance ベース)
 ├── alpha-os: BinanceExecutor optimizer 連携
 └── alpha-os: MICROSTRUCTURE_SIGNALS + DSL templates (6 seed expressions)
+
+Quant Insights ✅ 完了 (2026-03)
+├── alpha-os: CVResult metrics (log_growth/cvar/tail) → adoption gate 配線
+├── alpha-os: [gate] config セクション + 実効的閾値設定
+├── alpha-os: distributional gate デフォルト有効化 (CVaR + Kelly sizing)
+├── alpha-os: BinanceExecutor 注文分割 (split_order) + 3回リトライ
+├── alpha-os: RegimeDetector (vol/trend/drift KS検定) + Trader 統合
+└── alpha-os: diversity 再計算タイマー (63日ローリング)
 
 Phase 4 (未着手)
 ├── signal-noise: Deribit options collector
