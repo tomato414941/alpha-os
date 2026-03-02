@@ -75,6 +75,9 @@ class GenerationConfig:
     candidates_per_cycle: int = 10000
     max_depth: int = 3
     windows: list[int] = field(default_factory=lambda: [5, 10, 20, 30, 60])
+    bloat_penalty: float = 0.01
+    depth_penalty: float = 0.0
+    similarity_penalty: float = 0.0
 
 
 @dataclass

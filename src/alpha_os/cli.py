@@ -403,6 +403,9 @@ def cmd_evolve(args: argparse.Namespace) -> None:
         pop_size=args.pop_size,
         n_generations=args.generations,
         max_depth=cfg.generation.max_depth,
+        bloat_penalty=cfg.generation.bloat_penalty,
+        depth_penalty=cfg.generation.depth_penalty,
+        similarity_penalty=cfg.generation.similarity_penalty,
     )
     evolver = GPEvolver(features, evaluate_fn, config=gp_cfg, seed=args.seed)
 
@@ -649,6 +652,9 @@ def _build_pipeline_config(
             pop_size=pop_size,
             n_generations=generations,
             max_depth=config.generation.max_depth,
+            bloat_penalty=config.generation.bloat_penalty,
+            depth_penalty=config.generation.depth_penalty,
+            similarity_penalty=config.generation.similarity_penalty,
         ),
         gate=GateConfig(
             oos_sharpe_min=config.validation.oos_sharpe_min,
@@ -725,6 +731,9 @@ def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
             pop_size=pop_size,
             n_generations=generations,
             max_depth=config.generation.max_depth,
+            bloat_penalty=config.generation.bloat_penalty,
+            depth_penalty=config.generation.depth_penalty,
+            similarity_penalty=config.generation.similarity_penalty,
         ),
         gate=GateConfig(
             oos_sharpe_min=config.validation.oos_sharpe_min,
