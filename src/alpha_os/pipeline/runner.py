@@ -25,7 +25,7 @@ from ..evolution.gp import GPConfig, GPEvolver
 from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
-from ..validation.purged_cv import purged_walk_forward
+from ..validation.purged_cv import CVResult, purged_walk_forward
 
 logger = logging.getLogger(__name__)
 
@@ -167,8 +167,8 @@ class PipelineRunner:
 
     def _validate(
         self, results: list[tuple[Expr, float]]
-    ) -> list[tuple[Expr, float, float, float]]:
-        """Returns (expr, fitness, oos_sharpe, dsr_pvalue) for passing alphas."""
+    ) -> list[tuple[Expr, float, CVResult, float]]:
+        """Returns (expr, fitness, cv_result, dsr_pvalue) for passing alphas."""
         cfg = self.config
         n_days = len(self.prices)
         n_trials = len(results)
@@ -197,7 +197,7 @@ class PipelineRunner:
                 strat_rets = pos[:n] * rets[:n]
                 dsr = deflated_sharpe_ratio(strat_rets, n_trials=n_trials)
 
-                validated.append((expr, fitness, cv.oos_sharpe, dsr.p_value))
+                validated.append((expr, fitness, cv, dsr.p_value))
             except EvaluationError:
                 n_failed += 1
         if n_failed:
@@ -206,13 +206,13 @@ class PipelineRunner:
         return validated
 
     def _compute_batch_pbo(
-        self, validated: list[tuple[Expr, float, float, float]],
+        self, validated: list[tuple[Expr, float, CVResult, float]],
         max_pbo_signals: int = 200,
     ) -> float:
         """Compute batch PBO for validated alphas. Returns PBO in [0, 1]."""
         n_days = len(self.prices)
         signals = []
-        for expr, fitness, oos_sharpe, dsr_pvalue in validated:
+        for expr, fitness, cv, dsr_pvalue in validated:
             try:
                 sig = evaluate_expression(expr, self.data, n_days)
                 signals.append(sig)
@@ -240,7 +240,7 @@ class PipelineRunner:
         return pbo_result.pbo
 
     def _adopt(
-        self, validated: list[tuple[Expr, float, float, float]]
+        self, validated: list[tuple[Expr, float, CVResult, float]]
     ) -> list[tuple[Expr, float]]:
         """Apply governance gates and register adopted alphas."""
         gate_cfg = self.config.gate or GateConfig()
@@ -249,9 +249,12 @@ class PipelineRunner:
         batch_pbo = self._compute_batch_pbo(validated)
 
         adopted = []
-        for expr, fitness, oos_sharpe, dsr_pvalue in validated:
+        for expr, fitness, cv, dsr_pvalue in validated:
             result = adoption_gate(
-                oos_sharpe=oos_sharpe,
+                oos_sharpe=cv.oos_sharpe,
+                oos_log_growth=cv.oos_expected_log_growth,
+                oos_cvar_95=cv.oos_cvar_95,
+                oos_tail_hit_rate=cv.oos_tail_hit_rate,
                 pbo=batch_pbo,
                 dsr_pvalue=dsr_pvalue,
                 fdr_passed=True,
@@ -267,7 +270,7 @@ class PipelineRunner:
                         expression=to_string(expr),
                         state=AlphaState.ACTIVE,
                         fitness=fitness,
-                        oos_sharpe=oos_sharpe,
+                        oos_sharpe=cv.oos_sharpe,
                         pbo=batch_pbo,
                         dsr_pvalue=dsr_pvalue,
                     )

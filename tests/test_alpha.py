@@ -375,9 +375,13 @@ class TestWeightedCombiner:
 # ---------------------------------------------------------------------------
 
 class TestGovernanceGates:
+    # Default CV metrics that pass all gates
+    _cv_defaults = dict(oos_log_growth=0.1, oos_cvar_95=-0.02, oos_tail_hit_rate=0.05)
+
     def test_all_pass(self):
         result = adoption_gate(
-            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
+            oos_sharpe=1.0, **self._cv_defaults,
+            pbo=0.2, dsr_pvalue=0.01,
             fdr_passed=True, avg_correlation=0.1, n_days=500,
         )
         assert result.passed is True
@@ -386,7 +390,8 @@ class TestGovernanceGates:
 
     def test_sharpe_fail(self):
         result = adoption_gate(
-            oos_sharpe=0.1, pbo=0.2, dsr_pvalue=0.01,
+            oos_sharpe=0.1, **self._cv_defaults,
+            pbo=0.2, dsr_pvalue=0.01,
             fdr_passed=True, avg_correlation=0.1, n_days=500,
         )
         assert result.passed is False
@@ -395,7 +400,8 @@ class TestGovernanceGates:
 
     def test_pbo_fail(self):
         result = adoption_gate(
-            oos_sharpe=1.0, pbo=1.1, dsr_pvalue=0.01,
+            oos_sharpe=1.0, **self._cv_defaults,
+            pbo=1.1, dsr_pvalue=0.01,
             fdr_passed=True, avg_correlation=0.1, n_days=500,
         )
         assert result.passed is False
@@ -403,7 +409,8 @@ class TestGovernanceGates:
 
     def test_multiple_failures(self):
         result = adoption_gate(
-            oos_sharpe=0.1, pbo=1.1, dsr_pvalue=1.1,
+            oos_sharpe=0.1, oos_log_growth=-2.0, oos_cvar_95=-0.5,
+            oos_tail_hit_rate=0.5, pbo=1.1, dsr_pvalue=1.1,
             fdr_passed=False, avg_correlation=0.9, n_days=50,
         )
         assert result.passed is False
@@ -412,7 +419,8 @@ class TestGovernanceGates:
     def test_custom_config(self):
         cfg = GateConfig(oos_sharpe_min=0.3, pbo_max=0.8, dsr_pvalue_max=0.10)
         result = adoption_gate(
-            oos_sharpe=0.4, pbo=0.6, dsr_pvalue=0.08,
+            oos_sharpe=0.4, **self._cv_defaults,
+            pbo=0.6, dsr_pvalue=0.08,
             fdr_passed=True, avg_correlation=0.1, n_days=500,
             config=cfg,
         )
@@ -421,8 +429,42 @@ class TestGovernanceGates:
     def test_fdr_not_required(self):
         cfg = GateConfig(fdr_pass_required=False)
         result = adoption_gate(
-            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
+            oos_sharpe=1.0, **self._cv_defaults,
+            pbo=0.2, dsr_pvalue=0.01,
             fdr_passed=False, avg_correlation=0.1, n_days=500,
             config=cfg,
         )
         assert result.checks["fdr"] is True
+
+    def test_log_growth_gate_rejects(self):
+        cfg = GateConfig(oos_log_growth_min=0.0)
+        result = adoption_gate(
+            oos_sharpe=1.0, oos_log_growth=-0.5, oos_cvar_95=-0.02,
+            oos_tail_hit_rate=0.05, pbo=0.2, dsr_pvalue=0.01,
+            fdr_passed=True, avg_correlation=0.1, n_days=500,
+            config=cfg,
+        )
+        assert result.passed is False
+        assert not result.checks["oos_log_growth"]
+
+    def test_cvar_gate_rejects(self):
+        cfg = GateConfig(oos_cvar_abs_max=0.05)
+        result = adoption_gate(
+            oos_sharpe=1.0, oos_log_growth=0.1, oos_cvar_95=-0.10,
+            oos_tail_hit_rate=0.05, pbo=0.2, dsr_pvalue=0.01,
+            fdr_passed=True, avg_correlation=0.1, n_days=500,
+            config=cfg,
+        )
+        assert result.passed is False
+        assert not result.checks["oos_cvar"]
+
+    def test_tail_hit_rate_gate_rejects(self):
+        cfg = GateConfig(oos_tail_hit_rate_max=0.10)
+        result = adoption_gate(
+            oos_sharpe=1.0, oos_log_growth=0.1, oos_cvar_95=-0.02,
+            oos_tail_hit_rate=0.15, pbo=0.2, dsr_pvalue=0.01,
+            fdr_passed=True, avg_correlation=0.1, n_days=500,
+            config=cfg,
+        )
+        assert result.passed is False
+        assert not result.checks["oos_tail_hit_rate"]

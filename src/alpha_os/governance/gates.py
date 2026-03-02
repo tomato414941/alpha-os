@@ -14,6 +14,9 @@ class GateResult:
 @dataclass
 class GateConfig:
     oos_sharpe_min: float = 0.5
+    oos_log_growth_min: float = -1.0
+    oos_cvar_abs_max: float = 1.0
+    oos_tail_hit_rate_max: float = 1.0
     pbo_max: float = 1.0
     dsr_pvalue_max: float = 1.0   # disabled — lifecycle manages quality
     fdr_pass_required: bool = False
@@ -23,6 +26,9 @@ class GateConfig:
 
 def adoption_gate(
     oos_sharpe: float,
+    oos_log_growth: float,
+    oos_cvar_95: float,
+    oos_tail_hit_rate: float,
     pbo: float,
     dsr_pvalue: float,
     fdr_passed: bool,
@@ -41,6 +47,23 @@ def adoption_gate(
     checks["oos_sharpe"] = oos_sharpe >= cfg.oos_sharpe_min
     if not checks["oos_sharpe"]:
         reasons.append(f"OOS Sharpe {oos_sharpe:.3f} < {cfg.oos_sharpe_min}")
+
+    checks["oos_log_growth"] = oos_log_growth >= cfg.oos_log_growth_min
+    if not checks["oos_log_growth"]:
+        reasons.append(
+            f"OOS log-growth {oos_log_growth:.3f} < {cfg.oos_log_growth_min}"
+        )
+
+    cvar_abs = abs(min(float(oos_cvar_95), 0.0))
+    checks["oos_cvar"] = cvar_abs <= cfg.oos_cvar_abs_max
+    if not checks["oos_cvar"]:
+        reasons.append(f"OOS |CVaR95| {cvar_abs:.3%} > {cfg.oos_cvar_abs_max:.3%}")
+
+    checks["oos_tail_hit_rate"] = oos_tail_hit_rate <= cfg.oos_tail_hit_rate_max
+    if not checks["oos_tail_hit_rate"]:
+        reasons.append(
+            f"OOS tail-hit {oos_tail_hit_rate:.3%} > {cfg.oos_tail_hit_rate_max:.3%}"
+        )
 
     checks["pbo"] = pbo <= cfg.pbo_max
     if not checks["pbo"]:
