@@ -13,6 +13,7 @@ from .tokens import (
 from .expr import Expr, Feature, Constant, UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
 from .parser import parse, to_string
 from .generator import AlphaGenerator
+from .features import collect_feature_names
 
 __all__ = [
     "OpType",
@@ -35,4 +36,5 @@ __all__ = [
     "parse",
     "to_string",
     "AlphaGenerator",
+    "collect_feature_names",
 ]

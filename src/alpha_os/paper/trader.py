@@ -21,7 +21,7 @@ from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
-from ..dsl import parse
+from ..dsl import parse, collect_feature_names
 from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
@@ -163,16 +163,15 @@ class Trader:
         )
 
     def _recompute_diversity(
-        self, data: dict[str, np.ndarray], all_records: list,
+        self, data: dict[str, np.ndarray], parsed_records: list[tuple],
     ) -> None:
         """Recompute diversity scores from signal matrix."""
         n_days = len(next(iter(data.values())))
         signals = []
         alpha_ids = []
 
-        for record in all_records:
+        for record, expr in parsed_records:
             try:
-                expr = parse(record.expression)
                 sig = evaluate_expression(expr, data, n_days)
                 sig = normalize_signal(sig)
                 lookback = min(self._wcfg.corr_lookback, n_days)
@@ -284,10 +283,25 @@ class Trader:
         alpha_signals: dict[str, float] = {}
         n_evaluated = 0
         n_failed = 0
+        n_feature_filtered = 0
+        parsed_records: list[tuple] = []
+        available_features = set(data.keys())
 
         for record in all_alphas:
             try:
                 expr = parse(record.expression)
+            except SyntaxError as exc:
+                logger.warning("Failed to parse %s: %s", record.alpha_id, exc)
+                n_failed += 1
+                continue
+            required = collect_feature_names(expr)
+            if not required.issubset(available_features):
+                n_feature_filtered += 1
+                continue
+            parsed_records.append((record, expr))
+
+        for record, expr in parsed_records:
+            try:
                 signal = evaluate_expression(expr, data, len(matrix))
                 signal_norm = normalize_signal(signal)
                 signal_yesterday = float(signal_norm[-2])
@@ -324,12 +338,25 @@ class Trader:
                 logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
                 n_failed += 1
 
+        if n_feature_filtered:
+            logger.info(
+                "Cycle: %d/%d alphas skipped (missing features in current data)",
+                n_feature_filtered, len(all_alphas),
+            )
         if n_failed:
             logger.info("Cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
+        total_skipped = n_feature_filtered + n_failed
+        if all_alphas and total_skipped / len(all_alphas) > 0.7:
+            logger.warning(
+                "High alpha skip ratio: %.1f%% (%d/%d)",
+                100.0 * total_skipped / len(all_alphas),
+                total_skipped,
+                len(all_alphas),
+            )
 
         # 4. Combine signals with quality × diversity weighting
         if not self._diversity_computed:
-            self._recompute_diversity(data, all_alphas)
+            self._recompute_diversity(data, parsed_records)
 
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
@@ -435,6 +462,9 @@ class Trader:
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
         self.portfolio_tracker.save_alpha_signals(cycle_key, alpha_signals)
+        no_fill_streak = self.portfolio_tracker.count_consecutive_no_fill_cycles()
+        if no_fill_streak >= 6:
+            logger.warning("No fills for %d consecutive cycles", no_fill_streak)
 
         # 9. Record trade P&L in circuit breaker
         self.circuit_breaker.record_trade(daily_pnl)

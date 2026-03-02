@@ -121,6 +121,39 @@ class TestPaperPortfolioTracker:
         tracker.save_alpha_signals("2026-01-01", {"a1": 0.6})  # upsert
         tracker.close()
 
+    def test_consecutive_no_fill_cycles(self, tmp_path):
+        db = tmp_path / "test.db"
+        tracker = PaperPortfolioTracker(db)
+        tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-01-01T00:00:00",
+            cash=10000.0, positions={},
+            portfolio_value=10000.0, daily_pnl=0.0, daily_return=0.0,
+            combined_signal=0.0, dd_scale=1.0, vol_scale=1.0,
+        ))
+        tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-01-01T04:00:00",
+            cash=10000.0, positions={},
+            portfolio_value=10000.0, daily_pnl=0.0, daily_return=0.0,
+            combined_signal=0.0, dd_scale=1.0, vol_scale=1.0,
+        ))
+        tracker.save_fills("2026-01-01T04:00:00", [
+            Fill(symbol="btc_ohlcv", side="buy", qty=0.01, price=97000.0, order_id="p-1")
+        ])
+        tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-01-01T08:00:00",
+            cash=9990.0, positions={"btc_ohlcv": 0.01},
+            portfolio_value=10010.0, daily_pnl=10.0, daily_return=0.001,
+            combined_signal=0.2, dd_scale=1.0, vol_scale=1.0,
+        ))
+        tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-01-01T12:00:00",
+            cash=9990.0, positions={"btc_ohlcv": 0.01},
+            portfolio_value=10005.0, daily_pnl=-5.0, daily_return=-0.0005,
+            combined_signal=0.1, dd_scale=1.0, vol_scale=1.0,
+        ))
+        assert tracker.count_consecutive_no_fill_cycles() == 2
+        tracker.close()
+
 
 class TestPositionSizing:
     def test_dollar_pos_scales_with_portfolio_value(self, tmp_path):

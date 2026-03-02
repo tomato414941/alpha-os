@@ -222,6 +222,23 @@ class PaperPortfolioTracker:
         row = self._conn.execute("SELECT COUNT(*) AS cnt FROM paper_fills").fetchone()
         return row["cnt"] if row else 0
 
+    def count_consecutive_no_fill_cycles(self, max_lookback: int = 200) -> int:
+        """Return trailing number of snapshot cycles with zero fills."""
+        rows = self._conn.execute(
+            "SELECT date FROM portfolio_snapshots ORDER BY date DESC LIMIT ?",
+            (max_lookback,),
+        ).fetchall()
+        streak = 0
+        for r in rows:
+            has_fill = self._conn.execute(
+                "SELECT 1 FROM paper_fills WHERE date = ? LIMIT 1",
+                (r["date"],),
+            ).fetchone()
+            if has_fill:
+                break
+            streak += 1
+        return streak
+
     def summary(self) -> PaperTradingSummary | None:
         snapshots = self._conn.execute(
             "SELECT * FROM portfolio_snapshots ORDER BY date"

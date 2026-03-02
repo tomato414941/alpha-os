@@ -13,6 +13,7 @@ from alpha_os.dsl import (
     parse,
     to_string,
     AlphaGenerator,
+    collect_feature_names,
 )
 
 
@@ -518,3 +519,10 @@ class TestMicrostructureFeatureList:
         from alpha_os.data.universe import build_microstructure_feature_list
         features = build_microstructure_feature_list("BTC")
         assert len(features) == len(set(features))
+
+
+class TestFeatureCollection:
+    def test_collect_feature_names_nested_expr(self):
+        expr = parse("(if_gt (mean_5 f1) f2 (add f3 (lag_2 f4)) (neg f5))")
+        names = collect_feature_names(expr)
+        assert names == {"f1", "f2", "f3", "f4", "f5"}

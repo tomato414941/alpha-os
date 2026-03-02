@@ -691,11 +691,22 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
         return
 
     matrix = matrix.bfill().fillna(0)
+    available_features = [
+        f for f in trader.features
+        if f in matrix.columns and not (matrix[f] == 0).all()
+    ]
+    if trader.price_signal not in available_features:
+        logger.warning("Price signal missing for evolution: %s", trader.price_signal)
+        return
     data = {col: matrix[col].values for col in matrix.columns}
     prices = data[trader.price_signal]
+    logger.info(
+        "Evolution feature gate: %d/%d available features",
+        len(available_features), len(trader.features),
+    )
 
     runner = PipelineRunner(
-        features=trader.features,
+        features=available_features,
         data=data,
         prices=prices,
         config=pipeline_config,
@@ -773,12 +784,23 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
         return
 
     matrix = matrix.bfill().fillna(0)
+    available_features = [
+        f for f in tactical.features
+        if f in matrix.columns and not (matrix[f] == 0).all()
+    ]
     data = {col: matrix[col].values for col in matrix.columns}
     price_col = price_signal(tactical.asset)
+    if price_col not in available_features:
+        logger.warning("L2 price signal missing for evolution: %s", price_col)
+        return
     prices = data[price_col]
+    logger.info(
+        "L2 Evolution feature gate: %d/%d available features",
+        len(available_features), len(tactical.features),
+    )
 
     runner = PipelineRunner(
-        features=tactical.features,
+        features=available_features,
         data=data,
         prices=prices,
         config=pipeline_config,
