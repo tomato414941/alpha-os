@@ -45,6 +45,13 @@ degradation_window = 63
 target_success_days = 10
 max_acceptable_slippage_bps = 50.0
 
+[lifecycle]
+oos_sharpe_min = 0.05       # gate for BORN -> ACTIVE adoption
+probation_sharpe_min = 0.0  # ACTIVE -> PROBATION threshold
+dormant_sharpe_max = -0.5   # PROBATION -> DORMANT threshold
+dormant_revival_sharpe = 0.0 # DORMANT -> PROBATION revival
+correlation_max = 0.5
+
 [execution]
 imbalance_threshold = 0.1
 vpin_threshold = 0.5

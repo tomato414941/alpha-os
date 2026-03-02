@@ -148,7 +148,11 @@ def run_backfill(
 
         # Lifecycle thresholds from config (single source of truth)
         lc_cfg = LifecycleConfig(
-            oos_sharpe_min=config.validation.oos_sharpe_min,
+            oos_sharpe_min=config.lifecycle.oos_sharpe_min,
+            probation_sharpe_min=config.lifecycle.probation_sharpe_min,
+            dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+            correlation_max=config.lifecycle.correlation_max,
+            dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
         )
         rolling_window = 63
         min_obs = 20

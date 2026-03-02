@@ -86,7 +86,11 @@ class ForwardRunner:
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
             config=LifecycleConfig(
-                oos_sharpe_min=config.validation.oos_sharpe_min,
+                oos_sharpe_min=config.lifecycle.oos_sharpe_min,
+                probation_sharpe_min=config.lifecycle.probation_sharpe_min,
+                dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+                correlation_max=config.lifecycle.correlation_max,
+                dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
             ),
         )
 

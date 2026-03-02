@@ -146,6 +146,23 @@ class EventDrivenConfig:
 
 
 @dataclass
+class LifecycleTomlConfig:
+    oos_sharpe_min: float = 0.05
+    probation_sharpe_min: float = 0.0
+    dormant_sharpe_max: float = -0.5
+    dormant_revival_sharpe: float = 0.0
+    correlation_max: float = 0.5
+
+
+@dataclass
+class ExecutionTomlConfig:
+    imbalance_threshold: float = 0.1
+    vpin_threshold: float = 0.5
+    spread_threshold_bps: float = 5.0
+    max_slices: int = 5
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -157,6 +174,8 @@ class Config:
     forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
     testnet: TestnetConfig = field(default_factory=TestnetConfig)
     event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
+    lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
+    execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -177,4 +196,6 @@ class Config:
             forward=ForwardTestConfig(**raw.get("forward", {})),
             testnet=TestnetConfig(**raw.get("testnet", {})),
             event_driven=EventDrivenConfig(**raw.get("event_driven", {})),
+            lifecycle=LifecycleTomlConfig(**raw.get("lifecycle", {})),
+            execution=ExecutionTomlConfig(**raw.get("execution", {})),
         )

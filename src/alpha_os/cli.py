@@ -819,10 +819,27 @@ def _setup_asset_context(
     executor = None
     if is_crypto(asset):
         from alpha_os.execution.binance import BinanceExecutor
+        from alpha_os.execution.optimizer import ExecutionOptimizer, ExecutionConfig
+        from signal_noise.client import SignalClient
+
         signal_name = price_signal(asset)
         market_symbol = f"{asset}/USDT"
         symbol_map = {signal_name: market_symbol}
-        executor = BinanceExecutor(testnet=testnet, symbol_map=symbol_map)
+
+        client = SignalClient(
+            base_url=cfg.api.base_url,
+            timeout=cfg.api.timeout,
+        )
+        exec_cfg = ExecutionConfig(
+            imbalance_threshold=cfg.execution.imbalance_threshold,
+            vpin_threshold=cfg.execution.vpin_threshold,
+            spread_threshold_bps=cfg.execution.spread_threshold_bps,
+            max_slices=cfg.execution.max_slices,
+        )
+        optimizer = ExecutionOptimizer(client, exec_cfg)
+        executor = BinanceExecutor(
+            testnet=testnet, symbol_map=symbol_map, optimizer=optimizer,
+        )
 
     tactical = TacticalTrader(asset=asset, config=cfg)
     trader = Trader(asset=asset, config=cfg, executor=executor,

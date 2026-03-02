@@ -103,7 +103,11 @@ class Trader:
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
             config=LifecycleConfig(
-                oos_sharpe_min=config.validation.oos_sharpe_min,
+                oos_sharpe_min=config.lifecycle.oos_sharpe_min,
+                probation_sharpe_min=config.lifecycle.probation_sharpe_min,
+                dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+                correlation_max=config.lifecycle.correlation_max,
+                dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
             ),
         )
 
@@ -298,10 +302,11 @@ class Trader:
                     record.alpha_id, today_date, signal_yesterday, daily_return,
                 )
 
-                # Monitor + lifecycle
+                # Monitor + lifecycle (limit to degradation window to avoid memory growth)
                 all_returns = self.forward_tracker.get_returns(record.alpha_id)
+                recent_returns = all_returns[-self.config.forward.degradation_window:]
                 self.monitor.clear(record.alpha_id)
-                self.monitor.record_batch(record.alpha_id, all_returns)
+                self.monitor.record_batch(record.alpha_id, recent_returns)
                 status = self.monitor.check(record.alpha_id)
 
                 old_state = record.state
