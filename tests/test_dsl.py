@@ -423,3 +423,28 @@ class TestGenerator:
     def test_empty_features_raises(self):
         with pytest.raises(ValueError):
             AlphaGenerator([])
+
+
+# ---------------------------------------------------------------------------
+# Microstructure templates
+
+class TestMicrostructureTemplates:
+
+    def test_templates_parse_and_stringify(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        assert len(templates) >= 4
+        for expr in templates:
+            s = to_string(expr)
+            roundtrip = parse(s)
+            assert to_string(roundtrip) == s
+
+    def test_vpin_spike_template(self):
+        from alpha_os.dsl.generator import generate_microstructure_templates
+
+        templates = generate_microstructure_templates()
+        # First template should be VPIN spike detection
+        s = to_string(templates[0])
+        assert "vpin_btc" in s
+        assert "if_gt" in s

@@ -248,6 +248,54 @@ class AlphaGenerator:
         return Constant(round(self.rng.uniform(-2, 2), 2))
 
 
+def generate_microstructure_templates() -> list[Expr]:
+    """Seed templates for Layer 1 GP evolution with microstructure signals."""
+    return [
+        # VPIN spike detection
+        ConditionalOp(
+            op="if_gt",
+            condition_left=Feature("vpin_btc"),
+            condition_right=Constant(0.7),
+            then_branch=Constant(1.0),
+            else_branch=Constant(0.0),
+        ),
+        # Imbalance momentum
+        BinaryOp(
+            op="sub",
+            left=Feature("book_imbalance_btc"),
+            right=RollingOp(op="mean", window=5, child=Feature("book_imbalance_btc")),
+        ),
+        # Wide spread filter
+        ConditionalOp(
+            op="if_gt",
+            condition_left=Feature("spread_bps_btc"),
+            condition_right=Constant(10.0),
+            then_branch=Constant(0.0),
+            else_branch=Constant(1.0),
+        ),
+        # Flow weighted by inverse VPIN
+        BinaryOp(
+            op="mul",
+            left=Feature("trade_flow_btc"),
+            right=UnaryOp(op="neg", child=Feature("vpin_btc")),
+        ),
+        # Depth ratio divergence from mean
+        BinaryOp(
+            op="sub",
+            left=Feature("book_depth_ratio_btc"),
+            right=RollingOp(op="mean", window=20, child=Feature("book_depth_ratio_btc")),
+        ),
+        # Large trade count spike
+        ConditionalOp(
+            op="if_gt",
+            condition_left=Feature("large_trade_count_btc"),
+            condition_right=RollingOp(op="mean", window=10, child=Feature("large_trade_count_btc")),
+            then_branch=Feature("trade_flow_btc"),
+            else_branch=Constant(0.0),
+        ),
+    ]
+
+
 def _collect_nodes(expr: Expr) -> list[Expr]:
     nodes: list[Expr] = [expr]
     if isinstance(expr, UnaryOp):

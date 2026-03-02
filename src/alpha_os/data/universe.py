@@ -52,6 +52,15 @@ EXTRA_SIGNALS = [
     "steam_online",
 ]
 
+MICROSTRUCTURE_SIGNALS = [
+    "book_imbalance_btc",
+    "book_depth_ratio_btc",
+    "spread_bps_btc",
+    "trade_flow_btc",
+    "vpin_btc",
+    "large_trade_count_btc",
+]
+
 HOURLY_SIGNALS = [
     "funding_rate_btc", "funding_rate_eth", "funding_rate_sol",
     "liq_ratio_btc_1h", "liq_ratio_eth_1h",
@@ -143,6 +152,21 @@ def build_hourly_feature_list(asset: str) -> list[str]:
     seen = {price}
     result = [price]
     for s in HOURLY_SIGNALS:
+        if s not in seen:
+            seen.add(s)
+            result.append(s)
+    return result
+
+
+def build_microstructure_feature_list(asset: str) -> list[str]:
+    """Layer 1 feature list: price signal + microstructure signals."""
+    try:
+        price = price_signal(asset)
+    except KeyError:
+        price = asset.lower()
+    seen = {price}
+    result = [price]
+    for s in MICROSTRUCTURE_SIGNALS:
         if s not in seen:
             seen.add(s)
             result.append(s)
