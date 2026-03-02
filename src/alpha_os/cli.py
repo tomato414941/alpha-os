@@ -139,6 +139,10 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="GP population size for evolution")
     liv.add_argument("--generations", type=int, default=30,
                      help="GP generations per evolution cycle")
+    liv.add_argument("--event-driven", action="store_true",
+                     help="Use event-driven execution instead of fixed interval")
+    liv.add_argument("--debounce", type=int, default=None,
+                     help="Min seconds between event-triggered evaluations (default: from config)")
 
     # validate-testnet
     vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
@@ -910,7 +914,7 @@ def cmd_live(args: argparse.Namespace) -> None:
         _print_validation_report(report)
         validator.print_status()
 
-    if args.once or not args.schedule:
+    if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
         for asset in asset_list:
             print(f"\n{'='*40} {asset} {'='*40}")
             trader, cb, validator = contexts[asset]
@@ -954,6 +958,62 @@ def cmd_live(args: argparse.Namespace) -> None:
             recon = trader.reconcile()
             _run_asset_validation(result, recon, cb, validator)
             logger.info("--- %s cycle done ---", asset)
+
+    if getattr(args, "event_driven", False):
+        import asyncio as _asyncio
+
+        from signal_noise.client import SignalClient as _SignalClient
+        from alpha_os.paper.event_driven import EventDrivenTrader, EventTriggerConfig
+
+        # Use first asset's trader for event-driven mode
+        asset = asset_list[0]
+        trader, cb, validator = contexts[asset]
+        client = _SignalClient(
+            base_url=cfg.api.base_url,
+            timeout=cfg.api.timeout,
+        )
+
+        ed_cfg = EventTriggerConfig(
+            min_interval=cfg.event_driven.min_interval,
+            max_interval=cfg.event_driven.max_interval,
+            subscribe_pattern=cfg.event_driven.subscribe_pattern,
+            anomaly_trigger=cfg.event_driven.anomaly_trigger,
+        )
+
+        if args.debounce is not None:
+            ed_cfg.min_interval = float(args.debounce)
+
+        print(
+            f"Event-driven mode: debounce={ed_cfg.min_interval:.0f}s, "
+            f"fallback={ed_cfg.max_interval:.0f}s, "
+            f"pattern={ed_cfg.subscribe_pattern}"
+        )
+
+        def _pre_cycle():
+            """Handle evolution before each event-driven cycle."""
+            now = time.time()
+            evolve_interval = args.evolve_interval
+            if evolve_interval > 0:
+                if _needs_evolution(trader) or (now - last_evolve.get(asset, 0)) >= evolve_interval:
+                    logger.info("Running alpha evolution for %s...", asset)
+                    _run_evolution(trader, cfg, pipeline_cfg)
+                    last_evolve[asset] = now
+                if trader.tactical is not None:
+                    if _needs_evolution_l2(trader.tactical) or (now - last_evolve_l2.get(asset, 0)) >= evolve_interval:
+                        logger.info("Running L2 evolution for %s...", asset)
+                        _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
+                        last_evolve_l2[asset] = now
+
+        ed_trader = EventDrivenTrader(
+            trader=trader, client=client, config=ed_cfg,
+            pre_cycle_hook=_pre_cycle,
+        )
+        try:
+            _asyncio.run(ed_trader.run())
+        finally:
+            for t, _, _ in contexts.values():
+                t.close()
+        return
 
     scheduler = PipelineScheduler(
         run_fn=cycle,

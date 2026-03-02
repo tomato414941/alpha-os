@@ -138,6 +138,14 @@ class TestnetConfig:
 
 
 @dataclass
+class EventDrivenConfig:
+    min_interval: float = 900.0
+    max_interval: float = 14400.0
+    subscribe_pattern: str = "funding_rate_*,liq_*"
+    anomaly_trigger: bool = True
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -148,6 +156,7 @@ class Config:
     paper: PaperTradingConfig = field(default_factory=PaperTradingConfig)
     forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
     testnet: TestnetConfig = field(default_factory=TestnetConfig)
+    event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -167,4 +176,5 @@ class Config:
             paper=PaperTradingConfig(**raw.get("paper", {})),
             forward=ForwardTestConfig(**raw.get("forward", {})),
             testnet=TestnetConfig(**raw.get("testnet", {})),
+            event_driven=EventDrivenConfig(**raw.get("event_driven", {})),
         )
