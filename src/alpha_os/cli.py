@@ -1002,13 +1002,21 @@ def cmd_live(args: argparse.Namespace) -> None:
     last_evolve_l2: dict[str, float] = {a: 0.0 for a in asset_list}
     logger = logging.getLogger(__name__)
 
+    # Pipeline v2: determine if daemons handle evo/lifecycle
+    use_evo_daemon = cfg.evo_daemon.enabled
+    use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
+    if use_evo_daemon:
+        logger.info("Pipeline v2: evo daemon enabled — skipping inline evolution")
+    if use_lifecycle_daemon:
+        logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
+
     def cycle():
         for asset in asset_list:
             trader, cb, validator = contexts[asset]
             logger.info("--- %s cycle start ---", asset)
             now = time.time()
             evolve_interval = args.evolve_interval
-            if evolve_interval > 0:
+            if evolve_interval > 0 and not use_evo_daemon:
                 if _needs_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
@@ -1018,7 +1026,7 @@ def cmd_live(args: argparse.Namespace) -> None:
                         logger.info("Running L2 evolution for %s...", asset)
                         _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
                         last_evolve_l2[asset] = now
-            result = trader.run_cycle()
+            result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
             _print_paper_result(result)
             recon = trader.reconcile()
             _run_asset_validation(result, recon, cb, validator)

@@ -194,13 +194,36 @@ class Trader:
         self._diversity_computed = True
         logger.info("Diversity scores computed for %d alphas", len(alpha_ids))
 
-    def run_cycle(self, simulation_date: str | None = None) -> PaperCycleResult:
+    def _load_diversity_from_db(self) -> None:
+        """Load pre-computed diversity scores from diversity_cache table."""
+        import sqlite3
+
+        db_path = asset_data_dir(self.asset) / "alpha_registry.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("PRAGMA busy_timeout=30000")
+        rows = conn.execute(
+            "SELECT alpha_id, diversity_score FROM diversity_cache"
+        ).fetchall()
+        conn.close()
+
+        if rows:
+            self._diversity_cache = {r[0]: r[1] for r in rows}
+            self._diversity_computed = True
+            logger.info("Loaded %d diversity scores from cache", len(rows))
+
+    def run_cycle(
+        self,
+        simulation_date: str | None = None,
+        skip_lifecycle: bool = False,
+    ) -> PaperCycleResult:
         """Execute one trading cycle.
 
         Args:
             simulation_date: ISO date string for historical simulation.
                 When set, skips API sync and limits data to end=date.
                 Uses date key (daily mode) for backward compatibility.
+            skip_lifecycle: When True, skip monitor/lifecycle evaluation
+                (handled by separate lifecycle daemon in Pipeline v2).
         """
         t0 = time.perf_counter()
         now = datetime.now(timezone.utc)
@@ -317,23 +340,24 @@ class Trader:
                     record.alpha_id, today_date, signal_yesterday, daily_return,
                 )
 
-                # Monitor + lifecycle (limit to degradation window to avoid memory growth)
+                # Monitor (always needed for weight calculation)
                 all_returns = self.forward_tracker.get_returns(record.alpha_id)
                 recent_returns = all_returns[-self.config.forward.degradation_window:]
                 self.monitor.clear(record.alpha_id)
                 self.monitor.record_batch(record.alpha_id, recent_returns)
-                status = self.monitor.check(record.alpha_id)
 
-                old_state = record.state
-                new_state = self.lifecycle.evaluate(
-                    record.alpha_id, status.rolling_sharpe,
-                )
-
-                if new_state != old_state:
-                    self.audit_log.log_state_change(
-                        record.alpha_id, old_state, new_state,
-                        reason=f"paper: sharpe={status.rolling_sharpe:.3f}",
+                # Lifecycle transitions (skip when lifecycle daemon handles it)
+                if not skip_lifecycle:
+                    status = self.monitor.check(record.alpha_id)
+                    old_state = record.state
+                    new_state = self.lifecycle.evaluate(
+                        record.alpha_id, status.rolling_sharpe,
                     )
+                    if new_state != old_state:
+                        self.audit_log.log_state_change(
+                            record.alpha_id, old_state, new_state,
+                            reason=f"paper: sharpe={status.rolling_sharpe:.3f}",
+                        )
 
             except EvaluationError as exc:
                 logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
@@ -356,14 +380,18 @@ class Trader:
             )
 
         # 4. Combine signals with quality × diversity weighting
-        diversity_stale = (
-            not self._diversity_computed
-            or (time.time() - self._diversity_last_computed)
-            > self._wcfg.diversity_recompute_days * 86400
-        )
-        if diversity_stale:
-            self._recompute_diversity(data, parsed_records)
-            self._diversity_last_computed = time.time()
+        if skip_lifecycle and self.config.validator.enabled:
+            # Pipeline v2: read diversity from DB cache
+            self._load_diversity_from_db()
+        else:
+            diversity_stale = (
+                not self._diversity_computed
+                or (time.time() - self._diversity_last_computed)
+                > self._wcfg.diversity_recompute_days * 86400
+            )
+            if diversity_stale:
+                self._recompute_diversity(data, parsed_records)
+                self._diversity_last_computed = time.time()
 
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
