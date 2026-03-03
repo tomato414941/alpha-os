@@ -154,6 +154,11 @@ def _build_parser() -> argparse.ArgumentParser:
     val_d.add_argument("--asset", type=str, default="BTC")
     val_d.add_argument("--config", type=str, default=None)
 
+    # lifecycle (Pipeline v2)
+    lc_d = sub.add_parser("lifecycle", help="Run daily lifecycle evaluation (oneshot)")
+    lc_d.add_argument("--asset", type=str, default="BTC")
+    lc_d.add_argument("--config", type=str, default=None)
+
     # validate-testnet
     vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
     vt.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -1115,6 +1120,22 @@ def cmd_evo_daemon(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_lifecycle(args: argparse.Namespace) -> None:
+    """Run daily lifecycle evaluation (Pipeline v2, oneshot)."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os.daemon.lifecycle import LifecycleDaemon
+
+    daemon = LifecycleDaemon(asset=args.asset, config=cfg)
+    daemon.run()
+
+
 def cmd_validator(args: argparse.Namespace) -> None:
     """Run the candidate validation daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
@@ -1215,5 +1236,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_evo_daemon(args)
     elif args.command == "validator":
         cmd_validator(args)
+    elif args.command == "lifecycle":
+        cmd_lifecycle(args)
     elif args.command == "validate-testnet":
         cmd_validate_testnet(args)
