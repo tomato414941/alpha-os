@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import logging
 import sys
 import time
@@ -737,6 +738,8 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
         f"{result.n_validated} validated, {result.n_adopted} adopted "
         f"({result.elapsed:.1f}s)"
     )
+    del runner, data, matrix, result
+    gc.collect()
 
 
 def _needs_evolution_l2(tactical) -> bool:
@@ -831,6 +834,8 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
         f"{result.n_validated} validated, {result.n_adopted} adopted "
         f"({result.elapsed:.1f}s)"
     )
+    del runner, data, matrix, result
+    gc.collect()
 
 
 def _print_validation_report(report) -> None:
