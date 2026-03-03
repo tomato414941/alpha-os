@@ -144,6 +144,11 @@ def _build_parser() -> argparse.ArgumentParser:
     liv.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
 
+    # evo-daemon (Pipeline v2)
+    evo_d = sub.add_parser("evo-daemon", help="Run continuous GP evolution daemon")
+    evo_d.add_argument("--asset", type=str, default="BTC")
+    evo_d.add_argument("--config", type=str, default=None)
+
     # validate-testnet
     vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
     vt.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -1081,6 +1086,22 @@ def cmd_live(args: argparse.Namespace) -> None:
             trader.close()
 
 
+def cmd_evo_daemon(args: argparse.Namespace) -> None:
+    """Run the continuous evolution daemon (Pipeline v2)."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os.daemon.evo import EvoDaemon
+
+    daemon = EvoDaemon(asset=args.asset, config=cfg)
+    daemon.run()
+
+
 def cmd_validate_testnet(args: argparse.Namespace) -> None:
     import json as _json
 
@@ -1161,5 +1182,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_paper(args)
     elif args.command == "live":
         cmd_live(args)
+    elif args.command == "evo-daemon":
+        cmd_evo_daemon(args)
     elif args.command == "validate-testnet":
         cmd_validate_testnet(args)
