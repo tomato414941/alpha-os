@@ -34,15 +34,10 @@ def test_executor_abc_has_defaults():
 
 
 def test_binance_executor_portfolio_value():
-    """BinanceExecutor.portfolio_value sums USDT + marked positions."""
+    """BinanceExecutor.portfolio_value uses managed state, not exchange balance."""
     from alpha_os.execution.binance import BinanceExecutor
 
     mock_ex = MagicMock()
-    mock_ex.fetch_balance.return_value = {
-        "USDT": {"total": 5000.0, "free": 5000.0},
-        "BTC": {"total": 0.1, "free": 0.1},
-        "free": {}, "used": {}, "total": {}, "info": {},
-    }
     mock_ex.fetch_ticker.return_value = {"last": 50000.0}
 
     executor = object.__new__(BinanceExecutor)
@@ -51,34 +46,31 @@ def test_binance_executor_portfolio_value():
     executor._symbol_map = {}
     executor._max_slippage_bps = 10.0
     executor._max_book_fraction = 0.1
+    executor._managed_cash = 5000.0
+    executor._managed_positions = {"BTC": 0.1}
+    executor._initial_capital = 10000.0
 
     assert executor.portfolio_value == pytest.approx(10000.0)  # 5000 + 0.1*50000
 
 
 def test_binance_executor_all_positions():
-    """BinanceExecutor.all_positions returns non-zero holdings."""
+    """BinanceExecutor.all_positions returns managed positions only."""
     from alpha_os.execution.binance import BinanceExecutor
 
-    mock_ex = MagicMock()
-    mock_ex.fetch_balance.return_value = {
-        "USDT": {"total": 5000.0},
-        "BTC": {"total": 0.1},
-        "ETH": {"total": 0.0},
-        "free": {}, "used": {}, "total": {}, "info": {},
-    }
-
     executor = object.__new__(BinanceExecutor)
-    executor._exchange = mock_ex
+    executor._exchange = MagicMock()
     executor._testnet = True
     executor._symbol_map = {}
     executor._max_slippage_bps = 10.0
     executor._max_book_fraction = 0.1
+    executor._managed_cash = 5000.0
+    executor._managed_positions = {"BTC": 0.1, "ETH": 0.0}
+    executor._initial_capital = 10000.0
 
     positions = executor.all_positions
     assert "BTC" in positions
     assert positions["BTC"] == 0.1
     assert "ETH" not in positions  # zero position filtered
-    assert "USDT" not in positions  # USDT excluded
 
 
 def test_live_parser():

@@ -104,6 +104,7 @@ class RiskConfig:
     dd_stage1_pct: float = 5.0
     dd_stage2_pct: float = 10.0
     dd_stage3_pct: float = 15.0
+    max_vol_scale: float = 1.5
 
     def to_manager_config(self):
         """Convert user-facing percentages to decimal RiskManagerConfig."""
@@ -113,6 +114,7 @@ class RiskConfig:
             dd_stage1_pct=self.dd_stage1_pct / 100.0,
             dd_stage2_pct=self.dd_stage2_pct / 100.0,
             dd_stage3_pct=self.dd_stage3_pct / 100.0,
+            max_vol_scale=self.max_vol_scale,
         )
 
 
@@ -125,6 +127,8 @@ class TradingConfig:
 class PaperTradingConfig:
     max_position_pct: float = 1.0
     min_trade_usd: float = 10.0
+    signal_compression: float = 0.0
+    signal_compression: float = 0.0
 
 
 @dataclass

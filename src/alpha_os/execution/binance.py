@@ -71,10 +71,12 @@ def create_spot_exchange(testnet: bool = True):
 
 
 class BinanceExecutor(Executor):
-    """Live Binance spot executor with orderbook depth check and slippage guard.
+    """Live Binance spot executor with managed position tracking.
 
-    Conforms to alpha-os Executor interface. Positions and cash are always
-    queried from the exchange (single source of truth).
+    Tracks only positions created by alpha-os trades, separate from the
+    full exchange account balance. Exchange is used for order execution
+    and pre-trade safety checks, but portfolio_value reflects managed
+    equity only.
     """
 
     def __init__(
@@ -84,15 +86,18 @@ class BinanceExecutor(Executor):
         max_slippage_bps: float = 10.0,
         max_book_fraction: float = 0.1,
         optimizer: object | None = None,
+        initial_capital: float = 10000.0,
     ) -> None:
         self._exchange = create_spot_exchange(testnet=testnet)
         self._testnet = testnet
-        # Map alpha-os symbol names to CCXT market symbols.
-        # e.g. {"BTC": "BTC/USDT"} — default appends /USDT.
         self._symbol_map = symbol_map or {}
         self._max_slippage_bps = max_slippage_bps
         self._max_book_fraction = max_book_fraction
         self._optimizer = optimizer
+        # Managed state: tracks only alpha-os positions, not full exchange
+        self._managed_cash: float = initial_capital
+        self._managed_positions: dict[str, float] = {}
+        self._initial_capital = initial_capital
 
     def _market_symbol(self, symbol: str) -> str:
         if symbol in self._symbol_map:
@@ -101,9 +106,22 @@ class BinanceExecutor(Executor):
             return f"{symbol}/USDT"
         return symbol
 
+    def _update_managed_state(self, fill: Fill) -> None:
+        """Update internal managed position tracking after a successful fill."""
+        cost = fill.qty * fill.price
+        if fill.side == "buy":
+            self._managed_cash -= cost
+            self._managed_positions[fill.symbol] = (
+                self._managed_positions.get(fill.symbol, 0.0) + fill.qty
+            )
+        elif fill.side == "sell":
+            self._managed_cash += cost
+            self._managed_positions[fill.symbol] = (
+                self._managed_positions.get(fill.symbol, 0.0) - fill.qty
+            )
+
     def submit_order(self, order: Order) -> Fill | None:
         if self._optimizer is not None:
-            # Retry up to 3 times if optimizer defers execution
             for attempt in range(3):
                 if self._optimizer.optimal_execution_window(order.side):
                     break
@@ -118,12 +136,17 @@ class BinanceExecutor(Executor):
                     order.side, order.symbol,
                 )
 
-            # Split order based on microstructure conditions
             slices = self._optimizer.split_order(order.qty)
             if len(slices) > 1:
-                return self._execute_slices(order, slices)
+                fill = self._execute_slices(order, slices)
+                if fill is not None:
+                    self._update_managed_state(fill)
+                return fill
 
-        return self._submit_single(order)
+        fill = self._submit_single(order)
+        if fill is not None:
+            self._update_managed_state(fill)
+        return fill
 
     def _submit_single(self, order: Order) -> Fill | None:
         """Submit a single order without optimizer checks."""
@@ -173,16 +196,33 @@ class BinanceExecutor(Executor):
             latency_ms=total_latency,
         )
 
+    # ── Managed state interface (used by trader for sizing/risk/PnL) ──
+
     def get_position(self, symbol: str) -> float:
-        base = symbol.split("/")[0] if "/" in symbol else symbol
-        try:
-            balance = self._exchange.fetch_balance()
-            return float(balance.get(base, {}).get("total", 0.0))
-        except Exception as e:
-            logger.error("Failed to fetch position for %s: %s", base, e)
-            return 0.0
+        return self._managed_positions.get(symbol, 0.0)
 
     def get_cash(self) -> float:
+        return self._managed_cash
+
+    @property
+    def portfolio_value(self) -> float:
+        """Portfolio value from managed positions only (not whole exchange)."""
+        total = self._managed_cash
+        for symbol, qty in self._managed_positions.items():
+            if abs(qty) > 1e-8:
+                price = self.fetch_ticker_price(symbol)
+                if price is not None:
+                    total += qty * price
+        return total
+
+    @property
+    def all_positions(self) -> dict[str, float]:
+        return {s: q for s, q in self._managed_positions.items() if abs(q) > 1e-8}
+
+    # ── Exchange-level access (for safety checks and reconciliation) ──
+
+    def _exchange_cash(self) -> float:
+        """Fetch USDT balance from exchange (for pre-trade safety check)."""
         try:
             balance = self._exchange.fetch_balance()
             return float(balance.get("USDT", {}).get("free", 0.0))
@@ -190,48 +230,15 @@ class BinanceExecutor(Executor):
             logger.error("Failed to fetch USDT balance: %s", e)
             return 0.0
 
-    @property
-    def portfolio_value(self) -> float:
-        """Total portfolio value from exchange (USDT + marked positions)."""
+    def _exchange_position(self, symbol: str) -> float:
+        """Fetch actual position from exchange (for reconciliation)."""
+        base = symbol.split("/")[0] if "/" in symbol else symbol
         try:
             balance = self._exchange.fetch_balance()
-            total = float(balance.get("USDT", {}).get("total", 0.0))
-            for asset, amounts in balance.items():
-                if asset in ("USDT", "free", "used", "total", "info"):
-                    continue
-                if not isinstance(amounts, dict):
-                    continue
-                qty = float(amounts.get("total", 0.0))
-                if qty > 1e-8:
-                    try:
-                        market = f"{asset}/USDT"
-                        ticker = self._exchange.fetch_ticker(market)
-                        total += qty * float(ticker["last"])
-                    except Exception:
-                        pass
-            return total
+            return float(balance.get(base, {}).get("total", 0.0))
         except Exception as e:
-            logger.error("Failed to fetch portfolio value: %s", e)
+            logger.error("Failed to fetch position for %s: %s", base, e)
             return 0.0
-
-    @property
-    def all_positions(self) -> dict[str, float]:
-        """All non-zero positions from exchange."""
-        try:
-            balance = self._exchange.fetch_balance()
-            positions: dict[str, float] = {}
-            for asset, amounts in balance.items():
-                if asset in ("USDT", "free", "used", "total", "info"):
-                    continue
-                if not isinstance(amounts, dict):
-                    continue
-                qty = float(amounts.get("total", 0.0))
-                if qty > 1e-8:
-                    positions[asset] = qty
-            return positions
-        except Exception as e:
-            logger.error("Failed to fetch positions: %s", e)
-            return {}
 
     def fetch_ticker_price(self, symbol: str) -> float | None:
         """Fetch real-time last price from Binance via CCXT."""
@@ -243,7 +250,7 @@ class BinanceExecutor(Executor):
             logger.warning("Failed to fetch ticker for %s: %s", market, e)
             return None
 
-    # ------------------------------------------------------------------
+    # ── Order execution (exchange interaction) ──
 
     def _market_buy(self, market: str, order: Order) -> Fill | None:
         orderbook = self._exchange.fetch_order_book(market, limit=5)
@@ -252,7 +259,6 @@ class BinanceExecutor(Executor):
             logger.error("No asks in orderbook for %s", market)
             return None
 
-        # Depth check: reject if order value exceeds fraction of visible book.
         order_value = order.qty * best_ask
         book_depth = sum(p * q for p, q in orderbook["asks"][:5])
         if book_depth > 0 and order_value > book_depth * self._max_book_fraction:
@@ -265,8 +271,8 @@ class BinanceExecutor(Executor):
             )
             return None
 
-        # Pre-trade balance check
-        available_cash = self.get_cash()
+        # Check actual exchange balance (not managed cash)
+        available_cash = self._exchange_cash()
         if order_value > available_cash:
             logger.warning(
                 "Insufficient cash: need $%.2f, have $%.2f for %s, skipping",

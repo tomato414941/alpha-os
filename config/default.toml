@@ -31,13 +31,15 @@ target_vol_pct = 15.0
 dd_stage1_pct = 5.0
 dd_stage2_pct = 10.0
 dd_stage3_pct = 15.0
+max_vol_scale = 1.5
 
 [trading]
 initial_capital = 10000.0
 
 [paper]
-max_position_pct = 1.0
+max_position_pct = 0.25
 min_trade_usd = 10.0
+signal_compression = 0.5
 
 [forward]
 check_interval = 14400
@@ -108,5 +110,5 @@ tail_sigma = 2.0
 cvar_alpha = 0.05
 max_left_tail_prob = 0.10
 max_cvar_abs = 0.03
-kelly_fraction = 0.50
-max_kelly_leverage = 1.0
+kelly_fraction = 0.25
+max_kelly_leverage = 0.50

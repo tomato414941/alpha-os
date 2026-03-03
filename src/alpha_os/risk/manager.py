@@ -25,6 +25,7 @@ class RiskManagerConfig:
     dd_stage3_scale: float = 0.25
     max_position: float = 1.0
     lookback_vol: int = 63
+    max_vol_scale: float = 1.5
 
 
 # Backward compatibility alias
@@ -74,7 +75,7 @@ class RiskManager:
         realized = float(np.std(recent_returns) * np.sqrt(252))
         if realized < 1e-8:
             return 1.0
-        return min(self.config.target_vol / realized, 2.0)
+        return min(self.config.target_vol / realized, self.config.max_vol_scale)
 
     def adjust_position(
         self, raw_position: float, recent_returns: np.ndarray
@@ -119,7 +120,7 @@ class RiskManager:
             recent = returns_history[lookback_start:t]
             if len(recent) >= 10:
                 realized = float(np.std(recent) * np.sqrt(252))
-                vol_s = min(cfg.target_vol / realized, 2.0) if realized > 1e-8 else 1.0
+                vol_s = min(cfg.target_vol / realized, cfg.max_vol_scale) if realized > 1e-8 else 1.0
             else:
                 vol_s = 1.0
 

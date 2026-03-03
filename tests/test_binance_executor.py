@@ -70,7 +70,7 @@ def _mock_exchange():
     return ex
 
 
-def _make_executor(exchange=None):
+def _make_executor(exchange=None, initial_capital=10000.0):
     """Create BinanceExecutor with a mock exchange, bypassing create_spot_exchange."""
     executor = object.__new__(BinanceExecutor)
     executor._exchange = exchange or _mock_exchange()
@@ -79,6 +79,9 @@ def _make_executor(exchange=None):
     executor._max_slippage_bps = 10.0
     executor._max_book_fraction = 0.1
     executor._optimizer = None
+    executor._managed_cash = initial_capital
+    executor._managed_positions = {}
+    executor._initial_capital = initial_capital
     return executor
 
 
@@ -106,33 +109,37 @@ def test_market_symbol_custom_map():
 # get_position / get_cash
 # ---------------------------------------------------------------------------
 
-def test_get_position():
+def test_get_position_managed():
+    """get_position returns managed position, not exchange balance."""
     ex = _make_executor()
-    assert ex.get_position("BTC") == 1.5
+    assert ex.get_position("BTC") == 0.0  # no managed position yet
+    ex._managed_positions["BTC"] = 0.5
+    assert ex.get_position("BTC") == 0.5
 
 
-def test_get_position_with_slash():
-    ex = _make_executor()
-    assert ex.get_position("BTC/USDT") == 1.5
-
-
-def test_get_cash():
-    ex = _make_executor()
+def test_get_cash_managed():
+    """get_cash returns managed cash, not exchange balance."""
+    ex = _make_executor(initial_capital=10000.0)
     assert ex.get_cash() == 10000.0
 
 
-def test_get_position_exchange_error():
+def test_exchange_cash():
+    """_exchange_cash queries actual exchange balance."""
+    ex = _make_executor()
+    assert ex._exchange_cash() == 10000.0
+
+
+def test_exchange_position():
+    """_exchange_position queries actual exchange balance."""
+    ex = _make_executor()
+    assert ex._exchange_position("BTC") == 1.5
+
+
+def test_exchange_cash_error():
     mock_ex = _mock_exchange()
     mock_ex.fetch_balance.side_effect = Exception("network error")
     ex = _make_executor(mock_ex)
-    assert ex.get_position("BTC") == 0.0
-
-
-def test_get_cash_exchange_error():
-    mock_ex = _mock_exchange()
-    mock_ex.fetch_balance.side_effect = Exception("network error")
-    ex = _make_executor(mock_ex)
-    assert ex.get_cash() == 0.0
+    assert ex._exchange_cash() == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +157,9 @@ def test_buy_order():
     assert fill.price == 50002.0
     assert fill.order_id == "buy-001"
     ex._exchange.create_market_buy_order.assert_called_once()
+    # Managed state updated
+    assert ex._managed_positions.get("BTC", 0) == 0.1
+    assert ex._managed_cash < 10000.0
 
 
 def test_buy_order_no_asks():
@@ -191,6 +201,7 @@ def test_buy_order_exceeds_book_depth():
 
 def test_sell_order():
     ex = _make_executor()
+    ex._managed_positions["BTC"] = 1.0  # have some managed BTC
     order = Order(symbol="BTC", side="sell", qty=0.5)
     fill = ex.submit_order(order)
     assert fill is not None
@@ -200,6 +211,9 @@ def test_sell_order():
     assert fill.price == 49988.0
     assert fill.order_id == "sell-001"
     ex._exchange.create_market_sell_order.assert_called_once()
+    # Managed state updated
+    assert ex._managed_positions["BTC"] == 0.5
+    assert ex._managed_cash > 10000.0
 
 
 def test_sell_order_no_bids():
@@ -242,28 +256,28 @@ def test_submit_order_exchange_exception():
 
 def test_rebalance():
     mock_ex = _mock_exchange()
-    # Ensure enough cash for buy: 0.5 BTC @ ~$50k = $25k
     mock_ex.fetch_balance.return_value = {
         "BTC": {"total": 1.5, "free": 1.5},
         "USDT": {"total": 50000.0, "free": 50000.0},
     }
-    ex = _make_executor(mock_ex)
-    # Current BTC position is 1.5 (from mock).
-    # Target 2.0 → buy 0.5.
-    fills = ex.rebalance({"BTC": 2.0})
+    ex = _make_executor(mock_ex, initial_capital=50000.0)
+    # Managed position is 0.0. Target 0.05 → buy 0.05 (~$2500, within book depth).
+    fills = ex.rebalance({"BTC": 0.05})
     assert len(fills) == 1
     assert fills[0].side == "buy"
 
 
 def test_rebalance_sell():
     ex = _make_executor()
-    # Current 1.5 → target 1.0 → sell 0.5.
-    fills = ex.rebalance({"BTC": 1.0})
+    ex._managed_positions["BTC"] = 1.0
+    # Managed 1.0 → target 0.5 → sell 0.5.
+    fills = ex.rebalance({"BTC": 0.5})
     assert len(fills) == 1
     assert fills[0].side == "sell"
 
 
 def test_rebalance_no_change():
     ex = _make_executor()
+    ex._managed_positions["BTC"] = 1.5
     fills = ex.rebalance({"BTC": 1.5})
     assert len(fills) == 0

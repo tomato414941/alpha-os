@@ -892,6 +892,7 @@ def _setup_asset_context(
         optimizer = ExecutionOptimizer(client, exec_cfg)
         executor = BinanceExecutor(
             testnet=testnet, symbol_map=symbol_map, optimizer=optimizer,
+            initial_capital=capital,
         )
 
     tactical = TacticalTrader(asset=asset, config=cfg)

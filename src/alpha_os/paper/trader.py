@@ -22,6 +22,7 @@ from signal_noise.client import SignalClient
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse, collect_feature_names
+from ..execution.binance import BinanceExecutor
 from ..execution.executor import Executor, Fill
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
@@ -144,11 +145,13 @@ class Trader:
             self.risk_manager.reset(self.initial_capital)
             return
 
-        # PaperExecutor tracks state in memory; restore from last snapshot.
-        # Live executors query the exchange directly, so skip.
+        # Restore executor state from last snapshot.
         if isinstance(self.executor, PaperExecutor):
             self.executor._cash = snapshot.cash
             self.executor._positions = dict(snapshot.positions)
+        elif isinstance(self.executor, BinanceExecutor):
+            self.executor._managed_cash = snapshot.cash
+            self.executor._managed_positions = dict(snapshot.positions)
 
         equity_curve = self.portfolio_tracker.get_equity_curve()
         if equity_curve:
@@ -407,6 +410,10 @@ class Trader:
             w = compute_weights(sharpes_np, diversity_np, min_weight=self._wcfg.min_weight)
             weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
+            # Compress extreme signals toward center to prevent permanent all-in bias
+            compression = getattr(self.config.paper, "signal_compression", 0.0)
+            if compression > 0:
+                combined *= (1.0 - compression)
         else:
             combined = 0.0
 
