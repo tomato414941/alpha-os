@@ -149,6 +149,11 @@ def _build_parser() -> argparse.ArgumentParser:
     evo_d.add_argument("--asset", type=str, default="BTC")
     evo_d.add_argument("--config", type=str, default=None)
 
+    # validator (Pipeline v2)
+    val_d = sub.add_parser("validator", help="Run candidate validation daemon")
+    val_d.add_argument("--asset", type=str, default="BTC")
+    val_d.add_argument("--config", type=str, default=None)
+
     # validate-testnet
     vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
     vt.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -1102,6 +1107,22 @@ def cmd_evo_daemon(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_validator(args: argparse.Namespace) -> None:
+    """Run the candidate validation daemon (Pipeline v2)."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os.daemon.validator import ValidatorDaemon
+
+    daemon = ValidatorDaemon(asset=args.asset, config=cfg)
+    daemon.run()
+
+
 def cmd_validate_testnet(args: argparse.Namespace) -> None:
     import json as _json
 
@@ -1184,5 +1205,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_live(args)
     elif args.command == "evo-daemon":
         cmd_evo_daemon(args)
+    elif args.command == "validator":
+        cmd_validator(args)
     elif args.command == "validate-testnet":
         cmd_validate_testnet(args)
