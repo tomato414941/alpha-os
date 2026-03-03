@@ -595,3 +595,555 @@ Each new asset class requires: (1) signal-noise collectors, (2) an Executor impl
 #### Design Constraint
 
 - **HFT** — daily rebalance is the design choice; sub-minute trading needs different architecture
+
+## Pipeline Architecture v2: Separated Processes
+
+### Motivation
+
+The current pipeline is a batch monolith: every 4 hours, a single process
+runs evolve → validate → adopt → combine → risk → trade sequentially.
+This design emerged from the initial prototype and served well through
+Phase 1-3, but operational experience on the alpha-os server (cx23, then
+cx33) has revealed fundamental limitations:
+
+1. **Memory spikes**: GP evolution generates 10,000 candidates in a single
+   burst, causing memory to spike from ~300MB to 1GB+. On the original
+   cx23 (4GB), this consumed 800MB of swap while signal-noise was co-located.
+
+2. **Exploration blocks execution**: The evo phase consumes CPU 87% and
+   must complete before any trading can occur. A trade cycle that should
+   take seconds is blocked for minutes by evolution.
+
+3. **God class**: `Trader.run_cycle()` is 250+ lines spanning alpha
+   evaluation, lifecycle transitions, diversity recomputation, signal
+   combination, risk adjustment, and order execution. Testing and
+   modification require understanding the entire flow.
+
+4. **O(n²) diversity**: With 22,625 active alphas, computing the full
+   correlation matrix for diversity scoring requires ~256M pair
+   comparisons. This will not scale to 100K+ alphas.
+
+5. **Wasteful data reload**: Each cycle loads the full signal matrix
+   (2,089 days × 448 features ≈ 7.5MB) even though only one new row
+   was added since the last cycle.
+
+### Architecture Overview
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    SQLite (WAL mode, shared state)                    │
+│  ┌──────────────┬────────────────┬──────────────┬─────────────────┐  │
+│  │ alpha_cache   │ alpha_registry │ forward_rets │  paper_trading  │  │
+│  │ (signals)     │ (alphas)       │ (tracking)   │  (snapshots)    │  │
+│  │               │ candidates NEW │              │                 │  │
+│  │               │ div_cache  NEW │              │                 │  │
+│  └──────────────┴────────────────┴──────────────┴─────────────────┘  │
+└──────▲───────────────▲──────────────────▲────────────────▲───────────┘
+       │               │                  │                │
+┌──────┴──────┐  ┌─────┴──────┐  ┌───────┴───────┐  ┌─────┴──────────┐
+│ evo daemon  │  │  validator │  │  trade cycle  │  │   lifecycle    │
+│ (continuous)│  │ (triggered)│  │   (4h 周期)   │  │   (daily)      │
+│             │  │            │  │               │  │                │
+│ GP evolve   │  │ purged CV  │  │ read alphas   │  │ forward rets   │
+│ pop=80      │  │ DSR, PBO   │  │ read div_cache│  │ rolling Sharpe │
+│ 15 gens     │  │ gate       │  │ combine       │  │ state trans.   │
+│ → candidates│  │ diversity  │  │ risk adjust   │  │ → alphas.state │
+│   table     │  │ → alphas   │  │ execute       │  │                │
+│             │  │ → div_cache│  │               │  │                │
+└─────────────┘  └────────────┘  └───────────────┘  └────────────────┘
+       │                                   │
+       │         ┌──────────────────┐      │
+       └────────→│  signal-noise    │←─────┘
+         read    │ REST 127.0.0.1   │  sync
+         only    │ :8000 (既存)     │
+                 └──────────────────┘
+```
+
+Data flow:
+
+1. **evo daemon** runs GP evolution continuously in small batches and writes
+   candidates to the `candidates` table.
+2. **validator** reads PENDING candidates, runs statistical validation
+   (purged WF-CV, DSR, PBO, adoption gate), computes incremental diversity
+   against existing ACTIVE alphas, and writes to `alphas` (ACTIVE) and
+   `diversity_cache`.
+3. **trade cycle** reads ACTIVE/PROBATION alphas and diversity cache,
+   computes weighted combination, applies risk adjustments, and executes
+   via Binance. No evolution, no lifecycle evaluation.
+4. **lifecycle manager** reads forward returns, computes rolling Sharpe
+   (63-day window), and transitions alpha states (ACTIVE → PROBATION →
+   DORMANT or revival).
+
+### Process Definitions
+
+#### evo daemon (continuous)
+
+Responsibility: continuously explore the alpha search space and feed
+candidates to the validator.
+
+Extracts logic from `PipelineRunner._evolve()` (pipeline/runner.py) and
+`GPEvolver.run()` (evolution/gp.py) into a long-lived daemon.
+
+| Parameter | Current (batch) | New (daemon) |
+|-----------|----------------|--------------|
+| pop_size | 200 | 80 |
+| n_generations | 30 | 15 |
+| Execution | 1 burst per 24h | Continuous rounds |
+| Memory pattern | Spike to 1GB+ | Flat ~200-400MB |
+| Archive | Discarded per run | In-process, reset on restart |
+
+Implementation: `src/alpha_os/daemon/evo.py`
+
+- Each round: initialize population → evolve 15 generations → collect
+  results → bulk insert into `candidates` table → gc.collect() → sleep.
+- MAP-Elites archive is maintained in process memory across rounds for
+  quality-diversity coverage. Reset on process restart is acceptable
+  because all candidates are persisted in the `candidates` table.
+- Memory guard: check `resource.getrusage(RUSAGE_SELF).ru_maxrss` after
+  each generation. If RSS exceeds `memory_limit_mb`, halve pop_size and
+  prune the archive.
+- Graceful shutdown on SIGTERM (reuse existing `PipelineScheduler`
+  signal handling pattern).
+
+CLI entry point:
+
+```
+python -m alpha_os evo-daemon --asset BTC [--config ...]
+```
+
+#### validator (triggered batch)
+
+Responsibility: statistically validate candidates and register surviving
+alphas.
+
+Extracts logic from `PipelineRunner._validate()` and `_adopt()`
+(pipeline/runner.py).
+
+- Polls `candidates` table every `poll_interval` seconds (default: 1800).
+- When PENDING count ≥ `min_queue_size` (default: 10), fetches a batch
+  (default: 100 candidates).
+- For each candidate:
+  1. Parse expression, evaluate on current data.
+  2. Purged Walk-Forward CV (5 folds, embargo 5 days).
+  3. Deflated Sharpe Ratio.
+  4. Batch PBO (computed once per batch).
+  5. Adoption gate (OOS Sharpe, PBO, DSR, correlation, min_days).
+- Candidates that pass: `registry.register()` as ACTIVE, update
+  `candidates.status = 'adopted'`.
+- Candidates that fail: update `candidates.status = 'rejected'`.
+
+**Incremental diversity computation** (key optimization):
+
+Instead of computing the full N×N correlation matrix, the validator
+computes correlations only between new candidates and existing ACTIVE
+alphas. For a batch of 100 new candidates against 50,000 ACTIVE alphas,
+this is 5M pairs instead of 2.5 billion — a 500× reduction.
+
+Results are written to the `diversity_cache` table. The trade cycle reads
+this cache directly instead of recomputing diversity.
+
+Implementation: `src/alpha_os/daemon/validator.py`
+
+CLI entry point:
+
+```
+python -m alpha_os validator --asset BTC [--config ...]
+```
+
+#### trade cycle (periodic 4h) — existing Trader, slimmed down
+
+Responsibility: combine active alphas, apply risk adjustments, execute.
+
+This is the existing `Trader.run_cycle()` (paper/trader.py) with two
+responsibilities removed:
+
+1. **Lifecycle evaluation** (monitor.check → lifecycle.evaluate → state
+   transitions): moved to lifecycle manager.
+2. **Diversity recomputation** (_recompute_diversity): moved to validator.
+
+What remains in run_cycle():
+
+```
+Pre-checks: cooldown, circuit breaker
+Phase 1:    store.sync() → get_matrix() → evaluate ACTIVE alphas
+            → forward_tracker.record()
+Phase 2:    read diversity_cache table → compute_weights()
+            → weighted_combine_scalar()
+Phase 3:    risk adjustments (dd_scale, vol_scale, regime,
+            distributional, tactical)
+Phase 4:    executor.rebalance() → portfolio_tracker.save_snapshot()
+```
+
+Backward compatibility: `skip_lifecycle` parameter (default: False).
+When `evo_daemon.enabled = true` in config, the trade cycle sets
+`skip_lifecycle = True` automatically.
+
+No new CLI command — uses existing `live --schedule`.
+
+#### lifecycle manager (daily)
+
+Responsibility: evaluate forward performance of all alphas and transition
+states.
+
+Extracts the lifecycle evaluation loop from `Trader.run_cycle()` lines
+304-336 and the equivalent logic in `ForwardRunner.run_cycle()`.
+
+- Runs daily at UTC 00:30 via systemd timer.
+- Reads all ACTIVE, PROBATION, and DORMANT alphas from registry.
+- For each alpha: reads forward returns (63-day window) from
+  `forward_returns` table → computes rolling Sharpe via
+  `AlphaMonitor.check()` → calls `AlphaLifecycle.evaluate()` → updates
+  `alphas.state` if transition occurs.
+- Logs state changes to audit log.
+
+Memory: ~14MB for 22,625 alphas × 63 days × 8 bytes. Completes in
+seconds.
+
+Implementation: `src/alpha_os/daemon/lifecycle.py`
+
+CLI entry point:
+
+```
+python -m alpha_os lifecycle --asset BTC [--config ...]
+```
+
+### Communication: SQLite as Shared State
+
+No external message queue (Redis, RabbitMQ) is needed. SQLite with WAL
+mode provides sufficient concurrent access for 4 processes.
+
+#### New table: `candidates`
+
+Added to `alpha_registry.db`:
+
+```sql
+CREATE TABLE IF NOT EXISTS candidates (
+    candidate_id TEXT PRIMARY KEY,
+    expression TEXT NOT NULL,
+    fitness REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    -- status: 'pending' | 'validating' | 'adopted' | 'rejected'
+    oos_sharpe REAL,
+    pbo REAL,
+    dsr_pvalue REAL,
+    behavior_json TEXT DEFAULT '{}',
+    created_at REAL NOT NULL,
+    validated_at REAL,
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_candidates_status
+    ON candidates(status);
+CREATE INDEX IF NOT EXISTS idx_candidates_created
+    ON candidates(created_at);
+```
+
+Garbage collection: delete `adopted` and `rejected` rows older than 30
+days. Adopted candidates are already in the `alphas` table.
+
+#### New table: `diversity_cache`
+
+Added to `alpha_registry.db`:
+
+```sql
+CREATE TABLE IF NOT EXISTS diversity_cache (
+    alpha_id TEXT PRIMARY KEY,
+    diversity_score REAL NOT NULL,
+    computed_at REAL NOT NULL,
+    n_alphas_compared INTEGER NOT NULL
+);
+```
+
+Updated by validator when new alphas are adopted. Read by trade cycle
+for weight computation.
+
+#### WAL mode for all databases
+
+Currently only `DataStore` (alpha_cache.db) enables WAL mode. Extend to
+all databases for multi-process safety:
+
+| Database | WAL | busy_timeout | Writer(s) | Reader(s) |
+|----------|-----|-------------|-----------|-----------|
+| alpha_cache.db | ✅ existing | 30s | trade cycle (sync) | evo daemon |
+| alpha_registry.db | **NEW** | 30s | evo (candidates), validator (alphas, div_cache), lifecycle (alphas.state) | trade cycle |
+| forward_returns.db | **NEW** | 30s | trade cycle (record) | lifecycle |
+| paper_trading.db | **NEW** | 30s | trade cycle | — |
+
+Write contention is limited to `alpha_registry.db` where validator and
+lifecycle may both update `alphas`. With `busy_timeout=30000`, SQLite
+retries for up to 30 seconds, which is more than sufficient for the
+millisecond-scale writes involved.
+
+### Configuration
+
+New TOML sections in `config/default.toml`:
+
+```toml
+[evo_daemon]
+enabled = false            # true activates separated process mode
+pop_size = 80              # GP population per round
+n_generations = 15         # generations per round
+round_interval = 300       # seconds between rounds (5 min)
+memory_limit_mb = 400      # soft RSS limit, halve pop if exceeded
+batch_size = 500           # max candidates per round
+
+[validator]
+enabled = false
+poll_interval = 1800       # seconds between queue checks (30 min)
+batch_size = 100           # candidates per validation batch
+min_queue_size = 10        # minimum queue depth to trigger
+diversity_recompute_days = 63   # full recalculation interval
+incremental_diversity = true    # new-vs-existing only
+
+[lifecycle_daemon]
+enabled = false
+# When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
+# Lifecycle transitions are handled by the lifecycle daemon instead.
+```
+
+All sections default to `enabled = false`, preserving the existing
+monolithic behavior. The separated process architecture is activated by
+setting `enabled = true` in the relevant sections.
+
+### Incremental Migration Path
+
+Phase 4 (testnet validation) is in progress. The migration must minimize
+trade interruption.
+
+#### Step 1: Foundation (no trade downtime)
+
+- Add WAL mode + `busy_timeout` to `AlphaRegistry`, `ForwardTracker`,
+  `PaperPortfolioTracker` (3 files, ~6 lines each).
+- Add `candidates` and `diversity_cache` tables to
+  `AlphaRegistry._create_tables()`.
+- Create `daemon/` package with `__init__.py`.
+- Add `[evo_daemon]`, `[validator]`, `[lifecycle_daemon]` to TOML and
+  corresponding dataclasses to `config.py`.
+- Run all 434 existing tests to confirm no regression.
+
+#### Step 2: evo daemon (no trade downtime)
+
+- Implement `daemon/evo.py`. Extract logic from `PipelineRunner._evolve()`.
+- Add `evo-daemon` CLI subcommand.
+- Add `alpha-os-evo@.service` systemd unit.
+- Test: start evo daemon, verify candidates appear in DB.
+- The existing `alpha-os.service` continues running unchanged.
+
+#### Step 3: validator (no trade downtime)
+
+- Implement `daemon/validator.py`. Extract logic from
+  `PipelineRunner._validate()` and `_adopt()`.
+- Add `validator` CLI subcommand.
+- Add `alpha-os-validator@.service` systemd unit.
+- Test: verify candidates flow through validation to alphas table.
+
+#### Step 4: trade cycle slimming (~1 min downtime)
+
+- Add `skip_lifecycle` parameter to `Trader.run_cycle()`.
+- Switch diversity source to `diversity_cache` table when
+  `validator.enabled = true`.
+- Condition evolution in `cli.py:cycle()` on `evo_daemon.enabled`.
+
+```python
+# cli.py: cycle()
+if evolve_interval > 0 and not cfg.evo_daemon.enabled:
+    # Legacy: inline evolution
+    ...
+```
+
+- Set `enabled = true` in TOML, restart `alpha-os.service`. Downtime: ~1
+  minute.
+- Rollback: set `enabled = false`, restart. Instant revert.
+
+#### Step 5: lifecycle manager (no trade downtime)
+
+- Implement `daemon/lifecycle.py`.
+- Add `lifecycle` CLI subcommand.
+- Add `alpha-os-lifecycle@.service` + `.timer`.
+- Set `lifecycle_daemon.enabled = true`. Trade cycle stops doing inline
+  lifecycle evaluation.
+
+#### Step 6: legacy cleanup (after Phase 4 complete)
+
+- Remove inline evolution path from `cli.py:cycle()`.
+- Remove lifecycle code from `Trader.run_cycle()`.
+- Remove `skip_lifecycle` flag (always skip).
+- Simplify `PipelineRunner.run()` to use evo + validate internally (keep
+  for testing convenience).
+
+### Scaling to 100K+ Alphas
+
+#### Diversity: O(n²) → O(new × existing)
+
+Current `compute_diversity_scores()` computes `(N, T)` correlation
+matrix for all alpha pairs. At N=100K, this is 5 billion pairs — infeasible.
+
+The validator's incremental approach computes correlation only between new
+candidates (batch of ~100) and existing ACTIVE alphas (N). For N=100K,
+this is 10M pairs per batch — 500× cheaper.
+
+For periodic full recalculation (every 63 days), use random sampling:
+select 5,000 representative alphas from the ACTIVE pool and compute
+diversity against this sample. Approximation error is bounded and
+acceptable for portfolio weighting.
+
+#### Alpha evaluation: skip low-weight alphas
+
+In trade cycle, alphas with weight equal to `min_weight` (1e-4) contribute
+negligibly to the combined signal. With 100K alphas, most will be at
+min_weight. Skip evaluation of alphas whose cached weight is below a
+threshold (e.g., 10× min_weight = 1e-3).
+
+This reduces evaluation from O(N) to O(N_effective), where N_effective is
+the number of alphas with meaningful weight (typically ~1,000-5,000).
+
+#### Data loading: windowed get_matrix()
+
+Add `start` parameter to `DataStore.get_matrix()`:
+
+```python
+matrix = store.get_matrix(features, start=today - 252, end=today)
+```
+
+The trade cycle needs at most `corr_lookback=252` days for volatility
+scaling and monitor checks. Loading 252 days instead of 2,089 reduces
+memory by 8×.
+
+For evo daemon, the full history may be needed for backtesting. This is
+acceptable because evo runs in a separate process with its own memory
+budget.
+
+### systemd Service Design
+
+#### Service definitions
+
+**alpha-os-evo@.service** (continuous):
+
+```ini
+[Unit]
+Description=Alpha-OS evolution daemon (%i)
+After=network.target signal-noise-scheduler.service
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
+    -m alpha_os evo-daemon --asset %i
+Restart=on-failure
+RestartSec=60
+MemoryHigh=400M
+MemoryMax=600M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/evo.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/evo.log
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**alpha-os-validator@.service** (continuous poller):
+
+```ini
+[Unit]
+Description=Alpha-OS validator daemon (%i)
+After=network.target signal-noise-scheduler.service
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
+    -m alpha_os validator --asset %i
+Restart=on-failure
+RestartSec=120
+MemoryHigh=500M
+MemoryMax=700M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/validator.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/validator.log
+KillSignal=SIGTERM
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**alpha-os-lifecycle@.service** + **alpha-os-lifecycle@.timer** (daily):
+
+```ini
+# alpha-os-lifecycle@.service
+[Unit]
+Description=Alpha-OS lifecycle evaluation (%i)
+
+[Service]
+Type=oneshot
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
+    -m alpha_os lifecycle --asset %i
+MemoryHigh=300M
+MemoryMax=500M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/lifecycle.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/lifecycle.log
+
+# alpha-os-lifecycle@.timer
+[Unit]
+Description=Daily lifecycle evaluation for %i
+
+[Timer]
+OnCalendar=*-*-* 00:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+#### Memory budget (cx33: 8GB RAM)
+
+| Service | MemoryHigh | MemoryMax | Notes |
+|---------|-----------|-----------|-------|
+| signal-noise scheduler | ~700M | — | Existing, unchanged |
+| signal-noise serve | ~300M | — | Existing, unchanged |
+| alpha-os trade cycle | 300M | 500M | Slimmed (was ~500M with inline evo) |
+| alpha-os-evo | 400M | 600M | Memory spike isolated here |
+| alpha-os-validator | 500M | 700M | Validation + diversity computation |
+| alpha-os-lifecycle | 300M | 500M | Daily oneshot, short-lived |
+| OS + system services | ~500M | — | systemd, tailscale, sshd, etc. |
+| **Total MemoryHigh** | **~3000M** | | Lifecycle and validator rarely overlap |
+
+Effective peak usage is ~2.5GB. 8GB provides comfortable headroom with
+no swap usage expected.
+
+### Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| SQLite BUSY on alpha_registry.db | Validator and lifecycle write to `alphas` concurrently | WAL mode + `busy_timeout=30000ms`. Writes are millisecond-scale; 30s retry is more than sufficient. |
+| evo daemon memory leak | OOM kill → candidates lost | systemd `MemoryMax=600M` hard cap. RSS monitoring + pop_size halving in daemon. `Restart=on-failure` for auto-recovery. Candidates already written to DB survive. |
+| Phase 4 testnet disruption | Testnet validation streak resets | Steps 1-3 add no risk (new code only). Step 4 uses `enabled=false` default. Rollback: flip flag + restart (~1 min). |
+| candidates table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside validator daemon. |
+| diversity cache staleness | Trade weights based on outdated diversity | `computed_at` timestamp tracked. Cache valid for `diversity_recompute_days` (63 days). DORMANT alphas excluded from combination regardless of cache state. |
+| Process ordering | Trade runs before validator finishes first batch | Not a problem. Trade uses whatever ACTIVE alphas exist at cycle time. New alphas appear in the next cycle automatically. Exploration and exploitation are intentionally decoupled. |
+
+### Event-Driven Mode
+
+The existing `EventDrivenTrader` (paper/event_driven.py) subscribes to
+signal-noise WebSocket events and triggers trade cycles on market events
+instead of a fixed timer. This mode is orthogonal to the process
+separation described above — it replaces the trade cycle's timer
+trigger, not its internal logic.
+
+Integration with v2 architecture is deferred. The event-driven trigger
+mechanism can be applied to the slimmed trade cycle in a future iteration.
+
+### Future Considerations
+
+- **PostgreSQL migration**: if alpha count exceeds 500K or multi-machine
+  deployment is needed, migrate from SQLite to PostgreSQL for true
+  concurrent writes.
+- **Multiprocessing within evo**: parallelize GP evaluation using
+  `multiprocessing.Pool` within the evo daemon for multi-core utilization.
+- **Cross-asset portfolio optimization**: a fifth process that reads
+  positions across all per-asset trade cycles and applies portfolio-level
+  risk-parity allocation.

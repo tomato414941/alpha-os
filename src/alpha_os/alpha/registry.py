@@ -41,6 +41,8 @@ class AlphaRegistry:
         self._db_path = db_path or DATA_DIR / "alpha_registry.db"
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self._db_path))
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA busy_timeout=30000")
         self._conn.row_factory = sqlite3.Row
         self._create_tables()
 
@@ -66,6 +68,39 @@ class AlphaRegistry:
         """)
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_sharpe ON alphas(oos_sharpe DESC)
+        """)
+        # Pipeline v2: candidate queue for evo daemon → validator flow
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS candidates (
+                candidate_id TEXT PRIMARY KEY,
+                expression TEXT NOT NULL,
+                fitness REAL NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                oos_sharpe REAL,
+                pbo REAL,
+                dsr_pvalue REAL,
+                behavior_json TEXT DEFAULT '{}',
+                created_at REAL NOT NULL,
+                validated_at REAL,
+                error_message TEXT
+            )
+        """)
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_candidates_status
+            ON candidates(status)
+        """)
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_candidates_created
+            ON candidates(created_at)
+        """)
+        # Pipeline v2: pre-computed diversity scores from validator
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS diversity_cache (
+                alpha_id TEXT PRIMARY KEY,
+                diversity_score REAL NOT NULL,
+                computed_at REAL NOT NULL,
+                n_alphas_compared INTEGER NOT NULL
+            )
         """)
         self._conn.commit()
 

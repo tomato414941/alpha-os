@@ -195,6 +195,31 @@ class RegimeConfig:
 
 
 @dataclass
+class EvoDaemonConfig:
+    enabled: bool = False
+    pop_size: int = 80
+    n_generations: int = 15
+    round_interval: int = 300
+    memory_limit_mb: int = 400
+    batch_size: int = 500
+
+
+@dataclass
+class ValidatorConfig:
+    enabled: bool = False
+    poll_interval: int = 1800
+    batch_size: int = 100
+    min_queue_size: int = 10
+    diversity_recompute_days: int = 63
+    incremental_diversity: bool = True
+
+
+@dataclass
+class LifecycleDaemonConfig:
+    enabled: bool = False
+
+
+@dataclass
 class Config:
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -211,6 +236,9 @@ class Config:
     distributional: DistributionalConfig = field(default_factory=DistributionalConfig)
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
     regime: RegimeConfig = field(default_factory=RegimeConfig)
+    evo_daemon: EvoDaemonConfig = field(default_factory=EvoDaemonConfig)
+    validator: ValidatorConfig = field(default_factory=ValidatorConfig)
+    lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -236,4 +264,7 @@ class Config:
             distributional=DistributionalConfig(**raw.get("distributional", {})),
             gate=GateTomlConfig(**raw.get("gate", {})),
             regime=RegimeConfig(**raw.get("regime", {})),
+            evo_daemon=EvoDaemonConfig(**raw.get("evo_daemon", {})),
+            validator=ValidatorConfig(**raw.get("validator", {})),
+            lifecycle_daemon=LifecycleDaemonConfig(**raw.get("lifecycle_daemon", {})),
         )

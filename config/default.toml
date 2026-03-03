@@ -79,6 +79,27 @@ long_window = 63
 drift_threshold = 0.3
 drift_position_scale_min = 0.5
 
+# Pipeline v2: separated process daemons
+[evo_daemon]
+enabled = false            # true activates separated evo process
+pop_size = 80              # GP population per round
+n_generations = 15         # generations per round
+round_interval = 300       # seconds between rounds (5 min)
+memory_limit_mb = 400      # soft RSS limit, halve pop if exceeded
+batch_size = 500           # max candidates per round
+
+[validator]
+enabled = false
+poll_interval = 1800       # seconds between queue checks (30 min)
+batch_size = 100           # candidates per validation batch
+min_queue_size = 10        # minimum queue depth to trigger
+diversity_recompute_days = 63
+incremental_diversity = true
+
+[lifecycle_daemon]
+enabled = false
+# When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
+
 [distributional]
 enabled = true
 window = 63
