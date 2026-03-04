@@ -127,11 +127,7 @@ class TradingConfig:
 class PaperTradingConfig:
     max_position_pct: float = 1.0
     min_trade_usd: float = 10.0
-    signal_compression: float = 0.0
     max_trading_alphas: int = 30
-    exit_enabled: bool = True
-    exit_ema_span: int = 6
-    exit_zscore_threshold: float = 1.0
 
 
 @dataclass
@@ -173,19 +169,6 @@ class ExecutionTomlConfig:
 
 
 @dataclass
-class DistributionalConfig:
-    enabled: bool = False
-    window: int = 63
-    min_samples: int = 20
-    tail_sigma: float = 2.0
-    cvar_alpha: float = 0.05
-    max_left_tail_prob: float = 0.10
-    max_cvar_abs: float = 0.03
-    kelly_fraction: float = 0.25
-    max_kelly_leverage: float = 1.0
-
-
-@dataclass
 class GateTomlConfig:
     oos_log_growth_min: float = 0.0
     oos_cvar_abs_max: float = 0.05
@@ -199,6 +182,15 @@ class RegimeConfig:
     long_window: int = 63
     drift_threshold: float = 0.3
     drift_position_scale_min: float = 0.5
+
+
+@dataclass
+class StabilityConfig:
+    """Path A: alpha stabilization settings."""
+    tenure_bonus_max: float = 0.2       # max quality bonus for long-lived alphas
+    tenure_half_life_days: float = 7.0  # days to reach 50% of max bonus
+    top_n_protect: int = 10             # top-N alphas get demotion cooldown
+    demotion_cooldown_days: float = 3.0 # min days before top-N can be demoted
 
 
 @dataclass
@@ -241,12 +233,18 @@ class Config:
     event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
     lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
-    distributional: DistributionalConfig = field(default_factory=DistributionalConfig)
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
     regime: RegimeConfig = field(default_factory=RegimeConfig)
     evo_daemon: EvoDaemonConfig = field(default_factory=EvoDaemonConfig)
     validator: ValidatorConfig = field(default_factory=ValidatorConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
+    stability: StabilityConfig = field(default_factory=StabilityConfig)
+
+    @staticmethod
+    def _filter(dc_class: type, raw: dict) -> dict:
+        """Filter dict to only keys that dc_class accepts."""
+        valid = {f.name for f in dc_class.__dataclass_fields__.values()}
+        return {k: v for k, v in raw.items() if k in valid}
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -267,24 +265,25 @@ class Config:
         for old, new in _LC_ALIASES.items():
             if old in lc_raw and new not in lc_raw:
                 lc_raw[new] = lc_raw.pop(old)
+        _f = cls._filter
         return cls(
             fitness_metric=raw.get("fitness_metric", "sharpe"),
-            api=APIConfig(**raw.get("api", {})),
-            generation=GenerationConfig(**raw.get("generation", {})),
-            backtest=BacktestConfig(**raw.get("backtest", {})),
-            validation=ValidationConfig(**raw.get("validation", {})),
-            risk=RiskConfig(**raw.get("risk", {})),
-            trading=TradingConfig(**raw.get("trading", {})),
-            paper=PaperTradingConfig(**raw.get("paper", {})),
-            forward=ForwardTestConfig(**raw.get("forward", {})),
-            testnet=TestnetConfig(**raw.get("testnet", {})),
-            event_driven=EventDrivenConfig(**raw.get("event_driven", {})),
-            lifecycle=LifecycleTomlConfig(**lc_raw),
-            execution=ExecutionTomlConfig(**raw.get("execution", {})),
-            distributional=DistributionalConfig(**raw.get("distributional", {})),
-            gate=GateTomlConfig(**raw.get("gate", {})),
-            regime=RegimeConfig(**raw.get("regime", {})),
-            evo_daemon=EvoDaemonConfig(**raw.get("evo_daemon", {})),
-            validator=ValidatorConfig(**raw.get("validator", {})),
-            lifecycle_daemon=LifecycleDaemonConfig(**raw.get("lifecycle_daemon", {})),
+            api=APIConfig(**_f(APIConfig, raw.get("api", {}))),
+            generation=GenerationConfig(**_f(GenerationConfig, raw.get("generation", {}))),
+            backtest=BacktestConfig(**_f(BacktestConfig, raw.get("backtest", {}))),
+            validation=ValidationConfig(**_f(ValidationConfig, raw.get("validation", {}))),
+            risk=RiskConfig(**_f(RiskConfig, raw.get("risk", {}))),
+            trading=TradingConfig(**_f(TradingConfig, raw.get("trading", {}))),
+            paper=PaperTradingConfig(**_f(PaperTradingConfig, raw.get("paper", {}))),
+            forward=ForwardTestConfig(**_f(ForwardTestConfig, raw.get("forward", {}))),
+            testnet=TestnetConfig(**_f(TestnetConfig, raw.get("testnet", {}))),
+            event_driven=EventDrivenConfig(**_f(EventDrivenConfig, raw.get("event_driven", {}))),
+            lifecycle=LifecycleTomlConfig(**_f(LifecycleTomlConfig, lc_raw)),
+            execution=ExecutionTomlConfig(**_f(ExecutionTomlConfig, raw.get("execution", {}))),
+            gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),
+            regime=RegimeConfig(**_f(RegimeConfig, raw.get("regime", {}))),
+            evo_daemon=EvoDaemonConfig(**_f(EvoDaemonConfig, raw.get("evo_daemon", {}))),
+            validator=ValidatorConfig(**_f(ValidatorConfig, raw.get("validator", {}))),
+            lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
+            stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
         )

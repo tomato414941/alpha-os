@@ -1,6 +1,7 @@
 """Alpha lifecycle state machine: born → active → probation → dormant (with revival)."""
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -159,3 +160,43 @@ class AlphaLifecycle:
             and record.dsr_pvalue <= cfg.dsr_pvalue_max
             and record.correlation_avg <= cfg.correlation_max
         )
+
+
+# ---------------------------------------------------------------------------
+# Path A: Tenure bonus — reward long-lived alphas to stabilize top-30
+# ---------------------------------------------------------------------------
+
+
+def tenure_days(record: AlphaRecord, now: float | None = None) -> float:
+    """Days since alpha creation."""
+    now = now or time.time()
+    return max(0.0, (now - record.created_at) / 86400.0)
+
+
+def tenure_bonus(
+    record: AlphaRecord,
+    max_bonus: float = 0.2,
+    half_life_days: float = 7.0,
+    now: float | None = None,
+) -> float:
+    """Quality bonus that grows with alpha age (exponential saturation).
+
+    bonus = max_bonus × (1 - 0.5^(age / half_life))
+    At half_life days: bonus = max_bonus × 0.5
+    Converges to max_bonus as age → ∞.
+    """
+    age = tenure_days(record, now)
+    if age <= 0 or half_life_days <= 0:
+        return 0.0
+    return max_bonus * (1.0 - 0.5 ** (age / half_life_days))
+
+
+def apply_tenure_bonus(
+    quality: float,
+    record: AlphaRecord,
+    max_bonus: float = 0.2,
+    half_life_days: float = 7.0,
+    now: float | None = None,
+) -> float:
+    """Add tenure bonus to a quality score."""
+    return quality + tenure_bonus(record, max_bonus, half_life_days, now)

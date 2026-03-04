@@ -11,6 +11,9 @@ from alpha_os.alpha.lifecycle import (
     ST_ACTIVE,
     ST_PROBATION,
     ST_DORMANT,
+    tenure_days,
+    tenure_bonus,
+    apply_tenure_bonus,
 )
 from alpha_os.alpha.combiner import (
     select_low_correlation,
@@ -510,3 +513,43 @@ class TestSignalConsensus:
         weights = {"a1": 0.5, "a2": 0.3, "a3": 0.2}
         mean, std, cons = signal_consensus(signals, weights)
         assert 0.0 <= cons <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# Path A: Tenure Bonus
+# ---------------------------------------------------------------------------
+
+
+class TestTenureBonus:
+    def _make_record(self, created_at: float) -> AlphaRecord:
+        return AlphaRecord(alpha_id="test", expression="x", created_at=created_at)
+
+    def test_new_alpha_no_bonus(self):
+        now = 1000000.0
+        rec = self._make_record(now)
+        assert tenure_bonus(rec, now=now) == 0.0
+
+    def test_half_life(self):
+        now = 1000000.0
+        rec = self._make_record(now - 7 * 86400)  # 7 days old
+        bonus = tenure_bonus(rec, max_bonus=0.2, half_life_days=7.0, now=now)
+        assert np.isclose(bonus, 0.1, atol=0.001)  # 50% of max at half-life
+
+    def test_old_alpha_converges(self):
+        now = 1000000.0
+        rec = self._make_record(now - 100 * 86400)  # 100 days old
+        bonus = tenure_bonus(rec, max_bonus=0.2, half_life_days=7.0, now=now)
+        assert bonus > 0.19  # close to max
+
+    def test_apply_adds_to_quality(self):
+        now = 1000000.0
+        rec = self._make_record(now - 14 * 86400)  # 14 days old
+        quality = 0.5
+        adjusted = apply_tenure_bonus(quality, rec, max_bonus=0.2, half_life_days=7.0, now=now)
+        assert adjusted > quality
+        assert adjusted < quality + 0.2
+
+    def test_tenure_days(self):
+        now = 1000000.0
+        rec = self._make_record(now - 3 * 86400)
+        assert np.isclose(tenure_days(rec, now=now), 3.0)

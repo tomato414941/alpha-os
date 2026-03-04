@@ -248,6 +248,27 @@ position   = clip(adjusted) × max_position_pct × portfolio_value
    Both are real-time signals that don't depend on historical strategy
    stability.
 
+### Known Limitation: Top-30 Instability
+
+The current system generates ~144,000 alpha candidates/day (500/round ×
+5min intervals). The top 30 trading alphas change almost daily — average
+alpha lifetime is ~1.6 days (ACTIVE), ~3.4 days (PROBATION). This means
+signal_consensus measures agreement among a different set of alphas each
+cycle, reducing its reliability as a sizing signal.
+
+Two independent approaches are being considered:
+
+- **Path A (stabilize)**: Reduce generation rate, raise adoption bar,
+  add tenure bonus to lifecycle scoring — make the top 30 stable so
+  consensus becomes meaningful. This improves the current alpha-os.
+- **Path B (turnover-native)**: Build a separate system designed for
+  high-turnover alpha statistical voting. Instead of relying on a stable
+  top 30, treat all alphas as ephemeral voters. This would be a new
+  project, not a layer on top of alpha-os.
+
+These are independent: Path A improves alpha-os as-is, Path B is a
+separate system for a different paradigm. They are not layered.
+
 ## Paper Trading
 
 Two modes:
@@ -260,9 +281,8 @@ Two modes:
   simulation. Pre-computes all signal matrices once, then iterates days
   via array indexing. Orders of magnitude faster than per-day evaluation.
 
-When distributional sizing is enabled, risk is managed via Kelly criterion
-with signal consensus modulation. Legacy path uses three-stage drawdown
-scaling (5% / 10% / 15%) and volatility targeting (15% annualized).
+Position sizing uses signal consensus × drawdown scaling (see Position
+Sizing section above).
 
 ## Data Infrastructure
 
@@ -810,8 +830,7 @@ Phase 1:    store.sync() → get_matrix() → evaluate ACTIVE alphas
             → forward_tracker.record()
 Phase 2:    read diversity_cache table → compute_weights()
             → weighted_combine_scalar()
-Phase 3:    risk adjustments (dd_scale, vol_scale, regime,
-            distributional, tactical)
+Phase 3:    risk adjustments (consensus, dd_scale, regime)
 Phase 4:    executor.rebalance() → portfolio_tracker.save_snapshot()
 ```
 

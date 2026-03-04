@@ -104,3 +104,10 @@ incremental_diversity = true
 enabled = false
 # When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
 
+# Path A: alpha stabilization — reward tenure, protect top performers
+[stability]
+tenure_bonus_max = 0.2       # max quality bonus for long-lived alphas
+tenure_half_life_days = 7.0  # days to reach 50% of max bonus
+top_n_protect = 10           # top-N alphas get demotion cooldown
+demotion_cooldown_days = 3.0 # min days before top-N can be demoted
+
