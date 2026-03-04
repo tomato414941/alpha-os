@@ -191,6 +191,15 @@ class AlphaRegistry:
             row = self._conn.execute("SELECT COUNT(*) FROM alphas").fetchone()
         return row[0]
 
+    def top_trading(self, n: int = 30) -> list[AlphaRecord]:
+        """Top-N alphas by oos_sharpe from active + probation (for trading)."""
+        rows = self._conn.execute(
+            "SELECT * FROM alphas WHERE state IN (?, ?) "
+            "ORDER BY oos_sharpe DESC LIMIT ?",
+            (AlphaState.ACTIVE, AlphaState.PROBATION, n),
+        ).fetchall()
+        return [self._row_to_record(r) for r in rows]
+
     def top(self, n: int = 10, state: str | None = None) -> list[AlphaRecord]:
         if state:
             rows = self._conn.execute(

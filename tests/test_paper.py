@@ -155,6 +155,92 @@ class TestPaperPortfolioTracker:
         tracker.close()
 
 
+class TestRegistryTopTrading:
+    def test_top_trading_returns_limited(self, tmp_path):
+        from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+
+        reg = AlphaRegistry(tmp_path / "reg.db")
+        for i in range(10):
+            reg.register(AlphaRecord(
+                alpha_id=f"a{i}", expression=f"close_{i}",
+                state=AlphaState.ACTIVE, oos_sharpe=float(i),
+            ))
+        reg.register(AlphaRecord(
+            alpha_id="d1", expression="close_d",
+            state=AlphaState.DORMANT, oos_sharpe=100.0,
+        ))
+        result = reg.top_trading(3)
+        assert len(result) == 3
+        assert result[0].oos_sharpe == 9.0
+        assert all(r.state != AlphaState.DORMANT for r in result)
+        reg.close()
+
+    def test_top_trading_includes_probation(self, tmp_path):
+        from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+
+        reg = AlphaRegistry(tmp_path / "reg.db")
+        reg.register(AlphaRecord(
+            alpha_id="a1", expression="close_1",
+            state=AlphaState.ACTIVE, oos_sharpe=1.0,
+        ))
+        reg.register(AlphaRecord(
+            alpha_id="p1", expression="close_p",
+            state=AlphaState.PROBATION, oos_sharpe=2.0,
+        ))
+        result = reg.top_trading(10)
+        assert len(result) == 2
+        assert result[0].alpha_id == "p1"
+        reg.close()
+
+
+class TestSignalDeltaExit:
+    def test_zscore_triggers_exit(self):
+        import math
+
+        ema_span = 6
+        alpha = 2.0 / (ema_span + 1)
+        ema = 0.5
+        var = 0.001
+
+        for _ in range(10):
+            sig = 0.5
+            ema = alpha * sig + (1 - alpha) * ema
+            dev = sig - ema
+            var = alpha * dev**2 + (1 - alpha) * var
+
+        sig = -0.5
+        ema = alpha * sig + (1 - alpha) * ema
+        dev = sig - ema
+        var = alpha * dev**2 + (1 - alpha) * var
+        std = math.sqrt(var)
+        zscore = (sig - ema) / std if std > 1e-6 else 0.0
+        assert zscore < -1.0, f"Expected z < -1.0, got {zscore:.2f}"
+
+    def test_stable_signal_no_exit(self):
+        import math
+
+        ema_span = 6
+        alpha = 2.0 / (ema_span + 1)
+        ema = None
+        var = 0.0
+
+        for _ in range(20):
+            sig = 0.45
+            if ema is None:
+                ema = sig
+            else:
+                ema = alpha * sig + (1 - alpha) * ema
+                dev = sig - ema
+                var = alpha * dev**2 + (1 - alpha) * var
+
+        std = math.sqrt(var)
+        if std > 1e-6:
+            zscore = (sig - ema) / std
+        else:
+            zscore = 0.0
+        assert zscore > -1.0
+
+
 class TestPositionSizing:
     def test_dollar_pos_scales_with_portfolio_value(self, tmp_path):
         """Position sizing should use current portfolio value, not initial capital."""

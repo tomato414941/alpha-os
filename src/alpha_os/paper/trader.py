@@ -136,6 +136,12 @@ class Trader:
         self._diversity_computed = False
         self._diversity_last_computed: float = 0.0
 
+        # Signal-delta exit: EMA tracking
+        ema_span = self.config.paper.exit_ema_span
+        self._ema_alpha = 2.0 / (ema_span + 1)
+        self._signal_ema: float | None = None
+        self._signal_ema_var: float = 0.0
+
         self._restore_state()
 
     def _restore_state(self) -> None:
@@ -165,6 +171,23 @@ class Trader:
             "Restored state: $%.2f portfolio, %d snapshots",
             snapshot.portfolio_value, len(equity_curve),
         )
+
+        # Bootstrap signal-delta EMA from historical snapshots
+        if self.config.paper.exit_enabled:
+            snapshots = self.portfolio_tracker.get_all_snapshots()
+            for snap in snapshots:
+                sig = snap.combined_signal
+                if self._signal_ema is None:
+                    self._signal_ema = sig
+                    self._signal_ema_var = 0.0
+                else:
+                    a = self._ema_alpha
+                    self._signal_ema = a * sig + (1 - a) * self._signal_ema
+                    dev = sig - self._signal_ema
+                    self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
+            if self._signal_ema is not None:
+                logger.info("EMA bootstrapped: ema=%.4f var=%.6f (%d snapshots)",
+                            self._signal_ema, self._signal_ema_var, len(snapshots))
 
     def _recompute_diversity(
         self, data: dict[str, np.ndarray], parsed_records: list[tuple],
@@ -280,12 +303,17 @@ class Trader:
             except Exception as exc:
                 logger.warning("API sync failed — using cached data: %s", exc)
 
-        # 2. Get active alphas (dormant included for monitoring, not trading)
-        active = self.registry.list_by_state(AlphaState.ACTIVE)
-        probation = self.registry.list_by_state(AlphaState.PROBATION)
+        # 2. Get trading alphas (top N by oos_sharpe) + dormant for monitoring
+        max_trading = self.config.paper.max_trading_alphas
+        trading_alphas = self.registry.top_trading(max_trading)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
-        all_alphas = active + probation + dormant
+        all_alphas = trading_alphas + dormant
         dormant_ids = {r.alpha_id for r in dormant}
+
+        n_total_active = self.registry.count(AlphaState.ACTIVE) + self.registry.count(AlphaState.PROBATION)
+        if n_total_active > max_trading:
+            logger.info("Alpha cap: trading %d/%d", len(trading_alphas), n_total_active)
+        active = trading_alphas  # for n_alphas_active in result
 
         # 3. Evaluate each alpha's signal (uses daily data)
         matrix = self.store.get_matrix(self.features, end=today_date)
@@ -416,6 +444,26 @@ class Trader:
                 combined *= (1.0 - compression)
         else:
             combined = 0.0
+
+        # Signal-delta exit: EMA + z-score
+        if self.config.paper.exit_enabled:
+            a = self._ema_alpha
+            if self._signal_ema is None:
+                self._signal_ema = combined
+                self._signal_ema_var = 0.0
+            else:
+                self._signal_ema = a * combined + (1 - a) * self._signal_ema
+                dev = combined - self._signal_ema
+                self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
+            std = self._signal_ema_var**0.5
+            if std > 1e-6:
+                zscore = (combined - self._signal_ema) / std
+                if zscore < -self.config.paper.exit_zscore_threshold:
+                    logger.info(
+                        "Signal-delta exit: combined=%.4f ema=%.4f z=%.2f → exit",
+                        combined, self._signal_ema, zscore,
+                    )
+                    combined = 0.0
 
         # 5. Risk adjustment
         prev_value = self.executor.portfolio_value

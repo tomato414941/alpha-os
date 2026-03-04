@@ -128,7 +128,10 @@ class PaperTradingConfig:
     max_position_pct: float = 1.0
     min_trade_usd: float = 10.0
     signal_compression: float = 0.0
-    signal_compression: float = 0.0
+    max_trading_alphas: int = 30
+    exit_enabled: bool = True
+    exit_ema_span: int = 6
+    exit_zscore_threshold: float = 1.0
 
 
 @dataclass

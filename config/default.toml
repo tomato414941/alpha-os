@@ -40,6 +40,10 @@ initial_capital = 10000.0
 max_position_pct = 0.25
 min_trade_usd = 10.0
 signal_compression = 0.5
+max_trading_alphas = 30
+exit_enabled = true
+exit_ema_span = 6            # 6 cycles = 24h at 4h/cycle
+exit_zscore_threshold = 1.0
 
 [forward]
 check_interval = 14400
