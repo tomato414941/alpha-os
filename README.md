@@ -78,7 +78,7 @@ python -m alpha_os validate-testnet
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages, CVaR gate), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
 
 ### Position sizing
 
@@ -90,7 +90,6 @@ position   = direction × clip(size) × max_position_pct × portfolio_value
 
 - **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous → full conviction; split → reduced position.
 - **Drawdown scaling**: position shrinks as portfolio drawdown deepens (3 stages).
-- **CVaR gate**: hard block when portfolio-level tail risk exceeds thresholds.
 
 ## Testing
 

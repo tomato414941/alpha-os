@@ -228,9 +228,6 @@ position   = clip(adjusted) × max_position_pct × portfolio_value
   alphas agree) to 0.0 (equal split between long and short).
 - **dd_scale** (`risk/manager.py`): Drawdown-based scaling. Reduces
   position size as portfolio drawdown deepens (3 stages: 5%/10%/15%).
-- **CVaR gate** (`risk/distributional.py`): Portfolio-level tail risk
-  check. If recent returns show fat left tails (CVaR or left-tail
-  probability exceeds thresholds), position goes to 0.
 
 ### Design Rationale
 
@@ -239,16 +236,17 @@ position   = clip(adjusted) × max_position_pct × portfolio_value
    (evolved/replaced every few days), so past portfolio returns reflect
    alphas that no longer exist. Additionally, 4h-cycle returns are too
    small (±0.02%) for μ/σ² to produce meaningful values — it either
-   explodes or gets clipped to a constant. Kelly was removed after
-   confirming it contributed nothing to sizing in production.
-2. **Consensus modulates risk**: When alphas disagree, consensus → 0 and
-   position shrinks automatically. No ad-hoc signal compression needed.
-   This uses only "right now" information, so alpha turnover is irrelevant.
-3. **dd_scale stacks with consensus**: Drawdowns reduce sizing directly.
+   explodes or gets clipped to a constant.
+2. **No CVaR gate**: CVaR examines past return distributions, which
+   share the same problem as Kelly — past returns come from alphas that
+   no longer exist. dd_scale already provides drawdown protection using
+   the actual portfolio equity (a fact, not a statistical estimate).
+3. **Consensus modulates risk**: When alphas disagree, consensus → 0 and
+   position shrinks automatically. This uses only "right now" information,
+   so alpha turnover is irrelevant.
+4. **dd_scale stacks with consensus**: Drawdowns reduce sizing directly.
    Both are real-time signals that don't depend on historical strategy
    stability.
-4. **CVaR gate as circuit breaker**: Hard block when portfolio-level tail
-   risk is elevated. Independent of alpha identity.
 
 ## Paper Trading
 
