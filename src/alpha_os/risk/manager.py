@@ -2,15 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
-
-from .distributional import (
-    DistributionStats,
-    estimate_distribution,
-    passes_distributional_gate,
-)
 
 
 @dataclass
@@ -134,26 +127,3 @@ class RiskManager:
                 peak = max(peak, equity)
 
         return adjusted
-
-    def distributional_adjustment(
-        self, recent_returns: np.ndarray, cfg: Any
-    ) -> tuple[bool, float, DistributionStats]:
-        """Compute CVaR / left-tail gate.
-
-        When stats are not ready (insufficient samples), the gate defaults to
-        pass to preserve warm-up behavior.  The float return (scale) is always
-        1.0 — kept for API compatibility.
-        """
-        stats = estimate_distribution(
-            recent_returns,
-            window=cfg.window,
-            min_samples=cfg.min_samples,
-            tail_sigma=cfg.tail_sigma,
-            cvar_alpha=cfg.cvar_alpha,
-        )
-        gate_ok = passes_distributional_gate(
-            stats,
-            max_left_tail_prob=cfg.max_left_tail_prob,
-            max_cvar_abs=cfg.max_cvar_abs,
-        )
-        return gate_ok, 1.0, stats
