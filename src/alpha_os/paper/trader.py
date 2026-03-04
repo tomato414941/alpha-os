@@ -35,6 +35,7 @@ from ..alpha.combiner import (
     estimate_alpha_distribution,
     combine_distributions,
     select_low_correlation,
+    signal_consensus,
     weighted_combine_scalar,
 )
 from ..risk.distributional import kelly_position_fraction
@@ -488,10 +489,10 @@ class Trader:
 
         if _use_kelly and alpha_signals:
             # --- Distributional path ---
-            # Direction from signals, sizing from Kelly on alpha distributions.
-            # Replaces: signal_compression, signal-delta exit, vol_scale,
-            #           distributional gate+scale (all subsumed by Kelly + dd).
-            vol_s = 1.0  # not used — Kelly handles vol via σ
+            # Direction + consensus from signals, sizing from Kelly on distributions.
+            vol_s = 1.0  # Kelly handles vol via σ
+
+            sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
 
             dists = []
             dcfg = self.config.distributional
@@ -506,18 +507,19 @@ class Trader:
 
             if dists:
                 mu_c, sigma_c = combine_distributions(dists, weights_dict)
-                # dd_scale modulates Kelly fraction: reduce bet in drawdowns
-                eff_kelly = dcfg.kelly_fraction * dd_s
+                # consensus × dd_scale modulate Kelly fraction
+                eff_kelly = dcfg.kelly_fraction * dd_s * consensus
                 kelly_f = kelly_position_fraction(
                     mu_c, sigma_c,
                     kelly_fraction=eff_kelly,
                     max_position=self.max_position_pct,
                 )
-                # direction × size: signal gives sign, Kelly gives magnitude
-                adjusted = combined * abs(kelly_f)
+                # direction from signal consensus, magnitude from Kelly
+                adjusted = float(np.sign(sig_mean)) * abs(kelly_f)
                 logger.info(
-                    "Kelly: μ=%.6f σ=%.6f f=%.4f dd=%.2f (%d/%d alphas)",
-                    mu_c, sigma_c, kelly_f, dd_s, len(dists), len(alpha_signals),
+                    "Kelly: μ=%.6f σ=%.6f f=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d/%d alphas)",
+                    mu_c, sigma_c, kelly_f, dd_s, consensus,
+                    sig_mean, sig_std, len(dists), len(alpha_signals),
                 )
             else:
                 adjusted = 0.0

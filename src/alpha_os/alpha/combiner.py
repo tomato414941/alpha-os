@@ -264,3 +264,29 @@ def weighted_combine_scalar(
     for alpha_id, sig in signals.items():
         total += weights.get(alpha_id, 0.0) * sig
     return float(np.clip(total, -1.0, 1.0))
+
+
+def signal_consensus(
+    signals: dict[str, float],
+    weights: dict[str, float],
+) -> tuple[float, float, float]:
+    """Weighted signal mean, std, and consensus from alpha signals.
+
+    consensus = |mean| / (|mean| + std) measures how much alphas agree
+    on direction.  Returns (mean, std, consensus).
+    """
+    if not signals:
+        return 0.0, 0.0, 0.0
+    ids = list(signals.keys())
+    w = np.array([weights.get(a, 0.0) for a in ids])
+    s = np.array([signals[a] for a in ids])
+    w_sum = w.sum()
+    if w_sum <= 0:
+        return 0.0, 0.0, 0.0
+    w_norm = w / w_sum
+    mean = float(np.dot(w_norm, s))
+    var = float(np.dot(w_norm, (s - mean) ** 2))
+    std = sqrt(max(var, 0.0))
+    abs_mean = abs(mean)
+    consensus = abs_mean / (abs_mean + std) if (abs_mean + std) > 1e-12 else 0.0
+    return mean, std, consensus

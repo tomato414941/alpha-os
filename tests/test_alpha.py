@@ -23,6 +23,7 @@ from alpha_os.alpha.combiner import (
     AlphaDistribution,
     estimate_alpha_distribution,
     combine_distributions,
+    signal_consensus,
 )
 from alpha_os.governance.gates import adoption_gate, GateConfig
 
@@ -538,3 +539,39 @@ class TestAlphaDistribution:
         weights = {f"a{i}": 1.0 / n for i in range(n)}
         mu, sigma = combine_distributions(dists, weights)
         assert np.isclose(sigma, sigma_i / n**0.5, atol=1e-10)
+
+
+class TestSignalConsensus:
+    def test_unanimous_long(self):
+        signals = {"a1": 0.8, "a2": 0.7, "a3": 0.9}
+        weights = {"a1": 1 / 3, "a2": 1 / 3, "a3": 1 / 3}
+        mean, std, cons = signal_consensus(signals, weights)
+        assert mean > 0
+        assert cons > 0.8  # high consensus
+
+    def test_split_signals(self):
+        signals = {"a1": 1.0, "a2": -1.0}
+        weights = {"a1": 0.5, "a2": 0.5}
+        mean, std, cons = signal_consensus(signals, weights)
+        assert abs(mean) < 1e-10
+        assert cons < 0.01  # no consensus
+
+    def test_empty(self):
+        mean, std, cons = signal_consensus({}, {})
+        assert mean == 0.0
+        assert std == 0.0
+        assert cons == 0.0
+
+    def test_single_alpha(self):
+        signals = {"a1": 0.5}
+        weights = {"a1": 1.0}
+        mean, std, cons = signal_consensus(signals, weights)
+        assert np.isclose(mean, 0.5)
+        assert std == 0.0
+        assert cons == 1.0  # single alpha → full consensus
+
+    def test_consensus_between_zero_and_one(self):
+        signals = {"a1": 0.5, "a2": 0.3, "a3": -0.1}
+        weights = {"a1": 0.5, "a2": 0.3, "a3": 0.2}
+        mean, std, cons = signal_consensus(signals, weights)
+        assert 0.0 <= cons <= 1.0
