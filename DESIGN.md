@@ -210,52 +210,48 @@ number of low-correlation alphas and weighted them equally.
 
 ## Distributional Position Sizing
 
-When `[distributional].enabled = true`, position sizing uses Kelly criterion
-on alpha return distributions instead of linear signal scaling.
+When `[distributional].enabled = true`, position sizing uses portfolio-level
+Kelly criterion with signal consensus instead of linear signal scaling.
 
 ### Signal Flow
 
 ```
 alpha_i signals → weighted mean, std → consensus
-alpha_i forward returns → (μ_i, σ_i) → combine → (μ_c, σ_c)
+portfolio returns → estimate_distribution → (μ, σ) → kelly_scale
 
 direction  = sign(signal_mean)
 consensus  = |signal_mean| / (|signal_mean| + signal_std)
-kelly_f    = kelly_fraction × dd_scale × consensus × (μ_c / σ_c²)
-position   = sign(signal_mean) × |clip(kelly_f, -max_pos, max_pos)| × portfolio_value
+kelly_s    = kelly_fraction × (μ / σ²)          # portfolio-level
+adjusted   = sign(mean) × kelly_s × consensus × dd_scale
+position   = clip(adjusted) × max_position_pct × portfolio_value
 ```
 
 ### Key Components
 
-- **AlphaDistribution** (`combiner.py`): Per-alpha (μ, σ) estimated from
-  `forward_tracker.get_returns()` — these are `signal × price_return` so μ
-  already encodes the alpha's directional edge.
-- **combine_distributions**: Weighted combination assuming independence:
-  `μ_c = Σ w_i μ_i`, `σ²_c = Σ w_i² σ_i²`.
 - **signal_consensus** (`combiner.py`): Measures agreement among alpha
   signals. `consensus = |mean| / (|mean| + std)` — ranges from 1.0 (all
   alphas agree) to 0.0 (equal split between long and short).
-- **kelly_position_fraction** (`distributional.py`): `f* = fraction × μ/σ²`,
-  clipped to `[-max_position, max_position]`.
+- **kelly_scale** (`distributional.py`): Portfolio-level Kelly fraction from
+  recent portfolio returns `(μ, σ)`.
+- **distributional gate**: Portfolio-level CVaR/left-tail check as hard
+  block — if portfolio returns show fat left tails, position goes to 0.
 
 ### Design Rationale
 
-1. **Direction from signals, size from track record**: Today's alpha signals
-   determine which way to trade; historical forward returns determine how
-   much to bet. This separates real-time conviction from statistical edge.
+1. **Portfolio-level Kelly, not per-alpha**: Individual alphas are too
+   short-lived (evolved/replaced every few days) to accumulate enough
+   forward data for stable (μ, σ) estimates. Portfolio returns are stable.
 2. **Consensus modulates risk**: When alphas disagree, consensus → 0 and
    position shrinks automatically. No ad-hoc signal compression needed.
-3. **dd_scale × consensus × kelly_fraction**: Drawdowns reduce Kelly
-   fraction directly, stacking with consensus for double protection.
-4. **Distributional tail gate**: Portfolio-level CVaR/left-tail check as
-   hard block — if portfolio returns show fat left tails, position goes to 0.
+3. **dd_scale × consensus × kelly_scale**: Drawdowns reduce sizing
+   directly, stacking with consensus for double protection.
+4. **Distributional tail gate**: Hard block on portfolio-level tail risk.
 
 ### Fallback
 
-- Alphas without enough forward data (`min_samples`) are excluded from
-  distribution estimation but still contribute to signal direction.
-- If no alpha has sufficient data, position is 0 (no trading).
-- Set `[distributional].enabled = false` to revert to legacy scalar path
+- When portfolio returns have < `min_samples` data points, kelly_scale
+  defaults to 1.0 (full signal strength, gate passes).
+- Set `[distributional].enabled = false` to use scalar path
   (signal × dd_scale × vol_scale).
 
 ## Paper Trading

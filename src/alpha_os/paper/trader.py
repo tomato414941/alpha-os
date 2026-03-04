@@ -32,13 +32,10 @@ from ..alpha.combiner import (
     WeightedCombinerConfig,
     compute_diversity_scores,
     compute_weights,
-    estimate_alpha_distribution,
-    combine_distributions,
     select_low_correlation,
     signal_consensus,
     weighted_combine_scalar,
 )
-from ..risk.distributional import kelly_position_fraction
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from .tactical import TacticalTrader
@@ -489,44 +486,13 @@ class Trader:
 
         if _use_kelly and alpha_signals:
             # --- Distributional path ---
-            # Direction + consensus from signals, sizing from Kelly on distributions.
-            vol_s = 1.0  # Kelly handles vol via σ
-
+            # Direction + consensus from alpha signals,
+            # sizing from portfolio-level Kelly on recent portfolio returns.
+            dcfg = self.config.distributional
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
 
-            dists = []
-            dcfg = self.config.distributional
-            for aid in alpha_ids:
-                fwd_rets = self.forward_tracker.get_returns(aid)
-                dist = estimate_alpha_distribution(
-                    fwd_rets, window=dcfg.window, min_samples=dcfg.min_samples,
-                )
-                if dist is not None:
-                    dist.alpha_id = aid
-                    dists.append(dist)
-
-            if dists:
-                mu_c, sigma_c = combine_distributions(dists, weights_dict)
-                # consensus × dd_scale modulate Kelly fraction
-                eff_kelly = dcfg.kelly_fraction * dd_s * consensus
-                kelly_f = kelly_position_fraction(
-                    mu_c, sigma_c,
-                    kelly_fraction=eff_kelly,
-                    max_position=self.max_position_pct,
-                )
-                # direction from signal consensus, magnitude from Kelly
-                adjusted = float(np.sign(sig_mean)) * abs(kelly_f)
-                logger.info(
-                    "Kelly: μ=%.6f σ=%.6f f=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d/%d alphas)",
-                    mu_c, sigma_c, kelly_f, dd_s, consensus,
-                    sig_mean, sig_std, len(dists), len(alpha_signals),
-                )
-            else:
-                adjusted = 0.0
-                logger.info("No alpha distributions available (min_samples=%d)", dcfg.min_samples)
-
-            # Safety: distributional tail gate (hard block, no scaling)
-            gate_ok, _, dist_stats = self.risk_manager.distributional_adjustment(
+            # Portfolio-level Kelly scale + CVaR/tail gate
+            gate_ok, kelly_s, dist_stats = self.risk_manager.distributional_adjustment(
                 recent_returns, dcfg,
             )
             if not gate_ok:
@@ -535,8 +501,17 @@ class Trader:
                     dist_stats.left_tail_prob, dist_stats.cvar,
                 )
                 adjusted = 0.0
+            else:
+                # kelly_s from portfolio returns, consensus from signal agreement
+                adjusted = float(np.sign(sig_mean)) * kelly_s * consensus * dd_s
+                adjusted = float(np.clip(adjusted, -1, 1))
+            logger.info(
+                "Kelly: kelly_s=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
+                kelly_s if gate_ok else 0.0, dd_s, consensus,
+                sig_mean, sig_std, len(alpha_signals),
+            )
         else:
-            # --- Legacy scalar path ---
+            # --- Scalar path (distributional disabled) ---
             vol_s = self.risk_manager.vol_scale(recent_returns)
             compression = getattr(self.config.paper, "signal_compression", 0.0)
             if compression > 0:
@@ -604,11 +579,7 @@ class Trader:
             logger.info("Using daily close: $%.2f", current_price)
 
         # 7. Compute target position and execute
-        if _use_kelly:
-            # adjusted is already a position fraction (Kelly × direction)
-            dollar_pos = adjusted * prev_value
-        else:
-            dollar_pos = adjusted * prev_value * self.max_position_pct
+        dollar_pos = adjusted * prev_value * self.max_position_pct
         target_shares_value = dollar_pos / current_price if current_price > 0 else 0.0
 
         if abs(dollar_pos) < self.min_trade_usd:

@@ -85,16 +85,16 @@ Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[v
 When `[distributional].enabled = true` (default), position sizing uses:
 
 1. **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous signals → full conviction; split signals → reduced position.
-2. **Kelly criterion**: optimal sizing from per-alpha return distributions `(μ, σ)` estimated from forward returns track record.
+2. **Portfolio-level Kelly**: optimal sizing from portfolio return distribution `(μ, σ)`.
 3. **CVaR/tail gate**: hard block when portfolio-level tail risk exceeds thresholds.
 
 ```
 direction  = sign(weighted_signal_mean)
-size       = kelly_fraction × dd_scale × consensus × (μ / σ²)
-position   = direction × clip(size) × portfolio_value
+size       = kelly_scale × dd_scale × consensus
+position   = direction × clip(size) × max_position_pct × portfolio_value
 ```
 
-Rollback: set `[distributional].enabled = false` to revert to legacy scalar sizing.
+Rollback: set `[distributional].enabled = false` to revert to scalar sizing.
 
 ## Testing
 
