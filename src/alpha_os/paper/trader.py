@@ -106,11 +106,11 @@ class Trader:
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
             config=LifecycleConfig(
-                oos_sharpe_min=config.lifecycle.oos_sharpe_min,
-                probation_sharpe_min=config.lifecycle.probation_sharpe_min,
-                dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+                oos_quality_min=config.lifecycle.oos_quality_min,
+                probation_quality_min=config.lifecycle.probation_quality_min,
+                dormant_quality_max=config.lifecycle.dormant_quality_max,
                 correlation_max=config.lifecycle.correlation_max,
-                dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
+                dormant_revival_quality=config.lifecycle.dormant_revival_quality,
             ),
         )
 
@@ -308,7 +308,7 @@ class Trader:
         # 2. Get candidate alphas (wider pool for correlation filtering) + dormant
         max_trading = self.config.paper.max_trading_alphas
         n_candidates = max_trading * 5
-        trading_candidates = self.registry.top_trading(n_candidates)
+        trading_candidates = self.registry.top_trading(n_candidates, metric=self.config.fitness_metric)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
         all_alphas = trading_candidates + dormant
         dormant_ids = {r.alpha_id for r in dormant}
@@ -386,13 +386,14 @@ class Trader:
                 if not skip_lifecycle:
                     status = self.monitor.check(record.alpha_id)
                     old_state = record.state
+                    _fit = status.rolling_fitness(self.config.fitness_metric)
                     new_state = self.lifecycle.evaluate(
-                        record.alpha_id, status.rolling_sharpe,
+                        record.alpha_id, _fit,
                     )
                     if new_state != old_state:
                         self.audit_log.log_state_change(
                             record.alpha_id, old_state, new_state,
-                            reason=f"paper: sharpe={status.rolling_sharpe:.3f}",
+                            reason=f"paper: quality={_fit:.3f}",
                         )
 
             except EvaluationError as exc:
@@ -422,11 +423,12 @@ class Trader:
             sig_matrix = np.array([
                 alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
             ])
-            sharpes_for_sel = np.array([
-                self.monitor.check(aid).rolling_sharpe for aid in candidate_ids
+            quality_for_sel = np.array([
+                self.monitor.check(aid).rolling_fitness(self.config.fitness_metric)
+                for aid in candidate_ids
             ])
             selected_idx = select_low_correlation(
-                sig_matrix, sharpes_for_sel,
+                sig_matrix, quality_for_sel,
                 CombinerConfig(max_alphas=max_trading),
             )
             selected_ids = {candidate_ids[i] for i in selected_idx}
@@ -454,16 +456,17 @@ class Trader:
 
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
-            sharpes_list = []
+            quality_list = []
             diversity_list = []
+            _metric = self.config.fitness_metric
             for aid in alpha_ids:
                 status = self.monitor.check(aid)
-                sharpes_list.append(max(status.rolling_sharpe, 0.0))
+                quality_list.append(max(status.rolling_fitness(_metric), 0.0))
                 diversity_list.append(self._diversity_cache.get(aid, 1.0))
 
-            sharpes_np = np.array(sharpes_list)
+            quality_np = np.array(quality_list)
             diversity_np = np.array(diversity_list)
-            w = compute_weights(sharpes_np, diversity_np, min_weight=self._wcfg.min_weight)
+            w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
             weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
             # Compress extreme signals toward center to prevent permanent all-in bias

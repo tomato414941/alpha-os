@@ -140,7 +140,7 @@ class TestForwardRunnerIntegration:
             rolling_window=30, min_observations=5,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            probation_sharpe_min=0.3,
+            probation_quality_min=0.3,
         ))
 
         tracker.register_alpha("healthy", "2025-01-01")
@@ -154,7 +154,7 @@ class TestForwardRunnerIntegration:
         status = monitor.check("healthy")
         assert status.rolling_sharpe > 0
 
-        new_state = lifecycle.evaluate_active("healthy", status.rolling_sharpe)
+        new_state = lifecycle.evaluate_active("healthy", status.rolling_sharpe)  # sharpe as quality
         assert new_state == AlphaState.ACTIVE
 
         summary = tracker.summary("healthy")
@@ -177,7 +177,7 @@ class TestForwardRunnerIntegration:
             rolling_window=30, sharpe_threshold=0.0, min_observations=10,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            probation_sharpe_min=0.0,
+            probation_quality_min=0.0,
         ))
 
         tracker.register_alpha("bad", "2025-01-01")
@@ -190,7 +190,7 @@ class TestForwardRunnerIntegration:
         assert status.is_degraded
         assert status.rolling_sharpe < 0
 
-        new_state = lifecycle.evaluate_active("bad", status.rolling_sharpe)
+        new_state = lifecycle.evaluate_active("bad", status.rolling_sharpe)  # sharpe as quality
         assert new_state == AlphaState.PROBATION
         assert reg.get("bad").state == AlphaState.PROBATION
 
@@ -206,7 +206,7 @@ class TestForwardRunnerIntegration:
         ))
         lifecycle = AlphaLifecycle(reg)
 
-        new_state = lifecycle.evaluate_probation("dying", live_sharpe=-0.5)
+        new_state = lifecycle.evaluate_probation("dying", live_quality=-0.5)
         assert new_state == AlphaState.DORMANT
 
         reg.close()
@@ -219,10 +219,10 @@ class TestForwardRunnerIntegration:
             state=AlphaState.PROBATION,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            oos_sharpe_min=0.5,
+            oos_quality_min=0.5,
         ))
 
-        new_state = lifecycle.evaluate_probation("recover", live_sharpe=0.8)
+        new_state = lifecycle.evaluate_probation("recover", live_quality=0.8)
         assert new_state == AlphaState.ACTIVE
 
         reg.close()

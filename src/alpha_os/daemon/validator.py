@@ -129,8 +129,10 @@ class ValidatorDaemon:
                     n_folds=self.config.validation.n_cv_folds,
                     embargo=self.config.validation.embargo_days,
                 )
-                if cv.oos_sharpe <= 0:
-                    self._reject_candidate(cid, f"oos_sharpe={cv.oos_sharpe:.3f}")
+                _metric = self.config.fitness_metric
+                _oos_fit = cv.oos_fitness(_metric)
+                if _oos_fit <= 0:
+                    self._reject_candidate(cid, f"oos_{_metric}={_oos_fit:.3f}")
                     continue
 
                 pos = normalize_signal(sig)
@@ -187,6 +189,7 @@ class ValidatorDaemon:
                     state=AlphaState.ACTIVE,
                     fitness=fitness,
                     oos_sharpe=cv.oos_sharpe,
+                    oos_log_growth=cv.oos_expected_log_growth,
                     pbo=batch_pbo,
                     dsr_pvalue=dsr_pvalue,
                 )

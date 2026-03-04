@@ -25,6 +25,7 @@ class AlphaRecord:
     state: str = AlphaState.BORN
     fitness: float = 0.0
     oos_sharpe: float = 0.0
+    oos_log_growth: float = 0.0
     pbo: float = 1.0
     dsr_pvalue: float = 1.0
     turnover: float = 0.0
@@ -32,6 +33,11 @@ class AlphaRecord:
     created_at: float = 0.0
     updated_at: float = 0.0
     metadata: dict = field(default_factory=dict)
+
+    _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
+
+    def oos_fitness(self, metric: str = "sharpe") -> float:
+        return getattr(self, self._OOS_FITNESS_MAP[metric])
 
 
 class AlphaRegistry:
@@ -102,6 +108,17 @@ class AlphaRegistry:
                 n_alphas_compared INTEGER NOT NULL
             )
         """)
+        # Migration: add oos_log_growth column if missing
+        try:
+            self._conn.execute(
+                "ALTER TABLE alphas ADD COLUMN oos_log_growth REAL DEFAULT 0.0"
+            )
+        except sqlite3.OperationalError:
+            pass
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_oos_log_growth
+            ON alphas(oos_log_growth DESC)
+        """)
         self._conn.commit()
 
     def register(self, record: AlphaRecord) -> None:
@@ -111,15 +128,17 @@ class AlphaRegistry:
         record.updated_at = now
         self._conn.execute(
             """INSERT OR REPLACE INTO alphas
-               (alpha_id, expression, state, fitness, oos_sharpe, pbo,
-                dsr_pvalue, turnover, correlation_avg, created_at, updated_at, metadata)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
+                pbo, dsr_pvalue, turnover, correlation_avg,
+                created_at, updated_at, metadata)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 record.alpha_id,
                 record.expression,
                 record.state,
                 record.fitness,
                 record.oos_sharpe,
+                record.oos_log_growth,
                 record.pbo,
                 record.dsr_pvalue,
                 record.turnover,
@@ -191,24 +210,28 @@ class AlphaRegistry:
             row = self._conn.execute("SELECT COUNT(*) FROM alphas").fetchone()
         return row[0]
 
-    def top_trading(self, n: int = 30) -> list[AlphaRecord]:
-        """Top-N alphas by oos_sharpe from active + probation (for trading)."""
+    _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
+
+    def top_trading(self, n: int = 30, metric: str = "sharpe") -> list[AlphaRecord]:
+        """Top-N alphas by fitness metric from active + probation (for trading)."""
+        col = self._ORDER_COLUMN[metric]
         rows = self._conn.execute(
-            "SELECT * FROM alphas WHERE state IN (?, ?) "
-            "ORDER BY oos_sharpe DESC LIMIT ?",
+            f"SELECT * FROM alphas WHERE state IN (?, ?) "
+            f"ORDER BY {col} DESC LIMIT ?",
             (AlphaState.ACTIVE, AlphaState.PROBATION, n),
         ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
-    def top(self, n: int = 10, state: str | None = None) -> list[AlphaRecord]:
+    def top(self, n: int = 10, state: str | None = None, metric: str = "sharpe") -> list[AlphaRecord]:
+        col = self._ORDER_COLUMN[metric]
         if state:
             rows = self._conn.execute(
-                "SELECT * FROM alphas WHERE state = ? ORDER BY oos_sharpe DESC LIMIT ?",
+                f"SELECT * FROM alphas WHERE state = ? ORDER BY {col} DESC LIMIT ?",
                 (state, n),
             ).fetchall()
         else:
             rows = self._conn.execute(
-                "SELECT * FROM alphas ORDER BY oos_sharpe DESC LIMIT ?", (n,)
+                f"SELECT * FROM alphas ORDER BY {col} DESC LIMIT ?", (n,)
             ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
@@ -217,12 +240,14 @@ class AlphaRegistry:
 
     @staticmethod
     def _row_to_record(row: sqlite3.Row) -> AlphaRecord:
+        keys = row.keys()
         return AlphaRecord(
             alpha_id=row["alpha_id"],
             expression=row["expression"],
             state=row["state"],
             fitness=row["fitness"],
             oos_sharpe=row["oos_sharpe"],
+            oos_log_growth=row["oos_log_growth"] if "oos_log_growth" in keys else 0.0,
             pbo=row["pbo"],
             dsr_pvalue=row["dsr_pvalue"],
             turnover=row["turnover"],

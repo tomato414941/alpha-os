@@ -148,11 +148,11 @@ def run_backfill(
 
         # Lifecycle thresholds from config (single source of truth)
         lc_cfg = LifecycleConfig(
-            oos_sharpe_min=config.lifecycle.oos_sharpe_min,
-            probation_sharpe_min=config.lifecycle.probation_sharpe_min,
-            dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+            oos_quality_min=config.lifecycle.oos_quality_min,
+            probation_quality_min=config.lifecycle.probation_quality_min,
+            dormant_quality_max=config.lifecycle.dormant_quality_max,
             correlation_max=config.lifecycle.correlation_max,
-            dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
+            dormant_revival_quality=config.lifecycle.dormant_revival_quality,
         )
         rolling_window = 63
         min_obs = 20
@@ -179,13 +179,17 @@ def run_backfill(
                 recent = returns_mat[valid_mask, window_start + 1:d + 1]
                 m = recent.mean(axis=1)
                 s = recent.std(axis=1) + 1e-12
-                rolling_sharpe = m / s * np.sqrt(252)
+                if config.fitness_metric == "log_growth":
+                    r_clipped = np.clip(recent, -0.999999, None)
+                    rolling_quality = np.mean(np.log1p(r_clipped), axis=1) * 252
+                else:
+                    rolling_quality = m / s * np.sqrt(252)
             else:
-                rolling_sharpe = np.zeros(int(valid_mask.sum()))
+                rolling_quality = np.zeros(int(valid_mask.sum()))
 
             # State transitions (vectorized via shared lifecycle logic)
             valid_states = alpha_state_vec[valid_mask]
-            new_states = batch_transitions(valid_states, rolling_sharpe, lc_cfg)
+            new_states = batch_transitions(valid_states, rolling_quality, lc_cfg)
             alpha_state_vec[valid_mask] = new_states
 
             # Recompute diversity periodically (rolling window)
@@ -201,9 +205,9 @@ def run_backfill(
             # Combined signal from ACTIVE + PROBATION with quality × diversity weights
             trading_within_valid = (new_states == ST_ACTIVE) | (new_states == ST_PROBATION)
             if trading_within_valid.any():
-                t_sharpes = rolling_sharpe[trading_within_valid]
+                t_quality = rolling_quality[trading_within_valid]
                 t_diversity = diversity_scores[trading_within_valid]
-                weights = compute_weights(t_sharpes, t_diversity, min_weight=wcfg.min_weight)
+                weights = compute_weights(t_quality, t_diversity, min_weight=wcfg.min_weight)
                 trading_mask = valid_mask.copy()
                 trading_mask[valid_mask] &= trading_within_valid
                 combined = float(np.clip(

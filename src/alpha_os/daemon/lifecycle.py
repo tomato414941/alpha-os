@@ -43,11 +43,11 @@ class LifecycleDaemon:
         lifecycle = AlphaLifecycle(
             registry,
             config=LifecycleConfig(
-                oos_sharpe_min=self.config.lifecycle.oos_sharpe_min,
-                probation_sharpe_min=self.config.lifecycle.probation_sharpe_min,
-                dormant_sharpe_max=self.config.lifecycle.dormant_sharpe_max,
+                oos_quality_min=self.config.lifecycle.oos_quality_min,
+                probation_quality_min=self.config.lifecycle.probation_quality_min,
+                dormant_quality_max=self.config.lifecycle.dormant_quality_max,
                 correlation_max=self.config.lifecycle.correlation_max,
-                dormant_revival_sharpe=self.config.lifecycle.dormant_revival_sharpe,
+                dormant_revival_quality=self.config.lifecycle.dormant_revival_quality,
             ),
         )
 
@@ -80,15 +80,14 @@ class LifecycleDaemon:
             status = monitor.check(record.alpha_id)
 
             old_state = record.state
-            new_state = lifecycle.evaluate(
-                record.alpha_id, status.rolling_sharpe,
-            )
+            _fit = status.rolling_fitness(self.config.fitness_metric)
+            new_state = lifecycle.evaluate(record.alpha_id, _fit)
 
             if new_state != old_state:
                 n_transitions += 1
                 audit_log.log_state_change(
                     record.alpha_id, old_state, new_state,
-                    reason=f"lifecycle_daemon: sharpe={status.rolling_sharpe:.3f}",
+                    reason=f"lifecycle_daemon: quality={_fit:.3f}",
                 )
 
                 # Track direction

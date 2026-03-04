@@ -21,6 +21,11 @@ class BacktestResult:
     tail_hit_rate: float
     n_days: int
 
+    _FITNESS_MAP = {"sharpe": "sharpe", "log_growth": "expected_log_growth"}
+
+    def fitness(self, metric: str = "sharpe") -> float:
+        return getattr(self, self._FITNESS_MAP[metric])
+
 
 def _normalize_positions(signal: np.ndarray) -> np.ndarray:
     s = signal.copy().astype(float)

@@ -17,7 +17,7 @@ class CombinerConfig:
 
 def select_low_correlation(
     signals: np.ndarray,
-    sharpes: np.ndarray,
+    quality_scores: np.ndarray,
     config: CombinerConfig | None = None,
 ) -> list[int]:
     """Greedy forward selection of low-correlation alphas.
@@ -25,7 +25,7 @@ def select_low_correlation(
     Parameters
     ----------
     signals : (n_alphas, n_days) signal matrix
-    sharpes : (n_alphas,) Sharpe ratios for ranking
+    quality_scores : (n_alphas,) quality scores for ranking
     config : combiner configuration
 
     Returns
@@ -37,8 +37,7 @@ def select_low_correlation(
     if n == 0:
         return []
 
-    # Rank by Sharpe descending
-    order = np.argsort(-sharpes)
+    order = np.argsort(-quality_scores)
     selected: list[int] = [int(order[0])]
 
     for idx in order[1:]:
@@ -141,7 +140,7 @@ def compute_diversity_scores(
 
 
 def compute_weights(
-    sharpes: np.ndarray,
+    quality_scores: np.ndarray,
     diversity: np.ndarray,
     min_weight: float = 1e-4,
 ) -> np.ndarray:
@@ -149,7 +148,7 @@ def compute_weights(
 
     Parameters
     ----------
-    sharpes : (N,) rolling Sharpe ratios (quality signal)
+    quality_scores : (N,) rolling quality metric values
     diversity : (N,) diversity scores in [0, 1]
     min_weight : floor so no alpha is fully excluded
 
@@ -157,12 +156,12 @@ def compute_weights(
     -------
     weights : (N,) normalized weights summing to 1.0
     """
-    quality = np.maximum(sharpes, 0.0)
+    quality = np.maximum(quality_scores, 0.0)
     raw = quality * diversity + min_weight
     total = raw.sum()
     if total > 0:
         return raw / total
-    return np.full(len(sharpes), 1.0 / max(len(sharpes), 1))
+    return np.full(len(quality_scores), 1.0 / max(len(quality_scores), 1))
 
 
 def weighted_combine(

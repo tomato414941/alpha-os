@@ -86,11 +86,11 @@ class ForwardRunner:
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
             config=LifecycleConfig(
-                oos_sharpe_min=config.lifecycle.oos_sharpe_min,
-                probation_sharpe_min=config.lifecycle.probation_sharpe_min,
-                dormant_sharpe_max=config.lifecycle.dormant_sharpe_max,
+                oos_quality_min=config.lifecycle.oos_quality_min,
+                probation_quality_min=config.lifecycle.probation_quality_min,
+                dormant_quality_max=config.lifecycle.dormant_quality_max,
                 correlation_max=config.lifecycle.correlation_max,
-                dormant_revival_sharpe=config.lifecycle.dormant_revival_sharpe,
+                dormant_revival_quality=config.lifecycle.dormant_revival_quality,
             ),
         )
 
@@ -167,14 +167,13 @@ class ForwardRunner:
                 status = self.monitor.check(alpha_id)
 
                 old_state = record.state
-                new_state = self.lifecycle.evaluate(
-                    alpha_id, status.rolling_sharpe,
-                )
+                _fit = status.rolling_fitness(self.config.fitness_metric)
+                new_state = self.lifecycle.evaluate(alpha_id, _fit)
 
                 if new_state != old_state:
                     self.audit_log.log_state_change(
                         alpha_id, old_state, new_state,
-                        reason=f"forward_test: sharpe={status.rolling_sharpe:.3f}, "
+                        reason=f"forward_test: quality={_fit:.3f}, "
                                f"max_dd={status.rolling_max_dd:.3%}",
                     )
                     if new_state == AlphaState.PROBATION and old_state == AlphaState.ACTIVE:
@@ -195,8 +194,8 @@ class ForwardRunner:
                         n_restored += 1
 
                 logger.info(
-                    "  %s: ret=%.4f sharpe=%.3f dd=%.3f state=%s%s",
-                    alpha_id, daily_return, status.rolling_sharpe,
+                    "  %s: ret=%.4f quality=%.3f dd=%.3f state=%s%s",
+                    alpha_id, daily_return, _fit,
                     status.rolling_max_dd, new_state,
                     " [DEGRADED]" if status.is_degraded else "",
                 )

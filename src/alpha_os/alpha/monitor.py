@@ -18,9 +18,15 @@ class MonitorConfig:
 class MonitorStatus:
     alpha_id: str
     rolling_sharpe: float
+    rolling_log_growth: float
     rolling_max_dd: float
     is_degraded: bool
     degradation_reasons: list[str]
+
+    _ROLLING_FITNESS_MAP = {"sharpe": "rolling_sharpe", "log_growth": "rolling_log_growth"}
+
+    def rolling_fitness(self, metric: str = "sharpe") -> float:
+        return getattr(self, self._ROLLING_FITNESS_MAP[metric])
 
 
 class AlphaMonitor:
@@ -49,6 +55,7 @@ class AlphaMonitor:
             return MonitorStatus(
                 alpha_id=alpha_id,
                 rolling_sharpe=0.0,
+                rolling_log_growth=0.0,
                 rolling_max_dd=0.0,
                 is_degraded=False,
                 degradation_reasons=[],
@@ -57,6 +64,8 @@ class AlphaMonitor:
         recent = np.array(rets[-cfg.rolling_window:])
         std = recent.std()
         rolling_sharpe = float(recent.mean() / std * np.sqrt(252)) if std > 0 else 0.0
+        r_clipped = np.clip(recent, -0.999999, None)
+        rolling_log_growth = float(np.mean(np.log1p(r_clipped)) * 252)
 
         cum = np.cumprod(1 + recent)
         peak = np.maximum.accumulate(cum)
@@ -76,6 +85,7 @@ class AlphaMonitor:
         return MonitorStatus(
             alpha_id=alpha_id,
             rolling_sharpe=rolling_sharpe,
+            rolling_log_growth=rolling_log_growth,
             rolling_max_dd=rolling_max_dd,
             is_degraded=len(reasons) > 0,
             degradation_reasons=reasons,

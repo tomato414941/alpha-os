@@ -157,10 +157,10 @@ class EventDrivenConfig:
 
 @dataclass
 class LifecycleTomlConfig:
-    oos_sharpe_min: float = 0.05
-    probation_sharpe_min: float = 0.0
-    dormant_sharpe_max: float = -0.5
-    dormant_revival_sharpe: float = 0.0
+    oos_quality_min: float = 0.05
+    probation_quality_min: float = 0.0
+    dormant_quality_max: float = -0.5
+    dormant_revival_quality: float = 0.0
     correlation_max: float = 0.5
 
 
@@ -228,6 +228,7 @@ class LifecycleDaemonConfig:
 
 @dataclass
 class Config:
+    fitness_metric: str = "sharpe"
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
@@ -255,7 +256,19 @@ class Config:
             return cls()
         with open(path, "rb") as f:
             raw = tomllib.load(f)
+        # Backward compat: map old lifecycle sharpe keys to quality keys
+        lc_raw = dict(raw.get("lifecycle", {}))
+        _LC_ALIASES = {
+            "oos_sharpe_min": "oos_quality_min",
+            "probation_sharpe_min": "probation_quality_min",
+            "dormant_sharpe_max": "dormant_quality_max",
+            "dormant_revival_sharpe": "dormant_revival_quality",
+        }
+        for old, new in _LC_ALIASES.items():
+            if old in lc_raw and new not in lc_raw:
+                lc_raw[new] = lc_raw.pop(old)
         return cls(
+            fitness_metric=raw.get("fitness_metric", "sharpe"),
             api=APIConfig(**raw.get("api", {})),
             generation=GenerationConfig(**raw.get("generation", {})),
             backtest=BacktestConfig(**raw.get("backtest", {})),
@@ -266,7 +279,7 @@ class Config:
             forward=ForwardTestConfig(**raw.get("forward", {})),
             testnet=TestnetConfig(**raw.get("testnet", {})),
             event_driven=EventDrivenConfig(**raw.get("event_driven", {})),
-            lifecycle=LifecycleTomlConfig(**raw.get("lifecycle", {})),
+            lifecycle=LifecycleTomlConfig(**lc_raw),
             execution=ExecutionTomlConfig(**raw.get("execution", {})),
             distributional=DistributionalConfig(**raw.get("distributional", {})),
             gate=GateTomlConfig(**raw.get("gate", {})),

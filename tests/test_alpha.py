@@ -112,7 +112,7 @@ class TestAlphaLifecycle:
     def _setup(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "test.db")
         cfg = LifecycleConfig(
-            oos_sharpe_min=0.5,
+            oos_quality_min=0.5,
             pbo_max=0.5,
             dsr_pvalue_max=0.05,
             correlation_max=0.5,
@@ -144,7 +144,7 @@ class TestAlphaLifecycle:
             alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
             oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
         ))
-        state = lc.evaluate_active("a1", live_sharpe=0.1)
+        state = lc.evaluate_active("a1", live_quality=0.1)
         assert state == AlphaState.PROBATION
 
     def test_active_stays(self, tmp_path):
@@ -152,7 +152,7 @@ class TestAlphaLifecycle:
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
         ))
-        state = lc.evaluate_active("a1", live_sharpe=0.8)
+        state = lc.evaluate_active("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
     def test_probation_to_dormant(self, tmp_path):
@@ -160,7 +160,7 @@ class TestAlphaLifecycle:
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.PROBATION,
         ))
-        state = lc.evaluate_probation("a1", live_sharpe=-0.5)
+        state = lc.evaluate_probation("a1", live_quality=-0.5)
         assert state == AlphaState.DORMANT
 
     def test_dormant_stays_dormant(self, tmp_path):
@@ -168,7 +168,7 @@ class TestAlphaLifecycle:
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.DORMANT,
         ))
-        state = lc.evaluate_dormant("a1", live_sharpe=0.1)
+        state = lc.evaluate_dormant("a1", live_quality=0.1)
         assert state == AlphaState.DORMANT
 
     def test_dormant_to_probation(self, tmp_path):
@@ -176,7 +176,7 @@ class TestAlphaLifecycle:
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.DORMANT,
         ))
-        state = lc.evaluate_dormant("a1", live_sharpe=0.4)
+        state = lc.evaluate_dormant("a1", live_quality=0.4)
         assert state == AlphaState.PROBATION
 
     def test_dormant_revival_full_cycle(self, tmp_path):
@@ -185,10 +185,10 @@ class TestAlphaLifecycle:
             alpha_id="a1", expression="x", state=AlphaState.DORMANT,
         ))
         # Step 1: revive to PROBATION
-        state = lc.evaluate_dormant("a1", live_sharpe=0.4)
+        state = lc.evaluate_dormant("a1", live_quality=0.4)
         assert state == AlphaState.PROBATION
         # Step 2: prove itself back to ACTIVE
-        state = lc.evaluate_probation("a1", live_sharpe=0.8)
+        state = lc.evaluate_probation("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
     def test_probation_to_active(self, tmp_path):
@@ -196,7 +196,7 @@ class TestAlphaLifecycle:
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.PROBATION,
         ))
-        state = lc.evaluate_probation("a1", live_sharpe=0.8)
+        state = lc.evaluate_probation("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
     def test_not_found_raises(self, tmp_path):
@@ -210,34 +210,34 @@ class TestAlphaLifecycle:
             alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
             oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
         ))
-        state = lc.evaluate("a1", live_sharpe=0.1)
+        state = lc.evaluate("a1", live_quality=0.1)
         assert state == AlphaState.PROBATION
         assert reg.get("a1").state == AlphaState.PROBATION
 
 
 class TestComputeTransition:
     def test_active_stays(self):
-        cfg = LifecycleConfig(probation_sharpe_min=0.3)
+        cfg = LifecycleConfig(probation_quality_min=0.3)
         assert compute_transition(AlphaState.ACTIVE, 0.5, cfg) == AlphaState.ACTIVE
 
     def test_active_to_probation(self):
-        cfg = LifecycleConfig(probation_sharpe_min=0.3)
+        cfg = LifecycleConfig(probation_quality_min=0.3)
         assert compute_transition(AlphaState.ACTIVE, 0.1, cfg) == AlphaState.PROBATION
 
     def test_probation_to_active(self):
-        cfg = LifecycleConfig(oos_sharpe_min=0.5)
+        cfg = LifecycleConfig(oos_quality_min=0.5)
         assert compute_transition(AlphaState.PROBATION, 0.8, cfg) == AlphaState.ACTIVE
 
     def test_probation_to_dormant(self):
-        cfg = LifecycleConfig(dormant_sharpe_max=0.0)
+        cfg = LifecycleConfig(dormant_quality_max=0.0)
         assert compute_transition(AlphaState.PROBATION, -0.5, cfg) == AlphaState.DORMANT
 
     def test_dormant_stays(self):
-        cfg = LifecycleConfig(dormant_revival_sharpe=0.3)
+        cfg = LifecycleConfig(dormant_revival_quality=0.3)
         assert compute_transition(AlphaState.DORMANT, 0.1, cfg) == AlphaState.DORMANT
 
     def test_dormant_revival(self):
-        cfg = LifecycleConfig(dormant_revival_sharpe=0.3)
+        cfg = LifecycleConfig(dormant_revival_quality=0.3)
         assert compute_transition(AlphaState.DORMANT, 0.4, cfg) == AlphaState.PROBATION
 
 

@@ -94,7 +94,8 @@ class EvoDaemon:
                 if not np.all(np.isfinite(sig)):
                     sig = np.where(np.isfinite(sig), sig, 0.0)
                 result = engine.run(sig, prices)
-                return result.sharpe if np.isfinite(result.sharpe) else FAILED_FITNESS
+                v = result.fitness(self.config.fitness_metric)
+                return v if np.isfinite(v) else FAILED_FITNESS
             except Exception:
                 return FAILED_FITNESS
 
