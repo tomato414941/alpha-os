@@ -139,12 +139,6 @@ class Trader:
         self._diversity_computed = False
         self._diversity_last_computed: float = 0.0
 
-        # Signal-delta exit: EMA tracking
-        ema_span = self.config.paper.exit_ema_span
-        self._ema_alpha = 2.0 / (ema_span + 1)
-        self._signal_ema: float | None = None
-        self._signal_ema_var: float = 0.0
-
         self._restore_state()
 
     def _restore_state(self) -> None:
@@ -175,22 +169,6 @@ class Trader:
             snapshot.portfolio_value, len(equity_curve),
         )
 
-        # Bootstrap signal-delta EMA from historical snapshots
-        if self.config.paper.exit_enabled:
-            snapshots = self.portfolio_tracker.get_all_snapshots()
-            for snap in snapshots:
-                sig = snap.combined_signal
-                if self._signal_ema is None:
-                    self._signal_ema = sig
-                    self._signal_ema_var = 0.0
-                else:
-                    a = self._ema_alpha
-                    self._signal_ema = a * sig + (1 - a) * self._signal_ema
-                    dev = sig - self._signal_ema
-                    self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
-            if self._signal_ema is not None:
-                logger.info("EMA bootstrapped: ema=%.4f var=%.6f (%d snapshots)",
-                            self._signal_ema, self._signal_ema_var, len(snapshots))
 
     def _recompute_diversity(
         self, data: dict[str, np.ndarray], parsed_records: list[tuple],
@@ -455,8 +433,6 @@ class Trader:
                 self._recompute_diversity(data, parsed_records)
                 self._diversity_last_computed = time.time()
 
-        _use_kelly = self.config.distributional.enabled
-
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
@@ -478,23 +454,20 @@ class Trader:
             combined = 0.0
             weights_dict = {}
 
-        # 5. Position sizing — two paths
+        # 5. Position sizing: consensus × Kelly × dd_scale
         prev_value = self.executor.portfolio_value
         self.risk_manager.update_equity(prev_value)
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
+        dcfg = self.config.distributional
 
-        if _use_kelly and alpha_signals:
-            # --- Distributional path ---
-            # Direction + consensus from alpha signals,
-            # sizing from portfolio-level Kelly on recent portfolio returns.
-            dcfg = self.config.distributional
+        gate_ok, kelly_s, dist_stats = self.risk_manager.distributional_adjustment(
+            recent_returns, dcfg,
+        )
+
+        if alpha_signals:
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
 
-            # Portfolio-level Kelly scale + CVaR/tail gate
-            gate_ok, kelly_s, dist_stats = self.risk_manager.distributional_adjustment(
-                recent_returns, dcfg,
-            )
             if not gate_ok:
                 logger.info(
                     "Distributional gate blocked: left_tail=%.3f cvar=%.4f",
@@ -502,41 +475,15 @@ class Trader:
                 )
                 adjusted = 0.0
             else:
-                # kelly_s from portfolio returns, consensus from signal agreement
                 adjusted = float(np.sign(sig_mean)) * kelly_s * consensus * dd_s
                 adjusted = float(np.clip(adjusted, -1, 1))
             logger.info(
-                "Kelly: kelly_s=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
+                "Sizing: kelly=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
                 kelly_s if gate_ok else 0.0, dd_s, consensus,
                 sig_mean, sig_std, len(alpha_signals),
             )
         else:
-            # --- Scalar path (distributional disabled) ---
-            vol_s = self.risk_manager.vol_scale(recent_returns)
-            compression = getattr(self.config.paper, "signal_compression", 0.0)
-            if compression > 0:
-                combined *= (1.0 - compression)
-
-            if self.config.paper.exit_enabled:
-                a = self._ema_alpha
-                if self._signal_ema is None:
-                    self._signal_ema = combined
-                    self._signal_ema_var = 0.0
-                else:
-                    self._signal_ema = a * combined + (1 - a) * self._signal_ema
-                    dev = combined - self._signal_ema
-                    self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
-                std = self._signal_ema_var**0.5
-                if std > 1e-6:
-                    zscore = (combined - self._signal_ema) / std
-                    if zscore < -self.config.paper.exit_zscore_threshold:
-                        logger.info(
-                            "Signal-delta exit: combined=%.4f ema=%.4f z=%.2f → exit",
-                            combined, self._signal_ema, zscore,
-                        )
-                        combined = 0.0
-
-            adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
+            adjusted = 0.0
 
         # 5a. Regime-aware position scaling (both paths)
         if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
@@ -614,7 +561,7 @@ class Trader:
             daily_return=daily_return,
             combined_signal=combined,
             dd_scale=dd_s,
-            vol_scale=vol_s,
+            vol_scale=kelly_s if gate_ok else 0.0,
         )
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
@@ -643,7 +590,7 @@ class Trader:
             daily_pnl=daily_pnl,
             daily_return=daily_return,
             dd_scale=dd_s,
-            vol_scale=vol_s,
+            vol_scale=kelly_s if gate_ok else 0.0,
             n_alphas_active=len(active),
             n_alphas_evaluated=n_evaluated,
             order_failures=order_failures,

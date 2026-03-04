@@ -41,11 +41,7 @@ initial_capital = 10000.0
 [paper]
 max_position_pct = 0.25
 min_trade_usd = 10.0
-signal_compression = 0.5
 max_trading_alphas = 30
-exit_enabled = true
-exit_ema_span = 6            # 6 cycles = 24h at 4h/cycle
-exit_zscore_threshold = 1.0
 
 [forward]
 check_interval = 14400
@@ -109,10 +105,9 @@ enabled = false
 # When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
 
 [distributional]
-enabled = true
-# When enabled: per-alpha distribution estimation + Kelly sizing.
-# Direction from weighted signals, magnitude from Kelly(μ,σ).
-# Subsumes: signal_compression, signal-delta exit, vol_scale.
+# Portfolio-level Kelly sizing + signal consensus + CVaR gate.
+# kelly_scale = kelly_fraction × (μ/σ²) from portfolio returns.
+# position = sign(signal_mean) × kelly_scale × consensus × dd_scale × max_position_pct.
 window = 63
 min_samples = 20
 tail_sigma = 2.0
