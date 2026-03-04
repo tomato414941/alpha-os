@@ -27,7 +27,7 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 - Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
 - Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
 - EventDrivenTrader（WebSocket イベント駆動 + デバウンス）
-- Distributional risk layer（CVaR/left-tail gate + fractional Kelly sizing）— **デフォルト有効化済み**
+- Distributional risk layer（signal consensus + Kelly sizing + CVaR/tail gate）— **デフォルト有効化済み**
 - BinanceExecutor（spot, testnet）+ optimizer 連携 + **注文分割 + リトライ**
 - RegimeDetector（vol/trend/drift 検知 → ポジション自動スケーリング）
 - Adoption gate に log_growth / CVaR / tail_hit_rate チェック統合
@@ -471,7 +471,7 @@ Layer 1 専用の GP 進化で、microstructure alpha を発見:
 
 | 知見 | 実装 | 対象ファイル |
 |------|------|-------------|
-| 1+2. Log Growth + CVaR | CVResult の全メトリクスを adoption gate に配線、distributional gate 有効化 | `gates.py`, `runner.py`, `default.toml` |
+| 1+2. Log Growth + CVaR | CVResult の全メトリクスを adoption gate に配線、distributional sizing (signal consensus + Kelly) 有効化 | `gates.py`, `runner.py`, `combiner.py`, `distributional.py`, `default.toml` |
 | 3. 相関考慮 | diversity 再計算タイマー（63日ローリング） | `trader.py` |
 | 4. 執行品質 | BinanceExecutor に split_order 統合 + 3回リトライ | `binance.py` |
 | 5. 継続学習 | RegimeDetector（vol/trend/drift KS検定）→ ドリフト時ポジション縮小 | `monitor.py`, `trader.py` |
@@ -621,7 +621,7 @@ Phase 3 ✅ 完了 (2026-03)
 Quant Insights ✅ 完了 (2026-03)
 ├── alpha-os: CVResult metrics (log_growth/cvar/tail) → adoption gate 配線
 ├── alpha-os: [gate] config セクション + 実効的閾値設定
-├── alpha-os: distributional gate デフォルト有効化 (CVaR + Kelly sizing)
+├── alpha-os: distributional sizing (signal consensus + Kelly + CVaR gate)
 ├── alpha-os: BinanceExecutor 注文分割 (split_order) + 3回リトライ
 ├── alpha-os: RegimeDetector (vol/trend/drift KS検定) + Trader 統合
 └── alpha-os: diversity 再計算タイマー (63日ローリング)

@@ -78,31 +78,23 @@ python -m alpha_os validate-testnet
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[distributional]` (CVaR/tail gate + Kelly sizing), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[distributional]` (Kelly sizing + signal consensus + CVaR gate), `[testnet]`.
 
-### Distributional rollout
+### Distributional position sizing
 
-Start with shadow behavior (metrics only), then enable gate/size control in testnet:
+When `[distributional].enabled = true` (default), position sizing uses:
 
-```bash
-# 1) Baseline metrics (distributional disabled)
-python -m alpha_os validate --expr "(neg btc_ohlcv)"
+1. **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous signals → full conviction; split signals → reduced position.
+2. **Kelly criterion**: optimal sizing from per-alpha return distributions `(μ, σ)` estimated from forward returns track record.
+3. **CVaR/tail gate**: hard block when portfolio-level tail risk exceeds thresholds.
 
-# 2) Enable distributional controls in config/default.toml
-# [distributional]
-# enabled = true
-
-# 3) Run testnet cycle and monitor status
-python -m alpha_os live --once --asset BTC
-python -m alpha_os validate-testnet
+```
+direction  = sign(weighted_signal_mean)
+size       = kelly_fraction × dd_scale × consensus × (μ / σ²)
+position   = direction × clip(size) × portfolio_value
 ```
 
-Rollback conditions:
-- Consecutive success days stop increasing for 24h+
-- Trade frequency drops to near zero due to over-strict gate
-- OOS CVaR95 worsens materially vs baseline
-
-If any rollback condition is met, set `[distributional].enabled = false` and rerun.
+Rollback: set `[distributional].enabled = false` to revert to legacy scalar sizing.
 
 ## Testing
 

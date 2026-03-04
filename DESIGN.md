@@ -208,6 +208,56 @@ window. Correlation is computed via chunked matrix multiplication
 This replaces the earlier equal-weight combiner which selected a fixed
 number of low-correlation alphas and weighted them equally.
 
+## Distributional Position Sizing
+
+When `[distributional].enabled = true`, position sizing uses Kelly criterion
+on alpha return distributions instead of linear signal scaling.
+
+### Signal Flow
+
+```
+alpha_i signals → weighted mean, std → consensus
+alpha_i forward returns → (μ_i, σ_i) → combine → (μ_c, σ_c)
+
+direction  = sign(signal_mean)
+consensus  = |signal_mean| / (|signal_mean| + signal_std)
+kelly_f    = kelly_fraction × dd_scale × consensus × (μ_c / σ_c²)
+position   = sign(signal_mean) × |clip(kelly_f, -max_pos, max_pos)| × portfolio_value
+```
+
+### Key Components
+
+- **AlphaDistribution** (`combiner.py`): Per-alpha (μ, σ) estimated from
+  `forward_tracker.get_returns()` — these are `signal × price_return` so μ
+  already encodes the alpha's directional edge.
+- **combine_distributions**: Weighted combination assuming independence:
+  `μ_c = Σ w_i μ_i`, `σ²_c = Σ w_i² σ_i²`.
+- **signal_consensus** (`combiner.py`): Measures agreement among alpha
+  signals. `consensus = |mean| / (|mean| + std)` — ranges from 1.0 (all
+  alphas agree) to 0.0 (equal split between long and short).
+- **kelly_position_fraction** (`distributional.py`): `f* = fraction × μ/σ²`,
+  clipped to `[-max_position, max_position]`.
+
+### Design Rationale
+
+1. **Direction from signals, size from track record**: Today's alpha signals
+   determine which way to trade; historical forward returns determine how
+   much to bet. This separates real-time conviction from statistical edge.
+2. **Consensus modulates risk**: When alphas disagree, consensus → 0 and
+   position shrinks automatically. No ad-hoc signal compression needed.
+3. **dd_scale × consensus × kelly_fraction**: Drawdowns reduce Kelly
+   fraction directly, stacking with consensus for double protection.
+4. **Distributional tail gate**: Portfolio-level CVaR/left-tail check as
+   hard block — if portfolio returns show fat left tails, position goes to 0.
+
+### Fallback
+
+- Alphas without enough forward data (`min_samples`) are excluded from
+  distribution estimation but still contribute to signal direction.
+- If no alpha has sufficient data, position is 0 (no trading).
+- Set `[distributional].enabled = false` to revert to legacy scalar path
+  (signal × dd_scale × vol_scale).
+
 ## Paper Trading
 
 Two modes:
@@ -220,8 +270,9 @@ Two modes:
   simulation. Pre-computes all signal matrices once, then iterates days
   via array indexing. Orders of magnitude faster than per-day evaluation.
 
-Risk adjustment applies three-stage drawdown scaling (5% / 10% / 15%)
-and volatility targeting (15% annualized).
+When distributional sizing is enabled, risk is managed via Kelly criterion
+with signal consensus modulation. Legacy path uses three-stage drawdown
+scaling (5% / 10% / 15%) and volatility targeting (15% annualized).
 
 ## Data Infrastructure
 
