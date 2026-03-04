@@ -3,10 +3,72 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from math import sqrt
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Distributional alpha — (μ, σ) per alpha for Kelly-based position sizing
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class AlphaDistribution:
+    """Predicted return distribution for a single alpha.
+
+    Estimated from forward returns (signal × price_return), which already
+    encode the alpha's directional edge.  No rescaling by today's signal —
+    that would double-count conviction.
+    """
+
+    alpha_id: str
+    mu: float  # mean daily return contribution
+    sigma: float  # std of daily returns
+    n_samples: int
+
+
+def estimate_alpha_distribution(
+    returns: list[float],
+    window: int = 63,
+    min_samples: int = 20,
+) -> AlphaDistribution | None:
+    """Estimate (μ, σ) from an alpha's forward returns.
+
+    forward_returns are signal_yesterday × price_return, so mu already
+    captures the alpha's directional edge.  No signal scaling needed.
+    """
+    arr = np.asarray(returns, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    if window > 0 and len(arr) > window:
+        arr = arr[-window:]
+    if len(arr) < min_samples:
+        return None
+
+    return AlphaDistribution(
+        alpha_id="",
+        mu=float(np.mean(arr)),
+        sigma=float(np.std(arr)),
+        n_samples=len(arr),
+    )
+
+
+def combine_distributions(
+    dists: list[AlphaDistribution],
+    weights: dict[str, float],
+) -> tuple[float, float]:
+    """Combine independent alpha distributions into portfolio-level (μ, σ).
+
+    Assumes approximate independence (enforced by diversity weighting
+    and correlation filter).
+    """
+    if not dists:
+        return 0.0, 0.0
+    mu = sum(weights.get(d.alpha_id, 0.0) * d.mu for d in dists)
+    var = sum(weights.get(d.alpha_id, 0.0) ** 2 * d.sigma**2 for d in dists)
+    return mu, sqrt(max(var, 1e-20))
 
 
 @dataclass

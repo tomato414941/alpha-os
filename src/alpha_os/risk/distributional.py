@@ -84,3 +84,21 @@ def kelly_scale(
         return 1.0
     raw = kelly_fraction * (stats.mean / var)
     return float(np.clip(raw, 0.0, max_leverage))
+
+
+def kelly_position_fraction(
+    mu: float,
+    sigma: float,
+    kelly_fraction: float = 0.25,
+    max_position: float = 0.25,
+) -> float:
+    """Kelly-optimal position fraction from combined alpha distribution.
+
+    Unlike kelly_scale() which scales an existing signal, this returns
+    the position fraction directly (can be negative for short).
+    """
+    var = sigma * sigma
+    if var <= 1e-12:
+        return 0.0
+    raw = kelly_fraction * (mu / var)
+    return float(np.clip(raw, -max_position, max_position))

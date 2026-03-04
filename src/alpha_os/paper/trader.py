@@ -32,9 +32,12 @@ from ..alpha.combiner import (
     WeightedCombinerConfig,
     compute_diversity_scores,
     compute_weights,
+    estimate_alpha_distribution,
+    combine_distributions,
     select_low_correlation,
     weighted_combine_scalar,
 )
+from ..risk.distributional import kelly_position_fraction
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from .tactical import TacticalTrader
@@ -454,6 +457,8 @@ class Trader:
                 self._recompute_diversity(data, parsed_records)
                 self._diversity_last_computed = time.time()
 
+        _use_kelly = self.config.distributional.enabled
+
         if alpha_signals:
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
@@ -468,43 +473,95 @@ class Trader:
             diversity_np = np.array(diversity_list)
             w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
             weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
+
+            # Direction from weighted scalar signals (both paths)
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
-            # Compress extreme signals toward center to prevent permanent all-in bias
-            compression = getattr(self.config.paper, "signal_compression", 0.0)
-            if compression > 0:
-                combined *= (1.0 - compression)
         else:
             combined = 0.0
+            weights_dict = {}
 
-        # Signal-delta exit: EMA + z-score
-        if self.config.paper.exit_enabled:
-            a = self._ema_alpha
-            if self._signal_ema is None:
-                self._signal_ema = combined
-                self._signal_ema_var = 0.0
-            else:
-                self._signal_ema = a * combined + (1 - a) * self._signal_ema
-                dev = combined - self._signal_ema
-                self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
-            std = self._signal_ema_var**0.5
-            if std > 1e-6:
-                zscore = (combined - self._signal_ema) / std
-                if zscore < -self.config.paper.exit_zscore_threshold:
-                    logger.info(
-                        "Signal-delta exit: combined=%.4f ema=%.4f z=%.2f → exit",
-                        combined, self._signal_ema, zscore,
-                    )
-                    combined = 0.0
-
-        # 5. Risk adjustment
+        # 5. Position sizing — two paths
         prev_value = self.executor.portfolio_value
         self.risk_manager.update_equity(prev_value)
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
-        vol_s = self.risk_manager.vol_scale(recent_returns)
-        adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
 
-        # 5a. Regime-aware position scaling
+        if _use_kelly and alpha_signals:
+            # --- Distributional path ---
+            # Direction from signals, sizing from Kelly on alpha distributions.
+            # Replaces: signal_compression, signal-delta exit, vol_scale,
+            #           distributional gate+scale (all subsumed by Kelly + dd).
+            vol_s = 1.0  # not used — Kelly handles vol via σ
+
+            dists = []
+            dcfg = self.config.distributional
+            for aid in alpha_ids:
+                fwd_rets = self.forward_tracker.get_returns(aid)
+                dist = estimate_alpha_distribution(
+                    fwd_rets, window=dcfg.window, min_samples=dcfg.min_samples,
+                )
+                if dist is not None:
+                    dist.alpha_id = aid
+                    dists.append(dist)
+
+            if dists:
+                mu_c, sigma_c = combine_distributions(dists, weights_dict)
+                # dd_scale modulates Kelly fraction: reduce bet in drawdowns
+                eff_kelly = dcfg.kelly_fraction * dd_s
+                kelly_f = kelly_position_fraction(
+                    mu_c, sigma_c,
+                    kelly_fraction=eff_kelly,
+                    max_position=self.max_position_pct,
+                )
+                # direction × size: signal gives sign, Kelly gives magnitude
+                adjusted = combined * abs(kelly_f)
+                logger.info(
+                    "Kelly: μ=%.6f σ=%.6f f=%.4f dd=%.2f (%d/%d alphas)",
+                    mu_c, sigma_c, kelly_f, dd_s, len(dists), len(alpha_signals),
+                )
+            else:
+                adjusted = 0.0
+                logger.info("No alpha distributions available (min_samples=%d)", dcfg.min_samples)
+
+            # Safety: distributional tail gate (hard block, no scaling)
+            gate_ok, _, dist_stats = self.risk_manager.distributional_adjustment(
+                recent_returns, dcfg,
+            )
+            if not gate_ok:
+                logger.info(
+                    "Distributional gate blocked: left_tail=%.3f cvar=%.4f",
+                    dist_stats.left_tail_prob, dist_stats.cvar,
+                )
+                adjusted = 0.0
+        else:
+            # --- Legacy scalar path ---
+            vol_s = self.risk_manager.vol_scale(recent_returns)
+            compression = getattr(self.config.paper, "signal_compression", 0.0)
+            if compression > 0:
+                combined *= (1.0 - compression)
+
+            if self.config.paper.exit_enabled:
+                a = self._ema_alpha
+                if self._signal_ema is None:
+                    self._signal_ema = combined
+                    self._signal_ema_var = 0.0
+                else:
+                    self._signal_ema = a * combined + (1 - a) * self._signal_ema
+                    dev = combined - self._signal_ema
+                    self._signal_ema_var = a * dev**2 + (1 - a) * self._signal_ema_var
+                std = self._signal_ema_var**0.5
+                if std > 1e-6:
+                    zscore = (combined - self._signal_ema) / std
+                    if zscore < -self.config.paper.exit_zscore_threshold:
+                        logger.info(
+                            "Signal-delta exit: combined=%.4f ema=%.4f z=%.2f → exit",
+                            combined, self._signal_ema, zscore,
+                        )
+                        combined = 0.0
+
+            adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
+
+        # 5a. Regime-aware position scaling (both paths)
         if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
             regime = RegimeDetector(
                 short_window=self.config.regime.short_window,
@@ -522,23 +579,7 @@ class Trader:
                     regime.trend_regime, scale,
                 )
 
-        # 5b. Optional distribution-aware gate and sizing
-        if self.config.distributional.enabled:
-            gate_ok, dist_scale, dist_stats = self.risk_manager.distributional_adjustment(
-                recent_returns,
-                self.config.distributional,
-            )
-            if gate_ok:
-                adjusted = float(np.clip(adjusted * dist_scale, -1, 1))
-            else:
-                logger.info(
-                    "Distributional gate blocked trade: left_tail=%.3f cvar=%.4f",
-                    dist_stats.left_tail_prob,
-                    dist_stats.cvar,
-                )
-                adjusted = 0.0
-
-        # 5c. Tactical modulation (Layer 2)
+        # 5c. Tactical modulation (Layer 2, both paths)
         if self.tactical is not None:
             try:
                 tac = self.tactical.run_cycle(strategic_bias=adjusted)
@@ -561,7 +602,11 @@ class Trader:
             logger.info("Using daily close: $%.2f", current_price)
 
         # 7. Compute target position and execute
-        dollar_pos = adjusted * prev_value * self.max_position_pct
+        if _use_kelly:
+            # adjusted is already a position fraction (Kelly × direction)
+            dollar_pos = adjusted * prev_value
+        else:
+            dollar_pos = adjusted * prev_value * self.max_position_pct
         target_shares_value = dollar_pos / current_price if current_price > 0 else 0.0
 
         if abs(dollar_pos) < self.min_trade_usd:

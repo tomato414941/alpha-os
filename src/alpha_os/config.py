@@ -181,7 +181,7 @@ class DistributionalConfig:
     cvar_alpha: float = 0.05
     max_left_tail_prob: float = 0.10
     max_cvar_abs: float = 0.03
-    kelly_fraction: float = 0.50
+    kelly_fraction: float = 0.25
     max_kelly_leverage: float = 1.0
 
 

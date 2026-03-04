@@ -110,6 +110,9 @@ enabled = false
 
 [distributional]
 enabled = true
+# When enabled: per-alpha distribution estimation + Kelly sizing.
+# Direction from weighted signals, magnitude from Kelly(μ,σ).
+# Subsumes: signal_compression, signal-delta exit, vol_scale.
 window = 63
 min_samples = 20
 tail_sigma = 2.0

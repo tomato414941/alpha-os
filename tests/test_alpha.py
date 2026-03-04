@@ -20,6 +20,9 @@ from alpha_os.alpha.combiner import (
     compute_weights,
     weighted_combine,
     weighted_combine_scalar,
+    AlphaDistribution,
+    estimate_alpha_distribution,
+    combine_distributions,
 )
 from alpha_os.governance.gates import adoption_gate, GateConfig
 
@@ -468,3 +471,70 @@ class TestGovernanceGates:
         )
         assert result.passed is False
         assert not result.checks["oos_tail_hit_rate"]
+
+
+# ---------------------------------------------------------------------------
+# Alpha Distribution
+# ---------------------------------------------------------------------------
+
+
+class TestAlphaDistribution:
+    def test_estimate_insufficient_samples(self):
+        returns = [0.01, -0.02, 0.03]
+        assert estimate_alpha_distribution(returns, min_samples=10) is None
+
+    def test_estimate_from_forward_returns(self):
+        rng = np.random.RandomState(42)
+        returns = (rng.normal(0.001, 0.01, 100)).tolist()
+        dist = estimate_alpha_distribution(returns, window=63, min_samples=20)
+        assert dist is not None
+        assert dist.mu > 0  # forward returns have positive mean
+        assert dist.sigma > 0
+        assert dist.n_samples <= 63
+
+    def test_estimate_windowing(self):
+        # Old returns positive, recent negative
+        old = [0.01] * 50
+        recent = [-0.01] * 30
+        dist = estimate_alpha_distribution(old + recent, window=30, min_samples=20)
+        assert dist is not None
+        assert dist.mu < 0  # window captures only recent negative period
+
+    def test_estimate_nan_handling(self):
+        returns = [0.01] * 25 + [float("nan")] * 5
+        dist = estimate_alpha_distribution(returns, min_samples=20)
+        assert dist is not None
+        assert dist.n_samples == 25
+
+    def test_combine_single(self):
+        d = AlphaDistribution("a1", mu=0.001, sigma=0.01, n_samples=63)
+        mu, sigma = combine_distributions([d], {"a1": 1.0})
+        assert np.isclose(mu, 0.001)
+        assert np.isclose(sigma, 0.01)
+
+    def test_combine_independent_variance(self):
+        d1 = AlphaDistribution("a1", mu=0.002, sigma=0.01, n_samples=63)
+        d2 = AlphaDistribution("a2", mu=0.001, sigma=0.02, n_samples=63)
+        weights = {"a1": 0.5, "a2": 0.5}
+        mu, sigma = combine_distributions([d1, d2], weights)
+        expected_mu = 0.5 * 0.002 + 0.5 * 0.001
+        expected_var = 0.5**2 * 0.01**2 + 0.5**2 * 0.02**2
+        assert np.isclose(mu, expected_mu)
+        assert np.isclose(sigma**2, expected_var, atol=1e-12)
+
+    def test_combine_empty(self):
+        mu, sigma = combine_distributions([], {})
+        assert mu == 0.0
+        assert sigma == 0.0
+
+    def test_diversification_reduces_sigma(self):
+        # N equal alphas: sigma_combined = sigma_i / sqrt(N)
+        n = 10
+        sigma_i = 0.02
+        dists = [
+            AlphaDistribution(f"a{i}", mu=0.001, sigma=sigma_i, n_samples=50)
+            for i in range(n)
+        ]
+        weights = {f"a{i}": 1.0 / n for i in range(n)}
+        mu, sigma = combine_distributions(dists, weights)
+        assert np.isclose(sigma, sigma_i / n**0.5, atol=1e-10)

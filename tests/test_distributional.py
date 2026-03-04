@@ -6,6 +6,7 @@ import numpy as np
 
 from alpha_os.risk.distributional import (
     estimate_distribution,
+    kelly_position_fraction,
     kelly_scale,
     passes_distributional_gate,
 )
@@ -74,3 +75,24 @@ def test_risk_manager_distributional_adjustment():
     assert gate_ok
     assert stats.ready
     assert 0.0 <= scale <= 1.0
+
+
+def test_kelly_position_fraction_positive_mu():
+    f = kelly_position_fraction(mu=0.001, sigma=0.01, kelly_fraction=0.25, max_position=0.25)
+    assert 0.0 < f <= 0.25
+
+
+def test_kelly_position_fraction_negative_mu():
+    f = kelly_position_fraction(mu=-0.001, sigma=0.01, kelly_fraction=0.25, max_position=0.25)
+    assert -0.25 <= f < 0.0
+
+
+def test_kelly_position_fraction_clipped():
+    # Very high mu/sigma^2 → should clip to max_position
+    f = kelly_position_fraction(mu=0.1, sigma=0.01, kelly_fraction=0.25, max_position=0.25)
+    assert f == 0.25
+
+
+def test_kelly_position_fraction_zero_sigma():
+    f = kelly_position_fraction(mu=0.001, sigma=0.0, kelly_fraction=0.25, max_position=0.25)
+    assert f == 0.0
