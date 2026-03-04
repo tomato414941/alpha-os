@@ -78,23 +78,19 @@ python -m alpha_os validate-testnet
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[distributional]` (Kelly sizing + signal consensus + CVaR gate), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages, CVaR gate), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
 
-### Distributional position sizing
-
-When `[distributional].enabled = true` (default), position sizing uses:
-
-1. **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous signals → full conviction; split signals → reduced position.
-2. **Portfolio-level Kelly**: optimal sizing from portfolio return distribution `(μ, σ)`.
-3. **CVaR/tail gate**: hard block when portfolio-level tail risk exceeds thresholds.
+### Position sizing
 
 ```
 direction  = sign(weighted_signal_mean)
-size       = kelly_scale × dd_scale × consensus
+size       = consensus × dd_scale
 position   = direction × clip(size) × max_position_pct × portfolio_value
 ```
 
-Rollback: set `[distributional].enabled = false` to revert to scalar sizing.
+- **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous → full conviction; split → reduced position.
+- **Drawdown scaling**: position shrinks as portfolio drawdown deepens (3 stages).
+- **CVaR gate**: hard block when portfolio-level tail risk exceeds thresholds.
 
 ## Testing
 

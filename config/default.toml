@@ -105,14 +105,11 @@ enabled = false
 # When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
 
 [distributional]
-# Portfolio-level Kelly sizing + signal consensus + CVaR gate.
-# kelly_scale = kelly_fraction × (μ/σ²) from portfolio returns.
-# position = sign(signal_mean) × kelly_scale × consensus × dd_scale × max_position_pct.
+# CVaR / left-tail gate: blocks positions when portfolio tail risk is elevated.
+# position = sign(signal_mean) × consensus × dd_scale × max_position_pct.
 window = 63
 min_samples = 20
 tail_sigma = 2.0
 cvar_alpha = 0.05
 max_left_tail_prob = 0.10
 max_cvar_abs = 0.03
-kelly_fraction = 0.25
-max_kelly_leverage = 0.50

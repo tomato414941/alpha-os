@@ -9,7 +9,6 @@ import numpy as np
 from .distributional import (
     DistributionStats,
     estimate_distribution,
-    kelly_scale,
     passes_distributional_gate,
 )
 
@@ -139,10 +138,11 @@ class RiskManager:
     def distributional_adjustment(
         self, recent_returns: np.ndarray, cfg: Any
     ) -> tuple[bool, float, DistributionStats]:
-        """Compute distributional gate + size scale.
+        """Compute CVaR / left-tail gate.
 
-        When stats are not ready (insufficient samples), the gate defaults to pass
-        and the scale defaults to 1.0 to preserve warm-up behavior.
+        When stats are not ready (insufficient samples), the gate defaults to
+        pass to preserve warm-up behavior.  The float return (scale) is always
+        1.0 — kept for API compatibility.
         """
         stats = estimate_distribution(
             recent_returns,
@@ -156,9 +156,4 @@ class RiskManager:
             max_left_tail_prob=cfg.max_left_tail_prob,
             max_cvar_abs=cfg.max_cvar_abs,
         )
-        scale = kelly_scale(
-            stats,
-            kelly_fraction=cfg.kelly_fraction,
-            max_leverage=cfg.max_kelly_leverage,
-        )
-        return gate_ok, scale, stats
+        return gate_ok, 1.0, stats

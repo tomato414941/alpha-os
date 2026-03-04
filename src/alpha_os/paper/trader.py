@@ -454,14 +454,15 @@ class Trader:
             combined = 0.0
             weights_dict = {}
 
-        # 5. Position sizing: consensus × Kelly × dd_scale
+        # 5. Position sizing: consensus × dd_scale, CVaR gate
         prev_value = self.executor.portfolio_value
         self.risk_manager.update_equity(prev_value)
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
         dcfg = self.config.distributional
 
-        gate_ok, kelly_s, dist_stats = self.risk_manager.distributional_adjustment(
+        # CVaR / left-tail gate (hard block)
+        gate_ok, _, dist_stats = self.risk_manager.distributional_adjustment(
             recent_returns, dcfg,
         )
 
@@ -470,17 +471,16 @@ class Trader:
 
             if not gate_ok:
                 logger.info(
-                    "Distributional gate blocked: left_tail=%.3f cvar=%.4f",
+                    "CVaR gate blocked: left_tail=%.3f cvar=%.4f",
                     dist_stats.left_tail_prob, dist_stats.cvar,
                 )
                 adjusted = 0.0
             else:
-                adjusted = float(np.sign(sig_mean)) * kelly_s * consensus * dd_s
+                adjusted = float(np.sign(sig_mean)) * consensus * dd_s
                 adjusted = float(np.clip(adjusted, -1, 1))
             logger.info(
-                "Sizing: kelly=%.4f dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
-                kelly_s if gate_ok else 0.0, dd_s, consensus,
-                sig_mean, sig_std, len(alpha_signals),
+                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
+                dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
             )
         else:
             adjusted = 0.0
@@ -561,7 +561,7 @@ class Trader:
             daily_return=daily_return,
             combined_signal=combined,
             dd_scale=dd_s,
-            vol_scale=kelly_s if gate_ok else 0.0,
+            vol_scale=1.0,
         )
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
@@ -590,7 +590,7 @@ class Trader:
             daily_pnl=daily_pnl,
             daily_return=daily_return,
             dd_scale=dd_s,
-            vol_scale=kelly_s if gate_ok else 0.0,
+            vol_scale=1.0,
             n_alphas_active=len(active),
             n_alphas_evaluated=n_evaluated,
             order_failures=order_failures,
