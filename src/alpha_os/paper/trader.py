@@ -28,9 +28,11 @@ from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
 from ..alpha.combiner import (
+    CombinerConfig,
     WeightedCombinerConfig,
     compute_diversity_scores,
     compute_weights,
+    select_low_correlation,
     weighted_combine_scalar,
 )
 from ..risk.circuit_breaker import CircuitBreaker
@@ -303,17 +305,18 @@ class Trader:
             except Exception as exc:
                 logger.warning("API sync failed — using cached data: %s", exc)
 
-        # 2. Get trading alphas (top N by oos_sharpe) + dormant for monitoring
+        # 2. Get candidate alphas (wider pool for correlation filtering) + dormant
         max_trading = self.config.paper.max_trading_alphas
-        trading_alphas = self.registry.top_trading(max_trading)
+        n_candidates = max_trading * 5
+        trading_candidates = self.registry.top_trading(n_candidates)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
-        all_alphas = trading_alphas + dormant
+        all_alphas = trading_candidates + dormant
         dormant_ids = {r.alpha_id for r in dormant}
 
         n_total_active = self.registry.count(AlphaState.ACTIVE) + self.registry.count(AlphaState.PROBATION)
         if n_total_active > max_trading:
-            logger.info("Alpha cap: trading %d/%d", len(trading_alphas), n_total_active)
-        active = trading_alphas  # for n_alphas_active in result
+            logger.info("Alpha pool: %d candidates from %d active", len(trading_candidates), n_total_active)
+        active = trading_candidates  # for n_alphas_active in result
 
         # 3. Evaluate each alpha's signal (uses daily data)
         matrix = self.store.get_matrix(self.features, end=today_date)
@@ -336,6 +339,7 @@ class Trader:
         price_return = (prices_arr[-1] - prices_arr[-2]) / prices_arr[-2]
 
         alpha_signals: dict[str, float] = {}
+        alpha_signal_arrays: dict[str, np.ndarray] = {}
         n_evaluated = 0
         n_failed = 0
         n_feature_filtered = 0
@@ -364,6 +368,7 @@ class Trader:
 
                 if record.alpha_id not in dormant_ids:
                     alpha_signals[record.alpha_id] = signal_yesterday
+                    alpha_signal_arrays[record.alpha_id] = signal_norm
                 n_evaluated += 1
 
                 # Record per-alpha forward return (daily granularity)
@@ -409,6 +414,29 @@ class Trader:
                 total_skipped,
                 len(all_alphas),
             )
+
+        # 3b. Correlation filter: select top-N decorrelated alphas
+        if len(alpha_signals) > max_trading:
+            candidate_ids = list(alpha_signals.keys())
+            lookback = min(self._wcfg.corr_lookback, len(matrix))
+            sig_matrix = np.array([
+                alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
+            ])
+            sharpes_for_sel = np.array([
+                self.monitor.check(aid).rolling_sharpe for aid in candidate_ids
+            ])
+            selected_idx = select_low_correlation(
+                sig_matrix, sharpes_for_sel,
+                CombinerConfig(max_alphas=max_trading),
+            )
+            selected_ids = {candidate_ids[i] for i in selected_idx}
+            n_before = len(alpha_signals)
+            alpha_signals = {k: v for k, v in alpha_signals.items() if k in selected_ids}
+            logger.info(
+                "Correlation filter: %d → %d alphas (max_corr=%.2f)",
+                n_before, len(alpha_signals), CombinerConfig().max_correlation,
+            )
+        active = [r for r in trading_candidates if r.alpha_id in alpha_signals]
 
         # 4. Combine signals with quality × diversity weighting
         if skip_lifecycle and self.config.validator.enabled:
