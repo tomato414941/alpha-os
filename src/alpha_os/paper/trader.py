@@ -184,6 +184,8 @@ class Trader:
         elif isinstance(self.executor, BinanceExecutor):
             self.executor._managed_cash = snapshot.cash
             self.executor._managed_positions = dict(snapshot.positions)
+            tracked_symbols = list({self.price_signal, *snapshot.positions.keys()})
+            self.executor.sync_reconciliation_baseline(tracked_symbols)
 
         equity_curve = self.portfolio_tracker.get_equity_curve()
         if equity_curve:
@@ -756,8 +758,8 @@ class Trader:
         internal_qty = self._snapshot_position_qty(snapshot.positions, asset_ticker)
         internal_cash = snapshot.cash
 
-        exchange_qty = self.executor.get_exchange_position(self.price_signal)
-        exchange_cash = self.executor.get_exchange_cash()
+        exchange_qty = self.executor.get_reconciled_position(self.price_signal)
+        exchange_cash = self.executor.get_reconciled_cash()
 
         qty_diff = abs(exchange_qty - internal_qty)
         cash_diff = abs(exchange_cash - internal_cash)

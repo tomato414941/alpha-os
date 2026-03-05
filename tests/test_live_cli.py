@@ -33,6 +33,8 @@ def test_executor_abc_has_defaults():
     assert ex.all_fills == []
     assert ex.get_exchange_position("BTC") == 0.0
     assert ex.get_exchange_cash() == 1000.0
+    assert ex.get_reconciled_position("BTC") == 0.0
+    assert ex.get_reconciled_cash() == 1000.0
 
 
 def test_binance_executor_portfolio_value():
@@ -195,8 +197,8 @@ def test_reconcile_match():
     trader.portfolio_tracker.get_last_snapshot.return_value = snapshot
 
     trader.executor = MagicMock()
-    trader.executor.get_exchange_position.return_value = 0.1
-    trader.executor.get_exchange_cash.return_value = 5000.0
+    trader.executor.get_reconciled_position.return_value = 0.1
+    trader.executor.get_reconciled_cash.return_value = 5000.0
 
     result = trader.reconcile()
     assert result["match"] is True
@@ -228,8 +230,8 @@ def test_reconcile_mismatch():
     trader.portfolio_tracker.get_last_snapshot.return_value = snapshot
 
     trader.executor = MagicMock()
-    trader.executor.get_exchange_position.return_value = 0.15  # Mismatch
-    trader.executor.get_exchange_cash.return_value = 4800.0  # Mismatch
+    trader.executor.get_reconciled_position.return_value = 0.15  # Mismatch
+    trader.executor.get_reconciled_cash.return_value = 4800.0  # Mismatch
 
     result = trader.reconcile()
     assert result["match"] is False

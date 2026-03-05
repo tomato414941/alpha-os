@@ -50,6 +50,18 @@ class Executor(ABC):
         """Exchange-level cash. Defaults to managed/in-memory cash."""
         return self.get_cash()
 
+    def sync_reconciliation_baseline(self, symbols: list[str]) -> None:
+        """Refresh any executor-specific reconciliation baseline."""
+        return None
+
+    def get_reconciled_position(self, symbol: str) -> float:
+        """Position value to compare against internal managed state."""
+        return self.get_exchange_position(symbol)
+
+    def get_reconciled_cash(self) -> float:
+        """Cash value to compare against internal managed state."""
+        return self.get_exchange_cash()
+
     def set_price(self, symbol: str, price: float) -> None:
         """Set current price for a symbol. No-op for live executors."""
         pass

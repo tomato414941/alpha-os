@@ -102,6 +102,8 @@ class BinanceExecutor(Executor):
         self._managed_cash: float = initial_capital
         self._managed_positions: dict[str, float] = {}
         self._initial_capital = initial_capital
+        self._reconciliation_cash_offset: float = 0.0
+        self._reconciliation_position_offsets: dict[str, float] = {}
 
     def _get_market_info(self, market: str) -> dict[str, Any] | None:
         market_fn = getattr(self._exchange, "market", None)
@@ -379,6 +381,25 @@ class BinanceExecutor(Executor):
 
     def get_exchange_cash(self) -> float:
         return self._exchange_cash()
+
+    def sync_reconciliation_baseline(self, symbols: list[str]) -> None:
+        self._reconciliation_cash_offset = self._exchange_cash() - self._managed_cash
+        offsets: dict[str, float] = {}
+        for symbol in symbols:
+            offsets[symbol] = (
+                self._exchange_position(symbol)
+                - self._managed_positions.get(symbol, 0.0)
+            )
+        self._reconciliation_position_offsets = offsets
+
+    def get_reconciled_position(self, symbol: str) -> float:
+        return (
+            self._exchange_position(symbol)
+            - self._reconciliation_position_offsets.get(symbol, 0.0)
+        )
+
+    def get_reconciled_cash(self) -> float:
+        return self._exchange_cash() - self._reconciliation_cash_offset
 
     @property
     def portfolio_value(self) -> float:

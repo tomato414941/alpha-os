@@ -88,6 +88,8 @@ def _make_executor(exchange=None, initial_capital=10000.0):
     executor._managed_cash = initial_capital
     executor._managed_positions = {}
     executor._initial_capital = initial_capital
+    executor._reconciliation_cash_offset = 0.0
+    executor._reconciliation_position_offsets = {}
     return executor
 
 
@@ -147,6 +149,18 @@ def test_exchange_position():
     """_exchange_position queries actual exchange balance."""
     ex = _make_executor()
     assert ex._exchange_position("BTC") == 1.5
+
+
+def test_reconciliation_baseline_shared_account():
+    """Reconciliation subtracts non-managed baseline from shared balances."""
+    ex = _make_executor()
+    ex._managed_cash = 5000.0
+    ex._managed_positions["btc_ohlcv"] = 0.1
+
+    ex.sync_reconciliation_baseline(["btc_ohlcv"])
+
+    assert ex.get_reconciled_cash() == 5000.0
+    assert ex.get_reconciled_position("btc_ohlcv") == 0.1
 
 
 def test_exchange_cash_error():
