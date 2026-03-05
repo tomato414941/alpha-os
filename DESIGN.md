@@ -256,6 +256,15 @@ alpha lifetime is ~1.6 days (ACTIVE), ~3.4 days (PROBATION). This means
 signal_consensus measures agreement among a different set of alphas each
 cycle, reducing its reliability as a sizing signal.
 
+**Root cause**: The problem is not generation rate (144k/day) but
+ease of displacement. New alphas are GP-fitted to "data up to today"
+and naturally score higher on backtest metrics than incumbents fitted
+days ago. The ranking is based solely on backtest metrics, so freshly
+overfit alphas always displace older ones — overfitting recency, not
+genuine improvement. Potential Path A mitigations: forward performance
+in ranking, tenure bonus, incumbent advantage (hysteresis), adoption
+rate caps. Path B treats displacement as a given.
+
 Two independent approaches are being considered:
 
 - **Path A (stabilize)**: Reduce generation rate, raise adoption bar,
@@ -263,11 +272,295 @@ Two independent approaches are being considered:
   consensus becomes meaningful. This improves the current alpha-os.
 - **Path B (turnover-native)**: Build a separate system designed for
   high-turnover alpha statistical voting. Instead of relying on a stable
-  top 30, treat all alphas as ephemeral voters. This would be a new
-  project, not a layer on top of alpha-os.
+  top 30, treat all alphas as ephemeral voters.
 
 These are independent: Path A improves alpha-os as-is, Path B is a
 separate system for a different paradigm. They are not layered.
+
+### Path B: Design Discussion (2026-03-04)
+
+#### Direction vs Distribution
+
+The current system (consensus) and the initial Path B design (voting)
+are both **directional prediction** — "do more alphas say long or
+short?" This is the weakest form of signal combination:
+
+- With micro-returns (±0.02%), direction easily flips on noise
+- Win rate alone doesn't determine profitability — a 80% win rate
+  with asymmetric losses loses money; a 20% win rate with asymmetric
+  gains makes money
+- The question should not be "up or down?" but "what does the return
+  distribution look like?"
+
+The right approach is **distributional** — design the portfolio's
+return distribution (mean, variance, skewness, tail behavior) rather
+than predict direction. However, distributional methods (Kelly, CVaR)
+were removed because they require stable historical data, which
+short-lived alphas cannot provide (see "Design Rationale" above).
+
+#### Why Voting Fails: The 4 Conditions
+
+Prediction markets (Polymarket, etc.) work because they satisfy the
+four conditions for "wisdom of crowds" (Surowiecki / Condorcet):
+
+1. **Diversity** — voters hold different viewpoints
+2. **Independence** — voters are not influenced by each other
+3. **Decentralization** — each voter has access to unique information
+4. **Aggregation** — a mechanism to properly combine individual votes
+
+Alpha-os currently violates all four:
+
+| Condition | Prediction Market | Alpha-OS |
+|---|---|---|
+| Diversity | Each person has unique analysis | Same GP, same feature pool |
+| Independence | Separate brains, no coordination | Crossover creates parent-child lineages |
+| Decentralization | Each person has private info | All alphas read the same 753 signals |
+| Aggregation | Price discovery via real money | Naive weighted average |
+
+With 25,000+ alphas generated from the same GP and the same data,
+voting is essentially **one opinion echoed 25,000 times**. Adding
+more voters adds noise, not information.
+
+#### Solving the 4 Conditions
+
+| Condition | Difficulty | Approach |
+|---|---|---|
+| Aggregation (4) | Easy | Code design — replace naive average with cluster-representative voting |
+| Independence (2) | Medium | Cluster similar alphas → 1 vote per cluster, reducing 25,000 to ~50 independent voices |
+| Diversity (1) | Medium-Hard | Partition GP into sub-populations with different operator sets or evolution pressures |
+| Decentralization (3) | Hard | Assign each alpha a **feature subset** (e.g. macro-only, technical-only, sentiment-only) so they see different slices of reality. 753 signals across 6 domains exist; the issue is all alphas can access all of them |
+
+Conditions 2 and 4 are solvable with current architecture. Condition 1
+requires GP generation changes. Condition 3 is the hardest — it
+requires restricting each alpha's feature access, which changes the
+fundamental GP design.
+
+#### Design Decisions (2026-03-05)
+
+The following decisions resolve conditions 1 and 3 simultaneously,
+and simplify GP by removing crossover.
+
+**Decision 1: Random feature subsets (conditions 1 + 3)**
+
+Each alpha is born with a random subset of K features from the
+available 753. This is analogous to Random Forest feature bagging:
+
+- Each alpha sees a different slice of reality → decentralization (3)
+- Different inputs produce different strategies → diversity (1)
+- No manual domain partitioning needed — randomness handles it
+- Proven approach (Random Forest, 2001; Breiman)
+
+```
+Alpha generation:
+  1. Sample K features uniformly from 753 available
+  2. Generate random expression tree using only those K features
+  3. Mutation operates within the same feature subset
+  4. Feature subset is fixed for the alpha's lifetime
+```
+
+Open parameters:
+- K: how many features per alpha? √753 ≈ 27 as starting point
+- Whether to include a mandatory feature (e.g. btc_ohlcv) — TBD
+
+**Decision 2: Remove crossover (simplification)**
+
+Crossover and feature subsets are incompatible:
+
+```
+Parent A subset: {btc_ohlcv, vix, cpi}
+Parent B subset: {gold, sp500, pmi}
+Child expression references features from both parents
+→ Child's subset must be the union → subsets grow over generations
+→ After N generations, all alphas use all features → diversity lost
+```
+
+Alternatives (inheriting one parent's subset, re-sampling for children)
+all add complexity. The simplest solution: **remove crossover entirely**.
+
+- Mutation-only GP is well-established (Cartesian GP, etc.)
+- Crossover was likely contributing little value in current alpha-os:
+  with 25,000 similar alphas, crossover recombines near-identical
+  subtrees — it generates variety in form but not in substance
+- Removing crossover also eliminates bloat (tree size inflation)
+
+Evolution becomes: **random generation → mutation → selection**.
+
+**Decision 3: Deprecate recency weighting**
+
+The initial voting design weighted newer alphas higher (recency_weight).
+This is flawed:
+
+- "New = good" has no theoretical basis
+- Newest alphas have the least accuracy data — the highest-weighted
+  voters are the least trustworthy
+- GP generates for past-data fit, not market adaptation — newness
+  does not correlate with current-market relevance
+
+Recency weighting is removed from the voting design. Voter weight
+will be determined by other factors (accuracy, cluster membership)
+once conditions 2 and 4 are resolved.
+
+#### Remaining Work
+
+| Condition | Status | Next Step |
+|---|---|---|
+| 1. Diversity | **Decided**: random feature subsets | Implement feature subset in GP |
+| 2. Independence | **Deferred**: not needed initially | Feature subsets provide implicit decorrelation |
+| 3. Decentralization | **Decided**: random feature subsets | Same implementation as condition 1 |
+| 4. Aggregation | **Decided**: MAP-Elites distributional sizing | Resolve open design questions, then implement |
+
+Implementation order: **1+3 (feature subsets in GP) → behavior
+descriptor redesign → signal normalization → sizing formula →
+integration**.
+
+Conditions 2 and 4 require condition 1+3 to be in place first — without
+diverse alphas, clustering and aggregation operate on redundant data.
+
+#### Ensemble Distributional Forecasting
+
+Path B's sizing problem: how to determine position size, not just
+direction? Traditional approaches (Kelly criterion, CVaR) require
+stable historical return distributions — impossible when alphas live
+1.6 days and past returns reflect dead alphas (see Position Sizing
+section: "No Kelly criterion", "No CVaR gate").
+
+**Key insight**: instead of individual alphas estimating return
+distributions (impossible with short lifespans and insufficient data),
+use the **distribution of all alpha signals** as the predictive
+distribution. This is analogous to Random Forest uncertainty
+quantification — individual trees are weak predictors, but the
+ensemble's prediction spread captures uncertainty.
+
+```
+25,000 alpha signals → signal distribution
+                       ├── μ (mean)      → directional bias
+                       ├── σ² (variance) → disagreement = uncertainty
+                       ├── skewness      → tail risk asymmetry
+                       └── tail density  → extreme event probability
+```
+
+Why this works:
+- **Real-time**: uses current signal values, no history dependency
+- **Self-calibrating**: more diverse alphas (condition 1+3) →
+  broader distribution → better uncertainty quantification
+- **No dead-alpha problem**: only living alphas contribute
+- **Scale-independent**: works whether there are 100 or 100,000 alphas
+
+Alpha signals are not returns, but the **shape** of the signal
+distribution provides distributional information for sizing:
+
+| Signal distribution shape | Interpretation | Sizing response |
+|---|---|---|
+| Tight, one-sided (low σ, high μ) | Strong consensus | Larger position |
+| Wide, centered (high σ, low μ) | Maximum disagreement | Minimal or no position |
+| Skewed left | Downside tail risk | Reduce or hedge |
+| Bimodal | Two distinct regimes | Reduce (ambiguity) |
+
+This approach is known in the literature as **ensemble distributional
+forecasting** or **uncertainty quantification via ensemble**. The
+ensemble's prediction distribution serves as a proxy for the true
+predictive distribution of returns.
+
+Note: the exact sizing formula (how μ, σ, skewness map to position
+size) is condition 4 (aggregation) and awaits design.
+
+#### Architecture: MAP-Elites + Distributional Sizing
+
+Path B uses the MAP-Elites archive as the sole source of trading
+signals. Instead of adopting a top-30 into a registry with lifecycle
+management, the entire archive population is evaluated each cycle
+and the signal distribution determines position sizing.
+
+**Signal flow (two-level aggregation)**:
+
+```
+GP evolution (continuous, mutation only, no crossover)
+  ├── each individual born with K random features from 753
+  ├── sanity filter: non-constant, NaN < 10%, finite values
+  └── candidates → MAP-Elites archive (cell = behavior descriptor)
+
+Trade cycle:
+  Level 1 — per cell (sign normalization):
+    archive elites → evaluate on current data → sign(signal) → {-1, +1}
+    per cell: long_pct = count(+1) / count(votes in cell)
+
+  Level 2 — across cells (distributional sizing):
+    cell_long_pcts = [cell_A.long_pct, cell_B.long_pct, ...]
+    μ_cells     = mean(cell_long_pcts)
+    σ_cells     = std(cell_long_pcts)
+    skew_cells  = skewness(cell_long_pcts)
+
+  Sizing:
+    direction  = sign(μ_cells - 0.5)
+    confidence = |μ_cells - 0.5| × 2 / (|μ_cells - 0.5| × 2 + σ_cells)
+    skew_adj   = clip(1 - |skew_cells| × k, 0.5, 1.0)
+    position   = direction × confidence × skew_adj × dd_scale × max_pos × portfolio
+```
+
+Sign normalization solves the scale problem (DSL expressions produce
+wildly different scales). Two-level aggregation preserves distributional
+information: Level 1 reduces each cell to a vote, Level 2 examines
+how votes are distributed across behavioral niches. When all niches
+agree (low σ), confidence is high. When niches disagree (high σ) or
+the disagreement is asymmetric (high |skewness|), position shrinks.
+
+This is structurally identical to Random Forest classification:
+each tree (alpha) votes, but the ensemble's confidence comes from
+the distribution of votes across diverse trees (feature subsets).
+
+**Why MAP-Elites, not particle filter**: Particle filters suffer from
+particle degeneracy — after a few steps of resampling, nearly all
+particles descend from a single ancestor and diversity collapses.
+MAP-Elites avoids this by design: each cell holds exactly one elite,
+and individuals in different cells never compete. Diversity is a
+structural guarantee, not a tunable parameter.
+
+**Correlation between alphas**: Feature subsets ensure that alphas
+in different cells use different information sources. If all alphas
+agree despite using different features, this is genuine consensus
+(Wisdom of Crowds), not echo chamber. No explicit correlation
+management is needed beyond feature subsets.
+
+**Comparison with current system (Path A)**:
+
+| | Path A (current) | Path B (MAP-Elites) |
+|---|---|---|
+| Evolution | crossover + mutation | mutation only |
+| Features | all 753 available | K random per individual |
+| Management | registry + lifecycle | MAP-Elites archive only |
+| Signal source | top-30 from registry | all archive elites |
+| Sizing | consensus = \|μ\|/(|μ|+σ) | two-level: sign → per-cell vote → cross-cell distribution |
+| Correlation | quality × diversity weights | feature subsets (implicit) |
+| Alpha turnover | problem (1.6 days) | irrelevant (archive is the model) |
+
+**Root cause analysis**: Alpha turnover is caused by ease of
+displacement, not generation rate. New alphas are GP-fitted to the
+latest data and naturally outscore incumbents on backtest metrics.
+Path A mitigates this (tenure bonus, hysteresis). Path B eliminates
+the concept entirely — there is no "adoption" or "retirement", only
+archive cells being updated when a better individual arrives.
+
+#### Open Design Questions
+
+| # | Question | Notes |
+|---|---|---|
+| 1 | **Fitness function** | **Decided**: sanity filter only (non-constant, NaN < 10%, finite values). No performance-based fitness. With single-asset BTC, forward performance cannot distinguish skill from luck (one binary outcome per cycle for 10,000 alphas). Individual alpha quality is irrelevant — ensemble power comes from diversity, not individual fitness (Random Forest analogy: individual tree accuracy is not optimized). |
+| 2 | **Behavior descriptor redesign** | **Decided**: 3 axes — feature_bucket (hash(feature_set) % 100), holding_half_life (10 bins), complexity (10 bins). Total = 100 × 10 × 10 = 10,000 cells. Feature hash directly reflects feature subset diversity without requiring domain labels. Same feature set → same cell → within-cell competition. Different features → different cell → coexistence guaranteed. Replaces corr_to_live_book (Path A, needs registry) and turnover (redundant with half_life). |
+| 3 | **Signal normalization** | **Decided**: sign(signal) → {-1, +1}. Completely eliminates scale problem. Magnitude information is unnecessary — ensemble power comes from diversity of opinions, not strength of individual conviction. Two-level aggregation (per-cell vote → cross-cell distribution) preserves distributional information despite binary individual signals. |
+| 4 | **K value for feature subsets** | Starting point √753 ≈ 27. Too small → alphas are too constrained. Too large → alphas overlap too much, losing diversity. Needs experimental tuning. |
+| 5 | **Archive dimensions** | **Decided**: 100 (feature_bucket) × 10 (half_life) × 10 (complexity) = 10,000 cells. Resolved together with behavior descriptor redesign (#2). |
+| 6 | **skew_adj parameter k** | Initial value 0.5 (full penalty at \|skewness\| ≥ 1.0). Whether to penalize both directions of skew or only counter-directional. Now applies to cross-cell long_pct distribution skewness, not raw signal skewness. |
+
+#### Status
+
+Path B has a code skeleton (`src/alpha_os/voting/`) from an earlier
+voting-based design. The architecture has evolved to MAP-Elites +
+distributional sizing as described above. The voting modules will be
+replaced or repurposed during implementation.
+
+Existing MAP-Elites code (`src/alpha_os/evolution/archive.py`,
+`behavior.py`) provides the foundation. GP code (`gp.py`) needs
+modification to support feature subsets and remove crossover.
 
 ## Paper Trading
 
