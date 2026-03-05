@@ -439,7 +439,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
             if sig.ndim == 0:
                 sig = np.full(n_days, float(sig))
-            behavior = compute_behavior(sig, expr, live_signals)
+            behavior = compute_behavior(sig, expr)
             if archive.add(expr, fitness, behavior):
                 added += 1
                 live_signals.append(sig)

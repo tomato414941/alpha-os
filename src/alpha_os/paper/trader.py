@@ -38,6 +38,7 @@ from ..alpha.combiner import (
 )
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
+from ..voting.combiner import vote_combine
 from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -319,6 +320,7 @@ class Trader:
 
         alpha_signals: dict[str, float] = {}
         alpha_signal_arrays: dict[str, np.ndarray] = {}
+        alpha_exprs: dict[str, object] = {}  # aid → parsed Expr (for map_elites)
         n_evaluated = 0
         n_failed = 0
         n_feature_filtered = 0
@@ -348,6 +350,7 @@ class Trader:
                 if record.alpha_id not in dormant_ids:
                     alpha_signals[record.alpha_id] = signal_yesterday
                     alpha_signal_arrays[record.alpha_id] = signal_norm
+                    alpha_exprs[record.alpha_id] = expr
                 n_evaluated += 1
 
                 # Record per-alpha forward return (daily granularity)
@@ -396,7 +399,9 @@ class Trader:
             )
 
         # 3b. Correlation filter: select top-N decorrelated alphas
-        if len(alpha_signals) > max_trading:
+        # (skipped in map_elites mode — diversity handled by cell structure)
+        use_map_elites = self.config.paper.combine_mode == "map_elites"
+        if len(alpha_signals) > max_trading and not use_map_elites:
             candidate_ids = list(alpha_signals.keys())
             lookback = min(self._wcfg.corr_lookback, len(matrix))
             sig_matrix = np.array([
@@ -419,8 +424,10 @@ class Trader:
             )
         active = [r for r in trading_candidates if r.alpha_id in alpha_signals]
 
-        # 4. Combine signals with quality × diversity weighting
-        if skip_lifecycle and self.config.validator.enabled:
+        # 4. Combine signals with quality × diversity weighting (Path A only)
+        if use_map_elites:
+            pass  # diversity not needed — cell structure handles it
+        elif skip_lifecycle and self.config.validator.enabled:
             # Pipeline v2: read diversity from DB cache
             self._load_diversity_from_db()
         else:
@@ -433,7 +440,57 @@ class Trader:
                 self._recompute_diversity(data, parsed_records)
                 self._diversity_last_computed = time.time()
 
-        if alpha_signals:
+        # 5. Position sizing
+        prev_value = self.executor.portfolio_value
+        self.risk_manager.update_equity(prev_value)
+        recent_returns = np.array(self.portfolio_tracker.get_returns())
+        dd_s = self.risk_manager.dd_scale
+
+        combine_mode = self.config.paper.combine_mode
+
+        if alpha_signals and combine_mode == "map_elites":
+            # Path B (MAP-Elites): two-level ensemble aggregation
+            from ..evolution.archive import AlphaArchive
+            from ..evolution.behavior import compute_behavior
+            from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
+
+            archive = AlphaArchive()  # default config, used only for cell assignment
+            cell_signals: dict[tuple[int, ...], list[float]] = {}
+            for aid, sig_val in alpha_signals.items():
+                sig_arr = alpha_signal_arrays[aid]
+                behavior = compute_behavior(sig_arr, alpha_exprs[aid])
+                cell = archive._to_cell(behavior)
+                cell_signals.setdefault(cell, []).append(sig_val)
+
+            cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
+            ens = ensemble_sizing(cell_long_pcts)
+            adjusted = ens.direction * ens.confidence * ens.skew_adj * dd_s
+            adjusted = float(np.clip(adjusted, -1, 1))
+            combined = ens.direction * ens.confidence * ens.skew_adj
+            weights_dict = {}
+            logger.info(
+                "MAP-Elites: dir=%.0f conf=%.3f skew=%.3f cells=%d/%d μ=%.3f σ=%.3f dd=%.2f",
+                ens.direction, ens.confidence, ens.skew_adj,
+                ens.n_cells, len(cell_signals), ens.mu_cells, ens.sigma_cells, dd_s,
+            )
+        elif alpha_signals and combine_mode == "voting":
+            # Path B (voting): recency × accuracy weights
+            registry_records = {r.alpha_id: r for r in all_alphas}
+            vote_result = vote_combine(
+                alpha_signals, self.forward_tracker, registry_records,
+            )
+            adjusted = vote_result.direction * vote_result.confidence * dd_s
+            adjusted = float(np.clip(adjusted, -1, 1))
+            combined = vote_result.direction * vote_result.confidence
+            weights_dict = {}
+            logger.info(
+                "Voting: dir=%.0f conf=%.3f voters=%d long=%.0f%% short=%.0f%% dd=%.2f",
+                vote_result.direction, vote_result.confidence,
+                vote_result.n_voters, vote_result.long_pct * 100,
+                vote_result.short_pct * 100, dd_s,
+            )
+        elif alpha_signals:
+            # Path A: quality × diversity → consensus
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
             diversity_list = []
@@ -448,19 +505,7 @@ class Trader:
             w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
             weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
 
-            # Direction from weighted scalar signals (both paths)
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
-        else:
-            combined = 0.0
-            weights_dict = {}
-
-        # 5. Position sizing: consensus × dd_scale
-        prev_value = self.executor.portfolio_value
-        self.risk_manager.update_equity(prev_value)
-        recent_returns = np.array(self.portfolio_tracker.get_returns())
-        dd_s = self.risk_manager.dd_scale
-
-        if alpha_signals:
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
             adjusted = float(np.sign(sig_mean)) * consensus * dd_s
             adjusted = float(np.clip(adjusted, -1, 1))
@@ -469,6 +514,8 @@ class Trader:
                 dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
             )
         else:
+            combined = 0.0
+            weights_dict = {}
             adjusted = 0.0
 
         # 5a. Regime-aware position scaling (both paths)

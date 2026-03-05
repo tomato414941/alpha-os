@@ -1,7 +1,12 @@
 """Voter scoring — weight alphas by recency and recent accuracy."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from ..forward.tracker import ForwardRecord
 
 
 def recency_weight(
@@ -55,3 +60,28 @@ def accuracy_weight(
     out = outcomes[-L:]
     correct = (np.sign(sig) == np.sign(out)).astype(np.float64)
     return correct.mean(axis=1)
+
+
+def accuracy_from_forward(
+    records: list[ForwardRecord],
+    lookback: int = 5,
+) -> float:
+    """Directional accuracy from forward tracker records.
+
+    Parameters
+    ----------
+    records : per-alpha ForwardRecord list (ordered by date)
+    lookback : number of recent records to evaluate
+
+    Returns
+    -------
+    Fraction of correct direction calls in [0, 1]. Returns 0.5 if no data.
+    """
+    recent = records[-lookback:] if records else []
+    if not recent:
+        return 0.5
+    correct = sum(
+        1 for r in recent
+        if np.sign(r.signal_value) == np.sign(r.daily_return)
+    )
+    return correct / len(recent)

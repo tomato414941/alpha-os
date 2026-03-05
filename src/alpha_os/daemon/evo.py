@@ -120,7 +120,7 @@ class EvoDaemon:
                 sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
-                behavior = compute_behavior(sig, expr, live_signals)
+                behavior = compute_behavior(sig, expr)
                 if self.archive.add(expr, fitness, behavior):
                     live_signals.append(sig)
             except Exception:

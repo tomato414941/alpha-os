@@ -10,11 +10,20 @@ Design goals:
 - Use all alphas (not just top-30) as voters
 - Weight by recent accuracy, not historical quality
 - Produce a single directional signal with confidence
-
-Status: skeleton — interfaces defined, not yet integrated.
 """
 
-from .aggregator import vote_aggregate, VoteResult
-from .scorer import recency_weight
+from .aggregator import VoteResult, vote_aggregate
+from .combiner import vote_combine
+from .ensemble import EnsembleResult, compute_cell_long_pcts, ensemble_sizing
+from .scorer import accuracy_from_forward, recency_weight
 
-__all__ = ["vote_aggregate", "VoteResult", "recency_weight"]
+__all__ = [
+    "EnsembleResult",
+    "VoteResult",
+    "accuracy_from_forward",
+    "compute_cell_long_pcts",
+    "ensemble_sizing",
+    "recency_weight",
+    "vote_aggregate",
+    "vote_combine",
+]
