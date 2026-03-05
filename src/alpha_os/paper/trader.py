@@ -63,6 +63,25 @@ class PaperCycleResult:
     order_failures: int = 0
 
 
+@dataclass
+class PredictionOutput:
+    combined_signal: float
+    adjusted_signal: float
+    dd_scale: float
+
+
+@dataclass
+class AllocationPlan:
+    current_price: float
+    target_positions: dict[str, float]
+
+
+@dataclass
+class ExecutionOutcome:
+    fills: list[Fill]
+    order_failures: int
+
+
 class Trader:
     """Trading orchestrator. Executor determines paper vs live.
 
@@ -218,6 +237,175 @@ class Trader:
             self._diversity_cache = {r[0]: r[1] for r in rows}
             self._diversity_computed = True
             logger.info("Loaded %d diversity scores from cache", len(rows))
+
+    def _predict_portfolio_signal(
+        self,
+        alpha_signals: dict[str, float],
+        alpha_signal_arrays: dict[str, np.ndarray],
+        alpha_exprs: dict[str, object],
+        all_alphas: list,
+        data: dict[str, np.ndarray],
+        parsed_records: list[tuple],
+        skip_lifecycle: bool,
+    ) -> PredictionOutput:
+        """Prediction layer: combine alpha signals into an adjusted portfolio signal."""
+        use_map_elites = self.config.paper.combine_mode == "map_elites"
+        if use_map_elites:
+            pass  # diversity not needed — cell structure handles it
+        elif skip_lifecycle and self.config.validator.enabled:
+            self._load_diversity_from_db()
+        else:
+            diversity_stale = (
+                not self._diversity_computed
+                or (time.time() - self._diversity_last_computed)
+                > self._wcfg.diversity_recompute_days * 86400
+            )
+            if diversity_stale:
+                self._recompute_diversity(data, parsed_records)
+                self._diversity_last_computed = time.time()
+
+        prev_value = self.executor.portfolio_value
+        self.risk_manager.update_equity(prev_value)
+        recent_returns = np.array(self.portfolio_tracker.get_returns())
+        dd_s = self.risk_manager.dd_scale
+
+        combine_mode = self.config.paper.combine_mode
+
+        if alpha_signals and combine_mode == "map_elites":
+            from ..evolution.archive import AlphaArchive
+            from ..evolution.behavior import compute_behavior
+            from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
+
+            archive = AlphaArchive()
+            cell_signals: dict[tuple[int, ...], list[float]] = {}
+            for aid, sig_val in alpha_signals.items():
+                sig_arr = alpha_signal_arrays[aid]
+                behavior = compute_behavior(sig_arr, alpha_exprs[aid])
+                cell = archive._to_cell(behavior)
+                cell_signals.setdefault(cell, []).append(sig_val)
+
+            cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
+            ens = ensemble_sizing(cell_long_pcts)
+            adjusted = ens.direction * ens.confidence * ens.skew_adj * dd_s
+            adjusted = float(np.clip(adjusted, -1, 1))
+            combined = ens.direction * ens.confidence * ens.skew_adj
+            logger.info(
+                "MAP-Elites: dir=%.0f conf=%.3f skew=%.3f cells=%d/%d μ=%.3f σ=%.3f dd=%.2f",
+                ens.direction, ens.confidence, ens.skew_adj,
+                ens.n_cells, len(cell_signals), ens.mu_cells, ens.sigma_cells, dd_s,
+            )
+        elif alpha_signals and combine_mode == "voting":
+            registry_records = {r.alpha_id: r for r in all_alphas}
+            vote_result = vote_combine(
+                alpha_signals, self.forward_tracker, registry_records,
+            )
+            adjusted = vote_result.direction * vote_result.confidence * dd_s
+            adjusted = float(np.clip(adjusted, -1, 1))
+            combined = vote_result.direction * vote_result.confidence
+            logger.info(
+                "Voting: dir=%.0f conf=%.3f voters=%d long=%.0f%% short=%.0f%% dd=%.2f",
+                vote_result.direction, vote_result.confidence,
+                vote_result.n_voters, vote_result.long_pct * 100,
+                vote_result.short_pct * 100, dd_s,
+            )
+        elif alpha_signals:
+            alpha_ids = list(alpha_signals.keys())
+            quality_list = []
+            diversity_list = []
+            _metric = self.config.fitness_metric
+            for aid in alpha_ids:
+                status = self.monitor.check(aid)
+                quality_list.append(max(status.rolling_fitness(_metric), 0.0))
+                diversity_list.append(self._diversity_cache.get(aid, 1.0))
+
+            quality_np = np.array(quality_list)
+            diversity_np = np.array(diversity_list)
+            w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
+            weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
+
+            combined = weighted_combine_scalar(alpha_signals, weights_dict)
+            sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
+            adjusted = float(np.sign(sig_mean)) * consensus * dd_s
+            adjusted = float(np.clip(adjusted, -1, 1))
+            logger.info(
+                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
+                dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
+            )
+        else:
+            combined = 0.0
+            adjusted = 0.0
+
+        if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
+            regime = RegimeDetector(
+                short_window=self.config.regime.short_window,
+                long_window=self.config.regime.long_window,
+            ).detect(recent_returns)
+            if regime.drift_score > self.config.regime.drift_threshold:
+                scale = max(
+                    self.config.regime.drift_position_scale_min,
+                    1.0 - regime.drift_score,
+                )
+                adjusted *= scale
+                logger.info(
+                    "Regime drift detected: score=%.3f vol=%s trend=%s, scale=%.2f",
+                    regime.drift_score, regime.current_vol_regime,
+                    regime.trend_regime, scale,
+                )
+
+        if self.tactical is not None:
+            try:
+                tac = self.tactical.run_cycle(strategic_bias=adjusted)
+                adjusted = tac.combined_signal
+                logger.info(
+                    "Tactical: score=%.3f, combined=%.3f (was %.3f)",
+                    tac.tactical_score, tac.combined_signal, adjusted,
+                )
+            except Exception:
+                logger.warning("Tactical cycle failed — using strategic signal only")
+
+        return PredictionOutput(
+            combined_signal=float(combined),
+            adjusted_signal=float(adjusted),
+            dd_scale=float(dd_s),
+        )
+
+    def _build_allocation_plan(
+        self,
+        adjusted_signal: float,
+        prev_value: float,
+        today_date: str,
+    ) -> AllocationPlan:
+        """Allocation layer: convert adjusted signal into target portfolio."""
+        live_price = self.executor.fetch_ticker_price(self.price_signal)
+        if live_price is not None and live_price > 0:
+            current_price = float(live_price)
+            logger.info("Using live price: $%.2f", current_price)
+        else:
+            matrix = self.store.get_matrix([self.price_signal], end=today_date)
+            current_price = float(matrix[self.price_signal].iloc[-1])
+            logger.info("Using daily close: $%.2f", current_price)
+
+        dollar_pos = adjusted_signal * prev_value * self.max_position_pct
+        target_shares = dollar_pos / current_price if current_price > 0 else 0.0
+        if abs(dollar_pos) < self.min_trade_usd:
+            target_shares = 0.0
+
+        target = {self.price_signal: target_shares}
+        return AllocationPlan(current_price=current_price, target_positions=target)
+
+    def _execute_allocation(self, plan: AllocationPlan) -> ExecutionOutcome:
+        """Execution layer: rebalance to target and report fill failures."""
+        self.executor.set_price(self.price_signal, plan.current_price)
+        pre_positions = {sym: self.executor.get_position(sym) for sym in plan.target_positions}
+        fills = self.executor.rebalance(plan.target_positions)
+
+        filled_symbols = {f.symbol for f in fills}
+        order_failures = sum(
+            1 for sym, tgt in plan.target_positions.items()
+            if abs(tgt - pre_positions.get(sym, 0.0)) > 1e-6
+            and sym not in filled_symbols
+        )
+        return ExecutionOutcome(fills=fills, order_failures=order_failures)
 
     def run_cycle(
         self,
@@ -424,163 +612,31 @@ class Trader:
             )
         active = [r for r in trading_candidates if r.alpha_id in alpha_signals]
 
-        # 4. Combine signals with quality × diversity weighting (Path A only)
-        if use_map_elites:
-            pass  # diversity not needed — cell structure handles it
-        elif skip_lifecycle and self.config.validator.enabled:
-            # Pipeline v2: read diversity from DB cache
-            self._load_diversity_from_db()
-        else:
-            diversity_stale = (
-                not self._diversity_computed
-                or (time.time() - self._diversity_last_computed)
-                > self._wcfg.diversity_recompute_days * 86400
-            )
-            if diversity_stale:
-                self._recompute_diversity(data, parsed_records)
-                self._diversity_last_computed = time.time()
-
-        # 5. Position sizing
+        # 4. Prediction layer: alpha signals -> adjusted portfolio signal
         prev_value = self.executor.portfolio_value
-        self.risk_manager.update_equity(prev_value)
-        recent_returns = np.array(self.portfolio_tracker.get_returns())
-        dd_s = self.risk_manager.dd_scale
-
-        combine_mode = self.config.paper.combine_mode
-
-        if alpha_signals and combine_mode == "map_elites":
-            # Path B (MAP-Elites): two-level ensemble aggregation
-            from ..evolution.archive import AlphaArchive
-            from ..evolution.behavior import compute_behavior
-            from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
-
-            archive = AlphaArchive()  # default config, used only for cell assignment
-            cell_signals: dict[tuple[int, ...], list[float]] = {}
-            for aid, sig_val in alpha_signals.items():
-                sig_arr = alpha_signal_arrays[aid]
-                behavior = compute_behavior(sig_arr, alpha_exprs[aid])
-                cell = archive._to_cell(behavior)
-                cell_signals.setdefault(cell, []).append(sig_val)
-
-            cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
-            ens = ensemble_sizing(cell_long_pcts)
-            adjusted = ens.direction * ens.confidence * ens.skew_adj * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
-            combined = ens.direction * ens.confidence * ens.skew_adj
-            weights_dict = {}
-            logger.info(
-                "MAP-Elites: dir=%.0f conf=%.3f skew=%.3f cells=%d/%d μ=%.3f σ=%.3f dd=%.2f",
-                ens.direction, ens.confidence, ens.skew_adj,
-                ens.n_cells, len(cell_signals), ens.mu_cells, ens.sigma_cells, dd_s,
-            )
-        elif alpha_signals and combine_mode == "voting":
-            # Path B (voting): recency × accuracy weights
-            registry_records = {r.alpha_id: r for r in all_alphas}
-            vote_result = vote_combine(
-                alpha_signals, self.forward_tracker, registry_records,
-            )
-            adjusted = vote_result.direction * vote_result.confidence * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
-            combined = vote_result.direction * vote_result.confidence
-            weights_dict = {}
-            logger.info(
-                "Voting: dir=%.0f conf=%.3f voters=%d long=%.0f%% short=%.0f%% dd=%.2f",
-                vote_result.direction, vote_result.confidence,
-                vote_result.n_voters, vote_result.long_pct * 100,
-                vote_result.short_pct * 100, dd_s,
-            )
-        elif alpha_signals:
-            # Path A: quality × diversity → consensus
-            alpha_ids = list(alpha_signals.keys())
-            quality_list = []
-            diversity_list = []
-            _metric = self.config.fitness_metric
-            for aid in alpha_ids:
-                status = self.monitor.check(aid)
-                quality_list.append(max(status.rolling_fitness(_metric), 0.0))
-                diversity_list.append(self._diversity_cache.get(aid, 1.0))
-
-            quality_np = np.array(quality_list)
-            diversity_np = np.array(diversity_list)
-            w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
-            weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
-
-            combined = weighted_combine_scalar(alpha_signals, weights_dict)
-            sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
-            adjusted = float(np.sign(sig_mean)) * consensus * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
-            logger.info(
-                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
-                dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
-            )
-        else:
-            combined = 0.0
-            weights_dict = {}
-            adjusted = 0.0
-
-        # 5a. Regime-aware position scaling (both paths)
-        if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
-            regime = RegimeDetector(
-                short_window=self.config.regime.short_window,
-                long_window=self.config.regime.long_window,
-            ).detect(recent_returns)
-            if regime.drift_score > self.config.regime.drift_threshold:
-                scale = max(
-                    self.config.regime.drift_position_scale_min,
-                    1.0 - regime.drift_score,
-                )
-                adjusted *= scale
-                logger.info(
-                    "Regime drift detected: score=%.3f vol=%s trend=%s, scale=%.2f",
-                    regime.drift_score, regime.current_vol_regime,
-                    regime.trend_regime, scale,
-                )
-
-        # 5c. Tactical modulation (Layer 2, both paths)
-        if self.tactical is not None:
-            try:
-                tac = self.tactical.run_cycle(strategic_bias=adjusted)
-                adjusted = tac.combined_signal
-                logger.info(
-                    "Tactical: score=%.3f, combined=%.3f (was %.3f)",
-                    tac.tactical_score, tac.combined_signal, adjusted,
-                )
-            except Exception:
-                logger.warning("Tactical cycle failed — using strategic signal only")
-
-        # 6. Get execution price: prefer real-time from exchange, fall back to daily close
-        live_price = self.executor.fetch_ticker_price(self.price_signal)
-        if live_price is not None and live_price > 0:
-            current_price = live_price
-            logger.info("Using live price: $%.2f", current_price)
-        else:
-            matrix = self.store.get_matrix([self.price_signal], end=today_date)
-            current_price = float(matrix[self.price_signal].iloc[-1])
-            logger.info("Using daily close: $%.2f", current_price)
-
-        # 7. Compute target position and execute
-        dollar_pos = adjusted * prev_value * self.max_position_pct
-        target_shares_value = dollar_pos / current_price if current_price > 0 else 0.0
-
-        if abs(dollar_pos) < self.min_trade_usd:
-            target_shares_value = 0.0
-
-        target = {self.price_signal: target_shares_value}
-        self.executor.set_price(self.price_signal, current_price)
-
-        # Record pre-rebalance positions to detect order failures
-        pre_positions = {sym: self.executor.get_position(sym) for sym in target}
-        fills = self.executor.rebalance(target)
-
-        # Count order failures: non-trivial delta expected but no fill produced
-        filled_symbols = {f.symbol for f in fills}
-        order_failures = sum(
-            1 for sym, tgt in target.items()
-            if abs(tgt - pre_positions.get(sym, 0.0)) > 1e-6
-            and sym not in filled_symbols
+        prediction = self._predict_portfolio_signal(
+            alpha_signals=alpha_signals,
+            alpha_signal_arrays=alpha_signal_arrays,
+            alpha_exprs=alpha_exprs,
+            all_alphas=all_alphas,
+            data=data,
+            parsed_records=parsed_records,
+            skip_lifecycle=skip_lifecycle,
         )
 
-        # 8. Record snapshot — PnL relative to previous snapshot
+        # 5. Allocation layer: adjusted signal -> target portfolio
+        plan = self._build_allocation_plan(
+            adjusted_signal=prediction.adjusted_signal,
+            prev_value=prev_value,
+            today_date=today_date,
+        )
+
+        # 6. Execution layer: target portfolio -> fills
+        execution = self._execute_allocation(plan)
+        fills = execution.fills
+        order_failures = execution.order_failures
+
+        # 7. Record snapshot — PnL relative to previous snapshot
         portfolio_value = self.executor.portfolio_value
         daily_pnl = portfolio_value - prev_value
         daily_return = daily_pnl / prev_value if prev_value > 0 else 0.0
@@ -592,8 +648,8 @@ class Trader:
             portfolio_value=portfolio_value,
             daily_pnl=daily_pnl,
             daily_return=daily_return,
-            combined_signal=combined,
-            dd_scale=dd_s,
+            combined_signal=prediction.combined_signal,
+            dd_scale=prediction.dd_scale,
             vol_scale=1.0,
         )
         self.portfolio_tracker.save_snapshot(snapshot)
@@ -603,10 +659,10 @@ class Trader:
         if no_fill_streak >= 6:
             logger.warning("No fills for %d consecutive cycles", no_fill_streak)
 
-        # 9. Record trade P&L in circuit breaker
+        # 8. Record trade P&L in circuit breaker
         self.circuit_breaker.record_trade(daily_pnl)
 
-        # 10. Audit log
+        # 9. Audit log
         for fill in fills:
             self.audit_log.log_trade(
                 "portfolio", fill.symbol, fill.side, fill.qty, fill.price,
@@ -617,12 +673,12 @@ class Trader:
 
         return PaperCycleResult(
             date=cycle_key,
-            combined_signal=combined,
+            combined_signal=prediction.combined_signal,
             fills=fills,
             portfolio_value=portfolio_value,
             daily_pnl=daily_pnl,
             daily_return=daily_return,
-            dd_scale=dd_s,
+            dd_scale=prediction.dd_scale,
             vol_scale=1.0,
             n_alphas_active=len(active),
             n_alphas_evaluated=n_evaluated,
