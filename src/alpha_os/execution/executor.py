@@ -42,6 +42,14 @@ class Executor(ABC):
     def get_cash(self) -> float:
         ...
 
+    def get_exchange_position(self, symbol: str) -> float:
+        """Exchange-level position. Defaults to managed/in-memory position."""
+        return self.get_position(symbol)
+
+    def get_exchange_cash(self) -> float:
+        """Exchange-level cash. Defaults to managed/in-memory cash."""
+        return self.get_cash()
+
     def set_price(self, symbol: str, price: float) -> None:
         """Set current price for a symbol. No-op for live executors."""
         pass

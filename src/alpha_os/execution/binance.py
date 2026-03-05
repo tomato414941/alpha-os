@@ -374,6 +374,12 @@ class BinanceExecutor(Executor):
     def get_cash(self) -> float:
         return self._managed_cash
 
+    def get_exchange_position(self, symbol: str) -> float:
+        return self._exchange_position(symbol)
+
+    def get_exchange_cash(self) -> float:
+        return self._exchange_cash()
+
     @property
     def portfolio_value(self) -> float:
         """Portfolio value from managed positions only (not whole exchange)."""
@@ -402,7 +408,8 @@ class BinanceExecutor(Executor):
 
     def _exchange_position(self, symbol: str) -> float:
         """Fetch actual position from exchange (for reconciliation)."""
-        base = symbol.split("/")[0] if "/" in symbol else symbol
+        market = self._market_symbol(symbol)
+        base = market.split("/")[0]
         try:
             balance = self._exchange.fetch_balance()
             return float(balance.get(base, {}).get("total", 0.0))

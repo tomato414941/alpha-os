@@ -67,6 +67,7 @@ class CircuitBreaker:
             self._current_date = today
             self._daily_start_equity = equity
             self._daily_pnl = 0.0
+            self._consecutive_losses = 0
             self._halted = False
             self._halt_reason = ""
             logger.info("Circuit breaker daily reset: equity=$%.2f", equity)
@@ -171,6 +172,23 @@ class CircuitBreaker:
             cb._daily_pnl, cb._peak_equity, cb._halted,
         )
         return cb
+
+    def reload(self) -> None:
+        """Reload persisted state into the current instance."""
+        if not self._state_path.exists():
+            return
+        try:
+            data = json.loads(self._state_path.read_text())
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning("Failed to reload circuit breaker state: %s", e)
+            return
+        self._daily_start_equity = data.get("daily_start_equity", 0.0)
+        self._daily_pnl = data.get("daily_pnl", 0.0)
+        self._consecutive_losses = data.get("consecutive_losses", 0)
+        self._peak_equity = data.get("peak_equity", 0.0)
+        self._halted = data.get("halted", False)
+        self._halt_reason = data.get("halt_reason", "")
+        self._current_date = data.get("current_date", "")
 
     @property
     def halted(self) -> bool:

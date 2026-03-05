@@ -158,17 +158,26 @@ class Trader:
         self._diversity_cache: dict[str, float] = {}
         self._diversity_computed = False
         self._diversity_last_computed: float = 0.0
+        self._executor_state_date = ""
 
         self._restore_state()
 
     def _restore_state(self) -> None:
         """Reconstruct executor and risk manager state from last snapshot."""
+        self._sync_state_from_latest_snapshot(force=True)
+
+    def _sync_state_from_latest_snapshot(self, *, force: bool = False) -> None:
+        """Refresh in-memory state when the persisted snapshot has advanced."""
         snapshot = self.portfolio_tracker.get_last_snapshot()
-        if snapshot is None:
-            self.risk_manager.reset(self.initial_capital)
+        snapshot_date = snapshot.date if snapshot is not None else ""
+        if not force and snapshot_date == self._executor_state_date:
             return
 
-        # Restore executor state from last snapshot.
+        if snapshot is None:
+            self.risk_manager.reset(self.initial_capital)
+            self._executor_state_date = ""
+            return
+
         if isinstance(self.executor, PaperExecutor):
             self.executor._cash = snapshot.cash
             self.executor._positions = dict(snapshot.positions)
@@ -184,10 +193,26 @@ class Trader:
         else:
             self.risk_manager.reset(self.initial_capital)
 
+        previous_date = self._executor_state_date
+        self._executor_state_date = snapshot.date
+        if previous_date and previous_date != snapshot.date:
+            logger.info(
+                "Detected newer snapshot state: %s -> %s",
+                previous_date,
+                snapshot.date,
+            )
         logger.info(
             "Restored state: $%.2f portfolio, %d snapshots",
             snapshot.portfolio_value, len(equity_curve),
         )
+
+    def _snapshot_position_qty(
+        self, positions: dict[str, float], asset_ticker: str,
+    ) -> float:
+        for key in (self.price_signal, asset_ticker, asset_ticker.upper(), asset_ticker.lower()):
+            if key in positions:
+                return positions[key]
+        return 0.0
 
 
     def _recompute_diversity(
@@ -422,6 +447,8 @@ class Trader:
                 (handled by separate lifecycle daemon in Pipeline v2).
         """
         t0 = time.perf_counter()
+        self._sync_state_from_latest_snapshot()
+        self.circuit_breaker.reload()
         now = datetime.now(timezone.utc)
         today_date = simulation_date or date.today().isoformat()
 
@@ -655,6 +682,7 @@ class Trader:
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
         self.portfolio_tracker.save_alpha_signals(cycle_key, alpha_signals)
+        self._executor_state_date = snapshot.date
         no_fill_streak = self.portfolio_tracker.count_consecutive_no_fill_cycles()
         if no_fill_streak >= 6:
             logger.warning("No fills for %d consecutive cycles", no_fill_streak)
@@ -725,11 +753,11 @@ class Trader:
         signal_to_asset = {v: k for k, v in {**CRYPTO, **STOCKS}.items()}
         asset_ticker = signal_to_asset.get(self.price_signal, self.price_signal)
 
-        internal_qty = snapshot.positions.get(asset_ticker, 0.0)
+        internal_qty = self._snapshot_position_qty(snapshot.positions, asset_ticker)
         internal_cash = snapshot.cash
 
-        exchange_qty = self.executor.get_position(asset_ticker)
-        exchange_cash = self.executor.get_cash()
+        exchange_qty = self.executor.get_exchange_position(self.price_signal)
+        exchange_cash = self.executor.get_exchange_cash()
 
         qty_diff = abs(exchange_qty - internal_qty)
         cash_diff = abs(exchange_cash - internal_cash)

@@ -345,6 +345,49 @@ class TestPaperTrader:
         assert trader.executor.get_position("btc_ohlcv") == pytest.approx(0.015)
         trader.close()
 
+    def test_sync_state_from_newer_snapshot(self, tmp_path):
+        """Trader should refresh executor state when a newer snapshot appears."""
+        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.config import Config
+        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.data.store import DataStore
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.governance.audit_log import AuditLog
+
+        db = tmp_path / "paper.db"
+        pt = PaperPortfolioTracker(db)
+        pt.save_snapshot(PortfolioSnapshot(
+            date="2026-01-05T00:00:00", cash=8500.0,
+            positions={"btc_ohlcv": 0.015},
+            portfolio_value=9950.0, daily_pnl=-50.0, daily_return=-0.005,
+            combined_signal=0.3, dd_scale=1.0, vol_scale=0.9,
+        ))
+
+        cfg = Config()
+        trader = PaperTrader(
+            asset="BTC",
+            config=cfg,
+            portfolio_tracker=pt,
+            registry=AlphaRegistry(tmp_path / "reg.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            store=DataStore(tmp_path / "cache.db"),
+        )
+
+        pt.save_snapshot(PortfolioSnapshot(
+            date="2026-01-05T04:00:00", cash=8100.0,
+            positions={"btc_ohlcv": 0.02},
+            portfolio_value=10020.0, daily_pnl=70.0, daily_return=0.007,
+            combined_signal=0.4, dd_scale=1.0, vol_scale=1.0,
+        ))
+        trader._sync_state_from_latest_snapshot()
+
+        assert trader.executor.get_cash() == pytest.approx(8100.0)
+        assert trader.executor.get_position("btc_ohlcv") == pytest.approx(0.02)
+        trader.close()
+
 
 class TestMapElitesCombinePath:
     """Test the MAP-Elites two-level ensemble sizing path."""

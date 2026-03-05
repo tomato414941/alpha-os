@@ -160,6 +160,25 @@ def test_load_corrupted_file(state_path):
     assert loaded.halted is False
 
 
+def test_reload_updates_in_memory_state(state_path):
+    cb = CircuitBreaker(_state_path=state_path)
+    cb._daily_start_equity = 10000.0
+    cb._daily_pnl = -250.0
+    cb._consecutive_losses = 3
+    cb._halted = True
+    cb._halt_reason = "test halt"
+    cb._current_date = "2026-02-27"
+    cb.save()
+
+    reloaded = CircuitBreaker(_state_path=state_path)
+    reloaded.reload()
+
+    assert reloaded._daily_pnl == -250.0
+    assert reloaded._consecutive_losses == 3
+    assert reloaded.halted is True
+    assert reloaded.halt_reason == "test halt"
+
+
 # ---------------------------------------------------------------------------
 # Daily reset
 # ---------------------------------------------------------------------------
@@ -168,6 +187,7 @@ def test_daily_reset_clears_halt(cb, state_path, monkeypatch):
     cb._halted = True
     cb._halt_reason = "old halt"
     cb._daily_pnl = -500.0
+    cb._consecutive_losses = 5
     cb._current_date = "2026-02-26"
 
     # Simulate next day
@@ -182,6 +202,7 @@ def test_daily_reset_clears_halt(cb, state_path, monkeypatch):
     assert cb.halted is False
     assert cb._halt_reason == ""
     assert cb._daily_pnl == 0.0
+    assert cb._consecutive_losses == 0
     assert cb._daily_start_equity == 9500.0
 
 

@@ -31,6 +31,8 @@ def test_executor_abc_has_defaults():
     assert ex.portfolio_value == 1000.0  # defaults to get_cash()
     assert ex.all_positions == {}
     assert ex.all_fills == []
+    assert ex.get_exchange_position("BTC") == 0.0
+    assert ex.get_exchange_cash() == 1000.0
 
 
 def test_binance_executor_portfolio_value():
@@ -181,7 +183,7 @@ def test_reconcile_match():
     snapshot = PortfolioSnapshot(
         date="2026-02-27",
         cash=5000.0,
-        positions={"BTC": 0.1},
+        positions={"btc_ohlcv": 0.1},
         portfolio_value=10000.0,
         daily_pnl=100.0,
         daily_return=0.01,
@@ -193,11 +195,12 @@ def test_reconcile_match():
     trader.portfolio_tracker.get_last_snapshot.return_value = snapshot
 
     trader.executor = MagicMock()
-    trader.executor.get_position.return_value = 0.1
-    trader.executor.get_cash.return_value = 5000.0
+    trader.executor.get_exchange_position.return_value = 0.1
+    trader.executor.get_exchange_cash.return_value = 5000.0
 
     result = trader.reconcile()
     assert result["match"] is True
+    assert result["internal_qty"] == pytest.approx(0.1)
     assert result["qty_diff"] < 1e-6
     assert result["cash_diff"] < 1.0
 
@@ -213,7 +216,7 @@ def test_reconcile_mismatch():
     snapshot = PortfolioSnapshot(
         date="2026-02-27",
         cash=5000.0,
-        positions={"BTC": 0.1},
+        positions={"btc_ohlcv": 0.1},
         portfolio_value=10000.0,
         daily_pnl=100.0,
         daily_return=0.01,
@@ -225,11 +228,12 @@ def test_reconcile_mismatch():
     trader.portfolio_tracker.get_last_snapshot.return_value = snapshot
 
     trader.executor = MagicMock()
-    trader.executor.get_position.return_value = 0.15  # Mismatch
-    trader.executor.get_cash.return_value = 4800.0  # Mismatch
+    trader.executor.get_exchange_position.return_value = 0.15  # Mismatch
+    trader.executor.get_exchange_cash.return_value = 4800.0  # Mismatch
 
     result = trader.reconcile()
     assert result["match"] is False
+    assert result["internal_qty"] == pytest.approx(0.1)
     assert result["qty_diff"] == pytest.approx(0.05)
     assert result["cash_diff"] == pytest.approx(200.0)
 
