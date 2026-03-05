@@ -17,6 +17,7 @@ class ArchiveConfig:
         (0.0, 100.0),  # holding_half_life (days)
         (1.0, 20.0),   # complexity (node count)
     )
+    max_nan_ratio: float = 0.1
 
 
 @dataclass
@@ -26,11 +27,31 @@ class ArchiveEntry:
     behavior: np.ndarray
 
 
+def passes_sanity_filter(
+    signal: np.ndarray, max_nan_ratio: float = 0.1
+) -> bool:
+    """Check if a signal passes sanity requirements for archive entry."""
+    if signal.size == 0:
+        return False
+    nan_ratio = np.isnan(signal).sum() / signal.size
+    if nan_ratio > max_nan_ratio:
+        return False
+    clean = signal[~np.isnan(signal)]
+    if clean.size == 0:
+        return False
+    if not np.all(np.isfinite(clean)):
+        return False
+    if np.std(clean) == 0:
+        return False
+    return True
+
+
 class AlphaArchive:
     """Grid-based MAP-Elites archive storing alpha expressions.
 
-    Each cell in the N-dimensional grid holds the single best (highest fitness)
-    expression whose behavior descriptor falls into that cell.
+    Path B mode: sanity filter only, no fitness-based competition.
+    Candidates enter empty cells; occupied cells keep their incumbent.
+    Legacy mode: fitness-based competition (for backward compatibility).
     """
 
     def __init__(self, config: ArchiveConfig | None = None):
@@ -38,7 +59,7 @@ class AlphaArchive:
         self._grid: dict[tuple[int, ...], ArchiveEntry] = {}
 
     def add(self, expr: Expr, fitness: float, behavior: np.ndarray) -> bool:
-        """Add expression to archive.
+        """Add expression to archive (legacy fitness-based mode).
 
         Returns True if it was stored (new cell or better fitness than incumbent).
         """
@@ -50,6 +71,21 @@ class AlphaArchive:
             )
             return True
         return False
+
+    def add_if_empty(
+        self, expr: Expr, behavior: np.ndarray, signal: np.ndarray
+    ) -> bool:
+        """Add expression to archive if cell is empty and signal passes sanity filter.
+
+        Path B mode: no fitness competition. First valid occupant stays.
+        """
+        if not passes_sanity_filter(signal, self.config.max_nan_ratio):
+            return False
+        cell = self._to_cell(behavior)
+        if cell in self._grid:
+            return False
+        self._grid[cell] = ArchiveEntry(expr=expr, fitness=0.0, behavior=behavior)
+        return True
 
     def _to_cell(self, behavior: np.ndarray) -> tuple[int, ...]:
         indices: list[int] = []

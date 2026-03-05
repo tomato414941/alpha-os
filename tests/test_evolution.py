@@ -11,7 +11,7 @@ from alpha_os.evolution.gp import (
     _ast_signature,
     _jaccard_similarity,
 )
-from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig
+from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig, passes_sanity_filter
 from alpha_os.evolution.behavior import (
     compute_behavior,
     _feature_bucket,
@@ -262,6 +262,57 @@ class TestAlphaArchive:
         archive = AlphaArchive()
         behavior = np.array([200.0, 200.0, 50.0])  # all out of range
         assert archive.add(Feature("f1"), 0.5, behavior) is True
+
+
+class TestSanityFilter:
+    def test_passes_normal_signal(self):
+        signal = np.random.randn(100)
+        assert passes_sanity_filter(signal) is True
+
+    def test_rejects_constant(self):
+        assert passes_sanity_filter(np.ones(100)) is False
+
+    def test_rejects_high_nan(self):
+        signal = np.full(100, np.nan)
+        signal[:5] = np.random.randn(5)
+        assert passes_sanity_filter(signal) is False
+
+    def test_rejects_inf(self):
+        signal = np.random.randn(100)
+        signal[50] = np.inf
+        assert passes_sanity_filter(signal) is False
+
+    def test_rejects_empty(self):
+        assert passes_sanity_filter(np.array([])) is False
+
+    def test_accepts_low_nan(self):
+        signal = np.random.randn(100)
+        signal[:5] = np.nan  # 5% NaN
+        assert passes_sanity_filter(signal) is True
+
+
+class TestAddIfEmpty:
+    def test_adds_to_empty_cell(self):
+        archive = AlphaArchive()
+        signal = np.random.randn(100)
+        behavior = np.array([50.0, 10.0, 5.0])
+        assert archive.add_if_empty(Feature("f1"), behavior, signal) is True
+        assert archive.size == 1
+
+    def test_rejects_occupied_cell(self):
+        archive = AlphaArchive()
+        signal = np.random.randn(100)
+        behavior = np.array([50.0, 10.0, 5.0])
+        archive.add_if_empty(Feature("f1"), behavior, signal)
+        assert archive.add_if_empty(Feature("f2"), behavior, signal) is False
+        assert archive.size == 1
+
+    def test_rejects_bad_signal(self):
+        archive = AlphaArchive()
+        signal = np.ones(100)  # constant → fails sanity
+        behavior = np.array([50.0, 10.0, 5.0])
+        assert archive.add_if_empty(Feature("f1"), behavior, signal) is False
+        assert archive.size == 0
 
 
 # ---------------------------------------------------------------------------
