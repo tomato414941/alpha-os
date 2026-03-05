@@ -13,9 +13,10 @@ import numpy as np
 from ..alpha.evaluator import FAILED_FITNESS
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
-from ..config import Config, DATA_DIR
+from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import to_string
+from ..dsl.generator import AlphaGenerator
 from ..evolution.archive import AlphaArchive
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
@@ -28,6 +29,10 @@ class EvoDaemon:
 
     Each round: load data → evolve (small pop, few generations) →
     write candidates to SQLite → gc → sleep → repeat.
+
+    Supports two modes:
+    - "legacy": fitness-based archive + candidate queue for validator
+    - "map_elites": feature subsets + sanity filter + persistent archive
     """
 
     def __init__(self, asset: str, config: Config):
@@ -37,20 +42,30 @@ class EvoDaemon:
         self._running = False
         self._round = 0
         self._pop_size = self.evo_cfg.pop_size
-        self.archive = AlphaArchive()
+
+        # Load or create archive
+        if self.evo_cfg.evo_mode == "map_elites":
+            db_path = asset_data_dir(asset) / "archive.db"
+            self.archive = AlphaArchive.load_from_db(db_path)
+            logger.info("Loaded MAP-Elites archive: %d entries", self.archive.size)
+        else:
+            self.archive = AlphaArchive()
 
     def run(self) -> None:
         self._running = True
         self._setup_signals()
         logger.info(
-            "EvoDaemon started: asset=%s, pop=%d, gens=%d, interval=%ds",
-            self.asset, self._pop_size, self.evo_cfg.n_generations,
-            self.evo_cfg.round_interval,
+            "EvoDaemon started: asset=%s, mode=%s, pop=%d, gens=%d, interval=%ds",
+            self.asset, self.evo_cfg.evo_mode, self._pop_size,
+            self.evo_cfg.n_generations, self.evo_cfg.round_interval,
         )
 
         while self._running:
             try:
-                self._run_round()
+                if self.evo_cfg.evo_mode == "map_elites":
+                    self._run_round_map_elites()
+                else:
+                    self._run_round()
                 self._round += 1
             except Exception:
                 logger.exception("Round %d failed", self._round)
@@ -145,6 +160,87 @@ class EvoDaemon:
             self.archive.coverage * 100, elapsed,
         )
 
+    def _run_round_map_elites(self) -> None:
+        """MAP-Elites round: random feature subset → GP → sanity filter → archive."""
+        t0 = time.perf_counter()
+
+        features = build_feature_list(self.asset)
+        data, prices, available_features = self._load_data(features)
+        if data is None:
+            logger.warning("Insufficient data, skipping round")
+            return
+
+        n_days = len(prices)
+        k = self.evo_cfg.feature_subset_k
+        seed = int(time.time()) ^ self._round
+
+        # Random feature subset for this round
+        generator = AlphaGenerator.with_random_subset(available_features, k=k, seed=seed)
+        subset = generator.feature_subset
+
+        # Build evaluator (still uses fitness to guide GP search)
+        engine = BacktestEngine(
+            CostModel(self.config.backtest.commission_pct,
+                      self.config.backtest.slippage_pct)
+        )
+
+        def evaluate_fn(expr):
+            try:
+                sig = expr.evaluate(data)
+                sig = np.asarray(sig, dtype=float)
+                if sig.ndim == 0:
+                    sig = np.full(n_days, float(sig))
+                if len(sig) != n_days:
+                    return FAILED_FITNESS
+                if not np.all(np.isfinite(sig)):
+                    sig = np.where(np.isfinite(sig), sig, 0.0)
+                result = engine.run(sig, prices)
+                v = result.fitness(self.config.fitness_metric)
+                return v if np.isfinite(v) else FAILED_FITNESS
+            except Exception:
+                return FAILED_FITNESS
+
+        # Evolve with feature subset
+        gp_cfg = GPConfig(
+            pop_size=self._pop_size,
+            n_generations=self.evo_cfg.n_generations,
+            max_depth=self.config.generation.max_depth,
+            bloat_penalty=self.config.generation.bloat_penalty,
+        )
+        evolver = GPEvolver(
+            available_features, evaluate_fn, config=gp_cfg,
+            seed=seed, generator=generator,
+        )
+        results = evolver.run()
+
+        # Fill archive with sanity filter (no fitness competition)
+        n_added = 0
+        for expr, _fitness in results:
+            try:
+                sig = expr.evaluate(data)
+                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                if sig.ndim == 0:
+                    sig = np.full(n_days, float(sig))
+                behavior = compute_behavior(sig, expr, feature_subset=subset)
+                if self.archive.add_if_empty(expr, behavior, sig):
+                    n_added += 1
+            except Exception:
+                continue
+
+        # Persist archive
+        db_path = asset_data_dir(self.asset) / "archive.db"
+        if n_added > 0:
+            self.archive.save_to_db(db_path)
+
+        elapsed = time.perf_counter() - t0
+        logger.info(
+            "Round %d [MAP-Elites]: %d evolved, %d added, "
+            "archive %d/%d (%.1f%%), subset=%d features, %.1fs",
+            self._round, len(results), n_added,
+            self.archive.size, self.archive.capacity,
+            self.archive.coverage * 100, len(subset) if subset else 0, elapsed,
+        )
+
     def _load_data(
         self, features: list[str],
     ) -> tuple[dict[str, np.ndarray] | None, np.ndarray | None, list[str] | None]:
@@ -190,7 +286,6 @@ class EvoDaemon:
         import json
         import sqlite3
 
-        from ..config import asset_data_dir
         db_path = asset_data_dir(self.asset) / "alpha_registry.db"
         conn = sqlite3.connect(str(db_path))
         conn.execute("PRAGMA journal_mode=WAL")

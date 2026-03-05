@@ -1,12 +1,18 @@
 """MAP-Elites quality-diversity archive for alpha expressions."""
 from __future__ import annotations
 
+import json
+import logging
 import random
+import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
 from ..dsl.expr import Expr
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -129,3 +135,69 @@ class AlphaArchive:
     def elites(self) -> list[tuple[Expr, float, np.ndarray]]:
         """All archive entries as (expr, fitness, behavior) triples."""
         return [(e.expr, e.fitness, e.behavior) for e in self._grid.values()]
+
+    # --- Persistence (SQLite) ---
+
+    def save_to_db(self, db_path: Path) -> int:
+        """Persist archive to SQLite. Returns number of rows written."""
+        from ..dsl import to_string
+
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS archive (
+                cell_key TEXT PRIMARY KEY,
+                expression TEXT NOT NULL,
+                fitness REAL NOT NULL,
+                behavior TEXT NOT NULL
+            )
+        """)
+        rows = []
+        for cell, entry in self._grid.items():
+            rows.append((
+                json.dumps(cell),
+                to_string(entry.expr),
+                entry.fitness,
+                json.dumps(entry.behavior.tolist()),
+            ))
+        conn.execute("DELETE FROM archive")
+        conn.executemany(
+            "INSERT INTO archive (cell_key, expression, fitness, behavior) VALUES (?, ?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        conn.close()
+        return len(rows)
+
+    @classmethod
+    def load_from_db(cls, db_path: Path, config: ArchiveConfig | None = None) -> AlphaArchive:
+        """Load archive from SQLite."""
+        from ..dsl import parse
+
+        archive = cls(config=config)
+        if not db_path.exists():
+            return archive
+
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("PRAGMA busy_timeout=30000")
+        try:
+            rows = conn.execute(
+                "SELECT cell_key, expression, fitness, behavior FROM archive"
+            ).fetchall()
+        except sqlite3.OperationalError:
+            conn.close()
+            return archive
+        conn.close()
+
+        for cell_json, expr_str, fitness, behavior_json in rows:
+            try:
+                cell = tuple(json.loads(cell_json))
+                expr = parse(expr_str)
+                behavior = np.array(json.loads(behavior_json))
+                archive._grid[cell] = ArchiveEntry(
+                    expr=expr, fitness=fitness, behavior=behavior,
+                )
+            except Exception as exc:
+                logger.warning("Failed to load archive entry %s: %s", cell_json, exc)
+
+        return archive

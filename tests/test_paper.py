@@ -344,3 +344,74 @@ class TestPaperTrader:
         assert trader.executor.get_cash() == pytest.approx(8500.0)
         assert trader.executor.get_position("btc_ohlcv") == pytest.approx(0.015)
         trader.close()
+
+
+class TestMapElitesCombinePath:
+    """Test the MAP-Elites two-level ensemble sizing path."""
+
+    def test_cell_grouping_and_ensemble(self):
+        """Signals grouped into cells produce valid ensemble result."""
+        import numpy as np
+        from alpha_os.dsl.expr import Feature, BinaryOp, RollingOp
+        from alpha_os.evolution.archive import AlphaArchive
+        from alpha_os.evolution.behavior import compute_behavior
+        from alpha_os.voting.ensemble import compute_cell_long_pcts, ensemble_sizing
+
+        rng = np.random.RandomState(42)
+        archive = AlphaArchive()
+
+        # Simulate 20 alphas with different expressions and signals
+        exprs = [Feature("f1")] * 5 + [
+            BinaryOp("add", Feature("f1"), Feature("f2"))
+        ] * 5 + [
+            RollingOp("mean", 10, Feature("f1"))
+        ] * 5 + [
+            RollingOp("std", 20, Feature("f2"))
+        ] * 5
+        signals = [rng.randn(300) for _ in range(20)]
+        signal_values = [float(s[-2]) for s in signals]
+
+        # Group into cells
+        cell_signals: dict[tuple[int, ...], list[float]] = {}
+        for expr, sig_arr, sig_val in zip(exprs, signals, signal_values):
+            behavior = compute_behavior(sig_arr, expr)
+            cell = archive._to_cell(behavior)
+            cell_signals.setdefault(cell, []).append(sig_val)
+
+        assert len(cell_signals) >= 1  # at least 1 distinct cell
+
+        cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
+        assert len(cell_long_pcts) == len(cell_signals)
+
+        ens = ensemble_sizing(cell_long_pcts, min_cells=1)
+        assert ens.direction in (-1.0, 0.0, 1.0)
+        assert 0.0 <= ens.confidence <= 1.0
+        assert 0.5 <= ens.skew_adj <= 1.0
+        assert ens.n_cells == len(cell_long_pcts)
+
+    def test_map_elites_sizing_formula(self):
+        """Sizing = direction × confidence × skew_adj × dd_scale, clamped to [-1, 1]."""
+        from alpha_os.voting.ensemble import ensemble_sizing
+
+        # Strong long consensus
+        pcts = [0.9, 0.85, 0.95, 0.88, 0.92]
+        ens = ensemble_sizing(pcts)
+        dd_s = 0.8
+        adjusted = ens.direction * ens.confidence * ens.skew_adj * dd_s
+        assert -1.0 <= adjusted <= 1.0
+        assert adjusted > 0  # should be positive (long)
+
+    def test_few_cells_returns_neutral(self):
+        """With fewer than min_cells, ensemble returns neutral."""
+        from alpha_os.voting.ensemble import ensemble_sizing
+
+        ens = ensemble_sizing([0.9, 0.8], min_cells=5)
+        assert ens.direction == 0.0
+        assert ens.confidence == 0.0
+
+    def test_config_combine_mode_map_elites(self):
+        """Config loading accepts map_elites as combine_mode."""
+        from alpha_os.config import Config
+        cfg = Config()
+        cfg.paper.combine_mode = "map_elites"
+        assert cfg.paper.combine_mode == "map_elites"

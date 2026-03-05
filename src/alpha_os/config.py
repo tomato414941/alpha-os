@@ -202,6 +202,8 @@ class EvoDaemonConfig:
     round_interval: int = 300
     memory_limit_mb: int = 400
     batch_size: int = 500
+    evo_mode: str = "legacy"  # "legacy" | "map_elites"
+    feature_subset_k: int = 27  # √753 ≈ 27, features per subset
 
 
 @dataclass

@@ -184,6 +184,19 @@ class TestGPEvolver:
         raw = self._make_evaluate_fn()(expr)
         assert fit < raw
 
+    def test_custom_generator(self):
+        from alpha_os.dsl.generator import AlphaGenerator
+        gen = AlphaGenerator.with_random_subset(FEATURES, k=2, seed=42)
+        cfg = GPConfig(pop_size=10, n_generations=1, max_depth=2)
+        evolver = GPEvolver(FEATURES, self._make_evaluate_fn(), config=cfg, seed=42, generator=gen)
+        results = evolver.run()
+        assert len(results) > 0
+        # All expressions should only use subset features
+        for expr, _ in results:
+            from alpha_os.dsl import collect_feature_names
+            used = collect_feature_names(expr)
+            assert used.issubset(gen.feature_subset)
+
 
 # ---------------------------------------------------------------------------
 # Archive tests
@@ -262,6 +275,61 @@ class TestAlphaArchive:
         archive = AlphaArchive()
         behavior = np.array([200.0, 200.0, 50.0])  # all out of range
         assert archive.add(Feature("f1"), 0.5, behavior) is True
+
+    def test_save_load_roundtrip(self, tmp_path):
+        archive = AlphaArchive()
+        archive.add(Feature("f1"), 0.5, np.array([50.0, 10.0, 5.0]))
+        archive.add(Feature("f2"), 0.8, np.array([20.0, 30.0, 3.0]))
+        db_path = tmp_path / "archive.db"
+        n = archive.save_to_db(db_path)
+        assert n == 2
+
+        loaded = AlphaArchive.load_from_db(db_path)
+        assert loaded.size == 2
+        best = loaded.best(2)
+        assert best[0][1] == 0.8  # f2 has higher fitness
+
+    def test_load_nonexistent(self, tmp_path):
+        loaded = AlphaArchive.load_from_db(tmp_path / "missing.db")
+        assert loaded.size == 0
+
+    def test_save_empty_archive(self, tmp_path):
+        archive = AlphaArchive()
+        db_path = tmp_path / "archive.db"
+        n = archive.save_to_db(db_path)
+        assert n == 0
+        loaded = AlphaArchive.load_from_db(db_path)
+        assert loaded.size == 0
+
+    def test_save_load_preserves_cells(self, tmp_path):
+        archive = AlphaArchive()
+        b1 = np.array([10.0, 5.0, 3.0])
+        b2 = np.array([90.0, 80.0, 15.0])
+        archive.add(Feature("f1"), 0.5, b1)
+        archive.add(Feature("f2"), 0.8, b2)
+
+        cell1 = archive._to_cell(b1)
+        cell2 = archive._to_cell(b2)
+        assert cell1 != cell2
+
+        db_path = tmp_path / "archive.db"
+        archive.save_to_db(db_path)
+        loaded = AlphaArchive.load_from_db(db_path)
+        assert loaded.size == 2
+        assert cell1 in loaded._grid
+        assert cell2 in loaded._grid
+
+    def test_save_load_complex_expr(self, tmp_path):
+        archive = AlphaArchive()
+        expr = BinaryOp("add", RollingOp("mean", 10, Feature("f1")), Feature("f2"))
+        archive.add(expr, 1.0, np.array([50.0, 10.0, 4.0]))
+
+        db_path = tmp_path / "archive.db"
+        archive.save_to_db(db_path)
+        loaded = AlphaArchive.load_from_db(db_path)
+        assert loaded.size == 1
+        loaded_expr = loaded.best(1)[0][0]
+        assert repr(loaded_expr) == repr(expr)
 
 
 class TestSanityFilter:

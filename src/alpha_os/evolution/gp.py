@@ -119,9 +119,10 @@ class GPEvolver:
         evaluate_fn,
         config: GPConfig | None = None,
         seed: int | None = None,
+        generator: AlphaGenerator | None = None,
     ):
         self.config = config or GPConfig()
-        self.generator = AlphaGenerator(features, seed=seed)
+        self.generator = generator or AlphaGenerator(features, seed=seed)
         self.evaluate_fn = evaluate_fn
         self.rng = random.Random(seed)
         self.features = features
