@@ -425,6 +425,38 @@ class TestGenerator:
         with pytest.raises(ValueError):
             AlphaGenerator([])
 
+    def test_feature_subset_restricts_generation(self):
+        all_features = [f"f{i}" for i in range(20)]
+        subset = frozenset(["f3", "f7", "f12"])
+        gen = AlphaGenerator(all_features, feature_subset=subset, seed=42)
+        for expr in gen.generate_random(50, max_depth=3):
+            used = collect_feature_names(expr)
+            assert used <= subset, f"Expression uses features outside subset: {used - subset}"
+
+    def test_feature_subset_restricts_mutation(self):
+        all_features = [f"f{i}" for i in range(20)]
+        subset = frozenset(["f3", "f7", "f12"])
+        gen = AlphaGenerator(all_features, feature_subset=subset, seed=42)
+        original = gen.generate_random(1, max_depth=2)[0]
+        for _ in range(100):
+            mutated = gen.mutate(original)
+            used = collect_feature_names(mutated)
+            assert used <= subset, f"Mutation introduced features outside subset: {used - subset}"
+
+    def test_feature_subset_unknown_raises(self):
+        with pytest.raises(ValueError, match="unknown features"):
+            AlphaGenerator(["f1", "f2"], feature_subset=frozenset(["f1", "f99"]))
+
+    def test_with_random_subset(self):
+        all_features = [f"f{i}" for i in range(100)]
+        gen = AlphaGenerator.with_random_subset(all_features, k=10, seed=42)
+        assert gen.feature_subset is not None
+        assert len(gen.feature_subset) == 10
+        assert gen.feature_subset <= set(all_features)
+        for expr in gen.generate_random(20, max_depth=2):
+            used = collect_feature_names(expr)
+            assert used <= gen.feature_subset
+
 
 # ---------------------------------------------------------------------------
 # Microstructure templates

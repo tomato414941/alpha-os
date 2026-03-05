@@ -39,12 +39,33 @@ class AlphaGenerator:
         features: list[str],
         windows: list[int] | None = None,
         seed: int | None = None,
+        feature_subset: frozenset[str] | None = None,
     ) -> None:
         if not features:
             raise ValueError("features must be non-empty")
-        self.features = features
+        self.all_features = features
+        self.feature_subset = feature_subset
+        if feature_subset is not None:
+            unknown = feature_subset - set(features)
+            if unknown:
+                raise ValueError(f"feature_subset contains unknown features: {unknown}")
+            self.features = sorted(feature_subset)
+        else:
+            self.features = features
         self.windows = windows or ALLOWED_WINDOWS
         self.rng = random.Random(seed)
+
+    @classmethod
+    def with_random_subset(
+        cls,
+        features: list[str],
+        k: int,
+        seed: int | None = None,
+    ) -> AlphaGenerator:
+        """Create a generator with a random feature subset of size k."""
+        rng = random.Random(seed)
+        subset = frozenset(rng.sample(features, min(k, len(features))))
+        return cls(features, feature_subset=subset, seed=seed)
 
     def generate_random(self, n: int, max_depth: int = 3) -> list[Expr]:
         """Generate n random expression trees up to max_depth."""

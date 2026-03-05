@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 class GPConfig:
     pop_size: int = 200
     n_generations: int = 30
-    cx_prob: float = 0.5
-    mut_prob: float = 0.3
+    mut_prob: float = 0.5
     tournament_size: int = 3
     max_depth: int = 3
     elite_size: int = 5
@@ -111,83 +110,6 @@ def _jaccard_similarity(a: set[str], b: set[str]) -> float:
     return len(a & b) / len(union)
 
 
-def crossover(parent1: Expr, parent2: Expr, rng: random.Random) -> tuple[Expr, Expr]:
-    """Subtree crossover: swap random subtrees between two parents."""
-    import copy
-
-    c1 = copy.deepcopy(parent1)
-    c2 = copy.deepcopy(parent2)
-
-    nodes1 = _collect_nodes(c1)
-    nodes2 = _collect_nodes(c2)
-
-    if len(nodes1) < 2 or len(nodes2) < 2:
-        return c1, c2
-
-    # Pick non-root nodes for swap
-    idx1 = rng.randint(1, len(nodes1) - 1)
-    idx2 = rng.randint(1, len(nodes2) - 1)
-    n1 = nodes1[idx1]
-    n2 = nodes2[idx2]
-
-    # Find parents and replace
-    _replace_child(c1, n1, n2)
-    _replace_child(c2, n2, n1)
-
-    return c1, c2
-
-
-def _replace_child(root: Expr, old: Expr, new: Expr) -> None:
-    """Replace old subtree with new in root (in-place on frozen dataclass via object.__setattr__)."""
-    from ..dsl.expr import UnaryOp, BinaryOp, RollingOp, PairRollingOp, ConditionalOp, LagOp
-
-    if isinstance(root, UnaryOp):
-        if root.child is old:
-            object.__setattr__(root, "child", new)
-        else:
-            _replace_child(root.child, old, new)
-    elif isinstance(root, BinaryOp):
-        if root.left is old:
-            object.__setattr__(root, "left", new)
-        elif root.right is old:
-            object.__setattr__(root, "right", new)
-        else:
-            _replace_child(root.left, old, new)
-            _replace_child(root.right, old, new)
-    elif isinstance(root, RollingOp):
-        if root.child is old:
-            object.__setattr__(root, "child", new)
-        else:
-            _replace_child(root.child, old, new)
-    elif isinstance(root, PairRollingOp):
-        if root.left is old:
-            object.__setattr__(root, "left", new)
-        elif root.right is old:
-            object.__setattr__(root, "right", new)
-        else:
-            _replace_child(root.left, old, new)
-            _replace_child(root.right, old, new)
-    elif isinstance(root, LagOp):
-        if root.child is old:
-            object.__setattr__(root, "child", new)
-        else:
-            _replace_child(root.child, old, new)
-    elif isinstance(root, ConditionalOp):
-        if root.condition_left is old:
-            object.__setattr__(root, "condition_left", new)
-        elif root.condition_right is old:
-            object.__setattr__(root, "condition_right", new)
-        elif root.then_branch is old:
-            object.__setattr__(root, "then_branch", new)
-        elif root.else_branch is old:
-            object.__setattr__(root, "else_branch", new)
-        else:
-            _replace_child(root.condition_left, old, new)
-            _replace_child(root.condition_right, old, new)
-            _replace_child(root.then_branch, old, new)
-            _replace_child(root.else_branch, old, new)
-
-
 class GPEvolver:
     """Runs GP evolution to produce alpha expressions."""
 
@@ -221,24 +143,13 @@ class GPEvolver:
             # Selection (tournament)
             selected = self._tournament_select(pop, fitnesses, len(pop))
 
-            # Crossover + mutation
+            # Mutation only (no crossover — feature subsets require it)
             offspring = []
-            i = 0
-            while i < len(selected) - 1:
-                p1, p2 = selected[i], selected[i + 1]
-                if self.rng.random() < cfg.cx_prob:
-                    c1, c2 = crossover(p1, p2, self.rng)
-                    offspring.extend([c1, c2])
-                else:
-                    offspring.extend([p1, p2])
-                i += 2
-            if i < len(selected):
-                offspring.append(selected[i])
-
-            # Mutation
-            for j in range(len(offspring)):
+            for ind in selected:
                 if self.rng.random() < cfg.mut_prob:
-                    offspring[j] = self.generator.mutate(offspring[j])
+                    offspring.append(self.generator.mutate(ind))
+                else:
+                    offspring.append(ind)
 
             # Enforce depth limit
             offspring = [

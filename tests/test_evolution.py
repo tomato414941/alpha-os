@@ -10,7 +10,6 @@ from alpha_os.evolution.gp import (
     _node_count,
     _ast_signature,
     _jaccard_similarity,
-    crossover,
 )
 from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig
 from alpha_os.evolution.behavior import (
@@ -116,28 +115,6 @@ class TestAstSimilarity:
         a = _ast_signature(BinaryOp("add", Feature("f1"), Feature("f2")))
         b = _ast_signature(UnaryOp("neg", Feature("f3")))
         assert _jaccard_similarity(a, b) < 1.0
-
-
-class TestCrossover:
-    def test_crossover_returns_two_exprs(self):
-        import random
-
-        rng = random.Random(42)
-        p1 = BinaryOp("add", Feature("f1"), Feature("f2"))
-        p2 = BinaryOp("sub", Feature("f3"), Feature("f1"))
-        c1, c2 = crossover(p1, p2, rng)
-        assert isinstance(c1, BinaryOp)
-        assert isinstance(c2, BinaryOp)
-
-    def test_crossover_small_trees(self):
-        import random
-
-        rng = random.Random(42)
-        p1 = Feature("f1")
-        p2 = Feature("f2")
-        c1, c2 = crossover(p1, p2, rng)
-        assert repr(c1) == "f1"
-        assert repr(c2) == "f2"
 
 
 class TestGPEvolver:
