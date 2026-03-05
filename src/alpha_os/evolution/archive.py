@@ -11,11 +11,10 @@ from ..dsl.expr import Expr
 
 @dataclass
 class ArchiveConfig:
-    dims: tuple[int, ...] = (10, 10, 10, 10)
+    dims: tuple[int, ...] = (100, 10, 10)
     ranges: tuple[tuple[float, float], ...] = (
-        (0.0, 1.0),    # corr_to_live_book
+        (0.0, 100.0),  # feature_bucket (hash mod 100)
         (0.0, 100.0),  # holding_half_life (days)
-        (0.0, 2.0),    # turnover
         (1.0, 20.0),   # complexity (node count)
     )
 
