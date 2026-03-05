@@ -551,16 +551,44 @@ archive cells being updated when a better individual arrives.
 | 5 | **Archive dimensions** | **Decided**: 100 (feature_bucket) × 10 (half_life) × 10 (complexity) = 10,000 cells. Resolved together with behavior descriptor redesign (#2). |
 | 6 | **skew_adj parameter k** | Initial value 0.5 (full penalty at \|skewness\| ≥ 1.0). Whether to penalize both directions of skew or only counter-directional. Now applies to cross-cell long_pct distribution skewness, not raw signal skewness. |
 
+#### Implementation Plan
+
+```
+Phase 1 (parallel):
+  ├── Step 1: GP feature subsets + crossover removal
+  │     generator.py: feature_subset param, mutation within subset
+  │     gp.py: remove crossover, mutation-only evolution
+  │
+  ├── Step 2: New behavior descriptor
+  │     behavior.py: feature_hash(100) × half_life(10) × complexity(10)
+  │     archive.py: new ArchiveConfig for 3-axis grid
+  │
+  ├── Step 3: Sanity filter
+  │     archive.py: replace fitness comparison with sanity gate
+  │     (non-constant, NaN < 10%, finite values)
+  │
+  └── Step 4: Two-level aggregation (independent)
+        new module: per-cell sign vote → cross-cell distribution
+        → confidence, skew_adj calculation
+
+Phase 2:
+  └── Step 5: Trader integration
+        trader.py: combine_mode="map_elites" path
+        config.py + default.toml: Path B parameters
+        default remains "consensus" (Path A unchanged)
+```
+
+Each step is one commit with tests passing. Steps 1-3 are sequential
+(each depends on the prior). Step 4 is independent and can be done
+in parallel with Steps 1-3.
+
 #### Status
 
-Path B has a code skeleton (`src/alpha_os/voting/`) from an earlier
-voting-based design. The architecture has evolved to MAP-Elites +
-distributional sizing as described above. The voting modules will be
-replaced or repurposed during implementation.
-
-Existing MAP-Elites code (`src/alpha_os/evolution/archive.py`,
-`behavior.py`) provides the foundation. GP code (`gp.py`) needs
-modification to support feature subsets and remove crossover.
+Design complete. Awaiting implementation approval. Existing code:
+- `src/alpha_os/voting/` — earlier voting skeleton, will be replaced
+- `src/alpha_os/evolution/archive.py` — MAP-Elites foundation
+- `src/alpha_os/evolution/behavior.py` — behavior descriptor (needs redesign)
+- `src/alpha_os/evolution/gp.py` — GP with crossover (needs modification)
 
 ## Paper Trading
 
