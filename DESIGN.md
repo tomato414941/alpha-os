@@ -14,7 +14,7 @@ instructions that defines a strategy. The full set of alphas forms an
 ecosystem of coexisting genomes that compete for influence.
 
 - **Genome** = one alpha's DSL expression. A self-contained blueprint, not
-  a living thing. Crossover recombines two genomes into offspring.
+  a living thing. Mutation creates offspring within the same feature subset.
 - **Ecosystem** = all adopted genomes. The portfolio is the aggregate
   output of the ecosystem, not any single genome.
 - **Niche** = a region of the strategy space (MAP-Elites). Each niche
@@ -88,12 +88,17 @@ Allowed window sizes: 5, 10, 20, 30, 60 days.
 ### Evolution
 
 Expressions evolve via GP (population=200, generations=30):
-- **Crossover** (50%): subtree swap between two parents
 - **Mutation** (30%): swap feature, change window, or replace operator
 - **Selection**: tournament (size=3) with elitism
 - **Bloat control**: fitness penalty of 0.01 × node_count, max depth=3
-- **Quality-diversity**: MAP-Elites archive with 4D behavior descriptor
-  (correlation, holding half-life, turnover, complexity)
+- **Feature subsets**: each evolution round uses a random subset of K=27
+  features (√753 ≈ 27), ensuring diversity across alphas
+- **Quality-diversity**: MAP-Elites archive with 3D behavior descriptor
+  (feature_bucket mod 100, holding half-life, complexity) → 10,000 cells
+
+Crossover was removed: it is incompatible with feature subsets (parent
+expressions reference different feature sets) and contributed little value
+with large populations of similar alphas.
 
 ## Key Insight: Adaptive Market Hypothesis
 
@@ -555,40 +560,46 @@ archive cells being updated when a better individual arrives.
 
 ```
 Phase 1 (parallel):
-  ├── Step 1: GP feature subsets + crossover removal
-  │     generator.py: feature_subset param, mutation within subset
-  │     gp.py: remove crossover, mutation-only evolution
+  ├── Step 1: GP feature subsets + crossover removal          ✅
+  │     generator.py: with_random_subset(), feature_subset param
+  │     gp.py: mutation-only evolution, generator injection
   │
-  ├── Step 2: New behavior descriptor
+  ├── Step 2: New behavior descriptor                         ✅
   │     behavior.py: feature_hash(100) × half_life(10) × complexity(10)
   │     archive.py: new ArchiveConfig for 3-axis grid
   │
-  ├── Step 3: Sanity filter
-  │     archive.py: replace fitness comparison with sanity gate
+  ├── Step 3: Sanity filter                                   ✅
+  │     archive.py: add_if_empty() with passes_sanity_filter()
   │     (non-constant, NaN < 10%, finite values)
   │
-  └── Step 4: Two-level aggregation (independent)
-        new module: per-cell sign vote → cross-cell distribution
-        → confidence, skew_adj calculation
+  └── Step 4: Two-level aggregation                           ✅
+        voting/ensemble.py: per-cell sign vote → cross-cell distribution
+        → confidence, skew_adj, direction calculation
 
 Phase 2:
-  └── Step 5: Trader integration
-        trader.py: combine_mode="map_elites" path
-        config.py + default.toml: Path B parameters
-        default remains "consensus" (Path A unchanged)
+  ├── Step 5: Trader integration                              ✅
+  │     trader.py: combine_mode="map_elites" path
+  │     config.py + default.toml: Path B parameters
+  │     default remains "consensus" (Path A unchanged)
+  │
+  └── Step 6: Evo daemon MAP-Elites mode                      ✅
+        daemon/evo.py: evo_mode="map_elites" round with feature subsets
+        archive.py: SQLite persistence (save_to_db / load_from_db)
 ```
 
-Each step is one commit with tests passing. Steps 1-3 are sequential
-(each depends on the prior). Step 4 is independent and can be done
-in parallel with Steps 1-3.
+All steps completed with tests passing (508 tests). Each step is one
+commit. Default config remains "consensus" / "legacy" (Path A unchanged).
 
 #### Status
 
-Design complete. Awaiting implementation approval. Existing code:
-- `src/alpha_os/voting/` — earlier voting skeleton, will be replaced
-- `src/alpha_os/evolution/archive.py` — MAP-Elites foundation
-- `src/alpha_os/evolution/behavior.py` — behavior descriptor (needs redesign)
-- `src/alpha_os/evolution/gp.py` — GP with crossover (needs modification)
+**Implementation complete** (2026-03-05). Key files:
+- `src/alpha_os/dsl/generator.py` — `with_random_subset()` for feature bagging
+- `src/alpha_os/evolution/gp.py` — mutation-only GP, generator injection
+- `src/alpha_os/evolution/behavior.py` — 3D behavior descriptor (feature_bucket, half_life, complexity)
+- `src/alpha_os/evolution/archive.py` — MAP-Elites grid + `add_if_empty()` + SQLite persistence
+- `src/alpha_os/voting/ensemble.py` — two-level ensemble aggregation
+- `src/alpha_os/paper/trader.py` — `combine_mode="map_elites"` path
+- `src/alpha_os/daemon/evo.py` — `evo_mode="map_elites"` round with archive persistence
 
 ## Paper Trading
 
