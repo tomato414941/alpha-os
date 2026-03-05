@@ -61,13 +61,25 @@ class PaperCycleResult:
     n_alphas_active: int
     n_alphas_evaluated: int
     order_failures: int = 0
+    strategic_signal: float | None = None
+    regime_adjusted_signal: float | None = None
+    tactical_adjusted_signal: float | None = None
+    final_signal: float | None = None
 
 
 @dataclass
 class PredictionOutput:
     combined_signal: float
-    adjusted_signal: float
+    strategic_signal: float
+    regime_adjusted_signal: float
+    tactical_adjusted_signal: float
+    final_signal: float
     dd_scale: float
+
+    @property
+    def adjusted_signal(self) -> float:
+        """Backward-compatible alias for the final post-tactical signal."""
+        return self.final_signal
 
 
 @dataclass
@@ -276,6 +288,10 @@ class Trader:
         skip_lifecycle: bool,
     ) -> PredictionOutput:
         """Prediction layer: combine alpha signals into an adjusted portfolio signal."""
+        strategic_signal = 0.0
+        regime_adjusted_signal = 0.0
+        tactical_adjusted_signal = 0.0
+        final_signal = 0.0
         use_map_elites = self.config.paper.combine_mode == "map_elites"
         if use_map_elites:
             pass  # diversity not needed — cell structure handles it
@@ -313,8 +329,8 @@ class Trader:
 
             cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
             ens = ensemble_sizing(cell_long_pcts)
-            adjusted = ens.direction * ens.confidence * ens.skew_adj * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
+            strategic_signal = ens.direction * ens.confidence * ens.skew_adj * dd_s
+            strategic_signal = float(np.clip(strategic_signal, -1, 1))
             combined = ens.direction * ens.confidence * ens.skew_adj
             logger.info(
                 "MAP-Elites: dir=%.0f conf=%.3f skew=%.3f cells=%d/%d μ=%.3f σ=%.3f dd=%.2f",
@@ -326,8 +342,8 @@ class Trader:
             vote_result = vote_combine(
                 alpha_signals, self.forward_tracker, registry_records,
             )
-            adjusted = vote_result.direction * vote_result.confidence * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
+            strategic_signal = vote_result.direction * vote_result.confidence * dd_s
+            strategic_signal = float(np.clip(strategic_signal, -1, 1))
             combined = vote_result.direction * vote_result.confidence
             logger.info(
                 "Voting: dir=%.0f conf=%.3f voters=%d long=%.0f%% short=%.0f%% dd=%.2f",
@@ -352,15 +368,17 @@ class Trader:
 
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
-            adjusted = float(np.sign(sig_mean)) * consensus * dd_s
-            adjusted = float(np.clip(adjusted, -1, 1))
+            strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
+            strategic_signal = float(np.clip(strategic_signal, -1, 1))
             logger.info(
                 "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
                 dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
             )
         else:
             combined = 0.0
-            adjusted = 0.0
+            strategic_signal = 0.0
+
+        regime_adjusted_signal = strategic_signal
 
         if self.config.regime.enabled and len(recent_returns) >= self.config.regime.long_window:
             regime = RegimeDetector(
@@ -372,27 +390,42 @@ class Trader:
                     self.config.regime.drift_position_scale_min,
                     1.0 - regime.drift_score,
                 )
-                adjusted *= scale
+                regime_adjusted_signal *= scale
                 logger.info(
                     "Regime drift detected: score=%.3f vol=%s trend=%s, scale=%.2f",
                     regime.drift_score, regime.current_vol_regime,
                     regime.trend_regime, scale,
                 )
 
+        tactical_adjusted_signal = regime_adjusted_signal
+        final_signal = regime_adjusted_signal
         if self.tactical is not None:
             try:
-                tac = self.tactical.run_cycle(strategic_bias=adjusted)
-                adjusted = tac.combined_signal
+                tac = self.tactical.run_cycle(strategic_bias=regime_adjusted_signal)
+                tactical_adjusted_signal = tac.combined_signal
+                final_signal = tac.combined_signal
                 logger.info(
                     "Tactical: score=%.3f, combined=%.3f (was %.3f)",
-                    tac.tactical_score, tac.combined_signal, adjusted,
+                    tac.tactical_score, tac.combined_signal, regime_adjusted_signal,
                 )
             except Exception:
                 logger.warning("Tactical cycle failed — using strategic signal only")
 
+        logger.info(
+            "Signal stages: raw=%.4f strategic=%.4f regime=%.4f tactical=%.4f final=%.4f",
+            combined,
+            strategic_signal,
+            regime_adjusted_signal,
+            tactical_adjusted_signal,
+            final_signal,
+        )
+
         return PredictionOutput(
             combined_signal=float(combined),
-            adjusted_signal=float(adjusted),
+            strategic_signal=float(strategic_signal),
+            regime_adjusted_signal=float(regime_adjusted_signal),
+            tactical_adjusted_signal=float(tactical_adjusted_signal),
+            final_signal=float(final_signal),
             dd_scale=float(dd_s),
         )
 
@@ -655,7 +688,7 @@ class Trader:
 
         # 5. Allocation layer: adjusted signal -> target portfolio
         plan = self._build_allocation_plan(
-            adjusted_signal=prediction.adjusted_signal,
+            adjusted_signal=prediction.final_signal,
             prev_value=prev_value,
             today_date=today_date,
         )
@@ -678,6 +711,10 @@ class Trader:
             daily_pnl=daily_pnl,
             daily_return=daily_return,
             combined_signal=prediction.combined_signal,
+            strategic_signal=prediction.strategic_signal,
+            regime_adjusted_signal=prediction.regime_adjusted_signal,
+            tactical_adjusted_signal=prediction.tactical_adjusted_signal,
+            final_signal=prediction.final_signal,
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
         )
@@ -713,6 +750,10 @@ class Trader:
             n_alphas_active=len(active),
             n_alphas_evaluated=n_evaluated,
             order_failures=order_failures,
+            strategic_signal=prediction.strategic_signal,
+            regime_adjusted_signal=prediction.regime_adjusted_signal,
+            tactical_adjusted_signal=prediction.tactical_adjusted_signal,
+            final_signal=prediction.final_signal,
         )
 
     def print_status(self) -> None:

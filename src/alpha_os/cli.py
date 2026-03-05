@@ -562,7 +562,15 @@ def _print_paper_result(result) -> None:
     print(f"\n{'='*60}")
     print(f"Paper Trading Cycle: {result.date}")
     print(f"{'='*60}")
-    print(f"  Signal:     {result.combined_signal:+.4f}")
+    print(f"  Signal Raw: {result.combined_signal:+.4f}")
+    if result.strategic_signal is not None:
+        print(f"  Signal L3:  {result.strategic_signal:+.4f}")
+    if result.regime_adjusted_signal is not None:
+        print(f"  Signal Reg: {result.regime_adjusted_signal:+.4f}")
+    if result.tactical_adjusted_signal is not None:
+        print(f"  Signal L2:  {result.tactical_adjusted_signal:+.4f}")
+    if result.final_signal is not None:
+        print(f"  Signal Fin: {result.final_signal:+.4f}")
     print(f"  Risk Scale: DD={result.dd_scale:.2f} Vol={result.vol_scale:.2f}")
     print(f"  Trades:     {len(result.fills)}")
     for f in result.fills:

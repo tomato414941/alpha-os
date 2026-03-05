@@ -1,6 +1,8 @@
 """Tests for paper trading — tracker persistence and trader orchestration."""
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 
 from alpha_os.execution.executor import Fill
@@ -19,6 +21,10 @@ class TestPaperPortfolioTracker:
             daily_pnl=50.0,
             daily_return=0.005,
             combined_signal=0.5,
+            strategic_signal=0.4,
+            regime_adjusted_signal=0.35,
+            tactical_adjusted_signal=0.45,
+            final_signal=0.45,
             dd_scale=1.0,
             vol_scale=0.9,
         )
@@ -30,10 +36,63 @@ class TestPaperPortfolioTracker:
         assert loaded.cash == 9000.0
         assert loaded.positions == {"btc_ohlcv": 0.01}
         assert loaded.portfolio_value == 10000.0
+        assert loaded.strategic_signal == pytest.approx(0.4)
+        assert loaded.regime_adjusted_signal == pytest.approx(0.35)
+        assert loaded.tactical_adjusted_signal == pytest.approx(0.45)
+        assert loaded.final_signal == pytest.approx(0.45)
 
         by_date = tracker.get_snapshot("2026-01-01")
         assert by_date is not None
         assert by_date.daily_pnl == 50.0
+        tracker.close()
+
+    def test_snapshot_signal_stage_migration(self, tmp_path):
+        db = tmp_path / "legacy.db"
+        conn = sqlite3.connect(db)
+        conn.execute("""
+            CREATE TABLE portfolio_snapshots (
+                date TEXT PRIMARY KEY,
+                cash REAL NOT NULL,
+                positions_json TEXT NOT NULL,
+                portfolio_value REAL NOT NULL,
+                daily_pnl REAL NOT NULL,
+                daily_return REAL NOT NULL,
+                combined_signal REAL NOT NULL,
+                dd_scale REAL NOT NULL,
+                vol_scale REAL NOT NULL,
+                recorded_at REAL NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+        tracker = PaperPortfolioTracker(db)
+        columns = {
+            row[1] for row in tracker._conn.execute("PRAGMA table_info(portfolio_snapshots)")
+        }
+        assert "strategic_signal" in columns
+        assert "regime_adjusted_signal" in columns
+        assert "tactical_adjusted_signal" in columns
+        assert "final_signal" in columns
+
+        tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-01-02",
+            cash=9100.0,
+            positions={"btc_ohlcv": 0.02},
+            portfolio_value=10050.0,
+            daily_pnl=50.0,
+            daily_return=0.005,
+            combined_signal=0.3,
+            strategic_signal=0.4,
+            regime_adjusted_signal=0.38,
+            tactical_adjusted_signal=0.41,
+            final_signal=0.41,
+            dd_scale=1.0,
+            vol_scale=1.0,
+        ))
+        loaded = tracker.get_last_snapshot()
+        assert loaded is not None
+        assert loaded.final_signal == pytest.approx(0.41)
         tracker.close()
 
     def test_get_returns(self, tmp_path):
@@ -153,6 +212,22 @@ class TestPaperPortfolioTracker:
         ))
         assert tracker.count_consecutive_no_fill_cycles() == 2
         tracker.close()
+
+
+def test_prediction_output_adjusted_signal_alias():
+    """adjusted_signal remains a backward-compatible alias for final_signal."""
+    from alpha_os.paper.trader import PredictionOutput
+
+    result = PredictionOutput(
+        combined_signal=0.3,
+        strategic_signal=0.4,
+        regime_adjusted_signal=0.35,
+        tactical_adjusted_signal=0.5,
+        final_signal=0.5,
+        dd_scale=1.0,
+    )
+
+    assert result.adjusted_signal == pytest.approx(0.5)
 
 
 class TestRegistryTopTrading:

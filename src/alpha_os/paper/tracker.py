@@ -28,6 +28,10 @@ class PortfolioSnapshot:
     combined_signal: float
     dd_scale: float
     vol_scale: float
+    strategic_signal: float | None = None
+    regime_adjusted_signal: float | None = None
+    tactical_adjusted_signal: float | None = None
+    final_signal: float | None = None
 
 
 @dataclass
@@ -67,6 +71,10 @@ class PaperPortfolioTracker:
                 daily_pnl REAL NOT NULL,
                 daily_return REAL NOT NULL,
                 combined_signal REAL NOT NULL,
+                strategic_signal REAL,
+                regime_adjusted_signal REAL,
+                tactical_adjusted_signal REAL,
+                final_signal REAL,
                 dd_scale REAL NOT NULL,
                 vol_scale REAL NOT NULL,
                 recorded_at REAL NOT NULL
@@ -91,7 +99,29 @@ class PaperPortfolioTracker:
                 PRIMARY KEY (date, alpha_id)
             );
         """)
+        self._migrate_snapshot_columns()
         self._migrate_fills_columns()
+
+    def _migrate_snapshot_columns(self) -> None:
+        """Add signal stage columns if missing (existing DB migration)."""
+        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(portfolio_snapshots)")}
+        if "strategic_signal" not in existing:
+            self._conn.execute(
+                "ALTER TABLE portfolio_snapshots ADD COLUMN strategic_signal REAL"
+            )
+        if "regime_adjusted_signal" not in existing:
+            self._conn.execute(
+                "ALTER TABLE portfolio_snapshots ADD COLUMN regime_adjusted_signal REAL"
+            )
+        if "tactical_adjusted_signal" not in existing:
+            self._conn.execute(
+                "ALTER TABLE portfolio_snapshots ADD COLUMN tactical_adjusted_signal REAL"
+            )
+        if "final_signal" not in existing:
+            self._conn.execute(
+                "ALTER TABLE portfolio_snapshots ADD COLUMN final_signal REAL"
+            )
+        self._conn.commit()
 
     def _migrate_fills_columns(self) -> None:
         """Add slippage_bps and latency_ms columns if missing (existing DB migration)."""
@@ -110,8 +140,10 @@ class PaperPortfolioTracker:
         self._conn.execute(
             """INSERT OR REPLACE INTO portfolio_snapshots
             (date, cash, positions_json, portfolio_value, daily_pnl,
-             daily_return, combined_signal, dd_scale, vol_scale, recorded_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+             daily_return, combined_signal, strategic_signal,
+             regime_adjusted_signal, tactical_adjusted_signal, final_signal,
+             dd_scale, vol_scale, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 snapshot.date,
                 snapshot.cash,
@@ -120,6 +152,10 @@ class PaperPortfolioTracker:
                 snapshot.daily_pnl,
                 snapshot.daily_return,
                 snapshot.combined_signal,
+                snapshot.strategic_signal,
+                snapshot.regime_adjusted_signal,
+                snapshot.tactical_adjusted_signal,
+                snapshot.final_signal,
                 snapshot.dd_scale,
                 snapshot.vol_scale,
                 time.time(),
@@ -323,6 +359,7 @@ class PaperPortfolioTracker:
 
     @staticmethod
     def _row_to_snapshot(row: sqlite3.Row) -> PortfolioSnapshot:
+        keys = set(row.keys())
         return PortfolioSnapshot(
             date=row["date"],
             cash=row["cash"],
@@ -331,6 +368,18 @@ class PaperPortfolioTracker:
             daily_pnl=row["daily_pnl"],
             daily_return=row["daily_return"],
             combined_signal=row["combined_signal"],
+            strategic_signal=row["strategic_signal"] if "strategic_signal" in keys else None,
+            regime_adjusted_signal=(
+                row["regime_adjusted_signal"]
+                if "regime_adjusted_signal" in keys
+                else None
+            ),
+            tactical_adjusted_signal=(
+                row["tactical_adjusted_signal"]
+                if "tactical_adjusted_signal" in keys
+                else None
+            ),
+            final_signal=row["final_signal"] if "final_signal" in keys else None,
             dd_scale=row["dd_scale"],
             vol_scale=row["vol_scale"],
         )

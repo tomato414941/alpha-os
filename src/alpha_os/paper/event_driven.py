@@ -125,9 +125,14 @@ class EventDrivenTrader:
             if self._pre_cycle_hook is not None:
                 self._pre_cycle_hook()  # type: ignore[operator]
             result = self.trader.run_cycle()
+            signal_value = (
+                result.final_signal
+                if result.final_signal is not None
+                else result.combined_signal
+            )
             logger.info(
                 "Cycle [%s]: signal=%.4f, PV=$%.2f, PnL=$%.2f",
-                reason, result.combined_signal,
+                reason, signal_value,
                 result.portfolio_value, result.daily_pnl,
             )
             return result

@@ -97,6 +97,38 @@ def test_live_parser():
     assert args.capital == 500.0
 
 
+def test_print_paper_result_shows_signal_stages(capsys):
+    """CLI output should show raw and stage-adjusted signals."""
+    from alpha_os.cli import _print_paper_result
+    from alpha_os.paper.trader import PaperCycleResult
+
+    result = PaperCycleResult(
+        date="2026-03-05T21:52:58",
+        combined_signal=0.3005,
+        fills=[],
+        portfolio_value=9976.90,
+        daily_pnl=0.65,
+        daily_return=0.00006,
+        dd_scale=1.0,
+        vol_scale=1.0,
+        n_alphas_active=30,
+        n_alphas_evaluated=150,
+        strategic_signal=0.4210,
+        regime_adjusted_signal=0.4210,
+        tactical_adjusted_signal=0.5420,
+        final_signal=0.5420,
+    )
+
+    _print_paper_result(result)
+    output = capsys.readouterr().out
+
+    assert "Signal Raw: +0.3005" in output
+    assert "Signal L3:  +0.4210" in output
+    assert "Signal Reg: +0.4210" in output
+    assert "Signal L2:  +0.5420" in output
+    assert "Signal Fin: +0.5420" in output
+
+
 # ---------------------------------------------------------------------------
 # Position display filtering
 # ---------------------------------------------------------------------------
