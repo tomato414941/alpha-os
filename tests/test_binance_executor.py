@@ -55,6 +55,10 @@ def _mock_exchange():
         "bids": [[49990.0, 2.0], [49980.0, 3.0], [49970.0, 5.0]],
     }
     ex.amount_to_precision.side_effect = lambda sym, qty: str(round(qty, 8))
+    ex.market.return_value = {
+        "limits": {"cost": {"min": 10.0}},
+        "info": {"filters": [{"filterType": "MIN_NOTIONAL", "minNotional": "10"}]},
+    }
     ex.create_market_buy_order.return_value = {
         "id": "buy-001",
         "average": 50002.0,
@@ -79,10 +83,20 @@ def _make_executor(exchange=None, initial_capital=10000.0):
     executor._max_slippage_bps = 10.0
     executor._max_book_fraction = 0.1
     executor._optimizer = None
+    executor._min_notional_buffer = 1.02
+    executor._min_notional_cache = {}
     executor._managed_cash = initial_capital
     executor._managed_positions = {}
     executor._initial_capital = initial_capital
     return executor
+
+
+class _AlwaysSplitOptimizer:
+    def optimal_execution_window(self, side: str) -> bool:
+        return True
+
+    def split_order(self, qty: float) -> list[float]:
+        return [qty / 5] * 5
 
 
 # ---------------------------------------------------------------------------
@@ -230,6 +244,29 @@ def test_sell_order_exceeds_book_depth():
     fill = ex.submit_order(Order(symbol="BTC", side="sell", qty=1.5))
     assert fill is None
     mock_ex.create_market_sell_order.assert_not_called()
+
+
+def test_order_below_min_notional_skipped_before_submit():
+    mock_ex = _mock_exchange()
+    ex = _make_executor(mock_ex)
+    fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.0001))
+    assert fill is None
+    mock_ex.create_market_buy_order.assert_not_called()
+
+
+def test_split_order_reduced_to_single_when_slices_below_min_notional():
+    mock_ex = _mock_exchange()
+    ex = _make_executor(mock_ex)
+    ex._optimizer = _AlwaysSplitOptimizer()
+    ex._managed_positions["BTC"] = 1.0
+
+    fill = ex.submit_order(Order(symbol="BTC", side="sell", qty=0.000315))
+
+    assert fill is not None
+    assert fill.qty > 0
+    # If 5-way split stayed in place, each slice would violate min notional.
+    # Executor should collapse to a single order.
+    mock_ex.create_market_sell_order.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

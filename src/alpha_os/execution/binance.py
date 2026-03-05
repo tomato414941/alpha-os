@@ -5,6 +5,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 from .executor import Executor, Order, Fill
 
@@ -87,6 +88,7 @@ class BinanceExecutor(Executor):
         max_book_fraction: float = 0.1,
         optimizer: object | None = None,
         initial_capital: float = 10000.0,
+        min_notional_buffer: float = 1.02,
     ) -> None:
         self._exchange = create_spot_exchange(testnet=testnet)
         self._testnet = testnet
@@ -94,10 +96,174 @@ class BinanceExecutor(Executor):
         self._max_slippage_bps = max_slippage_bps
         self._max_book_fraction = max_book_fraction
         self._optimizer = optimizer
+        self._min_notional_buffer = min_notional_buffer
+        self._min_notional_cache: dict[str, float | None] = {}
         # Managed state: tracks only alpha-os positions, not full exchange
         self._managed_cash: float = initial_capital
         self._managed_positions: dict[str, float] = {}
         self._initial_capital = initial_capital
+
+    def _get_market_info(self, market: str) -> dict[str, Any] | None:
+        market_fn = getattr(self._exchange, "market", None)
+        if callable(market_fn):
+            try:
+                info = market_fn(market)
+                if isinstance(info, dict):
+                    return info
+            except Exception:
+                pass
+
+        load_markets_fn = getattr(self._exchange, "load_markets", None)
+        if callable(load_markets_fn):
+            try:
+                markets = load_markets_fn()
+                if isinstance(markets, dict):
+                    info = markets.get(market)
+                    if isinstance(info, dict):
+                        return info
+            except Exception:
+                pass
+
+        markets_attr = getattr(self._exchange, "markets", None)
+        if isinstance(markets_attr, dict):
+            info = markets_attr.get(market)
+            if isinstance(info, dict):
+                return info
+        return None
+
+    @staticmethod
+    def _extract_min_notional(market_info: dict[str, Any]) -> float | None:
+        candidates: list[float] = []
+
+        limits = market_info.get("limits", {})
+        if isinstance(limits, dict):
+            cost = limits.get("cost", {})
+            if isinstance(cost, dict):
+                cost_min = cost.get("min")
+                if cost_min is not None:
+                    try:
+                        value = float(cost_min)
+                        if value > 0:
+                            candidates.append(value)
+                    except (TypeError, ValueError):
+                        pass
+
+        info = market_info.get("info", {})
+        if isinstance(info, dict):
+            filters = info.get("filters", [])
+            if isinstance(filters, list):
+                for f in filters:
+                    if not isinstance(f, dict):
+                        continue
+                    f_type = str(f.get("filterType", "")).upper()
+                    if f_type not in {"MIN_NOTIONAL", "NOTIONAL"}:
+                        continue
+                    raw = f.get("minNotional") or f.get("notional")
+                    if raw is None:
+                        continue
+                    try:
+                        value = float(raw)
+                        if value > 0:
+                            candidates.append(value)
+                    except (TypeError, ValueError):
+                        pass
+
+        if not candidates:
+            return None
+        return max(candidates)
+
+    def _min_notional(self, market: str) -> float | None:
+        if market in self._min_notional_cache:
+            return self._min_notional_cache[market]
+
+        market_info = self._get_market_info(market)
+        if market_info is None:
+            self._min_notional_cache[market] = None
+            return None
+
+        min_notional = self._extract_min_notional(market_info)
+        self._min_notional_cache[market] = min_notional
+        return min_notional
+
+    def _meets_notional(self, market: str, qty: float, ref_price: float) -> bool:
+        if qty <= 0 or ref_price <= 0:
+            return False
+        min_notional = self._min_notional(market)
+        if min_notional is None:
+            return True
+
+        required = min_notional * self._min_notional_buffer
+        actual = qty * ref_price
+        if actual >= required:
+            return True
+
+        logger.warning(
+            "Order below min notional for %s: $%.4f < $%.4f (qty=%.8f, price=%.2f)",
+            market,
+            actual,
+            required,
+            qty,
+            ref_price,
+        )
+        return False
+
+    def _adjust_slices_for_notional(
+        self,
+        order: Order,
+        slices: list[float],
+        ref_price: float,
+    ) -> list[float]:
+        if len(slices) <= 1 or ref_price <= 0:
+            return slices
+
+        market = self._market_symbol(order.symbol)
+        min_notional = self._min_notional(market)
+        if min_notional is None:
+            return slices
+
+        total_notional = order.qty * ref_price
+        required_slice_notional = min_notional * self._min_notional_buffer
+        if total_notional < required_slice_notional:
+            logger.warning(
+                "Total order notional too small for %s: $%.4f < $%.4f",
+                market,
+                total_notional,
+                required_slice_notional,
+            )
+            return [order.qty]
+
+        max_valid_slices = int(total_notional // required_slice_notional)
+        target_slices = max(1, min(len(slices), max_valid_slices))
+        if target_slices == len(slices):
+            return slices
+
+        if target_slices == 1:
+            logger.info(
+                "Reducing split for %s %s: %d -> 1 due to min notional",
+                order.side,
+                order.symbol,
+                len(slices),
+            )
+            return [order.qty]
+
+        slice_qty = order.qty / target_slices
+        logger.info(
+            "Reducing split for %s %s: %d -> %d due to min notional",
+            order.side,
+            order.symbol,
+            len(slices),
+            target_slices,
+        )
+        return [slice_qty] * target_slices
+
+    def _best_price(self, market: str, side: str) -> float | None:
+        try:
+            orderbook = self._exchange.fetch_order_book(market, limit=5)
+            if side == "buy":
+                return orderbook["asks"][0][0] if orderbook["asks"] else None
+            return orderbook["bids"][0][0] if orderbook["bids"] else None
+        except Exception:
+            return None
 
     def _market_symbol(self, symbol: str) -> str:
         if symbol in self._symbol_map:
@@ -137,6 +303,10 @@ class BinanceExecutor(Executor):
                 )
 
             slices = self._optimizer.split_order(order.qty)
+            market = self._market_symbol(order.symbol)
+            ref_price = self._best_price(market, order.side)
+            if ref_price is not None:
+                slices = self._adjust_slices_for_notional(order, slices, ref_price)
             if len(slices) > 1:
                 fill = self._execute_slices(order, slices)
                 if fill is not None:
@@ -283,6 +453,8 @@ class BinanceExecutor(Executor):
         qty = float(self._exchange.amount_to_precision(market, order.qty))
         if qty <= 0:
             return None
+        if not self._meets_notional(market, qty, best_ask):
+            return None
 
         t0 = time.perf_counter()
         result = self._exchange.create_market_buy_order(market, qty)
@@ -326,6 +498,8 @@ class BinanceExecutor(Executor):
 
         qty = float(self._exchange.amount_to_precision(market, order.qty))
         if qty <= 0:
+            return None
+        if not self._meets_notional(market, qty, best_bid):
             return None
 
         t0 = time.perf_counter()
