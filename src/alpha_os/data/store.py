@@ -54,47 +54,48 @@ class DataStore:
         if overlap:
             log.warning("Stale upstream signals: %s", ", ".join(sorted(overlap)))
 
-        # Determine per-signal max date for incremental sync
-        max_dates: dict[str, str] = {}
+        # Determine per-signal max date and fetch each since-bucket separately.
+        # A single stale signal should not force a full re-fetch of every signal.
+        signals_by_since: dict[str | None, list[str]] = {}
         for name in signals:
             row = self._conn.execute(
                 "SELECT MAX(date) FROM signals WHERE name = ?"
                 " AND COALESCE(resolution, '1d') = ?",
                 (name, resolution),
             ).fetchone()
-            if row[0]:
-                max_dates[name] = row[0]
-
-        # Use earliest max_date as conservative global since
-        global_since = min(max_dates.values()) if max_dates else None
+            since = row[0] if row and row[0] else None
+            signals_by_since.setdefault(since, []).append(name)
 
         api_resolution = resolution if resolution != "1d" else None
-        batch = self._client.get_batch(
-            signals, since=global_since, columns=["timestamp", "value"],
-            resolution=api_resolution,
-        )
-
-        for name, df in batch.items():
-            if df.empty:
-                continue
-
-            rows = []
-            for _, r in df.iterrows():
-                ts = r["timestamp"]
-                val = r["value"]
-                if pd.isna(ts) or pd.isna(val):
-                    continue
-                if resolution == "1d":
-                    date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
-                else:
-                    date_str = str(ts)
-                rows.append((name, date_str, float(val), resolution))
-
-            self._conn.executemany(
-                "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
-                " VALUES (?, ?, ?, ?)",
-                rows,
+        for since, batch_names in signals_by_since.items():
+            batch = self._client.get_batch(
+                batch_names,
+                since=since,
+                columns=["timestamp", "value"],
+                resolution=api_resolution,
             )
+
+            for name, df in batch.items():
+                if df.empty:
+                    continue
+
+                rows = []
+                for _, r in df.iterrows():
+                    ts = r["timestamp"]
+                    val = r["value"]
+                    if pd.isna(ts) or pd.isna(val):
+                        continue
+                    if resolution == "1d":
+                        date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
+                    else:
+                        date_str = str(ts)
+                    rows.append((name, date_str, float(val), resolution))
+
+                self._conn.executemany(
+                    "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
+                    " VALUES (?, ?, ?, ?)",
+                    rows,
+                )
         self._conn.commit()
 
     def get_matrix(

@@ -79,6 +79,42 @@ class TestSyncHourly:
         assert len(rows[0][0]) == 10
         store.close()
 
+    def test_sync_groups_requests_by_signal_max_date(self, tmp_path):
+        mock_client = MagicMock()
+        mock_client.stale_signals.return_value = []
+
+        def fake_get_batch(names, since=None, columns=None, resolution=None):
+            ts = pd.Timestamp("2024-01-06")
+            return {
+                name: pd.DataFrame({"timestamp": [ts], "value": [1.0]})
+                for name in names
+            }
+
+        mock_client.get_batch.side_effect = fake_get_batch
+
+        store = DataStore(tmp_path / "sync_grouped.db", client=mock_client)
+        store._conn.execute(
+            "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+            ("sig_new", "2024-01-05", 10.0, "1d"),
+        )
+        store._conn.execute(
+            "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+            ("sig_old", "1970-01-01", 20.0, "1d"),
+        )
+        store._conn.commit()
+
+        store.sync(["sig_new", "sig_old", "sig_missing"])
+
+        calls = mock_client.get_batch.call_args_list
+        assert len(calls) == 3
+        assert calls[0].kwargs["since"] == "2024-01-05"
+        assert calls[0].args[0] == ["sig_new"]
+        assert calls[1].kwargs["since"] == "1970-01-01"
+        assert calls[1].args[0] == ["sig_old"]
+        assert calls[2].kwargs["since"] is None
+        assert calls[2].args[0] == ["sig_missing"]
+        store.close()
+
 
 class TestGetMatrixHourly:
     def test_get_matrix_hourly(self, store):
