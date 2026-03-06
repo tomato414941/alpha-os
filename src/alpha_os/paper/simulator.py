@@ -41,6 +41,29 @@ class SimulationResult:
     worst_day: tuple[str, float]  # (date, return)
 
 
+def _backfill_signals_to_position_intent(
+    signals: np.ndarray,
+    weights: np.ndarray,
+    *,
+    combine_mode: str,
+    dd_scale: float,
+    vol_scale: float,
+) -> tuple[float, float]:
+    """Return (raw_combined, adjusted_signal) for backfill simulation."""
+    raw_combined = float(np.clip(np.dot(weights, signals), -1.0, 1.0))
+    if combine_mode == "consensus":
+        mean = float(np.dot(weights, signals))
+        centered = signals - mean
+        std = float(np.sqrt(np.dot(weights, centered * centered)))
+        abs_mean = abs(mean)
+        consensus = abs_mean / (abs_mean + std) if (abs_mean + std) > 1e-12 else 0.0
+        adjusted = float(np.sign(mean)) * consensus * dd_scale
+        return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
+
+    adjusted = raw_combined * dd_scale * vol_scale
+    return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
+
+
 def run_backfill(
     asset: str,
     config: Config,
@@ -210,11 +233,10 @@ def run_backfill(
                 weights = compute_weights(t_quality, t_diversity, min_weight=wcfg.min_weight)
                 trading_mask = valid_mask.copy()
                 trading_mask[valid_mask] &= trading_within_valid
-                combined = float(np.clip(
-                    np.dot(weights, signal_matrix[trading_mask, d - 1]), -1, 1,
-                ))
+                selected_signals = signal_matrix[trading_mask, d - 1]
             else:
-                combined = 0.0
+                selected_signals = np.array([], dtype=np.float64)
+                weights = np.array([], dtype=np.float64)
 
             # Risk adjustment
             prev_value = executor.portfolio_value
@@ -222,7 +244,16 @@ def run_backfill(
             recent_rets = np.array(daily_returns_out[-252:]) if daily_returns_out else np.array([])
             dd_s = risk_manager.dd_scale
             vol_s = risk_manager.vol_scale(recent_rets)
-            adjusted = float(np.clip(combined * dd_s * vol_s, -1, 1))
+            if len(selected_signals):
+                _, adjusted = _backfill_signals_to_position_intent(
+                    selected_signals,
+                    weights,
+                    combine_mode=config.paper.combine_mode,
+                    dd_scale=dd_s,
+                    vol_scale=vol_s,
+                )
+            else:
+                adjusted = 0.0
 
             # Execute trade
             dollar_pos = adjusted * prev_value * max_position_pct
