@@ -1,4 +1,4 @@
-"""Backfill simulator — vectorized paper trading over historical dates."""
+"""Replay simulator — vectorized paper trading over historical dates."""
 from __future__ import annotations
 
 import logging
@@ -83,16 +83,16 @@ def _live_like_eval_indices(
     return trading_candidates, dormant, eval_set
 
 
-def _backfill_signals_to_position_intent(
+def _replay_signals_to_position_intent(
     signals: np.ndarray,
     weights: np.ndarray,
     *,
     combine_mode: str,
     dd_scale: float,
     vol_scale: float,
-    sizing_mode: str = "live",
+    sizing_mode: str = "runtime",
 ) -> tuple[float, float]:
-    """Return (raw_combined, adjusted_signal) for backfill simulation."""
+    """Return (raw_combined, adjusted_signal) for replay simulation."""
     raw_combined = float(np.clip(np.dot(weights, signals), -1.0, 1.0))
     if sizing_mode == "raw_mean":
         adjusted = raw_combined * dd_scale
@@ -116,7 +116,7 @@ def _apply_regime_adjustment(
     portfolio_returns: np.ndarray,
     config: Config,
 ) -> float:
-    """Apply the live trader's regime scaling to a backfill signal."""
+    """Apply the runtime trader's regime scaling to a replay signal."""
     if not config.regime.enabled or len(portfolio_returns) < config.regime.long_window:
         return signal
 
@@ -134,15 +134,15 @@ def _apply_regime_adjustment(
     return float(np.clip(signal * scale, -1.0, 1.0))
 
 
-def run_backfill(
+def run_replay(
     asset: str,
     config: Config,
     start_date: str,
     end_date: str,
     registry_db: Path | None = None,
-    sizing_mode: str = "live",
+    sizing_mode: str = "runtime",
 ) -> SimulationResult:
-    """Run vectorized paper trading simulation over a historical date range.
+    """Run vectorized paper trading replay over a historical date range.
 
     Pre-computes all alpha signals once on the full dataset, then iterates
     days using array indexing. This is orders of magnitude faster than
@@ -378,7 +378,7 @@ def run_backfill(
             dd_s = risk_manager.dd_scale
             vol_s = risk_manager.vol_scale(recent_rets)
             if len(selected_signals):
-                _, adjusted = _backfill_signals_to_position_intent(
+                _, adjusted = _replay_signals_to_position_intent(
                     selected_signals,
                     weights,
                     combine_mode=config.paper.combine_mode,

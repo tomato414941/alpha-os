@@ -15,8 +15,8 @@ from ..config import DATA_DIR
 
 logger = logging.getLogger(__name__)
 
-VALIDATION_STATE_PATH = DATA_DIR / "metrics" / "testnet_validation.json"
-VALIDATION_REPORT_PATH = DATA_DIR / "metrics" / "testnet_reports.jsonl"
+READINESS_STATE_PATH = DATA_DIR / "metrics" / "testnet_readiness.json"
+READINESS_REPORT_PATH = DATA_DIR / "metrics" / "testnet_readiness_reports.jsonl"
 
 
 @dataclass
@@ -56,7 +56,7 @@ class DailyReport:
 
 
 @dataclass
-class ValidationState:
+class ReadinessState:
     """Persistent state for Phase 4 readiness tracking."""
 
     consecutive_success_days: int = 0
@@ -68,7 +68,7 @@ class ValidationState:
     passed: bool = False
 
 
-class TestnetValidator:
+class ReadinessChecker:
     """Run post-cycle health checks and track Phase 4 readiness."""
 
     def __init__(
@@ -78,23 +78,23 @@ class TestnetValidator:
         target_days: int = 10,
         max_slippage_bps: float = 50.0,
     ) -> None:
-        self._state_path = state_path or VALIDATION_STATE_PATH
-        self._report_path = report_path or VALIDATION_REPORT_PATH
+        self._state_path = state_path or READINESS_STATE_PATH
+        self._report_path = report_path or READINESS_REPORT_PATH
         self._max_slippage_bps = max_slippage_bps
         self._state = self._load_state()
         self._state.target_days = target_days
 
-    def _load_state(self) -> ValidationState:
+    def _load_state(self) -> ReadinessState:
         if not self._state_path.exists():
-            return ValidationState()
+            return ReadinessState()
         try:
             data = json.loads(self._state_path.read_text())
-            return ValidationState(**{
+            return ReadinessState(**{
                 k: v for k, v in data.items()
-                if k in ValidationState.__dataclass_fields__
+                if k in ReadinessState.__dataclass_fields__
             })
         except (json.JSONDecodeError, TypeError):
-            return ValidationState()
+            return ReadinessState()
 
     def _save_state(self) -> None:
         self._state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -199,7 +199,7 @@ class TestnetValidator:
             s.passed = True
 
     @property
-    def state(self) -> ValidationState:
+    def state(self) -> ReadinessState:
         return self._state
 
     def print_status(self) -> None:

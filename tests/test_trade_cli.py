@@ -1,4 +1,4 @@
-"""Tests for the live CLI command, Trader rename, and Phase 4 features."""
+"""Tests for the trade CLI command, Trader rename, and Phase 4 features."""
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -77,15 +77,15 @@ def test_binance_executor_all_positions():
     assert "ETH" not in positions  # zero position filtered
 
 
-def test_live_parser():
-    """CLI parser accepts live subcommand with correct defaults."""
+def test_trade_parser():
+    """CLI parser accepts trade subcommand with correct defaults."""
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
 
     # Testnet (default)
-    args = parser.parse_args(["live", "--once"])
-    assert args.command == "live"
+    args = parser.parse_args(["trade", "--once"])
+    assert args.command == "trade"
     assert args.once is True
     assert args.real is False
     assert args.capital == 10000.0
@@ -94,10 +94,49 @@ def test_live_parser():
 
     # Real mode
     args = parser.parse_args([
-        "live", "--once", "--real", "--capital", "500",
+        "trade", "--once", "--real", "--capital", "500",
     ])
     assert args.real is True
     assert args.capital == 500.0
+
+
+def test_monitor_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args(["monitor", "--once", "--asset", "BTC"])
+
+    assert args.command == "monitor"
+    assert args.once is True
+    assert args.asset == "BTC"
+
+
+def test_paper_replay_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "paper", "--replay", "--start", "2025-09-01", "--end", "2026-03-05",
+    ])
+
+    assert args.command == "paper"
+    assert args.replay is True
+    assert args.sizing_mode == "runtime"
+
+
+def test_legacy_user_facing_commands_are_rejected():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["live", "--once"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["forward", "--once"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["validator"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["validate-testnet"])
 
 
 def test_rebuild_registry_parser():
@@ -119,15 +158,15 @@ def test_rebuild_registry_parser():
     assert args.dry_run is True
 
 
-def test_normalize_live_config_preserves_requested_profile():
-    from alpha_os.cli import _normalize_live_config
+def test_normalize_trade_config_preserves_requested_profile():
+    from alpha_os.cli import _normalize_trade_config
     from alpha_os.config import Config
 
     cfg = Config.load()
     cfg.paper.combine_mode = "map_elites"
     cfg.regime.enabled = True
 
-    changes = _normalize_live_config(cfg)
+    changes = _normalize_trade_config(cfg)
 
     assert cfg.paper.combine_mode == "map_elites"
     assert cfg.regime.enabled is True

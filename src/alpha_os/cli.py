@@ -7,7 +7,6 @@ import gc
 import logging
 import sys
 import time
-import warnings
 from datetime import date
 
 import numpy as np
@@ -66,8 +65,6 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Use synthetic random-walk data instead of real data")
     evo.add_argument("--eval-window", type=int, default=0,
                     help="Evaluation window in days (0=all data, e.g. 200 for recent)")
-    evo.add_argument("--live", action="store_true",
-                    help="(deprecated — real data is now the default)")
     evo.add_argument("--layer", type=int, default=3, choices=[2, 3],
                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     evo.add_argument("--config", type=str, default=None)
@@ -83,23 +80,21 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Use synthetic random-walk data instead of real data")
     val.add_argument("--eval-window", type=int, default=0,
                     help="Evaluation window in days (0=all data, e.g. 200 for recent)")
-    val.add_argument("--live", action="store_true",
-                    help="(deprecated — real data is now the default)")
     val.add_argument("--layer", type=int, default=3, choices=[2, 3],
                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     val.add_argument("--config", type=str, default=None)
 
-    # forward
-    fwd = sub.add_parser("forward", help="Forward-test adopted alphas on new data")
-    fwd.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    fwd.add_argument("--schedule", action="store_true", help="Run on interval")
-    fwd.add_argument("--summary", action="store_true", help="Print summary and exit")
-    fwd.add_argument("--interval", type=int, default=None,
+    # monitor
+    mon = sub.add_parser("monitor", help="Monitor adopted alphas on new data")
+    mon.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    mon.add_argument("--schedule", action="store_true", help="Run on interval")
+    mon.add_argument("--summary", action="store_true", help="Print summary and exit")
+    mon.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
-    fwd.add_argument("--asset", type=str, default="NVDA")
-    fwd.add_argument("--layer", type=int, default=3, choices=[2, 3],
+    mon.add_argument("--asset", type=str, default="NVDA")
+    mon.add_argument("--layer", type=int, default=3, choices=[2, 3],
                      help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
-    fwd.add_argument("--config", type=str, default=None)
+    mon.add_argument("--config", type=str, default=None)
 
     # paper
     ppr = sub.add_parser("paper", help="Paper trade with adopted alphas")
@@ -108,44 +103,44 @@ def _build_parser() -> argparse.ArgumentParser:
     ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
     ppr.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
-    ppr.add_argument("--backfill", action="store_true",
-                     help="Run historical simulation over date range")
+    ppr.add_argument("--replay", action="store_true",
+                     help="Run historical replay over date range")
     ppr.add_argument("--start", type=str, default=None,
-                     help="Start date for backfill (ISO format, e.g. 2025-06-01)")
+                     help="Start date for replay (ISO format, e.g. 2025-06-01)")
     ppr.add_argument("--end", type=str, default=None,
-                     help="End date for backfill (ISO format, e.g. 2026-02-25)")
-    ppr.add_argument("--sizing-mode", type=str, default="live",
-                     choices=["live", "raw_mean", "compare"],
-                     help="Backfill sizing mode: live logic, raw_mean baseline, or compare both")
+                     help="End date for replay (ISO format, e.g. 2026-02-25)")
+    ppr.add_argument("--sizing-mode", type=str, default="runtime",
+                     choices=["runtime", "raw_mean", "compare"],
+                     help="Replay sizing mode: runtime logic, raw_mean baseline, or compare both")
     ppr.add_argument("--tactical", action="store_true",
                      help="Enable Layer 2 tactical modulation")
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
-    # live
-    liv = sub.add_parser("live", help="Live trade on Binance (testnet by default)")
-    liv.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    liv.add_argument("--schedule", action="store_true", help="Run on interval")
-    liv.add_argument("--summary", action="store_true", help="Print summary and exit")
-    liv.add_argument("--interval", type=int, default=None,
+    # trade
+    trd = sub.add_parser("trade", help="Trade on Binance (testnet by default)")
+    trd.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    trd.add_argument("--schedule", action="store_true", help="Run on interval")
+    trd.add_argument("--summary", action="store_true", help="Print summary and exit")
+    trd.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
-    liv.add_argument("--real", action="store_true",
+    trd.add_argument("--real", action="store_true",
                      help="Use real Binance (default is testnet)")
-    liv.add_argument("--capital", type=float, default=10000.0,
+    trd.add_argument("--capital", type=float, default=10000.0,
                      help="Initial capital for tracking (default: 10000)")
-    liv.add_argument("--asset", type=str, default="BTC")
-    liv.add_argument("--assets", type=str, default=None,
+    trd.add_argument("--asset", type=str, default="BTC")
+    trd.add_argument("--assets", type=str, default=None,
                      help="Comma-separated asset list (e.g. BTC,ETH,SOL)")
-    liv.add_argument("--config", type=str, default=None)
-    liv.add_argument("--evolve-interval", type=int, default=86400,
+    trd.add_argument("--config", type=str, default=None)
+    trd.add_argument("--evolve-interval", type=int, default=86400,
                      help="Alpha evolution interval in seconds (default: 86400=24h, 0=disable)")
-    liv.add_argument("--pop-size", type=int, default=200,
+    trd.add_argument("--pop-size", type=int, default=200,
                      help="GP population size for evolution")
-    liv.add_argument("--generations", type=int, default=30,
+    trd.add_argument("--generations", type=int, default=30,
                      help="GP generations per evolution cycle")
-    liv.add_argument("--event-driven", action="store_true",
+    trd.add_argument("--event-driven", action="store_true",
                      help="Use event-driven execution instead of fixed interval")
-    liv.add_argument("--debounce", type=int, default=None,
+    trd.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
 
     # evo-daemon (Pipeline v2)
@@ -153,10 +148,10 @@ def _build_parser() -> argparse.ArgumentParser:
     evo_d.add_argument("--asset", type=str, default="BTC")
     evo_d.add_argument("--config", type=str, default=None)
 
-    # validator (Pipeline v2)
-    val_d = sub.add_parser("validator", help="Run candidate validation daemon")
-    val_d.add_argument("--asset", type=str, default="BTC")
-    val_d.add_argument("--config", type=str, default=None)
+    # admission-daemon (Pipeline v2)
+    adm_d = sub.add_parser("admission-daemon", help="Run candidate admission daemon")
+    adm_d.add_argument("--asset", type=str, default="BTC")
+    adm_d.add_argument("--config", type=str, default=None)
 
     # lifecycle (Pipeline v2)
     lc_d = sub.add_parser("lifecycle", help="Run daily lifecycle evaluation (oneshot)")
@@ -189,14 +184,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
-    # validate-testnet
-    vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
-    vt.add_argument("--reports", action="store_true", help="Show all daily reports")
-    vt.add_argument("--slippage", action="store_true", help="Show slippage distribution")
-    vt.add_argument("--latency", action="store_true", help="Show fill latency distribution")
-    vt.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
-    vt.add_argument("--asset", type=str, default="BTC")
-    vt.add_argument("--config", type=str, default=None)
+    # testnet-readiness
+    tnr = sub.add_parser("testnet-readiness", help="Check Phase 4 testnet readiness status")
+    tnr.add_argument("--reports", action="store_true", help="Show all daily reports")
+    tnr.add_argument("--slippage", action="store_true", help="Show slippage distribution")
+    tnr.add_argument("--latency", action="store_true", help="Show fill latency distribution")
+    tnr.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
+    tnr.add_argument("--asset", type=str, default="BTC")
+    tnr.add_argument("--config", type=str, default=None)
 
     return parser
 
@@ -208,24 +203,14 @@ def _load_config(config_path: str | None) -> Config:
     return Config.load()
 
 
-def _normalize_live_config(cfg: Config) -> list[str]:
-    """Live runtime now respects the configured profile as-is."""
+def _normalize_trade_config(cfg: Config) -> list[str]:
+    """Trade runtime now respects the configured profile as-is."""
     return []
 
 
 def _make_features(asset: str) -> list[str]:
     """Feature names available for alpha generation."""
     return build_feature_list(asset)
-
-
-def _warn_deprecated_live(args: argparse.Namespace) -> None:
-    if getattr(args, "live", False):
-        warnings.warn(
-            "--live is deprecated. Real data is now the default. "
-            "Use --synthetic for synthetic data.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
 
 
 def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np.ndarray]:
@@ -328,7 +313,6 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
 
 def cmd_backtest(args: argparse.Namespace) -> None:
-    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
     gen = AlphaGenerator(features=features, seed=args.seed)
@@ -413,7 +397,6 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 
 
 def cmd_evolve(args: argparse.Namespace) -> None:
-    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     layer = getattr(args, "layer", 3)
     if layer == 2:
@@ -497,7 +480,6 @@ def cmd_evolve(args: argparse.Namespace) -> None:
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
-    _warn_deprecated_live(args)
     cfg = _load_config(args.config)
     layer = getattr(args, "layer", 3)
 
@@ -551,7 +533,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
     print(f"\n  Gate (OOS Sharpe >= {cfg.validation.oos_sharpe_min}): {'PASS' if passed else 'FAIL'}")
 
 
-def cmd_forward(args: argparse.Namespace) -> None:
+def cmd_monitor(args: argparse.Namespace) -> None:
     from alpha_os.forward.runner import ForwardRunner, ForwardConfig
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
@@ -624,8 +606,8 @@ def cmd_paper(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     interval = args.interval or cfg.forward.check_interval
 
-    if args.backfill:
-        _cmd_paper_backfill(args, cfg)
+    if args.replay:
+        _cmd_paper_replay(args, cfg)
         return
 
     from alpha_os.paper.trader import PaperTrader
@@ -673,16 +655,16 @@ def cmd_paper(args: argparse.Namespace) -> None:
         trader.close()
 
 
-def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
-    from alpha_os.paper.simulator import run_backfill
+def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
+    from alpha_os.paper.simulator import run_replay
 
     if not args.start or not args.end:
-        print("Error: --backfill requires --start and --end dates")
+        print("Error: --replay requires --start and --end dates")
         sys.exit(1)
 
-    print(f"Running backfill simulation: {args.start} to {args.end} ({args.asset})")
-    def _print_backfill_result(label: str, result) -> None:
-        print(f"\nBackfill Simulation [{label}]: {args.start} to {args.end}")
+    print(f"Running historical replay: {args.start} to {args.end} ({args.asset})")
+    def _print_replay_result(label: str, result) -> None:
+        print(f"\nHistorical Replay [{label}]: {args.start} to {args.end}")
         print(f"  Days:       {result.n_days}")
         print(f"  {'─'*36}")
         print(f"  Initial:    ${result.initial_capital:,.2f}")
@@ -699,38 +681,38 @@ def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
             print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
 
     if args.sizing_mode == "compare":
-        live_result = run_backfill(
+        runtime_result = run_replay(
             asset=args.asset,
             config=cfg,
             start_date=args.start,
             end_date=args.end,
-            sizing_mode="live",
+            sizing_mode="runtime",
         )
-        raw_result = run_backfill(
+        raw_result = run_replay(
             asset=args.asset,
             config=cfg,
             start_date=args.start,
             end_date=args.end,
             sizing_mode="raw_mean",
         )
-        _print_backfill_result("live", live_result)
-        _print_backfill_result("raw_mean", raw_result)
-        print("\nDelta (live - raw_mean)")
-        print(f"  Final:      ${live_result.final_value - raw_result.final_value:+,.2f}")
-        print(f"  Return:     {live_result.total_return - raw_result.total_return:+.2%}")
-        print(f"  Sharpe:     {live_result.sharpe - raw_result.sharpe:+.3f}")
-        print(f"  Max DD:     {live_result.max_drawdown - raw_result.max_drawdown:+.2%}")
-        print(f"  Trades:     {live_result.total_trades - raw_result.total_trades:+d}")
+        _print_replay_result("runtime", runtime_result)
+        _print_replay_result("raw_mean", raw_result)
+        print("\nDelta (runtime - raw_mean)")
+        print(f"  Final:      ${runtime_result.final_value - raw_result.final_value:+,.2f}")
+        print(f"  Return:     {runtime_result.total_return - raw_result.total_return:+.2%}")
+        print(f"  Sharpe:     {runtime_result.sharpe - raw_result.sharpe:+.3f}")
+        print(f"  Max DD:     {runtime_result.max_drawdown - raw_result.max_drawdown:+.2%}")
+        print(f"  Trades:     {runtime_result.total_trades - raw_result.total_trades:+d}")
         return
 
-    result = run_backfill(
+    result = run_replay(
         asset=args.asset,
         config=cfg,
         start_date=args.start,
         end_date=args.end,
         sizing_mode=args.sizing_mode,
     )
-    _print_backfill_result(args.sizing_mode, result)
+    _print_replay_result(args.sizing_mode, result)
 
 
 def _build_pipeline_config(
@@ -955,7 +937,7 @@ def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
 ):
-    """Create trader, circuit breaker, and validator for one asset."""
+    """Create trader, circuit breaker, and readiness checker for one asset."""
     from alpha_os.paper.trader import Trader
     from alpha_os.risk.circuit_breaker import CircuitBreaker
 
@@ -992,22 +974,22 @@ def _setup_asset_context(
     trader = Trader(asset=asset, config=cfg, executor=executor,
                     circuit_breaker=cb)
 
-    validator = None
+    readiness_checker = None
     if testnet and is_crypto(asset):
-        from alpha_os.validation.testnet import TestnetValidator
-        validator = TestnetValidator(
-            state_path=adir / "metrics" / "testnet_validation.json",
-            report_path=adir / "metrics" / "testnet_reports.jsonl",
+        from alpha_os.validation.testnet import ReadinessChecker
+        readiness_checker = ReadinessChecker(
+            state_path=adir / "metrics" / "testnet_readiness.json",
+            report_path=adir / "metrics" / "testnet_readiness_reports.jsonl",
             target_days=cfg.testnet.target_success_days,
             max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
         )
 
-    return trader, cb, validator
+    return trader, cb, readiness_checker
 
 
-def cmd_live(args: argparse.Namespace) -> None:
+def cmd_trade(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
-    profile_changes = _normalize_live_config(cfg)
+    profile_changes = _normalize_trade_config(cfg)
     interval = args.interval or cfg.forward.check_interval
     testnet = not args.real
     asset_list = _resolve_asset_list(args)
@@ -1015,7 +997,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     # File logging
     log_dir = DATA_DIR / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"live_{date.today().isoformat()}.log"
+    log_file = log_dir / f"trade_{date.today().isoformat()}.log"
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(name)s %(levelname)s %(message)s",
@@ -1040,19 +1022,19 @@ def cmd_live(args: argparse.Namespace) -> None:
             return
 
     mode = "TESTNET" if testnet else "REAL"
-    print(f"Live trading [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
+    print(f"Trade runtime [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
     if profile_changes:
-        print("Live profile overrides: " + ", ".join(profile_changes))
+        print("Trade profile overrides: " + ", ".join(profile_changes))
     regime_state = "on" if cfg.regime.enabled else "off"
-    print(f"Live profile: {cfg.paper.combine_mode} L3, regime {regime_state}, L2 off")
+    print(f"Trade profile: {cfg.paper.combine_mode} L3, regime {regime_state}, L2 off")
 
     # Initialize per-asset contexts
     contexts: dict[str, tuple] = {}
     for asset in asset_list:
-        trader, cb, validator = _setup_asset_context(
+        trader, cb, readiness_checker = _setup_asset_context(
             asset, cfg, testnet, args.capital,
         )
-        contexts[asset] = (trader, cb, validator)
+        contexts[asset] = (trader, cb, readiness_checker)
         print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
 
     if args.summary:
@@ -1070,27 +1052,27 @@ def cmd_live(args: argparse.Namespace) -> None:
         active = trader.registry.list_by_state(AlphaState.ACTIVE)
         return len(active) == 0
 
-    def _run_asset_validation(result, recon, cb, validator):
-        if validator is None:
+    def _run_testnet_readiness_check(result, recon, cb, readiness_checker):
+        if readiness_checker is None:
             return
-        report = validator.validate_cycle(
+        report = readiness_checker.validate_cycle(
             result, recon, cb, result.fills,
             order_failures=getattr(result, "order_failures", 0),
         )
         _print_testnet_report(report)
-        validator.print_status()
+        readiness_checker.print_status()
 
     if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
         for asset in asset_list:
             print(f"\n{'='*40} {asset} {'='*40}")
-            trader, cb, validator = contexts[asset]
+            trader, cb, readiness_checker = contexts[asset]
             if _needs_evolution(trader):
                 print(f"No alphas for {asset} — running evolution...")
                 _run_evolution(trader, cfg, pipeline_cfg)
             result = trader.run_cycle()
             _print_paper_result(result)
             recon = trader.reconcile()
-            _run_asset_validation(result, recon, cb, validator)
+            _run_testnet_readiness_check(result, recon, cb, readiness_checker)
             trader.print_status()
         for trader, _, _ in contexts.values():
             trader.close()
@@ -1109,7 +1091,7 @@ def cmd_live(args: argparse.Namespace) -> None:
 
     def cycle():
         for asset in asset_list:
-            trader, cb, validator = contexts[asset]
+            trader, cb, readiness_checker = contexts[asset]
             logger.info("--- %s cycle start ---", asset)
             now = time.time()
             evolve_interval = args.evolve_interval
@@ -1121,7 +1103,7 @@ def cmd_live(args: argparse.Namespace) -> None:
             result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
             _print_paper_result(result)
             recon = trader.reconcile()
-            _run_asset_validation(result, recon, cb, validator)
+            _run_testnet_readiness_check(result, recon, cb, readiness_checker)
             logger.info("--- %s cycle done ---", asset)
 
     if getattr(args, "event_driven", False):
@@ -1132,7 +1114,7 @@ def cmd_live(args: argparse.Namespace) -> None:
 
         # Use first asset's trader for event-driven mode
         asset = asset_list[0]
-        trader, cb, validator = contexts[asset]
+        trader, cb, readiness_checker = contexts[asset]
         client = _SignalClient(
             base_url=cfg.api.base_url,
             timeout=cfg.api.timeout,
@@ -1248,8 +1230,8 @@ def cmd_rebuild_registry(args: argparse.Namespace) -> None:
         print("  Diversity cache cleared.")
 
 
-def cmd_validator(args: argparse.Namespace) -> None:
-    """Run the candidate validation daemon (Pipeline v2)."""
+def cmd_admission_daemon(args: argparse.Namespace) -> None:
+    """Run the candidate admission daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
 
     logging.basicConfig(
@@ -1258,36 +1240,36 @@ def cmd_validator(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.daemon.validator import ValidatorDaemon
+    from alpha_os.daemon.admission import AdmissionDaemon
 
-    daemon = ValidatorDaemon(asset=args.asset, config=cfg)
+    daemon = AdmissionDaemon(asset=args.asset, config=cfg)
     daemon.run()
 
 
-def cmd_validate_testnet(args: argparse.Namespace) -> None:
+def cmd_testnet_readiness(args: argparse.Namespace) -> None:
     import json as _json
 
-    from alpha_os.validation.testnet import TestnetValidator
+    from alpha_os.validation.testnet import ReadinessChecker
 
     cfg = _load_config(getattr(args, "config", None))
     adir = asset_data_dir(args.asset)
-    report_path = adir / "metrics" / "testnet_reports.jsonl"
+    report_path = adir / "metrics" / "testnet_readiness_reports.jsonl"
 
-    validator = TestnetValidator(
-        state_path=adir / "metrics" / "testnet_validation.json",
+    readiness_checker = ReadinessChecker(
+        state_path=adir / "metrics" / "testnet_readiness.json",
         report_path=report_path,
         target_days=cfg.testnet.target_success_days,
         max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
     )
 
     if args.reset:
-        validator._state.consecutive_success_days = 0
-        validator._state.passed = False
-        validator._save_state()
+        readiness_checker._state.consecutive_success_days = 0
+        readiness_checker._state.passed = False
+        readiness_checker._save_state()
         print("Reset consecutive success counter to 0.")
         return
 
-    validator.print_status()
+    readiness_checker.print_status()
 
     if args.slippage or args.latency:
         from alpha_os.paper.tracker import PaperPortfolioTracker
@@ -1338,19 +1320,19 @@ def main(argv: list[str] | None = None) -> None:
         cmd_evolve(args)
     elif args.command == "validate":
         cmd_validate(args)
-    elif args.command == "forward":
-        cmd_forward(args)
+    elif args.command == "monitor":
+        cmd_monitor(args)
     elif args.command == "paper":
         cmd_paper(args)
-    elif args.command == "live":
-        cmd_live(args)
+    elif args.command == "trade":
+        cmd_trade(args)
     elif args.command == "evo-daemon":
         cmd_evo_daemon(args)
-    elif args.command == "validator":
-        cmd_validator(args)
+    elif args.command == "admission-daemon":
+        cmd_admission_daemon(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
     elif args.command == "rebuild-registry":
         cmd_rebuild_registry(args)
-    elif args.command == "validate-testnet":
-        cmd_validate_testnet(args)
+    elif args.command == "testnet-readiness":
+        cmd_testnet_readiness(args)

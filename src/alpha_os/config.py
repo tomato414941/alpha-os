@@ -50,9 +50,11 @@ def _maybe_migrate_btc(adir: Path) -> None:
     ]
     metric_files = [
         "metrics/circuit_breaker.json",
-        "metrics/testnet_validation.json",
-        "metrics/testnet_reports.jsonl",
     ]
+    renamed_metric_files = {
+        "metrics/testnet_validation.json": "metrics/testnet_readiness.json",
+        "metrics/testnet_reports.jsonl": "metrics/testnet_readiness_reports.jsonl",
+    }
 
     for f in flat_files:
         src = DATA_DIR / f
@@ -67,6 +69,17 @@ def _maybe_migrate_btc(adir: Path) -> None:
         if src.exists() and not dst.exists():
             shutil.move(str(src), str(dst))
             _logger.info("Migrated %s → %s", src, dst)
+
+    for old_name, new_name in renamed_metric_files.items():
+        flat_src = DATA_DIR / old_name
+        asset_legacy = adir / old_name
+        dst = adir / new_name
+        if flat_src.exists() and not dst.exists():
+            shutil.move(str(flat_src), str(dst))
+            _logger.info("Migrated %s → %s", flat_src, dst)
+        if asset_legacy.exists() and not dst.exists():
+            shutil.move(str(asset_legacy), str(dst))
+            _logger.info("Renamed %s → %s", asset_legacy, dst)
 
 
 @dataclass

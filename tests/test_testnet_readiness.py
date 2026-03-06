@@ -1,4 +1,4 @@
-"""Tests for Phase 4 testnet validation."""
+"""Tests for Phase 4 testnet readiness."""
 from __future__ import annotations
 
 import json
@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from alpha_os.execution.executor import Fill
-from alpha_os.validation.testnet import TestnetValidator
+from alpha_os.validation.testnet import ReadinessChecker
 
 
 @dataclass
@@ -34,9 +34,9 @@ def _mock_cb(halted=False, reason=""):
     return cb
 
 
-class TestValidationState:
+class TestReadinessState:
     def test_fresh_state(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -45,7 +45,7 @@ class TestValidationState:
         assert v.state.total_days_run == 0
 
     def test_consecutive_success_increments(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
             target_days=3,
@@ -60,7 +60,7 @@ class TestValidationState:
         assert v.state.passed is True
 
     def test_error_resets_counter(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -83,19 +83,19 @@ class TestValidationState:
         state_path = tmp_path / "state.json"
         report_path = tmp_path / "reports.jsonl"
 
-        v1 = TestnetValidator(state_path=state_path, report_path=report_path)
+        v1 = ReadinessChecker(state_path=state_path, report_path=report_path)
         v1.validate_cycle(
             _MockCycleResult(), {"match": True}, _mock_cb(), [],
             today_override="2026-03-01",
         )
         assert v1.state.total_days_run == 1
 
-        v2 = TestnetValidator(state_path=state_path, report_path=report_path)
+        v2 = ReadinessChecker(state_path=state_path, report_path=report_path)
         assert v2.state.total_days_run == 1
         assert v2.state.consecutive_success_days == 1
 
     def test_duplicate_day_not_double_counted(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -110,7 +110,7 @@ class TestValidationState:
 
 class TestDailyReport:
     def test_reconciliation_mismatch_is_error(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -123,7 +123,7 @@ class TestDailyReport:
         assert any("Reconciliation mismatch" in e for e in report.error_details)
 
     def test_extreme_slippage_is_error(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -142,7 +142,7 @@ class TestDailyReport:
         assert report.mean_slippage_bps == pytest.approx(70.0)
 
     def test_normal_slippage_is_ok(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -158,7 +158,7 @@ class TestDailyReport:
 
     def test_reports_appended_to_jsonl(self, tmp_path):
         report_path = tmp_path / "reports.jsonl"
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=report_path,
         )
@@ -179,7 +179,7 @@ class TestDailyReport:
             assert "has_errors" in r
 
     def test_zero_portfolio_is_error(self, tmp_path):
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -195,7 +195,7 @@ class TestDailyReport:
 class TestOrderFailures:
     def test_order_failures_produce_error(self, tmp_path):
         """Order failures should be flagged as errors."""
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -210,7 +210,7 @@ class TestOrderFailures:
 
     def test_zero_order_failures_no_error(self, tmp_path):
         """Zero order failures should not produce an error."""
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )
@@ -224,7 +224,7 @@ class TestOrderFailures:
 
     def test_order_failures_reset_consecutive_days(self, tmp_path):
         """Order failures should reset the consecutive success counter."""
-        v = TestnetValidator(
+        v = ReadinessChecker(
             state_path=tmp_path / "state.json",
             report_path=tmp_path / "reports.jsonl",
         )

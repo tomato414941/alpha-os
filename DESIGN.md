@@ -609,7 +609,7 @@ Two modes:
   applies lifecycle transitions, combines signals with quality × diversity
   weights, adjusts for risk (drawdown + volatility scaling), and executes
   via paper executor.
-- **Backfill simulation** (`paper --backfill`): Vectorized historical
+- **Historical replay** (`paper --replay`): Vectorized historical
   simulation. Pre-computes all signal matrices once, then iterates days
   via array indexing. Orders of magnitude faster than per-day evaluation.
 
@@ -763,19 +763,19 @@ Create `src/alpha_os/risk/circuit_breaker.py`:
 
 State persisted to JSON; survives process restart.
 
-#### Phase 3: CLI `live` Command (1 day) ✅
+#### Phase 3: CLI `trade` Command (1 day) ✅
 
 Based on existing `paper` command:
 
 ```bash
 # Testnet (default — no real money)
-python3 -m alpha_os live --once --testnet
+python3 -m alpha_os trade --once
 
 # Production (real money, explicit flag required)
-python3 -m alpha_os live --once --real --capital 1000
+python3 -m alpha_os trade --once --real --capital 1000
 
 # Scheduled daily execution
-python3 -m alpha_os live --schedule --testnet
+python3 -m alpha_os trade --schedule
 ```
 
 Reuses PaperTrader's full cycle (data sync → alpha eval → combination →
@@ -783,7 +783,7 @@ risk adjustment → execution) with BinanceExecutor instead of PaperExecutor.
 
 #### Phase 4: Testnet Validation (1-2 weeks)
 
-Run `live --testnet --schedule` daily on Binance testnet:
+Run `trade --schedule` daily on Binance testnet:
 
 - Verify order fills, slippage measurement
 - Trigger circuit breaker intentionally (confirm halt + recovery)
@@ -850,15 +850,15 @@ Each asset gets its own registry, lifecycle, and risk budget.
 
 ```
 cron: 0 */4 * * *
-  ├── run_live.sh --asset BTC
-  ├── run_live.sh --asset ETH
-  └── run_live.sh --asset SOL
+  ├── run_trade.sh --asset BTC
+  ├── run_trade.sh --asset ETH
+  └── run_trade.sh --asset SOL
 ```
 
 Implementation:
 - Add per-asset DB isolation (`alpha_registry_ETH.db`, etc.) or
   asset column in existing tables
-- Extend `run_live.sh` to accept `--asset` parameter
+- Extend `run_trade.sh` to accept `--asset` parameter
 - Independent testnet validation per asset (10 days each)
 - Capital allocation: equal-weight initially, then risk-parity
 
@@ -1135,12 +1135,12 @@ this is 5M pairs instead of 2.5 billion — a 500× reduction.
 Results are written to the `diversity_cache` table. The trade cycle reads
 this cache directly instead of recomputing diversity.
 
-Implementation: `src/alpha_os/daemon/validator.py`
+Implementation: `src/alpha_os/daemon/admission.py`
 
 CLI entry point:
 
 ```
-python -m alpha_os validator --asset BTC [--config ...]
+python -m alpha_os admission-daemon --asset BTC [--config ...]
 ```
 
 #### trade cycle (periodic 4h) — existing Trader, slimmed down
@@ -1152,7 +1152,7 @@ responsibilities removed:
 
 1. **Lifecycle evaluation** (monitor.check → lifecycle.evaluate → state
    transitions): moved to lifecycle manager.
-2. **Diversity recomputation** (_recompute_diversity): moved to validator.
+2. **Diversity recomputation** (_recompute_diversity): moved to admission daemon.
 
 What remains in run_cycle():
 
@@ -1170,7 +1170,7 @@ Backward compatibility: `skip_lifecycle` parameter (default: False).
 When `evo_daemon.enabled = true` in config, the trade cycle sets
 `skip_lifecycle = True` automatically.
 
-No new CLI command — uses existing `live --schedule`.
+No new CLI command — uses existing `trade --schedule`.
 
 #### lifecycle manager (daily)
 
@@ -1321,12 +1321,12 @@ trade interruption.
 - Test: start evo daemon, verify candidates appear in DB.
 - The existing `alpha-os.service` continues running unchanged.
 
-#### Step 3: validator (no trade downtime)
+#### Step 3: admission daemon (no trade downtime)
 
-- Implement `daemon/validator.py`. Extract logic from
+- Implement `daemon/admission.py`. Extract logic from
   `PipelineRunner._validate()` and `_adopt()`.
-- Add `validator` CLI subcommand.
-- Add `alpha-os-validator@.service` systemd unit.
+- Add `admission-daemon` CLI subcommand.
+- Add `alpha-os-admission@.service` systemd unit.
 - Test: verify candidates flow through validation to alphas table.
 
 #### Step 4: trade cycle slimming (~1 min downtime)
@@ -1435,11 +1435,11 @@ TimeoutStopSec=60
 WantedBy=multi-user.target
 ```
 
-**alpha-os-validator@.service** (continuous poller):
+**alpha-os-admission@.service** (continuous poller):
 
 ```ini
 [Unit]
-Description=Alpha-OS validator daemon (%i)
+Description=Alpha-OS admission daemon (%i)
 After=network.target signal-noise-scheduler.service
 
 [Service]
@@ -1447,13 +1447,13 @@ Type=simple
 User=dev
 WorkingDirectory=/home/dev/projects/alpha-os
 ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
-    -m alpha_os validator --asset %i
+    -m alpha_os admission-daemon --asset %i
 Restart=on-failure
 RestartSec=120
 MemoryHigh=500M
 MemoryMax=700M
-StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/validator.log
-StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/validator.log
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/admission.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/admission.log
 KillSignal=SIGTERM
 TimeoutStopSec=300
 

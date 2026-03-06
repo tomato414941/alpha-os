@@ -57,8 +57,8 @@ python -m alpha_os --help
 - Prefer standard industry terminology in new docs, config keys, commands, and logs.
 - Keep legacy project-specific names only when needed for backward compatibility.
 - Distinguish statistical alpha validation (`validate`) from operational validation
-  (`validator`, `validate-testnet`).
-- Distinguish Binance `testnet` from real-money `live --real`.
+  (`admission-daemon`, `testnet-readiness`).
+- Distinguish Binance `testnet` from real-money `trade --real`.
 - Distinguish registry state counts from the per-cycle trading subset in logs and reports.
 
 ## Testing
@@ -74,8 +74,8 @@ python -m alpha_os --help
 - `data/alpha_registry.db` — adopted alphas registry
 - `data/forward_returns.db` — forward return data
 - `data/paper_trading.db` — paper trading history
-- `data/metrics/` — testnet validation state and reports
-- `data/logs/` — daily live trading logs
+- `data/metrics/` — testnet readiness state and reports
+- `data/logs/` — daily trade runtime logs
 
 ## Secrets
 

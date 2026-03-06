@@ -22,7 +22,7 @@ src/alpha_os/
 ├── execution/    Trade executors (Paper, Binance), ExecutionOptimizer
 ├── risk/         Position sizing, drawdown stages, circuit breaker
 ├── data/         DataStore (signal-noise integration, subdaily resolution support)
-├── forward/      Forward test runner
+├── forward/      Ongoing alpha monitoring (legacy package name)
 ├── governance/   Adoption gates, audit log
 └── pipeline/     Scheduler, pipeline runner
 ```
@@ -55,23 +55,26 @@ python -m alpha_os evolve --generations 30
 # Validate an alpha with purged walk-forward CV
 python -m alpha_os validate --expr '<dsl-expression>' --asset BTC
 
-# Forward-test adopted alphas
-python -m alpha_os forward
+# Monitor adopted alphas
+python -m alpha_os monitor
 
 # Paper trade
 python -m alpha_os paper --once
 
-# Live command (Binance testnet by default; add --real for actual capital)
-python -m alpha_os live --once --asset BTC
+# Historical replay
+python -m alpha_os paper --replay --start 2025-09-01 --end 2026-03-05
+
+# Trade command (Binance testnet by default; add --real for actual capital)
+python -m alpha_os trade --once --asset BTC
 
 # Event-driven mode (WebSocket, auto-triggers on market events)
-python -m alpha_os live --event-driven --asset BTC
+python -m alpha_os trade --event-driven --asset BTC
 
 # Layer 2 tactical evolution
 python -m alpha_os evolve --layer 2 --generations 30
 
-# Check testnet validation status
-python -m alpha_os validate-testnet
+# Check testnet readiness status
+python -m alpha_os testnet-readiness
 ```
 
 ## Configuration
@@ -82,28 +85,16 @@ Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[v
 
 ## Terminology Notes
 
-Some terms in the current codebase are project-specific and do not exactly match
-their standard industry meaning. Until the naming cleanup is complete, use the
-following interpretations:
+Recent CLI cleanup now prefers standard terms:
 
-- `live` is the runtime trading command, but it defaults to Binance testnet.
-  Real-money trading is only `live --real`.
-- `validate` means statistical alpha validation via purged walk-forward CV.
-- `validator` and `validate-testnet` are operational validation flows, not the
-  same thing as statistical alpha validation.
-- `backfill` means historical replay of the current paper/live decision stack,
-  not missing-data backfilling.
-- `forward` means the ongoing post-adoption monitoring loop for registry alphas
-  on newly arriving data.
-- `active` can refer either to the registry state (`ACTIVE`) or to the subset
-  selected for a specific cycle. Logs and reports should qualify which meaning
-  is intended.
-
-We should gradually converge on standard terminology in new docs, config keys,
-log messages, and commands. During that migration, legacy names may remain as
-compatibility aliases, but new work should prefer explicit terms such as
-`testnet`, `real`, `statistical validation`, `ops validation`,
-`registry active`, and `trading shortlist`.
+- `trade` is the runtime trading command and defaults to Binance testnet.
+  Real-money trading is only `trade --real`.
+- `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
+- `paper --replay` is historical replay of the current runtime decision stack.
+- `testnet-readiness` is the operational readiness check for testnet trading.
+- `validate` remains statistical alpha validation via purged walk-forward CV.
+- Logs and reports distinguish `registry active`, `shortlist candidates`,
+  `selected alphas`, and `signals evaluated`.
 
 ### Position sizing
 

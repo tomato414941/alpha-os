@@ -9,17 +9,17 @@ from alpha_os.config import Config
 from alpha_os.paper.simulator import (
     ST_EXCLUDED,
     _apply_regime_adjustment,
-    _backfill_signals_to_position_intent,
+    _replay_signals_to_position_intent,
     _initial_simulation_state,
     _live_like_eval_indices,
 )
 
 
-def test_consensus_backfill_matches_live_strategic_shape():
+def test_consensus_replay_matches_runtime_strategic_shape():
     signals = np.array([1.0, 0.8, -0.2])
     weights = np.array([0.5, 0.3, 0.2])
 
-    raw, adjusted = _backfill_signals_to_position_intent(
+    raw, adjusted = _replay_signals_to_position_intent(
         signals,
         weights,
         combine_mode="consensus",
@@ -35,11 +35,11 @@ def test_consensus_backfill_matches_live_strategic_shape():
     assert adjusted == pytest.approx(np.sign(mean) * consensus * 0.8)
 
 
-def test_non_consensus_backfill_keeps_raw_times_risk_scales():
+def test_non_consensus_replay_keeps_raw_times_risk_scales():
     signals = np.array([1.0, 0.8, -0.2])
     weights = np.array([0.5, 0.3, 0.2])
 
-    raw, adjusted = _backfill_signals_to_position_intent(
+    raw, adjusted = _replay_signals_to_position_intent(
         signals,
         weights,
         combine_mode="voting",
@@ -56,7 +56,7 @@ def test_raw_mean_sizing_mode_ignores_consensus_and_vol_scale():
     signals = np.array([1.0, 0.8, -0.2])
     weights = np.array([0.5, 0.3, 0.2])
 
-    raw, adjusted = _backfill_signals_to_position_intent(
+    raw, adjusted = _replay_signals_to_position_intent(
         signals,
         weights,
         combine_mode="consensus",

@@ -1,4 +1,4 @@
-"""Validator daemon — poll candidates queue, validate, adopt to registry."""
+"""Admission daemon — poll candidates queue, validate, adopt to registry."""
 from __future__ import annotations
 
 import logging
@@ -24,7 +24,7 @@ from ..validation.purged_cv import purged_walk_forward
 logger = logging.getLogger(__name__)
 
 
-class ValidatorDaemon:
+class AdmissionDaemon:
     """Poll candidates table, validate, and adopt passing alphas."""
 
     def __init__(self, asset: str, config: Config):
@@ -38,7 +38,7 @@ class ValidatorDaemon:
         self._running = True
         self._setup_signals()
         logger.info(
-            "ValidatorDaemon started: asset=%s, poll=%ds, batch=%d, min_queue=%d",
+            "AdmissionDaemon started: asset=%s, poll=%ds, batch=%d, min_queue=%d",
             self.asset, self.val_cfg.poll_interval,
             self.val_cfg.batch_size, self.val_cfg.min_queue_size,
         )
@@ -59,7 +59,7 @@ class ValidatorDaemon:
             if self._running:
                 self._sleep(self.val_cfg.poll_interval)
 
-        logger.info("ValidatorDaemon stopped after %d rounds", self._round)
+        logger.info("AdmissionDaemon stopped after %d rounds", self._round)
 
     def _count_pending(self) -> int:
         conn = self._open_registry_conn()

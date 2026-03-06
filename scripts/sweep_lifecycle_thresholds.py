@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sweep lifecycle thresholds with admission replay before backfill."""
+"""Sweep lifecycle thresholds with admission replay before historical replay."""
 from __future__ import annotations
 
 import argparse
@@ -63,7 +63,7 @@ def _print_rows(rows: list[SweepRow]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run backfill sweeps over lifecycle threshold combinations.",
+        description="Run historical replay sweeps over lifecycle threshold combinations.",
     )
     parser.add_argument("--asset", default="BTC")
     parser.add_argument("--config", required=True, help="Base TOML config path")
@@ -97,7 +97,7 @@ def main() -> int:
     )
     from alpha_os.config import Config
     from alpha_os.config import asset_data_dir
-    from alpha_os.paper.simulator import run_backfill
+    from alpha_os.paper.simulator import run_replay
 
     registry_db = asset_data_dir(args.asset) / "alpha_registry.db"
     source_records = load_source_records(registry_db, args.source)
@@ -139,7 +139,7 @@ def main() -> int:
                 )
                 apply_registry_snapshot(replay_db, snapshot)
                 starting_active = counts["active"]
-                result = run_backfill(
+                result = run_replay(
                     asset=args.asset,
                     config=cfg,
                     start_date=args.start,
