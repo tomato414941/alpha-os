@@ -8,7 +8,14 @@ from unittest.mock import MagicMock
 import pytest
 
 from alpha_os.execution.executor import Fill
-from alpha_os.validation.testnet import ReadinessChecker
+from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+
+
+def test_readiness_paths_are_under_metrics_dir(tmp_path):
+    state_path, report_path = readiness_paths(tmp_path)
+
+    assert state_path == tmp_path / "metrics" / "testnet_readiness.json"
+    assert report_path == tmp_path / "metrics" / "testnet_readiness_reports.jsonl"
 
 
 @dataclass

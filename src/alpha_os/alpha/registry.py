@@ -99,7 +99,7 @@ class AlphaRegistry:
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_sharpe ON alphas(oos_sharpe DESC)
         """)
-        # Pipeline v2: candidate queue for evo daemon → validator flow
+        # Pipeline v2: candidate queue for evo daemon → admission flow
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS candidates (
                 candidate_id TEXT PRIMARY KEY,
@@ -123,7 +123,7 @@ class AlphaRegistry:
             CREATE INDEX IF NOT EXISTS idx_candidates_created
             ON candidates(created_at)
         """)
-        # Pipeline v2: pre-computed diversity scores from validator
+        # Pipeline v2: pre-computed diversity scores from admission daemon
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS diversity_cache (
                 alpha_id TEXT PRIMARY KEY,

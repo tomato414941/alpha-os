@@ -37,21 +37,19 @@ genomes the system can evaluate and maintain.
   Validate (Purged WF-CV, DSR, PBO)
       │
       ▼
-  Adoption Gate ──── fail ──→ REJECTED
+  Admission Gate ─── fail ──→ REJECTED
       │
       pass
       ▼
-  ACTIVE ◄───────── revival ──── DORMANT
-      │                             ▲
-      │ degraded                    │ severe
-      ▼                             │
-  PROBATION ── recovery ──→ ACTIVE  │
-      │                             │
-      └──── continued decline ──────┘
+  CANDIDATE ──────── pass ───────→ ACTIVE
+      │                              ▲
+      │ fail                         │ revival
+      ▼                              │
+  REJECTED                     DORMANT
 ```
 
 The pipeline runs as a continuous cycle: generate candidates, validate
-statistically, adopt survivors, then monitor and demote as edges decay.
+statistically, admit survivors, then monitor and demote as edges decay.
 
 ## Alpha Expression DSL
 
@@ -157,61 +155,63 @@ Trust the exit mechanism (lifecycle); loosen the entrance (gate).
 
 ## Alpha Lifecycle
 
-Five states with automatic transitions based on rolling Sharpe (63-day window):
+Current runtime states are `candidate`, `active`, `dormant`, and `rejected`.
+Historical `born` and `probation` rows are normalized to `candidate` and
+`active` on read.
 
-| Transition             | Condition                    |
-| ---------------------- | ---------------------------- |
-| BORN → ACTIVE          | Passes adoption gate         |
-| BORN → REJECTED        | Fails adoption gate          |
-| ACTIVE → PROBATION     | Rolling Sharpe < 0.3         |
-| PROBATION → ACTIVE     | Rolling Sharpe ≥ 0.05        |
-| PROBATION → DORMANT    | Rolling Sharpe < 0           |
-| DORMANT → PROBATION    | Rolling Sharpe ≥ 0.3         |
+| Transition             | Condition |
+| ---------------------- | --------- |
+| CANDIDATE → ACTIVE     | Passes the admission gate (`candidate_quality_min`, PBO, DSR, correlation) |
+| CANDIDATE → REJECTED   | Fails the admission gate |
+| ACTIVE → DORMANT       | Blended quality < `active_quality_min` |
+| DORMANT → ACTIVE       | Blended quality ≥ `dormant_revival_quality` and enough forward observations |
 
-DORMANT alphas are not traded but remain monitored. If market conditions
-shift and their rolling Sharpe recovers, they re-enter PROBATION and can
-return to ACTIVE. This avoids permanently discarding alphas that may have
-regime-specific value.
+Runtime quality is blended from historical OOS quality and forward returns.
+The confidence weight rises with the number of forward observations, so new
+alphas shrink toward their historical prior instead of being treated as zero.
 
-## Adoption Gate
+## Admission Gate
 
-All criteria must pass for an alpha to be adopted:
+All criteria must pass for a candidate to be admitted:
 
-| Check         | Threshold | Notes                             |
-| ------------- | --------- | --------------------------------- |
-| OOS Sharpe    | ≥ 0.05    | Purged Walk-Forward CV (5 folds)  |
-| PBO           | ≤ 1.0     | Batch-computed, warn only         |
-| DSR p-value   | ≤ 1.0     | Disabled — lifecycle manages      |
-| Correlation   | ≤ 0.5     | Avg correlation with live alphas  |
-| Min days      | ≥ 200     | Minimum data requirement          |
+| Check         | Threshold | Notes |
+| ------------- | --------- | ----- |
+| OOS Sharpe    | `candidate_quality_min` | Purged Walk-Forward CV (5 folds) |
+| PBO           | `pbo_max` | Batch-computed |
+| DSR p-value   | `dsr_pvalue_max` | Batch-computed |
+| Correlation   | `correlation_max` | Avg correlation with registry-active alphas |
+| Min days      | ≥ 200     | Minimum data requirement |
 
-PBO and DSR thresholds are intentionally relaxed (≤ 1.0 = always pass).
-The lifecycle system handles quality control post-adoption: alphas that
-degrade are demoted through PROBATION → DORMANT → eventually pruned.
+In practice the BTC testnet profile currently runs a much stricter
+`candidate_quality_min` than the default config. The runtime lifecycle then
+handles post-admission quality control via blended quality and dormant revival.
 
 ## Signal Combination: Quality × Diversity Weighting
 
-All active and probation alphas participate in the combined signal.
-Each alpha's weight reflects both its recent performance (quality) and
+The runtime does not combine every registry alpha directly. It uses a
+three-stage selection pipeline:
+
+1. Rank `ACTIVE` alphas by historical OOS quality.
+2. Preselect a larger set, then rerank by blended quality and confidence.
+3. Apply a correlation filter to cap the final selected set.
+
+Each selected alpha's weight reflects both its blended quality and
 its uniqueness relative to the portfolio (diversity):
 
 ```
-weight_i = max(rolling_sharpe_i, 0) × diversity_i + min_weight
+weight_i = max(blended_quality_i, 0) × diversity_i + min_weight
 ```
 
 Where:
-- **Quality** = `max(rolling_sharpe, 0)` — negative Sharpe alphas get
-  minimal weight but are not excluded (min_weight floor).
+- **Quality** = `max(blended_quality, 0)` — weak alphas get minimal
+  weight but are not excluded entirely (`min_weight` floor).
 - **Diversity** = `1 - mean(|corr(i, j)|)` for all j ≠ i — alphas
   uncorrelated with the rest contribute more.
 - **min_weight** = 1e-4 — ensures no alpha is fully zeroed out.
 
 Diversity scores are recomputed every 63 days using a 252-day lookback
-window. Correlation is computed via chunked matrix multiplication
-(`chunk_size=1000`) to keep memory bounded for large alpha pools.
-
-This replaces the earlier equal-weight combiner which selected a fixed
-number of low-correlation alphas and weighted them equally.
+window. The final correlation filter currently caps the selected set at
+`max_trading_alphas` (default 30) with `max_correlation=0.3`.
 
 ## Position Sizing
 
@@ -257,7 +257,7 @@ position   = clip(adjusted) × max_position_pct × portfolio_value
 
 The current system generates ~144,000 alpha candidates/day (500/round ×
 5min intervals). The top 30 trading alphas change almost daily — average
-alpha lifetime is ~1.6 days (ACTIVE), ~3.4 days (PROBATION). This means
+active alpha lifetime is ~1.6 days before dormancy or replacement. This means
 signal_consensus measures agreement among a different set of alphas each
 cycle, reducing its reliability as a sizing signal.
 
@@ -1034,7 +1034,7 @@ cx33) has revealed fundamental limitations:
 └──────▲───────────────▲──────────────────▲────────────────▲───────────┘
        │               │                  │                │
 ┌──────┴──────┐  ┌─────┴──────┐  ┌───────┴───────┐  ┌─────┴──────────┐
-│ evo daemon  │  │  validator │  │  trade cycle  │  │   lifecycle    │
+│ evo daemon  │  │ admission   │  │ trade runtime │  │   lifecycle    │
 │ (continuous)│  │ (triggered)│  │   (4h 周期)   │  │   (daily)      │
 │             │  │            │  │               │  │                │
 │ GP evolve   │  │ purged CV  │  │ read alphas   │  │ forward rets   │
@@ -1056,23 +1056,22 @@ Data flow:
 
 1. **evo daemon** runs GP evolution continuously in small batches and writes
    candidates to the `candidates` table.
-2. **validator** reads PENDING candidates, runs statistical validation
-   (purged WF-CV, DSR, PBO, adoption gate), computes incremental diversity
+2. **admission daemon** reads PENDING candidates, runs statistical validation
+   (purged WF-CV, DSR, PBO, admission gate), computes incremental diversity
    against existing ACTIVE alphas, and writes to `alphas` (ACTIVE) and
    `diversity_cache`.
-3. **trade cycle** reads ACTIVE/PROBATION alphas and diversity cache,
-   computes weighted combination, applies risk adjustments, and executes
-   via Binance. No evolution, no lifecycle evaluation.
+3. **trade runtime** reads ACTIVE alphas and diversity cache, computes a
+   shortlist, applies correlation filtering and risk adjustments, and
+   executes via Binance. No evolution, no lifecycle evaluation.
 4. **lifecycle manager** reads forward returns, computes rolling Sharpe
-   (63-day window), and transitions alpha states (ACTIVE → PROBATION →
-   DORMANT or revival).
+   (63-day window), and transitions alpha states (ACTIVE ↔ DORMANT).
 
 ### Process Definitions
 
 #### evo daemon (continuous)
 
 Responsibility: continuously explore the alpha search space and feed
-candidates to the validator.
+candidates to the admission daemon.
 
 Extracts logic from `PipelineRunner._evolve()` (pipeline/runner.py) and
 `GPEvolver.run()` (evolution/gp.py) into a long-lived daemon.
@@ -1104,7 +1103,7 @@ CLI entry point:
 python -m alpha_os evo-daemon --asset BTC [--config ...]
 ```
 
-#### validator (triggered batch)
+#### admission daemon (triggered batch)
 
 Responsibility: statistically validate candidates and register surviving
 alphas.
@@ -1120,14 +1119,14 @@ Extracts logic from `PipelineRunner._validate()` and `_adopt()`
   2. Purged Walk-Forward CV (5 folds, embargo 5 days).
   3. Deflated Sharpe Ratio.
   4. Batch PBO (computed once per batch).
-  5. Adoption gate (OOS Sharpe, PBO, DSR, correlation, min_days).
+  5. Admission gate (OOS Sharpe, PBO, DSR, correlation, min_days).
 - Candidates that pass: `registry.register()` as ACTIVE, update
   `candidates.status = 'adopted'`.
 - Candidates that fail: update `candidates.status = 'rejected'`.
 
 **Incremental diversity computation** (key optimization):
 
-Instead of computing the full N×N correlation matrix, the validator
+Instead of computing the full N×N correlation matrix, the admission daemon
 computes correlations only between new candidates and existing ACTIVE
 alphas. For a batch of 100 new candidates against 50,000 ACTIVE alphas,
 this is 5M pairs instead of 2.5 billion — a 500× reduction.
@@ -1181,7 +1180,7 @@ Extracts the lifecycle evaluation loop from `Trader.run_cycle()` lines
 304-336 and the equivalent logic in `ForwardRunner.run_cycle()`.
 
 - Runs daily at UTC 00:30 via systemd timer.
-- Reads all ACTIVE, PROBATION, and DORMANT alphas from registry.
+- Reads all ACTIVE and DORMANT alphas from registry.
 - For each alpha: reads forward returns (63-day window) from
   `forward_returns` table → computes rolling Sharpe via
   `AlphaMonitor.check()` → calls `AlphaLifecycle.evaluate()` → updates
@@ -1246,7 +1245,7 @@ CREATE TABLE IF NOT EXISTS diversity_cache (
 );
 ```
 
-Updated by validator when new alphas are adopted. Read by trade cycle
+Updated by the admission daemon when new alphas are adopted. Read by the trade runtime
 for weight computation.
 
 #### WAL mode for all databases
@@ -1257,11 +1256,11 @@ all databases for multi-process safety:
 | Database | WAL | busy_timeout | Writer(s) | Reader(s) |
 |----------|-----|-------------|-----------|-----------|
 | alpha_cache.db | ✅ existing | 30s | trade cycle (sync) | evo daemon |
-| alpha_registry.db | **NEW** | 30s | evo (candidates), validator (alphas, div_cache), lifecycle (alphas.state) | trade cycle |
+| alpha_registry.db | **NEW** | 30s | evo (candidates), admission (alphas, div_cache), lifecycle (alphas.state) | trade runtime |
 | forward_returns.db | **NEW** | 30s | trade cycle (record) | lifecycle |
 | paper_trading.db | **NEW** | 30s | trade cycle | — |
 
-Write contention is limited to `alpha_registry.db` where validator and
+Write contention is limited to `alpha_registry.db` where admission and
 lifecycle may both update `alphas`. With `busy_timeout=30000`, SQLite
 retries for up to 30 seconds, which is more than sufficient for the
 millisecond-scale writes involved.
@@ -1279,7 +1278,7 @@ round_interval = 300       # seconds between rounds (5 min)
 memory_limit_mb = 400      # soft RSS limit, halve pop if exceeded
 batch_size = 500           # max candidates per round
 
-[validator]
+[validator]   # legacy section name for the admission daemon
 enabled = false
 poll_interval = 1800       # seconds between queue checks (30 min)
 batch_size = 100           # candidates per validation batch
@@ -1333,7 +1332,7 @@ trade interruption.
 
 - Add `skip_lifecycle` parameter to `Trader.run_cycle()`.
 - Switch diversity source to `diversity_cache` table when
-  `validator.enabled = true`.
+  `validator.enabled = true` (legacy TOML key).
 - Condition evolution in `cli.py:cycle()` on `evo_daemon.enabled`.
 
 ```python
@@ -1370,7 +1369,7 @@ if evolve_interval > 0 and not cfg.evo_daemon.enabled:
 Current `compute_diversity_scores()` computes `(N, T)` correlation
 matrix for all alpha pairs. At N=100K, this is 5 billion pairs — infeasible.
 
-The validator's incremental approach computes correlation only between new
+The admission daemon's incremental approach computes correlation only between new
 candidates (batch of ~100) and existing ACTIVE alphas (N). For N=100K,
 this is 10M pairs per batch — 500× cheaper.
 
@@ -1499,10 +1498,10 @@ WantedBy=timers.target
 | signal-noise serve | ~300M | — | Existing, unchanged |
 | alpha-os trade cycle | 300M | 500M | Slimmed (was ~500M with inline evo) |
 | alpha-os-evo | 400M | 600M | Memory spike isolated here |
-| alpha-os-validator | 500M | 700M | Validation + diversity computation |
+| alpha-os-admission | 500M | 700M | Admission + diversity computation |
 | alpha-os-lifecycle | 300M | 500M | Daily oneshot, short-lived |
 | OS + system services | ~500M | — | systemd, tailscale, sshd, etc. |
-| **Total MemoryHigh** | **~3000M** | | Lifecycle and validator rarely overlap |
+| **Total MemoryHigh** | **~3000M** | | Lifecycle and admission rarely overlap |
 
 Effective peak usage is ~2.5GB. 8GB provides comfortable headroom with
 no swap usage expected.
@@ -1511,12 +1510,12 @@ no swap usage expected.
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| SQLite BUSY on alpha_registry.db | Validator and lifecycle write to `alphas` concurrently | WAL mode + `busy_timeout=30000ms`. Writes are millisecond-scale; 30s retry is more than sufficient. |
+| SQLite BUSY on alpha_registry.db | Admission and lifecycle write to `alphas` concurrently | WAL mode + `busy_timeout=30000ms`. Writes are millisecond-scale; 30s retry is more than sufficient. |
 | evo daemon memory leak | OOM kill → candidates lost | systemd `MemoryMax=600M` hard cap. RSS monitoring + pop_size halving in daemon. `Restart=on-failure` for auto-recovery. Candidates already written to DB survive. |
 | Phase 4 testnet disruption | Testnet validation streak resets | Steps 1-3 add no risk (new code only). Step 4 uses `enabled=false` default. Rollback: flip flag + restart (~1 min). |
-| candidates table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside validator daemon. |
+| candidates table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside admission daemon. |
 | diversity cache staleness | Trade weights based on outdated diversity | `computed_at` timestamp tracked. Cache valid for `diversity_recompute_days` (63 days). DORMANT alphas excluded from combination regardless of cache state. |
-| Process ordering | Trade runs before validator finishes first batch | Not a problem. Trade uses whatever ACTIVE alphas exist at cycle time. New alphas appear in the next cycle automatically. Exploration and exploitation are intentionally decoupled. |
+| Process ordering | Trade runs before admission finishes first batch | Not a problem. Trade uses whatever ACTIVE alphas exist at cycle time. New alphas appear in the next cycle automatically. Exploration and exploitation are intentionally decoupled. |
 
 ### Event-Driven Mode
 

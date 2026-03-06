@@ -976,10 +976,11 @@ def _setup_asset_context(
 
     readiness_checker = None
     if testnet and is_crypto(asset):
-        from alpha_os.validation.testnet import ReadinessChecker
+        from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+        state_path, report_path = readiness_paths(adir)
         readiness_checker = ReadinessChecker(
-            state_path=adir / "metrics" / "testnet_readiness.json",
-            report_path=adir / "metrics" / "testnet_readiness_reports.jsonl",
+            state_path=state_path,
+            report_path=report_path,
             target_days=cfg.testnet.target_success_days,
             max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
         )
@@ -1249,14 +1250,14 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
 def cmd_testnet_readiness(args: argparse.Namespace) -> None:
     import json as _json
 
-    from alpha_os.validation.testnet import ReadinessChecker
+    from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
     cfg = _load_config(getattr(args, "config", None))
     adir = asset_data_dir(args.asset)
-    report_path = adir / "metrics" / "testnet_readiness_reports.jsonl"
+    state_path, report_path = readiness_paths(adir)
 
     readiness_checker = ReadinessChecker(
-        state_path=adir / "metrics" / "testnet_readiness.json",
+        state_path=state_path,
         report_path=report_path,
         target_days=cfg.testnet.target_success_days,
         max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,

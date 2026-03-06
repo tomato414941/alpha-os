@@ -30,7 +30,7 @@ class AdmissionDaemon:
     def __init__(self, asset: str, config: Config):
         self.asset = asset
         self.config = config
-        self.val_cfg = config.validator
+        self.admission_cfg = config.validator
         self._running = False
         self._round = 0
 
@@ -39,25 +39,25 @@ class AdmissionDaemon:
         self._setup_signals()
         logger.info(
             "AdmissionDaemon started: asset=%s, poll=%ds, batch=%d, min_queue=%d",
-            self.asset, self.val_cfg.poll_interval,
-            self.val_cfg.batch_size, self.val_cfg.min_queue_size,
+            self.asset, self.admission_cfg.poll_interval,
+            self.admission_cfg.batch_size, self.admission_cfg.min_queue_size,
         )
 
         while self._running:
             try:
                 n_pending = self._count_pending()
-                if n_pending >= self.val_cfg.min_queue_size:
+                if n_pending >= self.admission_cfg.min_queue_size:
                     self._run_batch()
                     self._round += 1
                     self._gc_old_candidates()
                 else:
                     logger.debug("Queue: %d pending (< %d), sleeping",
-                                 n_pending, self.val_cfg.min_queue_size)
+                                 n_pending, self.admission_cfg.min_queue_size)
             except Exception:
-                logger.exception("Validation round %d failed", self._round)
+                logger.exception("Admission round %d failed", self._round)
 
             if self._running:
-                self._sleep(self.val_cfg.poll_interval)
+                self._sleep(self.admission_cfg.poll_interval)
 
         logger.info("AdmissionDaemon stopped after %d rounds", self._round)
 
@@ -77,7 +77,7 @@ class AdmissionDaemon:
         rows = conn.execute(
             "SELECT candidate_id, expression, fitness FROM candidates "
             "WHERE status = 'pending' ORDER BY fitness DESC LIMIT ?",
-            (self.val_cfg.batch_size,),
+            (self.admission_cfg.batch_size,),
         ).fetchall()
         conn.close()
 

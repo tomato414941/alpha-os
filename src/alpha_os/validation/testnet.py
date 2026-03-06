@@ -15,8 +15,14 @@ from ..config import DATA_DIR
 
 logger = logging.getLogger(__name__)
 
-READINESS_STATE_PATH = DATA_DIR / "metrics" / "testnet_readiness.json"
-READINESS_REPORT_PATH = DATA_DIR / "metrics" / "testnet_readiness_reports.jsonl"
+
+def readiness_paths(root: Path | None = None) -> tuple[Path, Path]:
+    """Return the readiness state/report paths under the given root."""
+    metrics_dir = (root or DATA_DIR) / "metrics"
+    return (
+        metrics_dir / "testnet_readiness.json",
+        metrics_dir / "testnet_readiness_reports.jsonl",
+    )
 
 
 @dataclass
@@ -78,8 +84,9 @@ class ReadinessChecker:
         target_days: int = 10,
         max_slippage_bps: float = 50.0,
     ) -> None:
-        self._state_path = state_path or READINESS_STATE_PATH
-        self._report_path = report_path or READINESS_REPORT_PATH
+        default_state_path, default_report_path = readiness_paths()
+        self._state_path = state_path or default_state_path
+        self._report_path = report_path or default_report_path
         self._max_slippage_bps = max_slippage_bps
         self._state = self._load_state()
         self._state.target_days = target_days

@@ -31,7 +31,7 @@ class EvoDaemon:
     write candidates to SQLite → gc → sleep → repeat.
 
     Supports two modes:
-    - "legacy": fitness-based archive + candidate queue for validator
+    - "legacy": fitness-based archive + candidate queue for admission daemon
     - "map_elites": feature subsets + sanity filter + persistent archive
     """
 

@@ -73,6 +73,12 @@ python -m alpha_os trade --event-driven --asset BTC
 # Layer 2 tactical evolution
 python -m alpha_os evolve --layer 2 --generations 30
 
+# Run the candidate admission daemon
+python -m alpha_os admission-daemon --asset BTC
+
+# Rebuild registry states from validated candidates
+python -m alpha_os rebuild-registry --asset BTC --source candidates
+
 # Check testnet readiness status
 python -m alpha_os testnet-readiness
 ```
@@ -89,10 +95,14 @@ Recent CLI cleanup now prefers standard terms:
 
 - `trade` is the runtime trading command and defaults to Binance testnet.
   Real-money trading is only `trade --real`.
+- Registry state names are `candidate`, `active`, `dormant`, and `rejected`.
+  The trading pool uses only `active`; `dormant` is monitored for revival.
 - `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
 - `paper --replay` is historical replay of the current runtime decision stack.
 - `testnet-readiness` is the operational readiness check for testnet trading.
 - `validate` remains statistical alpha validation via purged walk-forward CV.
+- The CLI uses `admission-daemon`, while the TOML section is still `[validator]`
+  for now.
 - Logs and reports distinguish `registry active`, `shortlist candidates`,
   `selected alphas`, and `signals evaluated`.
 
