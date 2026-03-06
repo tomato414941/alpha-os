@@ -18,13 +18,16 @@ from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
 from ..alpha.combiner import (
+    CombinerConfig,
     WeightedCombinerConfig,
     compute_diversity_scores,
     compute_weights,
+    select_low_correlation,
 )
 from ..risk.manager import RiskManager
 
 logger = logging.getLogger(__name__)
+ST_EXCLUDED = -1
 
 
 @dataclass
@@ -39,6 +42,41 @@ class SimulationResult:
     win_rate: float
     best_day: tuple[str, float]   # (date, return)
     worst_day: tuple[str, float]  # (date, return)
+
+
+def _initial_simulation_state(state: str) -> int:
+    """Map registry state to simulator lifecycle state."""
+    if state == AlphaState.ACTIVE:
+        return ST_ACTIVE
+    if state == AlphaState.PROBATION:
+        return ST_PROBATION
+    if state == AlphaState.DORMANT:
+        return ST_DORMANT
+    return ST_EXCLUDED
+
+
+def _live_like_eval_indices(
+    records: list,
+    state_codes: np.ndarray,
+    *,
+    max_trading: int,
+    metric: str,
+) -> tuple[list[int], list[int], list[int]]:
+    """Return (trading_candidates, dormant, eval_set) using live trader rules."""
+    n_candidates = max_trading * 5
+    trading_candidates = [
+        i for i, state in enumerate(state_codes)
+        if state in (ST_ACTIVE, ST_PROBATION)
+    ]
+    trading_candidates.sort(
+        key=lambda i: records[i].oos_fitness(metric),
+        reverse=True,
+    )
+    trading_candidates = trading_candidates[:n_candidates]
+
+    dormant = [i for i, state in enumerate(state_codes) if state == ST_DORMANT]
+    eval_set = trading_candidates + dormant
+    return trading_candidates, dormant, eval_set
 
 
 def _backfill_signals_to_position_intent(
@@ -118,7 +156,7 @@ def run_backfill(
     n_days = len(prices)
     logger.info("Loaded %d days (%s to %s)", n_days, dates[0], dates[-1])
 
-    # 2. Load and reset alphas
+    # 2. Load current registry state
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         reg_path = registry_db or asset_data_dir(asset) / "alpha_registry.db"
@@ -126,17 +164,14 @@ def run_backfill(
         shutil.copy2(reg_path, sim_reg_path)
         registry = AlphaRegistry(sim_reg_path)
 
-        all_states = [AlphaState.ACTIVE, AlphaState.PROBATION,
-                      AlphaState.REJECTED, AlphaState.DORMANT]
-        n_activated = 0
-        for state in all_states:
-            for record in registry.list_by_state(state):
-                if record.state != AlphaState.ACTIVE:
-                    registry.update_state(record.alpha_id, AlphaState.ACTIVE)
-                    n_activated += 1
-        all_records = registry.list_by_state(AlphaState.ACTIVE)
+        all_records = (
+            registry.top(
+                n=registry.count(),
+                metric=config.fitness_metric,
+            )
+        )
         n_alphas = len(all_records)
-        logger.info("%d alphas (%d reactivated)", n_alphas, n_activated)
+        logger.info("%d alphas loaded from registry", n_alphas)
         if not all_records:
             raise RuntimeError("No alphas in registry. Run `evolve` first.")
 
@@ -161,6 +196,8 @@ def run_backfill(
         wcfg = WeightedCombinerConfig()
         valid_signals = np.nan_to_num(signal_matrix[valid_mask])
         diversity_scores = compute_diversity_scores(valid_signals, chunk_size=wcfg.chunk_size)
+        diversity_full = np.ones(n_alphas, dtype=np.float64)
+        diversity_full[valid_mask] = diversity_scores
         last_diversity_day = 0
         logger.info("Initial diversity scores computed for %d alphas", n_valid)
 
@@ -186,7 +223,10 @@ def run_backfill(
         rolling_window = 63
         min_obs = 20
 
-        alpha_state_vec = np.zeros(n_alphas, dtype=np.int8)
+        alpha_state_vec = np.array(
+            [_initial_simulation_state(record.state) for record in all_records],
+            dtype=np.int8,
+        )
 
         # Pre-compute forward returns matrix
         returns_mat = np.zeros((n_alphas, n_days), dtype=np.float64)
@@ -216,10 +256,23 @@ def run_backfill(
             else:
                 rolling_quality = np.zeros(int(valid_mask.sum()))
 
-            # State transitions (vectorized via shared lifecycle logic)
-            valid_states = alpha_state_vec[valid_mask]
-            new_states = batch_transitions(valid_states, rolling_quality, lc_cfg)
-            alpha_state_vec[valid_mask] = new_states
+            rolling_quality_full = np.zeros(n_alphas, dtype=np.float64)
+            rolling_quality_full[valid_mask] = rolling_quality
+
+            trading_candidates, _, eval_indices = _live_like_eval_indices(
+                all_records,
+                alpha_state_vec,
+                max_trading=config.paper.max_trading_alphas,
+                metric=config.fitness_metric,
+            )
+
+            # Live trader only evaluates top trading candidates plus dormant alphas.
+            eval_indices = [i for i in eval_indices if valid_mask[i]]
+            if eval_indices:
+                eval_state_vec = alpha_state_vec[eval_indices]
+                eval_quality = rolling_quality_full[eval_indices]
+                new_states = batch_transitions(eval_state_vec, eval_quality, lc_cfg)
+                alpha_state_vec[eval_indices] = new_states
 
             # Recompute diversity periodically (rolling window)
             if d - last_diversity_day >= wcfg.diversity_recompute_days:
@@ -229,17 +282,34 @@ def run_backfill(
                     diversity_scores = compute_diversity_scores(
                         window_sigs, chunk_size=wcfg.chunk_size,
                     )
+                    diversity_full[valid_mask] = diversity_scores
                     last_diversity_day = d
 
-            # Combined signal from ACTIVE + PROBATION with quality × diversity weights
-            trading_within_valid = (new_states == ST_ACTIVE) | (new_states == ST_PROBATION)
-            if trading_within_valid.any():
-                t_quality = rolling_quality[trading_within_valid]
-                t_diversity = diversity_scores[trading_within_valid]
+            # Combined signal from live-like candidate set with correlation filter
+            trading_indices = [i for i in trading_candidates if valid_mask[i]]
+            if (
+                len(trading_indices) > config.paper.max_trading_alphas
+                and config.paper.combine_mode != "map_elites"
+            ):
+                lookback = min(wcfg.corr_lookback, d)
+                corr_matrix = np.array([
+                    signal_matrix[i, d - lookback:d] for i in trading_indices
+                ])
+                quality_for_sel = np.array([
+                    rolling_quality_full[i] for i in trading_indices
+                ])
+                selected_idx = select_low_correlation(
+                    corr_matrix,
+                    quality_for_sel,
+                    CombinerConfig(max_alphas=config.paper.max_trading_alphas),
+                )
+                trading_indices = [trading_indices[i] for i in selected_idx]
+
+            if trading_indices:
+                t_quality = np.array([rolling_quality_full[i] for i in trading_indices])
+                t_diversity = diversity_full[trading_indices]
                 weights = compute_weights(t_quality, t_diversity, min_weight=wcfg.min_weight)
-                trading_mask = valid_mask.copy()
-                trading_mask[valid_mask] &= trading_within_valid
-                selected_signals = signal_matrix[trading_mask, d - 1]
+                selected_signals = np.array([signal_matrix[i, d - 1] for i in trading_indices])
             else:
                 selected_signals = np.array([], dtype=np.float64)
                 weights = np.array([], dtype=np.float64)
