@@ -8,6 +8,7 @@ import time
 
 import numpy as np
 
+from ..alpha.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
@@ -165,6 +166,10 @@ class ValidatorDaemon:
         )
 
         registry = AlphaRegistry(asset_data_dir(self.asset) / "alpha_registry.db")
+        existing_ids = {
+            record.expression: record.alpha_id
+            for record in registry.list_all()
+        }
         n_adopted = 0
         n_rejected = 0
 
@@ -183,7 +188,11 @@ class ValidatorDaemon:
             )
 
             if result.passed:
-                alpha_id = f"v2_{hash(expr_str) % 10**8:08d}"
+                alpha_id = alpha_id_for_expression(
+                    expr_str,
+                    existing_ids=existing_ids,
+                )
+                existing_ids[expr_str] = alpha_id
                 record = AlphaRecord(
                     alpha_id=alpha_id,
                     expression=expr_str,

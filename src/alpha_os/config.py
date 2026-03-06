@@ -309,6 +309,8 @@ class Config:
         return LifecycleConfig(
             candidate_quality_min=self.lifecycle.candidate_quality_min,
             active_quality_min=self.lifecycle.active_quality_min,
+            pbo_max=self.validation.pbo_max,
+            dsr_pvalue_max=self.validation.dsr_pvalue_max,
             correlation_max=self.lifecycle.correlation_max,
             dormant_revival_quality=self.lifecycle.dormant_revival_quality,
         )

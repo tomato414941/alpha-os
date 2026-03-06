@@ -156,33 +156,40 @@ class AlphaRegistry:
             (AlphaState.ACTIVE, "probation"),
         )
 
+    def replace_all(self, records: list[AlphaRecord]) -> None:
+        values = [self._record_values(record) for record in records]
+        self._conn.execute("DELETE FROM alphas")
+        if values:
+            self._conn.executemany(
+                """INSERT INTO alphas
+                   (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
+                    pbo, dsr_pvalue, turnover, correlation_avg,
+                    created_at, updated_at, metadata)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                values,
+            )
+        self._conn.commit()
+
+    def list_all(self) -> list[AlphaRecord]:
+        rows = self._conn.execute("SELECT * FROM alphas").fetchall()
+        return [self._row_to_record(r) for r in rows]
+
+    def clear_diversity_cache(self) -> None:
+        self._conn.execute("DELETE FROM diversity_cache")
+        self._conn.commit()
+
     def register(self, record: AlphaRecord) -> None:
         now = time.time()
         if record.created_at == 0.0:
             record.created_at = now
         record.updated_at = now
-        state = AlphaState.canonical(record.state)
         self._conn.execute(
             """INSERT OR REPLACE INTO alphas
                (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
                 pbo, dsr_pvalue, turnover, correlation_avg,
                 created_at, updated_at, metadata)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                record.alpha_id,
-                record.expression,
-                state,
-                record.fitness,
-                record.oos_sharpe,
-                record.oos_log_growth,
-                record.pbo,
-                record.dsr_pvalue,
-                record.turnover,
-                record.correlation_avg,
-                record.created_at,
-                record.updated_at,
-                json.dumps(record.metadata),
-            ),
+            self._record_values(record),
         )
         self._conn.commit()
 
@@ -277,6 +284,30 @@ class AlphaRegistry:
 
     def close(self) -> None:
         self._conn.close()
+
+    @staticmethod
+    def _record_values(record: AlphaRecord) -> tuple:
+        now = time.time()
+        if record.created_at == 0.0:
+            record.created_at = now
+        if record.updated_at == 0.0:
+            record.updated_at = now
+        state = AlphaState.canonical(record.state)
+        return (
+            record.alpha_id,
+            record.expression,
+            state,
+            record.fitness,
+            record.oos_sharpe,
+            record.oos_log_growth,
+            record.pbo,
+            record.dsr_pvalue,
+            record.turnover,
+            record.correlation_avg,
+            record.created_at,
+            record.updated_at,
+            json.dumps(record.metadata),
+        )
 
     @staticmethod
     def _row_to_record(row: sqlite3.Row) -> AlphaRecord:

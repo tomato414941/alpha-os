@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sqlite3
 import sys
 import tempfile
 import time
@@ -62,103 +61,6 @@ def _print_rows(rows: list[SweepRow]) -> None:
         )
 
 
-def _load_registry_records(asset: str) -> list[object]:
-    from alpha_os.alpha.registry import AlphaRegistry
-    from alpha_os.config import asset_data_dir
-
-    registry = AlphaRegistry(asset_data_dir(asset) / "alpha_registry.db")
-    try:
-        return registry.top(n=registry.count(), metric="sharpe")
-    finally:
-        registry.close()
-
-
-def _load_candidate_records(asset: str) -> list[object]:
-    from alpha_os.alpha.registry import AlphaRecord, AlphaState
-    from alpha_os.config import asset_data_dir
-
-    db_path = asset_data_dir(asset) / "alpha_registry.db"
-    conn = sqlite3.connect(str(db_path))
-    try:
-        rows = conn.execute(
-            """
-            SELECT candidate_id, expression, fitness, oos_sharpe, pbo, dsr_pvalue, validated_at
-            FROM candidates
-            WHERE oos_sharpe IS NOT NULL
-              AND pbo IS NOT NULL
-              AND dsr_pvalue IS NOT NULL
-            ORDER BY validated_at ASC, candidate_id ASC
-            """
-        ).fetchall()
-    finally:
-        conn.close()
-
-    records = []
-    for cid, expression, fitness, oos_sharpe, pbo, dsr_pvalue, validated_at in rows:
-        records.append(
-            AlphaRecord(
-                alpha_id=f"cand_{cid}",
-                expression=expression,
-                state=AlphaState.CANDIDATE,
-                fitness=float(fitness or 0.0),
-                oos_sharpe=float(oos_sharpe or 0.0),
-                pbo=float(pbo or 1.0),
-                dsr_pvalue=float(dsr_pvalue or 1.0),
-                created_at=float(validated_at or 0.0),
-                updated_at=float(validated_at or 0.0),
-            )
-        )
-    return records
-
-
-def _load_source_records(asset: str, source: str) -> list[object]:
-    if source == "alphas":
-        return _load_registry_records(asset)
-    if source == "candidates":
-        return _load_candidate_records(asset)
-    raise ValueError(f"unsupported source: {source}")
-
-
-def _materialize_replay_registry(records: list[object], cfg, db_path: Path) -> int:
-    from alpha_os.alpha.lifecycle import passes_candidate_gate
-    from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
-
-    replay_registry = AlphaRegistry(db_path)
-    lifecycle_cfg = cfg.to_lifecycle_config()
-    admitted = 0
-
-    try:
-        for record in records:
-            state = (
-                AlphaState.ACTIVE
-                if passes_candidate_gate(record, lifecycle_cfg)
-                else AlphaState.REJECTED
-            )
-            replay_registry.register(
-                AlphaRecord(
-                    alpha_id=record.alpha_id,
-                    expression=record.expression,
-                    state=state,
-                    fitness=record.fitness,
-                    oos_sharpe=record.oos_sharpe,
-                    oos_log_growth=getattr(record, "oos_log_growth", 0.0),
-                    pbo=record.pbo,
-                    dsr_pvalue=record.dsr_pvalue,
-                    turnover=getattr(record, "turnover", 0.0),
-                    correlation_avg=getattr(record, "correlation_avg", 0.0),
-                    created_at=getattr(record, "created_at", 0.0),
-                    updated_at=getattr(record, "updated_at", 0.0),
-                    metadata=getattr(record, "metadata", {}),
-                )
-            )
-            if state == AlphaState.ACTIVE:
-                admitted += 1
-    finally:
-        replay_registry.close()
-
-    return admitted
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run backfill sweeps over lifecycle threshold combinations.",
@@ -188,10 +90,17 @@ def main() -> int:
     candidate_values = _parse_values(args.candidate_values)
     active_values = _parse_values(args.active_values)
 
+    from alpha_os.alpha.admission_replay import (
+        apply_registry_snapshot,
+        load_source_records,
+        materialize_admission_snapshot,
+    )
     from alpha_os.config import Config
+    from alpha_os.config import asset_data_dir
     from alpha_os.paper.simulator import run_backfill
 
-    source_records = _load_source_records(args.asset, args.source)
+    registry_db = asset_data_dir(args.asset) / "alpha_registry.db"
+    source_records = load_source_records(registry_db, args.source)
     rows: list[SweepRow] = []
     total = len(candidate_values) * len(active_values)
     run_no = 0
@@ -224,11 +133,12 @@ def main() -> int:
             t0 = time.perf_counter()
             with tempfile.TemporaryDirectory(prefix="alpha_os_replay_") as tmp:
                 replay_db = Path(tmp) / "registry.db"
-                starting_active = _materialize_replay_registry(
+                snapshot, counts = materialize_admission_snapshot(
                     source_records,
-                    cfg,
-                    replay_db,
+                    cfg.to_lifecycle_config(),
                 )
+                apply_registry_snapshot(replay_db, snapshot)
+                starting_active = counts["active"]
                 result = run_backfill(
                     asset=args.asset,
                     config=cfg,

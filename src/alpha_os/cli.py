@@ -163,6 +163,32 @@ def _build_parser() -> argparse.ArgumentParser:
     lc_d.add_argument("--asset", type=str, default="BTC")
     lc_d.add_argument("--config", type=str, default=None)
 
+    # rebuild-registry
+    rb = sub.add_parser(
+        "rebuild-registry",
+        help="Replay admission gates and rebuild registry alphas",
+    )
+    rb.add_argument("--asset", type=str, default="BTC")
+    rb.add_argument("--config", type=str, default=None)
+    rb.add_argument(
+        "--source",
+        choices=["candidates", "alphas"],
+        default="candidates",
+        help="Source records used to rebuild alpha states",
+    )
+    rb.add_argument(
+        "--fail-state",
+        choices=["rejected", "dormant"],
+        default="rejected",
+        help="State assigned to records that fail the admission gate",
+    )
+    rb.add_argument("--dry-run", action="store_true", help="Print counts without writing")
+    rb.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Skip copying alpha_registry.db before rewrite",
+    )
+
     # validate-testnet
     vt = sub.add_parser("validate-testnet", help="Check Phase 4 testnet validation status")
     vt.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -1185,6 +1211,36 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_rebuild_registry(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    from alpha_os.alpha.admission_replay import rebuild_registry
+
+    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
+    stats = rebuild_registry(
+        db_path,
+        cfg.to_lifecycle_config(),
+        source=args.source,
+        fail_state=args.fail_state,
+        dry_run=args.dry_run,
+        backup=not args.no_backup,
+    )
+
+    mode = "DRY RUN" if args.dry_run else "WRITE"
+    print(
+        f"Registry rebuild [{mode}]: asset={args.asset} "
+        f"source={stats.source_name} db={stats.registry_db}"
+    )
+    print(f"  Source rows: {stats.source_rows}")
+    print(f"  Active:      {stats.active_count}")
+    print(f"  Dormant:     {stats.dormant_count}")
+    print(f"  Rejected:    {stats.rejected_count}")
+    if stats.backup_path is not None:
+        print(f"  Backup:      {stats.backup_path}")
+    if not args.dry_run:
+        print("  Diversity cache cleared.")
+
+
 def cmd_validator(args: argparse.Namespace) -> None:
     """Run the candidate validation daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
@@ -1287,5 +1343,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_validator(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
+    elif args.command == "rebuild-registry":
+        cmd_rebuild_registry(args)
     elif args.command == "validate-testnet":
         cmd_validate_testnet(args)

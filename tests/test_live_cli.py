@@ -100,6 +100,25 @@ def test_live_parser():
     assert args.capital == 500.0
 
 
+def test_rebuild_registry_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "rebuild-registry",
+        "--asset", "BTC",
+        "--source", "candidates",
+        "--fail-state", "dormant",
+        "--dry-run",
+    ])
+
+    assert args.command == "rebuild-registry"
+    assert args.asset == "BTC"
+    assert args.source == "candidates"
+    assert args.fail_state == "dormant"
+    assert args.dry_run is True
+
+
 def test_normalize_live_config_preserves_requested_profile():
     from alpha_os.cli import _normalize_live_config
     from alpha_os.config import Config
