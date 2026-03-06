@@ -231,7 +231,10 @@ def run_backfill(
 
         # 4. Simulate day by day — fully vectorized inner loop
         risk_manager = RiskManager(config.risk.to_manager_config())
-        executor = PaperExecutor(initial_cash=config.trading.initial_capital)
+        executor = PaperExecutor(
+            initial_cash=config.trading.initial_capital,
+            supports_short=config.trading.supports_short,
+        )
         initial_capital = config.trading.initial_capital
         max_position_pct = config.paper.max_position_pct
         min_trade_usd = config.paper.min_trade_usd
@@ -362,6 +365,8 @@ def run_backfill(
             dollar_pos = adjusted * prev_value * max_position_pct
             target_shares = dollar_pos / current_price if current_price > 0 else 0.0
             if abs(dollar_pos) < min_trade_usd:
+                target_shares = 0.0
+            if not executor.supports_short and target_shares < 0:
                 target_shares = 0.0
 
             executor.set_price(price_sig, current_price)

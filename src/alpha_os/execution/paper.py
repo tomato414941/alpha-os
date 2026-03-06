@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 class PaperExecutor(Executor):
     """In-memory paper trading executor for backtesting and simulation."""
 
-    def __init__(self, initial_cash: float = 10000.0):
+    def __init__(self, initial_cash: float = 10000.0, supports_short: bool = False):
         self._cash = initial_cash
         self._positions: dict[str, float] = {}
         self._prices: dict[str, float] = {}
         self._fills: list[Fill] = []
         self._order_counter = 0
+        self._supports_short = supports_short
 
     def set_price(self, symbol: str, price: float) -> None:
         self._prices[symbol] = price
@@ -38,8 +39,15 @@ class PaperExecutor(Executor):
             self._cash -= cost
             self._positions[order.symbol] = self._positions.get(order.symbol, 0) + order.qty
         elif order.side == "sell":
+            current_qty = self._positions.get(order.symbol, 0.0)
+            if not self._supports_short and order.qty > current_qty + 1e-12:
+                logger.warning(
+                    "Cannot sell %.6f %s with only %.6f available in long-only mode",
+                    order.qty, order.symbol, current_qty,
+                )
+                return None
             self._cash += cost
-            self._positions[order.symbol] = self._positions.get(order.symbol, 0) - order.qty
+            self._positions[order.symbol] = current_qty - order.qty
         else:
             return None
 
@@ -59,6 +67,10 @@ class PaperExecutor(Executor):
 
     def get_cash(self) -> float:
         return self._cash
+
+    @property
+    def supports_short(self) -> bool:
+        return self._supports_short
 
     @property
     def portfolio_value(self) -> float:

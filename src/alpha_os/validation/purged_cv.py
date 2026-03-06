@@ -71,7 +71,7 @@ def purged_walk_forward(
         fold_sharpes.append(result.sharpe)
 
         oos_rets = np.diff(oos_prices) / oos_prices[:-1]
-        pos = np.clip(np.sign(oos_signal[:-1]), -1.0, 1.0)
+        pos = engine.positions(oos_signal)[:-1]
         all_oos_returns.extend((pos * oos_rets).tolist())
 
     if not fold_sharpes:

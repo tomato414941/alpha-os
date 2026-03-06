@@ -147,8 +147,6 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Use event-driven execution instead of fixed interval")
     liv.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
-    liv.add_argument("--tactical", action="store_true",
-                     help="Enable Layer 2 tactical modulation")
 
     # evo-daemon (Pipeline v2)
     evo_d = sub.add_parser("evo-daemon", help="Run continuous GP evolution daemon")
@@ -182,6 +180,18 @@ def _load_config(config_path: str | None) -> Config:
     if config_path:
         return Config.load(Path(config_path))
     return Config.load()
+
+
+def _normalize_live_config(cfg: Config) -> list[str]:
+    """Reduce live runtime to the single supported production profile."""
+    changes: list[str] = []
+    if cfg.paper.combine_mode != "consensus":
+        changes.append(f"combine_mode {cfg.paper.combine_mode} -> consensus")
+        cfg.paper.combine_mode = "consensus"
+    if cfg.regime.enabled:
+        changes.append("regime on -> off")
+        cfg.regime.enabled = False
+    return changes
 
 
 def _make_features(asset: str) -> list[str]:
@@ -350,7 +360,8 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     t2 = time.perf_counter()
     sig_matrix = np.array(signals)
     engine = BacktestEngine(
-        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct)
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
     )
     results = engine.run_batch(
         sig_matrix, prices,
@@ -402,7 +413,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     prices = data[price_feat]
 
     engine = BacktestEngine(
-        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct)
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
     )
 
     def evaluate_fn(expr):
@@ -497,7 +509,8 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
     # Purged Walk-Forward CV
     engine = BacktestEngine(
-        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct)
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
     )
     cv = purged_walk_forward(
         sig, prices, engine,
@@ -725,6 +738,7 @@ def _build_pipeline_config(
         n_cv_folds=config.validation.n_cv_folds,
         embargo_days=config.validation.embargo_days,
         eval_window_days=config.backtest.eval_window_days,
+        allow_short=config.trading.supports_short,
     )
 
 
@@ -825,6 +839,7 @@ def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
         n_cv_folds=config.validation.n_cv_folds,
         embargo_days=config.validation.embargo_days,
         eval_window_days=0,
+        allow_short=config.trading.supports_short,
     )
 
 
@@ -914,7 +929,6 @@ def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
 
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
-    enable_tactical: bool = False,
 ):
     """Create trader, circuit breaker, and validator for one asset."""
     from alpha_os.paper.trader import Trader
@@ -950,9 +964,8 @@ def _setup_asset_context(
             initial_capital=capital,
         )
 
-    tactical = _build_tactical_trader(asset=asset, cfg=cfg, enabled=enable_tactical)
     trader = Trader(asset=asset, config=cfg, executor=executor,
-                    circuit_breaker=cb, tactical=tactical)
+                    circuit_breaker=cb)
 
     validator = None
     if testnet and is_crypto(asset):
@@ -969,6 +982,7 @@ def _setup_asset_context(
 
 def cmd_live(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
+    profile_changes = _normalize_live_config(cfg)
     interval = args.interval or cfg.forward.check_interval
     testnet = not args.real
     asset_list = _resolve_asset_list(args)
@@ -1002,17 +1016,18 @@ def cmd_live(args: argparse.Namespace) -> None:
 
     mode = "TESTNET" if testnet else "REAL"
     print(f"Live trading [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
+    if profile_changes:
+        print("Live profile overrides: " + ", ".join(profile_changes))
+    print("Live profile: consensus L3, regime off, L2 off")
 
     # Initialize per-asset contexts
     contexts: dict[str, tuple] = {}
     for asset in asset_list:
         trader, cb, validator = _setup_asset_context(
             asset, cfg, testnet, args.capital,
-            enable_tactical=getattr(args, "tactical", False),
         )
         contexts[asset] = (trader, cb, validator)
-        l2_status = "on" if getattr(args, "tactical", False) else "off"
-        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT (L2 {l2_status})")
+        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
 
     if args.summary:
         for asset in asset_list:
@@ -1025,8 +1040,6 @@ def cmd_live(args: argparse.Namespace) -> None:
     from alpha_os.alpha.registry import AlphaState
 
     pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
-    l2_pipeline_cfg = _build_l2_pipeline_config(cfg, args.pop_size, args.generations)
-
     def _needs_evolution(trader):
         active = trader.registry.list_by_state(AlphaState.ACTIVE)
         probation = trader.registry.list_by_state(AlphaState.PROBATION)
@@ -1049,9 +1062,6 @@ def cmd_live(args: argparse.Namespace) -> None:
             if _needs_evolution(trader):
                 print(f"No alphas for {asset} — running evolution...")
                 _run_evolution(trader, cfg, pipeline_cfg)
-            if trader.tactical is not None and _needs_evolution_l2(trader.tactical):
-                print(f"No L2 alphas for {asset} — running L2 evolution...")
-                _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
             result = trader.run_cycle()
             _print_paper_result(result)
             recon = trader.reconcile()
@@ -1062,7 +1072,6 @@ def cmd_live(args: argparse.Namespace) -> None:
         return
 
     last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
-    last_evolve_l2: dict[str, float] = {a: 0.0 for a in asset_list}
     logger = logging.getLogger(__name__)
 
     # Pipeline v2: determine if daemons handle evo/lifecycle
@@ -1084,11 +1093,6 @@ def cmd_live(args: argparse.Namespace) -> None:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
                     last_evolve[asset] = now
-                if trader.tactical is not None:
-                    if _needs_evolution_l2(trader.tactical) or (now - last_evolve_l2[asset]) >= evolve_interval:
-                        logger.info("Running L2 evolution for %s...", asset)
-                        _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
-                        last_evolve_l2[asset] = now
             result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
             _print_paper_result(result)
             recon = trader.reconcile()
@@ -1134,11 +1138,6 @@ def cmd_live(args: argparse.Namespace) -> None:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
                     last_evolve[asset] = now
-                if trader.tactical is not None:
-                    if _needs_evolution_l2(trader.tactical) or (now - last_evolve_l2.get(asset, 0)) >= evolve_interval:
-                        logger.info("Running L2 evolution for %s...", asset)
-                        _run_l2_evolution(trader.tactical, cfg, l2_pipeline_cfg)
-                        last_evolve_l2[asset] = now
 
         ed_trader = EventDrivenTrader(
             trader=trader, client=client, config=ed_cfg,

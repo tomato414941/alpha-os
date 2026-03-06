@@ -27,22 +27,32 @@ class BacktestResult:
         return getattr(self, self._FITNESS_MAP[metric])
 
 
-def _normalize_positions(signal: np.ndarray) -> np.ndarray:
+def _normalize_positions(signal: np.ndarray, *, allow_short: bool) -> np.ndarray:
     s = signal.copy().astype(float)
     s[np.isnan(s)] = 0.0
     std = s.std()
+    lower = -1.0 if allow_short else 0.0
     if std == 0:
-        return np.clip(np.sign(s), -1.0, 1.0)
-    return np.clip(s / std, -1.0, 1.0)
+        signed = np.sign(s)
+        return np.clip(signed, lower, 1.0)
+    return np.clip(s / std, lower, 1.0)
 
 
 class BacktestEngine:
-    def __init__(self, cost_model: CostModel | None = None):
+    def __init__(self, cost_model: CostModel | None = None, *, allow_short: bool = True):
         self._cost = cost_model or CostModel()
+        self._allow_short = allow_short
+
+    @property
+    def allow_short(self) -> bool:
+        return self._allow_short
+
+    def positions(self, alpha_signal: np.ndarray) -> np.ndarray:
+        return _normalize_positions(alpha_signal, allow_short=self._allow_short)
 
     def run(self, alpha_signal: np.ndarray, prices: np.ndarray,
             alpha_id: str = "") -> BacktestResult:
-        pos = _normalize_positions(alpha_signal)
+        pos = self.positions(alpha_signal)
         rets = np.diff(prices) / prices[:-1]
         n = min(len(pos) - 1, len(rets))
         strat_rets = pos[:n] * rets[:n]
@@ -73,8 +83,9 @@ class BacktestEngine:
         stds = sigs.std(axis=1, keepdims=True)
         zero_std_mask = stds.flatten() == 0
         stds[stds == 0] = 1.0
-        pos = np.clip(sigs / stds, -1.0, 1.0)
-        pos[zero_std_mask] = np.clip(np.sign(sigs[zero_std_mask]), -1.0, 1.0)
+        lower = -1.0 if self._allow_short else 0.0
+        pos = np.clip(sigs / stds, lower, 1.0)
+        pos[zero_std_mask] = np.clip(np.sign(sigs[zero_std_mask]), lower, 1.0)
 
         rets = np.diff(prices) / prices[:-1]
         n = min(pos.shape[1] - 1, len(rets))

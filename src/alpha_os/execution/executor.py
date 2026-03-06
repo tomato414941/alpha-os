@@ -71,6 +71,11 @@ class Executor(ABC):
         return None
 
     @property
+    def supports_short(self) -> bool:
+        """Whether the executor can maintain net short positions."""
+        return False
+
+    @property
     def portfolio_value(self) -> float:
         """Total portfolio value. Subclasses should override for accuracy."""
         return self.get_cash()

@@ -289,6 +289,15 @@ class BinanceExecutor(Executor):
             )
 
     def submit_order(self, order: Order) -> Fill | None:
+        if order.side == "sell" and not self.supports_short:
+            current_qty = self.get_position(order.symbol)
+            if order.qty > current_qty + 1e-12:
+                logger.warning(
+                    "Cannot sell %.6f %s with only %.6f managed in long-only mode",
+                    order.qty, order.symbol, current_qty,
+                )
+                return None
+
         if self._optimizer is not None:
             for attempt in range(3):
                 if self._optimizer.optimal_execution_window(order.side):
@@ -400,6 +409,10 @@ class BinanceExecutor(Executor):
 
     def get_reconciled_cash(self) -> float:
         return self._exchange_cash() - self._reconciliation_cash_offset
+
+    @property
+    def supports_short(self) -> bool:
+        return False
 
     @property
     def portfolio_value(self) -> float:

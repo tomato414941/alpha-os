@@ -42,7 +42,12 @@ def select_low_correlation(
     if n == 0:
         return []
 
-    order = np.argsort(-quality_scores)
+    priority = np.nan_to_num(np.asarray(quality_scores, dtype=np.float64), nan=0.0)
+    if np.max(priority) <= 0:
+        priority = compute_diversity_scores(
+            _sanitize_signal_array(np.asarray(signals, dtype=np.float64))
+        )
+    order = np.argsort(-priority)
     selected: list[int] = [int(order[0])]
 
     for idx in order[1:]:
@@ -165,8 +170,12 @@ def compute_weights(
     -------
     weights : (N,) normalized weights summing to 1.0
     """
-    quality = np.maximum(quality_scores, 0.0)
-    raw = quality * diversity + min_weight
+    quality = np.maximum(np.asarray(quality_scores, dtype=np.float64), 0.0)
+    diversity = np.clip(np.asarray(diversity, dtype=np.float64), 0.0, 1.0)
+    if np.max(quality) > 0:
+        raw = quality * diversity + min_weight
+    else:
+        raw = diversity + min_weight
     total = raw.sum()
     if total > 0:
         return raw / total

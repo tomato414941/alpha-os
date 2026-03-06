@@ -154,7 +154,10 @@ class Trader:
         self.max_position_pct = config.paper.max_position_pct
         self.min_trade_usd = config.paper.min_trade_usd
 
-        self.executor = executor or PaperExecutor(initial_cash=self.initial_capital)
+        self.executor = executor or PaperExecutor(
+            initial_cash=self.initial_capital,
+            supports_short=config.trading.supports_short,
+        )
 
         if store is not None:
             self.store = store
@@ -277,6 +280,64 @@ class Trader:
             self._diversity_computed = True
             logger.info("Loaded %d diversity scores from cache", len(rows))
 
+    def _compute_cycle_diversity(
+        self,
+        alpha_ids: list[str],
+        alpha_signal_arrays: dict[str, np.ndarray],
+    ) -> dict[str, float]:
+        if not alpha_ids:
+            return {}
+        if len(alpha_ids) == 1:
+            return {alpha_ids[0]: 1.0}
+
+        available = [aid for aid in alpha_ids if aid in alpha_signal_arrays]
+        if len(available) < 2:
+            return {aid: 1.0 for aid in alpha_ids}
+
+        lookback = min(
+            self._wcfg.corr_lookback,
+            *(len(alpha_signal_arrays[aid]) for aid in available),
+        )
+        if lookback < 2:
+            return {aid: 1.0 for aid in alpha_ids}
+
+        sig_matrix = np.array(
+            [alpha_signal_arrays[aid][-lookback:] for aid in available],
+            dtype=np.float64,
+        )
+        diversity = compute_diversity_scores(
+            sig_matrix, chunk_size=self._wcfg.chunk_size
+        )
+        scores = {aid: 1.0 for aid in alpha_ids}
+        for aid, score in zip(available, diversity):
+            scores[aid] = float(score)
+        return scores
+
+    def _resolve_diversity_scores(
+        self,
+        alpha_ids: list[str],
+        alpha_signal_arrays: dict[str, np.ndarray],
+    ) -> dict[str, float]:
+        cached = np.array(
+            [self._diversity_cache.get(aid, np.nan) for aid in alpha_ids],
+            dtype=np.float64,
+        )
+        if (
+            alpha_ids
+            and np.all(np.isfinite(cached))
+            and np.ptp(cached) > 1e-9
+        ):
+            return {aid: float(cached[i]) for i, aid in enumerate(alpha_ids)}
+
+        live_scores = self._compute_cycle_diversity(alpha_ids, alpha_signal_arrays)
+        if live_scores:
+            logger.info(
+                "Using live cycle diversity for %d alphas (cache missing or degenerate)",
+                len(alpha_ids),
+            )
+            return live_scores
+        return {aid: float(self._diversity_cache.get(aid, 1.0)) for aid in alpha_ids}
+
     def _predict_portfolio_signal(
         self,
         alpha_signals: dict[str, float],
@@ -354,12 +415,14 @@ class Trader:
         elif alpha_signals:
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
-            diversity_list = []
             _metric = self.config.fitness_metric
+            diversity_scores = self._resolve_diversity_scores(
+                alpha_ids, alpha_signal_arrays
+            )
             for aid in alpha_ids:
                 status = self.monitor.check(aid)
                 quality_list.append(max(status.rolling_fitness(_metric), 0.0))
-                diversity_list.append(self._diversity_cache.get(aid, 1.0))
+            diversity_list = [diversity_scores.get(aid, 1.0) for aid in alpha_ids]
 
             quality_np = np.array(quality_list)
             diversity_np = np.array(diversity_list)
@@ -448,6 +511,8 @@ class Trader:
         dollar_pos = adjusted_signal * prev_value * self.max_position_pct
         target_shares = dollar_pos / current_price if current_price > 0 else 0.0
         if abs(dollar_pos) < self.min_trade_usd:
+            target_shares = 0.0
+        if not self.executor.supports_short and target_shares < 0:
             target_shares = 0.0
 
         target = {self.price_signal: target_shares}

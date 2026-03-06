@@ -24,6 +24,22 @@ class TestPaperExecutor:
         assert pe.get_position("NVDA") == 5
         assert pe.get_cash() == 9500.0
 
+    def test_sell_rejected_in_long_only_mode(self):
+        pe = PaperExecutor(initial_cash=10000.0)
+        pe.set_price("NVDA", 100.0)
+        fill = pe.submit_order(Order(symbol="NVDA", side="sell", qty=1))
+        assert fill is None
+        assert pe.get_position("NVDA") == 0
+        assert pe.get_cash() == 10000.0
+
+    def test_sell_allows_net_short_when_enabled(self):
+        pe = PaperExecutor(initial_cash=10000.0, supports_short=True)
+        pe.set_price("NVDA", 100.0)
+        fill = pe.submit_order(Order(symbol="NVDA", side="sell", qty=1))
+        assert fill is not None
+        assert pe.get_position("NVDA") == -1
+        assert pe.get_cash() == 10100.0
+
     def test_insufficient_cash(self):
         pe = PaperExecutor(initial_cash=100.0)
         pe.set_price("NVDA", 200.0)

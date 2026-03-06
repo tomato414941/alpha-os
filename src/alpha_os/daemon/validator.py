@@ -8,13 +8,13 @@ import time
 
 import numpy as np
 
-from ..alpha.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
+from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.universe import build_feature_list, price_signal
-from ..dsl import parse, to_string
+from ..dsl import parse
 from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
@@ -103,7 +103,8 @@ class ValidatorDaemon:
 
         engine = BacktestEngine(
             CostModel(self.config.backtest.commission_pct,
-                      self.config.backtest.slippage_pct)
+                      self.config.backtest.slippage_pct),
+            allow_short=self.config.trading.supports_short,
         )
 
         # Parse and evaluate candidates

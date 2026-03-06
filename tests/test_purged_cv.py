@@ -26,3 +26,27 @@ def test_purged_walk_forward_includes_distributional_metrics():
     assert result.n_folds > 0
     assert result.oos_cvar_95 <= 0.0
     assert 0.0 <= result.oos_tail_hit_rate <= 1.0
+
+
+def test_purged_walk_forward_respects_long_only_positions():
+    n = 400
+    prices = np.linspace(100.0, 200.0, n)
+    signal = -np.ones(n)
+
+    engine = BacktestEngine(
+        CostModel(commission_pct=0.0, slippage_pct=0.0),
+        allow_short=False,
+    )
+    result = purged_walk_forward(
+        signal,
+        prices,
+        engine,
+        n_folds=5,
+        embargo=5,
+        min_train=120,
+    )
+
+    assert result.n_folds > 0
+    assert result.oos_sharpe == 0.0
+    assert result.oos_return == 0.0
+    assert result.oos_cvar_95 == 0.0

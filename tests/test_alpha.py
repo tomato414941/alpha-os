@@ -317,6 +317,20 @@ class TestCombiner:
 
         assert selected
 
+    def test_select_low_correlation_prefers_diverse_seed_when_quality_zero(self):
+        base = np.linspace(-1.0, 1.0, 60)
+        signals = np.array([
+            base,
+            base + 0.001,
+            np.tile([1.0, -1.0], 30),
+        ])
+        sharpes = np.zeros(3)
+
+        selected = select_low_correlation(signals, sharpes, config=CombinerConfig(max_alphas=2))
+
+        assert selected[0] == 2
+        assert len(selected) == 2
+
     def test_equal_weight_combine(self):
         signals = np.array([
             [1.0, -1.0, 1.0],
@@ -373,6 +387,13 @@ class TestWeightedCombiner:
         weights = compute_weights(sharpes, diversity, min_weight=1e-4)
         assert np.isclose(weights.sum(), 1.0)
         np.testing.assert_allclose(weights, 1.0 / 5, atol=1e-6)
+
+    def test_weights_fall_back_to_diversity_when_quality_zero(self):
+        sharpes = np.zeros(3)
+        diversity = np.array([0.9, 0.4, 0.1])
+        weights = compute_weights(sharpes, diversity, min_weight=1e-4)
+        assert np.isclose(weights.sum(), 1.0)
+        assert weights[0] > weights[1] > weights[2]
 
     def test_weighted_combine_matrix(self):
         signals = np.array([[1.0, -1.0], [-1.0, 1.0]])

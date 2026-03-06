@@ -95,7 +95,8 @@ class EvoDaemon:
         # Build evaluator
         engine = BacktestEngine(
             CostModel(self.config.backtest.commission_pct,
-                      self.config.backtest.slippage_pct)
+                      self.config.backtest.slippage_pct),
+            allow_short=self.config.trading.supports_short,
         )
 
         def evaluate_fn(expr):
@@ -181,7 +182,8 @@ class EvoDaemon:
         # Build evaluator (still uses fitness to guide GP search)
         engine = BacktestEngine(
             CostModel(self.config.backtest.commission_pct,
-                      self.config.backtest.slippage_pct)
+                      self.config.backtest.slippage_pct),
+            allow_short=self.config.trading.supports_short,
         )
 
         def evaluate_fn(expr):

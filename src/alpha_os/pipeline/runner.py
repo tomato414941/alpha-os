@@ -40,6 +40,7 @@ class PipelineConfig:
     n_cv_folds: int = 5
     embargo_days: int = 5
     eval_window_days: int = 0  # 0 = all data; >0 = trailing N days
+    allow_short: bool = True
 
 
 @dataclass
@@ -88,7 +89,8 @@ class PipelineRunner:
             )
 
         self.engine = BacktestEngine(
-            CostModel(self.config.commission_pct, self.config.slippage_pct)
+            CostModel(self.config.commission_pct, self.config.slippage_pct),
+            allow_short=self.config.allow_short,
         )
         self.archive = AlphaArchive()
 

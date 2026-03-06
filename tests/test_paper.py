@@ -3,10 +3,22 @@ from __future__ import annotations
 
 import sqlite3
 
+import pandas as pd
 import pytest
 
 from alpha_os.execution.executor import Fill
 from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+
+
+class _StaticMatrixStore:
+    def __init__(self, matrix: pd.DataFrame):
+        self._matrix = matrix
+
+    def get_matrix(self, features, start=None, end=None):
+        return self._matrix.loc[:, features]
+
+    def close(self):
+        return None
 
 
 class TestPaperPortfolioTracker:
@@ -461,6 +473,69 @@ class TestPaperTrader:
 
         assert trader.executor.get_cash() == pytest.approx(8100.0)
         assert trader.executor.get_position("btc_ohlcv") == pytest.approx(0.02)
+        trader.close()
+
+    def test_build_allocation_plan_clamps_short_target_in_long_only_mode(self, tmp_path):
+        """Long-only mode should never emit a negative target position."""
+        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.config import Config
+        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+
+        cfg = Config()
+        store = _StaticMatrixStore(pd.DataFrame({"btc_ohlcv": [100.0]}))
+        trader = PaperTrader(
+            asset="BTC",
+            config=cfg,
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            registry=AlphaRegistry(tmp_path / "reg.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            store=store,
+        )
+
+        plan = trader._build_allocation_plan(
+            adjusted_signal=-0.5,
+            prev_value=10000.0,
+            today_date="2026-01-05",
+        )
+
+        assert trader.executor.supports_short is False
+        assert plan.current_price == pytest.approx(100.0)
+        assert plan.target_positions == {"btc_ohlcv": 0.0}
+        trader.close()
+
+    def test_build_allocation_plan_keeps_short_target_when_supported(self, tmp_path):
+        """Long/short mode should preserve negative target positions."""
+        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
+        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+
+        cfg = Config()
+        cfg.trading.mode = TRADING_MODE_FUTURES_LONG_SHORT
+        store = _StaticMatrixStore(pd.DataFrame({"btc_ohlcv": [100.0]}))
+        trader = PaperTrader(
+            asset="BTC",
+            config=cfg,
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            registry=AlphaRegistry(tmp_path / "reg.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            store=store,
+        )
+
+        plan = trader._build_allocation_plan(
+            adjusted_signal=-0.5,
+            prev_value=10000.0,
+            today_date="2026-01-05",
+        )
+
+        assert trader.executor.supports_short is True
+        assert plan.current_price == pytest.approx(100.0)
+        assert plan.target_positions == {"btc_ohlcv": pytest.approx(-50.0)}
         trader.close()
 
 

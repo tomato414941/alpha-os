@@ -16,6 +16,13 @@ _logger = logging.getLogger(__name__)
 
 _BTC_MIGRATED = False
 
+TRADING_MODE_SPOT_LONG_ONLY = "spot_long_only"
+TRADING_MODE_FUTURES_LONG_SHORT = "futures_long_short"
+_TRADING_MODES = {
+    TRADING_MODE_SPOT_LONG_ONLY,
+    TRADING_MODE_FUTURES_LONG_SHORT,
+}
+
 
 def asset_data_dir(asset: str) -> Path:
     """Return per-asset data directory, creating it if needed."""
@@ -121,6 +128,17 @@ class RiskConfig:
 @dataclass
 class TradingConfig:
     initial_capital: float = 10000.0
+    mode: str = TRADING_MODE_SPOT_LONG_ONLY
+
+    @property
+    def supports_short(self) -> bool:
+        if self.mode == TRADING_MODE_SPOT_LONG_ONLY:
+            return False
+        if self.mode == TRADING_MODE_FUTURES_LONG_SHORT:
+            return True
+        raise ValueError(
+            f"Unknown trading mode: {self.mode!r}. Expected one of {sorted(_TRADING_MODES)}"
+        )
 
 
 @dataclass

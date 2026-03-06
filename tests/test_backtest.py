@@ -97,6 +97,18 @@ class TestBacktestEngine:
         assert result.sharpe == 0.0
         assert result.expected_log_growth == 0.0
 
+    def test_run_clamps_negative_signal_in_long_only_mode(self):
+        prices = np.linspace(100, 120, 100)
+        alpha = -np.ones(100)
+        engine = BacktestEngine(
+            CostModel(commission_pct=0.0, slippage_pct=0.0),
+            allow_short=False,
+        )
+        result = engine.run(alpha, prices)
+        assert np.all(engine.positions(alpha) == 0.0)
+        assert result.annual_return == pytest.approx(0.0)
+        assert result.turnover == pytest.approx(0.0)
+
     def test_costs_reduce_returns(self):
         prices = np.linspace(100, 110, 100)
         rng = np.random.default_rng(42)
@@ -115,3 +127,15 @@ class TestBacktestEngine:
         results = engine.run_batch(signals, prices)
         assert len(results) == 50
         assert all(isinstance(r, BacktestResult) for r in results)
+
+    def test_run_batch_clamps_negative_signal_in_long_only_mode(self):
+        prices = np.linspace(100, 120, 100)
+        signals = np.vstack([-np.ones(100), np.ones(100)])
+        engine = BacktestEngine(
+            CostModel(commission_pct=0.0, slippage_pct=0.0),
+            allow_short=False,
+        )
+        results = engine.run_batch(signals, prices)
+        assert results[0].annual_return == pytest.approx(0.0)
+        assert results[0].turnover == pytest.approx(0.0)
+        assert results[1].annual_return > 0.0

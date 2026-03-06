@@ -244,6 +244,14 @@ def test_sell_order():
     assert ex._managed_cash > 10000.0
 
 
+def test_sell_order_rejected_when_it_would_go_net_short():
+    ex = _make_executor()
+    fill = ex.submit_order(Order(symbol="BTC", side="sell", qty=0.1))
+    assert fill is None
+    assert ex.get_position("BTC") == 0.0
+    ex._exchange.create_market_sell_order.assert_not_called()
+
+
 def test_sell_order_no_bids():
     mock_ex = _mock_exchange()
     mock_ex.fetch_order_book.return_value = {"asks": [[50000, 1]], "bids": []}

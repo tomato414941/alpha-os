@@ -90,15 +90,32 @@ def test_live_parser():
     assert args.real is False
     assert args.capital == 10000.0
     assert args.asset == "BTC"
-    assert args.tactical is False
+    assert not hasattr(args, "tactical")
 
     # Real mode
     args = parser.parse_args([
-        "live", "--once", "--real", "--capital", "500", "--tactical",
+        "live", "--once", "--real", "--capital", "500",
     ])
     assert args.real is True
     assert args.capital == 500.0
-    assert args.tactical is True
+
+
+def test_normalize_live_config_forces_single_profile():
+    from alpha_os.cli import _normalize_live_config
+    from alpha_os.config import Config
+
+    cfg = Config.load()
+    cfg.paper.combine_mode = "map_elites"
+    cfg.regime.enabled = True
+
+    changes = _normalize_live_config(cfg)
+
+    assert cfg.paper.combine_mode == "consensus"
+    assert cfg.regime.enabled is False
+    assert changes == [
+        "combine_mode map_elites -> consensus",
+        "regime on -> off",
+    ]
 
 
 def test_build_tactical_trader_respects_enable_flag(monkeypatch):
