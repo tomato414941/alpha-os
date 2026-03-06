@@ -17,8 +17,10 @@ class _MockCycleResult:
     daily_pnl: float = 50.0
     daily_return: float = 0.005
     fills: list = None
-    n_alphas_active: int = 5
-    n_alphas_evaluated: int = 5
+    n_registry_active: int = 615
+    n_shortlist_candidates: int = 150
+    n_selected_alphas: int = 5
+    n_signals_evaluated: int = 5
 
     def __post_init__(self):
         if self.fills is None:

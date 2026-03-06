@@ -34,7 +34,7 @@ class TacticalSignal:
     tactical_score: float       # -1 to 1
     strategic_bias: float       # from Layer 3
     combined_signal: float      # agreement-modulated
-    n_alphas_evaluated: int
+    n_signals_evaluated: int
     confidence: float
 
 
@@ -103,7 +103,7 @@ class TacticalTrader:
                 tactical_score=0.0,
                 strategic_bias=strategic_bias,
                 combined_signal=strategic_bias,
-                n_alphas_evaluated=0,
+                n_signals_evaluated=0,
                 confidence=0.0,
             )
 
@@ -115,7 +115,7 @@ class TacticalTrader:
                 tactical_score=0.0,
                 strategic_bias=strategic_bias,
                 combined_signal=strategic_bias,
-                n_alphas_evaluated=0,
+                n_signals_evaluated=0,
                 confidence=0.0,
             )
 
@@ -141,7 +141,7 @@ class TacticalTrader:
                 tactical_score=0.0,
                 strategic_bias=strategic_bias,
                 combined_signal=strategic_bias,
-                n_alphas_evaluated=0,
+                n_signals_evaluated=0,
                 confidence=0.0,
             )
 
@@ -170,7 +170,7 @@ class TacticalTrader:
             tactical_score=tactical_score,
             strategic_bias=strategic_bias,
             combined_signal=combined,
-            n_alphas_evaluated=n_evaluated,
+            n_signals_evaluated=n_evaluated,
             confidence=confidence,
         )
 

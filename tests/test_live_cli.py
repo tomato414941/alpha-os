@@ -172,8 +172,10 @@ def test_print_paper_result_shows_signal_stages(capsys):
         daily_return=0.00006,
         dd_scale=1.0,
         vol_scale=1.0,
-        n_alphas_active=30,
-        n_alphas_evaluated=150,
+        n_registry_active=615,
+        n_shortlist_candidates=150,
+        n_selected_alphas=30,
+        n_signals_evaluated=150,
         strategic_signal=0.4210,
         regime_adjusted_signal=0.4210,
         tactical_adjusted_signal=0.5420,
@@ -188,6 +190,10 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signal Reg: +0.4210" in output
     assert "Signal L2:  +0.5420" in output
     assert "Signal Fin: +0.5420" in output
+    assert "Registry:   615 active" in output
+    assert "Shortlist:  150 candidates" in output
+    assert "Selected:   30 alphas" in output
+    assert "Signals:    150 evaluated" in output
 
 
 # ---------------------------------------------------------------------------

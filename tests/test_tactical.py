@@ -54,7 +54,7 @@ class TestNoL2Alphas:
         assert isinstance(result, TacticalSignal)
         assert result.tactical_score == 0.0
         assert result.combined_signal == 0.5
-        assert result.n_alphas_evaluated == 0
+        assert result.n_signals_evaluated == 0
         assert result.confidence == 0.0
 
         reg.close()
@@ -121,7 +121,7 @@ class TestWithL2Alphas:
         )
 
         result = trader.run_cycle(strategic_bias=0.5)
-        assert result.n_alphas_evaluated == 1
+        assert result.n_signals_evaluated == 1
         assert result.tactical_score != 0.0
         # Combined should be modulated from strategic bias
         assert result.combined_signal != 0.0

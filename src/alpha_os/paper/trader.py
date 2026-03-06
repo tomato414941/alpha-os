@@ -60,8 +60,10 @@ class PaperCycleResult:
     daily_return: float
     dd_scale: float
     vol_scale: float
-    n_alphas_active: int
-    n_alphas_evaluated: int
+    n_registry_active: int
+    n_shortlist_candidates: int
+    n_selected_alphas: int
+    n_signals_evaluated: int
     order_failures: int = 0
     strategic_signal: float | None = None
     regime_adjusted_signal: float | None = None
@@ -581,8 +583,10 @@ class Trader:
                     daily_return=last_snapshot.daily_return,
                     dd_scale=last_snapshot.dd_scale,
                     vol_scale=last_snapshot.vol_scale,
-                    n_alphas_active=0,
-                    n_alphas_evaluated=0,
+                    n_registry_active=0,
+                    n_shortlist_candidates=0,
+                    n_selected_alphas=0,
+                    n_signals_evaluated=0,
                 )
 
         # 0. Circuit breaker check
@@ -594,7 +598,9 @@ class Trader:
             return PaperCycleResult(
                 date=cycle_key, combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
-                dd_scale=1.0, vol_scale=1.0, n_alphas_active=0, n_alphas_evaluated=0,
+                dd_scale=1.0, vol_scale=1.0,
+                n_registry_active=0, n_shortlist_candidates=0,
+                n_selected_alphas=0, n_signals_evaluated=0,
             )
 
         # 1. Sync data (skip in simulation mode — use cached data)
@@ -626,8 +632,12 @@ class Trader:
 
         n_total_active = self.registry.count(AlphaState.ACTIVE)
         if n_total_active > max_trading:
-            logger.info("Alpha pool: %d candidates from %d active", len(trading_candidates), n_total_active)
-        active = trading_candidates  # for n_alphas_active in result
+            logger.info(
+                "Selection pool: %d shortlist candidates from %d registry-active alphas",
+                len(trading_candidates),
+                n_total_active,
+            )
+        selected_records = trading_candidates
 
         # 3. Evaluate each alpha's signal (uses daily data)
         matrix = self.store.get_matrix(self.features, end=today_date)
@@ -636,7 +646,10 @@ class Trader:
             return PaperCycleResult(
                 date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
-                n_alphas_active=len(active),
+                n_registry_active=n_total_active,
+                n_shortlist_candidates=len(trading_candidates),
+                n_selected_alphas=0,
+                n_signals_evaluated=0,
             )
 
         data = {col: matrix[col].values for col in matrix.columns}
@@ -645,7 +658,10 @@ class Trader:
             return PaperCycleResult(
                 date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
-                n_alphas_active=len(active),
+                n_registry_active=n_total_active,
+                n_shortlist_candidates=len(trading_candidates),
+                n_selected_alphas=0,
+                n_signals_evaluated=0,
             )
         price_return = (prices_arr[-1] - prices_arr[-2]) / prices_arr[-2]
 
@@ -761,10 +777,12 @@ class Trader:
             n_before = len(alpha_signals)
             alpha_signals = {k: v for k, v in alpha_signals.items() if k in selected_ids}
             logger.info(
-                "Correlation filter: %d → %d alphas (max_corr=%.2f)",
+                "Correlation filter: %d shortlist candidates → %d selected alphas (max_corr=%.2f)",
                 n_before, len(alpha_signals), CombinerConfig().max_correlation,
             )
-        active = [r for r in trading_candidates if r.alpha_id in alpha_signals]
+        selected_records = [
+            r for r in trading_candidates if r.alpha_id in alpha_signals
+        ]
 
         # 4. Prediction layer: alpha signals -> adjusted portfolio signal
         prev_value = self.executor.portfolio_value
@@ -840,8 +858,10 @@ class Trader:
             daily_return=daily_return,
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
-            n_alphas_active=len(active),
-            n_alphas_evaluated=n_evaluated,
+            n_registry_active=n_total_active,
+            n_shortlist_candidates=len(trading_candidates),
+            n_selected_alphas=len(selected_records),
+            n_signals_evaluated=n_evaluated,
             order_failures=order_failures,
             strategic_signal=prediction.strategic_signal,
             regime_adjusted_signal=prediction.regime_adjusted_signal,

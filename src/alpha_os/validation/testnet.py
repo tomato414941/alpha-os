@@ -1,4 +1,4 @@
-"""Testnet validation — daily health checks and consecutive success tracking.
+"""Testnet readiness checks — daily health checks and consecutive success tracking.
 
 Phase 4 success criteria: 10 consecutive days without errors or unexpected state.
 """
@@ -43,19 +43,21 @@ class DailyReport:
     # Circuit breaker
     circuit_breaker_halted: bool = False
     circuit_breaker_reason: str = ""
-    # Alphas
-    n_alphas_active: int = 0
-    n_alphas_evaluated: int = 0
+    # Selection stats
+    n_registry_active: int = 0
+    n_shortlist_candidates: int = 0
+    n_selected_alphas: int = 0
+    n_signals_evaluated: int = 0
     # Order failures
     n_order_failures: int = 0
-    # Validation result
+    # Readiness result
     has_errors: bool = False
     error_details: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ValidationState:
-    """Persistent state for Phase 4 validation tracking."""
+    """Persistent state for Phase 4 readiness tracking."""
 
     consecutive_success_days: int = 0
     total_days_run: int = 0
@@ -67,7 +69,7 @@ class ValidationState:
 
 
 class TestnetValidator:
-    """Run post-cycle health checks and track Phase 4 progress."""
+    """Run post-cycle health checks and track Phase 4 readiness."""
 
     def __init__(
         self,
@@ -160,8 +162,10 @@ class TestnetValidator:
             cash_diff=reconciliation.get("cash_diff", 0.0),
             circuit_breaker_halted=circuit_breaker.halted,
             circuit_breaker_reason=circuit_breaker.halt_reason,
-            n_alphas_active=cycle_result.n_alphas_active,
-            n_alphas_evaluated=cycle_result.n_alphas_evaluated,
+            n_registry_active=cycle_result.n_registry_active,
+            n_shortlist_candidates=cycle_result.n_shortlist_candidates,
+            n_selected_alphas=cycle_result.n_selected_alphas,
+            n_signals_evaluated=cycle_result.n_signals_evaluated,
             n_order_failures=order_failures,
             has_errors=len(errors) > 0,
             error_details=errors,
@@ -201,7 +205,7 @@ class TestnetValidator:
     def print_status(self) -> None:
         s = self._state
         status = "PASSED" if s.passed else "IN PROGRESS"
-        print(f"\nPhase 4 Testnet Validation: {status}")
+        print(f"\nPhase 4 Testnet Readiness: {status}")
         print(f"  Consecutive success days: {s.consecutive_success_days}/{s.target_days}")
         print(f"  Total days run: {s.total_days_run}")
         print(f"  First run: {s.first_run_date or 'N/A'}")

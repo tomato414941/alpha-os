@@ -614,7 +614,10 @@ def _print_paper_result(result) -> None:
         print(f"    {f.side.upper():>4} {f.qty:.6f} {f.symbol} @ ${f.price:,.2f}")
     print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
     print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
-    print(f"  Alphas:     {result.n_alphas_active} active, {result.n_alphas_evaluated} evaluated")
+    print(f"  Registry:   {result.n_registry_active} active")
+    print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
+    print(f"  Selected:   {result.n_selected_alphas} alphas")
+    print(f"  Signals:    {result.n_signals_evaluated} evaluated")
 
 
 def cmd_paper(args: argparse.Namespace) -> None:
@@ -921,11 +924,15 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
     gc.collect()
 
 
-def _print_validation_report(report) -> None:
-    print(f"\n--- Testnet Validation Report ({report.date}) ---")
+def _print_testnet_report(report) -> None:
+    print(f"\n--- Testnet Readiness Report ({report.date}) ---")
     print(f"  Cycle OK:       {report.cycle_completed}")
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
+    print(f"  Registry:       {report.n_registry_active} active")
+    print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
+    print(f"  Selected:       {report.n_selected_alphas} alphas")
+    print(f"  Signals:        {report.n_signals_evaluated} evaluated")
     if report.n_fills > 0:
         print(f"  Fills:          {report.n_fills}")
         print(f"  Avg slippage:   {report.mean_slippage_bps:.1f} bps")
@@ -1070,7 +1077,7 @@ def cmd_live(args: argparse.Namespace) -> None:
             result, recon, cb, result.fills,
             order_failures=getattr(result, "order_failures", 0),
         )
-        _print_validation_report(report)
+        _print_testnet_report(report)
         validator.print_status()
 
     if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
