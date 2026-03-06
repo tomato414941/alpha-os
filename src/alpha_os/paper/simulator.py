@@ -24,6 +24,7 @@ from ..alpha.combiner import (
     compute_weights,
     select_low_correlation,
 )
+from ..alpha.monitor import RegimeDetector
 from ..risk.manager import RiskManager
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,29 @@ def _backfill_signals_to_position_intent(
 
     adjusted = raw_combined * dd_scale
     return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
+
+
+def _apply_regime_adjustment(
+    signal: float,
+    portfolio_returns: np.ndarray,
+    config: Config,
+) -> float:
+    """Apply the live trader's regime scaling to a backfill signal."""
+    if not config.regime.enabled or len(portfolio_returns) < config.regime.long_window:
+        return signal
+
+    regime = RegimeDetector(
+        short_window=config.regime.short_window,
+        long_window=config.regime.long_window,
+    ).detect(portfolio_returns)
+    if regime.drift_score <= config.regime.drift_threshold:
+        return signal
+
+    scale = max(
+        config.regime.drift_position_scale_min,
+        1.0 - regime.drift_score,
+    )
+    return float(np.clip(signal * scale, -1.0, 1.0))
 
 
 def run_backfill(
@@ -318,6 +342,7 @@ def run_backfill(
             prev_value = executor.portfolio_value
             risk_manager.update_equity(prev_value)
             recent_rets = np.array(daily_returns_out[-252:]) if daily_returns_out else np.array([])
+            portfolio_rets = np.array(daily_returns_out) if daily_returns_out else np.array([])
             dd_s = risk_manager.dd_scale
             vol_s = risk_manager.vol_scale(recent_rets)
             if len(selected_signals):
@@ -329,6 +354,7 @@ def run_backfill(
                     vol_scale=vol_s,
                     sizing_mode=sizing_mode,
                 )
+                adjusted = _apply_regime_adjustment(adjusted, portfolio_rets, config)
             else:
                 adjusted = 0.0
 

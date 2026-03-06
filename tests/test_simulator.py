@@ -5,8 +5,10 @@ import pytest
 
 from alpha_os.alpha.registry import AlphaRecord, AlphaState
 from alpha_os.alpha.lifecycle import ST_ACTIVE, ST_DORMANT, ST_PROBATION
+from alpha_os.config import Config
 from alpha_os.paper.simulator import (
     ST_EXCLUDED,
+    _apply_regime_adjustment,
     _backfill_signals_to_position_intent,
     _initial_simulation_state,
     _live_like_eval_indices,
@@ -108,3 +110,53 @@ def test_live_like_eval_indices_matches_live_candidate_rules():
     assert trading_candidates == [0, 1, 2, 3, 4]
     assert dormant == [6]
     assert eval_set == [0, 1, 2, 3, 4, 6]
+
+
+def test_apply_regime_adjustment_is_noop_when_not_triggered(monkeypatch):
+    cfg = Config.load()
+    cfg.regime.enabled = True
+    cfg.regime.long_window = 3
+    cfg.regime.short_window = 2
+    cfg.regime.drift_threshold = 0.3
+
+    class DummyDetector:
+        def __init__(self, short_window, long_window):
+            assert short_window == 2
+            assert long_window == 3
+
+        def detect(self, returns):
+            return type("Regime", (), {"drift_score": 0.2})()
+
+    monkeypatch.setattr("alpha_os.paper.simulator.RegimeDetector", DummyDetector)
+
+    adjusted = _apply_regime_adjustment(
+        0.6,
+        np.array([0.01, -0.01, 0.02]),
+        cfg,
+    )
+    assert adjusted == pytest.approx(0.6)
+
+
+def test_apply_regime_adjustment_scales_signal_when_triggered(monkeypatch):
+    cfg = Config.load()
+    cfg.regime.enabled = True
+    cfg.regime.long_window = 3
+    cfg.regime.short_window = 2
+    cfg.regime.drift_threshold = 0.3
+    cfg.regime.drift_position_scale_min = 0.5
+
+    class DummyDetector:
+        def __init__(self, short_window, long_window):
+            pass
+
+        def detect(self, returns):
+            return type("Regime", (), {"drift_score": 0.7})()
+
+    monkeypatch.setattr("alpha_os.paper.simulator.RegimeDetector", DummyDetector)
+
+    adjusted = _apply_regime_adjustment(
+        0.6,
+        np.array([0.01, -0.01, 0.02]),
+        cfg,
+    )
+    assert adjusted == pytest.approx(0.3)
