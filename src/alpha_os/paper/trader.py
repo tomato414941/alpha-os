@@ -16,6 +16,7 @@ import numpy as np
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig, RegimeDetector
+from ..alpha.quality import QualityEstimate, blend_quality
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
@@ -133,7 +134,10 @@ class Trader:
         )
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
-        mon_cfg = MonitorConfig(rolling_window=config.forward.degradation_window)
+        mon_cfg = MonitorConfig(
+            rolling_window=config.forward.degradation_window,
+            min_observations=config.live_quality.min_observations,
+        )
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)
 
         self.lifecycle = lifecycle or AlphaLifecycle(
@@ -230,6 +234,43 @@ class Trader:
             if key in positions:
                 return positions[key]
         return 0.0
+
+    def _estimate_quality(
+        self,
+        record,
+        returns: list[float] | np.ndarray,
+    ) -> QualityEstimate:
+        return blend_quality(
+            record.oos_fitness(self.config.fitness_metric),
+            returns,
+            metric=self.config.fitness_metric,
+            rolling_window=self.config.forward.degradation_window,
+            min_observations=self.config.live_quality.min_observations,
+            full_weight_observations=self.config.live_quality.full_weight_observations,
+        )
+
+    def _rank_trading_candidates(
+        self,
+        records: list,
+        limit: int,
+    ) -> list:
+        ranked: list[tuple[float, float, float, object]] = []
+        for record in records:
+            estimate = self._estimate_quality(
+                record,
+                self.forward_tracker.get_returns(record.alpha_id),
+            )
+            ranked.append(
+                (
+                    estimate.blended_quality,
+                    estimate.confidence,
+                    record.oos_fitness(self.config.fitness_metric),
+                    record,
+                )
+            )
+
+        ranked.sort(key=lambda row: (row[0], row[1], row[2]), reverse=True)
+        return [record for _, _, _, record in ranked[:limit]]
 
 
     def _recompute_diversity(
@@ -342,6 +383,7 @@ class Trader:
         self,
         alpha_signals: dict[str, float],
         alpha_signal_arrays: dict[str, np.ndarray],
+        quality_estimates: dict[str, QualityEstimate],
         alpha_exprs: dict[str, object],
         all_alphas: list,
         data: dict[str, np.ndarray],
@@ -415,13 +457,12 @@ class Trader:
         elif alpha_signals:
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
-            _metric = self.config.fitness_metric
             diversity_scores = self._resolve_diversity_scores(
                 alpha_ids, alpha_signal_arrays
             )
             for aid in alpha_ids:
-                status = self.monitor.check(aid)
-                quality_list.append(max(status.rolling_fitness(_metric), 0.0))
+                quality = quality_estimates[aid].blended_quality
+                quality_list.append(max(quality, 0.0))
             diversity_list = [diversity_scores.get(aid, 1.0) for aid in alpha_ids]
 
             quality_np = np.array(quality_list)
@@ -603,7 +644,13 @@ class Trader:
         # 2. Get candidate alphas (wider pool for correlation filtering) + dormant
         max_trading = self.config.paper.max_trading_alphas
         n_candidates = max_trading * 5
-        trading_candidates = self.registry.top_trading(n_candidates, metric=self.config.fitness_metric)
+        preselect_factor = max(self.config.live_quality.shortlist_preselect_factor, 1)
+        preselect_n = max(n_candidates, max_trading * preselect_factor)
+        preselected = self.registry.top_trading(
+            preselect_n,
+            metric=self.config.fitness_metric,
+        )
+        trading_candidates = self._rank_trading_candidates(preselected, n_candidates)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
         all_alphas = trading_candidates + dormant
         dormant_ids = {r.alpha_id for r in dormant}
@@ -635,6 +682,7 @@ class Trader:
 
         alpha_signals: dict[str, float] = {}
         alpha_signal_arrays: dict[str, np.ndarray] = {}
+        quality_estimates: dict[str, QualityEstimate] = {}
         alpha_exprs: dict[str, object] = {}  # aid → parsed Expr (for map_elites)
         n_evaluated = 0
         n_failed = 0
@@ -678,19 +726,31 @@ class Trader:
                 recent_returns = all_returns[-self.config.forward.degradation_window:]
                 self.monitor.clear(record.alpha_id)
                 self.monitor.record_batch(record.alpha_id, recent_returns)
+                estimate = self._estimate_quality(record, all_returns)
+                quality_estimates[record.alpha_id] = estimate
 
                 # Lifecycle transitions (skip when lifecycle daemon handles it)
                 if not skip_lifecycle:
-                    status = self.monitor.check(record.alpha_id)
                     old_state = record.state
-                    _fit = status.rolling_fitness(self.config.fitness_metric)
+                    if (
+                        old_state == AlphaState.DORMANT
+                        and estimate.n_observations
+                        < self.config.live_quality.dormant_revival_min_observations
+                    ):
+                        continue
+                    _fit = estimate.blended_quality
                     new_state = self.lifecycle.evaluate(
                         record.alpha_id, _fit,
                     )
                     if new_state != old_state:
                         self.audit_log.log_state_change(
                             record.alpha_id, old_state, new_state,
-                            reason=f"paper: quality={_fit:.3f}",
+                            reason=(
+                                "paper: blended="
+                                f"{_fit:.3f} prior={estimate.prior_quality:.3f} "
+                                f"live={estimate.live_quality:.3f} "
+                                f"n={estimate.n_observations}"
+                            ),
                         )
 
             except EvaluationError as exc:
@@ -723,7 +783,7 @@ class Trader:
                 alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
             ])
             quality_for_sel = np.array([
-                self.monitor.check(aid).rolling_fitness(self.config.fitness_metric)
+                quality_estimates[aid].blended_quality
                 for aid in candidate_ids
             ])
             selected_idx = select_low_correlation(
@@ -744,6 +804,7 @@ class Trader:
         prediction = self._predict_portfolio_signal(
             alpha_signals=alpha_signals,
             alpha_signal_arrays=alpha_signal_arrays,
+            quality_estimates=quality_estimates,
             alpha_exprs=alpha_exprs,
             all_alphas=all_alphas,
             data=data,

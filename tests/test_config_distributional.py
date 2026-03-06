@@ -26,6 +26,38 @@ def test_unknown_toml_keys_ignored(tmp_path):
     assert cfg.paper.max_position_pct == 0.25
 
 
+def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
+    default_dir = tmp_path / "config"
+    default_dir.mkdir()
+    (default_dir / "default.toml").write_text(
+        "\n".join(
+            [
+                'fitness_metric = "log_growth"',
+                "[paper]",
+                'combine_mode = "consensus"',
+                "max_trading_alphas = 30",
+            ]
+        )
+    )
+    override = tmp_path / "prod.toml"
+    override.write_text(
+        "\n".join(
+            [
+                "[paper]",
+                "max_position_pct = 0.25",
+            ]
+        )
+    )
+
+    monkeypatch.setattr("alpha_os.config.CONFIG_DIR", default_dir)
+
+    cfg = Config.load(override)
+    assert cfg.fitness_metric == "log_growth"
+    assert cfg.paper.combine_mode == "consensus"
+    assert cfg.paper.max_trading_alphas == 30
+    assert cfg.paper.max_position_pct == 0.25
+
+
 def test_generation_penalties_load_from_toml(tmp_path):
     p = tmp_path / "cfg.toml"
     p.write_text(

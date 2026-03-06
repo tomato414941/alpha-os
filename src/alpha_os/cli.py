@@ -183,15 +183,8 @@ def _load_config(config_path: str | None) -> Config:
 
 
 def _normalize_live_config(cfg: Config) -> list[str]:
-    """Reduce live runtime to the single supported production profile."""
-    changes: list[str] = []
-    if cfg.paper.combine_mode != "consensus":
-        changes.append(f"combine_mode {cfg.paper.combine_mode} -> consensus")
-        cfg.paper.combine_mode = "consensus"
-    if cfg.regime.enabled:
-        changes.append("regime on -> off")
-        cfg.regime.enabled = False
-    return changes
+    """Live runtime now respects the configured profile as-is."""
+    return []
 
 
 def _make_features(asset: str) -> list[str]:
@@ -1018,7 +1011,8 @@ def cmd_live(args: argparse.Namespace) -> None:
     print(f"Live trading [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
     if profile_changes:
         print("Live profile overrides: " + ", ".join(profile_changes))
-    print("Live profile: consensus L3, regime off, L2 off")
+    regime_state = "on" if cfg.regime.enabled else "off"
+    print(f"Live profile: {cfg.paper.combine_mode} L3, regime {regime_state}, L2 off")
 
     # Initialize per-asset contexts
     contexts: dict[str, tuple] = {}

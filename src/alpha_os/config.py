@@ -171,6 +171,14 @@ class EventDrivenConfig:
 
 
 @dataclass
+class LiveQualityConfig:
+    min_observations: int = 20
+    full_weight_observations: int = 63
+    shortlist_preselect_factor: int = 20
+    dormant_revival_min_observations: int = 20
+
+
+@dataclass
 class LifecycleTomlConfig:
     oos_quality_min: float = 0.05
     probation_quality_min: float = 0.0
@@ -252,6 +260,7 @@ class Config:
     forward: ForwardTestConfig = field(default_factory=ForwardTestConfig)
     testnet: TestnetConfig = field(default_factory=TestnetConfig)
     event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
+    live_quality: LiveQualityConfig = field(default_factory=LiveQualityConfig)
     lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
@@ -267,14 +276,43 @@ class Config:
         valid = {f.name for f in dc_class.__dataclass_fields__.values()}
         return {k: v for k, v in raw.items() if k in valid}
 
+    @staticmethod
+    def _read_toml(path: Path) -> dict:
+        if not path.exists():
+            return {}
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+
+    @staticmethod
+    def _merge_dicts(base: dict, override: dict) -> dict:
+        merged = dict(base)
+        for key, value in override.items():
+            if (
+                key in merged
+                and isinstance(merged[key], dict)
+                and isinstance(value, dict)
+            ):
+                merged[key] = Config._merge_dicts(merged[key], value)
+            else:
+                merged[key] = value
+        return merged
+
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
+        default_path = CONFIG_DIR / "default.toml"
         if path is None:
-            path = CONFIG_DIR / "default.toml"
-        if not path.exists():
+            raw = cls._read_toml(default_path)
+        else:
+            path = Path(path)
+            if path.resolve() == default_path.resolve():
+                raw = cls._read_toml(path)
+            else:
+                raw = cls._merge_dicts(
+                    cls._read_toml(default_path),
+                    cls._read_toml(path),
+                )
+        if not raw:
             return cls()
-        with open(path, "rb") as f:
-            raw = tomllib.load(f)
         # Backward compat: map old lifecycle sharpe keys to quality keys
         lc_raw = dict(raw.get("lifecycle", {}))
         _LC_ALIASES = {
@@ -299,6 +337,7 @@ class Config:
             forward=ForwardTestConfig(**_f(ForwardTestConfig, raw.get("forward", {}))),
             testnet=TestnetConfig(**_f(TestnetConfig, raw.get("testnet", {}))),
             event_driven=EventDrivenConfig(**_f(EventDrivenConfig, raw.get("event_driven", {}))),
+            live_quality=LiveQualityConfig(**_f(LiveQualityConfig, raw.get("live_quality", {}))),
             lifecycle=LifecycleTomlConfig(**_f(LifecycleTomlConfig, lc_raw)),
             execution=ExecutionTomlConfig(**_f(ExecutionTomlConfig, raw.get("execution", {}))),
             gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),

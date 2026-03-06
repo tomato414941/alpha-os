@@ -100,7 +100,7 @@ def test_live_parser():
     assert args.capital == 500.0
 
 
-def test_normalize_live_config_forces_single_profile():
+def test_normalize_live_config_preserves_requested_profile():
     from alpha_os.cli import _normalize_live_config
     from alpha_os.config import Config
 
@@ -110,12 +110,9 @@ def test_normalize_live_config_forces_single_profile():
 
     changes = _normalize_live_config(cfg)
 
-    assert cfg.paper.combine_mode == "consensus"
-    assert cfg.regime.enabled is False
-    assert changes == [
-        "combine_mode map_elites -> consensus",
-        "regime on -> off",
-    ]
+    assert cfg.paper.combine_mode == "map_elites"
+    assert cfg.regime.enabled is True
+    assert changes == []
 
 
 def test_build_tactical_trader_respects_enable_flag(monkeypatch):

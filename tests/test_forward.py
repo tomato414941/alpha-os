@@ -107,8 +107,22 @@ class TestForwardTracker:
         tracker.record("a1", "2025-01-02", 0.5, 0.01)
         tracker.record("a1", "2025-01-02", 0.6, 0.02)
         returns = tracker.get_returns("a1")
+        records = tracker.get_records("a1")
         assert len(returns) == 1
         assert returns[0] == pytest.approx(0.02)
+        assert records[0].cumulative_return == pytest.approx(1.02)
+        tracker.close()
+
+    def test_record_replaces_same_date_after_prior_day_keeps_chain(self, tmp_path):
+        tracker = ForwardTracker(db_path=tmp_path / "fwd.db")
+        tracker.register_alpha("a1", "2025-01-01")
+        tracker.record("a1", "2025-01-02", 0.5, 0.01)
+        tracker.record("a1", "2025-01-03", 0.5, 0.02)
+        tracker.record("a1", "2025-01-03", 0.6, -0.01)
+        records = tracker.get_records("a1")
+        assert len(records) == 2
+        assert records[0].cumulative_return == pytest.approx(1.01)
+        assert records[1].cumulative_return == pytest.approx(1.01 * 0.99)
         tracker.close()
 
 
@@ -323,4 +337,87 @@ class TestForwardRunnerCycle:
             mock_date.today.return_value = last_date
             result = runner.run_cycle()
         assert result.n_evaluated == 0
+        runner.close()
+
+    def test_run_cycle_uses_oos_prior_before_min_observations(self, tmp_path):
+        store = DataStore(tmp_path / "cache.db")
+        dates = self._populate_store(store, n_days=3)
+        last_date = dates[-1].date()
+
+        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg.register(AlphaRecord(
+            alpha_id="alpha_prior",
+            expression="f1",
+            state=AlphaState.ACTIVE,
+            oos_sharpe=1.0,
+        ))
+
+        cfg = Config()
+        cfg.lifecycle.probation_quality_min = 0.3
+        tracker = ForwardTracker(db_path=tmp_path / "fwd.db")
+        tracker.register_alpha("alpha_prior", dates[0].strftime("%Y-%m-%d"))
+
+        runner = self._make_runner(tmp_path, store, reg)
+        runner.config = cfg
+        runner.tracker = tracker
+        runner.monitor = AlphaMonitor(config=MonitorConfig(
+            rolling_window=cfg.forward.degradation_window,
+            min_observations=cfg.live_quality.min_observations,
+        ))
+        runner.lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
+            oos_quality_min=cfg.lifecycle.oos_quality_min,
+            probation_quality_min=cfg.lifecycle.probation_quality_min,
+            dormant_quality_max=cfg.lifecycle.dormant_quality_max,
+            correlation_max=cfg.lifecycle.correlation_max,
+            dormant_revival_quality=cfg.lifecycle.dormant_revival_quality,
+        ))
+
+        with patch("alpha_os.forward.runner.date") as mock_date:
+            mock_date.today.return_value = last_date
+            result = runner.run_cycle()
+
+        assert result.n_evaluated == 1
+        assert reg.get("alpha_prior").state == AlphaState.ACTIVE
+        runner.close()
+
+    def test_run_cycle_does_not_revive_dormant_without_enough_forward_observations(self, tmp_path):
+        store = DataStore(tmp_path / "cache.db")
+        dates = self._populate_store(store, n_days=3)
+        last_date = dates[-1].date()
+
+        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg.register(AlphaRecord(
+            alpha_id="alpha_dormant",
+            expression="f1",
+            state=AlphaState.DORMANT,
+            oos_sharpe=1.0,
+        ))
+
+        cfg = Config()
+        cfg.lifecycle.dormant_revival_quality = 0.1
+        cfg.live_quality.dormant_revival_min_observations = 20
+        tracker = ForwardTracker(db_path=tmp_path / "fwd.db")
+        tracker.register_alpha("alpha_dormant", dates[0].strftime("%Y-%m-%d"))
+
+        runner = self._make_runner(tmp_path, store, reg)
+        runner.config = cfg
+        runner.tracker = tracker
+        runner.monitor = AlphaMonitor(config=MonitorConfig(
+            rolling_window=cfg.forward.degradation_window,
+            min_observations=cfg.live_quality.min_observations,
+        ))
+        runner.lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
+            oos_quality_min=cfg.lifecycle.oos_quality_min,
+            probation_quality_min=cfg.lifecycle.probation_quality_min,
+            dormant_quality_max=cfg.lifecycle.dormant_quality_max,
+            correlation_max=cfg.lifecycle.correlation_max,
+            dormant_revival_quality=cfg.lifecycle.dormant_revival_quality,
+        ))
+
+        with patch("alpha_os.forward.runner.date") as mock_date:
+            mock_date.today.return_value = last_date
+            result = runner.run_cycle()
+
+        assert result.n_evaluated == 1
+        assert reg.get("alpha_dormant").state == AlphaState.DORMANT
         runner.close()

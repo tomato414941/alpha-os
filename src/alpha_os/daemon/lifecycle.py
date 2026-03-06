@@ -8,6 +8,7 @@ import numpy as np
 
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
+from ..alpha.quality import blend_quality
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, asset_data_dir
 from ..forward.tracker import ForwardTracker
@@ -37,6 +38,7 @@ class LifecycleDaemon:
 
         mon_cfg = MonitorConfig(
             rolling_window=self.config.forward.degradation_window,
+            min_observations=self.config.live_quality.min_observations,
         )
         monitor = AlphaMonitor(config=mon_cfg)
 
@@ -70,7 +72,19 @@ class LifecycleDaemon:
 
         for record in all_alphas:
             returns = forward_tracker.get_returns(record.alpha_id)
-            if len(returns) < mon_cfg.min_observations:
+            estimate = blend_quality(
+                record.oos_fitness(self.config.fitness_metric),
+                returns,
+                metric=self.config.fitness_metric,
+                rolling_window=self.config.forward.degradation_window,
+                min_observations=self.config.live_quality.min_observations,
+                full_weight_observations=self.config.live_quality.full_weight_observations,
+            )
+            if (
+                record.state == AlphaState.DORMANT
+                and estimate.n_observations
+                < self.config.live_quality.dormant_revival_min_observations
+            ):
                 n_skipped += 1
                 continue
 
@@ -80,14 +94,23 @@ class LifecycleDaemon:
             status = monitor.check(record.alpha_id)
 
             old_state = record.state
-            _fit = status.rolling_fitness(self.config.fitness_metric)
-            new_state = lifecycle.evaluate(record.alpha_id, _fit)
+            new_state = lifecycle.evaluate(
+                record.alpha_id,
+                estimate.blended_quality,
+            )
 
             if new_state != old_state:
                 n_transitions += 1
                 audit_log.log_state_change(
                     record.alpha_id, old_state, new_state,
-                    reason=f"lifecycle_daemon: quality={_fit:.3f}",
+                    reason=(
+                        "lifecycle_daemon: blended="
+                        f"{estimate.blended_quality:.3f} "
+                        f"prior={estimate.prior_quality:.3f} "
+                        f"live={estimate.live_quality:.3f} "
+                        f"n={estimate.n_observations} "
+                        f"max_dd={status.rolling_max_dd:.3%}"
+                    ),
                 )
 
                 # Track direction

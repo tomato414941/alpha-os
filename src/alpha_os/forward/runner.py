@@ -9,6 +9,7 @@ from datetime import date
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
+from ..alpha.quality import blend_quality
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
@@ -80,7 +81,10 @@ class ForwardRunner:
             self.tracker = tracker or ForwardTracker(db_path=adir / "forward_returns.db")
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
-        mon_cfg = MonitorConfig(rolling_window=self.fwd_config.degradation_window)
+        mon_cfg = MonitorConfig(
+            rolling_window=self.fwd_config.degradation_window,
+            min_observations=config.live_quality.min_observations,
+        )
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)
 
         self.lifecycle = lifecycle or AlphaLifecycle(
@@ -165,16 +169,39 @@ class ForwardRunner:
                 self.monitor.clear(alpha_id)
                 self.monitor.record_batch(alpha_id, all_returns)
                 status = self.monitor.check(alpha_id)
+                estimate = blend_quality(
+                    record.oos_fitness(self.config.fitness_metric),
+                    all_returns,
+                    metric=self.config.fitness_metric,
+                    rolling_window=self.fwd_config.degradation_window,
+                    min_observations=self.config.live_quality.min_observations,
+                    full_weight_observations=self.config.live_quality.full_weight_observations,
+                )
 
                 old_state = record.state
-                _fit = status.rolling_fitness(self.config.fitness_metric)
-                new_state = self.lifecycle.evaluate(alpha_id, _fit)
+                if (
+                    old_state == AlphaState.DORMANT
+                    and estimate.n_observations
+                    < self.config.live_quality.dormant_revival_min_observations
+                ):
+                    new_state = old_state
+                else:
+                    new_state = self.lifecycle.evaluate(
+                        alpha_id,
+                        estimate.blended_quality,
+                    )
 
                 if new_state != old_state:
                     self.audit_log.log_state_change(
                         alpha_id, old_state, new_state,
-                        reason=f"forward_test: quality={_fit:.3f}, "
-                               f"max_dd={status.rolling_max_dd:.3%}",
+                        reason=(
+                            "forward_test: blended="
+                            f"{estimate.blended_quality:.3f} "
+                            f"prior={estimate.prior_quality:.3f} "
+                            f"live={estimate.live_quality:.3f} "
+                            f"n={estimate.n_observations} "
+                            f"max_dd={status.rolling_max_dd:.3%}"
+                        ),
                     )
                     if new_state == AlphaState.PROBATION and old_state == AlphaState.ACTIVE:
                         n_degraded += 1
@@ -194,8 +221,11 @@ class ForwardRunner:
                         n_restored += 1
 
                 logger.info(
-                    "  %s: ret=%.4f quality=%.3f dd=%.3f state=%s%s",
-                    alpha_id, daily_return, _fit,
+                    "  %s: ret=%.4f blended=%.3f prior=%.3f live=%.3f dd=%.3f state=%s%s",
+                    alpha_id, daily_return,
+                    estimate.blended_quality,
+                    estimate.prior_quality,
+                    estimate.live_quality,
                     status.rolling_max_dd, new_state,
                     " [DEGRADED]" if status.is_degraded else "",
                 )

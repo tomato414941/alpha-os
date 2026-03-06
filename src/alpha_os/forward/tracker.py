@@ -92,8 +92,8 @@ class ForwardTracker:
     ) -> None:
         prev = self._conn.execute(
             "SELECT cumulative_return FROM forward_returns "
-            "WHERE alpha_id = ? ORDER BY date DESC LIMIT 1",
-            (alpha_id,),
+            "WHERE alpha_id = ? AND date < ? ORDER BY date DESC LIMIT 1",
+            (alpha_id, date),
         ).fetchone()
         prev_cum = prev["cumulative_return"] if prev else 1.0
         cum = prev_cum * (1.0 + daily_return)
