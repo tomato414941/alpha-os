@@ -180,11 +180,34 @@ class LiveQualityConfig:
 
 @dataclass
 class LifecycleTomlConfig:
-    oos_quality_min: float = 0.05
-    probation_quality_min: float = 0.0
-    dormant_quality_max: float = -0.5
+    candidate_quality_min: float = 0.05
+    active_quality_min: float = 0.0
     dormant_revival_quality: float = 0.0
     correlation_max: float = 0.5
+
+    @property
+    def oos_quality_min(self) -> float:
+        return self.candidate_quality_min
+
+    @oos_quality_min.setter
+    def oos_quality_min(self, value: float) -> None:
+        self.candidate_quality_min = value
+
+    @property
+    def probation_quality_min(self) -> float:
+        return self.active_quality_min
+
+    @probation_quality_min.setter
+    def probation_quality_min(self, value: float) -> None:
+        self.active_quality_min = value
+
+    @property
+    def dormant_quality_max(self) -> float:
+        return self.active_quality_min
+
+    @dormant_quality_max.setter
+    def dormant_quality_max(self, value: float) -> None:
+        self.active_quality_min = value
 
 
 @dataclass
@@ -270,6 +293,39 @@ class Config:
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
     stability: StabilityConfig = field(default_factory=StabilityConfig)
 
+    def to_monitor_config(self):
+        """Build the monitor config used by live forward-quality checks."""
+        from alpha_os.alpha.monitor import MonitorConfig
+
+        return MonitorConfig(
+            rolling_window=self.forward.degradation_window,
+            min_observations=self.live_quality.min_observations,
+        )
+
+    def to_lifecycle_config(self):
+        """Build the lifecycle config used by live state transitions."""
+        from alpha_os.alpha.lifecycle import LifecycleConfig
+
+        return LifecycleConfig(
+            candidate_quality_min=self.lifecycle.candidate_quality_min,
+            active_quality_min=self.lifecycle.active_quality_min,
+            correlation_max=self.lifecycle.correlation_max,
+            dormant_revival_quality=self.lifecycle.dormant_revival_quality,
+        )
+
+    def estimate_alpha_quality(self, prior_quality: float, returns):
+        """Blend historical and live quality using the current runtime config."""
+        from alpha_os.alpha.quality import blend_quality
+
+        return blend_quality(
+            prior_quality,
+            returns,
+            metric=self.fitness_metric,
+            rolling_window=self.forward.degradation_window,
+            min_observations=self.live_quality.min_observations,
+            full_weight_observations=self.live_quality.full_weight_observations,
+        )
+
     @staticmethod
     def _filter(dc_class: type, raw: dict) -> dict:
         """Filter dict to only keys that dc_class accepts."""
@@ -316,9 +372,14 @@ class Config:
         # Backward compat: map old lifecycle sharpe keys to quality keys
         lc_raw = dict(raw.get("lifecycle", {}))
         _LC_ALIASES = {
-            "oos_sharpe_min": "oos_quality_min",
-            "probation_sharpe_min": "probation_quality_min",
-            "dormant_sharpe_max": "dormant_quality_max",
+            "candidate_quality_min": "candidate_quality_min",
+            "active_quality_min": "active_quality_min",
+            "oos_sharpe_min": "candidate_quality_min",
+            "oos_quality_min": "candidate_quality_min",
+            "probation_sharpe_min": "active_quality_min",
+            "probation_quality_min": "active_quality_min",
+            "dormant_sharpe_max": "active_quality_min",
+            "dormant_quality_max": "active_quality_min",
             "dormant_revival_sharpe": "dormant_revival_quality",
         }
         for old, new in _LC_ALIASES.items():

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from alpha_os.alpha.registry import AlphaRecord, AlphaState
-from alpha_os.alpha.lifecycle import ST_ACTIVE, ST_DORMANT, ST_PROBATION
+from alpha_os.alpha.lifecycle import ST_ACTIVE, ST_CANDIDATE, ST_DORMANT
 from alpha_os.config import Config
 from alpha_os.paper.simulator import (
     ST_EXCLUDED,
@@ -72,7 +72,7 @@ def test_raw_mean_sizing_mode_ignores_consensus_and_vol_scale():
 
 def test_initial_simulation_state_preserves_registry_state():
     assert _initial_simulation_state(AlphaState.ACTIVE) == ST_ACTIVE
-    assert _initial_simulation_state(AlphaState.PROBATION) == ST_PROBATION
+    assert _initial_simulation_state(AlphaState.CANDIDATE) == ST_EXCLUDED
     assert _initial_simulation_state(AlphaState.DORMANT) == ST_DORMANT
     assert _initial_simulation_state(AlphaState.REJECTED) == ST_EXCLUDED
     assert _initial_simulation_state(AlphaState.BORN) == ST_EXCLUDED
@@ -81,7 +81,7 @@ def test_initial_simulation_state_preserves_registry_state():
 def test_live_like_eval_indices_matches_live_candidate_rules():
     records = [
         AlphaRecord(alpha_id="a0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.9),
-        AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.PROBATION, oos_sharpe=0.8),
+        AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.CANDIDATE, oos_sharpe=0.8),
         AlphaRecord(alpha_id="a2", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.7),
         AlphaRecord(alpha_id="a3", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.6),
         AlphaRecord(alpha_id="a4", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.5),
@@ -91,7 +91,7 @@ def test_live_like_eval_indices_matches_live_candidate_rules():
     ]
     state_codes = np.array([
         ST_ACTIVE,
-        ST_PROBATION,
+        ST_CANDIDATE,
         ST_ACTIVE,
         ST_ACTIVE,
         ST_ACTIVE,
@@ -99,17 +99,24 @@ def test_live_like_eval_indices_matches_live_candidate_rules():
         ST_DORMANT,
         ST_EXCLUDED,
     ])
+    prior_quality = np.array([r.oos_sharpe for r in records], dtype=np.float64)
+    blended_quality = np.array([0.2, 0.7, 0.8, 0.6, 0.95, 0.1, 0.5, 0.0], dtype=np.float64)
+    confidence = np.array([0.3, 0.2, 0.4, 0.6, 0.1, 0.9, 0.0, 0.0], dtype=np.float64)
 
     trading_candidates, dormant, eval_set = _live_like_eval_indices(
         records,
         state_codes,
+        prior_quality=prior_quality,
+        blended_quality=blended_quality,
+        confidence=confidence,
         max_trading=1,
         metric="sharpe",
+        shortlist_preselect_factor=10,
     )
 
-    assert trading_candidates == [0, 1, 2, 3, 4]
+    assert trading_candidates == [4, 2, 3, 0, 5]
     assert dormant == [6]
-    assert eval_set == [0, 1, 2, 3, 4, 6]
+    assert eval_set == [4, 2, 3, 0, 5, 6]
 
 
 def test_apply_regime_adjustment_is_noop_when_not_triggered(monkeypatch):

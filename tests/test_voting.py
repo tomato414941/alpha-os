@@ -2,12 +2,11 @@
 import time
 
 import numpy as np
-import pytest
 
 from alpha_os.alpha.registry import AlphaRecord
 from alpha_os.forward.tracker import ForwardRecord
 from alpha_os.voting.scorer import recency_weight, accuracy_weight, accuracy_from_forward
-from alpha_os.voting.aggregator import vote_aggregate, VoteResult
+from alpha_os.voting.aggregator import vote_aggregate
 from alpha_os.voting.combiner import vote_combine
 
 

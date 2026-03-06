@@ -97,3 +97,21 @@ def test_unknown_trading_mode_raises_on_capability_check():
     cfg = TradingConfig(mode="invalid")
     with pytest.raises(ValueError, match="Unknown trading mode"):
         _ = cfg.supports_short
+
+
+def test_config_runtime_helpers_follow_current_settings():
+    cfg = Config()
+    cfg.forward.degradation_window = 42
+    cfg.live_quality.min_observations = 11
+    cfg.live_quality.full_weight_observations = 50
+    cfg.lifecycle.active_quality_min = 0.12
+
+    monitor_cfg = cfg.to_monitor_config()
+    lifecycle_cfg = cfg.to_lifecycle_config()
+    estimate = cfg.estimate_alpha_quality(0.8, [])
+
+    assert monitor_cfg.rolling_window == 42
+    assert monitor_cfg.min_observations == 11
+    assert lifecycle_cfg.active_quality_min == pytest.approx(0.12)
+    assert estimate.blended_quality == pytest.approx(0.8)
+    assert estimate.confidence == pytest.approx(0.0)

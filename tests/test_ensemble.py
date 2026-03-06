@@ -3,7 +3,6 @@ import numpy as np
 import pytest
 
 from alpha_os.voting.ensemble import (
-    EnsembleResult,
     ensemble_sizing,
     compute_cell_long_pcts,
 )

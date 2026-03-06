@@ -1,4 +1,4 @@
-"""Forward test runner — daily evaluation loop for adopted alphas."""
+"""Forward test runner — daily evaluation loop for active and dormant alphas."""
 from __future__ import annotations
 
 import logging
@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from datetime import date
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
-from ..alpha.monitor import AlphaMonitor, MonitorConfig
-from ..alpha.quality import blend_quality
+from ..alpha.lifecycle import AlphaLifecycle
+from ..alpha.monitor import AlphaMonitor
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
@@ -41,7 +40,7 @@ class ForwardCycleResult:
 
 
 class ForwardRunner:
-    """Run one cycle of forward testing on all ACTIVE, PROBATION, and DORMANT alphas."""
+    """Run one cycle of forward testing on all ACTIVE and DORMANT alphas."""
 
     def __init__(
         self,
@@ -81,21 +80,12 @@ class ForwardRunner:
             self.tracker = tracker or ForwardTracker(db_path=adir / "forward_returns.db")
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
-        mon_cfg = MonitorConfig(
-            rolling_window=self.fwd_config.degradation_window,
-            min_observations=config.live_quality.min_observations,
-        )
+        mon_cfg = config.to_monitor_config()
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)
 
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
-            config=LifecycleConfig(
-                oos_quality_min=config.lifecycle.oos_quality_min,
-                probation_quality_min=config.lifecycle.probation_quality_min,
-                dormant_quality_max=config.lifecycle.dormant_quality_max,
-                correlation_max=config.lifecycle.correlation_max,
-                dormant_revival_quality=config.lifecycle.dormant_revival_quality,
-            ),
+            config=config.to_lifecycle_config(),
         )
 
         if store is not None:
@@ -115,9 +105,8 @@ class ForwardRunner:
         self.store.sync(self.features, resolution=self.resolution)
 
         active = self.registry.list_by_state(AlphaState.ACTIVE)
-        probation = self.registry.list_by_state(AlphaState.PROBATION)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
-        all_alphas = active + probation + dormant
+        all_alphas = active + dormant
 
         n_evaluated = 0
         n_degraded = 0
@@ -169,27 +158,19 @@ class ForwardRunner:
                 self.monitor.clear(alpha_id)
                 self.monitor.record_batch(alpha_id, all_returns)
                 status = self.monitor.check(alpha_id)
-                estimate = blend_quality(
+                estimate = self.config.estimate_alpha_quality(
                     record.oos_fitness(self.config.fitness_metric),
                     all_returns,
-                    metric=self.config.fitness_metric,
-                    rolling_window=self.fwd_config.degradation_window,
-                    min_observations=self.config.live_quality.min_observations,
-                    full_weight_observations=self.config.live_quality.full_weight_observations,
                 )
 
                 old_state = record.state
-                if (
-                    old_state == AlphaState.DORMANT
-                    and estimate.n_observations
-                    < self.config.live_quality.dormant_revival_min_observations
-                ):
-                    new_state = old_state
-                else:
-                    new_state = self.lifecycle.evaluate(
-                        alpha_id,
-                        estimate.blended_quality,
-                    )
+                new_state = self.lifecycle.evaluate_live(
+                    alpha_id,
+                    estimate,
+                    dormant_revival_min_observations=(
+                        self.config.live_quality.dormant_revival_min_observations
+                    ),
+                )
 
                 if new_state != old_state:
                     self.audit_log.log_state_change(
@@ -203,21 +184,13 @@ class ForwardRunner:
                             f"max_dd={status.rolling_max_dd:.3%}"
                         ),
                     )
-                    if new_state == AlphaState.PROBATION and old_state == AlphaState.ACTIVE:
+                    if new_state == AlphaState.DORMANT and old_state == AlphaState.ACTIVE:
                         n_degraded += 1
-                    elif new_state == AlphaState.DORMANT:
                         n_dormant += 1
                     elif new_state == AlphaState.REJECTED:
                         n_rejected += 1
-                    elif (
-                        new_state == AlphaState.PROBATION
-                        and old_state == AlphaState.DORMANT
-                    ):
+                    elif new_state == AlphaState.ACTIVE and old_state == AlphaState.DORMANT:
                         n_revived += 1
-                    elif (
-                        new_state == AlphaState.ACTIVE
-                        and old_state == AlphaState.PROBATION
-                    ):
                         n_restored += 1
 
                 logger.info(

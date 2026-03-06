@@ -10,7 +10,8 @@ from pathlib import Path
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.lifecycle import LifecycleConfig, batch_transitions, ST_ACTIVE, ST_PROBATION, ST_DORMANT
+from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
+from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.store import DataStore
@@ -47,10 +48,9 @@ class SimulationResult:
 
 def _initial_simulation_state(state: str) -> int:
     """Map registry state to simulator lifecycle state."""
+    state = AlphaState.canonical(state)
     if state == AlphaState.ACTIVE:
         return ST_ACTIVE
-    if state == AlphaState.PROBATION:
-        return ST_PROBATION
     if state == AlphaState.DORMANT:
         return ST_DORMANT
     return ST_EXCLUDED
@@ -60,22 +60,25 @@ def _live_like_eval_indices(
     records: list,
     state_codes: np.ndarray,
     *,
+    prior_quality: np.ndarray,
+    blended_quality: np.ndarray,
+    confidence: np.ndarray,
     max_trading: int,
     metric: str,
+    shortlist_preselect_factor: int = 20,
 ) -> tuple[list[int], list[int], list[int]]:
     """Return (trading_candidates, dormant, eval_set) using live trader rules."""
-    n_candidates = max_trading * 5
-    trading_candidates = [
-        i for i, state in enumerate(state_codes)
-        if state in (ST_ACTIVE, ST_PROBATION)
-    ]
-    trading_candidates.sort(
-        key=lambda i: records[i].oos_fitness(metric),
-        reverse=True,
+    trading_candidates = rank_trading_indices(
+        records,
+        state_codes,
+        prior_quality=prior_quality,
+        blended_quality=blended_quality,
+        confidence=confidence,
+        max_trading=max_trading,
+        metric=metric,
+        shortlist_preselect_factor=shortlist_preselect_factor,
     )
-    trading_candidates = trading_candidates[:n_candidates]
-
-    dormant = [i for i, state in enumerate(state_codes) if state == ST_DORMANT]
+    dormant = dormant_indices(state_codes)
     eval_set = trading_candidates + dormant
     return trading_candidates, dormant, eval_set
 
@@ -198,6 +201,10 @@ def run_backfill(
         logger.info("%d alphas loaded from registry", n_alphas)
         if not all_records:
             raise RuntimeError("No alphas in registry. Run `evolve` first.")
+        prior_quality_full = np.array(
+            [record.oos_fitness(config.fitness_metric) for record in all_records],
+            dtype=np.float64,
+        )
 
         # 3. Pre-compute all signals (the key optimization)
         # signal_matrix[i, d] = normalized signal for alpha i at day d
@@ -240,15 +247,9 @@ def run_backfill(
         min_trade_usd = config.paper.min_trade_usd
 
         # Lifecycle thresholds from config (single source of truth)
-        lc_cfg = LifecycleConfig(
-            oos_quality_min=config.lifecycle.oos_quality_min,
-            probation_quality_min=config.lifecycle.probation_quality_min,
-            dormant_quality_max=config.lifecycle.dormant_quality_max,
-            correlation_max=config.lifecycle.correlation_max,
-            dormant_revival_quality=config.lifecycle.dormant_revival_quality,
-        )
-        rolling_window = 63
-        min_obs = 20
+        lc_cfg = config.to_lifecycle_config()
+        rolling_window = config.forward.degradation_window
+        full_weight_obs = max(config.live_quality.full_weight_observations, 1)
 
         alpha_state_vec = np.array(
             [_initial_simulation_state(record.state) for record in all_records],
@@ -271,34 +272,60 @@ def run_backfill(
             window_start = max(0, d - rolling_window)
             window_len = d - window_start
 
-            if window_len >= min_obs:
+            if window_len > 0:
                 recent = returns_mat[valid_mask, window_start + 1:d + 1]
-                m = recent.mean(axis=1)
-                s = recent.std(axis=1) + 1e-12
                 if config.fitness_metric == "log_growth":
                     r_clipped = np.clip(recent, -0.999999, None)
                     rolling_quality = np.mean(np.log1p(r_clipped), axis=1) * 252
                 else:
-                    rolling_quality = m / s * np.sqrt(252)
+                    m = recent.mean(axis=1)
+                    s = recent.std(axis=1)
+                    rolling_quality = np.zeros(recent.shape[0], dtype=np.float64)
+                    nonzero = s > 1e-12
+                    rolling_quality[nonzero] = (
+                        m[nonzero] / s[nonzero] * np.sqrt(252)
+                    )
             else:
                 rolling_quality = np.zeros(int(valid_mask.sum()))
 
             rolling_quality_full = np.zeros(n_alphas, dtype=np.float64)
             rolling_quality_full[valid_mask] = rolling_quality
+            confidence = np.full(n_alphas, min(d / full_weight_obs, 1.0), dtype=np.float64)
+            blended_quality_full = (
+                (1.0 - confidence) * prior_quality_full
+                + confidence * rolling_quality_full
+            )
 
             trading_candidates, _, eval_indices = _live_like_eval_indices(
                 all_records,
                 alpha_state_vec,
+                prior_quality=prior_quality_full,
+                blended_quality=blended_quality_full,
+                confidence=confidence,
                 max_trading=config.paper.max_trading_alphas,
                 metric=config.fitness_metric,
+                shortlist_preselect_factor=config.live_quality.shortlist_preselect_factor,
             )
 
             # Live trader only evaluates top trading candidates plus dormant alphas.
             eval_indices = [i for i in eval_indices if valid_mask[i]]
+            if d < config.live_quality.dormant_revival_min_observations:
+                eval_indices = [
+                    i for i in eval_indices if alpha_state_vec[i] != ST_DORMANT
+                ]
             if eval_indices:
                 eval_state_vec = alpha_state_vec[eval_indices]
-                eval_quality = rolling_quality_full[eval_indices]
-                new_states = batch_transitions(eval_state_vec, eval_quality, lc_cfg)
+                eval_quality = blended_quality_full[eval_indices]
+                eval_observations = np.full(len(eval_indices), d, dtype=np.int32)
+                new_states = batch_live_transitions(
+                    eval_state_vec,
+                    eval_quality,
+                    eval_observations,
+                    lc_cfg,
+                    dormant_revival_min_observations=(
+                        config.live_quality.dormant_revival_min_observations
+                    ),
+                )
                 alpha_state_vec[eval_indices] = new_states
 
             # Recompute diversity periodically (rolling window)
@@ -323,7 +350,7 @@ def run_backfill(
                     signal_matrix[i, d - lookback:d] for i in trading_indices
                 ])
                 quality_for_sel = np.array([
-                    rolling_quality_full[i] for i in trading_indices
+                    blended_quality_full[i] for i in trading_indices
                 ])
                 selected_idx = select_low_correlation(
                     corr_matrix,
@@ -333,7 +360,9 @@ def run_backfill(
                 trading_indices = [trading_indices[i] for i in selected_idx]
 
             if trading_indices:
-                t_quality = np.array([rolling_quality_full[i] for i in trading_indices])
+                t_quality = np.array([
+                    max(blended_quality_full[i], 0.0) for i in trading_indices
+                ])
                 t_diversity = diversity_full[trading_indices]
                 weights = compute_weights(t_quality, t_diversity, min_weight=wcfg.min_weight)
                 selected_signals = np.array([signal_matrix[i, d - 1] for i in trading_indices])

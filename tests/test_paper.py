@@ -262,7 +262,7 @@ class TestRegistryTopTrading:
         assert all(r.state != AlphaState.DORMANT for r in result)
         reg.close()
 
-    def test_top_trading_includes_probation(self, tmp_path):
+    def test_top_trading_excludes_candidate(self, tmp_path):
         from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
 
         reg = AlphaRegistry(tmp_path / "reg.db")
@@ -271,12 +271,12 @@ class TestRegistryTopTrading:
             state=AlphaState.ACTIVE, oos_sharpe=1.0,
         ))
         reg.register(AlphaRecord(
-            alpha_id="p1", expression="close_p",
-            state=AlphaState.PROBATION, oos_sharpe=2.0,
+            alpha_id="c1", expression="close_c",
+            state=AlphaState.CANDIDATE, oos_sharpe=2.0,
         ))
         result = reg.top_trading(10)
-        assert len(result) == 2
-        assert result[0].alpha_id == "p1"
+        assert len(result) == 1
+        assert result[0].alpha_id == "a1"
         reg.close()
 
 

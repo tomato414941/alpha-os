@@ -792,11 +792,10 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
 
 
 def _needs_evolution_l2(tactical) -> bool:
-    """Return True if L2 registry has no active or probation alphas."""
+    """Return True if L2 registry has no active alphas."""
     from alpha_os.alpha.registry import AlphaState
     active = tactical.registry.list_by_state(AlphaState.ACTIVE)
-    probation = tactical.registry.list_by_state(AlphaState.PROBATION)
-    return len(active) + len(probation) == 0
+    return len(active) == 0
 
 
 def _build_tactical_trader(asset: str, cfg: Config, enabled: bool):
@@ -1036,8 +1035,7 @@ def cmd_live(args: argparse.Namespace) -> None:
     pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
     def _needs_evolution(trader):
         active = trader.registry.list_by_state(AlphaState.ACTIVE)
-        probation = trader.registry.list_by_state(AlphaState.PROBATION)
-        return len(active) + len(probation) == 0
+        return len(active) == 0
 
     def _run_asset_validation(result, recon, cb, validator):
         if validator is None:

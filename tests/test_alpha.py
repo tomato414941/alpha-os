@@ -1,4 +1,6 @@
 """Tests for alpha registry, lifecycle, combiner, and governance gates."""
+import sqlite3
+
 import numpy as np
 import pytest
 
@@ -8,8 +10,8 @@ from alpha_os.alpha.lifecycle import (
     LifecycleConfig,
     compute_transition,
     batch_transitions,
+    ST_CANDIDATE,
     ST_ACTIVE,
-    ST_PROBATION,
     ST_DORMANT,
     tenure_days,
     tenure_bonus,
@@ -43,7 +45,7 @@ class TestAlphaRegistry:
         got = reg.get("a1")
         assert got is not None
         assert got.expression == "(neg nvda)"
-        assert got.state == AlphaState.BORN
+        assert got.state == AlphaState.CANDIDATE
         reg.close()
 
     def test_get_missing(self, tmp_path):
@@ -70,11 +72,11 @@ class TestAlphaRegistry:
 
     def test_list_by_state(self, tmp_path):
         reg = self._make_registry(tmp_path)
-        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.BORN))
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.CANDIDATE))
         reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE))
-        reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.BORN))
-        born = reg.list_by_state(AlphaState.BORN)
-        assert len(born) == 2
+        reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.CANDIDATE))
+        candidate = reg.list_by_state(AlphaState.CANDIDATE)
+        assert len(candidate) == 2
         active = reg.list_active()
         assert len(active) == 1
         reg.close()
@@ -84,7 +86,7 @@ class TestAlphaRegistry:
         reg.register(AlphaRecord(alpha_id="a1", expression="x"))
         reg.register(AlphaRecord(alpha_id="a2", expression="y"))
         assert reg.count() == 2
-        assert reg.count(state=AlphaState.BORN) == 2
+        assert reg.count(state=AlphaState.CANDIDATE) == 2
         reg.close()
 
     def test_top(self, tmp_path):
@@ -107,6 +109,44 @@ class TestAlphaRegistry:
         assert reg.count() == 1
         reg.close()
 
+    def test_legacy_states_migrate_on_open(self, tmp_path):
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE alphas (
+                alpha_id TEXT PRIMARY KEY,
+                expression TEXT NOT NULL,
+                state TEXT NOT NULL,
+                fitness REAL DEFAULT 0.0,
+                oos_sharpe REAL DEFAULT 0.0,
+                oos_log_growth REAL DEFAULT 0.0,
+                pbo REAL DEFAULT 1.0,
+                dsr_pvalue REAL DEFAULT 1.0,
+                turnover REAL DEFAULT 0.0,
+                correlation_avg REAL DEFAULT 0.0,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                metadata TEXT DEFAULT '{}'
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO alphas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("legacy_born", "x", "born", 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, "{}"),
+        )
+        conn.execute(
+            "INSERT INTO alphas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("legacy_probation", "y", "probation", 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, "{}"),
+        )
+        conn.commit()
+        conn.close()
+
+        reg = self._make_registry(tmp_path)
+        assert reg.get("legacy_born").state == AlphaState.CANDIDATE
+        assert reg.get("legacy_probation").state == AlphaState.ACTIVE
+        reg.close()
+
 
 # ---------------------------------------------------------------------------
 # Lifecycle
@@ -116,7 +156,7 @@ class TestAlphaLifecycle:
     def _setup(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "test.db")
         cfg = LifecycleConfig(
-            oos_quality_min=0.5,
+            candidate_quality_min=0.5,
             pbo_max=0.5,
             dsr_pvalue_max=0.05,
             correlation_max=0.5,
@@ -124,32 +164,32 @@ class TestAlphaLifecycle:
         lc = AlphaLifecycle(reg, config=cfg)
         return reg, lc
 
-    def test_born_passes_gate(self, tmp_path):
+    def test_candidate_passes_gate(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x",
             oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01, correlation_avg=0.1,
         ))
-        state = lc.evaluate_born("a1")
+        state = lc.evaluate_candidate("a1")
         assert state == AlphaState.ACTIVE
 
-    def test_born_fails_gate(self, tmp_path):
+    def test_candidate_fails_gate(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x",
             oos_sharpe=0.1, pbo=0.8, dsr_pvalue=0.5,
         ))
-        state = lc.evaluate_born("a1")
+        state = lc.evaluate_candidate("a1")
         assert state == AlphaState.REJECTED
 
-    def test_active_to_probation(self, tmp_path):
+    def test_active_to_dormant(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
             oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
         ))
         state = lc.evaluate_active("a1", live_quality=0.1)
-        assert state == AlphaState.PROBATION
+        assert state == AlphaState.DORMANT
 
     def test_active_stays(self, tmp_path):
         reg, lc = self._setup(tmp_path)
@@ -159,10 +199,10 @@ class TestAlphaLifecycle:
         state = lc.evaluate_active("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
-    def test_probation_to_dormant(self, tmp_path):
+    def test_active_alias_to_dormant_via_probation_method(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.PROBATION,
+            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
         ))
         state = lc.evaluate_probation("a1", live_quality=-0.5)
         assert state == AlphaState.DORMANT
@@ -175,30 +215,27 @@ class TestAlphaLifecycle:
         state = lc.evaluate_dormant("a1", live_quality=0.1)
         assert state == AlphaState.DORMANT
 
-    def test_dormant_to_probation(self, tmp_path):
+    def test_dormant_to_active(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.DORMANT,
         ))
         state = lc.evaluate_dormant("a1", live_quality=0.4)
-        assert state == AlphaState.PROBATION
+        assert state == AlphaState.ACTIVE
 
     def test_dormant_revival_full_cycle(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
             alpha_id="a1", expression="x", state=AlphaState.DORMANT,
         ))
-        # Step 1: revive to PROBATION
+        # Step 1: revive to ACTIVE
         state = lc.evaluate_dormant("a1", live_quality=0.4)
-        assert state == AlphaState.PROBATION
-        # Step 2: prove itself back to ACTIVE
-        state = lc.evaluate_probation("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
-    def test_probation_to_active(self, tmp_path):
+    def test_active_alias_stays_active_via_probation_method(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.PROBATION,
+            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
         ))
         state = lc.evaluate_probation("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
@@ -206,7 +243,7 @@ class TestAlphaLifecycle:
     def test_not_found_raises(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         with pytest.raises(ValueError):
-            lc.evaluate_born("nonexistent")
+            lc.evaluate_candidate("nonexistent")
 
     def test_evaluate_dispatches_correctly(self, tmp_path):
         reg, lc = self._setup(tmp_path)
@@ -215,26 +252,22 @@ class TestAlphaLifecycle:
             oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
         ))
         state = lc.evaluate("a1", live_quality=0.1)
-        assert state == AlphaState.PROBATION
-        assert reg.get("a1").state == AlphaState.PROBATION
+        assert state == AlphaState.DORMANT
+        assert reg.get("a1").state == AlphaState.DORMANT
 
 
 class TestComputeTransition:
     def test_active_stays(self):
-        cfg = LifecycleConfig(probation_quality_min=0.3)
+        cfg = LifecycleConfig(active_quality_min=0.3)
         assert compute_transition(AlphaState.ACTIVE, 0.5, cfg) == AlphaState.ACTIVE
 
-    def test_active_to_probation(self):
-        cfg = LifecycleConfig(probation_quality_min=0.3)
-        assert compute_transition(AlphaState.ACTIVE, 0.1, cfg) == AlphaState.PROBATION
+    def test_active_to_dormant(self):
+        cfg = LifecycleConfig(active_quality_min=0.3)
+        assert compute_transition(AlphaState.ACTIVE, 0.1, cfg) == AlphaState.DORMANT
 
-    def test_probation_to_active(self):
-        cfg = LifecycleConfig(oos_quality_min=0.5)
-        assert compute_transition(AlphaState.PROBATION, 0.8, cfg) == AlphaState.ACTIVE
-
-    def test_probation_to_dormant(self):
-        cfg = LifecycleConfig(dormant_quality_max=0.0)
-        assert compute_transition(AlphaState.PROBATION, -0.5, cfg) == AlphaState.DORMANT
+    def test_candidate_stays_candidate(self):
+        cfg = LifecycleConfig(candidate_quality_min=0.5)
+        assert compute_transition(AlphaState.CANDIDATE, 0.8, cfg) == AlphaState.CANDIDATE
 
     def test_dormant_stays(self):
         cfg = LifecycleConfig(dormant_revival_quality=0.3)
@@ -242,23 +275,23 @@ class TestComputeTransition:
 
     def test_dormant_revival(self):
         cfg = LifecycleConfig(dormant_revival_quality=0.3)
-        assert compute_transition(AlphaState.DORMANT, 0.4, cfg) == AlphaState.PROBATION
+        assert compute_transition(AlphaState.DORMANT, 0.4, cfg) == AlphaState.ACTIVE
 
 
 class TestBatchTransitions:
     def test_vectorized_matches_scalar(self):
         cfg = LifecycleConfig()
-        states = np.array([ST_ACTIVE, ST_PROBATION, ST_DORMANT], dtype=np.int8)
+        states = np.array([ST_CANDIDATE, ST_ACTIVE, ST_DORMANT], dtype=np.int8)
         sharpes = np.array([0.1, 0.8, 0.4])
         new = batch_transitions(states, sharpes, cfg)
         for i, (s, sh) in enumerate(zip(
-            [AlphaState.ACTIVE, AlphaState.PROBATION, AlphaState.DORMANT],
+            [AlphaState.CANDIDATE, AlphaState.ACTIVE, AlphaState.DORMANT],
             sharpes,
         )):
             expected = compute_transition(s, sh, cfg)
             state_map = {
+                AlphaState.CANDIDATE: ST_CANDIDATE,
                 AlphaState.ACTIVE: ST_ACTIVE,
-                AlphaState.PROBATION: ST_PROBATION,
                 AlphaState.DORMANT: ST_DORMANT,
             }
             assert new[i] == state_map[expected]

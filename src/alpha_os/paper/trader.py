@@ -14,9 +14,10 @@ from datetime import date, datetime, timezone
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
-from ..alpha.monitor import AlphaMonitor, MonitorConfig, RegimeDetector
-from ..alpha.quality import QualityEstimate, blend_quality
+from ..alpha.lifecycle import AlphaLifecycle
+from ..alpha.monitor import AlphaMonitor, RegimeDetector
+from ..alpha.quality import QualityEstimate
+from ..alpha.runtime_policy import rank_trading_records
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
@@ -134,21 +135,12 @@ class Trader:
         )
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
-        mon_cfg = MonitorConfig(
-            rolling_window=config.forward.degradation_window,
-            min_observations=config.live_quality.min_observations,
-        )
+        mon_cfg = config.to_monitor_config()
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)
 
         self.lifecycle = lifecycle or AlphaLifecycle(
             self.registry,
-            config=LifecycleConfig(
-                oos_quality_min=config.lifecycle.oos_quality_min,
-                probation_quality_min=config.lifecycle.probation_quality_min,
-                dormant_quality_max=config.lifecycle.dormant_quality_max,
-                correlation_max=config.lifecycle.correlation_max,
-                dormant_revival_quality=config.lifecycle.dormant_revival_quality,
-            ),
+            config=config.to_lifecycle_config(),
         )
 
         self.risk_manager = risk_manager or RiskManager(config.risk.to_manager_config())
@@ -240,38 +232,10 @@ class Trader:
         record,
         returns: list[float] | np.ndarray,
     ) -> QualityEstimate:
-        return blend_quality(
+        return self.config.estimate_alpha_quality(
             record.oos_fitness(self.config.fitness_metric),
             returns,
-            metric=self.config.fitness_metric,
-            rolling_window=self.config.forward.degradation_window,
-            min_observations=self.config.live_quality.min_observations,
-            full_weight_observations=self.config.live_quality.full_weight_observations,
         )
-
-    def _rank_trading_candidates(
-        self,
-        records: list,
-        limit: int,
-    ) -> list:
-        ranked: list[tuple[float, float, float, object]] = []
-        for record in records:
-            estimate = self._estimate_quality(
-                record,
-                self.forward_tracker.get_returns(record.alpha_id),
-            )
-            ranked.append(
-                (
-                    estimate.blended_quality,
-                    estimate.confidence,
-                    record.oos_fitness(self.config.fitness_metric),
-                    record,
-                )
-            )
-
-        ranked.sort(key=lambda row: (row[0], row[1], row[2]), reverse=True)
-        return [record for _, _, _, record in ranked[:limit]]
-
 
     def _recompute_diversity(
         self, data: dict[str, np.ndarray], parsed_records: list[tuple],
@@ -643,19 +607,24 @@ class Trader:
 
         # 2. Get candidate alphas (wider pool for correlation filtering) + dormant
         max_trading = self.config.paper.max_trading_alphas
-        n_candidates = max_trading * 5
-        preselect_factor = max(self.config.live_quality.shortlist_preselect_factor, 1)
-        preselect_n = max(n_candidates, max_trading * preselect_factor)
-        preselected = self.registry.top_trading(
-            preselect_n,
+        trading_candidates = rank_trading_records(
+            self.registry.top(
+                n=self.registry.count(),
+                metric=self.config.fitness_metric,
+            ),
+            lambda record: self._estimate_quality(
+                record,
+                self.forward_tracker.get_returns(record.alpha_id),
+            ),
+            max_trading=max_trading,
+            shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric=self.config.fitness_metric,
         )
-        trading_candidates = self._rank_trading_candidates(preselected, n_candidates)
         dormant = self.registry.list_by_state(AlphaState.DORMANT)
         all_alphas = trading_candidates + dormant
         dormant_ids = {r.alpha_id for r in dormant}
 
-        n_total_active = self.registry.count(AlphaState.ACTIVE) + self.registry.count(AlphaState.PROBATION)
+        n_total_active = self.registry.count(AlphaState.ACTIVE)
         if n_total_active > max_trading:
             logger.info("Alpha pool: %d candidates from %d active", len(trading_candidates), n_total_active)
         active = trading_candidates  # for n_alphas_active in result
@@ -732,22 +701,20 @@ class Trader:
                 # Lifecycle transitions (skip when lifecycle daemon handles it)
                 if not skip_lifecycle:
                     old_state = record.state
-                    if (
-                        old_state == AlphaState.DORMANT
-                        and estimate.n_observations
-                        < self.config.live_quality.dormant_revival_min_observations
-                    ):
-                        continue
-                    _fit = estimate.blended_quality
-                    new_state = self.lifecycle.evaluate(
-                        record.alpha_id, _fit,
+                    new_state = self.lifecycle.evaluate_live(
+                        record.alpha_id,
+                        estimate,
+                        dormant_revival_min_observations=(
+                            self.config.live_quality.dormant_revival_min_observations
+                        ),
                     )
                     if new_state != old_state:
                         self.audit_log.log_state_change(
                             record.alpha_id, old_state, new_state,
                             reason=(
                                 "paper: blended="
-                                f"{_fit:.3f} prior={estimate.prior_quality:.3f} "
+                                f"{estimate.blended_quality:.3f} "
+                                f"prior={estimate.prior_quality:.3f} "
                                 f"live={estimate.live_quality:.3f} "
                                 f"n={estimate.n_observations}"
                             ),

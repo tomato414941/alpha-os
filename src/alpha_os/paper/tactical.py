@@ -95,9 +95,7 @@ class TacticalTrader:
             logger.warning("L2 API sync failed — using cached data: %s", exc)
 
         # 2. Get active L2 alphas
-        active = self.registry.list_by_state(AlphaState.ACTIVE)
-        probation = self.registry.list_by_state(AlphaState.PROBATION)
-        all_alphas = active + probation
+        all_alphas = self.registry.list_by_state(AlphaState.ACTIVE)
 
         if not all_alphas:
             return TacticalSignal(

@@ -61,10 +61,9 @@ target_success_days = 10
 max_acceptable_slippage_bps = 50.0
 
 [lifecycle]
-oos_quality_min = 0.05       # gate for BORN -> ACTIVE adoption
-probation_quality_min = 0.0  # ACTIVE -> PROBATION threshold
-dormant_quality_max = -0.5   # PROBATION -> DORMANT threshold
-dormant_revival_quality = 0.0 # DORMANT -> PROBATION revival
+candidate_quality_min = 0.05  # gate for CANDIDATE -> ACTIVE adoption
+active_quality_min = 0.0      # ACTIVE -> DORMANT threshold
+dormant_revival_quality = 0.0 # DORMANT -> ACTIVE revival
 correlation_max = 0.5
 
 [execution]

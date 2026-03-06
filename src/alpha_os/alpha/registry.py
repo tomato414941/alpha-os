@@ -11,18 +11,42 @@ from ..config import DATA_DIR
 
 
 class AlphaState:
-    BORN = "born"
+    CANDIDATE = "candidate"
     ACTIVE = "active"
-    PROBATION = "probation"
-    REJECTED = "rejected"
     DORMANT = "dormant"
+    REJECTED = "rejected"
+
+    # Backward-compatible aliases for migrated runtime state names.
+    BORN = CANDIDATE
+    PROBATION = ACTIVE
+
+    _CANONICAL = {
+        CANDIDATE: CANDIDATE,
+        ACTIVE: ACTIVE,
+        DORMANT: DORMANT,
+        REJECTED: REJECTED,
+        "born": CANDIDATE,
+        "probation": ACTIVE,
+    }
+
+    @classmethod
+    def canonical(cls, state: str) -> str:
+        return cls._CANONICAL.get(state, state)
+
+    @classmethod
+    def trading_states(cls) -> tuple[str, ...]:
+        return (cls.ACTIVE,)
+
+    @classmethod
+    def runtime_states(cls) -> tuple[str, ...]:
+        return (cls.ACTIVE, cls.DORMANT)
 
 
 @dataclass
 class AlphaRecord:
     alpha_id: str
     expression: str
-    state: str = AlphaState.BORN
+    state: str = AlphaState.CANDIDATE
     fitness: float = 0.0
     oos_sharpe: float = 0.0
     oos_log_growth: float = 0.0
@@ -57,7 +81,7 @@ class AlphaRegistry:
             CREATE TABLE IF NOT EXISTS alphas (
                 alpha_id TEXT PRIMARY KEY,
                 expression TEXT NOT NULL,
-                state TEXT NOT NULL DEFAULT 'born',
+                state TEXT NOT NULL DEFAULT 'candidate',
                 fitness REAL DEFAULT 0.0,
                 oos_sharpe REAL DEFAULT 0.0,
                 pbo REAL DEFAULT 1.0,
@@ -119,13 +143,25 @@ class AlphaRegistry:
             CREATE INDEX IF NOT EXISTS idx_oos_log_growth
             ON alphas(oos_log_growth DESC)
         """)
+        self._migrate_states()
         self._conn.commit()
+
+    def _migrate_states(self) -> None:
+        self._conn.execute(
+            "UPDATE alphas SET state = ? WHERE state = ?",
+            (AlphaState.CANDIDATE, "born"),
+        )
+        self._conn.execute(
+            "UPDATE alphas SET state = ? WHERE state = ?",
+            (AlphaState.ACTIVE, "probation"),
+        )
 
     def register(self, record: AlphaRecord) -> None:
         now = time.time()
         if record.created_at == 0.0:
             record.created_at = now
         record.updated_at = now
+        state = AlphaState.canonical(record.state)
         self._conn.execute(
             """INSERT OR REPLACE INTO alphas
                (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
@@ -135,7 +171,7 @@ class AlphaRegistry:
             (
                 record.alpha_id,
                 record.expression,
-                record.state,
+                state,
                 record.fitness,
                 record.oos_sharpe,
                 record.oos_log_growth,
@@ -159,6 +195,7 @@ class AlphaRegistry:
         return self._row_to_record(row)
 
     def list_by_state(self, state: str) -> list[AlphaRecord]:
+        state = AlphaState.canonical(state)
         rows = self._conn.execute(
             "SELECT * FROM alphas WHERE state = ? ORDER BY oos_sharpe DESC",
             (state,),
@@ -169,6 +206,7 @@ class AlphaRegistry:
         return self.list_by_state(AlphaState.ACTIVE)
 
     def update_state(self, alpha_id: str, new_state: str) -> None:
+        new_state = AlphaState.canonical(new_state)
         self._conn.execute(
             "UPDATE alphas SET state = ?, updated_at = ? WHERE alpha_id = ?",
             (new_state, time.time(), alpha_id),
@@ -203,6 +241,7 @@ class AlphaRegistry:
 
     def count(self, state: str | None = None) -> int:
         if state:
+            state = AlphaState.canonical(state)
             row = self._conn.execute(
                 "SELECT COUNT(*) FROM alphas WHERE state = ?", (state,)
             ).fetchone()
@@ -213,12 +252,13 @@ class AlphaRegistry:
     _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
 
     def top_trading(self, n: int = 30, metric: str = "sharpe") -> list[AlphaRecord]:
-        """Top-N alphas by fitness metric from active + probation (for trading)."""
+        """Top-N alphas by fitness metric from active state (for trading)."""
         col = self._ORDER_COLUMN[metric]
+        placeholders = ", ".join("?" for _ in AlphaState.trading_states())
         rows = self._conn.execute(
-            f"SELECT * FROM alphas WHERE state IN (?, ?) "
+            f"SELECT * FROM alphas WHERE state IN ({placeholders}) "
             f"ORDER BY {col} DESC LIMIT ?",
-            (AlphaState.ACTIVE, AlphaState.PROBATION, n),
+            (*AlphaState.trading_states(), n),
         ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
@@ -244,7 +284,7 @@ class AlphaRegistry:
         return AlphaRecord(
             alpha_id=row["alpha_id"],
             expression=row["expression"],
-            state=row["state"],
+            state=AlphaState.canonical(row["state"]),
             fitness=row["fitness"],
             oos_sharpe=row["oos_sharpe"],
             oos_log_growth=row["oos_log_growth"] if "oos_log_growth" in keys else 0.0,

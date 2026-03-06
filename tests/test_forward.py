@@ -154,7 +154,7 @@ class TestForwardRunnerIntegration:
             rolling_window=30, min_observations=5,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            probation_quality_min=0.3,
+            active_quality_min=0.3,
         ))
 
         tracker.register_alpha("healthy", "2025-01-01")
@@ -178,7 +178,7 @@ class TestForwardRunnerIntegration:
         tracker.close()
         reg.close()
 
-    def test_degraded_alpha_to_probation(self, tmp_path):
+    def test_degraded_alpha_to_dormant(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="bad",
@@ -191,7 +191,7 @@ class TestForwardRunnerIntegration:
             rolling_window=30, sharpe_threshold=0.0, min_observations=10,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            probation_quality_min=0.0,
+            active_quality_min=0.0,
         ))
 
         tracker.register_alpha("bad", "2025-01-01")
@@ -205,18 +205,18 @@ class TestForwardRunnerIntegration:
         assert status.rolling_sharpe < 0
 
         new_state = lifecycle.evaluate_active("bad", status.rolling_sharpe)  # sharpe as quality
-        assert new_state == AlphaState.PROBATION
-        assert reg.get("bad").state == AlphaState.PROBATION
+        assert new_state == AlphaState.DORMANT
+        assert reg.get("bad").state == AlphaState.DORMANT
 
         tracker.close()
         reg.close()
 
-    def test_probation_to_dormant(self, tmp_path):
+    def test_active_alias_to_dormant_via_probation_method(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="dying",
             expression="(neg f1)",
-            state=AlphaState.PROBATION,
+            state=AlphaState.ACTIVE,
         ))
         lifecycle = AlphaLifecycle(reg)
 
@@ -225,18 +225,18 @@ class TestForwardRunnerIntegration:
 
         reg.close()
 
-    def test_probation_recovery_to_active(self, tmp_path):
+    def test_dormant_recovery_to_active(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="recover",
             expression="(neg f1)",
-            state=AlphaState.PROBATION,
+            state=AlphaState.DORMANT,
         ))
         lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            oos_quality_min=0.5,
+            dormant_revival_quality=0.5,
         ))
 
-        new_state = lifecycle.evaluate_probation("recover", live_quality=0.8)
+        new_state = lifecycle.evaluate_dormant("recover", live_quality=0.8)
         assert new_state == AlphaState.ACTIVE
 
         reg.close()
@@ -353,7 +353,7 @@ class TestForwardRunnerCycle:
         ))
 
         cfg = Config()
-        cfg.lifecycle.probation_quality_min = 0.3
+        cfg.lifecycle.active_quality_min = 0.3
         tracker = ForwardTracker(db_path=tmp_path / "fwd.db")
         tracker.register_alpha("alpha_prior", dates[0].strftime("%Y-%m-%d"))
 
@@ -365,9 +365,8 @@ class TestForwardRunnerCycle:
             min_observations=cfg.live_quality.min_observations,
         ))
         runner.lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            oos_quality_min=cfg.lifecycle.oos_quality_min,
-            probation_quality_min=cfg.lifecycle.probation_quality_min,
-            dormant_quality_max=cfg.lifecycle.dormant_quality_max,
+            candidate_quality_min=cfg.lifecycle.candidate_quality_min,
+            active_quality_min=cfg.lifecycle.active_quality_min,
             correlation_max=cfg.lifecycle.correlation_max,
             dormant_revival_quality=cfg.lifecycle.dormant_revival_quality,
         ))
@@ -407,9 +406,8 @@ class TestForwardRunnerCycle:
             min_observations=cfg.live_quality.min_observations,
         ))
         runner.lifecycle = AlphaLifecycle(reg, config=LifecycleConfig(
-            oos_quality_min=cfg.lifecycle.oos_quality_min,
-            probation_quality_min=cfg.lifecycle.probation_quality_min,
-            dormant_quality_max=cfg.lifecycle.dormant_quality_max,
+            candidate_quality_min=cfg.lifecycle.candidate_quality_min,
+            active_quality_min=cfg.lifecycle.active_quality_min,
             correlation_max=cfg.lifecycle.correlation_max,
             dormant_revival_quality=cfg.lifecycle.dormant_revival_quality,
         ))

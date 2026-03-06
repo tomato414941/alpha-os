@@ -4,11 +4,8 @@ from __future__ import annotations
 import logging
 import time
 
-import numpy as np
-
-from ..alpha.lifecycle import AlphaLifecycle, LifecycleConfig
-from ..alpha.monitor import AlphaMonitor, MonitorConfig
-from ..alpha.quality import blend_quality
+from ..alpha.lifecycle import AlphaLifecycle
+from ..alpha.monitor import AlphaMonitor
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, asset_data_dir
 from ..forward.tracker import ForwardTracker
@@ -36,32 +33,22 @@ class LifecycleDaemon:
         forward_tracker = ForwardTracker(db_path=adir / "forward_returns.db")
         audit_log = AuditLog(log_path=adir / "audit.jsonl")
 
-        mon_cfg = MonitorConfig(
-            rolling_window=self.config.forward.degradation_window,
-            min_observations=self.config.live_quality.min_observations,
-        )
+        mon_cfg = self.config.to_monitor_config()
         monitor = AlphaMonitor(config=mon_cfg)
 
         lifecycle = AlphaLifecycle(
             registry,
-            config=LifecycleConfig(
-                oos_quality_min=self.config.lifecycle.oos_quality_min,
-                probation_quality_min=self.config.lifecycle.probation_quality_min,
-                dormant_quality_max=self.config.lifecycle.dormant_quality_max,
-                correlation_max=self.config.lifecycle.correlation_max,
-                dormant_revival_quality=self.config.lifecycle.dormant_revival_quality,
-            ),
+            config=self.config.to_lifecycle_config(),
         )
 
         # Gather all alphas that need lifecycle evaluation
         active = registry.list_by_state(AlphaState.ACTIVE)
-        probation = registry.list_by_state(AlphaState.PROBATION)
         dormant = registry.list_by_state(AlphaState.DORMANT)
-        all_alphas = active + probation + dormant
+        all_alphas = active + dormant
 
         logger.info(
-            "Lifecycle evaluation: %d active, %d probation, %d dormant (%d total)",
-            len(active), len(probation), len(dormant), len(all_alphas),
+            "Lifecycle evaluation: %d active, %d dormant (%d total)",
+            len(active), len(dormant), len(all_alphas),
         )
 
         n_transitions = 0
@@ -72,31 +59,22 @@ class LifecycleDaemon:
 
         for record in all_alphas:
             returns = forward_tracker.get_returns(record.alpha_id)
-            estimate = blend_quality(
+            estimate = self.config.estimate_alpha_quality(
                 record.oos_fitness(self.config.fitness_metric),
                 returns,
-                metric=self.config.fitness_metric,
-                rolling_window=self.config.forward.degradation_window,
-                min_observations=self.config.live_quality.min_observations,
-                full_weight_observations=self.config.live_quality.full_weight_observations,
             )
-            if (
-                record.state == AlphaState.DORMANT
-                and estimate.n_observations
-                < self.config.live_quality.dormant_revival_min_observations
-            ):
-                n_skipped += 1
-                continue
-
             recent = returns[-degradation_window:]
             monitor.clear(record.alpha_id)
             monitor.record_batch(record.alpha_id, recent)
             status = monitor.check(record.alpha_id)
 
             old_state = record.state
-            new_state = lifecycle.evaluate(
+            new_state = lifecycle.evaluate_live(
                 record.alpha_id,
-                estimate.blended_quality,
+                estimate,
+                dormant_revival_min_observations=(
+                    self.config.live_quality.dormant_revival_min_observations
+                ),
             )
 
             if new_state != old_state:
@@ -116,8 +94,7 @@ class LifecycleDaemon:
                 # Track direction
                 state_rank = {
                     AlphaState.DORMANT: 0,
-                    AlphaState.PROBATION: 1,
-                    AlphaState.ACTIVE: 2,
+                    AlphaState.ACTIVE: 1,
                 }
                 if state_rank.get(new_state, 0) > state_rank.get(old_state, 0):
                     n_promoted += 1
