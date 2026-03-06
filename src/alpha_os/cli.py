@@ -147,6 +147,8 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Use event-driven execution instead of fixed interval")
     liv.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
+    liv.add_argument("--tactical", action="store_true",
+                     help="Enable Layer 2 tactical modulation")
 
     # evo-daemon (Pipeline v2)
     evo_d = sub.add_parser("evo-daemon", help="Run continuous GP evolution daemon")
@@ -594,10 +596,11 @@ def cmd_paper(args: argparse.Namespace) -> None:
     from alpha_os.paper.trader import PaperTrader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
-    tactical = None
-    if getattr(args, "tactical", False):
-        from alpha_os.paper.tactical import TacticalTrader
-        tactical = TacticalTrader(asset=args.asset, config=cfg)
+    tactical = _build_tactical_trader(
+        asset=args.asset,
+        cfg=cfg,
+        enabled=getattr(args, "tactical", False),
+    )
 
     trader = PaperTrader(asset=args.asset, config=cfg, tactical=tactical)
 
@@ -789,6 +792,14 @@ def _needs_evolution_l2(tactical) -> bool:
     return len(active) + len(probation) == 0
 
 
+def _build_tactical_trader(asset: str, cfg: Config, enabled: bool):
+    """Return TacticalTrader only when Layer 2 is explicitly enabled."""
+    if not enabled:
+        return None
+    from alpha_os.paper.tactical import TacticalTrader
+    return TacticalTrader(asset=asset, config=cfg)
+
+
 def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
     """Build PipelineConfig for L2 hourly alpha evolution."""
     from alpha_os.pipeline.runner import PipelineConfig
@@ -903,10 +914,10 @@ def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
 
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
+    enable_tactical: bool = False,
 ):
     """Create trader, circuit breaker, and validator for one asset."""
     from alpha_os.paper.trader import Trader
-    from alpha_os.paper.tactical import TacticalTrader
     from alpha_os.risk.circuit_breaker import CircuitBreaker
 
     adir = asset_data_dir(asset)
@@ -939,7 +950,7 @@ def _setup_asset_context(
             initial_capital=capital,
         )
 
-    tactical = TacticalTrader(asset=asset, config=cfg)
+    tactical = _build_tactical_trader(asset=asset, cfg=cfg, enabled=enable_tactical)
     trader = Trader(asset=asset, config=cfg, executor=executor,
                     circuit_breaker=cb, tactical=tactical)
 
@@ -997,9 +1008,11 @@ def cmd_live(args: argparse.Namespace) -> None:
     for asset in asset_list:
         trader, cb, validator = _setup_asset_context(
             asset, cfg, testnet, args.capital,
+            enable_tactical=getattr(args, "tactical", False),
         )
         contexts[asset] = (trader, cb, validator)
-        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
+        l2_status = "on" if getattr(args, "tactical", False) else "off"
+        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT (L2 {l2_status})")
 
     if args.summary:
         for asset in asset_list:

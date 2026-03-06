@@ -90,11 +90,39 @@ def test_live_parser():
     assert args.real is False
     assert args.capital == 10000.0
     assert args.asset == "BTC"
+    assert args.tactical is False
 
     # Real mode
-    args = parser.parse_args(["live", "--once", "--real", "--capital", "500"])
+    args = parser.parse_args([
+        "live", "--once", "--real", "--capital", "500", "--tactical",
+    ])
     assert args.real is True
     assert args.capital == 500.0
+    assert args.tactical is True
+
+
+def test_build_tactical_trader_respects_enable_flag(monkeypatch):
+    """Layer 2 trader should only be built when explicitly enabled."""
+    from alpha_os import cli
+    from alpha_os.config import Config
+
+    created: list[tuple[str, Config]] = []
+
+    class DummyTacticalTrader:
+        def __init__(self, asset, config):
+            created.append((asset, config))
+
+    monkeypatch.setattr(
+        "alpha_os.paper.tactical.TacticalTrader",
+        DummyTacticalTrader,
+    )
+
+    cfg = Config.load()
+    assert cli._build_tactical_trader("BTC", cfg, enabled=False) is None
+
+    tactical = cli._build_tactical_trader("BTC", cfg, enabled=True)
+    assert isinstance(tactical, DummyTacticalTrader)
+    assert created == [("BTC", cfg)]
 
 
 def test_print_paper_result_shows_signal_stages(capsys):
