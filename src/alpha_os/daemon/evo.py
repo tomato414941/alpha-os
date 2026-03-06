@@ -10,7 +10,7 @@ import time
 
 import numpy as np
 
-from ..alpha.evaluator import FAILED_FITNESS
+from ..alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -132,7 +132,7 @@ class EvoDaemon:
         for expr, fitness in results:
             try:
                 sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                sig = sanitize_signal(sig)
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr)
@@ -218,7 +218,7 @@ class EvoDaemon:
         for expr, _fitness in results:
             try:
                 sig = expr.evaluate(data)
-                sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+                sig = sanitize_signal(sig)
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr, feature_subset=subset)

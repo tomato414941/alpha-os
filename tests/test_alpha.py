@@ -304,6 +304,19 @@ class TestCombiner:
         selected = select_low_correlation(signals, sharpes, config=cfg)
         assert len(selected) <= 5
 
+    def test_select_low_correlation_sanitizes_infinities(self):
+        signals = np.array([
+            np.linspace(-1.0, 1.0, 20),
+            np.array([0.0, np.inf] * 10, dtype=float),
+            np.linspace(1.0, -1.0, 20),
+        ])
+        sharpes = np.array([1.0, 0.9, 0.8])
+
+        with np.errstate(all="raise"):
+            selected = select_low_correlation(signals, sharpes)
+
+        assert selected
+
     def test_equal_weight_combine(self):
         signals = np.array([
             [1.0, -1.0, 1.0],

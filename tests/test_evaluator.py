@@ -8,6 +8,7 @@ from alpha_os.alpha.evaluator import (
     evaluate_alpha,
     evaluate_expression,
     normalize_signal,
+    sanitize_signal,
 )
 from alpha_os.dsl.expr import Feature, Constant
 
@@ -31,6 +32,13 @@ class TestNormalizeSignal:
         np.testing.assert_array_equal(norm, np.zeros(10))
 
 
+class TestSanitizeSignal:
+    def test_replaces_nan_and_infinities(self):
+        sig = np.array([1.0, np.nan, np.inf, -np.inf])
+        clean = sanitize_signal(sig)
+        np.testing.assert_array_equal(clean, [1.0, 0.0, 0.0, 0.0])
+
+
 class TestEvaluateExpression:
     def test_feature(self):
         data = {"f1": np.array([1.0, 2.0, 3.0])}
@@ -47,6 +55,11 @@ class TestEvaluateExpression:
         result = evaluate_expression(Feature("f1"), data, 3)
         assert np.all(np.isfinite(result))
         assert result[1] == 0.0
+
+    def test_infinities_replaced(self):
+        data = {"f1": np.array([1.0, np.inf, -np.inf])}
+        result = evaluate_expression(Feature("f1"), data, 3)
+        np.testing.assert_array_equal(result, [1.0, 0.0, 0.0])
 
     def test_length_mismatch_raises(self):
         data = {"f1": np.array([1.0, 2.0])}

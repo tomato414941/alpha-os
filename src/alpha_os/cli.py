@@ -15,7 +15,7 @@ import numpy as np
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
-from alpha_os.alpha.evaluator import FAILED_FITNESS
+from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.universe import is_crypto, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
@@ -436,7 +436,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     for expr, fitness in results:
         try:
             sig = expr.evaluate(data)
-            sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+            sig = sanitize_signal(sig)
             if sig.ndim == 0:
                 sig = np.full(n_days, float(sig))
             behavior = compute_behavior(sig, expr)

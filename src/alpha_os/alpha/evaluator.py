@@ -22,6 +22,16 @@ class EvaluationError(Exception):
     """Raised when an alpha expression cannot be evaluated."""
 
 
+def sanitize_signal(signal: np.ndarray | float) -> np.ndarray:
+    """Convert NaN/inf-heavy outputs into a finite float array."""
+    return np.nan_to_num(
+        np.asarray(signal, dtype=float),
+        nan=0.0,
+        posinf=0.0,
+        neginf=0.0,
+    )
+
+
 def normalize_signal(signal: np.ndarray) -> np.ndarray:
     """Normalize a raw signal to [-1, 1] via std-scaling.
 
@@ -44,8 +54,7 @@ def evaluate_expression(
     Raises EvaluationError on any failure (missing feature, length mismatch, etc.).
     """
     try:
-        sig = expr.evaluate(data)
-        sig = np.nan_to_num(np.asarray(sig, dtype=float), nan=0.0)
+        sig = sanitize_signal(expr.evaluate(data))
         if sig.ndim == 0:
             sig = np.full(n_days, float(sig))
         if len(sig) != n_days:

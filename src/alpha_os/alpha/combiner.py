@@ -10,6 +10,10 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def _sanitize_signal_array(signal: np.ndarray) -> np.ndarray:
+    return np.nan_to_num(signal, nan=0.0, posinf=0.0, neginf=0.0)
+
+
 @dataclass
 class CombinerConfig:
     max_correlation: float = 0.3
@@ -46,16 +50,20 @@ def select_low_correlation(
             break
         idx = int(idx)
         sig = signals[idx]
-        sig_clean = np.nan_to_num(sig)
+        sig_clean = _sanitize_signal_array(sig)
 
         # Check correlation with all selected
         too_correlated = False
         for sel_idx in selected:
-            sel_sig = np.nan_to_num(signals[sel_idx])
+            sel_sig = _sanitize_signal_array(signals[sel_idx])
             n_pts = min(len(sig_clean), len(sel_sig))
             if n_pts < 10:
                 continue
-            corr = np.corrcoef(sig_clean[:n_pts], sel_sig[:n_pts])[0, 1]
+            cand = sig_clean[:n_pts]
+            base = sel_sig[:n_pts]
+            if np.std(cand) <= 1e-12 or np.std(base) <= 1e-12:
+                continue
+            corr = np.corrcoef(cand, base)[0, 1]
             if np.isnan(corr):
                 continue
             if abs(corr) > cfg.max_correlation:
@@ -78,7 +86,7 @@ def equal_weight_combine(signals: np.ndarray, indices: list[int]) -> np.ndarray:
 
     selected = signals[indices]
     # Replace NaN with 0 before combining
-    selected = np.nan_to_num(selected)
+    selected = _sanitize_signal_array(selected)
     combined = selected.mean(axis=0)
 
     std = combined.std()
@@ -180,7 +188,7 @@ def weighted_combine(
     -------
     combined : (T,) combined signal clipped to [-1, 1]
     """
-    combined = weights @ np.nan_to_num(signals)
+    combined = weights @ _sanitize_signal_array(signals)
     return np.clip(combined, -1.0, 1.0)
 
 
