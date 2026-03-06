@@ -138,6 +138,35 @@ def _interval_filter() -> set[int] | None:
     return values or None
 
 
+def _filter_signal_names(signals: list[dict], intervals: set[int] | None) -> list[str]:
+    if intervals is None:
+        return sorted(s["name"] for s in signals)
+    return sorted(
+        s["name"] for s in signals
+        if s.get("interval") in intervals
+    )
+
+
+def _load_daily_signals_from_local_store(
+    intervals: set[int] | None,
+) -> list[str] | None:
+    try:
+        from signal_noise.config import DB_PATH
+        from signal_noise.store.sqlite_store import SignalStore
+
+        if not DB_PATH.exists():
+            return None
+        store = SignalStore(DB_PATH)
+        try:
+            names = _filter_signal_names(store.list_signals(), intervals)
+        finally:
+            store.close()
+        return names or None
+    except Exception as e:
+        log.warning("Failed to load signals from local signal-noise store: %s", e)
+        return None
+
+
 def load_daily_signals() -> list[str]:
     """Load runtime signal names from signal-noise REST API.
 
@@ -154,13 +183,7 @@ def load_daily_signals() -> list[str]:
         client = SignalClient(base_url=base_url, timeout=10)
         signals = client.list_signals()
         intervals = _interval_filter()
-        if intervals is None:
-            names = sorted(s["name"] for s in signals)
-        else:
-            names = sorted(
-                s["name"] for s in signals
-                if s.get("interval") in intervals
-            )
+        names = _filter_signal_names(signals, intervals)
         if names:
             if intervals is None:
                 log.info("Loaded %d signals from API (all intervals)", len(names))
@@ -169,7 +192,23 @@ def load_daily_signals() -> list[str]:
             _daily_signal_cache = names
             return _daily_signal_cache
     except Exception as e:
-        log.warning("Failed to load signals from API: %s, using static list", e)
+        log.warning("Failed to load signals from API: %s", e)
+
+    intervals = _interval_filter()
+    names = _load_daily_signals_from_local_store(intervals)
+    if names:
+        if intervals is None:
+            log.info("Loaded %d signals from local signal-noise store", len(names))
+        else:
+            log.info(
+                "Loaded %d signals from local signal-noise store (intervals=%s)",
+                len(names),
+                sorted(intervals),
+            )
+        _daily_signal_cache = names
+        return _daily_signal_cache
+
+    log.warning("Falling back to static signal list")
 
     _daily_signal_cache = MACRO_SIGNALS
     return _daily_signal_cache
