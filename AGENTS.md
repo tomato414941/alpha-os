@@ -52,6 +52,15 @@ python -m alpha_os --help
 - **Distributional risk controls** (`[distributional]`) — optional CVaR/tail gate + Kelly-based sizing
 - **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` and `[distributional]`)
 
+## Terminology Policy
+
+- Prefer standard industry terminology in new docs, config keys, commands, and logs.
+- Keep legacy project-specific names only when needed for backward compatibility.
+- Distinguish statistical alpha validation (`validate`) from operational validation
+  (`validator`, `validate-testnet`).
+- Distinguish Binance `testnet` from real-money `live --real`.
+- Distinguish registry state counts from the per-cycle trading subset in logs and reports.
+
 ## Testing
 
 - pytest with fixtures in `tests/conftest.py`

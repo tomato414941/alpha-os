@@ -53,7 +53,7 @@ python -m alpha_os backtest
 python -m alpha_os evolve --generations 30
 
 # Validate an alpha with purged walk-forward CV
-python -m alpha_os validate --alpha-id <id>
+python -m alpha_os validate --expr '<dsl-expression>' --asset BTC
 
 # Forward-test adopted alphas
 python -m alpha_os forward
@@ -61,7 +61,7 @@ python -m alpha_os forward
 # Paper trade
 python -m alpha_os paper --once
 
-# Live trade (testnet is default)
+# Live command (Binance testnet by default; add --real for actual capital)
 python -m alpha_os live --once --asset BTC
 
 # Event-driven mode (WebSocket, auto-triggers on market events)
@@ -79,6 +79,31 @@ python -m alpha_os validate-testnet
 Edit `config/default.toml` or override via environment.
 
 Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+
+## Terminology Notes
+
+Some terms in the current codebase are project-specific and do not exactly match
+their standard industry meaning. Until the naming cleanup is complete, use the
+following interpretations:
+
+- `live` is the runtime trading command, but it defaults to Binance testnet.
+  Real-money trading is only `live --real`.
+- `validate` means statistical alpha validation via purged walk-forward CV.
+- `validator` and `validate-testnet` are operational validation flows, not the
+  same thing as statistical alpha validation.
+- `backfill` means historical replay of the current paper/live decision stack,
+  not missing-data backfilling.
+- `forward` means the ongoing post-adoption monitoring loop for registry alphas
+  on newly arriving data.
+- `active` can refer either to the registry state (`ACTIVE`) or to the subset
+  selected for a specific cycle. Logs and reports should qualify which meaning
+  is intended.
+
+We should gradually converge on standard terminology in new docs, config keys,
+log messages, and commands. During that migration, legacy names may remain as
+compatibility aliases, but new work should prefer explicit terms such as
+`testnet`, `real`, `statistical validation`, `ops validation`,
+`registry active`, and `trading shortlist`.
 
 ### Position sizing
 
