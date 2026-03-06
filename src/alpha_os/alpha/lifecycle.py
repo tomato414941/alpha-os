@@ -44,6 +44,16 @@ class LifecycleConfig:
         self.active_quality_min = value
 
 
+def passes_candidate_gate(record: AlphaRecord, config: LifecycleConfig) -> bool:
+    """Return True when a candidate clears the admission gate."""
+    return (
+        record.oos_sharpe >= config.candidate_quality_min
+        and record.pbo <= config.pbo_max
+        and record.dsr_pvalue <= config.dsr_pvalue_max
+        and record.correlation_avg <= config.correlation_max
+    )
+
+
 def compute_transition(state: str, quality: float, config: LifecycleConfig) -> str:
     """Pure function: compute state transition without DB side effects."""
     state = AlphaState.canonical(state)
@@ -214,13 +224,7 @@ class AlphaLifecycle:
         return new_state
 
     def _passes_gate(self, record: AlphaRecord) -> bool:
-        cfg = self.config
-        return (
-            record.oos_sharpe >= cfg.candidate_quality_min
-            and record.pbo <= cfg.pbo_max
-            and record.dsr_pvalue <= cfg.dsr_pvalue_max
-            and record.correlation_avg <= cfg.correlation_max
-        )
+        return passes_candidate_gate(record, self.config)
 
 
 # ---------------------------------------------------------------------------

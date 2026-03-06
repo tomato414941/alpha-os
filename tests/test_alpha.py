@@ -10,6 +10,7 @@ from alpha_os.alpha.lifecycle import (
     LifecycleConfig,
     compute_transition,
     batch_transitions,
+    passes_candidate_gate,
     ST_CANDIDATE,
     ST_ACTIVE,
     ST_DORMANT,
@@ -181,6 +182,32 @@ class TestAlphaLifecycle:
         ))
         state = lc.evaluate_candidate("a1")
         assert state == AlphaState.REJECTED
+
+    def test_passes_candidate_gate_pure_helper(self):
+        cfg = LifecycleConfig(
+            candidate_quality_min=0.5,
+            pbo_max=0.5,
+            dsr_pvalue_max=0.05,
+            correlation_max=0.5,
+        )
+        record = AlphaRecord(
+            alpha_id="a1",
+            expression="x",
+            oos_sharpe=0.7,
+            pbo=0.2,
+            dsr_pvalue=0.01,
+            correlation_avg=0.1,
+        )
+        assert passes_candidate_gate(record, cfg) is True
+
+    def test_passes_candidate_gate_rejects_low_quality(self):
+        cfg = LifecycleConfig(candidate_quality_min=0.5)
+        record = AlphaRecord(
+            alpha_id="a1",
+            expression="x",
+            oos_sharpe=0.4,
+        )
+        assert passes_candidate_gate(record, cfg) is False
 
     def test_active_to_dormant(self, tmp_path):
         reg, lc = self._setup(tmp_path)
