@@ -42,13 +42,31 @@ class DataStore:
             )
             self._conn.commit()
 
+    def _open_local_signal_noise_store(self):
+        try:
+            from signal_noise.config import DB_PATH
+            from signal_noise.store.sqlite_store import SignalStore
+        except Exception:
+            return None
+        if not DB_PATH.exists():
+            return None
+        try:
+            return SignalStore(DB_PATH)
+        except Exception:
+            return None
+
     def sync(self, signals: list[str], resolution: str = "1d") -> None:
         if self._client is None:
             log.info("No API client configured — skipping sync")
             return
 
+        local_store = self._open_local_signal_noise_store()
+
         # Warn about stale upstream signals
-        stale = self._client.stale_signals()
+        if local_store is not None:
+            stale = local_store.check_freshness()
+        else:
+            stale = self._client.stale_signals()
         stale_names = {s["name"] for s in stale}
         overlap = stale_names & set(signals)
         if overlap:
@@ -67,35 +85,47 @@ class DataStore:
             signals_by_since.setdefault(since, []).append(name)
 
         api_resolution = resolution if resolution != "1d" else None
-        for since, batch_names in signals_by_since.items():
-            batch = self._client.get_batch(
-                batch_names,
-                since=since,
-                columns=["timestamp", "value"],
-                resolution=api_resolution,
-            )
+        try:
+            for since, batch_names in signals_by_since.items():
+                if local_store is not None:
+                    batch = local_store.get_batch_data(
+                        batch_names,
+                        since=since,
+                        columns=["timestamp", "value"],
+                        resolution=api_resolution,
+                    )
+                else:
+                    batch = self._client.get_batch(
+                        batch_names,
+                        since=since,
+                        columns=["timestamp", "value"],
+                        resolution=api_resolution,
+                    )
 
-            for name, df in batch.items():
-                if df.empty:
-                    continue
-
-                rows = []
-                for _, r in df.iterrows():
-                    ts = r["timestamp"]
-                    val = r["value"]
-                    if pd.isna(ts) or pd.isna(val):
+                for name, df in batch.items():
+                    if df.empty:
                         continue
-                    if resolution == "1d":
-                        date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
-                    else:
-                        date_str = str(ts)
-                    rows.append((name, date_str, float(val), resolution))
 
-                self._conn.executemany(
-                    "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
-                    " VALUES (?, ?, ?, ?)",
-                    rows,
-                )
+                    rows = []
+                    for _, r in df.iterrows():
+                        ts = r["timestamp"]
+                        val = r["value"]
+                        if pd.isna(ts) or pd.isna(val):
+                            continue
+                        if resolution == "1d":
+                            date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
+                        else:
+                            date_str = str(ts)
+                        rows.append((name, date_str, float(val), resolution))
+
+                    self._conn.executemany(
+                        "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
+                        " VALUES (?, ?, ?, ?)",
+                        rows,
+                    )
+        finally:
+            if local_store is not None:
+                local_store.close()
         self._conn.commit()
 
     def get_matrix(
