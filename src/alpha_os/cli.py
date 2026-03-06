@@ -114,6 +114,9 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Start date for backfill (ISO format, e.g. 2025-06-01)")
     ppr.add_argument("--end", type=str, default=None,
                      help="End date for backfill (ISO format, e.g. 2026-02-25)")
+    ppr.add_argument("--sizing-mode", type=str, default="live",
+                     choices=["live", "raw_mean", "compare"],
+                     help="Backfill sizing mode: live logic, raw_mean baseline, or compare both")
     ppr.add_argument("--tactical", action="store_true",
                      help="Enable Layer 2 tactical modulation")
     ppr.add_argument("--asset", type=str, default="BTC")
@@ -640,28 +643,56 @@ def _cmd_paper_backfill(args: argparse.Namespace, cfg) -> None:
         sys.exit(1)
 
     print(f"Running backfill simulation: {args.start} to {args.end} ({args.asset})")
+    def _print_backfill_result(label: str, result) -> None:
+        print(f"\nBackfill Simulation [{label}]: {args.start} to {args.end}")
+        print(f"  Days:       {result.n_days}")
+        print(f"  {'─'*36}")
+        print(f"  Initial:    ${result.initial_capital:,.2f}")
+        print(f"  Final:      ${result.final_value:,.2f}")
+        print(f"  Return:     {result.total_return:+.2%}")
+        print(f"  Sharpe:     {result.sharpe:.3f}")
+        print(f"  Max DD:     {result.max_drawdown:.2%}")
+        print(f"  Trades:     {result.total_trades}")
+        print(f"  Win Rate:   {result.win_rate:.1%}")
+        print(f"  {'─'*36}")
+        if result.best_day[0]:
+            print(f"  Best Day:   {result.best_day[1]:+.2%} ({result.best_day[0]})")
+        if result.worst_day[0]:
+            print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
+
+    if args.sizing_mode == "compare":
+        live_result = run_backfill(
+            asset=args.asset,
+            config=cfg,
+            start_date=args.start,
+            end_date=args.end,
+            sizing_mode="live",
+        )
+        raw_result = run_backfill(
+            asset=args.asset,
+            config=cfg,
+            start_date=args.start,
+            end_date=args.end,
+            sizing_mode="raw_mean",
+        )
+        _print_backfill_result("live", live_result)
+        _print_backfill_result("raw_mean", raw_result)
+        print("\nDelta (live - raw_mean)")
+        print(f"  Final:      ${live_result.final_value - raw_result.final_value:+,.2f}")
+        print(f"  Return:     {live_result.total_return - raw_result.total_return:+.2%}")
+        print(f"  Sharpe:     {live_result.sharpe - raw_result.sharpe:+.3f}")
+        print(f"  Max DD:     {live_result.max_drawdown - raw_result.max_drawdown:+.2%}")
+        print(f"  Trades:     {live_result.total_trades - raw_result.total_trades:+d}")
+        return
+
     result = run_backfill(
         asset=args.asset,
         config=cfg,
         start_date=args.start,
         end_date=args.end,
+        sizing_mode=args.sizing_mode,
     )
-
-    print(f"\nBackfill Simulation: {args.start} to {args.end}")
-    print(f"  Days:       {result.n_days}")
-    print(f"  {'─'*36}")
-    print(f"  Initial:    ${result.initial_capital:,.2f}")
-    print(f"  Final:      ${result.final_value:,.2f}")
-    print(f"  Return:     {result.total_return:+.2%}")
-    print(f"  Sharpe:     {result.sharpe:.3f}")
-    print(f"  Max DD:     {result.max_drawdown:.2%}")
-    print(f"  Trades:     {result.total_trades}")
-    print(f"  Win Rate:   {result.win_rate:.1%}")
-    print(f"  {'─'*36}")
-    if result.best_day[0]:
-        print(f"  Best Day:   {result.best_day[1]:+.2%} ({result.best_day[0]})")
-    if result.worst_day[0]:
-        print(f"  Worst Day:  {result.worst_day[1]:+.2%} ({result.worst_day[0]})")
+    _print_backfill_result(args.sizing_mode, result)
 
 
 def _build_pipeline_config(

@@ -48,9 +48,14 @@ def _backfill_signals_to_position_intent(
     combine_mode: str,
     dd_scale: float,
     vol_scale: float,
+    sizing_mode: str = "live",
 ) -> tuple[float, float]:
     """Return (raw_combined, adjusted_signal) for backfill simulation."""
     raw_combined = float(np.clip(np.dot(weights, signals), -1.0, 1.0))
+    if sizing_mode == "raw_mean":
+        adjusted = raw_combined * dd_scale
+        return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
+
     if combine_mode == "consensus":
         mean = float(np.dot(weights, signals))
         centered = signals - mean
@@ -60,7 +65,7 @@ def _backfill_signals_to_position_intent(
         adjusted = float(np.sign(mean)) * consensus * dd_scale
         return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
 
-    adjusted = raw_combined * dd_scale * vol_scale
+    adjusted = raw_combined * dd_scale
     return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
 
 
@@ -70,6 +75,7 @@ def run_backfill(
     start_date: str,
     end_date: str,
     registry_db: Path | None = None,
+    sizing_mode: str = "live",
 ) -> SimulationResult:
     """Run vectorized paper trading simulation over a historical date range.
 
@@ -251,6 +257,7 @@ def run_backfill(
                     combine_mode=config.paper.combine_mode,
                     dd_scale=dd_s,
                     vol_scale=vol_s,
+                    sizing_mode=sizing_mode,
                 )
             else:
                 adjusted = 0.0
