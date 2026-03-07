@@ -158,6 +158,31 @@ def test_rebuild_registry_parser():
     assert args.dry_run is True
 
 
+def test_replay_experiment_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "replay-experiment",
+        "--name", "confidence sweep",
+        "--start", "2026-02-20",
+        "--end", "2026-03-05",
+        "--registry-mode", "admission",
+        "--source", "candidates",
+        "--set", "lifecycle.candidate_quality_min=1.10",
+        "--set", "live_quality.weight_confidence_floor=0.25",
+    ])
+
+    assert args.command == "replay-experiment"
+    assert args.name == "confidence sweep"
+    assert args.registry_mode == "admission"
+    assert args.source == "candidates"
+    assert args.set == [
+        "lifecycle.candidate_quality_min=1.10",
+        "live_quality.weight_confidence_floor=0.25",
+    ]
+
+
 def test_normalize_trade_config_preserves_requested_profile():
     from alpha_os.cli import _normalize_trade_config
     from alpha_os.config import Config

@@ -79,6 +79,15 @@ python -m alpha_os admission-daemon --asset BTC
 # Rebuild registry states from validated candidates
 python -m alpha_os rebuild-registry --asset BTC --source candidates
 
+# Run a named replay experiment and persist the artifact
+python -m alpha_os replay-experiment \
+  --name "candidate-1.10" \
+  --start 2025-09-01 \
+  --end 2026-03-05 \
+  --registry-mode admission \
+  --source candidates \
+  --set lifecycle.candidate_quality_min=1.10
+
 # Check testnet readiness status
 python -m alpha_os testnet-readiness
 ```
@@ -123,6 +132,15 @@ position   = direction × clip(size) × max_position_pct × portfolio_value
 pytest tests/
 ruff check src/
 ```
+
+## Experiment Workflow
+
+- Use `replay-experiment` for named historical experiments instead of ad-hoc shell notes.
+- Artifacts are written to `data/<ASSET>/experiments/`.
+- Each run appends a summary row to `index.jsonl` and stores the full payload in a timestamped `.json`.
+- `--registry-mode current` replays the current registry as-is.
+- `--registry-mode admission` rebuilds a temporary registry from `alphas` or `candidates` first, which is better for gate experiments.
+- Use repeated `--set path=value` flags for temporary config overrides.
 
 ## Design
 

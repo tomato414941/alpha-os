@@ -8,6 +8,7 @@ import logging
 import sys
 import time
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 
@@ -184,6 +185,50 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
+    # replay-experiment
+    rex = sub.add_parser(
+        "replay-experiment",
+        help="Run a named replay experiment and persist the artifact",
+    )
+    rex.add_argument("--name", required=True, help="Experiment name")
+    rex.add_argument("--asset", type=str, default="BTC")
+    rex.add_argument("--config", type=str, default=None)
+    rex.add_argument("--start", required=True, help="Replay start date (YYYY-MM-DD)")
+    rex.add_argument("--end", required=True, help="Replay end date (YYYY-MM-DD)")
+    rex.add_argument(
+        "--registry-mode",
+        choices=["current", "admission"],
+        default="current",
+        help="Use the current registry as-is or rebuild it from admission rules first",
+    )
+    rex.add_argument(
+        "--source",
+        choices=["alphas", "candidates"],
+        default="candidates",
+        help="Admission replay source when --registry-mode=admission",
+    )
+    rex.add_argument(
+        "--fail-state",
+        choices=["rejected", "dormant"],
+        default="rejected",
+        help="Fallback state for records that fail admission replay",
+    )
+    rex.add_argument(
+        "--sizing-mode",
+        type=str,
+        default="runtime",
+        choices=["runtime", "raw_mean"],
+        help="Replay sizing mode",
+    )
+    rex.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="PATH=VALUE",
+        help="Override merged config via dotted path, e.g. lifecycle.candidate_quality_min=1.10",
+    )
+    rex.add_argument("--notes", default="", help="Optional experiment notes")
+
     # testnet-readiness
     tnr = sub.add_parser("testnet-readiness", help="Check Phase 4 testnet readiness status")
     tnr.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -197,7 +242,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _load_config(config_path: str | None) -> Config:
-    from pathlib import Path
     if config_path:
         return Config.load(Path(config_path))
     return Config.load()
@@ -1231,6 +1275,41 @@ def cmd_rebuild_registry(args: argparse.Namespace) -> None:
         print("  Diversity cache cleared.")
 
 
+def cmd_replay_experiment(args: argparse.Namespace) -> None:
+    from alpha_os.experiments.replay import (
+        ReplayExperimentSpec,
+        parse_override_assignment,
+        run_replay_experiment,
+    )
+
+    overrides = dict(parse_override_assignment(raw) for raw in args.set)
+    run = run_replay_experiment(
+        ReplayExperimentSpec(
+            name=args.name,
+            asset=args.asset,
+            start_date=args.start,
+            end_date=args.end,
+            config_path=Path(args.config) if args.config else None,
+            registry_mode=args.registry_mode,
+            admission_source=args.source,
+            fail_state=args.fail_state,
+            sizing_mode=args.sizing_mode,
+            overrides=overrides,
+            notes=args.notes,
+        )
+    )
+
+    result = run.payload["result"]
+    print(f"Replay experiment: {run.experiment_id}")
+    print(f"  Detail:   {run.detail_path}")
+    print(f"  Index:    {run.index_path}")
+    print(f"  Final:    ${result['final_value']:,.2f}")
+    print(f"  Return:   {result['total_return']:+.2%}")
+    print(f"  Sharpe:   {result['sharpe']:.3f}")
+    print(f"  Max DD:   {result['max_drawdown']:.2%}")
+    print(f"  Trades:   {result['total_trades']}")
+
+
 def cmd_admission_daemon(args: argparse.Namespace) -> None:
     """Run the candidate admission daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
@@ -1335,5 +1414,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_lifecycle(args)
     elif args.command == "rebuild-registry":
         cmd_rebuild_registry(args)
+    elif args.command == "replay-experiment":
+        cmd_replay_experiment(args)
     elif args.command == "testnet-readiness":
         cmd_testnet_readiness(args)
