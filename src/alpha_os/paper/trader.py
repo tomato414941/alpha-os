@@ -65,6 +65,7 @@ class PaperCycleResult:
     dd_scale: float
     vol_scale: float
     n_registry_active: int
+    n_universe_deployed: int
     n_shortlist_candidates: int
     n_selected_alphas: int
     n_signals_evaluated: int
@@ -617,6 +618,7 @@ class Trader:
                     dd_scale=last_snapshot.dd_scale,
                     vol_scale=last_snapshot.vol_scale,
                     n_registry_active=0,
+                    n_universe_deployed=0,
                     n_shortlist_candidates=0,
                     n_selected_alphas=0,
                     n_signals_evaluated=0,
@@ -632,7 +634,8 @@ class Trader:
                 date=cycle_key, combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0,
-                n_registry_active=0, n_shortlist_candidates=0,
+                n_registry_active=0, n_universe_deployed=0,
+                n_shortlist_candidates=0,
                 n_selected_alphas=0, n_signals_evaluated=0,
             )
 
@@ -644,13 +647,21 @@ class Trader:
             except Exception as exc:
                 logger.warning("API sync failed — using cached data: %s", exc)
 
-        # 2. Get candidate alphas (wider pool for correlation filtering) + dormant
+        # 2. Get the deployed universe, then shortlist tradable candidates from it.
         max_trading = self.config.paper.max_trading_alphas
+        deployed_universe = self.registry.list_trading_universe()
+        if deployed_universe:
+            universe_records = deployed_universe
+            n_universe_deployed = len(deployed_universe)
+        else:
+            universe_records = self.registry.list_by_state(AlphaState.ACTIVE)
+            n_universe_deployed = len(universe_records)
+            if n_universe_deployed:
+                logger.warning(
+                    "Trading universe is empty — falling back to registry-active alphas"
+                )
         trading_candidates = rank_trading_records(
-            self.registry.top(
-                n=self.registry.count(),
-                metric=self.config.fitness_metric,
-            ),
+            universe_records,
             lambda record: self._estimate_quality(
                 record,
                 self.forward_tracker.get_returns(record.alpha_id),
@@ -659,15 +670,19 @@ class Trader:
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric=self.config.fitness_metric,
         )
-        dormant = self.registry.list_by_state(AlphaState.DORMANT)
+        dormant = [
+            record for record in universe_records
+            if AlphaState.canonical(record.state) == AlphaState.DORMANT
+        ]
         all_alphas = trading_candidates + dormant
         dormant_ids = {r.alpha_id for r in dormant}
 
         n_total_active = self.registry.count(AlphaState.ACTIVE)
-        if n_total_active > max_trading:
+        if n_universe_deployed > max_trading or n_total_active > max_trading:
             logger.info(
-                "Selection pool: %d shortlist candidates from %d registry-active alphas",
+                "Selection pool: %d shortlist candidates from %d deployed alphas (%d registry-active)",
                 len(trading_candidates),
+                n_universe_deployed,
                 n_total_active,
             )
         selected_records = trading_candidates
@@ -680,6 +695,7 @@ class Trader:
                 date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
+                n_universe_deployed=n_universe_deployed,
                 n_shortlist_candidates=len(trading_candidates),
                 n_selected_alphas=0,
                 n_signals_evaluated=0,
@@ -692,6 +708,7 @@ class Trader:
                 date=cycle_key, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
+                n_universe_deployed=n_universe_deployed,
                 n_shortlist_candidates=len(trading_candidates),
                 n_selected_alphas=0,
                 n_signals_evaluated=0,
@@ -892,6 +909,7 @@ class Trader:
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
             n_registry_active=n_total_active,
+            n_universe_deployed=n_universe_deployed,
             n_shortlist_candidates=len(trading_candidates),
             n_selected_alphas=len(selected_records),
             n_signals_evaluated=n_evaluated,

@@ -58,6 +58,11 @@ dormant_revival_min_observations = 20
 weight_confidence_floor = 1.0
 weight_confidence_power = 1.0
 
+[universe]
+max_alphas = 150
+max_replacements = 10
+promotion_margin = 0.05
+
 [testnet]
 target_success_days = 10
 max_acceptable_slippage_bps = 50.0

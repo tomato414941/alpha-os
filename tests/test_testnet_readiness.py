@@ -25,6 +25,7 @@ class _MockCycleResult:
     daily_return: float = 0.005
     fills: list = None
     n_registry_active: int = 615
+    n_universe_deployed: int = 150
     n_shortlist_candidates: int = 150
     n_selected_alphas: int = 5
     n_signals_evaluated: int = 5

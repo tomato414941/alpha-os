@@ -64,6 +64,15 @@ class AlphaRecord:
         return getattr(self, self._OOS_FITNESS_MAP[metric])
 
 
+@dataclass(frozen=True)
+class TradingUniverseEntry:
+    alpha_id: str
+    slot: int
+    deployed_at: float
+    deployment_score: float = 0.0
+    metadata: dict = field(default_factory=dict)
+
+
 class AlphaRegistry:
     """SQLite registry for alpha factor metadata and lifecycle tracking."""
 
@@ -132,6 +141,19 @@ class AlphaRegistry:
                 n_alphas_compared INTEGER NOT NULL
             )
         """)
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS trading_universe (
+                alpha_id TEXT PRIMARY KEY,
+                slot INTEGER NOT NULL UNIQUE,
+                deployed_at REAL NOT NULL,
+                deployment_score REAL NOT NULL DEFAULT 0.0,
+                metadata TEXT DEFAULT '{}'
+            )
+        """)
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_trading_universe_slot
+            ON trading_universe(slot)
+        """)
         # Migration: add oos_log_growth column if missing
         try:
             self._conn.execute(
@@ -158,6 +180,7 @@ class AlphaRegistry:
 
     def replace_all(self, records: list[AlphaRecord]) -> None:
         values = [self._record_values(record) for record in records]
+        self._conn.execute("DELETE FROM trading_universe")
         self._conn.execute("DELETE FROM alphas")
         if values:
             self._conn.executemany(
@@ -176,6 +199,10 @@ class AlphaRegistry:
 
     def clear_diversity_cache(self) -> None:
         self._conn.execute("DELETE FROM diversity_cache")
+        self._conn.commit()
+
+    def clear_trading_universe(self) -> None:
+        self._conn.execute("DELETE FROM trading_universe")
         self._conn.commit()
 
     def register(self, record: AlphaRecord) -> None:
@@ -211,6 +238,87 @@ class AlphaRegistry:
 
     def list_active(self) -> list[AlphaRecord]:
         return self.list_by_state(AlphaState.ACTIVE)
+
+    def list_trading_universe(self) -> list[AlphaRecord]:
+        rows = self._conn.execute(
+            """
+            SELECT a.*
+            FROM trading_universe u
+            JOIN alphas a ON a.alpha_id = u.alpha_id
+            ORDER BY u.slot ASC
+            """
+        ).fetchall()
+        return [self._row_to_record(r) for r in rows]
+
+    def list_trading_universe_entries(self) -> list[TradingUniverseEntry]:
+        rows = self._conn.execute(
+            """
+            SELECT alpha_id, slot, deployed_at, deployment_score, metadata
+            FROM trading_universe
+            ORDER BY slot ASC
+            """
+        ).fetchall()
+        return [
+            TradingUniverseEntry(
+                alpha_id=row["alpha_id"],
+                slot=row["slot"],
+                deployed_at=row["deployed_at"],
+                deployment_score=row["deployment_score"],
+                metadata=json.loads(row["metadata"]),
+            )
+            for row in rows
+        ]
+
+    def trading_universe_ids(self) -> list[str]:
+        return [entry.alpha_id for entry in self.list_trading_universe_entries()]
+
+    def count_trading_universe(self) -> int:
+        row = self._conn.execute("SELECT COUNT(*) FROM trading_universe").fetchone()
+        return row[0]
+
+    def replace_trading_universe(
+        self,
+        alpha_ids: list[str],
+        *,
+        scores: dict[str, float] | None = None,
+        metadata: dict[str, dict] | None = None,
+        deployed_at: float | None = None,
+    ) -> None:
+        unique_ids = list(dict.fromkeys(alpha_ids))
+        if unique_ids:
+            placeholders = ", ".join("?" for _ in unique_ids)
+            rows = self._conn.execute(
+                f"SELECT alpha_id FROM alphas WHERE alpha_id IN ({placeholders})",
+                unique_ids,
+            ).fetchall()
+            existing_ids = {row["alpha_id"] for row in rows}
+            missing = [alpha_id for alpha_id in unique_ids if alpha_id not in existing_ids]
+            if missing:
+                raise KeyError(f"Unknown alpha ids for trading universe: {missing[:5]}")
+
+        stamp = deployed_at or time.time()
+        self._conn.execute("DELETE FROM trading_universe")
+        if unique_ids:
+            rows = []
+            for slot, alpha_id in enumerate(unique_ids):
+                rows.append(
+                    (
+                        alpha_id,
+                        slot,
+                        stamp,
+                        float((scores or {}).get(alpha_id, 0.0)),
+                        json.dumps((metadata or {}).get(alpha_id, {})),
+                    )
+                )
+            self._conn.executemany(
+                """
+                INSERT INTO trading_universe
+                    (alpha_id, slot, deployed_at, deployment_score, metadata)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+        self._conn.commit()
 
     def update_state(self, alpha_id: str, new_state: str) -> None:
         new_state = AlphaState.canonical(new_state)

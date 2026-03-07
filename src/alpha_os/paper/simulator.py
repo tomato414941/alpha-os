@@ -14,6 +14,7 @@ from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
 from ..alpha.quality import shrink_weight_quality
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.trading_universe import refresh_trading_universe
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -142,6 +143,7 @@ def run_replay(
     end_date: str,
     registry_db: Path | None = None,
     sizing_mode: str = "runtime",
+    refresh_universe_before_run: bool = False,
 ) -> SimulationResult:
     """Run vectorized paper trading replay over a historical date range.
 
@@ -190,14 +192,25 @@ def run_replay(
         reg_path = registry_db or asset_data_dir(asset) / "alpha_registry.db"
         sim_reg_path = tmp_path / "registry.db"
         shutil.copy2(reg_path, sim_reg_path)
+        if refresh_universe_before_run:
+            refresh_trading_universe(
+                sim_reg_path,
+                config,
+                forward_db_path=asset_data_dir(asset) / "forward_returns.db",
+                dry_run=False,
+                backup=False,
+            )
         registry = AlphaRegistry(sim_reg_path)
 
-        all_records = (
-            registry.top(
-                n=registry.count(),
-                metric=config.fitness_metric,
-            )
-        )
+        all_records = registry.list_trading_universe()
+        if all_records:
+            logger.info("%d deployed alphas loaded from trading universe", len(all_records))
+        else:
+            all_records = registry.list_by_state(AlphaState.ACTIVE)
+            if all_records:
+                logger.warning(
+                    "Trading universe is empty in replay — falling back to registry-active alphas"
+                )
         n_alphas = len(all_records)
         logger.info("%d alphas loaded from registry", n_alphas)
         if not all_records:

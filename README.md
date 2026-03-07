@@ -79,12 +79,16 @@ python -m alpha_os admission-daemon --asset BTC
 # Rebuild registry states from validated candidates
 python -m alpha_os rebuild-registry --asset BTC --source candidates
 
+# Refresh the deployed trading universe from the registry
+python -m alpha_os refresh-universe --asset BTC
+
 # Run a named replay experiment and persist the artifact
 python -m alpha_os replay-experiment \
   --name "candidate-1.10" \
   --start 2025-09-01 \
   --end 2026-03-05 \
   --registry-mode admission \
+  --universe-mode refresh \
   --source candidates \
   --set lifecycle.candidate_quality_min=1.10
 
@@ -96,7 +100,7 @@ python -m alpha_os testnet-readiness
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[universe]` (deployed alpha slots and replacement policy), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
 
 ## Terminology Notes
 
@@ -105,7 +109,9 @@ Recent CLI cleanup now prefers standard terms:
 - `trade` is the runtime trading command and defaults to Binance testnet.
   Real-money trading is only `trade --real`.
 - Registry state names are `candidate`, `active`, `dormant`, and `rejected`.
-  The trading pool uses only `active`; `dormant` is monitored for revival.
+  The admission registry is a research ledger, not the live trading set.
+- `trading universe` means the deployed subset that `trade` actually reads.
+  It is refreshed explicitly with `refresh-universe`.
 - `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
 - `paper --replay` is historical replay of the current runtime decision stack.
 - `testnet-readiness` is the operational readiness check for testnet trading.
@@ -113,7 +119,8 @@ Recent CLI cleanup now prefers standard terms:
 - The CLI uses `admission-daemon`, while the TOML section is still `[validator]`
   for now.
 - Logs and reports distinguish `registry active`, `shortlist candidates`,
-  `selected alphas`, and `signals evaluated`.
+  `universe deployed`, `shortlist candidates`, `selected alphas`, and
+  `signals evaluated`.
 
 ### Position sizing
 
@@ -140,6 +147,8 @@ ruff check src/
 - Each run appends a summary row to `index.jsonl` and stores the full payload in a timestamped `.json`.
 - `--registry-mode current` replays the current registry as-is.
 - `--registry-mode admission` rebuilds a temporary registry from `alphas` or `candidates` first, which is better for gate experiments.
+- `--universe-mode current` uses the currently deployed universe if present.
+- `--universe-mode refresh` refreshes a temporary deployed universe inside the experiment before replay.
 - Use repeated `--set path=value` flags for temporary config overrides.
 
 ## Design

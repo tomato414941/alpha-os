@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -18,6 +19,7 @@ from ..alpha.admission_replay import (
     materialize_admission_snapshot,
 )
 from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.trading_universe import refresh_trading_universe
 from ..config import PROJECT_DIR, Config, asset_data_dir
 from ..paper.simulator import run_replay
 
@@ -32,6 +34,7 @@ class ReplayExperimentSpec:
     registry_mode: str = "current"
     admission_source: str = "candidates"
     fail_state: str = AlphaState.REJECTED
+    universe_mode: str = "current"
     sizing_mode: str = "runtime"
     overrides: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
@@ -114,6 +117,14 @@ def _registry_counts(db_path: Path) -> dict[str, int]:
         registry.close()
 
 
+def _trading_universe_count(db_path: Path) -> int:
+    registry = AlphaRegistry(db_path)
+    try:
+        return registry.count_trading_universe()
+    finally:
+        registry.close()
+
+
 def _serialize_result(result) -> dict[str, Any]:
     return {
         "n_days": result.n_days,
@@ -148,25 +159,64 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "fail_state": None,
         "counts": _registry_counts(registry_db),
     }
+    universe_info: dict[str, Any] = {
+        "mode": spec.universe_mode,
+        "deployed_count": _trading_universe_count(registry_db),
+    }
 
     t0 = time.perf_counter()
-    if spec.registry_mode == "admission":
-        source_records = load_source_records(registry_db, spec.admission_source)
-        snapshot, counts = materialize_admission_snapshot(
-            source_records,
-            cfg.to_lifecycle_config(),
-            fail_state=spec.fail_state,
-        )
-        registry_info = {
-            "mode": spec.registry_mode,
-            "source": spec.admission_source,
-            "fail_state": AlphaState.canonical(spec.fail_state),
-            "source_rows": len(source_records),
-            "counts": counts,
-        }
+    use_temp_registry = spec.registry_mode == "admission" or spec.universe_mode == "refresh"
+    if use_temp_registry:
         with tempfile.TemporaryDirectory(prefix="alpha_os_experiment_") as tmp:
             replay_db = Path(tmp) / "registry.db"
-            apply_registry_snapshot(replay_db, snapshot)
+            if spec.registry_mode == "admission":
+                source_records = load_source_records(registry_db, spec.admission_source)
+                snapshot, counts = materialize_admission_snapshot(
+                    source_records,
+                    cfg.to_lifecycle_config(),
+                    fail_state=spec.fail_state,
+                )
+                registry_info = {
+                    "mode": spec.registry_mode,
+                    "source": spec.admission_source,
+                    "fail_state": AlphaState.canonical(spec.fail_state),
+                    "source_rows": len(source_records),
+                    "counts": counts,
+                }
+                apply_registry_snapshot(replay_db, snapshot)
+            elif spec.registry_mode == "current":
+                registry_info = {
+                    "mode": spec.registry_mode,
+                    "source": None,
+                    "fail_state": None,
+                    "counts": _registry_counts(registry_db),
+                }
+                shutil.copy2(registry_db, replay_db)
+            else:
+                raise ValueError(f"Unsupported registry mode: {spec.registry_mode}")
+
+            if spec.universe_mode == "refresh":
+                refresh_stats = refresh_trading_universe(
+                    replay_db,
+                    cfg,
+                    forward_db_path=asset_data_dir(asset) / "forward_returns.db",
+                    dry_run=False,
+                    backup=False,
+                )
+                universe_info = {
+                    "mode": spec.universe_mode,
+                    "deployed_count": refresh_stats.plan.deployed_count,
+                    "kept_count": len(refresh_stats.plan.kept_ids),
+                    "added_count": len(refresh_stats.plan.added_ids),
+                    "dropped_count": len(refresh_stats.plan.dropped_ids),
+                    "replacement_count": refresh_stats.plan.replacement_count,
+                }
+            else:
+                universe_info = {
+                    "mode": spec.universe_mode,
+                    "deployed_count": _trading_universe_count(replay_db),
+                }
+
             result = run_replay(
                 asset=asset,
                 config=cfg,
@@ -200,12 +250,14 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             "registry_mode": spec.registry_mode,
             "admission_source": spec.admission_source,
             "fail_state": spec.fail_state,
+            "universe_mode": spec.universe_mode,
             "sizing_mode": spec.sizing_mode,
             "notes": spec.notes,
         },
         "overrides": spec.overrides,
         "resolved_config": asdict(cfg),
         "registry": registry_info,
+        "universe": universe_info,
         "result": _serialize_result(result),
         "elapsed_seconds": elapsed,
     }
@@ -221,6 +273,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "end_date": spec.end_date,
         "registry_mode": spec.registry_mode,
         "admission_source": spec.admission_source,
+        "universe_mode": spec.universe_mode,
         "overrides": spec.overrides,
         "final_value": payload["result"]["final_value"],
         "total_return": payload["result"]["total_return"],

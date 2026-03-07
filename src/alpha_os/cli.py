@@ -185,6 +185,20 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
+    # refresh-universe
+    ru = sub.add_parser(
+        "refresh-universe",
+        help="Refresh the deployed trading universe from the registry",
+    )
+    ru.add_argument("--asset", type=str, default="BTC")
+    ru.add_argument("--config", type=str, default=None)
+    ru.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
+    ru.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Skip copying alpha_registry.db before rewrite",
+    )
+
     # replay-experiment
     rex = sub.add_parser(
         "replay-experiment",
@@ -212,6 +226,12 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["rejected", "dormant"],
         default="rejected",
         help="Fallback state for records that fail admission replay",
+    )
+    rex.add_argument(
+        "--universe-mode",
+        choices=["current", "refresh"],
+        default="current",
+        help="Use the current deployed universe or refresh it inside the experiment",
     )
     rex.add_argument(
         "--sizing-mode",
@@ -641,6 +661,7 @@ def _print_paper_result(result) -> None:
     print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
     print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
     print(f"  Registry:   {result.n_registry_active} active")
+    print(f"  Universe:   {result.n_universe_deployed} deployed")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
     print(f"  Selected:   {result.n_selected_alphas} alphas")
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
@@ -956,6 +977,7 @@ def _print_testnet_report(report) -> None:
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
     print(f"  Registry:       {report.n_registry_active} active")
+    print(f"  Universe:       {report.n_universe_deployed} deployed")
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
     print(f"  Selected:       {report.n_selected_alphas} alphas")
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
@@ -1275,6 +1297,32 @@ def cmd_rebuild_registry(args: argparse.Namespace) -> None:
         print("  Diversity cache cleared.")
 
 
+def cmd_refresh_universe(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    from alpha_os.alpha.trading_universe import refresh_trading_universe
+
+    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
+    stats = refresh_trading_universe(
+        db_path,
+        cfg,
+        dry_run=args.dry_run,
+        backup=not args.no_backup,
+    )
+
+    mode = "DRY RUN" if args.dry_run else "WRITE"
+    print(f"Trading universe refresh [{mode}]: asset={args.asset} db={stats.registry_db}")
+    print(f"  Registry active: {stats.plan.active_count}")
+    print(f"  Universe before: {stats.plan.current_count}")
+    print(f"  Universe now:    {stats.plan.deployed_count}")
+    print(f"  Kept:            {len(stats.plan.kept_ids)}")
+    print(f"  Added:           {len(stats.plan.added_ids)}")
+    print(f"  Dropped:         {len(stats.plan.dropped_ids)}")
+    print(f"  Replacements:    {stats.plan.replacement_count}")
+    if stats.backup_path is not None:
+        print(f"  Backup:          {stats.backup_path}")
+
+
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
     from alpha_os.experiments.replay import (
         ReplayExperimentSpec,
@@ -1293,6 +1341,7 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
             registry_mode=args.registry_mode,
             admission_source=args.source,
             fail_state=args.fail_state,
+            universe_mode=args.universe_mode,
             sizing_mode=args.sizing_mode,
             overrides=overrides,
             notes=args.notes,
@@ -1303,6 +1352,7 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
     print(f"Replay experiment: {run.experiment_id}")
     print(f"  Detail:   {run.detail_path}")
     print(f"  Index:    {run.index_path}")
+    print(f"  Universe: {run.payload['universe']['mode']}")
     print(f"  Final:    ${result['final_value']:,.2f}")
     print(f"  Return:   {result['total_return']:+.2%}")
     print(f"  Sharpe:   {result['sharpe']:.3f}")
@@ -1414,6 +1464,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_lifecycle(args)
     elif args.command == "rebuild-registry":
         cmd_rebuild_registry(args)
+    elif args.command == "refresh-universe":
+        cmd_refresh_universe(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "testnet-readiness":

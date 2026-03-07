@@ -9,6 +9,7 @@ from alpha_os.experiments.replay import (
     parse_override_assignment,
     run_replay_experiment,
 )
+from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from alpha_os.config import Config
 
 
@@ -37,6 +38,16 @@ def test_apply_config_overrides_updates_nested_fields():
 def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     asset_root = tmp_path / "BTC"
     asset_root.mkdir(parents=True, exist_ok=True)
+    registry = AlphaRegistry(asset_root / "alpha_registry.db")
+    registry.register(
+        AlphaRecord(
+            alpha_id="a1",
+            expression="x",
+            state=AlphaState.ACTIVE,
+            oos_sharpe=1.0,
+        )
+    )
+    registry.close()
 
     monkeypatch.setattr(
         "alpha_os.experiments.replay.asset_data_dir",
@@ -68,6 +79,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
             asset="BTC",
             start_date="2026-03-01",
             end_date="2026-03-05",
+            universe_mode="refresh",
             overrides={"lifecycle.candidate_quality_min": 1.1},
         )
     )
@@ -80,6 +92,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
 
     assert payload["name"] == "smoke"
     assert payload["git_commit"] == "deadbeef"
+    assert payload["spec"]["universe_mode"] == "refresh"
     assert payload["overrides"]["lifecycle.candidate_quality_min"] == 1.1
     assert payload["result"]["final_value"] == 10123.0
     assert summary["detail_path"] == str(run.detail_path)

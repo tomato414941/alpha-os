@@ -170,6 +170,18 @@ Runtime quality is blended from historical OOS quality and forward returns.
 The confidence weight rises with the number of forward observations, so new
 alphas shrink toward their historical prior instead of being treated as zero.
 
+## Trading Universe
+
+The registry is not the live trading universe.
+
+- `alphas.state=active` means an alpha is eligible for deployment.
+- `trading_universe` is the explicitly deployed subset that the trade runtime reads.
+- `refresh-universe` populates that subset using blended quality, slot count,
+  replacement limits, and a promotion margin.
+
+This keeps research churn (`candidate` admission and lifecycle updates) separate
+from the set that actually drives positions.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
@@ -188,10 +200,11 @@ handles post-admission quality control via blended quality and dormant revival.
 
 ## Signal Combination: Quality × Diversity Weighting
 
-The runtime does not combine every registry alpha directly. It uses a
+The runtime does not combine every registry alpha directly. It uses the
+deployed trading universe and then applies a
 three-stage selection pipeline:
 
-1. Rank `ACTIVE` alphas by historical OOS quality.
+1. Start from deployed `ACTIVE` alphas in `trading_universe`.
 2. Preselect a larger set, then rerank by blended quality and confidence.
 3. Apply a correlation filter to cap the final selected set.
 
@@ -1060,7 +1073,7 @@ Data flow:
    (purged WF-CV, DSR, PBO, admission gate), computes incremental diversity
    against existing ACTIVE alphas, and writes to `alphas` (ACTIVE) and
    `diversity_cache`.
-3. **trade runtime** reads ACTIVE alphas and diversity cache, computes a
+3. **trade runtime** reads the deployed `trading_universe` and diversity cache, computes a
    shortlist, applies correlation filtering and risk adjustments, and
    executes via Binance. No evolution, no lifecycle evaluation.
 4. **lifecycle manager** reads forward returns, computes rolling Sharpe

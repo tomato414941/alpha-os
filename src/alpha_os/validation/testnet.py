@@ -51,6 +51,7 @@ class DailyReport:
     circuit_breaker_reason: str = ""
     # Selection stats
     n_registry_active: int = 0
+    n_universe_deployed: int = 0
     n_shortlist_candidates: int = 0
     n_selected_alphas: int = 0
     n_signals_evaluated: int = 0
@@ -170,6 +171,7 @@ class ReadinessChecker:
             circuit_breaker_halted=circuit_breaker.halted,
             circuit_breaker_reason=circuit_breaker.halt_reason,
             n_registry_active=cycle_result.n_registry_active,
+            n_universe_deployed=cycle_result.n_universe_deployed,
             n_shortlist_candidates=cycle_result.n_shortlist_candidates,
             n_selected_alphas=cycle_result.n_selected_alphas,
             n_signals_evaluated=cycle_result.n_signals_evaluated,

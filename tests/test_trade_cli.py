@@ -158,6 +158,21 @@ def test_rebuild_registry_parser():
     assert args.dry_run is True
 
 
+def test_refresh_universe_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "refresh-universe",
+        "--asset", "BTC",
+        "--dry-run",
+    ])
+
+    assert args.command == "refresh-universe"
+    assert args.asset == "BTC"
+    assert args.dry_run is True
+
+
 def test_replay_experiment_parser():
     from alpha_os.cli import _build_parser
 
@@ -169,6 +184,7 @@ def test_replay_experiment_parser():
         "--end", "2026-03-05",
         "--registry-mode", "admission",
         "--source", "candidates",
+        "--universe-mode", "refresh",
         "--set", "lifecycle.candidate_quality_min=1.10",
         "--set", "live_quality.weight_confidence_floor=0.25",
     ])
@@ -177,6 +193,7 @@ def test_replay_experiment_parser():
     assert args.name == "confidence sweep"
     assert args.registry_mode == "admission"
     assert args.source == "candidates"
+    assert args.universe_mode == "refresh"
     assert args.set == [
         "lifecycle.candidate_quality_min=1.10",
         "live_quality.weight_confidence_floor=0.25",
@@ -237,6 +254,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
         dd_scale=1.0,
         vol_scale=1.0,
         n_registry_active=615,
+        n_universe_deployed=150,
         n_shortlist_candidates=150,
         n_selected_alphas=30,
         n_signals_evaluated=150,
@@ -255,6 +273,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signal L2:  +0.5420" in output
     assert "Signal Fin: +0.5420" in output
     assert "Registry:   615 active" in output
+    assert "Universe:   150 deployed" in output
     assert "Shortlist:  150 candidates" in output
     assert "Selected:   30 alphas" in output
     assert "Signals:    150 evaluated" in output

@@ -18,6 +18,8 @@ from alpha_os.alpha.lifecycle import (
     tenure_bonus,
     apply_tenure_bonus,
 )
+from alpha_os.alpha.quality import QualityEstimate
+from alpha_os.alpha.trading_universe import plan_trading_universe
 from alpha_os.alpha.combiner import (
     select_low_correlation,
     equal_weight_combine,
@@ -147,6 +149,66 @@ class TestAlphaRegistry:
         assert reg.get("legacy_born").state == AlphaState.CANDIDATE
         assert reg.get("legacy_probation").state == AlphaState.ACTIVE
         reg.close()
+
+    def test_replace_and_list_trading_universe(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
+        reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE))
+
+        reg.replace_trading_universe(
+            ["a2", "a1"],
+            scores={"a1": 0.5, "a2": 1.0},
+            metadata={"a1": {"rank": 2}, "a2": {"rank": 1}},
+        )
+
+        assert reg.trading_universe_ids() == ["a2", "a1"]
+        assert [r.alpha_id for r in reg.list_trading_universe()] == ["a2", "a1"]
+        entries = reg.list_trading_universe_entries()
+        assert entries[0].deployment_score == pytest.approx(1.0)
+        assert entries[0].metadata["rank"] == 1
+        reg.close()
+
+    def test_replace_all_clears_trading_universe(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
+        reg.replace_trading_universe(["a1"])
+
+        reg.replace_all([
+            AlphaRecord(alpha_id="b1", expression="y", state=AlphaState.ACTIVE),
+        ])
+
+        assert reg.count_trading_universe() == 0
+        reg.close()
+
+    def test_plan_trading_universe_replaces_only_above_margin(self):
+        records = [
+            AlphaRecord(alpha_id="i0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.9),
+            AlphaRecord(alpha_id="i1", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.8),
+            AlphaRecord(alpha_id="c0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=1.1),
+            AlphaRecord(alpha_id="c1", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.7),
+        ]
+        estimates = {
+            "i0": QualityEstimate(0.9, 0.0, 0.90, 1.0, 63, True),
+            "i1": QualityEstimate(0.8, 0.0, 0.80, 1.0, 63, True),
+            "c0": QualityEstimate(1.1, 0.0, 1.10, 1.0, 63, True),
+            "c1": QualityEstimate(0.7, 0.0, 0.81, 1.0, 63, True),
+        }
+
+        plan = plan_trading_universe(
+            records,
+            current_ids=["i0", "i1"],
+            estimate_for=lambda record: estimates[record.alpha_id],
+            max_alphas=2,
+            max_replacements=1,
+            promotion_margin=0.25,
+            metric="sharpe",
+        )
+
+        assert plan.selected_ids == ["c0", "i0"]
+        assert plan.kept_ids == ["i0"]
+        assert plan.added_ids == ["c0"]
+        assert plan.dropped_ids == ["i1"]
+        assert plan.replacement_count == 1
 
 
 # ---------------------------------------------------------------------------
