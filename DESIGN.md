@@ -1293,7 +1293,7 @@ round_interval = 300       # seconds between rounds (5 min)
 memory_limit_mb = 400      # soft RSS limit, halve pop if exceeded
 batch_size = 500           # max candidates per round
 
-[validator]   # legacy section name for the admission daemon
+[admission]
 enabled = false
 poll_interval = 1800       # seconds between queue checks (30 min)
 batch_size = 100           # candidates per validation batch
@@ -1323,7 +1323,7 @@ trade interruption.
 - Add `candidates` and `diversity_cache` tables to
   `AlphaRegistry._create_tables()`.
 - Create `daemon/` package with `__init__.py`.
-- Add `[evo_daemon]`, `[validator]`, `[lifecycle_daemon]` to TOML and
+- Add `[evo_daemon]`, `[admission]`, `[lifecycle_daemon]` to TOML and
   corresponding dataclasses to `config.py`.
 - Run all 434 existing tests to confirm no regression.
 
@@ -1347,7 +1347,7 @@ trade interruption.
 
 - Add `skip_lifecycle` parameter to `Trader.run_cycle()`.
 - Switch diversity source to `diversity_cache` table when
-  `validator.enabled = true` (legacy TOML key).
+  `admission.enabled = true`.
 - Condition evolution in `cli.py:cycle()` on `evo_daemon.enabled`.
 
 ```python

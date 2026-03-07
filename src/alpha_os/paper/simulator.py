@@ -203,18 +203,14 @@ def run_replay(
         registry = AlphaRegistry(sim_reg_path)
 
         all_records = registry.list_trading_universe()
-        if all_records:
-            logger.info("%d deployed alphas loaded from trading universe", len(all_records))
-        else:
-            all_records = registry.list_by_state(AlphaState.ACTIVE)
-            if all_records:
-                logger.warning(
-                    "Trading universe is empty in replay — falling back to registry-active alphas"
-                )
+        if not all_records:
+            raise RuntimeError(
+                "Trading universe is empty in replay. Run `refresh-universe` first "
+                "or use `replay-experiment --universe-mode refresh`."
+            )
+        logger.info("%d deployed alphas loaded from trading universe", len(all_records))
         n_alphas = len(all_records)
         logger.info("%d alphas loaded from registry", n_alphas)
-        if not all_records:
-            raise RuntimeError("No alphas in registry. Run `evolve` first.")
         prior_quality_full = np.array(
             [record.oos_fitness(config.fitness_metric) for record in all_records],
             dtype=np.float64,

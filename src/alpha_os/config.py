@@ -278,7 +278,7 @@ class EvoDaemonConfig:
 
 
 @dataclass
-class ValidatorConfig:
+class AdmissionConfig:
     enabled: bool = False
     poll_interval: int = 1800
     batch_size: int = 100
@@ -312,7 +312,7 @@ class Config:
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
     regime: RegimeConfig = field(default_factory=RegimeConfig)
     evo_daemon: EvoDaemonConfig = field(default_factory=EvoDaemonConfig)
-    validator: ValidatorConfig = field(default_factory=ValidatorConfig)
+    admission: AdmissionConfig = field(default_factory=AdmissionConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
     stability: StabilityConfig = field(default_factory=StabilityConfig)
 
@@ -430,7 +430,7 @@ class Config:
             gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),
             regime=RegimeConfig(**_f(RegimeConfig, raw.get("regime", {}))),
             evo_daemon=EvoDaemonConfig(**_f(EvoDaemonConfig, raw.get("evo_daemon", {}))),
-            validator=ValidatorConfig(**_f(ValidatorConfig, raw.get("validator", {}))),
+            admission=AdmissionConfig(**_f(AdmissionConfig, raw.get("admission", {}))),
             lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
             stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
         )

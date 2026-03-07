@@ -369,7 +369,7 @@ class Trader:
         use_map_elites = self.config.paper.combine_mode == "map_elites"
         if use_map_elites:
             pass  # diversity not needed — cell structure handles it
-        elif skip_lifecycle and self.config.validator.enabled:
+        elif skip_lifecycle and self.config.admission.enabled:
             self._load_diversity_from_db()
         else:
             diversity_stale = (
@@ -650,16 +650,12 @@ class Trader:
         # 2. Get the deployed universe, then shortlist tradable candidates from it.
         max_trading = self.config.paper.max_trading_alphas
         deployed_universe = self.registry.list_trading_universe()
-        if deployed_universe:
-            universe_records = deployed_universe
-            n_universe_deployed = len(deployed_universe)
-        else:
-            universe_records = self.registry.list_by_state(AlphaState.ACTIVE)
-            n_universe_deployed = len(universe_records)
-            if n_universe_deployed:
-                logger.warning(
-                    "Trading universe is empty — falling back to registry-active alphas"
-                )
+        if not deployed_universe:
+            raise RuntimeError(
+                "Trading universe is empty. Run `refresh-universe` before trading."
+            )
+        universe_records = deployed_universe
+        n_universe_deployed = len(deployed_universe)
         trading_candidates = rank_trading_records(
             universe_records,
             lambda record: self._estimate_quality(

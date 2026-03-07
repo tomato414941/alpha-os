@@ -116,8 +116,7 @@ Recent CLI cleanup now prefers standard terms:
 - `paper --replay` is historical replay of the current runtime decision stack.
 - `testnet-readiness` is the operational readiness check for testnet trading.
 - `validate` remains statistical alpha validation via purged walk-forward CV.
-- The CLI uses `admission-daemon`, while the TOML section is still `[validator]`
-  for now.
+- The CLI and TOML both use `admission` / `admission-daemon`.
 - Logs and reports distinguish `registry active`, `shortlist candidates`,
   `universe deployed`, `shortlist candidates`, `selected alphas`, and
   `signals evaluated`.

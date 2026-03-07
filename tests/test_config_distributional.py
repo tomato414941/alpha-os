@@ -93,6 +93,24 @@ def test_trading_mode_loads_from_toml(tmp_path):
     assert cfg.trading.supports_short is True
 
 
+def test_admission_section_loads_from_toml(tmp_path):
+    p = tmp_path / "cfg.toml"
+    p.write_text(
+        "\n".join(
+            [
+                "[admission]",
+                "enabled = true",
+                "poll_interval = 900",
+                "batch_size = 42",
+            ]
+        )
+    )
+    cfg = Config.load(p)
+    assert cfg.admission.enabled is True
+    assert cfg.admission.poll_interval == 900
+    assert cfg.admission.batch_size == 42
+
+
 def test_unknown_trading_mode_raises_on_capability_check():
     cfg = TradingConfig(mode="invalid")
     with pytest.raises(ValueError, match="Unknown trading mode"):

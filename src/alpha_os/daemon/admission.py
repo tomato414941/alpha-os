@@ -30,7 +30,7 @@ class AdmissionDaemon:
     def __init__(self, asset: str, config: Config):
         self.asset = asset
         self.config = config
-        self.admission_cfg = config.validator
+        self.admission_cfg = config.admission
         self._running = False
         self._round = 0
 

@@ -108,7 +108,7 @@ batch_size = 500           # max candidates per round
 evo_mode = "legacy"        # "legacy" | "map_elites"
 feature_subset_k = 27      # features per subset (√753 ≈ 27, map_elites only)
 
-[validator]
+[admission]
 enabled = false
 poll_interval = 1800       # seconds between queue checks (30 min)
 batch_size = 100           # candidates per validation batch
