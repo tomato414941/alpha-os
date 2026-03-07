@@ -1,0 +1,14 @@
+[Unit]
+Description=Alpha-OS trading universe refresh (%i)
+After=network.target
+
+[Service]
+Type=oneshot
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && exec python3 -m alpha_os refresh-universe --asset %i --config /home/dev/.config/alpha-os/prod.toml'
+MemoryHigh=300M
+MemoryMax=500M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/refresh-universe.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/refresh-universe.log

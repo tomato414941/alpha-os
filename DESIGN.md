@@ -1078,6 +1078,8 @@ Data flow:
    executes via Binance. No evolution, no lifecycle evaluation.
 4. **lifecycle manager** reads forward returns, computes rolling Sharpe
    (63-day window), and transitions alpha states (ACTIVE ↔ DORMANT).
+5. **refresh-universe timer** runs after lifecycle, updates the deployed
+   `trading_universe`, and keeps live trading on a slower replacement cadence.
 
 ### Process Definitions
 
