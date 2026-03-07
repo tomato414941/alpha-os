@@ -1,6 +1,7 @@
 """Tests for BinanceExecutor — all exchange calls are mocked."""
 from __future__ import annotations
 
+import math
 from unittest.mock import MagicMock
 
 
@@ -289,6 +290,30 @@ def test_split_order_reduced_to_single_when_slices_below_min_notional():
     # If 5-way split stayed in place, each slice would violate min notional.
     # Executor should collapse to a single order.
     mock_ex.create_market_sell_order.assert_called_once()
+
+
+def test_split_order_accounts_for_precision_before_keeping_multiple_slices():
+    mock_ex = _mock_exchange()
+    mock_ex.market.return_value = {
+        "limits": {"cost": {"min": 5.0}},
+        "info": {"filters": [{"filterType": "MIN_NOTIONAL", "minNotional": "5"}]},
+    }
+    mock_ex.fetch_order_book.return_value = {
+        "asks": [[67969.0, 2.0]],
+        "bids": [[67959.0, 2.0]],
+    }
+    mock_ex.amount_to_precision.side_effect = (
+        lambda sym, qty: f"{math.floor(qty * 100000) / 100000:.5f}"
+    )
+
+    ex = _make_executor(mock_ex)
+    ex._optimizer = _AlwaysSplitOptimizer()
+    ex._managed_positions["BTC"] = 1.0
+
+    fill = ex.submit_order(Order(symbol="BTC", side="sell", qty=0.000154))
+
+    assert fill is not None
+    mock_ex.create_market_sell_order.assert_called_once_with("BTC/USDT", 0.00015)
 
 
 # ---------------------------------------------------------------------------

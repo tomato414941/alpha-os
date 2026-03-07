@@ -187,6 +187,12 @@ class BinanceExecutor(Executor):
         self._min_notional_cache[market] = min_notional
         return min_notional
 
+    def _precise_qty(self, market: str, qty: float) -> float:
+        try:
+            return float(self._exchange.amount_to_precision(market, qty))
+        except Exception:
+            return 0.0
+
     def _meets_notional(self, market: str, qty: float, ref_price: float) -> bool:
         if qty <= 0 or ref_price <= 0:
             return False
@@ -234,8 +240,14 @@ class BinanceExecutor(Executor):
             )
             return [order.qty]
 
-        max_valid_slices = int(total_notional // required_slice_notional)
-        target_slices = max(1, min(len(slices), max_valid_slices))
+        target_slices = 1
+        for candidate_slices in range(len(slices), 0, -1):
+            slice_qty = order.qty / candidate_slices
+            precise_slice_qty = self._precise_qty(market, slice_qty)
+            if self._meets_notional(market, precise_slice_qty, ref_price):
+                target_slices = candidate_slices
+                break
+
         if target_slices == len(slices):
             return slices
 
@@ -491,7 +503,7 @@ class BinanceExecutor(Executor):
             )
             return None
 
-        qty = float(self._exchange.amount_to_precision(market, order.qty))
+        qty = self._precise_qty(market, order.qty)
         if qty <= 0:
             return None
         if not self._meets_notional(market, qty, best_ask):
@@ -537,7 +549,7 @@ class BinanceExecutor(Executor):
             )
             return None
 
-        qty = float(self._exchange.amount_to_precision(market, order.qty))
+        qty = self._precise_qty(market, order.qty)
         if qty <= 0:
             return None
         if not self._meets_notional(market, qty, best_bid):
