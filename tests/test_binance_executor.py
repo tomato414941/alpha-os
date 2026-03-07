@@ -316,6 +316,42 @@ def test_split_order_accounts_for_precision_before_keeping_multiple_slices():
     mock_ex.create_market_sell_order.assert_called_once_with("BTC/USDT", 0.00015)
 
 
+def test_split_order_search_does_not_log_false_min_notional_warning(caplog):
+    mock_ex = _mock_exchange()
+    mock_ex.market.return_value = {
+        "limits": {"cost": {"min": 5.0}},
+        "info": {"filters": [{"filterType": "MIN_NOTIONAL", "minNotional": "5"}]},
+    }
+    mock_ex.fetch_order_book.return_value = {
+        "asks": [[67401.0, 2.0]],
+        "bids": [[67391.33, 2.0]],
+    }
+    mock_ex.amount_to_precision.side_effect = (
+        lambda sym, qty: f"{math.floor(qty * 100000) / 100000:.5f}"
+    )
+    mock_ex.create_market_sell_order.side_effect = (
+        lambda sym, qty: {
+            "id": f"sell-{qty}",
+            "average": 67391.33,
+            "filled": qty,
+            "cost": qty * 67391.33,
+        }
+    )
+
+    ex = _make_executor(mock_ex)
+    ex._optimizer = _AlwaysSplitOptimizer()
+    ex._managed_positions["BTC"] = 1.0
+
+    fill = ex.submit_order(Order(symbol="BTC", side="sell", qty=0.000343))
+
+    assert fill is not None
+    assert mock_ex.create_market_sell_order.call_count == 4
+    assert not [
+        record for record in caplog.records
+        if "Order below min notional" in record.message
+    ]
+
+
 # ---------------------------------------------------------------------------
 # submit_order — error handling
 # ---------------------------------------------------------------------------

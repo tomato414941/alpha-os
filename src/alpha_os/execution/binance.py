@@ -193,7 +193,14 @@ class BinanceExecutor(Executor):
         except Exception:
             return 0.0
 
-    def _meets_notional(self, market: str, qty: float, ref_price: float) -> bool:
+    def _meets_notional(
+        self,
+        market: str,
+        qty: float,
+        ref_price: float,
+        *,
+        log_failure: bool = True,
+    ) -> bool:
         if qty <= 0 or ref_price <= 0:
             return False
         min_notional = self._min_notional(market)
@@ -205,14 +212,15 @@ class BinanceExecutor(Executor):
         if actual >= required:
             return True
 
-        logger.warning(
-            "Order below min notional for %s: $%.4f < $%.4f (qty=%.8f, price=%.2f)",
-            market,
-            actual,
-            required,
-            qty,
-            ref_price,
-        )
+        if log_failure:
+            logger.warning(
+                "Order below min notional for %s: $%.4f < $%.4f (qty=%.8f, price=%.2f)",
+                market,
+                actual,
+                required,
+                qty,
+                ref_price,
+            )
         return False
 
     def _adjust_slices_for_notional(
@@ -244,7 +252,12 @@ class BinanceExecutor(Executor):
         for candidate_slices in range(len(slices), 0, -1):
             slice_qty = order.qty / candidate_slices
             precise_slice_qty = self._precise_qty(market, slice_qty)
-            if self._meets_notional(market, precise_slice_qty, ref_price):
+            if self._meets_notional(
+                market,
+                precise_slice_qty,
+                ref_price,
+                log_failure=False,
+            ):
                 target_slices = candidate_slices
                 break
 
