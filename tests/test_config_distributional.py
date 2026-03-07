@@ -104,6 +104,8 @@ def test_config_runtime_helpers_follow_current_settings():
     cfg.forward.degradation_window = 42
     cfg.live_quality.min_observations = 11
     cfg.live_quality.full_weight_observations = 50
+    cfg.live_quality.weight_confidence_floor = 0.25
+    cfg.live_quality.weight_confidence_power = 2.0
     cfg.lifecycle.active_quality_min = 0.12
 
     monitor_cfg = cfg.to_monitor_config()
@@ -115,3 +117,5 @@ def test_config_runtime_helpers_follow_current_settings():
     assert lifecycle_cfg.active_quality_min == pytest.approx(0.12)
     assert estimate.blended_quality == pytest.approx(0.8)
     assert estimate.confidence == pytest.approx(0.0)
+    assert cfg.live_quality.weight_confidence_floor == pytest.approx(0.25)
+    assert cfg.live_quality.weight_confidence_power == pytest.approx(2.0)

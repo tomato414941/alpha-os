@@ -16,7 +16,11 @@ import numpy as np
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor, RegimeDetector
-from ..alpha.quality import QualityEstimate
+from ..alpha.quality import (
+    QualityEstimate,
+    confidence_weight_scale,
+    shrink_weight_quality,
+)
 from ..alpha.runtime_policy import rank_trading_records
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -423,23 +427,52 @@ class Trader:
         elif alpha_signals:
             alpha_ids = list(alpha_signals.keys())
             quality_list = []
+            confidence_list = []
             diversity_scores = self._resolve_diversity_scores(
                 alpha_ids, alpha_signal_arrays
             )
             for aid in alpha_ids:
-                quality = quality_estimates[aid].blended_quality
-                quality_list.append(max(quality, 0.0))
+                estimate = quality_estimates[aid]
+                quality_list.append(estimate.blended_quality)
+                confidence_list.append(estimate.confidence)
             diversity_list = [diversity_scores.get(aid, 1.0) for aid in alpha_ids]
 
             quality_np = np.array(quality_list)
+            confidence_np = np.array(confidence_list)
             diversity_np = np.array(diversity_list)
-            w = compute_weights(quality_np, diversity_np, min_weight=self._wcfg.min_weight)
+            shrunk_quality_np = shrink_weight_quality(
+                quality_np,
+                confidence_np,
+                floor=self.config.live_quality.weight_confidence_floor,
+                power=self.config.live_quality.weight_confidence_power,
+            )
+            w = compute_weights(
+                shrunk_quality_np,
+                diversity_np,
+                min_weight=self._wcfg.min_weight,
+            )
             weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
 
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
             strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
+            if (
+                self.config.live_quality.weight_confidence_floor < 1.0
+                or self.config.live_quality.weight_confidence_power != 1.0
+            ):
+                shrink_np = confidence_weight_scale(
+                    confidence_np,
+                    floor=self.config.live_quality.weight_confidence_floor,
+                    power=self.config.live_quality.weight_confidence_power,
+                )
+                logger.info(
+                    "Confidence shrink: floor=%.2f power=%.2f mean=%.3f min=%.3f",
+                    self.config.live_quality.weight_confidence_floor,
+                    self.config.live_quality.weight_confidence_power,
+                    float(np.mean(shrink_np)),
+                    float(np.min(shrink_np)),
+                )
             logger.info(
                 "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
                 dd_s, consensus, sig_mean, sig_std, len(alpha_signals),

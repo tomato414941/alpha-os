@@ -11,6 +11,7 @@ import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
+from ..alpha.quality import shrink_weight_quality
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -361,10 +362,23 @@ def run_replay(
 
             if trading_indices:
                 t_quality = np.array([
-                    max(blended_quality_full[i], 0.0) for i in trading_indices
+                    blended_quality_full[i] for i in trading_indices
+                ])
+                t_confidence = np.array([
+                    confidence[i] for i in trading_indices
                 ])
                 t_diversity = diversity_full[trading_indices]
-                weights = compute_weights(t_quality, t_diversity, min_weight=wcfg.min_weight)
+                shrunk_quality = shrink_weight_quality(
+                    t_quality,
+                    t_confidence,
+                    floor=config.live_quality.weight_confidence_floor,
+                    power=config.live_quality.weight_confidence_power,
+                )
+                weights = compute_weights(
+                    shrunk_quality,
+                    t_diversity,
+                    min_weight=wcfg.min_weight,
+                )
                 selected_signals = np.array([signal_matrix[i, d - 1] for i in trading_indices])
             else:
                 selected_signals = np.array([], dtype=np.float64)
