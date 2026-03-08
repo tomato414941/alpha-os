@@ -20,7 +20,7 @@ from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
-from ..execution.planning import build_execution_intent, build_target_position
+from ..execution.planning import build_target_position, plan_execution_intent
 from ..alpha.combiner import (
     CombinerConfig,
     WeightedCombinerConfig,
@@ -44,6 +44,9 @@ class SimulationResult:
     sharpe: float
     max_drawdown: float
     total_trades: int
+    n_skipped_deadband: int
+    n_skipped_min_notional: int
+    n_skipped_rounded_to_zero: int
     win_rate: float
     best_day: tuple[str, float]   # (date, return)
     worst_day: tuple[str, float]  # (date, return)
@@ -275,6 +278,9 @@ def run_replay(
         daily_returns_out: list[float] = []
         daily_dates: list[str] = []
         total_trades = 0
+        skipped_deadband = 0
+        skipped_min_notional = 0
+        skipped_rounded_to_zero = 0
 
         for d in range(1, n_days):
             today = dates[d]
@@ -426,15 +432,22 @@ def run_replay(
                 min_trade_usd=min_trade_usd,
                 supports_short=executor.supports_short,
             )
-            intent = build_execution_intent(
+            decision = plan_execution_intent(
                 target_position,
                 current_qty=executor.get_position(price_sig),
                 rebalance_deadband_usd=rebalance_deadband_usd,
             )
+            intent = decision.intent
             if intent is None:
+                if decision.skip_reason == "deadband":
+                    skipped_deadband += 1
                 fills = []
             else:
                 constrained = executor.constrain_intent(intent)
+                if constrained.order is None and constrained.rejection_reason == "below_min_notional":
+                    skipped_min_notional += 1
+                if constrained.order is None and constrained.rejection_reason == "rounded_to_zero":
+                    skipped_rounded_to_zero += 1
                 fill = executor.execute_intent(intent) if constrained.order is not None else None
                 fills = [fill] if fill is not None else []
             total_trades += len(fills)
@@ -485,6 +498,9 @@ def run_replay(
         sharpe=sharpe,
         max_drawdown=max_dd,
         total_trades=total_trades,
+        n_skipped_deadband=skipped_deadband,
+        n_skipped_min_notional=skipped_min_notional,
+        n_skipped_rounded_to_zero=skipped_rounded_to_zero,
         win_rate=win_rate,
         best_day=(daily_dates[best_idx], float(rets[best_idx])),
         worst_day=(daily_dates[worst_idx], float(rets[worst_idx])),

@@ -67,6 +67,9 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
             sharpe=1.5,
             max_drawdown=0.02,
             total_trades=7,
+            n_skipped_deadband=1,
+            n_skipped_min_notional=2,
+            n_skipped_rounded_to_zero=3,
             win_rate=0.6,
             best_day=("2026-03-01", 0.01),
             worst_day=("2026-03-02", -0.01),
@@ -95,4 +98,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     assert payload["spec"]["universe_mode"] == "refresh"
     assert payload["overrides"]["lifecycle.candidate_quality_min"] == 1.1
     assert payload["result"]["final_value"] == 10123.0
+    assert payload["result"]["n_skipped_deadband"] == 1
+    assert payload["result"]["n_skipped_min_notional"] == 2
+    assert payload["result"]["n_skipped_rounded_to_zero"] == 3
     assert summary["detail_path"] == str(run.detail_path)
