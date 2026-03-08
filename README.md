@@ -121,6 +121,20 @@ Recent CLI cleanup now prefers standard terms:
   `universe deployed`, `shortlist candidates`, `selected alphas`, and
   `signals evaluated`.
 
+## Runtime Boundaries
+
+The runtime is being standardized around five layers:
+
+- `Prediction`: produce alpha and combined signals
+- `Portfolio Construction`: decide target holdings and risk-adjusted exposure
+- `Execution Planning`: convert target gaps into order intents
+- `Venue Constraints`: enforce min notional, precision, lot size, and fees
+- `Execution`: submit, retry, and reconcile venue-valid orders
+
+This boundary exists to keep venue-specific constraints from silently shaping
+strategy behavior. Executors should receive only orders that are already valid
+for the target venue.
+
 ### Position sizing
 
 ```

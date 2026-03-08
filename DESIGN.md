@@ -182,6 +182,76 @@ The registry is not the live trading universe.
 This keeps research churn (`candidate` admission and lifecycle updates) separate
 from the set that actually drives positions.
 
+## Runtime Layer Boundaries
+
+The trading runtime should separate prediction from portfolio decisions and
+venue execution. This is an explicit design goal, not just an implementation
+detail.
+
+### Why Separation Matters
+
+When these concerns are mixed, small prediction changes leak directly into
+order placement, and venue constraints become the place where strategy errors
+are discovered. That creates avoidable churn:
+
+- tiny target changes become micro-orders that cannot clear venue minimums
+- exchange-specific constraints distort strategy behavior late in the pipeline
+- replay experiments become less realistic because prediction and execution
+  assumptions are coupled
+
+The runtime should reject untradeable intents before they reach the executor.
+
+### Intended Runtime Stack
+
+```
+Prediction
+    ↓
+Portfolio Construction
+    ↓
+Execution Planning
+    ↓
+Venue Constraints
+    ↓
+Execution
+```
+
+### Responsibilities
+
+| Layer | Responsibility | Examples |
+| ----- | -------------- | -------- |
+| Prediction | Produce alpha-level and combined signals | alpha scoring, blended quality, consensus signal |
+| Portfolio Construction | Convert signals into desired holdings | target position, risk scaling, trading deadband |
+| Execution Planning | Convert holdings gap into order intents | side, qty delta, urgency, split preference |
+| Venue Constraints | Make intents executable on a specific venue | min notional, lot size, precision, fee-aware rounding |
+| Execution | Submit and reconcile executable orders | retries, optimizer delays, fills, reconciliation |
+
+### Canonical Runtime Objects
+
+The runtime should converge on three explicit handoff objects:
+
+- `TargetPosition`
+  - The desired post-trade holding for an asset.
+- `ExecutionIntent`
+  - The delta between current holdings and the target position.
+- `ExecutableOrder`
+  - A venue-valid order that already satisfies precision and notional rules.
+
+Executors should only accept `ExecutableOrder`-level inputs. They should not be
+responsible for deciding whether a trade is economically meaningful.
+
+### Current Refactoring Direction
+
+The codebase is moving toward this separation in stages:
+
+1. Keep research churn in the registry and deployment churn in `trading_universe`.
+2. Stop sending sub-minimum or low-value rebalances downstream.
+3. Move deadband and minimum-trade decisions into portfolio construction and
+   venue-constraint layers.
+4. Keep the executor focused on venue interaction, not strategy cleanup.
+
+This boundary is now part of the intended architecture. Future refactors should
+prefer clearer layer ownership over parameter-only tuning.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
