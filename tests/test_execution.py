@@ -147,6 +147,25 @@ class TestExecutionPlanning:
 
         assert intent is None
 
+    def test_build_execution_intent_skips_small_rebalance_under_deadband(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=True,
+        )
+
+        intent = build_execution_intent(
+            target,
+            current_qty=49.95,
+            rebalance_deadband_usd=10.0,
+        )
+
+        assert intent is None
+
     def test_apply_venue_constraints_rejects_below_min_notional(self):
         target = build_target_position(
             symbol="BTC",

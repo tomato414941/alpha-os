@@ -58,6 +58,22 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
     assert cfg.paper.max_position_pct == 0.25
 
 
+def test_paper_rebalance_deadband_loads_from_toml(tmp_path):
+    p = tmp_path / "cfg.toml"
+    p.write_text(
+        "\n".join(
+            [
+                "[paper]",
+                "rebalance_deadband_usd = 12.5",
+            ]
+        )
+    )
+
+    cfg = Config.load(p)
+
+    assert cfg.paper.rebalance_deadband_usd == 12.5
+
+
 def test_generation_penalties_load_from_toml(tmp_path):
     p = tmp_path / "cfg.toml"
     p.write_text(

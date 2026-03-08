@@ -256,6 +256,7 @@ def run_replay(
         initial_capital = config.trading.initial_capital
         max_position_pct = config.paper.max_position_pct
         min_trade_usd = config.paper.min_trade_usd
+        rebalance_deadband_usd = config.paper.rebalance_deadband_usd
 
         # Lifecycle thresholds from config (single source of truth)
         lc_cfg = config.to_lifecycle_config()
@@ -428,6 +429,7 @@ def run_replay(
             intent = build_execution_intent(
                 target_position,
                 current_qty=executor.get_position(price_sig),
+                rebalance_deadband_usd=rebalance_deadband_usd,
             )
             if intent is None:
                 fills = []

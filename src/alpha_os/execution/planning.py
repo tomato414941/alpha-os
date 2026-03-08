@@ -63,11 +63,15 @@ def build_execution_intent(
     target: TargetPosition,
     *,
     current_qty: float,
+    rebalance_deadband_usd: float = 0.0,
     qty_epsilon: float = 1e-6,
 ) -> ExecutionIntent | None:
     """Convert a target holding into an order intent."""
     delta_qty = target.qty - current_qty
     if abs(delta_qty) < qty_epsilon:
+        return None
+    delta_notional = abs(delta_qty) * target.reference_price
+    if delta_notional < rebalance_deadband_usd:
         return None
     return ExecutionIntent(
         symbol=target.symbol,

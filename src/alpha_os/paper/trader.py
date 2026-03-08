@@ -169,6 +169,7 @@ class Trader:
         self.initial_capital = config.trading.initial_capital
         self.max_position_pct = config.paper.max_position_pct
         self.min_trade_usd = config.paper.min_trade_usd
+        self.rebalance_deadband_usd = config.paper.rebalance_deadband_usd
 
         self.executor = executor or PaperExecutor(
             initial_cash=self.initial_capital,
@@ -577,7 +578,11 @@ class Trader:
         """Execution layer: rebalance to target and report fill failures."""
         self.executor.set_price(self.price_signal, plan.current_price)
         current_qty = self.executor.get_position(plan.target_position.symbol)
-        intent = build_execution_intent(plan.target_position, current_qty=current_qty)
+        intent = build_execution_intent(
+            plan.target_position,
+            current_qty=current_qty,
+            rebalance_deadband_usd=self.rebalance_deadband_usd,
+        )
         if intent is None:
             return ExecutionOutcome(intents=[], orders=[], fills=[], order_failures=0)
 
