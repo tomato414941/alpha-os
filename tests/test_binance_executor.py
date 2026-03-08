@@ -11,6 +11,7 @@ from alpha_os.execution.binance import (
     _get_credentials,
     _load_secrets,
 )
+from alpha_os.execution.costs import ExecutionCostModel
 from alpha_os.execution.executor import Order
 from alpha_os.execution.planning import ExecutionIntent
 
@@ -87,6 +88,7 @@ def _make_executor(exchange=None, initial_capital=10000.0):
     executor._max_book_fraction = 0.1
     executor._optimizer = None
     executor._min_notional_buffer = 1.02
+    executor._cost_model = ExecutionCostModel(commission_pct=0.10, modeled_slippage_pct=0.05)
     executor._min_notional_cache = {}
     executor._managed_cash = initial_capital
     executor._managed_positions = {}
@@ -187,10 +189,11 @@ def test_buy_order():
     assert fill.qty == 0.1
     assert fill.price == 50002.0
     assert fill.order_id == "buy-001"
+    assert fill.costs.commission > 0.0
     ex._exchange.create_market_buy_order.assert_called_once()
     # Managed state updated
     assert ex._managed_positions.get("BTC", 0) == 0.1
-    assert ex._managed_cash < 10000.0
+    assert ex._managed_cash < 4999.8
 
 
 def test_buy_order_no_asks():

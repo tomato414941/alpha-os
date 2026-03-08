@@ -255,6 +255,7 @@ def run_replay(
         executor = PaperExecutor(
             initial_cash=config.trading.initial_capital,
             supports_short=config.trading.supports_short,
+            cost_model=config.execution.to_cost_model(),
         )
         initial_capital = config.trading.initial_capital
         max_position_pct = config.paper.max_position_pct

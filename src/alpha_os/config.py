@@ -239,6 +239,17 @@ class ExecutionTomlConfig:
     vpin_threshold: float = 0.5
     spread_threshold_bps: float = 5.0
     max_slices: int = 5
+    commission_pct: float = 0.10
+    modeled_slippage_pct: float = 0.05
+
+    def to_cost_model(self):
+        """Build the shared runtime cost model."""
+        from alpha_os.execution.costs import ExecutionCostModel
+
+        return ExecutionCostModel(
+            commission_pct=self.commission_pct,
+            modeled_slippage_pct=self.modeled_slippage_pct,
+        )
 
 
 @dataclass

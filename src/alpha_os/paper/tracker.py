@@ -87,6 +87,8 @@ class PaperPortfolioTracker:
                 qty REAL NOT NULL,
                 price REAL NOT NULL,
                 order_id TEXT NOT NULL,
+                commission_cost REAL NOT NULL DEFAULT 0.0,
+                modeled_slippage_cost REAL NOT NULL DEFAULT 0.0,
                 slippage_bps REAL NOT NULL DEFAULT 0.0,
                 latency_ms REAL NOT NULL DEFAULT 0.0,
                 recorded_at REAL NOT NULL
@@ -124,8 +126,16 @@ class PaperPortfolioTracker:
         self._conn.commit()
 
     def _migrate_fills_columns(self) -> None:
-        """Add slippage_bps and latency_ms columns if missing (existing DB migration)."""
+        """Add fill cost columns if missing (existing DB migration)."""
         existing = {row[1] for row in self._conn.execute("PRAGMA table_info(paper_fills)")}
+        if "commission_cost" not in existing:
+            self._conn.execute(
+                "ALTER TABLE paper_fills ADD COLUMN commission_cost REAL NOT NULL DEFAULT 0.0"
+            )
+        if "modeled_slippage_cost" not in existing:
+            self._conn.execute(
+                "ALTER TABLE paper_fills ADD COLUMN modeled_slippage_cost REAL NOT NULL DEFAULT 0.0"
+            )
         if "slippage_bps" not in existing:
             self._conn.execute(
                 "ALTER TABLE paper_fills ADD COLUMN slippage_bps REAL NOT NULL DEFAULT 0.0"
@@ -167,14 +177,16 @@ class PaperPortfolioTracker:
         now = time.time()
         rows = [
             (date, f.symbol, f.side, f.qty, f.price, f.order_id,
+             f.costs.commission, f.costs.modeled_slippage,
              f.slippage_bps, f.latency_ms, now)
             for f in fills
         ]
         self._conn.executemany(
             """INSERT INTO paper_fills
             (date, symbol, side, qty, price, order_id,
+             commission_cost, modeled_slippage_cost,
              slippage_bps, latency_ms, recorded_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             rows,
         )
         self._conn.commit()

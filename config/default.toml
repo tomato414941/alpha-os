@@ -79,6 +79,8 @@ imbalance_threshold = 0.1
 vpin_threshold = 0.5
 spread_threshold_bps = 5.0
 max_slices = 5
+commission_pct = 0.10
+modeled_slippage_pct = 0.05
 
 [event_driven]
 min_interval = 900       # 15 min debounce between evaluations

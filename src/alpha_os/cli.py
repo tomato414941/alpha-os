@@ -1047,6 +1047,7 @@ def _setup_asset_context(
         executor = BinanceExecutor(
             testnet=testnet, symbol_map=symbol_map, optimizer=optimizer,
             initial_capital=capital,
+            cost_model=cfg.execution.to_cost_model(),
         )
 
     trader = Trader(asset=asset, config=cfg, executor=executor,

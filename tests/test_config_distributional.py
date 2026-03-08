@@ -74,6 +74,24 @@ def test_paper_rebalance_deadband_loads_from_toml(tmp_path):
     assert cfg.paper.rebalance_deadband_usd == 12.5
 
 
+def test_execution_cost_fields_load_from_toml(tmp_path):
+    p = tmp_path / "cfg.toml"
+    p.write_text(
+        "\n".join(
+            [
+                "[execution]",
+                "commission_pct = 0.20",
+                "modeled_slippage_pct = 0.07",
+            ]
+        )
+    )
+
+    cfg = Config.load(p)
+
+    assert cfg.execution.commission_pct == 0.20
+    assert cfg.execution.modeled_slippage_pct == 0.07
+
+
 def test_generation_penalties_load_from_toml(tmp_path):
     p = tmp_path / "cfg.toml"
     p.write_text(

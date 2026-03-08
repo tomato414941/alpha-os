@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .constraints import ConstraintResult, apply_venue_constraints
+from .costs import CostEstimate, ExecutionCostModel
 from .executor import Executor, Order, Fill
 from .planning import ExecutionIntent
 
@@ -91,6 +92,7 @@ class BinanceExecutor(Executor):
         optimizer: object | None = None,
         initial_capital: float = 10000.0,
         min_notional_buffer: float = 1.02,
+        cost_model: ExecutionCostModel | None = None,
     ) -> None:
         self._exchange = create_spot_exchange(testnet=testnet)
         self._testnet = testnet
@@ -99,6 +101,7 @@ class BinanceExecutor(Executor):
         self._max_book_fraction = max_book_fraction
         self._optimizer = optimizer
         self._min_notional_buffer = min_notional_buffer
+        self._cost_model = cost_model or ExecutionCostModel()
         self._min_notional_cache: dict[str, float | None] = {}
         # Managed state: tracks only alpha-os positions, not full exchange
         self._managed_cash: float = initial_capital
@@ -305,15 +308,64 @@ class BinanceExecutor(Executor):
         """Update internal managed position tracking after a successful fill."""
         cost = fill.qty * fill.price
         if fill.side == "buy":
-            self._managed_cash -= cost
+            self._managed_cash -= cost + fill.execution_cost
             self._managed_positions[fill.symbol] = (
                 self._managed_positions.get(fill.symbol, 0.0) + fill.qty
             )
         elif fill.side == "sell":
-            self._managed_cash += cost
+            self._managed_cash += cost - fill.execution_cost
             self._managed_positions[fill.symbol] = (
                 self._managed_positions.get(fill.symbol, 0.0) - fill.qty
             )
+
+    def _extract_fee_cost(
+        self,
+        result: dict[str, Any],
+        *,
+        filled_qty: float,
+        filled_price: float,
+        market: str,
+    ) -> CostEstimate:
+        quote = market.split("/")[-1] if "/" in market else "USDT"
+
+        def _convert(raw_cost: Any, currency: str | None) -> float | None:
+            try:
+                amount = float(raw_cost)
+            except (TypeError, ValueError):
+                return None
+            curr = (currency or quote).upper()
+            if curr == quote.upper():
+                return amount
+            if curr == market.split("/")[0].upper():
+                return amount * filled_price
+            return None
+
+        fee = result.get("fee")
+        if isinstance(fee, dict):
+            converted = _convert(fee.get("cost"), fee.get("currency"))
+            if converted is not None:
+                return CostEstimate(commission=converted)
+
+        fees = result.get("fees")
+        if isinstance(fees, list):
+            total = 0.0
+            matched = False
+            for item in fees:
+                if not isinstance(item, dict):
+                    continue
+                converted = _convert(item.get("cost"), item.get("currency"))
+                if converted is None:
+                    continue
+                total += converted
+                matched = True
+            if matched:
+                return CostEstimate(commission=total)
+
+        notional = filled_qty * filled_price
+        return self._cost_model.estimate_order_cost(
+            notional,
+            include_modeled_slippage=False,
+        )
 
     def submit_order(self, order: Order) -> Fill | None:
         if order.side == "sell" and not self.supports_short:
@@ -569,6 +621,12 @@ class BinanceExecutor(Executor):
             order_id=str(result.get("id", "")),
             slippage_bps=slippage,
             latency_ms=latency_ms,
+            costs=self._extract_fee_cost(
+                result,
+                filled_qty=filled_qty,
+                filled_price=filled_price,
+                market=market,
+            ),
         )
 
     def _market_sell(self, market: str, order: Order) -> Fill | None:
@@ -615,4 +673,10 @@ class BinanceExecutor(Executor):
             order_id=str(result.get("id", "")),
             slippage_bps=slippage,
             latency_ms=latency_ms,
+            costs=self._extract_fee_cost(
+                result,
+                filled_qty=filled_qty,
+                filled_price=filled_price,
+                market=market,
+            ),
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+from .costs import ExecutionCostModel
 from .executor import Executor, Order, Fill
 
 logger = logging.getLogger(__name__)
@@ -11,13 +12,19 @@ logger = logging.getLogger(__name__)
 class PaperExecutor(Executor):
     """In-memory paper trading executor for backtesting and simulation."""
 
-    def __init__(self, initial_cash: float = 10000.0, supports_short: bool = False):
+    def __init__(
+        self,
+        initial_cash: float = 10000.0,
+        supports_short: bool = False,
+        cost_model: ExecutionCostModel | None = None,
+    ):
         self._cash = initial_cash
         self._positions: dict[str, float] = {}
         self._prices: dict[str, float] = {}
         self._fills: list[Fill] = []
         self._order_counter = 0
         self._supports_short = supports_short
+        self._cost_model = cost_model or ExecutionCostModel()
 
     def set_price(self, symbol: str, price: float) -> None:
         self._prices[symbol] = price
@@ -31,12 +38,21 @@ class PaperExecutor(Executor):
             logger.warning(f"No price for {order.symbol}, skipping order")
             return None
 
-        cost = order.qty * price
+        notional = order.qty * price
+        costs = self._cost_model.estimate_order_cost(
+            notional,
+            include_modeled_slippage=True,
+        )
         if order.side == "buy":
-            if cost > self._cash:
-                logger.warning(f"Insufficient cash: need {cost:.2f}, have {self._cash:.2f}")
+            required_cash = notional + costs.total_cost
+            if required_cash > self._cash:
+                logger.warning(
+                    "Insufficient cash: need %.2f, have %.2f",
+                    required_cash,
+                    self._cash,
+                )
                 return None
-            self._cash -= cost
+            self._cash -= required_cash
             self._positions[order.symbol] = self._positions.get(order.symbol, 0) + order.qty
         elif order.side == "sell":
             current_qty = self._positions.get(order.symbol, 0.0)
@@ -46,7 +62,7 @@ class PaperExecutor(Executor):
                     order.qty, order.symbol, current_qty,
                 )
                 return None
-            self._cash += cost
+            self._cash += notional - costs.total_cost
             self._positions[order.symbol] = current_qty - order.qty
         else:
             return None
@@ -58,6 +74,7 @@ class PaperExecutor(Executor):
             qty=order.qty,
             price=price,
             order_id=f"paper-{self._order_counter}",
+            costs=costs,
         )
         self._fills.append(fill)
         return fill

@@ -2,6 +2,7 @@
 import pytest
 
 from alpha_os.execution.constraints import apply_venue_constraints
+from alpha_os.execution.costs import ExecutionCostModel
 from alpha_os.execution.executor import Order
 from alpha_os.execution.paper import PaperExecutor
 from alpha_os.execution.planning import (
@@ -13,7 +14,10 @@ from alpha_os.execution.planning import (
 
 class TestPaperExecutor:
     def test_buy(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         fill = pe.submit_order(Order(symbol="NVDA", side="buy", qty=10))
         assert fill is not None
@@ -23,7 +27,10 @@ class TestPaperExecutor:
         assert pe.get_cash() == 9000.0
 
     def test_sell(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=10))
         pe.submit_order(Order(symbol="NVDA", side="sell", qty=5))
@@ -31,7 +38,10 @@ class TestPaperExecutor:
         assert pe.get_cash() == 9500.0
 
     def test_sell_rejected_in_long_only_mode(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         fill = pe.submit_order(Order(symbol="NVDA", side="sell", qty=1))
         assert fill is None
@@ -39,7 +49,11 @@ class TestPaperExecutor:
         assert pe.get_cash() == 10000.0
 
     def test_sell_allows_net_short_when_enabled(self):
-        pe = PaperExecutor(initial_cash=10000.0, supports_short=True)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            supports_short=True,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         fill = pe.submit_order(Order(symbol="NVDA", side="sell", qty=1))
         assert fill is not None
@@ -47,26 +61,35 @@ class TestPaperExecutor:
         assert pe.get_cash() == 10100.0
 
     def test_insufficient_cash(self):
-        pe = PaperExecutor(initial_cash=100.0)
+        pe = PaperExecutor(
+            initial_cash=100.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 200.0)
         fill = pe.submit_order(Order(symbol="NVDA", side="buy", qty=1))
         assert fill is None
         assert pe.get_position("NVDA") == 0
 
     def test_no_price(self):
-        pe = PaperExecutor()
+        pe = PaperExecutor(cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0))
         fill = pe.submit_order(Order(symbol="NVDA", side="buy", qty=1))
         assert fill is None
 
     def test_portfolio_value(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=10))
         pe.set_price("NVDA", 110.0)
         assert pe.portfolio_value == pytest.approx(10100.0)  # 9000 + 10*110
 
     def test_rebalance(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         pe.set_price("AAPL", 150.0)
 
@@ -78,14 +101,20 @@ class TestPaperExecutor:
         assert pe.get_position("AAPL") == 5
 
     def test_all_fills(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=5))
         pe.submit_order(Order(symbol="NVDA", side="sell", qty=2))
         assert len(pe.all_fills) == 2
 
     def test_all_positions(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_price("NVDA", 100.0)
         pe.set_price("AAPL", 150.0)
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=5))
@@ -95,10 +124,28 @@ class TestPaperExecutor:
         assert pos["AAPL"] == 3
 
     def test_set_prices_batch(self):
-        pe = PaperExecutor(initial_cash=10000.0)
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.0, modeled_slippage_pct=0.0),
+        )
         pe.set_prices({"NVDA": 100.0, "AAPL": 150.0})
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=1))
         assert pe.get_cash() == 9900.0
+
+    def test_buy_deducts_modeled_execution_costs(self):
+        pe = PaperExecutor(
+            initial_cash=10000.0,
+            cost_model=ExecutionCostModel(commission_pct=0.10, modeled_slippage_pct=0.05),
+        )
+        pe.set_price("BTC", 100.0)
+
+        fill = pe.submit_order(Order(symbol="BTC", side="buy", qty=10))
+
+        assert fill is not None
+        assert fill.costs.commission == pytest.approx(1.0)
+        assert fill.costs.modeled_slippage == pytest.approx(0.5)
+        assert fill.execution_cost == pytest.approx(1.5)
+        assert pe.get_cash() == pytest.approx(8998.5)
 
 
 class TestExecutionPlanning:

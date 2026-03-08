@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .constraints import ConstraintResult, apply_venue_constraints
+from .costs import CostEstimate
 from .planning import ExecutionIntent
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,11 @@ class Fill:
     order_id: str = ""
     slippage_bps: float = 0.0
     latency_ms: float = 0.0
+    costs: CostEstimate = field(default_factory=CostEstimate)
+
+    @property
+    def execution_cost(self) -> float:
+        return self.costs.total_cost
 
 
 class Executor(ABC):

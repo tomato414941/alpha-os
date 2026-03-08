@@ -180,6 +180,7 @@ class Trader:
         self.executor = executor or PaperExecutor(
             initial_cash=self.initial_capital,
             supports_short=config.trading.supports_short,
+            cost_model=config.execution.to_cost_model(),
         )
 
         if store is not None:

@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from alpha_os.execution.costs import CostEstimate
 from alpha_os.execution.executor import Fill
 from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -300,9 +301,11 @@ class TestTrackerSlippageStats:
         tracker = PaperPortfolioTracker(db_path=tmp_path / "test.db")
         fills = [
             Fill(symbol="BTC", side="buy", qty=0.1, price=50000,
-                 order_id="t-1", slippage_bps=5.0, latency_ms=100),
+                 order_id="t-1", slippage_bps=5.0, latency_ms=100,
+                 costs=CostEstimate(commission=5.0, modeled_slippage=2.5)),
             Fill(symbol="BTC", side="buy", qty=0.1, price=50000,
-                 order_id="t-2", slippage_bps=10.0, latency_ms=200),
+                 order_id="t-2", slippage_bps=10.0, latency_ms=200,
+                 costs=CostEstimate(commission=5.0, modeled_slippage=2.5)),
         ]
         tracker.save_fills("2026-03-01", fills)
 
@@ -314,6 +317,12 @@ class TestTrackerSlippageStats:
         lat_stats = tracker.get_latency_stats()
         assert lat_stats["count"] == 2
         assert lat_stats["mean_ms"] == pytest.approx(150.0)
+
+        row = tracker._conn.execute(
+            "SELECT commission_cost, modeled_slippage_cost FROM paper_fills ORDER BY id LIMIT 1"
+        ).fetchone()
+        assert row["commission_cost"] == pytest.approx(5.0)
+        assert row["modeled_slippage_cost"] == pytest.approx(2.5)
 
         tracker.close()
 
