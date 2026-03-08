@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 from unittest.mock import MagicMock
+import time
 
 import pytest
 
@@ -99,11 +100,25 @@ def _make_executor(exchange=None, initial_capital=10000.0):
 
 
 class _AlwaysSplitOptimizer:
+    max_deferral_attempts = 2
+    deferral_sleep_seconds = 0.0
+
     def optimal_execution_window(self, side: str) -> bool:
         return True
 
     def split_order(self, qty: float) -> list[float]:
         return [qty / 5] * 5
+
+
+class _NeverReadyOptimizer:
+    max_deferral_attempts = 2
+    deferral_sleep_seconds = 1.0
+
+    def optimal_execution_window(self, side: str) -> bool:
+        return False
+
+    def split_order(self, qty: float) -> list[float]:
+        return [qty]
 
 
 # ---------------------------------------------------------------------------
@@ -412,6 +427,19 @@ def test_submit_order_exchange_exception():
     ex = _make_executor(mock_ex)
     fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.1))
     assert fill is None
+
+
+def test_submit_order_optimizer_skips_final_sleep(monkeypatch):
+    mock_ex = _mock_exchange()
+    ex = _make_executor(mock_ex)
+    ex._optimizer = _NeverReadyOptimizer()
+    sleeps: list[float] = []
+    monkeypatch.setattr(time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.1))
+
+    assert fill is not None
+    assert sleeps == [1.0]
 
 
 # ---------------------------------------------------------------------------

@@ -236,9 +236,13 @@ class LifecycleTomlConfig:
 @dataclass
 class ExecutionTomlConfig:
     imbalance_threshold: float = 0.1
-    vpin_threshold: float = 0.5
+    vpin_threshold: float = 0.85
     spread_threshold_bps: float = 5.0
     max_slices: int = 5
+    signal_lookback_minutes: int = 15
+    max_signal_age_seconds: int = 300
+    max_deferral_attempts: int = 2
+    deferral_sleep_seconds: float = 30.0
     commission_pct: float = 0.10
     modeled_slippage_pct: float = 0.05
 

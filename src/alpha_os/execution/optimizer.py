@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 from signal_noise.client import SignalClient
 
@@ -12,9 +13,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExecutionConfig:
     imbalance_threshold: float = 0.1
-    vpin_threshold: float = 0.5
+    vpin_threshold: float = 0.85
     spread_threshold_bps: float = 5.0
     max_slices: int = 5
+    signal_lookback_minutes: int = 15
+    max_signal_age_seconds: int = 300
+    max_deferral_attempts: int = 2
+    deferral_sleep_seconds: float = 30.0
 
 
 class ExecutionOptimizer:
@@ -28,12 +33,80 @@ class ExecutionOptimizer:
         self._client = client
         self._config = config or ExecutionConfig()
 
+    @property
+    def max_deferral_attempts(self) -> int:
+        return max(1, int(self._config.max_deferral_attempts))
+
+    @property
+    def deferral_sleep_seconds(self) -> float:
+        return max(0.0, float(self._config.deferral_sleep_seconds))
+
+    def _parse_timestamp(self, raw: object) -> datetime | None:
+        if not isinstance(raw, str) or not raw:
+            return None
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone(UTC)
+        except ValueError:
+            return None
+
+    def _extract_latest_value(self, payload: dict | None) -> float | None:
+        if not isinstance(payload, dict):
+            return None
+
+        value = payload.get("value")
+        if value is None:
+            return None
+
+        timestamp = self._parse_timestamp(payload.get("timestamp"))
+        if timestamp is None:
+            return float(value)
+
+        age = datetime.now(UTC) - timestamp
+        if age.total_seconds() <= self._config.max_signal_age_seconds:
+            return float(value)
+
+        logger.info(
+            "Ignoring stale latest %s: age=%.0fs > %ss",
+            payload.get("name", "signal"),
+            age.total_seconds(),
+            self._config.max_signal_age_seconds,
+        )
+        return None
+
+    def _get_recent_signal(self, name: str) -> float | None:
+        since = (datetime.now(UTC) - timedelta(minutes=self._config.signal_lookback_minutes)).isoformat()
+        try:
+            frame = self._client.get_data(name, since=since)
+        except Exception:
+            return None
+
+        if frame is None or frame.empty:
+            return None
+
+        latest_row = frame.iloc[-1]
+        value = latest_row.get("value")
+        if value is None:
+            return None
+
+        timestamp = latest_row.get("timestamp")
+        if timestamp is not None:
+            ts = timestamp.to_pydatetime().astimezone(UTC)
+            age = datetime.now(UTC) - ts
+            if age.total_seconds() > self._config.max_signal_age_seconds:
+                return None
+
+        return float(value)
+
     def get_signal(self, name: str) -> float | None:
+        recent = self._get_recent_signal(name)
+        if recent is not None:
+            return recent
+
         try:
             latest = self._client.get_latest(name)
             if latest is None:
                 return None
-            return latest.get("value")
+            return self._extract_latest_value(latest)
         except Exception:
             return None
 

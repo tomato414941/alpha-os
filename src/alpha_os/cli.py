@@ -1042,6 +1042,10 @@ def _setup_asset_context(
             vpin_threshold=cfg.execution.vpin_threshold,
             spread_threshold_bps=cfg.execution.spread_threshold_bps,
             max_slices=cfg.execution.max_slices,
+            signal_lookback_minutes=cfg.execution.signal_lookback_minutes,
+            max_signal_age_seconds=cfg.execution.max_signal_age_seconds,
+            max_deferral_attempts=cfg.execution.max_deferral_attempts,
+            deferral_sleep_seconds=cfg.execution.deferral_sleep_seconds,
         )
         optimizer = ExecutionOptimizer(client, exec_cfg)
         executor = BinanceExecutor(
