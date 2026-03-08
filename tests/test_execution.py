@@ -3,6 +3,7 @@ import pytest
 
 from alpha_os.execution.executor import Order
 from alpha_os.execution.paper import PaperExecutor
+from alpha_os.execution.planning import build_execution_intent, build_target_position
 
 
 class TestPaperExecutor:
@@ -93,3 +94,54 @@ class TestPaperExecutor:
         pe.set_prices({"NVDA": 100.0, "AAPL": 150.0})
         pe.submit_order(Order(symbol="NVDA", side="buy", qty=1))
         assert pe.get_cash() == 9900.0
+
+
+class TestExecutionPlanning:
+    def test_build_target_position_clamps_short_in_long_only_mode(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=-0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=False,
+        )
+
+        assert target.qty == 0.0
+        assert target.reference_price == 100.0
+        assert target.dollar_target == pytest.approx(-5000.0)
+
+    def test_build_execution_intent_uses_target_gap(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=True,
+        )
+
+        intent = build_execution_intent(target, current_qty=20.0)
+
+        assert intent is not None
+        assert intent.side == "buy"
+        assert intent.qty == pytest.approx(30.0)
+        assert intent.target_qty == pytest.approx(50.0)
+        assert intent.notional_value == pytest.approx(3000.0)
+
+    def test_build_execution_intent_skips_zero_gap(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=True,
+        )
+
+        intent = build_execution_intent(target, current_qty=50.0)
+
+        assert intent is None

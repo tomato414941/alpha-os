@@ -20,6 +20,7 @@ from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..execution.paper import PaperExecutor
+from ..execution.planning import build_execution_intent, build_target_position
 from ..alpha.combiner import (
     CombinerConfig,
     WeightedCombinerConfig,
@@ -414,15 +415,25 @@ def run_replay(
                 adjusted = 0.0
 
             # Execute trade
-            dollar_pos = adjusted * prev_value * max_position_pct
-            target_shares = dollar_pos / current_price if current_price > 0 else 0.0
-            if abs(dollar_pos) < min_trade_usd:
-                target_shares = 0.0
-            if not executor.supports_short and target_shares < 0:
-                target_shares = 0.0
-
             executor.set_price(price_sig, current_price)
-            fills = executor.rebalance({price_sig: target_shares})
+            target_position = build_target_position(
+                symbol=price_sig,
+                adjusted_signal=adjusted,
+                portfolio_value=prev_value,
+                current_price=current_price,
+                max_position_pct=max_position_pct,
+                min_trade_usd=min_trade_usd,
+                supports_short=executor.supports_short,
+            )
+            intent = build_execution_intent(
+                target_position,
+                current_qty=executor.get_position(price_sig),
+            )
+            fills = (
+                executor.rebalance({price_sig: target_position.qty})
+                if intent is not None
+                else []
+            )
             total_trades += len(fills)
 
             # Record daily return

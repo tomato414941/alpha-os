@@ -503,6 +503,8 @@ class TestPaperTrader:
 
         assert trader.executor.supports_short is False
         assert plan.current_price == pytest.approx(100.0)
+        assert plan.target_position.symbol == "btc_ohlcv"
+        assert plan.target_position.qty == 0.0
         assert plan.target_positions == {"btc_ohlcv": 0.0}
         trader.close()
 
@@ -535,6 +537,8 @@ class TestPaperTrader:
 
         assert trader.executor.supports_short is True
         assert plan.current_price == pytest.approx(100.0)
+        assert plan.target_position.symbol == "btc_ohlcv"
+        assert plan.target_position.qty == pytest.approx(-50.0)
         assert plan.target_positions == {"btc_ohlcv": pytest.approx(-50.0)}
         trader.close()
 

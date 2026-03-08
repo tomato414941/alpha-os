@@ -30,6 +30,12 @@ from ..data.universe import build_feature_list
 from ..dsl import parse, collect_feature_names
 from ..execution.binance import BinanceExecutor
 from ..execution.executor import Executor, Fill
+from ..execution.planning import (
+    ExecutionIntent,
+    TargetPosition,
+    build_execution_intent,
+    build_target_position,
+)
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
@@ -94,11 +100,16 @@ class PredictionOutput:
 @dataclass
 class AllocationPlan:
     current_price: float
-    target_positions: dict[str, float]
+    target_position: TargetPosition
+
+    @property
+    def target_positions(self) -> dict[str, float]:
+        return {self.target_position.symbol: self.target_position.qty}
 
 
 @dataclass
 class ExecutionOutcome:
+    intents: list[ExecutionIntent]
     fills: list[Fill]
     order_failures: int
 
@@ -549,20 +560,26 @@ class Trader:
             current_price = float(matrix[self.price_signal].iloc[-1])
             logger.info("Using daily close: $%.2f", current_price)
 
-        dollar_pos = adjusted_signal * prev_value * self.max_position_pct
-        target_shares = dollar_pos / current_price if current_price > 0 else 0.0
-        if abs(dollar_pos) < self.min_trade_usd:
-            target_shares = 0.0
-        if not self.executor.supports_short and target_shares < 0:
-            target_shares = 0.0
-
-        target = {self.price_signal: target_shares}
-        return AllocationPlan(current_price=current_price, target_positions=target)
+        target_position = build_target_position(
+            symbol=self.price_signal,
+            adjusted_signal=adjusted_signal,
+            portfolio_value=prev_value,
+            current_price=current_price,
+            max_position_pct=self.max_position_pct,
+            min_trade_usd=self.min_trade_usd,
+            supports_short=self.executor.supports_short,
+        )
+        return AllocationPlan(current_price=current_price, target_position=target_position)
 
     def _execute_allocation(self, plan: AllocationPlan) -> ExecutionOutcome:
         """Execution layer: rebalance to target and report fill failures."""
         self.executor.set_price(self.price_signal, plan.current_price)
-        pre_positions = {sym: self.executor.get_position(sym) for sym in plan.target_positions}
+        current_qty = self.executor.get_position(plan.target_position.symbol)
+        intent = build_execution_intent(plan.target_position, current_qty=current_qty)
+        if intent is None:
+            return ExecutionOutcome(intents=[], fills=[], order_failures=0)
+
+        pre_positions = {intent.symbol: current_qty}
         fills = self.executor.rebalance(plan.target_positions)
 
         filled_symbols = {f.symbol for f in fills}
@@ -571,7 +588,7 @@ class Trader:
             if abs(tgt - pre_positions.get(sym, 0.0)) > 1e-6
             and sym not in filled_symbols
         )
-        return ExecutionOutcome(fills=fills, order_failures=order_failures)
+        return ExecutionOutcome(intents=[intent], fills=fills, order_failures=order_failures)
 
     def run_cycle(
         self,
