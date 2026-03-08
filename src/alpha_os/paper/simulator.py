@@ -429,11 +429,12 @@ def run_replay(
                 target_position,
                 current_qty=executor.get_position(price_sig),
             )
-            fills = (
-                executor.rebalance({price_sig: target_position.qty})
-                if intent is not None
-                else []
-            )
+            if intent is None:
+                fills = []
+            else:
+                constrained = executor.constrain_intent(intent)
+                fill = executor.execute_intent(intent) if constrained.order is not None else None
+                fills = [fill] if fill is not None else []
             total_trades += len(fills)
 
             # Record daily return

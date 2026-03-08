@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 from unittest.mock import MagicMock
 
+import pytest
 
 from alpha_os.execution.binance import (
     BinanceExecutor,
@@ -11,6 +12,7 @@ from alpha_os.execution.binance import (
     _load_secrets,
 )
 from alpha_os.execution.executor import Order
+from alpha_os.execution.planning import ExecutionIntent
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +277,45 @@ def test_order_below_min_notional_skipped_before_submit():
     fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.0001))
     assert fill is None
     mock_ex.create_market_buy_order.assert_not_called()
+
+
+def test_constrain_intent_rejects_below_min_notional():
+    mock_ex = _mock_exchange()
+    ex = _make_executor(mock_ex)
+
+    result = ex.constrain_intent(
+        ExecutionIntent(
+            symbol="BTC",
+            side="buy",
+            qty=0.0001,
+            current_qty=0.0,
+            target_qty=0.0001,
+            reference_price=50000.0,
+        )
+    )
+
+    assert result.order is None
+    assert result.rejection_reason == "below_min_notional"
+
+
+def test_constrain_intent_applies_precision_before_order_creation():
+    mock_ex = _mock_exchange()
+    mock_ex.amount_to_precision.side_effect = lambda sym, qty: "0.12340000"
+    ex = _make_executor(mock_ex)
+
+    result = ex.constrain_intent(
+        ExecutionIntent(
+            symbol="BTC",
+            side="buy",
+            qty=0.12345678,
+            current_qty=0.0,
+            target_qty=0.12345678,
+            reference_price=50000.0,
+        )
+    )
+
+    assert result.order is not None
+    assert result.order.qty == pytest.approx(0.1234)
 
 
 def test_split_order_reduced_to_single_when_slices_below_min_notional():

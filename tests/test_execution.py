@@ -1,6 +1,7 @@
 """Tests for execution layer (paper trading, executor interface)."""
 import pytest
 
+from alpha_os.execution.constraints import apply_venue_constraints
 from alpha_os.execution.executor import Order
 from alpha_os.execution.paper import PaperExecutor
 from alpha_os.execution.planning import build_execution_intent, build_target_position
@@ -145,3 +146,45 @@ class TestExecutionPlanning:
         intent = build_execution_intent(target, current_qty=50.0)
 
         assert intent is None
+
+    def test_apply_venue_constraints_rejects_below_min_notional(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.004,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=True,
+        )
+        intent = build_execution_intent(target, current_qty=0.0)
+        assert intent is not None
+
+        result = apply_venue_constraints(
+            intent,
+            min_notional=50.0,
+            min_notional_buffer=1.02,
+        )
+
+        assert result.order is None
+        assert result.rejection_reason == "below_min_notional"
+
+    def test_execute_intent_submits_only_after_constraints(self):
+        pe = PaperExecutor(initial_cash=10000.0)
+        pe.set_price("BTC", 100.0)
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=False,
+        )
+        intent = build_execution_intent(target, current_qty=0.0)
+        assert intent is not None
+
+        fill = pe.execute_intent(intent)
+
+        assert fill is not None
+        assert pe.get_position("BTC") == pytest.approx(50.0)

@@ -5,6 +5,9 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from .constraints import ConstraintResult, apply_venue_constraints
+from .planning import ExecutionIntent
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,6 +92,23 @@ class Executor(ABC):
     def all_fills(self) -> list[Fill]:
         """All recorded fills. Subclasses should override."""
         return []
+
+    def constrain_intent(self, intent: ExecutionIntent) -> ConstraintResult:
+        """Convert an execution intent into a venue-valid order."""
+        return apply_venue_constraints(intent)
+
+    def execute_intent(self, intent: ExecutionIntent) -> Fill | None:
+        """Execute an intent after applying venue constraints."""
+        result = self.constrain_intent(intent)
+        if result.order is None:
+            return None
+        order = Order(
+            symbol=result.order.symbol,
+            side=result.order.side,
+            qty=result.order.qty,
+            order_type=result.order.order_type,
+        )
+        return self.submit_order(order)
 
     def rebalance(self, target_shares: dict[str, float]) -> list[Fill]:
         """Rebalance to target positions, returning list of fills."""

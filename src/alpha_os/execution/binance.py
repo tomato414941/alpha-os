@@ -7,7 +7,9 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .constraints import ConstraintResult, apply_venue_constraints
 from .executor import Executor, Order, Fill
+from .planning import ExecutionIntent
 
 logger = logging.getLogger(__name__)
 
@@ -353,6 +355,32 @@ class BinanceExecutor(Executor):
         if fill is not None:
             self._update_managed_state(fill)
         return fill
+
+    def constrain_intent(self, intent: ExecutionIntent) -> ConstraintResult:
+        market = self._market_symbol(intent.symbol)
+        result = apply_venue_constraints(
+            intent,
+            min_notional=self._min_notional(market),
+            min_notional_buffer=self._min_notional_buffer,
+            qty_rounder=lambda qty: self._precise_qty(market, qty),
+        )
+        if result.order is None and result.rejection_reason == "below_min_notional":
+            required = (self._min_notional(market) or 0.0) * self._min_notional_buffer
+            logger.warning(
+                "Intent below min notional for %s: $%.4f < $%.4f (qty=%.8f, price=%.2f)",
+                market,
+                intent.notional_value,
+                required,
+                intent.qty,
+                intent.reference_price,
+            )
+        elif result.order is None and result.rejection_reason == "rounded_to_zero":
+            logger.warning(
+                "Intent rounded to zero for %s after venue precision (qty=%.8f)",
+                market,
+                intent.qty,
+            )
+        return result
 
     def _submit_single(self, order: Order) -> Fill | None:
         """Submit a single order without optimizer checks."""

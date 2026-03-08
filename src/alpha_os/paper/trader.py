@@ -36,6 +36,7 @@ from ..execution.planning import (
     build_execution_intent,
     build_target_position,
 )
+from ..execution.constraints import ExecutableOrder
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
@@ -110,6 +111,7 @@ class AllocationPlan:
 @dataclass
 class ExecutionOutcome:
     intents: list[ExecutionIntent]
+    orders: list[ExecutableOrder]
     fills: list[Fill]
     order_failures: int
 
@@ -577,18 +579,21 @@ class Trader:
         current_qty = self.executor.get_position(plan.target_position.symbol)
         intent = build_execution_intent(plan.target_position, current_qty=current_qty)
         if intent is None:
-            return ExecutionOutcome(intents=[], fills=[], order_failures=0)
+            return ExecutionOutcome(intents=[], orders=[], fills=[], order_failures=0)
 
-        pre_positions = {intent.symbol: current_qty}
-        fills = self.executor.rebalance(plan.target_positions)
+        constrained = self.executor.constrain_intent(intent)
+        if constrained.order is None:
+            return ExecutionOutcome(intents=[intent], orders=[], fills=[], order_failures=0)
 
-        filled_symbols = {f.symbol for f in fills}
-        order_failures = sum(
-            1 for sym, tgt in plan.target_positions.items()
-            if abs(tgt - pre_positions.get(sym, 0.0)) > 1e-6
-            and sym not in filled_symbols
+        fill = self.executor.execute_intent(intent)
+        fills = [fill] if fill is not None else []
+        order_failures = 0 if fill is not None else 1
+        return ExecutionOutcome(
+            intents=[intent],
+            orders=[constrained.order],
+            fills=fills,
+            order_failures=order_failures,
         )
-        return ExecutionOutcome(intents=[intent], fills=fills, order_failures=order_failures)
 
     def run_cycle(
         self,
