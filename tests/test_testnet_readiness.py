@@ -29,6 +29,9 @@ class _MockCycleResult:
     n_shortlist_candidates: int = 150
     n_selected_alphas: int = 5
     n_signals_evaluated: int = 5
+    n_skipped_deadband: int = 0
+    n_skipped_min_notional: int = 0
+    n_skipped_rounded_to_zero: int = 0
 
     def __post_init__(self):
         if self.fills is None:
@@ -250,6 +253,29 @@ class TestOrderFailures:
             today_override="2026-03-02",
         )
         assert v.state.consecutive_success_days == 0
+
+
+class TestSkipMetrics:
+    def test_skip_metrics_are_copied_to_report(self, tmp_path):
+        v = ReadinessChecker(
+            state_path=tmp_path / "state.json",
+            report_path=tmp_path / "reports.jsonl",
+        )
+        report = v.validate_cycle(
+            _MockCycleResult(
+                n_skipped_deadband=1,
+                n_skipped_min_notional=2,
+                n_skipped_rounded_to_zero=3,
+            ),
+            {"match": True},
+            _mock_cb(),
+            [],
+            today_override="2026-03-01",
+        )
+
+        assert report.n_skipped_deadband == 1
+        assert report.n_skipped_min_notional == 2
+        assert report.n_skipped_rounded_to_zero == 3
 
 
 class TestFillFields:

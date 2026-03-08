@@ -279,6 +279,37 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signals:    150 evaluated" in output
 
 
+def test_print_paper_result_shows_skip_metrics(capsys):
+    from alpha_os.cli import _print_paper_result
+    from alpha_os.paper.trader import PaperCycleResult
+
+    result = PaperCycleResult(
+        date="2026-03-05T21:52:58",
+        combined_signal=0.0,
+        fills=[],
+        portfolio_value=10000.0,
+        daily_pnl=0.0,
+        daily_return=0.0,
+        dd_scale=1.0,
+        vol_scale=1.0,
+        n_registry_active=615,
+        n_universe_deployed=30,
+        n_shortlist_candidates=30,
+        n_selected_alphas=30,
+        n_signals_evaluated=30,
+        n_skipped_deadband=1,
+        n_skipped_min_notional=2,
+        n_skipped_rounded_to_zero=3,
+    )
+
+    _print_paper_result(result)
+    output = capsys.readouterr().out
+
+    assert "Skips:      deadband=1" in output
+    assert "Skips:      min_notional=2" in output
+    assert "Skips:      rounded_to_zero=3" in output
+
+
 # ---------------------------------------------------------------------------
 # Position display filtering
 # ---------------------------------------------------------------------------

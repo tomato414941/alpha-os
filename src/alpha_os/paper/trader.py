@@ -33,8 +33,8 @@ from ..execution.executor import Executor, Fill
 from ..execution.planning import (
     ExecutionIntent,
     TargetPosition,
-    build_execution_intent,
     build_target_position,
+    plan_execution_intent,
 )
 from ..execution.constraints import ExecutableOrder
 from ..execution.paper import PaperExecutor
@@ -77,6 +77,9 @@ class PaperCycleResult:
     n_selected_alphas: int
     n_signals_evaluated: int
     order_failures: int = 0
+    n_skipped_deadband: int = 0
+    n_skipped_min_notional: int = 0
+    n_skipped_rounded_to_zero: int = 0
     strategic_signal: float | None = None
     regime_adjusted_signal: float | None = None
     tactical_adjusted_signal: float | None = None
@@ -114,6 +117,9 @@ class ExecutionOutcome:
     orders: list[ExecutableOrder]
     fills: list[Fill]
     order_failures: int
+    skipped_deadband: int = 0
+    skipped_min_notional: int = 0
+    skipped_rounded_to_zero: int = 0
 
 
 class Trader:
@@ -578,17 +584,31 @@ class Trader:
         """Execution layer: rebalance to target and report fill failures."""
         self.executor.set_price(self.price_signal, plan.current_price)
         current_qty = self.executor.get_position(plan.target_position.symbol)
-        intent = build_execution_intent(
+        decision = plan_execution_intent(
             plan.target_position,
             current_qty=current_qty,
             rebalance_deadband_usd=self.rebalance_deadband_usd,
         )
+        intent = decision.intent
         if intent is None:
-            return ExecutionOutcome(intents=[], orders=[], fills=[], order_failures=0)
+            return ExecutionOutcome(
+                intents=[],
+                orders=[],
+                fills=[],
+                order_failures=0,
+                skipped_deadband=1 if decision.skip_reason == "deadband" else 0,
+            )
 
         constrained = self.executor.constrain_intent(intent)
         if constrained.order is None:
-            return ExecutionOutcome(intents=[intent], orders=[], fills=[], order_failures=0)
+            return ExecutionOutcome(
+                intents=[intent],
+                orders=[],
+                fills=[],
+                order_failures=0,
+                skipped_min_notional=1 if constrained.rejection_reason == "below_min_notional" else 0,
+                skipped_rounded_to_zero=1 if constrained.rejection_reason == "rounded_to_zero" else 0,
+            )
 
         fill = self.executor.execute_intent(intent)
         fills = [fill] if fill is not None else []
@@ -937,6 +957,9 @@ class Trader:
             n_selected_alphas=len(selected_records),
             n_signals_evaluated=n_evaluated,
             order_failures=order_failures,
+            n_skipped_deadband=execution.skipped_deadband,
+            n_skipped_min_notional=execution.skipped_min_notional,
+            n_skipped_rounded_to_zero=execution.skipped_rounded_to_zero,
             strategic_signal=prediction.strategic_signal,
             regime_adjusted_signal=prediction.regime_adjusted_signal,
             tactical_adjusted_signal=prediction.tactical_adjusted_signal,

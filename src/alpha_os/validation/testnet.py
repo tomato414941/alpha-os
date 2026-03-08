@@ -57,6 +57,9 @@ class DailyReport:
     n_signals_evaluated: int = 0
     # Order failures
     n_order_failures: int = 0
+    n_skipped_deadband: int = 0
+    n_skipped_min_notional: int = 0
+    n_skipped_rounded_to_zero: int = 0
     # Readiness result
     has_errors: bool = False
     error_details: list[str] = field(default_factory=list)
@@ -176,6 +179,9 @@ class ReadinessChecker:
             n_selected_alphas=cycle_result.n_selected_alphas,
             n_signals_evaluated=cycle_result.n_signals_evaluated,
             n_order_failures=order_failures,
+            n_skipped_deadband=getattr(cycle_result, "n_skipped_deadband", 0),
+            n_skipped_min_notional=getattr(cycle_result, "n_skipped_min_notional", 0),
+            n_skipped_rounded_to_zero=getattr(cycle_result, "n_skipped_rounded_to_zero", 0),
             has_errors=len(errors) > 0,
             error_details=errors,
         )

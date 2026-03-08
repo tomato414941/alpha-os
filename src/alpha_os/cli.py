@@ -665,6 +665,12 @@ def _print_paper_result(result) -> None:
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
     print(f"  Selected:   {result.n_selected_alphas} alphas")
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
+    if result.n_skipped_deadband > 0:
+        print(f"  Skips:      deadband={result.n_skipped_deadband}")
+    if result.n_skipped_min_notional > 0:
+        print(f"  Skips:      min_notional={result.n_skipped_min_notional}")
+    if result.n_skipped_rounded_to_zero > 0:
+        print(f"  Skips:      rounded_to_zero={result.n_skipped_rounded_to_zero}")
 
 
 def cmd_paper(args: argparse.Namespace) -> None:
@@ -981,6 +987,12 @@ def _print_testnet_report(report) -> None:
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
     print(f"  Selected:       {report.n_selected_alphas} alphas")
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
+    if report.n_skipped_deadband > 0:
+        print(f"  Skips:          deadband={report.n_skipped_deadband}")
+    if report.n_skipped_min_notional > 0:
+        print(f"  Skips:          min_notional={report.n_skipped_min_notional}")
+    if report.n_skipped_rounded_to_zero > 0:
+        print(f"  Skips:          rounded_to_zero={report.n_skipped_rounded_to_zero}")
     if report.n_fills > 0:
         print(f"  Fills:          {report.n_fills}")
         print(f"  Avg slippage:   {report.mean_slippage_bps:.1f} bps")

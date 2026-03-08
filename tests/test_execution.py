@@ -4,7 +4,11 @@ import pytest
 from alpha_os.execution.constraints import apply_venue_constraints
 from alpha_os.execution.executor import Order
 from alpha_os.execution.paper import PaperExecutor
-from alpha_os.execution.planning import build_execution_intent, build_target_position
+from alpha_os.execution.planning import (
+    build_execution_intent,
+    build_target_position,
+    plan_execution_intent,
+)
 
 
 class TestPaperExecutor:
@@ -165,6 +169,26 @@ class TestExecutionPlanning:
         )
 
         assert intent is None
+
+    def test_plan_execution_intent_reports_deadband_skip_reason(self):
+        target = build_target_position(
+            symbol="BTC",
+            adjusted_signal=0.5,
+            portfolio_value=10000.0,
+            current_price=100.0,
+            max_position_pct=1.0,
+            min_trade_usd=10.0,
+            supports_short=True,
+        )
+
+        decision = plan_execution_intent(
+            target,
+            current_qty=49.95,
+            rebalance_deadband_usd=10.0,
+        )
+
+        assert decision.intent is None
+        assert decision.skip_reason == "deadband"
 
     def test_apply_venue_constraints_rejects_below_min_notional(self):
         target = build_target_position(
