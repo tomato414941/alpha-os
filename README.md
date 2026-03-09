@@ -138,6 +138,9 @@ python -m alpha_os seed-handcrafted --asset BTC --alpha-set baseline
 
 # Run a TOML-defined historical replay matrix
 python -m alpha_os replay-matrix --manifest experiments/observation_window.toml --max-workers 2
+
+# Compare deployed-alpha policy variants around the current best range
+python -m alpha_os replay-matrix --manifest experiments/deployment_window.toml --max-workers 2
 ```
 
 ## Configuration

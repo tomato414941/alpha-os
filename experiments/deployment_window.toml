@@ -1,0 +1,53 @@
+[defaults]
+asset = "BTC"
+start_date = "2025-09-01"
+end_date = "2026-03-05"
+registry_mode = "admission"
+admission_source = "candidates"
+deployment_mode = "refresh"
+sizing_mode = "runtime"
+notes = "Deployment policy sweep around the current observation-window winner."
+
+[defaults.overrides]
+lifecycle.candidate_quality_min = 1.10
+lifecycle.active_quality_min = 0.0
+paper.rebalance_deadband_usd = 5.0
+deployment.max_alphas = 40
+deployment.max_replacements = 1
+deployment.promotion_margin = 0.05
+
+[[experiment]]
+name = "deployment-40-margin-005"
+
+[[experiment]]
+name = "deployment-50-margin-005"
+
+[experiment.overrides.deployment]
+max_alphas = 50
+
+[[experiment]]
+name = "deployment-60-margin-005"
+
+[experiment.overrides.deployment]
+max_alphas = 60
+
+[[experiment]]
+name = "deployment-40-margin-000"
+
+[experiment.overrides.deployment]
+max_alphas = 40
+promotion_margin = 0.0
+
+[[experiment]]
+name = "deployment-40-margin-010"
+
+[experiment.overrides.deployment]
+max_alphas = 40
+promotion_margin = 0.10
+
+[[experiment]]
+name = "deployment-40-repl-3"
+
+[experiment.overrides.deployment]
+max_alphas = 40
+max_replacements = 3
