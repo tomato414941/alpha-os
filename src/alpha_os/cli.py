@@ -1409,9 +1409,15 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
     )
 
     result = run.payload["result"]
+    profile = run.payload.get("runtime_profile", {})
+    profile_id = profile.get("profile_id", "")
+    profile_commit = profile.get("git_commit", "")
     print(f"Replay experiment: {run.experiment_id}")
     print(f"  Detail:   {run.detail_path}")
     print(f"  Index:    {run.index_path}")
+    if profile_id:
+        suffix = f" ({profile_commit[:8]})" if profile_commit else ""
+        print(f"  Profile:  {profile_id[:12]}{suffix}")
     print(f"  Deployment: {run.payload['deployment']['mode']}")
     print(f"  Final:    ${result['final_value']:,.2f}")
     print(f"  Return:   {result['total_return']:+.2%}")
@@ -1427,16 +1433,23 @@ def cmd_replay_matrix(args: argparse.Namespace) -> None:
     runs = run_replay_matrix(matrix, max_workers=args.max_workers)
 
     print(f"Replay matrix: {args.manifest}")
+    profile_ids: set[str] = set()
     for run in runs:
         result = run.payload["result"]
+        profile_id = run.payload.get("runtime_profile", {}).get("profile_id", "")
+        if profile_id:
+            profile_ids.add(profile_id)
+        profile_text = f" profile={profile_id[:12]}" if profile_id else ""
         print(
             f"  - {run.payload['name']}: "
             f"return={result['total_return']:+.2%} "
             f"sharpe={result['sharpe']:.3f} "
             f"dd={result['max_drawdown']:.2%} "
             f"trades={result['total_trades']} "
+            f"{profile_text} "
             f"detail={run.detail_path}"
         )
+    print(f"  Profiles: {len(profile_ids)} unique across {len(runs)} runs")
 
 
 def cmd_admission_daemon(args: argparse.Namespace) -> None:

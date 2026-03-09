@@ -1,6 +1,7 @@
 """Tests for the trade CLI command, Trader rename, and Phase 4 features."""
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -243,6 +244,125 @@ def test_replay_matrix_parser():
     assert args.command == "replay-matrix"
     assert args.manifest == "experiments/deadband.toml"
     assert args.max_workers == 4
+
+
+def test_cmd_replay_experiment_prints_profile(capsys, monkeypatch):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_replay_experiment
+    from alpha_os.experiments.replay import ReplayExperimentRun
+
+    monkeypatch.setattr(
+        "alpha_os.experiments.replay.run_replay_experiment",
+        lambda spec: ReplayExperimentRun(
+            experiment_id="exp-1",
+            detail_path=Path("/tmp/detail.json"),
+            index_path=Path("/tmp/index.jsonl"),
+            payload={
+                "deployment": {"mode": "refresh"},
+                "runtime_profile": {
+                    "profile_id": "abcdef1234567890",
+                    "git_commit": "deadbeefcafebabe",
+                },
+                "result": {
+                    "final_value": 10100.0,
+                    "total_return": 0.01,
+                    "sharpe": 1.2,
+                    "max_drawdown": 0.03,
+                    "total_trades": 7,
+                },
+            },
+        ),
+    )
+
+    cmd_replay_experiment(
+        Namespace(
+            name="smoke",
+            asset="BTC",
+            start="2026-03-01",
+            end="2026-03-05",
+            config=None,
+            registry_mode="current",
+            source="candidates",
+            fail_state="rejected",
+            deployment_mode="refresh",
+            sizing_mode="runtime",
+            set=[],
+            notes="",
+        )
+    )
+    output = capsys.readouterr().out
+    assert "Profile:  abcdef123456" in output
+
+
+def test_cmd_replay_matrix_prints_profiles(capsys, monkeypatch):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_replay_matrix
+    from alpha_os.experiments.matrix import ReplayMatrixSpec
+    from alpha_os.experiments.replay import ReplayExperimentRun, ReplayExperimentSpec
+
+    monkeypatch.setattr(
+        "alpha_os.experiments.matrix.load_replay_matrix",
+        lambda path: ReplayMatrixSpec(
+            defaults={},
+            experiments=[
+                ReplayExperimentSpec(
+                    name="exp-a",
+                    asset="BTC",
+                    start_date="2026-03-01",
+                    end_date="2026-03-05",
+                ),
+                ReplayExperimentSpec(
+                    name="exp-b",
+                    asset="BTC",
+                    start_date="2026-03-01",
+                    end_date="2026-03-05",
+                ),
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.experiments.matrix.run_replay_matrix",
+        lambda matrix, max_workers: [
+            ReplayExperimentRun(
+                experiment_id="exp-a",
+                detail_path=Path("/tmp/a.json"),
+                index_path=Path("/tmp/index.jsonl"),
+                payload={
+                    "name": "exp-a",
+                    "runtime_profile": {"profile_id": "aaaaabbbbbcccc"},
+                    "result": {
+                        "total_return": 0.01,
+                        "sharpe": 1.0,
+                        "max_drawdown": 0.02,
+                        "total_trades": 5,
+                    },
+                },
+            ),
+            ReplayExperimentRun(
+                experiment_id="exp-b",
+                detail_path=Path("/tmp/b.json"),
+                index_path=Path("/tmp/index.jsonl"),
+                payload={
+                    "name": "exp-b",
+                    "runtime_profile": {"profile_id": "dddddeeeeeffff"},
+                    "result": {
+                        "total_return": 0.02,
+                        "sharpe": 1.1,
+                        "max_drawdown": 0.03,
+                        "total_trades": 6,
+                    },
+                },
+            ),
+        ],
+    )
+
+    cmd_replay_matrix(Namespace(manifest="experiments/demo.toml", max_workers=2))
+    output = capsys.readouterr().out
+    assert "profile=aaaaabbbbbcc" in output
+    assert "profile=dddddeeeeeff" in output
+    assert "Profiles: 2 unique across 2 runs" in output
 
 
 def test_normalize_trade_config_preserves_requested_profile():
