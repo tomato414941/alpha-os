@@ -284,6 +284,27 @@ read it in this order:
 This order helps separate research, deployment, runtime planning, and
 operational verification.
 
+## Participant-System Mapping
+
+It can be useful to think about `alpha-os` like a participant-ranking system
+such as Numerai or a market with many forecasters. The analogy is not exact,
+but the governance mapping is useful:
+
+| Participant system idea | `alpha-os` counterpart |
+| ----------------------- | ---------------------- |
+| participant / forecaster | one alpha expression |
+| submission set | registry (`alphas`) |
+| eligible participant | `state=active` in the registry |
+| live allocation / stake | deployed `trading_universe` slot |
+| promotion | enter or remain in `trading_universe` |
+| demotion | move to `dormant` or fail to stay deployed |
+| payout proxy | blended quality, deployment score, and realized cycle contribution |
+| uniqueness / originality | diversity and correlation filtering |
+
+The important takeaway is that `alpha-os` is not trying to trade every
+participant. It is trying to govern a large candidate set and deploy only a
+small subset at any given time.
+
 ### Position sizing
 
 ```
