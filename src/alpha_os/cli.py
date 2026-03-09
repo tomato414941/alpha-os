@@ -24,6 +24,7 @@ from alpha_os.evolution.archive import AlphaArchive
 from alpha_os.evolution.behavior import compute_behavior
 from alpha_os.evolution.gp import GPConfig, GPEvolver
 from alpha_os.validation.purged_cv import purged_walk_forward
+from alpha_os.runtime_profile import build_runtime_profile
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -697,6 +698,10 @@ def _print_paper_result(result) -> None:
         print(f"    {f.side.upper():>4} {f.qty:.6f} {f.symbol} @ ${f.price:,.2f}")
     print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
     print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
+    if getattr(result, "profile_id", ""):
+        commit = getattr(result, "profile_commit", "")
+        suffix = f" ({commit[:8]})" if commit else ""
+        print(f"  Profile:    {result.profile_id[:12]}{suffix}")
     print(f"  Registry:   {result.n_registry_active} active")
     print(f"  Deployed:   {result.n_deployed_alphas} alphas")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
@@ -1016,6 +1021,9 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
 
 def _print_testnet_report(report) -> None:
     print(f"\n--- Testnet Readiness Report ({report.date}) ---")
+    if getattr(report, "profile_id", ""):
+        suffix = f" ({report.profile_commit[:8]})" if report.profile_commit else ""
+        print(f"  Profile:        {report.profile_id[:12]}{suffix}")
     print(f"  Cycle OK:       {report.cycle_completed}")
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
@@ -1561,6 +1569,22 @@ def _latest_deployed_count(latest: dict | None) -> int:
     )
 
 
+def _current_runtime_profile(cfg, adir: Path, asset: str) -> tuple[str, str]:
+    from alpha_os.alpha.registry import AlphaRegistry
+
+    registry = AlphaRegistry(adir / "alpha_registry.db")
+    try:
+        deployed_ids = [record.alpha_id for record in registry.list_deployed_alphas()]
+    finally:
+        registry.close()
+    profile = build_runtime_profile(
+        asset=asset,
+        config=cfg,
+        deployed_alpha_ids=deployed_ids,
+    )
+    return profile.profile_id, profile.git_commit
+
+
 def cmd_runtime_status(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -1576,6 +1600,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
     registry = _registry_status(adir)
+    current_profile_id, current_profile_commit = _current_runtime_profile(cfg, adir, args.asset)
     findings = _runtime_observation_findings(latest, registry)
 
     print(f"Runtime Status ({args.asset.upper()})")
@@ -1591,6 +1616,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"  Registry:  active={registry['active']} dormant={registry['dormant']} "
         f"rejected={registry['rejected']} deployed={registry['deployed']}"
     )
+    commit_suffix = f" ({current_profile_commit[:8]})" if current_profile_commit else ""
+    print(f"  Profile:   current={current_profile_id[:12]}{commit_suffix}")
 
     if latest is None:
         print("  Latest:    no readiness reports yet")
@@ -1601,6 +1628,11 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"  Latest:    {latest['date']} [{status}] PV=${latest['portfolio_value']:,.2f} "
         f"PnL=${latest['daily_pnl']:+,.2f} fills={latest['n_fills']}"
     )
+    latest_profile_id = latest.get("profile_id", "")
+    latest_profile_commit = latest.get("profile_commit", "")
+    if latest_profile_id:
+        latest_suffix = f" ({latest_profile_commit[:8]})" if latest_profile_commit else ""
+        print(f"  Profile:   latest={latest_profile_id[:12]}{latest_suffix}")
     print(
         f"  Selection: registry={latest['n_registry_active']} "
         f"deployed={_latest_deployed_count(latest)} "
@@ -1630,6 +1662,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     print(f"  Observe:   {verdict}")
     for finding in findings:
         print(f"    - {finding}")
+    if latest_profile_id and latest_profile_id != current_profile_id:
+        print("    - latest report was recorded under a different runtime profile")
     if latest["n_registry_active"] != registry["active"]:
         print(
             "  Note:      registry DB count differs from latest readiness report; "

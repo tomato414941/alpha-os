@@ -21,6 +21,8 @@ def test_readiness_paths_are_under_metrics_dir(tmp_path):
 
 @dataclass
 class _MockCycleResult:
+    profile_id: str = "profile-123"
+    profile_commit: str = "deadbeefcafebabe"
     portfolio_value: float = 10000.0
     daily_pnl: float = 50.0
     daily_return: float = 0.005
@@ -121,6 +123,22 @@ class TestReadinessState:
 
 
 class TestDailyReport:
+    def test_profile_fields_are_copied_to_report(self, tmp_path):
+        v = ReadinessChecker(
+            state_path=tmp_path / "state.json",
+            report_path=tmp_path / "reports.jsonl",
+        )
+        report = v.validate_cycle(
+            _MockCycleResult(),
+            {"match": True},
+            _mock_cb(),
+            [],
+            today_override="2026-03-01",
+        )
+        assert report.profile_id == "profile-123"
+        assert report.profile_commit == "deadbeefcafebabe"
+        assert v.state.last_profile_id == "profile-123"
+
     def test_reconciliation_mismatch_is_error(self, tmp_path):
         v = ReadinessChecker(
             state_path=tmp_path / "state.json",

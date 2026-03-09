@@ -6,8 +6,6 @@ with datetime keys.
 """
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import time
 from dataclasses import dataclass
@@ -53,6 +51,7 @@ from ..alpha.combiner import (
 )
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
+from ..runtime_profile import RuntimeProfile, build_runtime_profile
 from ..voting.combiner import vote_combine
 from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
@@ -78,6 +77,8 @@ class PaperCycleResult:
     n_shortlist_candidates: int
     n_selected_alphas: int
     n_signals_evaluated: int
+    profile_id: str = ""
+    profile_commit: str = ""
     order_failures: int = 0
     n_skipped_deadband: int = 0
     n_skipped_min_notional: int = 0
@@ -623,28 +624,18 @@ class Trader:
             order_failures=order_failures,
         )
 
+    def _runtime_profile(self, deployed_records=None) -> RuntimeProfile:
+        records = deployed_records
+        if records is None:
+            records = self.registry.list_deployed_alphas()
+        return build_runtime_profile(
+            asset=self.asset,
+            config=self.config,
+            deployed_alpha_ids=[record.alpha_id for record in records],
+        )
+
     def _strategy_epoch(self, universe_records) -> str:
-        payload = {
-            "asset": self.asset,
-            "universe": sorted(record.alpha_id for record in universe_records),
-            "paper": {
-                "max_position_pct": self.config.paper.max_position_pct,
-                "min_trade_usd": self.config.paper.min_trade_usd,
-                "rebalance_deadband_usd": self.config.paper.rebalance_deadband_usd,
-                "max_trading_alphas": self.config.paper.max_trading_alphas,
-                "combine_mode": self.config.paper.combine_mode,
-            },
-            "execution": {
-                "imbalance_threshold": self.config.execution.imbalance_threshold,
-                "vpin_threshold": self.config.execution.vpin_threshold,
-                "spread_threshold_bps": self.config.execution.spread_threshold_bps,
-                "max_slices": self.config.execution.max_slices,
-                "signal_lookback_minutes": self.config.execution.signal_lookback_minutes,
-                "max_signal_age_seconds": self.config.execution.max_signal_age_seconds,
-            },
-        }
-        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha1(raw.encode()).hexdigest()
+        return self._runtime_profile(universe_records).profile_id
 
     def run_cycle(
         self,
@@ -674,6 +665,7 @@ class Trader:
 
         # Cooldown: skip if last snapshot was too recent
         last_snapshot = self.portfolio_tracker.get_last_snapshot()
+        current_profile = self._runtime_profile()
         if last_snapshot is not None and simulation_date is None:
             last_recorded = self.portfolio_tracker._conn.execute(
                 "SELECT recorded_at FROM portfolio_snapshots WHERE date = ?",
@@ -683,6 +675,8 @@ class Trader:
                 logger.info("Cooldown: last cycle was < %ds ago", _MIN_CYCLE_COOLDOWN)
                 return PaperCycleResult(
                     date=cycle_key,
+                    profile_id=current_profile.profile_id,
+                    profile_commit=current_profile.git_commit,
                     combined_signal=last_snapshot.combined_signal,
                     fills=[],
                     portfolio_value=last_snapshot.portfolio_value,
@@ -704,8 +698,9 @@ class Trader:
             raise RuntimeError(
                 "No deployed alphas. Run `refresh-deployed-alphas` before trading."
             )
+        current_profile = self._runtime_profile(deployed_universe)
         self.circuit_breaker.sync_strategy_epoch(
-            self._strategy_epoch(deployed_universe),
+            current_profile.profile_id,
             prev_equity,
         )
         self.circuit_breaker.reset_daily(prev_equity)
@@ -713,7 +708,8 @@ class Trader:
         if not safe:
             logger.warning("Circuit breaker tripped: %s", reason)
             return PaperCycleResult(
-                date=cycle_key, combined_signal=0.0, fills=[],
+                date=cycle_key, profile_id=current_profile.profile_id,
+                profile_commit=current_profile.git_commit, combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0,
                 n_registry_active=0, n_deployed_alphas=0,
@@ -765,7 +761,8 @@ class Trader:
         if len(matrix) < 2:
             logger.warning("Insufficient data for %s (%d rows)", today_date, len(matrix))
             return PaperCycleResult(
-                date=cycle_key, combined_signal=0.0, dd_scale=1.0,
+                date=cycle_key, profile_id=current_profile.profile_id,
+                profile_commit=current_profile.git_commit, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
                 n_deployed_alphas=n_deployed_alphas,
@@ -778,7 +775,8 @@ class Trader:
         prices_arr = data[self.price_signal]
         if len(prices_arr) < 2:
             return PaperCycleResult(
-                date=cycle_key, combined_signal=0.0, dd_scale=1.0,
+                date=cycle_key, profile_id=current_profile.profile_id,
+                profile_commit=current_profile.git_commit, combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
                 n_deployed_alphas=n_deployed_alphas,
@@ -974,6 +972,8 @@ class Trader:
 
         return PaperCycleResult(
             date=cycle_key,
+            profile_id=current_profile.profile_id,
+            profile_commit=current_profile.git_commit,
             combined_signal=prediction.combined_signal,
             fills=fills,
             portfolio_value=portfolio_value,

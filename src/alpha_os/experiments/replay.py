@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import re
 import shutil
-import subprocess
 import tempfile
 import time
 import tomllib
@@ -20,8 +19,9 @@ from ..alpha.admission_replay import (
 )
 from ..alpha.registry import AlphaRegistry, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
-from ..config import PROJECT_DIR, Config, asset_data_dir
+from ..config import Config, asset_data_dir
 from ..paper.simulator import run_replay
+from ..runtime_profile import build_runtime_profile, git_commit
 
 
 @dataclass(frozen=True)
@@ -89,18 +89,6 @@ def _slugify(name: str) -> str:
     return slug or "experiment"
 
 
-def _git_commit() -> str:
-    result = subprocess.run(
-        ["git", "-C", str(PROJECT_DIR), "rev-parse", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
-
-
 def _registry_counts(db_path: Path) -> dict[str, int]:
     registry = AlphaRegistry(db_path)
     try:
@@ -121,6 +109,14 @@ def _deployed_alphas_count(db_path: Path) -> int:
     registry = AlphaRegistry(db_path)
     try:
         return registry.count_deployed_alphas()
+    finally:
+        registry.close()
+
+
+def _deployed_alpha_ids(db_path: Path) -> list[str]:
+    registry = AlphaRegistry(db_path)
+    try:
+        return [record.alpha_id for record in registry.list_deployed_alphas()]
     finally:
         registry.close()
 
@@ -156,6 +152,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
     index_path = out_dir / "index.jsonl"
 
     registry_db = asset_data_dir(asset) / "alpha_registry.db"
+    commit = git_commit()
     registry_info: dict[str, Any] = {
         "mode": spec.registry_mode,
         "source": None,
@@ -220,6 +217,18 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                     "deployed_count": _deployed_alphas_count(replay_db),
                 }
 
+            runtime_profile = build_runtime_profile(
+                asset=asset,
+                config=cfg,
+                deployed_alpha_ids=_deployed_alpha_ids(replay_db),
+                commit=commit,
+                extra={
+                    "registry_mode": spec.registry_mode,
+                    "deployment_mode": spec.deployment_mode,
+                    "sizing_mode": spec.sizing_mode,
+                },
+            )
+
             result = run_replay(
                 asset=asset,
                 config=cfg,
@@ -229,6 +238,17 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                 sizing_mode=spec.sizing_mode,
             )
     elif spec.registry_mode == "current":
+        runtime_profile = build_runtime_profile(
+            asset=asset,
+            config=cfg,
+            deployed_alpha_ids=_deployed_alpha_ids(registry_db),
+            commit=commit,
+            extra={
+                "registry_mode": spec.registry_mode,
+                "deployment_mode": spec.deployment_mode,
+                "sizing_mode": spec.sizing_mode,
+            },
+        )
         result = run_replay(
             asset=asset,
             config=cfg,
@@ -244,7 +264,12 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "experiment_id": experiment_id,
         "name": spec.name,
         "created_at": now.isoformat(),
-        "git_commit": _git_commit(),
+        "git_commit": commit,
+        "runtime_profile": {
+            "profile_id": runtime_profile.profile_id,
+            "git_commit": runtime_profile.git_commit,
+            "payload": runtime_profile.payload,
+        },
         "spec": {
             "asset": asset,
             "start_date": spec.start_date,
@@ -271,6 +296,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "name": spec.name,
         "created_at": payload["created_at"],
         "git_commit": payload["git_commit"],
+        "profile_id": runtime_profile.profile_id,
         "asset": asset,
         "start_date": spec.start_date,
         "end_date": spec.end_date,

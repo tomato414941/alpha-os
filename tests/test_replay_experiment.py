@@ -54,7 +54,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
         lambda asset: asset_root,
     )
     monkeypatch.setattr(
-        "alpha_os.experiments.replay._git_commit",
+        "alpha_os.experiments.replay.git_commit",
         lambda: "deadbeef",
     )
     monkeypatch.setattr(
@@ -95,10 +95,13 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
 
     assert payload["name"] == "smoke"
     assert payload["git_commit"] == "deadbeef"
+    assert payload["runtime_profile"]["profile_id"]
+    assert payload["runtime_profile"]["git_commit"] == "deadbeef"
     assert payload["spec"]["deployment_mode"] == "refresh"
     assert payload["overrides"]["lifecycle.candidate_quality_min"] == 1.1
     assert payload["result"]["final_value"] == 10123.0
     assert payload["result"]["n_skipped_deadband"] == 1
     assert payload["result"]["n_skipped_min_notional"] == 2
     assert payload["result"]["n_skipped_rounded_to_zero"] == 3
+    assert summary["profile_id"] == payload["runtime_profile"]["profile_id"]
     assert summary["detail_path"] == str(run.detail_path)

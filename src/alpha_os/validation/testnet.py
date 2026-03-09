@@ -33,6 +33,8 @@ class DailyReport:
     timestamp: float
     # Cycle outcome
     cycle_completed: bool
+    profile_id: str = ""
+    profile_commit: str = ""
     error_message: str = ""
     # Portfolio
     portfolio_value: float = 0.0
@@ -76,6 +78,7 @@ class ReadinessState:
     first_run_date: str = ""
     target_days: int = 10
     passed: bool = False
+    last_profile_id: str = ""
 
 
 class ReadinessChecker:
@@ -161,6 +164,8 @@ class ReadinessChecker:
         report = DailyReport(
             date=today,
             timestamp=time.time(),
+            profile_id=getattr(cycle_result, "profile_id", ""),
+            profile_commit=getattr(cycle_result, "profile_commit", ""),
             cycle_completed=cycle_ok,
             portfolio_value=cycle_result.portfolio_value,
             daily_pnl=cycle_result.daily_pnl,
@@ -209,6 +214,7 @@ class ReadinessChecker:
         else:
             s.consecutive_success_days += 1
             s.last_success_date = today
+        s.last_profile_id = report.profile_id
 
         if s.consecutive_success_days >= s.target_days:
             s.passed = True
