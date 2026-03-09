@@ -375,6 +375,64 @@ This means:
 During this phase, documentation, observability, and operational hygiene are
 in-scope. New strategy complexity is not.
 
+### Participant-System Analogy
+
+It is useful to think about `alpha-os` as a participant-governance system:
+
+| Participant system idea | `alpha-os` counterpart |
+| ----------------------- | ---------------------- |
+| participant / forecaster | one alpha expression |
+| submission set | registry (`alphas`) |
+| eligible participant | `state=active` in the registry |
+| live allocation / stake | deployed `trading_universe` slot |
+| promotion | enter or remain in `trading_universe` |
+| demotion | move to `dormant` or fail to stay deployed |
+| payout proxy | blended quality, deployment score, realized cycle contribution |
+| uniqueness / originality | diversity and correlation filtering |
+
+The analogy is imperfect, but it is useful because the main problem is not
+"how to trade every alpha". The main problem is how to govern many candidates
+and allocate only a small subset into live trading.
+
+### Diversity As A Likely Next Bottleneck
+
+If the current simplified runtime still fails to show a useful edge after the
+observation window, alpha diversity is one of the strongest next bottleneck
+candidates.
+
+The target is not "more alphas" by itself. The target is:
+
+- more independent alphas
+- less duplication across close variants
+- better selection and allocation across distinct views
+
+That is the direction in which `alpha-os` would become more similar to a
+participant system with many independent contributors.
+
+### Hand-Crafted BTC Baseline Candidates
+
+Before increasing search complexity further, a small hand-crafted BTC baseline
+set is useful as a benchmark. Good first candidates include:
+
+1. momentum: `(roc_20 btc_ohlcv)`
+2. short-horizon mean reversion: `(neg (zscore (roc_5 btc_ohlcv)))`
+3. BTC vs equity relative strength: `(sub (roc_20 btc_ohlcv) (roc_20 sp500))`
+4. volatility-conditioned trend:
+   `(if_gt vix_close 25.0 (neg (roc_10 btc_ohlcv)) (roc_10 btc_ohlcv))`
+5. sentiment-conditioned reversal:
+   `(if_gt fear_greed 70.0 (neg btc_ohlcv) btc_ohlcv)`
+6. on-chain activity imbalance:
+   `(sub (zscore btc_mempool_size) (zscore btc_hashrate))`
+7. funding-rate mean reversion:
+   `(sub funding_rate_btc (mean_5 funding_rate_btc))`
+8. order-book imbalance fade: `(neg book_imbalance_btc)`
+9. spread compression preference: `(neg spread_bps_btc)`
+10. VPIN-conditioned flow signal:
+   `(if_gt vpin_btc 0.8 (neg trade_flow_btc) trade_flow_btc)`
+
+These should be treated as normal research inputs and pass through the same
+validation, admission, and deployment path as generated alphas.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
