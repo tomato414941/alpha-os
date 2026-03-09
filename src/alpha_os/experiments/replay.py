@@ -19,7 +19,7 @@ from ..alpha.admission_replay import (
     materialize_admission_snapshot,
 )
 from ..alpha.registry import AlphaRegistry, AlphaState
-from ..alpha.trading_universe import refresh_trading_universe
+from ..alpha.deployed_alphas import refresh_deployed_alphas
 from ..config import PROJECT_DIR, Config, asset_data_dir
 from ..paper.simulator import run_replay
 
@@ -34,7 +34,7 @@ class ReplayExperimentSpec:
     registry_mode: str = "current"
     admission_source: str = "candidates"
     fail_state: str = AlphaState.REJECTED
-    universe_mode: str = "current"
+    deployment_mode: str = "current"
     sizing_mode: str = "runtime"
     overrides: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
@@ -117,10 +117,10 @@ def _registry_counts(db_path: Path) -> dict[str, int]:
         registry.close()
 
 
-def _trading_universe_count(db_path: Path) -> int:
+def _deployed_alphas_count(db_path: Path) -> int:
     registry = AlphaRegistry(db_path)
     try:
-        return registry.count_trading_universe()
+        return registry.count_deployed_alphas()
     finally:
         registry.close()
 
@@ -162,13 +162,13 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "fail_state": None,
         "counts": _registry_counts(registry_db),
     }
-    universe_info: dict[str, Any] = {
-        "mode": spec.universe_mode,
-        "deployed_count": _trading_universe_count(registry_db),
+    deployment_info: dict[str, Any] = {
+        "mode": spec.deployment_mode,
+        "deployed_count": _deployed_alphas_count(registry_db),
     }
 
     t0 = time.perf_counter()
-    use_temp_registry = spec.registry_mode == "admission" or spec.universe_mode == "refresh"
+    use_temp_registry = spec.registry_mode == "admission" or spec.deployment_mode == "refresh"
     if use_temp_registry:
         with tempfile.TemporaryDirectory(prefix="alpha_os_experiment_") as tmp:
             replay_db = Path(tmp) / "registry.db"
@@ -198,16 +198,16 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             else:
                 raise ValueError(f"Unsupported registry mode: {spec.registry_mode}")
 
-            if spec.universe_mode == "refresh":
-                refresh_stats = refresh_trading_universe(
+            if spec.deployment_mode == "refresh":
+                refresh_stats = refresh_deployed_alphas(
                     replay_db,
                     cfg,
                     forward_db_path=asset_data_dir(asset) / "forward_returns.db",
                     dry_run=False,
                     backup=False,
                 )
-                universe_info = {
-                    "mode": spec.universe_mode,
+                deployment_info = {
+                    "mode": spec.deployment_mode,
                     "deployed_count": refresh_stats.plan.deployed_count,
                     "kept_count": len(refresh_stats.plan.kept_ids),
                     "added_count": len(refresh_stats.plan.added_ids),
@@ -215,9 +215,9 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                     "replacement_count": refresh_stats.plan.replacement_count,
                 }
             else:
-                universe_info = {
-                    "mode": spec.universe_mode,
-                    "deployed_count": _trading_universe_count(replay_db),
+                deployment_info = {
+                    "mode": spec.deployment_mode,
+                    "deployed_count": _deployed_alphas_count(replay_db),
                 }
 
             result = run_replay(
@@ -253,14 +253,14 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             "registry_mode": spec.registry_mode,
             "admission_source": spec.admission_source,
             "fail_state": spec.fail_state,
-            "universe_mode": spec.universe_mode,
+            "deployment_mode": spec.deployment_mode,
             "sizing_mode": spec.sizing_mode,
             "notes": spec.notes,
         },
         "overrides": spec.overrides,
         "resolved_config": asdict(cfg),
         "registry": registry_info,
-        "universe": universe_info,
+        "deployment": deployment_info,
         "result": _serialize_result(result),
         "elapsed_seconds": elapsed,
     }
@@ -276,7 +276,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "end_date": spec.end_date,
         "registry_mode": spec.registry_mode,
         "admission_source": spec.admission_source,
-        "universe_mode": spec.universe_mode,
+        "deployment_mode": spec.deployment_mode,
         "overrides": spec.overrides,
         "final_value": payload["result"]["final_value"],
         "total_return": payload["result"]["total_return"],

@@ -187,15 +187,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
-    # refresh-universe
-    ru = sub.add_parser(
-        "refresh-universe",
-        help="Refresh the deployed trading universe from the registry",
+    # refresh-deployed-alphas
+    rda = sub.add_parser(
+        "refresh-deployed-alphas",
+        help="Refresh deployed alphas from the registry",
     )
-    ru.add_argument("--asset", type=str, default="BTC")
-    ru.add_argument("--config", type=str, default=None)
-    ru.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
-    ru.add_argument(
+    rda.add_argument("--asset", type=str, default="BTC")
+    rda.add_argument("--config", type=str, default=None)
+    rda.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
+    rda.add_argument(
         "--no-backup",
         action="store_true",
         help="Skip copying alpha_registry.db before rewrite",
@@ -230,10 +230,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Fallback state for records that fail admission replay",
     )
     rex.add_argument(
-        "--universe-mode",
+        "--deployment-mode",
         choices=["current", "refresh"],
         default="current",
-        help="Use the current deployed universe or refresh it inside the experiment",
+        help="Use the current deployed alpha set or refresh it inside the experiment",
     )
     rex.add_argument(
         "--sizing-mode",
@@ -699,7 +699,7 @@ def _print_paper_result(result) -> None:
     print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
     print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
     print(f"  Registry:   {result.n_registry_active} active")
-    print(f"  Universe:   {result.n_universe_deployed} deployed")
+    print(f"  Deployed:   {result.n_deployed_alphas} alphas")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
     print(f"  Selected:   {result.n_selected_alphas} alphas")
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
@@ -1021,7 +1021,7 @@ def _print_testnet_report(report) -> None:
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
     print(f"  Registry:       {report.n_registry_active} active")
-    print(f"  Universe:       {report.n_universe_deployed} deployed")
+    print(f"  Deployed:       {report.n_deployed_alphas} alphas")
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
     print(f"  Selected:       {report.n_selected_alphas} alphas")
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
@@ -1350,13 +1350,13 @@ def cmd_rebuild_registry(args: argparse.Namespace) -> None:
         print("  Diversity cache cleared.")
 
 
-def cmd_refresh_universe(args: argparse.Namespace) -> None:
+def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
-    from alpha_os.alpha.trading_universe import refresh_trading_universe
+    from alpha_os.alpha.deployed_alphas import refresh_deployed_alphas
 
     db_path = asset_data_dir(args.asset) / "alpha_registry.db"
-    stats = refresh_trading_universe(
+    stats = refresh_deployed_alphas(
         db_path,
         cfg,
         dry_run=args.dry_run,
@@ -1364,10 +1364,10 @@ def cmd_refresh_universe(args: argparse.Namespace) -> None:
     )
 
     mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(f"Trading universe refresh [{mode}]: asset={args.asset} db={stats.registry_db}")
+    print(f"Deployed alphas refresh [{mode}]: asset={args.asset} db={stats.registry_db}")
     print(f"  Registry active: {stats.plan.active_count}")
-    print(f"  Universe before: {stats.plan.current_count}")
-    print(f"  Universe now:    {stats.plan.deployed_count}")
+    print(f"  Deployed before: {stats.plan.current_count}")
+    print(f"  Deployed now:    {stats.plan.deployed_count}")
     print(f"  Kept:            {len(stats.plan.kept_ids)}")
     print(f"  Added:           {len(stats.plan.added_ids)}")
     print(f"  Dropped:         {len(stats.plan.dropped_ids)}")
@@ -1394,7 +1394,7 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
             registry_mode=args.registry_mode,
             admission_source=args.source,
             fail_state=args.fail_state,
-            universe_mode=args.universe_mode,
+            deployment_mode=args.deployment_mode,
             sizing_mode=args.sizing_mode,
             overrides=overrides,
             notes=args.notes,
@@ -1405,7 +1405,7 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
     print(f"Replay experiment: {run.experiment_id}")
     print(f"  Detail:   {run.detail_path}")
     print(f"  Index:    {run.index_path}")
-    print(f"  Universe: {run.payload['universe']['mode']}")
+    print(f"  Deployment: {run.payload['deployment']['mode']}")
     print(f"  Final:    ${result['final_value']:,.2f}")
     print(f"  Return:   {result['total_return']:+.2%}")
     print(f"  Sharpe:   {result['sharpe']:.3f}")
@@ -1529,8 +1529,8 @@ def _registry_status(adir: Path) -> dict[str, int]:
             "rejected": cur.execute(
                 "SELECT COUNT(*) FROM alphas WHERE state = 'rejected'"
             ).fetchone()[0],
-            "universe": cur.execute(
-                "SELECT COUNT(*) FROM trading_universe"
+            "deployed": cur.execute(
+                "SELECT COUNT(*) FROM deployed_alphas"
             ).fetchone()[0],
         }
     finally:
@@ -1586,7 +1586,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     print(
         f"  Registry:  active={registry['active']} dormant={registry['dormant']} "
-        f"rejected={registry['rejected']} universe={registry['universe']}"
+        f"rejected={registry['rejected']} deployed={registry['deployed']}"
     )
 
     if latest is None:
@@ -1600,7 +1600,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     print(
         f"  Selection: registry={latest['n_registry_active']} "
-        f"universe={latest['n_universe_deployed']} "
+        f"deployed={latest['n_deployed_alphas']} "
         f"selected={latest['n_selected_alphas']}"
     )
     print(
@@ -1708,8 +1708,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_lifecycle(args)
     elif args.command == "rebuild-registry":
         cmd_rebuild_registry(args)
-    elif args.command == "refresh-universe":
-        cmd_refresh_universe(args)
+    elif args.command == "refresh-deployed-alphas":
+        cmd_refresh_deployed_alphas(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "replay-matrix":

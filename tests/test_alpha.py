@@ -19,7 +19,7 @@ from alpha_os.alpha.lifecycle import (
     apply_tenure_bonus,
 )
 from alpha_os.alpha.quality import QualityEstimate
-from alpha_os.alpha.trading_universe import plan_trading_universe
+from alpha_os.alpha.deployed_alphas import plan_deployed_alphas
 from alpha_os.alpha.combiner import (
     select_low_correlation,
     equal_weight_combine,
@@ -161,37 +161,37 @@ class TestAlphaRegistry:
         assert reg.get("legacy_probation").state == AlphaState.ACTIVE
         reg.close()
 
-    def test_replace_and_list_trading_universe(self, tmp_path):
+    def test_replace_and_list_deployed_alphas(self, tmp_path):
         reg = self._make_registry(tmp_path)
         reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
         reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE))
 
-        reg.replace_trading_universe(
+        reg.replace_deployed_alphas(
             ["a2", "a1"],
             scores={"a1": 0.5, "a2": 1.0},
             metadata={"a1": {"rank": 2}, "a2": {"rank": 1}},
         )
 
-        assert reg.trading_universe_ids() == ["a2", "a1"]
-        assert [r.alpha_id for r in reg.list_trading_universe()] == ["a2", "a1"]
-        entries = reg.list_trading_universe_entries()
+        assert reg.deployed_alpha_ids() == ["a2", "a1"]
+        assert [r.alpha_id for r in reg.list_deployed_alphas()] == ["a2", "a1"]
+        entries = reg.list_deployed_alpha_entries()
         assert entries[0].deployment_score == pytest.approx(1.0)
         assert entries[0].metadata["rank"] == 1
         reg.close()
 
-    def test_replace_all_clears_trading_universe(self, tmp_path):
+    def test_replace_all_clears_deployed_alphas(self, tmp_path):
         reg = self._make_registry(tmp_path)
         reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
-        reg.replace_trading_universe(["a1"])
+        reg.replace_deployed_alphas(["a1"])
 
         reg.replace_all([
             AlphaRecord(alpha_id="b1", expression="y", state=AlphaState.ACTIVE),
         ])
 
-        assert reg.count_trading_universe() == 0
+        assert reg.count_deployed_alphas() == 0
         reg.close()
 
-    def test_plan_trading_universe_replaces_only_above_margin(self):
+    def test_plan_deployed_alphas_replaces_only_above_margin(self):
         records = [
             AlphaRecord(alpha_id="i0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.9),
             AlphaRecord(alpha_id="i1", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.8),
@@ -205,7 +205,7 @@ class TestAlphaRegistry:
             "c1": QualityEstimate(0.7, 0.0, 0.81, 1.0, 63, True),
         }
 
-        plan = plan_trading_universe(
+        plan = plan_deployed_alphas(
             records,
             current_ids=["i0", "i1"],
             estimate_for=lambda record: estimates[record.alpha_id],

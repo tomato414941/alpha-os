@@ -14,7 +14,7 @@ from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
 from ..alpha.quality import shrink_weight_quality
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.registry import AlphaRegistry, AlphaState
-from ..alpha.trading_universe import refresh_trading_universe
+from ..alpha.deployed_alphas import refresh_deployed_alphas
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -197,7 +197,7 @@ def run_replay(
         sim_reg_path = tmp_path / "registry.db"
         shutil.copy2(reg_path, sim_reg_path)
         if refresh_universe_before_run:
-            refresh_trading_universe(
+            refresh_deployed_alphas(
                 sim_reg_path,
                 config,
                 forward_db_path=asset_data_dir(asset) / "forward_returns.db",
@@ -206,13 +206,13 @@ def run_replay(
             )
         registry = AlphaRegistry(sim_reg_path)
 
-        all_records = registry.list_trading_universe()
+        all_records = registry.list_deployed_alphas()
         if not all_records:
             raise RuntimeError(
-                "Trading universe is empty in replay. Run `refresh-universe` first "
-                "or use `replay-experiment --universe-mode refresh`."
+                "No deployed alphas in replay. Run `refresh-deployed-alphas` first "
+                "or use `replay-experiment --deployment-mode refresh`."
             )
-        logger.info("%d deployed alphas loaded from trading universe", len(all_records))
+        logger.info("%d deployed alphas loaded", len(all_records))
         n_alphas = len(all_records)
         logger.info("%d alphas loaded from registry", n_alphas)
         prior_quality_full = np.array(

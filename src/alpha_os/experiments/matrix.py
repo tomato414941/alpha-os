@@ -62,7 +62,10 @@ def load_replay_matrix(path: Path) -> ReplayMatrixSpec:
                 defaults.get("admission_source", "candidates"),
             ),
             fail_state=item.get("fail_state", defaults.get("fail_state", "rejected")),
-            universe_mode=item.get("universe_mode", defaults.get("universe_mode", "current")),
+            deployment_mode=item.get(
+                "deployment_mode",
+                defaults.get("deployment_mode", defaults.get("universe_mode", "current")),
+            ),
             sizing_mode=item.get("sizing_mode", defaults.get("sizing_mode", "runtime")),
             overrides=_merge_overrides(base_overrides, item.get("overrides")),
             notes=item.get("notes", defaults.get("notes", "")),

@@ -195,7 +195,7 @@ class LiveQualityConfig:
 
 
 @dataclass
-class UniverseConfig:
+class DeploymentConfig:
     max_alphas: int = 150
     max_replacements: int = 10
     promotion_margin: float = 0.05
@@ -321,7 +321,7 @@ class Config:
     testnet: TestnetConfig = field(default_factory=TestnetConfig)
     event_driven: EventDrivenConfig = field(default_factory=EventDrivenConfig)
     live_quality: LiveQualityConfig = field(default_factory=LiveQualityConfig)
-    universe: UniverseConfig = field(default_factory=UniverseConfig)
+    deployment: DeploymentConfig = field(default_factory=DeploymentConfig)
     lifecycle: LifecycleTomlConfig = field(default_factory=LifecycleTomlConfig)
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
@@ -439,7 +439,12 @@ class Config:
             testnet=TestnetConfig(**_f(TestnetConfig, raw.get("testnet", {}))),
             event_driven=EventDrivenConfig(**_f(EventDrivenConfig, raw.get("event_driven", {}))),
             live_quality=LiveQualityConfig(**_f(LiveQualityConfig, raw.get("live_quality", {}))),
-            universe=UniverseConfig(**_f(UniverseConfig, raw.get("universe", {}))),
+            deployment=DeploymentConfig(
+                **_f(
+                    DeploymentConfig,
+                    raw.get("deployment", raw.get("universe", {})),
+                )
+            ),
             lifecycle=LifecycleTomlConfig(**_f(LifecycleTomlConfig, lc_raw)),
             execution=ExecutionTomlConfig(**_f(ExecutionTomlConfig, raw.get("execution", {}))),
             gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),

@@ -15,7 +15,7 @@ asset = "BTC"
 start_date = "2026-01-01"
 end_date = "2026-01-31"
 registry_mode = "admission"
-universe_mode = "refresh"
+deployment_mode = "refresh"
 
 [defaults.overrides]
 lifecycle.candidate_quality_min = 1.10
@@ -37,6 +37,7 @@ paper.rebalance_deadband_usd = 10.0
     assert matrix.experiments[0].name == "baseline"
     assert matrix.experiments[0].asset == "BTC"
     assert matrix.experiments[0].registry_mode == "admission"
+    assert matrix.experiments[0].deployment_mode == "refresh"
     assert matrix.experiments[0].overrides == {
         "lifecycle.candidate_quality_min": 1.10,
     }

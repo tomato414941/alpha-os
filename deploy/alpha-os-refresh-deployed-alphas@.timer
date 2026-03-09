@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily trading universe refresh for %i
+Description=Daily deployed alphas refresh for %i
 
 [Timer]
 OnCalendar=*-*-* 00:40:00 UTC

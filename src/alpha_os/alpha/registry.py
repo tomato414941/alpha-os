@@ -66,7 +66,7 @@ class AlphaRecord:
 
 
 @dataclass(frozen=True)
-class TradingUniverseEntry:
+class DeployedAlphaEntry:
     alpha_id: str
     slot: int
     deployed_at: float
@@ -143,7 +143,7 @@ class AlphaRegistry:
             )
         """)
         self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS trading_universe (
+            CREATE TABLE IF NOT EXISTS deployed_alphas (
                 alpha_id TEXT PRIMARY KEY,
                 slot INTEGER NOT NULL UNIQUE,
                 deployed_at REAL NOT NULL,
@@ -152,8 +152,8 @@ class AlphaRegistry:
             )
         """)
         self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_trading_universe_slot
-            ON trading_universe(slot)
+            CREATE INDEX IF NOT EXISTS idx_deployed_alphas_slot
+            ON deployed_alphas(slot)
         """)
         # Migration: add oos_log_growth column if missing
         try:
@@ -166,8 +166,34 @@ class AlphaRegistry:
             CREATE INDEX IF NOT EXISTS idx_oos_log_growth
             ON alphas(oos_log_growth DESC)
         """)
+        self._migrate_deployed_alphas()
         self._migrate_states()
         self._conn.commit()
+
+    def _migrate_deployed_alphas(self) -> None:
+        row = self._conn.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'trading_universe'
+            """
+        ).fetchone()
+        if row is None:
+            return
+        deployed_count = self._conn.execute(
+            "SELECT COUNT(*) FROM deployed_alphas"
+        ).fetchone()[0]
+        if deployed_count > 0:
+            return
+        self._conn.execute(
+            """
+            INSERT INTO deployed_alphas (
+                alpha_id, slot, deployed_at, deployment_score, metadata
+            )
+            SELECT alpha_id, slot, deployed_at, deployment_score, metadata
+            FROM trading_universe
+            """
+        )
 
     def _migrate_states(self) -> None:
         self._conn.execute(
@@ -181,7 +207,7 @@ class AlphaRegistry:
 
     def replace_all(self, records: list[AlphaRecord]) -> None:
         values = [self._record_values(record) for record in records]
-        self._conn.execute("DELETE FROM trading_universe")
+        self._conn.execute("DELETE FROM deployed_alphas")
         self._conn.execute("DELETE FROM alphas")
         if values:
             self._conn.executemany(
@@ -202,8 +228,8 @@ class AlphaRegistry:
         self._conn.execute("DELETE FROM diversity_cache")
         self._conn.commit()
 
-    def clear_trading_universe(self) -> None:
-        self._conn.execute("DELETE FROM trading_universe")
+    def clear_deployed_alphas(self) -> None:
+        self._conn.execute("DELETE FROM deployed_alphas")
         self._conn.commit()
 
     def queue_candidate_expressions(
@@ -289,27 +315,27 @@ class AlphaRegistry:
     def list_active(self) -> list[AlphaRecord]:
         return self.list_by_state(AlphaState.ACTIVE)
 
-    def list_trading_universe(self) -> list[AlphaRecord]:
+    def list_deployed_alphas(self) -> list[AlphaRecord]:
         rows = self._conn.execute(
             """
             SELECT a.*
-            FROM trading_universe u
+            FROM deployed_alphas u
             JOIN alphas a ON a.alpha_id = u.alpha_id
             ORDER BY u.slot ASC
             """
         ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
-    def list_trading_universe_entries(self) -> list[TradingUniverseEntry]:
+    def list_deployed_alpha_entries(self) -> list[DeployedAlphaEntry]:
         rows = self._conn.execute(
             """
             SELECT alpha_id, slot, deployed_at, deployment_score, metadata
-            FROM trading_universe
+            FROM deployed_alphas
             ORDER BY slot ASC
             """
         ).fetchall()
         return [
-            TradingUniverseEntry(
+            DeployedAlphaEntry(
                 alpha_id=row["alpha_id"],
                 slot=row["slot"],
                 deployed_at=row["deployed_at"],
@@ -319,14 +345,14 @@ class AlphaRegistry:
             for row in rows
         ]
 
-    def trading_universe_ids(self) -> list[str]:
-        return [entry.alpha_id for entry in self.list_trading_universe_entries()]
+    def deployed_alpha_ids(self) -> list[str]:
+        return [entry.alpha_id for entry in self.list_deployed_alpha_entries()]
 
-    def count_trading_universe(self) -> int:
-        row = self._conn.execute("SELECT COUNT(*) FROM trading_universe").fetchone()
+    def count_deployed_alphas(self) -> int:
+        row = self._conn.execute("SELECT COUNT(*) FROM deployed_alphas").fetchone()
         return row[0]
 
-    def replace_trading_universe(
+    def replace_deployed_alphas(
         self,
         alpha_ids: list[str],
         *,
@@ -344,10 +370,10 @@ class AlphaRegistry:
             existing_ids = {row["alpha_id"] for row in rows}
             missing = [alpha_id for alpha_id in unique_ids if alpha_id not in existing_ids]
             if missing:
-                raise KeyError(f"Unknown alpha ids for trading universe: {missing[:5]}")
+                raise KeyError(f"Unknown alpha ids for deployed alphas: {missing[:5]}")
 
         stamp = deployed_at or time.time()
-        self._conn.execute("DELETE FROM trading_universe")
+        self._conn.execute("DELETE FROM deployed_alphas")
         if unique_ids:
             rows = []
             for slot, alpha_id in enumerate(unique_ids):
@@ -362,7 +388,7 @@ class AlphaRegistry:
                 )
             self._conn.executemany(
                 """
-                INSERT INTO trading_universe
+                INSERT INTO deployed_alphas
                     (alpha_id, slot, deployed_at, deployment_score, metadata)
                 VALUES (?, ?, ?, ?, ?)
                 """,

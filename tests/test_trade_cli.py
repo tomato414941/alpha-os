@@ -158,17 +158,17 @@ def test_rebuild_registry_parser():
     assert args.dry_run is True
 
 
-def test_refresh_universe_parser():
+def test_refresh_deployed_alphas_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
-        "refresh-universe",
+        "refresh-deployed-alphas",
         "--asset", "BTC",
         "--dry-run",
     ])
 
-    assert args.command == "refresh-universe"
+    assert args.command == "refresh-deployed-alphas"
     assert args.asset == "BTC"
     assert args.dry_run is True
 
@@ -214,7 +214,7 @@ def test_replay_experiment_parser():
         "--end", "2026-03-05",
         "--registry-mode", "admission",
         "--source", "candidates",
-        "--universe-mode", "refresh",
+        "--deployment-mode", "refresh",
         "--set", "lifecycle.candidate_quality_min=1.10",
         "--set", "live_quality.weight_confidence_floor=0.25",
     ])
@@ -223,7 +223,7 @@ def test_replay_experiment_parser():
     assert args.name == "confidence sweep"
     assert args.registry_mode == "admission"
     assert args.source == "candidates"
-    assert args.universe_mode == "refresh"
+    assert args.deployment_mode == "refresh"
     assert args.set == [
         "lifecycle.candidate_quality_min=1.10",
         "live_quality.weight_confidence_floor=0.25",
@@ -299,7 +299,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
         dd_scale=1.0,
         vol_scale=1.0,
         n_registry_active=615,
-        n_universe_deployed=150,
+        n_deployed_alphas=150,
         n_shortlist_candidates=150,
         n_selected_alphas=30,
         n_signals_evaluated=150,
@@ -318,7 +318,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signal L2:  +0.5420" in output
     assert "Signal Fin: +0.5420" in output
     assert "Registry:   615 active" in output
-    assert "Universe:   150 deployed" in output
+    assert "Deployed:   150 alphas" in output
     assert "Shortlist:  150 candidates" in output
     assert "Selected:   30 alphas" in output
     assert "Signals:    150 evaluated" in output
@@ -338,7 +338,7 @@ def test_print_paper_result_shows_skip_metrics(capsys):
         dd_scale=1.0,
         vol_scale=1.0,
         n_registry_active=615,
-        n_universe_deployed=30,
+        n_deployed_alphas=30,
         n_shortlist_candidates=30,
         n_selected_alphas=30,
         n_signals_evaluated=30,
@@ -524,7 +524,7 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
     reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.DORMANT))
     reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.REJECTED))
-    reg.replace_trading_universe(["a1"])
+    reg.replace_deployed_alphas(["a1"])
     reg.close()
 
     state_path, report_path = readiness_paths(tmp_path)
@@ -543,7 +543,7 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
         "daily_pnl": 0.0,
         "n_fills": 0,
         "n_registry_active": 7,
-        "n_universe_deployed": 1,
+        "n_deployed_alphas": 1,
         "n_selected_alphas": 1,
         "n_skipped_deadband": 1,
         "n_skipped_min_notional": 0,
@@ -561,7 +561,7 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
 
     assert "Runtime Status (BTC)" in output
     assert "Readiness: 3/10 days" in output
-    assert "Registry:  active=1 dormant=1 rejected=1 universe=1" in output
+    assert "Registry:  active=1 dormant=1 rejected=1 deployed=1" in output
     assert "Latest:    2026-03-09 [OK]" in output
     assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
     assert "Observe:   pending" in output

@@ -6,7 +6,7 @@ This file is for design intent and architectural trade-offs.
 
 - keep here:
   - lifecycle semantics
-  - trading universe design
+  - deployed alphas design
   - sizing logic
   - known limitations
   - long-term direction
@@ -188,13 +188,13 @@ Runtime quality is blended from historical OOS quality and forward returns.
 The confidence weight rises with the number of forward observations, so new
 alphas shrink toward their historical prior instead of being treated as zero.
 
-## Trading Universe
+## Deployed Alphas
 
-The registry is not the live trading universe.
+The registry is not the live deployed alphas.
 
 - `alphas.state=active` means an alpha is eligible for deployment.
-- `trading_universe` is the explicitly deployed subset that the trade runtime reads.
-- `refresh-universe` populates that subset using blended quality, slot count,
+- `deployed_alphas` is the explicitly deployed subset that the trade runtime reads.
+- `refresh-deployed-alphas` populates that subset using blended quality, slot count,
   replacement limits, and a promotion margin.
 
 This keeps research churn (`candidate` admission and lifecycle updates) separate
@@ -261,7 +261,7 @@ responsible for deciding whether a trade is economically meaningful.
 
 The codebase is moving toward this separation in stages:
 
-1. Keep research churn in the registry and deployment churn in `trading_universe`.
+1. Keep research churn in the registry and deployment churn in `deployed_alphas`.
 2. Stop sending sub-minimum or low-value rebalances downstream.
 3. Move deadband and minimum-trade decisions into portfolio construction and
    venue-constraint layers.
@@ -279,7 +279,7 @@ That complexity is not all the same.
 
 These changes add moving parts, but they reduce coupling and should remain:
 
-- `trading_universe` separated from the research registry
+- `deployed_alphas` separated from the research registry
 - explicit runtime handoffs (`TargetPosition`, `ExecutionIntent`, `ExecutableOrder`)
 - shared runtime cost model across replay, paper, and exchange execution
 
@@ -313,7 +313,7 @@ Short version: keep structural separation, reduce policy branching.
 New runtime work should stay within a small complexity budget:
 
 - do not add new alpha lifecycle states
-- do not add new long-lived pools beyond the registry and `trading_universe`
+- do not add new long-lived pools beyond the registry and `deployed_alphas`
 - do not add new tuning knobs when an existing quality threshold or slot limit can solve the problem
 - prefer hard caps and one-in/one-out replacement over new scoring layers
 - remove migration fallbacks after the new path is proven in testnet
@@ -329,7 +329,7 @@ The active BTC registry now uses a hard cap through
 - the cap applies only to `alphas.state=active`
 - stronger incoming alphas can replace weaker incumbents
 - overflow is resolved by demoting weakest active rows to `dormant`
-- `trading_universe` remains separate and is still refreshed explicitly
+- `deployed_alphas` remains separate and is still refreshed explicitly
 
 This keeps the control mechanism simple: one cap, one demotion path, no new
 runtime state.
@@ -341,13 +341,13 @@ into technical debt if the semantics drift.
 
 - `active` means eligible in the registry lifecycle
 - it does not mean currently deployed for trading
-- deployment is a separate concern handled by `trading_universe`
+- deployment is a separate concern handled by `deployed_alphas`
 
 The mitigation is operational, not structural:
 
 - keep `state` for lifecycle only
-- keep deployment in `trading_universe` only
-- always say `registry active` and `universe deployed` in logs and docs
+- keep deployment in `deployed_alphas` only
+- always say `registry active` and `deployed alphas` in logs and docs
 
 The same bias applies to evaluation: use short observation windows after
 material runtime changes. The goal is a fast go / no-go decision, not a long
@@ -358,7 +358,7 @@ freeze period with unclear attribution.
 The current BTC testnet profile is not in an open-ended optimization phase.
 It is in a short observation phase after several structural changes:
 
-- deployed `trading_universe`
+- deployed `deployed_alphas`
 - runtime cost model
 - deadband-based small-trade suppression
 - simpler execution optimizer
@@ -384,8 +384,8 @@ It is useful to think about `alpha-os` as a participant-governance system:
 | participant / forecaster | one alpha expression |
 | submission set | registry (`alphas`) |
 | eligible participant | `state=active` in the registry |
-| live allocation / stake | deployed `trading_universe` slot |
-| promotion | enter or remain in `trading_universe` |
+| live allocation / stake | deployed `deployed_alphas` slot |
+| promotion | enter or remain in `deployed_alphas` |
 | demotion | move to `dormant` or fail to stay deployed |
 | payout proxy | blended quality, deployment score, realized cycle contribution |
 | uniqueness / originality | diversity and correlation filtering |
@@ -424,7 +424,7 @@ This slows learning even when the next idea is clear.
 The preferred direction is:
 
 - move more experiments to config / manifest-driven workflows
-- standardize temp registry / temp universe / temp artifact paths
+- standardize temp registry / temp deployed-alpha set / temp artifact paths
 - support parallel replay as a normal workflow
 - keep shared-account testnet runs serial and isolated from research sweeps
 
@@ -473,10 +473,10 @@ handles post-admission quality control via blended quality and dormant revival.
 ## Signal Combination: Quality × Diversity Weighting
 
 The runtime does not combine every registry alpha directly. It uses the
-deployed trading universe and then applies a
+deployed alpha set and then applies a
 three-stage selection pipeline:
 
-1. Start from deployed `ACTIVE` alphas in `trading_universe`.
+1. Start from deployed `ACTIVE` alphas in `deployed_alphas`.
 2. Preselect a larger set, then rerank by blended quality and confidence.
 3. Apply a correlation filter to cap the final selected set.
 
@@ -1384,13 +1384,13 @@ Data flow:
    (purged WF-CV, DSR, PBO, admission gate), computes incremental diversity
    against existing ACTIVE alphas, and writes to `alphas` (ACTIVE) and
    `diversity_cache`.
-3. **trade runtime** reads the deployed `trading_universe` and diversity cache, computes a
+3. **trade runtime** reads the deployed `deployed_alphas` and diversity cache, computes a
    shortlist, applies correlation filtering and risk adjustments, and
    executes via Binance. No evolution, no lifecycle evaluation.
 4. **lifecycle manager** reads forward returns, computes rolling Sharpe
    (63-day window), and transitions alpha states (ACTIVE ↔ DORMANT).
-5. **refresh-universe timer** runs after lifecycle, updates the deployed
-   `trading_universe`, and keeps live trading on a slower replacement cadence.
+5. **refresh-deployed-alphas timer** runs after lifecycle, updates the deployed
+   `deployed_alphas`, and keeps live trading on a slower replacement cadence.
 
 ### Process Definitions
 

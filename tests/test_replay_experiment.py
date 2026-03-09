@@ -82,7 +82,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
             asset="BTC",
             start_date="2026-03-01",
             end_date="2026-03-05",
-            universe_mode="refresh",
+            deployment_mode="refresh",
             overrides={"lifecycle.candidate_quality_min": 1.1},
         )
     )
@@ -95,7 +95,7 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
 
     assert payload["name"] == "smoke"
     assert payload["git_commit"] == "deadbeef"
-    assert payload["spec"]["universe_mode"] == "refresh"
+    assert payload["spec"]["deployment_mode"] == "refresh"
     assert payload["overrides"]["lifecycle.candidate_quality_min"] == 1.1
     assert payload["result"]["final_value"] == 10123.0
     assert payload["result"]["n_skipped_deadband"] == 1

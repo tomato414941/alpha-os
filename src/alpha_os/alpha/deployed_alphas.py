@@ -1,4 +1,4 @@
-"""Trading universe deployment policy."""
+"""Deployed alphas deployment policy."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from .registry import AlphaRecord, AlphaRegistry, AlphaState
 
 
 @dataclass(frozen=True)
-class RankedUniverseAlpha:
+class RankedDeployedAlpha:
     alpha_id: str
     prior_quality: float
     blended_quality: float
@@ -43,7 +43,7 @@ class RankedUniverseAlpha:
 
 
 @dataclass(frozen=True)
-class TradingUniversePlan:
+class DeployedAlphaPlan:
     active_count: int
     current_count: int
     deployed_count: int
@@ -51,7 +51,7 @@ class TradingUniversePlan:
     kept_ids: list[str]
     added_ids: list[str]
     dropped_ids: list[str]
-    selected: list[RankedUniverseAlpha]
+    selected: list[RankedDeployedAlpha]
 
     @property
     def selected_ids(self) -> list[str]:
@@ -67,13 +67,13 @@ class TradingUniversePlan:
 
 
 @dataclass(frozen=True)
-class TradingUniverseRefreshStats:
+class DeployedAlphaRefreshStats:
     registry_db: Path
     backup_path: Path | None
-    plan: TradingUniversePlan
+    plan: DeployedAlphaPlan
 
 
-def plan_trading_universe(
+def plan_deployed_alphas(
     records: list[AlphaRecord],
     current_ids: list[str],
     estimate_for,
@@ -82,7 +82,7 @@ def plan_trading_universe(
     max_replacements: int,
     promotion_margin: float,
     metric: str,
-) -> TradingUniversePlan:
+) -> DeployedAlphaPlan:
     active_records = [
         record for record in records
         if AlphaState.canonical(record.state) == AlphaState.ACTIVE
@@ -95,7 +95,7 @@ def plan_trading_universe(
     ranked_by_id = {item.alpha_id: item for item in ranked}
 
     if max_alphas <= 0 or not ranked:
-        return TradingUniversePlan(
+        return DeployedAlphaPlan(
             active_count=len(active_records),
             current_count=0,
             deployed_count=0,
@@ -153,7 +153,7 @@ def plan_trading_universe(
     added_ids = [item.alpha_id for item in selected if item.alpha_id not in current_set]
     dropped_ids = [alpha_id for alpha_id in current if alpha_id not in selected_set]
 
-    return TradingUniversePlan(
+    return DeployedAlphaPlan(
         active_count=len(active_records),
         current_count=len(current),
         deployed_count=len(selected),
@@ -165,29 +165,29 @@ def plan_trading_universe(
     )
 
 
-def refresh_trading_universe(
+def refresh_deployed_alphas(
     db_path: Path,
     config: Config,
     *,
     forward_db_path: Path | None = None,
     dry_run: bool = False,
     backup: bool = True,
-) -> TradingUniverseRefreshStats:
+) -> DeployedAlphaRefreshStats:
     registry = AlphaRegistry(db_path)
     tracker = ForwardTracker(
         db_path=forward_db_path or db_path.with_name("forward_returns.db"),
     )
     try:
-        plan = plan_trading_universe(
+        plan = plan_deployed_alphas(
             registry.list_all(),
-            registry.trading_universe_ids(),
+            registry.deployed_alpha_ids(),
             lambda record: config.estimate_alpha_quality(
                 record.oos_fitness(config.fitness_metric),
                 tracker.get_returns(record.alpha_id),
             ),
-            max_alphas=config.universe.max_alphas,
-            max_replacements=config.universe.max_replacements,
-            promotion_margin=config.universe.promotion_margin,
+            max_alphas=config.deployment.max_alphas,
+            max_replacements=config.deployment.max_replacements,
+            promotion_margin=config.deployment.promotion_margin,
             metric=config.fitness_metric,
         )
 
@@ -195,12 +195,12 @@ def refresh_trading_universe(
         if not dry_run:
             if backup and db_path.exists():
                 backup_path = backup_registry_db(db_path)
-            registry.replace_trading_universe(
+            registry.replace_deployed_alphas(
                 plan.selected_ids,
                 scores=plan.selected_scores,
                 metadata=plan.selected_metadata,
             )
-        return TradingUniverseRefreshStats(
+        return DeployedAlphaRefreshStats(
             registry_db=db_path,
             backup_path=backup_path,
             plan=plan,
@@ -214,8 +214,8 @@ def _ranked_alpha(
     record: AlphaRecord,
     estimate: QualityEstimate,
     metric: str,
-) -> RankedUniverseAlpha:
-    return RankedUniverseAlpha(
+) -> RankedDeployedAlpha:
+    return RankedDeployedAlpha(
         alpha_id=record.alpha_id,
         prior_quality=record.oos_fitness(metric),
         blended_quality=estimate.blended_quality,

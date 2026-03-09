@@ -16,7 +16,7 @@ Use the docs in this order:
   - where to look next
 - `DESIGN.md`
   - architectural decisions
-  - lifecycle / universe / sizing design
+  - lifecycle / deployment / sizing design
   - known limitations and long-term direction
 - `AGENTS.override.md`
   - server operations
@@ -114,8 +114,8 @@ python -m alpha_os admission-daemon --asset BTC
 # Rebuild registry states from validated candidates
 python -m alpha_os rebuild-registry --asset BTC --source candidates
 
-# Refresh the deployed trading universe from the registry
-python -m alpha_os refresh-universe --asset BTC
+# Refresh deployed alphas from the registry
+python -m alpha_os refresh-deployed-alphas --asset BTC
 
 # Run a named replay experiment and persist the artifact
 python -m alpha_os replay-experiment \
@@ -123,7 +123,7 @@ python -m alpha_os replay-experiment \
   --start 2025-09-01 \
   --end 2026-03-05 \
   --registry-mode admission \
-  --universe-mode refresh \
+  --deployment-mode refresh \
   --source candidates \
   --set lifecycle.candidate_quality_min=1.10
 
@@ -144,7 +144,7 @@ python -m alpha_os replay-matrix --manifest experiments/observation_window.toml 
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[universe]` (deployed alpha slots and replacement policy), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[deployment]` (deployed alpha slots and replacement policy), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
 
 ## Terminology Notes
 
@@ -154,21 +154,21 @@ Recent CLI cleanup now prefers standard terms:
   Real-money trading is only `trade --real`.
 - Registry state names are `candidate`, `active`, `dormant`, and `rejected`.
   The admission registry is a research ledger, not the live trading set.
-- `trading universe` means the deployed subset that `trade` actually reads.
-  It is refreshed explicitly with `refresh-universe`.
+- `deployed alphas` means the deployed subset that `trade` actually reads.
+  It is refreshed explicitly with `refresh-deployed-alphas`.
 - `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
 - `paper --replay` is historical replay of the current runtime decision stack.
 - `testnet-readiness` is the operational readiness check for testnet trading.
 - `validate` remains statistical alpha validation via purged walk-forward CV.
 - The CLI and TOML both use `admission` / `admission-daemon`.
 - Logs and reports distinguish `registry active`, `shortlist candidates`,
-  `universe deployed`, `shortlist candidates`, `selected alphas`, and
+  `deployed alphas`, `shortlist candidates`, `selected alphas`, and
   `signals evaluated`.
 
 State naming note:
 
 - `active` means `registry active`, not necessarily `currently traded`
-- `currently traded` means `deployed in trading_universe`
+- `currently traded` means `deployed in deployed_alphas`
 
 This distinction is important. If logs or docs collapse those meanings, it
 quickly becomes technical debt.
@@ -195,7 +195,7 @@ For current testnet operation, watch these values first:
 
 - registry DB counts: `active`, `dormant`, `rejected`
 - readiness report fields:
-  `n_registry_active`, `n_universe_deployed`, `n_selected_alphas`
+  `n_registry_active`, `n_deployed_alphas`, `n_selected_alphas`
 - trading outcomes:
   `n_fills`, `n_skipped_deadband`, `n_order_failures`, `daily_pnl`
 - service health:
@@ -234,7 +234,7 @@ After the recent runtime cleanup, the project is in a short observation phase.
 
 - observe `trade` cycles and `admission` stability without changing runtime behavior
 - verify that `admission.max_active_alphas` keeps the registry bounded
-- verify that `trading_universe=30` remains stable across refreshes
+- verify that `deployed_alphas=30` remains stable across refreshes
 - compare new readiness reports against the registry DB and service memory
 - improve documentation, logging, and operational checklists that do not change strategy behavior
 
@@ -265,9 +265,9 @@ After `24 hours` or `3-5` scheduled trade cycles, make a go / no-go call.
 
 Read the current runtime through these four flows:
 
-1. `registry -> trading_universe -> trade`
+1. `registry -> deployed_alphas -> trade`
    - research candidates live in the registry
-   - deployed alphas live in `trading_universe`
+   - deployed alphas live in `deployed_alphas`
    - `trade` should only act on the deployed subset
 2. `signal -> target -> intent -> executable order`
    - prediction, portfolio construction, execution planning, venue constraints
@@ -281,7 +281,7 @@ Read the current runtime through these four flows:
 Recommended first files:
 
 - [registry.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/registry.py)
-- [trading_universe.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/trading_universe.py)
+- [deployed_alphas.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/deployed_alphas.py)
 - [trader.py](/home/dev/projects/alpha-os/src/alpha_os/paper/trader.py)
 - [planning.py](/home/dev/projects/alpha-os/src/alpha_os/execution/planning.py)
 - [constraints.py](/home/dev/projects/alpha-os/src/alpha_os/execution/constraints.py)
@@ -307,7 +307,7 @@ Recommended first files:
 What better experiment throughput should look like:
 
 - more experiments driven by config / manifests instead of source edits
-- isolated temp registry / universe / output paths by default
+- isolated temp registry / deployed-alpha set / output paths by default
 - parallel historical replay as a first-class workflow
 - continued serial handling for live-ish testnet runs that share one venue/account
 
@@ -336,8 +336,8 @@ ruff check src/
 - Each run appends a summary row to `index.jsonl` and stores the full payload in a timestamped `.json`.
 - `--registry-mode current` replays the current registry as-is.
 - `--registry-mode admission` rebuilds a temporary registry from `alphas` or `candidates` first, which is better for gate experiments.
-- `--universe-mode current` uses the currently deployed universe if present.
-- `--universe-mode refresh` refreshes a temporary deployed universe inside the experiment before replay.
+- `--deployment-mode current` uses the currently deployed alpha set if present.
+- `--deployment-mode refresh` refreshes a temporary deployed alpha set inside the experiment before replay.
 - Use repeated `--set path=value` flags for temporary config overrides.
 
 ## Design
