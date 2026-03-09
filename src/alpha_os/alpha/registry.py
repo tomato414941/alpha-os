@@ -377,6 +377,17 @@ class AlphaRegistry:
         ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
+    def bottom_trading(self, n: int = 1, metric: str = "sharpe") -> list[AlphaRecord]:
+        """Bottom-N active alphas by fitness metric."""
+        col = self._ORDER_COLUMN[metric]
+        placeholders = ", ".join("?" for _ in AlphaState.trading_states())
+        rows = self._conn.execute(
+            f"SELECT * FROM alphas WHERE state IN ({placeholders}) "
+            f"ORDER BY {col} ASC LIMIT ?",
+            (*AlphaState.trading_states(), n),
+        ).fetchall()
+        return [self._row_to_record(r) for r in rows]
+
     def top(self, n: int = 10, state: str | None = None, metric: str = "sharpe") -> list[AlphaRecord]:
         col = self._ORDER_COLUMN[metric]
         if state:

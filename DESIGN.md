@@ -290,6 +290,19 @@ The preferred simplification order is:
 
 Short version: keep structural separation, reduce policy branching.
 
+### Complexity Budget
+
+New runtime work should stay within a small complexity budget:
+
+- do not add new alpha lifecycle states
+- do not add new long-lived pools beyond the registry and `trading_universe`
+- do not add new tuning knobs when an existing quality threshold or slot limit can solve the problem
+- prefer hard caps and one-in/one-out replacement over new scoring layers
+- remove migration fallbacks after the new path is proven in testnet
+
+The preferred fix for registry growth is therefore a simple active-cap rule,
+not a new shadow pool or a second deployment lifecycle.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:

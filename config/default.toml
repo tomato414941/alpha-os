@@ -118,6 +118,7 @@ enabled = false
 poll_interval = 1800       # seconds between queue checks (30 min)
 batch_size = 100           # candidates per validation batch
 min_queue_size = 10        # minimum queue depth to trigger
+max_active_alphas = 0      # 0 disables the cap; >0 enforces replace-one-in/one-out
 diversity_recompute_days = 63
 incremental_diversity = true
 

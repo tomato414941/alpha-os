@@ -30,6 +30,8 @@ from alpha_os.alpha.combiner import (
     weighted_combine_scalar,
     signal_consensus,
 )
+from alpha_os.config import Config
+from alpha_os.daemon.admission import AdmissionDaemon
 from alpha_os.governance.gates import adoption_gate, GateConfig
 
 
@@ -100,6 +102,15 @@ class TestAlphaRegistry:
         top = reg.top(2)
         assert top[0].alpha_id == "a2"
         assert top[1].alpha_id == "a3"
+        reg.close()
+
+    def test_bottom_trading_uses_metric_order(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.1))
+        reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.3))
+        reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.ACTIVE, oos_log_growth=0.2))
+        bottom = reg.bottom_trading(2, metric="log_growth")
+        assert [record.alpha_id for record in bottom] == ["a1", "a3"]
         reg.close()
 
     def test_register_replaces(self, tmp_path):
@@ -209,6 +220,56 @@ class TestAlphaRegistry:
         assert plan.added_ids == ["c0"]
         assert plan.dropped_ids == ["i1"]
         assert plan.replacement_count == 1
+
+    def test_admission_cap_rejects_weaker_incoming_alpha(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.40))
+        reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.30))
+
+        cfg = Config()
+        cfg.fitness_metric = "log_growth"
+        cfg.admission.max_active_alphas = 2
+        daemon = AdmissionDaemon("BTC", cfg)
+
+        incoming = AlphaRecord(
+            alpha_id="new",
+            expression="z",
+            state=AlphaState.ACTIVE,
+            oos_log_growth=0.25,
+        )
+
+        admitted, reason = daemon._reserve_active_slot(reg, incoming)
+
+        assert admitted is False
+        assert "active cap 2" in reason
+        assert reg.count(AlphaState.ACTIVE) == 2
+        assert reg.count(AlphaState.DORMANT) == 0
+        reg.close()
+
+    def test_admission_cap_demotes_weakest_active_alpha(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.40))
+        reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.30))
+
+        cfg = Config()
+        cfg.fitness_metric = "log_growth"
+        cfg.admission.max_active_alphas = 2
+        daemon = AdmissionDaemon("BTC", cfg)
+
+        incoming = AlphaRecord(
+            alpha_id="new",
+            expression="z",
+            state=AlphaState.ACTIVE,
+            oos_log_growth=0.35,
+        )
+
+        admitted, reason = daemon._reserve_active_slot(reg, incoming)
+
+        assert admitted is True
+        assert reason == ""
+        assert reg.get("a2").state == AlphaState.DORMANT
+        assert reg.get("a1").state == AlphaState.ACTIVE
+        reg.close()
 
 
 # ---------------------------------------------------------------------------

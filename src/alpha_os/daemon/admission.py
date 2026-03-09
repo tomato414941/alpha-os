@@ -34,6 +34,49 @@ class AdmissionDaemon:
         self._running = False
         self._round = 0
 
+    def _admission_metric(self) -> str:
+        return self.config.fitness_metric
+
+    def _reserve_active_slot(
+        self,
+        registry: AlphaRegistry,
+        incoming_record: AlphaRecord,
+    ) -> tuple[bool, str]:
+        limit = self.admission_cfg.max_active_alphas
+        if limit <= 0:
+            return True, ""
+
+        active_count = registry.count(AlphaState.ACTIVE)
+        if active_count < limit:
+            return True, ""
+
+        metric = self._admission_metric()
+        weakest = registry.bottom_trading(1, metric=metric)
+        if not weakest:
+            return True, ""
+
+        weakest_record = weakest[0]
+        incoming_score = incoming_record.oos_fitness(metric)
+        weakest_score = weakest_record.oos_fitness(metric)
+        if incoming_score <= weakest_score:
+            return False, (
+                f"active cap {limit}: {metric}={incoming_score:.3f} "
+                f"<= incumbent {weakest_record.alpha_id} ({weakest_score:.3f})"
+            )
+
+        registry.update_state(weakest_record.alpha_id, AlphaState.DORMANT)
+        logger.info(
+            "Admission cap: demoted %s to dormant to admit %s "
+            "(%s %.3f > %.3f, limit=%d)",
+            weakest_record.alpha_id,
+            incoming_record.alpha_id,
+            metric,
+            incoming_score,
+            weakest_score,
+            limit,
+        )
+        return True, ""
+
     def run(self) -> None:
         self._running = True
         self._setup_signals()
@@ -203,6 +246,11 @@ class AdmissionDaemon:
                     pbo=batch_pbo,
                     dsr_pvalue=dsr_pvalue,
                 )
+                can_admit, reject_reason = self._reserve_active_slot(registry, record)
+                if not can_admit:
+                    self._reject_candidate(cid, reject_reason)
+                    n_rejected += 1
+                    continue
                 registry.register(record)
                 self._adopt_candidate(cid, cv.oos_sharpe, batch_pbo, dsr_pvalue)
 

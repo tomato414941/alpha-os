@@ -297,6 +297,7 @@ class AdmissionConfig:
     poll_interval: int = 1800
     batch_size: int = 100
     min_queue_size: int = 10
+    max_active_alphas: int = 0
     diversity_recompute_days: int = 63
     incremental_diversity: bool = True
 
