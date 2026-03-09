@@ -290,11 +290,20 @@ Recommended first files:
   A large candidate set exists, but only a small deployed subset should drive trading.
 - If the simplified runtime still fails after the observation window, alpha
   diversity is a strong next bottleneck candidate.
+- A separate bottleneck is experiment throughput: many useful comparisons still
+  require source edits or serial runs, which slows learning.
 - A useful next benchmark is a small hand-crafted BTC alpha set spanning trend,
   reversal, cross-asset, macro regime, sentiment, on-chain, derivatives, and
   microstructure ideas.
 - The current runtime is still primarily directional. Long-term, the system
   should move toward distribution-aware forecasts instead of scalar conviction alone.
+
+What better experiment throughput should look like:
+
+- more experiments driven by config / manifests instead of source edits
+- isolated temp registry / universe / output paths by default
+- parallel historical replay as a first-class workflow
+- continued serial handling for live-ish testnet runs that share one venue/account
 
 See [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md) for the detailed design
 discussion, including:
@@ -302,6 +311,7 @@ discussion, including:
 - runtime layer boundaries
 - participant-system mapping
 - diversity as a bottleneck candidate
+- experiment harness as a bottleneck candidate
 - hand-crafted BTC baseline candidates
 - directional vs distributional forecasting
 - sizing rationale and known limitations

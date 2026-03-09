@@ -409,6 +409,27 @@ The target is not "more alphas" by itself. The target is:
 That is the direction in which `alpha-os` would become more similar to a
 participant system with many independent contributors.
 
+### Experiment Harness As A Likely Next Bottleneck
+
+Another likely bottleneck is experiment throughput rather than strategy logic.
+
+Current pain points:
+
+- useful comparisons still often require source edits
+- many experiments still run serially even when they only touch replay data
+- live-ish testnet validation cannot be parallelized safely on one account
+
+This slows learning even when the next idea is clear.
+
+The preferred direction is:
+
+- move more experiments to config / manifest-driven workflows
+- standardize temp registry / temp universe / temp artifact paths
+- support parallel replay as a normal workflow
+- keep shared-account testnet runs serial and isolated from research sweeps
+
+This is a research productivity problem first, not a runtime architecture problem.
+
 ### Hand-Crafted BTC Baseline Candidates
 
 Before increasing search complexity further, a small hand-crafted BTC baseline
