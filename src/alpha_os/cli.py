@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import gc
+import json
 import logging
+import sqlite3
 import sys
 import time
 from datetime import date
@@ -257,6 +259,14 @@ def _build_parser() -> argparse.ArgumentParser:
     tnr.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
     tnr.add_argument("--asset", type=str, default="BTC")
     tnr.add_argument("--config", type=str, default=None)
+
+    # runtime-status
+    rst = sub.add_parser(
+        "runtime-status",
+        help="Show current runtime observation status from registry and readiness files",
+    )
+    rst.add_argument("--asset", type=str, default="BTC")
+    rst.add_argument("--config", type=str, default=None)
 
     return parser
 
@@ -1392,8 +1402,6 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
 
 
 def cmd_testnet_readiness(args: argparse.Namespace) -> None:
-    import json as _json
-
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
     cfg = _load_config(getattr(args, "config", None))
@@ -1441,12 +1449,107 @@ def cmd_testnet_readiness(args: argparse.Namespace) -> None:
             return
         print("\nDaily Reports:")
         for line in report_path.read_text().splitlines():
-            r = _json.loads(line)
+            r = json.loads(line)
             status = "OK" if not r["has_errors"] else "ERROR"
             print(
                 f"  {r['date']} [{status}] PV=${r['portfolio_value']:,.2f} "
                 f"PnL=${r['daily_pnl']:+,.2f} fills={r['n_fills']}"
             )
+
+
+def _load_latest_report(report_path: Path) -> dict | None:
+    if not report_path.exists():
+        return None
+    last: dict | None = None
+    for line in report_path.read_text().splitlines():
+        line = line.strip()
+        if line:
+            last = json.loads(line)
+    return last
+
+
+def _registry_status(adir: Path) -> dict[str, int]:
+    conn = sqlite3.connect(str(adir / "alpha_registry.db"))
+    cur = conn.cursor()
+    try:
+        return {
+            "active": cur.execute(
+                "SELECT COUNT(*) FROM alphas WHERE state = 'active'"
+            ).fetchone()[0],
+            "dormant": cur.execute(
+                "SELECT COUNT(*) FROM alphas WHERE state = 'dormant'"
+            ).fetchone()[0],
+            "rejected": cur.execute(
+                "SELECT COUNT(*) FROM alphas WHERE state = 'rejected'"
+            ).fetchone()[0],
+            "universe": cur.execute(
+                "SELECT COUNT(*) FROM trading_universe"
+            ).fetchone()[0],
+        }
+    finally:
+        conn.close()
+
+
+def cmd_runtime_status(args: argparse.Namespace) -> None:
+    from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+
+    cfg = _load_config(getattr(args, "config", None))
+    adir = asset_data_dir(args.asset)
+    state_path, report_path = readiness_paths(adir)
+    readiness_checker = ReadinessChecker(
+        state_path=state_path,
+        report_path=report_path,
+        target_days=cfg.testnet.target_success_days,
+        max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+    )
+    state = readiness_checker.state
+    latest = _load_latest_report(report_path)
+    registry = _registry_status(adir)
+
+    print(f"Runtime Status ({args.asset.upper()})")
+    print(
+        f"  Readiness: {state.consecutive_success_days}/{state.target_days} "
+        f"days, total={state.total_days_run}, passed={state.passed}"
+    )
+    print(
+        f"  Last Run:  {state.last_run_date or 'N/A'} "
+        f"(last_success={state.last_success_date or 'N/A'})"
+    )
+    print(
+        f"  Registry:  active={registry['active']} dormant={registry['dormant']} "
+        f"rejected={registry['rejected']} universe={registry['universe']}"
+    )
+
+    if latest is None:
+        print("  Latest:    no readiness reports yet")
+        return
+
+    status = "ERROR" if latest.get("has_errors") else "OK"
+    print(
+        f"  Latest:    {latest['date']} [{status}] PV=${latest['portfolio_value']:,.2f} "
+        f"PnL=${latest['daily_pnl']:+,.2f} fills={latest['n_fills']}"
+    )
+    print(
+        f"  Selection: registry={latest['n_registry_active']} "
+        f"universe={latest['n_universe_deployed']} "
+        f"selected={latest['n_selected_alphas']}"
+    )
+    print(
+        "  Skips:     "
+        f"deadband={latest['n_skipped_deadband']} "
+        f"min_notional={latest['n_skipped_min_notional']} "
+        f"rounded_to_zero={latest['n_skipped_rounded_to_zero']}"
+    )
+    print(
+        f"  Health:    reconciliation={latest['reconciliation_match']} "
+        f"order_failures={latest['n_order_failures']} "
+        f"halted={latest['circuit_breaker_halted']}"
+    )
+    if latest["n_registry_active"] != registry["active"]:
+        print(
+            "  Note:      registry DB count differs from latest readiness report; "
+            "the next trade cycle will refresh the report."
+        )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -1485,3 +1588,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_replay_experiment(args)
     elif args.command == "testnet-readiness":
         cmd_testnet_readiness(args)
+    elif args.command == "runtime-status":
+        cmd_runtime_status(args)

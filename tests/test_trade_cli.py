@@ -173,6 +173,19 @@ def test_refresh_universe_parser():
     assert args.dry_run is True
 
 
+def test_runtime_status_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "runtime-status",
+        "--asset", "BTC",
+    ])
+
+    assert args.command == "runtime-status"
+    assert args.asset == "BTC"
+
+
 def test_replay_experiment_parser():
     from alpha_os.cli import _build_parser
 
@@ -465,3 +478,58 @@ def test_reconcile_no_data():
 
     result = trader.reconcile()
     assert result["status"] == "no_data"
+
+
+def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.validation.testnet import readiness_paths
+
+    reg = AlphaRegistry(tmp_path / "alpha_registry.db")
+    reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
+    reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.DORMANT))
+    reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.REJECTED))
+    reg.replace_trading_universe(["a1"])
+    reg.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 3,
+        "total_days_run": 9,
+        "last_success_date": "2026-03-09",
+        "last_run_date": "2026-03-09",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text(json.dumps({
+        "date": "2026-03-09",
+        "portfolio_value": 9905.91,
+        "daily_pnl": 0.0,
+        "n_fills": 0,
+        "n_registry_active": 7,
+        "n_universe_deployed": 1,
+        "n_selected_alphas": 1,
+        "n_skipped_deadband": 1,
+        "n_skipped_min_notional": 0,
+        "n_skipped_rounded_to_zero": 0,
+        "n_order_failures": 0,
+        "reconciliation_match": True,
+        "circuit_breaker_halted": False,
+        "has_errors": False,
+    }) + "\n")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "Runtime Status (BTC)" in output
+    assert "Readiness: 3/10 days" in output
+    assert "Registry:  active=1 dormant=1 rejected=1 universe=1" in output
+    assert "Latest:    2026-03-09 [OK]" in output
+    assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
+    assert "Note:      registry DB count differs" in output

@@ -94,6 +94,9 @@ python -m alpha_os replay-experiment \
 
 # Check testnet readiness status
 python -m alpha_os testnet-readiness
+
+# Show the current observation snapshot
+python -m alpha_os runtime-status --asset BTC
 ```
 
 ## Configuration
