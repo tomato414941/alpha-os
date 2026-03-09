@@ -174,6 +174,41 @@ Typical no-go signals:
 - daily PnL shows no improvement signal
 - `n_registry_active` or service memory becomes unstable again
 
+## Current Operating Posture
+
+After the recent runtime cleanup, the project is in a short observation phase.
+
+### What We Can Do Now
+
+- observe `trade` cycles and `admission` stability without changing runtime behavior
+- verify that `admission.max_active_alphas` keeps the registry bounded
+- verify that `trading_universe=30` remains stable across refreshes
+- compare new readiness reports against the registry DB and service memory
+- improve documentation, logging, and operational checklists that do not change strategy behavior
+
+### What We Cannot Conclude Yet
+
+- that the strategy has a durable edge
+- that the current testnet profile is strong enough for real capital
+- that low fill counts are a feature rather than a sign of insufficient opportunity
+- that replay improvements are large enough to matter economically
+
+These require the short observation window to complete first.
+
+### What We Should Not Do During This Window
+
+- add new runtime states, pools, or deployment paths
+- do large refactors that change trade behavior again
+- run broad parameter sweeps that invalidate attribution
+- treat the current profile as production-ready before the observation window ends
+
+### Next Decision
+
+After `24 hours` or `3-5` scheduled trade cycles, make a go / no-go call.
+
+- `go`: keep the simplified runtime and continue with the next bottleneck
+- `no-go`: stop extending this configuration and move to the next strategy hypothesis
+
 ## Runtime Boundaries
 
 The runtime is being standardized around five layers:

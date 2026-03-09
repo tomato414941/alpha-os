@@ -320,6 +320,28 @@ The same bias applies to evaluation: use short observation windows after
 material runtime changes. The goal is a fast go / no-go decision, not a long
 freeze period with unclear attribution.
 
+### Current Evaluation Posture
+
+The current BTC testnet profile is not in an open-ended optimization phase.
+It is in a short observation phase after several structural changes:
+
+- deployed `trading_universe`
+- runtime cost model
+- deadband-based small-trade suppression
+- simpler execution optimizer
+- strategy-aware circuit breaker
+- capped active registry growth
+
+This means:
+
+- the system is ready to measure operational behavior now
+- the system is not yet ready to claim durable profitability
+- the next decision should be made from a short observation window, not from
+  another round of immediate runtime tuning
+
+During this phase, documentation, observability, and operational hygiene are
+in-scope. New strategy complexity is not.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
