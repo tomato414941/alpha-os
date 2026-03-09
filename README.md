@@ -5,6 +5,41 @@ Autonomous alpha generation and trading system for any asset class — crypto, e
 Generates trading signals using genetic programming (GP + MAP-Elites),
 validates them with walk-forward cross-validation, and executes via pluggable executors (Binance, Alpaca, etc.).
 
+## Document Guide
+
+Use the docs in this order:
+
+- `README.md`
+  - current project entry point
+  - runtime concepts
+  - current operating posture
+  - where to look next
+- `DESIGN.md`
+  - architectural decisions
+  - lifecycle / universe / sizing design
+  - known limitations and long-term direction
+- `AGENTS.override.md`
+  - server operations
+  - deploy / restart / verification steps
+  - current testnet observation workflow
+- `ROADMAP.md`
+  - larger planned expansion work
+
+If a topic appears in multiple files, prefer:
+
+- `README.md` for current practical guidance
+- `DESIGN.md` for deeper rationale
+- `AGENTS.override.md` for concrete commands
+
+## Current Focus
+
+The project is currently in a short observation phase after recent runtime
+simplification. That means:
+
+- runtime behavior should remain mostly stable for `24 hours` or `3-5` cycles
+- docs, observability, and system understanding are in scope
+- large runtime changes are out of scope until the observation window ends
+
 ## Architecture
 
 ```

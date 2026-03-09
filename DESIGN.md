@@ -1,5 +1,23 @@
 # Alpha-OS Design Notes
 
+## Scope Of This Document
+
+This file is for design intent and architectural trade-offs.
+
+- keep here:
+  - lifecycle semantics
+  - trading universe design
+  - sizing logic
+  - known limitations
+  - long-term direction
+- do not rely on this file for:
+  - deploy commands
+  - service restart steps
+  - current server-only operational facts
+
+For those, prefer `AGENTS.override.md`. For the current reader-facing summary,
+prefer `README.md`.
+
 ## Core Philosophy
 
 Alpha factors are not permanent — they are adaptive genomes in an ecosystem.
@@ -440,6 +458,45 @@ position   = clip(adjusted) × max_position_pct × portfolio_value
 4. **dd_scale stacks with consensus**: Drawdowns reduce sizing directly.
    Both are real-time signals that don't depend on historical strategy
    stability.
+
+### Known Limitation: Directional Signals, Not Full Distributions
+
+The current runtime mainly predicts directional conviction, not a calibrated
+future return distribution.
+
+- each alpha outputs a scalar signal
+- the combined signal is still a scalar
+- portfolio construction uses that scalar plus drawdown/risk controls
+
+This means the system can express:
+
+- direction
+- relative strength
+- disagreement across alphas
+
+But it cannot yet express:
+
+- calibrated predictive uncertainty
+- quantile forecasts
+- explicit tail probabilities
+- a full next-period return distribution
+
+That limitation matters because some runtime decisions are still externalized
+into heuristics (`deadband`, sizing rules, deployment rules) instead of being
+derived directly from a predictive distribution.
+
+### Long-Term Direction
+
+The intended evolution is:
+
+1. directional scalar signals
+2. expected return plus uncertainty
+3. distribution-aware sizing and selection
+4. explicit quantile / tail-aware forecasts
+
+The immediate runtime work should stay simple, but the longer-term research
+direction should move toward distributional prediction rather than sharper
+scalar conviction alone.
 
 ### Known Limitation: Top-30 Instability
 
