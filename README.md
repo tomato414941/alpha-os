@@ -321,6 +321,48 @@ That is the direction in which `alpha-os` would become more similar to a
 participant system such as Numerai or a forecasting market with many
 independent contributors.
 
+## Hand-Crafted BTC Baseline Set
+
+A useful next baseline is a small set of manually designed BTC alphas. The
+goal is not to beat the full search space immediately. The goal is to create a
+clear, explainable benchmark that the generated/evolved pool should be able to
+beat.
+
+These are good first candidates because they represent distinct ideas rather
+than many close variants:
+
+1. Momentum
+   - `(roc_20 btc_ohlcv)`
+2. Short-horizon mean reversion
+   - `(neg (zscore (roc_5 btc_ohlcv)))`
+3. BTC vs equity relative strength
+   - `(sub (roc_20 btc_ohlcv) (roc_20 sp500))`
+4. Volatility-conditioned trend
+   - `(if_gt vix_close 25.0 (neg (roc_10 btc_ohlcv)) (roc_10 btc_ohlcv))`
+5. Sentiment-conditioned reversal
+   - `(if_gt fear_greed 70.0 (neg btc_ohlcv) btc_ohlcv)`
+6. On-chain activity imbalance
+   - `(sub (zscore btc_mempool_size) (zscore btc_hashrate))`
+7. Funding-rate mean reversion
+   - `(sub funding_rate_btc (mean_5 funding_rate_btc))`
+8. Order-book imbalance fade
+   - `(neg book_imbalance_btc)`
+9. Spread compression preference
+   - `(neg spread_bps_btc)`
+10. VPIN-conditioned flow signal
+   - `(if_gt vpin_btc 0.8 (neg trade_flow_btc) trade_flow_btc)`
+
+Why this set:
+
+- it spans trend, reversal, cross-asset, macro regime, sentiment, on-chain,
+  derivatives, and microstructure ideas
+- each alpha is easy to explain and debug
+- it can act as a benchmark against the evolved candidate pool
+
+These expressions are intended as a research baseline first. They should go
+through the same validation, admission, and deployment path as generated
+alphas instead of being special-cased into live trading.
+
 ### Position sizing
 
 ```
@@ -331,6 +373,26 @@ position   = direction × clip(size) × max_position_pct × portfolio_value
 
 - **Signal consensus**: measures alpha agreement — `|mean| / (|mean| + std)`. Unanimous → full conviction; split → reduced position.
 - **Drawdown scaling**: position shrinks as portfolio drawdown deepens (3 stages).
+
+### Distributional Direction
+
+The current runtime is still primarily directional:
+
+- each alpha emits a signed scalar signal
+- the combined runtime signal represents direction plus conviction
+- position sizing is based on that combined scalar, not on a full predictive distribution
+
+This is acceptable for the current simplified runtime, but it is not the
+intended long-term endpoint.
+
+The longer-term direction is to move toward distribution-aware forecasts:
+
+- expected return plus uncertainty first
+- then distribution-aware sizing and selection
+- eventually quantiles / tail-aware forecasts instead of scalar-only conviction
+
+In other words: the current system predicts direction better than it predicts
+the full future return distribution, and that is a known design limitation.
 
 ## Testing
 
