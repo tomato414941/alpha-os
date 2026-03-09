@@ -200,6 +200,50 @@ The registry is not the live deployed alphas.
 This keeps research churn (`candidate` admission and lifecycle updates) separate
 from the set that actually drives positions.
 
+## Naming Reset Direction
+
+The current architectural split is still the intended design. The problem is
+not that the runtime has a registry layer and a deployment layer. The problem
+is that some names still hide that split.
+
+### What We Intend To Preserve
+
+- `alphas` remains the research ledger and lifecycle state store
+- `deployed_alphas` remains the explicitly deployed runtime subset
+- admission decides registry membership, not immediate trading eligibility
+- deployment decides what the runtime is allowed to trade now
+
+### What We Intend To Change
+
+- labels that use plain `active` without saying `registry active`
+- config names that hide whether they cap registry growth or deployed count
+- logs and reports that do not make lifecycle vs deployment explicit
+
+### Naming Principle
+
+When there is a choice between a short name and an explicit name, prefer the
+explicit name if the short name can be read as either lifecycle state or live
+deployment status.
+
+Examples:
+
+- prefer `registry active` over plain `active`
+- prefer `deployed alphas` over overloaded uses of `universe`
+- prefer names like `max_deployed_alphas` over layer-ambiguous `max_alphas`
+
+### Migration Bias
+
+The migration order should be:
+
+1. document the intended meaning
+2. align logs and reports
+3. align config keys and CLI flags
+4. only then consider renaming internal code symbols that are already clear in context
+
+This keeps the underlying design while reducing terminology debt. The project
+should not flatten registry and deployment into one layer just to avoid naming
+work.
+
 ## Runtime Layer Boundaries
 
 The trading runtime should separate prediction from portfolio decisions and
@@ -348,6 +392,9 @@ The mitigation is operational, not structural:
 - keep `state` for lifecycle only
 - keep deployment in `deployed_alphas` only
 - always say `registry active` and `deployed alphas` in logs and docs
+
+This should be treated as an ongoing naming rule, not just a temporary
+clarification during the current observation window.
 
 The same bias applies to evaluation: use short observation windows after
 material runtime changes. The goal is a fast go / no-go decision, not a long

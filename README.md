@@ -40,6 +40,35 @@ simplification. That means:
 - docs, observability, and system understanding are in scope
 - large runtime changes are out of scope until the observation window ends
 
+## Naming And Boundary Plan
+
+The current direction is to keep the architecture idea, but make the names and
+surface APIs much more explicit.
+
+What should stay:
+
+- the registry remains the research ledger
+- deployed alphas remain the explicit runtime subset
+- admission, lifecycle, and deployment stay separate concerns
+
+What should change:
+
+- names that blur lifecycle and runtime allocation
+- config keys that hide which layer a limit applies to
+- logs and reports that say `active` without saying whether they mean
+  `registry active` or `deployed`
+
+Current working plan:
+
+1. keep the two-stage model (`registry` and `deployed_alphas`)
+2. document the boundary everywhere before making more renames
+3. prefer explicit names such as `registry active` and `deployed alphas`
+4. tighten config names over time when the observation window ends
+
+The project should not collapse the layers just because the current names are
+awkward. The design goal is still to separate research churn from deployed
+trading behavior.
+
 ## Architecture
 
 ```
@@ -175,6 +204,14 @@ State naming note:
 
 This distinction is important. If logs or docs collapse those meanings, it
 quickly becomes technical debt.
+
+Near-term naming direction:
+
+- keep `active` as the lifecycle state name for now
+- prefer `registry active` in logs, docs, and discussions
+- prefer `deployed alphas` for the live runtime subset
+- treat ambiguous labels such as plain `active` or plain `max_alphas` as debt
+  to remove gradually, not as the desired end state
 
 ## Registry Control
 
