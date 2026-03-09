@@ -255,6 +255,31 @@ This keeps the underlying design while reducing terminology debt. The project
 should not flatten registry and deployment into one layer just to avoid naming
 work.
 
+### Naming Backlog
+
+The current backlog is not to redesign the architecture again. It is to make
+the existing layers easier to read.
+
+Highest-priority terminology debt:
+
+- config keys such as `admission.max_active_alphas` and `deployment.max_alphas`
+  are still shorter than the semantics they carry
+- package names such as `forward/` still describe history rather than current
+  intent
+- module names such as `data.universe` still use an overloaded word that is
+  easy to read as asset universe instead of feature-set helpers
+- some logs and tests still use plain `active` where `registry active` would be
+  safer
+
+Preferred order after the observation window:
+
+1. public-facing config names
+2. log and report wording
+3. CLI help text and docs examples
+4. internal package and module names
+
+The rule is to rename the public surface before touching deeper internal names.
+
 ## Runtime Layer Boundaries
 
 The trading runtime should separate prediction from portfolio decisions and
