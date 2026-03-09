@@ -18,12 +18,16 @@ class ExecutionConfig:
     max_slices: int = 5
     signal_lookback_minutes: int = 15
     max_signal_age_seconds: int = 300
-    max_deferral_attempts: int = 2
-    deferral_sleep_seconds: float = 30.0
+
+
+@dataclass
+class ExecutionAdvice:
+    reason: str = ""
+    slice_count: int = 1
 
 
 class ExecutionOptimizer:
-    """Layer 1: decide WHEN to execute based on microstructure signals."""
+    """Execution optimizer: convert microstructure state into execution advice."""
 
     def __init__(
         self,
@@ -32,14 +36,6 @@ class ExecutionOptimizer:
     ):
         self._client = client
         self._config = config or ExecutionConfig()
-
-    @property
-    def max_deferral_attempts(self) -> int:
-        return max(1, int(self._config.max_deferral_attempts))
-
-    @property
-    def deferral_sleep_seconds(self) -> float:
-        return max(0.0, float(self._config.deferral_sleep_seconds))
 
     def _parse_timestamp(self, raw: object) -> datetime | None:
         if not isinstance(raw, str) or not raw:
@@ -110,48 +106,40 @@ class ExecutionOptimizer:
         except Exception:
             return None
 
-    def optimal_execution_window(self, side: str) -> bool:
-        """Check if microstructure conditions favor execution now."""
+    def execution_advice(self, side: str) -> ExecutionAdvice:
+        """Return microstructure-aware execution advice without hard blocking."""
         imbalance = self.get_signal("book_imbalance_btc")
         vpin = self.get_signal("vpin_btc")
         spread = self.get_signal("spread_bps_btc")
 
-        # If signals unavailable, don't block execution
         if any(v is None for v in [imbalance, vpin, spread]):
-            return True
+            return ExecutionAdvice()
 
         cfg = self._config
+        reasons: list[str] = []
+        slice_count = 1
 
         if vpin > cfg.vpin_threshold:
-            logger.info("Execution delayed: VPIN %.3f > %.3f", vpin, cfg.vpin_threshold)
-            return False
+            reasons.append(f"high VPIN {vpin:.3f} > {cfg.vpin_threshold:.3f}")
+            slice_count = max(slice_count, cfg.max_slices)
 
         if spread > cfg.spread_threshold_bps:
-            logger.info("Execution delayed: spread %.1f > %.1f bps", spread, cfg.spread_threshold_bps)
-            return False
+            reasons.append(
+                f"wide spread {spread:.1f} > {cfg.spread_threshold_bps:.1f} bps"
+            )
+            slice_count = max(slice_count, max(3, cfg.max_slices - 1))
 
-        # Unfavorable imbalance for our side
         if side == "buy" and imbalance < -cfg.imbalance_threshold:
-            logger.info("Execution delayed: ask-heavy imbalance %.3f for buy", imbalance)
-            return False
-        if side == "sell" and imbalance > cfg.imbalance_threshold:
-            logger.info("Execution delayed: bid-heavy imbalance %.3f for sell", imbalance)
-            return False
+            reasons.append(f"ask-heavy imbalance {imbalance:.3f} for buy")
+            slice_count = max(slice_count, max(3, cfg.max_slices - 1))
+        elif side == "sell" and imbalance > cfg.imbalance_threshold:
+            reasons.append(f"bid-heavy imbalance {imbalance:.3f} for sell")
+            slice_count = max(slice_count, max(3, cfg.max_slices - 1))
 
-        return True
+        return ExecutionAdvice(reason="; ".join(reasons), slice_count=slice_count)
 
-    def split_order(self, total_qty: float) -> list[float]:
-        """TWAP-style order splitting based on current conditions."""
-        cfg = self._config
-        vpin = self.get_signal("vpin_btc")
-        spread = self.get_signal("spread_bps_btc")
-
-        if vpin is not None and vpin > cfg.vpin_threshold:
-            n_slices = cfg.max_slices
-        elif spread is not None and spread > cfg.spread_threshold_bps:
-            n_slices = max(3, cfg.max_slices - 1)
-        else:
-            n_slices = 1
-
-        slice_qty = total_qty / n_slices
-        return [slice_qty] * n_slices
+    def split_order(self, total_qty: float, side: str) -> list[float]:
+        """Split order quantity according to current execution advice."""
+        advice = self.execution_advice(side)
+        slice_qty = total_qty / advice.slice_count
+        return [slice_qty] * advice.slice_count

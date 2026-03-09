@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import math
 from unittest.mock import MagicMock
-import time
 
 import pytest
 
@@ -100,24 +99,18 @@ def _make_executor(exchange=None, initial_capital=10000.0):
 
 
 class _AlwaysSplitOptimizer:
-    max_deferral_attempts = 2
-    deferral_sleep_seconds = 0.0
+    def execution_advice(self, side: str):
+        return type("Advice", (), {"reason": "high VPIN", "slice_count": 5})()
 
-    def optimal_execution_window(self, side: str) -> bool:
-        return True
-
-    def split_order(self, qty: float) -> list[float]:
+    def split_order(self, qty: float, side: str) -> list[float]:
         return [qty / 5] * 5
 
 
-class _NeverReadyOptimizer:
-    max_deferral_attempts = 2
-    deferral_sleep_seconds = 1.0
+class _CautiousOptimizer:
+    def execution_advice(self, side: str):
+        return type("Advice", (), {"reason": "ask-heavy imbalance", "slice_count": 1})()
 
-    def optimal_execution_window(self, side: str) -> bool:
-        return False
-
-    def split_order(self, qty: float) -> list[float]:
+    def split_order(self, qty: float, side: str) -> list[float]:
         return [qty]
 
 
@@ -429,17 +422,16 @@ def test_submit_order_exchange_exception():
     assert fill is None
 
 
-def test_submit_order_optimizer_skips_final_sleep(monkeypatch):
+def test_submit_order_executes_immediately_under_optimizer_caution(caplog):
     mock_ex = _mock_exchange()
     ex = _make_executor(mock_ex)
-    ex._optimizer = _NeverReadyOptimizer()
-    sleeps: list[float] = []
-    monkeypatch.setattr(time, "sleep", lambda seconds: sleeps.append(seconds))
+    ex._optimizer = _CautiousOptimizer()
+    caplog.set_level("INFO")
 
     fill = ex.submit_order(Order(symbol="BTC", side="buy", qty=0.1))
 
     assert fill is not None
-    assert sleeps == [1.0]
+    assert any("Optimizer caution:" in record.message for record in caplog.records)
 
 
 # ---------------------------------------------------------------------------

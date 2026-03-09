@@ -241,8 +241,6 @@ class ExecutionTomlConfig:
     max_slices: int = 5
     signal_lookback_minutes: int = 15
     max_signal_age_seconds: int = 300
-    max_deferral_attempts: int = 2
-    deferral_sleep_seconds: float = 30.0
     commission_pct: float = 0.10
     modeled_slippage_pct: float = 0.05
 

@@ -81,8 +81,6 @@ spread_threshold_bps = 5.0
 max_slices = 5
 signal_lookback_minutes = 15
 max_signal_age_seconds = 300
-max_deferral_attempts = 2
-deferral_sleep_seconds = 30.0
 commission_pct = 0.10
 modeled_slippage_pct = 0.05
 

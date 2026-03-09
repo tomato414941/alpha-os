@@ -378,24 +378,18 @@ class BinanceExecutor(Executor):
                 return None
 
         if self._optimizer is not None:
-            max_attempts = max(1, int(getattr(self._optimizer, "max_deferral_attempts", 3)))
-            sleep_seconds = max(0.0, float(getattr(self._optimizer, "deferral_sleep_seconds", 30.0)))
-            for attempt in range(max_attempts):
-                if self._optimizer.optimal_execution_window(order.side):
-                    break
+            advice = self._optimizer.execution_advice(order.side)
+            if advice.reason:
                 logger.info(
-                    "Order deferred by optimizer (attempt %d/%d): %s %s %.6f",
-                    attempt + 1, max_attempts, order.side, order.symbol, order.qty,
-                )
-                if attempt + 1 < max_attempts:
-                    time.sleep(sleep_seconds)
-            else:
-                logger.warning(
-                    "Optimizer blocked after %d attempts, executing anyway: %s %s",
-                    max_attempts, order.side, order.symbol,
+                    "Optimizer caution: %s; executing with %d slice(s): %s %s %.6f",
+                    advice.reason,
+                    advice.slice_count,
+                    order.side,
+                    order.symbol,
+                    order.qty,
                 )
 
-            slices = self._optimizer.split_order(order.qty)
+            slices = self._optimizer.split_order(order.qty, order.side)
             market = self._market_symbol(order.symbol)
             ref_price = self._best_price(market, order.side)
             if ref_price is not None:

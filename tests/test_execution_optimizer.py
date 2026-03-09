@@ -38,8 +38,8 @@ def test_optimal_window_favorable():
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client)
-    assert opt.optimal_execution_window("buy") is True
-    assert opt.optimal_execution_window("sell") is True
+    assert opt.execution_advice("buy").reason == ""
+    assert opt.execution_advice("sell").reason == ""
 
 
 def test_optimal_window_high_vpin():
@@ -49,7 +49,9 @@ def test_optimal_window_high_vpin():
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client, ExecutionConfig(vpin_threshold=0.5))
-    assert opt.optimal_execution_window("buy") is False
+    advice = opt.execution_advice("buy")
+    assert "high VPIN" in advice.reason
+    assert advice.slice_count == 5
 
 
 def test_optimal_window_wide_spread():
@@ -59,7 +61,9 @@ def test_optimal_window_wide_spread():
         "spread_bps_btc": 10.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client)
-    assert opt.optimal_execution_window("buy") is False
+    advice = opt.execution_advice("buy")
+    assert "wide spread" in advice.reason
+    assert advice.slice_count >= 3
 
 
 def test_optimal_window_unfavorable_imbalance_buy():
@@ -70,8 +74,8 @@ def test_optimal_window_unfavorable_imbalance_buy():
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client, ExecutionConfig(imbalance_threshold=0.1))
-    assert opt.optimal_execution_window("buy") is False
-    assert opt.optimal_execution_window("sell") is True
+    assert "ask-heavy imbalance" in opt.execution_advice("buy").reason
+    assert opt.execution_advice("sell").reason == ""
 
 
 def test_optimal_window_unfavorable_imbalance_sell():
@@ -82,15 +86,15 @@ def test_optimal_window_unfavorable_imbalance_sell():
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client, ExecutionConfig(imbalance_threshold=0.1))
-    assert opt.optimal_execution_window("buy") is True
-    assert opt.optimal_execution_window("sell") is False
+    assert opt.execution_advice("buy").reason == ""
+    assert "bid-heavy imbalance" in opt.execution_advice("sell").reason
 
 
 def test_optimal_window_missing_signals():
     """Missing signals default to allow execution."""
     client = _make_client({})
     opt = ExecutionOptimizer(client)
-    assert opt.optimal_execution_window("buy") is True
+    assert opt.execution_advice("buy").reason == ""
 
 
 def test_optimal_window_prefers_recent_signal_data():
@@ -110,7 +114,7 @@ def test_optimal_window_prefers_recent_signal_data():
         }[name]}]
     )
     opt = ExecutionOptimizer(client, ExecutionConfig(max_signal_age_seconds=300))
-    assert opt.optimal_execution_window("buy") is True
+    assert opt.execution_advice("buy").reason == ""
 
 
 def test_stale_latest_signal_does_not_block_when_recent_missing():
@@ -123,36 +127,39 @@ def test_stale_latest_signal_does_not_block_when_recent_missing():
         latest_ts="2026-03-08T00:00:00Z",
     )
     opt = ExecutionOptimizer(client, ExecutionConfig(max_signal_age_seconds=1))
-    assert opt.optimal_execution_window("buy") is True
+    assert opt.execution_advice("buy").reason == ""
 
 
 def test_split_order_good_conditions():
     client = _make_client({
+        "book_imbalance_btc": 0.0,
         "vpin_btc": 0.2,
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client)
-    slices = opt.split_order(1.0)
+    slices = opt.split_order(1.0, "buy")
     assert slices == [1.0]
 
 
 def test_split_order_high_vpin():
     client = _make_client({
+        "book_imbalance_btc": 0.0,
         "vpin_btc": 0.8,
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client, ExecutionConfig(max_slices=5, vpin_threshold=0.5))
-    slices = opt.split_order(1.0)
+    slices = opt.split_order(1.0, "buy")
     assert len(slices) == 5
     assert sum(slices) == pytest.approx(1.0)
 
 
 def test_split_order_wide_spread():
     client = _make_client({
+        "book_imbalance_btc": 0.0,
         "vpin_btc": 0.3,
         "spread_bps_btc": 10.0,
     }, latest_ts=_fresh_ts())
     opt = ExecutionOptimizer(client, ExecutionConfig(max_slices=5))
-    slices = opt.split_order(1.0)
+    slices = opt.split_order(1.0, "buy")
     assert len(slices) >= 3
     assert sum(slices) == pytest.approx(1.0)
