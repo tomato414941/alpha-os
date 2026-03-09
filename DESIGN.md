@@ -422,6 +422,11 @@ This means:
 During this phase, documentation, observability, and operational hygiene are
 in-scope. New strategy complexity is not.
 
+Current BTC server profile at the time of writing:
+
+- `admission.max_active_alphas = 1000`
+- `deployment.max_alphas = 120`
+
 ### Participant-System Analogy
 
 It is useful to think about `alpha-os` as a participant-governance system:

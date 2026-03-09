@@ -274,9 +274,14 @@ After the recent runtime cleanup, the project is in a short observation phase.
 
 - observe `trade` cycles and `admission` stability without changing runtime behavior
 - verify that `admission.max_active_alphas` keeps the registry bounded
-- verify that `deployed_alphas=30` remains stable across refreshes
+- verify that the configured deployed alpha count remains stable across refreshes
 - compare new readiness reports against the registry DB and service memory
 - improve documentation, logging, and operational checklists that do not change strategy behavior
+
+Current server profile:
+
+- `admission.max_active_alphas = 1000`
+- `deployment.max_alphas = 120`
 
 ### What We Cannot Conclude Yet
 
