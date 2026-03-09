@@ -59,19 +59,36 @@ class CircuitBreaker:
     _halted: bool = False
     _halt_reason: str = ""
     _current_date: str = ""
+    _strategy_epoch: str = ""
+
+    def _reset_state(self, equity: float, *, today: str, reason: str) -> None:
+        self._current_date = today
+        self._daily_start_equity = equity
+        self._daily_pnl = 0.0
+        self._consecutive_losses = 0
+        self._peak_equity = equity
+        self._halted = False
+        self._halt_reason = ""
+        logger.info("Circuit breaker %s: equity=$%.2f", reason, equity)
+        self.save()
 
     def reset_daily(self, equity: float) -> None:
         """Reset daily counters if the date has changed."""
         today = date.today().isoformat()
         if today != self._current_date:
-            self._current_date = today
-            self._daily_start_equity = equity
-            self._daily_pnl = 0.0
-            self._consecutive_losses = 0
-            self._halted = False
-            self._halt_reason = ""
-            logger.info("Circuit breaker daily reset: equity=$%.2f", equity)
-            self.save()
+            self._reset_state(equity, today=today, reason="daily reset")
+
+    def sync_strategy_epoch(self, epoch: str, equity: float) -> None:
+        """Reset state when deployed universe or runtime policy changes."""
+        if not epoch or epoch == self._strategy_epoch:
+            return
+
+        self._strategy_epoch = epoch
+        self._reset_state(
+            equity,
+            today=date.today().isoformat(),
+            reason=f"strategy epoch reset ({epoch[:12]})",
+        )
 
     def record_trade(self, pnl: float) -> None:
         """Record a trade's P&L for daily loss and consecutive loss tracking."""
@@ -140,6 +157,7 @@ class CircuitBreaker:
             "halted": self._halted,
             "halt_reason": self._halt_reason,
             "current_date": self._current_date,
+            "strategy_epoch": self._strategy_epoch,
         }
         _atomic_write_text(path, json.dumps(data, indent=2))
 
@@ -167,6 +185,7 @@ class CircuitBreaker:
         cb._halted = data.get("halted", False)
         cb._halt_reason = data.get("halt_reason", "")
         cb._current_date = data.get("current_date", "")
+        cb._strategy_epoch = data.get("strategy_epoch", "")
         logger.info(
             "Circuit breaker loaded: pnl=$%.2f, peak=$%.2f, halted=%s",
             cb._daily_pnl, cb._peak_equity, cb._halted,
@@ -189,6 +208,7 @@ class CircuitBreaker:
         self._halted = data.get("halted", False)
         self._halt_reason = data.get("halt_reason", "")
         self._current_date = data.get("current_date", "")
+        self._strategy_epoch = data.get("strategy_epoch", "")
 
     @property
     def halted(self) -> bool:

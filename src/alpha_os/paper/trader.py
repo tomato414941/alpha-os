@@ -6,6 +6,8 @@ with datetime keys.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -621,6 +623,29 @@ class Trader:
             order_failures=order_failures,
         )
 
+    def _strategy_epoch(self, universe_records) -> str:
+        payload = {
+            "asset": self.asset,
+            "universe": sorted(record.alpha_id for record in universe_records),
+            "paper": {
+                "max_position_pct": self.config.paper.max_position_pct,
+                "min_trade_usd": self.config.paper.min_trade_usd,
+                "rebalance_deadband_usd": self.config.paper.rebalance_deadband_usd,
+                "max_trading_alphas": self.config.paper.max_trading_alphas,
+                "combine_mode": self.config.paper.combine_mode,
+            },
+            "execution": {
+                "imbalance_threshold": self.config.execution.imbalance_threshold,
+                "vpin_threshold": self.config.execution.vpin_threshold,
+                "spread_threshold_bps": self.config.execution.spread_threshold_bps,
+                "max_slices": self.config.execution.max_slices,
+                "signal_lookback_minutes": self.config.execution.signal_lookback_minutes,
+                "max_signal_age_seconds": self.config.execution.max_signal_age_seconds,
+            },
+        }
+        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha1(raw.encode()).hexdigest()
+
     def run_cycle(
         self,
         simulation_date: str | None = None,
@@ -674,6 +699,15 @@ class Trader:
 
         # 0. Circuit breaker check
         prev_equity = self.executor.portfolio_value
+        deployed_universe = self.registry.list_trading_universe()
+        if not deployed_universe:
+            raise RuntimeError(
+                "Trading universe is empty. Run `refresh-universe` before trading."
+            )
+        self.circuit_breaker.sync_strategy_epoch(
+            self._strategy_epoch(deployed_universe),
+            prev_equity,
+        )
         self.circuit_breaker.reset_daily(prev_equity)
         safe, reason = self.circuit_breaker.is_safe_to_trade(prev_equity)
         if not safe:
@@ -697,11 +731,6 @@ class Trader:
 
         # 2. Get the deployed universe, then shortlist tradable candidates from it.
         max_trading = self.config.paper.max_trading_alphas
-        deployed_universe = self.registry.list_trading_universe()
-        if not deployed_universe:
-            raise RuntimeError(
-                "Trading universe is empty. Run `refresh-universe` before trading."
-            )
         universe_records = deployed_universe
         n_universe_deployed = len(deployed_universe)
         trading_candidates = rank_trading_records(

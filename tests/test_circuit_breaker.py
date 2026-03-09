@@ -179,6 +179,38 @@ def test_reload_updates_in_memory_state(state_path):
     assert reloaded.halt_reason == "test halt"
 
 
+def test_strategy_epoch_change_resets_halt_and_losses(tmp_path):
+    state_path = tmp_path / "cb_state.json"
+    cb = CircuitBreaker(_state_path=state_path)
+    cb.sync_strategy_epoch("epoch-a", 10000.0)
+    for _ in range(5):
+        cb.record_trade(-10.0)
+    safe, _ = cb.is_safe_to_trade(9950.0)
+    assert safe is False
+    assert cb.halted is True
+
+    cb.sync_strategy_epoch("epoch-b", 9950.0)
+
+    assert cb.halted is False
+    assert cb.halt_reason == ""
+    assert cb._consecutive_losses == 0
+    assert cb._daily_pnl == 0.0
+    assert cb._daily_start_equity == 9950.0
+    assert cb._peak_equity == 9950.0
+
+
+def test_same_strategy_epoch_preserves_state(tmp_path):
+    state_path = tmp_path / "cb_state.json"
+    cb = CircuitBreaker(_state_path=state_path)
+    cb.sync_strategy_epoch("epoch-a", 10000.0)
+    cb.record_trade(-25.0)
+
+    cb.sync_strategy_epoch("epoch-a", 9990.0)
+
+    assert cb._daily_pnl == -25.0
+    assert cb._daily_start_equity == 10000.0
+
+
 # ---------------------------------------------------------------------------
 # Daily reset
 # ---------------------------------------------------------------------------
