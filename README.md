@@ -124,6 +124,14 @@ Recent CLI cleanup now prefers standard terms:
   `universe deployed`, `shortlist candidates`, `selected alphas`, and
   `signals evaluated`.
 
+State naming note:
+
+- `active` means `registry active`, not necessarily `currently traded`
+- `currently traded` means `deployed in trading_universe`
+
+This distinction is important. If logs or docs collapse those meanings, it
+quickly becomes technical debt.
+
 ## Registry Control
 
 The research registry is allowed to change continuously, but it should not

@@ -316,6 +316,21 @@ The active BTC registry now uses a hard cap through
 This keeps the control mechanism simple: one cap, one demotion path, no new
 runtime state.
 
+### State Semantics Risk
+
+The current state model is intentionally small, but the naming can still turn
+into technical debt if the semantics drift.
+
+- `active` means eligible in the registry lifecycle
+- it does not mean currently deployed for trading
+- deployment is a separate concern handled by `trading_universe`
+
+The mitigation is operational, not structural:
+
+- keep `state` for lifecycle only
+- keep deployment in `trading_universe` only
+- always say `registry active` and `universe deployed` in logs and docs
+
 The same bias applies to evaluation: use short observation windows after
 material runtime changes. The goal is a fast go / no-go decision, not a long
 freeze period with unclear attribution.
