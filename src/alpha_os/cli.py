@@ -6,7 +6,6 @@ import argparse
 import gc
 import json
 import logging
-import sqlite3
 import sys
 import time
 from datetime import date
@@ -1516,25 +1515,18 @@ def _load_latest_report(report_path: Path) -> dict | None:
 
 
 def _registry_status(adir: Path) -> dict[str, int]:
-    conn = sqlite3.connect(str(adir / "alpha_registry.db"))
-    cur = conn.cursor()
+    from alpha_os.alpha.registry import AlphaRegistry, AlphaState
+
+    registry = AlphaRegistry(adir / "alpha_registry.db")
     try:
         return {
-            "active": cur.execute(
-                "SELECT COUNT(*) FROM alphas WHERE state = 'active'"
-            ).fetchone()[0],
-            "dormant": cur.execute(
-                "SELECT COUNT(*) FROM alphas WHERE state = 'dormant'"
-            ).fetchone()[0],
-            "rejected": cur.execute(
-                "SELECT COUNT(*) FROM alphas WHERE state = 'rejected'"
-            ).fetchone()[0],
-            "deployed": cur.execute(
-                "SELECT COUNT(*) FROM deployed_alphas"
-            ).fetchone()[0],
+            "active": registry.count(AlphaState.ACTIVE),
+            "dormant": registry.count(AlphaState.DORMANT),
+            "rejected": registry.count(AlphaState.REJECTED),
+            "deployed": registry.count_deployed_alphas(),
         }
     finally:
-        conn.close()
+        registry.close()
 
 
 def _runtime_observation_findings(latest: dict | None, registry: dict[str, int]) -> list[str]:
