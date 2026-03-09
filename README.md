@@ -238,6 +238,44 @@ The next cleanup goal is not another large rewrite. It is to preserve the
 runtime boundaries while removing decision paths that mostly add delay,
 fallbacks, and operational ambiguity.
 
+## How To Read The System
+
+If you are trying to understand the project during an observation window,
+read it in this order:
+
+1. `registry -> trading_universe -> trade`
+   - Research alphas live in the registry.
+   - Deployed alphas live in `trading_universe`.
+   - `trade` should only act on the deployed subset.
+   - Start with
+     [registry.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/registry.py),
+     [trading_universe.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/trading_universe.py),
+     [trader.py](/home/dev/projects/alpha-os/src/alpha_os/paper/trader.py)
+
+2. `signal -> target -> intent -> executable order`
+   - This is the current runtime boundary.
+   - Start with
+     [planning.py](/home/dev/projects/alpha-os/src/alpha_os/execution/planning.py),
+     [constraints.py](/home/dev/projects/alpha-os/src/alpha_os/execution/constraints.py),
+     [binance.py](/home/dev/projects/alpha-os/src/alpha_os/execution/binance.py)
+
+3. `admission -> lifecycle`
+   - `admission` decides what enters `active`.
+   - `lifecycle` decides what leaves `active`.
+   - Start with
+     [admission.py](/home/dev/projects/alpha-os/src/alpha_os/daemon/admission.py),
+     [lifecycle.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/lifecycle.py)
+
+4. `replay -> testnet readiness`
+   - `replay` compares logic on historical data.
+   - `testnet-readiness` measures runtime behavior that replay cannot fully capture.
+   - Start with
+     [replay.py](/home/dev/projects/alpha-os/src/alpha_os/experiments/replay.py),
+     [testnet.py](/home/dev/projects/alpha-os/src/alpha_os/validation/testnet.py)
+
+This order helps separate research, deployment, runtime planning, and
+operational verification.
+
 ### Position sizing
 
 ```
