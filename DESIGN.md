@@ -316,6 +316,10 @@ The active BTC registry now uses a hard cap through
 This keeps the control mechanism simple: one cap, one demotion path, no new
 runtime state.
 
+The same bias applies to evaluation: use short observation windows after
+material runtime changes. The goal is a fast go / no-go decision, not a long
+freeze period with unclear attribution.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:

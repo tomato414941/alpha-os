@@ -159,6 +159,21 @@ The readiness files have different roles:
 The registry DB can change before the next scheduled trade cycle writes a new
 readiness report, so DB counts and the latest report may briefly disagree.
 
+### Observation Window
+
+Do not pause development for multiple days just to watch this strategy.
+
+- use a short observation window: about `24 hours` or `3-5` scheduled trade cycles
+- avoid large runtime changes during that window so the result stays attributable
+- after that window, make a go / no-go call instead of extending observation by default
+
+Typical no-go signals:
+
+- fills remain near zero
+- `n_skipped_deadband` dominates and the runtime rarely trades
+- daily PnL shows no improvement signal
+- `n_registry_active` or service memory becomes unstable again
+
 ## Runtime Boundaries
 
 The runtime is being standardized around five layers:
