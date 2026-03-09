@@ -1550,6 +1550,17 @@ def _runtime_observation_findings(latest: dict | None, registry: dict[str, int])
     return findings
 
 
+def _latest_deployed_count(latest: dict | None) -> int:
+    if latest is None:
+        return 0
+    return int(
+        latest.get(
+            "n_deployed_alphas",
+            latest.get("n_universe_deployed", 0),
+        )
+    )
+
+
 def cmd_runtime_status(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -1592,7 +1603,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     print(
         f"  Selection: registry={latest['n_registry_active']} "
-        f"deployed={latest['n_deployed_alphas']} "
+        f"deployed={_latest_deployed_count(latest)} "
         f"selected={latest['n_selected_alphas']}"
     )
     print(
