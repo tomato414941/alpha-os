@@ -305,6 +305,22 @@ The important takeaway is that `alpha-os` is not trying to trade every
 participant. It is trying to govern a large candidate set and deploy only a
 small subset at any given time.
 
+### Diversity Note
+
+If the current simplified runtime still fails to show a useful edge after the
+observation window, alpha diversity is one of the strongest next bottleneck
+candidates.
+
+The target is not "more alphas" by itself. The target is:
+
+- more independent alphas
+- less duplication across close variants
+- better selection and allocation across distinct views
+
+That is the direction in which `alpha-os` would become more similar to a
+participant system such as Numerai or a forecasting market with many
+independent contributors.
+
 ### Position sizing
 
 ```
