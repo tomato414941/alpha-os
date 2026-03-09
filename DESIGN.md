@@ -231,6 +231,17 @@ Examples:
 - prefer `deployed alphas` over overloaded uses of `universe`
 - prefer names like `max_deployed_alphas` over layer-ambiguous `max_alphas`
 
+### Canonical Naming Rules
+
+These rules should be treated as defaults for future code review and cleanup:
+
+- lifecycle vocabulary belongs to the registry layer
+- deployment vocabulary belongs to the runtime subset layer
+- `active` by itself is only acceptable when the surrounding code is already
+  unambiguously about registry state
+- public-facing output should prefer `registry active` and `deployed alphas`
+- new config keys should encode the layer they govern
+
 ### Migration Bias
 
 The migration order should be:

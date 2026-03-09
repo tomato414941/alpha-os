@@ -69,6 +69,16 @@ The project should not collapse the layers just because the current names are
 awkward. The design goal is still to separate research churn from deployed
 trading behavior.
 
+### Naming Rules
+
+Use these labels consistently in docs, logs, and reviews:
+
+- say `registry active` when you mean lifecycle eligibility in `alphas`
+- say `deployed alphas` when you mean the runtime subset in `deployed_alphas`
+- say `deployment` for runtime allocation policy, not `universe`
+- avoid plain `active` and plain `max_alphas` when the layer is ambiguous
+- prefer names that encode the layer, even if they are longer
+
 ## Architecture
 
 ```
