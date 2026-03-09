@@ -3,6 +3,18 @@
 alpha-os + signal-noise の統合進化ロードマップ。
 現在の日次シグナル × 4h サイクルから、マルチタイムフレーム・イベント駆動型への移行計画。
 
+## Read This As A Roadmap
+
+This file is intentionally forward-looking. It is not the source of truth for
+the current runtime shape or current server configuration.
+
+- for the current runtime and naming, prefer `README.md`
+- for the architectural rationale behind the current runtime, prefer `DESIGN.md`
+- for current server-side operations, prefer `AGENTS.override.md`
+
+Some items below describe planned or exploratory directions rather than the
+current deployed stack.
+
 ## Vision
 
 市場の情報は「半減期」を持つ。日次でしか動かない情報もあれば、
