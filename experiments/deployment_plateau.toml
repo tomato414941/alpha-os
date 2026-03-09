@@ -1,0 +1,40 @@
+[defaults]
+asset = "BTC"
+start_date = "2025-09-01"
+end_date = "2026-03-05"
+registry_mode = "admission"
+admission_source = "candidates"
+deployment_mode = "refresh"
+sizing_mode = "runtime"
+notes = "Check whether deployed alpha count is still improving past 90."
+
+[defaults.overrides]
+lifecycle.candidate_quality_min = 1.10
+lifecycle.active_quality_min = 0.0
+paper.rebalance_deadband_usd = 5.0
+deployment.max_replacements = 1
+deployment.promotion_margin = 0.05
+
+[[experiment]]
+name = "deployment-90"
+
+[experiment.overrides.deployment]
+max_alphas = 90
+
+[[experiment]]
+name = "deployment-100"
+
+[experiment.overrides.deployment]
+max_alphas = 100
+
+[[experiment]]
+name = "deployment-120"
+
+[experiment.overrides.deployment]
+max_alphas = 120
+
+[[experiment]]
+name = "deployment-150"
+
+[experiment.overrides.deployment]
+max_alphas = 150
