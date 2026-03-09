@@ -37,6 +37,31 @@ class AdmissionDaemon:
     def _admission_metric(self) -> str:
         return self.config.fitness_metric
 
+    def _prune_active_overflow(
+        self,
+        registry: AlphaRegistry,
+        *,
+        metric: str,
+        limit: int,
+    ) -> int:
+        active_count = registry.count(AlphaState.ACTIVE)
+        overflow = active_count - limit
+        if overflow <= 0:
+            return 0
+
+        for record in registry.bottom_trading(overflow, metric=metric):
+            registry.update_state(record.alpha_id, AlphaState.DORMANT)
+
+        logger.info(
+            "Admission cap: demoted %d weakest active alphas to dormant "
+            "(metric=%s, limit=%d, active_before=%d)",
+            overflow,
+            metric,
+            limit,
+            active_count,
+        )
+        return overflow
+
     def _reserve_active_slot(
         self,
         registry: AlphaRegistry,
@@ -46,11 +71,12 @@ class AdmissionDaemon:
         if limit <= 0:
             return True, ""
 
+        metric = self._admission_metric()
+        self._prune_active_overflow(registry, metric=metric, limit=limit)
         active_count = registry.count(AlphaState.ACTIVE)
         if active_count < limit:
             return True, ""
 
-        metric = self._admission_metric()
         weakest = registry.bottom_trading(1, metric=metric)
         if not weakest:
             return True, ""
