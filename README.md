@@ -121,6 +121,44 @@ Recent CLI cleanup now prefers standard terms:
   `universe deployed`, `shortlist candidates`, `selected alphas`, and
   `signals evaluated`.
 
+## Registry Control
+
+The research registry is allowed to change continuously, but it should not
+grow without bound.
+
+- `admission.max_active_alphas` is the hard cap for `alphas.state=active`.
+- `0` disables the cap. Any positive value enables it.
+- When the cap is reached, a weaker incoming alpha is rejected.
+- When the cap is reached and the incoming alpha is stronger, the weakest
+  active alpha is demoted to `dormant` first.
+- If the registry is already above the cap, admission first prunes the
+  weakest active rows down to the limit, then evaluates the new alpha.
+
+This is intentionally simple. It avoids adding a new pool or a second
+deployment lifecycle just to control registry growth.
+
+## Runtime Observation
+
+For current testnet operation, watch these values first:
+
+- registry DB counts: `active`, `dormant`, `rejected`
+- readiness report fields:
+  `n_registry_active`, `n_universe_deployed`, `n_selected_alphas`
+- trading outcomes:
+  `n_fills`, `n_skipped_deadband`, `n_order_failures`, `daily_pnl`
+- service health:
+  `alpha-os.service` and `alpha-os-admission@BTC.service` memory usage
+
+The readiness files have different roles:
+
+- `data/BTC/metrics/testnet_readiness.json`
+  aggregated readiness state such as consecutive success days
+- `data/BTC/metrics/testnet_readiness_reports.jsonl`
+  per-cycle reports with fills, skips, reconciliation, and registry counts
+
+The registry DB can change before the next scheduled trade cycle writes a new
+readiness report, so DB counts and the latest report may briefly disagree.
+
 ## Runtime Boundaries
 
 The runtime is being standardized around five layers:

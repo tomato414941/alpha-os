@@ -303,6 +303,19 @@ New runtime work should stay within a small complexity budget:
 The preferred fix for registry growth is therefore a simple active-cap rule,
 not a new shadow pool or a second deployment lifecycle.
 
+### Current Registry Cap
+
+The active BTC registry now uses a hard cap through
+`admission.max_active_alphas`.
+
+- the cap applies only to `alphas.state=active`
+- stronger incoming alphas can replace weaker incumbents
+- overflow is resolved by demoting weakest active rows to `dormant`
+- `trading_universe` remains separate and is still refreshed explicitly
+
+This keeps the control mechanism simple: one cap, one demotion path, no new
+runtime state.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
