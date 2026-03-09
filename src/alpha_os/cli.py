@@ -251,6 +251,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     rex.add_argument("--notes", default="", help="Optional experiment notes")
 
+    # replay-matrix
+    rmx = sub.add_parser(
+        "replay-matrix",
+        help="Run a TOML-defined replay experiment matrix",
+    )
+    rmx.add_argument("--manifest", required=True, help="Path to TOML matrix manifest")
+    rmx.add_argument(
+        "--max-workers",
+        type=int,
+        default=1,
+        help="Parallel workers for historical replay runs",
+    )
+
     # testnet-readiness
     tnr = sub.add_parser("testnet-readiness", help="Check Phase 4 testnet readiness status")
     tnr.add_argument("--reports", action="store_true", help="Show all daily reports")
@@ -1400,6 +1413,25 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
     print(f"  Trades:   {result['total_trades']}")
 
 
+def cmd_replay_matrix(args: argparse.Namespace) -> None:
+    from alpha_os.experiments.matrix import load_replay_matrix, run_replay_matrix
+
+    matrix = load_replay_matrix(Path(args.manifest))
+    runs = run_replay_matrix(matrix, max_workers=args.max_workers)
+
+    print(f"Replay matrix: {args.manifest}")
+    for run in runs:
+        result = run.payload["result"]
+        print(
+            f"  - {run.payload['name']}: "
+            f"return={result['total_return']:+.2%} "
+            f"sharpe={result['sharpe']:.3f} "
+            f"dd={result['max_drawdown']:.2%} "
+            f"trades={result['total_trades']} "
+            f"detail={run.detail_path}"
+        )
+
+
 def cmd_admission_daemon(args: argparse.Namespace) -> None:
     """Run the candidate admission daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
@@ -1680,6 +1712,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_refresh_universe(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
+    elif args.command == "replay-matrix":
+        cmd_replay_matrix(args)
     elif args.command == "testnet-readiness":
         cmd_testnet_readiness(args)
     elif args.command == "runtime-status":

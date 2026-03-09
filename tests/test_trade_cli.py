@@ -230,6 +230,21 @@ def test_replay_experiment_parser():
     ]
 
 
+def test_replay_matrix_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "replay-matrix",
+        "--manifest", "experiments/deadband.toml",
+        "--max-workers", "4",
+    ])
+
+    assert args.command == "replay-matrix"
+    assert args.manifest == "experiments/deadband.toml"
+    assert args.max_workers == 4
+
+
 def test_normalize_trade_config_preserves_requested_profile():
     from alpha_os.cli import _normalize_trade_config
     from alpha_os.config import Config
