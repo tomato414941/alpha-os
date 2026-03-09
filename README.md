@@ -135,6 +135,18 @@ This boundary exists to keep venue-specific constraints from silently shaping
 strategy behavior. Executors should receive only orders that are already valid
 for the target venue.
 
+## Runtime Cleanup Direction
+
+The current runtime is more modular than before, but some policy layers are
+still heavier than they should be.
+
+- Keep: `trading_universe`, explicit execution handoffs, shared cost model.
+- Reduce: optimizer hard blocks, stale circuit-breaker carryover, and policy branching inside `trade`.
+
+The next cleanup goal is not another large rewrite. It is to preserve the
+runtime boundaries while removing decision paths that mostly add delay,
+fallbacks, and operational ambiguity.
+
 ### Position sizing
 
 ```

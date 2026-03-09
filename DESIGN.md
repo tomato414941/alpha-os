@@ -252,6 +252,44 @@ The codebase is moving toward this separation in stages:
 This boundary is now part of the intended architecture. Future refactors should
 prefer clearer layer ownership over parameter-only tuning.
 
+## Runtime Complexity Review
+
+The runtime has become more structured, but it has also become more complex.
+That complexity is not all the same.
+
+### Complexity to Keep
+
+These changes add moving parts, but they reduce coupling and should remain:
+
+- `trading_universe` separated from the research registry
+- explicit runtime handoffs (`TargetPosition`, `ExecutionIntent`, `ExecutableOrder`)
+- shared runtime cost model across replay, paper, and exchange execution
+
+These are architecture boundaries, not incidental knobs.
+
+### Complexity to Reduce
+
+These parts currently add operational complexity without enough return:
+
+- execution optimizer hard-block rules (`wait`, retry, then execute anyway)
+- circuit breaker state that survives strategy/runtime regime changes unchanged
+- strategy policy still spread across `trade`, optimizer policy, and runtime guards
+- signal-source behavior that is not transparent enough (`latest` vs recent data)
+
+The main smell is not "too many modules". The main smell is too many boolean
+runtime gates that delay or block execution, then fall back to execution anyway.
+
+### Simplification Priority
+
+The preferred simplification order is:
+
+1. Remove or weaken optimizer hard blocks in favor of softer penalties or size reduction.
+2. Make the circuit breaker strategy-aware so new runtime regimes do not inherit old loss streaks blindly.
+3. Move more runtime policy out of `trade` into explicit policy objects with narrow responsibilities.
+4. Keep signal freshness semantics explicit and observable in logs and reports.
+
+Short version: keep structural separation, reduce policy branching.
+
 ## Admission Gate
 
 All criteria must pass for a candidate to be admitted:
