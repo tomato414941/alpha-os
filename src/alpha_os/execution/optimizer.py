@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExecutionConfig:
-    imbalance_threshold: float = 0.1
+    imbalance_threshold: float = 0.3
     vpin_threshold: float = 0.85
     spread_threshold_bps: float = 5.0
     max_slices: int = 5

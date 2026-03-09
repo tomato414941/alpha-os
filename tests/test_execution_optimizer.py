@@ -69,7 +69,7 @@ def test_optimal_window_unfavorable_imbalance_buy():
         "vpin_btc": 0.3,
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
-    opt = ExecutionOptimizer(client)
+    opt = ExecutionOptimizer(client, ExecutionConfig(imbalance_threshold=0.1))
     assert opt.optimal_execution_window("buy") is False
     assert opt.optimal_execution_window("sell") is True
 
@@ -81,7 +81,7 @@ def test_optimal_window_unfavorable_imbalance_sell():
         "vpin_btc": 0.3,
         "spread_bps_btc": 2.0,
     }, latest_ts=_fresh_ts())
-    opt = ExecutionOptimizer(client)
+    opt = ExecutionOptimizer(client, ExecutionConfig(imbalance_threshold=0.1))
     assert opt.optimal_execution_window("buy") is True
     assert opt.optimal_execution_window("sell") is False
 

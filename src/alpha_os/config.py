@@ -235,7 +235,7 @@ class LifecycleTomlConfig:
 
 @dataclass
 class ExecutionTomlConfig:
-    imbalance_threshold: float = 0.1
+    imbalance_threshold: float = 0.3
     vpin_threshold: float = 0.85
     spread_threshold_bps: float = 5.0
     max_slices: int = 5

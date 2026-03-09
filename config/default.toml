@@ -75,7 +75,7 @@ dormant_revival_quality = 0.0 # DORMANT -> ACTIVE revival
 correlation_max = 0.5
 
 [execution]
-imbalance_threshold = 0.1
+imbalance_threshold = 0.3
 vpin_threshold = 0.85
 spread_threshold_bps = 5.0
 max_slices = 5
