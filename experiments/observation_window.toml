@@ -1,0 +1,43 @@
+[defaults]
+asset = "BTC"
+start_date = "2025-09-01"
+end_date = "2026-03-05"
+registry_mode = "admission"
+admission_source = "candidates"
+universe_mode = "refresh"
+sizing_mode = "runtime"
+notes = "Observation-window comparisons without touching runtime services."
+
+[defaults.overrides]
+lifecycle.candidate_quality_min = 1.10
+lifecycle.active_quality_min = 0.0
+paper.rebalance_deadband_usd = 5.0
+universe.max_alphas = 30
+universe.max_replacements = 1
+
+[[experiment]]
+name = "baseline-current"
+
+[[experiment]]
+name = "deadband-0"
+
+[experiment.overrides.paper]
+rebalance_deadband_usd = 0.0
+
+[[experiment]]
+name = "deadband-10"
+
+[experiment.overrides.paper]
+rebalance_deadband_usd = 10.0
+
+[[experiment]]
+name = "universe-20"
+
+[experiment.overrides.universe]
+max_alphas = 20
+
+[[experiment]]
+name = "universe-40"
+
+[experiment.overrides.universe]
+max_alphas = 40

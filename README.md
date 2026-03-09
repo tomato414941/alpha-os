@@ -135,6 +135,9 @@ python -m alpha_os runtime-status --asset BTC
 
 # Queue the hand-crafted BTC baseline into the local admission queue
 python -m alpha_os seed-handcrafted --asset BTC --alpha-set baseline
+
+# Run a TOML-defined historical replay matrix
+python -m alpha_os replay-matrix --manifest experiments/observation_window.toml --max-workers 2
 ```
 
 ## Configuration
