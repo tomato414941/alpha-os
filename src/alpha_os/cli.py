@@ -268,6 +268,21 @@ def _build_parser() -> argparse.ArgumentParser:
     rst.add_argument("--asset", type=str, default="BTC")
     rst.add_argument("--config", type=str, default=None)
 
+    # seed-handcrafted
+    shc = sub.add_parser(
+        "seed-handcrafted",
+        help="Queue hand-crafted alpha candidates into the admission queue",
+    )
+    shc.add_argument("--asset", type=str, default="BTC")
+    shc.add_argument(
+        "--alpha-set",
+        type=str,
+        default="baseline",
+        help="Named handcrafted alpha set for the asset",
+    )
+    shc.add_argument("--list", action="store_true", help="List available sets and exit")
+    shc.add_argument("--dry-run", action="store_true", help="Print expressions without writing")
+
     return parser
 
 
@@ -1587,6 +1602,50 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
+    from alpha_os.alpha.handcrafted import (
+        get_handcrafted_expressions,
+        list_handcrafted_sets,
+    )
+    from alpha_os.alpha.registry import AlphaRegistry
+
+    asset = args.asset.upper()
+    available_sets = list_handcrafted_sets(asset)
+    if args.list:
+        print(f"Hand-crafted sets ({asset})")
+        if not available_sets:
+            print("  none")
+            return
+        for name in available_sets:
+            print(f"  - {name}")
+        return
+
+    try:
+        expressions = get_handcrafted_expressions(asset, args.alpha_set)
+    except KeyError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    print(
+        f"Seed hand-crafted set: asset={asset} set={args.alpha_set} "
+        f"count={len(expressions)}"
+    )
+    for expression in expressions:
+        print(f"  {expression}")
+    if args.dry_run:
+        return
+
+    registry = AlphaRegistry(asset_data_dir(asset) / "alpha_registry.db")
+    try:
+        inserted = registry.queue_candidate_expressions(
+            expressions,
+            source=f"manual_{asset.lower()}_{args.alpha_set}",
+            behavior_json={"source": "handcrafted", "set": args.alpha_set, "asset": asset},
+        )
+    finally:
+        registry.close()
+    print(f"Queued: {inserted} new candidates")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -1625,3 +1684,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_testnet_readiness(args)
     elif args.command == "runtime-status":
         cmd_runtime_status(args)
+    elif args.command == "seed-handcrafted":
+        cmd_seed_handcrafted(args)

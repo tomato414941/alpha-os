@@ -132,6 +132,9 @@ python -m alpha_os testnet-readiness
 
 # Show the current observation snapshot
 python -m alpha_os runtime-status --asset BTC
+
+# Queue the hand-crafted BTC baseline into the local admission queue
+python -m alpha_os seed-handcrafted --asset BTC --alpha-set baseline
 ```
 
 ## Configuration

@@ -186,6 +186,23 @@ def test_runtime_status_parser():
     assert args.asset == "BTC"
 
 
+def test_seed_handcrafted_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "seed-handcrafted",
+        "--asset", "BTC",
+        "--alpha-set", "baseline",
+        "--dry-run",
+    ])
+
+    assert args.command == "seed-handcrafted"
+    assert args.asset == "BTC"
+    assert args.alpha_set == "baseline"
+    assert args.dry_run is True
+
+
 def test_replay_experiment_parser():
     from alpha_os.cli import _build_parser
 

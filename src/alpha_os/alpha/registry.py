@@ -1,6 +1,7 @@
 """Alpha Registry — SQLite-backed metadata store for alpha lifecycle."""
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import time
@@ -204,6 +205,55 @@ class AlphaRegistry:
     def clear_trading_universe(self) -> None:
         self._conn.execute("DELETE FROM trading_universe")
         self._conn.commit()
+
+    def queue_candidate_expressions(
+        self,
+        expressions: list[str],
+        *,
+        source: str,
+        fitness: float = 0.0,
+        behavior_json: dict | None = None,
+        created_at: float | None = None,
+    ) -> int:
+        if not expressions:
+            return 0
+
+        stamp = created_at or time.time()
+        payload: dict[str, tuple[str, str, float, str, str, float]] = {}
+        behavior = json.dumps(behavior_json or {})
+        for expression in expressions:
+            digest = hashlib.md5(
+                f"{source}:{expression}".encode(),
+                usedforsecurity=False,
+            ).hexdigest()[:16]
+            candidate_id = f"{source}_{digest}"
+            payload[candidate_id] = (
+                candidate_id,
+                expression,
+                float(fitness),
+                "pending",
+                behavior,
+                stamp,
+            )
+
+        rows = list(payload.values())
+        placeholders = ", ".join("?" for _ in rows)
+        existing = set()
+        if rows:
+            existing_rows = self._conn.execute(
+                f"SELECT candidate_id FROM candidates WHERE candidate_id IN ({placeholders})",
+                [row[0] for row in rows],
+            ).fetchall()
+            existing = {row["candidate_id"] for row in existing_rows}
+
+        self._conn.executemany(
+            """INSERT OR IGNORE INTO candidates
+               (candidate_id, expression, fitness, status, behavior_json, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            rows,
+        )
+        self._conn.commit()
+        return len(rows) - len(existing)
 
     def register(self, record: AlphaRecord) -> None:
         now = time.time()
