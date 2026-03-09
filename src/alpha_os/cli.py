@@ -1490,6 +1490,27 @@ def _registry_status(adir: Path) -> dict[str, int]:
         conn.close()
 
 
+def _runtime_observation_findings(latest: dict | None, registry: dict[str, int]) -> list[str]:
+    findings: list[str] = []
+    if latest is None:
+        findings.append("no readiness reports yet")
+        return findings
+
+    if latest.get("has_errors"):
+        findings.append("latest cycle has runtime errors")
+    if latest.get("n_fills", 0) == 0:
+        findings.append("latest cycle had zero fills")
+    if latest.get("n_skipped_deadband", 0) > 0 and latest.get("n_fills", 0) == 0:
+        findings.append("deadband skipped the latest cycle")
+    if latest.get("n_order_failures", 0) > 0:
+        findings.append("latest cycle had order failures")
+    if not latest.get("reconciliation_match", False):
+        findings.append("latest cycle failed reconciliation")
+    if latest.get("n_registry_active", registry["active"]) != registry["active"]:
+        findings.append("latest report is older than current registry state")
+    return findings
+
+
 def cmd_runtime_status(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -1505,6 +1526,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
     registry = _registry_status(adir)
+    findings = _runtime_observation_findings(latest, registry)
 
     print(f"Runtime Status ({args.asset.upper()})")
     print(
@@ -1545,6 +1567,19 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"order_failures={latest['n_order_failures']} "
         f"halted={latest['circuit_breaker_halted']}"
     )
+    verdict = "pending"
+    if any(
+        finding in findings
+        for finding in (
+            "latest cycle has runtime errors",
+            "latest cycle had order failures",
+            "latest cycle failed reconciliation",
+        )
+    ):
+        verdict = "attention"
+    print(f"  Observe:   {verdict}")
+    for finding in findings:
+        print(f"    - {finding}")
     if latest["n_registry_active"] != registry["active"]:
         print(
             "  Note:      registry DB count differs from latest readiness report; "

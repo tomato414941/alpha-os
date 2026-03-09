@@ -532,4 +532,7 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     assert "Registry:  active=1 dormant=1 rejected=1 universe=1" in output
     assert "Latest:    2026-03-09 [OK]" in output
     assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
+    assert "Observe:   pending" in output
+    assert "- latest cycle had zero fills" in output
+    assert "- deadband skipped the latest cycle" in output
     assert "Note:      registry DB count differs" in output
