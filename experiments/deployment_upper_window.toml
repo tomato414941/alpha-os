@@ -1,0 +1,31 @@
+[defaults]
+asset = "BTC"
+start_date = "2025-09-01"
+end_date = "2026-03-05"
+registry_mode = "current"
+deployment_mode = "refresh"
+sizing_mode = "runtime"
+
+[defaults.overrides]
+admission.max_active_alphas = 1000
+deployment.max_replacements = 1
+deployment.promotion_margin = 0.05
+paper.rebalance_deadband_usd = 5.0
+
+[[experiment]]
+name = "deployment-120"
+
+[experiment.overrides]
+deployment.max_alphas = 120
+
+[[experiment]]
+name = "deployment-150"
+
+[experiment.overrides]
+deployment.max_alphas = 150
+
+[[experiment]]
+name = "deployment-180"
+
+[experiment.overrides]
+deployment.max_alphas = 180
