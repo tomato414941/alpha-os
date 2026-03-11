@@ -518,6 +518,31 @@ The preferred direction is:
 
 This is a research productivity problem first, not a runtime architecture problem.
 
+### Champion / Challenger Replay Shape
+
+Historical replay should move toward an explicit `champion / challenger`
+workflow instead of ad-hoc one-off comparisons.
+
+Recommended structure:
+
+- `champion`: the currently deployed runtime profile
+- `challengers`: a small set of alternatives, each changing one main lever
+- every run identified by `profile_id`, with code commit stored separately
+
+This keeps comparison units stable even when docs, CLI output, or other
+non-behavioral code changes land.
+
+Current starter manifest:
+
+- [champion_challenger.toml](/home/dev/projects/alpha-os/experiments/champion_challenger.toml)
+
+Near-term rule:
+
+- one champion
+- a few challengers
+- one primary change per challenger
+- promotion only after replay and testnet evidence beat the champion
+
 ### Hand-Crafted BTC Baseline Candidates
 
 Before increasing search complexity further, a small hand-crafted BTC baseline

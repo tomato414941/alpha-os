@@ -180,6 +180,9 @@ python -m alpha_os replay-matrix --manifest experiments/observation_window.toml 
 
 # Compare deployed-alpha policy variants around the current best range
 python -m alpha_os replay-matrix --manifest experiments/deployment_window.toml --max-workers 2
+
+# Run a champion / challenger replay set against the current BTC baseline
+python -m alpha_os replay-matrix --manifest experiments/champion_challenger.toml --max-workers 2
 ```
 
 ## Configuration
@@ -227,6 +230,27 @@ Near-term naming direction:
 
 The research registry is allowed to change continuously, but it should not
 grow without bound.
+
+## Champion / Challenger Experiments
+
+Use `replay-matrix` manifests to make one profile the explicit baseline
+(`champion`) and compare alternatives as `challengers`.
+
+Recommended shape:
+
+- one `champion-current` entry that matches the current testnet/runtime profile
+- a small number of challengers that change exactly one lever
+- compare runs by both `profile_id` and performance metrics
+
+Current example:
+
+- [champion_challenger.toml](/home/dev/projects/alpha-os/experiments/champion_challenger.toml)
+
+Practical rule:
+
+- change one runtime lever per challenger
+- keep the champion fixed until it is explicitly replaced
+- treat `profile_id` as the unit of comparison, not just the experiment name
 
 - `admission.max_active_alphas` is the hard cap for `alphas.state=active`.
 - `0` disables the cap. Any positive value enables it.
