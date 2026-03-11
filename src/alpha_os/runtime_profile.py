@@ -61,18 +61,20 @@ def build_runtime_profile(
     commit: str | None = None,
 ) -> RuntimeProfile:
     resolved_commit = git_commit() if commit is None else commit
-    payload = {
+    profile_payload = {
         "asset": asset.upper(),
-        "git_commit": resolved_commit,
         "config": _runtime_config_payload(config),
         "deployed_alpha_ids": sorted(deployed_alpha_ids),
     }
     if extra:
-        payload["extra"] = extra
-    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        profile_payload["extra"] = extra
+    raw = json.dumps(profile_payload, sort_keys=True, separators=(",", ":"))
+    payload = {
+        **profile_payload,
+        "git_commit": resolved_commit,
+    }
     return RuntimeProfile(
         profile_id=hashlib.sha1(raw.encode()).hexdigest(),
         git_commit=resolved_commit,
         payload=payload,
     )
-

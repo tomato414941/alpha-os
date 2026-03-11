@@ -11,6 +11,7 @@ from alpha_os.experiments.replay import (
 )
 from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from alpha_os.config import Config
+from alpha_os.runtime_profile import build_runtime_profile
 
 
 def test_parse_override_assignment_uses_toml_types():
@@ -105,3 +106,24 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     assert payload["result"]["n_skipped_rounded_to_zero"] == 3
     assert summary["profile_id"] == payload["runtime_profile"]["profile_id"]
     assert summary["detail_path"] == str(run.detail_path)
+
+
+def test_runtime_profile_id_ignores_git_commit():
+    cfg = Config()
+
+    profile_a = build_runtime_profile(
+        asset="BTC",
+        config=cfg,
+        deployed_alpha_ids=["a1", "a2"],
+        commit="aaaaaaaa",
+    )
+    profile_b = build_runtime_profile(
+        asset="BTC",
+        config=cfg,
+        deployed_alpha_ids=["a1", "a2"],
+        commit="bbbbbbbb",
+    )
+
+    assert profile_a.profile_id == profile_b.profile_id
+    assert profile_a.git_commit == "aaaaaaaa"
+    assert profile_b.git_commit == "bbbbbbbb"
