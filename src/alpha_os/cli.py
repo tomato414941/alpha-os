@@ -1852,11 +1852,21 @@ def cmd_analyze_diversity(args: argparse.Namespace) -> None:
         f"struct={summary.mean_structure_overlap:.3f} "
         f"composite={summary.mean_composite_similarity:.3f}"
     )
+    print(
+        "  Inputs:    "
+        f"unique={summary.n_unique_features} "
+        f"input_div={summary.input_diversity:.3f} "
+        f"input_corr={summary.mean_abs_input_correlation:.3f}"
+    )
     if summary.family_counts:
         family_blob = ", ".join(
             f"{name}={count}" for name, count in summary.family_counts.items()
         )
         print(f"  Families:  {family_blob}")
+    if summary.feature_usage_counts:
+        top_usage = list(summary.feature_usage_counts.items())[:10]
+        usage_blob = ", ".join(f"{name}={count}" for name, count in top_usage)
+        print(f"  Features:  {usage_blob}")
     if report.skipped_alpha_ids:
         skipped_preview = ", ".join(report.skipped_alpha_ids[:5])
         suffix = "" if len(report.skipped_alpha_ids) <= 5 else ", ..."
@@ -1875,6 +1885,15 @@ def cmd_analyze_diversity(args: argparse.Namespace) -> None:
                 f"sig={pair.abs_signal_correlation:.3f} "
                 f"feat={pair.feature_overlap:.3f} "
                 f"struct={pair.structure_overlap:.3f}"
+            )
+
+    if report.top_input_pairs:
+        print("  Top Inputs:")
+        for pair in report.top_input_pairs:
+            print(
+                "    "
+                f"{pair.feature_a} <-> {pair.feature_b} "
+                f"corr={pair.abs_input_correlation:.3f}"
             )
 
     if report.rows:

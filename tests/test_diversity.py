@@ -41,3 +41,7 @@ def test_analyze_diversity_surfaces_redundant_pairs():
     assert report.rows[0].alpha_id in {"a", "b"}
     assert report.summary.family_counts["microstructure"] == 2
     assert report.summary.family_counts["macro"] == 1
+    assert report.summary.n_unique_features == 2
+    assert "book_imbalance_btc" in report.summary.feature_usage_counts
+    assert report.top_input_pairs[0].feature_a == "book_imbalance_btc"
+    assert report.top_input_pairs[0].feature_b == "sp500"
