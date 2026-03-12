@@ -380,6 +380,20 @@ def test_normalize_trade_config_preserves_requested_profile():
     assert changes == []
 
 
+def test_load_runtime_observation_config_prefers_user_prod(tmp_path, monkeypatch):
+    from alpha_os.cli import _load_runtime_observation_config
+
+    home = tmp_path / "home"
+    prod = home / ".config" / "alpha-os" / "prod.toml"
+    prod.parent.mkdir(parents=True, exist_ok=True)
+    prod.write_text("[deployment]\nmax_alphas = 150\n")
+    monkeypatch.setattr("pathlib.Path.home", lambda: home)
+
+    cfg = _load_runtime_observation_config(None)
+
+    assert cfg.deployment.max_alphas == 150
+
+
 def test_build_tactical_trader_respects_enable_flag(monkeypatch):
     """Layer 2 trader should only be built when explicitly enabled."""
     from alpha_os import cli

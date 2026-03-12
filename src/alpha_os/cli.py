@@ -305,6 +305,15 @@ def _load_config(config_path: str | None) -> Config:
     return Config.load()
 
 
+def _load_runtime_observation_config(config_path: str | None) -> Config:
+    if config_path:
+        return Config.load(Path(config_path))
+    user_prod = Path.home() / ".config" / "alpha-os" / "prod.toml"
+    if user_prod.exists():
+        return Config.load(user_prod)
+    return Config.load()
+
+
 def _normalize_trade_config(cfg: Config) -> list[str]:
     """Trade runtime now respects the configured profile as-is."""
     return []
@@ -1471,7 +1480,7 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
 def cmd_testnet_readiness(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
-    cfg = _load_config(getattr(args, "config", None))
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
     adir = asset_data_dir(args.asset)
     state_path, report_path = readiness_paths(adir)
 
@@ -1601,7 +1610,7 @@ def _current_runtime_profile(cfg, adir: Path, asset: str):
 def cmd_runtime_status(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
-    cfg = _load_config(getattr(args, "config", None))
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
     adir = asset_data_dir(args.asset)
     state_path, report_path = readiness_paths(adir)
     readiness_checker = ReadinessChecker(
