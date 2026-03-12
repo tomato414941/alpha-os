@@ -404,6 +404,18 @@ class AlphaRegistry:
         )
         self._conn.commit()
 
+    def bulk_update_states(self, alpha_ids: list[str], new_state: str) -> None:
+        alpha_ids = list(dict.fromkeys(alpha_ids))
+        if not alpha_ids:
+            return
+        new_state = AlphaState.canonical(new_state)
+        stamp = time.time()
+        self._conn.executemany(
+            "UPDATE alphas SET state = ?, updated_at = ? WHERE alpha_id = ?",
+            [(new_state, stamp, alpha_id) for alpha_id in alpha_ids],
+        )
+        self._conn.commit()
+
     def update_metrics(
         self, alpha_id: str, oos_sharpe: float | None = None,
         pbo: float | None = None, dsr_pvalue: float | None = None,

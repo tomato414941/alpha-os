@@ -201,6 +201,25 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
+    # prune-registry-duplicates
+    prd = sub.add_parser(
+        "prune-registry-duplicates",
+        help="Demote duplicate active registry alphas and refresh deployed alphas",
+    )
+    prd.add_argument("--asset", type=str, default="BTC")
+    prd.add_argument("--config", type=str, default=None)
+    prd.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
+    prd.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Skip copying alpha_registry.db before rewrite",
+    )
+    prd.add_argument(
+        "--no-refresh-deployed",
+        action="store_true",
+        help="Do not refresh deployed alphas after demoting duplicates",
+    )
+
     # replay-experiment
     rex = sub.add_parser(
         "replay-experiment",
@@ -1435,6 +1454,39 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
         print(f"  Backup:          {stats.backup_path}")
 
 
+def cmd_prune_registry_duplicates(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    from alpha_os.alpha.deployed_alphas import prune_registry_active_duplicates
+
+    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
+    stats = prune_registry_active_duplicates(
+        db_path,
+        cfg,
+        asset=args.asset,
+        dry_run=args.dry_run,
+        backup=not args.no_backup,
+        refresh_deployed=not args.no_refresh_deployed,
+    )
+
+    mode = "DRY RUN" if args.dry_run else "WRITE"
+    print(f"Registry duplicate prune [{mode}]: asset={args.asset} db={stats.registry_db}")
+    print(f"  Active before:    {stats.plan.active_count}")
+    print(f"  Active kept:      {stats.plan.kept_count}")
+    print(f"  Demoted:          {stats.plan.demoted_count}")
+    print(f"  Deployed before:  {stats.plan.current_deployed_count}")
+    print(f"  Deployed touched: {stats.plan.touched_deployed_count}")
+    print(f"  Semantic dedup:   {len(stats.plan.skipped_semantic_duplicate_ids)}")
+    print(f"  Signal dedup:     {len(stats.plan.skipped_signal_duplicate_ids)}")
+    if stats.deployed_refresh is not None:
+        print(
+            f"  Deployed refresh: {stats.deployed_refresh.plan.current_count}"
+            f" -> {stats.deployed_refresh.plan.deployed_count}"
+        )
+    if stats.backup_path is not None:
+        print(f"  Backup:           {stats.backup_path}")
+
+
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
     from alpha_os.experiments.replay import (
         ReplayExperimentSpec,
@@ -1946,6 +1998,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_rebuild_registry(args)
     elif args.command == "refresh-deployed-alphas":
         cmd_refresh_deployed_alphas(args)
+    elif args.command == "prune-registry-duplicates":
+        cmd_prune_registry_duplicates(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "replay-matrix":

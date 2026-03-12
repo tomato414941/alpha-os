@@ -174,6 +174,23 @@ def test_refresh_deployed_alphas_parser():
     assert args.dry_run is True
 
 
+def test_prune_registry_duplicates_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "prune-registry-duplicates",
+        "--asset", "BTC",
+        "--dry-run",
+        "--no-refresh-deployed",
+    ])
+
+    assert args.command == "prune-registry-duplicates"
+    assert args.asset == "BTC"
+    assert args.dry_run is True
+    assert args.no_refresh_deployed is True
+
+
 def test_runtime_status_parser():
     from alpha_os.cli import _build_parser
 

@@ -93,6 +93,27 @@ class DeployedAlphaRefreshStats:
     plan: DeployedAlphaPlan
 
 
+@dataclass(frozen=True)
+class RegistryActivePrunePlan:
+    active_count: int
+    current_deployed_count: int
+    kept_count: int
+    demoted_count: int
+    touched_deployed_count: int
+    kept_ids: list[str]
+    demoted_ids: list[str]
+    skipped_semantic_duplicate_ids: list[str]
+    skipped_signal_duplicate_ids: list[str]
+
+
+@dataclass(frozen=True)
+class RegistryActivePruneStats:
+    registry_db: Path
+    backup_path: Path | None
+    plan: RegistryActivePrunePlan
+    deployed_refresh: DeployedAlphaRefreshStats | None
+
+
 def plan_deployed_alphas(
     records: list[AlphaRecord],
     current_ids: list[str],
@@ -275,6 +296,130 @@ def refresh_deployed_alphas(
             registry_db=db_path,
             backup_path=backup_path,
             plan=plan,
+        )
+    finally:
+        tracker.close()
+        registry.close()
+
+
+def plan_registry_active_prune(
+    records: list[AlphaRecord],
+    current_deployed_ids: list[str],
+    estimate_for,
+    *,
+    metric: str,
+    signal_by_id: dict[str, np.ndarray] | None = None,
+    signal_similarity_max: float = 1.0,
+) -> RegistryActivePrunePlan:
+    active_records = [
+        record for record in records
+        if AlphaState.canonical(record.state) == AlphaState.ACTIVE
+    ]
+    ranked = [
+        _ranked_alpha(record, estimate_for(record), metric)
+        for record in active_records
+    ]
+    ranked.sort(key=lambda item: item.rank_key, reverse=True)
+    semantic_key_by_id = {
+        record.alpha_id: _semantic_key(record.expression)
+        for record in active_records
+    }
+
+    deduped_ranked: list[RankedDeployedAlpha] = []
+    seen_keys: set[str] = set()
+    skipped_semantic_duplicate_ids: list[str] = []
+    for item in ranked:
+        key = semantic_key_by_id[item.alpha_id]
+        if key in seen_keys:
+            skipped_semantic_duplicate_ids.append(item.alpha_id)
+            continue
+        seen_keys.add(key)
+        deduped_ranked.append(item)
+
+    kept_ranked, skipped_signal_duplicate_ids = _dedupe_by_signal_similarity(
+        deduped_ranked,
+        signal_by_id=signal_by_id or {},
+        similarity_max=signal_similarity_max,
+    )
+    kept_ids = [item.alpha_id for item in kept_ranked]
+    kept_set = set(kept_ids)
+    demoted_ids = [
+        record.alpha_id
+        for record in active_records
+        if record.alpha_id not in kept_set
+    ]
+    touched_deployed_count = sum(
+        1 for alpha_id in current_deployed_ids if alpha_id in set(demoted_ids)
+    )
+    return RegistryActivePrunePlan(
+        active_count=len(active_records),
+        current_deployed_count=len(current_deployed_ids),
+        kept_count=len(kept_ids),
+        demoted_count=len(demoted_ids),
+        touched_deployed_count=touched_deployed_count,
+        kept_ids=kept_ids,
+        demoted_ids=demoted_ids,
+        skipped_semantic_duplicate_ids=skipped_semantic_duplicate_ids,
+        skipped_signal_duplicate_ids=skipped_signal_duplicate_ids,
+    )
+
+
+def prune_registry_active_duplicates(
+    db_path: Path,
+    config: Config,
+    *,
+    asset: str | None = None,
+    forward_db_path: Path | None = None,
+    dry_run: bool = False,
+    backup: bool = True,
+    refresh_deployed: bool = True,
+) -> RegistryActivePruneStats:
+    registry = AlphaRegistry(db_path)
+    tracker = ForwardTracker(
+        db_path=forward_db_path or db_path.with_name("forward_returns.db"),
+    )
+    try:
+        resolved_asset = (asset or db_path.parent.name).upper()
+        records = registry.list_all()
+        current_deployed_ids = registry.deployed_alpha_ids()
+        signal_by_id = _build_signal_map(
+            resolved_asset,
+            config,
+            records,
+        )
+        plan = plan_registry_active_prune(
+            records,
+            current_deployed_ids,
+            lambda record: config.estimate_alpha_quality(
+                record.oos_fitness(config.fitness_metric),
+                tracker.get_returns(record.alpha_id),
+            ),
+            metric=config.fitness_metric,
+            signal_by_id=signal_by_id,
+            signal_similarity_max=config.deployment.signal_similarity_max,
+        )
+
+        backup_path = None
+        deployed_refresh = None
+        if not dry_run and plan.demoted_ids:
+            if backup and db_path.exists():
+                backup_path = backup_registry_db(db_path)
+            registry.bulk_update_states(plan.demoted_ids, AlphaState.DORMANT)
+            registry.clear_diversity_cache()
+            if refresh_deployed:
+                deployed_refresh = refresh_deployed_alphas(
+                    db_path,
+                    config,
+                    asset=resolved_asset,
+                    forward_db_path=forward_db_path,
+                    dry_run=False,
+                    backup=False,
+                )
+        return RegistryActivePruneStats(
+            registry_db=db_path,
+            backup_path=backup_path,
+            plan=plan,
+            deployed_refresh=deployed_refresh,
         )
     finally:
         tracker.close()
