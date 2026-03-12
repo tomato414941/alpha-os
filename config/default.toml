@@ -63,6 +63,8 @@ weight_confidence_power = 1.0
 max_alphas = 150
 max_replacements = 10
 promotion_margin = 0.05
+signal_similarity_max = 0.995
+signal_similarity_lookback = 252
 
 [testnet]
 target_success_days = 10

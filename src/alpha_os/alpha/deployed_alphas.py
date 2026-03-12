@@ -4,8 +4,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
+from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..config import Config
+from ..config import DATA_DIR
+from ..data.store import DataStore
+from ..data.universe import build_feature_list
 from ..dsl.canonical import canonical_string
+from ..dsl import parse
 from ..forward.tracker import ForwardTracker
 from .admission_replay import backup_registry_db
 from .quality import QualityEstimate
@@ -52,7 +59,8 @@ class DeployedAlphaPlan:
     kept_ids: list[str]
     added_ids: list[str]
     dropped_ids: list[str]
-    skipped_duplicate_ids: list[str]
+    skipped_semantic_duplicate_ids: list[str]
+    skipped_signal_duplicate_ids: list[str]
     selected: list[RankedDeployedAlpha]
 
     @property
@@ -66,6 +74,10 @@ class DeployedAlphaPlan:
     @property
     def selected_metadata(self) -> dict[str, dict[str, float | int]]:
         return {item.alpha_id: item.to_metadata() for item in self.selected}
+
+    @property
+    def skipped_duplicate_ids(self) -> list[str]:
+        return self.skipped_semantic_duplicate_ids + self.skipped_signal_duplicate_ids
 
 
 @dataclass(frozen=True)
@@ -84,6 +96,8 @@ def plan_deployed_alphas(
     max_replacements: int,
     promotion_margin: float,
     metric: str,
+    signal_by_id: dict[str, np.ndarray] | None = None,
+    signal_similarity_max: float = 1.0,
 ) -> DeployedAlphaPlan:
     active_records = [
         record for record in records
@@ -109,21 +123,26 @@ def plan_deployed_alphas(
             kept_ids=[],
             added_ids=[],
             dropped_ids=[],
-            skipped_duplicate_ids=[],
+            skipped_semantic_duplicate_ids=[],
+            skipped_signal_duplicate_ids=[],
             selected=[],
         )
 
     deduped_ranked: list[RankedDeployedAlpha] = []
     seen_keys: set[str] = set()
-    skipped_duplicate_ids: list[str] = []
+    skipped_semantic_duplicate_ids: list[str] = []
     for item in ranked:
         key = semantic_key_by_id[item.alpha_id]
         if key in seen_keys:
-            skipped_duplicate_ids.append(item.alpha_id)
+            skipped_semantic_duplicate_ids.append(item.alpha_id)
             continue
         seen_keys.add(key)
         deduped_ranked.append(item)
-    ranked = deduped_ranked
+    ranked, skipped_signal_duplicate_ids = _dedupe_by_signal_similarity(
+        deduped_ranked,
+        signal_by_id=signal_by_id or {},
+        similarity_max=signal_similarity_max,
+    )
     ranked_by_id = {item.alpha_id: item for item in ranked}
 
     current = []
@@ -181,7 +200,8 @@ def plan_deployed_alphas(
         kept_ids=kept_ids,
         added_ids=added_ids,
         dropped_ids=dropped_ids,
-        skipped_duplicate_ids=skipped_duplicate_ids,
+        skipped_semantic_duplicate_ids=skipped_semantic_duplicate_ids,
+        skipped_signal_duplicate_ids=skipped_signal_duplicate_ids,
         selected=selected,
     )
 
@@ -190,6 +210,7 @@ def refresh_deployed_alphas(
     db_path: Path,
     config: Config,
     *,
+    asset: str | None = None,
     forward_db_path: Path | None = None,
     dry_run: bool = False,
     backup: bool = True,
@@ -199,8 +220,15 @@ def refresh_deployed_alphas(
         db_path=forward_db_path or db_path.with_name("forward_returns.db"),
     )
     try:
+        resolved_asset = (asset or db_path.parent.name).upper()
+        records = registry.list_all()
+        signal_by_id = _build_signal_map(
+            resolved_asset,
+            config,
+            records,
+        )
         plan = plan_deployed_alphas(
-            registry.list_all(),
+            records,
             registry.deployed_alpha_ids(),
             lambda record: config.estimate_alpha_quality(
                 record.oos_fitness(config.fitness_metric),
@@ -210,6 +238,8 @@ def refresh_deployed_alphas(
             max_replacements=config.deployment.max_replacements,
             promotion_margin=config.deployment.promotion_margin,
             metric=config.fitness_metric,
+            signal_by_id=signal_by_id,
+            signal_similarity_max=config.deployment.signal_similarity_max,
         )
 
         backup_path = None
@@ -251,3 +281,85 @@ def _semantic_key(expression: str) -> str:
         return canonical_string(expression)
     except Exception:
         return expression
+
+
+def _abs_signal_correlation(left: np.ndarray, right: np.ndarray) -> float:
+    n = min(len(left), len(right))
+    if n < 10:
+        return 0.0
+    lhs = np.asarray(left[:n], dtype=np.float64)
+    rhs = np.asarray(right[:n], dtype=np.float64)
+    if np.std(lhs) <= 1e-12 or np.std(rhs) <= 1e-12:
+        return 0.0
+    corr = np.corrcoef(lhs, rhs)[0, 1]
+    if np.isnan(corr):
+        return 0.0
+    return float(abs(corr))
+
+
+def _dedupe_by_signal_similarity(
+    ranked: list[RankedDeployedAlpha],
+    *,
+    signal_by_id: dict[str, np.ndarray],
+    similarity_max: float,
+) -> tuple[list[RankedDeployedAlpha], list[str]]:
+    if similarity_max >= 1.0 or not signal_by_id:
+        return ranked, []
+
+    kept: list[RankedDeployedAlpha] = []
+    kept_signals: list[np.ndarray] = []
+    skipped: list[str] = []
+    for item in ranked:
+        signal = signal_by_id.get(item.alpha_id)
+        if signal is None:
+            kept.append(item)
+            continue
+        if any(
+            _abs_signal_correlation(signal, existing) >= similarity_max
+            for existing in kept_signals
+        ):
+            skipped.append(item.alpha_id)
+            continue
+        kept.append(item)
+        kept_signals.append(signal)
+    return kept, skipped
+
+
+def _build_signal_map(
+    asset: str,
+    config: Config,
+    records: list[AlphaRecord],
+) -> dict[str, np.ndarray]:
+    active_records = [
+        record for record in records
+        if AlphaState.canonical(record.state) == AlphaState.ACTIVE
+    ]
+    if not active_records:
+        return {}
+
+    lookback = max(int(config.deployment.signal_similarity_lookback), 0)
+    if lookback <= 1 or config.deployment.signal_similarity_max >= 1.0:
+        return {}
+
+    store = DataStore(DATA_DIR / "alpha_cache.db", None)
+    try:
+        features = build_feature_list(asset)
+        matrix = store.get_matrix(features)
+    finally:
+        store.close()
+    if matrix.empty:
+        return {}
+
+    if lookback > 0:
+        matrix = matrix.tail(lookback)
+    data = {column: matrix[column].to_numpy(dtype=np.float64) for column in matrix.columns}
+    n_days = len(matrix)
+    signal_by_id: dict[str, np.ndarray] = {}
+    for record in active_records:
+        try:
+            expr = parse(record.expression)
+            signal = normalize_signal(evaluate_expression(expr, data, n_days))
+        except (EvaluationError, Exception):
+            continue
+        signal_by_id[record.alpha_id] = np.asarray(signal, dtype=np.float64)
+    return signal_by_id

@@ -1414,6 +1414,7 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
     stats = refresh_deployed_alphas(
         db_path,
         cfg,
+        asset=args.asset,
         dry_run=args.dry_run,
         backup=not args.no_backup,
     )
@@ -1427,7 +1428,8 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
     print(f"  Added:           {len(stats.plan.added_ids)}")
     print(f"  Dropped:         {len(stats.plan.dropped_ids)}")
     print(f"  Replacements:    {stats.plan.replacement_count}")
-    print(f"  Dedup skipped:   {len(stats.plan.skipped_duplicate_ids)}")
+    print(f"  Semantic dedup:  {len(stats.plan.skipped_semantic_duplicate_ids)}")
+    print(f"  Signal dedup:    {len(stats.plan.skipped_signal_duplicate_ids)}")
     if stats.backup_path is not None:
         print(f"  Backup:          {stats.backup_path}")
 

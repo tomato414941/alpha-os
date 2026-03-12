@@ -261,10 +261,45 @@ class TestAlphaRegistry:
         )
 
         assert plan.selected_ids == ["a", "c"]
-        assert plan.skipped_duplicate_ids == ["b"]
+        assert plan.skipped_semantic_duplicate_ids == ["b"]
+        assert plan.skipped_signal_duplicate_ids == []
 
     def test_canonical_string_simplifies_degenerate_conditionals(self):
         assert canonical_string("(if_gt nasdaq nasdaq tsy_yield_10y fear_greed)") == "fear_greed"
+
+    def test_plan_deployed_alphas_skips_signal_duplicates(self):
+        records = [
+            AlphaRecord(alpha_id="a", expression="x", state=AlphaState.ACTIVE, oos_sharpe=1.2),
+            AlphaRecord(alpha_id="b", expression="y", state=AlphaState.ACTIVE, oos_sharpe=1.1),
+            AlphaRecord(alpha_id="c", expression="z", state=AlphaState.ACTIVE, oos_sharpe=1.0),
+        ]
+        estimates = {
+            "a": QualityEstimate(1.2, 0.0, 1.2, 1.0, 63, True),
+            "b": QualityEstimate(1.1, 0.0, 1.1, 1.0, 63, True),
+            "c": QualityEstimate(1.0, 0.0, 1.0, 1.0, 63, True),
+        }
+        base = np.linspace(-1.0, 1.0, 80)
+        signal_by_id = {
+            "a": base,
+            "b": base * 0.999,
+            "c": np.sin(np.linspace(0.0, 4.0, 80)),
+        }
+
+        plan = plan_deployed_alphas(
+            records,
+            current_ids=[],
+            estimate_for=lambda record: estimates[record.alpha_id],
+            max_alphas=3,
+            max_replacements=1,
+            promotion_margin=0.0,
+            metric="sharpe",
+            signal_by_id=signal_by_id,
+            signal_similarity_max=0.995,
+        )
+
+        assert plan.selected_ids == ["a", "c"]
+        assert plan.skipped_semantic_duplicate_ids == []
+        assert plan.skipped_signal_duplicate_ids == ["b"]
 
     def test_admission_cap_rejects_weaker_incoming_alpha(self, tmp_path):
         reg = self._make_registry(tmp_path)

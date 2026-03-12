@@ -199,6 +199,8 @@ class DeploymentConfig:
     max_alphas: int = 150
     max_replacements: int = 10
     promotion_margin: float = 0.05
+    signal_similarity_max: float = 0.995
+    signal_similarity_lookback: int = 252
 
 
 @dataclass

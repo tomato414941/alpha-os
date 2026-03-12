@@ -200,6 +200,7 @@ def run_replay(
             refresh_deployed_alphas(
                 sim_reg_path,
                 config,
+                asset=asset,
                 forward_db_path=asset_data_dir(asset) / "forward_returns.db",
                 dry_run=False,
                 backup=False,

@@ -199,6 +199,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                 refresh_stats = refresh_deployed_alphas(
                     replay_db,
                     cfg,
+                    asset=asset,
                     forward_db_path=asset_data_dir(asset) / "forward_returns.db",
                     dry_run=False,
                     backup=False,
