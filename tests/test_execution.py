@@ -152,7 +152,7 @@ class TestExecutionPlanning:
     def test_build_target_position_clamps_short_in_long_only_mode(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=-0.5,
+            final_signal=-0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -167,7 +167,7 @@ class TestExecutionPlanning:
     def test_build_execution_intent_uses_target_gap(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.5,
+            final_signal=0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -186,7 +186,7 @@ class TestExecutionPlanning:
     def test_build_execution_intent_skips_zero_gap(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.5,
+            final_signal=0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -201,7 +201,7 @@ class TestExecutionPlanning:
     def test_build_execution_intent_skips_small_rebalance_under_deadband(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.5,
+            final_signal=0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -220,7 +220,7 @@ class TestExecutionPlanning:
     def test_plan_execution_intent_reports_deadband_skip_reason(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.5,
+            final_signal=0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -240,7 +240,7 @@ class TestExecutionPlanning:
     def test_apply_venue_constraints_rejects_below_min_notional(self):
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.004,
+            final_signal=0.004,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,
@@ -264,7 +264,7 @@ class TestExecutionPlanning:
         pe.set_price("BTC", 100.0)
         target = build_target_position(
             symbol="BTC",
-            adjusted_signal=0.5,
+            final_signal=0.5,
             portfolio_value=10000.0,
             current_price=100.0,
             max_position_pct=1.0,

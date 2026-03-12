@@ -43,7 +43,7 @@ class IntentDecision:
 def build_target_position(
     *,
     symbol: str,
-    adjusted_signal: float,
+    final_signal: float,
     portfolio_value: float,
     current_price: float,
     max_position_pct: float,
@@ -51,7 +51,7 @@ def build_target_position(
     supports_short: bool,
 ) -> TargetPosition:
     """Convert a normalized signal into a desired holding."""
-    dollar_target = adjusted_signal * portfolio_value * max_position_pct
+    dollar_target = final_signal * portfolio_value * max_position_pct
     qty = dollar_target / current_price if current_price > 0 else 0.0
     if abs(dollar_target) < min_trade_usd:
         qty = 0.0

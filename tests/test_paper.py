@@ -226,22 +226,6 @@ class TestPaperPortfolioTracker:
         tracker.close()
 
 
-def test_prediction_output_adjusted_signal_alias():
-    """adjusted_signal remains a backward-compatible alias for final_signal."""
-    from alpha_os.paper.trader import PredictionOutput
-
-    result = PredictionOutput(
-        combined_signal=0.3,
-        strategic_signal=0.4,
-        regime_adjusted_signal=0.35,
-        tactical_adjusted_signal=0.5,
-        final_signal=0.5,
-        dd_scale=1.0,
-    )
-
-    assert result.adjusted_signal == pytest.approx(0.5)
-
-
 class TestRegistryTopTrading:
     def test_top_trading_returns_limited(self, tmp_path):
         from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
@@ -496,7 +480,7 @@ class TestPaperTrader:
         )
 
         plan = trader._build_allocation_plan(
-            adjusted_signal=-0.5,
+            final_signal=-0.5,
             prev_value=10000.0,
             today_date="2026-01-05",
         )
@@ -530,7 +514,7 @@ class TestPaperTrader:
         )
 
         plan = trader._build_allocation_plan(
-            adjusted_signal=-0.5,
+            final_signal=-0.5,
             prev_value=10000.0,
             today_date="2026-01-05",
         )

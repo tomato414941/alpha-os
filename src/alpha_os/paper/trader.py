@@ -100,11 +100,6 @@ class PredictionOutput:
     final_signal: float
     dd_scale: float
 
-    @property
-    def adjusted_signal(self) -> float:
-        """Backward-compatible alias for the final post-tactical signal."""
-        return self.final_signal
-
 
 @dataclass
 class AllocationPlan:
@@ -561,11 +556,11 @@ class Trader:
 
     def _build_allocation_plan(
         self,
-        adjusted_signal: float,
+        final_signal: float,
         prev_value: float,
         today_date: str,
     ) -> AllocationPlan:
-        """Allocation layer: convert adjusted signal into target portfolio."""
+        """Allocation layer: convert the final signal into a target portfolio."""
         live_price = self.executor.fetch_ticker_price(self.price_signal)
         if live_price is not None and live_price > 0:
             current_price = float(live_price)
@@ -577,7 +572,7 @@ class Trader:
 
         target_position = build_target_position(
             symbol=self.price_signal,
-            adjusted_signal=adjusted_signal,
+            final_signal=final_signal,
             portfolio_value=prev_value,
             current_price=current_price,
             max_position_pct=self.max_position_pct,
@@ -918,7 +913,7 @@ class Trader:
             r for r in trading_candidates if r.alpha_id in alpha_signals
         ]
 
-        # 4. Prediction layer: alpha signals -> adjusted portfolio signal
+        # 4. Prediction layer: alpha signals -> final portfolio signal
         prev_value = self.executor.portfolio_value
         prediction = self._predict_portfolio_signal(
             alpha_signals=alpha_signals,
@@ -931,9 +926,9 @@ class Trader:
             skip_lifecycle=skip_lifecycle,
         )
 
-        # 5. Allocation layer: adjusted signal -> target portfolio
+        # 5. Allocation layer: final signal -> target portfolio
         plan = self._build_allocation_plan(
-            adjusted_signal=prediction.final_signal,
+            final_signal=prediction.final_signal,
             prev_value=prev_value,
             today_date=today_date,
         )

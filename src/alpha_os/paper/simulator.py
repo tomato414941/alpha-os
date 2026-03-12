@@ -98,7 +98,7 @@ def _replay_signals_to_position_intent(
     vol_scale: float,
     sizing_mode: str = "runtime",
 ) -> tuple[float, float]:
-    """Return (raw_combined, adjusted_signal) for replay simulation."""
+    """Return (raw_combined, final_signal) for replay simulation."""
     raw_combined = float(np.clip(np.dot(weights, signals), -1.0, 1.0))
     if sizing_mode == "raw_mean":
         adjusted = raw_combined * dd_scale
@@ -411,7 +411,7 @@ def run_replay(
             dd_s = risk_manager.dd_scale
             vol_s = risk_manager.vol_scale(recent_rets)
             if len(selected_signals):
-                _, adjusted = _replay_signals_to_position_intent(
+                _, final_signal = _replay_signals_to_position_intent(
                     selected_signals,
                     weights,
                     combine_mode=config.paper.combine_mode,
@@ -419,15 +419,15 @@ def run_replay(
                     vol_scale=vol_s,
                     sizing_mode=sizing_mode,
                 )
-                adjusted = _apply_regime_adjustment(adjusted, portfolio_rets, config)
+                final_signal = _apply_regime_adjustment(final_signal, portfolio_rets, config)
             else:
-                adjusted = 0.0
+                final_signal = 0.0
 
             # Execute trade
             executor.set_price(price_sig, current_price)
             target_position = build_target_position(
                 symbol=price_sig,
-                adjusted_signal=adjusted,
+                final_signal=final_signal,
                 portfolio_value=prev_value,
                 current_price=current_price,
                 max_position_pct=max_position_pct,
