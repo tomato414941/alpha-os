@@ -1430,6 +1430,7 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
     print(f"  Replacements:    {stats.plan.replacement_count}")
     print(f"  Semantic dedup:  {len(stats.plan.skipped_semantic_duplicate_ids)}")
     print(f"  Signal dedup:    {len(stats.plan.skipped_signal_duplicate_ids)}")
+    print(f"  Feature cap:     {len(stats.plan.skipped_feature_cap_ids)}")
     if stats.backup_path is not None:
         print(f"  Backup:          {stats.backup_path}")
 

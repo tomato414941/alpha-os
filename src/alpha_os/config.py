@@ -201,6 +201,7 @@ class DeploymentConfig:
     promotion_margin: float = 0.05
     signal_similarity_max: float = 0.995
     signal_similarity_lookback: int = 252
+    max_feature_occurrences: int = 0
 
 
 @dataclass

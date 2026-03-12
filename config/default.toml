@@ -65,6 +65,7 @@ max_replacements = 10
 promotion_margin = 0.05
 signal_similarity_max = 0.995
 signal_similarity_lookback = 252
+max_feature_occurrences = 0
 
 [testnet]
 target_success_days = 10

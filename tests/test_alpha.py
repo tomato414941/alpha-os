@@ -263,6 +263,7 @@ class TestAlphaRegistry:
         assert plan.selected_ids == ["a", "c"]
         assert plan.skipped_semantic_duplicate_ids == ["b"]
         assert plan.skipped_signal_duplicate_ids == []
+        assert plan.skipped_feature_cap_ids == []
 
     def test_canonical_string_simplifies_degenerate_conditionals(self):
         assert canonical_string("(if_gt nasdaq nasdaq tsy_yield_10y fear_greed)") == "fear_greed"
@@ -300,6 +301,33 @@ class TestAlphaRegistry:
         assert plan.selected_ids == ["a", "c"]
         assert plan.skipped_semantic_duplicate_ids == []
         assert plan.skipped_signal_duplicate_ids == ["b"]
+        assert plan.skipped_feature_cap_ids == []
+
+    def test_plan_deployed_alphas_applies_soft_feature_cap(self):
+        records = [
+            AlphaRecord(alpha_id="a", expression="nasdaq", state=AlphaState.ACTIVE, oos_sharpe=1.3),
+            AlphaRecord(alpha_id="b", expression="(neg nasdaq)", state=AlphaState.ACTIVE, oos_sharpe=1.2),
+            AlphaRecord(alpha_id="c", expression="sp500", state=AlphaState.ACTIVE, oos_sharpe=1.1),
+            AlphaRecord(alpha_id="d", expression="gold", state=AlphaState.ACTIVE, oos_sharpe=1.0),
+        ]
+        estimates = {
+            rid: QualityEstimate(score, 0.0, score, 1.0, 63, True)
+            for rid, score in [("a", 1.3), ("b", 1.2), ("c", 1.1), ("d", 1.0)]
+        }
+
+        plan = plan_deployed_alphas(
+            records,
+            current_ids=[],
+            estimate_for=lambda record: estimates[record.alpha_id],
+            max_alphas=3,
+            max_replacements=1,
+            promotion_margin=0.0,
+            metric="sharpe",
+            max_feature_occurrences=1,
+        )
+
+        assert plan.selected_ids == ["a", "c", "d"]
+        assert plan.skipped_feature_cap_ids == ["b"]
 
     def test_admission_cap_rejects_weaker_incoming_alpha(self, tmp_path):
         reg = self._make_registry(tmp_path)

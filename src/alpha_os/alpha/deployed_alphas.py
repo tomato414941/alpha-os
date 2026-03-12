@@ -11,6 +11,7 @@ from ..config import Config
 from ..config import DATA_DIR
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
+from ..dsl.features import collect_feature_names
 from ..dsl.canonical import canonical_string
 from ..dsl import parse
 from ..forward.tracker import ForwardTracker
@@ -61,6 +62,7 @@ class DeployedAlphaPlan:
     dropped_ids: list[str]
     skipped_semantic_duplicate_ids: list[str]
     skipped_signal_duplicate_ids: list[str]
+    skipped_feature_cap_ids: list[str]
     selected: list[RankedDeployedAlpha]
 
     @property
@@ -77,7 +79,11 @@ class DeployedAlphaPlan:
 
     @property
     def skipped_duplicate_ids(self) -> list[str]:
-        return self.skipped_semantic_duplicate_ids + self.skipped_signal_duplicate_ids
+        return (
+            self.skipped_semantic_duplicate_ids
+            + self.skipped_signal_duplicate_ids
+            + self.skipped_feature_cap_ids
+        )
 
 
 @dataclass(frozen=True)
@@ -98,6 +104,7 @@ def plan_deployed_alphas(
     metric: str,
     signal_by_id: dict[str, np.ndarray] | None = None,
     signal_similarity_max: float = 1.0,
+    max_feature_occurrences: int = 0,
 ) -> DeployedAlphaPlan:
     active_records = [
         record for record in records
@@ -113,6 +120,10 @@ def plan_deployed_alphas(
         record.alpha_id: _semantic_key(record.expression)
         for record in active_records
     }
+    feature_names_by_id = {
+        record.alpha_id: _feature_names(record.expression)
+        for record in active_records
+    }
 
     if max_alphas <= 0 or not ranked:
         return DeployedAlphaPlan(
@@ -125,6 +136,7 @@ def plan_deployed_alphas(
             dropped_ids=[],
             skipped_semantic_duplicate_ids=[],
             skipped_signal_duplicate_ids=[],
+            skipped_feature_cap_ids=[],
             selected=[],
         )
 
@@ -142,6 +154,12 @@ def plan_deployed_alphas(
         deduped_ranked,
         signal_by_id=signal_by_id or {},
         similarity_max=signal_similarity_max,
+    )
+    ranked, skipped_feature_cap_ids = _apply_feature_usage_cap(
+        ranked,
+        feature_names_by_id=feature_names_by_id,
+        max_occurrences=max_feature_occurrences,
+        min_keep=max_alphas,
     )
     ranked_by_id = {item.alpha_id: item for item in ranked}
 
@@ -202,6 +220,7 @@ def plan_deployed_alphas(
         dropped_ids=dropped_ids,
         skipped_semantic_duplicate_ids=skipped_semantic_duplicate_ids,
         skipped_signal_duplicate_ids=skipped_signal_duplicate_ids,
+        skipped_feature_cap_ids=skipped_feature_cap_ids,
         selected=selected,
     )
 
@@ -240,6 +259,7 @@ def refresh_deployed_alphas(
             metric=config.fitness_metric,
             signal_by_id=signal_by_id,
             signal_similarity_max=config.deployment.signal_similarity_max,
+            max_feature_occurrences=config.deployment.max_feature_occurrences,
         )
 
         backup_path = None
@@ -283,6 +303,13 @@ def _semantic_key(expression: str) -> str:
         return expression
 
 
+def _feature_names(expression: str) -> set[str]:
+    try:
+        return collect_feature_names(parse(expression))
+    except Exception:
+        return set()
+
+
 def _abs_signal_correlation(left: np.ndarray, right: np.ndarray) -> float:
     n = min(len(left), len(right))
     if n < 10:
@@ -322,6 +349,41 @@ def _dedupe_by_signal_similarity(
             continue
         kept.append(item)
         kept_signals.append(signal)
+    return kept, skipped
+
+
+def _apply_feature_usage_cap(
+    ranked: list[RankedDeployedAlpha],
+    *,
+    feature_names_by_id: dict[str, set[str]],
+    max_occurrences: int,
+    min_keep: int,
+) -> tuple[list[RankedDeployedAlpha], list[str]]:
+    if max_occurrences <= 0:
+        return ranked, []
+
+    kept: list[RankedDeployedAlpha] = []
+    overflow: list[RankedDeployedAlpha] = []
+    feature_counts: dict[str, int] = {}
+    skipped: list[str] = []
+
+    for item in ranked:
+        features = feature_names_by_id.get(item.alpha_id, set())
+        if any(feature_counts.get(name, 0) >= max_occurrences for name in features):
+            overflow.append(item)
+            skipped.append(item.alpha_id)
+            continue
+        kept.append(item)
+        for name in features:
+            feature_counts[name] = feature_counts.get(name, 0) + 1
+
+    if len(kept) >= min_keep:
+        return kept, skipped
+
+    deficit = min_keep - len(kept)
+    if deficit > 0:
+        kept.extend(overflow[:deficit])
+        skipped = skipped[deficit:]
     return kept, skipped
 
 
