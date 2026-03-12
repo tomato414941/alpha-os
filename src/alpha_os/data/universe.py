@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -242,6 +243,87 @@ def build_microstructure_feature_list(asset: str) -> list[str]:
             seen.add(s)
             result.append(s)
     return result
+
+
+def infer_feature_family(name: str) -> str:
+    """Infer a coarse family label from a raw feature name."""
+    lowered = name.lower()
+
+    if lowered in {
+        "sp500",
+        "nasdaq",
+        "vix_close",
+        "fear_greed",
+        "dxy",
+        "gold",
+        "oil_wti",
+        "russell2000",
+        "tsy_yield_10y",
+        "tsy_yield_2y",
+    }:
+        return "macro"
+    if lowered.startswith(("book_", "spread_", "trade_flow_", "vpin_", "large_trade_")):
+        return "microstructure"
+    if lowered.startswith(
+        ("funding_", "oi_", "liq_", "ls_", "iv_", "put_call_", "max_pain_", "gamma_")
+    ):
+        return "derivatives"
+    if lowered.startswith(("btc_mempool_", "btc_hashrate", "btc_active_", "btc_difficulty")):
+        return "onchain"
+    if lowered.startswith(("earthquake_", "sunspot_", "enso_", "github_", "steam_")):
+        return "alt"
+    if lowered.startswith(("gdelt_", "eonet_", "fr24_", "glad_", "nasa_")):
+        return "event"
+    if lowered.endswith(("_ohlcv", "_usdt", "_btc")) or lowered in {
+        "nvda",
+        "aapl",
+        "msft",
+        "googl",
+        "amzn",
+        "meta",
+        "tsla",
+        "amd",
+    }:
+        return "price"
+    return "other"
+
+
+def stratified_feature_subset(
+    features: list[str],
+    *,
+    k: int,
+    seed: int | None = None,
+) -> frozenset[str]:
+    """Sample a feature subset while spreading picks across coarse families."""
+    if k <= 0 or not features:
+        return frozenset()
+
+    rng = random.Random(seed)
+    grouped: dict[str, list[str]] = {}
+    for feature in features:
+        grouped.setdefault(infer_feature_family(feature), []).append(feature)
+
+    for bucket in grouped.values():
+        rng.shuffle(bucket)
+
+    family_order = list(grouped)
+    rng.shuffle(family_order)
+    selected: list[str] = []
+
+    while len(selected) < min(k, len(features)):
+        added_this_round = False
+        for family in family_order:
+            bucket = grouped[family]
+            if not bucket:
+                continue
+            selected.append(bucket.pop())
+            added_this_round = True
+            if len(selected) >= min(k, len(features)):
+                break
+        if not added_this_round:
+            break
+
+    return frozenset(selected)
 
 
 def discover_signals(

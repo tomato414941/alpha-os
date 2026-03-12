@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
+from ..data.universe import infer_feature_family
 from ..dsl import parse
 from ..dsl.expr import (
     BinaryOp,
@@ -92,49 +93,7 @@ class DiversityReport:
 
 
 def infer_feature_families(feature_names: set[str]) -> list[str]:
-    families: set[str] = set()
-    for name in feature_names:
-        lowered = name.lower()
-        if lowered in {
-            "sp500",
-            "nasdaq",
-            "vix_close",
-            "fear_greed",
-            "dxy",
-            "gold",
-            "oil_wti",
-            "russell2000",
-            "tsy_yield_10y",
-            "tsy_yield_2y",
-        }:
-            families.add("macro")
-            continue
-        if lowered.startswith(("book_", "spread_", "trade_flow_", "vpin_", "large_trade_")):
-            families.add("microstructure")
-            continue
-        if lowered.startswith(("funding_", "oi_", "liq_", "ls_", "iv_", "put_call_", "max_pain_", "gamma_")):
-            families.add("derivatives")
-            continue
-        if lowered.startswith(("btc_mempool_", "btc_hashrate")):
-            families.add("onchain")
-            continue
-        if lowered.startswith(("earthquake_", "sunspot_", "enso_", "github_", "steam_")):
-            families.add("alt")
-            continue
-        if lowered.endswith(("_ohlcv", "_usdt", "_btc")) or lowered in {
-            "nvda",
-            "aapl",
-            "msft",
-            "googl",
-            "amzn",
-            "meta",
-            "tsla",
-            "amd",
-        }:
-            families.add("price")
-            continue
-        families.add("other")
-    return sorted(families)
+    return sorted({infer_feature_family(name) for name in feature_names})
 
 
 def expression_structure_signature(expr: Expr) -> set[str]:

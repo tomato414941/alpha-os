@@ -176,7 +176,7 @@ class EvoDaemon:
         seed = int(time.time()) ^ self._round
 
         # Random feature subset for this round
-        generator = AlphaGenerator.with_random_subset(available_features, k=k, seed=seed)
+        generator = AlphaGenerator.with_stratified_subset(available_features, k=k, seed=seed)
         subset = generator.feature_subset
 
         # Build evaluator (still uses fitness to guide GP search)

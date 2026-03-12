@@ -4,6 +4,7 @@ import copy
 import itertools
 import random
 
+from ..data.universe import stratified_feature_subset
 from .tokens import (
     UNARY_OPS,
     BINARY_OPS,
@@ -65,6 +66,17 @@ class AlphaGenerator:
         """Create a generator with a random feature subset of size k."""
         rng = random.Random(seed)
         subset = frozenset(rng.sample(features, min(k, len(features))))
+        return cls(features, feature_subset=subset, seed=seed)
+
+    @classmethod
+    def with_stratified_subset(
+        cls,
+        features: list[str],
+        k: int,
+        seed: int | None = None,
+    ) -> AlphaGenerator:
+        """Create a generator with a family-stratified feature subset."""
+        subset = stratified_feature_subset(features, k=k, seed=seed)
         return cls(features, feature_subset=subset, seed=seed)
 
     def generate_random(self, n: int, max_depth: int = 3) -> list[Expr]:

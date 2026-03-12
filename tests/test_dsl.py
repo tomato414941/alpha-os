@@ -457,6 +457,31 @@ class TestGenerator:
             used = collect_feature_names(expr)
             assert used <= gen.feature_subset
 
+    def test_with_stratified_subset_spreads_across_families(self):
+        all_features = [
+            "sp500", "nasdaq", "gold",
+            "book_imbalance_btc", "vpin_btc", "spread_bps_btc",
+            "funding_rate_btc", "oi_btc_1h", "iv_atm_btc_30d",
+            "btc_active_addresses", "btc_difficulty",
+            "earthquake_count", "gdelt_doc_crypto",
+            "btc_ohlcv", "eth_btc", "nvda",
+        ]
+        gen = AlphaGenerator.with_stratified_subset(all_features, k=6, seed=42)
+        assert gen.feature_subset is not None
+        assert len(gen.feature_subset) == 6
+        assert gen.feature_subset <= set(all_features)
+        used_families = {
+            "macro" if name in {"sp500", "nasdaq", "gold"} else
+            "microstructure" if name in {"book_imbalance_btc", "vpin_btc", "spread_bps_btc"} else
+            "derivatives" if name in {"funding_rate_btc", "oi_btc_1h", "iv_atm_btc_30d"} else
+            "onchain" if name in {"btc_active_addresses", "btc_difficulty"} else
+            "event" if name == "gdelt_doc_crypto" else
+            "alt" if name == "earthquake_count" else
+            "price"
+            for name in gen.feature_subset
+        }
+        assert len(used_families) >= 4
+
 
 # ---------------------------------------------------------------------------
 # Microstructure templates
