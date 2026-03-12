@@ -444,7 +444,9 @@ class TestAlphaRegistry:
         cfg = Config()
         cfg.admission.max_feature_occurrences = 2
         daemon = AdmissionDaemon("BTC", cfg)
-        feature_counts = daemon._active_feature_counts(daemon._managed_registry_records(reg))
+        feature_counts = daemon._feature_counts(
+            daemon._feature_cap_reference_records(reg)
+        )
 
         reason = daemon._feature_cap_reason(
             expression="(add nasdaq sp500)",
@@ -463,7 +465,9 @@ class TestAlphaRegistry:
         cfg = Config()
         cfg.admission.max_feature_occurrences = 2
         daemon = AdmissionDaemon("BTC", cfg)
-        feature_counts = daemon._active_feature_counts(daemon._managed_registry_records(reg))
+        feature_counts = daemon._feature_counts(
+            daemon._feature_cap_reference_records(reg)
+        )
 
         reason = daemon._feature_cap_reason(
             expression="sp500",
@@ -471,6 +475,29 @@ class TestAlphaRegistry:
         )
 
         assert reason == ""
+        reg.close()
+
+    def test_admission_feature_cap_prefers_deployed_reference_set(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(
+            AlphaRecord(alpha_id="a1", expression="nasdaq", state=AlphaState.ACTIVE)
+        )
+        reg.register(
+            AlphaRecord(alpha_id="a2", expression="(neg nasdaq)", state=AlphaState.ACTIVE)
+        )
+        reg.register(
+            AlphaRecord(alpha_id="a3", expression="sp500", state=AlphaState.ACTIVE)
+        )
+        reg.replace_deployed_alphas(["a3"])
+
+        cfg = Config()
+        daemon = AdmissionDaemon("BTC", cfg)
+
+        reference = daemon._feature_cap_reference_records(reg)
+        counts = daemon._feature_counts(reference)
+
+        assert [record.alpha_id for record in reference] == ["a3"]
+        assert counts == {"sp500": 1}
         reg.close()
 
 

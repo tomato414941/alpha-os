@@ -124,11 +124,19 @@ class AdmissionDaemon:
         except Exception:
             return set()
 
-    def _active_feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
+    def _feature_cap_reference_records(self, registry: AlphaRegistry) -> list[AlphaRecord]:
+        deployed = registry.list_deployed_alphas()
+        if deployed:
+            return deployed
+        return [
+            record
+            for record in registry.list_all()
+            if AlphaState.canonical(record.state) == AlphaState.ACTIVE
+        ]
+
+    def _feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
         counts: dict[str, int] = {}
         for record in records:
-            if AlphaState.canonical(record.state) != AlphaState.ACTIVE:
-                continue
             for name in self._feature_names(record.expression):
                 counts[name] = counts.get(name, 0) + 1
         return counts
@@ -303,7 +311,9 @@ class AdmissionDaemon:
             self._semantic_key(record.expression): record.alpha_id
             for record in managed_records
         }
-        active_feature_counts = self._active_feature_counts(managed_records)
+        active_feature_counts = self._feature_counts(
+            self._feature_cap_reference_records(registry)
+        )
         existing_ids = {
             record.expression: record.alpha_id
             for record in managed_records
