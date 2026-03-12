@@ -79,6 +79,8 @@ class PaperCycleResult:
     n_signals_evaluated: int
     profile_id: str = ""
     profile_commit: str = ""
+    profile_config_id: str = ""
+    profile_deployed_set_id: str = ""
     order_failures: int = 0
     n_skipped_deadband: int = 0
     n_skipped_min_notional: int = 0
@@ -677,6 +679,8 @@ class Trader:
                     date=cycle_key,
                     profile_id=current_profile.profile_id,
                     profile_commit=current_profile.git_commit,
+                    profile_config_id=current_profile.config_id,
+                    profile_deployed_set_id=current_profile.deployed_set_id,
                     combined_signal=last_snapshot.combined_signal,
                     fills=[],
                     portfolio_value=last_snapshot.portfolio_value,
@@ -709,7 +713,10 @@ class Trader:
             logger.warning("Circuit breaker tripped: %s", reason)
             return PaperCycleResult(
                 date=cycle_key, profile_id=current_profile.profile_id,
-                profile_commit=current_profile.git_commit, combined_signal=0.0, fills=[],
+                profile_commit=current_profile.git_commit,
+                profile_config_id=current_profile.config_id,
+                profile_deployed_set_id=current_profile.deployed_set_id,
+                combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0,
                 n_registry_active=0, n_deployed_alphas=0,
@@ -762,7 +769,10 @@ class Trader:
             logger.warning("Insufficient data for %s (%d rows)", today_date, len(matrix))
             return PaperCycleResult(
                 date=cycle_key, profile_id=current_profile.profile_id,
-                profile_commit=current_profile.git_commit, combined_signal=0.0, dd_scale=1.0,
+                profile_commit=current_profile.git_commit,
+                profile_config_id=current_profile.config_id,
+                profile_deployed_set_id=current_profile.deployed_set_id,
+                combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
                 n_deployed_alphas=n_deployed_alphas,
@@ -776,7 +786,10 @@ class Trader:
         if len(prices_arr) < 2:
             return PaperCycleResult(
                 date=cycle_key, profile_id=current_profile.profile_id,
-                profile_commit=current_profile.git_commit, combined_signal=0.0, dd_scale=1.0,
+                profile_commit=current_profile.git_commit,
+                profile_config_id=current_profile.config_id,
+                profile_deployed_set_id=current_profile.deployed_set_id,
+                combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
                 n_deployed_alphas=n_deployed_alphas,
@@ -974,6 +987,8 @@ class Trader:
             date=cycle_key,
             profile_id=current_profile.profile_id,
             profile_commit=current_profile.git_commit,
+            profile_config_id=current_profile.config_id,
+            profile_deployed_set_id=current_profile.deployed_set_id,
             combined_signal=prediction.combined_signal,
             fills=fills,
             portfolio_value=portfolio_value,

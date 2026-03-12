@@ -15,6 +15,8 @@ from .config import PROJECT_DIR, Config
 class RuntimeProfile:
     profile_id: str
     git_commit: str
+    config_id: str
+    deployed_set_id: str
     payload: dict[str, Any]
 
     @property
@@ -61,10 +63,16 @@ def build_runtime_profile(
     commit: str | None = None,
 ) -> RuntimeProfile:
     resolved_commit = git_commit() if commit is None else commit
+    deployed_ids = sorted(deployed_alpha_ids)
+    config_payload = _runtime_config_payload(config)
+    config_raw = json.dumps(config_payload, sort_keys=True, separators=(",", ":"))
+    deployed_raw = json.dumps(deployed_ids, sort_keys=True, separators=(",", ":"))
+    config_id = hashlib.sha1(config_raw.encode()).hexdigest()
+    deployed_set_id = hashlib.sha1(deployed_raw.encode()).hexdigest()
     profile_payload = {
         "asset": asset.upper(),
-        "config": _runtime_config_payload(config),
-        "deployed_alpha_ids": sorted(deployed_alpha_ids),
+        "config": config_payload,
+        "deployed_alpha_ids": deployed_ids,
     }
     if extra:
         profile_payload["extra"] = extra
@@ -76,5 +84,7 @@ def build_runtime_profile(
     return RuntimeProfile(
         profile_id=hashlib.sha1(raw.encode()).hexdigest(),
         git_commit=resolved_commit,
+        config_id=config_id,
+        deployed_set_id=deployed_set_id,
         payload=payload,
     )

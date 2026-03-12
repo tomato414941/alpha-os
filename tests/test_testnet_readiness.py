@@ -23,6 +23,8 @@ def test_readiness_paths_are_under_metrics_dir(tmp_path):
 class _MockCycleResult:
     profile_id: str = "profile-123"
     profile_commit: str = "deadbeefcafebabe"
+    profile_config_id: str = "config-123"
+    profile_deployed_set_id: str = "deployed-123"
     portfolio_value: float = 10000.0
     daily_pnl: float = 50.0
     daily_return: float = 0.005
@@ -137,6 +139,8 @@ class TestDailyReport:
         )
         assert report.profile_id == "profile-123"
         assert report.profile_commit == "deadbeefcafebabe"
+        assert report.profile_config_id == "config-123"
+        assert report.profile_deployed_set_id == "deployed-123"
         assert v.state.last_profile_id == "profile-123"
 
     def test_reconciliation_mismatch_is_error(self, tmp_path):

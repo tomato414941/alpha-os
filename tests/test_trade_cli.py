@@ -662,6 +662,8 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
         "date": "2026-03-09",
         "profile_id": "prof123456789",
         "profile_commit": "deadbeefcafebabe",
+        "profile_config_id": "cfg123456789",
+        "profile_deployed_set_id": "dep123456789",
         "portfolio_value": 9905.91,
         "daily_pnl": 0.0,
         "n_fills": 0,
@@ -687,10 +689,14 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     assert "Registry:  active=1 dormant=1 rejected=1 deployed=1" in output
     assert "Profile:   current=" in output
     assert "Profile:   latest=prof12345678" in output
+    assert "ProfileIDs: config=cfg123456789 deployed=dep123456789" in output
+    assert "CurrentIDs: config=" in output
     assert "Latest:    2026-03-09 [OK]" in output
     assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
     assert "Observe:   pending" in output
     assert "- latest cycle had zero fills" in output
     assert "- deadband skipped the latest cycle" in output
     assert "- latest report was recorded under a different runtime profile" in output
+    assert "- config fingerprint differs between current and latest" in output
+    assert "- deployed alpha set fingerprint differs between current and latest" in output
     assert "Note:      registry DB count differs" in output

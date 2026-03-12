@@ -127,3 +127,5 @@ def test_runtime_profile_id_ignores_git_commit():
     assert profile_a.profile_id == profile_b.profile_id
     assert profile_a.git_commit == "aaaaaaaa"
     assert profile_b.git_commit == "bbbbbbbb"
+    assert profile_a.config_id == profile_b.config_id
+    assert profile_a.deployed_set_id == profile_b.deployed_set_id

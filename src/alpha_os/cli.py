@@ -1582,7 +1582,7 @@ def _latest_deployed_count(latest: dict | None) -> int:
     )
 
 
-def _current_runtime_profile(cfg, adir: Path, asset: str) -> tuple[str, str]:
+def _current_runtime_profile(cfg, adir: Path, asset: str):
     from alpha_os.alpha.registry import AlphaRegistry
 
     registry = AlphaRegistry(adir / "alpha_registry.db")
@@ -1595,7 +1595,7 @@ def _current_runtime_profile(cfg, adir: Path, asset: str) -> tuple[str, str]:
         config=cfg,
         deployed_alpha_ids=deployed_ids,
     )
-    return profile.profile_id, profile.git_commit
+    return profile
 
 
 def cmd_runtime_status(args: argparse.Namespace) -> None:
@@ -1613,7 +1613,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
     registry = _registry_status(adir)
-    current_profile_id, current_profile_commit = _current_runtime_profile(cfg, adir, args.asset)
+    current_profile = _current_runtime_profile(cfg, adir, args.asset)
     findings = _runtime_observation_findings(latest, registry)
 
     print(f"Runtime Status ({args.asset.upper()})")
@@ -1629,8 +1629,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"  Registry:  active={registry['active']} dormant={registry['dormant']} "
         f"rejected={registry['rejected']} deployed={registry['deployed']}"
     )
-    commit_suffix = f" ({current_profile_commit[:8]})" if current_profile_commit else ""
-    print(f"  Profile:   current={current_profile_id[:12]}{commit_suffix}")
+    commit_suffix = f" ({current_profile.git_commit[:8]})" if current_profile.git_commit else ""
+    print(f"  Profile:   current={current_profile.profile_id[:12]}{commit_suffix}")
 
     if latest is None:
         print("  Latest:    no readiness reports yet")
@@ -1646,6 +1646,19 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     if latest_profile_id:
         latest_suffix = f" ({latest_profile_commit[:8]})" if latest_profile_commit else ""
         print(f"  Profile:   latest={latest_profile_id[:12]}{latest_suffix}")
+        latest_config_id = latest.get("profile_config_id", "")
+        latest_deployed_set_id = latest.get("profile_deployed_set_id", "")
+        if latest_config_id or latest_deployed_set_id:
+            print(
+                "  ProfileIDs: "
+                f"config={latest_config_id[:12] or 'n/a'} "
+                f"deployed={latest_deployed_set_id[:12] or 'n/a'}"
+            )
+            print(
+                "  CurrentIDs: "
+                f"config={current_profile.config_id[:12]} "
+                f"deployed={current_profile.deployed_set_id[:12]}"
+            )
     print(
         f"  Selection: registry={latest['n_registry_active']} "
         f"deployed={_latest_deployed_count(latest)} "
@@ -1675,8 +1688,14 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     print(f"  Observe:   {verdict}")
     for finding in findings:
         print(f"    - {finding}")
-    if latest_profile_id and latest_profile_id != current_profile_id:
+    if latest_profile_id and latest_profile_id != current_profile.profile_id:
         print("    - latest report was recorded under a different runtime profile")
+        latest_config_id = latest.get("profile_config_id", "")
+        latest_deployed_set_id = latest.get("profile_deployed_set_id", "")
+        if latest_config_id and latest_config_id != current_profile.config_id:
+            print("    - config fingerprint differs between current and latest")
+        if latest_deployed_set_id and latest_deployed_set_id != current_profile.deployed_set_id:
+            print("    - deployed alpha set fingerprint differs between current and latest")
     if latest["n_registry_active"] != registry["active"]:
         print(
             "  Note:      registry DB count differs from latest readiness report; "

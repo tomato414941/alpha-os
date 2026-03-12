@@ -35,6 +35,8 @@ class DailyReport:
     cycle_completed: bool
     profile_id: str = ""
     profile_commit: str = ""
+    profile_config_id: str = ""
+    profile_deployed_set_id: str = ""
     error_message: str = ""
     # Portfolio
     portfolio_value: float = 0.0
@@ -166,6 +168,8 @@ class ReadinessChecker:
             timestamp=time.time(),
             profile_id=getattr(cycle_result, "profile_id", ""),
             profile_commit=getattr(cycle_result, "profile_commit", ""),
+            profile_config_id=getattr(cycle_result, "profile_config_id", ""),
+            profile_deployed_set_id=getattr(cycle_result, "profile_deployed_set_id", ""),
             cycle_completed=cycle_ok,
             portfolio_value=cycle_result.portfolio_value,
             daily_pnl=cycle_result.daily_pnl,
