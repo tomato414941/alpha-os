@@ -75,7 +75,6 @@ def test_initial_simulation_state_preserves_registry_state():
     assert _initial_simulation_state(AlphaState.CANDIDATE) == ST_EXCLUDED
     assert _initial_simulation_state(AlphaState.DORMANT) == ST_DORMANT
     assert _initial_simulation_state(AlphaState.REJECTED) == ST_EXCLUDED
-    assert _initial_simulation_state(AlphaState.BORN) == ST_EXCLUDED
 
 
 def test_live_like_eval_indices_matches_live_candidate_rules():

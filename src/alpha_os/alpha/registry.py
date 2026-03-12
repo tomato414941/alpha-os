@@ -17,17 +17,11 @@ class AlphaState:
     DORMANT = "dormant"
     REJECTED = "rejected"
 
-    # Backward-compatible aliases for migrated runtime state names.
-    BORN = CANDIDATE
-    PROBATION = ACTIVE
-
     _CANONICAL = {
         CANDIDATE: CANDIDATE,
         ACTIVE: ACTIVE,
         DORMANT: DORMANT,
         REJECTED: REJECTED,
-        "born": CANDIDATE,
-        "probation": ACTIVE,
     }
 
     @classmethod
@@ -166,44 +160,7 @@ class AlphaRegistry:
             CREATE INDEX IF NOT EXISTS idx_oos_log_growth
             ON alphas(oos_log_growth DESC)
         """)
-        self._migrate_deployed_alphas()
-        self._migrate_states()
         self._conn.commit()
-
-    def _migrate_deployed_alphas(self) -> None:
-        row = self._conn.execute(
-            """
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table' AND name = 'trading_universe'
-            """
-        ).fetchone()
-        if row is None:
-            return
-        deployed_count = self._conn.execute(
-            "SELECT COUNT(*) FROM deployed_alphas"
-        ).fetchone()[0]
-        if deployed_count > 0:
-            return
-        self._conn.execute(
-            """
-            INSERT INTO deployed_alphas (
-                alpha_id, slot, deployed_at, deployment_score, metadata
-            )
-            SELECT alpha_id, slot, deployed_at, deployment_score, metadata
-            FROM trading_universe
-            """
-        )
-
-    def _migrate_states(self) -> None:
-        self._conn.execute(
-            "UPDATE alphas SET state = ? WHERE state = ?",
-            (AlphaState.CANDIDATE, "born"),
-        )
-        self._conn.execute(
-            "UPDATE alphas SET state = ? WHERE state = ?",
-            (AlphaState.ACTIVE, "probation"),
-        )
 
     def replace_all(self, records: list[AlphaRecord]) -> None:
         values = [self._record_values(record) for record in records]

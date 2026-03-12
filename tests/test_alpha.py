@@ -1,5 +1,4 @@
 """Tests for alpha registry, lifecycle, combiner, and governance gates."""
-import sqlite3
 
 import numpy as np
 import pytest
@@ -125,44 +124,6 @@ class TestAlphaRegistry:
         assert got.expression == "x_new"
         assert got.fitness == 1.0
         assert reg.count() == 1
-        reg.close()
-
-    def test_legacy_states_migrate_on_open(self, tmp_path):
-        db_path = tmp_path / "test.db"
-        conn = sqlite3.connect(db_path)
-        conn.execute(
-            """
-            CREATE TABLE alphas (
-                alpha_id TEXT PRIMARY KEY,
-                expression TEXT NOT NULL,
-                state TEXT NOT NULL,
-                fitness REAL DEFAULT 0.0,
-                oos_sharpe REAL DEFAULT 0.0,
-                oos_log_growth REAL DEFAULT 0.0,
-                pbo REAL DEFAULT 1.0,
-                dsr_pvalue REAL DEFAULT 1.0,
-                turnover REAL DEFAULT 0.0,
-                correlation_avg REAL DEFAULT 0.0,
-                created_at REAL NOT NULL,
-                updated_at REAL NOT NULL,
-                metadata TEXT DEFAULT '{}'
-            )
-            """
-        )
-        conn.execute(
-            "INSERT INTO alphas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ("legacy_born", "x", "born", 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, "{}"),
-        )
-        conn.execute(
-            "INSERT INTO alphas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ("legacy_probation", "y", "probation", 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, "{}"),
-        )
-        conn.commit()
-        conn.close()
-
-        reg = self._make_registry(tmp_path)
-        assert reg.get("legacy_born").state == AlphaState.CANDIDATE
-        assert reg.get("legacy_probation").state == AlphaState.ACTIVE
         reg.close()
 
     def test_replace_and_list_deployed_alphas(self, tmp_path):
@@ -667,14 +628,6 @@ class TestAlphaLifecycle:
         state = lc.evaluate_active("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
-    def test_active_alias_to_dormant_via_probation_method(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
-        ))
-        state = lc.evaluate_probation("a1", live_quality=-0.5)
-        assert state == AlphaState.DORMANT
-
     def test_dormant_stays_dormant(self, tmp_path):
         reg, lc = self._setup(tmp_path)
         reg.register(AlphaRecord(
@@ -698,14 +651,6 @@ class TestAlphaLifecycle:
         ))
         # Step 1: revive to ACTIVE
         state = lc.evaluate_dormant("a1", live_quality=0.4)
-        assert state == AlphaState.ACTIVE
-
-    def test_active_alias_stays_active_via_probation_method(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
-        ))
-        state = lc.evaluate_probation("a1", live_quality=0.8)
         assert state == AlphaState.ACTIVE
 
     def test_not_found_raises(self, tmp_path):

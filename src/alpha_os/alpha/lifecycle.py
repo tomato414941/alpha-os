@@ -19,30 +19,6 @@ class LifecycleConfig:
     dsr_pvalue_max: float = 1.0
     correlation_max: float = 0.5
 
-    @property
-    def oos_quality_min(self) -> float:
-        return self.candidate_quality_min
-
-    @oos_quality_min.setter
-    def oos_quality_min(self, value: float) -> None:
-        self.candidate_quality_min = value
-
-    @property
-    def probation_quality_min(self) -> float:
-        return self.active_quality_min
-
-    @probation_quality_min.setter
-    def probation_quality_min(self, value: float) -> None:
-        self.active_quality_min = value
-
-    @property
-    def dormant_quality_max(self) -> float:
-        return self.active_quality_min
-
-    @dormant_quality_max.setter
-    def dormant_quality_max(self, value: float) -> None:
-        self.active_quality_min = value
-
 
 def passes_candidate_gate(record: AlphaRecord, config: LifecycleConfig) -> bool:
     """Return True when a candidate clears the admission gate."""
@@ -87,10 +63,6 @@ def next_live_state(
 
 # Vectorized state codes for batch transitions (used by simulator)
 ST_CANDIDATE, ST_ACTIVE, ST_DORMANT = 0, 1, 2
-
-# Backward-compatible alias: probation collapsed into active.
-ST_PROBATION = ST_ACTIVE
-
 
 def batch_transitions(
     states: np.ndarray,
@@ -153,10 +125,6 @@ class AlphaLifecycle:
         self.registry.update_state(alpha_id, AlphaState.REJECTED)
         return AlphaState.REJECTED
 
-    def evaluate_born(self, alpha_id: str) -> str:
-        """Backward-compatible alias for evaluate_candidate()."""
-        return self.evaluate_candidate(alpha_id)
-
     def evaluate_active(self, alpha_id: str, live_quality: float) -> str:
         """Check if an active alpha should become dormant."""
         record = self.registry.get(alpha_id)
@@ -182,15 +150,6 @@ class AlphaLifecycle:
             self.registry.update_state(alpha_id, AlphaState.ACTIVE)
             return AlphaState.ACTIVE
         return AlphaState.DORMANT
-
-    def evaluate_probation(self, alpha_id: str, live_quality: float) -> str:
-        """Backward-compatible alias after collapsing probation into active."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        if AlphaState.canonical(record.state) == AlphaState.DORMANT:
-            return self.evaluate_dormant(alpha_id, live_quality)
-        return self.evaluate_active(alpha_id, live_quality)
 
     def evaluate(self, alpha_id: str, live_quality: float) -> str:
         """Evaluate any alpha regardless of current state."""

@@ -211,30 +211,6 @@ class LifecycleTomlConfig:
     dormant_revival_quality: float = 0.0
     correlation_max: float = 0.5
 
-    @property
-    def oos_quality_min(self) -> float:
-        return self.candidate_quality_min
-
-    @oos_quality_min.setter
-    def oos_quality_min(self, value: float) -> None:
-        self.candidate_quality_min = value
-
-    @property
-    def probation_quality_min(self) -> float:
-        return self.active_quality_min
-
-    @probation_quality_min.setter
-    def probation_quality_min(self, value: float) -> None:
-        self.active_quality_min = value
-
-    @property
-    def dormant_quality_max(self) -> float:
-        return self.active_quality_min
-
-    @dormant_quality_max.setter
-    def dormant_quality_max(self, value: float) -> None:
-        self.active_quality_min = value
-
 
 @dataclass
 class ExecutionTomlConfig:
@@ -414,22 +390,7 @@ class Config:
                 )
         if not raw:
             return cls()
-        # Backward compat: map old lifecycle sharpe keys to quality keys
         lc_raw = dict(raw.get("lifecycle", {}))
-        _LC_ALIASES = {
-            "candidate_quality_min": "candidate_quality_min",
-            "active_quality_min": "active_quality_min",
-            "oos_sharpe_min": "candidate_quality_min",
-            "oos_quality_min": "candidate_quality_min",
-            "probation_sharpe_min": "active_quality_min",
-            "probation_quality_min": "active_quality_min",
-            "dormant_sharpe_max": "active_quality_min",
-            "dormant_quality_max": "active_quality_min",
-            "dormant_revival_sharpe": "dormant_revival_quality",
-        }
-        for old, new in _LC_ALIASES.items():
-            if old in lc_raw and new not in lc_raw:
-                lc_raw[new] = lc_raw.pop(old)
         _f = cls._filter
         return cls(
             fitness_metric=raw.get("fitness_metric", "sharpe"),
@@ -444,12 +405,7 @@ class Config:
             testnet=TestnetConfig(**_f(TestnetConfig, raw.get("testnet", {}))),
             event_driven=EventDrivenConfig(**_f(EventDrivenConfig, raw.get("event_driven", {}))),
             live_quality=LiveQualityConfig(**_f(LiveQualityConfig, raw.get("live_quality", {}))),
-            deployment=DeploymentConfig(
-                **_f(
-                    DeploymentConfig,
-                    raw.get("deployment", raw.get("universe", {})),
-                )
-            ),
+            deployment=DeploymentConfig(**_f(DeploymentConfig, raw.get("deployment", {}))),
             lifecycle=LifecycleTomlConfig(**_f(LifecycleTomlConfig, lc_raw)),
             execution=ExecutionTomlConfig(**_f(ExecutionTomlConfig, raw.get("execution", {}))),
             gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),

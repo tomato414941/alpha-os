@@ -211,20 +211,6 @@ class TestForwardRunnerIntegration:
         tracker.close()
         reg.close()
 
-    def test_active_alias_to_dormant_via_probation_method(self, tmp_path):
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
-        reg.register(AlphaRecord(
-            alpha_id="dying",
-            expression="(neg f1)",
-            state=AlphaState.ACTIVE,
-        ))
-        lifecycle = AlphaLifecycle(reg)
-
-        new_state = lifecycle.evaluate_probation("dying", live_quality=-0.5)
-        assert new_state == AlphaState.DORMANT
-
-        reg.close()
-
     def test_dormant_recovery_to_active(self, tmp_path):
         reg = AlphaRegistry(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
