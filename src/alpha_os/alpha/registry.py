@@ -103,7 +103,7 @@ class AlphaRegistry:
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_sharpe ON alphas(oos_sharpe DESC)
         """)
-        # Pipeline v2: candidate queue for evo daemon → admission flow
+        # Pipeline v2: candidate queue for alpha generator → admission flow
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS candidates (
                 candidate_id TEXT PRIMARY KEY,

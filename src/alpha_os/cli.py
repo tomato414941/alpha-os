@@ -146,10 +146,13 @@ def _build_parser() -> argparse.ArgumentParser:
     trd.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
 
-    # evo-daemon (Pipeline v2)
-    evo_d = sub.add_parser("evo-daemon", help="Run continuous GP evolution daemon")
-    evo_d.add_argument("--asset", type=str, default="BTC")
-    evo_d.add_argument("--config", type=str, default=None)
+    # alpha-generator (Pipeline v2)
+    gen_d = sub.add_parser(
+        "alpha-generator",
+        help="Run the continuous alpha generation daemon",
+    )
+    gen_d.add_argument("--asset", type=str, default="BTC")
+    gen_d.add_argument("--config", type=str, default=None)
 
     # admission-daemon (Pipeline v2)
     adm_d = sub.add_parser("admission-daemon", help="Run candidate admission daemon")
@@ -1275,11 +1278,11 @@ def cmd_trade(args: argparse.Namespace) -> None:
     last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
     logger = logging.getLogger(__name__)
 
-    # Pipeline v2: determine if daemons handle evo/lifecycle
-    use_evo_daemon = cfg.evo_daemon.enabled
+    # Pipeline v2: determine if daemons handle alpha generation/lifecycle
+    use_alpha_generator = cfg.alpha_generator.enabled
     use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
-    if use_evo_daemon:
-        logger.info("Pipeline v2: evo daemon enabled — skipping inline evolution")
+    if use_alpha_generator:
+        logger.info("Pipeline v2: alpha generator enabled — skipping inline evolution")
     if use_lifecycle_daemon:
         logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
 
@@ -1289,7 +1292,7 @@ def cmd_trade(args: argparse.Namespace) -> None:
             logger.info("--- %s cycle start ---", asset)
             now = time.time()
             evolve_interval = args.evolve_interval
-            if evolve_interval > 0 and not use_evo_daemon:
+            if evolve_interval > 0 and not use_alpha_generator:
                 if _needs_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
@@ -1362,8 +1365,8 @@ def cmd_trade(args: argparse.Namespace) -> None:
             trader.close()
 
 
-def cmd_evo_daemon(args: argparse.Namespace) -> None:
-    """Run the continuous evolution daemon (Pipeline v2)."""
+def cmd_alpha_generator(args: argparse.Namespace) -> None:
+    """Run the continuous alpha generation daemon (Pipeline v2)."""
     cfg = _load_config(args.config)
 
     logging.basicConfig(
@@ -1372,9 +1375,9 @@ def cmd_evo_daemon(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.daemon.evo import EvoDaemon
+    from alpha_os.daemon.alpha_generator import AlphaGeneratorDaemon
 
-    daemon = EvoDaemon(asset=args.asset, config=cfg)
+    daemon = AlphaGeneratorDaemon(asset=args.asset, config=cfg)
     daemon.run()
 
 
@@ -1988,8 +1991,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_paper(args)
     elif args.command == "trade":
         cmd_trade(args)
-    elif args.command == "evo-daemon":
-        cmd_evo_daemon(args)
+    elif args.command == "alpha-generator":
+        cmd_alpha_generator(args)
     elif args.command == "admission-daemon":
         cmd_admission_daemon(args)
     elif args.command == "lifecycle":

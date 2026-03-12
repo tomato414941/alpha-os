@@ -106,8 +106,8 @@ drift_threshold = 0.3
 drift_position_scale_min = 0.5
 
 # Pipeline v2: separated process daemons
-[evo_daemon]
-enabled = false            # true activates separated evo process
+[alpha_generator]
+enabled = false            # true activates the separated alpha generator
 pop_size = 80              # GP population per round
 n_generations = 15         # generations per round
 round_interval = 300       # seconds between rounds (5 min)

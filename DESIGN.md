@@ -1020,7 +1020,7 @@ Phase 2:
   │     default remains "consensus" (Path A unchanged)
   │
   └── Step 6: Evo daemon MAP-Elites mode                      ✅
-        daemon/evo.py: stratified feature-subset round with archive persistence
+        daemon/alpha_generator.py: stratified feature-subset round with archive persistence
         archive.py: SQLite persistence (save_to_db / load_from_db)
 ```
 
@@ -1036,7 +1036,7 @@ commit. Default config remains "consensus" / "legacy" (Path A unchanged).
 - `src/alpha_os/evolution/archive.py` — MAP-Elites grid + `add_if_empty()` + SQLite persistence
 - `src/alpha_os/voting/ensemble.py` — two-level ensemble aggregation
 - `src/alpha_os/paper/trader.py` — `combine_mode="map_elites"` path
-- `src/alpha_os/daemon/evo.py` — stratified feature-subset round with archive persistence
+- `src/alpha_os/daemon/alpha_generator.py` — stratified feature-subset round with archive persistence
 
 ## Paper Trading
 
@@ -1440,7 +1440,7 @@ cx33) has revealed fundamental limitations:
    burst, causing memory to spike from ~300MB to 1GB+. On the original
    cx23 (4GB), this consumed 800MB of swap while signal-noise was co-located.
 
-2. **Exploration blocks execution**: The evo phase consumes CPU 87% and
+2. **Exploration blocks execution**: The alpha-generation phase consumes CPU 87% and
    must complete before any trading can occur. A trade cycle that should
    take seconds is blocked for minutes by evolution.
 
@@ -1471,7 +1471,7 @@ cx33) has revealed fundamental limitations:
 └──────▲───────────────▲──────────────────▲────────────────▲───────────┘
        │               │                  │                │
 ┌──────┴──────┐  ┌─────┴──────┐  ┌───────┴───────┐  ┌─────┴──────────┐
-│ evo daemon  │  │ admission   │  │ trade runtime │  │   lifecycle    │
+│ alpha gen   │  │ admission   │  │ trade runtime │  │   lifecycle    │
 │ (continuous)│  │ (triggered)│  │   (4h 周期)   │  │   (daily)      │
 │             │  │            │  │               │  │                │
 │ GP evolve   │  │ purged CV  │  │ read alphas   │  │ forward rets   │
@@ -1491,7 +1491,7 @@ cx33) has revealed fundamental limitations:
 
 Data flow:
 
-1. **evo daemon** runs GP evolution continuously in small batches and writes
+1. **alpha generator** runs GP evolution continuously in small batches and writes
    candidates to the `candidates` table.
 2. **admission daemon** reads PENDING candidates, runs statistical validation
    (purged WF-CV, DSR, PBO, admission gate), computes incremental diversity
@@ -1507,7 +1507,7 @@ Data flow:
 
 ### Process Definitions
 
-#### evo daemon (continuous)
+#### alpha generator (continuous)
 
 Responsibility: continuously explore the alpha search space and feed
 candidates to the admission daemon.
@@ -1523,7 +1523,7 @@ Extracts logic from `PipelineRunner._evolve()` (pipeline/runner.py) and
 | Memory pattern | Spike to 1GB+ | Flat ~200-400MB |
 | Archive | Discarded per run | In-process, reset on restart |
 
-Implementation: `src/alpha_os/daemon/evo.py`
+Implementation: `src/alpha_os/daemon/alpha_generator.py`
 
 - Each round: initialize population → evolve 15 generations → collect
   results → bulk insert into `candidates` table → gc.collect() → sleep.
@@ -1539,7 +1539,7 @@ Implementation: `src/alpha_os/daemon/evo.py`
 CLI entry point:
 
 ```
-python -m alpha_os evo-daemon --asset BTC [--config ...]
+python -m alpha_os alpha-generator --asset BTC [--config ...]
 ```
 
 #### admission daemon (triggered batch)
@@ -1611,7 +1611,7 @@ Phase 4:    executor.rebalance() → portfolio_tracker.save_snapshot()
 ```
 
 Backward compatibility: `skip_lifecycle` parameter (default: False).
-When `evo_daemon.enabled = true` in config, the trade cycle sets
+When `alpha_generator.enabled = true` in config, the trade cycle sets
 `skip_lifecycle = True` automatically.
 
 No new CLI command — uses existing `trade --schedule`.
@@ -1700,8 +1700,8 @@ all databases for multi-process safety:
 
 | Database | WAL | busy_timeout | Writer(s) | Reader(s) |
 |----------|-----|-------------|-----------|-----------|
-| alpha_cache.db | ✅ existing | 30s | trade cycle (sync) | evo daemon |
-| alpha_registry.db | **NEW** | 30s | evo (candidates), admission (alphas, div_cache), lifecycle (alphas.state) | trade runtime |
+| alpha_cache.db | ✅ existing | 30s | trade cycle (sync) | alpha generator |
+| alpha_registry.db | **NEW** | 30s | alpha generator (archive), admission (alphas, div_cache), lifecycle (alphas.state) | trade runtime |
 | forward_returns.db | **NEW** | 30s | trade cycle (record) | lifecycle |
 | paper_trading.db | **NEW** | 30s | trade cycle | — |
 
@@ -1715,7 +1715,7 @@ millisecond-scale writes involved.
 New TOML sections in `config/default.toml`:
 
 ```toml
-[evo_daemon]
+[alpha_generator]
 enabled = false            # true activates separated process mode
 pop_size = 80              # GP population per round
 n_generations = 15         # generations per round
@@ -1753,16 +1753,16 @@ trade interruption.
 - Add `candidates` and `diversity_cache` tables to
   `AlphaRegistry._create_tables()`.
 - Create `daemon/` package with `__init__.py`.
-- Add `[evo_daemon]`, `[admission]`, `[lifecycle_daemon]` to TOML and
+- Add `[alpha_generator]`, `[admission]`, `[lifecycle_daemon]` to TOML and
   corresponding dataclasses to `config.py`.
 - Run all 434 existing tests to confirm no regression.
 
-#### Step 2: evo daemon (no trade downtime)
+#### Step 2: alpha generator (no trade downtime)
 
-- Implement `daemon/evo.py`. Extract logic from `PipelineRunner._evolve()`.
-- Add `evo-daemon` CLI subcommand.
-- Add `alpha-os-evo@.service` systemd unit.
-- Test: start evo daemon, verify candidates appear in DB.
+- Implement `daemon/alpha_generator.py`. Extract logic from `PipelineRunner._evolve()`.
+- Add `alpha-generator` CLI subcommand.
+- Add `alpha-os-alpha-generator@.service` systemd unit.
+- Test: start the alpha generator, verify the archive grows.
 - The existing `alpha-os.service` continues running unchanged.
 
 #### Step 3: admission daemon (no trade downtime)
@@ -1778,11 +1778,11 @@ trade interruption.
 - Add `skip_lifecycle` parameter to `Trader.run_cycle()`.
 - Switch diversity source to `diversity_cache` table when
   `admission.enabled = true`.
-- Condition evolution in `cli.py:cycle()` on `evo_daemon.enabled`.
+- Condition evolution in `cli.py:cycle()` on `alpha_generator.enabled`.
 
 ```python
 # cli.py: cycle()
-if evolve_interval > 0 and not cfg.evo_daemon.enabled:
+if evolve_interval > 0 and not cfg.alpha_generator.enabled:
     # Legacy: inline evolution
     ...
 ```
@@ -1804,7 +1804,7 @@ if evolve_interval > 0 and not cfg.evo_daemon.enabled:
 - Remove inline evolution path from `cli.py:cycle()`.
 - Remove lifecycle code from `Trader.run_cycle()`.
 - Remove `skip_lifecycle` flag (always skip).
-- Simplify `PipelineRunner.run()` to use evo + validate internally (keep
+- Simplify `PipelineRunner.run()` to use generation + validate internally (keep
   for testing convenience).
 
 ### Scaling to 100K+ Alphas
@@ -1845,15 +1845,15 @@ The trade cycle needs at most `corr_lookback=252` days for volatility
 scaling and monitor checks. Loading 252 days instead of 2,089 reduces
 memory by 8×.
 
-For evo daemon, the full history may be needed for backtesting. This is
-acceptable because evo runs in a separate process with its own memory
+For the alpha generator, the full history may be needed for backtesting. This is
+acceptable because it runs in a separate process with its own memory
 budget.
 
 ### systemd Service Design
 
 #### Service definitions
 
-**alpha-os-evo@.service** (continuous):
+**alpha-os-alpha-generator@.service** (continuous):
 
 ```ini
 [Unit]
@@ -1865,13 +1865,13 @@ Type=simple
 User=dev
 WorkingDirectory=/home/dev/projects/alpha-os
 ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
-    -m alpha_os evo-daemon --asset %i
+    -m alpha_os alpha-generator --asset %i
 Restart=on-failure
 RestartSec=60
 MemoryHigh=400M
 MemoryMax=600M
-StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/evo.log
-StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/evo.log
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
 KillSignal=SIGTERM
 TimeoutStopSec=60
 
@@ -1941,8 +1941,8 @@ WantedBy=timers.target
 |---------|-----------|-----------|-------|
 | signal-noise scheduler | ~700M | — | Existing, unchanged |
 | signal-noise serve | ~300M | — | Existing, unchanged |
-| alpha-os trade cycle | 300M | 500M | Slimmed (was ~500M with inline evo) |
-| alpha-os-evo | 400M | 600M | Memory spike isolated here |
+| alpha-os trade cycle | 300M | 500M | Slimmed (was ~500M with inline generation) |
+| alpha-os-alpha-generator | 400M | 600M | Memory spike isolated here |
 | alpha-os-admission | 500M | 700M | Admission + diversity computation |
 | alpha-os-lifecycle | 300M | 500M | Daily oneshot, short-lived |
 | OS + system services | ~500M | — | systemd, tailscale, sshd, etc. |
@@ -1956,7 +1956,7 @@ no swap usage expected.
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | SQLite BUSY on alpha_registry.db | Admission and lifecycle write to `alphas` concurrently | WAL mode + `busy_timeout=30000ms`. Writes are millisecond-scale; 30s retry is more than sufficient. |
-| evo daemon memory leak | OOM kill → candidates lost | systemd `MemoryMax=600M` hard cap. RSS monitoring + pop_size halving in daemon. `Restart=on-failure` for auto-recovery. Candidates already written to DB survive. |
+| alpha generator memory leak | OOM kill → rounds lost | systemd `MemoryMax=600M` hard cap. RSS monitoring + pop_size halving in daemon. `Restart=on-failure` for auto-recovery. Archive persists across restarts. |
 | Phase 4 testnet disruption | Testnet validation streak resets | Steps 1-3 add no risk (new code only). Step 4 uses `enabled=false` default. Rollback: flip flag + restart (~1 min). |
 | candidates table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside admission daemon. |
 | diversity cache staleness | Trade weights based on outdated diversity | `computed_at` timestamp tracked. Cache valid for `diversity_recompute_days` (63 days). DORMANT alphas excluded from combination regardless of cache state. |
@@ -1978,8 +1978,8 @@ mechanism can be applied to the slimmed trade cycle in a future iteration.
 - **PostgreSQL migration**: if alpha count exceeds 500K or multi-machine
   deployment is needed, migrate from SQLite to PostgreSQL for true
   concurrent writes.
-- **Multiprocessing within evo**: parallelize GP evaluation using
-  `multiprocessing.Pool` within the evo daemon for multi-core utilization.
+- **Multiprocessing within alpha generation**: parallelize GP evaluation using
+  `multiprocessing.Pool` within the alpha generator for multi-core utilization.
 - **Cross-asset portfolio optimization**: a fifth process that reads
   positions across all per-asset trade cycles and applies portfolio-level
   risk-parity allocation.

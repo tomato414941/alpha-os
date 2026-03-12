@@ -1,0 +1,21 @@
+[Unit]
+Description=Alpha-OS alpha generator daemon (%i)
+After=network.target signal-noise-scheduler.service
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs
+ExecStart=/bin/bash -lc 'cd /home/dev/projects/alpha-os && source .venv/bin/activate && exec python3 -m alpha_os alpha-generator --asset %i --config /home/dev/.config/alpha-os/prod.toml'
+Restart=on-failure
+RestartSec=60
+MemoryHigh=400M
+MemoryMax=600M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

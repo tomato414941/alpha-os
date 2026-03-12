@@ -1,4 +1,4 @@
-"""Evo daemon — continuous GP evolution writing candidates to SQLite queue."""
+"""Alpha generator daemon — continuous GP evolution into the archive."""
 from __future__ import annotations
 
 import gc
@@ -22,7 +22,7 @@ from ..evolution.gp import GPConfig, GPEvolver
 logger = logging.getLogger(__name__)
 
 
-class EvoDaemon:
+class AlphaGeneratorDaemon:
     """Continuous GP evolution daemon.
 
     Each round: load data → evolve on a stratified feature subset →
@@ -32,10 +32,10 @@ class EvoDaemon:
     def __init__(self, asset: str, config: Config):
         self.asset = asset
         self.config = config
-        self.evo_cfg = config.evo_daemon
+        self.generator_cfg = config.alpha_generator
         self._running = False
         self._round = 0
-        self._pop_size = self.evo_cfg.pop_size
+        self._pop_size = self.generator_cfg.pop_size
 
         db_path = asset_data_dir(asset) / "archive.db"
         self.archive = AlphaArchive.load_from_db(db_path)
@@ -45,9 +45,9 @@ class EvoDaemon:
         self._running = True
         self._setup_signals()
         logger.info(
-            "EvoDaemon started: asset=%s, mode=map_elites, pop=%d, gens=%d, interval=%ds",
+            "AlphaGeneratorDaemon started: asset=%s, mode=map_elites, pop=%d, gens=%d, interval=%ds",
             self.asset, self._pop_size,
-            self.evo_cfg.n_generations, self.evo_cfg.round_interval,
+            self.generator_cfg.n_generations, self.generator_cfg.round_interval,
         )
 
         while self._running:
@@ -63,9 +63,9 @@ class EvoDaemon:
             gc.collect()
 
             if self._running:
-                self._sleep(self.evo_cfg.round_interval)
+                self._sleep(self.generator_cfg.round_interval)
 
-        logger.info("EvoDaemon stopped after %d rounds", self._round)
+        logger.info("AlphaGeneratorDaemon stopped after %d rounds", self._round)
 
     def _run_round(self) -> None:
         """MAP-Elites round: stratified feature subset → GP → sanity filter → archive."""
@@ -78,7 +78,7 @@ class EvoDaemon:
             return
 
         n_days = len(prices)
-        k = self.evo_cfg.feature_subset_k
+        k = self.generator_cfg.feature_subset_k
         seed = int(time.time()) ^ self._round
 
         # Random feature subset for this round
@@ -111,7 +111,7 @@ class EvoDaemon:
         # Evolve with feature subset
         gp_cfg = GPConfig(
             pop_size=self._pop_size,
-            n_generations=self.evo_cfg.n_generations,
+            n_generations=self.generator_cfg.n_generations,
             max_depth=self.config.generation.max_depth,
             bloat_penalty=self.config.generation.bloat_penalty,
         )
@@ -193,7 +193,7 @@ class EvoDaemon:
     def _check_memory(self) -> None:
         rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         rss_mb = rss_kb / 1024
-        limit = self.evo_cfg.memory_limit_mb
+        limit = self.generator_cfg.memory_limit_mb
 
         if rss_mb > limit:
             old_pop = self._pop_size

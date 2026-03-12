@@ -259,7 +259,7 @@ class StabilityConfig:
 
 
 @dataclass
-class EvoDaemonConfig:
+class AlphaGeneratorConfig:
     enabled: bool = False
     pop_size: int = 80
     n_generations: int = 15
@@ -305,7 +305,7 @@ class Config:
     execution: ExecutionTomlConfig = field(default_factory=ExecutionTomlConfig)
     gate: GateTomlConfig = field(default_factory=GateTomlConfig)
     regime: RegimeConfig = field(default_factory=RegimeConfig)
-    evo_daemon: EvoDaemonConfig = field(default_factory=EvoDaemonConfig)
+    alpha_generator: AlphaGeneratorConfig = field(default_factory=AlphaGeneratorConfig)
     admission: AdmissionConfig = field(default_factory=AdmissionConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
     stability: StabilityConfig = field(default_factory=StabilityConfig)
@@ -408,7 +408,9 @@ class Config:
             execution=ExecutionTomlConfig(**_f(ExecutionTomlConfig, raw.get("execution", {}))),
             gate=GateTomlConfig(**_f(GateTomlConfig, raw.get("gate", {}))),
             regime=RegimeConfig(**_f(RegimeConfig, raw.get("regime", {}))),
-            evo_daemon=EvoDaemonConfig(**_f(EvoDaemonConfig, raw.get("evo_daemon", {}))),
+            alpha_generator=AlphaGeneratorConfig(
+                **_f(AlphaGeneratorConfig, raw.get("alpha_generator", {}))
+            ),
             admission=AdmissionConfig(**_f(AdmissionConfig, raw.get("admission", {}))),
             lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
             stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
