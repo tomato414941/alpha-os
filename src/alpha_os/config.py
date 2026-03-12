@@ -301,6 +301,8 @@ class AdmissionConfig:
     batch_size: int = 100
     min_queue_size: int = 10
     max_active_alphas: int = 0
+    reject_semantic_duplicates: bool = True
+    max_feature_occurrences: int = 0
     diversity_recompute_days: int = 63
     incremental_diversity: bool = True
 

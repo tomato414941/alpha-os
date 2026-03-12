@@ -16,6 +16,8 @@ from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
+from ..dsl.canonical import canonical_string
+from ..dsl.features import collect_feature_names
 from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
@@ -102,6 +104,67 @@ class AdmissionDaemon:
             limit,
         )
         return True, ""
+
+    def _managed_registry_records(self, registry: AlphaRegistry) -> list[AlphaRecord]:
+        return [
+            record
+            for record in registry.list_all()
+            if AlphaState.canonical(record.state) != AlphaState.REJECTED
+        ]
+
+    def _semantic_key(self, expression: str) -> str:
+        try:
+            return canonical_string(expression)
+        except Exception:
+            return expression
+
+    def _feature_names(self, expression: str) -> set[str]:
+        try:
+            return collect_feature_names(parse(expression))
+        except Exception:
+            return set()
+
+    def _active_feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for record in records:
+            if AlphaState.canonical(record.state) != AlphaState.ACTIVE:
+                continue
+            for name in self._feature_names(record.expression):
+                counts[name] = counts.get(name, 0) + 1
+        return counts
+
+    def _semantic_duplicate_reason(
+        self,
+        *,
+        expression: str,
+        semantic_owner_by_key: dict[str, str],
+    ) -> str:
+        if not self.admission_cfg.reject_semantic_duplicates:
+            return ""
+        key = self._semantic_key(expression)
+        owner = semantic_owner_by_key.get(key)
+        if owner is None:
+            return ""
+        return f"semantic duplicate of {owner}"
+
+    def _feature_cap_reason(
+        self,
+        *,
+        expression: str,
+        feature_counts: dict[str, int],
+    ) -> str:
+        limit = self.admission_cfg.max_feature_occurrences
+        if limit <= 0:
+            return ""
+        overused = sorted(
+            name
+            for name in self._feature_names(expression)
+            if feature_counts.get(name, 0) >= limit
+        )
+        if not overused:
+            return ""
+        preview = ", ".join(overused[:3])
+        return f"feature cap {limit}: {preview}"
 
     def run(self) -> None:
         self._running = True
@@ -235,9 +298,15 @@ class AdmissionDaemon:
         )
 
         registry = AlphaRegistry(asset_data_dir(self.asset) / "alpha_registry.db")
+        managed_records = self._managed_registry_records(registry)
+        semantic_owner_by_key = {
+            self._semantic_key(record.expression): record.alpha_id
+            for record in managed_records
+        }
+        active_feature_counts = self._active_feature_counts(managed_records)
         existing_ids = {
             record.expression: record.alpha_id
-            for record in registry.list_all()
+            for record in managed_records
         }
         n_adopted = 0
         n_rejected = 0
@@ -257,6 +326,24 @@ class AdmissionDaemon:
             )
 
             if result.passed:
+                duplicate_reason = self._semantic_duplicate_reason(
+                    expression=expr_str,
+                    semantic_owner_by_key=semantic_owner_by_key,
+                )
+                if duplicate_reason:
+                    self._reject_candidate(cid, duplicate_reason)
+                    n_rejected += 1
+                    continue
+
+                feature_cap_reason = self._feature_cap_reason(
+                    expression=expr_str,
+                    feature_counts=active_feature_counts,
+                )
+                if feature_cap_reason:
+                    self._reject_candidate(cid, feature_cap_reason)
+                    n_rejected += 1
+                    continue
+
                 alpha_id = alpha_id_for_expression(
                     expr_str,
                     existing_ids=existing_ids,
@@ -279,6 +366,9 @@ class AdmissionDaemon:
                     continue
                 registry.register(record)
                 self._adopt_candidate(cid, cv.oos_sharpe, batch_pbo, dsr_pvalue)
+                semantic_owner_by_key[self._semantic_key(expr_str)] = alpha_id
+                for name in self._feature_names(expr_str):
+                    active_feature_counts[name] = active_feature_counts.get(name, 0) + 1
 
                 # Write diversity cache
                 self._write_diversity_cache(alpha_id, registry)

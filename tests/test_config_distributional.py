@@ -137,6 +137,8 @@ def test_admission_section_loads_from_toml(tmp_path):
                 "poll_interval = 900",
                 "batch_size = 42",
                 "max_active_alphas = 123",
+                "reject_semantic_duplicates = false",
+                "max_feature_occurrences = 17",
             ]
         )
     )
@@ -145,6 +147,8 @@ def test_admission_section_loads_from_toml(tmp_path):
     assert cfg.admission.poll_interval == 900
     assert cfg.admission.batch_size == 42
     assert cfg.admission.max_active_alphas == 123
+    assert cfg.admission.reject_semantic_duplicates is False
+    assert cfg.admission.max_feature_occurrences == 17
 
 
 def test_unknown_trading_mode_raises_on_capability_check():

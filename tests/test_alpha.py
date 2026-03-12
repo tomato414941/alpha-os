@@ -406,6 +406,73 @@ class TestAlphaRegistry:
         assert reg.get("a3").state == AlphaState.DORMANT
         reg.close()
 
+    def test_admission_rejects_semantic_duplicates_against_registry(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(
+            AlphaRecord(
+                alpha_id="a1",
+                expression="(corr_10 nasdaq (ts_max_5 russell2000))",
+                state=AlphaState.ACTIVE,
+            )
+        )
+
+        cfg = Config()
+        daemon = AdmissionDaemon("BTC", cfg)
+        managed = daemon._managed_registry_records(reg)
+        semantic_owner_by_key = {
+            daemon._semantic_key(record.expression): record.alpha_id
+            for record in managed
+        }
+
+        reason = daemon._semantic_duplicate_reason(
+            expression="(corr_10 (ts_max_5 russell2000) nasdaq)",
+            semantic_owner_by_key=semantic_owner_by_key,
+        )
+
+        assert reason == "semantic duplicate of a1"
+        reg.close()
+
+    def test_admission_feature_cap_rejects_overused_active_features(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(
+            AlphaRecord(alpha_id="a1", expression="nasdaq", state=AlphaState.ACTIVE)
+        )
+        reg.register(
+            AlphaRecord(alpha_id="a2", expression="(neg nasdaq)", state=AlphaState.ACTIVE)
+        )
+
+        cfg = Config()
+        cfg.admission.max_feature_occurrences = 2
+        daemon = AdmissionDaemon("BTC", cfg)
+        feature_counts = daemon._active_feature_counts(daemon._managed_registry_records(reg))
+
+        reason = daemon._feature_cap_reason(
+            expression="(add nasdaq sp500)",
+            feature_counts=feature_counts,
+        )
+
+        assert reason == "feature cap 2: nasdaq"
+        reg.close()
+
+    def test_admission_feature_cap_allows_underused_features(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.register(
+            AlphaRecord(alpha_id="a1", expression="nasdaq", state=AlphaState.ACTIVE)
+        )
+
+        cfg = Config()
+        cfg.admission.max_feature_occurrences = 2
+        daemon = AdmissionDaemon("BTC", cfg)
+        feature_counts = daemon._active_feature_counts(daemon._managed_registry_records(reg))
+
+        reason = daemon._feature_cap_reason(
+            expression="sp500",
+            feature_counts=feature_counts,
+        )
+
+        assert reason == ""
+        reg.close()
+
 
 # ---------------------------------------------------------------------------
 # Lifecycle
