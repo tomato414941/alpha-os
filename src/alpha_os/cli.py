@@ -296,6 +296,45 @@ def _build_parser() -> argparse.ArgumentParser:
     shc.add_argument("--list", action="store_true", help="List available sets and exit")
     shc.add_argument("--dry-run", action="store_true", help="Print expressions without writing")
 
+    # analyze-diversity
+    adv = sub.add_parser(
+        "analyze-diversity",
+        help="Analyze alpha diversity across signal, structure, and feature families",
+    )
+    adv.add_argument("--asset", type=str, default="BTC")
+    adv.add_argument("--config", type=str, default=None)
+    adv.add_argument(
+        "--scope",
+        choices=["deployed", "active"],
+        default="deployed",
+        help="Analyze the deployed alpha set or the registry-active pool",
+    )
+    adv.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Optional record cap (0 = full scope)",
+    )
+    adv.add_argument(
+        "--metric",
+        choices=["sharpe", "log_growth"],
+        default="sharpe",
+        help="Ordering metric when limiting the registry-active pool",
+    )
+    adv.add_argument(
+        "--lookback",
+        type=int,
+        default=252,
+        help="Signal lookback window used for correlation analysis",
+    )
+    adv.add_argument(
+        "--top-pairs",
+        type=int,
+        default=10,
+        help="Number of most redundant pairs to print",
+    )
+    adv.add_argument("--json", action="store_true", help="Print full report as JSON")
+
     return parser
 
 
@@ -1756,6 +1795,102 @@ def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
     print(f"Queued: {inserted} new candidates")
 
 
+def cmd_analyze_diversity(args: argparse.Namespace) -> None:
+    from alpha_os.alpha.diversity import analyze_diversity
+    from alpha_os.alpha.registry import AlphaRegistry, AlphaState
+
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
+    features = build_feature_list(args.asset)
+    data, n_days = _real_data(features, cfg, eval_window=max(args.lookback, 0))
+
+    registry = AlphaRegistry(asset_data_dir(args.asset) / "alpha_registry.db")
+    try:
+        if args.scope == "deployed":
+            records = registry.list_deployed_alphas()
+            if args.limit > 0:
+                records = records[:args.limit]
+        else:
+            if args.limit > 0:
+                records = registry.top(
+                    args.limit,
+                    state=AlphaState.ACTIVE,
+                    metric=args.metric,
+                )
+            else:
+                records = registry.list_active()
+    finally:
+        registry.close()
+
+    report = analyze_diversity(
+        records,
+        data,
+        n_days,
+        lookback=args.lookback,
+        top_pairs=args.top_pairs,
+    )
+
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        return
+
+    summary = report.summary
+    print(
+        f"Diversity Analysis ({args.asset.upper()} {args.scope}, "
+        f"analyzed={summary.n_analyzed}/{summary.n_records}, lookback={summary.lookback})"
+    )
+    print(
+        "  Summary:   "
+        f"signal_div={summary.signal_diversity:.3f} "
+        f"feature_div={summary.feature_diversity:.3f} "
+        f"struct_div={summary.structure_diversity:.3f} "
+        f"composite_div={summary.composite_diversity:.3f}"
+    )
+    print(
+        "  Overlap:   "
+        f"signal={summary.mean_abs_signal_correlation:.3f} "
+        f"feature={summary.mean_feature_overlap:.3f} "
+        f"struct={summary.mean_structure_overlap:.3f} "
+        f"composite={summary.mean_composite_similarity:.3f}"
+    )
+    if summary.family_counts:
+        family_blob = ", ".join(
+            f"{name}={count}" for name, count in summary.family_counts.items()
+        )
+        print(f"  Families:  {family_blob}")
+    if report.skipped_alpha_ids:
+        skipped_preview = ", ".join(report.skipped_alpha_ids[:5])
+        suffix = "" if len(report.skipped_alpha_ids) <= 5 else ", ..."
+        print(
+            f"  Skipped:   {len(report.skipped_alpha_ids)} "
+            f"({skipped_preview}{suffix})"
+        )
+
+    if report.top_redundant_pairs:
+        print("  Top Pairs:")
+        for pair in report.top_redundant_pairs:
+            print(
+                "    "
+                f"{pair.alpha_id_a} <-> {pair.alpha_id_b} "
+                f"comp={pair.composite_similarity:.3f} "
+                f"sig={pair.abs_signal_correlation:.3f} "
+                f"feat={pair.feature_overlap:.3f} "
+                f"struct={pair.structure_overlap:.3f}"
+            )
+
+    if report.rows:
+        print("  Most Redundant:")
+        for row in report.rows[: min(10, len(report.rows))]:
+            families = ",".join(row.feature_families) or "-"
+            print(
+                "    "
+                f"{row.alpha_id} comp={row.avg_composite_similarity:.3f} "
+                f"sig={row.avg_abs_signal_correlation:.3f} "
+                f"feat={row.avg_feature_overlap:.3f} "
+                f"struct={row.avg_structure_overlap:.3f} "
+                f"nodes={row.node_count} families={families}"
+            )
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -1798,3 +1933,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_runtime_status(args)
     elif args.command == "seed-handcrafted":
         cmd_seed_handcrafted(args)
+    elif args.command == "analyze-diversity":
+        cmd_analyze_diversity(args)

@@ -204,6 +204,31 @@ def test_seed_handcrafted_parser():
     assert args.dry_run is True
 
 
+def test_analyze_diversity_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "analyze-diversity",
+        "--asset", "BTC",
+        "--scope", "active",
+        "--limit", "50",
+        "--metric", "log_growth",
+        "--lookback", "126",
+        "--top-pairs", "5",
+        "--json",
+    ])
+
+    assert args.command == "analyze-diversity"
+    assert args.asset == "BTC"
+    assert args.scope == "active"
+    assert args.limit == 50
+    assert args.metric == "log_growth"
+    assert args.lookback == 126
+    assert args.top_pairs == 5
+    assert args.json is True
+
+
 def test_replay_experiment_parser():
     from alpha_os.cli import _build_parser
 

@@ -1573,6 +1573,12 @@ this is 5M pairs instead of 2.5 billion — a 500× reduction.
 Results are written to the `diversity_cache` table. The trade cycle reads
 this cache directly instead of recomputing diversity.
 
+Current limitation: runtime diversity is still mostly signal-correlation
+driven. The first-stage diversity foundation now lives outside the runtime
+path via `alpha_os analyze-diversity`, which reports signal overlap,
+expression-structure overlap, and feature-family overlap for deployed or
+registry-active alphas before any selection logic is changed.
+
 Implementation: `src/alpha_os/daemon/admission.py`
 
 CLI entry point:

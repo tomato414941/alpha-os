@@ -172,6 +172,9 @@ python -m alpha_os testnet-readiness
 # Show the current observation snapshot
 python -m alpha_os runtime-status --asset BTC
 
+# Inspect deployed or registry-active alpha diversity
+python -m alpha_os analyze-diversity --asset BTC --scope deployed --lookback 252
+
 # Queue the hand-crafted BTC baseline into the local admission queue
 python -m alpha_os seed-handcrafted --asset BTC --alpha-set baseline
 
@@ -208,6 +211,9 @@ Recent CLI cleanup now prefers standard terms:
   The admission registry is a research ledger, not the live trading set.
 - `deployed alphas` means the deployed subset that `trade` actually reads.
   It is refreshed explicitly with `refresh-deployed-alphas`.
+- `analyze-diversity` is a research/diagnostic command. It does not change
+  runtime behavior; it reports similarity across signal correlation,
+  expression structure, and feature families.
 - `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
 - `paper --replay` is historical replay of the current runtime decision stack.
 - `testnet-readiness` is the operational readiness check for testnet trading.
