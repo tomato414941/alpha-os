@@ -8,7 +8,7 @@ sizing_mode = "runtime"
 
 [defaults.overrides]
 admission.max_active_alphas = 1000
-deployment.max_alphas = 120
+deployment.max_alphas = 150
 deployment.max_replacements = 1
 deployment.promotion_margin = 0.05
 paper.rebalance_deadband_usd = 5.0
@@ -18,16 +18,16 @@ name = "champion-current"
 notes = "Current BTC testnet profile used as the comparison baseline."
 
 [[experiment]]
-name = "challenger-deployment-90"
+name = "challenger-deployment-120"
 
 [experiment.overrides]
-deployment.max_alphas = 90
+deployment.max_alphas = 120
 
 [[experiment]]
-name = "challenger-deployment-150"
+name = "challenger-deployment-180"
 
 [experiment.overrides]
-deployment.max_alphas = 150
+deployment.max_alphas = 180
 
 [[experiment]]
 name = "challenger-deadband-0"
