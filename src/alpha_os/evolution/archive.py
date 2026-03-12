@@ -57,7 +57,6 @@ class AlphaArchive:
 
     Path B mode: sanity filter only, no fitness-based competition.
     Candidates enter empty cells; occupied cells keep their incumbent.
-    Legacy mode: fitness-based competition (for backward compatibility).
     """
 
     def __init__(self, config: ArchiveConfig | None = None):
@@ -65,7 +64,7 @@ class AlphaArchive:
         self._grid: dict[tuple[int, ...], ArchiveEntry] = {}
 
     def add(self, expr: Expr, fitness: float, behavior: np.ndarray) -> bool:
-        """Add expression to archive (legacy fitness-based mode).
+        """Add expression to the archive using fitness-based replacement.
 
         Returns True if it was stored (new cell or better fitness than incumbent).
         """

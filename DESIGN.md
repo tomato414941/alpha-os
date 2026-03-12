@@ -1020,7 +1020,7 @@ Phase 2:
   │     default remains "consensus" (Path A unchanged)
   │
   └── Step 6: Evo daemon MAP-Elites mode                      ✅
-        daemon/evo.py: evo_mode="map_elites" round with feature subsets
+        daemon/evo.py: stratified feature-subset round with archive persistence
         archive.py: SQLite persistence (save_to_db / load_from_db)
 ```
 
@@ -1036,7 +1036,7 @@ commit. Default config remains "consensus" / "legacy" (Path A unchanged).
 - `src/alpha_os/evolution/archive.py` — MAP-Elites grid + `add_if_empty()` + SQLite persistence
 - `src/alpha_os/voting/ensemble.py` — two-level ensemble aggregation
 - `src/alpha_os/paper/trader.py` — `combine_mode="map_elites"` path
-- `src/alpha_os/daemon/evo.py` — `evo_mode="map_elites"` round with archive persistence
+- `src/alpha_os/daemon/evo.py` — stratified feature-subset round with archive persistence
 
 ## Paper Trading
 
