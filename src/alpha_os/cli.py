@@ -1427,6 +1427,7 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
     print(f"  Added:           {len(stats.plan.added_ids)}")
     print(f"  Dropped:         {len(stats.plan.dropped_ids)}")
     print(f"  Replacements:    {stats.plan.replacement_count}")
+    print(f"  Dedup skipped:   {len(stats.plan.skipped_duplicate_ids)}")
     if stats.backup_path is not None:
         print(f"  Backup:          {stats.backup_path}")
 

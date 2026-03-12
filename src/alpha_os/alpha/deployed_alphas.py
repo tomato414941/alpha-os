@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..config import Config
+from ..dsl.canonical import canonical_string
 from ..forward.tracker import ForwardTracker
 from .admission_replay import backup_registry_db
 from .quality import QualityEstimate
@@ -51,6 +52,7 @@ class DeployedAlphaPlan:
     kept_ids: list[str]
     added_ids: list[str]
     dropped_ids: list[str]
+    skipped_duplicate_ids: list[str]
     selected: list[RankedDeployedAlpha]
 
     @property
@@ -93,6 +95,10 @@ def plan_deployed_alphas(
     ]
     ranked.sort(key=lambda item: item.rank_key, reverse=True)
     ranked_by_id = {item.alpha_id: item for item in ranked}
+    semantic_key_by_id = {
+        record.alpha_id: _semantic_key(record.expression)
+        for record in active_records
+    }
 
     if max_alphas <= 0 or not ranked:
         return DeployedAlphaPlan(
@@ -103,8 +109,22 @@ def plan_deployed_alphas(
             kept_ids=[],
             added_ids=[],
             dropped_ids=[],
+            skipped_duplicate_ids=[],
             selected=[],
         )
+
+    deduped_ranked: list[RankedDeployedAlpha] = []
+    seen_keys: set[str] = set()
+    skipped_duplicate_ids: list[str] = []
+    for item in ranked:
+        key = semantic_key_by_id[item.alpha_id]
+        if key in seen_keys:
+            skipped_duplicate_ids.append(item.alpha_id)
+            continue
+        seen_keys.add(key)
+        deduped_ranked.append(item)
+    ranked = deduped_ranked
+    ranked_by_id = {item.alpha_id: item for item in ranked}
 
     current = []
     seen = set()
@@ -161,6 +181,7 @@ def plan_deployed_alphas(
         kept_ids=kept_ids,
         added_ids=added_ids,
         dropped_ids=dropped_ids,
+        skipped_duplicate_ids=skipped_duplicate_ids,
         selected=selected,
     )
 
@@ -223,3 +244,10 @@ def _ranked_alpha(
         live_quality=estimate.live_quality,
         n_observations=estimate.n_observations,
     )
+
+
+def _semantic_key(expression: str) -> str:
+    try:
+        return canonical_string(expression)
+    except Exception:
+        return expression

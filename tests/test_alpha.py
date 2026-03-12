@@ -32,6 +32,7 @@ from alpha_os.alpha.combiner import (
 )
 from alpha_os.config import Config
 from alpha_os.daemon.admission import AdmissionDaemon
+from alpha_os.dsl.canonical import canonical_string
 from alpha_os.governance.gates import adoption_gate, GateConfig
 
 
@@ -194,9 +195,9 @@ class TestAlphaRegistry:
     def test_plan_deployed_alphas_replaces_only_above_margin(self):
         records = [
             AlphaRecord(alpha_id="i0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.9),
-            AlphaRecord(alpha_id="i1", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.8),
-            AlphaRecord(alpha_id="c0", expression="x", state=AlphaState.ACTIVE, oos_sharpe=1.1),
-            AlphaRecord(alpha_id="c1", expression="x", state=AlphaState.ACTIVE, oos_sharpe=0.7),
+            AlphaRecord(alpha_id="i1", expression="y", state=AlphaState.ACTIVE, oos_sharpe=0.8),
+            AlphaRecord(alpha_id="c0", expression="z", state=AlphaState.ACTIVE, oos_sharpe=1.1),
+            AlphaRecord(alpha_id="c1", expression="w", state=AlphaState.ACTIVE, oos_sharpe=0.7),
         ]
         estimates = {
             "i0": QualityEstimate(0.9, 0.0, 0.90, 1.0, 63, True),
@@ -220,6 +221,50 @@ class TestAlphaRegistry:
         assert plan.added_ids == ["c0"]
         assert plan.dropped_ids == ["i1"]
         assert plan.replacement_count == 1
+        assert plan.skipped_duplicate_ids == []
+
+    def test_plan_deployed_alphas_skips_semantic_duplicates(self):
+        records = [
+            AlphaRecord(
+                alpha_id="a",
+                expression="(corr_10 nasdaq (ts_max_5 russell2000))",
+                state=AlphaState.ACTIVE,
+                oos_sharpe=1.2,
+            ),
+            AlphaRecord(
+                alpha_id="b",
+                expression="(corr_10 (ts_max_5 russell2000) nasdaq)",
+                state=AlphaState.ACTIVE,
+                oos_sharpe=1.1,
+            ),
+            AlphaRecord(
+                alpha_id="c",
+                expression="sp500",
+                state=AlphaState.ACTIVE,
+                oos_sharpe=1.0,
+            ),
+        ]
+        estimates = {
+            "a": QualityEstimate(1.2, 0.0, 1.2, 1.0, 63, True),
+            "b": QualityEstimate(1.1, 0.0, 1.1, 1.0, 63, True),
+            "c": QualityEstimate(1.0, 0.0, 1.0, 1.0, 63, True),
+        }
+
+        plan = plan_deployed_alphas(
+            records,
+            current_ids=[],
+            estimate_for=lambda record: estimates[record.alpha_id],
+            max_alphas=3,
+            max_replacements=1,
+            promotion_margin=0.0,
+            metric="sharpe",
+        )
+
+        assert plan.selected_ids == ["a", "c"]
+        assert plan.skipped_duplicate_ids == ["b"]
+
+    def test_canonical_string_simplifies_degenerate_conditionals(self):
+        assert canonical_string("(if_gt nasdaq nasdaq tsy_yield_10y fear_greed)") == "fear_greed"
 
     def test_admission_cap_rejects_weaker_incoming_alpha(self, tmp_path):
         reg = self._make_registry(tmp_path)
