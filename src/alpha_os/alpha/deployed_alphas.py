@@ -11,11 +11,13 @@ from ..config import Config
 from ..config import DATA_DIR
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
-from ..dsl.features import collect_feature_names
-from ..dsl.canonical import canonical_string
 from ..dsl import parse
 from ..forward.tracker import ForwardTracker
 from .admission_replay import backup_registry_db
+from .expression_identity import (
+    expression_feature_names,
+    expression_semantic_key,
+)
 from .quality import QualityEstimate
 from .registry import AlphaRecord, AlphaRegistry, AlphaState
 
@@ -138,11 +140,11 @@ def plan_deployed_alphas(
     ranked.sort(key=lambda item: item.rank_key, reverse=True)
     ranked_by_id = {item.alpha_id: item for item in ranked}
     semantic_key_by_id = {
-        record.alpha_id: _semantic_key(record.expression)
+        record.alpha_id: expression_semantic_key(record.expression)
         for record in active_records
     }
     feature_names_by_id = {
-        record.alpha_id: _feature_names(record.expression)
+        record.alpha_id: expression_feature_names(record.expression)
         for record in active_records
     }
 
@@ -321,7 +323,7 @@ def plan_registry_active_prune(
     ]
     ranked.sort(key=lambda item: item.rank_key, reverse=True)
     semantic_key_by_id = {
-        record.alpha_id: _semantic_key(record.expression)
+        record.alpha_id: expression_semantic_key(record.expression)
         for record in active_records
     }
 
@@ -439,20 +441,6 @@ def _ranked_alpha(
         live_quality=estimate.live_quality,
         n_observations=estimate.n_observations,
     )
-
-
-def _semantic_key(expression: str) -> str:
-    try:
-        return canonical_string(expression)
-    except Exception:
-        return expression
-
-
-def _feature_names(expression: str) -> set[str]:
-    try:
-        return collect_feature_names(parse(expression))
-    except Exception:
-        return set()
 
 
 def _abs_signal_correlation(left: np.ndarray, right: np.ndarray) -> float:

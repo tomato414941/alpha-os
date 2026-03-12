@@ -10,14 +10,17 @@ import numpy as np
 
 from ..alpha.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
+from ..alpha.expression_identity import (
+    count_expression_features,
+    expression_feature_names,
+    expression_semantic_key,
+)
 from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
-from ..dsl.canonical import canonical_string
-from ..dsl.features import collect_feature_names
 from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
@@ -113,16 +116,10 @@ class AdmissionDaemon:
         ]
 
     def _semantic_key(self, expression: str) -> str:
-        try:
-            return canonical_string(expression)
-        except Exception:
-            return expression
+        return expression_semantic_key(expression)
 
     def _feature_names(self, expression: str) -> set[str]:
-        try:
-            return collect_feature_names(parse(expression))
-        except Exception:
-            return set()
+        return expression_feature_names(expression)
 
     def _feature_cap_reference_records(self, registry: AlphaRegistry) -> list[AlphaRecord]:
         deployed = registry.list_deployed_alphas()
@@ -135,11 +132,7 @@ class AdmissionDaemon:
         ]
 
     def _feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
-        counts: dict[str, int] = {}
-        for record in records:
-            for name in self._feature_names(record.expression):
-                counts[name] = counts.get(name, 0) + 1
-        return counts
+        return count_expression_features(record.expression for record in records)
 
     def _semantic_duplicate_reason(
         self,
