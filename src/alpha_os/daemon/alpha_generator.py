@@ -6,13 +6,16 @@ import logging
 import resource
 import signal
 import time
+from dataclasses import dataclass
 
 import numpy as np
 
 from ..alpha.evaluator import FAILED_FITNESS, sanitize_signal
+from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
+from ..dsl import to_string
 from ..data.universe import build_feature_list, price_signal
 from ..dsl.generator import AlphaGenerator
 from ..evolution.discovery_pool import DiscoveryPool
@@ -20,6 +23,13 @@ from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class PromotionCandidate:
+    expression: str
+    fitness: float
+    behavior: np.ndarray
 
 
 class AlphaGeneratorDaemon:
@@ -121,8 +131,9 @@ class AlphaGeneratorDaemon:
         )
         results = evolver.run()
 
-        # Fill archive with sanity filter (no fitness competition)
+        # Fill discovery pool with sanity filter (no fitness competition)
         n_added = 0
+        promoted: list[PromotionCandidate] = []
         for expr, _fitness in results:
             try:
                 sig = expr.evaluate(data)
@@ -132,22 +143,71 @@ class AlphaGeneratorDaemon:
                 behavior = compute_behavior(sig, expr, feature_subset=subset)
                 if self.archive.add_if_empty(expr, behavior, sig):
                     n_added += 1
+                    promoted.append(
+                        PromotionCandidate(
+                            expression=to_string(expr),
+                            fitness=float(_fitness),
+                            behavior=behavior,
+                        )
+                    )
             except Exception:
                 continue
 
-        # Persist archive
+        # Persist discovery pool
         db_path = asset_data_dir(self.asset) / "archive.db"
         if n_added > 0:
             self.archive.save_to_db(db_path)
+        n_queued = self._queue_promoted_candidates(promoted)
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Round %d [MAP-Elites]: %d evolved, %d added, "
-            "archive %d/%d (%.1f%%), subset=%d features, %.1fs",
-            self._round, len(results), n_added,
+            "Round %d [MAP-Elites]: %d evolved, %d added, %d queued, "
+            "discovery_pool %d/%d (%.1f%%), subset=%d features, %.1fs",
+            self._round, len(results), n_added, n_queued,
             self.archive.size, self.archive.capacity,
             self.archive.coverage * 100, len(subset) if subset else 0, elapsed,
         )
+
+    def _queue_promoted_candidates(
+        self,
+        candidates: list[PromotionCandidate],
+    ) -> int:
+        if not candidates:
+            return 0
+
+        limit = self.generator_cfg.promote_per_round
+        if limit <= 0:
+            return 0
+
+        promoted = [
+            candidate
+            for candidate in candidates
+            if candidate.fitness >= self.generator_cfg.promotion_min_fitness
+        ]
+        if not promoted:
+            return 0
+
+        promoted.sort(key=lambda candidate: candidate.fitness, reverse=True)
+        promoted = promoted[:limit]
+        seeds = [
+            CandidateSeed(
+                expression=candidate.expression,
+                source=f"alpha_generator_{self.asset.lower()}",
+                fitness=candidate.fitness,
+                behavior_json={
+                    "source": "alpha_generator",
+                    "asset": self.asset,
+                    "behavior": [float(x) for x in candidate.behavior.tolist()],
+                    "round": self._round,
+                },
+            )
+            for candidate in promoted
+        ]
+        store = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
+        try:
+            return store.queue_candidates(seeds)
+        finally:
+            store.close()
 
     def _load_data(
         self, features: list[str],

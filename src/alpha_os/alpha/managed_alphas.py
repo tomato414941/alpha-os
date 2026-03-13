@@ -68,6 +68,15 @@ class DeployedAlphaEntry:
     metadata: dict = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class CandidateSeed:
+    expression: str
+    source: str
+    fitness: float = 0.0
+    behavior_json: dict = field(default_factory=dict)
+    created_at: float | None = None
+
+
 class ManagedAlphaStore:
     """SQLite store for managed alpha metadata and lifecycle tracking."""
 
@@ -198,24 +207,36 @@ class ManagedAlphaStore:
         behavior_json: dict | None = None,
         created_at: float | None = None,
     ) -> int:
-        if not expressions:
+        rows = [
+            CandidateSeed(
+                expression=expression,
+                source=source,
+                fitness=float(fitness),
+                behavior_json=dict(behavior_json or {}),
+                created_at=created_at,
+            )
+            for expression in expressions
+        ]
+        return self.queue_candidates(rows)
+
+    def queue_candidates(self, seeds: list[CandidateSeed]) -> int:
+        if not seeds:
             return 0
 
-        stamp = created_at or time.time()
         payload: dict[str, tuple[str, str, float, str, str, float]] = {}
-        behavior = json.dumps(behavior_json or {})
-        for expression in expressions:
+        for seed in seeds:
+            stamp = seed.created_at or time.time()
             digest = hashlib.md5(
-                f"{source}:{expression}".encode(),
+                f"{seed.source}:{seed.expression}".encode(),
                 usedforsecurity=False,
             ).hexdigest()[:16]
-            candidate_id = f"{source}_{digest}"
+            candidate_id = f"{seed.source}_{digest}"
             payload[candidate_id] = (
                 candidate_id,
-                expression,
-                float(fitness),
+                seed.expression,
+                float(seed.fitness),
                 "pending",
-                behavior,
+                json.dumps(seed.behavior_json),
                 stamp,
             )
 

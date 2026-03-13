@@ -200,6 +200,18 @@ Managed alphas are not the live deployed alphas.
 This keeps research churn (`candidate` admission and lifecycle updates) separate
 from the set that actually drives positions.
 
+## Discovery Pool Promotion
+
+`alpha-generator` does not write directly into `managed_alphas`.
+
+- each round fills the `discovery_pool`
+- only a capped subset of newly discovered entries is promoted into
+  `candidates`
+- `admission-daemon` remains the only path into `managed_alphas`
+
+This keeps the generator exploratory while still giving discovery-pool breadth a
+path into the managed runtime state.
+
 ## Naming Reset Direction
 
 The current architectural split is still the intended design. The problem is
