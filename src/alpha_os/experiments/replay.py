@@ -17,7 +17,7 @@ from ..alpha.admission_replay import (
     load_source_records,
     materialize_admission_snapshot,
 )
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
 from ..config import Config, asset_data_dir
 from ..paper.simulator import run_replay
@@ -31,7 +31,7 @@ class ReplayExperimentSpec:
     start_date: str
     end_date: str
     config_path: Path | None = None
-    registry_mode: str = "current"
+    managed_alpha_mode: str = "current"
     admission_source: str = "candidates"
     fail_state: str = AlphaState.REJECTED
     deployment_mode: str = "current"
@@ -89,11 +89,11 @@ def _slugify(name: str) -> str:
     return slug or "experiment"
 
 
-def _registry_counts(db_path: Path) -> dict[str, int]:
-    registry = AlphaRegistry(db_path)
+def _managed_alpha_counts(db_path: Path) -> dict[str, int]:
+    managed_alphas = ManagedAlphaStore(db_path)
     try:
         return {
-            state: registry.count(state)
+            state: managed_alphas.count(state)
             for state in (
                 AlphaState.CANDIDATE,
                 AlphaState.ACTIVE,
@@ -102,11 +102,11 @@ def _registry_counts(db_path: Path) -> dict[str, int]:
             )
         }
     finally:
-        registry.close()
+        managed_alphas.close()
 
 
 def _deployed_alphas_count(db_path: Path) -> int:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         return registry.count_deployed_alphas()
     finally:
@@ -114,7 +114,7 @@ def _deployed_alphas_count(db_path: Path) -> int:
 
 
 def _deployed_alpha_ids(db_path: Path) -> list[str]:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         return [record.alpha_id for record in registry.list_deployed_alphas()]
     finally:
@@ -153,11 +153,11 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
 
     registry_db = asset_data_dir(asset) / "alpha_registry.db"
     commit = git_commit()
-    registry_info: dict[str, Any] = {
-        "mode": spec.registry_mode,
+    managed_alpha_info: dict[str, Any] = {
+        "mode": spec.managed_alpha_mode,
         "source": None,
         "fail_state": None,
-        "counts": _registry_counts(registry_db),
+        "counts": _managed_alpha_counts(registry_db),
     }
     deployment_info: dict[str, Any] = {
         "mode": spec.deployment_mode,
@@ -165,35 +165,39 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
     }
 
     t0 = time.perf_counter()
-    use_temp_registry = spec.registry_mode == "admission" or spec.deployment_mode == "refresh"
+    use_temp_registry = (
+        spec.managed_alpha_mode == "admission" or spec.deployment_mode == "refresh"
+    )
     if use_temp_registry:
         with tempfile.TemporaryDirectory(prefix="alpha_os_experiment_") as tmp:
             replay_db = Path(tmp) / "registry.db"
-            if spec.registry_mode == "admission":
+            if spec.managed_alpha_mode == "admission":
                 source_records = load_source_records(registry_db, spec.admission_source)
                 snapshot, counts = materialize_admission_snapshot(
                     source_records,
                     cfg.to_lifecycle_config(),
                     fail_state=spec.fail_state,
                 )
-                registry_info = {
-                    "mode": spec.registry_mode,
+                managed_alpha_info = {
+                    "mode": spec.managed_alpha_mode,
                     "source": spec.admission_source,
                     "fail_state": AlphaState.canonical(spec.fail_state),
                     "source_rows": len(source_records),
                     "counts": counts,
                 }
                 apply_registry_snapshot(replay_db, snapshot)
-            elif spec.registry_mode == "current":
-                registry_info = {
-                    "mode": spec.registry_mode,
+            elif spec.managed_alpha_mode == "current":
+                managed_alpha_info = {
+                    "mode": spec.managed_alpha_mode,
                     "source": None,
                     "fail_state": None,
-                    "counts": _registry_counts(registry_db),
+                    "counts": _managed_alpha_counts(registry_db),
                 }
                 shutil.copy2(registry_db, replay_db)
             else:
-                raise ValueError(f"Unsupported registry mode: {spec.registry_mode}")
+                raise ValueError(
+                    f"Unsupported managed alpha mode: {spec.managed_alpha_mode}"
+                )
 
             if spec.deployment_mode == "refresh":
                 refresh_stats = refresh_deployed_alphas(
@@ -224,7 +228,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                 deployed_alpha_ids=_deployed_alpha_ids(replay_db),
                 commit=commit,
                 extra={
-                    "registry_mode": spec.registry_mode,
+                    "managed_alpha_mode": spec.managed_alpha_mode,
                     "deployment_mode": spec.deployment_mode,
                     "sizing_mode": spec.sizing_mode,
                 },
@@ -238,14 +242,14 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                 registry_db=replay_db,
                 sizing_mode=spec.sizing_mode,
             )
-    elif spec.registry_mode == "current":
+    elif spec.managed_alpha_mode == "current":
         runtime_profile = build_runtime_profile(
             asset=asset,
             config=cfg,
             deployed_alpha_ids=_deployed_alpha_ids(registry_db),
             commit=commit,
             extra={
-                "registry_mode": spec.registry_mode,
+                "managed_alpha_mode": spec.managed_alpha_mode,
                 "deployment_mode": spec.deployment_mode,
                 "sizing_mode": spec.sizing_mode,
             },
@@ -258,7 +262,9 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             sizing_mode=spec.sizing_mode,
         )
     else:
-        raise ValueError(f"Unsupported registry mode: {spec.registry_mode}")
+        raise ValueError(
+            f"Unsupported managed alpha mode: {spec.managed_alpha_mode}"
+        )
     elapsed = time.perf_counter() - t0
 
     payload = {
@@ -276,7 +282,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             "start_date": spec.start_date,
             "end_date": spec.end_date,
             "config_path": str(spec.config_path) if spec.config_path else None,
-            "registry_mode": spec.registry_mode,
+            "managed_alpha_mode": spec.managed_alpha_mode,
             "admission_source": spec.admission_source,
             "fail_state": spec.fail_state,
             "deployment_mode": spec.deployment_mode,
@@ -285,7 +291,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         },
         "overrides": spec.overrides,
         "resolved_config": asdict(cfg),
-        "registry": registry_info,
+        "managed_alphas": managed_alpha_info,
         "deployment": deployment_info,
         "result": _serialize_result(result),
         "elapsed_seconds": elapsed,
@@ -301,7 +307,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         "asset": asset,
         "start_date": spec.start_date,
         "end_date": spec.end_date,
-        "registry_mode": spec.registry_mode,
+        "managed_alpha_mode": spec.managed_alpha_mode,
         "admission_source": spec.admission_source,
         "deployment_mode": spec.deployment_mode,
         "overrides": spec.overrides,

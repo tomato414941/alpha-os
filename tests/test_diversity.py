@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from alpha_os.alpha.diversity import analyze_diversity, infer_feature_families
-from alpha_os.alpha.registry import AlphaRecord
+from alpha_os.alpha.managed_alphas import AlphaRecord
 
 
 def test_infer_feature_families_uses_runtime_domains():

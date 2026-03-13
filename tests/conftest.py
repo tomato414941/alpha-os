@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.data.store import DataStore
 
 
@@ -27,16 +27,16 @@ def synthetic_data():
 
 @pytest.fixture
 def registry(tmp_path):
-    """Fresh AlphaRegistry backed by a temp DB."""
-    reg = AlphaRegistry(db_path=tmp_path / "test_registry.db")
+    """Fresh ManagedAlphaStore backed by a temp DB."""
+    reg = ManagedAlphaStore(db_path=tmp_path / "test_registry.db")
     yield reg
     reg.close()
 
 
 @pytest.fixture
 def populated_registry(tmp_path):
-    """AlphaRegistry with a few ACTIVE alphas for integration tests."""
-    reg = AlphaRegistry(db_path=tmp_path / "pop_registry.db")
+    """ManagedAlphaStore with a few ACTIVE alphas for integration tests."""
+    reg = ManagedAlphaStore(db_path=tmp_path / "pop_registry.db")
     alphas = [
         AlphaRecord(
             alpha_id="alpha_neg_f1",

@@ -22,7 +22,7 @@ from ..alpha.quality import (
     shrink_weight_quality,
 )
 from ..alpha.runtime_policy import rank_trading_records
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
@@ -133,7 +133,7 @@ class Trader:
         self,
         asset: str,
         config: Config,
-        registry: AlphaRegistry | None = None,
+        registry: ManagedAlphaStore | None = None,
         portfolio_tracker: PaperPortfolioTracker | None = None,
         forward_tracker: ForwardTracker | None = None,
         monitor: AlphaMonitor | None = None,
@@ -152,7 +152,7 @@ class Trader:
         self.price_signal = self.features[0]
 
         adir = asset_data_dir(asset)
-        self.registry = registry or AlphaRegistry(db_path=adir / "alpha_registry.db")
+        self.registry = registry or ManagedAlphaStore(db_path=adir / "alpha_registry.db")
         self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker(
             db_path=adir / "paper_trading.db"
         )
@@ -410,11 +410,11 @@ class Trader:
         combine_mode = self.config.paper.combine_mode
 
         if alpha_signals and combine_mode == "map_elites":
-            from ..evolution.archive import AlphaArchive
+            from ..evolution.discovery_pool import DiscoveryPool
             from ..evolution.behavior import compute_behavior
             from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
 
-            archive = AlphaArchive()
+            archive = DiscoveryPool()
             cell_signals: dict[tuple[int, ...], list[float]] = {}
             for aid, sig_val in alpha_signals.items():
                 sig_arr = alpha_signal_arrays[aid]

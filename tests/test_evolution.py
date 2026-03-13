@@ -11,7 +11,7 @@ from alpha_os.evolution.gp import (
     _ast_signature,
     _jaccard_similarity,
 )
-from alpha_os.evolution.archive import AlphaArchive, ArchiveConfig, passes_sanity_filter
+from alpha_os.evolution.discovery_pool import DiscoveryPool, DiscoveryPoolConfig, passes_sanity_filter
 from alpha_os.evolution.behavior import (
     compute_behavior,
     _feature_bucket,
@@ -202,16 +202,16 @@ class TestGPEvolver:
 # Archive tests
 # ---------------------------------------------------------------------------
 
-class TestAlphaArchive:
+class TestDiscoveryPool:
     def test_add_new_cell(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         expr = Feature("f1")
         behavior = np.array([50.0, 10.0, 5.0])
         assert archive.add(expr, 0.5, behavior) is True
         assert archive.size == 1
 
     def test_add_better_replaces(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         behavior = np.array([50.0, 10.0, 5.0])
         archive.add(Feature("f1"), 0.3, behavior)
         assert archive.add(Feature("f2"), 0.7, behavior) is True
@@ -220,31 +220,31 @@ class TestAlphaArchive:
         assert repr(best[0][0]) == "f2"
 
     def test_add_worse_rejected(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         behavior = np.array([50.0, 10.0, 5.0])
         archive.add(Feature("f1"), 0.7, behavior)
         assert archive.add(Feature("f2"), 0.3, behavior) is False
         assert archive.size == 1
 
     def test_different_cells(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         archive.add(Feature("f1"), 0.5, np.array([10.0, 5.0, 3.0]))
         archive.add(Feature("f2"), 0.6, np.array([90.0, 80.0, 15.0]))
         assert archive.size == 2
 
     def test_capacity(self):
-        cfg = ArchiveConfig(dims=(5, 5, 5))
-        archive = AlphaArchive(config=cfg)
+        cfg = DiscoveryPoolConfig(dims=(5, 5, 5))
+        archive = DiscoveryPool(config=cfg)
         assert archive.capacity == 125
 
     def test_coverage(self):
-        cfg = ArchiveConfig(dims=(2, 2, 2))
-        archive = AlphaArchive(config=cfg)
+        cfg = DiscoveryPoolConfig(dims=(2, 2, 2))
+        archive = DiscoveryPool(config=cfg)
         archive.add(Feature("f1"), 0.5, np.array([20.0, 10.0, 5.0]))
         assert archive.coverage == 1 / 8
 
     def test_best_ordering(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         archive.add(Feature("f1"), 0.3, np.array([10.0, 5.0, 3.0]))
         archive.add(Feature("f2"), 0.9, np.array([50.0, 50.0, 10.0]))
         archive.add(Feature("f3"), 0.6, np.array([90.0, 80.0, 15.0]))
@@ -252,7 +252,7 @@ class TestAlphaArchive:
         assert best[0][1] >= best[1][1] >= best[2][1]
 
     def test_sample(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         for i in range(5):
             archive.add(
                 Feature(f"f{i}"),
@@ -265,44 +265,44 @@ class TestAlphaArchive:
         assert len(sampled) == 3
 
     def test_elites(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         archive.add(Feature("f1"), 0.5, np.array([50.0, 10.0, 5.0]))
         elites = archive.elites()
         assert len(elites) == 1
         assert elites[0][1] == 0.5
 
     def test_boundary_clipping(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         behavior = np.array([200.0, 200.0, 50.0])  # all out of range
         assert archive.add(Feature("f1"), 0.5, behavior) is True
 
     def test_save_load_roundtrip(self, tmp_path):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         archive.add(Feature("f1"), 0.5, np.array([50.0, 10.0, 5.0]))
         archive.add(Feature("f2"), 0.8, np.array([20.0, 30.0, 3.0]))
         db_path = tmp_path / "archive.db"
         n = archive.save_to_db(db_path)
         assert n == 2
 
-        loaded = AlphaArchive.load_from_db(db_path)
+        loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 2
         best = loaded.best(2)
         assert best[0][1] == 0.8  # f2 has higher fitness
 
     def test_load_nonexistent(self, tmp_path):
-        loaded = AlphaArchive.load_from_db(tmp_path / "missing.db")
+        loaded = DiscoveryPool.load_from_db(tmp_path / "missing.db")
         assert loaded.size == 0
 
     def test_save_empty_archive(self, tmp_path):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         db_path = tmp_path / "archive.db"
         n = archive.save_to_db(db_path)
         assert n == 0
-        loaded = AlphaArchive.load_from_db(db_path)
+        loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 0
 
     def test_save_load_preserves_cells(self, tmp_path):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         b1 = np.array([10.0, 5.0, 3.0])
         b2 = np.array([90.0, 80.0, 15.0])
         archive.add(Feature("f1"), 0.5, b1)
@@ -314,19 +314,19 @@ class TestAlphaArchive:
 
         db_path = tmp_path / "archive.db"
         archive.save_to_db(db_path)
-        loaded = AlphaArchive.load_from_db(db_path)
+        loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 2
         assert cell1 in loaded._grid
         assert cell2 in loaded._grid
 
     def test_save_load_complex_expr(self, tmp_path):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         expr = BinaryOp("add", RollingOp("mean", 10, Feature("f1")), Feature("f2"))
         archive.add(expr, 1.0, np.array([50.0, 10.0, 4.0]))
 
         db_path = tmp_path / "archive.db"
         archive.save_to_db(db_path)
-        loaded = AlphaArchive.load_from_db(db_path)
+        loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 1
         loaded_expr = loaded.best(1)[0][0]
         assert repr(loaded_expr) == repr(expr)
@@ -361,14 +361,14 @@ class TestSanityFilter:
 
 class TestAddIfEmpty:
     def test_adds_to_empty_cell(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([50.0, 10.0, 5.0])
         assert archive.add_if_empty(Feature("f1"), behavior, signal) is True
         assert archive.size == 1
 
     def test_rejects_occupied_cell(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([50.0, 10.0, 5.0])
         archive.add_if_empty(Feature("f1"), behavior, signal)
@@ -376,7 +376,7 @@ class TestAddIfEmpty:
         assert archive.size == 1
 
     def test_rejects_bad_signal(self):
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
         signal = np.ones(100)  # constant → fails sanity
         behavior = np.array([50.0, 10.0, 5.0])
         assert archive.add_if_empty(Feature("f1"), behavior, signal) is False

@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 
 from alpha_os.alpha.handcrafted import get_handcrafted_expressions, list_handcrafted_sets
-from alpha_os.alpha.registry import AlphaRegistry
+from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 
 
 def test_list_handcrafted_sets_for_btc():
@@ -19,7 +19,7 @@ def test_get_handcrafted_expressions_returns_parseable_canonical_strings():
 
 
 def test_queue_candidate_expressions_is_idempotent(tmp_path):
-    registry = AlphaRegistry(tmp_path / "alpha_registry.db")
+    registry = ManagedAlphaStore(tmp_path / "alpha_registry.db")
     expressions = get_handcrafted_expressions("BTC", "baseline")[:2]
 
     inserted_first = registry.queue_candidate_expressions(

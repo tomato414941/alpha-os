@@ -107,9 +107,9 @@ Expressions evolve via GP (population=200, generations=30):
 - **Mutation** (30%): swap feature, change window, or replace operator
 - **Selection**: tournament (size=3) with elitism
 - **Bloat control**: fitness penalty of 0.01 × node_count, max depth=3
-- **Feature subsets**: each evolution round uses a random subset of K=27
-  features (√753 ≈ 27), ensuring diversity across alphas
-- **Quality-diversity**: MAP-Elites archive with 3D behavior descriptor
+- **Feature subsets**: each alpha-generator round uses a family-stratified
+  subset of K=27 features, ensuring diversity across alphas
+- **Quality-diversity**: MAP-Elites discovery pool with 3D behavior descriptor
   (feature_bucket mod 100, holding half-life, complexity) → 10,000 cells
 
 Crossover was removed: it is incompatible with feature subsets (parent
@@ -190,7 +190,7 @@ alphas shrink toward their historical prior instead of being treated as zero.
 
 ## Deployed Alphas
 
-The registry is not the live deployed alphas.
+Managed alphas are not the live deployed alphas.
 
 - `alphas.state=active` means an alpha is eligible for deployment.
 - `deployed_alphas` is the explicitly deployed subset that the trade runtime reads.
@@ -203,14 +203,14 @@ from the set that actually drives positions.
 ## Naming Reset Direction
 
 The current architectural split is still the intended design. The problem is
-not that the runtime has a registry layer and a deployment layer. The problem
+not that the runtime has a managed-alpha layer and a deployment layer. The problem
 is that some names still hide that split.
 
 ### What We Intend To Preserve
 
-- `alphas` remains the research ledger and lifecycle state store
+- `managed_alphas` remains the research ledger and lifecycle state store
 - `deployed_alphas` remains the explicitly deployed runtime subset
-- admission decides registry membership, not immediate trading eligibility
+- admission decides managed-alpha membership, not immediate trading eligibility
 - deployment decides what the runtime is allowed to trade now
 
 ### What We Intend To Change
@@ -227,7 +227,7 @@ deployment status.
 
 Examples:
 
-- prefer `registry active` over plain `active`
+- prefer `managed active` over plain `active`
 - prefer `deployed alphas` over overloaded uses of `universe`
 - prefer names like `max_deployed_alphas` over layer-ambiguous `max_alphas`
 
@@ -239,7 +239,7 @@ These rules should be treated as defaults for future code review and cleanup:
 - deployment vocabulary belongs to the runtime subset layer
 - `active` by itself is only acceptable when the surrounding code is already
   unambiguously about registry state
-- public-facing output should prefer `registry active` and `deployed alphas`
+- public-facing output should prefer `managed active` and `deployed alphas`
 - new config keys should encode the layer they govern
 
 ### Migration Bias

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from alpha_os.alpha.registry import AlphaRegistry
+from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 from alpha_os.config import Config
 from alpha_os.forward.tracker import ForwardTracker
 from alpha_os.governance.audit_log import AuditLog
@@ -20,7 +20,7 @@ def test_trader_recomputes_diversity_when_cache_is_degenerate(tmp_path):
         asset="BTC",
         config=Config(),
         portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-        registry=AlphaRegistry(tmp_path / "reg.db"),
+        registry=ManagedAlphaStore(tmp_path / "reg.db"),
         forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
         audit_log=AuditLog(tmp_path / "audit.jsonl"),
         store=_DummyStore(),

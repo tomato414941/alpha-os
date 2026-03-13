@@ -79,13 +79,13 @@ class TestBtcMigration:
 class TestRegistryIsolation:
     def test_two_assets_isolated(self, tmp_path, monkeypatch):
         from alpha_os.config import asset_data_dir
-        from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 
         btc_dir = asset_data_dir("BTC")
         eth_dir = asset_data_dir("ETH")
 
-        reg_btc = AlphaRegistry(db_path=btc_dir / "alpha_registry.db")
-        reg_eth = AlphaRegistry(db_path=eth_dir / "alpha_registry.db")
+        reg_btc = ManagedAlphaStore(db_path=btc_dir / "alpha_registry.db")
+        reg_eth = ManagedAlphaStore(db_path=eth_dir / "alpha_registry.db")
 
         reg_btc.register(AlphaRecord(
             alpha_id="btc_1", expression="(neg btc_ohlcv)",

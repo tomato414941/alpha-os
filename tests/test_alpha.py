@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 from alpha_os.alpha.lifecycle import (
     AlphaLifecycle,
     LifecycleConfig,
@@ -42,9 +42,9 @@ from alpha_os.governance.gates import adoption_gate, GateConfig
 # Registry
 # ---------------------------------------------------------------------------
 
-class TestAlphaRegistry:
+class TestManagedAlphaStore:
     def _make_registry(self, tmp_path):
-        return AlphaRegistry(db_path=tmp_path / "test.db")
+        return ManagedAlphaStore(db_path=tmp_path / "test.db")
 
     def test_register_and_get(self, tmp_path):
         reg = self._make_registry(tmp_path)
@@ -557,7 +557,7 @@ class TestAlphaRegistry:
 
 class TestAlphaLifecycle:
     def _setup(self, tmp_path):
-        reg = AlphaRegistry(db_path=tmp_path / "test.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "test.db")
         cfg = LifecycleConfig(
             candidate_quality_min=0.5,
             pbo_max=0.5,

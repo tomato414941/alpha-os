@@ -20,7 +20,7 @@ from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.universe import is_crypto, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
-from alpha_os.evolution.archive import AlphaArchive
+from alpha_os.evolution.discovery_pool import DiscoveryPool
 from alpha_os.evolution.behavior import compute_behavior
 from alpha_os.evolution.gp import GPConfig, GPEvolver
 from alpha_os.validation.purged_cv import purged_walk_forward
@@ -164,10 +164,10 @@ def _build_parser() -> argparse.ArgumentParser:
     lc_d.add_argument("--asset", type=str, default="BTC")
     lc_d.add_argument("--config", type=str, default=None)
 
-    # rebuild-registry
+    # rebuild-managed-alphas
     rb = sub.add_parser(
-        "rebuild-registry",
-        help="Replay admission gates and rebuild registry alphas",
+        "rebuild-managed-alphas",
+        help="Replay admission gates and rebuild managed alpha states",
     )
     rb.add_argument("--asset", type=str, default="BTC")
     rb.add_argument("--config", type=str, default=None)
@@ -175,7 +175,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--source",
         choices=["candidates", "alphas"],
         default="candidates",
-        help="Source records used to rebuild alpha states",
+        help="Source records used to rebuild managed alpha states",
     )
     rb.add_argument(
         "--fail-state",
@@ -193,7 +193,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # refresh-deployed-alphas
     rda = sub.add_parser(
         "refresh-deployed-alphas",
-        help="Refresh deployed alphas from the registry",
+        help="Refresh deployed alphas from managed alphas",
     )
     rda.add_argument("--asset", type=str, default="BTC")
     rda.add_argument("--config", type=str, default=None)
@@ -204,10 +204,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Skip copying alpha_registry.db before rewrite",
     )
 
-    # prune-registry-duplicates
+    # prune-managed-alpha-duplicates
     prd = sub.add_parser(
-        "prune-registry-duplicates",
-        help="Demote duplicate active registry alphas and refresh deployed alphas",
+        "prune-managed-alpha-duplicates",
+        help="Demote duplicate active managed alphas and refresh deployed alphas",
     )
     prd.add_argument("--asset", type=str, default="BTC")
     prd.add_argument("--config", type=str, default=None)
@@ -234,16 +234,16 @@ def _build_parser() -> argparse.ArgumentParser:
     rex.add_argument("--start", required=True, help="Replay start date (YYYY-MM-DD)")
     rex.add_argument("--end", required=True, help="Replay end date (YYYY-MM-DD)")
     rex.add_argument(
-        "--registry-mode",
+        "--managed-alpha-mode",
         choices=["current", "admission"],
         default="current",
-        help="Use the current registry as-is or rebuild it from admission rules first",
+        help="Use the current managed-alpha set as-is or rebuild it from admission rules first",
     )
     rex.add_argument(
         "--source",
         choices=["alphas", "candidates"],
         default="candidates",
-        help="Admission replay source when --registry-mode=admission",
+        help="Admission replay source when --managed-alpha-mode=admission",
     )
     rex.add_argument(
         "--fail-state",
@@ -621,7 +621,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     evolve_time = time.perf_counter() - t0
 
     # Fill MAP-Elites archive
-    archive = AlphaArchive()
+    archive = DiscoveryPool()
     live_signals: list[np.ndarray] = []
     added = 0
     for expr, fitness in results:
@@ -772,7 +772,7 @@ def _print_paper_result(result) -> None:
         commit = getattr(result, "profile_commit", "")
         suffix = f" ({commit[:8]})" if commit else ""
         print(f"  Profile:    {result.profile_id[:12]}{suffix}")
-    print(f"  Registry:   {result.n_registry_active} active")
+    print(f"  Managed:    {result.n_registry_active} active")
     print(f"  Deployed:   {result.n_deployed_alphas} alphas")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
     print(f"  Selected:   {result.n_selected_alphas} alphas")
@@ -987,7 +987,7 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
 
 def _needs_evolution_l2(tactical) -> bool:
     """Return True if L2 registry has no active alphas."""
-    from alpha_os.alpha.registry import AlphaState
+    from alpha_os.alpha.managed_alphas import AlphaState
     active = tactical.registry.list_by_state(AlphaState.ACTIVE)
     return len(active) == 0
 
@@ -1097,7 +1097,7 @@ def _print_testnet_report(report) -> None:
     print(f"  Cycle OK:       {report.cycle_completed}")
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
-    print(f"  Registry:       {report.n_registry_active} active")
+    print(f"  Managed:        {report.n_registry_active} active")
     print(f"  Deployed:       {report.n_deployed_alphas} alphas")
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
     print(f"  Selected:       {report.n_selected_alphas} alphas")
@@ -1242,7 +1242,7 @@ def cmd_trade(args: argparse.Namespace) -> None:
             trader.close()
         return
 
-    from alpha_os.alpha.registry import AlphaState
+    from alpha_os.alpha.managed_alphas import AlphaState
 
     pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
     def _needs_evolution(trader):
@@ -1397,7 +1397,7 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
     daemon.run()
 
 
-def cmd_rebuild_registry(args: argparse.Namespace) -> None:
+def cmd_rebuild_managed_alphas(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
     from alpha_os.alpha.admission_replay import rebuild_registry
@@ -1414,7 +1414,7 @@ def cmd_rebuild_registry(args: argparse.Namespace) -> None:
 
     mode = "DRY RUN" if args.dry_run else "WRITE"
     print(
-        f"Registry rebuild [{mode}]: asset={args.asset} "
+        f"Managed-alpha rebuild [{mode}]: asset={args.asset} "
         f"source={stats.source_name} db={stats.registry_db}"
     )
     print(f"  Source rows: {stats.source_rows}")
@@ -1457,7 +1457,7 @@ def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
         print(f"  Backup:          {stats.backup_path}")
 
 
-def cmd_prune_registry_duplicates(args: argparse.Namespace) -> None:
+def cmd_prune_managed_alpha_duplicates(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
     from alpha_os.alpha.deployed_alphas import prune_registry_active_duplicates
@@ -1473,7 +1473,7 @@ def cmd_prune_registry_duplicates(args: argparse.Namespace) -> None:
     )
 
     mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(f"Registry duplicate prune [{mode}]: asset={args.asset} db={stats.registry_db}")
+    print(f"Managed-alpha duplicate prune [{mode}]: asset={args.asset} db={stats.registry_db}")
     print(f"  Active before:    {stats.plan.active_count}")
     print(f"  Active kept:      {stats.plan.kept_count}")
     print(f"  Demoted:          {stats.plan.demoted_count}")
@@ -1505,7 +1505,7 @@ def cmd_replay_experiment(args: argparse.Namespace) -> None:
             start_date=args.start,
             end_date=args.end,
             config_path=Path(args.config) if args.config else None,
-            registry_mode=args.registry_mode,
+            managed_alpha_mode=args.managed_alpha_mode,
             admission_source=args.source,
             fail_state=args.fail_state,
             deployment_mode=args.deployment_mode,
@@ -1642,10 +1642,10 @@ def _load_latest_report(report_path: Path) -> dict | None:
     return last
 
 
-def _registry_status(adir: Path) -> dict[str, int]:
-    from alpha_os.alpha.registry import AlphaRegistry, AlphaState
+def _managed_alpha_status(adir: Path) -> dict[str, int]:
+    from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaState
 
-    registry = AlphaRegistry(adir / "alpha_registry.db")
+    registry = ManagedAlphaStore(adir / "alpha_registry.db")
     try:
         return {
             "active": registry.count(AlphaState.ACTIVE),
@@ -1657,7 +1657,10 @@ def _registry_status(adir: Path) -> dict[str, int]:
         registry.close()
 
 
-def _runtime_observation_findings(latest: dict | None, registry: dict[str, int]) -> list[str]:
+def _runtime_observation_findings(
+    latest: dict | None,
+    managed_alphas: dict[str, int],
+) -> list[str]:
     findings: list[str] = []
     if latest is None:
         findings.append("no readiness reports yet")
@@ -1673,8 +1676,11 @@ def _runtime_observation_findings(latest: dict | None, registry: dict[str, int])
         findings.append("latest cycle had order failures")
     if not latest.get("reconciliation_match", False):
         findings.append("latest cycle failed reconciliation")
-    if latest.get("n_registry_active", registry["active"]) != registry["active"]:
-        findings.append("latest report is older than current registry state")
+    if (
+        latest.get("n_registry_active", managed_alphas["active"])
+        != managed_alphas["active"]
+    ):
+        findings.append("latest report is older than current managed-alpha state")
     return findings
 
 
@@ -1690,9 +1696,9 @@ def _latest_deployed_count(latest: dict | None) -> int:
 
 
 def _current_runtime_profile(cfg, adir: Path, asset: str):
-    from alpha_os.alpha.registry import AlphaRegistry
+    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 
-    registry = AlphaRegistry(adir / "alpha_registry.db")
+    registry = ManagedAlphaStore(adir / "alpha_registry.db")
     try:
         deployed_ids = [record.alpha_id for record in registry.list_deployed_alphas()]
     finally:
@@ -1719,9 +1725,9 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
-    registry = _registry_status(adir)
+    managed_alphas = _managed_alpha_status(adir)
     current_profile = _current_runtime_profile(cfg, adir, args.asset)
-    findings = _runtime_observation_findings(latest, registry)
+    findings = _runtime_observation_findings(latest, managed_alphas)
 
     print(f"Runtime Status ({args.asset.upper()})")
     print(
@@ -1733,8 +1739,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"(last_success={state.last_success_date or 'N/A'})"
     )
     print(
-        f"  Registry:  active={registry['active']} dormant={registry['dormant']} "
-        f"rejected={registry['rejected']} deployed={registry['deployed']}"
+        f"  Managed:   active={managed_alphas['active']} dormant={managed_alphas['dormant']} "
+        f"rejected={managed_alphas['rejected']} deployed={managed_alphas['deployed']}"
     )
     commit_suffix = f" ({current_profile.git_commit[:8]})" if current_profile.git_commit else ""
     print(f"  Profile:   current={current_profile.profile_id[:12]}{commit_suffix}")
@@ -1767,7 +1773,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
                 f"deployed={current_profile.deployed_set_id[:12]}"
             )
     print(
-        f"  Selection: registry={latest['n_registry_active']} "
+        f"  Selection: managed_active={latest['n_registry_active']} "
         f"deployed={_latest_deployed_count(latest)} "
         f"selected={latest['n_selected_alphas']}"
     )
@@ -1803,9 +1809,9 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             print("    - config fingerprint differs between current and latest")
         if latest_deployed_set_id and latest_deployed_set_id != current_profile.deployed_set_id:
             print("    - deployed alpha set fingerprint differs between current and latest")
-    if latest["n_registry_active"] != registry["active"]:
+    if latest["n_registry_active"] != managed_alphas["active"]:
         print(
-            "  Note:      registry DB count differs from latest readiness report; "
+            "  Note:      managed-alpha DB count differs from latest readiness report; "
             "the next trade cycle will refresh the report."
         )
 
@@ -1815,7 +1821,7 @@ def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
         get_handcrafted_expressions,
         list_handcrafted_sets,
     )
-    from alpha_os.alpha.registry import AlphaRegistry
+    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 
     asset = args.asset.upper()
     available_sets = list_handcrafted_sets(asset)
@@ -1842,7 +1848,7 @@ def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
     if args.dry_run:
         return
 
-    registry = AlphaRegistry(asset_data_dir(asset) / "alpha_registry.db")
+    registry = ManagedAlphaStore(asset_data_dir(asset) / "alpha_registry.db")
     try:
         inserted = registry.queue_candidate_expressions(
             expressions,
@@ -1856,13 +1862,13 @@ def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
 
 def cmd_analyze_diversity(args: argparse.Namespace) -> None:
     from alpha_os.alpha.diversity import analyze_diversity
-    from alpha_os.alpha.registry import AlphaRegistry, AlphaState
+    from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaState
 
     cfg = _load_runtime_observation_config(getattr(args, "config", None))
     features = build_feature_list(args.asset)
     data, n_days = _real_data(features, cfg, eval_window=max(args.lookback, 0))
 
-    registry = AlphaRegistry(asset_data_dir(args.asset) / "alpha_registry.db")
+    registry = ManagedAlphaStore(asset_data_dir(args.asset) / "alpha_registry.db")
     try:
         if args.scope == "deployed":
             records = registry.list_deployed_alphas()
@@ -1997,12 +2003,12 @@ def main(argv: list[str] | None = None) -> None:
         cmd_admission_daemon(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
-    elif args.command == "rebuild-registry":
-        cmd_rebuild_registry(args)
+    elif args.command == "rebuild-managed-alphas":
+        cmd_rebuild_managed_alphas(args)
     elif args.command == "refresh-deployed-alphas":
         cmd_refresh_deployed_alphas(args)
-    elif args.command == "prune-registry-duplicates":
-        cmd_prune_registry_duplicates(args)
+    elif args.command == "prune-managed-alpha-duplicates":
+        cmd_prune_managed_alpha_duplicates(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "replay-matrix":

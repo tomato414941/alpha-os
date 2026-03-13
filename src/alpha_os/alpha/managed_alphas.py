@@ -1,4 +1,4 @@
-"""Alpha Registry — SQLite-backed metadata store for alpha lifecycle."""
+"""Managed alpha store backed by SQLite."""
 from __future__ import annotations
 
 import hashlib
@@ -68,8 +68,8 @@ class DeployedAlphaEntry:
     metadata: dict = field(default_factory=dict)
 
 
-class AlphaRegistry:
-    """SQLite registry for alpha factor metadata and lifecycle tracking."""
+class ManagedAlphaStore:
+    """SQLite store for managed alpha metadata and lifecycle tracking."""
 
     def __init__(self, db_path: Path | None = None):
         self._db_path = db_path or DATA_DIR / "alpha_registry.db"

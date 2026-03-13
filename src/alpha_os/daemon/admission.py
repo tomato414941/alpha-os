@@ -15,7 +15,7 @@ from ..alpha.expression_identity import (
     expression_feature_names,
     expression_semantic_key,
 )
-from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -44,7 +44,7 @@ class AdmissionDaemon:
 
     def _prune_active_overflow(
         self,
-        registry: AlphaRegistry,
+        registry: ManagedAlphaStore,
         *,
         metric: str,
         limit: int,
@@ -69,7 +69,7 @@ class AdmissionDaemon:
 
     def _reserve_active_slot(
         self,
-        registry: AlphaRegistry,
+        registry: ManagedAlphaStore,
         incoming_record: AlphaRecord,
     ) -> tuple[bool, str]:
         limit = self.admission_cfg.max_active_alphas
@@ -108,7 +108,7 @@ class AdmissionDaemon:
         )
         return True, ""
 
-    def _managed_registry_records(self, registry: AlphaRegistry) -> list[AlphaRecord]:
+    def _managed_registry_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
         return [
             record
             for record in registry.list_all()
@@ -121,7 +121,7 @@ class AdmissionDaemon:
     def _feature_names(self, expression: str) -> set[str]:
         return expression_feature_names(expression)
 
-    def _feature_cap_reference_records(self, registry: AlphaRegistry) -> list[AlphaRecord]:
+    def _feature_cap_reference_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
         deployed = registry.list_deployed_alphas()
         if deployed:
             return deployed
@@ -298,7 +298,7 @@ class AdmissionDaemon:
             dsr_pvalue_max=self.config.validation.dsr_pvalue_max,
         )
 
-        registry = AlphaRegistry(asset_data_dir(self.asset) / "alpha_registry.db")
+        registry = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         managed_records = self._managed_registry_records(registry)
         semantic_owner_by_key = {
             self._semantic_key(record.expression): record.alpha_id
@@ -419,7 +419,7 @@ class AdmissionDaemon:
             logger.warning("PBO computation failed, using 1.0")
             return 1.0
 
-    def _write_diversity_cache(self, alpha_id: str, registry: AlphaRegistry) -> None:
+    def _write_diversity_cache(self, alpha_id: str, registry: ManagedAlphaStore) -> None:
         n_active = registry.count(AlphaState.ACTIVE)
         conn = self._open_registry_conn()
         conn.execute(

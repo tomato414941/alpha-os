@@ -13,7 +13,7 @@ from datetime import date
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.combiner import (
     WeightedCombinerConfig,
     compute_weights,
@@ -49,7 +49,7 @@ class TacticalTrader:
         self,
         asset: str,
         config: Config,
-        registry: AlphaRegistry | None = None,
+        registry: ManagedAlphaStore | None = None,
         store: DataStore | None = None,
     ):
         self.asset = asset
@@ -58,7 +58,7 @@ class TacticalTrader:
         self.features = build_hourly_feature_list(asset)
 
         adir = asset_data_dir(asset)
-        self.registry = registry or AlphaRegistry(
+        self.registry = registry or ManagedAlphaStore(
             db_path=adir / "alpha_registry_l2.db",
         )
 

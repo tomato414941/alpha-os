@@ -9,7 +9,7 @@ from datetime import date
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from signal_noise.client import SignalClient
 from ..data.store import DataStore
@@ -47,7 +47,7 @@ class ForwardRunner:
         asset: str,
         config: Config,
         forward_config: ForwardConfig | None = None,
-        registry: AlphaRegistry | None = None,
+        registry: ManagedAlphaStore | None = None,
         tracker: ForwardTracker | None = None,
         monitor: AlphaMonitor | None = None,
         lifecycle: AlphaLifecycle | None = None,
@@ -73,10 +73,10 @@ class ForwardRunner:
 
         adir = asset_data_dir(asset)
         if resolution == "1h":
-            self.registry = registry or AlphaRegistry(db_path=adir / "alpha_registry_l2.db")
+            self.registry = registry or ManagedAlphaStore(db_path=adir / "alpha_registry_l2.db")
             self.tracker = tracker or ForwardTracker(db_path=adir / "forward_returns_l2.db")
         else:
-            self.registry = registry or AlphaRegistry(db_path=adir / "alpha_registry.db")
+            self.registry = registry or ManagedAlphaStore(db_path=adir / "alpha_registry.db")
             self.tracker = tracker or ForwardTracker(db_path=adir / "forward_returns.db")
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 

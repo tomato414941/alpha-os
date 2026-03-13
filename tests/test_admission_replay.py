@@ -8,7 +8,7 @@ from alpha_os.alpha.admission_replay import (
     rebuild_registry,
 )
 from alpha_os.alpha.lifecycle import LifecycleConfig
-from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 
 
 def test_alpha_id_for_expression_is_stable():
@@ -31,7 +31,7 @@ def test_alpha_id_for_expression_reuses_existing_id():
 
 def test_load_candidate_records_deduplicates_and_preserves_existing_id(tmp_path):
     db_path = tmp_path / "alpha_registry.db"
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     registry.register(
         AlphaRecord(
             alpha_id="existing_a1",
@@ -98,7 +98,7 @@ def test_load_candidate_records_deduplicates_and_preserves_existing_id(tmp_path)
 
 def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
     db_path = tmp_path / "alpha_registry.db"
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     registry.register(
         AlphaRecord(
             alpha_id="legacy_old",
@@ -166,7 +166,7 @@ def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
         backup=False,
     )
 
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     conn = sqlite3.connect(db_path)
     try:
         assert stats.source_rows == 2
@@ -184,7 +184,7 @@ def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
 
 def test_rebuild_registry_dry_run_does_not_modify_existing_alphas(tmp_path):
     db_path = tmp_path / "alpha_registry.db"
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     registry.register(
         AlphaRecord(
             alpha_id="existing_a1",
@@ -225,7 +225,7 @@ def test_rebuild_registry_dry_run_does_not_modify_existing_alphas(tmp_path):
         backup=False,
     )
 
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         assert stats.active_count == 1
         assert registry.count() == 1

@@ -228,9 +228,9 @@ class TestPaperPortfolioTracker:
 
 class TestRegistryTopTrading:
     def test_top_trading_returns_limited(self, tmp_path):
-        from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 
-        reg = AlphaRegistry(tmp_path / "reg.db")
+        reg = ManagedAlphaStore(tmp_path / "reg.db")
         for i in range(10):
             reg.register(AlphaRecord(
                 alpha_id=f"a{i}", expression=f"close_{i}",
@@ -247,9 +247,9 @@ class TestRegistryTopTrading:
         reg.close()
 
     def test_top_trading_excludes_candidate(self, tmp_path):
-        from alpha_os.alpha.registry import AlphaRegistry, AlphaRecord, AlphaState
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 
-        reg = AlphaRegistry(tmp_path / "reg.db")
+        reg = ManagedAlphaStore(tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="a1", expression="close_1",
             state=AlphaState.ACTIVE, oos_sharpe=1.0,
@@ -317,7 +317,7 @@ class TestPositionSizing:
         """Position sizing should use current portfolio value, not initial capital."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -332,7 +332,7 @@ class TestPositionSizing:
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             executor=executor,
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
@@ -359,7 +359,7 @@ class TestPaperTrader:
         """Fresh trader should have initial capital."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -373,7 +373,7 @@ class TestPaperTrader:
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
@@ -386,7 +386,7 @@ class TestPaperTrader:
         """Trader should restore cash/positions from last snapshot."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -406,7 +406,7 @@ class TestPaperTrader:
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
@@ -420,7 +420,7 @@ class TestPaperTrader:
         """Trader should refresh executor state when a newer snapshot appears."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -440,7 +440,7 @@ class TestPaperTrader:
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
@@ -463,7 +463,7 @@ class TestPaperTrader:
         """Long-only mode should never emit a negative target position."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.governance.audit_log import AuditLog
 
@@ -473,7 +473,7 @@ class TestPaperTrader:
             asset="BTC",
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=store,
@@ -496,7 +496,7 @@ class TestPaperTrader:
         """Long/short mode should preserve negative target positions."""
         from alpha_os.paper.trader import PaperTrader
         from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
-        from alpha_os.alpha.registry import AlphaRegistry
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.governance.audit_log import AuditLog
 
@@ -507,7 +507,7 @@ class TestPaperTrader:
             asset="BTC",
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-            registry=AlphaRegistry(tmp_path / "reg.db"),
+            registry=ManagedAlphaStore(tmp_path / "reg.db"),
             forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=store,
@@ -534,12 +534,12 @@ class TestMapElitesCombinePath:
         """Signals grouped into cells produce valid ensemble result."""
         import numpy as np
         from alpha_os.dsl.expr import Feature, BinaryOp, RollingOp
-        from alpha_os.evolution.archive import AlphaArchive
+        from alpha_os.evolution.discovery_pool import DiscoveryPool
         from alpha_os.evolution.behavior import compute_behavior
         from alpha_os.voting.ensemble import compute_cell_long_pcts, ensemble_sizing
 
         rng = np.random.RandomState(42)
-        archive = AlphaArchive()
+        archive = DiscoveryPool()
 
         # Simulate 20 alphas with different expressions and signals
         exprs = [Feature("f1")] * 5 + [

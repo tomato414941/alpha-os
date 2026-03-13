@@ -7,7 +7,7 @@ import pytest
 
 from alpha_os.alpha.lifecycle import AlphaLifecycle, LifecycleConfig
 from alpha_os.alpha.monitor import AlphaMonitor, MonitorConfig
-from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.config import Config
 from alpha_os.data.store import DataStore
 from alpha_os.forward.runner import ForwardConfig, ForwardCycleResult, ForwardRunner
@@ -142,7 +142,7 @@ class TestForwardRunnerIntegration:
         assert result.elapsed == pytest.approx(1.23)
 
     def test_healthy_alpha_stays_active(self, tmp_path):
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="healthy",
             expression="(neg f1)",
@@ -179,7 +179,7 @@ class TestForwardRunnerIntegration:
         reg.close()
 
     def test_degraded_alpha_to_dormant(self, tmp_path):
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="bad",
             expression="(neg f1)",
@@ -212,7 +212,7 @@ class TestForwardRunnerIntegration:
         reg.close()
 
     def test_dormant_recovery_to_active(self, tmp_path):
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="recover",
             expression="(neg f1)",
@@ -274,7 +274,7 @@ class TestForwardRunnerCycle:
         # Use a date in the middle so matrix has enough rows
         fake_today = dates[50].date()
 
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="alpha_f1", expression="f1",
             state=AlphaState.ACTIVE, oos_sharpe=0.8,
@@ -298,7 +298,7 @@ class TestForwardRunnerCycle:
         dates = self._populate_store(store, n_days=50)
         last_date = dates[-1].date()
 
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         runner = self._make_runner(tmp_path, store, reg)
         with patch("alpha_os.forward.runner.date") as mock_date:
             mock_date.today.return_value = last_date
@@ -312,7 +312,7 @@ class TestForwardRunnerCycle:
         dates = self._populate_store(store, n_days=50)
         last_date = dates[-1].date()
 
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="alpha_bad", expression="(neg missing_feature)",
             state=AlphaState.ACTIVE, oos_sharpe=0.5,
@@ -330,7 +330,7 @@ class TestForwardRunnerCycle:
         dates = self._populate_store(store, n_days=3)
         last_date = dates[-1].date()
 
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="alpha_prior",
             expression="f1",
@@ -370,7 +370,7 @@ class TestForwardRunnerCycle:
         dates = self._populate_store(store, n_days=3)
         last_date = dates[-1].date()
 
-        reg = AlphaRegistry(db_path=tmp_path / "reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "reg.db")
         reg.register(AlphaRecord(
             alpha_id="alpha_dormant",
             expression="f1",

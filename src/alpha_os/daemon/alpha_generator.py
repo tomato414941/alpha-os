@@ -15,7 +15,7 @@ from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.universe import build_feature_list, price_signal
 from ..dsl.generator import AlphaGenerator
-from ..evolution.archive import AlphaArchive
+from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
 
@@ -38,7 +38,7 @@ class AlphaGeneratorDaemon:
         self._pop_size = self.generator_cfg.pop_size
 
         db_path = asset_data_dir(asset) / "archive.db"
-        self.archive = AlphaArchive.load_from_db(db_path)
+        self.archive = DiscoveryPool.load_from_db(db_path)
         logger.info("Loaded MAP-Elites archive: %d entries", self.archive.size)
 
     def run(self) -> None:

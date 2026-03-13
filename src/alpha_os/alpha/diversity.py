@@ -21,7 +21,7 @@ from ..dsl.expr import (
 )
 from ..dsl.features import collect_feature_names
 from ..dsl.generator import _collect_nodes
-from .registry import AlphaRecord
+from .managed_alphas import AlphaRecord
 
 
 @dataclass(frozen=True)

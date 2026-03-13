@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 
-from ..alpha.registry import AlphaRecord
+from ..alpha.managed_alphas import AlphaRecord
 from ..forward.tracker import ForwardTracker
 from .aggregator import VoteResult, vote_aggregate
 from .scorer import accuracy_from_forward, recency_weight

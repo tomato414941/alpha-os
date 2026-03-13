@@ -1,4 +1,4 @@
-"""MAP-Elites quality-diversity archive for alpha expressions."""
+"""MAP-Elites discovery pool for alpha expressions."""
 from __future__ import annotations
 
 import json
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ArchiveConfig:
+class DiscoveryPoolConfig:
     dims: tuple[int, ...] = (100, 10, 10)
     ranges: tuple[tuple[float, float], ...] = (
         (0.0, 100.0),  # feature_bucket (hash mod 100)
@@ -27,7 +27,7 @@ class ArchiveConfig:
 
 
 @dataclass
-class ArchiveEntry:
+class DiscoveryPoolEntry:
     expr: Expr
     fitness: float
     behavior: np.ndarray
@@ -36,7 +36,7 @@ class ArchiveEntry:
 def passes_sanity_filter(
     signal: np.ndarray, max_nan_ratio: float = 0.1
 ) -> bool:
-    """Check if a signal passes sanity requirements for archive entry."""
+    """Check if a signal passes sanity requirements for a discovery-pool entry."""
     if signal.size == 0:
         return False
     nan_ratio = np.isnan(signal).sum() / signal.size
@@ -52,16 +52,16 @@ def passes_sanity_filter(
     return True
 
 
-class AlphaArchive:
-    """Grid-based MAP-Elites archive storing alpha expressions.
+class DiscoveryPool:
+    """Grid-based MAP-Elites discovery pool storing alpha expressions.
 
     Path B mode: sanity filter only, no fitness-based competition.
     Candidates enter empty cells; occupied cells keep their incumbent.
     """
 
-    def __init__(self, config: ArchiveConfig | None = None):
-        self.config = config or ArchiveConfig()
-        self._grid: dict[tuple[int, ...], ArchiveEntry] = {}
+    def __init__(self, config: DiscoveryPoolConfig | None = None):
+        self.config = config or DiscoveryPoolConfig()
+        self._grid: dict[tuple[int, ...], DiscoveryPoolEntry] = {}
 
     def add(self, expr: Expr, fitness: float, behavior: np.ndarray) -> bool:
         """Add expression to the archive using fitness-based replacement.
@@ -71,7 +71,7 @@ class AlphaArchive:
         cell = self._to_cell(behavior)
         existing = self._grid.get(cell)
         if existing is None or fitness > existing.fitness:
-            self._grid[cell] = ArchiveEntry(
+            self._grid[cell] = DiscoveryPoolEntry(
                 expr=expr, fitness=fitness, behavior=behavior
             )
             return True
@@ -80,7 +80,7 @@ class AlphaArchive:
     def add_if_empty(
         self, expr: Expr, behavior: np.ndarray, signal: np.ndarray
     ) -> bool:
-        """Add expression to archive if cell is empty and signal passes sanity filter.
+        """Add expression to the discovery pool if the cell is empty.
 
         Path B mode: no fitness competition. First valid occupant stays.
         """
@@ -89,7 +89,7 @@ class AlphaArchive:
         cell = self._to_cell(behavior)
         if cell in self._grid:
             return False
-        self._grid[cell] = ArchiveEntry(expr=expr, fitness=0.0, behavior=behavior)
+        self._grid[cell] = DiscoveryPoolEntry(expr=expr, fitness=0.0, behavior=behavior)
         return True
 
     def _to_cell(self, behavior: np.ndarray) -> tuple[int, ...]:
@@ -123,7 +123,7 @@ class AlphaArchive:
         )
         return [(e.expr, e.fitness) for e in entries[:n]]
 
-    def sample(self, n: int, rng: random.Random | None = None) -> list[ArchiveEntry]:
+    def sample(self, n: int, rng: random.Random | None = None) -> list[DiscoveryPoolEntry]:
         """Sample n entries uniformly from occupied cells."""
         rng = rng or random.Random()
         entries = list(self._grid.values())
@@ -132,13 +132,13 @@ class AlphaArchive:
         return rng.sample(entries, n)
 
     def elites(self) -> list[tuple[Expr, float, np.ndarray]]:
-        """All archive entries as (expr, fitness, behavior) triples."""
+        """All discovery-pool entries as (expr, fitness, behavior) triples."""
         return [(e.expr, e.fitness, e.behavior) for e in self._grid.values()]
 
     # --- Persistence (SQLite) ---
 
     def save_to_db(self, db_path: Path) -> int:
-        """Persist archive to SQLite. Returns number of rows written."""
+        """Persist the discovery pool to SQLite. Returns the number of rows written."""
         from ..dsl import to_string
 
         conn = sqlite3.connect(str(db_path))
@@ -169,8 +169,8 @@ class AlphaArchive:
         return len(rows)
 
     @classmethod
-    def load_from_db(cls, db_path: Path, config: ArchiveConfig | None = None) -> AlphaArchive:
-        """Load archive from SQLite."""
+    def load_from_db(cls, db_path: Path, config: DiscoveryPoolConfig | None = None) -> DiscoveryPool:
+        """Load the discovery pool from SQLite."""
         from ..dsl import parse
 
         archive = cls(config=config)
@@ -193,7 +193,7 @@ class AlphaArchive:
                 cell = tuple(json.loads(cell_json))
                 expr = parse(expr_str)
                 behavior = np.array(json.loads(behavior_json))
-                archive._grid[cell] = ArchiveEntry(
+                archive._grid[cell] = DiscoveryPoolEntry(
                     expr=expr, fitness=fitness, behavior=behavior,
                 )
             except Exception as exc:

@@ -140,19 +140,19 @@ def test_legacy_user_facing_commands_are_rejected():
         parser.parse_args(["validate-testnet"])
 
 
-def test_rebuild_registry_parser():
+def test_rebuild_managed_alphas_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
-        "rebuild-registry",
+        "rebuild-managed-alphas",
         "--asset", "BTC",
         "--source", "candidates",
         "--fail-state", "dormant",
         "--dry-run",
     ])
 
-    assert args.command == "rebuild-registry"
+    assert args.command == "rebuild-managed-alphas"
     assert args.asset == "BTC"
     assert args.source == "candidates"
     assert args.fail_state == "dormant"
@@ -174,18 +174,18 @@ def test_refresh_deployed_alphas_parser():
     assert args.dry_run is True
 
 
-def test_prune_registry_duplicates_parser():
+def test_prune_managed_alpha_duplicates_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
-        "prune-registry-duplicates",
+        "prune-managed-alpha-duplicates",
         "--asset", "BTC",
         "--dry-run",
         "--no-refresh-deployed",
     ])
 
-    assert args.command == "prune-registry-duplicates"
+    assert args.command == "prune-managed-alpha-duplicates"
     assert args.asset == "BTC"
     assert args.dry_run is True
     assert args.no_refresh_deployed is True
@@ -255,7 +255,7 @@ def test_replay_experiment_parser():
         "--name", "confidence sweep",
         "--start", "2026-02-20",
         "--end", "2026-03-05",
-        "--registry-mode", "admission",
+        "--managed-alpha-mode", "admission",
         "--source", "candidates",
         "--deployment-mode", "refresh",
         "--set", "lifecycle.candidate_quality_min=1.10",
@@ -264,7 +264,7 @@ def test_replay_experiment_parser():
 
     assert args.command == "replay-experiment"
     assert args.name == "confidence sweep"
-    assert args.registry_mode == "admission"
+    assert args.managed_alpha_mode == "admission"
     assert args.source == "candidates"
     assert args.deployment_mode == "refresh"
     assert args.set == [
@@ -324,7 +324,7 @@ def test_cmd_replay_experiment_prints_profile(capsys, monkeypatch):
             start="2026-03-01",
             end="2026-03-05",
             config=None,
-            registry_mode="current",
+            managed_alpha_mode="current",
             source="candidates",
             fail_state="rejected",
             deployment_mode="refresh",
@@ -493,7 +493,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signal Reg: +0.4210" in output
     assert "Signal L2:  +0.5420" in output
     assert "Signal Fin: +0.5420" in output
-    assert "Registry:   615 active" in output
+    assert "Managed:    615 active" in output
     assert "Deployed:   150 alphas" in output
     assert "Shortlist:  150 candidates" in output
     assert "Selected:   30 alphas" in output
@@ -692,11 +692,11 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     import json
     from argparse import Namespace
 
-    from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+    from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
     from alpha_os.cli import cmd_runtime_status
     from alpha_os.validation.testnet import readiness_paths
 
-    reg = AlphaRegistry(tmp_path / "alpha_registry.db")
+    reg = ManagedAlphaStore(tmp_path / "alpha_registry.db")
     reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
     reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.DORMANT))
     reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.REJECTED))
@@ -742,7 +742,7 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
 
     assert "Runtime Status (BTC)" in output
     assert "Readiness: 3/10 days" in output
-    assert "Registry:  active=1 dormant=1 rejected=1 deployed=1" in output
+    assert "Managed:   active=1 dormant=1 rejected=1 deployed=1" in output
     assert "Profile:   current=" in output
     assert "Profile:   latest=prof12345678" in output
     assert "ProfileIDs: config=cfg123456789 deployed=dep123456789" in output
@@ -755,4 +755,4 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     assert "- latest report was recorded under a different runtime profile" in output
     assert "- config fingerprint differs between current and latest" in output
     assert "- deployed alpha set fingerprint differs between current and latest" in output
-    assert "Note:      registry DB count differs" in output
+    assert "Note:      managed-alpha DB count differs" in output

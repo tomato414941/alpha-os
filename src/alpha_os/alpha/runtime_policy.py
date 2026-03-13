@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .lifecycle import ST_ACTIVE, ST_DORMANT
 from .quality import QualityEstimate
-from .registry import AlphaState
+from .managed_alphas import AlphaState
 
 
 def trading_candidate_limit(max_trading: int) -> int:

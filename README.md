@@ -47,7 +47,7 @@ surface APIs much more explicit.
 
 What should stay:
 
-- the registry remains the research ledger
+- managed alphas remain the research ledger
 - deployed alphas remain the explicit runtime subset
 - admission, lifecycle, and deployment stay separate concerns
 
@@ -56,13 +56,13 @@ What should change:
 - names that blur lifecycle and runtime allocation
 - config keys that hide which layer a limit applies to
 - logs and reports that say `active` without saying whether they mean
-  `registry active` or `deployed`
+  `managed active` or `deployed`
 
 Current working plan:
 
-1. keep the two-stage model (`registry` and `deployed_alphas`)
+1. keep the two-stage model (`managed_alphas` and `deployed_alphas`)
 2. document the boundary everywhere before making more renames
-3. prefer explicit names such as `registry active` and `deployed alphas`
+3. prefer explicit names such as `managed active` and `deployed alphas`
 4. tighten config names over time when the observation window ends
 
 The project should not collapse the layers just because the current names are
@@ -73,7 +73,7 @@ trading behavior.
 
 Use these labels consistently in docs, logs, and reviews:
 
-- say `registry active` when you mean lifecycle eligibility in `alphas`
+- say `managed active` when you mean lifecycle eligibility in `alphas`
 - say `deployed alphas` when you mean the runtime subset in `deployed_alphas`
 - say `deployment` for runtime allocation policy, not `universe`
 - avoid plain `active` and plain `max_alphas` when the layer is ambiguous
@@ -88,10 +88,10 @@ Layer 1: Execution (Minute)   — VPIN/spread/imbalance-based optimal execution 
 
 src/alpha_os/
 ├── dsl/          S-expression DSL (parser, evaluator, operators, GP templates)
-├── evolution/    GP + MAP-Elites alpha evolution
+├── evolution/    GP + MAP-Elites discovery-pool search
 ├── backtest/     Backtest engine, cost model, metrics
 ├── validation/   Purged Walk-Forward CV, PBO, DSR, FDR
-├── alpha/        Alpha evaluator, registry, lifecycle, combiner
+├── alpha/        Alpha evaluator, managed alphas, lifecycle, combiner
 ├── paper/        Paper trading simulator + tracker, EventDrivenTrader, TacticalTrader
 ├── execution/    Trade executors (Paper, Binance), ExecutionOptimizer
 ├── risk/         Position sizing, drawdown stages, circuit breaker
@@ -150,10 +150,10 @@ python -m alpha_os evolve --layer 2 --generations 30
 # Run the candidate admission daemon
 python -m alpha_os admission-daemon --asset BTC
 
-# Rebuild registry states from validated candidates
-python -m alpha_os rebuild-registry --asset BTC --source candidates
+# Rebuild managed alpha states from validated candidates
+python -m alpha_os rebuild-managed-alphas --asset BTC --source candidates
 
-# Refresh deployed alphas from the registry
+# Refresh deployed alphas from managed alphas
 python -m alpha_os refresh-deployed-alphas --asset BTC
 
 # Run a named replay experiment and persist the artifact
@@ -161,7 +161,7 @@ python -m alpha_os replay-experiment \
   --name "candidate-1.10" \
   --start 2025-09-01 \
   --end 2026-03-05 \
-  --registry-mode admission \
+  --managed-alpha-mode admission \
   --deployment-mode refresh \
   --source candidates \
   --set lifecycle.candidate_quality_min=1.10

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .lifecycle import LifecycleConfig, passes_candidate_gate
-from .registry import AlphaRecord, AlphaRegistry, AlphaState
+from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ def alpha_id_for_expression(
 
 
 def existing_alpha_ids_by_expression(db_path: Path) -> dict[str, str]:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         return {
             record.expression: record.alpha_id
@@ -49,7 +49,7 @@ def existing_alpha_ids_by_expression(db_path: Path) -> dict[str, str]:
 
 
 def load_registry_records(db_path: Path) -> list[AlphaRecord]:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         return registry.list_all()
     finally:
@@ -160,7 +160,7 @@ def backup_registry_db(db_path: Path) -> Path:
 
 
 def apply_registry_snapshot(db_path: Path, records: list[AlphaRecord]) -> None:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     try:
         registry.replace_all(records)
         registry.clear_diversity_cache()

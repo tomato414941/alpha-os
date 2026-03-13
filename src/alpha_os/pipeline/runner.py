@@ -14,12 +14,12 @@ from ..alpha.combiner import (
     weighted_combine,
 )
 from ..alpha.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..dsl import to_string
 from ..dsl.expr import Expr
-from ..evolution.archive import AlphaArchive
+from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
 from ..governance.gates import GateConfig, adoption_gate
@@ -63,7 +63,7 @@ class PipelineRunner:
         data: dict[str, np.ndarray],
         prices: np.ndarray,
         config: PipelineConfig | None = None,
-        registry: AlphaRegistry | None = None,
+        registry: ManagedAlphaStore | None = None,
         seed: int = 42,
     ):
         self.features = features
@@ -92,7 +92,7 @@ class PipelineRunner:
             CostModel(self.config.commission_pct, self.config.slippage_pct),
             allow_short=self.config.allow_short,
         )
-        self.archive = AlphaArchive()
+        self.archive = DiscoveryPool()
 
     def run(self) -> PipelineResult:
         """Execute full pipeline: evolve → validate → adopt → combine."""

@@ -2,7 +2,7 @@
 asset = "BTC"
 start_date = "2025-09-01"
 end_date = "2026-03-05"
-registry_mode = "current"
+managed_alpha_mode = "current"
 deployment_mode = "refresh"
 sizing_mode = "runtime"
 

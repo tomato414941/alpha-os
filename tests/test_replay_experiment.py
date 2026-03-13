@@ -9,7 +9,7 @@ from alpha_os.experiments.replay import (
     parse_override_assignment,
     run_replay_experiment,
 )
-from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.config import Config
 from alpha_os.runtime_profile import build_runtime_profile
 
@@ -39,7 +39,7 @@ def test_apply_config_overrides_updates_nested_fields():
 def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     asset_root = tmp_path / "BTC"
     asset_root.mkdir(parents=True, exist_ok=True)
-    registry = AlphaRegistry(asset_root / "alpha_registry.db")
+    registry = ManagedAlphaStore(asset_root / "alpha_registry.db")
     registry.register(
         AlphaRecord(
             alpha_id="a1",

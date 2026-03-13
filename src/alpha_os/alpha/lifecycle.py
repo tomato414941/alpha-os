@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .quality import QualityEstimate
-from .registry import AlphaRecord, AlphaRegistry, AlphaState
+from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 
 
 @dataclass
@@ -104,7 +104,7 @@ class AlphaLifecycle:
 
     def __init__(
         self,
-        registry: AlphaRegistry,
+        registry: ManagedAlphaStore,
         config: LifecycleConfig | None = None,
     ):
         self.registry = registry

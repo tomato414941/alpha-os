@@ -6,14 +6,14 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from alpha_os.alpha.registry import AlphaRecord, AlphaRegistry, AlphaState
+from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.data.store import DataStore
 from alpha_os.paper.tactical import TacticalTrader, TacticalSignal
 
 
 @pytest.fixture
 def l2_registry(tmp_path):
-    reg = AlphaRegistry(db_path=tmp_path / "l2_registry.db")
+    reg = ManagedAlphaStore(db_path=tmp_path / "l2_registry.db")
     yield reg
     reg.close()
 
@@ -44,7 +44,7 @@ class TestNoL2Alphas:
         cfg.api.base_url = "http://localhost:8000"
         cfg.api.timeout = 10
 
-        reg = AlphaRegistry(db_path=tmp_path / "empty_reg.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "empty_reg.db")
         trader = TacticalTrader(
             asset="BTC", config=cfg, registry=reg, store=l2_store,
         )
@@ -134,7 +134,7 @@ class TestNeedsEvolutionL2:
         cfg.forward.degradation_window = 63
         cfg.api.base_url = "http://localhost:8000"
         cfg.api.timeout = 10
-        reg = AlphaRegistry(db_path=tmp_path / "empty_l2.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "empty_l2.db")
         store = DataStore(tmp_path / "l2_cache_empty.db")
         tactical = TacticalTrader(
             asset="BTC", config=cfg, registry=reg, store=store,
@@ -149,7 +149,7 @@ class TestNeedsEvolutionL2:
         cfg.forward.degradation_window = 63
         cfg.api.base_url = "http://localhost:8000"
         cfg.api.timeout = 10
-        reg = AlphaRegistry(db_path=tmp_path / "pop_l2.db")
+        reg = ManagedAlphaStore(db_path=tmp_path / "pop_l2.db")
         reg.register(AlphaRecord(
             alpha_id="l2_active",
             expression="(neg f1)",
@@ -203,7 +203,7 @@ class TestTraderIntegration:
 
         cfg = Config.load()
         store = DataStore(tmp_path / "cache.db")
-        l2_reg = AlphaRegistry(db_path=tmp_path / "l2_reg.db")
+        l2_reg = ManagedAlphaStore(db_path=tmp_path / "l2_reg.db")
         l2_store = DataStore(tmp_path / "l2_cache.db")
         tactical = TacticalTrader(
             asset="BTC", config=cfg, registry=l2_reg, store=l2_store,

@@ -56,7 +56,10 @@ def load_replay_matrix(path: Path) -> ReplayMatrixSpec:
                 if item.get("config_path")
                 else (Path(defaults["config_path"]) if defaults.get("config_path") else None)
             ),
-            registry_mode=item.get("registry_mode", defaults.get("registry_mode", "current")),
+            managed_alpha_mode=item.get(
+                "managed_alpha_mode",
+                defaults.get("managed_alpha_mode", "current"),
+            ),
             admission_source=item.get(
                 "admission_source",
                 defaults.get("admission_source", "candidates"),

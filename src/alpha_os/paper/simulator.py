@@ -13,7 +13,7 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
 from ..alpha.quality import shrink_weight_quality
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.store import DataStore
@@ -205,7 +205,7 @@ def run_replay(
                 dry_run=False,
                 backup=False,
             )
-        registry = AlphaRegistry(sim_reg_path)
+        registry = ManagedAlphaStore(sim_reg_path)
 
         all_records = registry.list_deployed_alphas()
         if not all_records:

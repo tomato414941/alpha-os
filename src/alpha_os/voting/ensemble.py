@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..evolution.archive import AlphaArchive
+from ..evolution.discovery_pool import DiscoveryPool
 
 
 @dataclass
@@ -75,7 +75,7 @@ def ensemble_sizing(
 
 
 def compute_cell_long_pcts(
-    archive: AlphaArchive,
+    archive: DiscoveryPool,
     signals: dict[tuple[int, ...], list[float]],
 ) -> list[float]:
     """Compute per-cell long_pct from cell-grouped signals.

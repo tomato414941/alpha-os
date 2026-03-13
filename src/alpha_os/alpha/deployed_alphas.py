@@ -19,7 +19,7 @@ from .expression_identity import (
     expression_semantic_key,
 )
 from .quality import QualityEstimate
-from .registry import AlphaRecord, AlphaRegistry, AlphaState
+from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 
 
 @dataclass(frozen=True)
@@ -257,7 +257,7 @@ def refresh_deployed_alphas(
     dry_run: bool = False,
     backup: bool = True,
 ) -> DeployedAlphaRefreshStats:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     tracker = ForwardTracker(
         db_path=forward_db_path or db_path.with_name("forward_returns.db"),
     )
@@ -376,7 +376,7 @@ def prune_registry_active_duplicates(
     backup: bool = True,
     refresh_deployed: bool = True,
 ) -> RegistryActivePruneStats:
-    registry = AlphaRegistry(db_path)
+    registry = ManagedAlphaStore(db_path)
     tracker = ForwardTracker(
         db_path=forward_db_path or db_path.with_name("forward_returns.db"),
     )

@@ -6,7 +6,7 @@ import time
 
 from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor
-from ..alpha.registry import AlphaRegistry, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, asset_data_dir
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
@@ -29,7 +29,7 @@ class LifecycleDaemon:
         t0 = time.perf_counter()
         adir = asset_data_dir(self.asset)
 
-        registry = AlphaRegistry(db_path=adir / "alpha_registry.db")
+        registry = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
         forward_tracker = ForwardTracker(db_path=adir / "forward_returns.db")
         audit_log = AuditLog(log_path=adir / "audit.jsonl")
 
