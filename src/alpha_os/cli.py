@@ -154,6 +154,15 @@ def _build_parser() -> argparse.ArgumentParser:
     gen_d.add_argument("--asset", type=str, default="BTC")
     gen_d.add_argument("--config", type=str, default=None)
 
+    pg = sub.add_parser(
+        "promote-discovery-pool",
+        help="Queue top discovery-pool entries into the admission candidates table",
+    )
+    pg.add_argument("--asset", type=str, default="BTC")
+    pg.add_argument("--config", type=str, default=None)
+    pg.add_argument("--limit", type=int, default=None)
+    pg.add_argument("--dry-run", action="store_true")
+
     # admission-daemon (Pipeline v2)
     adm_d = sub.add_parser("admission-daemon", help="Run candidate admission daemon")
     adm_d.add_argument("--asset", type=str, default="BTC")
@@ -1381,6 +1390,23 @@ def cmd_alpha_generator(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_promote_discovery_pool(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    from alpha_os.daemon.alpha_generator import queue_discovery_pool_candidates
+
+    selected, inserted = queue_discovery_pool_candidates(
+        args.asset,
+        cfg,
+        limit=args.limit,
+        dry_run=args.dry_run,
+    )
+    mode = "DRY RUN" if args.dry_run else "WRITE"
+    print(f"Discovery-pool promotion [{mode}]: asset={args.asset}")
+    print(f"  Selected: {selected}")
+    print(f"  Queued:   {inserted}")
+
+
 def cmd_lifecycle(args: argparse.Namespace) -> None:
     """Run daily lifecycle evaluation (Pipeline v2, oneshot)."""
     cfg = _load_config(args.config)
@@ -1999,6 +2025,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_trade(args)
     elif args.command == "alpha-generator":
         cmd_alpha_generator(args)
+    elif args.command == "promote-discovery-pool":
+        cmd_promote_discovery_pool(args)
     elif args.command == "admission-daemon":
         cmd_admission_daemon(args)
     elif args.command == "lifecycle":

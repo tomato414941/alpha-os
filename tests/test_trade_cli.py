@@ -204,6 +204,23 @@ def test_runtime_status_parser():
     assert args.asset == "BTC"
 
 
+def test_promote_discovery_pool_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "promote-discovery-pool",
+        "--asset", "BTC",
+        "--limit", "12",
+        "--dry-run",
+    ])
+
+    assert args.command == "promote-discovery-pool"
+    assert args.asset == "BTC"
+    assert args.limit == 12
+    assert args.dry_run is True
+
+
 def test_seed_handcrafted_parser():
     from alpha_os.cli import _build_parser
 

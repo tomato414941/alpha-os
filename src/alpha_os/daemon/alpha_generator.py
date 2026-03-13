@@ -32,6 +32,59 @@ class PromotionCandidate:
     behavior: np.ndarray
 
 
+def queue_discovery_pool_candidates(
+    asset: str,
+    config: Config,
+    *,
+    limit: int | None = None,
+    dry_run: bool = False,
+) -> tuple[int, int]:
+    """Queue top discovery-pool entries into candidates.
+
+    Returns a tuple of `(selected_count, inserted_count)`.
+    """
+    pool = DiscoveryPool.load_from_db(asset_data_dir(asset) / "archive.db")
+    promote_limit = config.alpha_generator.promote_per_round if limit is None else limit
+    if promote_limit <= 0:
+        return 0, 0
+
+    promoted = [
+        PromotionCandidate(
+            expression=to_string(expr),
+            fitness=float(fitness),
+            behavior=behavior,
+        )
+        for expr, fitness, behavior in pool.elites()
+        if fitness >= config.alpha_generator.promotion_min_fitness
+    ]
+    promoted.sort(key=lambda candidate: candidate.fitness, reverse=True)
+    promoted = promoted[:promote_limit]
+    if dry_run or not promoted:
+        return len(promoted), 0
+
+    seeds = [
+        CandidateSeed(
+            expression=candidate.expression,
+            source=f"alpha_generator_{asset.lower()}",
+            fitness=candidate.fitness,
+            behavior_json={
+                "source": "alpha_generator",
+                "asset": asset,
+                "behavior": [float(x) for x in candidate.behavior.tolist()],
+                "round": None,
+                "promotion": "manual_discovery_pool",
+            },
+        )
+        for candidate in promoted
+    ]
+    store = ManagedAlphaStore(asset_data_dir(asset) / "alpha_registry.db")
+    try:
+        inserted = store.queue_candidates(seeds)
+    finally:
+        store.close()
+    return len(promoted), inserted
+
+
 class AlphaGeneratorDaemon:
     """Continuous GP evolution daemon.
 
