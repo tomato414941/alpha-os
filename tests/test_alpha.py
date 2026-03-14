@@ -3,7 +3,12 @@
 import numpy as np
 import pytest
 
-from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
+from alpha_os.alpha.managed_alphas import (
+    ManagedAlphaStore,
+    AlphaRecord,
+    AlphaState,
+    CandidateSeed,
+)
 from alpha_os.alpha.lifecycle import (
     AlphaLifecycle,
     LifecycleConfig,
@@ -548,6 +553,44 @@ class TestManagedAlphaStore:
 
         assert [record.alpha_id for record in reference] == ["a3"]
         assert counts == {"sp500": 1}
+        reg.close()
+
+    def test_admission_fetch_pending_rows_prioritizes_alpha_generator(self, tmp_path):
+        reg = self._make_registry(tmp_path)
+        reg.queue_candidates(
+            [
+                CandidateSeed(
+                    expression="old_unknown",
+                    source="legacy_batch",
+                    fitness=10.0,
+                    created_at=1.0,
+                ),
+                CandidateSeed(
+                    expression="fresh_generated",
+                    source="alpha_generator_btc",
+                    fitness=0.5,
+                    created_at=10.0,
+                ),
+                CandidateSeed(
+                    expression="fresh_manual",
+                    source="manual",
+                    fitness=1.0,
+                    created_at=9.0,
+                ),
+            ]
+        )
+
+        cfg = Config()
+        daemon = AdmissionDaemon("BTC", cfg)
+        daemon._open_registry_conn = lambda: reg._conn
+
+        rows = daemon._fetch_pending_rows(3)
+
+        assert [row[1] for row in rows] == [
+            "fresh_generated",
+            "fresh_manual",
+            "old_unknown",
+        ]
         reg.close()
 
 

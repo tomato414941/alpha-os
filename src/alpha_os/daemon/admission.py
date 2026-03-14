@@ -202,17 +202,33 @@ class AdmissionDaemon:
         conn.close()
         return row[0]
 
+    def _fetch_pending_rows(self, limit: int) -> list[tuple[str, str, float]]:
+        conn = self._open_registry_conn()
+        rows = conn.execute(
+            """
+            SELECT candidate_id, expression, fitness
+            FROM candidates
+            WHERE status = 'pending'
+            ORDER BY
+                CASE
+                    WHEN source LIKE 'alpha_generator_%' THEN 0
+                    WHEN source = 'manual' THEN 1
+                    ELSE 2
+                END,
+                created_at DESC,
+                fitness DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return rows
+
     def _run_batch(self) -> None:
         t0 = time.perf_counter()
 
         # Fetch pending candidates
-        conn = self._open_registry_conn()
-        rows = conn.execute(
-            "SELECT candidate_id, expression, fitness FROM candidates "
-            "WHERE status = 'pending' ORDER BY fitness DESC LIMIT ?",
-            (self.admission_cfg.batch_size,),
-        ).fetchall()
-        conn.close()
+        rows = self._fetch_pending_rows(self.admission_cfg.batch_size)
 
         if not rows:
             return

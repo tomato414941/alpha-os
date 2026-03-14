@@ -72,14 +72,16 @@ def test_queue_candidates_preserves_per_candidate_metadata(tmp_path):
     conn = sqlite3.connect(tmp_path / "alpha_registry.db")
     try:
         rows = conn.execute(
-            "SELECT expression, fitness, behavior_json FROM candidates ORDER BY expression"
+            "SELECT expression, source, fitness, behavior_json FROM candidates ORDER BY expression"
         ).fetchall()
     finally:
         conn.close()
         store.close()
 
     assert inserted == 2
-    assert rows[0][1] == 0.75
-    assert '"round": 4' in rows[0][2]
-    assert rows[1][1] == 1.25
-    assert '"round": 3' in rows[1][2]
+    assert rows[0][1] == "alpha_generator_btc"
+    assert rows[0][2] == 0.75
+    assert '"round": 4' in rows[0][3]
+    assert rows[1][1] == "alpha_generator_btc"
+    assert rows[1][2] == 1.25
+    assert '"round": 3' in rows[1][3]

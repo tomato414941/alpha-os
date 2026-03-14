@@ -116,6 +116,7 @@ class ManagedAlphaStore:
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS candidates (
                 candidate_id TEXT PRIMARY KEY,
+                source TEXT NOT NULL DEFAULT '',
                 expression TEXT NOT NULL,
                 fitness REAL NOT NULL,
                 status TEXT NOT NULL DEFAULT 'pending',
@@ -135,6 +136,10 @@ class ManagedAlphaStore:
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_candidates_created
             ON candidates(created_at)
+        """)
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_candidates_source_status_created
+            ON candidates(source, status, created_at DESC)
         """)
         # Pipeline v2: pre-computed diversity scores from admission daemon
         self._conn.execute("""
@@ -165,6 +170,20 @@ class ManagedAlphaStore:
             )
         except sqlite3.OperationalError:
             pass
+        try:
+            self._conn.execute(
+                "ALTER TABLE candidates ADD COLUMN source TEXT NOT NULL DEFAULT ''"
+            )
+        except sqlite3.OperationalError:
+            pass
+        self._conn.execute(
+            "UPDATE candidates SET source = 'alpha_generator_btc' "
+            "WHERE source = '' AND candidate_id LIKE 'alpha_generator_btc_%'"
+        )
+        self._conn.execute(
+            "UPDATE candidates SET source = 'manual' "
+            "WHERE source = '' AND candidate_id LIKE 'manual_%'"
+        )
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_log_growth
             ON alphas(oos_log_growth DESC)
@@ -233,6 +252,7 @@ class ManagedAlphaStore:
             candidate_id = f"{seed.source}_{digest}"
             payload[candidate_id] = (
                 candidate_id,
+                seed.source,
                 seed.expression,
                 float(seed.fitness),
                 "pending",
@@ -252,8 +272,8 @@ class ManagedAlphaStore:
 
         self._conn.executemany(
             """INSERT OR IGNORE INTO candidates
-               (candidate_id, expression, fitness, status, behavior_json, created_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+               (candidate_id, source, expression, fitness, status, behavior_json, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
             rows,
         )
         self._conn.commit()
