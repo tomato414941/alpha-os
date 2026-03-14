@@ -95,3 +95,47 @@ def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, mon
     assert selected == 2
     assert inserted == 2
     assert [row[0] for row in rows] == ["f2", "f3"]
+
+
+def test_queue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monkeypatch):
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr(
+        "alpha_os.daemon.alpha_generator.build_feature_list",
+        lambda asset: ["btc_ohlcv"],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.alpha_generator._load_generator_data",
+        lambda asset, config, features: (
+            {"btc_ohlcv": np.array([1.0, 2.0, 3.0])},
+            np.array([1.0, 2.0, 3.0]),
+            ["btc_ohlcv"],
+        ),
+    )
+    scores = {"f1": 0.3, "f2": 1.2, "f3": 0.8}
+    monkeypatch.setattr(
+        "alpha_os.daemon.alpha_generator._score_expression",
+        lambda expression, data, prices, config: scores[expression],
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.promote_per_round = 2
+    pool = DiscoveryPool()
+    signal = np.random.randn(100)
+    pool.add_if_empty(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal)
+    pool.add_if_empty(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal)
+    pool.add_if_empty(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal)
+    pool.save_to_db(Path(tmp_path) / "archive.db")
+
+    selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
+
+    conn = sqlite3.connect(tmp_path / "alpha_registry.db")
+    try:
+        rows = conn.execute(
+            "SELECT expression, fitness FROM candidates ORDER BY fitness DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    assert selected == 2
+    assert inserted == 2
+    assert [row[0] for row in rows] == ["f2", "f3"]

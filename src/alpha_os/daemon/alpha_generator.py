@@ -15,7 +15,7 @@ from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
-from ..dsl import to_string
+from ..dsl import parse, to_string
 from ..data.universe import build_feature_list, price_signal
 from ..dsl.generator import AlphaGenerator
 from ..evolution.discovery_pool import DiscoveryPool
@@ -30,6 +30,79 @@ class PromotionCandidate:
     expression: str
     fitness: float
     behavior: np.ndarray
+
+
+def _load_generator_data(
+    asset: str,
+    config: Config,
+    features: list[str],
+) -> tuple[dict[str, np.ndarray] | None, np.ndarray | None, list[str] | None]:
+    from ..data.store import DataStore
+
+    db_path = DATA_DIR / "alpha_cache.db"
+    try:
+        from signal_noise.client import SignalClient
+        client = SignalClient(
+            base_url=config.api.base_url,
+            timeout=config.api.timeout,
+        )
+        store = DataStore(db_path, client)
+        try:
+            if client.health():
+                store.sync(features)
+        except Exception as exc:
+            logger.warning("API sync failed: %s", exc)
+    except ImportError:
+        from ..data.store import DataStore as DS
+
+        store = DS(db_path, None)
+
+    matrix = store.get_matrix(features)
+    store.close()
+
+    ps = price_signal(asset)
+    if ps in matrix.columns:
+        matrix = matrix[matrix[ps].notna()]
+    matrix = matrix.bfill().fillna(0)
+
+    if len(matrix) < config.backtest.min_days:
+        return None, None, None
+
+    available = [
+        f for f in features
+        if f in matrix.columns and not (matrix[f] == 0).all()
+    ]
+    data = {col: matrix[col].values for col in matrix.columns}
+    prices = data[ps]
+    return data, prices, available
+
+
+def _score_expression(
+    expression: str,
+    data: dict[str, np.ndarray],
+    prices: np.ndarray,
+    config: Config,
+) -> float:
+    n_days = len(prices)
+    engine = BacktestEngine(
+        CostModel(
+            config.backtest.commission_pct,
+            config.backtest.slippage_pct,
+        ),
+        allow_short=config.trading.supports_short,
+    )
+    try:
+        expr = parse(expression)
+        sig = sanitize_signal(expr.evaluate(data))
+        if sig.ndim == 0:
+            sig = np.full(n_days, float(sig))
+        if len(sig) != n_days:
+            return FAILED_FITNESS
+        result = engine.run(sig, prices)
+        value = result.fitness(config.fitness_metric)
+        return value if np.isfinite(value) else FAILED_FITNESS
+    except Exception:
+        return FAILED_FITNESS
 
 
 def queue_discovery_pool_candidates(
@@ -56,6 +129,35 @@ def queue_discovery_pool_candidates(
         )
         for expr, fitness, behavior in pool.elites()
         if fitness >= config.alpha_generator.promotion_min_fitness
+    ]
+    unresolved = [candidate for candidate in promoted if candidate.fitness == 0.0]
+    if unresolved:
+        features = build_feature_list(asset)
+        data, prices, _ = _load_generator_data(asset, config, features)
+        if data is not None and prices is not None:
+            rescored: list[PromotionCandidate] = []
+            for candidate in promoted:
+                fitness = candidate.fitness
+                if fitness == 0.0:
+                    fitness = _score_expression(
+                        candidate.expression,
+                        data,
+                        prices,
+                        config,
+                    )
+                rescored.append(
+                    PromotionCandidate(
+                        expression=candidate.expression,
+                        fitness=fitness,
+                        behavior=candidate.behavior,
+                    )
+                )
+            promoted = rescored
+
+    promoted = [
+        candidate
+        for candidate in promoted
+        if candidate.fitness >= config.alpha_generator.promotion_min_fitness
     ]
     promoted.sort(key=lambda candidate: candidate.fitness, reverse=True)
     promoted = promoted[:promote_limit]
@@ -270,43 +372,7 @@ class AlphaGeneratorDaemon:
     def _load_data(
         self, features: list[str],
     ) -> tuple[dict[str, np.ndarray] | None, np.ndarray | None, list[str] | None]:
-        from ..data.store import DataStore
-
-        db_path = DATA_DIR / "alpha_cache.db"
-        try:
-            from signal_noise.client import SignalClient
-            client = SignalClient(
-                base_url=self.config.api.base_url,
-                timeout=self.config.api.timeout,
-            )
-            store = DataStore(db_path, client)
-            try:
-                if client.health():
-                    store.sync(features)
-            except Exception as exc:
-                logger.warning("API sync failed: %s", exc)
-        except ImportError:
-            from ..data.store import DataStore as DS
-            store = DS(db_path, None)
-
-        matrix = store.get_matrix(features)
-        store.close()
-
-        ps = price_signal(self.asset)
-        if ps in matrix.columns:
-            matrix = matrix[matrix[ps].notna()]
-        matrix = matrix.bfill().fillna(0)
-
-        if len(matrix) < self.config.backtest.min_days:
-            return None, None, None
-
-        available = [
-            f for f in features
-            if f in matrix.columns and not (matrix[f] == 0).all()
-        ]
-        data = {col: matrix[col].values for col in matrix.columns}
-        prices = data[ps]
-        return data, prices, available
+        return _load_generator_data(self.asset, self.config, features)
 
     def _check_memory(self) -> None:
         rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
