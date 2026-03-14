@@ -111,6 +111,30 @@ therefore:
 - `candidates` receives a capped promoted subset
 - `admission-daemon` validates and adopts them into `managed_alphas`
 
+### Pipeline Simplification Direction
+
+The current direction is not to collapse every stage into one table. It is to
+keep the three meaningful layers while making the scoring logic more coherent.
+
+What should stay:
+
+- `discovery_pool` for exploratory search
+- `managed_alphas` for validation and lifecycle control
+- `deployed_alphas` for the runtime subset
+
+What should change:
+
+- `candidates` should be treated more as a queue than as a separate conceptual
+  layer
+- each stage should use the same score schema, even if the thresholds differ
+
+Near-term design bias:
+
+- use common axes such as `quality`, `diversity`, `confidence`, and
+  `deployability`
+- let stages differ by weighting, not by completely different selection logic
+- remove stages only after the shared score model is in place
+
 ## Setup
 
 ```bash

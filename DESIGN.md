@@ -212,6 +212,67 @@ from the set that actually drives positions.
 This keeps the generator exploratory while still giving discovery-pool breadth a
 path into the managed runtime state.
 
+## Pipeline Simplification Direction
+
+The current problem is not only that the pipeline has many steps. The deeper
+problem is that the steps still optimize against partially different notions of
+"good alpha". Simplification should therefore start with score alignment, not
+with flattening the whole flow.
+
+### Layers To Preserve
+
+These layers still have distinct value and should remain:
+
+- `discovery_pool`
+  - exploratory search and novelty retention
+- `managed_alphas`
+  - admission, lifecycle, and managed state
+- `deployed_alphas`
+  - explicit runtime deployment set
+
+`candidates` is weaker conceptually. It should move toward an implementation
+detail of the promotion/admission queue rather than remain a fully separate
+decision layer.
+
+### Shared Score Schema
+
+The project should converge on a common score vocabulary across stages:
+
+- `quality`
+  - expected usefulness after costs
+- `diversity`
+  - additional information relative to the current set
+- `confidence`
+  - reliability of the estimate, including OOS/live evidence
+- `deployability`
+  - practicality for runtime use under venue/runtime constraints
+
+The goal is not to use identical thresholds everywhere. The goal is that each
+stage talks about the same axes and differs only in weighting and gating.
+
+Suggested emphasis by stage:
+
+- `discovery_pool`
+  - novelty and diversity first
+- `managed_alphas`
+  - quality and confidence first
+- `deployed_alphas`
+  - quality, diversity, and deployability together
+
+### Simplification Order
+
+The intended order is:
+
+1. make the funnel visible
+   - `generated -> discovery_pool -> promoted -> adopted -> active -> deployed`
+2. align reject/adopt reasons to the shared score schema
+3. reduce redundant stage logic
+4. only then remove or collapse stages that are clearly not pulling their
+   weight
+
+This preserves the research/runtime separation while reducing accidental
+complexity.
+
 ## Naming Reset Direction
 
 The current architectural split is still the intended design. The problem is
