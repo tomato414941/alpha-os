@@ -137,10 +137,6 @@ class ManagedAlphaStore:
             CREATE INDEX IF NOT EXISTS idx_candidates_created
             ON candidates(created_at)
         """)
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_candidates_source_status_created
-            ON candidates(source, status, created_at DESC)
-        """)
         # Pipeline v2: pre-computed diversity scores from admission daemon
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS diversity_cache (
@@ -184,6 +180,10 @@ class ManagedAlphaStore:
             "UPDATE candidates SET source = 'manual' "
             "WHERE source = '' AND candidate_id LIKE 'manual_%'"
         )
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_candidates_source_status_created
+            ON candidates(source, status, created_at DESC)
+        """)
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_log_growth
             ON alphas(oos_log_growth DESC)
