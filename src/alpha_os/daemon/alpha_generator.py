@@ -194,7 +194,12 @@ class AlphaGeneratorDaemon:
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr, feature_subset=subset)
-                if self.archive.add_if_empty(expr, behavior, sig):
+                if self.archive.add_if_empty(
+                    expr,
+                    behavior,
+                    sig,
+                    fitness=float(_fitness),
+                ):
                     n_added += 1
                     promoted.append(
                         PromotionCandidate(

@@ -78,18 +78,28 @@ class DiscoveryPool:
         return False
 
     def add_if_empty(
-        self, expr: Expr, behavior: np.ndarray, signal: np.ndarray
+        self,
+        expr: Expr,
+        behavior: np.ndarray,
+        signal: np.ndarray,
+        *,
+        fitness: float = 0.0,
     ) -> bool:
         """Add expression to the discovery pool if the cell is empty.
 
-        Path B mode: no fitness competition. First valid occupant stays.
+        Path B mode: no fitness competition. First valid occupant stays,
+        but we still persist its originating fitness for later promotion.
         """
         if not passes_sanity_filter(signal, self.config.max_nan_ratio):
             return False
         cell = self._to_cell(behavior)
         if cell in self._grid:
             return False
-        self._grid[cell] = DiscoveryPoolEntry(expr=expr, fitness=0.0, behavior=behavior)
+        self._grid[cell] = DiscoveryPoolEntry(
+            expr=expr,
+            fitness=float(fitness),
+            behavior=behavior,
+        )
         return True
 
     def _to_cell(self, behavior: np.ndarray) -> tuple[int, ...]:

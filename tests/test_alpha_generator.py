@@ -69,3 +69,29 @@ def test_queue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypat
     assert inserted == 2
     assert [row[0] for row in rows] == ["f2", "f3"]
     assert '"promotion": "manual_discovery_pool"' in rows[0][2]
+
+
+def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, monkeypatch):
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    cfg = Config()
+    cfg.alpha_generator.promote_per_round = 2
+    pool = DiscoveryPool()
+    signal = np.random.randn(100)
+    pool.add_if_empty(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal, fitness=0.4)
+    pool.add_if_empty(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal, fitness=1.4)
+    pool.add_if_empty(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal, fitness=0.9)
+    pool.save_to_db(Path(tmp_path) / "archive.db")
+
+    selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
+
+    conn = sqlite3.connect(tmp_path / "alpha_registry.db")
+    try:
+        rows = conn.execute(
+            "SELECT expression, fitness FROM candidates ORDER BY fitness DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    assert selected == 2
+    assert inserted == 2
+    assert [row[0] for row in rows] == ["f2", "f3"]

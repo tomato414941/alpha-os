@@ -364,8 +364,16 @@ class TestAddIfEmpty:
         archive = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([50.0, 10.0, 5.0])
-        assert archive.add_if_empty(Feature("f1"), behavior, signal) is True
+        assert archive.add_if_empty(
+            Feature("f1"),
+            behavior,
+            signal,
+            fitness=1.25,
+        ) is True
         assert archive.size == 1
+        best = archive.best(1)
+        assert len(best) == 1
+        assert best[0][1] == 1.25
 
     def test_rejects_occupied_cell(self):
         archive = DiscoveryPool()
