@@ -312,6 +312,12 @@ def _build_parser() -> argparse.ArgumentParser:
     rst.add_argument("--asset", type=str, default="BTC")
     rst.add_argument("--config", type=str, default=None)
 
+    afl = sub.add_parser(
+        "alpha-funnel",
+        help="Show discovery-pool to deployed-alpha funnel counts",
+    )
+    afl.add_argument("--asset", type=str, default="BTC")
+
     # seed-handcrafted
     shc = sub.add_parser(
         "seed-handcrafted",
@@ -1842,6 +1848,39 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_alpha_funnel(args: argparse.Namespace) -> None:
+    from alpha_os.alpha.funnel import load_funnel_summary
+
+    summary = load_funnel_summary(args.asset)
+    print(f"Alpha Funnel ({summary.asset.upper()})")
+    print(f"  Discovery: pool={summary.discovery_pool_entries}")
+    print(
+        "  Candidates:"
+        f" total={summary.candidate_total}"
+        f" pending={summary.candidate_pending}"
+        f" validating={summary.candidate_validating}"
+        f" adopted={summary.candidate_adopted}"
+        f" rejected={summary.candidate_rejected}"
+    )
+    print(
+        "  Promoted:"
+        f" total={summary.promoted_total}"
+        f" manual={summary.promoted_manual}"
+    )
+    print(
+        "  Managed:"
+        f" candidate={summary.managed_candidate}"
+        f" active={summary.managed_active}"
+        f" dormant={summary.managed_dormant}"
+        f" rejected={summary.managed_rejected}"
+    )
+    print(f"  Deployed: total={summary.deployed_total}")
+    if summary.reject_reasons:
+        print("  Top Rejects:")
+        for reason, count in summary.reject_reasons:
+            print(f"    - {count}x {reason}")
+
+
 def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
     from alpha_os.alpha.handcrafted import (
         get_handcrafted_expressions,
@@ -2045,6 +2084,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_testnet_readiness(args)
     elif args.command == "runtime-status":
         cmd_runtime_status(args)
+    elif args.command == "alpha-funnel":
+        cmd_alpha_funnel(args)
     elif args.command == "seed-handcrafted":
         cmd_seed_handcrafted(args)
     elif args.command == "analyze-diversity":

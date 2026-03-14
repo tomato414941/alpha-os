@@ -204,6 +204,19 @@ def test_runtime_status_parser():
     assert args.asset == "BTC"
 
 
+def test_alpha_funnel_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "alpha-funnel",
+        "--asset", "BTC",
+    ])
+
+    assert args.command == "alpha-funnel"
+    assert args.asset == "BTC"
+
+
 def test_promote_discovery_pool_parser():
     from alpha_os.cli import _build_parser
 

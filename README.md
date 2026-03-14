@@ -204,6 +204,9 @@ python -m alpha_os testnet-readiness
 # Show the current observation snapshot
 python -m alpha_os runtime-status --asset BTC
 
+# Show discovery_pool -> managed -> deployed funnel counts
+python -m alpha_os alpha-funnel --asset BTC
+
 # Inspect deployed or registry-active alpha diversity
 python -m alpha_os analyze-diversity --asset BTC --scope deployed --lookback 252
 
