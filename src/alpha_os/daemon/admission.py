@@ -5,6 +5,7 @@ import logging
 import signal
 import sqlite3
 import time
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -27,6 +28,75 @@ from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import purged_walk_forward
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class PendingCandidatePruneStats:
+    asset: str
+    max_age_days: int
+    selected_count: int
+    pruned_count: int
+
+
+def prune_stale_pending_candidates(
+    asset: str,
+    *,
+    max_age_days: int,
+    dry_run: bool = False,
+) -> PendingCandidatePruneStats:
+    cutoff = time.time() - max_age_days * 86400
+    db_path = asset_data_dir(asset) / "alpha_registry.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=30000")
+    try:
+        rows = conn.execute(
+            """
+            SELECT candidate_id
+            FROM candidates
+            WHERE status = 'pending'
+              AND created_at < ?
+              AND source NOT LIKE 'alpha_generator_%'
+              AND source != 'manual'
+            """,
+            (cutoff,),
+        ).fetchall()
+        selected_count = len(rows)
+        if dry_run or not rows:
+            return PendingCandidatePruneStats(
+                asset=asset,
+                max_age_days=max_age_days,
+                selected_count=selected_count,
+                pruned_count=0,
+            )
+
+        stamp = time.time()
+        conn.executemany(
+            """
+            UPDATE candidates
+            SET status = 'rejected',
+                validated_at = ?,
+                error_message = ?
+            WHERE candidate_id = ?
+            """,
+            [
+                (
+                    stamp,
+                    f"stale pending > {max_age_days}d",
+                    row[0],
+                )
+                for row in rows
+            ],
+        )
+        conn.commit()
+        return PendingCandidatePruneStats(
+            asset=asset,
+            max_age_days=max_age_days,
+            selected_count=selected_count,
+            pruned_count=selected_count,
+        )
+    finally:
+        conn.close()
 
 
 class AdmissionDaemon:

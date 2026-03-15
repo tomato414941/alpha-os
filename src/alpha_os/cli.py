@@ -168,6 +168,14 @@ def _build_parser() -> argparse.ArgumentParser:
     adm_d.add_argument("--asset", type=str, default="BTC")
     adm_d.add_argument("--config", type=str, default=None)
 
+    psc = sub.add_parser(
+        "prune-stale-candidates",
+        help="Reject stale pending candidates outside the active discovery/manual sources",
+    )
+    psc.add_argument("--asset", type=str, default="BTC")
+    psc.add_argument("--max-age-days", type=int, default=7)
+    psc.add_argument("--dry-run", action="store_true")
+
     # lifecycle (Pipeline v2)
     lc_d = sub.add_parser("lifecycle", help="Run daily lifecycle evaluation (oneshot)")
     lc_d.add_argument("--asset", type=str, default="BTC")
@@ -1607,6 +1615,22 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_prune_stale_candidates(args: argparse.Namespace) -> None:
+    from alpha_os.daemon.admission import prune_stale_pending_candidates
+
+    stats = prune_stale_pending_candidates(
+        args.asset,
+        max_age_days=args.max_age_days,
+        dry_run=args.dry_run,
+    )
+    print(f"Stale candidates: asset={stats.asset}")
+    print(f"  Max age days: {stats.max_age_days}")
+    print(f"  Selected:     {stats.selected_count}")
+    print(f"  Pruned:       {stats.pruned_count}")
+    if args.dry_run:
+        print("  Mode:         dry-run")
+
+
 def cmd_testnet_readiness(args: argparse.Namespace) -> None:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -2068,6 +2092,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_promote_discovery_pool(args)
     elif args.command == "admission-daemon":
         cmd_admission_daemon(args)
+    elif args.command == "prune-stale-candidates":
+        cmd_prune_stale_candidates(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
     elif args.command == "rebuild-managed-alphas":

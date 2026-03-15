@@ -234,6 +234,23 @@ def test_promote_discovery_pool_parser():
     assert args.dry_run is True
 
 
+def test_prune_stale_candidates_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "prune-stale-candidates",
+        "--asset", "BTC",
+        "--max-age-days", "14",
+        "--dry-run",
+    ])
+
+    assert args.command == "prune-stale-candidates"
+    assert args.asset == "BTC"
+    assert args.max_age_days == 14
+    assert args.dry_run is True
+
+
 def test_seed_handcrafted_parser():
     from alpha_os.cli import _build_parser
 

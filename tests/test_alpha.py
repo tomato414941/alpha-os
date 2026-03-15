@@ -38,7 +38,7 @@ from alpha_os.alpha.combiner import (
     signal_consensus,
 )
 from alpha_os.config import Config
-from alpha_os.daemon.admission import AdmissionDaemon
+from alpha_os.daemon.admission import AdmissionDaemon, prune_stale_pending_candidates
 from alpha_os.dsl.canonical import canonical_string
 from alpha_os.governance.gates import adoption_gate, GateConfig
 
@@ -592,6 +592,65 @@ class TestManagedAlphaStore:
             "old_unknown",
         ]
         reg.close()
+
+    def test_prune_stale_pending_candidates_rejects_old_non_priority_sources(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "alpha_registry.db"
+        reg = ManagedAlphaStore(db_path=db_path)
+        reg.queue_candidates(
+            [
+                CandidateSeed(
+                    expression="old_unknown",
+                    source="legacy_batch",
+                    fitness=1.0,
+                    created_at=1.0,
+                ),
+                CandidateSeed(
+                    expression="old_manual",
+                    source="manual",
+                    fitness=1.0,
+                    created_at=1.0,
+                ),
+                CandidateSeed(
+                    expression="old_generated",
+                    source="alpha_generator_btc",
+                    fitness=1.0,
+                    created_at=1.0,
+                ),
+                CandidateSeed(
+                    expression="fresh_unknown",
+                    source="legacy_batch",
+                    fitness=1.0,
+                    created_at=10_000_000_000.0,
+                ),
+            ]
+        )
+        reg.close()
+        monkeypatch.setattr(
+            "alpha_os.daemon.admission.asset_data_dir",
+            lambda asset: tmp_path,
+        )
+        monkeypatch.setattr("alpha_os.daemon.admission.time.time", lambda: 10 * 86400)
+
+        stats = prune_stale_pending_candidates("BTC", max_age_days=7)
+
+        assert stats.selected_count == 1
+        assert stats.pruned_count == 1
+
+        reg = ManagedAlphaStore(db_path=db_path)
+        try:
+            rows = reg._conn.execute(
+                "SELECT expression, status, error_message FROM candidates ORDER BY expression"
+            ).fetchall()
+            by_expression = {
+                row["expression"]: (row["status"], row["error_message"])
+                for row in rows
+            }
+            assert by_expression["old_unknown"] == ("rejected", "stale pending > 7d")
+            assert by_expression["old_manual"] == ("pending", None)
+            assert by_expression["old_generated"] == ("pending", None)
+            assert by_expression["fresh_unknown"] == ("pending", None)
+        finally:
+            reg.close()
 
 
 # ---------------------------------------------------------------------------
