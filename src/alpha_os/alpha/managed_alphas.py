@@ -1,7 +1,6 @@
 """Managed alpha store backed by SQLite."""
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
 import time
@@ -9,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..config import DATA_DIR
+from .admission_queue import CandidateSeed, queue_candidate_expressions, queue_candidates
 
 
 class AlphaState:
@@ -66,15 +66,6 @@ class DeployedAlphaEntry:
     deployed_at: float
     deployment_score: float = 0.0
     metadata: dict = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class CandidateSeed:
-    expression: str
-    source: str
-    fitness: float = 0.0
-    behavior_json: dict = field(default_factory=dict)
-    created_at: float | None = None
 
 
 class ManagedAlphaStore:
@@ -226,58 +217,17 @@ class ManagedAlphaStore:
         behavior_json: dict | None = None,
         created_at: float | None = None,
     ) -> int:
-        rows = [
-            CandidateSeed(
-                expression=expression,
-                source=source,
-                fitness=float(fitness),
-                behavior_json=dict(behavior_json or {}),
-                created_at=created_at,
-            )
-            for expression in expressions
-        ]
-        return self.queue_candidates(rows)
+        return queue_candidate_expressions(
+            self._conn,
+            expressions,
+            source=source,
+            fitness=fitness,
+            behavior_json=behavior_json,
+            created_at=created_at,
+        )
 
     def queue_candidates(self, seeds: list[CandidateSeed]) -> int:
-        if not seeds:
-            return 0
-
-        payload: dict[str, tuple[str, str, float, str, str, float]] = {}
-        for seed in seeds:
-            stamp = seed.created_at or time.time()
-            digest = hashlib.md5(
-                f"{seed.source}:{seed.expression}".encode(),
-                usedforsecurity=False,
-            ).hexdigest()[:16]
-            candidate_id = f"{seed.source}_{digest}"
-            payload[candidate_id] = (
-                candidate_id,
-                seed.source,
-                seed.expression,
-                float(seed.fitness),
-                "pending",
-                json.dumps(seed.behavior_json),
-                stamp,
-            )
-
-        rows = list(payload.values())
-        placeholders = ", ".join("?" for _ in rows)
-        existing = set()
-        if rows:
-            existing_rows = self._conn.execute(
-                f"SELECT candidate_id FROM candidates WHERE candidate_id IN ({placeholders})",
-                [row[0] for row in rows],
-            ).fetchall()
-            existing = {row["candidate_id"] for row in existing_rows}
-
-        self._conn.executemany(
-            """INSERT OR IGNORE INTO candidates
-               (candidate_id, source, expression, fitness, status, behavior_json, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            rows,
-        )
-        self._conn.commit()
-        return len(rows) - len(existing)
+        return queue_candidates(self._conn, seeds)
 
     def register(self, record: AlphaRecord) -> None:
         now = time.time()

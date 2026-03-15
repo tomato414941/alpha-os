@@ -108,7 +108,7 @@ discovery-pool entries into the admission queue each round. The runtime path is
 therefore:
 
 - `discovery_pool` finds diverse candidates
-- `candidates` receives a capped promoted subset
+- the admission queue receives a capped promoted subset
 - `admission-daemon` validates and adopts them into `managed_alphas`
 
 ### Pipeline Simplification Direction

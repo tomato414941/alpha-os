@@ -5,10 +5,19 @@ import logging
 import signal
 import sqlite3
 import time
-from dataclasses import dataclass
 
 import numpy as np
 
+from ..alpha import admission_queue
+from ..alpha.admission_queue import (
+    adopt_candidate,
+    count_pending_candidates,
+    fetch_pending_candidates,
+    gc_old_candidate_results,
+    mark_candidates_validating,
+    reject_candidate,
+    reset_candidates_to_pending,
+)
 from ..alpha.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.expression_identity import (
@@ -29,74 +38,7 @@ from ..validation.purged_cv import purged_walk_forward
 
 logger = logging.getLogger(__name__)
 
-
-@dataclass(frozen=True)
-class PendingCandidatePruneStats:
-    asset: str
-    max_age_days: int
-    selected_count: int
-    pruned_count: int
-
-
-def prune_stale_pending_candidates(
-    asset: str,
-    *,
-    max_age_days: int,
-    dry_run: bool = False,
-) -> PendingCandidatePruneStats:
-    cutoff = time.time() - max_age_days * 86400
-    db_path = asset_data_dir(asset) / "alpha_registry.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=30000")
-    try:
-        rows = conn.execute(
-            """
-            SELECT candidate_id
-            FROM candidates
-            WHERE status = 'pending'
-              AND created_at < ?
-              AND source NOT LIKE 'alpha_generator_%'
-              AND source != 'manual'
-            """,
-            (cutoff,),
-        ).fetchall()
-        selected_count = len(rows)
-        if dry_run or not rows:
-            return PendingCandidatePruneStats(
-                asset=asset,
-                max_age_days=max_age_days,
-                selected_count=selected_count,
-                pruned_count=0,
-            )
-
-        stamp = time.time()
-        conn.executemany(
-            """
-            UPDATE candidates
-            SET status = 'rejected',
-                validated_at = ?,
-                error_message = ?
-            WHERE candidate_id = ?
-            """,
-            [
-                (
-                    stamp,
-                    f"stale pending > {max_age_days}d",
-                    row[0],
-                )
-                for row in rows
-            ],
-        )
-        conn.commit()
-        return PendingCandidatePruneStats(
-            asset=asset,
-            max_age_days=max_age_days,
-            selected_count=selected_count,
-            pruned_count=selected_count,
-        )
-    finally:
-        conn.close()
+prune_stale_pending_candidates = admission_queue.prune_stale_pending_candidates
 
 
 class AdmissionDaemon:
@@ -266,33 +208,17 @@ class AdmissionDaemon:
 
     def _count_pending(self) -> int:
         conn = self._open_registry_conn()
-        row = conn.execute(
-            "SELECT COUNT(*) FROM candidates WHERE status = 'pending'"
-        ).fetchone()
-        conn.close()
-        return row[0]
+        try:
+            return count_pending_candidates(conn)
+        finally:
+            conn.close()
 
     def _fetch_pending_rows(self, limit: int) -> list[tuple[str, str, float]]:
         conn = self._open_registry_conn()
-        rows = conn.execute(
-            """
-            SELECT candidate_id, expression, fitness
-            FROM candidates
-            WHERE status = 'pending'
-            ORDER BY
-                CASE
-                    WHEN source LIKE 'alpha_generator_%' THEN 0
-                    WHEN source = 'manual' THEN 1
-                    ELSE 2
-                END,
-                created_at DESC,
-                fitness DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
-        conn.close()
-        return rows
+        try:
+            return fetch_pending_candidates(conn, limit)
+        finally:
+            conn.close()
 
     def _run_batch(self) -> None:
         t0 = time.perf_counter()
@@ -306,12 +232,10 @@ class AdmissionDaemon:
         # Mark as validating
         cids = [r[0] for r in rows]
         conn = self._open_registry_conn()
-        conn.executemany(
-            "UPDATE candidates SET status = 'validating' WHERE candidate_id = ?",
-            [(cid,) for cid in cids],
-        )
-        conn.commit()
-        conn.close()
+        try:
+            mark_candidates_validating(conn, cids)
+        finally:
+            conn.close()
 
         # Load data
         features = build_feature_list(self.asset)
@@ -560,46 +484,39 @@ class AdmissionDaemon:
 
     def _reject_candidate(self, cid: str, reason: str) -> None:
         conn = self._open_registry_conn()
-        conn.execute(
-            "UPDATE candidates SET status = 'rejected', "
-            "validated_at = ?, error_message = ? WHERE candidate_id = ?",
-            (time.time(), reason[:200], cid),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            reject_candidate(conn, cid, reason)
+        finally:
+            conn.close()
 
     def _adopt_candidate(self, cid: str, oos_sharpe: float, pbo: float, dsr: float) -> None:
         conn = self._open_registry_conn()
-        conn.execute(
-            "UPDATE candidates SET status = 'adopted', "
-            "oos_sharpe = ?, pbo = ?, dsr_pvalue = ?, validated_at = ? "
-            "WHERE candidate_id = ?",
-            (oos_sharpe, pbo, dsr, time.time(), cid),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            adopt_candidate(
+                conn,
+                cid,
+                oos_sharpe=oos_sharpe,
+                pbo=pbo,
+                dsr_pvalue=dsr,
+            )
+        finally:
+            conn.close()
 
     def _reset_to_pending(self, cids: list[str]) -> None:
         conn = self._open_registry_conn()
-        conn.executemany(
-            "UPDATE candidates SET status = 'pending' WHERE candidate_id = ?",
-            [(cid,) for cid in cids],
-        )
-        conn.commit()
-        conn.close()
+        try:
+            reset_candidates_to_pending(conn, cids)
+        finally:
+            conn.close()
 
     def _gc_old_candidates(self, max_age_days: int = 30) -> None:
-        cutoff = time.time() - max_age_days * 86400
         conn = self._open_registry_conn()
-        result = conn.execute(
-            "DELETE FROM candidates WHERE status IN ('adopted', 'rejected') "
-            "AND created_at < ?",
-            (cutoff,),
-        )
-        if result.rowcount > 0:
-            logger.info("GC: deleted %d old candidates", result.rowcount)
-        conn.commit()
-        conn.close()
+        try:
+            deleted = gc_old_candidate_results(conn, max_age_days=max_age_days)
+        finally:
+            conn.close()
+        if deleted > 0:
+            logger.info("GC: deleted %d old candidates", deleted)
 
     def _sleep(self, seconds: int) -> None:
         end = time.time() + seconds

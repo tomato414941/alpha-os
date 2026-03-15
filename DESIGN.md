@@ -231,8 +231,8 @@ These layers still have distinct value and should remain:
   - explicit runtime deployment set
 
 `candidates` is weaker conceptually. It should move toward an implementation
-detail of the promotion/admission queue rather than remain a fully separate
-decision layer.
+detail of the admission queue rather than remain a fully separate decision
+layer.
 
 ### Shared Score Schema
 

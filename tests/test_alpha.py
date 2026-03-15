@@ -626,10 +626,10 @@ class TestManagedAlphaStore:
         )
         reg.close()
         monkeypatch.setattr(
-            "alpha_os.daemon.admission.asset_data_dir",
+            "alpha_os.alpha.admission_queue.asset_data_dir",
             lambda asset: tmp_path,
         )
-        monkeypatch.setattr("alpha_os.daemon.admission.time.time", lambda: 10 * 86400)
+        monkeypatch.setattr("alpha_os.alpha.admission_queue.time.time", lambda: 10 * 86400)
 
         stats = prune_stale_pending_candidates("BTC", max_age_days=7)
 
