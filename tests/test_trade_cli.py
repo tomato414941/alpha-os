@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -99,6 +100,60 @@ def test_trade_parser():
     ])
     assert args.real is True
     assert args.capital == 500.0
+
+
+def test_trade_runtime_lock_path():
+    from alpha_os.runtime_lock import runtime_lock_path
+
+    path = runtime_lock_path("trade", ["eth", "btc"])
+
+    assert path.name == "trade_BTC-ETH.lock"
+    assert path.parent.name == "locks"
+
+
+def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
+    from alpha_os.cli import cmd_trade
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    cfg = SimpleNamespace(
+        forward=SimpleNamespace(check_interval=14400),
+        regime=SimpleNamespace(enabled=False),
+        paper=SimpleNamespace(combine_mode="consensus"),
+    )
+    args = SimpleNamespace(
+        config=None,
+        interval=None,
+        real=False,
+        asset="BTC",
+        assets=None,
+        capital=10000.0,
+        summary=False,
+        once=True,
+        schedule=False,
+        event_driven=False,
+        evolve_interval=86400,
+        pop_size=200,
+        generations=30,
+        debounce=None,
+    )
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/trade_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: cfg)
+    monkeypatch.setattr("alpha_os.cli._normalize_trade_config", lambda _cfg: [])
+    monkeypatch.setattr("alpha_os.cli._resolve_asset_list", lambda _args: ["BTC"])
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+
+    cmd_trade(args)
+
+    out = capsys.readouterr().out
+    assert "Trade runtime already active for BTC" in out
 
 
 def test_monitor_parser():
