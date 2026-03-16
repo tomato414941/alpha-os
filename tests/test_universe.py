@@ -6,9 +6,10 @@ from alpha_os.data import universe
 
 
 class _FakeClient:
-    def __init__(self, base_url: str, timeout: int):
+    def __init__(self, base_url: str, timeout: int, api_key: str | None = None):
         self.base_url = base_url
         self.timeout = timeout
+        self.api_key = api_key
 
     def list_signals(self):
         return [
@@ -41,9 +42,10 @@ def test_load_daily_signals_falls_back_to_cached_catalog(monkeypatch, tmp_path):
     monkeypatch.delenv("ALPHA_OS_SIGNAL_INTERVALS", raising=False)
 
     class _BrokenClient:
-        def __init__(self, base_url: str, timeout: int):
+        def __init__(self, base_url: str, timeout: int, api_key: str | None = None):
             self.base_url = base_url
             self.timeout = timeout
+            self.api_key = api_key
 
         def list_signals(self):
             raise TimeoutError("api timeout")
