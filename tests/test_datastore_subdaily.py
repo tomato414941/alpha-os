@@ -115,33 +115,22 @@ class TestSyncHourly:
         assert calls[2].args[0] == ["sig_missing"]
         store.close()
 
-    def test_sync_prefers_local_signal_noise_store(self, tmp_path, monkeypatch):
+    def test_sync_uses_api_client_only(self, tmp_path):
         mock_client = MagicMock()
         mock_client.stale_signals.return_value = []
-
-        class FakeLocalStore:
-            def check_freshness(self):
-                return []
-
-            def get_batch_data(self, names, since=None, columns=None, resolution=None):
-                return {
-                    name: pd.DataFrame({
-                        "timestamp": [pd.Timestamp("2024-01-02")],
-                        "value": [42.0],
-                    })
-                    for name in names
-                }
-
-            def close(self):
-                pass
+        mock_client.get_batch.return_value = {
+            "sig_remote": pd.DataFrame({
+                "timestamp": [pd.Timestamp("2024-01-02")],
+                "value": [42.0],
+            }),
+        }
 
         store = DataStore(tmp_path / "sync_local.db", client=mock_client)
-        monkeypatch.setattr(store, "_open_local_signal_noise_store", lambda: FakeLocalStore())
-        store.sync(["sig_local"])
+        store.sync(["sig_remote"])
 
-        mock_client.get_batch.assert_not_called()
+        mock_client.get_batch.assert_called_once()
         rows = store._conn.execute(
-            "SELECT date, value FROM signals WHERE name = 'sig_local'"
+            "SELECT date, value FROM signals WHERE name = 'sig_remote'"
         ).fetchall()
         assert rows == [("2024-01-02", 42.0)]
         store.close()

@@ -6,6 +6,7 @@ import argparse
 import gc
 import json
 import logging
+import os
 import sys
 import time
 from datetime import date
@@ -385,18 +386,24 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _load_config(config_path: str | None) -> Config:
-    if config_path:
-        return Config.load(Path(config_path))
-    return Config.load()
+    cfg = Config.load(Path(config_path)) if config_path else Config.load()
+    os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+    return cfg
 
 
 def _load_runtime_observation_config(config_path: str | None) -> Config:
     if config_path:
-        return Config.load(Path(config_path))
+        cfg = Config.load(Path(config_path))
+        os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+        return cfg
     user_prod = Path.home() / ".config" / "alpha-os" / "prod.toml"
     if user_prod.exists():
-        return Config.load(user_prod)
-    return Config.load()
+        cfg = Config.load(user_prod)
+        os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+        return cfg
+    cfg = Config.load()
+    os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+    return cfg
 
 
 def _normalize_trade_config(cfg: Config) -> list[str]:

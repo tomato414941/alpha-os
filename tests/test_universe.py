@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from alpha_os.data import universe
 
 
@@ -34,7 +36,7 @@ def test_load_daily_signals_interval_filter(monkeypatch):
     assert names == ["sig_3600", "sig_86400"]
 
 
-def test_load_daily_signals_falls_back_to_local_store(monkeypatch):
+def test_load_daily_signals_falls_back_to_cached_catalog(monkeypatch, tmp_path):
     universe._daily_signal_cache = None
     monkeypatch.delenv("ALPHA_OS_SIGNAL_INTERVALS", raising=False)
 
@@ -47,11 +49,17 @@ def test_load_daily_signals_falls_back_to_local_store(monkeypatch):
             raise TimeoutError("api timeout")
 
     monkeypatch.setattr("signal_noise.client.SignalClient", _BrokenClient)
-    monkeypatch.setattr(
-        universe,
-        "_load_daily_signals_from_local_store",
-        lambda intervals: ["sig_local_a", "sig_local_b"],
+    cache_path = tmp_path / "signal_catalog.json"
+    cache_path.write_text(
+        json.dumps(
+            [
+                {"name": "sig_cached_a", "interval": 60},
+                {"name": "sig_cached_b", "interval": 86400},
+            ]
+        ),
+        encoding="utf-8",
     )
+    monkeypatch.setattr(universe, "_signal_catalog_cache_path", cache_path)
 
     names = universe.load_daily_signals()
-    assert names == ["sig_local_a", "sig_local_b"]
+    assert names == ["sig_cached_a", "sig_cached_b"]

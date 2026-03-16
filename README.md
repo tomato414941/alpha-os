@@ -142,8 +142,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# signal-noise (same server, required for data)
-pip install -e ~/projects/signal-noise
+# signal-noise client dependency only
+pip install signal-noise
 ```
 
 ## CLI

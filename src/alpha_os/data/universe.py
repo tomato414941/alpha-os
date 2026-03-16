@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import random
 from typing import TYPE_CHECKING
+
+from ..config import DATA_DIR
 
 if TYPE_CHECKING:
     from signal_noise.client import SignalClient
@@ -115,6 +118,7 @@ def price_signal(asset: str) -> str:
 
 
 _daily_signal_cache: list[str] | None = None
+_signal_catalog_cache_path = DATA_DIR / "signal_catalog.json"
 
 
 def _interval_filter() -> set[int] | None:
@@ -148,31 +152,41 @@ def _filter_signal_names(signals: list[dict], intervals: set[int] | None) -> lis
     )
 
 
-def _load_daily_signals_from_local_store(
-    intervals: set[int] | None,
-) -> list[str] | None:
+def _write_signal_catalog_cache(signals: list[dict]) -> None:
     try:
-        from signal_noise.config import DB_PATH
-        from signal_noise.store.sqlite_store import SignalStore
-
-        if not DB_PATH.exists():
-            return None
-        store = SignalStore(DB_PATH)
-        try:
-            names = _filter_signal_names(store.list_signals(), intervals)
-        finally:
-            store.close()
-        return names or None
+        _signal_catalog_cache_path.parent.mkdir(parents=True, exist_ok=True)
+        _signal_catalog_cache_path.write_text(json.dumps(signals), encoding="utf-8")
     except Exception as e:
-        log.warning("Failed to load signals from local signal-noise store: %s", e)
+        log.warning("Failed to write signal catalog cache: %s", e)
+
+
+def _load_signal_catalog_cache() -> list[dict] | None:
+    if not _signal_catalog_cache_path.exists():
         return None
+    try:
+        raw = json.loads(_signal_catalog_cache_path.read_text(encoding="utf-8"))
+        if isinstance(raw, list):
+            return raw
+    except Exception as e:
+        log.warning("Failed to load cached signal catalog: %s", e)
+        return None
+    log.warning("Ignoring malformed cached signal catalog: %s", _signal_catalog_cache_path)
+    return None
+
+
+def _cached_signal_catalog_names(intervals: set[int] | None) -> list[str] | None:
+    cached = _load_signal_catalog_cache()
+    if not cached:
+        return None
+    names = _filter_signal_names(cached, intervals)
+    return names or None
 
 
 def load_daily_signals() -> list[str]:
     """Load runtime signal names from signal-noise REST API.
 
     Default includes all available intervals.
-    Falls back to MACRO_SIGNALS if API is unavailable.
+    Falls back to alpha-os cached signal catalog if API is unavailable.
     """
     global _daily_signal_cache
     if _daily_signal_cache is not None:
@@ -186,6 +200,7 @@ def load_daily_signals() -> list[str]:
         intervals = _interval_filter()
         names = _filter_signal_names(signals, intervals)
         if names:
+            _write_signal_catalog_cache(signals)
             if intervals is None:
                 log.info("Loaded %d signals from API (all intervals)", len(names))
             else:
@@ -196,13 +211,13 @@ def load_daily_signals() -> list[str]:
         log.warning("Failed to load signals from API: %s", e)
 
     intervals = _interval_filter()
-    names = _load_daily_signals_from_local_store(intervals)
+    names = _cached_signal_catalog_names(intervals)
     if names:
         if intervals is None:
-            log.info("Loaded %d signals from local signal-noise store", len(names))
+            log.info("Loaded %d signals from cached signal catalog", len(names))
         else:
             log.info(
-                "Loaded %d signals from local signal-noise store (intervals=%s)",
+                "Loaded %d signals from cached signal catalog (intervals=%s)",
                 len(names),
                 sorted(intervals),
             )

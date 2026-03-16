@@ -1,6 +1,6 @@
 [Unit]
 Description=Alpha-OS alpha generator daemon (%i)
-After=network.target signal-noise-scheduler.service
+After=network.target
 
 [Service]
 Type=simple
