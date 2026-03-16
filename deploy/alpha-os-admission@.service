@@ -1,0 +1,22 @@
+[Unit]
+Description=Alpha-OS admission daemon (%i)
+After=network.target
+
+[Service]
+Type=simple
+User=dev
+WorkingDirectory=/home/dev/projects/alpha-os
+EnvironmentFile=-/home/dev/.secrets/alpha-os-env
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && exec python3 -m alpha_os admission-daemon --asset %i --config /home/dev/.config/alpha-os/prod.toml'
+Restart=on-failure
+RestartSec=120
+MemoryHigh=500M
+MemoryMax=700M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/admission.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/admission.log
+KillSignal=SIGTERM
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
