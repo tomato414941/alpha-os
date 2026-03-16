@@ -11,7 +11,7 @@ from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
-from signal_noise.client import SignalClient
+from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import price_signal, MACRO_SIGNALS, build_hourly_feature_list
 from ..dsl import parse
@@ -91,10 +91,7 @@ class ForwardRunner:
         if store is not None:
             self.store = store
         else:
-            client = SignalClient(
-                base_url=config.api.base_url,
-                timeout=config.api.timeout,
-            )
+            client = build_signal_client_from_config(config.api)
             db_name = "alpha_cache_l2.db" if resolution == "1h" else "alpha_cache.db"
             self.store = DataStore(DATA_DIR / db_name, client)
 

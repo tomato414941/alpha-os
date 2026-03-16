@@ -15,6 +15,7 @@ from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
+from ..data.signal_client import build_signal_client_from_config
 from ..dsl import parse, to_string
 from ..data.universe import build_feature_list, price_signal
 from ..dsl.generator import AlphaGenerator
@@ -41,11 +42,7 @@ def _load_generator_data(
 
     db_path = DATA_DIR / "alpha_cache.db"
     try:
-        from signal_noise.client import SignalClient
-        client = SignalClient(
-            base_url=config.api.base_url,
-            timeout=config.api.timeout,
-        )
+        client = build_signal_client_from_config(config.api)
         store = DataStore(db_path, client)
         try:
             if client.health():

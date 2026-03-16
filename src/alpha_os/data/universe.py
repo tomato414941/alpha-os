@@ -7,6 +7,7 @@ import random
 from typing import TYPE_CHECKING
 
 from ..config import DATA_DIR
+from .signal_client import build_signal_client
 
 if TYPE_CHECKING:
     from signal_noise.client import SignalClient
@@ -193,9 +194,8 @@ def load_daily_signals() -> list[str]:
         return _daily_signal_cache
 
     try:
-        from signal_noise.client import SignalClient
         base_url = os.getenv("ALPHA_OS_SIGNAL_NOISE_URL", "http://127.0.0.1:8000")
-        client = SignalClient(base_url=base_url, timeout=10)
+        client = build_signal_client(base_url=base_url, timeout=10)
         signals = client.list_signals()
         intervals = _interval_filter()
         names = _filter_signal_names(signals, intervals)

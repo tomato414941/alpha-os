@@ -24,7 +24,7 @@ from ..alpha.quality import (
 from ..alpha.runtime_policy import rank_trading_records
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
-from signal_noise.client import SignalClient
+from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse, collect_feature_names
@@ -186,10 +186,7 @@ class Trader:
         if store is not None:
             self.store = store
         else:
-            client = SignalClient(
-                base_url=config.api.base_url,
-                timeout=config.api.timeout,
-            )
+            client = build_signal_client_from_config(config.api)
             self.store = DataStore(DATA_DIR / "alpha_cache.db", client)
 
         self.tactical = tactical

@@ -21,6 +21,7 @@ from ..alpha.combiner import (
 )
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..config import Config, asset_data_dir
+from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_hourly_feature_list
 from ..dsl import parse
@@ -65,11 +66,7 @@ class TacticalTrader:
         if store is not None:
             self.store = store
         else:
-            from signal_noise.client import SignalClient
-            client = SignalClient(
-                base_url=config.api.base_url,
-                timeout=config.api.timeout,
-            )
+            client = build_signal_client_from_config(config.api)
             from ..config import DATA_DIR
             self.store = DataStore(DATA_DIR / "alpha_cache_l2.db", client)
 

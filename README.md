@@ -236,6 +236,10 @@ Edit `config/default.toml` or override via environment.
 
 Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[deployment]` (deployed alpha slots and replacement policy), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
 
+If the remote `signal-noise` endpoint is protected, set `ALPHA_OS_SIGNAL_NOISE_API_KEY`
+in the runtime environment. `alpha-os` will automatically pass it to
+`signal-noise` client calls without storing the secret in repo config.
+
 ## Terminology Notes
 
 Recent CLI cleanup now prefers standard terms:

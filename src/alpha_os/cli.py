@@ -19,6 +19,7 @@ from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
+from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import is_crypto, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
@@ -440,11 +441,7 @@ def _real_data(
     db_name = "alpha_cache_l2.db" if resolution != "1d" else "alpha_cache.db"
     db_path = DATA_DIR / db_name
 
-    from signal_noise.client import SignalClient
-    client = SignalClient(
-        base_url=config.api.base_url,
-        timeout=config.api.timeout,
-    )
+    client = build_signal_client_from_config(config.api)
     store = DataStore(db_path, client)
 
     # Sync from REST API (incremental, best-effort)
@@ -1173,16 +1170,11 @@ def _setup_asset_context(
     if is_crypto(asset):
         from alpha_os.execution.binance import BinanceExecutor
         from alpha_os.execution.optimizer import ExecutionOptimizer, ExecutionConfig
-        from signal_noise.client import SignalClient
-
         signal_name = price_signal(asset)
         market_symbol = f"{asset}/USDT"
         symbol_map = {signal_name: market_symbol}
 
-        client = SignalClient(
-            base_url=cfg.api.base_url,
-            timeout=cfg.api.timeout,
-        )
+        client = build_signal_client_from_config(cfg.api)
         exec_cfg = ExecutionConfig(
             imbalance_threshold=cfg.execution.imbalance_threshold,
             vpin_threshold=cfg.execution.vpin_threshold,
@@ -1349,16 +1341,12 @@ def cmd_trade(args: argparse.Namespace) -> None:
         if getattr(args, "event_driven", False):
             import asyncio as _asyncio
 
-            from signal_noise.client import SignalClient as _SignalClient
             from alpha_os.paper.event_driven import EventDrivenTrader, EventTriggerConfig
 
             # Use first asset's trader for event-driven mode
             asset = asset_list[0]
             trader, cb, readiness_checker = contexts[asset]
-            client = _SignalClient(
-                base_url=cfg.api.base_url,
-                timeout=cfg.api.timeout,
-            )
+            client = build_signal_client_from_config(cfg.api)
 
             ed_cfg = EventTriggerConfig(
                 min_interval=cfg.event_driven.min_interval,
