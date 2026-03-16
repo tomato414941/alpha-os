@@ -21,7 +21,7 @@ class _FakeClient:
 def test_load_daily_signals_all_intervals(monkeypatch):
     universe._daily_signal_cache = None
     monkeypatch.delenv("ALPHA_OS_SIGNAL_INTERVALS", raising=False)
-    monkeypatch.setattr("signal_noise.client.SignalClient", _FakeClient)
+    monkeypatch.setattr("alpha_os.data.signal_client.SignalClient", _FakeClient)
 
     names = universe.load_daily_signals()
     assert names == ["sig_3600", "sig_60", "sig_86400"]
@@ -30,7 +30,7 @@ def test_load_daily_signals_all_intervals(monkeypatch):
 def test_load_daily_signals_interval_filter(monkeypatch):
     universe._daily_signal_cache = None
     monkeypatch.setenv("ALPHA_OS_SIGNAL_INTERVALS", "3600,86400")
-    monkeypatch.setattr("signal_noise.client.SignalClient", _FakeClient)
+    monkeypatch.setattr("alpha_os.data.signal_client.SignalClient", _FakeClient)
 
     names = universe.load_daily_signals()
     assert names == ["sig_3600", "sig_86400"]
@@ -48,7 +48,7 @@ def test_load_daily_signals_falls_back_to_cached_catalog(monkeypatch, tmp_path):
         def list_signals(self):
             raise TimeoutError("api timeout")
 
-    monkeypatch.setattr("signal_noise.client.SignalClient", _BrokenClient)
+    monkeypatch.setattr("alpha_os.data.signal_client.SignalClient", _BrokenClient)
     cache_path = tmp_path / "signal_catalog.json"
     cache_path.write_text(
         json.dumps(
