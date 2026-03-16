@@ -1146,7 +1146,7 @@ Alpha-OS dynamically discovers all signals from the signal-noise database
 bulk-imported into a local SQLite cache (`data/alpha_cache.db`) on each run.
 
 - Default: real data from signal-noise DB + local cache
-- API sync when signal-noise is running (localhost:8000)
+- API sync via the configured external signal-noise endpoint
 - `--synthetic` flag for testing with random walks (clearly labeled)
 - No silent fallback — missing data raises an error
 
