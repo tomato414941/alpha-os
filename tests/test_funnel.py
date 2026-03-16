@@ -28,13 +28,14 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
         conn.executemany(
             """
             INSERT INTO candidates (
-                candidate_id, expression, fitness, status, behavior_json,
+                candidate_id, source, expression, fitness, status, behavior_json,
                 created_at, validated_at, error_message
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
                     "alpha_generator_btc_a",
+                    "alpha_generator_btc",
                     "f1",
                     1.2,
                     "pending",
@@ -45,6 +46,7 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
                 ),
                 (
                     "alpha_generator_btc_b",
+                    "alpha_generator_btc",
                     "f2",
                     0.8,
                     "adopted",
@@ -55,6 +57,7 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
                 ),
                 (
                     "manual_btc_baseline_a",
+                    "manual",
                     "f3",
                     0.5,
                     "rejected",
@@ -103,3 +106,16 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     assert summary.managed_rejected == 1
     assert summary.deployed_total == 1
     assert summary.reject_reasons == [("feature cap 50: dxy", 1)]
+    assert [row.source for row in summary.source_summaries] == [
+        "alpha_generator_btc",
+        "manual",
+    ]
+    generator = summary.source_summaries[0]
+    assert generator.total == 2
+    assert generator.pending == 1
+    assert generator.adopted == 1
+    assert generator.rejected == 0
+    manual = summary.source_summaries[1]
+    assert manual.total == 1
+    assert manual.rejected == 1
+    assert manual.top_reject_reasons == [("feature cap 50: dxy", 1)]

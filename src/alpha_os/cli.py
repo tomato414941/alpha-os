@@ -1903,6 +1903,20 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
         print("  Top Rejects:")
         for reason, count in summary.reject_reasons:
             print(f"    - {count}x {reason}")
+    if summary.source_summaries:
+        print("  By Source:")
+        for row in summary.source_summaries:
+            print(
+                "    "
+                f"{row.source}: "
+                f"total={row.total} "
+                f"pending={row.pending} "
+                f"validating={row.validating} "
+                f"adopted={row.adopted} "
+                f"rejected={row.rejected}"
+            )
+            for reason, count in row.top_reject_reasons:
+                print(f"      - {count}x {reason}")
 
 
 def cmd_seed_handcrafted(args: argparse.Namespace) -> None:

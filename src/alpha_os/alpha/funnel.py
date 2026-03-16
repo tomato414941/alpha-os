@@ -9,6 +9,17 @@ from ..evolution.discovery_pool import DiscoveryPool
 
 
 @dataclass(frozen=True)
+class SourceFunnelSummary:
+    source: str
+    total: int
+    pending: int
+    validating: int
+    adopted: int
+    rejected: int
+    top_reject_reasons: list[tuple[str, int]]
+
+
+@dataclass(frozen=True)
 class FunnelSummary:
     asset: str
     discovery_pool_entries: int
@@ -25,6 +36,7 @@ class FunnelSummary:
     managed_rejected: int
     deployed_total: int
     reject_reasons: list[tuple[str, int]]
+    source_summaries: list[SourceFunnelSummary]
 
 
 def load_funnel_summary(asset: str) -> FunnelSummary:
@@ -34,7 +46,7 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
     conn.row_factory = sqlite3.Row
     try:
         candidate_rows = conn.execute(
-            "SELECT status, behavior_json, error_message FROM candidates"
+            "SELECT source, status, behavior_json, error_message FROM candidates"
         ).fetchall()
         managed_rows = conn.execute(
             "SELECT state FROM alphas"
@@ -52,8 +64,11 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
     promoted_total = 0
     promoted_manual = 0
     reject_reason_counts: dict[str, int] = {}
+    source_counts: dict[str, dict[str, int]] = {}
+    source_reject_reasons: dict[str, dict[str, int]] = {}
 
     for row in candidate_rows:
+        source = (row["source"] or "").strip() or "<legacy>"
         status = row["status"]
         if status == "pending":
             candidate_pending += 1
@@ -69,15 +84,25 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
             behavior = json.loads(behavior_json)
         except json.JSONDecodeError:
             behavior = {}
-        source = behavior.get("source", "")
-        if source == "alpha_generator":
+        behavior_source = behavior.get("source", "")
+        if source.startswith("alpha_generator_") or behavior_source == "alpha_generator":
             promoted_total += 1
             if behavior.get("promotion") == "manual_discovery_pool":
                 promoted_manual += 1
 
+        counts = source_counts.setdefault(
+            source,
+            {"total": 0, "pending": 0, "validating": 0, "adopted": 0, "rejected": 0},
+        )
+        counts["total"] += 1
+        if status in counts:
+            counts[status] += 1
+
         reason = (row["error_message"] or "").strip()
         if reason:
             reject_reason_counts[reason] = reject_reason_counts.get(reason, 0) + 1
+            reasons = source_reject_reasons.setdefault(source, {})
+            reasons[reason] = reasons.get(reason, 0) + 1
 
     managed_candidate = 0
     managed_active = 0
@@ -98,6 +123,27 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
         reject_reason_counts.items(),
         key=lambda item: (-item[1], item[0]),
     )[:10]
+    source_summaries = [
+        SourceFunnelSummary(
+            source=source,
+            total=counts["total"],
+            pending=counts["pending"],
+            validating=counts["validating"],
+            adopted=counts["adopted"],
+            rejected=counts["rejected"],
+            top_reject_reasons=sorted(
+                source_reject_reasons.get(source, {}).items(),
+                key=lambda item: (-item[1], item[0]),
+            )[:5],
+        )
+        for source, counts in sorted(
+            source_counts.items(),
+            key=lambda item: (
+                0 if item[0].startswith("alpha_generator_") else 1 if item[0] == "manual" else 2,
+                item[0],
+            ),
+        )
+    ]
 
     return FunnelSummary(
         asset=asset,
@@ -115,4 +161,5 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
         managed_rejected=managed_rejected,
         deployed_total=deployed_total,
         reject_reasons=top_rejects,
+        source_summaries=source_summaries,
     )
