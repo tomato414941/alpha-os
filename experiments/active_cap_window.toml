@@ -1,0 +1,51 @@
+[defaults]
+asset = "BTC"
+start_date = "2025-09-01"
+end_date = "2026-03-05"
+managed_alpha_mode = "admission"
+admission_source = "candidates"
+fail_state = "rejected"
+deployment_mode = "refresh"
+sizing_mode = "runtime"
+
+[defaults.overrides]
+deployment.max_alphas = 180
+deployment.max_replacements = 1
+deployment.promotion_margin = 0.05
+paper.rebalance_deadband_usd = 5.0
+
+[[experiment]]
+name = "active-cap-400"
+
+[experiment.overrides]
+admission.max_active_alphas = 400
+
+[[experiment]]
+name = "active-cap-600"
+
+[experiment.overrides]
+admission.max_active_alphas = 600
+
+[[experiment]]
+name = "active-cap-800"
+
+[experiment.overrides]
+admission.max_active_alphas = 800
+
+[[experiment]]
+name = "active-cap-1000"
+
+[experiment.overrides]
+admission.max_active_alphas = 1000
+
+[[experiment]]
+name = "active-cap-1200"
+
+[experiment.overrides]
+admission.max_active_alphas = 1200
+
+[[experiment]]
+name = "active-cap-1500"
+
+[experiment.overrides]
+admission.max_active_alphas = 1500

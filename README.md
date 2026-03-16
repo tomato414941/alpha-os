@@ -445,6 +445,7 @@ discussion, including:
 - participant-system mapping
 - diversity as a bottleneck candidate
 - experiment harness as a bottleneck candidate
+- why participant-governance ideas from Numerai/Polymarket matter here
 - hand-crafted BTC baseline candidates
 - directional vs distributional forecasting
 - sizing rationale and known limitations

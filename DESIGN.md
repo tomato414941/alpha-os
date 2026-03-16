@@ -555,6 +555,17 @@ The analogy is imperfect, but it is useful because the main problem is not
 "how to trade every alpha". The main problem is how to govern many candidates
 and allocate only a small subset into live trading.
 
+The useful lesson from Numerai or Polymarket is not "allow many inputs" by
+itself. It is that a large participant set can work only when:
+
+- influence is earned rather than assigned equally
+- uniqueness is rewarded rather than ignored
+- weak or redundant participants lose influence naturally
+- promotion and demotion are part of the system design
+
+For `alpha-os`, this suggests a more market-like allocation model across many
+alphas rather than a simple capped shortlist.
+
 ### Diversity As A Likely Next Bottleneck
 
 If the current simplified runtime still fails to show a useful edge after the
