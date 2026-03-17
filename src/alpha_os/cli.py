@@ -1207,14 +1207,7 @@ def _setup_asset_context(
     return trader, cb, readiness_checker
 
 
-def cmd_trade(args: argparse.Namespace) -> None:
-    cfg = _load_config(args.config)
-    profile_changes = _normalize_trade_config(cfg)
-    interval = args.interval or cfg.forward.check_interval
-    testnet = not args.real
-    asset_list = _resolve_asset_list(args)
-
-    # File logging
+def _configure_trade_logging() -> None:
     log_dir = DATA_DIR / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"trade_{date.today().isoformat()}.log"
@@ -1228,25 +1221,210 @@ def cmd_trade(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
-    if args.real:
-        print("=" * 60)
-        print("WARNING: REAL TRADING MODE — real money on Binance.")
-        print("Press Ctrl+C within 5 seconds to abort...")
-        print("=" * 60)
-        try:
-            time.sleep(5)
-        except KeyboardInterrupt:
-            print("\nAborted.")
-            return
+def _confirm_real_trading(args: argparse.Namespace) -> bool:
+    if not args.real:
+        return True
+    print("=" * 60)
+    print("WARNING: REAL TRADING MODE — real money on Binance.")
+    print("Press Ctrl+C within 5 seconds to abort...")
+    print("=" * 60)
+    try:
+        time.sleep(5)
+    except KeyboardInterrupt:
+        print("\nAborted.")
+        return False
+    return True
 
+
+def _print_trade_runtime_banner(
+    *,
+    asset_list: list[str],
+    interval: int,
+    testnet: bool,
+    profile_changes: list[str],
+    cfg: Config,
+) -> None:
     mode = "TESTNET" if testnet else "REAL"
     print(f"Trade runtime [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
     if profile_changes:
         print("Trade profile overrides: " + ", ".join(profile_changes))
     regime_state = "on" if cfg.regime.enabled else "off"
     print(f"Trade profile: {cfg.paper.combine_mode} L3, regime {regime_state}, L2 off")
+
+
+def _build_trade_contexts(
+    *,
+    asset_list: list[str],
+    cfg: Config,
+    testnet: bool,
+    capital: float,
+) -> dict[str, tuple]:
+    contexts: dict[str, tuple] = {}
+    for asset in asset_list:
+        trader, cb, readiness_checker = _setup_asset_context(
+            asset,
+            cfg,
+            testnet,
+            capital,
+        )
+        contexts[asset] = (trader, cb, readiness_checker)
+        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
+    return contexts
+
+
+def _close_trade_contexts(contexts: dict[str, tuple]) -> None:
+    for trader, _, _ in contexts.values():
+        trader.close()
+
+
+def _needs_trade_evolution(trader) -> bool:
+    from alpha_os.alpha.managed_alphas import AlphaState
+
+    active = trader.registry.list_by_state(AlphaState.ACTIVE)
+    return len(active) == 0
+
+
+def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
+    if readiness_checker is None:
+        return
+    report = readiness_checker.validate_cycle(
+        result,
+        recon,
+        cb,
+        result.fills,
+        order_failures=getattr(result, "order_failures", 0),
+    )
+    _print_testnet_report(report)
+    readiness_checker.print_status()
+
+
+def _run_trade_once(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    pipeline_cfg,
+) -> None:
+    for asset in asset_list:
+        print(f"\n{'='*40} {asset} {'='*40}")
+        trader, cb, readiness_checker = contexts[asset]
+        if _needs_trade_evolution(trader):
+            print(f"No alphas for {asset} — running evolution...")
+            _run_evolution(trader, cfg, pipeline_cfg)
+        result = trader.run_cycle()
+        _print_paper_result(result)
+        recon = trader.reconcile()
+        _run_trade_readiness_check(result, recon, cb, readiness_checker)
+        trader.print_status()
+
+
+def _build_trade_cycle_runner(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    args: argparse.Namespace,
+    pipeline_cfg,
+):
+    logger = logging.getLogger(__name__)
+    last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
+    use_alpha_generator = cfg.alpha_generator.enabled
+    use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
+    if use_alpha_generator:
+        logger.info("Pipeline v2: alpha generator enabled — skipping inline evolution")
+    if use_lifecycle_daemon:
+        logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
+
+    def cycle() -> None:
+        for asset in asset_list:
+            trader, cb, readiness_checker = contexts[asset]
+            logger.info("--- %s cycle start ---", asset)
+            now = time.time()
+            evolve_interval = args.evolve_interval
+            if evolve_interval > 0 and not use_alpha_generator:
+                if _needs_trade_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
+                    logger.info("Running alpha evolution for %s...", asset)
+                    _run_evolution(trader, cfg, pipeline_cfg)
+                    last_evolve[asset] = now
+            result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
+            _print_paper_result(result)
+            recon = trader.reconcile()
+            _run_trade_readiness_check(result, recon, cb, readiness_checker)
+            logger.info("--- %s cycle done ---", asset)
+
+    return cycle
+
+
+def _run_event_driven_trade(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    args: argparse.Namespace,
+    pipeline_cfg,
+) -> None:
+    import asyncio as _asyncio
+
+    from alpha_os.paper.event_driven import EventDrivenTrader, EventTriggerConfig
+
+    asset = asset_list[0]
+    trader, _, _ = contexts[asset]
+    client = build_signal_client_from_config(cfg.api)
+    last_evolve: dict[str, float] = {asset: 0.0}
+
+    ed_cfg = EventTriggerConfig(
+        min_interval=cfg.event_driven.min_interval,
+        max_interval=cfg.event_driven.max_interval,
+        subscribe_pattern=cfg.event_driven.subscribe_pattern,
+        anomaly_trigger=cfg.event_driven.anomaly_trigger,
+    )
+    if args.debounce is not None:
+        ed_cfg.min_interval = float(args.debounce)
+
+    print(
+        f"Event-driven mode: debounce={ed_cfg.min_interval:.0f}s, "
+        f"fallback={ed_cfg.max_interval:.0f}s, "
+        f"pattern={ed_cfg.subscribe_pattern}"
+    )
+
+    def _pre_cycle() -> None:
+        now = time.time()
+        evolve_interval = args.evolve_interval
+        if evolve_interval > 0:
+            if _needs_trade_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
+                logging.getLogger(__name__).info("Running alpha evolution for %s...", asset)
+                _run_evolution(trader, cfg, pipeline_cfg)
+                last_evolve[asset] = now
+
+    ed_trader = EventDrivenTrader(
+        trader=trader,
+        client=client,
+        config=ed_cfg,
+        pre_cycle_hook=_pre_cycle,
+    )
+    _asyncio.run(ed_trader.run())
+
+
+def cmd_trade(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    profile_changes = _normalize_trade_config(cfg)
+    interval = args.interval or cfg.forward.check_interval
+    testnet = not args.real
+    asset_list = _resolve_asset_list(args)
+    _configure_trade_logging()
+
+    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    if not _confirm_real_trading(args):
+        return
+    _print_trade_runtime_banner(
+        asset_list=asset_list,
+        interval=interval,
+        testnet=testnet,
+        profile_changes=profile_changes,
+        cfg=cfg,
+    )
 
     lock_path = runtime_lock_path("trade", asset_list)
     try:
@@ -1260,129 +1438,51 @@ def cmd_trade(args: argparse.Namespace) -> None:
         return
 
     try:
-        # Initialize per-asset contexts
-        contexts: dict[str, tuple] = {}
-        for asset in asset_list:
-            trader, cb, readiness_checker = _setup_asset_context(
-                asset, cfg, testnet, args.capital,
-            )
-            contexts[asset] = (trader, cb, readiness_checker)
-            print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
+        contexts = _build_trade_contexts(
+            asset_list=asset_list,
+            cfg=cfg,
+            testnet=testnet,
+            capital=args.capital,
+        )
 
         if args.summary:
             for asset in asset_list:
                 print(f"\n--- {asset} ---")
                 contexts[asset][0].print_status()
-            for t, _, _ in contexts.values():
-                t.close()
+            _close_trade_contexts(contexts)
             return
-
-        from alpha_os.alpha.managed_alphas import AlphaState
 
         pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
-        def _needs_evolution(trader):
-            active = trader.registry.list_by_state(AlphaState.ACTIVE)
-            return len(active) == 0
-
-        def _run_testnet_readiness_check(result, recon, cb, readiness_checker):
-            if readiness_checker is None:
-                return
-            report = readiness_checker.validate_cycle(
-                result, recon, cb, result.fills,
-                order_failures=getattr(result, "order_failures", 0),
-            )
-            _print_testnet_report(report)
-            readiness_checker.print_status()
 
         if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
-            for asset in asset_list:
-                print(f"\n{'='*40} {asset} {'='*40}")
-                trader, cb, readiness_checker = contexts[asset]
-                if _needs_evolution(trader):
-                    print(f"No alphas for {asset} — running evolution...")
-                    _run_evolution(trader, cfg, pipeline_cfg)
-                result = trader.run_cycle()
-                _print_paper_result(result)
-                recon = trader.reconcile()
-                _run_testnet_readiness_check(result, recon, cb, readiness_checker)
-                trader.print_status()
-            for trader, _, _ in contexts.values():
-                trader.close()
+            _run_trade_once(
+                asset_list=asset_list,
+                contexts=contexts,
+                cfg=cfg,
+                pipeline_cfg=pipeline_cfg,
+            )
+            _close_trade_contexts(contexts)
             return
 
-        last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
-        logger = logging.getLogger(__name__)
-
-        # Pipeline v2: determine if daemons handle alpha generation/lifecycle
-        use_alpha_generator = cfg.alpha_generator.enabled
-        use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
-        if use_alpha_generator:
-            logger.info("Pipeline v2: alpha generator enabled — skipping inline evolution")
-        if use_lifecycle_daemon:
-            logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
-
-        def cycle():
-            for asset in asset_list:
-                trader, cb, readiness_checker = contexts[asset]
-                logger.info("--- %s cycle start ---", asset)
-                now = time.time()
-                evolve_interval = args.evolve_interval
-                if evolve_interval > 0 and not use_alpha_generator:
-                    if _needs_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
-                        logger.info("Running alpha evolution for %s...", asset)
-                        _run_evolution(trader, cfg, pipeline_cfg)
-                        last_evolve[asset] = now
-                result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
-                _print_paper_result(result)
-                recon = trader.reconcile()
-                _run_testnet_readiness_check(result, recon, cb, readiness_checker)
-                logger.info("--- %s cycle done ---", asset)
+        cycle = _build_trade_cycle_runner(
+            asset_list=asset_list,
+            contexts=contexts,
+            cfg=cfg,
+            args=args,
+            pipeline_cfg=pipeline_cfg,
+        )
 
         if getattr(args, "event_driven", False):
-            import asyncio as _asyncio
-
-            from alpha_os.paper.event_driven import EventDrivenTrader, EventTriggerConfig
-
-            # Use first asset's trader for event-driven mode
-            asset = asset_list[0]
-            trader, cb, readiness_checker = contexts[asset]
-            client = build_signal_client_from_config(cfg.api)
-
-            ed_cfg = EventTriggerConfig(
-                min_interval=cfg.event_driven.min_interval,
-                max_interval=cfg.event_driven.max_interval,
-                subscribe_pattern=cfg.event_driven.subscribe_pattern,
-                anomaly_trigger=cfg.event_driven.anomaly_trigger,
-            )
-
-            if args.debounce is not None:
-                ed_cfg.min_interval = float(args.debounce)
-
-            print(
-                f"Event-driven mode: debounce={ed_cfg.min_interval:.0f}s, "
-                f"fallback={ed_cfg.max_interval:.0f}s, "
-                f"pattern={ed_cfg.subscribe_pattern}"
-            )
-
-            def _pre_cycle():
-                """Handle evolution before each event-driven cycle."""
-                now = time.time()
-                evolve_interval = args.evolve_interval
-                if evolve_interval > 0:
-                    if _needs_evolution(trader) or (now - last_evolve.get(asset, 0)) >= evolve_interval:
-                        logger.info("Running alpha evolution for %s...", asset)
-                        _run_evolution(trader, cfg, pipeline_cfg)
-                        last_evolve[asset] = now
-
-            ed_trader = EventDrivenTrader(
-                trader=trader, client=client, config=ed_cfg,
-                pre_cycle_hook=_pre_cycle,
-            )
             try:
-                _asyncio.run(ed_trader.run())
+                _run_event_driven_trade(
+                    asset_list=asset_list,
+                    contexts=contexts,
+                    cfg=cfg,
+                    args=args,
+                    pipeline_cfg=pipeline_cfg,
+                )
             finally:
-                for t, _, _ in contexts.values():
-                    t.close()
+                _close_trade_contexts(contexts)
             return
 
         scheduler = PipelineScheduler(
@@ -1392,8 +1492,7 @@ def cmd_trade(args: argparse.Namespace) -> None:
         try:
             scheduler.start()
         finally:
-            for trader, _, _ in contexts.values():
-                trader.close()
+            _close_trade_contexts(contexts)
     finally:
         runtime_lock.__exit__(None, None, None)
 
