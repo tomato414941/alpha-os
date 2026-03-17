@@ -42,6 +42,126 @@ logger = logging.getLogger(__name__)
 prune_stale_pending_candidates = admission_queue.prune_stale_pending_candidates
 
 
+def _non_rejected_managed_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:
+    return [
+        record
+        for record in registry.list_all()
+        if AlphaState.canonical(record.state) != AlphaState.REJECTED
+    ]
+
+
+def _feature_cap_reference_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:
+    deployed = registry.list_deployed_alphas()
+    if deployed:
+        return deployed
+    return [
+        record
+        for record in registry.list_all()
+        if AlphaState.canonical(record.state) == AlphaState.ACTIVE
+    ]
+
+
+def _prune_active_overflow(
+    registry: ManagedAlphaStore,
+    *,
+    metric: str,
+    limit: int,
+) -> int:
+    active_count = registry.count(AlphaState.ACTIVE)
+    overflow = active_count - limit
+    if overflow <= 0:
+        return 0
+
+    for record in registry.bottom_trading(overflow, metric=metric):
+        registry.update_state(record.alpha_id, AlphaState.DORMANT)
+
+    logger.info(
+        "Admission cap: demoted %d weakest active alphas to dormant "
+        "(metric=%s, limit=%d, active_before=%d)",
+        overflow,
+        metric,
+        limit,
+        active_count,
+    )
+    return overflow
+
+
+def _reserve_active_slot(
+    registry: ManagedAlphaStore,
+    incoming_record: AlphaRecord,
+    *,
+    metric: str,
+    limit: int,
+) -> tuple[bool, str]:
+    if limit <= 0:
+        return True, ""
+
+    _prune_active_overflow(registry, metric=metric, limit=limit)
+    active_count = registry.count(AlphaState.ACTIVE)
+    if active_count < limit:
+        return True, ""
+
+    weakest = registry.bottom_trading(1, metric=metric)
+    if not weakest:
+        return True, ""
+
+    weakest_record = weakest[0]
+    incoming_score = incoming_record.oos_fitness(metric)
+    weakest_score = weakest_record.oos_fitness(metric)
+    if incoming_score <= weakest_score:
+        return False, (
+            f"active cap {limit}: {metric}={incoming_score:.3f} "
+            f"<= incumbent {weakest_record.alpha_id} ({weakest_score:.3f})"
+        )
+
+    registry.update_state(weakest_record.alpha_id, AlphaState.DORMANT)
+    logger.info(
+        "Admission cap: demoted %s to dormant to admit %s "
+        "(%s %.3f > %.3f, limit=%d)",
+        weakest_record.alpha_id,
+        incoming_record.alpha_id,
+        metric,
+        incoming_score,
+        weakest_score,
+        limit,
+    )
+    return True, ""
+
+
+def _semantic_duplicate_reason(
+    *,
+    expression: str,
+    semantic_owner_by_key: dict[str, str],
+    reject_semantic_duplicates: bool,
+) -> str:
+    if not reject_semantic_duplicates:
+        return ""
+    key = expression_semantic_key(expression)
+    owner = semantic_owner_by_key.get(key)
+    if owner is None:
+        return ""
+    return f"semantic duplicate of {owner}"
+
+
+def _feature_cap_reason(
+    *,
+    expression: str,
+    feature_counts: dict[str, int],
+    limit: int,
+) -> str:
+    if limit <= 0:
+        return ""
+    overused = sorted(
+        name
+        for name in expression_feature_names(expression)
+        if feature_counts.get(name, 0) >= limit
+    )
+    if not overused:
+        return ""
+    preview = ", ".join(overused[:3])
+    return f"feature cap {limit}: {preview}"
+
+
 class AdmissionDaemon:
     """Poll candidates table, validate, and adopt passing alphas."""
 
@@ -62,71 +182,22 @@ class AdmissionDaemon:
         metric: str,
         limit: int,
     ) -> int:
-        active_count = registry.count(AlphaState.ACTIVE)
-        overflow = active_count - limit
-        if overflow <= 0:
-            return 0
-
-        for record in registry.bottom_trading(overflow, metric=metric):
-            registry.update_state(record.alpha_id, AlphaState.DORMANT)
-
-        logger.info(
-            "Admission cap: demoted %d weakest active alphas to dormant "
-            "(metric=%s, limit=%d, active_before=%d)",
-            overflow,
-            metric,
-            limit,
-            active_count,
-        )
-        return overflow
+        return _prune_active_overflow(registry, metric=metric, limit=limit)
 
     def _reserve_active_slot(
         self,
         registry: ManagedAlphaStore,
         incoming_record: AlphaRecord,
     ) -> tuple[bool, str]:
-        limit = self.admission_cfg.max_active_alphas
-        if limit <= 0:
-            return True, ""
-
-        metric = self._admission_metric()
-        self._prune_active_overflow(registry, metric=metric, limit=limit)
-        active_count = registry.count(AlphaState.ACTIVE)
-        if active_count < limit:
-            return True, ""
-
-        weakest = registry.bottom_trading(1, metric=metric)
-        if not weakest:
-            return True, ""
-
-        weakest_record = weakest[0]
-        incoming_score = incoming_record.oos_fitness(metric)
-        weakest_score = weakest_record.oos_fitness(metric)
-        if incoming_score <= weakest_score:
-            return False, (
-                f"active cap {limit}: {metric}={incoming_score:.3f} "
-                f"<= incumbent {weakest_record.alpha_id} ({weakest_score:.3f})"
-            )
-
-        registry.update_state(weakest_record.alpha_id, AlphaState.DORMANT)
-        logger.info(
-            "Admission cap: demoted %s to dormant to admit %s "
-            "(%s %.3f > %.3f, limit=%d)",
-            weakest_record.alpha_id,
-            incoming_record.alpha_id,
-            metric,
-            incoming_score,
-            weakest_score,
-            limit,
+        return _reserve_active_slot(
+            registry,
+            incoming_record,
+            metric=self._admission_metric(),
+            limit=self.admission_cfg.max_active_alphas,
         )
-        return True, ""
 
     def _managed_registry_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
-        return [
-            record
-            for record in registry.list_all()
-            if AlphaState.canonical(record.state) != AlphaState.REJECTED
-        ]
+        return _non_rejected_managed_records(registry)
 
     def _semantic_key(self, expression: str) -> str:
         return expression_semantic_key(expression)
@@ -135,14 +206,7 @@ class AdmissionDaemon:
         return expression_feature_names(expression)
 
     def _feature_cap_reference_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
-        deployed = registry.list_deployed_alphas()
-        if deployed:
-            return deployed
-        return [
-            record
-            for record in registry.list_all()
-            if AlphaState.canonical(record.state) == AlphaState.ACTIVE
-        ]
+        return _feature_cap_reference_records(registry)
 
     def _feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
         return count_expression_features(record.expression for record in records)
@@ -153,13 +217,11 @@ class AdmissionDaemon:
         expression: str,
         semantic_owner_by_key: dict[str, str],
     ) -> str:
-        if not self.admission_cfg.reject_semantic_duplicates:
-            return ""
-        key = self._semantic_key(expression)
-        owner = semantic_owner_by_key.get(key)
-        if owner is None:
-            return ""
-        return f"semantic duplicate of {owner}"
+        return _semantic_duplicate_reason(
+            expression=expression,
+            semantic_owner_by_key=semantic_owner_by_key,
+            reject_semantic_duplicates=self.admission_cfg.reject_semantic_duplicates,
+        )
 
     def _feature_cap_reason(
         self,
@@ -167,18 +229,11 @@ class AdmissionDaemon:
         expression: str,
         feature_counts: dict[str, int],
     ) -> str:
-        limit = self.admission_cfg.max_feature_occurrences
-        if limit <= 0:
-            return ""
-        overused = sorted(
-            name
-            for name in self._feature_names(expression)
-            if feature_counts.get(name, 0) >= limit
+        return _feature_cap_reason(
+            expression=expression,
+            feature_counts=feature_counts,
+            limit=self.admission_cfg.max_feature_occurrences,
         )
-        if not overused:
-            return ""
-        preview = ", ".join(overused[:3])
-        return f"feature cap {limit}: {preview}"
 
     def run(self) -> None:
         self._running = True
