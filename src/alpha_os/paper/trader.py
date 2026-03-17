@@ -1073,7 +1073,3 @@ class Trader:
         self.registry.close()
         if self.tactical is not None:
             self.tactical.close()
-
-
-# Backward compatibility
-PaperTrader = Trader

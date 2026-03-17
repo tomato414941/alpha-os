@@ -8,7 +8,6 @@ import time
 
 import numpy as np
 
-from ..alpha import admission_queue
 from ..alpha.admission_queue import (
     adopt_candidate,
     count_pending_candidates,
@@ -38,8 +37,6 @@ from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import purged_walk_forward
 
 logger = logging.getLogger(__name__)
-
-prune_stale_pending_candidates = admission_queue.prune_stale_pending_candidates
 
 
 def _non_rejected_managed_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:

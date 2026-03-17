@@ -315,7 +315,7 @@ class TestSignalDeltaExit:
 class TestPositionSizing:
     def test_dollar_pos_scales_with_portfolio_value(self, tmp_path):
         """Position sizing should use current portfolio value, not initial capital."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -328,7 +328,7 @@ class TestPositionSizing:
 
         # Simulate a grown portfolio: started at $10k, now $50k
         executor = PaperExecutor(initial_cash=50000.0)
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
@@ -354,10 +354,10 @@ class TestPositionSizing:
         trader.close()
 
 
-class TestPaperTrader:
+class TestTrader:
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -369,7 +369,7 @@ class TestPaperTrader:
         cfg = Config()
         pt = PaperPortfolioTracker(db)
 
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
@@ -384,7 +384,7 @@ class TestPaperTrader:
 
     def test_restore_state_from_snapshot(self, tmp_path):
         """Trader should restore cash/positions from last snapshot."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -402,7 +402,7 @@ class TestPaperTrader:
         ))
 
         cfg = Config()
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
@@ -418,7 +418,7 @@ class TestPaperTrader:
 
     def test_sync_state_from_newer_snapshot(self, tmp_path):
         """Trader should refresh executor state when a newer snapshot appears."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -436,7 +436,7 @@ class TestPaperTrader:
         ))
 
         cfg = Config()
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=pt,
@@ -461,7 +461,7 @@ class TestPaperTrader:
 
     def test_build_allocation_plan_clamps_short_target_in_long_only_mode(self, tmp_path):
         """Long-only mode should never emit a negative target position."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -469,7 +469,7 @@ class TestPaperTrader:
 
         cfg = Config()
         store = _StaticMatrixStore(pd.DataFrame({"btc_ohlcv": [100.0]}))
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
@@ -494,7 +494,7 @@ class TestPaperTrader:
 
     def test_build_allocation_plan_keeps_short_target_when_supported(self, tmp_path):
         """Long/short mode should preserve negative target positions."""
-        from alpha_os.paper.trader import PaperTrader
+        from alpha_os.paper.trader import Trader
         from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
         from alpha_os.alpha.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
@@ -503,7 +503,7 @@ class TestPaperTrader:
         cfg = Config()
         cfg.trading.mode = TRADING_MODE_FUTURES_LONG_SHORT
         store = _StaticMatrixStore(pd.DataFrame({"btc_ohlcv": [100.0]}))
-        trader = PaperTrader(
+        trader = Trader(
             asset="BTC",
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),

@@ -38,7 +38,8 @@ from alpha_os.alpha.combiner import (
     signal_consensus,
 )
 from alpha_os.config import Config
-from alpha_os.daemon.admission import AdmissionDaemon, prune_stale_pending_candidates
+from alpha_os.daemon.admission import AdmissionDaemon
+from alpha_os.alpha.admission_queue import prune_stale_pending_candidates
 from alpha_os.dsl.canonical import canonical_string
 from alpha_os.governance.gates import adoption_gate, GateConfig
 

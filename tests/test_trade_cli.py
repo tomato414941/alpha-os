@@ -8,12 +8,6 @@ from unittest.mock import MagicMock
 import pytest
 
 
-def test_trader_alias():
-    """PaperTrader alias still works after rename."""
-    from alpha_os.paper.trader import Trader, PaperTrader
-    assert PaperTrader is Trader
-
-
 def test_executor_abc_has_defaults():
     """Executor ABC provides default implementations for optional methods."""
     from alpha_os.execution.executor import Executor

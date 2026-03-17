@@ -7,7 +7,7 @@ from alpha_os.config import Config
 from alpha_os.forward.tracker import ForwardTracker
 from alpha_os.governance.audit_log import AuditLog
 from alpha_os.paper.tracker import PaperPortfolioTracker
-from alpha_os.paper.trader import PaperTrader
+from alpha_os.paper.trader import Trader
 
 
 class _DummyStore:
@@ -16,7 +16,7 @@ class _DummyStore:
 
 
 def test_trader_recomputes_diversity_when_cache_is_degenerate(tmp_path):
-    trader = PaperTrader(
+    trader = Trader(
         asset="BTC",
         config=Config(),
         portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),

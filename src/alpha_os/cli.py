@@ -821,7 +821,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
         _cmd_paper_replay(args, cfg)
         return
 
-    from alpha_os.paper.trader import PaperTrader
+    from alpha_os.paper.trader import Trader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
     tactical = _build_tactical_trader(
@@ -830,7 +830,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
         enabled=getattr(args, "tactical", False),
     )
 
-    trader = PaperTrader(asset=args.asset, config=cfg, tactical=tactical)
+    trader = Trader(asset=args.asset, config=cfg, tactical=tactical)
 
     if args.summary:
         trader.print_status()
@@ -1725,7 +1725,7 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
 
 
 def cmd_prune_stale_candidates(args: argparse.Namespace) -> None:
-    from alpha_os.daemon.admission import prune_stale_pending_candidates
+    from alpha_os.alpha.admission_queue import prune_stale_pending_candidates
 
     stats = prune_stale_pending_candidates(
         args.asset,
