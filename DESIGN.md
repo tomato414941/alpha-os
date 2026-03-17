@@ -1847,7 +1847,7 @@ trade interruption.
 - Add `alpha-generator` CLI subcommand.
 - Add `alpha-os-alpha-generator@.service` systemd unit.
 - Test: start the alpha generator, verify the archive grows.
-- The existing `alpha-os.service` continues running unchanged.
+- The existing `alpha-os@BTC.service` continues running unchanged.
 
 #### Step 3: admission daemon (no trade downtime)
 
@@ -1871,7 +1871,7 @@ if evolve_interval > 0 and not cfg.alpha_generator.enabled:
     ...
 ```
 
-- Set `enabled = true` in TOML, restart `alpha-os.service`. Downtime: ~1
+- Set `enabled = true` in TOML, restart `alpha-os@BTC.service`. Downtime: ~1
   minute.
 - Rollback: set `enabled = false`, restart. Instant revert.
 

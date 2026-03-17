@@ -1,5 +1,5 @@
 [Unit]
-Description=Alpha-OS multi-asset trading
+Description=Alpha-OS trade runtime (compat wrapper, BTC)
 After=network.target
 
 [Service]
@@ -7,12 +7,12 @@ Type=simple
 User=dev
 WorkingDirectory=/home/dev/projects/alpha-os
 EnvironmentFile=-/home/dev/.secrets/alpha-os-env
-ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/logs
-ExecStart=/home/dev/projects/alpha-os/scripts/run_schedule.sh BTC,ETH,SOL,BNB,XRP,ADA,DOGE,NVDA,AAPL,MSFT,GOOGL,AMZN,META,TSLA,AMD
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/BTC/logs /home/dev/projects/alpha-os/data/BTC/metrics
+ExecStart=/home/dev/projects/alpha-os/scripts/run_schedule.sh BTC
 Restart=on-failure
 RestartSec=60
-StandardOutput=append:/home/dev/projects/alpha-os/data/logs/service.log
-StandardError=append:/home/dev/projects/alpha-os/data/logs/service.log
+StandardOutput=append:/home/dev/projects/alpha-os/data/BTC/logs/service.log
+StandardError=append:/home/dev/projects/alpha-os/data/BTC/logs/service.log
 
 # Graceful shutdown via SIGTERM (PipelineScheduler handles it)
 KillSignal=SIGTERM

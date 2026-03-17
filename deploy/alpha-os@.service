@@ -1,5 +1,5 @@
 [Unit]
-Description=Alpha-OS live trading (%i)
+Description=Alpha-OS trade runtime (%i)
 After=network.target
 
 [Service]
