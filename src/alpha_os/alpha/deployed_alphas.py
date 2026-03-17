@@ -116,6 +116,14 @@ class RegistryActivePruneStats:
     deployed_refresh: DeployedAlphaRefreshStats | None
 
 
+@dataclass(frozen=True)
+class RankedActiveAlphaInputs:
+    active_records: list[AlphaRecord]
+    ranked: list[RankedDeployedAlpha]
+    semantic_key_by_id: dict[str, str]
+    feature_names_by_id: dict[str, set[str]]
+
+
 def plan_deployed_alphas(
     records: list[AlphaRecord],
     current_ids: list[str],
@@ -129,6 +137,83 @@ def plan_deployed_alphas(
     signal_similarity_max: float = 1.0,
     max_feature_occurrences: int = 0,
 ) -> DeployedAlphaPlan:
+    prepared = _prepare_ranked_active_alphas(
+        records,
+        estimate_for=estimate_for,
+        metric=metric,
+    )
+    ranked = prepared.ranked
+
+    if max_alphas <= 0 or not ranked:
+        return _empty_deployed_alpha_plan(active_count=len(prepared.active_records))
+
+    ranked, skipped_semantic_duplicate_ids = _dedupe_by_semantic_key(
+        ranked,
+        semantic_key_by_id=prepared.semantic_key_by_id,
+    )
+    ranked, skipped_signal_duplicate_ids = _dedupe_by_signal_similarity(
+        ranked,
+        signal_by_id=signal_by_id or {},
+        similarity_max=signal_similarity_max,
+    )
+    ranked, skipped_feature_cap_ids = _apply_feature_usage_cap(
+        ranked,
+        feature_names_by_id=prepared.feature_names_by_id,
+        max_occurrences=max_feature_occurrences,
+        min_keep=max_alphas,
+    )
+    ranked_by_id = {item.alpha_id: item for item in ranked}
+    current = _resolve_ranked_current_ids(current_ids, ranked_by_id)
+    current_set = set(current)
+    selected_ids = _seed_selected_ids(
+        current=current,
+        ranked=ranked,
+        max_alphas=max_alphas,
+    )
+    current_set = set(current)
+    remaining_ranked = [
+        item.alpha_id for item in ranked if item.alpha_id not in set(selected_ids)
+    ]
+    selected_ids, replacements = _apply_replacement_policy(
+        selected_ids=selected_ids,
+        current_set=current_set,
+        remaining_ranked=remaining_ranked,
+        ranked_by_id=ranked_by_id,
+        max_replacements=max_replacements,
+        promotion_margin=promotion_margin,
+    )
+
+    selected = sorted(
+        [ranked_by_id[alpha_id] for alpha_id in selected_ids],
+        key=lambda item: item.rank_key,
+        reverse=True,
+    )
+    selected_set = {item.alpha_id for item in selected}
+    kept_ids = [item.alpha_id for item in selected if item.alpha_id in current_set]
+    added_ids = [item.alpha_id for item in selected if item.alpha_id not in current_set]
+    dropped_ids = [alpha_id for alpha_id in current if alpha_id not in selected_set]
+
+    return DeployedAlphaPlan(
+        active_count=len(prepared.active_records),
+        current_count=len(current),
+        deployed_count=len(selected),
+        replacement_count=replacements,
+        kept_ids=kept_ids,
+        added_ids=added_ids,
+        dropped_ids=dropped_ids,
+        skipped_semantic_duplicate_ids=skipped_semantic_duplicate_ids,
+        skipped_signal_duplicate_ids=skipped_signal_duplicate_ids,
+        skipped_feature_cap_ids=skipped_feature_cap_ids,
+        selected=selected,
+    )
+
+
+def _prepare_ranked_active_alphas(
+    records: list[AlphaRecord],
+    *,
+    estimate_for,
+    metric: str,
+) -> RankedActiveAlphaInputs:
     active_records = [
         record for record in records
         if AlphaState.canonical(record.state) == AlphaState.ACTIVE
@@ -138,68 +223,92 @@ def plan_deployed_alphas(
         for record in active_records
     ]
     ranked.sort(key=lambda item: item.rank_key, reverse=True)
-    ranked_by_id = {item.alpha_id: item for item in ranked}
-    semantic_key_by_id = {
-        record.alpha_id: expression_semantic_key(record.expression)
-        for record in active_records
-    }
-    feature_names_by_id = {
-        record.alpha_id: expression_feature_names(record.expression)
-        for record in active_records
-    }
+    return RankedActiveAlphaInputs(
+        active_records=active_records,
+        ranked=ranked,
+        semantic_key_by_id={
+            record.alpha_id: expression_semantic_key(record.expression)
+            for record in active_records
+        },
+        feature_names_by_id={
+            record.alpha_id: expression_feature_names(record.expression)
+            for record in active_records
+        },
+    )
 
-    if max_alphas <= 0 or not ranked:
-        return DeployedAlphaPlan(
-            active_count=len(active_records),
-            current_count=0,
-            deployed_count=0,
-            replacement_count=0,
-            kept_ids=[],
-            added_ids=[],
-            dropped_ids=[],
-            skipped_semantic_duplicate_ids=[],
-            skipped_signal_duplicate_ids=[],
-            skipped_feature_cap_ids=[],
-            selected=[],
-        )
 
-    deduped_ranked: list[RankedDeployedAlpha] = []
+def _empty_deployed_alpha_plan(*, active_count: int) -> DeployedAlphaPlan:
+    return DeployedAlphaPlan(
+        active_count=active_count,
+        current_count=0,
+        deployed_count=0,
+        replacement_count=0,
+        kept_ids=[],
+        added_ids=[],
+        dropped_ids=[],
+        skipped_semantic_duplicate_ids=[],
+        skipped_signal_duplicate_ids=[],
+        skipped_feature_cap_ids=[],
+        selected=[],
+    )
+
+
+def _dedupe_by_semantic_key(
+    ranked: list[RankedDeployedAlpha],
+    *,
+    semantic_key_by_id: dict[str, str],
+) -> tuple[list[RankedDeployedAlpha], list[str]]:
+    kept: list[RankedDeployedAlpha] = []
     seen_keys: set[str] = set()
-    skipped_semantic_duplicate_ids: list[str] = []
+    skipped: list[str] = []
     for item in ranked:
         key = semantic_key_by_id[item.alpha_id]
         if key in seen_keys:
-            skipped_semantic_duplicate_ids.append(item.alpha_id)
+            skipped.append(item.alpha_id)
             continue
         seen_keys.add(key)
-        deduped_ranked.append(item)
-    ranked, skipped_signal_duplicate_ids = _dedupe_by_signal_similarity(
-        deduped_ranked,
-        signal_by_id=signal_by_id or {},
-        similarity_max=signal_similarity_max,
-    )
-    ranked, skipped_feature_cap_ids = _apply_feature_usage_cap(
-        ranked,
-        feature_names_by_id=feature_names_by_id,
-        max_occurrences=max_feature_occurrences,
-        min_keep=max_alphas,
-    )
-    ranked_by_id = {item.alpha_id: item for item in ranked}
+        kept.append(item)
+    return kept, skipped
 
-    current = []
-    seen = set()
+
+def _resolve_ranked_current_ids(
+    current_ids: list[str],
+    ranked_by_id: dict[str, RankedDeployedAlpha],
+) -> list[str]:
+    current: list[str] = []
+    seen: set[str] = set()
     for alpha_id in current_ids:
         if alpha_id in ranked_by_id and alpha_id not in seen:
             current.append(alpha_id)
             seen.add(alpha_id)
+    return current
 
+
+def _seed_selected_ids(
+    *,
+    current: list[str],
+    ranked: list[RankedDeployedAlpha],
+    max_alphas: int,
+) -> list[str]:
     selected_ids = current[:max_alphas]
-    current_set = set(current)
-    remaining_ranked = [item.alpha_id for item in ranked if item.alpha_id not in selected_ids]
+    for item in ranked:
+        if len(selected_ids) >= max_alphas:
+            break
+        if item.alpha_id in selected_ids:
+            continue
+        selected_ids.append(item.alpha_id)
+    return selected_ids
 
-    while len(selected_ids) < max_alphas and remaining_ranked:
-        selected_ids.append(remaining_ranked.pop(0))
 
+def _apply_replacement_policy(
+    *,
+    selected_ids: list[str],
+    current_set: set[str],
+    remaining_ranked: list[str],
+    ranked_by_id: dict[str, RankedDeployedAlpha],
+    max_replacements: int,
+    promotion_margin: float,
+) -> tuple[list[str], int]:
     replaced_out: set[str] = set()
     replacements = 0
     while replacements < max_replacements and remaining_ranked:
@@ -222,30 +331,7 @@ def plan_deployed_alphas(
         remaining_ranked.pop(0)
         replaced_out.add(weakest_id)
         replacements += 1
-
-    selected = sorted(
-        [ranked_by_id[alpha_id] for alpha_id in selected_ids],
-        key=lambda item: item.rank_key,
-        reverse=True,
-    )
-    selected_set = {item.alpha_id for item in selected}
-    kept_ids = [item.alpha_id for item in selected if item.alpha_id in current_set]
-    added_ids = [item.alpha_id for item in selected if item.alpha_id not in current_set]
-    dropped_ids = [alpha_id for alpha_id in current if alpha_id not in selected_set]
-
-    return DeployedAlphaPlan(
-        active_count=len(active_records),
-        current_count=len(current),
-        deployed_count=len(selected),
-        replacement_count=replacements,
-        kept_ids=kept_ids,
-        added_ids=added_ids,
-        dropped_ids=dropped_ids,
-        skipped_semantic_duplicate_ids=skipped_semantic_duplicate_ids,
-        skipped_signal_duplicate_ids=skipped_signal_duplicate_ids,
-        skipped_feature_cap_ids=skipped_feature_cap_ids,
-        selected=selected,
-    )
+    return selected_ids, replacements
 
 
 def refresh_deployed_alphas(
