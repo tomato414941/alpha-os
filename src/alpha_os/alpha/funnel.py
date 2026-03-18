@@ -16,6 +16,7 @@ class SourceFunnelSummary:
     validating: int
     adopted: int
     rejected: int
+    reject_axes: list[tuple[str, int]]
     top_reject_reasons: list[tuple[str, int]]
 
 
@@ -35,8 +36,16 @@ class FunnelSummary:
     managed_dormant: int
     managed_rejected: int
     deployed_total: int
+    reject_axes: list[tuple[str, int]]
     reject_reasons: list[tuple[str, int]]
     source_summaries: list[SourceFunnelSummary]
+
+
+def _reject_axis(reason: str) -> str:
+    prefix, sep, _rest = reason.partition(":")
+    if sep and prefix in {"quality", "diversity", "confidence", "deployability"}:
+        return prefix
+    return "uncategorized"
 
 
 def load_funnel_summary(asset: str) -> FunnelSummary:
@@ -63,8 +72,10 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
     candidate_rejected = 0
     promoted_total = 0
     promoted_manual = 0
+    reject_axis_counts: dict[str, int] = {}
     reject_reason_counts: dict[str, int] = {}
     source_counts: dict[str, dict[str, int]] = {}
+    source_reject_axes: dict[str, dict[str, int]] = {}
     source_reject_reasons: dict[str, dict[str, int]] = {}
 
     for row in candidate_rows:
@@ -100,7 +111,11 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
 
         reason = (row["error_message"] or "").strip()
         if reason:
+            axis = _reject_axis(reason)
+            reject_axis_counts[axis] = reject_axis_counts.get(axis, 0) + 1
             reject_reason_counts[reason] = reject_reason_counts.get(reason, 0) + 1
+            axes = source_reject_axes.setdefault(source, {})
+            axes[axis] = axes.get(axis, 0) + 1
             reasons = source_reject_reasons.setdefault(source, {})
             reasons[reason] = reasons.get(reason, 0) + 1
 
@@ -119,6 +134,10 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
         elif state == "rejected":
             managed_rejected += 1
 
+    top_axes = sorted(
+        reject_axis_counts.items(),
+        key=lambda item: (-item[1], item[0]),
+    )
     top_rejects = sorted(
         reject_reason_counts.items(),
         key=lambda item: (-item[1], item[0]),
@@ -131,6 +150,10 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
             validating=counts["validating"],
             adopted=counts["adopted"],
             rejected=counts["rejected"],
+            reject_axes=sorted(
+                source_reject_axes.get(source, {}).items(),
+                key=lambda item: (-item[1], item[0]),
+            ),
             top_reject_reasons=sorted(
                 source_reject_reasons.get(source, {}).items(),
                 key=lambda item: (-item[1], item[0]),
@@ -160,6 +183,7 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
         managed_dormant=managed_dormant,
         managed_rejected=managed_rejected,
         deployed_total=deployed_total,
+        reject_axes=top_axes,
         reject_reasons=top_rejects,
         source_summaries=source_summaries,
     )

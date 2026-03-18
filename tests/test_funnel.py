@@ -66,6 +66,17 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
                     5.0,
                     "diversity: feature cap 50: dxy",
                 ),
+                (
+                    "manual_btc_baseline_b",
+                    "manual",
+                    "f4",
+                    0.4,
+                    "rejected",
+                    '{"source":"handcrafted"}',
+                    6.0,
+                    7.0,
+                    "quality: OOS Sharpe 0.100 < 0.5",
+                ),
             ],
         )
         conn.executemany(
@@ -95,17 +106,21 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     summary = load_funnel_summary("BTC")
 
     assert summary.discovery_pool_entries == 2
-    assert summary.candidate_total == 3
+    assert summary.candidate_total == 4
     assert summary.candidate_pending == 1
     assert summary.candidate_adopted == 1
-    assert summary.candidate_rejected == 1
+    assert summary.candidate_rejected == 2
     assert summary.promoted_total == 2
     assert summary.promoted_manual == 1
     assert summary.managed_active == 1
     assert summary.managed_dormant == 1
     assert summary.managed_rejected == 1
     assert summary.deployed_total == 1
-    assert summary.reject_reasons == [("diversity: feature cap 50: dxy", 1)]
+    assert summary.reject_axes == [("diversity", 1), ("quality", 1)]
+    assert summary.reject_reasons == [
+        ("diversity: feature cap 50: dxy", 1),
+        ("quality: OOS Sharpe 0.100 < 0.5", 1),
+    ]
     assert [row.source for row in summary.source_summaries] == [
         "alpha_generator_btc",
         "manual",
@@ -116,6 +131,10 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     assert generator.adopted == 1
     assert generator.rejected == 0
     manual = summary.source_summaries[1]
-    assert manual.total == 1
-    assert manual.rejected == 1
-    assert manual.top_reject_reasons == [("diversity: feature cap 50: dxy", 1)]
+    assert manual.total == 2
+    assert manual.rejected == 2
+    assert manual.reject_axes == [("diversity", 1), ("quality", 1)]
+    assert manual.top_reject_reasons == [
+        ("diversity: feature cap 50: dxy", 1),
+        ("quality: OOS Sharpe 0.100 < 0.5", 1),
+    ]

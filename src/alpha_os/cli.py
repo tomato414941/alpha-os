@@ -2008,6 +2008,9 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
         f" rejected={summary.managed_rejected}"
     )
     print(f"  Deployed: total={summary.deployed_total}")
+    if summary.reject_axes:
+        axes = " ".join(f"{axis}={count}" for axis, count in summary.reject_axes)
+        print(f"  Reject Axes: {axes}")
     if summary.reject_reasons:
         print("  Top Rejects:")
         for reason, count in summary.reject_reasons:
@@ -2024,6 +2027,9 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
                 f"adopted={row.adopted} "
                 f"rejected={row.rejected}"
             )
+            if row.reject_axes:
+                axes = " ".join(f"{axis}={count}" for axis, count in row.reject_axes)
+                print(f"      axes: {axes}")
             for reason, count in row.top_reject_reasons:
                 print(f"      - {count}x {reason}")
 
