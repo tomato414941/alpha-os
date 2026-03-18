@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.risk.manager import RiskManager, RiskConfig
+from alpha_os.risk.manager import RiskManager, RiskManagerConfig
 from alpha_os.risk.position import (
     PositionConfig,
     signal_to_positions,
@@ -23,7 +23,7 @@ class TestRiskManager:
         assert rm.dd_scale == 1.0
 
     def test_stage1_drawdown(self):
-        cfg = RiskConfig(dd_stage1_pct=0.05, dd_stage1_scale=0.75)
+        cfg = RiskManagerConfig(dd_stage1_pct=0.05, dd_stage1_scale=0.75)
         rm = RiskManager(config=cfg)
         rm.reset(1.0)
         rm.update_equity(1.0)
@@ -32,34 +32,34 @@ class TestRiskManager:
         assert rm.dd_scale == 0.75
 
     def test_stage2_drawdown(self):
-        cfg = RiskConfig(dd_stage2_pct=0.10, dd_stage2_scale=0.50)
+        cfg = RiskManagerConfig(dd_stage2_pct=0.10, dd_stage2_scale=0.50)
         rm = RiskManager(config=cfg)
         rm.reset(1.0)
         rm.update_equity(0.88)  # 12% DD
         assert rm.dd_scale == 0.50
 
     def test_stage3_drawdown(self):
-        cfg = RiskConfig(dd_stage3_pct=0.15, dd_stage3_scale=0.25)
+        cfg = RiskManagerConfig(dd_stage3_pct=0.15, dd_stage3_scale=0.25)
         rm = RiskManager(config=cfg)
         rm.reset(1.0)
         rm.update_equity(0.80)  # 20% DD
         assert rm.dd_scale == 0.25
 
     def test_vol_scale_high_vol(self):
-        rm = RiskManager(config=RiskConfig(target_vol=0.15))
+        rm = RiskManager(config=RiskManagerConfig(target_vol=0.15))
         # High realized vol -> scale down
         returns = np.random.RandomState(42).normal(0, 0.03, 63)
         scale = rm.vol_scale(returns)
         assert scale < 1.0
 
     def test_vol_scale_low_vol(self):
-        rm = RiskManager(config=RiskConfig(target_vol=0.15))
+        rm = RiskManager(config=RiskManagerConfig(target_vol=0.15))
         returns = np.random.RandomState(42).normal(0, 0.003, 63)
         scale = rm.vol_scale(returns)
         assert scale > 1.0
 
     def test_vol_scale_capped(self):
-        rm = RiskManager(config=RiskConfig(target_vol=0.15))
+        rm = RiskManager(config=RiskManagerConfig(target_vol=0.15))
         # Near-zero vol should cap at 2.0
         returns = np.full(63, 0.0001)
         scale = rm.vol_scale(returns)
@@ -84,7 +84,7 @@ class TestRiskManager:
         assert np.all(np.abs(adjusted) <= 1.0)
 
     def test_adjust_positions_reduces_in_drawdown(self):
-        cfg = RiskConfig(
+        cfg = RiskManagerConfig(
             dd_stage1_pct=0.03, dd_stage1_scale=0.5,
             target_vol=100.0,  # effectively disable vol scaling
         )

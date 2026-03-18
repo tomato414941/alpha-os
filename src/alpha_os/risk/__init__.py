@@ -1,9 +1,9 @@
-from .manager import RiskManager, RiskConfig
+from .manager import RiskManager, RiskManagerConfig
 from .circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 
 __all__ = [
     "RiskManager",
-    "RiskConfig",
+    "RiskManagerConfig",
     "CircuitBreaker",
     "CircuitBreakerConfig",
 ]

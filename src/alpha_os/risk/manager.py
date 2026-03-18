@@ -20,10 +20,6 @@ class RiskManagerConfig:
     max_vol_scale: float = 1.5
 
 
-# Backward compatibility alias
-RiskConfig = RiskManagerConfig
-
-
 class RiskManager:
     """Position-level risk management with DD staged response and vol-targeting."""
 
