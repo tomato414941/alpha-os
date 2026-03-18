@@ -109,7 +109,7 @@ drift_position_scale_min = 0.5
 [alpha_generator]
 enabled = false            # true activates the separated alpha generator
 pop_size = 80              # candidates per round (random + archive mutation)
-round_interval = 300       # seconds between rounds (5 min)
+round_interval = 60        # seconds between rounds
 memory_limit_mb = 700      # soft RSS limit, halve budget if exceeded
 feature_subset_k = 27      # features per stratified subset
 mutate_ratio = 0.5         # fraction of budget from archive mutation (rest is random)
