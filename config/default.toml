@@ -118,7 +118,7 @@ promotion_min_fitness = 0.0
 
 [admission]
 enabled = false
-poll_interval = 1800       # seconds between queue checks (30 min)
+poll_interval = 300        # seconds between queue checks
 batch_size = 100           # candidates per validation batch
 min_queue_size = 10        # minimum queue depth to trigger
 max_active_alphas = 0      # 0 disables the cap; >0 enforces replace-one-in/one-out
