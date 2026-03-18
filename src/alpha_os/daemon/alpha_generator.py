@@ -30,7 +30,18 @@ logger = logging.getLogger(__name__)
 class PromotionCandidate:
     expression: str
     fitness: float
+    promotion_score: float
     behavior: np.ndarray
+
+
+def _survival_score(fitness: float) -> float:
+    """Cell-local survival score for discovery-pool incumbents."""
+    return float(fitness)
+
+
+def _promotion_score(fitness: float) -> float:
+    """Ranking score for promotion into the admission queue."""
+    return float(fitness)
 
 
 def _load_generator_data(
@@ -122,6 +133,7 @@ def queue_discovery_pool_candidates(
         PromotionCandidate(
             expression=to_string(expr),
             fitness=float(fitness),
+            promotion_score=_promotion_score(float(fitness)),
             behavior=behavior,
         )
         for expr, fitness, behavior in pool.elites()
@@ -146,6 +158,7 @@ def queue_discovery_pool_candidates(
                     PromotionCandidate(
                         expression=candidate.expression,
                         fitness=fitness,
+                        promotion_score=_promotion_score(fitness),
                         behavior=candidate.behavior,
                     )
                 )
@@ -156,7 +169,7 @@ def queue_discovery_pool_candidates(
         for candidate in promoted
         if candidate.fitness >= config.alpha_generator.promotion_min_fitness
     ]
-    promoted.sort(key=lambda candidate: candidate.fitness, reverse=True)
+    promoted.sort(key=lambda candidate: candidate.promotion_score, reverse=True)
     promoted = promoted[:promote_limit]
     if dry_run or not promoted:
         return len(promoted), 0
@@ -283,8 +296,9 @@ class AlphaGeneratorDaemon:
         )
         results = evolver.run()
 
-        # Fill discovery pool with sanity filter (no fitness competition)
-        n_added = 0
+        # Keep a quality frontier per discovery-pool cell.
+        n_stored = 0
+        n_replaced = 0
         promoted: list[PromotionCandidate] = []
         for expr, _fitness in results:
             try:
@@ -293,17 +307,22 @@ class AlphaGeneratorDaemon:
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr, feature_subset=subset)
-                if self.archive.add_if_empty(
+                update = self.archive.store_candidate(
                     expr,
                     behavior,
                     sig,
                     fitness=float(_fitness),
-                ):
-                    n_added += 1
+                    survival_score=_survival_score(float(_fitness)),
+                )
+                if update.stored:
+                    n_stored += 1
+                    if update.replaced:
+                        n_replaced += 1
                     promoted.append(
                         PromotionCandidate(
                             expression=to_string(expr),
                             fitness=float(_fitness),
+                            promotion_score=_promotion_score(float(_fitness)),
                             behavior=behavior,
                         )
                     )
@@ -312,15 +331,15 @@ class AlphaGeneratorDaemon:
 
         # Persist discovery pool
         db_path = asset_data_dir(self.asset) / "archive.db"
-        if n_added > 0:
+        if n_stored > 0:
             self.archive.save_to_db(db_path)
         n_queued = self._queue_promoted_candidates(promoted)
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Round %d [MAP-Elites]: %d evolved, %d added, %d queued, "
+            "Round %d [MAP-Elites]: %d evolved, %d stored (%d replaced), %d queued, "
             "discovery_pool %d/%d (%.1f%%), subset=%d features, %.1fs",
-            self._round, len(results), n_added, n_queued,
+            self._round, len(results), n_stored, n_replaced, n_queued,
             self.archive.size, self.archive.capacity,
             self.archive.coverage * 100, len(subset) if subset else 0, elapsed,
         )
@@ -344,7 +363,7 @@ class AlphaGeneratorDaemon:
         if not promoted:
             return 0
 
-        promoted.sort(key=lambda candidate: candidate.fitness, reverse=True)
+        promoted.sort(key=lambda candidate: candidate.promotion_score, reverse=True)
         promoted = promoted[:limit]
         seeds = [
             CandidateSeed(

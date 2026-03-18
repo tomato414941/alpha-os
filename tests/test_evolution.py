@@ -359,35 +359,53 @@ class TestSanityFilter:
         assert passes_sanity_filter(signal) is True
 
 
-class TestAddIfEmpty:
+class TestStoreCandidate:
     def test_adds_to_empty_cell(self):
         archive = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([50.0, 10.0, 5.0])
-        assert archive.add_if_empty(
+        update = archive.store_candidate(
             Feature("f1"),
             behavior,
             signal,
             fitness=1.25,
-        ) is True
+        )
+        assert update.stored is True
+        assert update.replaced is False
         assert archive.size == 1
         best = archive.best(1)
         assert len(best) == 1
         assert best[0][1] == 1.25
 
-    def test_rejects_occupied_cell(self):
+    def test_replaces_weaker_incumbent(self):
         archive = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([50.0, 10.0, 5.0])
-        archive.add_if_empty(Feature("f1"), behavior, signal)
-        assert archive.add_if_empty(Feature("f2"), behavior, signal) is False
+        archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.4)
+        update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.9)
+        assert update.stored is True
+        assert update.replaced is True
+        assert archive.size == 1
+        best = archive.best(1)
+        assert repr(best[0][0]) == "f2"
+
+    def test_rejects_weaker_incumbent(self):
+        archive = DiscoveryPool()
+        signal = np.random.randn(100)
+        behavior = np.array([50.0, 10.0, 5.0])
+        archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.9)
+        update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.4)
+        assert update.stored is False
+        assert update.replaced is False
         assert archive.size == 1
 
     def test_rejects_bad_signal(self):
         archive = DiscoveryPool()
         signal = np.ones(100)  # constant → fails sanity
         behavior = np.array([50.0, 10.0, 5.0])
-        assert archive.add_if_empty(Feature("f1"), behavior, signal) is False
+        update = archive.store_candidate(Feature("f1"), behavior, signal)
+        assert update.stored is False
+        assert update.replaced is False
         assert archive.size == 0
 
 

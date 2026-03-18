@@ -16,8 +16,8 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
 
     pool = DiscoveryPool()
     signal = np.random.randn(100)
-    pool.add_if_empty(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal, fitness=1.2)
-    pool.add_if_empty(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal, fitness=0.8)
+    pool.store_candidate(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal, fitness=1.2)
+    pool.store_candidate(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal, fitness=0.8)
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
     store = ManagedAlphaStore(tmp_path / "alpha_registry.db")

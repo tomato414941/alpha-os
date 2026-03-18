@@ -24,9 +24,9 @@ def test_queue_promoted_candidates_applies_limit_and_threshold(tmp_path, monkeyp
     daemon = AlphaGeneratorDaemon(asset="BTC", config=cfg)
     inserted = daemon._queue_promoted_candidates(
         [
-            PromotionCandidate("(a)", 1.2, behavior=np.array([])),
-            PromotionCandidate("(b)", 0.8, behavior=np.array([])),
-            PromotionCandidate("(c)", 0.4, behavior=np.array([])),
+            PromotionCandidate("(a)", 1.2, 1.2, behavior=np.array([])),
+            PromotionCandidate("(b)", 0.8, 0.8, behavior=np.array([])),
+            PromotionCandidate("(c)", 0.4, 0.4, behavior=np.array([])),
         ]
     )
 
@@ -77,9 +77,9 @@ def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, mon
     cfg.alpha_generator.promote_per_round = 2
     pool = DiscoveryPool()
     signal = np.random.randn(100)
-    pool.add_if_empty(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal, fitness=0.4)
-    pool.add_if_empty(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal, fitness=1.4)
-    pool.add_if_empty(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal, fitness=0.9)
+    pool.store_candidate(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal, fitness=0.4)
+    pool.store_candidate(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal, fitness=1.4)
+    pool.store_candidate(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal, fitness=0.9)
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
     selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
@@ -121,9 +121,9 @@ def test_queue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monke
     cfg.alpha_generator.promote_per_round = 2
     pool = DiscoveryPool()
     signal = np.random.randn(100)
-    pool.add_if_empty(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal)
-    pool.add_if_empty(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal)
-    pool.add_if_empty(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal)
+    pool.store_candidate(Feature("f1"), np.array([1.0, 2.0, 3.0]), signal)
+    pool.store_candidate(Feature("f2"), np.array([2.0, 2.0, 3.0]), signal)
+    pool.store_candidate(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal)
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
     selected, inserted = queue_discovery_pool_candidates("BTC", cfg)

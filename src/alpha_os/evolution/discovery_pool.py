@@ -31,6 +31,13 @@ class DiscoveryPoolEntry:
     expr: Expr
     fitness: float
     behavior: np.ndarray
+    survival_score: float = 0.0
+
+
+@dataclass(frozen=True)
+class DiscoveryPoolUpdate:
+    stored: bool
+    replaced: bool = False
 
 
 def passes_sanity_filter(
@@ -55,8 +62,9 @@ def passes_sanity_filter(
 class DiscoveryPool:
     """Grid-based MAP-Elites discovery pool storing alpha expressions.
 
-    Path B mode: sanity filter only, no fitness-based competition.
-    Candidates enter empty cells; occupied cells keep their incumbent.
+    Discovery-pool cells act as local quality frontiers.
+    A valid candidate enters an empty cell or replaces the incumbent when it
+    improves the cell-local survival score.
     """
 
     def __init__(self, config: DiscoveryPoolConfig | None = None):
@@ -70,37 +78,40 @@ class DiscoveryPool:
         """
         cell = self._to_cell(behavior)
         existing = self._grid.get(cell)
-        if existing is None or fitness > existing.fitness:
+        if existing is None or fitness > existing.survival_score:
             self._grid[cell] = DiscoveryPoolEntry(
-                expr=expr, fitness=fitness, behavior=behavior
+                expr=expr,
+                fitness=fitness,
+                behavior=behavior,
+                survival_score=fitness,
             )
             return True
         return False
 
-    def add_if_empty(
+    def store_candidate(
         self,
         expr: Expr,
         behavior: np.ndarray,
         signal: np.ndarray,
         *,
         fitness: float = 0.0,
-    ) -> bool:
-        """Add expression to the discovery pool if the cell is empty.
-
-        Path B mode: no fitness competition. First valid occupant stays,
-        but we still persist its originating fitness for later promotion.
-        """
+        survival_score: float | None = None,
+    ) -> DiscoveryPoolUpdate:
+        """Store a candidate if it is valid and improves its cell frontier."""
         if not passes_sanity_filter(signal, self.config.max_nan_ratio):
-            return False
+            return DiscoveryPoolUpdate(stored=False)
         cell = self._to_cell(behavior)
-        if cell in self._grid:
-            return False
+        incumbent = self._grid.get(cell)
+        candidate_score = float(fitness if survival_score is None else survival_score)
+        if incumbent is not None and candidate_score <= incumbent.survival_score:
+            return DiscoveryPoolUpdate(stored=False)
         self._grid[cell] = DiscoveryPoolEntry(
             expr=expr,
             fitness=float(fitness),
             behavior=behavior,
+            survival_score=candidate_score,
         )
-        return True
+        return DiscoveryPoolUpdate(stored=True, replaced=incumbent is not None)
 
     def _to_cell(self, behavior: np.ndarray) -> tuple[int, ...]:
         indices: list[int] = []
@@ -204,7 +215,10 @@ class DiscoveryPool:
                 expr = parse(expr_str)
                 behavior = np.array(json.loads(behavior_json))
                 archive._grid[cell] = DiscoveryPoolEntry(
-                    expr=expr, fitness=fitness, behavior=behavior,
+                    expr=expr,
+                    fitness=fitness,
+                    behavior=behavior,
+                    survival_score=fitness,
                 )
             except Exception as exc:
                 logger.warning("Failed to load archive entry %s: %s", cell_json, exc)
