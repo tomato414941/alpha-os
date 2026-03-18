@@ -458,10 +458,14 @@ class TestBehavior:
         b = compute_behavior(signal, expr)
         assert b[2] == 3.0  # binary + 2 leaves
 
-    def test_behavior_with_feature_subset(self):
+    def test_behavior_uses_expression_features(self):
         expr = Feature("f1")
         signal = np.random.randn(100)
-        subset = frozenset(["f1", "f5", "f10"])
-        b = compute_behavior(signal, expr, feature_subset=subset)
-        assert b[0] == float(_feature_bucket(subset))
+        b = compute_behavior(signal, expr)
+        assert b[0] == float(_feature_bucket(expr))
         assert b[2] == 1.0  # single feature node
+
+        expr2 = BinaryOp("add", Feature("f1"), Feature("f2"))
+        b2 = compute_behavior(signal, expr2)
+        assert b2[0] == float(_feature_bucket(expr2))
+        assert b[0] != b2[0]  # different features → different bucket

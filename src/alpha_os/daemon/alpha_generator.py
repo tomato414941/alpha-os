@@ -367,7 +367,7 @@ class AlphaGeneratorDaemon:
                 clean_sig = sanitize_signal(sig)
                 if clean_sig.ndim == 0:
                     clean_sig = np.full(n_days, float(clean_sig))
-                behavior = compute_behavior(clean_sig, expr, feature_subset=subset)
+                behavior = compute_behavior(clean_sig, expr)
 
                 update = self.archive.store_candidate(
                     expr,
