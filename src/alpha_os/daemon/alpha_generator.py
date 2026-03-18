@@ -19,7 +19,7 @@ from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..dsl import parse, to_string
-from ..data.universe import build_feature_list, price_signal
+from ..data.universe import build_feature_list, price_signal, stratified_feature_subset
 from ..dsl.generator import AlphaGenerator
 from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
@@ -296,19 +296,28 @@ class AlphaGeneratorDaemon:
         """MAP-Elites round: stratified feature subset → GP → sanity filter → archive."""
         t0 = time.perf_counter()
 
-        features = build_feature_list(self.asset)
-        data, prices, available_features = self._load_data(features)
+        all_features = build_feature_list(self.asset)
+        k = self.generator_cfg.feature_subset_k
+        seed = int(time.time()) ^ self._round
+
+        # Pre-select subset BEFORE loading data to avoid loading all 3000+ signals
+        subset = stratified_feature_subset(all_features, k=k, seed=seed)
+        ps = price_signal(self.asset)
+        load_features = sorted({ps} | subset)
+
+        data, prices, available_features = self._load_data(load_features)
         if data is None:
             logger.warning("Insufficient data, skipping round")
             return
 
         n_days = len(prices)
-        k = self.generator_cfg.feature_subset_k
-        seed = int(time.time()) ^ self._round
 
-        # Random feature subset for this round
-        generator = AlphaGenerator.with_stratified_subset(available_features, k=k, seed=seed)
-        subset = generator.feature_subset
+        # Build generator from the available (loaded) features
+        generator = AlphaGenerator(
+            available_features,
+            feature_subset=frozenset(available_features) - {ps},
+            seed=seed,
+        )
 
         # Build evaluator (still uses fitness to guide GP search)
         engine = BacktestEngine(
