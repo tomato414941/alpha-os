@@ -33,12 +33,13 @@ If a topic appears in multiple files, prefer:
 
 ## Current Focus
 
-The project is currently in a short observation phase after recent runtime
+The project is currently in a controlled tuning phase after recent runtime
 simplification. That means:
 
-- runtime behavior should remain mostly stable for `24 hours` or `3-5` cycles
-- docs, observability, and system understanding are in scope
-- large runtime changes are out of scope until the observation window ends
+- `trade` and execution behavior should remain mostly stable
+- current changes should focus on `alpha-generator`, `discovery_pool`,
+  admission flow, and observability
+- large new runtime layers are out of scope
 
 ## Naming And Boundary Plan
 
@@ -101,14 +102,16 @@ src/alpha_os/
 └── pipeline/     Scheduler, pipeline runner
 ```
 
-Data source: [signal-noise](https://github.com/tomato414941/signal-noise) — time series collector providing 1,307+ signals via REST API + WebSocket.
+Data source: [signal-noise](https://github.com/tomato414941/signal-noise) — external time-series service currently providing about 3,022 signals to `alpha-os` via authenticated REST API.
 
 The `alpha-generator` now enqueues a capped set of newly discovered
 discovery-pool entries into the admission queue each round. The runtime path is
 therefore:
 
-- `discovery_pool` finds diverse candidates
-- the admission queue receives a capped enqueued subset
+- `discovery_pool` keeps a novelty-constrained frontier and replaces weaker
+  incumbents within a behavior cell
+- the admission queue receives a capped enqueued subset after obvious semantic
+  duplicates are filtered out
 - `admission-daemon` validates and adopts them into `managed_alphas`
 
 ### Pipeline Simplification Direction
@@ -360,20 +363,27 @@ Typical no-go signals:
 
 ## Current Operating Posture
 
-After the recent runtime cleanup, the project is in a short observation phase.
+After the recent runtime cleanup, the core runtime path is stable and current
+work is focused on improving `alpha-generator -> discovery_pool -> admission`
+quality rather than adding new runtime stages.
 
 ### What We Can Do Now
 
 - observe `trade` cycles and `admission` stability without changing runtime behavior
 - verify that `admission.max_active_alphas` keeps the registry bounded
 - verify that the configured deployed alpha count remains stable across refreshes
+- watch `alpha-generator` throughput (`stored / replaced / queued`) after recent
+  discovery-pool and memory-control changes
 - compare new readiness reports against the registry DB and service memory
 - improve documentation, logging, and operational checklists that do not change strategy behavior
 
 Current server profile:
 
-- `admission.max_active_alphas = 1000`
-- `deployment.max_alphas = 120`
+- `admission.max_active_alphas = 600`
+- `deployment.max_alphas = 150`
+- canonical trade unit is `alpha-os@BTC.service`
+- `alpha-generator` reads remote `signal-noise` via authenticated API, not a
+  local store dependency
 
 ### What We Cannot Conclude Yet
 

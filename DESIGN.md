@@ -200,14 +200,25 @@ Managed alphas are not the live deployed alphas.
 This keeps research churn (`candidate` admission and lifecycle updates) separate
 from the set that actually drives positions.
 
-## Discovery Pool Promotion
+## Discovery Pool Enqueue
 
 `alpha-generator` does not write directly into `managed_alphas`.
 
-- each round fills the `discovery_pool`
-- only a capped subset of newly discovered entries is promoted into
-  `candidates`
+- each round updates the `discovery_pool`
+- each behavior cell keeps the stronger incumbent rather than staying
+  empty-only
+- only a capped subset of `discovery_pool` entries is enqueued into the
+  admission queue
+- enqueue avoids obvious semantic duplicates that are already present in
+  `managed_alphas` or the admission queue
 - `admission-daemon` remains the only path into `managed_alphas`
+
+Current scoring bias:
+
+- `survival_score`
+  - close to fitness, with a small simplicity bias inside a behavior cell
+- `queue_score`
+  - quality-first ordering for admission-queue enqueue
 
 This keeps the generator exploratory while still giving discovery-pool breadth a
 path into the managed runtime state.
@@ -264,7 +275,7 @@ Suggested emphasis by stage:
 The intended order is:
 
 1. make the funnel visible
-   - `generated -> discovery_pool -> promoted -> adopted -> active -> deployed`
+   - `generated -> discovery_pool -> enqueued -> adopted -> active -> deployed`
 2. align reject/adopt reasons to the shared score schema
 3. reduce redundant stage logic
 4. only then remove or collapse stages that are clearly not pulling their
@@ -534,7 +545,8 @@ freeze period with unclear attribution.
 ### Current Evaluation Posture
 
 The current BTC testnet profile is not in an open-ended optimization phase.
-It is in a short observation phase after several structural changes:
+The execution/runtime path is comparatively stable, and current iteration is
+centered on `alpha-generator -> discovery_pool -> admission` quality:
 
 - deployed `deployed_alphas`
 - runtime cost model
@@ -555,8 +567,10 @@ in-scope. New strategy complexity is not.
 
 Current BTC server profile at the time of writing:
 
-- `admission.max_active_alphas = 1000`
-- `deployment.max_alphas = 120`
+- `admission.max_active_alphas = 600`
+- `deployment.max_alphas = 150`
+- `alpha-os@BTC.service` is the canonical trade unit
+- `signal-noise` is consumed as an authenticated external API
 
 ### Participant-System Analogy
 
@@ -1626,19 +1640,20 @@ Extracts logic from `PipelineRunner._evolve()` (pipeline/runner.py) and
 | pop_size | 200 | 80 |
 | n_generations | 30 | 15 |
 | Execution | 1 burst per 24h | Continuous rounds |
-| Memory pattern | Spike to 1GB+ | Flat ~200-400MB |
+| Memory pattern | Spike to 1GB+ | Flatter continuous rounds with explicit RSS guard |
 | Archive | Discarded per run | In-process, reset on restart |
 
 Implementation: `src/alpha_os/daemon/alpha_generator.py`
 
-- Each round: initialize population → evolve 15 generations → collect
-  results → bulk insert into `candidates` table → gc.collect() → sleep.
+- Each round: initialize population → evolve 15 generations → update the
+  `discovery_pool` frontier → enqueue a capped subset into the admission queue
+  → gc.collect() → sleep.
 - MAP-Elites archive is maintained in process memory across rounds for
   quality-diversity coverage. Reset on process restart is acceptable
-  because all candidates are persisted in the `candidates` table.
-- Memory guard: check `resource.getrusage(RUSAGE_SELF).ru_maxrss` after
-  each generation. If RSS exceeds `memory_limit_mb`, halve pop_size and
-  prune the archive.
+  because frontier candidates are persisted in the `discovery_pool`.
+- Memory guard: check current RSS after each round. If RSS exceeds
+  `memory_limit_mb`, halve pop_size; if RSS later falls sufficiently, allow
+  pop_size to recover.
 - Graceful shutdown on SIGTERM (reuse existing `PipelineScheduler`
   signal handling pattern).
 
@@ -1974,8 +1989,8 @@ ExecStart=/home/dev/projects/alpha-os/.venv/bin/python \
     -m alpha_os alpha-generator --asset %i
 Restart=on-failure
 RestartSec=60
-MemoryHigh=400M
-MemoryMax=600M
+MemoryHigh=700M
+MemoryMax=1000M
 StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
 StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/alpha_generator.log
 KillSignal=SIGTERM
@@ -2048,11 +2063,11 @@ WantedBy=timers.target
 | signal-noise scheduler | ~700M | — | Existing, unchanged |
 | signal-noise serve | ~300M | — | Existing, unchanged |
 | alpha-os trade cycle | 300M | 500M | Slimmed (was ~500M with inline generation) |
-| alpha-os-alpha-generator | 400M | 600M | Memory spike isolated here |
+| alpha-os-alpha-generator | 700M | 1000M | Frontier search + enqueue; current RSS-based scaling |
 | alpha-os-admission | 500M | 700M | Admission + diversity computation |
 | alpha-os-lifecycle | 300M | 500M | Daily oneshot, short-lived |
 | OS + system services | ~500M | — | systemd, tailscale, sshd, etc. |
-| **Total MemoryHigh** | **~3000M** | | Lifecycle and admission rarely overlap |
+| **Total MemoryHigh** | **~3300M** | | Lifecycle and admission rarely overlap |
 
 Effective peak usage is ~2.5GB. 8GB provides comfortable headroom with
 no swap usage expected.
@@ -2062,9 +2077,9 @@ no swap usage expected.
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | SQLite BUSY on alpha_registry.db | Admission and lifecycle write to `alphas` concurrently | WAL mode + `busy_timeout=30000ms`. Writes are millisecond-scale; 30s retry is more than sufficient. |
-| alpha generator memory leak | OOM kill → rounds lost | systemd `MemoryMax=600M` hard cap. RSS monitoring + pop_size halving in daemon. `Restart=on-failure` for auto-recovery. Archive persists across restarts. |
+| alpha generator memory pressure | OOM kill → rounds lost | systemd `MemoryMax=1000M` hard cap. Current-RSS monitoring scales pop_size down and allows recovery when memory falls. `Restart=on-failure` for auto-recovery. Discovery-pool frontier persists across restarts. |
 | Phase 4 testnet disruption | Testnet validation streak resets | Steps 1-3 add no risk (new code only). Step 4 uses `enabled=false` default. Rollback: flip flag + restart (~1 min). |
-| candidates table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside admission daemon. |
+| admission queue table bloat | DB file growth | GC job deletes `adopted`/`rejected` rows older than 30 days. Scheduled inside admission daemon. |
 | diversity cache staleness | Trade weights based on outdated diversity | `computed_at` timestamp tracked. Cache valid for `diversity_recompute_days` (63 days). DORMANT alphas excluded from combination regardless of cache state. |
 | Process ordering | Trade runs before admission finishes first batch | Not a problem. Trade uses whatever ACTIVE alphas exist at cycle time. New alphas appear in the next cycle automatically. Exploration and exploitation are intentionally decoupled. |
 
