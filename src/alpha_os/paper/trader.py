@@ -412,10 +412,11 @@ class Trader:
             from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
 
             archive = DiscoveryPool()
+            prices_arr = data.get(self.price_signal)
             cell_signals: dict[tuple[int, ...], list[float]] = {}
             for aid, sig_val in alpha_signals.items():
                 sig_arr = alpha_signal_arrays[aid]
-                behavior = compute_behavior(sig_arr, alpha_exprs[aid])
+                behavior = compute_behavior(sig_arr, alpha_exprs[aid], prices=prices_arr)
                 cell = archive._to_cell(behavior)
                 cell_signals.setdefault(cell, []).append(sig_val)
 

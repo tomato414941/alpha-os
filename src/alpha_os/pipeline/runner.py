@@ -157,7 +157,7 @@ class PipelineRunner:
         for expr, fitness in results:
             try:
                 sig = evaluate_expression(expr, data, n_days)
-                behavior = compute_behavior(sig, expr)
+                behavior = compute_behavior(sig, expr, prices=prices)
                 if self.archive.add(expr, fitness, behavior):
                     live_signals.append(sig)
             except EvaluationError:

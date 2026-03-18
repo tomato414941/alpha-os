@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DiscoveryPoolConfig:
-    dims: tuple[int, ...] = (100, 10, 10)
+    dims: tuple[int, ...] = (8, 8, 8, 8)
     ranges: tuple[tuple[float, float], ...] = (
-        (0.0, 100.0),  # feature_bucket (hash mod 100)
-        (0.0, 100.0),  # holding_half_life (days)
-        (1.0, 12.0),   # complexity (node count, practical range for depth≤3)
+        (0.0, 50.0),   # persistence: half-life in days
+        (0.0, 1.0),    # activity: fraction of non-trivial days
+        (-1.0, 1.0),   # price_beta: momentum vs mean-reversion
+        (-1.0, 1.0),   # vol_sensitivity: volatile vs calm market affinity
     )
     max_nan_ratio: float = 0.1
 
@@ -193,15 +194,12 @@ class DiscoveryPool:
     def load_from_db(cls, db_path: Path, config: DiscoveryPoolConfig | None = None) -> DiscoveryPool:
         """Load the discovery pool from SQLite.
 
-        Recomputes cell keys from behavior vectors so that grid range
-        changes take effect on restart without a manual rebuild.
-        When entries collide under the new mapping, the higher-fitness
-        entry wins.
+        Recomputes cell keys from stored behavior vectors.  When the
+        number of behavior axes has changed (e.g. 3→4), old entries
+        cannot be placed and are dropped — the archive effectively
+        resets, keeping only entries whose behavior dimension matches.
         """
         from ..dsl import parse
-        from ..dsl.features import collect_feature_names
-        from ..dsl.generator import _collect_nodes
-        from .behavior import N_FEAT_BUCKETS
 
         archive = cls(config=config)
         if not db_path.exists():
@@ -218,16 +216,16 @@ class DiscoveryPool:
             return archive
         conn.close()
 
+        expected_dims = len(archive.config.dims)
         n_collisions = 0
+        n_skipped = 0
         for _cell_json, expr_str, fitness, behavior_json in rows:
             try:
                 expr = parse(expr_str)
                 behavior = np.array(json.loads(behavior_json))
-                # Recompute axes 0 (feature bucket) and 2 (complexity)
-                # from the expression to match current hashing logic.
-                names = collect_feature_names(expr)
-                behavior[0] = float(hash(frozenset(names)) % N_FEAT_BUCKETS if names else 0)
-                behavior[2] = float(len(_collect_nodes(expr)))
+                if len(behavior) != expected_dims:
+                    n_skipped += 1
+                    continue
                 cell = archive._to_cell(behavior)
                 incumbent = archive._grid.get(cell)
                 if incumbent is not None and incumbent.fitness >= fitness:
@@ -242,10 +240,10 @@ class DiscoveryPool:
             except Exception as exc:
                 logger.warning("Failed to load archive entry %s: %s", expr_str, exc)
 
-        if n_collisions > 0:
+        if n_skipped > 0 or n_collisions > 0:
             logger.info(
-                "Archive rebuild: %d entries loaded, %d lost to collisions",
-                len(rows), n_collisions,
+                "Archive load: %d rows, %d loaded, %d dim-mismatch skipped, %d collisions",
+                len(rows), archive.size, n_skipped, n_collisions,
             )
 
         return archive

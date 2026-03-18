@@ -1,4 +1,5 @@
 """Tests for the evolution module (GP, archive, behavior)."""
+import json
 import numpy as np
 import pytest
 
@@ -14,8 +15,10 @@ from alpha_os.evolution.gp import (
 from alpha_os.evolution.discovery_pool import DiscoveryPool, DiscoveryPoolConfig, passes_sanity_filter
 from alpha_os.evolution.behavior import (
     compute_behavior,
-    _feature_bucket,
-    _holding_half_life,
+    _persistence,
+    _activity,
+    _price_beta,
+    _vol_sensitivity,
 )
 
 
@@ -203,51 +206,52 @@ class TestGPEvolver:
 # ---------------------------------------------------------------------------
 
 class TestDiscoveryPool:
+    def _b(self, p=25.0, a=0.5, pb=0.0, vs=0.0):
+        """Helper: build a 4D behavior vector."""
+        return np.array([p, a, pb, vs])
+
     def test_add_new_cell(self):
         archive = DiscoveryPool()
-        expr = Feature("f1")
-        behavior = np.array([50.0, 10.0, 5.0])
-        assert archive.add(expr, 0.5, behavior) is True
+        assert archive.add(Feature("f1"), 0.5, self._b()) is True
         assert archive.size == 1
 
     def test_add_better_replaces(self):
         archive = DiscoveryPool()
-        behavior = np.array([50.0, 10.0, 5.0])
-        archive.add(Feature("f1"), 0.3, behavior)
-        assert archive.add(Feature("f2"), 0.7, behavior) is True
+        b = self._b()
+        archive.add(Feature("f1"), 0.3, b)
+        assert archive.add(Feature("f2"), 0.7, b) is True
         assert archive.size == 1
-        best = archive.best(1)
-        assert repr(best[0][0]) == "f2"
+        assert repr(archive.best(1)[0][0]) == "f2"
 
     def test_add_worse_rejected(self):
         archive = DiscoveryPool()
-        behavior = np.array([50.0, 10.0, 5.0])
-        archive.add(Feature("f1"), 0.7, behavior)
-        assert archive.add(Feature("f2"), 0.3, behavior) is False
+        b = self._b()
+        archive.add(Feature("f1"), 0.7, b)
+        assert archive.add(Feature("f2"), 0.3, b) is False
         assert archive.size == 1
 
     def test_different_cells(self):
         archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, np.array([10.0, 5.0, 3.0]))
-        archive.add(Feature("f2"), 0.6, np.array([90.0, 80.0, 15.0]))
+        archive.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.5, -0.3))
+        archive.add(Feature("f2"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
         assert archive.size == 2
 
     def test_capacity(self):
-        cfg = DiscoveryPoolConfig(dims=(5, 5, 5))
+        cfg = DiscoveryPoolConfig(dims=(5, 5, 5, 5))
         archive = DiscoveryPool(config=cfg)
-        assert archive.capacity == 125
+        assert archive.capacity == 625
 
     def test_coverage(self):
-        cfg = DiscoveryPoolConfig(dims=(2, 2, 2))
+        cfg = DiscoveryPoolConfig(dims=(2, 2, 2, 2))
         archive = DiscoveryPool(config=cfg)
-        archive.add(Feature("f1"), 0.5, np.array([20.0, 10.0, 5.0]))
-        assert archive.coverage == 1 / 8
+        archive.add(Feature("f1"), 0.5, self._b())
+        assert archive.coverage == 1 / 16
 
     def test_best_ordering(self):
         archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.3, np.array([10.0, 5.0, 3.0]))
-        archive.add(Feature("f2"), 0.9, np.array([50.0, 50.0, 10.0]))
-        archive.add(Feature("f3"), 0.6, np.array([90.0, 80.0, 15.0]))
+        archive.add(Feature("f1"), 0.3, self._b(5.0, 0.2, -0.5, -0.3))
+        archive.add(Feature("f2"), 0.9, self._b(25.0, 0.5, 0.0, 0.0))
+        archive.add(Feature("f3"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
         best = archive.best(3)
         assert best[0][1] >= best[1][1] >= best[2][1]
 
@@ -257,37 +261,34 @@ class TestDiscoveryPool:
             archive.add(
                 Feature(f"f{i}"),
                 float(i),
-                np.array([i * 10.0, i * 10.0, i + 1.0]),
+                self._b(i * 8.0, i * 0.15, i * 0.2 - 0.5, i * 0.1 - 0.3),
             )
         import random
-
         sampled = archive.sample(3, rng=random.Random(42))
         assert len(sampled) == 3
 
     def test_elites(self):
         archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, np.array([50.0, 10.0, 5.0]))
+        archive.add(Feature("f1"), 0.5, self._b())
         elites = archive.elites()
         assert len(elites) == 1
         assert elites[0][1] == 0.5
 
     def test_boundary_clipping(self):
         archive = DiscoveryPool()
-        behavior = np.array([200.0, 200.0, 50.0])  # all out of range
+        behavior = np.array([200.0, 5.0, 5.0, 5.0])  # out of range
         assert archive.add(Feature("f1"), 0.5, behavior) is True
 
     def test_save_load_roundtrip(self, tmp_path):
         archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, np.array([50.0, 10.0, 5.0]))
-        archive.add(Feature("f2"), 0.8, np.array([20.0, 30.0, 3.0]))
+        archive.add(Feature("f1"), 0.5, self._b(10.0, 0.3, -0.2, 0.1))
+        archive.add(Feature("f2"), 0.8, self._b(30.0, 0.7, 0.4, -0.3))
         db_path = tmp_path / "archive.db"
         n = archive.save_to_db(db_path)
         assert n == 2
-
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 2
-        best = loaded.best(2)
-        assert best[0][1] == 0.8  # f2 has higher fitness
+        assert loaded.best(2)[0][1] == 0.8
 
     def test_load_nonexistent(self, tmp_path):
         loaded = DiscoveryPool.load_from_db(tmp_path / "missing.db")
@@ -303,16 +304,11 @@ class TestDiscoveryPool:
 
     def test_save_load_preserves_entries(self, tmp_path):
         archive = DiscoveryPool()
-        b1 = np.array([10.0, 5.0, 3.0])
-        b2 = np.array([90.0, 80.0, 15.0])
-        archive.add(Feature("f1"), 0.5, b1)
-        archive.add(Feature("f2"), 0.8, b2)
-
+        archive.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.3, 0.1))
+        archive.add(Feature("f2"), 0.8, self._b(40.0, 0.8, 0.6, -0.5))
         db_path = tmp_path / "archive.db"
         archive.save_to_db(db_path)
         loaded = DiscoveryPool.load_from_db(db_path)
-        # load_from_db recomputes cells from expressions, so cell keys
-        # may differ but all entries should survive (distinct features).
         assert loaded.size == 2
         exprs = {repr(e) for e, _ in loaded.best(10)}
         assert repr(Feature("f1")) in exprs
@@ -321,14 +317,30 @@ class TestDiscoveryPool:
     def test_save_load_complex_expr(self, tmp_path):
         archive = DiscoveryPool()
         expr = BinaryOp("add", RollingOp("mean", 10, Feature("f1")), Feature("f2"))
-        archive.add(expr, 1.0, np.array([50.0, 10.0, 4.0]))
-
+        archive.add(expr, 1.0, self._b(25.0, 0.6, 0.1, -0.1))
         db_path = tmp_path / "archive.db"
         archive.save_to_db(db_path)
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 1
-        loaded_expr = loaded.best(1)[0][0]
-        assert repr(loaded_expr) == repr(expr)
+        assert repr(loaded.best(1)[0][0]) == repr(expr)
+
+    def test_load_skips_dim_mismatch(self, tmp_path):
+        """Old 3D entries are skipped when grid expects 4D."""
+        archive = DiscoveryPool()
+        archive.add(Feature("f1"), 0.5, self._b())
+        db_path = tmp_path / "archive.db"
+        archive.save_to_db(db_path)
+        # Tamper: rewrite with 3D behavior
+        import sqlite3
+        conn = sqlite3.connect(str(db_path))
+        conn.execute(
+            "UPDATE archive SET behavior = ? WHERE 1=1",
+            (json.dumps([10.0, 5.0, 3.0]),),
+        )
+        conn.commit()
+        conn.close()
+        loaded = DiscoveryPool.load_from_db(db_path)
+        assert loaded.size == 0
 
 
 class TestSanityFilter:
@@ -362,7 +374,7 @@ class TestStoreCandidate:
     def test_adds_to_empty_cell(self):
         archive = DiscoveryPool()
         signal = np.random.randn(100)
-        behavior = np.array([50.0, 10.0, 5.0])
+        behavior = np.array([25.0, 0.5, 0.0, 0.0])
         update = archive.store_candidate(
             Feature("f1"),
             behavior,
@@ -379,7 +391,7 @@ class TestStoreCandidate:
     def test_replaces_weaker_incumbent(self):
         archive = DiscoveryPool()
         signal = np.random.randn(100)
-        behavior = np.array([50.0, 10.0, 5.0])
+        behavior = np.array([25.0, 0.5, 0.0, 0.0])
         archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.4)
         update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.9)
         assert update.stored is True
@@ -391,7 +403,7 @@ class TestStoreCandidate:
     def test_rejects_weaker_incumbent(self):
         archive = DiscoveryPool()
         signal = np.random.randn(100)
-        behavior = np.array([50.0, 10.0, 5.0])
+        behavior = np.array([25.0, 0.5, 0.0, 0.0])
         archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.9)
         update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.4)
         assert update.stored is False
@@ -401,7 +413,7 @@ class TestStoreCandidate:
     def test_rejects_bad_signal(self):
         archive = DiscoveryPool()
         signal = np.ones(100)  # constant → fails sanity
-        behavior = np.array([50.0, 10.0, 5.0])
+        behavior = np.array([25.0, 0.5, 0.0, 0.0])
         update = archive.store_candidate(Feature("f1"), behavior, signal)
         assert update.stored is False
         assert update.replaced is False
@@ -413,58 +425,66 @@ class TestStoreCandidate:
 # ---------------------------------------------------------------------------
 
 class TestBehavior:
-    def test_compute_behavior_shape(self):
+    def test_compute_behavior_shape_4d(self):
         signal = np.random.randn(100)
         expr = Feature("f1")
         b = compute_behavior(signal, expr)
-        assert b.shape == (3,)
+        assert b.shape == (4,)
 
-    def test_feature_bucket_none(self):
-        assert _feature_bucket(None) == 0
+    def test_compute_behavior_with_prices(self):
+        rng = np.random.RandomState(42)
+        prices = 100 + np.cumsum(rng.randn(200) * 0.5)
+        signal = rng.randn(200)
+        expr = Feature("f1")
+        b = compute_behavior(signal, expr, prices=prices)
+        assert b.shape == (4,)
+        assert all(np.isfinite(b))
 
-    def test_feature_bucket_deterministic(self):
-        subset = frozenset(["f1", "f3", "f7"])
-        b1 = _feature_bucket(subset)
-        b2 = _feature_bucket(subset)
-        assert b1 == b2
-        assert 0 <= b1 < 100
+    def test_persistence_constant_signal(self):
+        assert _persistence(np.ones(100)) == 0.0
 
-    def test_feature_bucket_different_subsets(self):
-        s1 = frozenset(["f1", "f2"])
-        s2 = frozenset(["f3", "f4"])
-        # Different subsets should (usually) get different buckets
-        # Not guaranteed but extremely likely with mod 100
-        b1 = _feature_bucket(s1)
-        b2 = _feature_bucket(s2)
-        assert 0 <= b1 < 100
-        assert 0 <= b2 < 100
-
-    def test_holding_half_life_constant(self):
-        signal = np.ones(100)
-        assert _holding_half_life(signal) == 0.0
-
-    def test_holding_half_life_positive(self):
+    def test_persistence_autocorrelated_signal(self):
         rng = np.random.RandomState(42)
         signal = np.zeros(200)
         for i in range(1, 200):
             signal[i] = 0.95 * signal[i - 1] + rng.randn() * 0.1
-        hl = _holding_half_life(signal)
+        hl = _persistence(signal)
         assert hl > 5.0
 
-    def test_complexity_is_node_count(self):
-        expr = BinaryOp("add", Feature("f1"), Feature("f2"))
-        signal = np.random.randn(100)
-        b = compute_behavior(signal, expr)
-        assert b[2] == 3.0  # binary + 2 leaves
+    def test_activity_all_active(self):
+        signal = np.random.randn(100) * 10
+        act = _activity(signal)
+        assert act > 0.5
 
-    def test_behavior_uses_expression_features(self):
-        expr = Feature("f1")
-        signal = np.random.randn(100)
-        b = compute_behavior(signal, expr)
-        assert b[0] == float(_feature_bucket(expr))
-        assert b[2] == 1.0  # single feature node
+    def test_activity_mostly_zero(self):
+        signal = np.zeros(100)
+        signal[10] = 5.0
+        signal[50] = -3.0
+        act = _activity(signal)
+        assert act < 0.2
 
-        expr2 = BinaryOp("add", Feature("f1"), Feature("f2"))
-        b2 = compute_behavior(signal, expr2)
-        assert b2[0] == float(_feature_bucket(expr2))
-        assert b[0] != b2[0]  # different features → different bucket
+    def test_price_beta_no_prices(self):
+        signal = np.random.randn(100)
+        assert _price_beta(signal, None) == 0.0
+
+    def test_price_beta_momentum_signal(self):
+        rng = np.random.RandomState(42)
+        prices = 100 + np.cumsum(rng.randn(200) * 0.5)
+        rets = np.diff(prices) / (np.abs(prices[:-1]) + 1e-12)
+        # Signal that mimics returns → positive beta
+        signal = np.concatenate([[0.0], rets])
+        beta = _price_beta(signal, rets)
+        assert beta > 0.3
+
+    def test_vol_sensitivity_no_prices(self):
+        signal = np.random.randn(100)
+        assert _vol_sensitivity(signal, None) == 0.0
+
+    def test_vol_sensitivity_returns_finite(self):
+        rng = np.random.RandomState(42)
+        prices = 100 + np.cumsum(rng.randn(200) * 0.5)
+        rets = np.diff(prices) / (np.abs(prices[:-1]) + 1e-12)
+        signal = rng.randn(200)
+        vs = _vol_sensitivity(signal, rets)
+        assert np.isfinite(vs)
+        assert -1.0 <= vs <= 1.0
