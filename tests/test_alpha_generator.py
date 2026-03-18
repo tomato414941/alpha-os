@@ -8,25 +8,25 @@ import numpy as np
 from alpha_os.config import Config
 from alpha_os.daemon.alpha_generator import (
     AlphaGeneratorDaemon,
-    PromotionCandidate,
-    queue_discovery_pool_candidates,
+    AdmissionQueueCandidate,
+    enqueue_discovery_pool_candidates,
 )
 from alpha_os.evolution.discovery_pool import DiscoveryPool
 from alpha_os.dsl.expr import Feature
 
 
-def test_queue_promoted_candidates_applies_limit_and_threshold(tmp_path, monkeypatch):
+def test_enqueue_admission_queue_candidates_applies_limit_and_threshold(tmp_path, monkeypatch):
     monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 2
     cfg.alpha_generator.promotion_min_fitness = 0.5
 
     daemon = AlphaGeneratorDaemon(asset="BTC", config=cfg)
-    inserted = daemon._queue_promoted_candidates(
+    inserted = daemon._enqueue_admission_queue_candidates(
         [
-            PromotionCandidate("(a)", 1.2, 1.2, behavior=np.array([])),
-            PromotionCandidate("(b)", 0.8, 0.8, behavior=np.array([])),
-            PromotionCandidate("(c)", 0.4, 0.4, behavior=np.array([])),
+            AdmissionQueueCandidate("(a)", 1.2, 1.2, behavior=np.array([])),
+            AdmissionQueueCandidate("(b)", 0.8, 0.8, behavior=np.array([])),
+            AdmissionQueueCandidate("(c)", 0.4, 0.4, behavior=np.array([])),
         ]
     )
 
@@ -45,7 +45,7 @@ def test_queue_promoted_candidates_applies_limit_and_threshold(tmp_path, monkeyp
     assert '"round": 0' in rows[0][2]
 
 
-def test_queue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypatch):
+def test_enqueue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypatch):
     monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 2
@@ -55,7 +55,7 @@ def test_queue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypat
     pool.add(Feature("f3"), 0.9, np.array([3.0, 2.0, 3.0]))
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
-    selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
+    selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 
     conn = sqlite3.connect(tmp_path / "alpha_registry.db")
     try:
@@ -68,10 +68,10 @@ def test_queue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypat
     assert selected == 2
     assert inserted == 2
     assert [row[0] for row in rows] == ["f2", "f3"]
-    assert '"promotion": "manual_discovery_pool"' in rows[0][2]
+    assert '"enqueue": "manual_discovery_pool"' in rows[0][2]
 
 
-def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, monkeypatch):
+def test_enqueue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, monkeypatch):
     monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 2
@@ -82,7 +82,7 @@ def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, mon
     pool.store_candidate(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal, fitness=0.9)
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
-    selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
+    selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 
     conn = sqlite3.connect(tmp_path / "alpha_registry.db")
     try:
@@ -97,7 +97,7 @@ def test_queue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, mon
     assert [row[0] for row in rows] == ["f2", "f3"]
 
 
-def test_queue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monkeypatch):
+def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monkeypatch):
     monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     monkeypatch.setattr(
         "alpha_os.daemon.alpha_generator.build_feature_list",
@@ -126,7 +126,7 @@ def test_queue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monke
     pool.store_candidate(Feature("f3"), np.array([3.0, 2.0, 3.0]), signal)
     pool.save_to_db(Path(tmp_path) / "archive.db")
 
-    selected, inserted = queue_discovery_pool_candidates("BTC", cfg)
+    selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 
     conn = sqlite3.connect(tmp_path / "alpha_registry.db")
     try:

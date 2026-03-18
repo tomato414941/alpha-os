@@ -158,8 +158,8 @@ def _build_parser() -> argparse.ArgumentParser:
     gen_d.add_argument("--config", type=str, default=None)
 
     pg = sub.add_parser(
-        "promote-discovery-pool",
-        help="Queue top discovery-pool entries into the admission candidates table",
+        "enqueue-discovery-pool",
+        help="Enqueue top discovery-pool entries into the admission queue",
     )
     pg.add_argument("--asset", type=str, default="BTC")
     pg.add_argument("--config", type=str, default=None)
@@ -1513,19 +1513,19 @@ def cmd_alpha_generator(args: argparse.Namespace) -> None:
     daemon.run()
 
 
-def cmd_promote_discovery_pool(args: argparse.Namespace) -> None:
+def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
-    from alpha_os.daemon.alpha_generator import queue_discovery_pool_candidates
+    from alpha_os.daemon.alpha_generator import enqueue_discovery_pool_candidates
 
-    selected, inserted = queue_discovery_pool_candidates(
+    selected, inserted = enqueue_discovery_pool_candidates(
         args.asset,
         cfg,
         limit=args.limit,
         dry_run=args.dry_run,
     )
     mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(f"Discovery-pool promotion [{mode}]: asset={args.asset}")
+    print(f"Discovery-pool enqueue [{mode}]: asset={args.asset}")
     print(f"  Selected: {selected}")
     print(f"  Queued:   {inserted}")
 
@@ -1996,9 +1996,9 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
         f" rejected={summary.candidate_rejected}"
     )
     print(
-        "  Promoted:"
-        f" total={summary.promoted_total}"
-        f" manual={summary.promoted_manual}"
+        "  Enqueued:"
+        f" total={summary.enqueued_total}"
+        f" manual={summary.enqueued_manual}"
     )
     print(
         "  Managed:"
@@ -2217,8 +2217,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_trade(args)
     elif args.command == "alpha-generator":
         cmd_alpha_generator(args)
-    elif args.command == "promote-discovery-pool":
-        cmd_promote_discovery_pool(args)
+    elif args.command == "enqueue-discovery-pool":
+        cmd_enqueue_discovery_pool(args)
     elif args.command == "admission-daemon":
         cmd_admission_daemon(args)
     elif args.command == "prune-stale-candidates":

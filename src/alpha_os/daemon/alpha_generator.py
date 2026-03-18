@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class PromotionCandidate:
+class AdmissionQueueCandidate:
     expression: str
     fitness: float
-    promotion_score: float
+    queue_score: float
     behavior: np.ndarray
 
 
@@ -39,8 +39,8 @@ def _survival_score(fitness: float) -> float:
     return float(fitness)
 
 
-def _promotion_score(fitness: float) -> float:
-    """Ranking score for promotion into the admission queue."""
+def _admission_queue_score(fitness: float) -> float:
+    """Ranking score for admission-queue enqueue order."""
     return float(fitness)
 
 
@@ -113,7 +113,7 @@ def _score_expression(
         return FAILED_FITNESS
 
 
-def queue_discovery_pool_candidates(
+def enqueue_discovery_pool_candidates(
     asset: str,
     config: Config,
     *,
@@ -129,23 +129,23 @@ def queue_discovery_pool_candidates(
     if promote_limit <= 0:
         return 0, 0
 
-    promoted = [
-        PromotionCandidate(
+    enqueued = [
+        AdmissionQueueCandidate(
             expression=to_string(expr),
             fitness=float(fitness),
-            promotion_score=_promotion_score(float(fitness)),
+            queue_score=_admission_queue_score(float(fitness)),
             behavior=behavior,
         )
         for expr, fitness, behavior in pool.elites()
         if fitness >= config.alpha_generator.promotion_min_fitness
     ]
-    unresolved = [candidate for candidate in promoted if candidate.fitness == 0.0]
+    unresolved = [candidate for candidate in enqueued if candidate.fitness == 0.0]
     if unresolved:
         features = build_feature_list(asset)
         data, prices, _ = _load_generator_data(asset, config, features)
         if data is not None and prices is not None:
-            rescored: list[PromotionCandidate] = []
-            for candidate in promoted:
+            rescored: list[AdmissionQueueCandidate] = []
+            for candidate in enqueued:
                 fitness = candidate.fitness
                 if fitness == 0.0:
                     fitness = _score_expression(
@@ -155,24 +155,24 @@ def queue_discovery_pool_candidates(
                         config,
                     )
                 rescored.append(
-                    PromotionCandidate(
+                    AdmissionQueueCandidate(
                         expression=candidate.expression,
                         fitness=fitness,
-                        promotion_score=_promotion_score(fitness),
+                        queue_score=_admission_queue_score(fitness),
                         behavior=candidate.behavior,
                     )
                 )
-            promoted = rescored
+            enqueued = rescored
 
-    promoted = [
+    enqueued = [
         candidate
-        for candidate in promoted
+        for candidate in enqueued
         if candidate.fitness >= config.alpha_generator.promotion_min_fitness
     ]
-    promoted.sort(key=lambda candidate: candidate.promotion_score, reverse=True)
-    promoted = promoted[:promote_limit]
-    if dry_run or not promoted:
-        return len(promoted), 0
+    enqueued.sort(key=lambda candidate: candidate.queue_score, reverse=True)
+    enqueued = enqueued[:promote_limit]
+    if dry_run or not enqueued:
+        return len(enqueued), 0
 
     seeds = [
         CandidateSeed(
@@ -184,17 +184,17 @@ def queue_discovery_pool_candidates(
                 "asset": asset,
                 "behavior": [float(x) for x in candidate.behavior.tolist()],
                 "round": None,
-                "promotion": "manual_discovery_pool",
+                "enqueue": "manual_discovery_pool",
             },
         )
-        for candidate in promoted
+        for candidate in enqueued
     ]
     store = ManagedAlphaStore(asset_data_dir(asset) / "alpha_registry.db")
     try:
         inserted = store.queue_candidates(seeds)
     finally:
         store.close()
-    return len(promoted), inserted
+    return len(enqueued), inserted
 
 
 class AlphaGeneratorDaemon:
@@ -299,7 +299,7 @@ class AlphaGeneratorDaemon:
         # Keep a quality frontier per discovery-pool cell.
         n_stored = 0
         n_replaced = 0
-        promoted: list[PromotionCandidate] = []
+        queued_candidates: list[AdmissionQueueCandidate] = []
         for expr, _fitness in results:
             try:
                 sig = expr.evaluate(data)
@@ -318,11 +318,11 @@ class AlphaGeneratorDaemon:
                     n_stored += 1
                     if update.replaced:
                         n_replaced += 1
-                    promoted.append(
-                        PromotionCandidate(
+                    queued_candidates.append(
+                        AdmissionQueueCandidate(
                             expression=to_string(expr),
                             fitness=float(_fitness),
-                            promotion_score=_promotion_score(float(_fitness)),
+                            queue_score=_admission_queue_score(float(_fitness)),
                             behavior=behavior,
                         )
                     )
@@ -333,7 +333,7 @@ class AlphaGeneratorDaemon:
         db_path = asset_data_dir(self.asset) / "archive.db"
         if n_stored > 0:
             self.archive.save_to_db(db_path)
-        n_queued = self._queue_promoted_candidates(promoted)
+        n_queued = self._enqueue_admission_queue_candidates(queued_candidates)
 
         elapsed = time.perf_counter() - t0
         logger.info(
@@ -344,9 +344,9 @@ class AlphaGeneratorDaemon:
             self.archive.coverage * 100, len(subset) if subset else 0, elapsed,
         )
 
-    def _queue_promoted_candidates(
+    def _enqueue_admission_queue_candidates(
         self,
-        candidates: list[PromotionCandidate],
+        candidates: list[AdmissionQueueCandidate],
     ) -> int:
         if not candidates:
             return 0
@@ -355,16 +355,16 @@ class AlphaGeneratorDaemon:
         if limit <= 0:
             return 0
 
-        promoted = [
+        enqueued = [
             candidate
             for candidate in candidates
             if candidate.fitness >= self.generator_cfg.promotion_min_fitness
         ]
-        if not promoted:
+        if not enqueued:
             return 0
 
-        promoted.sort(key=lambda candidate: candidate.promotion_score, reverse=True)
-        promoted = promoted[:limit]
+        enqueued.sort(key=lambda candidate: candidate.queue_score, reverse=True)
+        enqueued = enqueued[:limit]
         seeds = [
             CandidateSeed(
                 expression=candidate.expression,
@@ -377,7 +377,7 @@ class AlphaGeneratorDaemon:
                     "round": self._round,
                 },
             )
-            for candidate in promoted
+            for candidate in enqueued
         ]
         store = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         try:

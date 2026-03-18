@@ -50,7 +50,7 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
                     "f2",
                     0.8,
                     "adopted",
-                    '{"source":"alpha_generator","promotion":"manual_discovery_pool"}',
+                    '{"source":"alpha_generator","enqueue":"manual_discovery_pool"}',
                     2.0,
                     3.0,
                     None,
@@ -110,8 +110,8 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     assert summary.candidate_pending == 1
     assert summary.candidate_adopted == 1
     assert summary.candidate_rejected == 2
-    assert summary.promoted_total == 2
-    assert summary.promoted_manual == 1
+    assert summary.enqueued_total == 2
+    assert summary.enqueued_manual == 1
     assert summary.managed_active == 1
     assert summary.managed_dormant == 1
     assert summary.managed_rejected == 1

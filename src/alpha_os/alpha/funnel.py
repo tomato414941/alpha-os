@@ -29,8 +29,8 @@ class FunnelSummary:
     candidate_validating: int
     candidate_adopted: int
     candidate_rejected: int
-    promoted_total: int
-    promoted_manual: int
+    enqueued_total: int
+    enqueued_manual: int
     managed_candidate: int
     managed_active: int
     managed_dormant: int
@@ -70,8 +70,8 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
     candidate_validating = 0
     candidate_adopted = 0
     candidate_rejected = 0
-    promoted_total = 0
-    promoted_manual = 0
+    enqueued_total = 0
+    enqueued_manual = 0
     reject_axis_counts: dict[str, int] = {}
     reject_reason_counts: dict[str, int] = {}
     source_counts: dict[str, dict[str, int]] = {}
@@ -97,9 +97,9 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
             behavior = {}
         behavior_source = behavior.get("source", "")
         if source.startswith("alpha_generator_") or behavior_source == "alpha_generator":
-            promoted_total += 1
-            if behavior.get("promotion") == "manual_discovery_pool":
-                promoted_manual += 1
+            enqueued_total += 1
+            if behavior.get("enqueue") == "manual_discovery_pool":
+                enqueued_manual += 1
 
         counts = source_counts.setdefault(
             source,
@@ -176,8 +176,8 @@ def load_funnel_summary(asset: str) -> FunnelSummary:
         candidate_validating=candidate_validating,
         candidate_adopted=candidate_adopted,
         candidate_rejected=candidate_rejected,
-        promoted_total=promoted_total,
-        promoted_manual=promoted_manual,
+        enqueued_total=enqueued_total,
+        enqueued_manual=enqueued_manual,
         managed_candidate=managed_candidate,
         managed_active=managed_active,
         managed_dormant=managed_dormant,

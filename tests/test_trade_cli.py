@@ -266,18 +266,18 @@ def test_alpha_funnel_parser():
     assert args.asset == "BTC"
 
 
-def test_promote_discovery_pool_parser():
+def test_enqueue_discovery_pool_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
-        "promote-discovery-pool",
+        "enqueue-discovery-pool",
         "--asset", "BTC",
         "--limit", "12",
         "--dry-run",
     ])
 
-    assert args.command == "promote-discovery-pool"
+    assert args.command == "enqueue-discovery-pool"
     assert args.asset == "BTC"
     assert args.limit == 12
     assert args.dry_run is True
