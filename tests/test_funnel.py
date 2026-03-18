@@ -64,7 +64,7 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
                     '{"source":"handcrafted"}',
                     4.0,
                     5.0,
-                    "feature cap 50: dxy",
+                    "diversity: feature cap 50: dxy",
                 ),
             ],
         )
@@ -105,7 +105,7 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     assert summary.managed_dormant == 1
     assert summary.managed_rejected == 1
     assert summary.deployed_total == 1
-    assert summary.reject_reasons == [("feature cap 50: dxy", 1)]
+    assert summary.reject_reasons == [("diversity: feature cap 50: dxy", 1)]
     assert [row.source for row in summary.source_summaries] == [
         "alpha_generator_btc",
         "manual",
@@ -118,4 +118,4 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
     manual = summary.source_summaries[1]
     assert manual.total == 1
     assert manual.rejected == 1
-    assert manual.top_reject_reasons == [("feature cap 50: dxy", 1)]
+    assert manual.top_reject_reasons == [("diversity: feature cap 50: dxy", 1)]

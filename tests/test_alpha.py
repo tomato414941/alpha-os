@@ -475,7 +475,7 @@ class TestManagedAlphaStore:
             semantic_owner_by_key=semantic_owner_by_key,
         )
 
-        assert reason == "semantic duplicate of a1"
+        assert reason == "diversity: semantic duplicate of a1"
         reg.close()
 
     def test_admission_feature_cap_rejects_overused_active_features(self, tmp_path):
@@ -499,7 +499,7 @@ class TestManagedAlphaStore:
             feature_counts=feature_counts,
         )
 
-        assert reason == "feature cap 2: nasdaq"
+        assert reason == "diversity: feature cap 2: nasdaq"
         reg.close()
 
     def test_admission_feature_cap_allows_underused_features(self, tmp_path):

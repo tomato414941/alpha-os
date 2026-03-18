@@ -39,6 +39,10 @@ from ..validation.purged_cv import purged_walk_forward
 logger = logging.getLogger(__name__)
 
 
+def _axis_reason(axis: str, detail: str) -> str:
+    return f"{axis}: {detail}"
+
+
 def _non_rejected_managed_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:
     return [
         record
@@ -95,7 +99,7 @@ def _semantic_duplicate_reason(
     owner = semantic_owner_by_key.get(key)
     if owner is None:
         return ""
-    return f"semantic duplicate of {owner}"
+    return _axis_reason("diversity", f"semantic duplicate of {owner}")
 
 
 def _feature_cap_reason(
@@ -114,7 +118,21 @@ def _feature_cap_reason(
     if not overused:
         return ""
     preview = ", ".join(overused[:3])
-    return f"feature cap {limit}: {preview}"
+    return _axis_reason("diversity", f"feature cap {limit}: {preview}")
+
+
+def _classify_gate_reason(reason: str) -> str:
+    if reason.startswith(("OOS Sharpe", "OOS log-growth", "OOS |CVaR95|", "OOS tail-hit")):
+        return _axis_reason("quality", reason)
+    if reason.startswith(("PBO ", "DSR p-value", "Failed FDR", "Only ")):
+        return _axis_reason("confidence", reason)
+    if reason.startswith("Avg correlation"):
+        return _axis_reason("diversity", reason)
+    return _axis_reason("quality", reason)
+
+
+def _gate_failure_reason(reasons: list[str]) -> str:
+    return "; ".join(_classify_gate_reason(reason) for reason in reasons[:3])
 
 
 class AdmissionDaemon:
@@ -381,7 +399,7 @@ class AdmissionDaemon:
                 self._write_diversity_cache(alpha_id, registry)
                 n_adopted += 1
             else:
-                reason = "; ".join(result.reasons[:3])
+                reason = _gate_failure_reason(result.reasons)
                 self._reject_candidate(cid, reason)
                 n_rejected += 1
 
