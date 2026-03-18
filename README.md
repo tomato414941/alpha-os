@@ -278,6 +278,12 @@ Near-term naming direction:
 - treat ambiguous labels such as plain `active` or plain `max_alphas` as debt
   to remove gradually, not as the desired end state
 
+Admission scope note:
+
+- keep `admission` thin: sanity, obvious duplicates, minimum quality/confidence
+- prefer moving portfolio-shaping diversity and live allocation logic toward
+  `deployment`
+
 ## Registry Control
 
 The research registry is allowed to change continuously, but it should not

@@ -286,6 +286,28 @@ is that some names still hide that split.
 - admission decides managed-alpha membership, not immediate trading eligibility
 - deployment decides what the runtime is allowed to trade now
 
+### Admission Scope
+
+`admission` should stay narrow. Its job is to decide whether a candidate is
+safe and meaningful enough to enter `managed_alphas`, not whether it deserves
+capital allocation right now.
+
+Keep in `admission`:
+
+- sanity checks that reject broken expressions or unusable signals
+- obvious duplicate filtering such as semantic duplicates
+- minimum quality and confidence gates
+
+Move toward `deployment`:
+
+- portfolio-shaping diversity policies such as feature concentration
+- runtime allocation decisions and other "should trade now" judgments
+
+Remove or avoid:
+
+- incumbent-by-incumbent competition during admission
+- queue-specific concepts becoming architectural stages
+
 ### What We Intend To Change
 
 - labels that use plain `active` without saying `registry active`
