@@ -83,48 +83,6 @@ def _prune_active_overflow(
     return overflow
 
 
-def _reserve_active_slot(
-    registry: ManagedAlphaStore,
-    incoming_record: AlphaRecord,
-    *,
-    metric: str,
-    limit: int,
-) -> tuple[bool, str]:
-    if limit <= 0:
-        return True, ""
-
-    _prune_active_overflow(registry, metric=metric, limit=limit)
-    active_count = registry.count(AlphaState.ACTIVE)
-    if active_count < limit:
-        return True, ""
-
-    weakest = registry.bottom_trading(1, metric=metric)
-    if not weakest:
-        return True, ""
-
-    weakest_record = weakest[0]
-    incoming_score = incoming_record.oos_fitness(metric)
-    weakest_score = weakest_record.oos_fitness(metric)
-    if incoming_score <= weakest_score:
-        return False, (
-            f"active cap {limit}: {metric}={incoming_score:.3f} "
-            f"<= incumbent {weakest_record.alpha_id} ({weakest_score:.3f})"
-        )
-
-    registry.update_state(weakest_record.alpha_id, AlphaState.DORMANT)
-    logger.info(
-        "Admission cap: demoted %s to dormant to admit %s "
-        "(%s %.3f > %.3f, limit=%d)",
-        weakest_record.alpha_id,
-        incoming_record.alpha_id,
-        metric,
-        incoming_score,
-        weakest_score,
-        limit,
-    )
-    return True, ""
-
-
 def _semantic_duplicate_reason(
     *,
     expression: str,
@@ -180,18 +138,6 @@ class AdmissionDaemon:
         limit: int,
     ) -> int:
         return _prune_active_overflow(registry, metric=metric, limit=limit)
-
-    def _reserve_active_slot(
-        self,
-        registry: ManagedAlphaStore,
-        incoming_record: AlphaRecord,
-    ) -> tuple[bool, str]:
-        return _reserve_active_slot(
-            registry,
-            incoming_record,
-            metric=self._admission_metric(),
-            limit=self.admission_cfg.max_active_alphas,
-        )
 
     def _managed_registry_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
         return _non_rejected_managed_records(registry)
@@ -425,11 +371,6 @@ class AdmissionDaemon:
                     pbo=batch_pbo,
                     dsr_pvalue=dsr_pvalue,
                 )
-                can_admit, reject_reason = self._reserve_active_slot(registry, record)
-                if not can_admit:
-                    self._reject_candidate(cid, reject_reason)
-                    n_rejected += 1
-                    continue
                 registry.register(record)
                 self._adopt_candidate(cid, cv.oos_sharpe, batch_pbo, dsr_pvalue)
                 semantic_owner_by_key[self._semantic_key(expr_str)] = alpha_id
@@ -444,12 +385,17 @@ class AdmissionDaemon:
                 self._reject_candidate(cid, reason)
                 n_rejected += 1
 
+        pruned = self._prune_active_overflow(
+            registry,
+            metric=self._admission_metric(),
+            limit=self.admission_cfg.max_active_alphas,
+        )
         registry.close()
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Round %d: %d candidates → %d validated → %d adopted, %d rejected (%.1fs)",
-            self._round, len(rows), len(validated), n_adopted, n_rejected, elapsed,
+            "Round %d: %d candidates -> %d validated -> %d adopted, %d rejected, %d demoted (%.1fs)",
+            self._round, len(rows), len(validated), n_adopted, n_rejected, pruned, elapsed,
         )
 
     def _compute_batch_pbo(self, validated, data, prices, engine) -> float:

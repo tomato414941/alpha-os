@@ -385,32 +385,30 @@ class TestManagedAlphaStore:
         assert plan.skipped_signal_duplicate_ids == ["b"]
         assert plan.touched_deployed_count == 1
 
-    def test_admission_cap_rejects_weaker_incoming_alpha(self, tmp_path):
+    def test_admission_cap_prunes_overflow_to_limit(self, tmp_path):
         reg = self._make_registry(tmp_path)
         reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.40))
         reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.30))
+        reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.ACTIVE, oos_log_growth=0.25))
 
         cfg = Config()
         cfg.fitness_metric = "log_growth"
         cfg.admission.max_active_alphas = 2
         daemon = AdmissionDaemon("BTC", cfg)
 
-        incoming = AlphaRecord(
-            alpha_id="new",
-            expression="z",
-            state=AlphaState.ACTIVE,
-            oos_log_growth=0.25,
+        pruned = daemon._prune_active_overflow(
+            reg,
+            metric="log_growth",
+            limit=cfg.admission.max_active_alphas,
         )
 
-        admitted, reason = daemon._reserve_active_slot(reg, incoming)
-
-        assert admitted is False
-        assert "active cap 2" in reason
+        assert pruned == 1
         assert reg.count(AlphaState.ACTIVE) == 2
-        assert reg.count(AlphaState.DORMANT) == 0
+        assert reg.count(AlphaState.DORMANT) == 1
+        assert reg.get("a3").state == AlphaState.DORMANT
         reg.close()
 
-    def test_admission_cap_demotes_weakest_active_alpha(self, tmp_path):
+    def test_admission_cap_prune_is_noop_when_within_limit(self, tmp_path):
         reg = self._make_registry(tmp_path)
         reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.40))
         reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.30))
@@ -420,19 +418,15 @@ class TestManagedAlphaStore:
         cfg.admission.max_active_alphas = 2
         daemon = AdmissionDaemon("BTC", cfg)
 
-        incoming = AlphaRecord(
-            alpha_id="new",
-            expression="z",
-            state=AlphaState.ACTIVE,
-            oos_log_growth=0.35,
+        pruned = daemon._prune_active_overflow(
+            reg,
+            metric="log_growth",
+            limit=cfg.admission.max_active_alphas,
         )
 
-        admitted, reason = daemon._reserve_active_slot(reg, incoming)
-
-        assert admitted is True
-        assert reason == ""
-        assert reg.get("a2").state == AlphaState.DORMANT
+        assert pruned == 0
         assert reg.get("a1").state == AlphaState.ACTIVE
+        assert reg.get("a2").state == AlphaState.ACTIVE
         reg.close()
 
     def test_admission_cap_prunes_existing_overflow_before_admission(self, tmp_path):
@@ -446,19 +440,15 @@ class TestManagedAlphaStore:
         cfg.admission.max_active_alphas = 2
         daemon = AdmissionDaemon("BTC", cfg)
 
-        incoming = AlphaRecord(
-            alpha_id="new",
-            expression="n",
-            state=AlphaState.ACTIVE,
-            oos_log_growth=0.45,
+        pruned = daemon._prune_active_overflow(
+            reg,
+            metric="log_growth",
+            limit=cfg.admission.max_active_alphas,
         )
 
-        admitted, reason = daemon._reserve_active_slot(reg, incoming)
-
-        assert admitted is True
-        assert reason == ""
-        assert reg.count(AlphaState.ACTIVE) == 1
-        assert reg.count(AlphaState.DORMANT) == 2
+        assert pruned == 1
+        assert reg.count(AlphaState.ACTIVE) == 2
+        assert reg.count(AlphaState.DORMANT) == 1
         assert reg.get("a3").state == AlphaState.DORMANT
         reg.close()
 
