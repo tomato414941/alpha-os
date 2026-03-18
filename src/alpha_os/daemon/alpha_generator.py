@@ -12,6 +12,7 @@ import numpy as np
 
 from ..alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
+from ..alpha.expression_identity import expression_semantic_key
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -42,6 +43,21 @@ def _survival_score(fitness: float) -> float:
 def _admission_queue_score(fitness: float) -> float:
     """Ranking score for admission-queue enqueue order."""
     return float(fitness)
+
+
+def _existing_enqueue_semantic_keys(store: ManagedAlphaStore) -> set[str]:
+    managed_keys = {
+        expression_semantic_key(record.expression)
+        for record in store.list_all()
+        if record.state != "rejected"
+    }
+    queued_keys = {
+        expression_semantic_key(expression)
+        for expression in store.list_candidate_expressions(
+            statuses=("pending", "validating", "adopted")
+        )
+    }
+    return managed_keys | queued_keys
 
 
 def _load_generator_data(
@@ -174,23 +190,31 @@ def enqueue_discovery_pool_candidates(
     if dry_run or not enqueued:
         return len(enqueued), 0
 
-    seeds = [
-        CandidateSeed(
-            expression=candidate.expression,
-            source=f"alpha_generator_{asset.lower()}",
-            fitness=candidate.fitness,
-            behavior_json={
-                "source": "alpha_generator",
-                "asset": asset,
-                "behavior": [float(x) for x in candidate.behavior.tolist()],
-                "round": None,
-                "enqueue": "manual_discovery_pool",
-            },
-        )
-        for candidate in enqueued
-    ]
     store = ManagedAlphaStore(asset_data_dir(asset) / "alpha_registry.db")
     try:
+        existing_keys = _existing_enqueue_semantic_keys(store)
+        unique_candidates: list[AdmissionQueueCandidate] = []
+        for candidate in enqueued:
+            semantic_key = expression_semantic_key(candidate.expression)
+            if semantic_key in existing_keys:
+                continue
+            existing_keys.add(semantic_key)
+            unique_candidates.append(candidate)
+        seeds = [
+            CandidateSeed(
+                expression=candidate.expression,
+                source=f"alpha_generator_{asset.lower()}",
+                fitness=candidate.fitness,
+                behavior_json={
+                    "source": "alpha_generator",
+                    "asset": asset,
+                    "behavior": [float(x) for x in candidate.behavior.tolist()],
+                    "round": None,
+                    "enqueue": "manual_discovery_pool",
+                },
+            )
+            for candidate in unique_candidates
+        ]
         inserted = store.queue_candidates(seeds)
     finally:
         store.close()
@@ -365,22 +389,30 @@ class AlphaGeneratorDaemon:
 
         enqueued.sort(key=lambda candidate: candidate.queue_score, reverse=True)
         enqueued = enqueued[:limit]
-        seeds = [
-            CandidateSeed(
-                expression=candidate.expression,
-                source=f"alpha_generator_{self.asset.lower()}",
-                fitness=candidate.fitness,
-                behavior_json={
-                    "source": "alpha_generator",
-                    "asset": self.asset,
-                    "behavior": [float(x) for x in candidate.behavior.tolist()],
-                    "round": self._round,
-                },
-            )
-            for candidate in enqueued
-        ]
         store = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         try:
+            existing_keys = _existing_enqueue_semantic_keys(store)
+            unique_candidates: list[AdmissionQueueCandidate] = []
+            for candidate in enqueued:
+                semantic_key = expression_semantic_key(candidate.expression)
+                if semantic_key in existing_keys:
+                    continue
+                existing_keys.add(semantic_key)
+                unique_candidates.append(candidate)
+            seeds = [
+                CandidateSeed(
+                    expression=candidate.expression,
+                    source=f"alpha_generator_{self.asset.lower()}",
+                    fitness=candidate.fitness,
+                    behavior_json={
+                        "source": "alpha_generator",
+                        "asset": self.asset,
+                        "behavior": [float(x) for x in candidate.behavior.tolist()],
+                        "round": self._round,
+                    },
+                )
+                for candidate in unique_candidates
+            ]
             return store.queue_candidates(seeds)
         finally:
             store.close()

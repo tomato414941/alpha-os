@@ -229,6 +229,23 @@ class ManagedAlphaStore:
     def queue_candidates(self, seeds: list[CandidateSeed]) -> int:
         return queue_candidates(self._conn, seeds)
 
+    def list_candidate_expressions(
+        self,
+        *,
+        statuses: tuple[str, ...] | None = None,
+    ) -> list[str]:
+        if statuses:
+            placeholders = ", ".join("?" for _ in statuses)
+            rows = self._conn.execute(
+                f"SELECT expression FROM candidates WHERE status IN ({placeholders})",
+                statuses,
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT expression FROM candidates"
+            ).fetchall()
+        return [row["expression"] for row in rows]
+
     def register(self, record: AlphaRecord) -> None:
         now = time.time()
         if record.created_at == 0.0:
