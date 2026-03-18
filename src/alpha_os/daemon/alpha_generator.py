@@ -7,6 +7,7 @@ import resource
 import signal
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
@@ -25,6 +26,8 @@ from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
 
 logger = logging.getLogger(__name__)
+
+_MIN_ALPHA_GENERATOR_POP_SIZE = 20
 
 
 @dataclass(frozen=True)
@@ -58,6 +61,22 @@ def _existing_enqueue_semantic_keys(store: ManagedAlphaStore) -> set[str]:
         )
     }
     return managed_keys | queued_keys
+
+
+def _current_rss_mb() -> float:
+    """Return current resident set size in MB."""
+    status_path = Path("/proc/self/status")
+    try:
+        for line in status_path.read_text().splitlines():
+            if line.startswith("VmRSS:"):
+                parts = line.split()
+                if len(parts) >= 2:
+                    return float(parts[1]) / 1024.0
+    except OSError:
+        pass
+
+    rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return rss_kb / 1024.0
 
 
 def _load_generator_data(
@@ -423,16 +442,27 @@ class AlphaGeneratorDaemon:
         return _load_generator_data(self.asset, self.config, features)
 
     def _check_memory(self) -> None:
-        rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        rss_mb = rss_kb / 1024
+        rss_mb = _current_rss_mb()
         limit = self.generator_cfg.memory_limit_mb
+        target_pop = self.generator_cfg.pop_size
 
         if rss_mb > limit:
             old_pop = self._pop_size
-            self._pop_size = max(20, self._pop_size // 2)
-            logger.warning(
-                "RSS %.0fMB > limit %dMB, reducing pop_size %d → %d",
-                rss_mb, limit, old_pop, self._pop_size,
+            self._pop_size = max(_MIN_ALPHA_GENERATOR_POP_SIZE, self._pop_size // 2)
+            if self._pop_size != old_pop:
+                logger.warning(
+                    "RSS %.0fMB > limit %dMB, reducing pop_size %d → %d",
+                    rss_mb, limit, old_pop, self._pop_size,
+                )
+            return
+
+        recovery_threshold = limit * 0.75
+        if rss_mb < recovery_threshold and self._pop_size < target_pop:
+            old_pop = self._pop_size
+            self._pop_size = min(target_pop, max(old_pop + 1, old_pop * 2))
+            logger.info(
+                "RSS %.0fMB < recovery threshold %.0fMB, increasing pop_size %d → %d",
+                rss_mb, recovery_threshold, old_pop, self._pop_size,
             )
 
     def _sleep(self, seconds: int) -> None:

@@ -10,6 +10,7 @@ from alpha_os.config import Config
 from alpha_os.daemon.alpha_generator import (
     AlphaGeneratorDaemon,
     AdmissionQueueCandidate,
+    _current_rss_mb,
     enqueue_discovery_pool_candidates,
 )
 from alpha_os.evolution.discovery_pool import DiscoveryPool
@@ -153,6 +154,46 @@ def test_enqueue_discovery_pool_candidates_skips_semantic_duplicates(tmp_path, m
     assert selected == 2
     assert inserted == 1
     assert [row[0] for row in rows] == ["f2"]
+
+
+def test_check_memory_reduces_pop_size_when_over_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    cfg = Config()
+    cfg.alpha_generator.pop_size = 80
+    cfg.alpha_generator.memory_limit_mb = 700
+    daemon = AlphaGeneratorDaemon(asset="BTC", config=cfg)
+    daemon._pop_size = 80
+
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator._current_rss_mb", lambda: 750.0)
+
+    daemon._check_memory()
+
+    assert daemon._pop_size == 40
+
+
+def test_check_memory_recovers_pop_size_when_below_threshold(tmp_path, monkeypatch):
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    cfg = Config()
+    cfg.alpha_generator.pop_size = 80
+    cfg.alpha_generator.memory_limit_mb = 700
+    daemon = AlphaGeneratorDaemon(asset="BTC", config=cfg)
+    daemon._pop_size = 20
+
+    monkeypatch.setattr("alpha_os.daemon.alpha_generator._current_rss_mb", lambda: 400.0)
+
+    daemon._check_memory()
+
+    assert daemon._pop_size == 40
+
+
+def test_current_rss_mb_falls_back_to_ru_maxrss(monkeypatch):
+    class FakeUsage:
+        ru_maxrss = 2048
+
+    monkeypatch.setattr("pathlib.Path.read_text", lambda self: (_ for _ in ()).throw(OSError("x")))
+    monkeypatch.setattr("resource.getrusage", lambda _: FakeUsage())
+
+    assert _current_rss_mb() == 2.0
 
 
 def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monkeypatch):
