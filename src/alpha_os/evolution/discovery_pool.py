@@ -21,7 +21,7 @@ class DiscoveryPoolConfig:
     ranges: tuple[tuple[float, float], ...] = (
         (0.0, 100.0),  # feature_bucket (hash mod 100)
         (0.0, 100.0),  # holding_half_life (days)
-        (1.0, 20.0),   # complexity (node count)
+        (1.0, 12.0),   # complexity (node count, practical range for depth≤3)
     )
     max_nan_ratio: float = 0.1
 
@@ -191,8 +191,17 @@ class DiscoveryPool:
 
     @classmethod
     def load_from_db(cls, db_path: Path, config: DiscoveryPoolConfig | None = None) -> DiscoveryPool:
-        """Load the discovery pool from SQLite."""
+        """Load the discovery pool from SQLite.
+
+        Recomputes cell keys from behavior vectors so that grid range
+        changes take effect on restart without a manual rebuild.
+        When entries collide under the new mapping, the higher-fitness
+        entry wins.
+        """
         from ..dsl import parse
+        from ..dsl.features import collect_feature_names
+        from ..dsl.generator import _collect_nodes
+        from .behavior import N_FEAT_BUCKETS
 
         archive = cls(config=config)
         if not db_path.exists():
@@ -209,11 +218,21 @@ class DiscoveryPool:
             return archive
         conn.close()
 
-        for cell_json, expr_str, fitness, behavior_json in rows:
+        n_collisions = 0
+        for _cell_json, expr_str, fitness, behavior_json in rows:
             try:
-                cell = tuple(json.loads(cell_json))
                 expr = parse(expr_str)
                 behavior = np.array(json.loads(behavior_json))
+                # Recompute axes 0 (feature bucket) and 2 (complexity)
+                # from the expression to match current hashing logic.
+                names = collect_feature_names(expr)
+                behavior[0] = float(hash(frozenset(names)) % N_FEAT_BUCKETS if names else 0)
+                behavior[2] = float(len(_collect_nodes(expr)))
+                cell = archive._to_cell(behavior)
+                incumbent = archive._grid.get(cell)
+                if incumbent is not None and incumbent.fitness >= fitness:
+                    n_collisions += 1
+                    continue
                 archive._grid[cell] = DiscoveryPoolEntry(
                     expr=expr,
                     fitness=fitness,
@@ -221,6 +240,12 @@ class DiscoveryPool:
                     survival_score=fitness,
                 )
             except Exception as exc:
-                logger.warning("Failed to load archive entry %s: %s", cell_json, exc)
+                logger.warning("Failed to load archive entry %s: %s", expr_str, exc)
+
+        if n_collisions > 0:
+            logger.info(
+                "Archive rebuild: %d entries loaded, %d lost to collisions",
+                len(rows), n_collisions,
+            )
 
         return archive

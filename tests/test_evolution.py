@@ -301,23 +301,22 @@ class TestDiscoveryPool:
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 0
 
-    def test_save_load_preserves_cells(self, tmp_path):
+    def test_save_load_preserves_entries(self, tmp_path):
         archive = DiscoveryPool()
         b1 = np.array([10.0, 5.0, 3.0])
         b2 = np.array([90.0, 80.0, 15.0])
         archive.add(Feature("f1"), 0.5, b1)
         archive.add(Feature("f2"), 0.8, b2)
 
-        cell1 = archive._to_cell(b1)
-        cell2 = archive._to_cell(b2)
-        assert cell1 != cell2
-
         db_path = tmp_path / "archive.db"
         archive.save_to_db(db_path)
         loaded = DiscoveryPool.load_from_db(db_path)
+        # load_from_db recomputes cells from expressions, so cell keys
+        # may differ but all entries should survive (distinct features).
         assert loaded.size == 2
-        assert cell1 in loaded._grid
-        assert cell2 in loaded._grid
+        exprs = {repr(e) for e, _ in loaded.best(10)}
+        assert repr(Feature("f1")) in exprs
+        assert repr(Feature("f2")) in exprs
 
     def test_save_load_complex_expr(self, tmp_path):
         archive = DiscoveryPool()
