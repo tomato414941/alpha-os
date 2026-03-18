@@ -38,9 +38,16 @@ class AdmissionQueueCandidate:
     behavior: np.ndarray
 
 
-def _survival_score(fitness: float) -> float:
-    """Cell-local survival score for discovery-pool incumbents."""
-    return float(fitness)
+def _survival_score(fitness: float, behavior: np.ndarray) -> float:
+    """Cell-local survival score for discovery-pool incumbents.
+
+    Within a behavior cell, novelty is already constrained by the descriptor
+    itself. Bias survival slightly toward simpler expressions so that near-tied
+    candidates do not drift toward unnecessary complexity.
+    """
+    complexity = float(behavior[2]) if len(behavior) >= 3 else 0.0
+    simplicity_bonus = 1.0 / (1.0 + max(complexity, 0.0))
+    return float(fitness) + 0.01 * simplicity_bonus
 
 
 def _admission_queue_score(fitness: float) -> float:
