@@ -1,8 +1,9 @@
-"""Alpha generator daemon — continuous GP evolution into the archive."""
+"""Alpha generator daemon — pure MAP-Elites candidate generation."""
 from __future__ import annotations
 
 import gc
 import logging
+import random as _random
 import resource
 import signal
 import time
@@ -23,11 +24,10 @@ from ..data.universe import build_feature_list, price_signal, stratified_feature
 from ..dsl.generator import AlphaGenerator
 from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
-from ..evolution.gp import GPConfig, GPEvolver
 
 logger = logging.getLogger(__name__)
 
-_MIN_ALPHA_GENERATOR_POP_SIZE = 20
+_MIN_BUDGET = 20
 
 
 @dataclass(frozen=True)
@@ -248,10 +248,10 @@ def enqueue_discovery_pool_candidates(
 
 
 class AlphaGeneratorDaemon:
-    """Continuous GP evolution daemon.
+    """Pure MAP-Elites alpha generator.
 
-    Each round: load data → evolve on a stratified feature subset →
-    archive new diverse candidates → gc → sleep → repeat.
+    Each round: generate diverse candidates (random + archive mutation) →
+    evaluate once → store in behavior grid → sleep → repeat.
     """
 
     def __init__(self, asset: str, config: Config):
@@ -260,7 +260,7 @@ class AlphaGeneratorDaemon:
         self.generator_cfg = config.alpha_generator
         self._running = False
         self._round = 0
-        self._pop_size = self.generator_cfg.pop_size
+        self._budget = self.generator_cfg.pop_size
 
         db_path = asset_data_dir(asset) / "archive.db"
         self.archive = DiscoveryPool.load_from_db(db_path)
@@ -270,9 +270,9 @@ class AlphaGeneratorDaemon:
         self._running = True
         self._setup_signals()
         logger.info(
-            "AlphaGeneratorDaemon started: asset=%s, mode=map_elites, pop=%d, gens=%d, interval=%ds",
-            self.asset, self._pop_size,
-            self.generator_cfg.n_generations, self.generator_cfg.round_interval,
+            "AlphaGeneratorDaemon started: asset=%s, budget=%d, interval=%ds, mutate_ratio=%.1f",
+            self.asset, self._budget,
+            self.generator_cfg.round_interval, self.generator_cfg.mutate_ratio,
         )
 
         while self._running:
@@ -293,14 +293,14 @@ class AlphaGeneratorDaemon:
         logger.info("AlphaGeneratorDaemon stopped after %d rounds", self._round)
 
     def _run_round(self) -> None:
-        """MAP-Elites round: stratified feature subset → GP → sanity filter → archive."""
+        """MAP-Elites round: generate diverse candidates → evaluate → archive."""
         t0 = time.perf_counter()
 
         all_features = build_feature_list(self.asset)
         k = self.generator_cfg.feature_subset_k
         seed = int(time.time()) ^ self._round
 
-        # Pre-select subset BEFORE loading data to avoid loading all 3000+ signals
+        # Pre-select subset BEFORE loading data
         subset = stratified_feature_subset(all_features, k=k, seed=seed)
         ps = price_signal(self.asset)
         load_features = sorted({ps} | subset)
@@ -311,67 +311,70 @@ class AlphaGeneratorDaemon:
             return
 
         n_days = len(prices)
+        rng = _random.Random(seed)
 
-        # Build generator from the available (loaded) features
+        available_subset = frozenset(available_features) - {ps}
         generator = AlphaGenerator(
             available_features,
-            feature_subset=frozenset(available_features) - {ps},
+            feature_subset=available_subset,
             seed=seed,
         )
 
-        # Build evaluator (still uses fitness to guide GP search)
         engine = BacktestEngine(
             CostModel(self.config.backtest.commission_pct,
                       self.config.backtest.slippage_pct),
             allow_short=self.config.trading.supports_short,
         )
 
-        def evaluate_fn(expr):
+        # Generate candidates: archive mutations + random
+        budget = self._budget
+        candidates = []
+        n_mutated = 0
+
+        if self.archive.size > 0:
+            n_mutate = int(budget * self.generator_cfg.mutate_ratio)
+            elites = self.archive.sample(n_mutate, rng=rng)
+            for entry in elites:
+                candidates.append(generator.mutate(entry.expr))
+            n_mutated = len(elites)
+
+        n_random = budget - len(candidates)
+        candidates.extend(generator.generate_random(
+            n_random, max_depth=self.config.generation.max_depth,
+        ))
+
+        # Evaluate each candidate once → fitness + behavior → archive
+        n_stored = 0
+        n_replaced = 0
+        queued_candidates: list[AdmissionQueueCandidate] = []
+
+        for expr in candidates:
             try:
                 sig = expr.evaluate(data)
                 sig = np.asarray(sig, dtype=float)
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 if len(sig) != n_days:
-                    return FAILED_FITNESS
+                    continue
                 if not np.all(np.isfinite(sig)):
                     sig = np.where(np.isfinite(sig), sig, 0.0)
+
                 result = engine.run(sig, prices)
-                v = result.fitness(self.config.fitness_metric)
-                return v if np.isfinite(v) else FAILED_FITNESS
-            except Exception:
-                return FAILED_FITNESS
+                fitness = result.fitness(self.config.fitness_metric)
+                if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
+                    continue
 
-        # Evolve with feature subset
-        gp_cfg = GPConfig(
-            pop_size=self._pop_size,
-            n_generations=self.generator_cfg.n_generations,
-            max_depth=self.config.generation.max_depth,
-            bloat_penalty=self.config.generation.bloat_penalty,
-        )
-        evolver = GPEvolver(
-            available_features, evaluate_fn, config=gp_cfg,
-            seed=seed, generator=generator,
-        )
-        results = evolver.run()
+                clean_sig = sanitize_signal(sig)
+                if clean_sig.ndim == 0:
+                    clean_sig = np.full(n_days, float(clean_sig))
+                behavior = compute_behavior(clean_sig, expr, feature_subset=subset)
 
-        # Keep a quality frontier per discovery-pool cell.
-        n_stored = 0
-        n_replaced = 0
-        queued_candidates: list[AdmissionQueueCandidate] = []
-        for expr, _fitness in results:
-            try:
-                sig = expr.evaluate(data)
-                sig = sanitize_signal(sig)
-                if sig.ndim == 0:
-                    sig = np.full(n_days, float(sig))
-                behavior = compute_behavior(sig, expr, feature_subset=subset)
                 update = self.archive.store_candidate(
                     expr,
                     behavior,
-                    sig,
-                    fitness=float(_fitness),
-                    survival_score=_survival_score(float(_fitness)),
+                    clean_sig,
+                    fitness=float(fitness),
+                    survival_score=_survival_score(float(fitness), behavior),
                 )
                 if update.stored:
                     n_stored += 1
@@ -380,8 +383,8 @@ class AlphaGeneratorDaemon:
                     queued_candidates.append(
                         AdmissionQueueCandidate(
                             expression=to_string(expr),
-                            fitness=float(_fitness),
-                            queue_score=_admission_queue_score(float(_fitness)),
+                            fitness=float(fitness),
+                            queue_score=_admission_queue_score(float(fitness)),
                             behavior=behavior,
                         )
                     )
@@ -396,9 +399,11 @@ class AlphaGeneratorDaemon:
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Round %d [MAP-Elites]: %d evolved, %d stored (%d replaced), %d queued, "
+            "Round %d [MAP-Elites]: %d evaluated (%d mutated, %d random), "
+            "%d stored (%d replaced), %d queued, "
             "discovery_pool %d/%d (%.1f%%), subset=%d features, %.1fs",
-            self._round, len(results), n_stored, n_replaced, n_queued,
+            self._round, len(candidates), n_mutated, len(candidates) - n_mutated,
+            n_stored, n_replaced, n_queued,
             self.archive.size, self.archive.capacity,
             self.archive.coverage * 100, len(subset) if subset else 0, elapsed,
         )
@@ -460,25 +465,25 @@ class AlphaGeneratorDaemon:
     def _check_memory(self) -> None:
         rss_mb = _current_rss_mb()
         limit = self.generator_cfg.memory_limit_mb
-        target_pop = self.generator_cfg.pop_size
+        target = self.generator_cfg.pop_size
 
         if rss_mb > limit:
-            old_pop = self._pop_size
-            self._pop_size = max(_MIN_ALPHA_GENERATOR_POP_SIZE, self._pop_size // 2)
-            if self._pop_size != old_pop:
+            old = self._budget
+            self._budget = max(_MIN_BUDGET, self._budget // 2)
+            if self._budget != old:
                 logger.warning(
-                    "RSS %.0fMB > limit %dMB, reducing pop_size %d → %d",
-                    rss_mb, limit, old_pop, self._pop_size,
+                    "RSS %.0fMB > limit %dMB, reducing budget %d → %d",
+                    rss_mb, limit, old, self._budget,
                 )
             return
 
         recovery_threshold = limit * 0.75
-        if rss_mb < recovery_threshold and self._pop_size < target_pop:
-            old_pop = self._pop_size
-            self._pop_size = min(target_pop, max(old_pop + 1, old_pop * 2))
+        if rss_mb < recovery_threshold and self._budget < target:
+            old = self._budget
+            self._budget = min(target, max(old + 1, old * 2))
             logger.info(
-                "RSS %.0fMB < recovery threshold %.0fMB, increasing pop_size %d → %d",
-                rss_mb, recovery_threshold, old_pop, self._pop_size,
+                "RSS %.0fMB < recovery threshold %.0fMB, increasing budget %d → %d",
+                rss_mb, recovery_threshold, old, self._budget,
             )
 
     def _sleep(self, seconds: int) -> None:

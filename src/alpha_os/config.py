@@ -262,10 +262,11 @@ class StabilityConfig:
 class AlphaGeneratorConfig:
     enabled: bool = False
     pop_size: int = 80
-    n_generations: int = 15
+    n_generations: int = 15  # legacy, unused by pure MAP-Elites
     round_interval: int = 300
     memory_limit_mb: int = 400
     feature_subset_k: int = 27
+    mutate_ratio: float = 0.5
     promote_per_round: int = 25
     promotion_min_fitness: float = 0.0
 

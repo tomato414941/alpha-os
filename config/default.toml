@@ -108,11 +108,11 @@ drift_position_scale_min = 0.5
 # Pipeline v2: separated process daemons
 [alpha_generator]
 enabled = false            # true activates the separated alpha generator
-pop_size = 80              # GP population per round
-n_generations = 15         # generations per round
+pop_size = 80              # candidates per round (random + archive mutation)
 round_interval = 300       # seconds between rounds (5 min)
-memory_limit_mb = 700      # soft RSS limit, halve pop if exceeded
+memory_limit_mb = 700      # soft RSS limit, halve budget if exceeded
 feature_subset_k = 27      # features per stratified subset
+mutate_ratio = 0.5         # fraction of budget from archive mutation (rest is random)
 promote_per_round = 25     # max discovery-pool entries queued into candidates each round
 promotion_min_fitness = 0.0
 
