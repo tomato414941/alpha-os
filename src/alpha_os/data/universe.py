@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from ..config import DATA_DIR
@@ -122,6 +123,22 @@ _daily_signal_cache: list[str] | None = None
 _signal_catalog_cache_path = DATA_DIR / "signal_catalog.json"
 
 
+@dataclass(frozen=True)
+class SignalCatalogStatus:
+    source: str
+    signal_count: int
+    intervals: tuple[int, ...] | None
+    api_error_kind: str = ""
+    api_error_message: str = ""
+
+
+_signal_catalog_status = SignalCatalogStatus(
+    source="uninitialized",
+    signal_count=0,
+    intervals=None,
+)
+
+
 def _interval_filter() -> set[int] | None:
     """Parse interval filter from env.
 
@@ -151,6 +168,50 @@ def _filter_signal_names(signals: list[dict], intervals: set[int] | None) -> lis
         s["name"] for s in signals
         if s.get("interval") in intervals
     )
+
+
+def _status_intervals(intervals: set[int] | None) -> tuple[int, ...] | None:
+    if intervals is None:
+        return None
+    return tuple(sorted(intervals))
+
+
+def _set_signal_catalog_status(
+    *,
+    source: str,
+    signal_count: int,
+    intervals: set[int] | None,
+    api_error_kind: str = "",
+    api_error_message: str = "",
+) -> None:
+    global _signal_catalog_status
+    _signal_catalog_status = SignalCatalogStatus(
+        source=source,
+        signal_count=signal_count,
+        intervals=_status_intervals(intervals),
+        api_error_kind=api_error_kind,
+        api_error_message=api_error_message,
+    )
+
+
+def signal_catalog_status() -> SignalCatalogStatus:
+    return _signal_catalog_status
+
+
+def _classify_signal_catalog_error(exc: Exception) -> str:
+    if isinstance(exc, TimeoutError):
+        return "timeout"
+    if isinstance(exc, ConnectionError):
+        return "connection"
+    name = exc.__class__.__name__.lower()
+    message = str(exc).lower()
+    if "401" in message or "403" in message or "unauthorized" in message or "forbidden" in message:
+        return "auth"
+    if "timeout" in name or "timeout" in message:
+        return "timeout"
+    if "connection" in name or "connect" in message:
+        return "connection"
+    return "api_error"
 
 
 def _write_signal_catalog_cache(signals: list[dict]) -> None:
@@ -193,38 +254,78 @@ def load_daily_signals() -> list[str]:
     if _daily_signal_cache is not None:
         return _daily_signal_cache
 
+    intervals = _interval_filter()
+    api_error_kind = ""
+    api_error_message = ""
     try:
         base_url = os.getenv("ALPHA_OS_SIGNAL_NOISE_URL", "http://127.0.0.1:8000")
         client = build_signal_client(base_url=base_url, timeout=10)
         signals = client.list_signals()
-        intervals = _interval_filter()
         names = _filter_signal_names(signals, intervals)
         if names:
             _write_signal_catalog_cache(signals)
+            _set_signal_catalog_status(
+                source="api",
+                signal_count=len(names),
+                intervals=intervals,
+            )
             if intervals is None:
-                log.info("Loaded %d signals from API (all intervals)", len(names))
+                log.info("Signal catalog source=api count=%d intervals=all", len(names))
             else:
-                log.info("Loaded %d signals from API (intervals=%s)", len(names), sorted(intervals))
+                log.info(
+                    "Signal catalog source=api count=%d intervals=%s",
+                    len(names),
+                    sorted(intervals),
+                )
             _daily_signal_cache = names
             return _daily_signal_cache
     except Exception as e:
-        log.warning("Failed to load signals from API: %s", e)
+        api_error_kind = _classify_signal_catalog_error(e)
+        api_error_message = str(e)
+        log.warning(
+            "Signal catalog API failed kind=%s base_url=%s error=%s",
+            api_error_kind,
+            os.getenv("ALPHA_OS_SIGNAL_NOISE_URL", "http://127.0.0.1:8000"),
+            e,
+        )
 
-    intervals = _interval_filter()
     names = _cached_signal_catalog_names(intervals)
     if names:
+        _set_signal_catalog_status(
+            source="cache",
+            signal_count=len(names),
+            intervals=intervals,
+            api_error_kind=api_error_kind,
+            api_error_message=api_error_message,
+        )
         if intervals is None:
-            log.info("Loaded %d signals from cached signal catalog", len(names))
+            log.warning(
+                "Signal catalog source=cache count=%d intervals=all after_api_failure=%s",
+                len(names),
+                api_error_kind or "none",
+            )
         else:
-            log.info(
-                "Loaded %d signals from cached signal catalog (intervals=%s)",
+            log.warning(
+                "Signal catalog source=cache count=%d intervals=%s after_api_failure=%s",
                 len(names),
                 sorted(intervals),
+                api_error_kind or "none",
             )
         _daily_signal_cache = names
         return _daily_signal_cache
 
-    log.warning("Falling back to static signal list")
+    _set_signal_catalog_status(
+        source="static",
+        signal_count=len(MACRO_SIGNALS),
+        intervals=intervals,
+        api_error_kind=api_error_kind,
+        api_error_message=api_error_message,
+    )
+    log.error(
+        "Signal catalog source=static count=%d after_api_failure=%s cache=miss",
+        len(MACRO_SIGNALS),
+        api_error_kind or "none",
+    )
 
     _daily_signal_cache = MACRO_SIGNALS
     return _daily_signal_cache
