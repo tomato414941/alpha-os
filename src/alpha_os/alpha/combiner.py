@@ -210,6 +210,31 @@ def compute_diversity_scores(
     return np.clip(1.0 - avg_abs_corr, 0.0, 1.0)
 
 
+def cross_asset_neutralize(
+    signals: dict[str, float],
+) -> dict[str, float]:
+    """Cross-sectional neutralization: subtract mean across assets.
+
+    Converts absolute directional signals into relative signals.
+    If BTC=+0.3, ETH=+0.5, SOL=+0.1, mean=0.3:
+    → BTC=0.0, ETH=+0.2, SOL=-0.2
+
+    This ensures the portfolio is approximately market-neutral and
+    that TC weighting can differentiate between assets.
+    """
+    if len(signals) <= 1:
+        return dict(signals)
+    values = np.array(list(signals.values()))
+    finite_mask = np.isfinite(values)
+    if not finite_mask.any():
+        return {k: 0.0 for k in signals}
+    mean = float(np.mean(values[finite_mask]))
+    return {
+        k: (float(v - mean) if np.isfinite(v) else 0.0)
+        for k, v in signals.items()
+    }
+
+
 def weighted_combine(
     signals: np.ndarray,
     weights: np.ndarray,

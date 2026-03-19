@@ -1378,7 +1378,26 @@ def _build_trade_cycle_runner(
     if use_lifecycle_daemon:
         logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
 
+    # Cache previous cycle's raw signals for cross-asset neutralization.
+    # Uses 1-cycle lag: neutralize based on prior signals.
+    # Signals change slowly (daily), so lag is negligible.
+    prev_raw_signals: dict[str, float] = {}
+
     def cycle() -> None:
+        nonlocal prev_raw_signals
+
+        # Compute cross-asset neutralization from previous cycle
+        signal_overrides: dict[str, float | None] = {a: None for a in asset_list}
+        if len(asset_list) > 1 and len(prev_raw_signals) == len(asset_list):
+            from alpha_os.alpha.combiner import cross_asset_neutralize
+            neutralized = cross_asset_neutralize(prev_raw_signals)
+            signal_overrides = {a: neutralized.get(a) for a in asset_list}
+            logger.info(
+                "Cross-asset neutralization: raw=%s -> neutralized=%s",
+                {a: f"{v:.4f}" for a, v in prev_raw_signals.items()},
+                {a: f"{v:.4f}" for a, v in neutralized.items()},
+            )
+
         for asset in asset_list:
             trader, cb, readiness_checker = contexts[asset]
             logger.info("--- %s cycle start ---", asset)
@@ -1389,7 +1408,12 @@ def _build_trade_cycle_runner(
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
                     last_evolve[asset] = now
-            result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
+            result = trader.run_cycle(
+                skip_lifecycle=use_lifecycle_daemon,
+                signal_override=signal_overrides[asset],
+            )
+            # Cache raw signal for next cycle's neutralization
+            prev_raw_signals[asset] = trader.last_raw_signal
             _print_paper_result(result)
             recon = trader.reconcile()
             _run_trade_readiness_check(result, recon, cb, readiness_checker)

@@ -186,8 +186,14 @@ class Trader:
 
         self.tactical = tactical
         self._executor_state_date = ""
+        self._last_raw_signal: float = float("nan")
 
         self._restore_state()
+
+    @property
+    def last_raw_signal(self) -> float:
+        """Last raw (pre-neutralization) final signal from prediction layer."""
+        return self._last_raw_signal
 
     def _restore_state(self) -> None:
         """Reconstruct executor and risk manager state from last snapshot."""
@@ -434,6 +440,7 @@ class Trader:
         self,
         simulation_date: str | None = None,
         skip_lifecycle: bool = False,
+        signal_override: float | None = None,
     ) -> PaperCycleResult:
         """Execute one trading cycle.
 
@@ -745,10 +752,20 @@ class Trader:
             alpha_signal_arrays=alpha_signal_arrays,
             data=data,
         )
+        self._last_raw_signal = prediction.final_signal
+
+        # 4b. Cross-asset neutralization override
+        effective_signal = prediction.final_signal
+        if signal_override is not None:
+            logger.info(
+                "Signal override: %.4f -> %.4f (cross-asset neutralized)",
+                prediction.final_signal, signal_override,
+            )
+            effective_signal = signal_override
 
         # 5. Allocation layer: final signal -> target portfolio
         plan = self._build_allocation_plan(
-            final_signal=prediction.final_signal,
+            final_signal=effective_signal,
             prev_value=prev_value,
             today_date=today_date,
         )
@@ -774,7 +791,7 @@ class Trader:
             strategic_signal=prediction.strategic_signal,
             regime_adjusted_signal=prediction.regime_adjusted_signal,
             tactical_adjusted_signal=prediction.tactical_adjusted_signal,
-            final_signal=prediction.final_signal,
+            final_signal=effective_signal,
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
         )
@@ -823,7 +840,7 @@ class Trader:
             strategic_signal=prediction.strategic_signal,
             regime_adjusted_signal=prediction.regime_adjusted_signal,
             tactical_adjusted_signal=prediction.tactical_adjusted_signal,
-            final_signal=prediction.final_signal,
+            final_signal=effective_signal,
         )
 
     def print_status(self) -> None:

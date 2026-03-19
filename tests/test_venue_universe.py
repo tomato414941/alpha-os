@@ -16,6 +16,7 @@ from alpha_os.data.universe import (
     register_polymarket_market,
     POLYMARKET,
 )
+from alpha_os.alpha.combiner import cross_asset_neutralize
 from alpha_os.risk.manager import (
     BinaryOutcomeRiskConfig,
     BinaryOutcomeRiskManager,
@@ -135,3 +136,34 @@ class TestKellyRiskManager:
         full = rm_full.kelly_size(0.70, 0.50)
         half = rm_half.kelly_size(0.70, 0.50)
         assert abs(half.fraction) == pytest.approx(abs(full.fraction) / 2, rel=0.01)
+
+
+class TestCrossAssetNeutralize:
+    def test_subtracts_mean(self):
+        signals = {"BTC": 0.3, "ETH": 0.5, "SOL": 0.1}
+        result = cross_asset_neutralize(signals)
+        assert result["BTC"] == pytest.approx(0.0)
+        assert result["ETH"] == pytest.approx(0.2)
+        assert result["SOL"] == pytest.approx(-0.2)
+
+    def test_sums_to_zero(self):
+        signals = {"BTC": 0.3, "ETH": 0.5, "SOL": 0.1}
+        result = cross_asset_neutralize(signals)
+        assert sum(result.values()) == pytest.approx(0.0)
+
+    def test_single_asset_unchanged(self):
+        signals = {"BTC": 0.5}
+        result = cross_asset_neutralize(signals)
+        assert result["BTC"] == 0.5
+
+    def test_handles_nan(self):
+        signals = {"BTC": float("nan"), "ETH": 0.5, "SOL": 0.1}
+        result = cross_asset_neutralize(signals)
+        assert result["BTC"] == 0.0
+        assert result["ETH"] == pytest.approx(0.2)
+        assert result["SOL"] == pytest.approx(-0.2)
+
+    def test_all_same_becomes_zero(self):
+        signals = {"BTC": 0.5, "ETH": 0.5, "SOL": 0.5}
+        result = cross_asset_neutralize(signals)
+        assert all(v == pytest.approx(0.0) for v in result.values())
