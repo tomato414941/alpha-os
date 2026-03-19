@@ -1,6 +1,7 @@
 """Runtime planning helpers shared by trade and replay paths."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -51,6 +52,10 @@ def build_target_position(
     supports_short: bool,
 ) -> TargetPosition:
     """Convert a normalized signal into a desired holding."""
+    if not math.isfinite(final_signal):
+        return TargetPosition(
+            symbol=symbol, qty=0.0, reference_price=float(current_price), dollar_target=0.0,
+        )
     dollar_target = final_signal * portfolio_value * max_position_pct
     qty = dollar_target / current_price if current_price > 0 else 0.0
     if abs(dollar_target) < min_trade_usd:

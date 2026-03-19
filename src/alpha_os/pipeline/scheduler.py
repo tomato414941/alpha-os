@@ -55,7 +55,7 @@ class PipelineScheduler:
                 self._run_count += 1
                 logger.info(f"Run #{self._run_count} completed in {elapsed:.1f}s")
             except Exception as e:
-                logger.error(f"Run failed: {e}")
+                logger.error("Run failed: %s", e, exc_info=True)
                 logger.info(f"Retrying in {cfg.retry_delay}s...")
                 self._sleep(cfg.retry_delay)
                 continue
