@@ -170,38 +170,6 @@ def select_low_correlation(
     return selected
 
 
-def equal_weight_combine(signals: np.ndarray, indices: list[int]) -> np.ndarray:
-    """Combine selected signals with equal weight.
-
-    Returns normalized combined signal clipped to [-1, 1].
-    """
-    if not indices:
-        return np.zeros(signals.shape[1])
-
-    selected = signals[indices]
-    # Replace NaN with 0 before combining
-    selected = _sanitize_signal_array(selected)
-    combined = selected.mean(axis=0)
-
-    std = combined.std()
-    if std > 0:
-        combined = combined / std
-    return np.clip(combined, -1, 1)
-
-
-# ---------------------------------------------------------------------------
-# Weighted combiner — quality × diversity, all alphas participate
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class WeightedCombinerConfig:
-    min_weight: float = 1e-4
-    chunk_size: int = 1000
-    diversity_recompute_days: int = 63
-    corr_lookback: int = 252
-
-
 def compute_diversity_scores(
     signals: np.ndarray,
     chunk_size: int = 1000,
@@ -240,35 +208,6 @@ def compute_diversity_scores(
 
     avg_abs_corr = abs_corr_sum / max(N - 1, 1)
     return np.clip(1.0 - avg_abs_corr, 0.0, 1.0)
-
-
-def compute_weights(
-    quality_scores: np.ndarray,
-    diversity: np.ndarray,
-    min_weight: float = 1e-4,
-) -> np.ndarray:
-    """Compute normalized weights = quality × diversity + min_weight.
-
-    Parameters
-    ----------
-    quality_scores : (N,) rolling quality metric values
-    diversity : (N,) diversity scores in [0, 1]
-    min_weight : floor so no alpha is fully excluded
-
-    Returns
-    -------
-    weights : (N,) normalized weights summing to 1.0
-    """
-    quality = np.maximum(np.asarray(quality_scores, dtype=np.float64), 0.0)
-    diversity = np.clip(np.asarray(diversity, dtype=np.float64), 0.0, 1.0)
-    if np.max(quality) > 0:
-        raw = quality * diversity + min_weight
-    else:
-        raw = diversity + min_weight
-    total = raw.sum()
-    if total > 0:
-        return raw / total
-    return np.full(len(quality_scores), 1.0 / max(len(quality_scores), 1))
 
 
 def weighted_combine(

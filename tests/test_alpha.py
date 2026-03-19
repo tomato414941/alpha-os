@@ -29,10 +29,8 @@ from alpha_os.alpha.deployed_alphas import (
 )
 from alpha_os.alpha.combiner import (
     select_low_correlation,
-    equal_weight_combine,
     CombinerConfig,
     compute_diversity_scores,
-    compute_weights,
     compute_tc_scores,
     compute_tc_weights,
     weighted_combine,
@@ -872,21 +870,6 @@ class TestCombiner:
         assert selected[0] == 2
         assert len(selected) == 2
 
-    def test_equal_weight_combine(self):
-        signals = np.array([
-            [1.0, -1.0, 1.0],
-            [-1.0, 1.0, -1.0],
-        ])
-        combined = equal_weight_combine(signals, [0, 1])
-        assert combined.shape == (3,)
-        np.testing.assert_array_equal(combined, [0.0, 0.0, 0.0])
-
-    def test_equal_weight_empty(self):
-        signals = np.random.randn(5, 100)
-        combined = equal_weight_combine(signals, [])
-        assert np.all(combined == 0.0)
-
-
 class TestWeightedCombiner:
     def test_diversity_independent(self):
         rng = np.random.RandomState(42)
@@ -913,28 +896,6 @@ class TestWeightedCombiner:
         full = compute_diversity_scores(signals, chunk_size=50)
         chunked = compute_diversity_scores(signals, chunk_size=10)
         np.testing.assert_allclose(full, chunked, atol=1e-10)
-
-    def test_weights_basic(self):
-        sharpes = np.array([2.0, 1.0, 0.5, -0.5])
-        diversity = np.array([0.8, 0.6, 0.9, 0.5])
-        weights = compute_weights(sharpes, diversity, min_weight=1e-4)
-        assert np.isclose(weights.sum(), 1.0)
-        assert weights[3] < weights[0]  # negative Sharpe gets minimal weight
-        assert np.all(weights > 0)
-
-    def test_weights_all_zero_sharpe(self):
-        sharpes = np.zeros(5)
-        diversity = np.ones(5)
-        weights = compute_weights(sharpes, diversity, min_weight=1e-4)
-        assert np.isclose(weights.sum(), 1.0)
-        np.testing.assert_allclose(weights, 1.0 / 5, atol=1e-6)
-
-    def test_weights_fall_back_to_diversity_when_quality_zero(self):
-        sharpes = np.zeros(3)
-        diversity = np.array([0.9, 0.4, 0.1])
-        weights = compute_weights(sharpes, diversity, min_weight=1e-4)
-        assert np.isclose(weights.sum(), 1.0)
-        assert weights[0] > weights[1] > weights[2]
 
     def test_weighted_combine_matrix(self):
         signals = np.array([[1.0, -1.0], [-1.0, 1.0]])
