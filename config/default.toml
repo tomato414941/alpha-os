@@ -55,8 +55,6 @@ min_observations = 20
 full_weight_observations = 63
 shortlist_preselect_factor = 20
 dormant_revival_min_observations = 20
-weight_confidence_floor = 1.0
-weight_confidence_power = 1.0
 
 [deployment]
 max_deployed_alphas = 150

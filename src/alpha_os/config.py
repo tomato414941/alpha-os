@@ -189,8 +189,6 @@ class LiveQualityConfig:
     full_weight_observations: int = 63
     shortlist_preselect_factor: int = 20
     dormant_revival_min_observations: int = 20
-    weight_confidence_floor: float = 1.0
-    weight_confidence_power: float = 1.0
 
 
 @dataclass

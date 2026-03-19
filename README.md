@@ -33,19 +33,17 @@ If a topic appears in multiple files, prefer:
 
 ## Current Focus
 
-The project is transitioning to **TC (True Contribution)** based weighting,
-inspired by Numerai's marginal-contribution philosophy. Key recent changes:
+**TC (True Contribution)** weighting is fully wired. The system uses a single
+Numerai-inspired metric for portfolio construction and lifecycle management.
 
-- **Pure MAP-Elites generator**: GP convergence removed; candidates are
-  generated directly (50% archive mutation + 50% random), evaluated once,
-  stored in the behavior grid
+- **Pure MAP-Elites generator**: candidates generated directly (50% archive
+  mutation + 50% random), evaluated once, stored in the behavior grid
 - **4D behavioral descriptors**: persistence × activity × price_beta ×
-  vol_sensitivity (8×8×8×8 = 4,096 cells). All axes are behavioral, not
-  syntactic
-- **TC weighting** (in progress): `compute_tc_scores()` / `compute_tc_weights()`
-  replace separate quality × diversity scoring. Single metric that naturally
-  captures both individual performance and marginal ensemble value
-- Next: wire TC into trader, remove combine_mode choices, simplify lifecycle
+  vol_sensitivity (8×8×8×8 = 4,096 cells). All axes are behavioral
+- **TC weighting**: `compute_tc_scores()` / `compute_tc_weights()` — single
+  leave-one-out ensemble Sharpe metric replaces quality × diversity scoring
+- **TC lifecycle**: active alphas with TC ≤ 0 are demoted to dormant
+  (hurting the ensemble). Dormant revival remains quality-based
 
 ## Naming And Boundary Plan
 
@@ -123,22 +121,13 @@ therefore:
 ### Pipeline Simplification Direction
 
 Three layers stay: `discovery_pool` → `managed_alphas` → `deployed_alphas`.
-The scoring logic is moving to **TC (True Contribution)** — a single metric
-that replaces the separate quality × diversity system.
+Scoring uses **TC (True Contribution)** — a single leave-one-out ensemble
+Sharpe metric for both weighting and lifecycle.
 
-What TC changes:
-
-- **Weighting**: `weight = TC(alpha, ensemble)` instead of `quality × diversity`
-- **Lifecycle**: demote when TC ≤ 0 (alpha hurts ensemble), not when individual Sharpe drops
-- **Admission**: accept when TC > 0 (alpha improves ensemble), not just individual quality gates
-- **Combine mode**: removed. Single consensus path with TC weights. No more voting/map_elites branches
-
-What TC removes:
-
-- `combine_mode` config and 3-way dispatch
-- `voting/` module
-- diversity computation infrastructure (correlation matrix, cache, recompute interval)
-- separate quality and diversity scores
+- **Weighting**: `weight = TC(alpha, ensemble)` — positive TC gets higher weight
+- **Lifecycle**: demote when TC ≤ 0 (alpha hurts ensemble)
+- **Admission**: OOS Sharpe + PBO + DSR gates (thin sanity checks)
+- **Combination**: single TC-weighted consensus path
 
 ## Setup
 
@@ -378,17 +367,13 @@ Current server profile:
 
 ### Active Work
 
-- Wire TC into trader (Phase 2) — replace quality×diversity with TC weights
-- Remove combine_mode, voting module, diversity infrastructure (Phase 3)
-- Update lifecycle/admission to TC-based decisions (Phase 4)
+- Observing TC weighting + TC lifecycle impact on live trading
 - Observe 4D behavioral grid coverage growth
 
 ### Known Limitations
 
 - No durable edge demonstrated yet (PV slightly below initial capital)
 - Fills are sparse — system is often flat
-- Replay comparison showed map_elites slightly better than consensus
-  (Sharpe -0.988 vs -1.136) but both negative
 
 ## System Map
 

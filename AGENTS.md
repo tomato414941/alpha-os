@@ -53,7 +53,7 @@ python -m alpha_os --help
 - **Distributional risk controls** (`[distributional]`) — optional CVaR/tail gate + Kelly-based sizing
 - **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` and `[distributional]`)
 - **MAP-Elites** discovery pool: 4D behavioral grid (persistence × activity × price_beta × vol_sensitivity), 8×8×8×8 = 4,096 cells
-- **TC (True Contribution)** weighting: leave-one-out ensemble Sharpe improvement replaces quality×diversity (Phase 1 done, wiring in progress)
+- **TC (True Contribution)** weighting: leave-one-out ensemble Sharpe for portfolio weights + lifecycle demotion (TC ≤ 0 → dormant)
 
 ## Terminology Policy
 

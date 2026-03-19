@@ -17,41 +17,6 @@ class QualityEstimate:
     has_min_observations: bool
 
 
-def confidence_weight_scale(
-    confidence: float | np.ndarray,
-    *,
-    floor: float = 1.0,
-    power: float = 1.0,
-) -> float | np.ndarray:
-    """Return a shrink factor for weight calculation based on confidence."""
-    floor_clipped = float(np.clip(floor, 0.0, 1.0))
-    power_clipped = max(float(power), 0.0)
-    conf = np.clip(np.asarray(confidence, dtype=np.float64), 0.0, 1.0)
-    scale = floor_clipped + (1.0 - floor_clipped) * np.power(conf, power_clipped)
-    if np.isscalar(confidence):
-        return float(scale)
-    return scale
-
-
-def shrink_weight_quality(
-    quality: float | np.ndarray,
-    confidence: float | np.ndarray,
-    *,
-    floor: float = 1.0,
-    power: float = 1.0,
-) -> float | np.ndarray:
-    """Shrink positive quality scores when forward confidence is low."""
-    base_quality = np.maximum(np.asarray(quality, dtype=np.float64), 0.0)
-    scaled = base_quality * confidence_weight_scale(
-        confidence,
-        floor=floor,
-        power=power,
-    )
-    if np.isscalar(quality) and np.isscalar(confidence):
-        return float(scaled)
-    return scaled
-
-
 def rolling_fitness(
     returns: list[float] | np.ndarray,
     *,

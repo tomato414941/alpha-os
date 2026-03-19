@@ -1573,7 +1573,7 @@ def cmd_rebuild_managed_alphas(args: argparse.Namespace) -> None:
     if stats.backup_path is not None:
         print(f"  Backup:      {stats.backup_path}")
     if not args.dry_run:
-        print("  Diversity cache cleared.")
+        print("  Registry rebuilt.")
 
 
 def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:

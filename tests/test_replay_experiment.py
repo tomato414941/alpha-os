@@ -15,10 +15,10 @@ from alpha_os.runtime_profile import build_runtime_profile
 
 
 def test_parse_override_assignment_uses_toml_types():
-    key, value = parse_override_assignment("live_quality.weight_confidence_floor=0.25")
+    key, value = parse_override_assignment("live_quality.min_observations=30")
 
-    assert key == "live_quality.weight_confidence_floor"
-    assert value == 0.25
+    assert key == "live_quality.min_observations"
+    assert value == 30
 
 
 def test_apply_config_overrides_updates_nested_fields():
@@ -28,12 +28,12 @@ def test_apply_config_overrides_updates_nested_fields():
         cfg,
         {
             "lifecycle.candidate_quality_min": 1.1,
-            "live_quality.weight_confidence_power": 4,
+            "live_quality.dormant_revival_min_observations": 30,
         },
     )
 
     assert cfg.lifecycle.candidate_quality_min == 1.1
-    assert cfg.live_quality.weight_confidence_power == 4
+    assert cfg.live_quality.dormant_revival_min_observations == 30
 
 
 def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):

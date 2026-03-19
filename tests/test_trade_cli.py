@@ -355,7 +355,7 @@ def test_replay_experiment_parser():
         "--source", "candidates",
         "--deployment-mode", "refresh",
         "--set", "lifecycle.candidate_quality_min=1.10",
-        "--set", "live_quality.weight_confidence_floor=0.25",
+        "--set", "live_quality.min_observations=30",
     ])
 
     assert args.command == "replay-experiment"
@@ -365,7 +365,7 @@ def test_replay_experiment_parser():
     assert args.deployment_mode == "refresh"
     assert args.set == [
         "lifecycle.candidate_quality_min=1.10",
-        "live_quality.weight_confidence_floor=0.25",
+        "live_quality.min_observations=30",
     ]
 
 

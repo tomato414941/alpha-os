@@ -128,15 +128,6 @@ class ManagedAlphaStore:
             CREATE INDEX IF NOT EXISTS idx_candidates_created
             ON candidates(created_at)
         """)
-        # Pipeline v2: pre-computed diversity scores from admission daemon
-        self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS diversity_cache (
-                alpha_id TEXT PRIMARY KEY,
-                diversity_score REAL NOT NULL,
-                computed_at REAL NOT NULL,
-                n_alphas_compared INTEGER NOT NULL
-            )
-        """)
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS deployed_alphas (
                 alpha_id TEXT PRIMARY KEY,
