@@ -270,8 +270,15 @@ def weighted_combine_scalar(
     combined signal clipped to [-1, 1]
     """
     total = 0.0
+    w_sum = 0.0
     for alpha_id, sig in signals.items():
-        total += weights.get(alpha_id, 0.0) * sig
+        if not np.isfinite(sig):
+            continue
+        w = weights.get(alpha_id, 0.0)
+        total += w * sig
+        w_sum += w
+    if w_sum > 0 and w_sum < 0.99:
+        total /= w_sum  # renormalize if some alphas were nan-filtered
     return float(np.clip(total, -1.0, 1.0))
 
 
@@ -289,6 +296,12 @@ def signal_consensus(
     ids = list(signals.keys())
     w = np.array([weights.get(a, 0.0) for a in ids])
     s = np.array([signals[a] for a in ids])
+    finite_mask = np.isfinite(s)
+    if not finite_mask.all():
+        w = w[finite_mask]
+        s = s[finite_mask]
+    if len(s) == 0:
+        return 0.0, 0.0, 0.0
     w_sum = w.sum()
     if w_sum <= 0:
         return 0.0, 0.0, 0.0
