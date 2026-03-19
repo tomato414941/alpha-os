@@ -34,7 +34,6 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
             [
                 'fitness_metric = "log_growth"',
                 "[paper]",
-                'combine_mode = "consensus"',
                 "max_trading_alphas = 30",
             ]
         )
@@ -53,7 +52,6 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
 
     cfg = Config.load(override)
     assert cfg.fitness_metric == "log_growth"
-    assert cfg.paper.combine_mode == "consensus"
     assert cfg.paper.max_trading_alphas == 30
     assert cfg.paper.max_position_pct == 0.25
 

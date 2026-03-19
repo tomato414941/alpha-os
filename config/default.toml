@@ -44,7 +44,6 @@ max_position_pct = 0.25
 min_trade_usd = 10.0
 rebalance_deadband_usd = 0.0
 max_trading_alphas = 30
-combine_mode = "consensus"  # "consensus" | "voting" | "map_elites"
 
 [forward]
 check_interval = 14400

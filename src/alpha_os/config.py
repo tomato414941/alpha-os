@@ -160,7 +160,6 @@ class PaperTradingConfig:
     min_trade_usd: float = 10.0
     rebalance_deadband_usd: float = 0.0
     max_trading_alphas: int = 30
-    combine_mode: str = "consensus"  # "consensus" | "voting" | "map_elites"
 
 
 @dataclass

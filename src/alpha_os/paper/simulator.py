@@ -11,7 +11,6 @@ import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
-from ..alpha.quality import shrink_weight_quality
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
@@ -24,9 +23,8 @@ from ..execution.paper import PaperExecutor
 from ..execution.planning import build_target_position, plan_execution_intent
 from ..alpha.combiner import (
     CombinerConfig,
-    WeightedCombinerConfig,
-    compute_diversity_scores,
-    compute_weights,
+    compute_tc_scores,
+    compute_tc_weights,
     select_low_correlation,
 )
 from ..alpha.monitor import RegimeDetector
@@ -94,7 +92,6 @@ def _replay_signals_to_position_intent(
     signals: np.ndarray,
     weights: np.ndarray,
     *,
-    combine_mode: str,
     dd_scale: float,
     vol_scale: float,
     sizing_mode: str = "runtime",
@@ -105,16 +102,13 @@ def _replay_signals_to_position_intent(
         adjusted = raw_combined * dd_scale
         return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
 
-    if combine_mode == "consensus":
-        mean = float(np.dot(weights, signals))
-        centered = signals - mean
-        std = float(np.sqrt(np.dot(weights, centered * centered)))
-        abs_mean = abs(mean)
-        consensus = abs_mean / (abs_mean + std) if (abs_mean + std) > 1e-12 else 0.0
-        adjusted = float(np.sign(mean)) * consensus * dd_scale
-        return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
-
-    adjusted = raw_combined * dd_scale
+    # TC-weighted consensus sizing
+    mean = float(np.dot(weights, signals))
+    centered = signals - mean
+    std = float(np.sqrt(np.dot(weights, centered * centered)))
+    abs_mean = abs(mean)
+    consensus = abs_mean / (abs_mean + std) if (abs_mean + std) > 1e-12 else 0.0
+    adjusted = float(np.sign(mean)) * consensus * dd_scale
     return raw_combined, float(np.clip(adjusted, -1.0, 1.0))
 
 
@@ -235,14 +229,10 @@ def run_replay(
         n_valid = int(valid_mask.sum())
         logger.info("Pre-computed signals: %d/%d valid", n_valid, n_alphas)
 
-        # Diversity scores for weighted combination
-        wcfg = WeightedCombinerConfig()
-        valid_signals = np.nan_to_num(signal_matrix[valid_mask])
-        diversity_scores = compute_diversity_scores(valid_signals, chunk_size=wcfg.chunk_size)
-        diversity_full = np.ones(n_alphas, dtype=np.float64)
-        diversity_full[valid_mask] = diversity_scores
-        last_diversity_day = 0
-        logger.info("Initial diversity scores computed for %d alphas", n_valid)
+        # TC weights — recomputed periodically during simulation
+        tc_recompute_interval = 63
+        tc_weights_cache: dict[str, float] = {}
+        last_tc_day = -tc_recompute_interval  # force initial compute
 
         # Pre-compute daily price returns
         price_returns = np.zeros(n_days)
@@ -345,24 +335,24 @@ def run_replay(
                 )
                 alpha_state_vec[eval_indices] = new_states
 
-            # Recompute diversity periodically (rolling window)
-            if d - last_diversity_day >= wcfg.diversity_recompute_days:
-                lookback = min(wcfg.corr_lookback, d)
-                window_sigs = np.nan_to_num(signal_matrix[valid_mask, d - lookback:d])
-                if window_sigs.shape[1] >= 20:
-                    diversity_scores = compute_diversity_scores(
-                        window_sigs, chunk_size=wcfg.chunk_size,
-                    )
-                    diversity_full[valid_mask] = diversity_scores
-                    last_diversity_day = d
+            # Recompute TC weights periodically
+            if d - last_tc_day >= tc_recompute_interval:
+                lookback_tc = min(252, d)
+                if lookback_tc >= 20:
+                    valid_indices = [i for i in range(n_alphas) if valid_mask[i]]
+                    sig_dict = {}
+                    for idx in valid_indices:
+                        aid = all_records[idx].alpha_id
+                        sig_dict[aid] = signal_matrix[idx, d - lookback_tc:d]
+                    tc_returns = price_returns[d - lookback_tc:d]
+                    tc_scores = compute_tc_scores(sig_dict, tc_returns)
+                    tc_weights_cache = compute_tc_weights(tc_scores)
+                    last_tc_day = d
 
             # Combined signal from live-like candidate set with correlation filter
             trading_indices = [i for i in trading_candidates if valid_mask[i]]
-            if (
-                len(trading_indices) > config.paper.max_trading_alphas
-                and config.paper.combine_mode != "map_elites"
-            ):
-                lookback = min(wcfg.corr_lookback, d)
+            if len(trading_indices) > config.paper.max_trading_alphas:
+                lookback = min(252, d)
                 corr_matrix = np.array([
                     signal_matrix[i, d - lookback:d] for i in trading_indices
                 ])
@@ -377,24 +367,17 @@ def run_replay(
                 trading_indices = [trading_indices[i] for i in selected_idx]
 
             if trading_indices:
-                t_quality = np.array([
-                    blended_quality_full[i] for i in trading_indices
-                ])
-                t_confidence = np.array([
-                    confidence[i] for i in trading_indices
-                ])
-                t_diversity = diversity_full[trading_indices]
-                shrunk_quality = shrink_weight_quality(
-                    t_quality,
-                    t_confidence,
-                    floor=config.live_quality.weight_confidence_floor,
-                    power=config.live_quality.weight_confidence_power,
-                )
-                weights = compute_weights(
-                    shrunk_quality,
-                    t_diversity,
-                    min_weight=wcfg.min_weight,
-                )
+                # TC weights for selected trading alphas
+                w_list = []
+                for idx in trading_indices:
+                    aid = all_records[idx].alpha_id
+                    w_list.append(tc_weights_cache.get(aid, 1e-4))
+                weights = np.array(w_list, dtype=np.float64)
+                w_sum = weights.sum()
+                if w_sum > 0:
+                    weights = weights / w_sum
+                else:
+                    weights = np.full(len(trading_indices), 1.0 / len(trading_indices))
                 selected_signals = np.array([signal_matrix[i, d - 1] for i in trading_indices])
             else:
                 selected_signals = np.array([], dtype=np.float64)
@@ -411,7 +394,6 @@ def run_replay(
                 _, final_signal = _replay_signals_to_position_intent(
                     selected_signals,
                     weights,
-                    combine_mode=config.paper.combine_mode,
                     dd_scale=dd_s,
                     vol_scale=vol_s,
                     sizing_mode=sizing_mode,

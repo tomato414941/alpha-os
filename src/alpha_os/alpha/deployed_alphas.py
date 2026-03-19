@@ -493,7 +493,6 @@ def prune_registry_active_duplicates(
             if backup and db_path.exists():
                 backup_path = backup_registry_db(db_path)
             registry.bulk_update_states(plan.demoted_ids, AlphaState.DORMANT)
-            registry.clear_diversity_cache()
             if refresh_deployed:
                 deployed_refresh = refresh_deployed_alphas(
                     db_path,

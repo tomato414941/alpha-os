@@ -200,10 +200,6 @@ class ManagedAlphaStore:
         rows = self._conn.execute("SELECT * FROM alphas").fetchall()
         return [self._row_to_record(r) for r in rows]
 
-    def clear_diversity_cache(self) -> None:
-        self._conn.execute("DELETE FROM diversity_cache")
-        self._conn.commit()
-
     def clear_deployed_alphas(self) -> None:
         self._conn.execute("DELETE FROM deployed_alphas")
         self._conn.commit()

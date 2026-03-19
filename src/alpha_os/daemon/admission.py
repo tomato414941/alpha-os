@@ -395,8 +395,6 @@ class AdmissionDaemon:
                 for name in self._feature_names(expr_str):
                     active_feature_counts[name] = active_feature_counts.get(name, 0) + 1
 
-                # Write diversity cache
-                self._write_diversity_cache(alpha_id, registry)
                 n_adopted += 1
             else:
                 reason = _gate_failure_reason(result.reasons)
@@ -445,18 +443,6 @@ class AdmissionDaemon:
         except Exception:
             logger.warning("PBO computation failed, using 1.0")
             return 1.0
-
-    def _write_diversity_cache(self, alpha_id: str, registry: ManagedAlphaStore) -> None:
-        n_active = registry.count(AlphaState.ACTIVE)
-        conn = self._open_registry_conn()
-        conn.execute(
-            "INSERT OR REPLACE INTO diversity_cache "
-            "(alpha_id, diversity_score, computed_at, n_alphas_compared) "
-            "VALUES (?, ?, ?, ?)",
-            (alpha_id, 1.0, time.time(), n_active),
-        )
-        conn.commit()
-        conn.close()
 
     def _load_data(self, features):
         from ..data.store import DataStore

@@ -14,11 +14,7 @@ import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
-from ..alpha.combiner import (
-    WeightedCombinerConfig,
-    compute_weights,
-    weighted_combine_scalar,
-)
+from ..alpha.combiner import weighted_combine_scalar
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..config import Config, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
@@ -72,8 +68,6 @@ class TacticalTrader:
 
         mon_cfg = MonitorConfig(rolling_window=config.forward.degradation_window)
         self.monitor = AlphaMonitor(config=mon_cfg)
-        self._wcfg = WeightedCombinerConfig()
-        self._diversity_cache: dict[str, float] = {}
 
     def run_cycle(self, strategic_bias: float = 0.0) -> TacticalSignal:
         """Evaluate L2 alphas and modulate strategic bias.
@@ -142,19 +136,10 @@ class TacticalTrader:
                 confidence=0.0,
             )
 
-        # 5. Combine with quality × diversity
+        # 5. Equal-weight combination (L2 has few alphas; TC is overkill)
         alpha_ids = list(alpha_signals.keys())
-        sharpes_list = []
-        diversity_list = []
-        for aid in alpha_ids:
-            status = self.monitor.check(aid)
-            sharpes_list.append(max(status.rolling_sharpe, 0.0))
-            diversity_list.append(self._diversity_cache.get(aid, 1.0))
-
-        sharpes_np = np.array(sharpes_list)
-        diversity_np = np.array(diversity_list)
-        w = compute_weights(sharpes_np, diversity_np, min_weight=self._wcfg.min_weight)
-        weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
+        eq = 1.0 / len(alpha_ids)
+        weights_dict = {aid: eq for aid in alpha_ids}
         tactical_score = weighted_combine_scalar(alpha_signals, weights_dict)
 
         # 6. Agreement modulation

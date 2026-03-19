@@ -112,7 +112,7 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
     cfg = SimpleNamespace(
         forward=SimpleNamespace(check_interval=14400),
         regime=SimpleNamespace(enabled=False),
-        paper=SimpleNamespace(combine_mode="consensus"),
+        paper=SimpleNamespace(),
     )
     args = SimpleNamespace(
         config=None,
@@ -508,12 +508,10 @@ def test_normalize_trade_config_preserves_requested_profile():
     from alpha_os.config import Config
 
     cfg = Config.load()
-    cfg.paper.combine_mode = "map_elites"
     cfg.regime.enabled = True
 
     changes = _normalize_trade_config(cfg)
 
-    assert cfg.paper.combine_mode == "map_elites"
     assert cfg.regime.enabled is True
     assert changes == []
 

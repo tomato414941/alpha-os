@@ -96,7 +96,7 @@ def test_load_candidate_records_deduplicates_and_preserves_existing_id(tmp_path)
     assert records[0].metadata["candidate_id"] == "cand_new"
 
 
-def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
+def test_rebuild_registry_rewrites_alphas(tmp_path):
     db_path = tmp_path / "alpha_registry.db"
     registry = ManagedAlphaStore(db_path)
     registry.register(
@@ -106,13 +106,6 @@ def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
             state=AlphaState.ACTIVE,
             oos_sharpe=0.3,
         )
-    )
-    registry._conn.execute(
-        """
-        INSERT INTO diversity_cache (alpha_id, diversity_score, computed_at, n_alphas_compared)
-        VALUES (?, ?, ?, ?)
-        """,
-        ("legacy_old", 1.0, 1.0, 1),
     )
     registry._conn.execute(
         """
@@ -176,7 +169,6 @@ def test_rebuild_registry_rewrites_alphas_and_clears_diversity_cache(tmp_path):
         assert registry.count(AlphaState.REJECTED) == 1
         assert registry.count() == 2
         assert conn.execute("SELECT COUNT(*) FROM candidates").fetchone()[0] == 2
-        assert conn.execute("SELECT COUNT(*) FROM diversity_cache").fetchone()[0] == 0
     finally:
         conn.close()
         registry.close()

@@ -8,9 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..alpha.combiner import (
-    WeightedCombinerConfig,
-    compute_diversity_scores,
-    compute_weights,
+    compute_tc_scores,
+    compute_tc_weights,
     weighted_combine,
 )
 from ..alpha.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PipelineConfig:
     gp: GPConfig | None = None
-    combiner_weighted: WeightedCombinerConfig | None = None
+    tc_min_weight: float = 1e-4
     gate: GateConfig | None = None
     commission_pct: float = 0.10
     slippage_pct: float = 0.05
@@ -281,16 +280,16 @@ class PipelineRunner:
         return adopted
 
     def _combine(self, adopted: list[tuple[Expr, float]]) -> np.ndarray:
-        """Build combined signal using quality × diversity weighting."""
+        """Build combined signal using TC weighting."""
         n_days = len(self.prices)
         signals = []
-        sharpes = []
+        ids = []
 
-        for expr, fitness in adopted:
+        for i, (expr, fitness) in enumerate(adopted):
             try:
                 sig = evaluate_expression(expr, self.data, n_days)
                 signals.append(sig)
-                sharpes.append(fitness)
+                ids.append(f"alpha_{i}")
             except EvaluationError:
                 continue
 
@@ -298,9 +297,9 @@ class PipelineRunner:
             return np.zeros(n_days)
 
         sig_matrix = np.array(signals)
-        sharpe_arr = np.array(sharpes)
-
-        wcfg = self.config.combiner_weighted or WeightedCombinerConfig()
-        diversity = compute_diversity_scores(sig_matrix, chunk_size=wcfg.chunk_size)
-        weights = compute_weights(sharpe_arr, diversity, min_weight=wcfg.min_weight)
+        returns = np.diff(self.prices) / self.prices[:-1]
+        sig_dict = {aid: sig_matrix[i] for i, aid in enumerate(ids)}
+        tc_scores = compute_tc_scores(sig_dict, returns)
+        tc_weights = compute_tc_weights(tc_scores, min_weight=self.config.tc_min_weight)
+        weights = np.array([tc_weights[aid] for aid in ids])
         return weighted_combine(sig_matrix, weights)

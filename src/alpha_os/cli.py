@@ -1250,7 +1250,7 @@ def _print_trade_runtime_banner(
     if profile_changes:
         print("Trade profile overrides: " + ", ".join(profile_changes))
     regime_state = "on" if cfg.regime.enabled else "off"
-    print(f"Trade profile: {cfg.paper.combine_mode} L3, regime {regime_state}, L2 off")
+    print(f"Trade profile: TC-weighted consensus L3, regime {regime_state}, L2 off")
 
 
 def _build_trade_contexts(

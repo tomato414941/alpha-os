@@ -22,7 +22,6 @@ def test_consensus_replay_matches_runtime_strategic_shape():
     raw, adjusted = _replay_signals_to_position_intent(
         signals,
         weights,
-        combine_mode="consensus",
         dd_scale=0.8,
         vol_scale=0.1,
     )
@@ -35,31 +34,13 @@ def test_consensus_replay_matches_runtime_strategic_shape():
     assert adjusted == pytest.approx(np.sign(mean) * consensus * 0.8)
 
 
-def test_non_consensus_replay_keeps_raw_times_risk_scales():
+def test_raw_mean_sizing_mode_ignores_consensus():
     signals = np.array([1.0, 0.8, -0.2])
     weights = np.array([0.5, 0.3, 0.2])
 
     raw, adjusted = _replay_signals_to_position_intent(
         signals,
         weights,
-        combine_mode="voting",
-        dd_scale=0.8,
-        vol_scale=0.5,
-    )
-
-    expected_raw = float(np.clip(np.dot(weights, signals), -1.0, 1.0))
-    assert raw == pytest.approx(expected_raw)
-    assert adjusted == pytest.approx(expected_raw * 0.8)
-
-
-def test_raw_mean_sizing_mode_ignores_consensus_and_vol_scale():
-    signals = np.array([1.0, 0.8, -0.2])
-    weights = np.array([0.5, 0.3, 0.2])
-
-    raw, adjusted = _replay_signals_to_position_intent(
-        signals,
-        weights,
-        combine_mode="consensus",
         dd_scale=0.8,
         vol_scale=0.1,
         sizing_mode="raw_mean",

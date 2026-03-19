@@ -16,11 +16,7 @@ import numpy as np
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor, RegimeDetector
-from ..alpha.quality import (
-    QualityEstimate,
-    confidence_weight_scale,
-    shrink_weight_quality,
-)
+from ..alpha.quality import QualityEstimate
 from ..alpha.runtime_policy import rank_trading_records
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
@@ -42,9 +38,8 @@ from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
 from ..alpha.combiner import (
     CombinerConfig,
-    WeightedCombinerConfig,
-    compute_diversity_scores,
-    compute_weights,
+    compute_tc_scores,
+    compute_tc_weights,
     select_low_correlation,
     signal_consensus,
     weighted_combine_scalar,
@@ -52,7 +47,6 @@ from ..alpha.combiner import (
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from ..runtime_profile import RuntimeProfile, build_runtime_profile
-from ..voting.combiner import vote_combine
 from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -190,10 +184,6 @@ class Trader:
             self.store = DataStore(DATA_DIR / "alpha_cache.db", client)
 
         self.tactical = tactical
-        self._wcfg = WeightedCombinerConfig()
-        self._diversity_cache: dict[str, float] = {}
-        self._diversity_computed = False
-        self._diversity_last_computed: float = 0.0
         self._executor_state_date = ""
 
         self._restore_state()
@@ -262,240 +252,42 @@ class Trader:
             returns,
         )
 
-    def _recompute_diversity(
-        self, data: dict[str, np.ndarray], parsed_records: list[tuple],
-    ) -> None:
-        """Recompute diversity scores from signal matrix."""
-        n_days = len(next(iter(data.values())))
-        signals = []
-        alpha_ids = []
-
-        for record, expr in parsed_records:
-            try:
-                sig = evaluate_expression(expr, data, n_days)
-                sig = normalize_signal(sig)
-                lookback = min(self._wcfg.corr_lookback, n_days)
-                signals.append(sig[-lookback:])
-                alpha_ids.append(record.alpha_id)
-            except EvaluationError:
-                continue
-
-        if len(signals) < 2:
-            self._diversity_cache = {aid: 1.0 for aid in alpha_ids}
-            self._diversity_computed = True
-            return
-
-        sig_matrix = np.array(signals)
-        diversity = compute_diversity_scores(sig_matrix, chunk_size=self._wcfg.chunk_size)
-        self._diversity_cache = {
-            aid: float(d) for aid, d in zip(alpha_ids, diversity)
-        }
-        self._diversity_computed = True
-        logger.info("Diversity scores computed for %d alphas", len(alpha_ids))
-
-    def _load_diversity_from_db(self) -> None:
-        """Load pre-computed diversity scores from diversity_cache table."""
-        import sqlite3
-
-        db_path = asset_data_dir(self.asset) / "alpha_registry.db"
-        conn = sqlite3.connect(str(db_path))
-        conn.execute("PRAGMA busy_timeout=30000")
-        rows = conn.execute(
-            "SELECT alpha_id, diversity_score FROM diversity_cache"
-        ).fetchall()
-        conn.close()
-
-        if rows:
-            self._diversity_cache = {r[0]: r[1] for r in rows}
-            self._diversity_computed = True
-            logger.info("Loaded %d diversity scores from cache", len(rows))
-
-    def _compute_cycle_diversity(
-        self,
-        alpha_ids: list[str],
-        alpha_signal_arrays: dict[str, np.ndarray],
-    ) -> dict[str, float]:
-        if not alpha_ids:
-            return {}
-        if len(alpha_ids) == 1:
-            return {alpha_ids[0]: 1.0}
-
-        available = [aid for aid in alpha_ids if aid in alpha_signal_arrays]
-        if len(available) < 2:
-            return {aid: 1.0 for aid in alpha_ids}
-
-        lookback = min(
-            self._wcfg.corr_lookback,
-            *(len(alpha_signal_arrays[aid]) for aid in available),
-        )
-        if lookback < 2:
-            return {aid: 1.0 for aid in alpha_ids}
-
-        sig_matrix = np.array(
-            [alpha_signal_arrays[aid][-lookback:] for aid in available],
-            dtype=np.float64,
-        )
-        diversity = compute_diversity_scores(
-            sig_matrix, chunk_size=self._wcfg.chunk_size
-        )
-        scores = {aid: 1.0 for aid in alpha_ids}
-        for aid, score in zip(available, diversity):
-            scores[aid] = float(score)
-        return scores
-
-    def _resolve_diversity_scores(
-        self,
-        alpha_ids: list[str],
-        alpha_signal_arrays: dict[str, np.ndarray],
-    ) -> dict[str, float]:
-        cached = np.array(
-            [self._diversity_cache.get(aid, np.nan) for aid in alpha_ids],
-            dtype=np.float64,
-        )
-        if (
-            alpha_ids
-            and np.all(np.isfinite(cached))
-            and np.ptp(cached) > 1e-9
-        ):
-            return {aid: float(cached[i]) for i, aid in enumerate(alpha_ids)}
-
-        live_scores = self._compute_cycle_diversity(alpha_ids, alpha_signal_arrays)
-        if live_scores:
-            logger.info(
-                "Using live cycle diversity for %d alphas (cache missing or degenerate)",
-                len(alpha_ids),
-            )
-            return live_scores
-        return {aid: float(self._diversity_cache.get(aid, 1.0)) for aid in alpha_ids}
-
     def _predict_portfolio_signal(
         self,
         alpha_signals: dict[str, float],
         alpha_signal_arrays: dict[str, np.ndarray],
-        quality_estimates: dict[str, QualityEstimate],
-        alpha_exprs: dict[str, object],
-        all_alphas: list,
         data: dict[str, np.ndarray],
-        parsed_records: list[tuple],
-        skip_lifecycle: bool,
     ) -> PredictionOutput:
-        """Prediction layer: combine alpha signals into an adjusted portfolio signal."""
+        """Prediction layer: combine alpha signals via TC-weighted consensus."""
         strategic_signal = 0.0
         regime_adjusted_signal = 0.0
         tactical_adjusted_signal = 0.0
         final_signal = 0.0
-        use_map_elites = self.config.paper.combine_mode == "map_elites"
-        if use_map_elites:
-            pass  # diversity not needed — cell structure handles it
-        elif skip_lifecycle and self.config.admission.enabled:
-            self._load_diversity_from_db()
-        else:
-            diversity_stale = (
-                not self._diversity_computed
-                or (time.time() - self._diversity_last_computed)
-                > self._wcfg.diversity_recompute_days * 86400
-            )
-            if diversity_stale:
-                self._recompute_diversity(data, parsed_records)
-                self._diversity_last_computed = time.time()
 
         prev_value = self.executor.portfolio_value
         self.risk_manager.update_equity(prev_value)
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
 
-        combine_mode = self.config.paper.combine_mode
-
-        if alpha_signals and combine_mode == "map_elites":
-            from ..evolution.discovery_pool import DiscoveryPool
-            from ..evolution.behavior import compute_behavior
-            from ..voting.ensemble import compute_cell_long_pcts, ensemble_sizing
-
-            archive = DiscoveryPool()
+        if alpha_signals:
+            # Compute asset returns for TC
             prices_arr = data.get(self.price_signal)
-            cell_signals: dict[tuple[int, ...], list[float]] = {}
-            for aid, sig_val in alpha_signals.items():
-                sig_arr = alpha_signal_arrays[aid]
-                behavior = compute_behavior(sig_arr, alpha_exprs[aid], prices=prices_arr)
-                cell = archive._to_cell(behavior)
-                cell_signals.setdefault(cell, []).append(sig_val)
+            if prices_arr is not None and len(prices_arr) >= 2:
+                asset_returns = np.diff(prices_arr) / prices_arr[:-1]
+            else:
+                asset_returns = np.array([])
 
-            cell_long_pcts = compute_cell_long_pcts(None, cell_signals)
-            ens = ensemble_sizing(cell_long_pcts)
-            strategic_signal = ens.direction * ens.confidence * ens.skew_adj * dd_s
-            strategic_signal = float(np.clip(strategic_signal, -1, 1))
-            combined = ens.direction * ens.confidence * ens.skew_adj
-            logger.info(
-                "MAP-Elites: dir=%.0f conf=%.3f skew=%.3f cells=%d/%d μ=%.3f σ=%.3f dd=%.2f",
-                ens.direction, ens.confidence, ens.skew_adj,
-                ens.n_cells, len(cell_signals), ens.mu_cells, ens.sigma_cells, dd_s,
-            )
-        elif alpha_signals and combine_mode == "voting":
-            registry_records = {r.alpha_id: r for r in all_alphas}
-            vote_result = vote_combine(
-                alpha_signals, self.forward_tracker, registry_records,
-            )
-            strategic_signal = vote_result.direction * vote_result.confidence * dd_s
-            strategic_signal = float(np.clip(strategic_signal, -1, 1))
-            combined = vote_result.direction * vote_result.confidence
-            logger.info(
-                "Voting: dir=%.0f conf=%.3f voters=%d long=%.0f%% short=%.0f%% dd=%.2f",
-                vote_result.direction, vote_result.confidence,
-                vote_result.n_voters, vote_result.long_pct * 100,
-                vote_result.short_pct * 100, dd_s,
-            )
-        elif alpha_signals:
-            alpha_ids = list(alpha_signals.keys())
-            quality_list = []
-            confidence_list = []
-            diversity_scores = self._resolve_diversity_scores(
-                alpha_ids, alpha_signal_arrays
-            )
-            for aid in alpha_ids:
-                estimate = quality_estimates[aid]
-                quality_list.append(estimate.blended_quality)
-                confidence_list.append(estimate.confidence)
-            diversity_list = [diversity_scores.get(aid, 1.0) for aid in alpha_ids]
-
-            quality_np = np.array(quality_list)
-            confidence_np = np.array(confidence_list)
-            diversity_np = np.array(diversity_list)
-            shrunk_quality_np = shrink_weight_quality(
-                quality_np,
-                confidence_np,
-                floor=self.config.live_quality.weight_confidence_floor,
-                power=self.config.live_quality.weight_confidence_power,
-            )
-            w = compute_weights(
-                shrunk_quality_np,
-                diversity_np,
-                min_weight=self._wcfg.min_weight,
-            )
-            weights_dict = {aid: float(w[i]) for i, aid in enumerate(alpha_ids)}
+            tc_scores = compute_tc_scores(alpha_signal_arrays, asset_returns)
+            weights_dict = compute_tc_weights(tc_scores)
 
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
             strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
-            if (
-                self.config.live_quality.weight_confidence_floor < 1.0
-                or self.config.live_quality.weight_confidence_power != 1.0
-            ):
-                shrink_np = confidence_weight_scale(
-                    confidence_np,
-                    floor=self.config.live_quality.weight_confidence_floor,
-                    power=self.config.live_quality.weight_confidence_power,
-                )
-                logger.info(
-                    "Confidence shrink: floor=%.2f power=%.2f mean=%.3f min=%.3f",
-                    self.config.live_quality.weight_confidence_floor,
-                    self.config.live_quality.weight_confidence_power,
-                    float(np.mean(shrink_np)),
-                    float(np.min(shrink_np)),
-                )
+            n_positive_tc = sum(1 for v in tc_scores.values() if v > 0)
             logger.info(
-                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas)",
-                dd_s, consensus, sig_mean, sig_std, len(alpha_signals),
+                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0)",
+                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_positive_tc,
             )
         else:
             combined = 0.0
@@ -795,7 +587,7 @@ class Trader:
         alpha_signals: dict[str, float] = {}
         alpha_signal_arrays: dict[str, np.ndarray] = {}
         quality_estimates: dict[str, QualityEstimate] = {}
-        alpha_exprs: dict[str, object] = {}  # aid → parsed Expr (for map_elites)
+        alpha_exprs: dict[str, object] = {}  # aid → parsed Expr
         n_evaluated = 0
         n_failed = 0
         n_feature_filtered = 0
@@ -884,11 +676,9 @@ class Trader:
             )
 
         # 3b. Correlation filter: select top-N decorrelated alphas
-        # (skipped in map_elites mode — diversity handled by cell structure)
-        use_map_elites = self.config.paper.combine_mode == "map_elites"
-        if len(alpha_signals) > max_trading and not use_map_elites:
+        if len(alpha_signals) > max_trading:
             candidate_ids = list(alpha_signals.keys())
-            lookback = min(self._wcfg.corr_lookback, len(matrix))
+            lookback = min(252, len(matrix))
             sig_matrix = np.array([
                 alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
             ])
@@ -916,12 +706,7 @@ class Trader:
         prediction = self._predict_portfolio_signal(
             alpha_signals=alpha_signals,
             alpha_signal_arrays=alpha_signal_arrays,
-            quality_estimates=quality_estimates,
-            alpha_exprs=alpha_exprs,
-            all_alphas=all_alphas,
             data=data,
-            parsed_records=parsed_records,
-            skip_lifecycle=skip_lifecycle,
         )
 
         # 5. Allocation layer: final signal -> target portfolio

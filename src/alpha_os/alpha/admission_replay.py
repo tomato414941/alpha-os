@@ -163,7 +163,6 @@ def apply_registry_snapshot(db_path: Path, records: list[AlphaRecord]) -> None:
     registry = ManagedAlphaStore(db_path)
     try:
         registry.replace_all(records)
-        registry.clear_diversity_cache()
     finally:
         registry.close()
 
