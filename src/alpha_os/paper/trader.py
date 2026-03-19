@@ -296,9 +296,12 @@ class Trader:
             strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
             n_positive_tc = sum(1 for v in tc_scores.values() if v > 0)
+            n_finite = sum(1 for v in alpha_signals.values() if np.isfinite(v))
+            sample_vals = list(alpha_signals.values())[:5]
             logger.info(
-                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0)",
-                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_positive_tc,
+                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d finite, %d TC>0) sample=%s combined=%.4f",
+                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_finite, n_positive_tc,
+                [f"{v:.3f}" for v in sample_vals], combined,
             )
         else:
             combined = 0.0
