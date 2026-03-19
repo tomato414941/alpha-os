@@ -22,11 +22,6 @@ from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
-from alpha_os.dsl.generator import AlphaGenerator
-from alpha_os.evolution.discovery_pool import DiscoveryPool
-from alpha_os.evolution.behavior import compute_behavior
-from alpha_os.evolution.gp import GPConfig, GPEvolver
-from alpha_os.validation.purged_cv import purged_walk_forward
 from alpha_os.runtime_profile import build_runtime_profile
 
 
@@ -498,6 +493,7 @@ def _real_data(
 
 def cmd_generate(args: argparse.Namespace) -> None:
     features = _make_features(args.asset)
+    from alpha_os.dsl.generator import AlphaGenerator
     gen = AlphaGenerator(features=features, seed=args.seed)
 
     t0 = time.perf_counter()
@@ -518,6 +514,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
 def cmd_backtest(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
+    from alpha_os.dsl.generator import AlphaGenerator
     gen = AlphaGenerator(features=features, seed=args.seed)
 
     # Generate alphas
@@ -600,6 +597,10 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 
 
 def cmd_evolve(args: argparse.Namespace) -> None:
+    from alpha_os.evolution.discovery_pool import DiscoveryPool
+    from alpha_os.evolution.behavior import compute_behavior
+    from alpha_os.evolution.gp import GPConfig, GPEvolver
+
     cfg = _load_config(args.config)
     layer = getattr(args, "layer", 3)
     if layer == 2:
@@ -683,6 +684,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
+    from alpha_os.validation.purged_cv import purged_walk_forward
+
     cfg = _load_config(args.config)
     layer = getattr(args, "layer", 3)
 
@@ -933,6 +936,7 @@ def _build_pipeline_config(
     config: Config, pop_size: int, generations: int,
 ):
     """Build PipelineConfig from global Config + CLI args."""
+    from alpha_os.evolution.gp import GPConfig
     from alpha_os.pipeline.runner import PipelineConfig
     from alpha_os.governance.gates import GateConfig
 
@@ -1033,6 +1037,7 @@ def _build_tactical_trader(asset: str, cfg: Config, enabled: bool):
 
 def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
     """Build PipelineConfig for L2 hourly alpha evolution."""
+    from alpha_os.evolution.gp import GPConfig
     from alpha_os.pipeline.runner import PipelineConfig
     from alpha_os.governance.gates import GateConfig
 
