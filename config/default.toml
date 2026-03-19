@@ -59,7 +59,7 @@ weight_confidence_floor = 1.0
 weight_confidence_power = 1.0
 
 [deployment]
-max_alphas = 150
+max_deployed_alphas = 150
 max_replacements = 10
 promotion_margin = 0.05
 signal_similarity_max = 0.995
@@ -123,8 +123,6 @@ min_queue_size = 10        # minimum queue depth to trigger
 max_active_alphas = 0      # 0 disables the cap; >0 enforces replace-one-in/one-out
 reject_semantic_duplicates = true
 max_feature_occurrences = 0 # 0 disables the cap; >0 rejects candidates that would exceed active feature usage
-diversity_recompute_days = 63
-incremental_diversity = true
 
 [lifecycle_daemon]
 enabled = false

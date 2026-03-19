@@ -93,6 +93,7 @@ class PredictionOutput:
     tactical_adjusted_signal: float
     final_signal: float
     dd_scale: float
+    tc_scores: dict[str, float] | None = None
 
 
 @dataclass
@@ -269,6 +270,7 @@ class Trader:
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
 
+        tc_scores: dict[str, float] | None = None
         if alpha_signals:
             # Compute asset returns for TC
             prices_arr = data.get(self.price_signal)
@@ -342,6 +344,7 @@ class Trader:
             tactical_adjusted_signal=float(tactical_adjusted_signal),
             final_signal=float(final_signal),
             dd_scale=float(dd_s),
+            tc_scores=tc_scores,
         )
 
     def _build_allocation_plan(
@@ -625,35 +628,13 @@ class Trader:
                     record.alpha_id, today_date, signal_yesterday, daily_return,
                 )
 
-                # Monitor (always needed for weight calculation)
+                # Monitor and quality estimate
                 all_returns = self.forward_tracker.get_returns(record.alpha_id)
                 recent_returns = all_returns[-self.config.forward.degradation_window:]
                 self.monitor.clear(record.alpha_id)
                 self.monitor.record_batch(record.alpha_id, recent_returns)
                 estimate = self._estimate_quality(record, all_returns)
                 quality_estimates[record.alpha_id] = estimate
-
-                # Lifecycle transitions (skip when lifecycle daemon handles it)
-                if not skip_lifecycle:
-                    old_state = record.state
-                    new_state = self.lifecycle.evaluate_live(
-                        record.alpha_id,
-                        estimate,
-                        dormant_revival_min_observations=(
-                            self.config.live_quality.dormant_revival_min_observations
-                        ),
-                    )
-                    if new_state != old_state:
-                        self.audit_log.log_state_change(
-                            record.alpha_id, old_state, new_state,
-                            reason=(
-                                "paper: blended="
-                                f"{estimate.blended_quality:.3f} "
-                                f"prior={estimate.prior_quality:.3f} "
-                                f"live={estimate.live_quality:.3f} "
-                                f"n={estimate.n_observations}"
-                            ),
-                        )
 
             except EvaluationError as exc:
                 logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
@@ -675,7 +656,60 @@ class Trader:
                 len(all_alphas),
             )
 
-        # 3b. Correlation filter: select top-N decorrelated alphas
+        # 3b. Compute TC on full signal set (before correlation filter)
+        prices_arr = data.get(self.price_signal)
+        if prices_arr is not None and len(prices_arr) >= 2:
+            asset_returns = np.diff(prices_arr) / prices_arr[:-1]
+        else:
+            asset_returns = np.array([])
+        full_tc_scores = compute_tc_scores(alpha_signal_arrays, asset_returns)
+
+        # 3c. TC-based lifecycle: demote active alphas with TC ≤ 0
+        if not skip_lifecycle and full_tc_scores:
+            record_map = {r.alpha_id: r for r in all_alphas}
+            n_demoted = 0
+            for aid, tc in full_tc_scores.items():
+                record = record_map.get(aid)
+                if record is None:
+                    continue
+                old_state = AlphaState.canonical(record.state)
+                if old_state == AlphaState.ACTIVE and tc <= 0:
+                    self.registry.update_state(aid, AlphaState.DORMANT)
+                    estimate = quality_estimates.get(aid)
+                    reason = f"tc={tc:.4f}"
+                    if estimate:
+                        reason += f" blended={estimate.blended_quality:.3f}"
+                    self.audit_log.log_state_change(
+                        aid, old_state, AlphaState.DORMANT,
+                        reason=f"paper: TC demotion {reason}",
+                    )
+                    n_demoted += 1
+            # Dormant revival: quality-based (TC not available for non-ensemble alphas)
+            for record in all_alphas:
+                if AlphaState.canonical(record.state) != AlphaState.DORMANT:
+                    continue
+                estimate = quality_estimates.get(record.alpha_id)
+                if estimate is None:
+                    continue
+                new_state = self.lifecycle.evaluate_live(
+                    record.alpha_id,
+                    estimate,
+                    dormant_revival_min_observations=(
+                        self.config.live_quality.dormant_revival_min_observations
+                    ),
+                )
+                if new_state != record.state:
+                    self.audit_log.log_state_change(
+                        record.alpha_id, record.state, new_state,
+                        reason=(
+                            f"paper: revival blended={estimate.blended_quality:.3f} "
+                            f"n={estimate.n_observations}"
+                        ),
+                    )
+            if n_demoted:
+                logger.info("TC lifecycle: %d alphas demoted (TC ≤ 0)", n_demoted)
+
+        # 3d. Correlation filter: select top-N decorrelated alphas
         if len(alpha_signals) > max_trading:
             candidate_ids = list(alpha_signals.keys())
             lookback = min(252, len(matrix))

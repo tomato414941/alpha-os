@@ -37,7 +37,7 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 - 3-Layer architecture: Strategic (日次) / Tactical (時間) / Execution (分)
 - S-expression DSL + **純 MAP-Elites 進化**（GP convergence 廃止）
 - **4D 行動的 behavior grid**: persistence × activity × price_beta × vol_sensitivity (8³=4,096 cells)
-- **TC (True Contribution) 重み付け** 移行中: leave-one-out ensemble Sharpe 改善で alpha を評価
+- **TC (True Contribution) 重み付け** 完了: leave-one-out ensemble Sharpe で重み付け + TC ≤ 0 で dormant 降格
 - Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
 - Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
 - EventDrivenTrader（WebSocket イベント駆動 + デバウンス）

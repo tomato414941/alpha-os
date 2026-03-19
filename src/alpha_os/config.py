@@ -195,7 +195,7 @@ class LiveQualityConfig:
 
 @dataclass
 class DeploymentConfig:
-    max_alphas: int = 150
+    max_deployed_alphas: int = 150
     max_replacements: int = 10
     promotion_margin: float = 0.05
     signal_similarity_max: float = 0.995
@@ -279,8 +279,6 @@ class AdmissionConfig:
     max_active_alphas: int = 0
     reject_semantic_duplicates: bool = True
     max_feature_occurrences: int = 0
-    diversity_recompute_days: int = 63
-    incremental_diversity: bool = True
 
 
 @dataclass

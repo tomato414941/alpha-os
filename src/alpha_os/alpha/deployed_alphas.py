@@ -362,7 +362,7 @@ def refresh_deployed_alphas(
                 record.oos_fitness(config.fitness_metric),
                 tracker.get_returns(record.alpha_id),
             ),
-            max_alphas=config.deployment.max_alphas,
+            max_alphas=config.deployment.max_deployed_alphas,
             max_replacements=config.deployment.max_replacements,
             promotion_margin=config.deployment.promotion_margin,
             metric=config.fitness_metric,

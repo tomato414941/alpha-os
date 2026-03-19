@@ -522,12 +522,12 @@ def test_load_runtime_observation_config_prefers_user_prod(tmp_path, monkeypatch
     home = tmp_path / "home"
     prod = home / ".config" / "alpha-os" / "prod.toml"
     prod.parent.mkdir(parents=True, exist_ok=True)
-    prod.write_text("[deployment]\nmax_alphas = 150\n")
+    prod.write_text("[deployment]\nmax_deployed_alphas = 150\n")
     monkeypatch.setattr("pathlib.Path.home", lambda: home)
 
     cfg = _load_runtime_observation_config(None)
 
-    assert cfg.deployment.max_alphas == 150
+    assert cfg.deployment.max_deployed_alphas == 150
 
 
 def test_build_tactical_trader_respects_enable_flag(monkeypatch):
