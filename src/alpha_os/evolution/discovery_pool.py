@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 class DiscoveryPoolConfig:
     dims: tuple[int, ...] = (8, 8, 8, 8)
     ranges: tuple[tuple[float, float], ...] = (
-        (0.0, 50.0),   # persistence: half-life in days
-        (0.0, 1.0),    # activity: fraction of non-trivial days
-        (-1.0, 1.0),   # price_beta: momentum vs mean-reversion
-        (-1.0, 1.0),   # vol_sensitivity: volatile vs calm market affinity
+        (0.0, 50.0),    # persistence: half-life in days
+        (0.0, 1.0),     # activity: fraction of non-trivial days
+        (-0.15, 0.15),  # price_beta: momentum vs mean-reversion
+        (-0.6, 0.6),    # vol_sensitivity: volatile vs calm market affinity
     )
     max_nan_ratio: float = 0.1
 
