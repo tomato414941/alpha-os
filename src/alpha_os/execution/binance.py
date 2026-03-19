@@ -2,50 +2,32 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
-from pathlib import Path
 from typing import Any
 
 from .constraints import ConstraintResult, apply_venue_constraints
 from .costs import CostEstimate, ExecutionCostModel
 from .executor import Executor, Order, Fill
 from .planning import ExecutionIntent
+from .secrets import get_env_or_secret, load_secrets
 
 logger = logging.getLogger(__name__)
 
 _SECRETS_FILE = "binance"
 
 
-def _load_secrets(name: str = _SECRETS_FILE) -> dict[str, str]:
-    """Load key-value pairs from ~/.secrets/{name}."""
-    secret_path = Path.home() / ".secrets" / name
-    if not secret_path.exists():
-        return {}
-    result: dict[str, str] = {}
-    for line in secret_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[7:]
-        if "=" in line:
-            key, val = line.split("=", 1)
-            result[key.strip()] = val.strip().strip("'\"")
-    return result
+# Keep module-level aliases for backward compatibility (used by tests)
+_load_secrets = load_secrets
 
 
 def _get_credentials(testnet: bool = True) -> tuple[str, str]:
     """Return (api_key, secret) from env vars or ~/.secrets/binance{_real}."""
-    api_key = os.environ.get("BINANCE_API_KEY", "")
-    secret = os.environ.get("BINANCE_SECRET_KEY", "")
-    if api_key and secret:
-        return api_key, secret
     secrets_name = _SECRETS_FILE if testnet else f"{_SECRETS_FILE}_real"
-    secrets = _load_secrets(secrets_name)
-    api_key = api_key or secrets.get("BINANCE_API_KEY", "")
-    secret = secret or secrets.get("BINANCE_SECRET_KEY", "")
-    return api_key, secret
+    creds = get_env_or_secret(
+        ["BINANCE_API_KEY", "BINANCE_SECRET_KEY"],
+        secrets_name,
+    )
+    return creds.get("BINANCE_API_KEY", ""), creds.get("BINANCE_SECRET_KEY", "")
 
 
 def create_spot_exchange(testnet: bool = True):
@@ -117,7 +99,7 @@ class BinanceExecutor(Executor):
                 info = market_fn(market)
                 if isinstance(info, dict):
                     return info
-            except Exception:
+            except (KeyError, ValueError):
                 pass
 
         load_markets_fn = getattr(self._exchange, "load_markets", None)
@@ -128,7 +110,7 @@ class BinanceExecutor(Executor):
                     info = markets.get(market)
                     if isinstance(info, dict):
                         return info
-            except Exception:
+            except (OSError, ValueError):
                 pass
 
         markets_attr = getattr(self._exchange, "markets", None)
@@ -195,7 +177,7 @@ class BinanceExecutor(Executor):
     def _precise_qty(self, market: str, qty: float) -> float:
         try:
             return float(self._exchange.amount_to_precision(market, qty))
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             return 0.0
 
     def _meets_notional(
@@ -294,7 +276,7 @@ class BinanceExecutor(Executor):
             if side == "buy":
                 return orderbook["asks"][0][0] if orderbook["asks"] else None
             return orderbook["bids"][0][0] if orderbook["bids"] else None
-        except Exception:
+        except (OSError, KeyError, IndexError):
             return None
 
     def _market_symbol(self, symbol: str) -> str:

@@ -2,8 +2,11 @@
 
 ## Project
 
-Autonomous alpha generation + trading system (crypto, equities, commodities, derivatives, prediction markets).
-Python 3.12, S-expression DSL, pure MAP-Elites evolution, Binance execution.
+Autonomous alpha generation + trading system.
+Python 3.12, S-expression DSL, pure MAP-Elites evolution, multi-venue execution.
+
+Asset classes: crypto (BTC/ETH/SOL), US stocks, ETFs, prediction markets (Polymarket).
+Venues: Binance (crypto), Alpaca (equities), Polymarket (prediction markets), Paper.
 
 3-Layer architecture:
 - **Layer 3 (Strategic)**: Daily signals → direction bias (MAP-Elites on daily DSL)
@@ -17,12 +20,12 @@ src/alpha_os/       Main package
   data/             DataStore, universe (daily + hourly + microstructure features)
   dsl/              S-expression DSL parser, evaluator, GP generator
   evolution/        Pure MAP-Elites discovery pool (4D behavioral grid)
-  execution/        Executor ABC, BinanceExecutor, ExecutionOptimizer
-  risk/             Position sizing, circuit breaker
+  execution/        Executor ABC, BinanceExecutor, AlpacaExecutor, PolymarketExecutor, ExecutionOptimizer
+  risk/             Position sizing, circuit breaker, BinaryOutcomeRiskManager (Kelly)
   paper/            PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
-tests/              pytest test suite (654 tests)
+tests/              pytest test suite (663 tests)
 data/               Runtime data (SQLite DBs, logs) — gitignored
 ```
 
@@ -48,10 +51,11 @@ python -m alpha_os --help
 - **Dataclasses** for all data structures (Fill, Order, AlphaRecord, ExecutionConfig, etc.)
 - **SQLite** for persistence (alpha_cache.db, alpha_registry.db, paper_trading.db)
 - **S-expression DSL** for alpha expressions: `(neg f1)`, `(ts_mean f2 10)`, `(if_gt f1 f2 f3 f4)`
-- **Executor interface** (`Executor` ABC in `execution/executor.py`) — Paper and Binance implementations
+- **Executor interface** (`Executor` ABC in `execution/executor.py`) — Paper, Binance, Alpaca, Polymarket implementations
+- **Venue auto-detection** — `infer_venue(asset)` maps asset → venue; CLI `--venue` for override
 - **ExecutionOptimizer** — microstructure-aware execution timing (optional, plugs into BinanceExecutor)
-- **Distributional risk controls** (`[distributional]`) — optional CVaR/tail gate + Kelly-based sizing
-- **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` and `[distributional]`)
+- **Secrets** — shared `execution/secrets.py` (`load_secrets`, `get_env_or_secret`); per-venue files in `~/.secrets/`
+- **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]`, `[alpaca]`, `[polymarket]`)
 - **MAP-Elites** discovery pool: 4D behavioral grid (persistence × activity × price_beta × vol_sensitivity), 8×8×8×8 = 4,096 cells
 - **TC (True Contribution)** weighting: leave-one-out ensemble Sharpe for portfolio weights + lifecycle demotion (TC ≤ 0 → dormant)
 
@@ -82,10 +86,15 @@ python -m alpha_os --help
 
 ## Secrets
 
-- `~/.secrets/binance` — Binance testnet API keys
+All venues use `execution/secrets.py` (`load_secrets`, `get_env_or_secret`).
+
+- `~/.secrets/binance` — Binance testnet API keys (`BINANCE_API_KEY`, `BINANCE_SECRET_KEY`)
 - `~/.secrets/binance_real` — Binance production API keys
-- Format: `export BINANCE_API_KEY=...` / `export BINANCE_SECRET_KEY=...`
-- Never commit secrets. Loaded by `_load_secrets()` in `execution/binance.py`
+- `~/.secrets/alpaca` — Alpaca paper trading keys (`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`)
+- `~/.secrets/alpaca_real` — Alpaca production keys
+- `~/.secrets/polymarket` — Polymarket keys (`POLYMARKET_PRIVATE_KEY`, `POLYMARKET_API_KEY`)
+- Format: `export KEY=value` or `KEY=value`
+- Never commit secrets. Env vars take precedence over files.
 
 ## signal-noise Integration
 

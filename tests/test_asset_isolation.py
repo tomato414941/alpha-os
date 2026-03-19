@@ -11,7 +11,6 @@ import pytest
 def _patch_data_dir(tmp_path, monkeypatch):
     """Redirect DATA_DIR to tmp_path for all tests."""
     monkeypatch.setattr("alpha_os.config.DATA_DIR", tmp_path)
-    monkeypatch.setattr("alpha_os.config._BTC_MIGRATED", False)
     yield
 
 
@@ -36,44 +35,6 @@ class TestAssetDataDir:
         assert btc != eth
         assert btc.name == "BTC"
         assert eth.name == "ETH"
-
-
-class TestBtcMigration:
-    def test_migrates_flat_files(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
-        # Create flat files mimicking existing state
-        (tmp_path / "alpha_registry.db").write_text("registry")
-        (tmp_path / "paper_trading.db").write_text("paper")
-        (tmp_path / "metrics").mkdir()
-        (tmp_path / "metrics" / "circuit_breaker.json").write_text("{}")
-
-        d = asset_data_dir("BTC")
-
-        assert (d / "alpha_registry.db").read_text() == "registry"
-        assert (d / "paper_trading.db").read_text() == "paper"
-        assert (d / "metrics" / "circuit_breaker.json").read_text() == "{}"
-        # Originals moved
-        assert not (tmp_path / "alpha_registry.db").exists()
-        assert not (tmp_path / "paper_trading.db").exists()
-
-    def test_no_migration_if_already_in_subdir(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
-        # Already-migrated state: file in BTC/ but not in flat data/
-        btc_dir = tmp_path / "BTC"
-        btc_dir.mkdir()
-        (btc_dir / "alpha_registry.db").write_text("existing")
-
-        d = asset_data_dir("BTC")
-        assert (d / "alpha_registry.db").read_text() == "existing"
-
-    def test_migration_skips_non_btc(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
-        (tmp_path / "alpha_registry.db").write_text("registry")
-        d = asset_data_dir("ETH")
-        # ETH should NOT trigger BTC migration
-        assert not (d / "alpha_registry.db").exists()
-        # Flat file should still be there
-        assert (tmp_path / "alpha_registry.db").exists()
 
 
 class TestRegistryIsolation:

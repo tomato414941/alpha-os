@@ -19,18 +19,18 @@ from alpha_os.execution.polymarket import (
 # ---------------------------------------------------------------------------
 
 def test_load_secrets_missing_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.polymarket.Path.home", lambda: tmp_path)
-    assert _load_secrets() == {}
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
+    assert _load_secrets("polymarket") == {}
 
 
 def test_load_secrets_parses_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.polymarket.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
     secrets_dir = tmp_path / ".secrets"
     secrets_dir.mkdir()
     (secrets_dir / "polymarket").write_text(
         "export POLYMARKET_PRIVATE_KEY='0xabc123'\nPOLYMARKET_API_KEY=apikey456\n"
     )
-    result = _load_secrets()
+    result = _load_secrets("polymarket")
     assert result == {
         "POLYMARKET_PRIVATE_KEY": "0xabc123",
         "POLYMARKET_API_KEY": "apikey456",

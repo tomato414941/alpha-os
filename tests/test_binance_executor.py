@@ -21,18 +21,18 @@ from alpha_os.execution.planning import ExecutionIntent
 # ---------------------------------------------------------------------------
 
 def test_load_secrets_missing_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.binance.Path.home", lambda: tmp_path)
-    assert _load_secrets() == {}
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
+    assert _load_secrets("binance") == {}
 
 
 def test_load_secrets_parses_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.binance.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
     secrets_dir = tmp_path / ".secrets"
     secrets_dir.mkdir()
     (secrets_dir / "binance").write_text(
         "export BINANCE_API_KEY='abc123'\nBINANCE_SECRET_KEY=secret456\n"
     )
-    result = _load_secrets()
+    result = _load_secrets("binance")
     assert result == {"BINANCE_API_KEY": "abc123", "BINANCE_SECRET_KEY": "secret456"}
 
 

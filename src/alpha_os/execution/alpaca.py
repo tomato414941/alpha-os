@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
-from pathlib import Path
 
 import requests
 
 from .costs import ExecutionCostModel
 from .executor import Executor, Order, Fill
+from .secrets import get_env_or_secret, load_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -19,36 +18,18 @@ PAPER_URL = "https://paper-api.alpaca.markets"
 LIVE_URL = "https://api.alpaca.markets"
 DATA_URL = "https://data.alpaca.markets"
 
-
-def _load_secrets(name: str = _SECRETS_FILE) -> dict[str, str]:
-    """Load key-value pairs from ~/.secrets/{name}."""
-    secret_path = Path.home() / ".secrets" / name
-    if not secret_path.exists():
-        return {}
-    result: dict[str, str] = {}
-    for line in secret_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[7:]
-        if "=" in line:
-            key, val = line.split("=", 1)
-            result[key.strip()] = val.strip().strip("'\"")
-    return result
+# Module-level alias for test compatibility
+_load_secrets = load_secrets
 
 
 def _get_credentials(paper: bool = True) -> tuple[str, str]:
     """Return (api_key, api_secret) from env vars or ~/.secrets/alpaca{_real}."""
-    api_key = os.environ.get("ALPACA_API_KEY", "")
-    api_secret = os.environ.get("ALPACA_SECRET_KEY", "")
-    if api_key and api_secret:
-        return api_key, api_secret
     secrets_name = _SECRETS_FILE if paper else f"{_SECRETS_FILE}_real"
-    secrets = _load_secrets(secrets_name)
-    api_key = api_key or secrets.get("ALPACA_API_KEY", "")
-    api_secret = api_secret or secrets.get("ALPACA_SECRET_KEY", "")
-    return api_key, api_secret
+    creds = get_env_or_secret(
+        ["ALPACA_API_KEY", "ALPACA_SECRET_KEY"],
+        secrets_name,
+    )
+    return creds.get("ALPACA_API_KEY", ""), creds.get("ALPACA_SECRET_KEY", "")
 
 
 def _create_session(paper: bool = True) -> tuple[requests.Session, str]:

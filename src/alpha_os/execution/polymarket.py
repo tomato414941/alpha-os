@@ -2,46 +2,27 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
-from pathlib import Path
 
 from .costs import PolymarketCostModel
 from .executor import Executor, Order, Fill
+from .secrets import get_env_or_secret, load_secrets
 
 logger = logging.getLogger(__name__)
 
 _SECRETS_FILE = "polymarket"
 
-
-def _load_secrets(name: str = _SECRETS_FILE) -> dict[str, str]:
-    """Load key-value pairs from ~/.secrets/{name}."""
-    secret_path = Path.home() / ".secrets" / name
-    if not secret_path.exists():
-        return {}
-    result: dict[str, str] = {}
-    for line in secret_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[7:]
-        if "=" in line:
-            key, val = line.split("=", 1)
-            result[key.strip()] = val.strip().strip("'\"")
-    return result
+# Module-level alias for test compatibility
+_load_secrets = load_secrets
 
 
 def _get_credentials() -> tuple[str, str]:
     """Return (private_key, api_key) from env vars or ~/.secrets/polymarket."""
-    private_key = os.environ.get("POLYMARKET_PRIVATE_KEY", "")
-    api_key = os.environ.get("POLYMARKET_API_KEY", "")
-    if private_key and api_key:
-        return private_key, api_key
-    secrets = _load_secrets()
-    private_key = private_key or secrets.get("POLYMARKET_PRIVATE_KEY", "")
-    api_key = api_key or secrets.get("POLYMARKET_API_KEY", "")
-    return private_key, api_key
+    creds = get_env_or_secret(
+        ["POLYMARKET_PRIVATE_KEY", "POLYMARKET_API_KEY"],
+        _SECRETS_FILE,
+    )
+    return creds.get("POLYMARKET_PRIVATE_KEY", ""), creds.get("POLYMARKET_API_KEY", "")
 
 
 def _create_clob_client(host: str = "https://clob.polymarket.com"):

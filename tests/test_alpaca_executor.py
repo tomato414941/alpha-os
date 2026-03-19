@@ -19,18 +19,18 @@ from alpha_os.execution.executor import Order
 # ---------------------------------------------------------------------------
 
 def test_load_secrets_missing_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.alpaca.Path.home", lambda: tmp_path)
-    assert _load_secrets() == {}
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
+    assert _load_secrets("alpaca") == {}
 
 
 def test_load_secrets_parses_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.alpaca.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
     secrets_dir = tmp_path / ".secrets"
     secrets_dir.mkdir()
     (secrets_dir / "alpaca").write_text(
         "export ALPACA_API_KEY='key123'\nALPACA_SECRET_KEY=secret456\n"
     )
-    result = _load_secrets()
+    result = _load_secrets("alpaca")
     assert result == {"ALPACA_API_KEY": "key123", "ALPACA_SECRET_KEY": "secret456"}
 
 
