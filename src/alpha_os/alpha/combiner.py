@@ -41,16 +41,19 @@ def compute_tc_scores(
     n = len(ids)
     if n == 0:
         return {}
-    if len(returns) < min_observations:
+
+    # Use only finite returns (drop nan from date ranges with missing price data)
+    finite_mask = np.isfinite(returns)
+    clean_returns = returns[finite_mask]
+    if len(clean_returns) < min_observations:
         return {aid: 0.0 for aid in ids}
 
-    T = len(returns)
     signals = np.array([
-        _sanitize_signal_array(signal_arrays[aid][-T:]) for aid in ids
+        _sanitize_signal_array(signal_arrays[aid][-len(returns):])[finite_mask] for aid in ids
     ])
 
     # Equal-weight ensemble return
-    ens = signals.mean(axis=0) * returns
+    ens = signals.mean(axis=0) * clean_returns
     full_sharpe = _sharpe(ens)
 
     scores: dict[str, float] = {}
@@ -59,9 +62,9 @@ def compute_tc_scores(
             scores[aid] = full_sharpe
             continue
         # Remove alpha i, equal weight the rest
-        mask = np.ones(n, dtype=bool)
-        mask[i] = False
-        ens_without = signals[mask].mean(axis=0) * returns
+        alpha_mask = np.ones(n, dtype=bool)
+        alpha_mask[i] = False
+        ens_without = signals[alpha_mask].mean(axis=0) * clean_returns
         scores[aid] = full_sharpe - _sharpe(ens_without)
     return scores
 
