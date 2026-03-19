@@ -2,11 +2,11 @@
 
 ## Project
 
-Autonomous alpha generation + multi-asset trading system (crypto, equities, commodities, derivatives, prediction markets).
-Python 3.12, S-expression DSL, GP + MAP-Elites evolution, Binance execution.
+Autonomous alpha generation + trading system (crypto, equities, commodities, derivatives, prediction markets).
+Python 3.12, S-expression DSL, pure MAP-Elites evolution, Binance execution.
 
 3-Layer architecture:
-- **Layer 3 (Strategic)**: Daily signals → direction bias (GP evolution on daily DSL)
+- **Layer 3 (Strategic)**: Daily signals → direction bias (MAP-Elites on daily DSL)
 - **Layer 2 (Tactical)**: Hourly signals → entry/exit timing (TacticalTrader, 17 hourly features)
 - **Layer 1 (Execution)**: Minute signals → optimal execution (ExecutionOptimizer, VPIN/spread/imbalance)
 
@@ -16,12 +16,13 @@ Python 3.12, S-expression DSL, GP + MAP-Elites evolution, Binance execution.
 src/alpha_os/       Main package
   data/             DataStore, universe (daily + hourly + microstructure features)
   dsl/              S-expression DSL parser, evaluator, GP generator
+  evolution/        Pure MAP-Elites discovery pool (4D behavioral grid)
   execution/        Executor ABC, BinanceExecutor, ExecutionOptimizer
   risk/             Position sizing, circuit breaker
   paper/            PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
-tests/              pytest test suite (508 tests)
+tests/              pytest test suite (654 tests)
 data/               Runtime data (SQLite DBs, logs) — gitignored
 ```
 
@@ -51,6 +52,8 @@ python -m alpha_os --help
 - **ExecutionOptimizer** — microstructure-aware execution timing (optional, plugs into BinanceExecutor)
 - **Distributional risk controls** (`[distributional]`) — optional CVaR/tail gate + Kelly-based sizing
 - **Config** loaded from `config/default.toml` via `Config.load()` (includes `[execution]` and `[distributional]`)
+- **MAP-Elites** discovery pool: 4D behavioral grid (persistence × activity × price_beta × vol_sensitivity), 8×8×8×8 = 4,096 cells
+- **TC (True Contribution)** weighting: leave-one-out ensemble Sharpe improvement replaces quality×diversity (Phase 1 done, wiring in progress)
 
 ## Terminology Policy
 

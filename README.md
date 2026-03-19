@@ -2,7 +2,7 @@
 
 Autonomous alpha generation and trading system for any asset class — crypto, equities, commodities, derivatives, prediction markets, and beyond.
 3-layer architecture: strategic (daily), tactical (hourly), execution (minute).
-Generates trading signals using genetic programming (GP + MAP-Elites),
+Generates trading signals using pure MAP-Elites evolution with 4D behavioral diversity,
 validates them with walk-forward cross-validation, and executes via pluggable executors (Binance, Alpaca, etc.).
 
 ## Document Guide
@@ -33,13 +33,19 @@ If a topic appears in multiple files, prefer:
 
 ## Current Focus
 
-The project is currently in a controlled tuning phase after recent runtime
-simplification. That means:
+The project is transitioning to **TC (True Contribution)** based weighting,
+inspired by Numerai's marginal-contribution philosophy. Key recent changes:
 
-- `trade` and execution behavior should remain mostly stable
-- current changes should focus on `alpha-generator`, `discovery_pool`,
-  admission flow, and observability
-- large new runtime layers are out of scope
+- **Pure MAP-Elites generator**: GP convergence removed; candidates are
+  generated directly (50% archive mutation + 50% random), evaluated once,
+  stored in the behavior grid
+- **4D behavioral descriptors**: persistence × activity × price_beta ×
+  vol_sensitivity (8×8×8×8 = 4,096 cells). All axes are behavioral, not
+  syntactic
+- **TC weighting** (in progress): `compute_tc_scores()` / `compute_tc_weights()`
+  replace separate quality × diversity scoring. Single metric that naturally
+  captures both individual performance and marginal ensemble value
+- Next: wire TC into trader, remove combine_mode choices, simplify lifecycle
 
 ## Naming And Boundary Plan
 
@@ -83,13 +89,13 @@ Use these labels consistently in docs, logs, and reviews:
 ## Architecture
 
 ```
-Layer 3: Strategic (Daily)    — Direction bias via GP evolution on 448+ daily signals
+Layer 3: Strategic (Daily)    — Direction bias via MAP-Elites evolution on 3,022+ daily signals
 Layer 2: Tactical (Hourly)    — Entry/exit timing via 17 hourly features (funding, OI, liquidations)
 Layer 1: Execution (Minute)   — VPIN/spread/imbalance-based optimal execution timing
 
 src/alpha_os/
 ├── dsl/          S-expression DSL (parser, evaluator, operators, GP templates)
-├── evolution/    GP + MAP-Elites discovery-pool search
+├── evolution/    Pure MAP-Elites discovery pool (4D behavioral grid)
 ├── backtest/     Backtest engine, cost model, metrics
 ├── validation/   Purged Walk-Forward CV, PBO, DSR, FDR
 ├── alpha/        Alpha evaluator, managed alphas, lifecycle, combiner
@@ -116,27 +122,23 @@ therefore:
 
 ### Pipeline Simplification Direction
 
-The current direction is not to collapse every stage into one table. It is to
-keep the three meaningful layers while making the scoring logic more coherent.
+Three layers stay: `discovery_pool` → `managed_alphas` → `deployed_alphas`.
+The scoring logic is moving to **TC (True Contribution)** — a single metric
+that replaces the separate quality × diversity system.
 
-What should stay:
+What TC changes:
 
-- `discovery_pool` for exploratory search
-- `managed_alphas` for validation and lifecycle control
-- `deployed_alphas` for the runtime subset
+- **Weighting**: `weight = TC(alpha, ensemble)` instead of `quality × diversity`
+- **Lifecycle**: demote when TC ≤ 0 (alpha hurts ensemble), not when individual Sharpe drops
+- **Admission**: accept when TC > 0 (alpha improves ensemble), not just individual quality gates
+- **Combine mode**: removed. Single consensus path with TC weights. No more voting/map_elites branches
 
-What should change:
+What TC removes:
 
-- `candidates` should be treated more as a queue than as a separate conceptual
-  layer
-- each stage should use the same score schema, even if the thresholds differ
-
-Near-term design bias:
-
-- use common axes such as `quality`, `diversity`, `confidence`, and
-  `deployability`
-- let stages differ by weighting, not by completely different selection logic
-- remove stages only after the shared score model is in place
+- `combine_mode` config and 3-way dispatch
+- `voting/` module
+- diversity computation infrastructure (correlation matrix, cache, recompute interval)
+- separate quality and diversity scores
 
 ## Setup
 
@@ -363,50 +365,30 @@ Typical no-go signals:
 
 ## Current Operating Posture
 
-After the recent runtime cleanup, the core runtime path is stable and current
-work is focused on improving `alpha-generator -> discovery_pool -> admission`
-quality rather than adding new runtime stages.
-
-### What We Can Do Now
-
-- observe `trade` cycles and `admission` stability without changing runtime behavior
-- verify that `admission.max_active_alphas` keeps the registry bounded
-- verify that the configured deployed alpha count remains stable across refreshes
-- watch `alpha-generator` throughput (`stored / replaced / queued`) after recent
-  discovery-pool and memory-control changes
-- compare new readiness reports against the registry DB and service memory
-- improve documentation, logging, and operational checklists that do not change strategy behavior
+Active development phase. Core runtime is stable; current work focuses on
+the TC transition and MAP-Elites behavior quality.
 
 Current server profile:
 
-- `admission.max_active_alphas = 600`
-- `deployment.max_alphas = 150`
-- canonical trade unit is `alpha-os@BTC.service`
-- `alpha-generator` reads remote `signal-noise` via authenticated API, not a
-  local store dependency
+- `admission.max_active_alphas = 600`, `deployment.max_alphas = 150`
+- `alpha-generator`: pure MAP-Elites, 80 candidates/min, 4D behavioral grid
+- `admission-daemon`: 5-min poll interval
+- Testnet readiness: PASSED (13/10 consecutive success days)
+- PV: ~$9,917 (from $10,000 initial, -0.8%)
 
-### What We Cannot Conclude Yet
+### Active Work
 
-- that the strategy has a durable edge
-- that the current testnet profile is strong enough for real capital
-- that low fill counts are a feature rather than a sign of insufficient opportunity
-- that replay improvements are large enough to matter economically
+- Wire TC into trader (Phase 2) — replace quality×diversity with TC weights
+- Remove combine_mode, voting module, diversity infrastructure (Phase 3)
+- Update lifecycle/admission to TC-based decisions (Phase 4)
+- Observe 4D behavioral grid coverage growth
 
-These require the short observation window to complete first.
+### Known Limitations
 
-### What We Should Not Do During This Window
-
-- add new runtime states, pools, or deployment paths
-- do large refactors that change trade behavior again
-- run broad parameter sweeps that invalidate attribution
-- treat the current profile as production-ready before the observation window ends
-
-### Next Decision
-
-After `24 hours` or `3-5` scheduled trade cycles, make a go / no-go call.
-
-- `go`: keep the simplified runtime and continue with the next bottleneck
-- `no-go`: stop extending this configuration and move to the next strategy hypothesis
+- No durable edge demonstrated yet (PV slightly below initial capital)
+- Fills are sparse — system is often flat
+- Replay comparison showed map_elites slightly better than consensus
+  (Sharpe -0.988 vs -1.136) but both negative
 
 ## System Map
 
@@ -439,36 +421,34 @@ Recommended first files:
 
 ## Research Notes
 
-- `alpha-os` behaves more like a participant-ranking system than a single model.
-  A large candidate set exists, but only a small deployed subset should drive trading.
-- If the simplified runtime still fails after the observation window, alpha
-  diversity is a strong next bottleneck candidate.
-- A separate bottleneck is experiment throughput: many useful comparisons still
-  require source edits or serial runs, which slows learning.
-- A useful next benchmark is a small hand-crafted BTC alpha set spanning trend,
-  reversal, cross-asset, macro regime, sentiment, on-chain, derivatives, and
-  microstructure ideas.
-- The current runtime is still primarily directional. Long-term, the system
-  should move toward distribution-aware forecasts instead of scalar conviction alone.
+### Numerai-Inspired Design (TC Transition)
 
-What better experiment throughput should look like:
+The key insight from Numerai: **reward marginal contribution, not individual
+performance.** TC naturally captures both quality and diversity in one metric.
+An alpha with high Sharpe but redundant with existing alphas gets low TC.
+An alpha with moderate Sharpe but unique behavior gets high TC.
 
-- more experiments driven by config / manifests instead of source edits
-- isolated temp registry / deployed-alpha set / output paths by default
-- parallel historical replay as a first-class workflow
-- continued serial handling for live-ish testnet runs that share one venue/account
+This simplifies the codebase (removes diversity infrastructure, combine modes)
+while producing a more principled weighting scheme.
 
-See [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md) for the detailed design
-discussion, including:
+### MAP-Elites Behavioral Grid
 
-- runtime layer boundaries
-- participant-system mapping
-- diversity as a bottleneck candidate
-- experiment harness as a bottleneck candidate
-- why participant-governance ideas from Numerai/Polymarket matter here
-- hand-crafted BTC baseline candidates
-- directional vs distributional forecasting
-- sizing rationale and known limitations
+600 active alphas occupy only ~160 unique cells in the 4D behavioral grid,
+revealing significant behavioral redundancy in the current portfolio. The grid
+enables discovery of strategies in unexplored regions (e.g., "slow mean-reversion
+in volatile markets") that would never emerge from fitness-only search.
+
+### Open Questions
+
+- Is the current DSL expressive enough to generate genuinely profitable alphas,
+  or is the alpha quality ceiling too low regardless of search method?
+- Should the system target other venues (Numerai tournaments, prediction markets)
+  where alpha generation without execution risk is possible?
+- Is the 3,022-signal feature universe sufficient, or do we need fundamentally
+  different signal types?
+
+See [DESIGN.md](DESIGN.md) for detailed architecture and lifecycle design.
+See [ROADMAP.md](ROADMAP.md) for the multi-timeframe evolution roadmap.
 
 ## Testing
 

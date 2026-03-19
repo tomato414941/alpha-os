@@ -30,21 +30,23 @@ Layer 1: Execution（分）    — 最適な瞬間に最小コストで執行
 各レイヤーが独立した GP 進化 + ライフサイクルを持ち、
 上位レイヤーの判断を下位が実行する階層構造。
 
-## Current State (2026-03-02)
+## Current State (2026-03-19)
 
 ### alpha-os
 
 - 3-Layer architecture: Strategic (日次) / Tactical (時間) / Execution (分)
-- S-expression DSL + GP 進化 + MAP-Elites アーカイブ
+- S-expression DSL + **純 MAP-Elites 進化**（GP convergence 廃止）
+- **4D 行動的 behavior grid**: persistence × activity × price_beta × vol_sensitivity (8³=4,096 cells)
+- **TC (True Contribution) 重み付け** 移行中: leave-one-out ensemble Sharpe 改善で alpha を評価
 - Layer 2: TacticalTrader（hourly signals, funding rate, OI, liquidations）
 - Layer 1: ExecutionOptimizer（VPIN, spread, imbalance ベース執行最適化）
 - EventDrivenTrader（WebSocket イベント駆動 + デバウンス）
-- Distributional risk layer（signal consensus + Kelly sizing + CVaR/tail gate）— **デフォルト有効化済み**
-- BinanceExecutor（spot, testnet）+ optimizer 連携 + **注文分割 + リトライ**
+- Distributional risk layer（signal consensus + Kelly sizing + CVaR/tail gate）
+- BinanceExecutor（spot, testnet）+ optimizer 連携 + 注文分割 + リトライ
 - RegimeDetector（vol/trend/drift 検知 → ポジション自動スケーリング）
-- Adoption gate に log_growth / CVaR / tail_hit_rate チェック統合
-- Feature universe: 1000+ シグナル対応（signal-noise 全 interval 展開）
+- Feature universe: 3,022 シグナル（signal-noise 全 interval 展開）
 - シグナル源: signal-noise REST API + WebSocket（日次 + hourly + 1min realtime）
+- Testnet readiness: PASSED (13/10 days), PV=$9,917
 
 ### signal-noise
 
