@@ -625,9 +625,16 @@ class Trader:
                 signal = evaluate_expression(expr, data, len(matrix))
                 signal_norm = normalize_signal(signal)
                 signal_yesterday = float(signal_norm[-2])
-                daily_return = signal_yesterday * price_return
+                if not np.isfinite(signal_yesterday):
+                    # Try further back if today's data is incomplete
+                    for offset in range(3, min(10, len(signal_norm))):
+                        fallback = float(signal_norm[-offset])
+                        if np.isfinite(fallback):
+                            signal_yesterday = fallback
+                            break
+                daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
-                if record.alpha_id not in dormant_ids:
+                if record.alpha_id not in dormant_ids and np.isfinite(signal_yesterday):
                     alpha_signals[record.alpha_id] = signal_yesterday
                     alpha_signal_arrays[record.alpha_id] = signal_norm
                     alpha_exprs[record.alpha_id] = expr
