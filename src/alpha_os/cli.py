@@ -20,7 +20,7 @@ from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import is_crypto, price_signal, build_feature_list, build_hourly_feature_list
+from alpha_os.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.discovery_pool import DiscoveryPool
@@ -148,6 +148,9 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Use event-driven execution instead of fixed interval")
     trd.add_argument("--debounce", type=int, default=None,
                      help="Min seconds between event-triggered evaluations (default: from config)")
+    trd.add_argument("--venue", type=str, default=None,
+                     choices=["binance", "alpaca", "polymarket", "paper"],
+                     help="Trading venue (default: auto-detect from asset)")
 
     # alpha-generator (Pipeline v2)
     gen_d = sub.add_parser(
@@ -1157,6 +1160,7 @@ def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
 
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
+    venue: str | None = None,
 ):
     """Create trader, circuit breaker, and readiness checker for one asset."""
     from alpha_os.paper.trader import Trader
@@ -1166,8 +1170,10 @@ def _setup_asset_context(
     cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
     cfg.trading.initial_capital = capital
 
+    resolved_venue = venue or infer_venue(asset)
+
     executor = None
-    if is_crypto(asset):
+    if resolved_venue == "binance" and is_crypto(asset):
         from alpha_os.execution.binance import BinanceExecutor
         from alpha_os.execution.optimizer import ExecutionOptimizer, ExecutionConfig
         signal_name = price_signal(asset)
@@ -1188,6 +1194,29 @@ def _setup_asset_context(
             testnet=testnet, symbol_map=symbol_map, optimizer=optimizer,
             initial_capital=capital,
             cost_model=cfg.execution.to_cost_model(),
+        )
+    elif resolved_venue == "alpaca" and is_equity(asset):
+        from alpha_os.execution.alpaca import AlpacaExecutor
+        from alpha_os.execution.costs import ExecutionCostModel
+        executor = AlpacaExecutor(
+            paper=cfg.alpaca.paper,
+            initial_capital=capital,
+            cost_model=ExecutionCostModel(
+                commission_pct=cfg.alpaca.commission_pct,
+                modeled_slippage_pct=cfg.alpaca.modeled_slippage_pct,
+            ),
+            max_slippage_bps=cfg.alpaca.max_slippage_bps,
+        )
+    elif resolved_venue == "polymarket":
+        from alpha_os.execution.polymarket import PolymarketExecutor
+        from alpha_os.execution.costs import PolymarketCostModel
+        executor = PolymarketExecutor(
+            max_position_per_market_usd=cfg.polymarket.max_position_per_market_usd,
+            initial_capital=capital,
+            cost_model=PolymarketCostModel(
+                maker_fee_pct=cfg.polymarket.maker_fee_pct,
+                taker_fee_pct=cfg.polymarket.taker_fee_pct,
+            ),
         )
 
     trader = Trader(asset=asset, config=cfg, executor=executor,
@@ -1259,17 +1288,25 @@ def _build_trade_contexts(
     cfg: Config,
     testnet: bool,
     capital: float,
+    venue: str | None = None,
 ) -> dict[str, tuple]:
     contexts: dict[str, tuple] = {}
     for asset in asset_list:
+        resolved_venue = venue or infer_venue(asset)
         trader, cb, readiness_checker = _setup_asset_context(
             asset,
             cfg,
             testnet,
             capital,
+            venue=resolved_venue,
         )
         contexts[asset] = (trader, cb, readiness_checker)
-        print(f"  {asset}: {price_signal(asset)} → {asset}/USDT")
+        venue_label = resolved_venue
+        try:
+            sig = price_signal(asset)
+        except KeyError:
+            sig = asset.lower()
+        print(f"  {asset}: {sig} via {venue_label}")
     return contexts
 
 
@@ -1438,11 +1475,13 @@ def cmd_trade(args: argparse.Namespace) -> None:
         return
 
     try:
+        venue = getattr(args, "venue", None)
         contexts = _build_trade_contexts(
             asset_list=asset_list,
             cfg=cfg,
             testnet=testnet,
             capital=args.capital,
+            venue=venue,
         )
 
         if args.summary:

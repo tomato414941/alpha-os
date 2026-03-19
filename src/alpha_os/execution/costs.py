@@ -34,3 +34,25 @@ class ExecutionCostModel:
             commission=commission,
             modeled_slippage=modeled_slippage,
         )
+
+
+@dataclass(frozen=True)
+class PolymarketCostModel:
+    """Cost model for Polymarket prediction market.
+
+    Polymarket charges 0% maker fee and ~1-2% taker fee.
+    Binary outcomes: max loss = position size, max gain = (1-price) * qty.
+    """
+    maker_fee_pct: float = 0.0
+    taker_fee_pct: float = 1.0
+
+    def estimate_order_cost(
+        self,
+        notional: float,
+        *,
+        is_maker: bool = False,
+    ) -> CostEstimate:
+        base = abs(notional)
+        fee_pct = self.maker_fee_pct if is_maker else self.taker_fee_pct
+        commission = base * fee_pct / 100.0
+        return CostEstimate(commission=commission)

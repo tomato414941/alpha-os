@@ -132,3 +132,22 @@ tenure_bonus_max = 0.2       # max quality bonus for long-lived alphas
 tenure_half_life_days = 7.0  # days to reach 50% of max bonus
 top_n_protect = 10           # top-N alphas get demotion cooldown
 demotion_cooldown_days = 3.0 # min days before top-N can be demoted
+
+# Alpaca — US stocks and ETFs
+[alpaca]
+enabled = false
+paper = true
+commission_pct = 0.0          # Alpaca: zero commission
+modeled_slippage_pct = 0.05
+initial_capital = 10000.0
+max_slippage_bps = 20.0
+
+# Polymarket prediction market venue
+[polymarket]
+enabled = false
+max_markets = 10
+min_liquidity_usd = 10000
+min_days_to_expiry = 7
+max_position_per_market_usd = 100
+maker_fee_pct = 0.0
+taker_fee_pct = 1.0

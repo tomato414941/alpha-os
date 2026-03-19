@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import numpy as np
 
@@ -123,3 +124,91 @@ class RiskManager:
                 peak = max(peak, equity)
 
         return adjusted
+
+
+class KellySizing(NamedTuple):
+    """Kelly criterion result for a binary outcome market."""
+    fraction: float
+    edge: float
+    expected_return: float
+
+
+@dataclass
+class BinaryOutcomeRiskConfig:
+    max_fraction: float = 0.25
+    min_edge: float = 0.02
+    kelly_fraction: float = 0.5
+
+
+class BinaryOutcomeRiskManager:
+    """Risk manager for binary outcome markets (e.g. Polymarket).
+
+    Uses Kelly criterion for position sizing:
+        f* = (p - market_price) / (1 - market_price)
+    where p is the model's estimated probability and market_price is the
+    current market price (which represents the market's implied probability).
+
+    Positive edge means buy YES, negative edge means sell YES (or buy NO).
+    """
+
+    def __init__(self, config: BinaryOutcomeRiskConfig | None = None):
+        self.config = config or BinaryOutcomeRiskConfig()
+
+    def kelly_size(self, model_prob: float, market_price: float) -> KellySizing:
+        """Compute Kelly fraction for a binary outcome.
+
+        Parameters
+        ----------
+        model_prob : Model's estimated probability of YES outcome [0, 1].
+        market_price : Current market price of YES token [0, 1].
+
+        Returns
+        -------
+        KellySizing with fraction (of bankroll), edge, and expected return.
+        """
+        model_prob = float(np.clip(model_prob, 0.01, 0.99))
+        market_price = float(np.clip(market_price, 0.01, 0.99))
+
+        edge = model_prob - market_price
+
+        if abs(edge) < self.config.min_edge:
+            return KellySizing(fraction=0.0, edge=edge, expected_return=0.0)
+
+        if edge > 0:
+            # Buy YES: max loss = price, max gain = 1 - price
+            kelly_f = edge / (1.0 - market_price)
+        else:
+            # Buy NO (sell YES): max loss = 1 - price, max gain = price
+            kelly_f = -edge / market_price
+
+        fraction = kelly_f * self.config.kelly_fraction
+        fraction = float(np.clip(fraction, -self.config.max_fraction, self.config.max_fraction))
+
+        if edge > 0:
+            expected_return = model_prob * (1.0 - market_price) - (1.0 - model_prob) * market_price
+        else:
+            expected_return = (1.0 - model_prob) * market_price - model_prob * (1.0 - market_price)
+            fraction = -fraction
+
+        return KellySizing(
+            fraction=fraction,
+            edge=edge,
+            expected_return=expected_return,
+        )
+
+    def position_usd(
+        self,
+        model_prob: float,
+        market_price: float,
+        bankroll: float,
+        max_position_usd: float = 100.0,
+    ) -> float:
+        """Compute dollar position size for a binary outcome market.
+
+        Returns positive value for YES, negative for NO.
+        """
+        sizing = self.kelly_size(model_prob, market_price)
+        if abs(sizing.fraction) < 1e-8:
+            return 0.0
+        raw_usd = sizing.fraction * bankroll
+        return float(np.clip(raw_usd, -max_position_usd, max_position_usd))

@@ -269,6 +269,27 @@ class AlphaGeneratorConfig:
 
 
 @dataclass
+class AlpacaConfig:
+    enabled: bool = False
+    paper: bool = True
+    commission_pct: float = 0.0
+    modeled_slippage_pct: float = 0.05
+    initial_capital: float = 10000.0
+    max_slippage_bps: float = 20.0
+
+
+@dataclass
+class PolymarketConfig:
+    enabled: bool = False
+    max_markets: int = 10
+    min_liquidity_usd: float = 10000.0
+    min_days_to_expiry: int = 7
+    max_position_per_market_usd: float = 100.0
+    maker_fee_pct: float = 0.0
+    taker_fee_pct: float = 1.0
+
+
+@dataclass
 class AdmissionConfig:
     enabled: bool = False
     poll_interval: int = 1800
@@ -307,6 +328,8 @@ class Config:
     admission: AdmissionConfig = field(default_factory=AdmissionConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
     stability: StabilityConfig = field(default_factory=StabilityConfig)
+    alpaca: AlpacaConfig = field(default_factory=AlpacaConfig)
+    polymarket: PolymarketConfig = field(default_factory=PolymarketConfig)
 
     def to_monitor_config(self):
         """Build the monitor config used by live forward-quality checks."""
@@ -412,4 +435,6 @@ class Config:
             admission=AdmissionConfig(**_f(AdmissionConfig, raw.get("admission", {}))),
             lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
             stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
+            alpaca=AlpacaConfig(**_f(AlpacaConfig, raw.get("alpaca", {}))),
+            polymarket=PolymarketConfig(**_f(PolymarketConfig, raw.get("polymarket", {}))),
         )

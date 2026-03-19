@@ -20,6 +20,10 @@ dev = [
     "pytest-asyncio>=1.0",
     "ruff>=0.4",
 ]
+polymarket = [
+    "py-clob-client>=0.17",
+    "web3>=6.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

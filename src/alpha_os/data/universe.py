@@ -24,6 +24,29 @@ STOCKS: dict[str, str] = {
     "META": "meta",
     "TSLA": "tsla",
     "AMD": "amd",
+    "JPM": "jpm",
+    "V": "v",
+    "UNH": "unh",
+    "JNJ": "jnj",
+    "XOM": "xom",
+    "PG": "pg",
+}
+
+ETFS: dict[str, str] = {
+    "SPY": "spy",
+    "QQQ": "qqq",
+    "IWM": "iwm",
+    "DIA": "dia",
+    "GLD": "gld",
+    "TLT": "tlt",
+    "XLF": "xlf",
+    "XLE": "xle",
+    "XLK": "xlk",
+    "XLV": "xlv",
+    "EEM": "eem",
+    "HYG": "hyg",
+    "LQD": "lqd",
+    "VXX": "vxx",
 }
 
 CRYPTO: dict[str, str] = {
@@ -79,12 +102,55 @@ HOURLY_SIGNALS = [
     "volume_dominance_btc", "lead_lag_btc",
 ]
 
-_ALL_ASSETS = {**STOCKS, **CRYPTO}
+POLYMARKET: dict[str, str] = {}
+
+_ALL_ASSETS = {**STOCKS, **ETFS, **CRYPTO}
+
+
+def is_stock(asset: str) -> bool:
+    """Return True if asset is an individual stock."""
+    return asset.upper() in STOCKS
+
+
+def is_etf(asset: str) -> bool:
+    """Return True if asset is an ETF."""
+    return asset.upper() in ETFS
+
+
+def is_equity(asset: str) -> bool:
+    """Return True if asset is a stock or ETF (traded on Alpaca/traditional broker)."""
+    return asset.upper() in STOCKS or asset.upper() in ETFS
 
 
 def is_crypto(asset: str) -> bool:
     """Return True if asset is a cryptocurrency (traded on Binance)."""
     return asset.upper() in CRYPTO
+
+
+def is_polymarket(asset: str) -> bool:
+    """Return True if asset is a Polymarket prediction market."""
+    return asset in POLYMARKET
+
+
+def register_polymarket_market(condition_id: str, signal_name: str) -> None:
+    """Register a Polymarket market for use in the signal universe."""
+    POLYMARKET[condition_id] = signal_name
+    log.info("Registered Polymarket market: %s -> %s", condition_id, signal_name)
+
+
+def infer_venue(asset: str) -> str:
+    """Infer the default trading venue for an asset.
+
+    Returns 'binance' for crypto, 'alpaca' for stocks/ETFs,
+    'polymarket' for prediction markets, or 'paper' as fallback.
+    """
+    if is_crypto(asset):
+        return "binance"
+    if is_equity(asset):
+        return "alpaca"
+    if is_polymarket(asset):
+        return "polymarket"
+    return "paper"
 
 
 def all_signals() -> list[str]:

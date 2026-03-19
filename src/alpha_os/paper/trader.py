@@ -213,6 +213,9 @@ class Trader:
             self.executor._managed_positions = dict(snapshot.positions)
             tracked_symbols = list({self.price_signal, *snapshot.positions.keys()})
             self.executor.sync_reconciliation_baseline(tracked_symbols)
+        elif hasattr(self.executor, "_managed_cash"):
+            self.executor._managed_cash = snapshot.cash
+            self.executor._managed_positions = dict(snapshot.positions)
 
         equity_curve = self.portfolio_tracker.get_equity_curve()
         if equity_curve:
