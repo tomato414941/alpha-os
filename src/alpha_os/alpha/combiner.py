@@ -1,4 +1,4 @@
-"""Alpha combiner — signal combination with quality × diversity weighting."""
+"""Alpha combiner — signal combination with TC (True Contribution) weighting."""
 from __future__ import annotations
 
 import logging
@@ -8,6 +8,95 @@ from math import sqrt
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# True Contribution (TC) — Numerai-inspired ensemble contribution metric
+# ---------------------------------------------------------------------------
+
+_ANNUALIZE = sqrt(252)
+
+
+def compute_tc_scores(
+    signal_arrays: dict[str, np.ndarray],
+    returns: np.ndarray,
+    min_observations: int = 20,
+) -> dict[str, float]:
+    """Leave-one-out ensemble Sharpe improvement for each alpha.
+
+    TC_i = Sharpe(ensemble) - Sharpe(ensemble without alpha i).
+    Positive TC means the alpha improves the ensemble.
+
+    Parameters
+    ----------
+    signal_arrays : {alpha_id: (T,) signal} for each alpha
+    returns : (T,) asset returns
+    min_observations : minimum data points required
+
+    Returns
+    -------
+    {alpha_id: tc_score}
+    """
+    ids = list(signal_arrays.keys())
+    n = len(ids)
+    if n == 0:
+        return {}
+    if len(returns) < min_observations:
+        return {aid: 0.0 for aid in ids}
+
+    T = len(returns)
+    signals = np.array([
+        _sanitize_signal_array(signal_arrays[aid][-T:]) for aid in ids
+    ])
+
+    # Equal-weight ensemble return
+    ens = signals.mean(axis=0) * returns
+    full_sharpe = _sharpe(ens)
+
+    scores: dict[str, float] = {}
+    for i, aid in enumerate(ids):
+        if n == 1:
+            scores[aid] = full_sharpe
+            continue
+        # Remove alpha i, equal weight the rest
+        mask = np.ones(n, dtype=bool)
+        mask[i] = False
+        ens_without = signals[mask].mean(axis=0) * returns
+        scores[aid] = full_sharpe - _sharpe(ens_without)
+    return scores
+
+
+def compute_tc_weights(
+    tc_scores: dict[str, float],
+    min_weight: float = 1e-4,
+    max_weight: float = 0.3,
+) -> dict[str, float]:
+    """Normalize TC scores to portfolio weights.
+
+    Negative TC alphas get min_weight (kept for monitoring, not excluded).
+    """
+    if not tc_scores:
+        return {}
+    ids = list(tc_scores.keys())
+    raw = np.array([max(tc_scores[aid], 0.0) + min_weight for aid in ids])
+    # Cap individual weight
+    raw = np.minimum(raw, max_weight * raw.sum())
+    total = raw.sum()
+    if total <= 0:
+        eq = 1.0 / len(ids)
+        return {aid: eq for aid in ids}
+    weights = raw / total
+    return {aid: float(weights[i]) for i, aid in enumerate(ids)}
+
+
+def _sharpe(returns: np.ndarray) -> float:
+    """Annualized Sharpe of a return series."""
+    if len(returns) < 2:
+        return 0.0
+    std = returns.std()
+    if std < 1e-12:
+        return 0.0
+    return float(returns.mean() / std * _ANNUALIZE)
 
 
 def _sanitize_signal_array(signal: np.ndarray) -> np.ndarray:

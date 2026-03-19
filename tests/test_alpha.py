@@ -33,6 +33,8 @@ from alpha_os.alpha.combiner import (
     CombinerConfig,
     compute_diversity_scores,
     compute_weights,
+    compute_tc_scores,
+    compute_tc_weights,
     weighted_combine,
     weighted_combine_scalar,
     signal_consensus,
@@ -945,6 +947,58 @@ class TestWeightedCombiner:
         weights = {"a": 0.75, "b": 0.25}
         result = weighted_combine_scalar(signals, weights)
         assert np.isclose(result, 0.5)
+
+
+# ---------------------------------------------------------------------------
+# True Contribution (TC)
+# ---------------------------------------------------------------------------
+
+class TestTrueContribution:
+    def test_single_alpha_tc_equals_sharpe(self):
+        rng = np.random.RandomState(42)
+        returns = rng.randn(200) * 0.01
+        signal = rng.randn(200)
+        tc = compute_tc_scores({"a": signal}, returns)
+        assert "a" in tc
+        assert tc["a"] != 0.0
+
+    def test_harmful_alpha_gets_negative_tc(self):
+        rng = np.random.RandomState(42)
+        returns = rng.randn(200) * 0.01
+        good = returns * 0.5 + rng.randn(200) * 0.001  # correlated with returns
+        bad = -returns * 0.5 + rng.randn(200) * 0.001   # anti-correlated
+        tc = compute_tc_scores({"good": good, "bad": bad}, returns)
+        assert tc["good"] > tc["bad"]
+
+    def test_redundant_alpha_has_low_tc(self):
+        rng = np.random.RandomState(42)
+        returns = rng.randn(200) * 0.01
+        sig = returns * 0.3 + rng.randn(200) * 0.005
+        # Two copies of the same signal
+        tc = compute_tc_scores({"a": sig, "b": sig, "c": sig}, returns)
+        # Each copy contributes less than if it were unique
+        tc_single = compute_tc_scores({"a": sig}, returns)
+        assert tc["a"] < tc_single["a"]
+
+    def test_empty_returns_zero(self):
+        tc = compute_tc_scores({}, np.array([]))
+        assert tc == {}
+
+    def test_short_history_returns_zero(self):
+        tc = compute_tc_scores({"a": np.array([1.0])}, np.array([0.01]))
+        assert tc["a"] == 0.0
+
+    def test_tc_weights_positive(self):
+        tc_scores = {"a": 0.5, "b": -0.1, "c": 0.2}
+        weights = compute_tc_weights(tc_scores)
+        assert all(w > 0 for w in weights.values())
+        assert abs(sum(weights.values()) - 1.0) < 1e-9
+
+    def test_tc_weights_negative_gets_min(self):
+        tc_scores = {"a": 1.0, "b": -0.5}
+        weights = compute_tc_weights(tc_scores)
+        assert weights["a"] > weights["b"]
+        assert weights["b"] > 0  # not zero, min_weight floor
 
 
 # ---------------------------------------------------------------------------
