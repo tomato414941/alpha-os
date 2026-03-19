@@ -146,7 +146,16 @@ class PaperPortfolioTracker:
             )
         self._conn.commit()
 
+    @staticmethod
+    def _finite(v: float | None, default: float = 0.0) -> float | None:
+        """Replace nan/inf with default for SQLite NOT NULL columns."""
+        if v is None:
+            return None
+        import math
+        return v if math.isfinite(v) else default
+
     def save_snapshot(self, snapshot: PortfolioSnapshot) -> None:
+        f = self._finite
         self._conn.execute(
             """INSERT OR REPLACE INTO portfolio_snapshots
             (date, cash, positions_json, portfolio_value, daily_pnl,
@@ -159,15 +168,15 @@ class PaperPortfolioTracker:
                 snapshot.cash,
                 json.dumps(snapshot.positions),
                 snapshot.portfolio_value,
-                snapshot.daily_pnl,
-                snapshot.daily_return,
-                snapshot.combined_signal,
+                f(snapshot.daily_pnl),
+                f(snapshot.daily_return),
+                f(snapshot.combined_signal),
                 snapshot.strategic_signal,
                 snapshot.regime_adjusted_signal,
                 snapshot.tactical_adjusted_signal,
                 snapshot.final_signal,
-                snapshot.dd_scale,
-                snapshot.vol_scale,
+                f(snapshot.dd_scale),
+                f(snapshot.vol_scale),
                 time.time(),
             ),
         )
