@@ -1,10 +1,17 @@
 # Evaluation Pipeline Design
 
-## Principle
+## Principles
 
-Individual signal quality is measured by **IC** (prediction accuracy).
-Portfolio quality is measured by **Sharpe** (profitability after costs).
-These are never mixed: IC is per-signal, Sharpe is per-portfolio.
+**1. IC for signals, Sharpe for portfolio.**
+Individual signal quality is measured by IC (prediction accuracy).
+Portfolio quality is measured by Sharpe (profitability after costs).
+These are never mixed.
+
+**2. Internal market efficiency.**
+Good predictors gain influence. Bad predictors lose influence and die.
+No manual thresholds — selection pressure is continuous and automatic,
+like a market where accurate participants accumulate capital and
+inaccurate ones go bankrupt.
 
 ## Prediction Targets
 
@@ -122,31 +129,58 @@ Admission validates that IC is robust out-of-sample:
 
 - Purged walk-forward CV: compute OOS IC per fold at the stored horizon
 - IC must be consistently positive across folds
-- PBO (Probability of Backtest Overfitting) gate
-- DSR (Deflated Sharpe Ratio) gate applied to IC-derived returns
+- Statistical checks (PBO, DSR) as sanity filters, not hard gates
 
-Admission does NOT run backtests or compute Sharpe for individual signals.
+Signals that pass enter the live pool with a **minimum stake**.
 
-### 4. Combine (Portfolio)
+### 4. Live Selection (Internal Market)
 
-Admitted signals are combined into a portfolio signal:
+Each live signal carries a virtual stake. Stake determines portfolio
+weight — this replaces manual TC weighting and threshold-based lifecycle.
 
-- Current: TC (True Contribution) weighting — linear
-- Future: ML combiner — can learn interactions, time-varying weights
+```
+every day:
+    for each live signal:
+        prediction = signal's output yesterday
+        actual     = realized residual return today
+        score      = correlation(prediction, actual)
 
-**Portfolio-level evaluation uses Sharpe, drawdown, costs.**
-This is the only place Sharpe appears in the pipeline.
+        if score > 0:  stake *= (1 + reward_rate)
+        else:          stake *= (1 - penalty_rate)
+
+    normalize stakes → portfolio weights
+```
+
+Properties:
+- **New signals enter small.** They must prove themselves before gaining
+  influence. No immediate large allocation.
+- **Accurate signals grow.** Compounding stake → increasing weight.
+  The best predictors dominate the portfolio naturally.
+- **Inaccurate signals shrink and die.** No manual demotion rules.
+  Stake → 0 is natural death. Slot freed for new candidates.
+- **Marginal contribution matters.** A signal with IC > 0 but
+  identical to existing signals adds no value — its predictions are
+  already covered, so its live score won't improve the portfolio.
+  It stagnates and eventually dies. This is TC without computing TC.
+
+This is analogous to:
+- Numerai: models stake NMR, earn/lose based on live correlation
+- Polymarket: accurate predictors profit, inaccurate ones lose
+- Real markets: informed participants accumulate capital
 
 ### 5. Trade
 
-The combined signal is executed. Each underlying alpha's horizon
-determines rebalancing frequency:
+Portfolio weights from the stake system determine position sizes.
+Each signal's horizon determines rebalancing frequency:
 
 - horizon=1: daily rebalance
 - horizon=5: rebalance every 5 days
 - horizon=20: rebalance every 20 days
 
-Mixed horizons in the portfolio provide natural time-scale diversification.
+Mixed horizons provide natural time-scale diversification.
+
+**Portfolio-level evaluation uses Sharpe, drawdown, costs.**
+This is the only place Sharpe appears in the pipeline.
 
 ## Signal Generator Interface
 
@@ -169,6 +203,9 @@ signals.
 - Backtest in Admission — replaced by OOS IC validation.
 - Raw returns in evaluation — always residualized.
 - Per-call eval universe — fixed and cached.
+- Manual lifecycle thresholds — replaced by stake-based natural selection.
+- Active/dormant/rejected state machine — replaced by continuous stake.
+- TC computation — emergent from stake dynamics (redundant signals stagnate).
 
 ## Implementation Order
 
@@ -177,7 +214,9 @@ signals.
 3. Store horizon in discovery pool schema
 4. Rewrite admission to validate OOS IC (not backtest Sharpe)
 5. Remove `fitness_metric` config, hardcode IC for signals
-6. Portfolio-level Sharpe evaluation (separate from signal evaluation)
+6. Stake-based live selection (replace state machine lifecycle)
+7. Portfolio weights from stakes (replace TC weighting)
+8. Portfolio-level Sharpe evaluation (separate from signal evaluation)
 
 ## Constraints
 
