@@ -157,52 +157,90 @@ Signals that pass enter the live pool with a **minimum stake**.
 
 ### 4. Live Selection (Internal Market)
 
-Each live signal carries a virtual stake. Stake = cumulative P&L of
-following this signal. This replaces TC weighting, lifecycle state
-machine, and manual thresholds with a single mechanism.
+Each live signal carries a virtual stake. Stake grows or shrinks based
+on the signal's **marginal contribution to portfolio P&L** — not its
+individual accuracy. This replaces TC weighting, lifecycle state machine,
+and manual thresholds with a single mechanism.
 
 ```
-every day, for each live signal with horizon h:
-    # h days ago, this signal made a prediction
-    net_return = sign(signal[t-h]) * residual_return[t-h : t]
-                 - turnover * transaction_cost
+every day:
+    # Portfolio = stake-weighted combination of all signals
+    full_portfolio = Σ(stake_i × signal_i) / Σ(stake_i)
+    full_pnl = full_portfolio × realized_residual_return
 
-    stake *= (1 + net_return)
-    if stake < min_stake: remove signal  # natural death
+    for each live signal j:
+        # What would the portfolio be without signal j?
+        without_j = (Σ(stake_i × signal_i) - stake_j × signal_j)
+                    / (Σ(stake_i) - stake_j)
+        without_j_pnl = without_j × realized_residual_return
 
-normalize stakes → portfolio weights
-cap any single signal at max_weight (e.g. 5%)
+        # Marginal contribution = what did signal j add?
+        marginal_j = full_pnl - without_j_pnl
+        stake_j *= (1 + marginal_j)
+
+    remove signals where stake < min_stake  # natural death
+    cap any single signal at max_weight (e.g. 5%)
 ```
 
-Stake is literally "how much money would you have made following this
-signal?" Good predictions → profit → stake grows → more influence.
-Bad predictions → loss → stake shrinks → less influence → death.
+Portfolio is a linear combination, so removing signal j is O(1).
+500 signals = 500 subtractions per day. Trivial.
 
-**Turnover is not a separate metric.** It is embedded in the P&L via
-transaction costs. A high-IC signal with extreme turnover will have
-poor net returns and its stake will not grow.
+**Why marginal contribution, not individual P&L:**
+
+Individual P&L (`sign(signal) * return`) has a fatal flaw: two
+identical signals get the same score and both grow. The portfolio
+doubles its bet on one prediction without knowing it.
+
+Marginal contribution fixes this. If signal j is identical to another
+signal already in the portfolio, removing j changes nothing.
+`marginal_j = 0`. Stake stagnates. Signal dies. Redundancy is
+eliminated automatically — no duplicate detection needed.
+
+**This also solves non-return prediction targets.** A volatility
+signal doesn't predict direction — it adjusts position sizing. Its
+value shows up as improved portfolio P&L (smaller positions before
+crashes, larger positions in calm periods). Marginal contribution
+captures this: "with the vol signal, the portfolio made more money
+than without it."
+
+**Turnover is embedded, not separate.** The portfolio rebalances
+based on signals. High-turnover signals cause frequent rebalancing →
+transaction costs reduce portfolio P&L → their marginal contribution
+shrinks. No explicit turnover metric needed.
 
 **Tail risk protection:**
 - Single signal weight capped (e.g. 5% max)
 - Large loss → immediate stake reduction → automatic de-risking
-- Portfolio-level circuit breaker is separate (not per-signal)
+- Portfolio-level circuit breaker (separate, see Risk Management)
 
 Properties:
-- **New signals enter small.** They must prove themselves before gaining
-  influence. No immediate large allocation.
-- **Accurate signals grow.** Compounding stake → increasing weight.
-  The best predictors dominate the portfolio naturally.
-- **Inaccurate signals shrink and die.** No manual demotion rules.
-  Stake → 0 is natural death. Slot freed for new candidates.
-- **Marginal contribution is emergent.** A signal with IC > 0 but
-  identical to existing signals adds no value — its predictions are
-  already covered, so its live score won't improve the portfolio.
-  It stagnates and eventually dies. This is TC without computing TC.
+- **New signals enter small.** Minimum stake. Must prove marginal
+  value before gaining influence.
+- **Valuable signals grow.** Consistent marginal contribution →
+  compounding stake → increasing weight.
+- **Redundant signals die.** Zero marginal contribution →
+  stagnating stake → eventual removal.
+- **Harmful signals die fast.** Negative marginal contribution →
+  shrinking stake → rapid removal.
 
 This is analogous to:
-- Numerai: models stake NMR, earn/lose based on live correlation
+- Numerai MMC: scored on what you add to the meta-model
 - Polymarket: accurate predictors profit, inaccurate ones lose
 - Real markets: informed participants accumulate capital
+
+### Risk Management
+
+Portfolio-level, separate from signal evaluation:
+
+- **Drawdown circuit breaker**: if portfolio drawdown exceeds threshold
+  (e.g. 10%), reduce all positions to a fraction of normal. Gradual
+  recovery after drawdown heals.
+- **Hard stop**: extreme drawdown (e.g. 20%) → halt trading, require
+  manual review.
+- **Position limits**: maximum total exposure, per-asset limits.
+
+These protect the portfolio from systemic events that individual signal
+scoring cannot anticipate.
 
 ### 5. Trade
 
