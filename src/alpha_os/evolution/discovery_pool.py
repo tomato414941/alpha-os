@@ -33,6 +33,7 @@ class DiscoveryPoolEntry:
     fitness: float
     behavior: np.ndarray
     survival_score: float = 0.0
+    best_horizon: int = 1
 
 
 @dataclass(frozen=True)
@@ -67,7 +68,8 @@ def _migrate_table(conn: sqlite3.Connection) -> None:
             cell_key TEXT PRIMARY KEY,
             expression TEXT NOT NULL,
             fitness REAL NOT NULL,
-            behavior TEXT NOT NULL
+            behavior TEXT NOT NULL,
+            best_horizon INTEGER NOT NULL DEFAULT 1
         )
     """)
     tables = {
@@ -79,9 +81,15 @@ def _migrate_table(conn: sqlite3.Connection) -> None:
     if "archive" in tables:
         conn.execute(
             "INSERT OR IGNORE INTO discovery_pool"
+            " (cell_key, expression, fitness, behavior)"
             " SELECT * FROM archive"
         )
         conn.execute("DROP TABLE archive")
+        conn.commit()
+    # Add best_horizon column to existing tables
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(discovery_pool)")}
+    if "best_horizon" not in cols:
+        conn.execute("ALTER TABLE discovery_pool ADD COLUMN best_horizon INTEGER NOT NULL DEFAULT 1")
         conn.commit()
 
 
@@ -122,6 +130,7 @@ class DiscoveryPool:
         *,
         fitness: float = 0.0,
         survival_score: float | None = None,
+        best_horizon: int = 1,
     ) -> DiscoveryPoolUpdate:
         """Store a candidate if it is valid and improves its cell frontier."""
         if not passes_sanity_filter(signal, self.config.max_nan_ratio):
@@ -136,6 +145,7 @@ class DiscoveryPool:
             fitness=float(fitness),
             behavior=behavior,
             survival_score=candidate_score,
+            best_horizon=best_horizon,
         )
         return DiscoveryPoolUpdate(stored=True, replaced=incumbent is not None)
 
@@ -182,6 +192,13 @@ class DiscoveryPool:
         """All discovery-pool entries as (expr, fitness, behavior) triples."""
         return [(e.expr, e.fitness, e.behavior) for e in self._grid.values()]
 
+    def elites_with_horizon(self) -> list[tuple[Expr, float, np.ndarray, int]]:
+        """All entries as (expr, fitness, behavior, best_horizon) tuples."""
+        return [
+            (e.expr, e.fitness, e.behavior, e.best_horizon)
+            for e in self._grid.values()
+        ]
+
     # --- Persistence (SQLite) ---
 
     def save_to_db(self, db_path: Path) -> int:
@@ -198,11 +215,12 @@ class DiscoveryPool:
                 to_string(entry.expr),
                 entry.fitness,
                 json.dumps(entry.behavior.tolist()),
+                entry.best_horizon,
             ))
         conn.execute("DELETE FROM discovery_pool")
         conn.executemany(
-            "INSERT INTO discovery_pool (cell_key, expression, fitness, behavior)"
-            " VALUES (?, ?, ?, ?)",
+            "INSERT INTO discovery_pool (cell_key, expression, fitness, behavior, best_horizon)"
+            " VALUES (?, ?, ?, ?, ?)",
             rows,
         )
         conn.commit()
@@ -229,7 +247,8 @@ class DiscoveryPool:
         _migrate_table(conn)
         try:
             rows = conn.execute(
-                "SELECT cell_key, expression, fitness, behavior FROM discovery_pool"
+                "SELECT cell_key, expression, fitness, behavior, best_horizon"
+                " FROM discovery_pool"
             ).fetchall()
         except sqlite3.OperationalError:
             conn.close()
@@ -239,7 +258,7 @@ class DiscoveryPool:
         expected_dims = len(pool.config.dims)
         n_collisions = 0
         n_skipped = 0
-        for _cell_json, expr_str, fitness, behavior_json in rows:
+        for _cell_json, expr_str, fitness, behavior_json, best_horizon in rows:
             try:
                 expr = parse(expr_str)
                 behavior = np.array(json.loads(behavior_json))
@@ -256,6 +275,7 @@ class DiscoveryPool:
                     fitness=fitness,
                     behavior=behavior,
                     survival_score=fitness,
+                    best_horizon=int(best_horizon) if best_horizon else 1,
                 )
             except Exception as exc:
                 logger.warning("Failed to load pool entry %s: %s", expr_str, exc)

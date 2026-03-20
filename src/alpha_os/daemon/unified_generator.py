@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from alpha_os.alpha.cross_asset import evaluate_cross_asset
+from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
@@ -39,6 +39,7 @@ class AdmissionQueueCandidate:
     fitness: float
     queue_score: float
     behavior: np.ndarray
+    best_horizon: int = 1
 
 
 def _admission_queue_score(fitness: float) -> float:
@@ -205,18 +206,17 @@ class UnifiedAlphaGeneratorDaemon:
         for expr in candidates:
             try:
                 expr_str = to_string(expr)
-                per_asset = evaluate_cross_asset(
+                result = evaluate_cross_asset_multi_horizon(
                     expr_str, data, self.universe,
+                    horizons=DEFAULT_HORIZONS,
                     fitness_metric=self.config.fitness_metric,
-                    commission_pct=self.config.backtest.commission_pct,
-                    slippage_pct=self.config.backtest.slippage_pct,
-                    allow_short=self.config.trading.supports_short,
                     benchmark_assets=bm_assets,
                 )
-                if not per_asset:
+                if not result.per_asset:
                     continue
 
-                fitness = float(np.mean(list(per_asset.values())))
+                fitness = result.best_fitness
+                best_horizon = result.best_horizon
                 if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
                     continue
 
@@ -229,6 +229,7 @@ class UnifiedAlphaGeneratorDaemon:
                     expr, behavior, sig,
                     fitness=fitness,
                     survival_score=_survival_score(fitness, behavior),
+                    best_horizon=best_horizon,
                 )
                 if update.stored:
                     n_stored += 1
@@ -241,6 +242,7 @@ class UnifiedAlphaGeneratorDaemon:
                         fitness=fitness,
                         queue_score=_admission_queue_score(fitness),
                         behavior=behavior,
+                        best_horizon=best_horizon,
                     ))
             except Exception:
                 continue
@@ -275,6 +277,10 @@ class UnifiedAlphaGeneratorDaemon:
                     expression=c.expression,
                     source="unified_generator",
                     fitness=c.fitness,
+                    behavior_json={
+                        "best_horizon": c.best_horizon,
+                        "behavior": [float(x) for x in c.behavior.tolist()],
+                    },
                 )
                 for c in candidates
             ]
