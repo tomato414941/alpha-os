@@ -250,7 +250,7 @@ class UnifiedAlphaGeneratorDaemon:
                 )
                 for c in candidates
             ]
-            n = store.enqueue_candidates(seeds)
+            n = store.queue_candidates(seeds)
             logger.info("Enqueued %d candidates into registry", n)
             return n
         finally:
