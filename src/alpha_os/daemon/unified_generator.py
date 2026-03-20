@@ -66,17 +66,21 @@ class UnifiedAlphaGeneratorDaemon:
         client = build_signal_client_from_config(self.config.api)
         store = DataStore(DATA_DIR / "alpha_cache.db", client)
         matrix = store.get_matrix(features)
-        if matrix is None or len(matrix) < 200:
+        if matrix is None or len(matrix) < 2:
+            return None, None, []
+        data = {col: matrix[col].values for col in matrix.columns}
+        ps = price_signal(self.primary_asset)
+        prices = data.get(ps)
+        if prices is None:
+            return None, None, []
+        # Require primary asset to have at least 200 rows
+        finite_prices = prices[np.isfinite(prices)]
+        if len(finite_prices) < 200:
             return None, None, []
         available = [
             f for f in features
             if f in matrix.columns and not (matrix[f] == 0).all()
         ]
-        data = {col: matrix[col].values for col in matrix.columns}
-        ps = price_signal(self.primary_asset)
-        prices = data.get(ps)
-        if prices is None or len(prices) < 200:
-            return None, None, []
         return data, prices, available
 
     def run(self) -> None:
@@ -113,11 +117,9 @@ class UnifiedAlphaGeneratorDaemon:
         seed = int(time.time()) ^ self._round
 
         subset = stratified_feature_subset(all_features, k=k, seed=seed)
-        # Include ALL universe price signals for cross-asset evaluation
-        universe_signals = set()
-        for asset_sig in self.universe:
-            universe_signals.add(asset_sig)
-        load_features = sorted(universe_signals | subset)
+        # Load feature subset + universe price signals that are likely available
+        ps = price_signal(self.primary_asset)
+        load_features = sorted({ps} | subset | set(self.universe))
 
         data, prices, available_features = self._load_data(load_features)
         if data is None:
