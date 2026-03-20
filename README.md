@@ -31,6 +31,56 @@ If a topic appears in multiple files, prefer:
 - `DESIGN.md` for deeper rationale
 - `AGENTS.override.md` for concrete commands
 
+## Pipeline Architecture
+
+The system has three independent services with distinct responsibilities:
+
+```
+signal-noise          Data collection (3,600+ signals, separate server)
+     │
+     ▼
+alpha-os-generator    Alpha discovery — generates DSL expressions,
+                      evaluates across multiple assets, registers candidates
+     │
+     ▼
+alpha-os-trader       Portfolio execution — combines deployed alphas into
+                      signals, constructs positions, executes orders
+```
+
+**alpha-os-generator** (`unified-generator` command)
+- Responsibility: discover new alpha expressions
+- Input: signal-noise data (prices, macro, crypto derivatives, etc.)
+- Output: candidates registered in the alpha registry
+- Method: MAP-Elites evolution + random generation, cross-asset residual fitness
+- Runs continuously, evaluating ~80 candidates/min
+
+**alpha-os-trader** (`cross-trade` command)
+- Responsibility: trade using deployed alphas
+- Input: deployed alpha registry + live signal data
+- Output: positions on Binance (testnet)
+- Method: TC-weighted signal combination, cross-sectional neutralization
+- Runs on 5-min schedule
+
+**Separation of concerns:** The generator creates alphas without trading.
+The trader uses alphas without creating them. Neither depends on the other
+being running. The trader is only useful when good alphas exist in the registry.
+
+### Current Status
+
+- **generator**: needs repair (archive=0, no evolution happening)
+- **trader**: running but limited value (residual Sharpe ~0, spot-only = no shorts)
+- **Priority**: fix generator first, then improve trader (futures support for shorting)
+
+### Known Structural Limitations
+
+- **No shorting**: Binance spot testnet is long-only. Cross-sectional
+  neutralization produces negative signals that cannot be acted on.
+  Fix: migrate to Binance Futures.
+- **3 assets only**: BTC/ETH/SOL. Cross-sectional diversification requires
+  more assets. signal-noise now has 800+ daily assets available.
+- **Residual alpha is weak**: 91% of deployed alpha performance was market
+  direction bias. After removing beta, mean residual Sharpe is +0.039.
+
 ## Current Focus
 
 **TC (True Contribution)** weighting is fully wired. The system uses a single
