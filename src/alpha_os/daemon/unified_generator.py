@@ -11,7 +11,7 @@ import numpy as np
 
 from alpha_os.alpha.cross_asset import evaluate_cross_asset
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
-from alpha_os.alpha.admission_queue import AdmissionQueueCandidate
+from alpha_os.daemon.alpha_generator import AdmissionQueueCandidate
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.data.signal_client import build_signal_client_from_config
@@ -56,9 +56,6 @@ class UnifiedAlphaGeneratorDaemon:
 
         adir = asset_data_dir(self.primary_asset)
         self.archive = DiscoveryPool(data_dir=adir)
-
-        from alpha_os.alpha.admission_queue import CandidateQueue
-        self.queue = CandidateQueue(db_path=adir / "alpha_registry.db")
 
         self._budget = self.generator_cfg.pop_size
         self._round = 0
@@ -220,7 +217,7 @@ class UnifiedAlphaGeneratorDaemon:
                 continue
 
         if queued_candidates:
-            self.queue.enqueue(queued_candidates)
+            self._enqueue_candidates(queued_candidates)
 
         elapsed = time.perf_counter() - t0
         logger.info(
@@ -230,6 +227,33 @@ class UnifiedAlphaGeneratorDaemon:
             len(queued_candidates), elapsed, self.archive.size,
             len(self.universe),
         )
+
+    def _enqueue_candidates(self, candidates: list[AdmissionQueueCandidate]) -> int:
+        from alpha_os.alpha.admission_queue import CandidateSeed
+        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+
+        limit = self.generator_cfg.promote_per_round
+        if limit <= 0:
+            return 0
+        candidates.sort(key=lambda c: c.queue_score, reverse=True)
+        candidates = candidates[:limit]
+
+        adir = asset_data_dir(self.primary_asset)
+        store = ManagedAlphaStore(adir / "alpha_registry.db")
+        try:
+            seeds = [
+                CandidateSeed(
+                    expression=c.expression,
+                    source="unified_generator",
+                    fitness=c.fitness,
+                )
+                for c in candidates
+            ]
+            n = store.enqueue_candidates(seeds)
+            logger.info("Enqueued %d candidates into registry", n)
+            return n
+        finally:
+            store.close()
 
     def _handle_signal(self, signum, frame):
         logger.info("Received signal %d, shutting down...", signum)
