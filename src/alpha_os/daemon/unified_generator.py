@@ -52,7 +52,9 @@ class UnifiedAlphaGeneratorDaemon:
 
         # Use first crypto asset as primary for data loading & behavior
         self.primary_asset = "BTC"
-        self.universe = CROSS_ASSET_UNIVERSE
+        # Evaluation universe is selected automatically at runtime
+        # via correlation clustering (see _select_universe)
+        self.universe: list[str] = []
 
         self.archive = DiscoveryPool()
 
@@ -117,14 +119,25 @@ class UnifiedAlphaGeneratorDaemon:
         seed = int(time.time()) ^ self._round
 
         subset = stratified_feature_subset(all_features, k=k, seed=seed)
-        # Load feature subset + universe price signals that are likely available
         ps = price_signal(self.primary_asset)
-        load_features = sorted({ps} | subset | set(self.universe))
+        # Include full universe candidates for auto-selection
+        load_features = sorted({ps} | subset | set(CROSS_ASSET_UNIVERSE))
 
         data, prices, available_features = self._load_data(load_features)
         if data is None:
             logger.warning("Insufficient data, skipping round")
             return
+
+        # Auto-select diverse evaluation universe (once, then cache)
+        if not self.universe:
+            from alpha_os.data.eval_universe import select_eval_universe
+            self.universe = select_eval_universe(
+                data, CROSS_ASSET_UNIVERSE,
+                n_clusters=20, min_finite_days=500,
+            )
+            if not self.universe:
+                logger.warning("No assets with sufficient data for evaluation")
+                return
 
         # Build benchmark
         bm_assets = self.config.backtest.benchmark_assets
