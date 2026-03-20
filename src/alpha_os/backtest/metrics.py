@@ -79,3 +79,63 @@ def tail_hit_rate(returns: np.ndarray, sigma: float = 2.0) -> float:
     sd = float(np.std(r))
     threshold = mu - sigma * sd
     return float(np.mean(r < threshold))
+
+
+def rank_ic(signal: np.ndarray, forward_returns: np.ndarray) -> float:
+    """Information Coefficient — Spearman rank correlation between signal and forward returns.
+
+    Computed over rolling windows: for each day, signal[t] predicts forward_returns[t].
+    """
+    from scipy.stats import spearmanr
+
+    sig = np.asarray(signal, dtype=float)
+    fwd = np.asarray(forward_returns, dtype=float)
+    n = min(len(sig), len(fwd))
+    if n < 20:
+        return 0.0
+    sig = sig[:n]
+    fwd = fwd[:n]
+    valid = np.isfinite(sig) & np.isfinite(fwd)
+    if valid.sum() < 20:
+        return 0.0
+    corr, _ = spearmanr(sig[valid], fwd[valid])
+    return float(corr) if np.isfinite(corr) else 0.0
+
+
+def rolling_ic(
+    signal: np.ndarray, forward_returns: np.ndarray, window: int = 252,
+) -> np.ndarray:
+    """Rolling IC over trailing windows. Returns array of per-window IC values."""
+    from scipy.stats import spearmanr
+
+    sig = np.asarray(signal, dtype=float)
+    fwd = np.asarray(forward_returns, dtype=float)
+    n = min(len(sig), len(fwd))
+    if n < window:
+        ic = rank_ic(sig[:n], fwd[:n])
+        return np.array([ic]) if np.isfinite(ic) else np.array([0.0])
+    ics = []
+    for start in range(0, n - window + 1, window // 4):
+        end = start + window
+        s = sig[start:end]
+        f = fwd[start:end]
+        valid = np.isfinite(s) & np.isfinite(f)
+        if valid.sum() < 20:
+            continue
+        corr, _ = spearmanr(s[valid], f[valid])
+        if np.isfinite(corr):
+            ics.append(corr)
+    return np.array(ics) if ics else np.array([0.0])
+
+
+def risk_adjusted_ic(
+    signal: np.ndarray, forward_returns: np.ndarray, window: int = 252,
+) -> float:
+    """RIC — mean IC / std IC. Measures stability of prediction power."""
+    ics = rolling_ic(signal, forward_returns, window)
+    if len(ics) < 2:
+        return rank_ic(signal, forward_returns)
+    std = float(np.std(ics))
+    if std == 0:
+        return 0.0
+    return float(np.mean(ics) / std)

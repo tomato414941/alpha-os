@@ -8,10 +8,13 @@ import numpy as np
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
+from alpha_os.backtest.metrics import rank_ic, risk_adjusted_ic
 from alpha_os.alpha.evaluator import sanitize_signal
 from alpha_os.dsl import parse
 
 logger = logging.getLogger(__name__)
+
+IC_METRICS = {"ic", "ric"}
 
 
 def evaluate_cross_asset(
@@ -40,16 +43,19 @@ def evaluate_cross_asset(
     benchmark_assets : if set, compute residual fitness vs this benchmark
     """
     expr = parse(expression)
-    engine = BacktestEngine(
-        CostModel(commission_pct, slippage_pct),
-        allow_short=allow_short,
-    )
+    use_ic = fitness_metric in IC_METRICS
 
+    engine = None
     bm_returns = None
-    if benchmark_assets:
-        bm_returns = build_benchmark_returns(data, benchmark_assets)
-        if len(bm_returns) == 0:
-            bm_returns = None
+    if not use_ic:
+        engine = BacktestEngine(
+            CostModel(commission_pct, slippage_pct),
+            allow_short=allow_short,
+        )
+        if benchmark_assets:
+            bm_returns = build_benchmark_returns(data, benchmark_assets)
+            if len(bm_returns) == 0:
+                bm_returns = None
 
     results: dict[str, float] = {}
     for price_signal in asset_price_signals:
@@ -73,20 +79,28 @@ def evaluate_cross_asset(
             if len(sig_slice) < 200 or len(prices_slice) < 200:
                 continue
 
-            # Align benchmark to the same valid range
-            bm_slice = None
-            if bm_returns is not None:
-                # bm_returns has len(prices)-1, so offset by -1
-                bm_start = max(start_idx - 1, 0)
-                bm_end = end_idx - 1
-                bm_slice = bm_returns[bm_start:bm_end]
-                if len(bm_slice) == 0:
-                    bm_slice = None
+            if use_ic:
+                # IC-based evaluation: rank correlation between signal and forward returns
+                fwd_returns = np.diff(prices_slice) / prices_slice[:-1]
+                sig_for_ic = sig_slice[:-1]  # align: signal[t] predicts return[t]
+                if fitness_metric == "ric":
+                    fitness = risk_adjusted_ic(sig_for_ic, fwd_returns)
+                else:
+                    fitness = rank_ic(sig_for_ic, fwd_returns)
+            else:
+                # Backtest-based evaluation (sharpe, log_growth, etc.)
+                bm_slice = None
+                if bm_returns is not None:
+                    bm_start = max(start_idx - 1, 0)
+                    bm_end = end_idx - 1
+                    bm_slice = bm_returns[bm_start:bm_end]
+                    if len(bm_slice) == 0:
+                        bm_slice = None
+                result = engine.run(sig_slice, prices_slice,
+                                    benchmark_returns=bm_slice)
+                fitness = result.fitness(fitness_metric)
 
-            result = engine.run(sig_slice, prices_slice,
-                                benchmark_returns=bm_slice)
-            fitness = result.fitness(fitness_metric)
-            if np.isfinite(fitness):
+            if np.isfinite(fitness) and fitness != 0.0:
                 results[price_signal] = fitness
         except Exception:
             continue
