@@ -155,6 +155,12 @@ def _build_parser() -> argparse.ArgumentParser:
     gen_d.add_argument("--asset", type=str, default="BTC")
     gen_d.add_argument("--config", type=str, default=None)
 
+    ugen = sub.add_parser(
+        "unified-generator",
+        help="Run cross-asset alpha generation daemon (evaluates across all assets)",
+    )
+    ugen.add_argument("--config", type=str, default=None)
+
     pg = sub.add_parser(
         "enqueue-discovery-pool",
         help="Enqueue top discovery-pool entries into the admission queue",
@@ -1581,6 +1587,22 @@ def cmd_alpha_generator(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_unified_generator(args: argparse.Namespace) -> None:
+    """Run the cross-asset alpha generation daemon."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os.daemon.unified_generator import UnifiedAlphaGeneratorDaemon
+
+    daemon = UnifiedAlphaGeneratorDaemon(config=cfg)
+    daemon.run()
+
+
 def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
@@ -2285,6 +2307,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_trade(args)
     elif args.command == "alpha-generator":
         cmd_alpha_generator(args)
+    elif args.command == "unified-generator":
+        cmd_unified_generator(args)
     elif args.command == "enqueue-discovery-pool":
         cmd_enqueue_discovery_pool(args)
     elif args.command == "admission-daemon":
