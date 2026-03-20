@@ -5,6 +5,7 @@ import logging
 import os
 import random
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..config import DATA_DIR
@@ -102,11 +103,25 @@ HOURLY_SIGNALS = [
     "volume_dominance_btc", "lead_lag_btc",
 ]
 
-CROSS_ASSET_UNIVERSE: list[str] = [
-    "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt", "xrp_usdt", "ada_usdt", "doge_usdt",
-    "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla", "amd", "jpm", "xom",
-    "sp500", "nasdaq", "gold", "russell2000", "tlt", "eem", "hyg", "oil_wti",
-]
+def _load_cross_asset_universe() -> list[str]:
+    """Load cross-asset universe from signal-noise tickers.csv if available."""
+    import csv
+    csv_path = Path.home() / "projects" / "signal-noise" / "data" / "universe" / "tickers.csv"
+    if not csv_path.exists():
+        # Fallback: hardcoded core universe
+        return [
+            "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt", "xrp_usdt", "ada_usdt", "doge_usdt",
+            "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla", "amd", "jpm", "xom",
+            "sp500", "nasdaq", "gold", "russell2000", "tlt", "eem", "hyg", "oil_wti",
+        ]
+    names = []
+    with open(csv_path, newline="") as f:
+        for row in csv.DictReader(f):
+            names.append(row["name"])
+    return names
+
+
+CROSS_ASSET_UNIVERSE: list[str] = _load_cross_asset_universe()
 
 POLYMARKET: dict[str, str] = {}
 
