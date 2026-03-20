@@ -103,21 +103,41 @@ HOURLY_SIGNALS = [
     "volume_dominance_btc", "lead_lag_btc",
 ]
 
+_CORE_UNIVERSE = [
+    # Crypto (from CCXT collectors, not in tickers.csv)
+    "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt", "xrp_usdt", "ada_usdt", "doge_usdt",
+    # Indices (from yahoo_generic / yahoo_finance, not in tickers.csv)
+    "sp500", "nasdaq", "russell2000", "dxy", "vix_close",
+    # Commodities & rates
+    "gold", "silver", "oil_wti", "oil_brent", "nat_gas", "copper",
+    # Fixed income
+    "tlt", "tsy_yield_10y", "tsy_yield_2y",
+    # Forex
+    "eur_usd", "gbp_usd", "usd_jpy",
+    # Sentiment
+    "fear_greed",
+]
+
+
 def _load_cross_asset_universe() -> list[str]:
-    """Load cross-asset universe from signal-noise tickers.csv if available."""
+    """Load cross-asset universe from signal-noise tickers.csv + core assets."""
     import csv
-    csv_path = Path.home() / "projects" / "signal-noise" / "data" / "universe" / "tickers.csv"
-    if not csv_path.exists():
-        # Fallback: hardcoded core universe
-        return [
-            "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt", "xrp_usdt", "ada_usdt", "doge_usdt",
-            "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla", "amd", "jpm", "xom",
-            "sp500", "nasdaq", "gold", "russell2000", "tlt", "eem", "hyg", "oil_wti",
-        ]
+    # Start with core assets that exist in signal-noise but not in tickers.csv
+    seen = set()
     names = []
-    with open(csv_path, newline="") as f:
-        for row in csv.DictReader(f):
-            names.append(row["name"])
+    for name in _CORE_UNIVERSE:
+        if name not in seen:
+            seen.add(name)
+            names.append(name)
+    # Add tickers.csv entries
+    csv_path = Path.home() / "projects" / "signal-noise" / "data" / "universe" / "tickers.csv"
+    if csv_path.exists():
+        with open(csv_path, newline="") as f:
+            for row in csv.DictReader(f):
+                name = row["name"]
+                if name not in seen:
+                    seen.add(name)
+                    names.append(name)
     return names
 
 
