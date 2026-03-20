@@ -158,14 +158,6 @@ def _build_parser() -> argparse.ArgumentParser:
     xst.add_argument("--real", action="store_true")
     xst.add_argument("--config", type=str, default=None)
 
-    # alpha-generator (Pipeline v2)
-    gen_d = sub.add_parser(
-        "alpha-generator",
-        help="Run the continuous alpha generation daemon",
-    )
-    gen_d.add_argument("--asset", type=str, default="BTC")
-    gen_d.add_argument("--config", type=str, default=None)
-
     ugen = sub.add_parser(
         "unified-generator",
         help="Run cross-asset alpha generation daemon (evaluates across all assets)",
@@ -1387,10 +1379,7 @@ def _build_trade_cycle_runner(
 ):
     logger = logging.getLogger(__name__)
     last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
-    use_alpha_generator = cfg.alpha_generator.enabled
     use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
-    if use_alpha_generator:
-        logger.info("Pipeline v2: alpha generator enabled — skipping inline evolution")
     if use_lifecycle_daemon:
         logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
 
@@ -1419,7 +1408,7 @@ def _build_trade_cycle_runner(
             logger.info("--- %s cycle start ---", asset)
             now = time.time()
             evolve_interval = args.evolve_interval
-            if evolve_interval > 0 and not use_alpha_generator:
+            if evolve_interval > 0:
                 if _needs_trade_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
                     logger.info("Running alpha evolution for %s...", asset)
                     _run_evolution(trader, cfg, pipeline_cfg)
@@ -1579,22 +1568,6 @@ def cmd_trade(args: argparse.Namespace) -> None:
             _close_trade_contexts(contexts)
     finally:
         runtime_lock.__exit__(None, None, None)
-
-
-def cmd_alpha_generator(args: argparse.Namespace) -> None:
-    """Run the continuous alpha generation daemon (Pipeline v2)."""
-    cfg = _load_config(args.config)
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(name)s %(levelname)s %(message)s",
-        force=True,
-    )
-
-    from alpha_os.daemon.alpha_generator import AlphaGeneratorDaemon
-
-    daemon = AlphaGeneratorDaemon(asset=args.asset, config=cfg)
-    daemon.run()
 
 
 def cmd_cross_trade(args: argparse.Namespace) -> None:
@@ -2380,8 +2353,6 @@ def main(argv: list[str] | None = None) -> None:
         cmd_trade(args)
     elif args.command == "cross-trade":
         cmd_cross_trade(args)
-    elif args.command == "alpha-generator":
-        cmd_alpha_generator(args)
     elif args.command == "unified-generator":
         cmd_unified_generator(args)
     elif args.command == "enqueue-discovery-pool":

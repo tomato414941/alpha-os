@@ -6,12 +6,12 @@ import logging
 import random as _random
 import signal
 import time
+from dataclasses import dataclass
 
 import numpy as np
 
 from alpha_os.alpha.cross_asset import evaluate_cross_asset
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
-from alpha_os.daemon.alpha_generator import AdmissionQueueCandidate
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.data.signal_client import build_signal_client_from_config
@@ -31,6 +31,14 @@ logger = logging.getLogger(__name__)
 
 # Minimum history for meaningful cross-asset evaluation
 MIN_HISTORY_DAYS = 2000
+
+
+@dataclass(frozen=True)
+class AdmissionQueueCandidate:
+    expression: str
+    fitness: float
+    queue_score: float
+    behavior: np.ndarray
 
 
 def _admission_queue_score(fitness: float) -> float:
