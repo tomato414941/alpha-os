@@ -2,12 +2,28 @@
 
 ## Principles
 
-**1. IC for signals, Sharpe for portfolio.**
+**1. Output only.**
+Signal generators are black boxes. The pipeline sees only predictions,
+never internals. DSL expression, ML model, LLM, human — all the same.
+Evaluation judges "you predicted X, did X happen?" Nothing else.
+
+This eliminates: complexity penalties, feature cap checks, semantic
+duplicate detection, expression structure inspection. If two generators
+produce identical output, they compete on equal footing — one survives
+naturally.
+
+**2. Adaptive and online.**
+Evaluation is continuous, not batch. Every day, every signal's latest
+prediction is scored against realized outcomes. No periodic retraining
+cycles or manual review gates. The system learns what works and what
+doesn't, always, automatically.
+
+**3. IC for signals, Sharpe for portfolio.**
 Individual signal quality is measured by IC (prediction accuracy).
 Portfolio quality is measured by Sharpe (profitability after costs).
 These are never mixed.
 
-**2. Internal market efficiency.**
+**4. Internal market efficiency.**
 Good predictors gain influence. Bad predictors lose influence and die.
 No manual thresholds — selection pressure is continuous and automatic,
 like a market where accurate participants accumulate capital and
@@ -184,28 +200,32 @@ This is the only place Sharpe appears in the pipeline.
 
 ## Signal Generator Interface
 
-DSL expressions and ML models are the same abstraction:
+The pipeline sees one thing:
 
 ```
 Input:  data: dict[str, np.ndarray]  (features)
 Output: signal: np.ndarray           (one value per day)
 ```
 
-Differences in lifecycle (ML needs retraining, serialization is different)
-are handled by the generator, not the pipeline. The pipeline only sees
-signals.
+What happens inside is irrelevant. DSL expression, gradient-boosted tree,
+neural net, hand-written rule, LLM-generated strategy — all produce a
+signal array and are judged solely by that output.
+
+Lifecycle differences (ML needs retraining, DSL is stateless) are the
+generator's problem. The pipeline doesn't know and doesn't care.
 
 ## What This Eliminates
 
-- `fitness_metric` config — gone. IC is always used for signals, Sharpe for portfolio.
-- IC vs Sharpe confusion — each has exactly one role.
-- Backtest in Generator — unnecessary. IC is sufficient as a fast screen.
-- Backtest in Admission — replaced by OOS IC validation.
-- Raw returns in evaluation — always residualized.
+- `fitness_metric` config — gone. IC for signals, Sharpe for portfolio. Fixed.
+- Backtest in Generator/Admission — IC is sufficient.
+- Raw returns — always residualized.
 - Per-call eval universe — fixed and cached.
 - Manual lifecycle thresholds — replaced by stake-based natural selection.
 - Active/dormant/rejected state machine — replaced by continuous stake.
-- TC computation — emergent from stake dynamics (redundant signals stagnate).
+- TC computation — emergent from stake dynamics.
+- Feature cap checks, semantic duplicate detection, complexity penalties —
+  output-only evaluation makes internal inspection unnecessary.
+- Separate handling for DSL vs ML — the pipeline is generator-agnostic.
 
 ## Implementation Order
 
