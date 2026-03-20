@@ -1656,7 +1656,7 @@ def cmd_cross_trade(args: argparse.Namespace) -> None:
 
     scheduler = PipelineScheduler(cycle, SchedulerConfig(interval_seconds=interval))
     try:
-        scheduler.run()
+        scheduler.start()
     finally:
         trader.close()
 
