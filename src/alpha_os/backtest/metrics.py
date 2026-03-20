@@ -86,7 +86,8 @@ def rank_ic(signal: np.ndarray, forward_returns: np.ndarray) -> float:
 
     Computed over rolling windows: for each day, signal[t] predicts forward_returns[t].
     """
-    from scipy.stats import spearmanr
+    import warnings
+    from scipy.stats import spearmanr, ConstantInputWarning
 
     sig = np.asarray(signal, dtype=float)
     fwd = np.asarray(forward_returns, dtype=float)
@@ -98,7 +99,9 @@ def rank_ic(signal: np.ndarray, forward_returns: np.ndarray) -> float:
     valid = np.isfinite(sig) & np.isfinite(fwd)
     if valid.sum() < 20:
         return 0.0
-    corr, _ = spearmanr(sig[valid], fwd[valid])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConstantInputWarning)
+        corr, _ = spearmanr(sig[valid], fwd[valid])
     return float(corr) if np.isfinite(corr) else 0.0
 
 
@@ -106,7 +109,8 @@ def rolling_ic(
     signal: np.ndarray, forward_returns: np.ndarray, window: int = 252,
 ) -> np.ndarray:
     """Rolling IC over trailing windows. Returns array of per-window IC values."""
-    from scipy.stats import spearmanr
+    import warnings
+    from scipy.stats import spearmanr, ConstantInputWarning
 
     sig = np.asarray(signal, dtype=float)
     fwd = np.asarray(forward_returns, dtype=float)
@@ -122,7 +126,9 @@ def rolling_ic(
         valid = np.isfinite(s) & np.isfinite(f)
         if valid.sum() < 20:
             continue
-        corr, _ = spearmanr(s[valid], f[valid])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConstantInputWarning)
+            corr, _ = spearmanr(s[valid], f[valid])
         if np.isfinite(corr):
             ics.append(corr)
     return np.array(ics) if ics else np.array([0.0])
