@@ -150,7 +150,7 @@ class CrossSectionalTrader:
         cycle_key = now.strftime("%Y-%m-%dT%H:%M:%S")
         today_date = date.today().isoformat()
 
-        if self.circuit_breaker.is_halted:
+        if self.circuit_breaker.halted:
             logger.warning("Circuit breaker halted, skipping cycle")
             return CrossSectionalCycleResult(
                 date=cycle_key, per_asset_signals={}, neutralized_signals={},
