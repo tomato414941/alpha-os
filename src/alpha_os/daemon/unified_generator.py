@@ -54,8 +54,7 @@ class UnifiedAlphaGeneratorDaemon:
         self.primary_asset = "BTC"
         self.universe = CROSS_ASSET_UNIVERSE
 
-        adir = asset_data_dir(self.primary_asset)
-        self.archive = DiscoveryPool(data_dir=adir)
+        self.archive = DiscoveryPool()
 
         self._budget = self.generator_cfg.pop_size
         self._round = 0
