@@ -138,6 +138,13 @@ tenure_half_life_days = 7.0  # days to reach 50% of max bonus
 top_n_protect = 10           # top-N alphas get demotion cooldown
 demotion_cooldown_days = 3.0 # min days before top-N can be demoted
 
+# Cross-sectional trading — Numerai-style cross-asset allocation
+[cross_sectional]
+allocation_mode = "signal_proportional"   # "equal_weight" | "signal_proportional"
+max_per_asset_pct = 0.5                   # max capital fraction per asset
+neutralize = true                         # subtract cross-asset mean
+registry_asset = "BTC"                    # shared alpha registry source
+
 # Alpaca — US stocks and ETFs
 [alpaca]
 enabled = false

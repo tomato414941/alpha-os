@@ -147,6 +147,17 @@ def _build_parser() -> argparse.ArgumentParser:
                      choices=["binance", "alpaca", "polymarket", "paper"],
                      help="Trading venue (default: auto-detect from asset)")
 
+    # cross-trade (cross-sectional trading)
+    xst = sub.add_parser("cross-trade", help="Cross-sectional multi-asset trading")
+    xst.add_argument("--assets", type=str, required=True,
+                     help="Comma-separated tradeable assets (e.g. BTC,ETH,SOL)")
+    xst.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    xst.add_argument("--schedule", action="store_true", help="Run on interval")
+    xst.add_argument("--interval", type=int, default=None)
+    xst.add_argument("--capital", type=float, default=10000.0)
+    xst.add_argument("--real", action="store_true")
+    xst.add_argument("--config", type=str, default=None)
+
     # alpha-generator (Pipeline v2)
     gen_d = sub.add_parser(
         "alpha-generator",
@@ -1587,6 +1598,69 @@ def cmd_alpha_generator(args: argparse.Namespace) -> None:
     daemon.run()
 
 
+def cmd_cross_trade(args: argparse.Namespace) -> None:
+    """Run cross-sectional multi-asset trading."""
+    cfg = _load_config(args.config)
+    cfg.trading.initial_capital = args.capital
+    interval = args.interval or cfg.forward.check_interval
+    testnet = not args.real
+    asset_list = [a.strip().upper() for a in args.assets.split(",")]
+
+    _configure_trade_logging()
+    logging.getLogger().info(
+        "Cross-sectional trade: assets=%s, testnet=%s, capital=$%.0f",
+        asset_list, testnet, args.capital,
+    )
+
+    from alpha_os.paper.cross_sectional_trader import CrossSectionalTrader
+    from alpha_os.execution.binance import BinanceExecutor
+    from alpha_os.data.universe import price_signal as _price_signal
+
+    symbol_map = {}
+    for asset in asset_list:
+        try:
+            ps = _price_signal(asset)
+            symbol_map[ps] = f"{asset}/USDT"
+        except KeyError:
+            symbol_map[asset.lower()] = f"{asset}/USDT"
+
+    executor = BinanceExecutor(
+        testnet=testnet,
+        symbol_map=symbol_map,
+        initial_capital=args.capital,
+        cost_model=cfg.execution.to_cost_model(),
+    )
+
+    trader = CrossSectionalTrader(
+        tradeable_assets=asset_list,
+        config=cfg,
+        executor=executor,
+    )
+
+    if args.once:
+        result = trader.run_cycle()
+        print(f"Portfolio: ${result.portfolio_value:,.2f}")
+        print(f"Signals: {result.neutralized_signals}")
+        print(f"Fills: {len(result.fills)}")
+        trader.close()
+        return
+
+    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    def cycle():
+        trader.run_cycle()
+        recon = trader.reconcile()
+        for asset, r in recon.items():
+            if not r["match"]:
+                logging.getLogger().warning("Reconciliation mismatch for %s: %s", asset, r)
+
+    scheduler = PipelineScheduler(cycle, SchedulerConfig(interval_seconds=interval))
+    try:
+        scheduler.run()
+    finally:
+        trader.close()
+
+
 def cmd_unified_generator(args: argparse.Namespace) -> None:
     """Run the cross-asset alpha generation daemon."""
     cfg = _load_config(args.config)
@@ -2305,6 +2379,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_paper(args)
     elif args.command == "trade":
         cmd_trade(args)
+    elif args.command == "cross-trade":
+        cmd_cross_trade(args)
     elif args.command == "alpha-generator":
         cmd_alpha_generator(args)
     elif args.command == "unified-generator":

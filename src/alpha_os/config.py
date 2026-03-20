@@ -214,6 +214,14 @@ class AlphaGeneratorConfig:
 
 
 @dataclass
+class CrossSectionalConfig:
+    allocation_mode: str = "signal_proportional"
+    max_per_asset_pct: float = 0.5
+    neutralize: bool = True
+    registry_asset: str = "BTC"
+
+
+@dataclass
 class AlpacaConfig:
     enabled: bool = False
     paper: bool = True
@@ -273,6 +281,7 @@ class Config:
     admission: AdmissionConfig = field(default_factory=AdmissionConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
     stability: StabilityConfig = field(default_factory=StabilityConfig)
+    cross_sectional: CrossSectionalConfig = field(default_factory=CrossSectionalConfig)
     alpaca: AlpacaConfig = field(default_factory=AlpacaConfig)
     polymarket: PolymarketConfig = field(default_factory=PolymarketConfig)
 
@@ -380,6 +389,7 @@ class Config:
             admission=AdmissionConfig(**_f(AdmissionConfig, raw.get("admission", {}))),
             lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
             stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
+            cross_sectional=CrossSectionalConfig(**_f(CrossSectionalConfig, raw.get("cross_sectional", {}))),
             alpaca=AlpacaConfig(**_f(AlpacaConfig, raw.get("alpaca", {}))),
             polymarket=PolymarketConfig(**_f(PolymarketConfig, raw.get("polymarket", {}))),
         )
