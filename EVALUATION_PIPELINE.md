@@ -194,9 +194,13 @@ every day:
 
     for each live signal j:
         marginal_j = total_pnl_with_j - total_pnl_without_j
-        stake_j *= (1 + marginal_j)
+        record marginal_j in signal j's rolling history
 
-    remove signals where stake < min_stake  # natural death
+    # Stake = recent performance, not cumulative
+    for each live signal j:
+        stake_j = mean(marginal history over last N days)  # e.g. N=60
+        if stake_j < min_stake: remove signal  # natural death
+
     cap any single signal at max_weight (e.g. 5%)
 ```
 
@@ -235,16 +239,38 @@ shrinks. No explicit turnover metric needed.
 - Large loss → immediate stake reduction → automatic de-risking
 - Portfolio-level circuit breaker (separate, see Risk Management)
 
+#### Rolling window, not cumulative
+
+Stake is the mean marginal contribution over a rolling window (e.g.
+60 days), not a cumulative compounding value.
+
+**Why:** Cumulative stakes create monopolies. A signal that was great
+3 years ago but mediocre now retains a dominant stake from compounded
+growth, blocking new signals from gaining influence. Real markets
+don't work this way:
+
+- **Numerai**: models scored on rolling 20-round window. Past
+  glory doesn't help.
+- **Real markets**: ongoing costs (fees, salaries, rent) create
+  constant pressure. Investors redeem based on recent performance.
+- **Polymarket**: each bet is independent. No accumulated advantage.
+
+Rolling window ensures all signals compete on recent merit. A signal
+must continuously justify its existence. New signals have a fair
+chance against incumbents.
+
 #### Properties
 
-- **New signals enter small.** Minimum stake. Must prove marginal
-  value before gaining influence.
-- **Valuable signals grow.** Consistent marginal contribution →
-  compounding stake → increasing weight.
+- **New signals start fair.** Evaluated on the same rolling window
+  as everyone else. No permanent disadvantage vs incumbents.
+- **Valuable signals earn weight.** Consistent recent marginal
+  contribution → high stake → high influence.
+- **Fading signals lose weight.** Edge decays → rolling marginal
+  drops → stake shrinks → less influence.
 - **Redundant signals die.** Zero marginal contribution →
-  stagnating stake → eventual removal.
+  zero stake → removal.
 - **Harmful signals die fast.** Negative marginal contribution →
-  shrinking stake → rapid removal.
+  negative stake → immediate removal.
 
 This is analogous to:
 - Numerai MMC: scored on what you add to the meta-model
