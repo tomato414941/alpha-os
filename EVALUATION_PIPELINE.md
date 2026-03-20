@@ -162,30 +162,52 @@ on the signal's **marginal contribution to portfolio P&L** — not its
 individual accuracy. This replaces TC weighting, lifecycle state machine,
 and manual thresholds with a single mechanism.
 
+#### Normalization
+
+Signals are normalized by the pipeline before combination. Generators
+output raw values on arbitrary scales; the pipeline applies uniform
+normalization (rank or z-score) so signals are combinable. This is
+the pipeline's responsibility, not the generator's.
+
+Features are also normalized by the pipeline before being given to
+generators. This makes DSL operations like `add` and `sub` meaningful
+across features of different scales, and is a practical requirement
+for ML generators.
+
+#### Multi-asset portfolio
+
+Each signal participates in multiple assets' portfolios based on
+per-asset IC (stored at admission). Stake is per signal, not per
+signal-asset pair.
+
 ```
 every day:
-    # Portfolio = stake-weighted combination of all signals
-    full_portfolio = Σ(stake_i × signal_i) / Σ(stake_i)
-    full_pnl = full_portfolio × realized_residual_return
+    for each traded asset a:
+        # Signals relevant to this asset (per_asset_ic[a] > 0)
+        relevant = signals where per_asset_ic[j][a] > 0
+        portfolio_a = Σ(stake_j × normalized_signal_j
+                        for j in relevant) / Σ(stake_j)
+        pnl_a = portfolio_a × realized_residual_return_a
+
+    # Capital allocation across assets (risk parity or IC-weighted)
+    total_pnl = Σ(allocation_a × pnl_a)
 
     for each live signal j:
-        # What would the portfolio be without signal j?
-        without_j = (Σ(stake_i × signal_i) - stake_j × signal_j)
-                    / (Σ(stake_i) - stake_j)
-        without_j_pnl = without_j × realized_residual_return
-
-        # Marginal contribution = what did signal j add?
-        marginal_j = full_pnl - without_j_pnl
+        marginal_j = total_pnl_with_j - total_pnl_without_j
         stake_j *= (1 + marginal_j)
 
     remove signals where stake < min_stake  # natural death
     cap any single signal at max_weight (e.g. 5%)
 ```
 
-Portfolio is a linear combination, so removing signal j is O(1).
-500 signals = 500 subtractions per day. Trivial.
+A signal effective across 50 assets has higher marginal contribution
+than one effective for 1 asset. Generalization is naturally rewarded.
 
-**Why marginal contribution, not individual P&L:**
+Portfolio is a linear combination per asset, so removing signal j
+is O(1) per asset. 500 signals × 50 assets = 25,000 subtractions
+per day. Trivial.
+
+#### Why marginal contribution, not individual P&L
 
 Individual P&L (`sign(signal) * return`) has a fatal flaw: two
 identical signals get the same score and both grow. The portfolio
@@ -213,7 +235,8 @@ shrinks. No explicit turnover metric needed.
 - Large loss → immediate stake reduction → automatic de-risking
 - Portfolio-level circuit breaker (separate, see Risk Management)
 
-Properties:
+#### Properties
+
 - **New signals enter small.** Minimum stake. Must prove marginal
   value before gaining influence.
 - **Valuable signals grow.** Consistent marginal contribution →
@@ -280,6 +303,58 @@ signal array and are judged solely by that output.
 
 Lifecycle differences (ML needs retraining, DSL is stateless) are the
 generator's problem. The pipeline doesn't know and doesn't care.
+
+## Diversity
+
+Diversity is maintained at two layers without explicit diversity rules.
+
+**Generation: MAP-Elites.**
+The discovery pool uses a behavioral grid (persistence × activity ×
+price_beta × vol_sensitivity) to ensure candidates are structurally
+diverse. GP cannot converge to a single expression pattern — the grid
+forces exploration of different behavioral niches.
+
+**Selection: Marginal contribution.**
+Correlated signals have near-zero marginal contribution. If 10 signals
+all produce similar output, only the first adds value — the other 9
+stagnate and die. The portfolio naturally diversifies without inspecting
+signal internals.
+
+**Structural diversity axes:**
+- Horizons (1, 5, 20 days)
+- Prediction targets (returns, volatility, cross-sectional)
+- Asset classes (crypto, stocks, ETFs, commodities)
+- Generator types (DSL/GP, ML, future additions)
+
+These multiply combinatorially, creating a large diversity space that
+the pipeline explores through generation and selects through marginal
+contribution.
+
+**Remaining risk: feature concentration.**
+If all high-stake signals depend on the same underlying feature
+(e.g. `fear_greed`), the portfolio is exposed to that feature breaking.
+The output-only principle prevents direct feature inspection. However,
+marginal contribution mitigates this indirectly: same-feature signals
+produce correlated output → low marginal → limited concentration.
+Complete mitigation requires feature-diverse generation (MAP-Elites
+behavioral dimensions help here).
+
+## Pipeline Validation
+
+The pipeline itself (not individual signals) must be validated.
+
+**Historical simulation**: run the full pipeline on historical data.
+Start from zero signals, generate, admit, simulate stake updates with
+realized returns, measure portfolio Sharpe/drawdown.
+
+This tests whether stake-based selection, multi-asset combination,
+and capital allocation work as a system. It is a backtest of the
+mechanism, not of individual signals.
+
+**Caution**: tuning pipeline parameters (reward rate, min_stake,
+max_weight) on historical data risks overfitting the pipeline itself.
+Keep parameters minimal and driven by design principles, not
+optimization.
 
 ## What This Eliminates
 
