@@ -39,8 +39,9 @@ def main():
 
     # Load data once
     logger.info("Loading data...")
+    from alpha_os.data.universe import CROSS_ASSET_UNIVERSE
     ps = price_signal("BTC")
-    load_features = sorted({ps} | set(EVAL_UNIVERSE) | set(all_features[:100]))
+    load_features = sorted({ps} | set(CROSS_ASSET_UNIVERSE) | set(all_features[:100]))
     matrix = store.get_matrix(load_features, end=date.today().isoformat())
     if matrix is None or len(matrix) < 200:
         logger.error("Insufficient data")
@@ -53,9 +54,8 @@ def main():
     # Auto-select diverse evaluation universe
     global EVAL_UNIVERSE
     from alpha_os.data.eval_universe import select_eval_universe
-    from alpha_os.data.universe import CROSS_ASSET_UNIVERSE
     EVAL_UNIVERSE = select_eval_universe(data, CROSS_ASSET_UNIVERSE, n_clusters=20, min_finite_days=500)
-    logger.info("Eval universe: %s", EVAL_UNIVERSE)
+    logger.info("Eval universe (%d): %s", len(EVAL_UNIVERSE), EVAL_UNIVERSE)
 
     bm_returns = build_benchmark_returns(data, cfg.backtest.benchmark_assets)
 
