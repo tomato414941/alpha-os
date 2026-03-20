@@ -128,7 +128,7 @@ def enqueue_discovery_pool_candidates(
 
     Returns a tuple of `(selected_count, inserted_count)`.
     """
-    pool = DiscoveryPool.load_from_db(asset_data_dir(asset) / "archive.db")
+    pool = DiscoveryPool.load_from_db(asset_data_dir(asset) / "discovery_pool.db")
     promote_limit = config.alpha_generator.promote_per_round if limit is None else limit
     if promote_limit <= 0:
         return 0, 0

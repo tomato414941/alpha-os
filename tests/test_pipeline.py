@@ -84,7 +84,7 @@ class TestPipelineRunner:
         )
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         runner.run()
-        assert runner.archive.size > 0
+        assert runner.pool.size > 0
 
 
 class TestEvalWindow:

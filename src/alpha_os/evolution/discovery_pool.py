@@ -60,6 +60,31 @@ def passes_sanity_filter(
     return True
 
 
+def _migrate_table(conn: sqlite3.Connection) -> None:
+    """Migrate legacy 'archive' table to 'discovery_pool' if needed."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS discovery_pool (
+            cell_key TEXT PRIMARY KEY,
+            expression TEXT NOT NULL,
+            fitness REAL NOT NULL,
+            behavior TEXT NOT NULL
+        )
+    """)
+    tables = {
+        row[0]
+        for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+    }
+    if "archive" in tables:
+        conn.execute(
+            "INSERT OR IGNORE INTO discovery_pool"
+            " SELECT * FROM archive"
+        )
+        conn.execute("DROP TABLE archive")
+        conn.commit()
+
+
 class DiscoveryPool:
     """Grid-based MAP-Elites discovery pool storing alpha expressions.
 
@@ -73,7 +98,7 @@ class DiscoveryPool:
         self._grid: dict[tuple[int, ...], DiscoveryPoolEntry] = {}
 
     def add(self, expr: Expr, fitness: float, behavior: np.ndarray) -> bool:
-        """Add expression to the archive using fitness-based replacement.
+        """Add expression to the pool using fitness-based replacement.
 
         Returns True if it was stored (new cell or better fitness than incumbent).
         """
@@ -165,14 +190,7 @@ class DiscoveryPool:
 
         conn = sqlite3.connect(str(db_path))
         conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS archive (
-                cell_key TEXT PRIMARY KEY,
-                expression TEXT NOT NULL,
-                fitness REAL NOT NULL,
-                behavior TEXT NOT NULL
-            )
-        """)
+        _migrate_table(conn)
         rows = []
         for cell, entry in self._grid.items():
             rows.append((
@@ -181,9 +199,10 @@ class DiscoveryPool:
                 entry.fitness,
                 json.dumps(entry.behavior.tolist()),
             ))
-        conn.execute("DELETE FROM archive")
+        conn.execute("DELETE FROM discovery_pool")
         conn.executemany(
-            "INSERT INTO archive (cell_key, expression, fitness, behavior) VALUES (?, ?, ?, ?)",
+            "INSERT INTO discovery_pool (cell_key, expression, fitness, behavior)"
+            " VALUES (?, ?, ?, ?)",
             rows,
         )
         conn.commit()
@@ -196,27 +215,28 @@ class DiscoveryPool:
 
         Recomputes cell keys from stored behavior vectors.  When the
         number of behavior axes has changed (e.g. 3→4), old entries
-        cannot be placed and are dropped — the archive effectively
+        cannot be placed and are dropped — the pool effectively
         resets, keeping only entries whose behavior dimension matches.
         """
         from ..dsl import parse
 
-        archive = cls(config=config)
+        pool = cls(config=config)
         if not db_path.exists():
-            return archive
+            return pool
 
         conn = sqlite3.connect(str(db_path))
         conn.execute("PRAGMA busy_timeout=30000")
+        _migrate_table(conn)
         try:
             rows = conn.execute(
-                "SELECT cell_key, expression, fitness, behavior FROM archive"
+                "SELECT cell_key, expression, fitness, behavior FROM discovery_pool"
             ).fetchall()
         except sqlite3.OperationalError:
             conn.close()
-            return archive
+            return pool
         conn.close()
 
-        expected_dims = len(archive.config.dims)
+        expected_dims = len(pool.config.dims)
         n_collisions = 0
         n_skipped = 0
         for _cell_json, expr_str, fitness, behavior_json in rows:
@@ -226,24 +246,24 @@ class DiscoveryPool:
                 if len(behavior) != expected_dims:
                     n_skipped += 1
                     continue
-                cell = archive._to_cell(behavior)
-                incumbent = archive._grid.get(cell)
+                cell = pool._to_cell(behavior)
+                incumbent = pool._grid.get(cell)
                 if incumbent is not None and incumbent.fitness >= fitness:
                     n_collisions += 1
                     continue
-                archive._grid[cell] = DiscoveryPoolEntry(
+                pool._grid[cell] = DiscoveryPoolEntry(
                     expr=expr,
                     fitness=fitness,
                     behavior=behavior,
                     survival_score=fitness,
                 )
             except Exception as exc:
-                logger.warning("Failed to load archive entry %s: %s", expr_str, exc)
+                logger.warning("Failed to load pool entry %s: %s", expr_str, exc)
 
         if n_skipped > 0 or n_collisions > 0:
             logger.info(
-                "Archive load: %d rows, %d loaded, %d dim-mismatch skipped, %d collisions",
-                len(rows), archive.size, n_skipped, n_collisions,
+                "Pool load: %d rows, %d loaded, %d dim-mismatch skipped, %d collisions",
+                len(rows), pool.size, n_skipped, n_collisions,
             )
 
-        return archive
+        return pool

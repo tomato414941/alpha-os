@@ -22,7 +22,7 @@ def test_enqueue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeyp
     pool.add(Feature("f1"), 0.4, np.array([5.0, 0.3, -0.1, 0.1]))
     pool.add(Feature("f2"), 1.4, np.array([20.0, 0.7, 0.3, -0.2]))
     pool.add(Feature("f3"), 0.9, np.array([35.0, 0.9, 0.6, 0.4]))
-    pool.save_to_db(Path(tmp_path) / "archive.db")
+    pool.save_to_db(Path(tmp_path) / "discovery_pool.db")
 
     selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 
@@ -49,7 +49,7 @@ def test_enqueue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, m
     pool.store_candidate(Feature("f1"), np.array([5.0, 0.3, -0.1, 0.1]), signal, fitness=0.4)
     pool.store_candidate(Feature("f2"), np.array([20.0, 0.7, 0.3, -0.2]), signal, fitness=1.4)
     pool.store_candidate(Feature("f3"), np.array([35.0, 0.9, 0.6, 0.4]), signal, fitness=0.9)
-    pool.save_to_db(Path(tmp_path) / "archive.db")
+    pool.save_to_db(Path(tmp_path) / "discovery_pool.db")
 
     selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 
@@ -97,7 +97,7 @@ def test_enqueue_discovery_pool_candidates_skips_semantic_duplicates(tmp_path, m
         signal,
         fitness=1.2,
     )
-    pool.save_to_db(Path(tmp_path) / "archive.db")
+    pool.save_to_db(Path(tmp_path) / "discovery_pool.db")
 
     monkeypatch.setattr(
         "alpha_os.daemon.alpha_generator.to_string",
@@ -150,7 +150,7 @@ def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, mon
     pool.store_candidate(Feature("f1"), np.array([5.0, 0.3, -0.1, 0.1]), signal)
     pool.store_candidate(Feature("f2"), np.array([20.0, 0.7, 0.3, -0.2]), signal)
     pool.store_candidate(Feature("f3"), np.array([35.0, 0.9, 0.6, 0.4]), signal)
-    pool.save_to_db(Path(tmp_path) / "archive.db")
+    pool.save_to_db(Path(tmp_path) / "discovery_pool.db")
 
     selected, inserted = enqueue_discovery_pool_candidates("BTC", cfg)
 

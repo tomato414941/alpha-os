@@ -660,8 +660,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     results = evolver.run()
     evolve_time = time.perf_counter() - t0
 
-    # Fill MAP-Elites archive
-    archive = DiscoveryPool()
+    # Fill discovery pool
+    pool = DiscoveryPool()
     live_signals: list[np.ndarray] = []
     added = 0
     for expr, fitness in results:
@@ -671,7 +671,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
             if sig.ndim == 0:
                 sig = np.full(n_days, float(sig))
             behavior = compute_behavior(sig, expr, prices=prices)
-            if archive.add(expr, fitness, behavior):
+            if pool.add(expr, fitness, behavior):
                 added += 1
                 live_signals.append(sig)
         except Exception:
@@ -680,10 +680,10 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     total_time = time.perf_counter() - t0
     layer_label = f"Layer {layer}" if layer == 2 else "Layer 3"
     print(f"Evolution ({layer_label}): {len(results)} unique alphas in {evolve_time:.2f}s")
-    print(f"Archive: {archive.size}/{archive.capacity} cells filled ({archive.coverage:.1%} coverage)")
+    print(f"Pool: {pool.size}/{pool.capacity} cells filled ({pool.coverage:.1%} coverage)")
     print(f"Total time: {total_time:.2f}s\n")
 
-    top = archive.best(args.top)
+    top = pool.best(args.top)
     print(f"Top {min(args.top, len(top))} alphas by fitness:")
     print(f"{'Rank':>4}  {'Fitness':>8}  Expression")
     print("-" * 70)

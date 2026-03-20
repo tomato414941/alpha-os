@@ -50,7 +50,7 @@ class PipelineResult:
     n_combined: int
     combined_signal: np.ndarray | None
     elapsed: float
-    archive_coverage: float
+    pool_coverage: float
 
 
 class PipelineRunner:
@@ -91,7 +91,7 @@ class PipelineRunner:
             CostModel(self.config.commission_pct, self.config.slippage_pct),
             allow_short=self.config.allow_short,
         )
-        self.archive = DiscoveryPool()
+        self.pool = DiscoveryPool()
 
     def run(self) -> PipelineResult:
         """Execute full pipeline: evolve → validate → adopt → combine."""
@@ -130,7 +130,7 @@ class PipelineRunner:
             n_combined=len(adopted),
             combined_signal=combined_signal,
             elapsed=elapsed,
-            archive_coverage=self.archive.coverage,
+            pool_coverage=self.pool.coverage,
         )
 
     def _evolve(self) -> list[tuple[Expr, float]]:
@@ -150,19 +150,19 @@ class PipelineRunner:
         evolver = GPEvolver(self.features, evaluate_fn, config=gp_cfg, seed=self.seed)
         results = evolver.run()
 
-        # Fill archive
+        # Fill discovery pool
         live_signals: list[np.ndarray] = []
-        n_archive_failed = 0
+        n_pool_failed = 0
         for expr, fitness in results:
             try:
                 sig = evaluate_expression(expr, data, n_days)
                 behavior = compute_behavior(sig, expr, prices=prices)
-                if self.archive.add(expr, fitness, behavior):
+                if self.pool.add(expr, fitness, behavior):
                     live_signals.append(sig)
             except EvaluationError:
-                n_archive_failed += 1
-        if n_archive_failed:
-            logger.info("  Archive: %d/%d failed evaluation", n_archive_failed, len(results))
+                n_pool_failed += 1
+        if n_pool_failed:
+            logger.info("  Archive: %d/%d failed evaluation", n_pool_failed, len(results))
 
         return results
 

@@ -62,7 +62,7 @@ class UnifiedAlphaGeneratorDaemon:
         self.generator_cfg = config.alpha_generator
         self.primary_asset = "BTC"
         self.universe: list[str] = []
-        self.archive = DiscoveryPool()
+        self.pool = DiscoveryPool()
         self._budget = self.generator_cfg.pop_size
         self._round = 0
         self._running = False
@@ -178,9 +178,9 @@ class UnifiedAlphaGeneratorDaemon:
         budget = self._budget
         candidates = []
 
-        if self.archive.size > 0:
+        if self.pool.size > 0:
             n_mutate = int(budget * self.generator_cfg.mutate_ratio)
-            elites = self.archive.sample(n_mutate, rng=rng)
+            elites = self.pool.sample(n_mutate, rng=rng)
             for entry in elites:
                 candidates.append(generator.mutate(entry.expr))
 
@@ -217,7 +217,7 @@ class UnifiedAlphaGeneratorDaemon:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr, prices=prices)
 
-                update = self.archive.store_candidate(
+                update = self.pool.store_candidate(
                     expr, behavior, sig,
                     fitness=fitness,
                     survival_score=_survival_score(fitness, behavior),
@@ -243,9 +243,9 @@ class UnifiedAlphaGeneratorDaemon:
         elapsed = time.perf_counter() - t0
         logger.info(
             "Round %d: %d candidates, %d stored (%d replaced), "
-            "%d queued, %.1fs, archive=%d, universe=%d assets",
+            "%d queued, %.1fs, pool=%d, universe=%d assets",
             self._round, len(candidates), n_stored, n_replaced,
-            len(queued_candidates), elapsed, self.archive.size,
+            len(queued_candidates), elapsed, self.pool.size,
             len(self.universe),
         )
 

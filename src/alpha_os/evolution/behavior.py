@@ -1,4 +1,4 @@
-"""Behavior descriptor computation for MAP-Elites archive.
+"""Behavior descriptor computation for MAP-Elites discovery pool.
 
 4 behavioral axes: persistence, activity, price_beta, vol_sensitivity.
 """

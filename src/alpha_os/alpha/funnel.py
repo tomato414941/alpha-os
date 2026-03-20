@@ -50,7 +50,7 @@ def _reject_axis(reason: str) -> str:
 
 def load_funnel_summary(asset: str) -> FunnelSummary:
     asset_dir = asset_data_dir(asset)
-    pool = DiscoveryPool.load_from_db(asset_dir / "archive.db")
+    pool = DiscoveryPool.load_from_db(asset_dir / "discovery_pool.db")
     conn = sqlite3.connect(str(asset_dir / "alpha_registry.db"))
     conn.row_factory = sqlite3.Row
     try:

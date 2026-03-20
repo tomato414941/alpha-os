@@ -1,4 +1,4 @@
-"""Tests for the evolution module (GP, archive, behavior)."""
+"""Tests for the evolution module (GP, discovery pool, behavior)."""
 import json
 import numpy as np
 import pytest
@@ -211,80 +211,80 @@ class TestDiscoveryPool:
         return np.array([p, a, pb, vs])
 
     def test_add_new_cell(self):
-        archive = DiscoveryPool()
-        assert archive.add(Feature("f1"), 0.5, self._b()) is True
-        assert archive.size == 1
+        pool = DiscoveryPool()
+        assert pool.add(Feature("f1"), 0.5, self._b()) is True
+        assert pool.size == 1
 
     def test_add_better_replaces(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         b = self._b()
-        archive.add(Feature("f1"), 0.3, b)
-        assert archive.add(Feature("f2"), 0.7, b) is True
-        assert archive.size == 1
-        assert repr(archive.best(1)[0][0]) == "f2"
+        pool.add(Feature("f1"), 0.3, b)
+        assert pool.add(Feature("f2"), 0.7, b) is True
+        assert pool.size == 1
+        assert repr(pool.best(1)[0][0]) == "f2"
 
     def test_add_worse_rejected(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         b = self._b()
-        archive.add(Feature("f1"), 0.7, b)
-        assert archive.add(Feature("f2"), 0.3, b) is False
-        assert archive.size == 1
+        pool.add(Feature("f1"), 0.7, b)
+        assert pool.add(Feature("f2"), 0.3, b) is False
+        assert pool.size == 1
 
     def test_different_cells(self):
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.5, -0.3))
-        archive.add(Feature("f2"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
-        assert archive.size == 2
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.5, -0.3))
+        pool.add(Feature("f2"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
+        assert pool.size == 2
 
     def test_capacity(self):
         cfg = DiscoveryPoolConfig(dims=(5, 5, 5, 5))
-        archive = DiscoveryPool(config=cfg)
-        assert archive.capacity == 625
+        pool = DiscoveryPool(config=cfg)
+        assert pool.capacity == 625
 
     def test_coverage(self):
         cfg = DiscoveryPoolConfig(dims=(2, 2, 2, 2))
-        archive = DiscoveryPool(config=cfg)
-        archive.add(Feature("f1"), 0.5, self._b())
-        assert archive.coverage == 1 / 16
+        pool = DiscoveryPool(config=cfg)
+        pool.add(Feature("f1"), 0.5, self._b())
+        assert pool.coverage == 1 / 16
 
     def test_best_ordering(self):
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.3, self._b(5.0, 0.2, -0.5, -0.3))
-        archive.add(Feature("f2"), 0.9, self._b(25.0, 0.5, 0.0, 0.0))
-        archive.add(Feature("f3"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
-        best = archive.best(3)
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.3, self._b(5.0, 0.2, -0.5, -0.3))
+        pool.add(Feature("f2"), 0.9, self._b(25.0, 0.5, 0.0, 0.0))
+        pool.add(Feature("f3"), 0.6, self._b(40.0, 0.9, 0.7, 0.5))
+        best = pool.best(3)
         assert best[0][1] >= best[1][1] >= best[2][1]
 
     def test_sample(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         for i in range(5):
-            archive.add(
+            pool.add(
                 Feature(f"f{i}"),
                 float(i),
                 self._b(i * 8.0, i * 0.15, i * 0.2 - 0.5, i * 0.1 - 0.3),
             )
         import random
-        sampled = archive.sample(3, rng=random.Random(42))
+        sampled = pool.sample(3, rng=random.Random(42))
         assert len(sampled) == 3
 
     def test_elites(self):
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, self._b())
-        elites = archive.elites()
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.5, self._b())
+        elites = pool.elites()
         assert len(elites) == 1
         assert elites[0][1] == 0.5
 
     def test_boundary_clipping(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         behavior = np.array([200.0, 5.0, 5.0, 5.0])  # out of range
-        assert archive.add(Feature("f1"), 0.5, behavior) is True
+        assert pool.add(Feature("f1"), 0.5, behavior) is True
 
     def test_save_load_roundtrip(self, tmp_path):
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, self._b(10.0, 0.3, -0.2, 0.1))
-        archive.add(Feature("f2"), 0.8, self._b(30.0, 0.7, 0.4, -0.3))
-        db_path = tmp_path / "archive.db"
-        n = archive.save_to_db(db_path)
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.5, self._b(10.0, 0.3, -0.2, 0.1))
+        pool.add(Feature("f2"), 0.8, self._b(30.0, 0.7, 0.4, -0.3))
+        db_path = tmp_path / "discovery_pool.db"
+        n = pool.save_to_db(db_path)
         assert n == 2
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 2
@@ -294,20 +294,20 @@ class TestDiscoveryPool:
         loaded = DiscoveryPool.load_from_db(tmp_path / "missing.db")
         assert loaded.size == 0
 
-    def test_save_empty_archive(self, tmp_path):
-        archive = DiscoveryPool()
-        db_path = tmp_path / "archive.db"
-        n = archive.save_to_db(db_path)
+    def test_save_empty_pool(self, tmp_path):
+        pool = DiscoveryPool()
+        db_path = tmp_path / "discovery_pool.db"
+        n = pool.save_to_db(db_path)
         assert n == 0
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 0
 
     def test_save_load_preserves_entries(self, tmp_path):
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.3, 0.1))
-        archive.add(Feature("f2"), 0.8, self._b(40.0, 0.8, 0.6, -0.5))
-        db_path = tmp_path / "archive.db"
-        archive.save_to_db(db_path)
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.5, self._b(5.0, 0.2, -0.3, 0.1))
+        pool.add(Feature("f2"), 0.8, self._b(40.0, 0.8, 0.6, -0.5))
+        db_path = tmp_path / "discovery_pool.db"
+        pool.save_to_db(db_path)
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 2
         exprs = {repr(e) for e, _ in loaded.best(10)}
@@ -315,26 +315,26 @@ class TestDiscoveryPool:
         assert repr(Feature("f2")) in exprs
 
     def test_save_load_complex_expr(self, tmp_path):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         expr = BinaryOp("add", RollingOp("mean", 10, Feature("f1")), Feature("f2"))
-        archive.add(expr, 1.0, self._b(25.0, 0.6, 0.1, -0.1))
-        db_path = tmp_path / "archive.db"
-        archive.save_to_db(db_path)
+        pool.add(expr, 1.0, self._b(25.0, 0.6, 0.1, -0.1))
+        db_path = tmp_path / "discovery_pool.db"
+        pool.save_to_db(db_path)
         loaded = DiscoveryPool.load_from_db(db_path)
         assert loaded.size == 1
         assert repr(loaded.best(1)[0][0]) == repr(expr)
 
     def test_load_skips_dim_mismatch(self, tmp_path):
         """Old 3D entries are skipped when grid expects 4D."""
-        archive = DiscoveryPool()
-        archive.add(Feature("f1"), 0.5, self._b())
-        db_path = tmp_path / "archive.db"
-        archive.save_to_db(db_path)
+        pool = DiscoveryPool()
+        pool.add(Feature("f1"), 0.5, self._b())
+        db_path = tmp_path / "discovery_pool.db"
+        pool.save_to_db(db_path)
         # Tamper: rewrite with 3D behavior
         import sqlite3
         conn = sqlite3.connect(str(db_path))
         conn.execute(
-            "UPDATE archive SET behavior = ? WHERE 1=1",
+            "UPDATE discovery_pool SET behavior = ? WHERE 1=1",
             (json.dumps([10.0, 5.0, 3.0]),),
         )
         conn.commit()
@@ -372,10 +372,10 @@ class TestSanityFilter:
 
 class TestStoreCandidate:
     def test_adds_to_empty_cell(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([25.0, 0.5, 0.0, 0.0])
-        update = archive.store_candidate(
+        update = pool.store_candidate(
             Feature("f1"),
             behavior,
             signal,
@@ -383,41 +383,41 @@ class TestStoreCandidate:
         )
         assert update.stored is True
         assert update.replaced is False
-        assert archive.size == 1
-        best = archive.best(1)
+        assert pool.size == 1
+        best = pool.best(1)
         assert len(best) == 1
         assert best[0][1] == 1.25
 
     def test_replaces_weaker_incumbent(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([25.0, 0.5, 0.0, 0.0])
-        archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.4)
-        update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.9)
+        pool.store_candidate(Feature("f1"), behavior, signal, fitness=0.4)
+        update = pool.store_candidate(Feature("f2"), behavior, signal, fitness=0.9)
         assert update.stored is True
         assert update.replaced is True
-        assert archive.size == 1
-        best = archive.best(1)
+        assert pool.size == 1
+        best = pool.best(1)
         assert repr(best[0][0]) == "f2"
 
     def test_rejects_weaker_incumbent(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         signal = np.random.randn(100)
         behavior = np.array([25.0, 0.5, 0.0, 0.0])
-        archive.store_candidate(Feature("f1"), behavior, signal, fitness=0.9)
-        update = archive.store_candidate(Feature("f2"), behavior, signal, fitness=0.4)
+        pool.store_candidate(Feature("f1"), behavior, signal, fitness=0.9)
+        update = pool.store_candidate(Feature("f2"), behavior, signal, fitness=0.4)
         assert update.stored is False
         assert update.replaced is False
-        assert archive.size == 1
+        assert pool.size == 1
 
     def test_rejects_bad_signal(self):
-        archive = DiscoveryPool()
+        pool = DiscoveryPool()
         signal = np.ones(100)  # constant → fails sanity
         behavior = np.array([25.0, 0.5, 0.0, 0.0])
-        update = archive.store_candidate(Feature("f1"), behavior, signal)
+        update = pool.store_candidate(Feature("f1"), behavior, signal)
         assert update.stored is False
         assert update.replaced is False
-        assert archive.size == 0
+        assert pool.size == 0
 
 
 # ---------------------------------------------------------------------------
