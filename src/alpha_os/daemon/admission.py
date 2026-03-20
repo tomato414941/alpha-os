@@ -475,7 +475,7 @@ class AdmissionDaemon:
         ps = price_signal(self.asset)
         if ps in matrix.columns:
             matrix = matrix[matrix[ps].notna()]
-        matrix = matrix.bfill().fillna(0)
+        matrix = matrix.fillna(0)
 
         if len(matrix) < self.config.backtest.min_days:
             return None, None, None

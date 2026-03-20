@@ -157,6 +157,7 @@ class DataStore:
         start: str | None = None,
         end: str | None = None,
         resolution: str = "1d",
+        ffill_limit: int = 5,
     ) -> pd.DataFrame:
         placeholders = ",".join("?" for _ in signals)
         query = (
@@ -181,7 +182,7 @@ class DataStore:
 
         matrix = df.pivot(index="date", columns="name", values="value")
         matrix = matrix.reindex(columns=signals)
-        matrix = matrix.ffill()
+        matrix = matrix.ffill(limit=ffill_limit)
         matrix.index.name = "date"
         return matrix
 

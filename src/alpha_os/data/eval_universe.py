@@ -41,11 +41,13 @@ def select_eval_universe(
         arr = data.get(sig)
         if arr is None:
             continue
-        finite_mask = np.isfinite(arr)
-        n_finite = int(finite_mask.sum())
-        if n_finite < min_finite_days:
+        finite_idx = np.where(np.isfinite(arr))[0]
+        if len(finite_idx) < min_finite_days:
             continue
-        rets = np.diff(arr) / arr[:-1]
+        # Use only the valid (finite) portion of prices
+        first_valid = int(finite_idx[0])
+        valid_prices = arr[first_valid:]
+        rets = np.diff(valid_prices) / valid_prices[:-1]
         rets = np.where(np.isfinite(rets), rets, 0.0)
         returns[sig] = rets
         valid.append(sig)

@@ -57,14 +57,34 @@ def evaluate_cross_asset(
         if prices is None or len(prices) < 200:
             continue
         try:
+            # Detect valid (finite) price range for this asset
+            valid = np.where(np.isfinite(prices))[0]
+            if len(valid) < 200:
+                continue
+            start_idx, end_idx = int(valid[0]), int(valid[-1]) + 1
+
             sig = sanitize_signal(expr.evaluate(data))
             if sig.ndim == 0:
                 sig = np.full(len(prices), float(sig))
-            n = min(len(sig), len(prices))
-            sig = sig[:n]
-            prices_trimmed = prices[:n]
-            result = engine.run(sig, prices_trimmed,
-                                benchmark_returns=bm_returns)
+
+            # Slice signal and prices to valid range
+            sig_slice = sig[start_idx:end_idx]
+            prices_slice = prices[start_idx:end_idx]
+            if len(sig_slice) < 200 or len(prices_slice) < 200:
+                continue
+
+            # Align benchmark to the same valid range
+            bm_slice = None
+            if bm_returns is not None:
+                # bm_returns has len(prices)-1, so offset by -1
+                bm_start = max(start_idx - 1, 0)
+                bm_end = end_idx - 1
+                bm_slice = bm_returns[bm_start:bm_end]
+                if len(bm_slice) == 0:
+                    bm_slice = None
+
+            result = engine.run(sig_slice, prices_slice,
+                                benchmark_returns=bm_slice)
             fitness = result.fitness(fitness_metric)
             if np.isfinite(fitness):
                 results[price_signal] = fitness

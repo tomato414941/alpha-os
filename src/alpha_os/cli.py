@@ -476,8 +476,7 @@ def _real_data(
     if price_col in matrix.columns:
         matrix = matrix[matrix[price_col].notna()]
 
-    # Fill remaining NaN: ffill already done in get_matrix, bfill + 0 for leading
-    matrix = matrix.bfill().fillna(0)
+    matrix = matrix.fillna(0)
 
     available = [f for f in features if f in matrix.columns and not (matrix[f] == 0).all()]
     missing = [f for f in features if f not in available]
@@ -1001,7 +1000,7 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
         )
         return
 
-    matrix = matrix.bfill().fillna(0)
+    matrix = matrix.fillna(0)
     available_features = [
         f for f in trader.features
         if f in matrix.columns and not (matrix[f] == 0).all()
@@ -1105,7 +1104,7 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
         )
         return
 
-    matrix = matrix.bfill().fillna(0)
+    matrix = matrix.fillna(0)
     available_features = [
         f for f in tactical.features
         if f in matrix.columns and not (matrix[f] == 0).all()

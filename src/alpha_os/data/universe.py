@@ -4,7 +4,6 @@ import json
 import logging
 import random
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..config import DATA_DIR
@@ -70,6 +69,7 @@ _ALL_ASSETS = {**STOCKS, **ETFS, **CRYPTO}
 
 _CATALOG_CACHE_PATH = DATA_DIR / "signal_catalog.json"
 _daily_signal_cache: list[str] | None = None
+_signal_catalog_cache: list[dict] | None = None
 
 
 @dataclass(frozen=True)
@@ -120,29 +120,24 @@ def _load_catalog_cache() -> list[dict] | None:
         return None
 
 
-def load_daily_signals(client: SignalClient | None = None) -> list[str]:
-    """Load available signal names from signal-noise API.
-
-    Falls back to local cache, then to static list.
-    The client parameter should come from Config — no hardcoded URLs.
-    """
-    global _daily_signal_cache, _signal_catalog_status
-    if _daily_signal_cache is not None:
-        return _daily_signal_cache
+def _load_signal_catalog(client: SignalClient | None = None) -> list[dict]:
+    """Load full signal catalog (list of dicts) from API, cache, or static fallback."""
+    global _signal_catalog_cache, _signal_catalog_status
+    if _signal_catalog_cache is not None:
+        return _signal_catalog_cache
 
     # Try API
     if client is not None:
         try:
             signals = client.list_signals()
-            names = sorted(s["name"] for s in signals)
-            if names:
+            if signals:
                 _write_catalog_cache(signals)
                 _signal_catalog_status = SignalCatalogStatus(
-                    source="api", signal_count=len(names), intervals=None,
+                    source="api", signal_count=len(signals), intervals=None,
                 )
-                log.info("Signal catalog source=api count=%d", len(names))
-                _daily_signal_cache = names
-                return names
+                log.info("Signal catalog source=api count=%d", len(signals))
+                _signal_catalog_cache = signals
+                return signals
         except Exception as e:
             error_kind = _classify_error(e)
             log.warning("Signal catalog API failed: %s (%s)", error_kind, e)
@@ -154,44 +149,72 @@ def load_daily_signals(client: SignalClient | None = None) -> list[str]:
     # Try local cache
     cached = _load_catalog_cache()
     if cached:
-        names = sorted(s["name"] for s in cached)
         if _signal_catalog_status.source != "cache":
             _signal_catalog_status = SignalCatalogStatus(
-                source="cache", signal_count=len(names), intervals=None,
+                source="cache", signal_count=len(cached), intervals=None,
             )
-        log.warning("Signal catalog source=cache count=%d", len(names))
-        _daily_signal_cache = names
-        return names
+        log.warning("Signal catalog source=cache count=%d", len(cached))
+        _signal_catalog_cache = cached
+        return cached
 
-    # Static fallback — preserve API error info from earlier attempt
+    # Static fallback
+    static = [{"name": s, "signal_type": "scalar"} for s in MACRO_SIGNALS]
     _signal_catalog_status = SignalCatalogStatus(
-        source="static", signal_count=len(MACRO_SIGNALS), intervals=None,
+        source="static", signal_count=len(static), intervals=None,
         api_error_kind=_signal_catalog_status.api_error_kind,
         api_error_message=_signal_catalog_status.api_error_message,
     )
-    log.error("Signal catalog source=static count=%d", len(MACRO_SIGNALS))
-    _daily_signal_cache = MACRO_SIGNALS
-    return MACRO_SIGNALS
+    log.error("Signal catalog source=static count=%d", len(static))
+    _signal_catalog_cache = static
+    return static
+
+
+def load_daily_signals(client: SignalClient | None = None) -> list[str]:
+    """Load available signal names from signal-noise API.
+
+    Falls back to local cache, then to static list.
+    The client parameter should come from Config — no hardcoded URLs.
+    """
+    global _daily_signal_cache
+    if _daily_signal_cache is not None:
+        return _daily_signal_cache
+    catalog = _load_signal_catalog(client)
+    names = sorted(s["name"] for s in catalog)
+    _daily_signal_cache = names
+    return names
+
+
+def load_price_signals(client: SignalClient | None = None) -> list[str]:
+    """Return only price (OHLCV) signal names from the catalog."""
+    catalog = _load_signal_catalog(client)
+    return sorted(
+        s["name"] for s in catalog
+        if s.get("signal_type") == "ohlcv"
+    )
 
 
 def load_cross_asset_universe(client: SignalClient | None = None) -> list[str]:
     """Build cross-asset universe from signal-noise API.
 
-    Returns all daily signals available upstream. No filesystem coupling.
+    Returns only price (OHLCV) signals — these are tradeable assets.
     """
-    signals = load_daily_signals(client)
-    return signals
+    return load_price_signals(client)
 
 
-# Module-level universe — populated lazily or by explicit init
+# Module-level universes — populated lazily or by explicit init
 CROSS_ASSET_UNIVERSE: list[str] = []
+FEATURE_CATALOG: list[str] = []
 
 
 def init_universe(client: SignalClient | None = None) -> list[str]:
     """Initialize the cross-asset universe from API. Call once at startup."""
-    global CROSS_ASSET_UNIVERSE
+    global CROSS_ASSET_UNIVERSE, FEATURE_CATALOG
     CROSS_ASSET_UNIVERSE = load_cross_asset_universe(client)
-    log.info("Cross-asset universe: %d signals", len(CROSS_ASSET_UNIVERSE))
+    FEATURE_CATALOG = load_daily_signals(client)
+    log.info(
+        "Cross-asset universe: %d price signals, feature catalog: %d total",
+        len(CROSS_ASSET_UNIVERSE), len(FEATURE_CATALOG),
+    )
     return CROSS_ASSET_UNIVERSE
 
 
