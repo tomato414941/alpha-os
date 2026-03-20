@@ -102,6 +102,12 @@ HOURLY_SIGNALS = [
     "volume_dominance_btc", "lead_lag_btc",
 ]
 
+CROSS_ASSET_UNIVERSE: list[str] = [
+    "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt", "xrp_usdt", "ada_usdt", "doge_usdt",
+    "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla", "amd", "jpm", "xom",
+    "sp500", "nasdaq", "gold", "russell2000", "tlt", "eem", "hyg", "oil_wti",
+]
+
 POLYMARKET: dict[str, str] = {}
 
 _ALL_ASSETS = {**STOCKS, **ETFS, **CRYPTO}
