@@ -51,10 +51,14 @@ def main():
     first_valid = np.argmax(np.isfinite(prices))
     logger.info("Data loaded: %d rows, %d features, BTC from index %d", len(matrix), len(data), first_valid)
 
-    # Auto-select diverse evaluation universe
+    # Use cached eval universe; recompute only if missing
     global EVAL_UNIVERSE
-    from alpha_os.data.eval_universe import select_eval_universe
-    EVAL_UNIVERSE = select_eval_universe(data, CROSS_ASSET_UNIVERSE, n_clusters=20, min_finite_days=500)
+    from alpha_os.data.eval_universe import load_cached_eval_universe, save_eval_universe, select_eval_universe
+    EVAL_UNIVERSE = load_cached_eval_universe()
+    if not EVAL_UNIVERSE:
+        EVAL_UNIVERSE = select_eval_universe(data, CROSS_ASSET_UNIVERSE, n_clusters=20, min_finite_days=500)
+        if EVAL_UNIVERSE:
+            save_eval_universe(EVAL_UNIVERSE)
     logger.info("Eval universe (%d): %s", len(EVAL_UNIVERSE), EVAL_UNIVERSE)
 
     bm_returns = build_benchmark_returns(data, cfg.backtest.benchmark_assets)

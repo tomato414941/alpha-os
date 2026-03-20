@@ -2,14 +2,52 @@
 
 Selects a diverse subset of assets for cross-asset alpha evaluation.
 Criteria: low pairwise correlation, long data history, diverse volatility.
+
+The eval universe is computed once and cached to disk so that all consumers
+(generator, admission, manual tests) use the same fixed set of assets.
 """
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
 
 import numpy as np
 
+from ..config import DATA_DIR
+
 logger = logging.getLogger(__name__)
+
+_EVAL_UNIVERSE_PATH = DATA_DIR / "eval_universe.json"
+
+# Module-level cache — loaded once per process
+EVAL_UNIVERSE: list[str] = []
+
+
+def load_cached_eval_universe() -> list[str]:
+    """Load eval universe from disk cache. Returns empty list if not cached."""
+    global EVAL_UNIVERSE
+    if EVAL_UNIVERSE:
+        return EVAL_UNIVERSE
+    if not _EVAL_UNIVERSE_PATH.exists():
+        return []
+    try:
+        raw = json.loads(_EVAL_UNIVERSE_PATH.read_text(encoding="utf-8"))
+        if isinstance(raw, list) and all(isinstance(s, str) for s in raw):
+            EVAL_UNIVERSE = raw
+            return raw
+    except Exception:
+        pass
+    return []
+
+
+def save_eval_universe(selected: list[str]) -> None:
+    """Save eval universe to disk cache."""
+    global EVAL_UNIVERSE
+    EVAL_UNIVERSE = selected
+    _EVAL_UNIVERSE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _EVAL_UNIVERSE_PATH.write_text(json.dumps(selected), encoding="utf-8")
+    logger.info("Eval universe cached: %d assets -> %s", len(selected), _EVAL_UNIVERSE_PATH)
 
 
 def select_eval_universe(

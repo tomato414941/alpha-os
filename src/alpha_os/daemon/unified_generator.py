@@ -145,13 +145,21 @@ class UnifiedAlphaGeneratorDaemon:
             logger.warning("Insufficient data, skipping round")
             return
 
-        # Auto-select diverse evaluation universe (once, then cache)
+        # Use cached eval universe; recompute only if missing
         if not self.universe:
-            from alpha_os.data.eval_universe import select_eval_universe
-            self.universe = select_eval_universe(
-                data, universe_signals,
-                n_clusters=20, min_finite_days=500,
+            from alpha_os.data.eval_universe import (
+                load_cached_eval_universe,
+                save_eval_universe,
+                select_eval_universe,
             )
+            self.universe = load_cached_eval_universe()
+            if not self.universe:
+                self.universe = select_eval_universe(
+                    data, universe_signals,
+                    n_clusters=20, min_finite_days=500,
+                )
+                if self.universe:
+                    save_eval_universe(self.universe)
             if not self.universe:
                 logger.warning("No assets with sufficient data for evaluation")
                 return
