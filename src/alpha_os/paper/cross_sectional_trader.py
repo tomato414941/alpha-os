@@ -169,10 +169,7 @@ class CrossSectionalTrader:
         data = {col: matrix[col].values for col in matrix.columns}
 
         # 2. Get deployed alphas
-        from alpha_os.alpha.deployed_alphas import DeployedAlphaPlan
-        adir = asset_data_dir(self.xs_config.registry_asset)
-        plan = DeployedAlphaPlan(adir / "alpha_registry.db")
-        deployed_ids = plan.list_deployed_ids()
+        deployed_ids = self.registry.deployed_alpha_ids()
         deployed_records = [self.registry.get(aid) for aid in deployed_ids]
         deployed_records = [r for r in deployed_records if r is not None]
 
