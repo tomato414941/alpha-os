@@ -132,6 +132,7 @@ def _score_expression(
     data: dict[str, np.ndarray],
     prices: np.ndarray,
     config: Config,
+    benchmark_returns: np.ndarray | None = None,
 ) -> float:
     n_days = len(prices)
     engine = BacktestEngine(
@@ -148,7 +149,7 @@ def _score_expression(
             sig = np.full(n_days, float(sig))
         if len(sig) != n_days:
             return FAILED_FITNESS
-        result = engine.run(sig, prices)
+        result = engine.run(sig, prices, benchmark_returns=benchmark_returns)
         value = result.fitness(config.fitness_metric)
         return value if np.isfinite(value) else FAILED_FITNESS
     except Exception:
@@ -186,6 +187,12 @@ def enqueue_discovery_pool_candidates(
         features = build_feature_list(asset)
         data, prices, _ = _load_generator_data(asset, config, features)
         if data is not None and prices is not None:
+            bm_returns = None
+            if config.backtest.benchmark_assets:
+                from alpha_os.backtest.benchmark import build_benchmark_returns
+                bm_returns = build_benchmark_returns(data, config.backtest.benchmark_assets)
+                if len(bm_returns) == 0:
+                    bm_returns = None
             rescored: list[AdmissionQueueCandidate] = []
             for candidate in enqueued:
                 fitness = candidate.fitness
@@ -195,6 +202,7 @@ def enqueue_discovery_pool_candidates(
                         data,
                         prices,
                         config,
+                        benchmark_returns=bm_returns,
                     )
                 rescored.append(
                     AdmissionQueueCandidate(
@@ -310,6 +318,15 @@ class AlphaGeneratorDaemon:
             logger.warning("Insufficient data, skipping round")
             return
 
+        # Build benchmark for residual fitness
+        bm_assets = self.config.backtest.benchmark_assets
+        bm_returns = None
+        if bm_assets:
+            from alpha_os.backtest.benchmark import build_benchmark_returns
+            bm_returns = build_benchmark_returns(data, bm_assets)
+            if len(bm_returns) == 0:
+                bm_returns = None
+
         n_days = len(prices)
         rng = _random.Random(seed)
 
@@ -359,7 +376,7 @@ class AlphaGeneratorDaemon:
                 if not np.all(np.isfinite(sig)):
                     sig = np.where(np.isfinite(sig), sig, 0.0)
 
-                result = engine.run(sig, prices)
+                result = engine.run(sig, prices, benchmark_returns=bm_returns)
                 fitness = result.fitness(self.config.fitness_metric)
                 if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
                     continue

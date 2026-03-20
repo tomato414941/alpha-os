@@ -51,6 +51,7 @@ class BacktestConfig:
     slippage_pct: float = 0.05
     min_days: int = 200
     eval_window_days: int = 0  # 0 = all data; >0 = trailing N days
+    benchmark_assets: list[str] | None = None  # None = no benchmark (raw returns)
 
 
 @dataclass

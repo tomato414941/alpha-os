@@ -35,6 +35,7 @@ def purged_walk_forward(
     n_folds: int = 5,
     embargo: int = 5,
     min_train: int = 100,
+    benchmark_returns: np.ndarray | None = None,
 ) -> CVResult:
     """Run purged expanding-window walk-forward CV.
 
@@ -67,12 +68,20 @@ def purged_walk_forward(
         if len(oos_prices) < 10:
             continue
 
-        result = engine.run(oos_signal, oos_prices, alpha_id=f"fold_{fold}")
+        oos_bm = None
+        if benchmark_returns is not None:
+            oos_bm = benchmark_returns[test_start:test_end - 1]
+        result = engine.run(oos_signal, oos_prices,
+                            alpha_id=f"fold_{fold}", benchmark_returns=oos_bm)
         fold_sharpes.append(result.sharpe)
 
         oos_rets = np.diff(oos_prices) / oos_prices[:-1]
         pos = engine.positions(oos_signal)[:-1]
-        all_oos_returns.extend((pos * oos_rets).tolist())
+        fold_net = pos * oos_rets
+        if oos_bm is not None:
+            n_bm = min(len(fold_net), len(oos_bm))
+            fold_net[:n_bm] = fold_net[:n_bm] - oos_bm[:n_bm]
+        all_oos_returns.extend(fold_net.tolist())
 
     if not fold_sharpes:
         return CVResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, [])

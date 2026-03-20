@@ -51,13 +51,17 @@ class BacktestEngine:
         return _normalize_positions(alpha_signal, allow_short=self._allow_short)
 
     def run(self, alpha_signal: np.ndarray, prices: np.ndarray,
-            alpha_id: str = "") -> BacktestResult:
+            alpha_id: str = "",
+            benchmark_returns: np.ndarray | None = None) -> BacktestResult:
         pos = self.positions(alpha_signal)
         rets = np.diff(prices) / prices[:-1]
         n = min(len(pos) - 1, len(rets))
         strat_rets = pos[:n] * rets[:n]
         cost = np.abs(np.diff(pos[:n + 1])) * self._cost.one_way_cost
         net = strat_rets - cost[:n]
+        if benchmark_returns is not None:
+            bm = benchmark_returns[:n]
+            net = net - bm  # excess return over benchmark
         return BacktestResult(
             alpha_id=alpha_id,
             sharpe=metrics.sharpe_ratio(net),
@@ -74,7 +78,8 @@ class BacktestEngine:
         )
 
     def run_batch(self, signals: np.ndarray, prices: np.ndarray,
-                  alpha_ids: list[str] | None = None) -> list[BacktestResult]:
+                  alpha_ids: list[str] | None = None,
+                  benchmark_returns: np.ndarray | None = None) -> list[BacktestResult]:
         n_alphas = signals.shape[0]
         ids = alpha_ids or [f"alpha_{i}" for i in range(n_alphas)]
 
@@ -93,6 +98,9 @@ class BacktestEngine:
         dpos = np.abs(np.diff(pos[:, :n + 1], axis=1))
         cost = dpos[:, :n] * self._cost.one_way_cost
         net = strat_rets - cost
+        if benchmark_returns is not None:
+            bm = benchmark_returns[:n]
+            net = net - bm  # excess return over benchmark
 
         results = []
         for i in range(n_alphas):

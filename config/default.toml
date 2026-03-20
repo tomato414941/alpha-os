@@ -19,6 +19,7 @@ commission_pct = 0.10
 slippage_pct = 0.05
 min_days = 200
 eval_window_days = 0  # 0 = all data; >0 = trailing N days
+benchmark_assets = ["btc_ohlcv", "eth_btc", "sol_usdt"]  # equal-weight benchmark for residual fitness
 
 [validation]
 oos_sharpe_min = 0.05

@@ -213,7 +213,7 @@ def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, mon
     scores = {"f1": 0.3, "f2": 1.2, "f3": 0.8}
     monkeypatch.setattr(
         "alpha_os.daemon.alpha_generator._score_expression",
-        lambda expression, data, prices, config: scores[expression],
+        lambda expression, data, prices, config, benchmark_returns=None: scores[expression],
     )
 
     cfg = Config()
