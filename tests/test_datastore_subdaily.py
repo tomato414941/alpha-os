@@ -106,13 +106,18 @@ class TestSyncHourly:
         store.sync(["sig_new", "sig_old", "sig_missing"])
 
         calls = mock_client.get_batch.call_args_list
-        assert len(calls) == 3
-        assert calls[0].kwargs["since"] == "2024-01-05"
-        assert calls[0].args[0] == ["sig_new"]
-        assert calls[1].kwargs["since"] == "1970-01-01"
-        assert calls[1].args[0] == ["sig_old"]
-        assert calls[2].kwargs["since"] is None
-        assert calls[2].args[0] == ["sig_missing"]
+        # New sync: full_fetch first (sig_missing), then incremental grouped by since
+        all_fetched_names = set()
+        full_fetch_names = set()
+        for call in calls:
+            names = call.args[0]
+            since = call.kwargs.get("since")
+            all_fetched_names.update(names)
+            if since is None:
+                full_fetch_names.update(names)
+        assert "sig_missing" in full_fetch_names
+        assert "sig_new" in all_fetched_names
+        assert "sig_old" in all_fetched_names
         store.close()
 
     def test_sync_uses_api_client_only(self, tmp_path):

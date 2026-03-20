@@ -17,8 +17,8 @@ from alpha_os.config import Config, DATA_DIR, asset_data_dir
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.store import DataStore
 from alpha_os.data.universe import (
-    CROSS_ASSET_UNIVERSE,
     build_feature_list,
+    init_universe,
     price_signal,
     stratified_feature_subset,
 )
@@ -28,6 +28,9 @@ from alpha_os.evolution.behavior import compute_behavior
 from alpha_os.evolution.discovery_pool import DiscoveryPool
 
 logger = logging.getLogger(__name__)
+
+# Minimum history for meaningful cross-asset evaluation
+MIN_HISTORY_DAYS = 2000
 
 
 def _admission_queue_score(fitness: float) -> float:
@@ -41,33 +44,33 @@ def _survival_score(fitness: float, behavior) -> float:
 class UnifiedAlphaGeneratorDaemon:
     """Cross-asset alpha generator.
 
-    Unlike the per-asset AlphaGeneratorDaemon, this evaluates each
-    candidate expression against ALL assets in CROSS_ASSET_UNIVERSE
-    and stores the mean residual fitness. One shared registry is used.
+    Evaluates each candidate expression against a diverse subset of assets
+    (auto-selected via correlation clustering) and stores the mean residual
+    fitness. One shared registry is used.
     """
 
     def __init__(self, config: Config):
         self.config = config
         self.generator_cfg = config.alpha_generator
-
-        # Use first crypto asset as primary for data loading & behavior
         self.primary_asset = "BTC"
-        # Evaluation universe is selected automatically at runtime
-        # via correlation clustering (see _select_universe)
         self.universe: list[str] = []
-
         self.archive = DiscoveryPool()
-
         self._budget = self.generator_cfg.pop_size
         self._round = 0
         self._running = False
+        self._client = build_signal_client_from_config(config.api)
+        self._store = DataStore(DATA_DIR / "alpha_cache.db", self._client)
+
+    def _sync_data(self, features: list[str]) -> None:
+        """Ensure local cache has full history from signal-noise."""
+        logger.info("Syncing %d features (min_history=%d days)...",
+                     len(features), MIN_HISTORY_DAYS)
+        self._store.sync(features, min_history_days=MIN_HISTORY_DAYS)
 
     def _load_data(
         self, features: list[str],
     ) -> tuple[dict[str, np.ndarray] | None, np.ndarray | None, list[str]]:
-        client = build_signal_client_from_config(self.config.api)
-        store = DataStore(DATA_DIR / "alpha_cache.db", client)
-        matrix = store.get_matrix(features)
+        matrix = self._store.get_matrix(features)
         if matrix is None or len(matrix) < 2:
             return None, None, []
         data = {col: matrix[col].values for col in matrix.columns}
@@ -75,7 +78,6 @@ class UnifiedAlphaGeneratorDaemon:
         prices = data.get(ps)
         if prices is None:
             return None, None, []
-        # Require primary asset to have at least 200 rows
         finite_prices = prices[np.isfinite(prices)]
         if len(finite_prices) < 200:
             return None, None, []
@@ -90,9 +92,11 @@ class UnifiedAlphaGeneratorDaemon:
         signal.signal(signal.SIGTERM, self._handle_signal)
         signal.signal(signal.SIGINT, self._handle_signal)
 
+        # Initialize universe from API (not filesystem)
+        universe_signals = init_universe(self._client)
         logger.info(
-            "UnifiedAlphaGenerator started: universe=%d assets, budget=%d, interval=%ds",
-            len(self.universe), self._budget, self.generator_cfg.round_interval,
+            "UnifiedAlphaGenerator started: %d universe signals, budget=%d",
+            len(universe_signals), self._budget,
         )
 
         while self._running:
@@ -113,15 +117,20 @@ class UnifiedAlphaGeneratorDaemon:
     def _run_round(self) -> None:
         t0 = time.perf_counter()
 
-        # Load features — use full catalog, not asset-specific
-        all_features = build_feature_list(self.primary_asset)
+        all_features = build_feature_list(self.primary_asset, self._client)
         k = self.generator_cfg.feature_subset_k
         seed = int(time.time()) ^ self._round
 
         subset = stratified_feature_subset(all_features, k=k, seed=seed)
         ps = price_signal(self.primary_asset)
-        # Include full universe candidates for auto-selection
-        load_features = sorted({ps} | subset | set(CROSS_ASSET_UNIVERSE))
+
+        # Load features: price + subset + universe candidates for eval
+        universe_signals = init_universe(self._client) if not self.universe else self.universe
+        load_features = sorted({ps} | subset | set(universe_signals))
+
+        # Sync from signal-noise (backfills short history automatically)
+        if self._round == 0:
+            self._sync_data(load_features)
 
         data, prices, available_features = self._load_data(load_features)
         if data is None:
@@ -132,7 +141,7 @@ class UnifiedAlphaGeneratorDaemon:
         if not self.universe:
             from alpha_os.data.eval_universe import select_eval_universe
             self.universe = select_eval_universe(
-                data, CROSS_ASSET_UNIVERSE,
+                data, universe_signals,
                 n_clusters=20, min_finite_days=500,
             )
             if not self.universe:
@@ -180,37 +189,28 @@ class UnifiedAlphaGeneratorDaemon:
         for expr in candidates:
             try:
                 expr_str = to_string(expr)
-
-                # Cross-asset fitness: mean residual fitness across universe
                 per_asset = evaluate_cross_asset(
-                    expr_str,
-                    data,
-                    self.universe,
+                    expr_str, data, self.universe,
                     fitness_metric=self.config.fitness_metric,
                     commission_pct=self.config.backtest.commission_pct,
                     slippage_pct=self.config.backtest.slippage_pct,
                     allow_short=self.config.trading.supports_short,
                     benchmark_assets=bm_assets,
                 )
-
                 if not per_asset:
                     continue
 
                 fitness = float(np.mean(list(per_asset.values())))
-
                 if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
                     continue
 
-                # Behavior computed on primary asset
                 sig = sanitize_signal(expr.evaluate(data))
                 if sig.ndim == 0:
                     sig = np.full(n_days, float(sig))
                 behavior = compute_behavior(sig, expr, prices=prices)
 
                 update = self.archive.store_candidate(
-                    expr,
-                    behavior,
-                    sig,
+                    expr, behavior, sig,
                     fitness=fitness,
                     survival_score=_survival_score(fitness, behavior),
                 )
@@ -226,7 +226,6 @@ class UnifiedAlphaGeneratorDaemon:
                         queue_score=_admission_queue_score(fitness),
                         behavior=behavior,
                     ))
-
             except Exception:
                 continue
 

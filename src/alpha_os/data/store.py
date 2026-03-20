@@ -16,7 +16,13 @@ log = logging.getLogger(__name__)
 
 
 class DataStore:
-    """SQLite-backed data cache that syncs from SignalClient."""
+    """SQLite-backed data cache that syncs from signal-noise API.
+
+    Sync strategy:
+    - New signals (not in cache): full fetch (since=None)
+    - Existing signals with short history: backfill from earliest available
+    - Existing signals with sufficient history: incremental (since=MAX(date))
+    """
 
     def __init__(self, db_path: Path, client: SignalClient | None = None):
         self._db_path = db_path
@@ -28,75 +34,122 @@ class DataStore:
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS signals ("
             "  name TEXT, date TEXT, value REAL,"
+            "  resolution TEXT DEFAULT '1d',"
             "  PRIMARY KEY (name, date)"
             ")"
         )
         self._conn.commit()
-        self._migrate()
 
-    def _migrate(self) -> None:
-        cols = {r[1] for r in self._conn.execute("PRAGMA table_info(signals)")}
-        if "resolution" not in cols:
-            self._conn.execute(
-                "ALTER TABLE signals ADD COLUMN resolution TEXT DEFAULT '1d'"
-            )
-            self._conn.commit()
+    def sync(
+        self,
+        signals: list[str],
+        resolution: str = "1d",
+        *,
+        min_history_days: int = 0,
+    ) -> None:
+        """Sync signals from signal-noise API.
 
-    def sync(self, signals: list[str], resolution: str = "1d") -> None:
+        For each signal:
+        - Not in cache → full fetch (since=None)
+        - In cache but fewer rows than min_history_days → full re-fetch
+        - Otherwise → incremental (since=MAX(date))
+        """
         if self._client is None:
             log.info("No API client configured — skipping sync")
             return
 
-        # Warn about stale upstream signals
-        stale = self._client.stale_signals()
-        stale_names = {s["name"] for s in stale}
-        overlap = stale_names & set(signals)
-        if overlap:
-            log.warning("Stale upstream signals: %s", ", ".join(sorted(overlap)))
+        # Query local state for all signals at once
+        local_state = self._get_local_state(signals, resolution)
 
-        # Determine per-signal max date and fetch each since-bucket separately.
-        # A single stale signal should not force a full re-fetch of every signal.
-        signals_by_since: dict[str | None, list[str]] = {}
+        # Partition into full-fetch vs incremental
+        full_fetch: list[str] = []
+        incremental: dict[str | None, list[str]] = {}
+
         for name in signals:
-            row = self._conn.execute(
-                "SELECT MAX(date) FROM signals WHERE name = ?"
-                " AND COALESCE(resolution, '1d') = ?",
-                (name, resolution),
-            ).fetchone()
-            since = row[0] if row and row[0] else None
-            signals_by_since.setdefault(since, []).append(name)
+            state = local_state.get(name)
+            if state is None:
+                # New signal — full fetch
+                full_fetch.append(name)
+            elif min_history_days > 0 and state["count"] < min_history_days:
+                # Insufficient history — full re-fetch
+                full_fetch.append(name)
+            else:
+                # Incremental from last date
+                since = state["max_date"]
+                incremental.setdefault(since, []).append(name)
 
         api_resolution = resolution if resolution != "1d" else None
-        for since, batch_names in signals_by_since.items():
-            batch = self._client.get_batch(
-                batch_names,
-                since=since,
-                columns=["timestamp", "value"],
-                resolution=api_resolution,
-            )
 
-            for name, df in batch.items():
-                if df.empty:
+        # Full fetches (since=None)
+        if full_fetch:
+            log.info("Full sync: %d signals (new or short history)", len(full_fetch))
+            self._fetch_and_store(full_fetch, since=None, resolution=resolution,
+                                  api_resolution=api_resolution)
+
+        # Incremental fetches (grouped by since date)
+        for since, batch_names in incremental.items():
+            self._fetch_and_store(batch_names, since=since, resolution=resolution,
+                                  api_resolution=api_resolution)
+
+        self._conn.commit()
+
+    def _get_local_state(
+        self, signals: list[str], resolution: str,
+    ) -> dict[str, dict]:
+        """Query MIN(date), MAX(date), COUNT(*) for each signal."""
+        result: dict[str, dict] = {}
+        for chunk_start in range(0, len(signals), 500):
+            chunk = signals[chunk_start:chunk_start + 500]
+            placeholders = ",".join("?" for _ in chunk)
+            rows = self._conn.execute(
+                f"SELECT name, MIN(date), MAX(date), COUNT(*) FROM signals"
+                f" WHERE name IN ({placeholders})"
+                f" AND COALESCE(resolution, '1d') = ?"
+                f" GROUP BY name",
+                chunk + [resolution],
+            ).fetchall()
+            for name, min_date, max_date, count in rows:
+                result[name] = {
+                    "min_date": min_date,
+                    "max_date": max_date,
+                    "count": count,
+                }
+        return result
+
+    def _fetch_and_store(
+        self,
+        names: list[str],
+        since: str | None,
+        resolution: str,
+        api_resolution: str | None,
+    ) -> None:
+        """Fetch a batch of signals from API and store in SQLite."""
+        batch = self._client.get_batch(
+            names,
+            since=since,
+            columns=["timestamp", "value"],
+            resolution=api_resolution,
+        )
+        for name, df in batch.items():
+            if df.empty:
+                continue
+            rows = []
+            for _, r in df.iterrows():
+                ts = r["timestamp"]
+                val = r["value"]
+                if pd.isna(ts) or pd.isna(val):
                     continue
-
-                rows = []
-                for _, r in df.iterrows():
-                    ts = r["timestamp"]
-                    val = r["value"]
-                    if pd.isna(ts) or pd.isna(val):
-                        continue
-                    if resolution == "1d":
-                        date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
-                    else:
-                        date_str = str(ts)
-                    rows.append((name, date_str, float(val), resolution))
-
+                if resolution == "1d":
+                    date_str = str(ts.date()) if hasattr(ts, "date") else str(ts)[:10]
+                else:
+                    date_str = str(ts)
+                rows.append((name, date_str, float(val), resolution))
+            if rows:
                 self._conn.executemany(
                     "INSERT OR REPLACE INTO signals (name, date, value, resolution)"
                     " VALUES (?, ?, ?, ?)",
                     rows,
                 )
-        self._conn.commit()
 
     def get_matrix(
         self,
@@ -153,6 +206,21 @@ class DataStore:
         cursor = self._conn.execute(query, params)
         values = [row[0] for row in cursor.fetchall()]
         return np.array(values, dtype=np.float64)
+
+    def signal_row_counts(self, signals: list[str]) -> dict[str, int]:
+        """Return {name: row_count} for the given signals."""
+        result: dict[str, int] = {}
+        for chunk_start in range(0, len(signals), 500):
+            chunk = signals[chunk_start:chunk_start + 500]
+            placeholders = ",".join("?" for _ in chunk)
+            rows = self._conn.execute(
+                f"SELECT name, COUNT(*) FROM signals"
+                f" WHERE name IN ({placeholders}) GROUP BY name",
+                chunk,
+            ).fetchall()
+            for name, count in rows:
+                result[name] = count
+        return result
 
     def close(self) -> None:
         self._conn.close()
