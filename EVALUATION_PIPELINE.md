@@ -6,11 +6,28 @@ Individual signal quality is measured by **IC** (prediction accuracy).
 Portfolio quality is measured by **Sharpe** (profitability after costs).
 These are never mixed: IC is per-signal, Sharpe is per-portfolio.
 
-## Forward Returns
+## Prediction Targets
 
-All evaluation uses **residualized returns** — benchmark-subtracted.
+The system should predict multiple targets, not just returns. Different
+targets capture different edges and diversify the portfolio's source of
+profit. Each signal carries metadata about what it predicts and at what
+horizon.
+
+### Target types
+
+| Target | Definition | Use |
+|--------|-----------|-----|
+| Residualized return | asset_return - benchmark_return | Directional alpha |
+| Volatility | future realized vol vs current | Position sizing, vol targeting |
+| Cross-sectional rank | which assets outperform others | Market-neutral strategies |
+
+Residualized returns are the starting point. Volatility and cross-sectional
+targets are natural extensions using the same IC evaluation framework.
+
+### Residualization
+
+All return-based evaluation uses **residualized returns** — benchmark-subtracted.
 Raw return prediction conflates market direction with alpha.
-Residualized return isolates what the signal uniquely predicts.
 
 ```
 residual_return[t] = asset_return[t] - benchmark_return[t]
@@ -18,7 +35,7 @@ residual_return[t] = asset_return[t] - benchmark_return[t]
 
 Benchmark: equal-weight portfolio of broad assets (configured in default.toml).
 
-## Horizons
+### Horizons
 
 Each signal is evaluated at multiple horizons. The best horizon is stored
 as metadata — it is a property of the signal, not a system-wide setting.
@@ -36,13 +53,45 @@ best_horizon     = argmax(IC_h)
 A signal that predicts 5-day residual returns but not 1-day returns is
 valuable. Without multi-horizon evaluation, it would be discarded.
 
+### Signal metadata
+
+Each signal carries:
+- **target**: what it predicts (residual_return, volatility, rank)
+- **horizon**: at what time scale (1, 5, 20 days)
+- **per-asset IC**: prediction accuracy per asset class
+
+These are properties of the signal discovered during evaluation, not
+system-wide settings.
+
 ## Eval Universe
 
-A fixed set of ~20 diverse assets, selected once and cached to disk.
-All stages use the same set. Recomputed only when explicitly requested.
+Evaluation asset count is a tradeoff: more assets per signal vs more
+signals evaluated. The pipeline uses different depths at different stages.
 
-Selection criteria: low pairwise correlation, long data history, diverse
-volatility. Stored in `data/eval_universe.json`.
+**Generator (speed priority)**: 20-50 assets, balanced across asset classes.
+More candidates explored is more valuable than more assets per candidate.
+
+```
+crypto: 5, US stocks: 10, ETFs: 5, commodities: 5, ...
+```
+
+**Admission (precision priority)**: all ~919 OHLCV assets.
+Adoption is a one-time decision — thoroughness matters. Per-asset IC is
+stored, providing the data for trading universe selection.
+
+```
+(sub (abs fear_greed) (delta_30 oil_wti))
+  crypto:      IC = +0.03  (12 assets)
+  US stocks:   IC = +0.01  (200 assets)
+  ETFs:        IC = -0.005 (30 assets)
+  commodities: IC = +0.04  (15 assets)
+  overall:     IC = +0.02
+```
+
+The Generator eval universe is a fixed set cached to disk
+(`data/eval_universe.json`). Selected once via correlation clustering
+with explicit asset-class balancing. Recomputed only when explicitly
+requested.
 
 ## Pipeline Stages
 
