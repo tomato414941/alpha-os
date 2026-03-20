@@ -139,33 +139,53 @@ Stored in discovery pool: `(expression, fitness, horizon, behavior_vector)`.
 
 This is a fast screen. No backtest, no cost model.
 
-### 3. Validate (OOS IC)
+### 3. Admit (Noise Filter)
 
-Admission validates that IC is robust out-of-sample:
+Admission is a practical noise filter, not a quality judgment. Generator
+produces thousands of candidates per round — most are noise. Admitting
+all to the live pool would waste computation.
 
 - Purged walk-forward CV: compute OOS IC per fold at the stored horizon
 - IC must be consistently positive across folds
-- Statistical checks (PBO, DSR) as sanity filters, not hard gates
+- Statistical checks (PBO, DSR) as sanity filters
+- Full eval universe (~919 assets): per-asset IC stored for later use
+
+Role: minimum viable prediction quality. Like a prediction market's
+minimum bet — not judging the bettor, just filtering zero-value entries.
 
 Signals that pass enter the live pool with a **minimum stake**.
 
 ### 4. Live Selection (Internal Market)
 
-Each live signal carries a virtual stake. Stake determines portfolio
-weight — this replaces manual TC weighting and threshold-based lifecycle.
+Each live signal carries a virtual stake. Stake = cumulative P&L of
+following this signal. This replaces TC weighting, lifecycle state
+machine, and manual thresholds with a single mechanism.
 
 ```
-every day:
-    for each live signal:
-        prediction = signal's output yesterday
-        actual     = realized residual return today
-        score      = correlation(prediction, actual)
+every day, for each live signal with horizon h:
+    # h days ago, this signal made a prediction
+    net_return = sign(signal[t-h]) * residual_return[t-h : t]
+                 - turnover * transaction_cost
 
-        if score > 0:  stake *= (1 + reward_rate)
-        else:          stake *= (1 - penalty_rate)
+    stake *= (1 + net_return)
+    if stake < min_stake: remove signal  # natural death
 
-    normalize stakes → portfolio weights
+normalize stakes → portfolio weights
+cap any single signal at max_weight (e.g. 5%)
 ```
+
+Stake is literally "how much money would you have made following this
+signal?" Good predictions → profit → stake grows → more influence.
+Bad predictions → loss → stake shrinks → less influence → death.
+
+**Turnover is not a separate metric.** It is embedded in the P&L via
+transaction costs. A high-IC signal with extreme turnover will have
+poor net returns and its stake will not grow.
+
+**Tail risk protection:**
+- Single signal weight capped (e.g. 5% max)
+- Large loss → immediate stake reduction → automatic de-risking
+- Portfolio-level circuit breaker is separate (not per-signal)
 
 Properties:
 - **New signals enter small.** They must prove themselves before gaining
@@ -174,7 +194,7 @@ Properties:
   The best predictors dominate the portfolio naturally.
 - **Inaccurate signals shrink and die.** No manual demotion rules.
   Stake → 0 is natural death. Slot freed for new candidates.
-- **Marginal contribution matters.** A signal with IC > 0 but
+- **Marginal contribution is emergent.** A signal with IC > 0 but
   identical to existing signals adds no value — its predictions are
   already covered, so its live score won't improve the portfolio.
   It stagnates and eventually dies. This is TC without computing TC.
@@ -197,6 +217,15 @@ Mixed horizons provide natural time-scale diversification.
 
 **Portfolio-level evaluation uses Sharpe, drawdown, costs.**
 This is the only place Sharpe appears in the pipeline.
+
+### Paper → Real
+
+The entire system runs on paper first. Graduation to real capital is
+a portfolio-level decision, not per-signal:
+
+- Paper portfolio Sharpe > threshold for N consecutive days
+- No individual signal graduates independently
+- Real capital allocation is proportional to paper track record
 
 ## Signal Generator Interface
 
