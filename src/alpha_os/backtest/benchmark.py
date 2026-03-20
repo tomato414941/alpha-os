@@ -32,7 +32,9 @@ def equal_weight_benchmark(
     for name, prices in price_arrays.items():
         if len(prices) < 2:
             continue
-        rets = np.diff(prices) / prices[:-1]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            rets = np.diff(prices) / prices[:-1]
+        rets = np.nan_to_num(rets, nan=0.0, posinf=0.0, neginf=0.0)
         all_returns.append(rets)
         max_len = max(max_len, len(rets))
 

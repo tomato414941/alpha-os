@@ -404,7 +404,12 @@ class ManagedAlphaStore:
             row = self._conn.execute("SELECT COUNT(*) FROM alphas").fetchone()
         return row[0]
 
-    _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
+    _ORDER_COLUMN = {
+        "sharpe": "oos_sharpe",
+        "log_growth": "oos_log_growth",
+        "ic": "oos_sharpe",
+        "ric": "oos_sharpe",
+    }
 
     def top_trading(self, n: int = 30, metric: str = "sharpe") -> list[AlphaRecord]:
         """Top-N alphas by fitness metric from active state (for trading)."""
