@@ -211,17 +211,23 @@ class Trader:
             self._executor_state_date = ""
             return
 
+        # Only restore positions for the asset's own price signal.
+        # Snapshots may contain stale keys from exchange-level balance queries.
+        own_positions = {
+            k: v for k, v in snapshot.positions.items()
+            if k == self.price_signal
+        }
         if isinstance(self.executor, PaperExecutor):
             self.executor._cash = snapshot.cash
-            self.executor._positions = dict(snapshot.positions)
+            self.executor._positions = dict(own_positions)
         elif isinstance(self.executor, BinanceExecutor):
             self.executor._managed_cash = snapshot.cash
-            self.executor._managed_positions = dict(snapshot.positions)
-            tracked_symbols = list({self.price_signal, *snapshot.positions.keys()})
+            self.executor._managed_positions = dict(own_positions)
+            tracked_symbols = list({self.price_signal})
             self.executor.sync_reconciliation_baseline(tracked_symbols)
         elif hasattr(self.executor, "_managed_cash"):
             self.executor._managed_cash = snapshot.cash
-            self.executor._managed_positions = dict(snapshot.positions)
+            self.executor._managed_positions = dict(own_positions)
 
         equity_curve = self.portfolio_tracker.get_equity_curve()
         if equity_curve:
@@ -296,12 +302,9 @@ class Trader:
             strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
             n_positive_tc = sum(1 for v in tc_scores.values() if v > 0)
-            n_finite = sum(1 for v in alpha_signals.values() if np.isfinite(v))
-            sample_vals = list(alpha_signals.values())[:5]
             logger.info(
-                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d finite, %d TC>0) sample=%s combined=%.4f",
-                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_finite, n_positive_tc,
-                [f"{v:.3f}" for v in sample_vals], combined,
+                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0) combined=%.4f",
+                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_positive_tc, combined,
             )
         else:
             combined = 0.0
