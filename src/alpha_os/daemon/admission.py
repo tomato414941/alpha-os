@@ -268,6 +268,15 @@ class AdmissionDaemon:
             allow_short=self.config.trading.supports_short,
         )
 
+        # Build benchmark for residual fitness
+        bm_returns = None
+        bm_assets = self.config.backtest.benchmark_assets
+        if bm_assets:
+            from alpha_os.backtest.benchmark import build_benchmark_returns
+            bm_returns = build_benchmark_returns(data, bm_assets)
+            if len(bm_returns) == 0:
+                bm_returns = None
+
         # Parse and evaluate candidates
         parsed = []
         for cid, expr_str, fitness in rows:
@@ -290,6 +299,7 @@ class AdmissionDaemon:
                     sig, prices, engine,
                     n_folds=self.config.validation.n_cv_folds,
                     embargo=self.config.validation.embargo_days,
+                    benchmark_returns=bm_returns,
                 )
                 _metric = self.config.fitness_metric
                 _oos_fit = cv.oos_fitness(_metric)
