@@ -482,9 +482,50 @@ optimization.
 7. Portfolio weights from stakes (replace TC weighting)
 8. Portfolio-level Sharpe evaluation (separate from signal evaluation)
 
+## Deprecation Schedule
+
+Legacy code that will be removed as the stake system matures.
+
+### Remove when stakes are live (~60 days of forward returns)
+
+These require marginal contribution scoring to be functioning on
+real data before removal. During bootstrap, they serve as safety nets.
+
+| Code | File | Why wait |
+|------|------|----------|
+| Feature cap check | `admission.py` | Without marginal contribution, nothing limits feature concentration |
+| Semantic dedup check | `admission.py` | Without marginal contribution, duplicates get equal bootstrap stake |
+| `AlphaState` filter in trader | `trader.py`, `runtime_policy.py` | Stakes must reflect reality, not bootstrap values |
+| `_prune_active_overflow` (cap=600) | `admission.py` | Memory/compute guard until stake-based removal works |
+| State transitions in lifecycle | `daemon/lifecycle.py` | Stake update must be sole mechanism |
+| `active_quality_min` / `dormant_revival_quality` config | `config.py`, `lifecycle.py` | Thresholds replaced by continuous stake |
+
+### Remove when producer-consumer is implemented
+
+These are structural changes that require the prediction store.
+
+| Code | File | Why wait |
+|------|------|----------|
+| Direct `parse(expr).evaluate(data)` in admission | `admission.py` | Admission should read from prediction store, not compute |
+| Direct `parse(expr).evaluate(data)` in trader | `trader.py` | Trader should read from prediction store |
+| `BacktestEngine` in admission | `admission.py` | PBO still uses it; replace with IC-only validation |
+| `fitness_metric` config field | `config.py` | Used by trader/lifecycle; remove after full stake migration |
+| `AlphaState` enum | `managed_alphas.py` | Only after all consumers use stake instead of state |
+
+### Already superseded (remove when convenient)
+
+Low-risk cleanup. No behavioral change.
+
+| Code | Notes |
+|------|-------|
+| `oos_sharpe_min` in `GateConfig` construction (admission) | Already hardcoded to 0.0 |
+| `GateTomlConfig.oos_log_growth_min` etc. | IC admission doesn't use these |
+| `_OOS_FITNESS_MAP` fallback for "ic"/"ric" | Temporary compat shim |
+
 ## Constraints
 
 - Memory: 7.6GB server limits concurrent data loading
 - eval universe cached to avoid recomputation
 - IC computation is cheap (rank correlation), enabling high throughput
 - ML integration is future work; pipeline designed to accommodate it
+- Bootstrap period: ~40 more days until stakes reflect live performance
