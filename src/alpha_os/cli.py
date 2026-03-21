@@ -101,6 +101,10 @@ def _build_parser() -> argparse.ArgumentParser:
     pp.add_argument("--asset", type=str, default="BTC")
     pp.add_argument("--config", type=str, default=None)
 
+    # produce-classical
+    pc = sub.add_parser("produce-classical", help="Compute classical indicators and write to prediction store")
+    pc.add_argument("--config", type=str, default=None)
+
     # monitor
     mon = sub.add_parser("monitor", help="Monitor adopted alphas on new data")
     mon.add_argument("--once", action="store_true", help="Run one cycle and exit")
@@ -2320,6 +2324,16 @@ def cmd_submit_expression(args: argparse.Namespace) -> None:
         print("Already in queue (duplicate)")
 
 
+def cmd_produce_classical(args: argparse.Namespace) -> None:
+    """Run classical indicator producer → prediction store."""
+    from alpha_os.config import Config
+    from alpha_os.predictions.classical_producer import produce_classical_predictions
+
+    cfg = Config.load(args.config)
+    n = produce_classical_predictions(cfg)
+    print(f"Wrote {n} classical predictions to store")
+
+
 def cmd_produce_predictions(args: argparse.Namespace) -> None:
     """Run registry producer: evaluate active alphas → prediction store."""
     from alpha_os.config import Config
@@ -2549,3 +2563,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_submit_expression(args)
     elif args.command == "produce-predictions":
         cmd_produce_predictions(args)
+    elif args.command == "produce-classical":
+        cmd_produce_classical(args)
