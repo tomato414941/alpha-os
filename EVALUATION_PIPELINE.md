@@ -512,9 +512,16 @@ These are structural changes that require the prediction store.
 | `fitness_metric` config field | `config.py` | Used by trader/lifecycle; remove after full stake migration |
 | `AlphaState` enum | `managed_alphas.py` | Only after all consumers use stake instead of state |
 
-### Already superseded (remove when convenient)
+### Already removed
 
-Low-risk cleanup. No behavioral change.
+| Code | When | Commit |
+|------|------|--------|
+| Feature cap check | 2026-03-21 | `341a55d` |
+| Semantic dedup check | 2026-03-21 | `341a55d` |
+| State transitions in lifecycle | 2026-03-21 | `341a55d` |
+| State-based trading filter → stake > 0 | 2026-03-21 | `341a55d` |
+
+### Low-risk cleanup (remove when convenient)
 
 | Code | Notes |
 |------|-------|
