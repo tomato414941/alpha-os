@@ -168,9 +168,6 @@ class AdmissionDaemon:
             logger.info("Batch: 0 candidates passed validation")
             return
 
-        # IC > 0 already validated in the loop above. No additional gates needed.
-        # PBO removed: it used BacktestEngine (Sharpe-based), contradicting IC evaluation.
-
         registry = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         existing_ids = {
             record.expression: record.alpha_id
