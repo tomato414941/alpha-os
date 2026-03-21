@@ -28,13 +28,6 @@ class AlphaState:
     def canonical(cls, state: str) -> str:
         return cls._CANONICAL.get(state, state)
 
-    @classmethod
-    def trading_states(cls) -> tuple[str, ...]:
-        return (cls.ACTIVE,)
-
-    @classmethod
-    def runtime_states(cls) -> tuple[str, ...]:
-        return (cls.ACTIVE, cls.DORMANT)
 
 
 @dataclass
@@ -442,28 +435,6 @@ class ManagedAlphaStore:
         return row[0]
 
     _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
-
-    def top_trading(self, n: int = 30, metric: str = "sharpe") -> list[AlphaRecord]:
-        """Top-N alphas by fitness metric from active state (for trading)."""
-        col = self._ORDER_COLUMN[metric]
-        placeholders = ", ".join("?" for _ in AlphaState.trading_states())
-        rows = self._conn.execute(
-            f"SELECT * FROM alphas WHERE state IN ({placeholders}) "
-            f"ORDER BY {col} DESC LIMIT ?",
-            (*AlphaState.trading_states(), n),
-        ).fetchall()
-        return [self._row_to_record(r) for r in rows]
-
-    def bottom_trading(self, n: int = 1, metric: str = "sharpe") -> list[AlphaRecord]:
-        """Bottom-N active alphas by fitness metric."""
-        col = self._ORDER_COLUMN[metric]
-        placeholders = ", ".join("?" for _ in AlphaState.trading_states())
-        rows = self._conn.execute(
-            f"SELECT * FROM alphas WHERE state IN ({placeholders}) "
-            f"ORDER BY {col} ASC LIMIT ?",
-            (*AlphaState.trading_states(), n),
-        ).fetchall()
-        return [self._row_to_record(r) for r in rows]
 
     def top(self, n: int = 10, state: str | None = None, metric: str = "sharpe") -> list[AlphaRecord]:
         col = self._ORDER_COLUMN[metric]

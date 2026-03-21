@@ -226,44 +226,6 @@ class TestPaperPortfolioTracker:
         tracker.close()
 
 
-class TestRegistryTopTrading:
-    def test_top_trading_returns_limited(self, tmp_path):
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
-
-        reg = ManagedAlphaStore(tmp_path / "reg.db")
-        for i in range(10):
-            reg.register(AlphaRecord(
-                alpha_id=f"a{i}", expression=f"close_{i}",
-                state=AlphaState.ACTIVE, oos_sharpe=float(i),
-            ))
-        reg.register(AlphaRecord(
-            alpha_id="d1", expression="close_d",
-            state=AlphaState.DORMANT, oos_sharpe=100.0,
-        ))
-        result = reg.top_trading(3)
-        assert len(result) == 3
-        assert result[0].oos_sharpe == 9.0
-        assert all(r.state != AlphaState.DORMANT for r in result)
-        reg.close()
-
-    def test_top_trading_excludes_candidate(self, tmp_path):
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
-
-        reg = ManagedAlphaStore(tmp_path / "reg.db")
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="close_1",
-            state=AlphaState.ACTIVE, oos_sharpe=1.0,
-        ))
-        reg.register(AlphaRecord(
-            alpha_id="c1", expression="close_c",
-            state=AlphaState.CANDIDATE, oos_sharpe=2.0,
-        ))
-        result = reg.top_trading(10)
-        assert len(result) == 1
-        assert result[0].alpha_id == "a1"
-        reg.close()
-
-
 class TestSignalDeltaExit:
     def test_zscore_triggers_exit(self):
         import math

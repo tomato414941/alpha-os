@@ -108,15 +108,6 @@ class TestManagedAlphaStore:
         assert top[1].alpha_id == "a3"
         reg.close()
 
-    def test_bottom_trading_uses_metric_order(self, tmp_path):
-        reg = self._make_registry(tmp_path)
-        reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE, oos_log_growth=0.1))
-        reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.ACTIVE, oos_log_growth=0.3))
-        reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.ACTIVE, oos_log_growth=0.2))
-        bottom = reg.bottom_trading(2, metric="log_growth")
-        assert [record.alpha_id for record in bottom] == ["a1", "a3"]
-        reg.close()
-
     def test_register_replaces(self, tmp_path):
         reg = self._make_registry(tmp_path)
         reg.register(AlphaRecord(alpha_id="a1", expression="x", fitness=0.5))
