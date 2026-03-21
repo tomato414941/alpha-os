@@ -481,11 +481,13 @@ optimization.
 6. ~~Stake column + bootstrap + daily rolling update~~ — done
 7. ~~Portfolio weights from stakes (TC fallback)~~ — done
 8. ~~Remove feature cap, semantic dedup, state transitions~~ — done
-9. ~~Prediction store + GP producer~~ — done
-10. Classical indicator producer
-11. Pipeline reads from prediction store (replace direct eval)
-12. Full marginal contribution scoring (leave-one-out)
-13. Remove remaining legacy (AlphaState enum, prune overflow)
+9. ~~Remove IC→Sharpe fallback shims~~ — done
+10. ~~Prediction store + GP producer~~ — done (506 signals)
+11. ~~Registry producer: active alphas → store~~ — done (638 signals)
+12. ~~Trader reads from prediction store (fallback to direct eval)~~ — done
+13. Classical indicator producer
+14. Full marginal contribution scoring (leave-one-out)
+15. Remove remaining legacy (AlphaState enum, prune overflow)
 
 ## Deprecation Schedule
 
