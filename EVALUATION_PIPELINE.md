@@ -314,74 +314,97 @@ a portfolio-level decision, not per-signal:
 - No individual signal graduates independently
 - Real capital allocation is proportional to paper track record
 
-## Signal Interface
+## Architecture: Producer-Consumer Separation
 
-### What the pipeline sees
+The current system is tightly coupled: each daemon loads data, computes
+signals, evaluates them, manages the registry, and executes trades. This
+means adding a new signal type (ML, classical indicator, external) requires
+changes throughout the codebase.
+
+The target architecture separates production from consumption:
 
 ```
-Input:  data: dict[str, np.ndarray]  (features)
-Output: signal: np.ndarray           (one value per day)
+Producers (independent, know nothing about the pipeline):
+  ├─ GP daemon      — explores DSL expression space
+  ├─ ML daemon      — trains and runs ML models
+  ├─ Classical job   — computes RSI, MACD, carry, momentum, etc.
+  ├─ External ingest — reads from APIs, prediction markets, etc.
+  └─ Human CLI       — manual submission
+
+         │
+         │  each writes: (signal_id, date, prediction_value, asset)
+         ▼
+
+Prediction Store (the only coupling point):
+  "signal X predicted Y on date Z for asset A"
+  Simple append-only table. No computation, no evaluation.
+
+         │
+         │  pipeline reads predictions + realized outcomes
+         ▼
+
+Consumer (single pipeline, knows nothing about producers):
+  reads predictions → scores IC → updates stakes → portfolio weights → trade
 ```
 
-What happens inside is irrelevant. The pipeline judges only the output.
+### Why this matters
+
+**Adding a new signal type = writing a new producer.** The producer
+computes predictions and writes them to the store. It doesn't import
+the pipeline, the registry, the DSL, or any evaluation code. The
+pipeline doesn't change.
+
+**The pipeline is truly output-only.** It reads predictions from the
+store. It doesn't know if a prediction came from a DSL expression, an
+ML model, or a human. It can't inspect internals because it has no
+access to the producer code.
+
+**signal-noise stays focused.** It collects raw market data (prices,
+macro, on-chain). It does NOT compute signals, run models, or store
+predictions. That's alpha-os's job.
+
+### Prediction Store schema
+
+```sql
+CREATE TABLE predictions (
+    signal_id   TEXT NOT NULL,
+    date        TEXT NOT NULL,
+    asset       TEXT NOT NULL,
+    value       REAL NOT NULL,
+    horizon     INTEGER NOT NULL DEFAULT 1,
+    recorded_at REAL NOT NULL,
+    PRIMARY KEY (signal_id, date, asset)
+);
+```
+
+Each producer writes to this table. The pipeline reads from it.
+Signal metadata (source, expression, model path) is stored in a
+separate `signals` table for reproducibility and auditing, but is
+never read by the evaluation pipeline.
 
 ### Signal types
 
-Signals can be implemented in different ways. The pipeline treats
-all of them identically.
+Different producers, same output format.
 
-**DSL expressions.** `(neg (zscore sp500))`. Composable operators
-over features. GP explores the space automatically. Best for
-discovering novel patterns.
+| Producer | What it does | Writes to prediction store |
+|----------|-------------|---------------------------|
+| GP daemon | Explores DSL space, finds novel patterns | DSL evaluation output |
+| Classical job | Computes RSI, MACD, carry, momentum | Indicator values |
+| ML daemon | Trains models, runs inference | Model predictions |
+| External ingest | Reads prediction markets, APIs | External values |
+| Human CLI | Manual rules, domain knowledge | Manual values |
 
-**Classical indicators.** RSI, MACD, Bollinger, moving average
-crossovers, etc. Implemented as Python functions, not approximated
-via DSL. Known signals should use their canonical implementation
-for accuracy. Provided as features by signal-noise or computed
-locally.
+### Migration path
 
-**ML models.** Gradient-boosted trees, neural nets, etc. Trained
-on features, output predictions. Higher capacity than DSL, higher
-overfitting risk.
+This is a large refactor from the current monolithic architecture.
+Incremental steps:
 
-**External signals.** Predictions from other systems, sentiment
-APIs, on-chain analytics. Any source that produces a daily value.
-
-**Human-crafted.** Manual rules based on domain knowledge. Entered
-via CLI.
-
-The DSL's role is exploration — finding new patterns via GP. Known
-signals (RSI, carry, momentum) should be implemented directly, not
-forced into DSL syntax. DSL approximations like `(neg (rank_20
-(roc_5 sp500)))` are imprecise substitutes for a proper RSI.
-
-### Submission
-
-All signal sources use the same two-step path:
-
-```
-1. Evaluate:  signal → multi-horizon IC + per-asset breakdown
-2. Submit:    IC > 0 → admission queue (source tagged)
-```
-
-This is the universal entry point. GP, ML, classical indicators,
-human — all go through the same evaluation and the same admission
-gate. No source gets special treatment or bypasses validation.
-
-Sources are tagged for observability, not for differential treatment:
-- `source="gp"` — DSL/GP evolutionary search
-- `source="ml"` — ML model
-- `source="classical"` — known indicator (RSI, MACD, etc.)
-- `source="external"` — external system
-- `source="human"` — manually crafted
-
-### What submission does NOT do
-
-- Skip admission. Every signal must pass OOS IC validation.
-- Bypass the stake system. Admitted signals start with minimum stake
-  regardless of source.
-- Inspect internals. The pipeline never looks at implementation
-  method, feature usage, or model architecture.
+1. Create the prediction store (new SQLite table)
+2. Make GP daemon write predictions to the store (alongside current flow)
+3. Add a classical indicator producer (writes to store)
+4. Modify the pipeline to read from the store (alongside current flow)
+5. Remove direct coupling between producers and pipeline
+6. Remove internal inspection code (feature caps, semantic dedup)
 
 ## Diversity
 
