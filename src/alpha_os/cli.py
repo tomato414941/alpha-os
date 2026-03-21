@@ -1653,6 +1653,7 @@ def cmd_rebuild_managed_alphas(args: argparse.Namespace) -> None:
         fail_state=args.fail_state,
         dry_run=args.dry_run,
         backup=not args.no_backup,
+        metric=cfg.portfolio.objective,
     )
 
     mode = "DRY RUN" if args.dry_run else "WRITE"
@@ -2130,7 +2131,6 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
 
 def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     """Evaluate expression with multi-horizon IC across eval universe."""
-    from pathlib import Path
     from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
     from alpha_os.config import Config, DATA_DIR
     from alpha_os.data.store import DataStore
@@ -2140,7 +2140,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
 
     cfg = Config.load(args.config)
     client = build_signal_client_from_config(cfg.api)
-    price_signals = init_universe(client)
+    init_universe(client)
     all_signals = load_daily_signals(client)
 
     # Load cached eval universe
@@ -2150,7 +2150,6 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
         return
 
     # Load data: eval universe prices + features referenced by expression
-    from alpha_os.dsl import parse as dsl_parse
     from alpha_os.alpha.expression_identity import expression_feature_names
     expr_features = expression_feature_names(args.expr)
     db_path = DATA_DIR / "alpha_cache.db"
@@ -2186,7 +2185,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     print(f"Best: horizon={result.best_horizon}d, IC={result.best_fitness:+.4f}")
 
     if result.per_asset:
-        print(f"\nPer-asset IC (top 10):")
+        print("\nPer-asset IC (top 10):")
         sorted_assets = sorted(result.per_asset.items(), key=lambda x: x[1], reverse=True)
         for asset, ic in sorted_assets[:10]:
             print(f"  {asset:30s} IC={ic:+.4f}")
@@ -2194,7 +2193,6 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
 
 def cmd_submit_expression(args: argparse.Namespace) -> None:
     """Submit expression to admission queue."""
-    from pathlib import Path
     from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
     from alpha_os.alpha.managed_alphas import ManagedAlphaStore
     from alpha_os.config import Config, DATA_DIR, asset_data_dir
@@ -2205,7 +2203,7 @@ def cmd_submit_expression(args: argparse.Namespace) -> None:
 
     cfg = Config.load(args.config)
     client = build_signal_client_from_config(cfg.api)
-    price_signals = init_universe(client)
+    init_universe(client)
     all_signals = load_daily_signals(client)
 
     eval_assets = load_cached_eval_universe()

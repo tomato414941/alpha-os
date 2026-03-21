@@ -21,8 +21,9 @@ def test_build_signal_client_reads_api_key_from_env(monkeypatch):
     assert client.api_key == "secret-token"
 
 
-def test_build_signal_client_omits_empty_api_key(monkeypatch):
+def test_build_signal_client_omits_empty_api_key(monkeypatch, tmp_path):
     monkeypatch.delenv("ALPHA_OS_SIGNAL_NOISE_API_KEY", raising=False)
+    monkeypatch.setattr(signal_client, "_SECRETS_FILE", tmp_path / "nonexistent")
     monkeypatch.setattr(signal_client, "SignalClient", _FakeClient)
 
     client = signal_client.build_signal_client(base_url="https://signals.example", timeout=15)

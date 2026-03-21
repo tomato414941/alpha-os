@@ -11,7 +11,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
 
 from ..config import DATA_DIR
 

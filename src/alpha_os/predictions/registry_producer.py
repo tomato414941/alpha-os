@@ -9,16 +9,15 @@ from __future__ import annotations
 import logging
 import time
 from datetime import date
-from pathlib import Path
 
 import numpy as np
 
 from ..alpha.evaluator import sanitize_signal
-from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
-from ..data.universe import build_feature_list, init_universe, price_signal
+from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
 from .store import Prediction, PredictionStore, SignalMeta
 

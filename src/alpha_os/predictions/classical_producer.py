@@ -8,14 +8,13 @@ from __future__ import annotations
 import logging
 import time
 from datetime import date
-from pathlib import Path
 
 import numpy as np
 
 from ..config import Config, DATA_DIR
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
-from ..data.universe import init_universe, load_daily_signals
+from ..data.universe import init_universe
 from ..data.eval_universe import load_cached_eval_universe
 from .store import Prediction, PredictionStore, SignalMeta
 
