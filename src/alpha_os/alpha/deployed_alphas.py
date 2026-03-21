@@ -355,17 +355,18 @@ def refresh_deployed_alphas(
             config,
             records,
         )
+        objective = config.portfolio.objective
         plan = plan_deployed_alphas(
             records,
             registry.deployed_alpha_ids(),
             lambda record: config.estimate_alpha_quality(
-                record.oos_fitness("sharpe"),
+                record.oos_fitness(objective),
                 tracker.get_returns(record.alpha_id),
             ),
             max_alphas=config.deployment.max_deployed_alphas,
             max_replacements=config.deployment.max_replacements,
             promotion_margin=config.deployment.promotion_margin,
-            metric="sharpe",
+            metric=objective,
             signal_by_id=signal_by_id,
             signal_similarity_max=config.deployment.signal_similarity_max,
             max_feature_occurrences=config.deployment.max_feature_occurrences,
@@ -475,14 +476,15 @@ def prune_registry_active_duplicates(
             config,
             records,
         )
+        objective = config.portfolio.objective
         plan = plan_registry_active_prune(
             records,
             current_deployed_ids,
             lambda record: config.estimate_alpha_quality(
-                record.oos_fitness("sharpe"),
+                record.oos_fitness(objective),
                 tracker.get_returns(record.alpha_id),
             ),
-            metric="sharpe",
+            metric=objective,
             signal_by_id=signal_by_id,
             signal_similarity_max=config.deployment.signal_similarity_max,
         )

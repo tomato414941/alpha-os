@@ -147,6 +147,21 @@ class DeploymentConfig:
     max_feature_occurrences: int = 0
 
 
+PORTFOLIO_OBJECTIVES = {"sharpe", "log_growth"}
+
+
+@dataclass
+class PortfolioConfig:
+    objective: str = "sharpe"  # "sharpe" | "log_growth"
+
+    def __post_init__(self):
+        if self.objective not in PORTFOLIO_OBJECTIVES:
+            raise ValueError(
+                f"Unknown portfolio objective: {self.objective!r}. "
+                f"Expected one of {sorted(PORTFOLIO_OBJECTIVES)}"
+            )
+
+
 @dataclass
 class LifecycleTomlConfig:
     candidate_quality_min: float = 0.05
@@ -251,6 +266,7 @@ class LifecycleDaemonConfig:
 
 @dataclass
 class Config:
+    portfolio: PortfolioConfig = field(default_factory=PortfolioConfig)
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
@@ -303,7 +319,7 @@ class Config:
         return blend_quality(
             prior_quality,
             returns,
-            metric="sharpe",
+            metric=self.portfolio.objective,
             rolling_window=self.forward.degradation_window,
             min_observations=self.live_quality.min_observations,
             full_weight_observations=self.live_quality.full_weight_observations,
@@ -355,6 +371,7 @@ class Config:
         lc_raw = dict(raw.get("lifecycle", {}))
         _f = cls._filter
         return cls(
+            portfolio=PortfolioConfig(**_f(PortfolioConfig, raw.get("portfolio", {}))),
             api=APIConfig(**_f(APIConfig, raw.get("api", {}))),
             generation=GenerationConfig(**_f(GenerationConfig, raw.get("generation", {}))),
             backtest=BacktestConfig(**_f(BacktestConfig, raw.get("backtest", {}))),

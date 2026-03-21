@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from alpha_os.config import Config
+from alpha_os.config import Config, PortfolioConfig
 from alpha_os.config import TRADING_MODE_FUTURES_LONG_SHORT, TradingConfig
 
 
@@ -169,3 +169,29 @@ def test_config_runtime_helpers_follow_current_settings():
     assert lifecycle_cfg.active_quality_min == pytest.approx(0.12)
     assert estimate.blended_quality == pytest.approx(0.8)
     assert estimate.confidence == pytest.approx(0.0)
+
+
+def test_portfolio_objective_default():
+    cfg = Config()
+    assert cfg.portfolio.objective == "sharpe"
+
+
+def test_portfolio_objective_loads_from_toml(tmp_path):
+    p = tmp_path / "cfg.toml"
+    p.write_text('[portfolio]\nobjective = "log_growth"\n')
+    cfg = Config.load(p)
+    assert cfg.portfolio.objective == "log_growth"
+
+
+def test_portfolio_objective_invalid_raises():
+    with pytest.raises(ValueError, match="Unknown portfolio objective"):
+        PortfolioConfig(objective="invalid")
+
+
+def test_estimate_alpha_quality_respects_portfolio_objective():
+    cfg = Config()
+    cfg.portfolio = PortfolioConfig(objective="log_growth")
+    estimate = cfg.estimate_alpha_quality(0.5, [0.01, 0.02, -0.005] * 30)
+    # With log_growth, live_quality uses log1p rather than sharpe
+    assert estimate.n_observations == 90
+    assert estimate.confidence > 0

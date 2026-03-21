@@ -17,7 +17,7 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.monitor import AlphaMonitor, RegimeDetector
 from ..alpha.quality import QualityEstimate
 from ..alpha.runtime_policy import rank_trading_records
-from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
@@ -257,7 +257,7 @@ class Trader:
         returns: list[float] | np.ndarray,
     ) -> QualityEstimate:
         return self.config.estimate_alpha_quality(
-            record.oos_fitness("sharpe"),
+            record.oos_fitness(self.config.portfolio.objective),
             returns,
         )
 
@@ -552,7 +552,7 @@ class Trader:
             ),
             max_trading=max_trading,
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
-            metric="sharpe",
+            metric=self.config.portfolio.objective,
         )
         all_alphas = trading_candidates
 

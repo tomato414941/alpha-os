@@ -207,8 +207,9 @@ def run_replay(
         logger.info("%d deployed alphas loaded", len(all_records))
         n_alphas = len(all_records)
         logger.info("%d alphas loaded from registry", n_alphas)
+        objective = config.portfolio.objective
         prior_quality_full = np.array(
-            [record.oos_fitness("sharpe") for record in all_records],
+            [record.oos_fitness(objective) for record in all_records],
             dtype=np.float64,
         )
 
@@ -281,7 +282,7 @@ def run_replay(
 
             if window_len > 0:
                 recent = returns_mat[valid_mask, window_start + 1:d + 1]
-                if False:  # log_growth path removed — always use sharpe
+                if objective == "log_growth":
                     r_clipped = np.clip(recent, -0.999999, None)
                     rolling_quality = np.mean(np.log1p(r_clipped), axis=1) * 252
                 else:
@@ -310,7 +311,7 @@ def run_replay(
                 blended_quality=blended_quality_full,
                 confidence=confidence,
                 max_trading=config.paper.max_trading_alphas,
-                metric="sharpe",
+                metric=objective,
                 shortlist_preselect_factor=config.live_quality.shortlist_preselect_factor,
             )
 

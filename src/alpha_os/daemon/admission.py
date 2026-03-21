@@ -175,6 +175,7 @@ class AdmissionDaemon:
         }
         n_adopted = 0
         n_rejected = 0
+        objective = self.config.portfolio.objective
 
         for cid, expr, expr_str, fitness, cv, dsr_pvalue in validated:
             alpha_id = alpha_id_for_expression(
@@ -191,7 +192,7 @@ class AdmissionDaemon:
                 oos_log_growth=cv.oos_expected_log_growth,
                 pbo=0.0,
                 dsr_pvalue=dsr_pvalue,
-                stake=max(cv.oos_sharpe, 0.0),
+                stake=max(cv.oos_fitness(objective), 0.0),
             )
             registry.register(record)
             self._adopt_candidate(cid, cv.oos_sharpe, 0.0, dsr_pvalue)

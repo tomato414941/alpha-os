@@ -19,10 +19,15 @@ class LifecycleConfig:
     correlation_max: float = 0.5
 
 
-def passes_candidate_gate(record: AlphaRecord, config: LifecycleConfig) -> bool:
+def passes_candidate_gate(
+    record: AlphaRecord,
+    config: LifecycleConfig,
+    *,
+    metric: str = "sharpe",
+) -> bool:
     """Return True when a candidate clears the admission gate."""
     return (
-        record.oos_sharpe >= config.candidate_quality_min
+        record.oos_fitness(metric) >= config.candidate_quality_min
         and record.pbo <= config.pbo_max
         and record.dsr_pvalue <= config.dsr_pvalue_max
         and record.correlation_avg <= config.correlation_max

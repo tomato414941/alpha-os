@@ -1,4 +1,5 @@
-fitness_metric = "log_growth"
+[portfolio]
+objective = "sharpe"   # "sharpe" | "log_growth" — flows through admission, deployment, lifecycle, trading
 
 [api]
 base_url = "http://localhost:8000"

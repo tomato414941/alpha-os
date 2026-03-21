@@ -177,6 +177,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                     source_records,
                     cfg.to_lifecycle_config(),
                     fail_state=spec.fail_state,
+                    metric=cfg.portfolio.objective,
                 )
                 managed_alpha_info = {
                     "mode": spec.managed_alpha_mode,

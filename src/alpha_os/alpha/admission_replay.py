@@ -115,6 +115,7 @@ def materialize_admission_snapshot(
     config: LifecycleConfig,
     *,
     fail_state: str = AlphaState.REJECTED,
+    metric: str = "sharpe",
 ) -> tuple[list[AlphaRecord], dict[str, int]]:
     fail_state = AlphaState.canonical(fail_state)
     counts = {
@@ -126,7 +127,7 @@ def materialize_admission_snapshot(
     for record in records:
         state = (
             AlphaState.ACTIVE
-            if passes_candidate_gate(record, config)
+            if passes_candidate_gate(record, config, metric=metric)
             else fail_state
         )
         if state not in counts:
@@ -175,12 +176,14 @@ def rebuild_registry(
     fail_state: str = AlphaState.REJECTED,
     dry_run: bool = False,
     backup: bool = True,
+    metric: str = "sharpe",
 ) -> RegistryRebuildStats:
     source_records = load_source_records(db_path, source)
     snapshot, counts = materialize_admission_snapshot(
         source_records,
         config,
         fail_state=fail_state,
+        metric=metric,
     )
     backup_path = None
     if not dry_run:

@@ -504,6 +504,19 @@ class TestPassesCandidateGate:
         )
         assert passes_candidate_gate(record, cfg) is False
 
+    def test_passes_candidate_gate_uses_metric(self):
+        cfg = LifecycleConfig(candidate_quality_min=0.5)
+        record = AlphaRecord(
+            alpha_id="a1",
+            expression="x",
+            oos_sharpe=0.4,
+            oos_log_growth=0.8,
+        )
+        # Fails with sharpe (0.4 < 0.5)
+        assert passes_candidate_gate(record, cfg, metric="sharpe") is False
+        # Passes with log_growth (0.8 >= 0.5)
+        assert passes_candidate_gate(record, cfg, metric="log_growth") is True
+
 
 class TestComputeTransition:
     def test_active_stays(self):
