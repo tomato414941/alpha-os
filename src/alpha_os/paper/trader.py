@@ -14,7 +14,6 @@ from datetime import date, datetime, timezone
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.lifecycle import AlphaLifecycle
 from ..alpha.monitor import AlphaMonitor, RegimeDetector
 from ..alpha.quality import QualityEstimate
 from ..alpha.runtime_policy import rank_trading_records
@@ -158,11 +157,6 @@ class Trader:
 
         mon_cfg = config.to_monitor_config()
         self.monitor = monitor or AlphaMonitor(config=mon_cfg)
-
-        self.lifecycle = lifecycle or AlphaLifecycle(
-            self.registry,
-            config=config.to_lifecycle_config(),
-        )
 
         self.risk_manager = risk_manager or RiskManager(config.risk.to_manager_config())
         self.circuit_breaker = circuit_breaker or CircuitBreaker()

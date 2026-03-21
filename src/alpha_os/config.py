@@ -260,7 +260,6 @@ class LifecycleDaemonConfig:
 
 @dataclass
 class Config:
-    fitness_metric: str = "sharpe"
     api: APIConfig = field(default_factory=APIConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
@@ -366,7 +365,6 @@ class Config:
         lc_raw = dict(raw.get("lifecycle", {}))
         _f = cls._filter
         return cls(
-            fitness_metric=raw.get("fitness_metric", "sharpe"),
             api=APIConfig(**_f(APIConfig, raw.get("api", {}))),
             generation=GenerationConfig(**_f(GenerationConfig, raw.get("generation", {}))),
             backtest=BacktestConfig(**_f(BacktestConfig, raw.get("backtest", {}))),

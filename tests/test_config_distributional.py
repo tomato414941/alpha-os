@@ -32,7 +32,6 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
     (default_dir / "default.toml").write_text(
         "\n".join(
             [
-                'fitness_metric = "log_growth"',
                 "[paper]",
                 "max_trading_alphas = 30",
             ]
@@ -51,7 +50,6 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
     monkeypatch.setattr("alpha_os.config.CONFIG_DIR", default_dir)
 
     cfg = Config.load(override)
-    assert cfg.fitness_metric == "log_growth"
     assert cfg.paper.max_trading_alphas == 30
     assert cfg.paper.max_position_pct == 0.25
 

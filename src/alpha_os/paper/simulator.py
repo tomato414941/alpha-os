@@ -281,7 +281,7 @@ def run_replay(
 
             if window_len > 0:
                 recent = returns_mat[valid_mask, window_start + 1:d + 1]
-                if config.fitness_metric == "log_growth":
+                if False:  # log_growth path removed — always use sharpe
                     r_clipped = np.clip(recent, -0.999999, None)
                     rolling_quality = np.mean(np.log1p(r_clipped), axis=1) * 252
                 else:

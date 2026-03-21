@@ -111,7 +111,7 @@ def _score_expression(
         if len(sig) != n_days:
             return FAILED_FITNESS
         result = engine.run(sig, prices, benchmark_returns=benchmark_returns)
-        value = result.fitness(config.fitness_metric)
+        value = result.fitness("sharpe")
         return value if np.isfinite(value) else FAILED_FITNESS
     except Exception:
         return FAILED_FITNESS
