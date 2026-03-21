@@ -54,10 +54,16 @@ class AlphaRecord:
     metadata: dict = field(default_factory=dict)
     stake: float = 0.0
 
-    _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
+    _OOS_FITNESS_MAP = {
+        "sharpe": "oos_sharpe",
+        "log_growth": "oos_log_growth",
+        "ic": "oos_sharpe",
+        "ric": "oos_sharpe",
+    }
 
     def oos_fitness(self, metric: str = "sharpe") -> float:
-        return getattr(self, self._OOS_FITNESS_MAP[metric])
+        attr = self._OOS_FITNESS_MAP.get(metric, "oos_sharpe")
+        return getattr(self, attr)
 
 
 @dataclass(frozen=True)
