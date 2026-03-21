@@ -52,6 +52,7 @@ class AlphaRecord:
     created_at: float = 0.0
     updated_at: float = 0.0
     metadata: dict = field(default_factory=dict)
+    stake: float = 0.0
 
     _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
 
@@ -94,7 +95,8 @@ class ManagedAlphaStore:
                 correlation_avg REAL DEFAULT 0.0,
                 created_at REAL NOT NULL,
                 updated_at REAL NOT NULL,
-                metadata TEXT DEFAULT '{}'
+                metadata TEXT DEFAULT '{}',
+                stake REAL DEFAULT 0.0
             )
         """)
         self._conn.execute("""
@@ -102,6 +104,17 @@ class ManagedAlphaStore:
         """)
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_oos_sharpe ON alphas(oos_sharpe DESC)
+        """)
+        # Migrate: add stake column to existing tables
+        cols = {row[1] for row in self._conn.execute("PRAGMA table_info(alphas)")}
+        if "stake" not in cols:
+            self._conn.execute("ALTER TABLE alphas ADD COLUMN stake REAL DEFAULT 0.0")
+            self._conn.execute(
+                "UPDATE alphas SET stake = MAX(oos_sharpe, 0.0) WHERE state = 'active'"
+            )
+            self._conn.commit()
+        self._conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_stake ON alphas(stake DESC)
         """)
         # Pipeline v2: candidate queue for alpha generator → admission flow
         self._conn.execute("""
@@ -368,6 +381,30 @@ class ManagedAlphaStore:
         )
         self._conn.commit()
 
+    def update_stake(self, alpha_id: str, stake: float) -> None:
+        self._conn.execute(
+            "UPDATE alphas SET stake = ?, updated_at = ? WHERE alpha_id = ?",
+            (stake, time.time(), alpha_id),
+        )
+        self._conn.commit()
+
+    def bulk_update_stakes(self, stakes: dict[str, float]) -> None:
+        if not stakes:
+            return
+        stamp = time.time()
+        self._conn.executemany(
+            "UPDATE alphas SET stake = ?, updated_at = ? WHERE alpha_id = ?",
+            [(s, stamp, aid) for aid, s in stakes.items()],
+        )
+        self._conn.commit()
+
+    def top_by_stake(self, n: int = 30) -> list[AlphaRecord]:
+        rows = self._conn.execute(
+            "SELECT * FROM alphas WHERE stake > 0 ORDER BY stake DESC LIMIT ?",
+            (n,),
+        ).fetchall()
+        return [self._row_to_record(r) for r in rows]
+
     def update_metrics(
         self, alpha_id: str, oos_sharpe: float | None = None,
         pbo: float | None = None, dsr_pvalue: float | None = None,
@@ -490,4 +527,5 @@ class ManagedAlphaStore:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             metadata=json.loads(row["metadata"]),
+            stake=row["stake"] if "stake" in keys else 0.0,
         )
