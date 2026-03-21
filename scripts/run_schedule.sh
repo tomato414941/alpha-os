@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euo pipefail
-ASSETS="${1:-BTC}"
+
+# Map portfolio group names to asset lists
+RAW="${1:-crypto-spot}"
+case "$RAW" in
+  crypto-spot) ASSETS="BTC,ETH,SOL" ;;
+  *)           ASSETS="$RAW" ;;
+esac
+
 cd /home/dev/projects/alpha-os
 source .venv/bin/activate
 source ~/.secrets/binance

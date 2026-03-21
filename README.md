@@ -375,7 +375,7 @@ For current testnet operation, watch these values first:
 - trading outcomes:
   `n_fills`, `n_skipped_deadband`, `n_order_failures`, `daily_pnl`
 - service health:
-  `alpha-os@BTC.service` and `alpha-os-admission@BTC.service` memory usage
+  `alpha-os@crypto-spot.service` and `alpha-os-admission@BTC.service` memory usage
 
 The readiness files have different roles:
 

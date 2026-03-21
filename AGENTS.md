@@ -25,7 +25,7 @@ src/alpha_os/       Main package
   paper/            PaperTrader, EventDrivenTrader, TacticalTrader
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
-tests/              pytest test suite (663 tests)
+tests/              pytest test suite
 data/               Runtime data (SQLite DBs, logs) — gitignored
 ```
 
