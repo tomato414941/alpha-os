@@ -399,11 +399,12 @@ Different producers, same output format.
 Incremental migration from monolithic to producer-consumer.
 
 1. ~~Create the prediction store~~ — done (`predictions.db`)
-2. ~~Make GP daemon write predictions to the store~~ — done (parallel with admission queue)
-3. Add a classical indicator producer (writes to store)
-4. Modify the pipeline to read from the store (alongside current flow)
-5. Remove direct coupling between producers and pipeline
-6. ~~Remove internal inspection code (feature caps, semantic dedup)~~ — done
+2. ~~Make GP daemon write predictions to the store~~ — done (506 signals)
+3. ~~Registry producer: evaluate active alphas → store~~ — done (638 signals)
+4. ~~Trader reads from prediction store~~ — done (fallback to direct eval)
+5. Add a classical indicator producer (writes to store)
+6. Remove direct coupling between producers and pipeline
+7. ~~Remove internal inspection code (feature caps, semantic dedup)~~ — done
 
 ## Diversity
 
