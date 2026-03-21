@@ -124,7 +124,9 @@ class UnifiedAlphaGeneratorDaemon:
         logger.info("UnifiedAlphaGenerator stopped after %d rounds", self._round)
 
     def _run_round(self) -> None:
+        from datetime import date
         t0 = time.perf_counter()
+        today_date = date.today().isoformat()
 
         all_features = build_feature_list(self.primary_asset, self._client)
         k = self.generator_cfg.feature_subset_k
@@ -249,6 +251,7 @@ class UnifiedAlphaGeneratorDaemon:
 
         if queued_candidates:
             self._enqueue_candidates(queued_candidates)
+            self._write_predictions(queued_candidates, data, today_date)
 
         elapsed = time.perf_counter() - t0
         logger.info(
@@ -289,6 +292,53 @@ class UnifiedAlphaGeneratorDaemon:
             return n
         finally:
             store.close()
+
+    def _write_predictions(
+        self,
+        candidates: list[AdmissionQueueCandidate],
+        data: dict[str, np.ndarray],
+        today_date: str,
+    ) -> None:
+        """Write candidate predictions to the prediction store."""
+        try:
+            from alpha_os.predictions.store import Prediction, PredictionStore, SignalMeta
+            from alpha_os.alpha.evaluator import sanitize_signal
+            from alpha_os.alpha.expression_identity import expression_semantic_key
+            from alpha_os.dsl import parse
+
+            store = PredictionStore()
+            preds: list[Prediction] = []
+            for c in candidates:
+                signal_id = expression_semantic_key(c.expression)
+                store.register_signal(SignalMeta(
+                    signal_id=signal_id,
+                    source="gp",
+                    definition=c.expression,
+                    horizon=c.best_horizon,
+                ))
+                try:
+                    expr = parse(c.expression)
+                    sig = sanitize_signal(expr.evaluate(data))
+                    if sig.ndim == 0 or len(sig) == 0:
+                        continue
+                    value = float(sig[-1])
+                    for asset in self.universe:
+                        preds.append(Prediction(
+                            signal_id=signal_id,
+                            date=today_date,
+                            asset=asset,
+                            value=value,
+                            horizon=c.best_horizon,
+                        ))
+                except Exception:
+                    continue
+
+            if preds:
+                n = store.write(preds)
+                logger.debug("Wrote %d predictions to store", n)
+            store.close()
+        except Exception as exc:
+            logger.warning("Failed to write predictions: %s", exc)
 
     def _handle_signal(self, signum, frame):
         logger.info("Received signal %d, shutting down...", signum)
