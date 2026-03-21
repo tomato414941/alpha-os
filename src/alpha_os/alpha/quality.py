@@ -41,6 +41,13 @@ def rolling_fitness(
         clipped = np.clip(recent, -0.999999, None)
         return float(np.mean(np.log1p(clipped)) * 252)
 
+    # IC-based metrics fall back to Sharpe for live quality estimation
+    if metric in ("ic", "ric"):
+        std = float(recent.std())
+        if std <= 1e-12:
+            return 0.0
+        return float(recent.mean() / std * sqrt(252))
+
     raise ValueError(f"Unsupported fitness metric: {metric}")
 
 
