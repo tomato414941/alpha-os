@@ -173,20 +173,12 @@ Trust the exit mechanism (lifecycle); loosen the entrance (gate).
 
 ## Alpha Lifecycle
 
-Current runtime states are `candidate`, `active`, `dormant`, and `rejected`.
-Historical `born` and `probation` rows are normalized to `candidate` and
-`active` on read.
+**Superseded.** See `EVALUATION_PIPELINE.md` → Live Selection (Internal Market).
 
-| Transition             | Condition |
-| ---------------------- | --------- |
-| CANDIDATE → ACTIVE     | Passes the admission gate (`candidate_quality_min`, PBO, DSR, correlation) |
-| CANDIDATE → REJECTED   | Fails the admission gate |
-| ACTIVE → DORMANT       | Blended quality < `active_quality_min` |
-| DORMANT → ACTIVE       | Blended quality ≥ `dormant_revival_quality` and enough forward observations |
-
-Runtime quality is blended from historical OOS quality and forward returns.
-The confidence weight rises with the number of forward observations, so new
-alphas shrink toward their historical prior instead of being treated as zero.
+The discrete state machine (candidate/active/dormant/rejected) is replaced
+by continuous stake-based selection. Each signal's influence is determined
+by its rolling marginal contribution to portfolio P&L, not by threshold-based
+state transitions.
 
 ## Deployed Alphas
 
