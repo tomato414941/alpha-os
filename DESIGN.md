@@ -1,5 +1,78 @@
 # Alpha-OS System Design
 
+## Glossary
+
+### Core terms
+
+| Term | Definition | Examples |
+|------|-----------|---------|
+| **feature** | Input data series from signal-noise. Raw or computed market observables that hypotheses consume. | `fear_greed`, `btc_ohlcv`, `vix_close`, `funding_rate_btc` |
+| **hypothesis** | A single predictive logic that consumes features and produces predictions. A claim about market inefficiency; it may or may not have real predictive power. | `(sub fear_greed dxy)`, XGBoost model, RSI mean-reversion rule |
+| **prediction** | The concrete output value a hypothesis produces for a given date and asset. This is what the pipeline evaluates. | `+0.3`, `-0.15` |
+| **alpha** | Excess return over benchmark. Not a method but a **result** — the return attributable to skill rather than market exposure. A hypothesis may or may not generate alpha; this is discovered through evaluation, not assumed. | Sharpe 0.5 after subtracting benchmark |
+
+**feature → hypothesis → prediction** is the data flow. The pipeline
+evaluates predictions, never hypothesis internals.
+
+### Hierarchy
+
+```
+strategy (any method of generating profit)
+│
+│   prediction reliance is a spectrum, not a binary:
+│
+├── strongly predictive — prediction is the core value
+│   └── hypothesis (individual instance)
+│       ├── DSL expression
+│       ├── ML model
+│       ├── classical indicator
+│       └── ...
+└── weakly predictive — structure or speed is the core value,
+    │                    prediction is auxiliary
+    ├── arbitrage ("these prices will converge")
+    ├── market making ("spread will exceed adverse selection")
+    └── ...
+
+Pure non-predictive strategies exist only in textbooks.
+Real implementations almost always involve some prediction.
+
+alpha (excess return) is orthogonal — it is the outcome, not the method.
+Any strategy can generate alpha. Whether a hypothesis has alpha is
+discovered through IC/Sharpe evaluation, not assumed from its form.
+```
+
+alpha-os is a system for strongly predictive strategies. It manages
+hypotheses, evaluates their predictions, and allocates capital based
+on results.
+
+alpha-os is a system for predictive strategies. It manages hypotheses,
+evaluates their predictions, and allocates capital based on results.
+
+### Hypothesis types
+
+| Type | What it does | Status |
+|------|-------------|--------|
+| **DSL expression** | Compose features via S-expression operators | Active — primary generator |
+| **Classical indicator** | Deterministic technical rules (RSI, mean reversion, carry) | Active — classical_producer |
+| **ML model** | Learn patterns from features statistically | Planned |
+| **LLM / NLP** | Extract sentiment from text (news, earnings, social media) | Future |
+| **External prediction** | Ingest prediction market odds, analyst forecasts | Future |
+| **Human rule** | Domain knowledge codified as manual logic | Active — seed-handcrafted |
+| **Meta / ensemble** | Combine other hypotheses' predictions (stacking) | Future |
+| **Lead-lag** | Exploit time-delay relationships between assets | Future |
+| **Options-derived** | Interpret IV surface, skew, term structure | Future (ROADMAP Phase 4) |
+| **Order flow** | Predict from VPIN, book imbalance, trade flow | Partial — execution only |
+| **On-chain** | Wallet flows, whale behavior, DeFi TVL | Future |
+| **Event-driven** | Calendar events (FOMC, halving, earnings) | Future |
+
+The boundary between feature and hypothesis depends on processing
+depth. A single time series (`iv_skew_btc`) is a feature. Logic that
+interprets it to produce a directional prediction is a hypothesis.
+
+Note: the codebase uses `alpha` (WorldQuant convention) as the legacy
+name for hypothesis. `AlphaRecord`, `alpha_id`, etc. remain in code
+for now. New code and documentation should prefer `hypothesis`.
+
 ## Principles
 
 **1. Output only.**
