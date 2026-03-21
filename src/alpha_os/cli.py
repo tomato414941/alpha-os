@@ -105,18 +105,6 @@ def _build_parser() -> argparse.ArgumentParser:
     pc = sub.add_parser("produce-classical", help="Compute classical indicators and write to prediction store")
     pc.add_argument("--config", type=str, default=None)
 
-    # monitor
-    mon = sub.add_parser("monitor", help="Monitor adopted alphas on new data")
-    mon.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    mon.add_argument("--schedule", action="store_true", help="Run on interval")
-    mon.add_argument("--summary", action="store_true", help="Print summary and exit")
-    mon.add_argument("--interval", type=int, default=None,
-                     help="Override check_interval in seconds (default: from config)")
-    mon.add_argument("--asset", type=str, default="NVDA")
-    mon.add_argument("--layer", type=int, default=3, choices=[2, 3],
-                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
-    mon.add_argument("--config", type=str, default=None)
-
     # paper
     ppr = sub.add_parser("paper", help="Paper trade with adopted alphas")
     ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
@@ -765,50 +753,6 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
     passed = cv.oos_sharpe >= cfg.validation.oos_sharpe_min
     print(f"\n  Gate (OOS Sharpe >= {cfg.validation.oos_sharpe_min}): {'PASS' if passed else 'FAIL'}")
-
-
-def cmd_monitor(args: argparse.Namespace) -> None:
-    from alpha_os.forward.runner import ForwardRunner, ForwardConfig
-    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
-
-    cfg = _load_config(args.config)
-    interval = args.interval or cfg.forward.check_interval
-    fwd_cfg = ForwardConfig(
-        check_interval=interval,
-        min_forward_days=cfg.forward.min_forward_days,
-        degradation_window=cfg.forward.degradation_window,
-    )
-    layer = getattr(args, "layer", 3)
-    resolution = "1h" if layer == 2 else "1d"
-    runner = ForwardRunner(asset=args.asset, config=cfg, forward_config=fwd_cfg,
-                           resolution=resolution)
-
-    if args.summary:
-        runner.print_summary()
-        runner.close()
-        return
-
-    if args.once or not args.schedule:
-        result = runner.run_cycle()
-        runner.print_summary()
-        runner.close()
-        print(
-            f"\nCycle: {result.n_evaluated} evaluated, {result.n_degraded} degraded, "
-            f"{result.n_dormant} dormant, {result.n_revived} revived in {result.elapsed:.1f}s"
-        )
-        return
-
-    def cycle():
-        runner.run_cycle()
-
-    scheduler = PipelineScheduler(
-        run_fn=cycle,
-        config=SchedulerConfig(interval_seconds=interval),
-    )
-    try:
-        scheduler.start()
-    finally:
-        runner.close()
 
 
 def _print_paper_result(result) -> None:
@@ -2519,8 +2463,6 @@ def main(argv: list[str] | None = None) -> None:
         cmd_evolve(args)
     elif args.command == "validate":
         cmd_validate(args)
-    elif args.command == "monitor":
-        cmd_monitor(args)
     elif args.command == "paper":
         cmd_paper(args)
     elif args.command == "trade":

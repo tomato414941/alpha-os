@@ -150,17 +150,6 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
     assert "Trade runtime already active for BTC" in out
 
 
-def test_monitor_parser():
-    from alpha_os.cli import _build_parser
-
-    parser = _build_parser()
-    args = parser.parse_args(["monitor", "--once", "--asset", "BTC"])
-
-    assert args.command == "monitor"
-    assert args.once is True
-    assert args.asset == "BTC"
-
-
 def test_paper_replay_parser():
     from alpha_os.cli import _build_parser
 
