@@ -85,6 +85,17 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     val.add_argument("--config", type=str, default=None)
 
+    # evaluate — multi-horizon IC evaluation
+    eva = sub.add_parser("evaluate", help="Evaluate expression with multi-horizon IC")
+    eva.add_argument("--expr", type=str, required=True, help="DSL expression string")
+    eva.add_argument("--config", type=str, default=None)
+
+    # submit — submit expression to admission queue
+    smt = sub.add_parser("submit", help="Submit expression to admission queue")
+    smt.add_argument("--expr", type=str, required=True, help="DSL expression string")
+    smt.add_argument("--asset", type=str, default="BTC")
+    smt.add_argument("--config", type=str, default=None)
+
     # monitor
     mon = sub.add_parser("monitor", help="Monitor adopted alphas on new data")
     mon.add_argument("--once", action="store_true", help="Run one cycle and exit")
@@ -2170,6 +2181,133 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
                 print(f"      - {count}x {reason}")
 
 
+def cmd_evaluate_expression(args: argparse.Namespace) -> None:
+    """Evaluate expression with multi-horizon IC across eval universe."""
+    from pathlib import Path
+    from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
+    from alpha_os.config import Config, DATA_DIR
+    from alpha_os.data.store import DataStore
+    from alpha_os.data.signal_client import build_signal_client_from_config
+    from alpha_os.data.universe import init_universe, load_daily_signals
+    from alpha_os.data.eval_universe import load_cached_eval_universe
+
+    cfg = Config.load(args.config)
+    client = build_signal_client_from_config(cfg.api)
+    price_signals = init_universe(client)
+    all_signals = load_daily_signals(client)
+
+    # Load cached eval universe
+    eval_assets = load_cached_eval_universe()
+    if not eval_assets:
+        print("No cached eval universe. Run unified-generator first.")
+        return
+
+    # Load data
+    db_path = DATA_DIR / "alpha_cache.db"
+    store = DataStore(db_path, client)
+    needed = sorted(set(eval_assets) | set(all_signals[:200]))
+    matrix = store.get_matrix(needed)
+    store.close()
+    for col in matrix.columns:
+        if col not in set(eval_assets):
+            matrix[col] = matrix[col].fillna(0)
+    data = {col: matrix[col].values for col in matrix.columns}
+
+    print(f"Expression: {args.expr}")
+    print(f"Eval universe: {len(eval_assets)} assets")
+    print(f"Data: {len(matrix)} rows")
+    print()
+
+    result = evaluate_cross_asset_multi_horizon(
+        args.expr, data, eval_assets,
+        horizons=DEFAULT_HORIZONS,
+        fitness_metric="ic",
+        benchmark_assets=cfg.backtest.benchmark_assets,
+    )
+
+    print("Horizon  Mean IC  Assets")
+    print("-" * 35)
+    for h in sorted(result.fitness_by_horizon):
+        ic = result.fitness_by_horizon[h]
+        marker = " <-- best" if h == result.best_horizon else ""
+        print(f"  {h:2d}d    {ic:+.4f}   {len(result.per_asset) if h == result.best_horizon else '-':>5}{marker}")
+    print()
+    print(f"Best: horizon={result.best_horizon}d, IC={result.best_fitness:+.4f}")
+
+    if result.per_asset:
+        print(f"\nPer-asset IC (top 10):")
+        sorted_assets = sorted(result.per_asset.items(), key=lambda x: x[1], reverse=True)
+        for asset, ic in sorted_assets[:10]:
+            print(f"  {asset:30s} IC={ic:+.4f}")
+
+
+def cmd_submit_expression(args: argparse.Namespace) -> None:
+    """Submit expression to admission queue."""
+    from pathlib import Path
+    from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
+    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+    from alpha_os.config import Config, DATA_DIR, asset_data_dir
+    from alpha_os.data.store import DataStore
+    from alpha_os.data.signal_client import build_signal_client_from_config
+    from alpha_os.data.universe import init_universe, load_daily_signals
+    from alpha_os.data.eval_universe import load_cached_eval_universe
+
+    cfg = Config.load(args.config)
+    client = build_signal_client_from_config(cfg.api)
+    price_signals = init_universe(client)
+    all_signals = load_daily_signals(client)
+
+    eval_assets = load_cached_eval_universe()
+    if not eval_assets:
+        print("No cached eval universe. Run unified-generator first.")
+        return
+
+    db_path = DATA_DIR / "alpha_cache.db"
+    store = DataStore(db_path, client)
+    needed = sorted(set(eval_assets) | set(all_signals[:200]))
+    matrix = store.get_matrix(needed)
+    store.close()
+    for col in matrix.columns:
+        if col not in set(eval_assets):
+            matrix[col] = matrix[col].fillna(0)
+    data = {col: matrix[col].values for col in matrix.columns}
+
+    # Evaluate
+    result = evaluate_cross_asset_multi_horizon(
+        args.expr, data, eval_assets,
+        horizons=DEFAULT_HORIZONS,
+        fitness_metric="ic",
+        benchmark_assets=cfg.backtest.benchmark_assets,
+    )
+
+    print(f"Expression: {args.expr}")
+    print(f"Best horizon: {result.best_horizon}d, IC: {result.best_fitness:+.4f}")
+
+    if result.best_fitness <= 0:
+        print("IC <= 0. Not submitting.")
+        return
+
+    # Submit to admission queue
+    registry = ManagedAlphaStore(asset_data_dir(args.asset) / "alpha_registry.db")
+    try:
+        inserted = registry.queue_candidate_expressions(
+            [args.expr],
+            source="human",
+            behavior_json={
+                "source": "human",
+                "best_horizon": result.best_horizon,
+                "fitness_by_horizon": {str(k): v for k, v in result.fitness_by_horizon.items()},
+            },
+        )
+    finally:
+        registry.close()
+
+    if inserted > 0:
+        print(f"Submitted to admission queue (source=human, horizon={result.best_horizon}d)")
+    else:
+        print("Already in queue (duplicate)")
+
+
 def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
     from alpha_os.alpha.handcrafted import (
         get_handcrafted_expressions,
@@ -2383,3 +2521,7 @@ def main(argv: list[str] | None = None) -> None:
         cmd_seed_handcrafted(args)
     elif args.command == "analyze-diversity":
         cmd_analyze_diversity(args)
+    elif args.command == "evaluate":
+        cmd_evaluate_expression(args)
+    elif args.command == "submit":
+        cmd_submit_expression(args)
