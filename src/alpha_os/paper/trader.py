@@ -273,8 +273,9 @@ class Trader:
         alpha_signals: dict[str, float],
         alpha_signal_arrays: dict[str, np.ndarray],
         data: dict[str, np.ndarray],
+        alpha_stakes: dict[str, float] | None = None,
     ) -> PredictionOutput:
-        """Prediction layer: combine alpha signals via TC-weighted consensus."""
+        """Prediction layer: combine alpha signals via stake or TC weighting."""
         strategic_signal = 0.0
         regime_adjusted_signal = 0.0
         tactical_adjusted_signal = 0.0
@@ -287,7 +288,7 @@ class Trader:
 
         tc_scores: dict[str, float] | None = None
         if alpha_signals:
-            # Compute asset returns for TC
+            # Compute asset returns for TC (monitoring only)
             prices_arr = data.get(self.price_signal)
             if prices_arr is not None and len(prices_arr) >= 2:
                 asset_returns = np.diff(prices_arr) / prices_arr[:-1]
@@ -295,7 +296,17 @@ class Trader:
                 asset_returns = np.array([])
 
             tc_scores = compute_tc_scores(alpha_signal_arrays, asset_returns)
-            weights_dict = compute_tc_weights(tc_scores)
+
+            # Stake-based weights with TC fallback
+            positive_stakes = {
+                aid: s for aid, s in (alpha_stakes or {}).items()
+                if s > 0 and aid in alpha_signals
+            }
+            if positive_stakes:
+                from alpha_os.alpha.combiner import compute_stake_weights
+                weights_dict = compute_stake_weights(positive_stakes)
+            else:
+                weights_dict = compute_tc_weights(tc_scores)
 
             combined = weighted_combine_scalar(alpha_signals, weights_dict)
             sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
@@ -303,7 +314,7 @@ class Trader:
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
             n_positive_tc = sum(1 for v in tc_scores.values() if v > 0)
             logger.info(
-                "TC sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0) combined=%.4f",
+                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0) combined=%.4f",
                 dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_positive_tc, combined,
             )
         else:
@@ -759,11 +770,17 @@ class Trader:
         ]
 
         # 4. Prediction layer: alpha signals -> final portfolio signal
+        alpha_stakes = {
+            r.alpha_id: r.stake
+            for r in selected_records
+            if r.alpha_id in alpha_signals
+        }
         prev_value = self.executor.portfolio_value
         prediction = self._predict_portfolio_signal(
             alpha_signals=alpha_signals,
             alpha_signal_arrays=alpha_signal_arrays,
             data=data,
+            alpha_stakes=alpha_stakes,
         )
         self._last_raw_signal = prediction.final_signal
 

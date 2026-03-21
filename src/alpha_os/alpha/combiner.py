@@ -92,6 +92,31 @@ def compute_tc_weights(
     return {aid: float(weights[i]) for i, aid in enumerate(ids)}
 
 
+def compute_stake_weights(
+    stakes: dict[str, float],
+    max_weight: float = 0.05,
+) -> dict[str, float]:
+    """Convert stakes to portfolio weights.
+
+    weight = stake / sum(stakes), capped at max_weight per signal.
+    """
+    if not stakes:
+        return {}
+    ids = list(stakes.keys())
+    raw = np.array([max(stakes[aid], 0.0) for aid in ids])
+    total = raw.sum()
+    if total <= 0:
+        eq = 1.0 / len(ids) if ids else 0.0
+        return {aid: eq for aid in ids}
+    weights = raw / total
+    weights = np.minimum(weights, max_weight)
+    # Renormalize after cap
+    w_total = weights.sum()
+    if w_total > 0:
+        weights = weights / w_total
+    return {aid: float(weights[i]) for i, aid in enumerate(ids)}
+
+
 def _sharpe(returns: np.ndarray) -> float:
     """Annualized Sharpe of a return series."""
     if len(returns) < 2:
