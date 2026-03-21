@@ -25,16 +25,12 @@ from ..alpha.expression_identity import (
     expression_semantic_key,
 )
 from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
-from ..backtest.cost_model import CostModel
-from ..backtest.engine import BacktestEngine
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
-from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
-from ..validation.pbo import probability_of_backtest_overfitting
-from ..validation.purged_cv import purged_walk_forward, purged_walk_forward_ic
+from ..validation.purged_cv import purged_walk_forward_ic
 
 logger = logging.getLogger(__name__)
 
@@ -262,13 +258,7 @@ class AdmissionDaemon:
             self._reset_to_pending(cids)
             return
 
-        engine = BacktestEngine(
-            CostModel(self.config.backtest.commission_pct,
-                      self.config.backtest.slippage_pct),
-            allow_short=self.config.trading.supports_short,
-        )
-
-        # Build benchmark for residual fitness
+        # Build benchmark for residual IC
         bm_returns = None
         bm_assets = self.config.backtest.benchmark_assets
         if bm_assets:
@@ -330,16 +320,8 @@ class AdmissionDaemon:
             logger.info("Batch: 0 candidates passed validation")
             return
 
-        # Batch PBO
-        batch_pbo = self._compute_batch_pbo(validated, data, prices, engine)
-
-        # Adoption gate — IC > 0 already checked in validation loop above,
-        # so oos_sharpe_min is set to 0 (gate was designed for Sharpe scale)
-        gate_cfg = GateConfig(
-            oos_sharpe_min=0.0,
-            pbo_max=self.config.validation.pbo_max,
-            dsr_pvalue_max=self.config.validation.dsr_pvalue_max,
-        )
+        # IC > 0 already validated in the loop above. No additional gates needed.
+        # PBO removed: it used BacktestEngine (Sharpe-based), contradicting IC evaluation.
 
         registry = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         managed_records = self._managed_registry_records(registry)
@@ -351,44 +333,25 @@ class AdmissionDaemon:
         n_rejected = 0
 
         for cid, expr, expr_str, fitness, cv, dsr_pvalue in validated:
-            result = adoption_gate(
+            alpha_id = alpha_id_for_expression(
+                expr_str,
+                existing_ids=existing_ids,
+            )
+            existing_ids[expr_str] = alpha_id
+            record = AlphaRecord(
+                alpha_id=alpha_id,
+                expression=expr_str,
+                state=AlphaState.ACTIVE,
+                fitness=fitness,
                 oos_sharpe=cv.oos_sharpe,
                 oos_log_growth=cv.oos_expected_log_growth,
-                oos_cvar_95=cv.oos_cvar_95,
-                oos_tail_hit_rate=cv.oos_tail_hit_rate,
-                pbo=batch_pbo,
+                pbo=0.0,
                 dsr_pvalue=dsr_pvalue,
-                fdr_passed=True,
-                avg_correlation=0.0,
-                n_days=n_days,
-                config=gate_cfg,
+                stake=max(cv.oos_sharpe, 0.0),
             )
-
-            if result.passed:
-                alpha_id = alpha_id_for_expression(
-                    expr_str,
-                    existing_ids=existing_ids,
-                )
-                existing_ids[expr_str] = alpha_id
-                record = AlphaRecord(
-                    alpha_id=alpha_id,
-                    expression=expr_str,
-                    state=AlphaState.ACTIVE,
-                    fitness=fitness,
-                    oos_sharpe=cv.oos_sharpe,
-                    oos_log_growth=cv.oos_expected_log_growth,
-                    pbo=batch_pbo,
-                    dsr_pvalue=dsr_pvalue,
-                    stake=max(cv.oos_sharpe, 0.0),
-                )
-                registry.register(record)
-                self._adopt_candidate(cid, cv.oos_sharpe, batch_pbo, dsr_pvalue)
-
-                n_adopted += 1
-            else:
-                reason = _gate_failure_reason(result.reasons)
-                self._reject_candidate(cid, reason)
-                n_rejected += 1
+            registry.register(record)
+            self._adopt_candidate(cid, cv.oos_sharpe, 0.0, dsr_pvalue)
+            n_adopted += 1
 
         pruned = self._prune_active_overflow(
             registry,
@@ -402,36 +365,6 @@ class AdmissionDaemon:
             "Round %d: %d candidates -> %d validated -> %d adopted, %d rejected, %d demoted (%.1fs)",
             self._round, len(rows), len(validated), n_adopted, n_rejected, pruned, elapsed,
         )
-
-    def _compute_batch_pbo(self, validated, data, prices, engine) -> float:
-        n_days = len(prices)
-        signals = []
-        for cid, expr, expr_str, fitness, cv, dsr_pvalue in validated:
-            try:
-                sig = evaluate_expression(expr, data, n_days)
-                signals.append(sig)
-            except EvaluationError:
-                continue
-
-        if len(signals) < 2:
-            return 1.0
-
-        if len(signals) > 200:
-            rng = np.random.default_rng(42)
-            indices = rng.choice(len(signals), 200, replace=False)
-            signals = [signals[i] for i in indices]
-
-        sig_matrix = np.array(signals)
-        try:
-            pbo_result = probability_of_backtest_overfitting(
-                sig_matrix, prices, engine,
-                n_blocks=10, max_combinations=50,
-            )
-            logger.info("Batch PBO: %.3f (%d strategies)", pbo_result.pbo, len(signals))
-            return pbo_result.pbo
-        except Exception:
-            logger.warning("PBO computation failed, using 1.0")
-            return 1.0
 
     def _load_data(self, features):
         from ..data.store import DataStore

@@ -512,10 +512,10 @@ class Trader:
 
         # 0. Circuit breaker check
         prev_equity = self.executor.portfolio_value
-        deployed_universe = self.registry.list_deployed_alphas()
+        deployed_universe = self.registry.top_by_stake(n=200)
         if not deployed_universe:
             raise RuntimeError(
-                "No deployed alphas. Run `refresh-deployed-alphas` before trading."
+                "No alphas with stake > 0. Run lifecycle or admission first."
             )
         current_profile = self._runtime_profile(deployed_universe)
         self.circuit_breaker.sync_strategy_epoch(
@@ -707,19 +707,7 @@ class Trader:
                 len(all_alphas),
             )
 
-        # 3b. Compute TC on full signal set (before correlation filter)
-        prices_arr = data.get(self.price_signal)
-        if prices_arr is not None and len(prices_arr) >= 2:
-            asset_returns = np.diff(prices_arr) / prices_arr[:-1]
-        else:
-            asset_returns = np.array([])
-        full_tc_scores = compute_tc_scores(alpha_signal_arrays, asset_returns)
-
-        # 3c. TC-based lifecycle: demote active alphas with TC ≤ 0
-        if not skip_lifecycle and full_tc_scores:
-            # TC demotion and dormant revival removed — stake system handles selection
-            if n_demoted:
-                logger.info("TC lifecycle: %d alphas demoted (TC ≤ 0)", n_demoted)
+        # TC computation removed — stake-based weights handle selection
 
         # 3d. Correlation filter: select top-N decorrelated alphas
         if len(alpha_signals) > max_trading:
