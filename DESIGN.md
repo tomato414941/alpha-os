@@ -81,25 +81,47 @@ alpha-os is one pod. Adding sleeves requires only the shared layer
 interfaces (P&L reporting, risk limits, capital requests), not changes
 to the predictive pipeline.
 
-### Hypothesis types
+### Hypothesis dimensions
 
-| Type | What it does | Status |
-|------|-------------|--------|
-| **DSL expression** | Compose features via S-expression operators | Active — primary generator |
-| **Classical indicator** | Deterministic technical rules (RSI, mean reversion, carry) | Active — classical_producer |
-| **ML model** | Learn patterns from features statistically | Planned |
-| **LLM / NLP** | Extract sentiment from text (news, earnings, social media) | Future |
-| **External prediction** | Ingest prediction market odds, analyst forecasts | Future |
-| **Human rule** | Domain knowledge codified as manual logic | Active — seed-handcrafted |
+A hypothesis is defined by two orthogonal axes: **method** (how it is
+built) and **domain** (what market phenomenon it targets). These
+combine freely — any method can target any domain.
+
+#### Method (how)
+
+| Method | What it does | Status |
+|--------|-------------|--------|
+| **DSL / GP** | Compose features via S-expression operators, evolved by genetic programming | Active — primary generator |
+| **Human-authored** | Fixed rules written by humans from domain knowledge | Active — classical_producer, seed-handcrafted |
+| **ML** | Learn patterns from features statistically | Planned |
+| **LLM / NLP** | Extract predictions from unstructured text | Future |
 | **Meta / ensemble** | Combine other hypotheses' predictions (stacking) | Future |
-| **Lead-lag** | Exploit time-delay relationships between assets | Future |
-| **Options-derived** | Interpret IV surface, skew, term structure | Future (ROADMAP Phase 4) |
-| **Order flow** | Predict from VPIN, book imbalance, trade flow | Partial — execution only |
-| **On-chain** | Wallet flows, whale behavior, DeFi TVL | Future |
-| **Event-driven** | Calendar events (FOMC, halving, earnings) | Future |
+| **External ingest** | Import predictions from outside systems | Future |
 
-The boundary between feature and hypothesis depends on processing
-depth. A single time series (`iv_skew_btc`) is a feature. Logic that
+#### Domain (what)
+
+| Domain | What it targets | Examples |
+|--------|----------------|---------|
+| **Technical / macro** | Price patterns, macro indicators | RSI, momentum, carry, dollar weakness |
+| **Options** | Volatility surface, skew, term structure | IV smile interpretation |
+| **Order flow** | Microstructure signals | VPIN, book imbalance, trade flow |
+| **On-chain** | Blockchain observables | Wallet flows, whale behavior, DeFi TVL |
+| **Event** | Calendar and news events | FOMC, halving, earnings |
+| **Lead-lag** | Cross-asset time delays | ETH lagging BTC by N hours |
+| **External markets** | Prediction markets, analyst forecasts | Polymarket odds |
+
+#### Examples
+
+| Hypothesis | Method | Domain |
+|-----------|--------|--------|
+| `(sub fear_greed dxy)` | DSL / GP | Technical / macro |
+| RSI mean-reversion rule | Human-authored | Technical / macro |
+| XGBoost on order book features | ML | Order flow |
+| GPT sentiment from earnings calls | LLM / NLP | Event |
+| Polymarket odds as directional signal | External ingest | External markets |
+
+The boundary between feature and domain depends on processing depth.
+A single time series (`iv_skew_btc`) is a feature. Logic that
 interprets it to produce a directional prediction is a hypothesis.
 
 Note: the codebase uses `alpha` (WorldQuant convention) as the legacy
@@ -108,24 +130,37 @@ for now. New code and documentation should prefer `hypothesis`.
 
 ## Principles
 
-**1. Output only.**
-Signal generators are black boxes. The pipeline sees only predictions,
-never internals. DSL expression, ML model, LLM, human — all the same.
-Evaluation judges "you predicted X, did X happen?" Nothing else.
+**1. Prediction-first, metadata-enriched.**
+Evaluation is based on predictions alone — "you predicted X, did X
+happen?" DSL expression, ML model, LLM, human — all evaluated the
+same way. A hypothesis that provides no metadata is still fully
+functional in the pipeline.
 
-This eliminates: complexity penalties, feature cap checks, semantic
-duplicate detection, expression structure inspection. If two generators
-produce identical output, they compete on equal footing — one survives
-naturally.
+However, hypotheses may optionally provide **feature dependency
+metadata** (which features they consume, importance weights). When
+available, the platform uses this for proactive risk management:
+detecting feature concentration, alerting before a data source
+failure cascades through correlated hypotheses, and monitoring
+diversity across the portfolio.
+
+This metadata is cheap to produce (DSL expressions are fully
+inspectable, ML models expose feature importances) and valuable
+for risk. The pipeline does not use it for evaluation or selection
+— only for monitoring and risk.
+
+What this eliminates: complexity penalties, semantic duplicate
+detection based on structure. Redundancy is handled by marginal
+contribution (identical outputs → zero marginal → natural death),
+not by structural inspection.
 
 **2. Adaptive and online.**
-Evaluation is continuous, not batch. Every day, every signal's latest
-prediction is scored against realized outcomes. No periodic retraining
-cycles or manual review gates. The system learns what works and what
-doesn't, always, automatically.
+Evaluation is continuous, not batch. Every day, every hypothesis's
+latest prediction is scored against realized outcomes. No periodic
+retraining cycles or manual review gates. The system learns what
+works and what doesn't, always, automatically.
 
-**3. IC for signals, Sharpe for portfolio.**
-Individual signal quality is measured by IC (prediction accuracy).
+**3. IC for hypotheses, Sharpe for portfolio.**
+Individual hypothesis quality is measured by IC (prediction accuracy).
 Portfolio quality is measured by Sharpe (profitability after costs).
 These are never mixed.
 
