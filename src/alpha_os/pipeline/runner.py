@@ -21,7 +21,6 @@ from ..dsl.expr import Expr
 from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
-from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import CVResult, purged_walk_forward
@@ -33,7 +32,10 @@ logger = logging.getLogger(__name__)
 class PipelineConfig:
     gp: GPConfig | None = None
     tc_min_weight: float = 1e-4
-    gate: GateConfig | None = None
+    oos_sharpe_min: float = 0.5
+    pbo_max: float = 1.0
+    dsr_pvalue_max: float = 1.0
+    min_n_days: int = 200
     commission_pct: float = 0.10
     slippage_pct: float = 0.05
     n_cv_folds: int = 5
@@ -80,11 +82,10 @@ class PipelineRunner:
             self.data = data
             self.prices = prices
 
-        gate_cfg = self.config.gate or GateConfig()
-        if window > 0 and window < gate_cfg.min_n_days:
+        if window > 0 and window < self.config.min_n_days:
             logger.warning(
                 "eval_window_days=%d < min_n_days=%d — all alphas will fail the n_days gate",
-                window, gate_cfg.min_n_days,
+                window, self.config.min_n_days,
             )
 
         self.engine = BacktestEngine(
@@ -243,39 +244,34 @@ class PipelineRunner:
     def _adopt(
         self, validated: list[tuple[Expr, float, CVResult, float]]
     ) -> list[tuple[Expr, float]]:
-        """Apply governance gates and register adopted alphas."""
-        gate_cfg = self.config.gate or GateConfig()
+        """Apply inline IC checks and register adopted alphas."""
+        cfg = self.config
 
-        # Compute batch PBO once for all validated alphas
         batch_pbo = self._compute_batch_pbo(validated)
 
         adopted = []
+        n_days = len(self.prices)
         for expr, fitness, cv, dsr_pvalue in validated:
-            result = adoption_gate(
-                oos_sharpe=cv.oos_sharpe,
-                oos_log_growth=cv.oos_expected_log_growth,
-                oos_cvar_95=cv.oos_cvar_95,
-                oos_tail_hit_rate=cv.oos_tail_hit_rate,
-                pbo=batch_pbo,
-                dsr_pvalue=dsr_pvalue,
-                fdr_passed=True,
-                avg_correlation=0.0,
-                n_days=len(self.prices),
-                config=gate_cfg,
-            )
-            if result.passed:
-                adopted.append((expr, fitness))
-                if self.registry:
-                    record = AlphaRecord(
-                        alpha_id=f"alpha_{hash(repr(expr)) % 10**8:08d}",
-                        expression=to_string(expr),
-                        state=AlphaState.ACTIVE,
-                        fitness=fitness,
-                        oos_sharpe=cv.oos_sharpe,
-                        pbo=batch_pbo,
-                        dsr_pvalue=dsr_pvalue,
-                    )
-                    self.registry.register(record)
+            if (
+                cv.oos_sharpe < cfg.oos_sharpe_min
+                or batch_pbo > cfg.pbo_max
+                or dsr_pvalue > cfg.dsr_pvalue_max
+                or n_days < cfg.min_n_days
+            ):
+                continue
+
+            adopted.append((expr, fitness))
+            if self.registry:
+                record = AlphaRecord(
+                    alpha_id=f"alpha_{hash(repr(expr)) % 10**8:08d}",
+                    expression=to_string(expr),
+                    state=AlphaState.ACTIVE,
+                    fitness=fitness,
+                    oos_sharpe=cv.oos_sharpe,
+                    pbo=batch_pbo,
+                    dsr_pvalue=dsr_pvalue,
+                )
+                self.registry.register(record)
 
         return adopted
 

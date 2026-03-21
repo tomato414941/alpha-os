@@ -2,7 +2,6 @@
 import numpy as np
 
 from alpha_os.evolution.gp import GPConfig
-from alpha_os.governance.gates import GateConfig
 from alpha_os.pipeline.runner import PipelineConfig, PipelineRunner, PipelineResult
 
 
@@ -24,13 +23,10 @@ class TestPipelineRunner:
         features, data, prices = self._make_data()
         cfg = PipelineConfig(
             gp=GPConfig(pop_size=20, n_generations=3, max_depth=2),
-            gate=GateConfig(
-                oos_sharpe_min=0.0,  # relaxed for test
-                pbo_max=1.0,
-                dsr_pvalue_max=1.0,
-                fdr_pass_required=False,
-                min_n_days=10,
-            ),
+            oos_sharpe_min=0.0,
+            pbo_max=1.0,
+            dsr_pvalue_max=1.0,
+            min_n_days=10,
         )
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         result = runner.run()
@@ -42,13 +38,10 @@ class TestPipelineRunner:
         features, data, prices = self._make_data()
         cfg = PipelineConfig(
             gp=GPConfig(pop_size=20, n_generations=3, max_depth=2),
-            gate=GateConfig(
-                oos_sharpe_min=0.0,
-                pbo_max=1.0,
-                dsr_pvalue_max=1.0,
-                fdr_pass_required=False,
-                min_n_days=10,
-            ),
+            oos_sharpe_min=0.0,
+            pbo_max=1.0,
+            dsr_pvalue_max=1.0,
+            min_n_days=10,
         )
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         result = runner.run()
@@ -60,10 +53,8 @@ class TestPipelineRunner:
         features, data, prices = self._make_data()
         cfg = PipelineConfig(
             gp=GPConfig(pop_size=10, n_generations=2),
-            gate=GateConfig(
-                oos_sharpe_min=10.0,  # impossible
-                dsr_pvalue_max=0.001,
-            ),
+            oos_sharpe_min=10.0,  # impossible
+            dsr_pvalue_max=0.001,
         )
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         result = runner.run()
@@ -74,13 +65,10 @@ class TestPipelineRunner:
         features, data, prices = self._make_data()
         cfg = PipelineConfig(
             gp=GPConfig(pop_size=30, n_generations=3),
-            gate=GateConfig(
-                oos_sharpe_min=0.0,
-                pbo_max=1.0,
-                dsr_pvalue_max=1.0,
-                fdr_pass_required=False,
-                min_n_days=10,
-            ),
+            oos_sharpe_min=0.0,
+            pbo_max=1.0,
+            dsr_pvalue_max=1.0,
+            min_n_days=10,
         )
         runner = PipelineRunner(features, data, prices, config=cfg, seed=42)
         runner.run()

@@ -910,7 +910,6 @@ def _build_pipeline_config(
     """Build PipelineConfig from global Config + CLI args."""
     from alpha_os.evolution.gp import GPConfig
     from alpha_os.pipeline.runner import PipelineConfig
-    from alpha_os.governance.gates import GateConfig
 
     return PipelineConfig(
         gp=GPConfig(
@@ -921,12 +920,10 @@ def _build_pipeline_config(
             depth_penalty=config.generation.depth_penalty,
             similarity_penalty=config.generation.similarity_penalty,
         ),
-        gate=GateConfig(
-            oos_sharpe_min=config.validation.oos_sharpe_min,
-            pbo_max=config.validation.pbo_max,
-            dsr_pvalue_max=config.validation.dsr_pvalue_max,
-            min_n_days=config.backtest.min_days,
-        ),
+        oos_sharpe_min=config.validation.oos_sharpe_min,
+        pbo_max=config.validation.pbo_max,
+        dsr_pvalue_max=config.validation.dsr_pvalue_max,
+        min_n_days=config.backtest.min_days,
         commission_pct=config.backtest.commission_pct,
         slippage_pct=config.backtest.slippage_pct,
         n_cv_folds=config.validation.n_cv_folds,
@@ -1011,7 +1008,6 @@ def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
     """Build PipelineConfig for L2 hourly alpha evolution."""
     from alpha_os.evolution.gp import GPConfig
     from alpha_os.pipeline.runner import PipelineConfig
-    from alpha_os.governance.gates import GateConfig
 
     return PipelineConfig(
         gp=GPConfig(
@@ -1022,12 +1018,10 @@ def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
             depth_penalty=config.generation.depth_penalty,
             similarity_penalty=config.generation.similarity_penalty,
         ),
-        gate=GateConfig(
-            oos_sharpe_min=config.validation.oos_sharpe_min,
-            pbo_max=config.validation.pbo_max,
-            dsr_pvalue_max=config.validation.dsr_pvalue_max,
-            min_n_days=168,  # 7 days * 24 hourly bars
-        ),
+        oos_sharpe_min=config.validation.oos_sharpe_min,
+        pbo_max=config.validation.pbo_max,
+        dsr_pvalue_max=config.validation.dsr_pvalue_max,
+        min_n_days=168,  # 7 days * 24 hourly bars
         commission_pct=config.backtest.commission_pct,
         slippage_pct=config.backtest.slippage_pct,
         n_cv_folds=config.validation.n_cv_folds,
@@ -1052,7 +1046,7 @@ def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
     matrix = tactical.store.get_matrix(
         tactical.features, resolution=tactical.resolution,
     )
-    min_bars = pipeline_config.gate.min_n_days
+    min_bars = pipeline_config.min_n_days
     if len(matrix) < min_bars:
         logger.warning(
             "Insufficient L2 data for evolution (%d bars, need %d)",
