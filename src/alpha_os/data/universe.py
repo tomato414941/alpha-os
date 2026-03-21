@@ -140,21 +140,25 @@ def _load_signal_catalog(client: SignalClient | None = None) -> list[dict]:
                 return signals
         except Exception as e:
             error_kind = _classify_error(e)
-            log.warning("Signal catalog API failed: %s (%s)", error_kind, e)
+            if error_kind == "auth":
+                # Auth errors are permanent — log as ERROR, don't cache fallback
+                log.error("Signal catalog API auth failed: %s — check ALPHA_OS_SIGNAL_NOISE_API_KEY", e)
+            else:
+                log.warning("Signal catalog API failed: %s (%s)", error_kind, e)
             _signal_catalog_status = SignalCatalogStatus(
                 source="cache", signal_count=0, intervals=None,
                 api_error_kind=error_kind, api_error_message=str(e),
             )
 
-    # Try local cache
+    # Try local cache (don't save to process cache — retry API next call)
     cached = _load_catalog_cache()
     if cached:
-        if _signal_catalog_status.source != "cache":
-            _signal_catalog_status = SignalCatalogStatus(
-                source="cache", signal_count=len(cached), intervals=None,
-            )
+        _signal_catalog_status = SignalCatalogStatus(
+            source="cache", signal_count=len(cached), intervals=None,
+            api_error_kind=_signal_catalog_status.api_error_kind,
+            api_error_message=_signal_catalog_status.api_error_message,
+        )
         log.warning("Signal catalog source=cache count=%d", len(cached))
-        _signal_catalog_cache = cached
         return cached
 
     # Static fallback
@@ -165,7 +169,6 @@ def _load_signal_catalog(client: SignalClient | None = None) -> list[dict]:
         api_error_message=_signal_catalog_status.api_error_message,
     )
     log.error("Signal catalog source=static count=%d", len(static))
-    _signal_catalog_cache = static
     return static
 
 
