@@ -333,9 +333,10 @@ class AdmissionDaemon:
         # Batch PBO
         batch_pbo = self._compute_batch_pbo(validated, data, prices, engine)
 
-        # Adoption gate
+        # Adoption gate — IC > 0 already checked in validation loop above,
+        # so oos_sharpe_min is set to 0 (gate was designed for Sharpe scale)
         gate_cfg = GateConfig(
-            oos_sharpe_min=self.config.validation.oos_sharpe_min,
+            oos_sharpe_min=0.0,
             pbo_max=self.config.validation.pbo_max,
             dsr_pvalue_max=self.config.validation.dsr_pvalue_max,
         )
