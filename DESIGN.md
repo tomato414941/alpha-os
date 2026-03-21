@@ -402,7 +402,7 @@ Incremental migration from monolithic to producer-consumer.
 2. ~~Make GP daemon write predictions to the store~~ — done (506 signals)
 3. ~~Registry producer: evaluate active alphas → store~~ — done (638 signals)
 4. ~~Trader reads from prediction store~~ — done (fallback to direct eval)
-5. Add a classical indicator producer (writes to store)
+5. ~~Add a classical indicator producer~~ — done (7 signals: RSI, zscore, carry, dollar, F&G, vol, gold-dxy)
 6. Remove direct coupling between producers and pipeline
 7. ~~Remove internal inspection code (feature caps, semantic dedup)~~ — done
 
@@ -485,7 +485,7 @@ optimization.
 10. ~~Prediction store + GP producer~~ — done (506 signals)
 11. ~~Registry producer: active alphas → store~~ — done (638 signals)
 12. ~~Trader reads from prediction store (fallback to direct eval)~~ — done
-13. Classical indicator producer
+13. ~~Classical indicator producer~~ — done (7 signals, 3rd producer)
 14. Full marginal contribution scoring (leave-one-out)
 15. Remove remaining legacy (AlphaState enum, prune overflow)
 
