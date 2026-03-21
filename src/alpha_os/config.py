@@ -193,15 +193,6 @@ class RegimeConfig:
 
 
 @dataclass
-class StabilityConfig:
-    """Path A: alpha stabilization settings."""
-    tenure_bonus_max: float = 0.2       # max quality bonus for long-lived alphas
-    tenure_half_life_days: float = 7.0  # days to reach 50% of max bonus
-    top_n_protect: int = 10             # top-N alphas get demotion cooldown
-    demotion_cooldown_days: float = 3.0 # min days before top-N can be demoted
-
-
-@dataclass
 class AlphaGeneratorConfig:
     enabled: bool = False
     pop_size: int = 80
@@ -279,7 +270,6 @@ class Config:
     alpha_generator: AlphaGeneratorConfig = field(default_factory=AlphaGeneratorConfig)
     admission: AdmissionConfig = field(default_factory=AdmissionConfig)
     lifecycle_daemon: LifecycleDaemonConfig = field(default_factory=LifecycleDaemonConfig)
-    stability: StabilityConfig = field(default_factory=StabilityConfig)
     cross_sectional: CrossSectionalConfig = field(default_factory=CrossSectionalConfig)
     alpaca: AlpacaConfig = field(default_factory=AlpacaConfig)
     polymarket: PolymarketConfig = field(default_factory=PolymarketConfig)
@@ -386,7 +376,6 @@ class Config:
             ),
             admission=AdmissionConfig(**_f(AdmissionConfig, raw.get("admission", {}))),
             lifecycle_daemon=LifecycleDaemonConfig(**_f(LifecycleDaemonConfig, raw.get("lifecycle_daemon", {}))),
-            stability=StabilityConfig(**_f(StabilityConfig, raw.get("stability", {}))),
             cross_sectional=CrossSectionalConfig(**_f(CrossSectionalConfig, raw.get("cross_sectional", {}))),
             alpaca=AlpacaConfig(**_f(AlpacaConfig, raw.get("alpaca", {}))),
             polymarket=PolymarketConfig(**_f(PolymarketConfig, raw.get("polymarket", {}))),

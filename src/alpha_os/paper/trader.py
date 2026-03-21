@@ -131,7 +131,6 @@ class Trader:
         portfolio_tracker: PaperPortfolioTracker | None = None,
         forward_tracker: ForwardTracker | None = None,
         monitor: AlphaMonitor | None = None,
-        lifecycle: AlphaLifecycle | None = None,
         executor: Executor | None = None,
         risk_manager: RiskManager | None = None,
         circuit_breaker: CircuitBreaker | None = None,
