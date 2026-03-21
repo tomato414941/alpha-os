@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 
-from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
+from ..alpha.managed_alphas import ManagedAlphaStore
 from ..config import Config, asset_data_dir
 from ..forward.tracker import ForwardTracker
 
@@ -52,14 +52,9 @@ class LifecycleDaemon:
         registry = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
         forward_tracker = ForwardTracker(db_path=adir / "forward_returns.db")
 
-        active = registry.list_by_state(AlphaState.ACTIVE)
-        dormant = registry.list_by_state(AlphaState.DORMANT)
-        all_alphas = active + dormant
+        all_alphas = [r for r in registry.list_all() if r.stake > 0]
 
-        logger.info(
-            "Stake update: %d active, %d dormant (%d total)",
-            len(active), len(dormant), len(all_alphas),
-        )
+        logger.info("Stake update: %d alphas with stake > 0", len(all_alphas))
 
         n_stake_updated = 0
         stake_updates: dict[str, float] = {}

@@ -561,14 +561,9 @@ class Trader:
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric="sharpe",
         )
-        dormant = [
-            record for record in universe_records
-            if AlphaState.canonical(record.state) == AlphaState.DORMANT
-        ]
-        all_alphas = trading_candidates + dormant
-        dormant_ids = {r.alpha_id for r in dormant}
+        all_alphas = trading_candidates
 
-        n_total_active = self.registry.count(AlphaState.ACTIVE)
+        n_total_active = len(trading_candidates)
         if n_deployed_alphas > max_trading or n_total_active > max_trading:
             logger.info(
                 "Selection pool: %d shortlist candidates from %d deployed alphas (%d registry-active)",
@@ -671,7 +666,7 @@ class Trader:
                                 break
                 daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
-                if record.alpha_id not in dormant_ids and np.isfinite(signal_yesterday):
+                if np.isfinite(signal_yesterday):
                     alpha_signals[record.alpha_id] = signal_yesterday
                     alpha_signal_arrays[record.alpha_id] = signal_norm
                     alpha_exprs[record.alpha_id] = expr
@@ -722,46 +717,7 @@ class Trader:
 
         # 3c. TC-based lifecycle: demote active alphas with TC ≤ 0
         if not skip_lifecycle and full_tc_scores:
-            record_map = {r.alpha_id: r for r in all_alphas}
-            n_demoted = 0
-            for aid, tc in full_tc_scores.items():
-                record = record_map.get(aid)
-                if record is None:
-                    continue
-                old_state = AlphaState.canonical(record.state)
-                if old_state == AlphaState.ACTIVE and tc <= 0:
-                    self.registry.update_state(aid, AlphaState.DORMANT)
-                    estimate = quality_estimates.get(aid)
-                    reason = f"tc={tc:.4f}"
-                    if estimate:
-                        reason += f" blended={estimate.blended_quality:.3f}"
-                    self.audit_log.log_state_change(
-                        aid, old_state, AlphaState.DORMANT,
-                        reason=f"paper: TC demotion {reason}",
-                    )
-                    n_demoted += 1
-            # Dormant revival: quality-based (TC not available for non-ensemble alphas)
-            for record in all_alphas:
-                if AlphaState.canonical(record.state) != AlphaState.DORMANT:
-                    continue
-                estimate = quality_estimates.get(record.alpha_id)
-                if estimate is None:
-                    continue
-                new_state = self.lifecycle.evaluate_live(
-                    record.alpha_id,
-                    estimate,
-                    dormant_revival_min_observations=(
-                        self.config.live_quality.dormant_revival_min_observations
-                    ),
-                )
-                if new_state != record.state:
-                    self.audit_log.log_state_change(
-                        record.alpha_id, record.state, new_state,
-                        reason=(
-                            f"paper: revival blended={estimate.blended_quality:.3f} "
-                            f"n={estimate.n_observations}"
-                        ),
-                    )
+            # TC demotion and dormant revival removed — stake system handles selection
             if n_demoted:
                 logger.info("TC lifecycle: %d alphas demoted (TC ≤ 0)", n_demoted)
 
