@@ -486,8 +486,8 @@ optimization.
 11. ~~Registry producer: active alphas → store~~ — done (638 signals)
 12. ~~Trader reads from prediction store (fallback to direct eval)~~ — done
 13. ~~Classical indicator producer~~ — done (7 signals, 3rd producer)
-14. Full marginal contribution scoring (leave-one-out)
-15. Remove remaining legacy (AlphaState enum, prune overflow)
+14. ~~Full marginal contribution scoring (leave-one-out)~~ — done
+15. ~~Remove prune overflow, dead admission code~~ — done (322 lines deleted)
 
 ## Deprecation Schedule
 
