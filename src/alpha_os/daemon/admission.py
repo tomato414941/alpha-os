@@ -34,7 +34,7 @@ from ..dsl import parse
 from ..governance.gates import GateConfig, adoption_gate
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
-from ..validation.purged_cv import purged_walk_forward
+from ..validation.purged_cv import purged_walk_forward, purged_walk_forward_ic
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ class AdmissionDaemon:
         self._round = 0
 
     def _admission_metric(self) -> str:
-        return self.config.fitness_metric
+        return "sharpe"  # prune ordering always by oos_sharpe
 
     def _prune_active_overflow(
         self,
@@ -230,7 +230,7 @@ class AdmissionDaemon:
         finally:
             conn.close()
 
-    def _fetch_pending_rows(self, limit: int) -> list[tuple[str, str, float]]:
+    def _fetch_pending_rows(self, limit: int) -> list[tuple[str, str, float, str]]:
         conn = self._open_registry_conn()
         try:
             return fetch_pending_candidates(conn, limit)
@@ -278,33 +278,38 @@ class AdmissionDaemon:
                 bm_returns = None
 
         # Parse and evaluate candidates
+        import json as _json
         parsed = []
-        for cid, expr_str, fitness in rows:
+        for cid, expr_str, fitness, behavior_json_str in rows:
             try:
                 expr = parse(expr_str)
-                parsed.append((cid, expr, expr_str, fitness))
+                try:
+                    bj = _json.loads(behavior_json_str) if behavior_json_str else {}
+                except (ValueError, TypeError):
+                    bj = {}
+                horizon = int(bj.get("best_horizon", 1))
+                parsed.append((cid, expr, expr_str, fitness, horizon))
             except Exception:
                 self._reject_candidate(cid, "parse error")
 
-        # Validate: purged WF-CV + DSR
+        # Validate: purged WF-CV (IC-based) + DSR
         n_trials = len(parsed)
         validated = []
         n_failed = 0
 
-        for cid, expr, expr_str, fitness in parsed:
+        for cid, expr, expr_str, fitness, horizon in parsed:
             try:
                 sig = evaluate_expression(expr, data, n_days)
 
-                cv = purged_walk_forward(
-                    sig, prices, engine,
+                cv = purged_walk_forward_ic(
+                    sig, prices,
+                    horizon=horizon,
                     n_folds=self.config.validation.n_cv_folds,
                     embargo=self.config.validation.embargo_days,
                     benchmark_returns=bm_returns,
                 )
-                _metric = self.config.fitness_metric
-                _oos_fit = cv.oos_fitness(_metric)
-                if _oos_fit <= 0:
-                    self._reject_candidate(cid, f"oos_{_metric}={_oos_fit:.3f}")
+                if cv.oos_ic <= 0:
+                    self._reject_candidate(cid, f"oos_ic={cv.oos_ic:.4f}")
                     continue
 
                 pos = normalize_signal(sig)

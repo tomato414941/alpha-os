@@ -128,10 +128,10 @@ def count_pending_candidates(conn: sqlite3.Connection) -> int:
 def fetch_pending_candidates(
     conn: sqlite3.Connection,
     limit: int,
-) -> list[tuple[str, str, float]]:
+) -> list[tuple[str, str, float, str]]:
     rows = conn.execute(
         """
-        SELECT candidate_id, expression, fitness
+        SELECT candidate_id, expression, fitness, COALESCE(behavior_json, '{}')
         FROM candidates
         WHERE status = 'pending'
         ORDER BY
