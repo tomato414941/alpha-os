@@ -45,8 +45,41 @@ alpha-os is a system for strongly predictive strategies. It manages
 hypotheses, evaluates their predictions, and allocates capital based
 on results.
 
-alpha-os is a system for predictive strategies. It manages hypotheses,
-evaluates their predictions, and allocates capital based on results.
+### Multi-strategy extensibility
+
+The current system is a single predictive sleeve. The name "alpha-os"
+is goal-oriented (generate alpha), not method-oriented, so it can
+accommodate non-predictive strategies in the future.
+
+Different strategy types have fundamentally different internal
+pipelines. The only universal output is P&L.
+
+```
+alpha-os platform
+├── sleeve: predictive (current)
+│   feature → hypothesis → prediction → P&L
+├── sleeve: arbitrage (future)
+│   price feeds → spread detection → P&L
+├── sleeve: market making (future)
+│   order book → quoting → P&L
+└── ...
+
+shared layer (applies to all sleeves):
+  capital allocator — cross-sleeve allocation (Sharpe, correlation, drawdown)
+  risk manager — portfolio-level limits
+  execution — shared order infrastructure
+  data — shared market data
+```
+
+Each sleeve owns its internal pipeline. The platform evaluates sleeves
+by P&L characteristics, not by prediction accuracy. IC evaluates
+hypotheses within the predictive sleeve; Sharpe/drawdown evaluates
+sleeves at the platform level.
+
+This is the pod model used by multi-strategy hedge funds. The current
+alpha-os is one pod. Adding sleeves requires only the shared layer
+interfaces (P&L reporting, risk limits, capital requests), not changes
+to the predictive pipeline.
 
 ### Hypothesis types
 
