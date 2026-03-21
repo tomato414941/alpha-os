@@ -1,4 +1,4 @@
-"""Admission daemon — poll candidates queue, validate, adopt to registry."""
+"""Admission daemon — poll candidates queue, validate via OOS IC, adopt to registry."""
 from __future__ import annotations
 
 import logging
@@ -19,11 +19,6 @@ from ..alpha.admission_queue import (
 )
 from ..alpha.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.expression_identity import (
-    count_expression_features,
-    expression_feature_names,
-    expression_semantic_key,
-)
 from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..config import Config, DATA_DIR, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
@@ -35,104 +30,8 @@ from ..validation.purged_cv import purged_walk_forward_ic
 logger = logging.getLogger(__name__)
 
 
-def _axis_reason(axis: str, detail: str) -> str:
-    return f"{axis}: {detail}"
-
-
-def _non_rejected_managed_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:
-    return [
-        record
-        for record in registry.list_all()
-        if AlphaState.canonical(record.state) != AlphaState.REJECTED
-    ]
-
-
-def _feature_cap_reference_records(registry: ManagedAlphaStore) -> list[AlphaRecord]:
-    deployed = registry.list_deployed_alphas()
-    if deployed:
-        return deployed
-    return [
-        record
-        for record in registry.list_all()
-        if AlphaState.canonical(record.state) == AlphaState.ACTIVE
-    ]
-
-
-def _prune_active_overflow(
-    registry: ManagedAlphaStore,
-    *,
-    metric: str,
-    limit: int,
-) -> int:
-    active_count = registry.count(AlphaState.ACTIVE)
-    overflow = active_count - limit
-    if overflow <= 0:
-        return 0
-
-    for record in registry.bottom_trading(overflow, metric=metric):
-        registry.update_state(record.alpha_id, AlphaState.DORMANT)
-
-    logger.info(
-        "Admission cap: demoted %d weakest active alphas to dormant "
-        "(metric=%s, limit=%d, active_before=%d)",
-        overflow,
-        metric,
-        limit,
-        active_count,
-    )
-    return overflow
-
-
-def _semantic_duplicate_reason(
-    *,
-    expression: str,
-    semantic_owner_by_key: dict[str, str],
-    reject_semantic_duplicates: bool,
-) -> str:
-    if not reject_semantic_duplicates:
-        return ""
-    key = expression_semantic_key(expression)
-    owner = semantic_owner_by_key.get(key)
-    if owner is None:
-        return ""
-    return _axis_reason("diversity", f"semantic duplicate of {owner}")
-
-
-def _feature_cap_reason(
-    *,
-    expression: str,
-    feature_counts: dict[str, int],
-    limit: int,
-) -> str:
-    if limit <= 0:
-        return ""
-    overused = sorted(
-        name
-        for name in expression_feature_names(expression)
-        if feature_counts.get(name, 0) >= limit
-    )
-    if not overused:
-        return ""
-    preview = ", ".join(overused[:3])
-    return _axis_reason("diversity", f"feature cap {limit}: {preview}")
-
-
-def _classify_gate_reason(reason: str) -> str:
-    if reason.startswith(("OOS Sharpe", "OOS log-growth", "OOS |CVaR95|", "OOS tail-hit")):
-        return _axis_reason("quality", reason)
-    if reason.startswith(("PBO ", "DSR p-value", "Failed FDR", "Only ")):
-        return _axis_reason("confidence", reason)
-    if reason.startswith("Avg correlation"):
-        return _axis_reason("diversity", reason)
-    return _axis_reason("quality", reason)
-
-
-def _gate_failure_reason(reasons: list[str]) -> str:
-    return "; ".join(_classify_gate_reason(reason) for reason in reasons[:3])
-
-
 class AdmissionDaemon:
-    """Poll candidates table, validate, and adopt passing alphas."""
+    """Poll candidates table, validate via OOS IC, and adopt passing alphas."""
 
     def __init__(self, asset: str, config: Config):
         self.asset = asset
@@ -140,57 +39,6 @@ class AdmissionDaemon:
         self.admission_cfg = config.admission
         self._running = False
         self._round = 0
-
-    def _admission_metric(self) -> str:
-        return "sharpe"  # prune ordering always by oos_sharpe
-
-    def _prune_active_overflow(
-        self,
-        registry: ManagedAlphaStore,
-        *,
-        metric: str,
-        limit: int,
-    ) -> int:
-        return _prune_active_overflow(registry, metric=metric, limit=limit)
-
-    def _managed_registry_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
-        return _non_rejected_managed_records(registry)
-
-    def _semantic_key(self, expression: str) -> str:
-        return expression_semantic_key(expression)
-
-    def _feature_names(self, expression: str) -> set[str]:
-        return expression_feature_names(expression)
-
-    def _feature_cap_reference_records(self, registry: ManagedAlphaStore) -> list[AlphaRecord]:
-        return _feature_cap_reference_records(registry)
-
-    def _feature_counts(self, records: list[AlphaRecord]) -> dict[str, int]:
-        return count_expression_features(record.expression for record in records)
-
-    def _semantic_duplicate_reason(
-        self,
-        *,
-        expression: str,
-        semantic_owner_by_key: dict[str, str],
-    ) -> str:
-        return _semantic_duplicate_reason(
-            expression=expression,
-            semantic_owner_by_key=semantic_owner_by_key,
-            reject_semantic_duplicates=self.admission_cfg.reject_semantic_duplicates,
-        )
-
-    def _feature_cap_reason(
-        self,
-        *,
-        expression: str,
-        feature_counts: dict[str, int],
-    ) -> str:
-        return _feature_cap_reason(
-            expression=expression,
-            feature_counts=feature_counts,
-            limit=self.admission_cfg.max_feature_occurrences,
-        )
 
     def run(self) -> None:
         self._running = True
@@ -324,10 +172,9 @@ class AdmissionDaemon:
         # PBO removed: it used BacktestEngine (Sharpe-based), contradicting IC evaluation.
 
         registry = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
-        managed_records = self._managed_registry_records(registry)
         existing_ids = {
             record.expression: record.alpha_id
-            for record in managed_records
+            for record in registry.list_all()
         }
         n_adopted = 0
         n_rejected = 0
@@ -353,17 +200,12 @@ class AdmissionDaemon:
             self._adopt_candidate(cid, cv.oos_sharpe, 0.0, dsr_pvalue)
             n_adopted += 1
 
-        pruned = self._prune_active_overflow(
-            registry,
-            metric=self._admission_metric(),
-            limit=self.admission_cfg.max_active_alphas,
-        )
         registry.close()
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Round %d: %d candidates -> %d validated -> %d adopted, %d rejected, %d demoted (%.1fs)",
-            self._round, len(rows), len(validated), n_adopted, n_rejected, pruned, elapsed,
+            "Round %d: %d candidates -> %d validated -> %d adopted, %d rejected (%.1fs)",
+            self._round, len(rows), len(validated), n_adopted, n_rejected, elapsed,
         )
 
     def _load_data(self, features):
