@@ -1,13 +1,12 @@
 """Alpha lifecycle state machine: candidate → active ↔ dormant."""
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 
 import numpy as np
 
 from .quality import QualityEstimate
-from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from .managed_alphas import AlphaRecord, AlphaState
 
 
 @dataclass
@@ -99,123 +98,3 @@ def batch_live_transitions(
     return new
 
 
-class AlphaLifecycle:
-    """Manage state transitions for alphas based on validation metrics."""
-
-    def __init__(
-        self,
-        registry: ManagedAlphaStore,
-        config: LifecycleConfig | None = None,
-    ):
-        self.registry = registry
-        self.config = config or LifecycleConfig()
-
-    def evaluate_candidate(self, alpha_id: str) -> str:
-        """Evaluate a candidate alpha for promotion to active or rejection."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        if record.state != AlphaState.CANDIDATE:
-            return record.state
-
-        if self._passes_gate(record):
-            self.registry.update_state(alpha_id, AlphaState.ACTIVE)
-            return AlphaState.ACTIVE
-
-        self.registry.update_state(alpha_id, AlphaState.REJECTED)
-        return AlphaState.REJECTED
-
-    def evaluate_active(self, alpha_id: str, live_quality: float) -> str:
-        """Check if an active alpha should become dormant."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        if record.state != AlphaState.ACTIVE:
-            return record.state
-
-        if live_quality < self.config.active_quality_min:
-            self.registry.update_state(alpha_id, AlphaState.DORMANT)
-            return AlphaState.DORMANT
-        return AlphaState.ACTIVE
-
-    def evaluate_dormant(self, alpha_id: str, live_quality: float) -> str:
-        """Check if a dormant alpha should revive to active."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        if record.state != AlphaState.DORMANT:
-            return record.state
-
-        if live_quality >= self.config.dormant_revival_quality:
-            self.registry.update_state(alpha_id, AlphaState.ACTIVE)
-            return AlphaState.ACTIVE
-        return AlphaState.DORMANT
-
-    def evaluate(self, alpha_id: str, live_quality: float) -> str:
-        """Evaluate any alpha regardless of current state."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        new_state = compute_transition(record.state, live_quality, self.config)
-        if new_state != record.state:
-            self.registry.update_state(alpha_id, new_state)
-        return new_state
-
-    def evaluate_live(
-        self,
-        alpha_id: str,
-        estimate: QualityEstimate,
-        *,
-        dormant_revival_min_observations: int = 20,
-    ) -> str:
-        """Evaluate live state from a blended quality estimate."""
-        record = self.registry.get(alpha_id)
-        if record is None:
-            raise ValueError(f"Alpha {alpha_id} not found")
-        new_state = next_live_state(
-            record.state,
-            estimate,
-            self.config,
-            dormant_revival_min_observations=dormant_revival_min_observations,
-        )
-        if new_state != record.state:
-            self.registry.update_state(alpha_id, new_state)
-        return new_state
-
-    def _passes_gate(self, record: AlphaRecord) -> bool:
-        return passes_candidate_gate(record, self.config)
-
-
-# ---------------------------------------------------------------------------
-# Path A: Tenure bonus — reward long-lived alphas to stabilize top-30
-# ---------------------------------------------------------------------------
-
-
-def tenure_days(record: AlphaRecord, now: float | None = None) -> float:
-    """Days since alpha creation."""
-    now = now or time.time()
-    return max(0.0, (now - record.created_at) / 86400.0)
-
-
-def tenure_bonus(
-    record: AlphaRecord,
-    max_bonus: float = 0.2,
-    half_life_days: float = 7.0,
-    now: float | None = None,
-) -> float:
-    """Quality bonus that grows with alpha age (exponential saturation)."""
-    age = tenure_days(record, now)
-    if age <= 0 or half_life_days <= 0:
-        return 0.0
-    return max_bonus * (1.0 - 0.5 ** (age / half_life_days))
-
-
-def apply_tenure_bonus(
-    quality: float,
-    record: AlphaRecord,
-    max_bonus: float = 0.2,
-    half_life_days: float = 7.0,
-    now: float | None = None,
-) -> float:
-    """Add tenure bonus to a quality score."""
-    return quality + tenure_bonus(record, max_bonus, half_life_days, now)

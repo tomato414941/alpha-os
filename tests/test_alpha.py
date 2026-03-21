@@ -10,7 +10,6 @@ from alpha_os.alpha.managed_alphas import (
     CandidateSeed,
 )
 from alpha_os.alpha.lifecycle import (
-    AlphaLifecycle,
     LifecycleConfig,
     compute_transition,
     batch_transitions,
@@ -18,9 +17,6 @@ from alpha_os.alpha.lifecycle import (
     ST_CANDIDATE,
     ST_ACTIVE,
     ST_DORMANT,
-    tenure_days,
-    tenure_bonus,
-    apply_tenure_bonus,
 )
 from alpha_os.alpha.quality import QualityEstimate
 from alpha_os.alpha.deployed_alphas import (
@@ -491,36 +487,7 @@ class TestManagedAlphaStore:
 # Lifecycle
 # ---------------------------------------------------------------------------
 
-class TestAlphaLifecycle:
-    def _setup(self, tmp_path):
-        reg = ManagedAlphaStore(db_path=tmp_path / "test.db")
-        cfg = LifecycleConfig(
-            candidate_quality_min=0.5,
-            pbo_max=0.5,
-            dsr_pvalue_max=0.05,
-            correlation_max=0.5,
-        )
-        lc = AlphaLifecycle(reg, config=cfg)
-        return reg, lc
-
-    def test_candidate_passes_gate(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x",
-            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01, correlation_avg=0.1,
-        ))
-        state = lc.evaluate_candidate("a1")
-        assert state == AlphaState.ACTIVE
-
-    def test_candidate_fails_gate(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x",
-            oos_sharpe=0.1, pbo=0.8, dsr_pvalue=0.5,
-        ))
-        state = lc.evaluate_candidate("a1")
-        assert state == AlphaState.REJECTED
-
+class TestPassesCandidateGate:
     def test_passes_candidate_gate_pure_helper(self):
         cfg = LifecycleConfig(
             candidate_quality_min=0.5,
@@ -546,63 +513,6 @@ class TestAlphaLifecycle:
             oos_sharpe=0.4,
         )
         assert passes_candidate_gate(record, cfg) is False
-
-    def test_active_to_dormant(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
-            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
-        ))
-        state = lc.evaluate_active("a1", live_quality=0.1)
-        assert state == AlphaState.DORMANT
-
-    def test_active_stays(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
-        ))
-        state = lc.evaluate_active("a1", live_quality=0.8)
-        assert state == AlphaState.ACTIVE
-
-    def test_dormant_stays_dormant(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
-        ))
-        state = lc.evaluate_dormant("a1", live_quality=0.1)
-        assert state == AlphaState.DORMANT
-
-    def test_dormant_to_active(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
-        ))
-        state = lc.evaluate_dormant("a1", live_quality=0.4)
-        assert state == AlphaState.ACTIVE
-
-    def test_dormant_revival_full_cycle(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.DORMANT,
-        ))
-        # Step 1: revive to ACTIVE
-        state = lc.evaluate_dormant("a1", live_quality=0.4)
-        assert state == AlphaState.ACTIVE
-
-    def test_not_found_raises(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        with pytest.raises(ValueError):
-            lc.evaluate_candidate("nonexistent")
-
-    def test_evaluate_dispatches_correctly(self, tmp_path):
-        reg, lc = self._setup(tmp_path)
-        reg.register(AlphaRecord(
-            alpha_id="a1", expression="x", state=AlphaState.ACTIVE,
-            oos_sharpe=1.0, pbo=0.2, dsr_pvalue=0.01,
-        ))
-        state = lc.evaluate("a1", live_quality=0.1)
-        assert state == AlphaState.DORMANT
-        assert reg.get("a1").state == AlphaState.DORMANT
 
 
 class TestComputeTransition:
@@ -944,43 +854,3 @@ class TestSignalConsensus:
         weights = {"a1": 0.5, "a2": 0.3, "a3": 0.2}
         mean, std, cons = signal_consensus(signals, weights)
         assert 0.0 <= cons <= 1.0
-
-
-# ---------------------------------------------------------------------------
-# Path A: Tenure Bonus
-# ---------------------------------------------------------------------------
-
-
-class TestTenureBonus:
-    def _make_record(self, created_at: float) -> AlphaRecord:
-        return AlphaRecord(alpha_id="test", expression="x", created_at=created_at)
-
-    def test_new_alpha_no_bonus(self):
-        now = 1000000.0
-        rec = self._make_record(now)
-        assert tenure_bonus(rec, now=now) == 0.0
-
-    def test_half_life(self):
-        now = 1000000.0
-        rec = self._make_record(now - 7 * 86400)  # 7 days old
-        bonus = tenure_bonus(rec, max_bonus=0.2, half_life_days=7.0, now=now)
-        assert np.isclose(bonus, 0.1, atol=0.001)  # 50% of max at half-life
-
-    def test_old_alpha_converges(self):
-        now = 1000000.0
-        rec = self._make_record(now - 100 * 86400)  # 100 days old
-        bonus = tenure_bonus(rec, max_bonus=0.2, half_life_days=7.0, now=now)
-        assert bonus > 0.19  # close to max
-
-    def test_apply_adds_to_quality(self):
-        now = 1000000.0
-        rec = self._make_record(now - 14 * 86400)  # 14 days old
-        quality = 0.5
-        adjusted = apply_tenure_bonus(quality, rec, max_bonus=0.2, half_life_days=7.0, now=now)
-        assert adjusted > quality
-        assert adjusted < quality + 0.2
-
-    def test_tenure_days(self):
-        now = 1000000.0
-        rec = self._make_record(now - 3 * 86400)
-        assert np.isclose(tenure_days(rec, now=now), 3.0)
