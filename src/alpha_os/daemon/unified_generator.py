@@ -209,7 +209,7 @@ class UnifiedAlphaGeneratorDaemon:
                 result = evaluate_cross_asset_multi_horizon(
                     expr_str, data, self.universe,
                     horizons=DEFAULT_HORIZONS,
-                    fitness_metric=self.config.fitness_metric,
+                    fitness_metric="ic",  # fixed: IC for signal evaluation
                     benchmark_assets=bm_assets,
                 )
                 if not result.per_asset:
