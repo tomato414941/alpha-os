@@ -48,26 +48,8 @@ genomes the system can evaluate and maintain.
 
 ## Architecture
 
-```
-  Evolve (GP + MAP-Elites)
-      │
-      ▼
-  Validate (Purged WF-CV, DSR, PBO)
-      │
-      ▼
-  Admission Gate ─── fail ──→ REJECTED
-      │
-      pass
-      ▼
-  CANDIDATE ──────── pass ───────→ ACTIVE
-      │                              ▲
-      │ fail                         │ revival
-      ▼                              │
-  REJECTED                     DORMANT
-```
-
-The pipeline runs as a continuous cycle: generate candidates, validate
-statistically, admit survivors, then monitor and demote as edges decay.
+**Removed.** State machine replaced by stake-based pipeline.
+See `DESIGN.md` → Pipeline Stages.
 
 ## Alpha Expression DSL
 
