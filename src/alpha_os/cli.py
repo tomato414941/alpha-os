@@ -96,6 +96,11 @@ def _build_parser() -> argparse.ArgumentParser:
     smt.add_argument("--asset", type=str, default="BTC")
     smt.add_argument("--config", type=str, default=None)
 
+    # produce-predictions
+    pp = sub.add_parser("produce-predictions", help="Evaluate active alphas and write to prediction store")
+    pp.add_argument("--asset", type=str, default="BTC")
+    pp.add_argument("--config", type=str, default=None)
+
     # monitor
     mon = sub.add_parser("monitor", help="Monitor adopted alphas on new data")
     mon.add_argument("--once", action="store_true", help="Run one cycle and exit")
@@ -2315,6 +2320,16 @@ def cmd_submit_expression(args: argparse.Namespace) -> None:
         print("Already in queue (duplicate)")
 
 
+def cmd_produce_predictions(args: argparse.Namespace) -> None:
+    """Run registry producer: evaluate active alphas → prediction store."""
+    from alpha_os.config import Config
+    from alpha_os.predictions.registry_producer import produce_daily_predictions
+
+    cfg = Config.load(args.config)
+    n = produce_daily_predictions(args.asset, cfg)
+    print(f"Wrote {n} predictions to store")
+
+
 def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
     from alpha_os.alpha.handcrafted import (
         get_handcrafted_expressions,
@@ -2532,3 +2547,5 @@ def main(argv: list[str] | None = None) -> None:
         cmd_evaluate_expression(args)
     elif args.command == "submit":
         cmd_submit_expression(args)
+    elif args.command == "produce-predictions":
+        cmd_produce_predictions(args)

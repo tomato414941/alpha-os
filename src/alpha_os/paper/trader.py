@@ -621,8 +621,22 @@ class Trader:
         n_evaluated = 0
         n_failed = 0
         n_feature_filtered = 0
+        n_from_store = 0
         parsed_records: list[tuple] = []
         available_features = set(data.keys())
+
+        # Try reading from prediction store first
+        store_signals: dict[str, float] = {}
+        try:
+            from alpha_os.predictions.store import PredictionStore
+            pred_store = PredictionStore()
+            store_preds = pred_store.read_latest(today_date, assets=[self.asset])
+            for signal_id, assets in store_preds.items():
+                if self.asset in assets:
+                    store_signals[signal_id] = assets[self.asset]
+            pred_store.close()
+        except Exception:
+            pass
 
         for record in all_alphas:
             try:
@@ -639,16 +653,22 @@ class Trader:
 
         for record, expr in parsed_records:
             try:
-                signal = evaluate_expression(expr, data, len(matrix))
-                signal_norm = normalize_signal(signal)
-                signal_yesterday = float(signal_norm[-2])
-                if not np.isfinite(signal_yesterday):
-                    # Try further back if today's data is incomplete
-                    for offset in range(3, min(10, len(signal_norm))):
-                        fallback = float(signal_norm[-offset])
-                        if np.isfinite(fallback):
-                            signal_yesterday = fallback
-                            break
+                # Use prediction store if available, else compute directly
+                if record.alpha_id in store_signals:
+                    signal_yesterday = store_signals[record.alpha_id]
+                    signal = evaluate_expression(expr, data, len(matrix))
+                    signal_norm = normalize_signal(signal)
+                    n_from_store += 1
+                else:
+                    signal = evaluate_expression(expr, data, len(matrix))
+                    signal_norm = normalize_signal(signal)
+                    signal_yesterday = float(signal_norm[-2])
+                    if not np.isfinite(signal_yesterday):
+                        for offset in range(3, min(10, len(signal_norm))):
+                            fallback = float(signal_norm[-offset])
+                            if np.isfinite(fallback):
+                                signal_yesterday = fallback
+                                break
                 daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
                 if record.alpha_id not in dormant_ids and np.isfinite(signal_yesterday):
@@ -674,6 +694,8 @@ class Trader:
                 logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
                 n_failed += 1
 
+        if n_from_store:
+            logger.info("Cycle: %d/%d signals from prediction store", n_from_store, n_evaluated)
         if n_feature_filtered:
             logger.info(
                 "Cycle: %d/%d alphas skipped (missing features in current data)",
