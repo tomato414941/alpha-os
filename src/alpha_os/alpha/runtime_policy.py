@@ -26,9 +26,9 @@ def rank_trading_records(
     )
     tradable = [
         record for record in records
-        if AlphaState.canonical(record.state) in AlphaState.trading_states()
+        if record.stake > 0
     ]
-    tradable.sort(key=lambda record: record.oos_fitness(metric), reverse=True)
+    tradable.sort(key=lambda record: record.stake, reverse=True)
     preselected = tradable[:preselect_n]
     preselected.sort(
         key=lambda record: _rank_key(

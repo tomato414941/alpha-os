@@ -343,13 +343,6 @@ class AdmissionDaemon:
 
         registry = ManagedAlphaStore(asset_data_dir(self.asset) / "alpha_registry.db")
         managed_records = self._managed_registry_records(registry)
-        semantic_owner_by_key = {
-            self._semantic_key(record.expression): record.alpha_id
-            for record in managed_records
-        }
-        active_feature_counts = self._feature_counts(
-            self._feature_cap_reference_records(registry)
-        )
         existing_ids = {
             record.expression: record.alpha_id
             for record in managed_records
@@ -372,24 +365,6 @@ class AdmissionDaemon:
             )
 
             if result.passed:
-                duplicate_reason = self._semantic_duplicate_reason(
-                    expression=expr_str,
-                    semantic_owner_by_key=semantic_owner_by_key,
-                )
-                if duplicate_reason:
-                    self._reject_candidate(cid, duplicate_reason)
-                    n_rejected += 1
-                    continue
-
-                feature_cap_reason = self._feature_cap_reason(
-                    expression=expr_str,
-                    feature_counts=active_feature_counts,
-                )
-                if feature_cap_reason:
-                    self._reject_candidate(cid, feature_cap_reason)
-                    n_rejected += 1
-                    continue
-
                 alpha_id = alpha_id_for_expression(
                     expr_str,
                     existing_ids=existing_ids,
@@ -404,12 +379,10 @@ class AdmissionDaemon:
                     oos_log_growth=cv.oos_expected_log_growth,
                     pbo=batch_pbo,
                     dsr_pvalue=dsr_pvalue,
+                    stake=max(cv.oos_sharpe, 0.0),
                 )
                 registry.register(record)
                 self._adopt_candidate(cid, cv.oos_sharpe, batch_pbo, dsr_pvalue)
-                semantic_owner_by_key[self._semantic_key(expr_str)] = alpha_id
-                for name in self._feature_names(expr_str):
-                    active_feature_counts[name] = active_feature_counts.get(name, 0) + 1
 
                 n_adopted += 1
             else:
