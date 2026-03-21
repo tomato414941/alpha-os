@@ -54,16 +54,10 @@ class AlphaRecord:
     metadata: dict = field(default_factory=dict)
     stake: float = 0.0
 
-    _OOS_FITNESS_MAP = {
-        "sharpe": "oos_sharpe",
-        "log_growth": "oos_log_growth",
-        "ic": "oos_sharpe",
-        "ric": "oos_sharpe",
-    }
+    _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
 
     def oos_fitness(self, metric: str = "sharpe") -> float:
-        attr = self._OOS_FITNESS_MAP.get(metric, "oos_sharpe")
-        return getattr(self, attr)
+        return getattr(self, self._OOS_FITNESS_MAP[metric])
 
 
 @dataclass(frozen=True)
@@ -447,12 +441,7 @@ class ManagedAlphaStore:
             row = self._conn.execute("SELECT COUNT(*) FROM alphas").fetchone()
         return row[0]
 
-    _ORDER_COLUMN = {
-        "sharpe": "oos_sharpe",
-        "log_growth": "oos_log_growth",
-        "ic": "oos_sharpe",
-        "ric": "oos_sharpe",
-    }
+    _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
 
     def top_trading(self, n: int = 30, metric: str = "sharpe") -> list[AlphaRecord]:
         """Top-N alphas by fitness metric from active state (for trading)."""

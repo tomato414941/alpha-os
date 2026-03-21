@@ -264,7 +264,7 @@ class Trader:
         returns: list[float] | np.ndarray,
     ) -> QualityEstimate:
         return self.config.estimate_alpha_quality(
-            record.oos_fitness(self.config.fitness_metric),
+            record.oos_fitness("sharpe"),
             returns,
         )
 
@@ -559,7 +559,7 @@ class Trader:
             ),
             max_trading=max_trading,
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
-            metric=self.config.fitness_metric,
+            metric="sharpe",
         )
         dormant = [
             record for record in universe_records

@@ -208,7 +208,7 @@ def run_replay(
         n_alphas = len(all_records)
         logger.info("%d alphas loaded from registry", n_alphas)
         prior_quality_full = np.array(
-            [record.oos_fitness(config.fitness_metric) for record in all_records],
+            [record.oos_fitness("sharpe") for record in all_records],
             dtype=np.float64,
         )
 
@@ -310,7 +310,7 @@ def run_replay(
                 blended_quality=blended_quality_full,
                 confidence=confidence,
                 max_trading=config.paper.max_trading_alphas,
-                metric=config.fitness_metric,
+                metric="sharpe",
                 shortlist_preselect_factor=config.live_quality.shortlist_preselect_factor,
             )
 

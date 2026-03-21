@@ -22,17 +22,10 @@ class CVResult:
     n_folds: int
     fold_sharpes: list[float]
 
-    _OOS_FITNESS_MAP = {
-        "sharpe": "oos_sharpe",
-        "log_growth": "oos_expected_log_growth",
-        # IC-based metrics fall back to Sharpe for backtest-based validation
-        "ic": "oos_sharpe",
-        "ric": "oos_sharpe",
-    }
+    _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_expected_log_growth"}
 
     def oos_fitness(self, metric: str = "sharpe") -> float:
-        attr = self._OOS_FITNESS_MAP.get(metric, "oos_sharpe")
-        return getattr(self, attr)
+        return getattr(self, self._OOS_FITNESS_MAP[metric])
 
 
 def purged_walk_forward(

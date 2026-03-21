@@ -156,7 +156,7 @@ class ForwardRunner:
                 self.monitor.record_batch(alpha_id, all_returns)
                 status = self.monitor.check(alpha_id)
                 estimate = self.config.estimate_alpha_quality(
-                    record.oos_fitness(self.config.fitness_metric),
+                    record.oos_fitness("sharpe"),
                     all_returns,
                 )
 

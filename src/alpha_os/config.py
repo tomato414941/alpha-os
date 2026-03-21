@@ -314,7 +314,7 @@ class Config:
         return blend_quality(
             prior_quality,
             returns,
-            metric=self.fitness_metric,
+            metric="sharpe",
             rolling_window=self.forward.degradation_window,
             min_observations=self.live_quality.min_observations,
             full_weight_observations=self.live_quality.full_weight_observations,
