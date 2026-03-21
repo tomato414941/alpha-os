@@ -2202,20 +2202,24 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
         print("No cached eval universe. Run unified-generator first.")
         return
 
-    # Load data
+    # Load data: eval universe prices + features referenced by expression
+    from alpha_os.dsl import parse as dsl_parse
+    from alpha_os.alpha.expression_identity import expression_feature_names
+    expr_features = expression_feature_names(args.expr)
     db_path = DATA_DIR / "alpha_cache.db"
     store = DataStore(db_path, client)
-    needed = sorted(set(eval_assets) | set(all_signals[:200]))
+    needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))
     matrix = store.get_matrix(needed)
     store.close()
+    eval_set = set(eval_assets)
     for col in matrix.columns:
-        if col not in set(eval_assets):
+        if col not in eval_set:
             matrix[col] = matrix[col].fillna(0)
     data = {col: matrix[col].values for col in matrix.columns}
 
     print(f"Expression: {args.expr}")
     print(f"Eval universe: {len(eval_assets)} assets")
-    print(f"Data: {len(matrix)} rows")
+    print(f"Data: {len(matrix)} rows, {len(data)} signals")
     print()
 
     result = evaluate_cross_asset_multi_horizon(
@@ -2225,12 +2229,12 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
         benchmark_assets=cfg.backtest.benchmark_assets,
     )
 
-    print("Horizon  Mean IC  Assets")
-    print("-" * 35)
+    print("Horizon  Mean IC")
+    print("-" * 25)
     for h in sorted(result.fitness_by_horizon):
         ic = result.fitness_by_horizon[h]
         marker = " <-- best" if h == result.best_horizon else ""
-        print(f"  {h:2d}d    {ic:+.4f}   {len(result.per_asset) if h == result.best_horizon else '-':>5}{marker}")
+        print(f"  {h:2d}d    {ic:+.4f}{marker}")
     print()
     print(f"Best: horizon={result.best_horizon}d, IC={result.best_fitness:+.4f}")
 
@@ -2262,13 +2266,16 @@ def cmd_submit_expression(args: argparse.Namespace) -> None:
         print("No cached eval universe. Run unified-generator first.")
         return
 
+    from alpha_os.alpha.expression_identity import expression_feature_names
+    expr_features = expression_feature_names(args.expr)
     db_path = DATA_DIR / "alpha_cache.db"
     store = DataStore(db_path, client)
-    needed = sorted(set(eval_assets) | set(all_signals[:200]))
+    needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))
     matrix = store.get_matrix(needed)
     store.close()
+    eval_set = set(eval_assets)
     for col in matrix.columns:
-        if col not in set(eval_assets):
+        if col not in eval_set:
             matrix[col] = matrix[col].fillna(0)
     data = {col: matrix[col].values for col in matrix.columns}
 
