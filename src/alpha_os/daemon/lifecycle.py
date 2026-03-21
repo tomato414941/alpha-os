@@ -19,13 +19,18 @@ STAKE_LOOKBACK_DAYS = 60
 MIN_STAKE_OBSERVATIONS = 10
 
 
-def _compute_rolling_stake(returns: np.ndarray, lookback: int = STAKE_LOOKBACK_DAYS) -> float:
+def _compute_rolling_stake(
+    returns: np.ndarray,
+    lookback: int = STAKE_LOOKBACK_DAYS,
+    prior_stake: float = 0.0,
+) -> float:
     """Compute stake from rolling mean of recent returns.
 
     Stake = mean of last N daily returns. Positive returns → positive stake.
+    If insufficient observations, returns prior_stake unchanged.
     """
     if len(returns) < MIN_STAKE_OBSERVATIONS:
-        return 0.0
+        return prior_stake  # keep bootstrap value until enough data
     recent = returns[-lookback:] if len(returns) > lookback else returns
     mean_ret = float(np.mean(recent))
     return max(mean_ret, 0.0)
@@ -78,7 +83,7 @@ class LifecycleDaemon:
             returns = forward_tracker.get_returns(record.alpha_id)
 
             # Update stake from rolling forward returns
-            new_stake = _compute_rolling_stake(np.array(returns))
+            new_stake = _compute_rolling_stake(np.array(returns), prior_stake=record.stake)
             if abs(new_stake - record.stake) > 1e-6:
                 stake_updates[record.alpha_id] = new_stake
                 n_stake_updated += 1
