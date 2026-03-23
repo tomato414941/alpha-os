@@ -8,14 +8,14 @@ from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, price_signal, stratified_feature_subset
-from alpha_os.alpha.cross_asset import evaluate_cross_asset
-from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
-from alpha_os.alpha.admission_queue import CandidateSeed
-from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
+from alpha_os.dsl.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.evolution.behavior import compute_behavior
 from alpha_os.evolution.discovery_pool import DiscoveryPool
+from alpha_os.legacy.admission_queue import CandidateSeed
+from alpha_os.legacy.managed_alphas import ManagedAlphaStore
+from alpha_os.research.cross_asset import evaluate_cross_asset
 from datetime import date
 import random
 import logging

@@ -13,17 +13,17 @@ from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, price_signal
-from alpha_os.alpha.managed_alphas import ManagedAlphaStore
-from alpha_os.alpha.combiner import (
+from alpha_os.dsl import parse
+from alpha_os.dsl.evaluator import normalize_signal, sanitize_signal
+from alpha_os.hypotheses.combiner import (
     compute_tc_scores,
     compute_tc_weights,
     cross_asset_neutralize,
     weighted_combine_scalar,
 )
-from alpha_os.alpha.evaluator import normalize_signal, sanitize_signal
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.backtest import metrics
-from alpha_os.dsl import parse
+from alpha_os.legacy.managed_alphas import ManagedAlphaStore
 
 
 def run_backtest():

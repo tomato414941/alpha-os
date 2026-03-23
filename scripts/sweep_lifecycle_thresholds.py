@@ -90,7 +90,7 @@ def main() -> int:
     candidate_values = _parse_values(args.candidate_values)
     active_values = _parse_values(args.active_values)
 
-    from alpha_os.alpha.admission_replay import (
+    from alpha_os.legacy.admission_replay import (
         apply_registry_snapshot,
         load_source_records,
         materialize_admission_snapshot,

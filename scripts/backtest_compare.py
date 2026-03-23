@@ -2,15 +2,15 @@
 import numpy as np
 from pathlib import Path
 from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
-from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
+from alpha_os.data.store import DataStore
 from alpha_os.data.universe import build_feature_list
-from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.benchmark import build_benchmark_returns
-from alpha_os.alpha.evaluator import sanitize_signal
 from alpha_os.dsl import parse
+from alpha_os.dsl.evaluator import sanitize_signal
+from alpha_os.legacy.managed_alphas import ManagedAlphaStore
 from datetime import date
 
 cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
