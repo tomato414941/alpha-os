@@ -299,6 +299,51 @@ Important recovery rule:
 - use them as the canonical draft once service inventory cleanup is complete
 - enable only the `paper` chain first; live trading units remain out of scope
 
+## Code Support Matrix
+
+The repo should not treat every historical path as equally supported.
+
+Support classes:
+
+- `current`: part of the hypotheses-first recovery target; keep working and test
+- `research`: useful for bounded analysis, but not part of the scheduler-safe runtime
+- `archive`: retained only for reference or migration context; do not extend
+
+### CLI Classification
+
+| Surface | Class | Rule |
+|---------|-------|------|
+| `hypothesis-seeder` | current | keep as a bounded runtime stage |
+| `sync-signal-cache` | current | keep as a bounded runtime stage |
+| `produce-predictions` | current | keep as a bounded runtime stage |
+| `trade --once --venue paper` | current | keep as the canonical bounded trade entrypoint |
+| `runtime-status` | current | keep as the runtime observation entrypoint |
+| `testnet-readiness` | current | keep as readiness accounting for repeated bounded runs |
+| `lifecycle`, `rebalance-allocation-trust`, `analyze-live-breadth` | current | keep only if they operate on `hypotheses` and remain bounded |
+| `generate`, `backtest`, `evolve`, `validate`, `evaluate`, `produce-classical` | research | move under an explicit research boundary; do not treat as runtime commands |
+| `paper --replay`, `replay-experiment`, `replay-matrix` | research | keep only for offline experiments until rewritten around current inputs |
+| `admission-daemon`, `prune-stale-candidates`, `enqueue-discovery-pool`, `unified-generator`, `alpha-funnel` | archive | legacy registry/discovery surface; freeze and remove from the default runtime path |
+| `paper --schedule`, `trade --schedule`, `paper --summary`, `trade --summary`, event-driven trade flags | archive | recovery model prefers bounded oneshot jobs; always-on convenience paths are out of scope |
+
+### Module Classification
+
+| Module area | Class | Rule |
+|------------|-------|------|
+| `hypotheses`, `predictions.store`, `data`, `execution`, `risk`, `validation.testnet`, `runtime_lock`, `runtime_profile` | current | these form the bounded recovery runtime and should be the main maintenance target |
+| `paper.trader`, `paper.tracker`, `daemon.hypothesis_seeder` | current | keep only the minimum code needed for bounded paper runtime and seeding |
+| `dsl`, `backtest`, `evolution`, `experiments`, `predictions.classical_producer` | research | keep available for offline work, but isolate from runtime assumptions |
+| `paper.simulator`, `paper.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
+| `alpha.managed_alphas`, `alpha.deployed_alphas`, `alpha.admission_replay`, `alpha.funnel`, `alpha.monitor`, `daemon.admission`, `daemon.lifecycle`, `daemon.unified_generator`, `pipeline` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
+| `alpha.evaluator`, `alpha.quality`, `alpha.handcrafted`, `alpha.expression_identity`, `alpha.runtime_policy` | split later | retain only pure logic that is still used; move surviving pieces into non-legacy modules and delete the shell |
+
+### Cleanup Rules
+
+- the default `alpha-os` CLI should expose `current` commands first and treat the rest as opt-in paths
+- `research` commands should move under an explicit namespace or separate entrypoint
+- `archive` code must not be a dependency of the bounded runtime path
+- no new features should land in `archive` areas; only extraction, migration, or deletion is allowed
+- if a legacy path is still needed, rewrite it around `hypotheses` inputs instead of preserving registry-era state machines
+
 ## Status Labels
 
 - `broken`: observed runtime failure or contradiction exists
