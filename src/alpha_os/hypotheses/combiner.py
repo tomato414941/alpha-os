@@ -125,6 +125,10 @@ def select_low_correlation(
         return []
 
     priority = np.nan_to_num(np.asarray(quality_scores, dtype=np.float64), nan=0.0)
+    if np.max(priority) <= 0:
+        priority = compute_diversity_scores(
+            _sanitize_signal_array(np.asarray(signals, dtype=np.float64))
+        )
     order = np.argsort(-priority)
     selected: list[int] = [int(order[0])]
 
@@ -158,6 +162,30 @@ def select_low_correlation(
     return selected
 
 
+def compute_diversity_scores(
+    signals: np.ndarray,
+    chunk_size: int = 1000,
+) -> np.ndarray:
+    n_rows, n_cols = signals.shape
+    if n_rows <= 1:
+        return np.ones(n_rows, dtype=np.float64)
+
+    means = signals.mean(axis=1, keepdims=True)
+    stds = signals.std(axis=1, keepdims=True)
+    stds = np.where(stds > 1e-12, stds, 1.0)
+    z_scores = (signals - means) / stds
+
+    abs_corr_sum = np.zeros(n_rows, dtype=np.float64)
+    for start in range(0, n_rows, chunk_size):
+        end = min(start + chunk_size, n_rows)
+        chunk_corr = z_scores[start:end] @ z_scores.T / n_cols
+        np.abs(chunk_corr, out=chunk_corr)
+        abs_corr_sum[start:end] = chunk_corr.sum(axis=1) - 1.0
+
+    avg_abs_corr = abs_corr_sum / max(n_rows - 1, 1)
+    return np.clip(1.0 - avg_abs_corr, 0.0, 1.0)
+
+
 def cross_asset_neutralize(
     signals: dict[str, float],
 ) -> dict[str, float]:
@@ -172,6 +200,14 @@ def cross_asset_neutralize(
         key: (float(value - mean) if np.isfinite(value) else 0.0)
         for key, value in signals.items()
     }
+
+
+def weighted_combine(
+    signals: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    combined = weights @ _sanitize_signal_array(signals)
+    return np.clip(combined, -1.0, 1.0)
 
 
 def weighted_combine_scalar(
