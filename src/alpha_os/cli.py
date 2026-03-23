@@ -1339,7 +1339,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         record_daily_contributions,
     )
     from alpha_os.hypotheses.breadth import (
-        apply_bootstrap_redundancy_cap,
+        apply_capital_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -1395,12 +1395,12 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
             )
         finally:
             data_store.close()
-        plan = apply_bootstrap_redundancy_cap(
+        plan = apply_capital_redundancy_cap(
             plan,
             records,
             data=breadth_data,
             asset=trader.asset,
-            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
         )
     updates = apply_allocation_rebalance_plan(trader.registry, plan)
@@ -1754,7 +1754,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     from alpha_os.forward.tracker import ForwardTracker
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses.breadth import (
-        apply_bootstrap_redundancy_cap,
+        apply_capital_redundancy_cap,
         load_breadth_matrix,
     )
     from alpha_os.hypotheses import (
@@ -1801,12 +1801,12 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             asset=args.asset,
             lookback=cfg.forward.degradation_window,
         )
-        plan = apply_bootstrap_redundancy_cap(
+        plan = apply_capital_redundancy_cap(
             plan,
             records,
             data=breadth_data,
             asset=args.asset,
-            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
         )
         zeroed = sum(
@@ -1862,7 +1862,7 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses.breadth import (
         analyze_capital_breadth,
-        load_bootstrap_capital_backed_records,
+        load_capital_backed_records,
         load_breadth_matrix,
     )
     from alpha_os.hypotheses.store import HypothesisStore
@@ -1871,7 +1871,7 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
     store = HypothesisStore(HYPOTHESES_DB)
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
-        records = load_bootstrap_capital_backed_records(store)
+        records = load_capital_backed_records(store)
         data = load_breadth_matrix(
             data_store,
             records,
@@ -1925,7 +1925,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
         build_allocation_rebalance_plan,
     )
     from alpha_os.hypotheses.breadth import (
-        apply_bootstrap_redundancy_cap,
+        apply_capital_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -1984,12 +1984,12 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             asset=args.asset,
             lookback=cfg.forward.degradation_window,
         )
-        plan = apply_bootstrap_redundancy_cap(
+        plan = apply_capital_redundancy_cap(
             plan,
             records,
             data=breadth_data,
             asset=args.asset,
-            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
         )
         updates = apply_allocation_rebalance_plan(store, plan)

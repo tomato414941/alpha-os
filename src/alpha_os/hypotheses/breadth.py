@@ -126,6 +126,17 @@ def load_bootstrap_capital_backed_records(store, *, floor: float = 0.0) -> list[
     return records
 
 
+def load_capital_backed_records(store, *, floor: float = 0.0) -> list[HypothesisRecord]:
+    records = []
+    for record in store.list_observation_active():
+        capital_eligible = bool(
+            record.metadata.get("lifecycle_capital_eligible", record.stake > floor)
+        )
+        if capital_eligible and record.stake > floor:
+            records.append(record)
+    return records
+
+
 def load_breadth_matrix(
     store: DataStore,
     records: list[HypothesisRecord],
@@ -152,10 +163,51 @@ def apply_bootstrap_redundancy_cap(
     corr_max: float,
     floor: float = 0.0,
 ) -> list[AllocationRebalanceEntry]:
+    return _apply_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset=asset,
+        corr_max=corr_max,
+        floor=floor,
+        eligibility=lambda entry: entry.research_backed,
+    )
+
+
+def apply_capital_redundancy_cap(
+    plan: list[AllocationRebalanceEntry],
+    records: list[HypothesisRecord],
+    *,
+    data: dict[str, np.ndarray],
+    asset: str,
+    corr_max: float,
+    floor: float = 0.0,
+) -> list[AllocationRebalanceEntry]:
+    return _apply_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset=asset,
+        corr_max=corr_max,
+        floor=floor,
+        eligibility=lambda entry: entry.capital_eligible,
+    )
+
+
+def _apply_redundancy_cap(
+    plan: list[AllocationRebalanceEntry],
+    records: list[HypothesisRecord],
+    *,
+    data: dict[str, np.ndarray],
+    asset: str,
+    corr_max: float,
+    floor: float,
+    eligibility,
+) -> list[AllocationRebalanceEntry]:
     record_by_id = {record.hypothesis_id: record for record in records}
     series_by_id: dict[str, np.ndarray] = {}
     for entry in plan:
-        if not entry.research_backed or entry.proposed_stake <= floor:
+        if not eligibility(entry) or entry.proposed_stake <= floor:
             continue
         record = record_by_id.get(entry.hypothesis_id)
         if record is None:

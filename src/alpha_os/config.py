@@ -174,7 +174,7 @@ class LifecycleTomlConfig:
     active_quality_min: float = 0.0
     dormant_revival_quality: float = 0.0
     correlation_max: float = 0.5
-    bootstrap_redundancy_corr_max: float = 0.7
+    capital_redundancy_corr_max: float = 0.7
     bootstrap_weight: float = 0.25
     live_proven_quality_min: float = 0.05
     live_proven_marginal_contribution_min: float = 0.0
@@ -317,7 +317,7 @@ class Config:
 
     def to_lifecycle_config(self):
         """Build the lifecycle config used by live state transitions."""
-        from alpha_os.alpha.lifecycle import LifecycleConfig
+        from alpha_os.hypotheses.state_lifecycle import LifecycleConfig
 
         return LifecycleConfig(
             candidate_quality_min=self.lifecycle.candidate_quality_min,

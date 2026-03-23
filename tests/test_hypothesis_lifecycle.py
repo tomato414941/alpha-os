@@ -24,6 +24,7 @@ from alpha_os.hypotheses import (
 )
 from alpha_os.data.store import DataStore
 from alpha_os.forward.tracker import ForwardTracker
+from alpha_os.hypotheses.lifecycle import AllocationRebalanceEntry
 
 
 def test_weighted_prediction_uses_stakes():
@@ -481,6 +482,84 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
     forward_tracker.close()
     data_store.close()
     store.close()
+
+
+def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
+    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+
+    records = [
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+        HypothesisRecord(
+            hypothesis_id="h2",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+    ]
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="h1",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            capital_eligible=True,
+            capital_reason="live_proven",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.4,
+            live_quality=0.4,
+            raw_live_quality=0.4,
+            confidence=1.0,
+            marginal_contribution=0.02,
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="h2",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            capital_eligible=True,
+            capital_reason="live_proven",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.2,
+            live_quality=0.2,
+            raw_live_quality=0.2,
+            confidence=1.0,
+            marginal_contribution=0.01,
+        ),
+    ]
+    data = {
+        "btc_ohlcv": [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0, 116.0, 118.0, 120.0],
+    }
+
+    capped = apply_capital_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset="BTC",
+        corr_max=0.7,
+        floor=0.0,
+    )
+
+    kept = next(entry for entry in capped if entry.hypothesis_id == "h1")
+    dropped = next(entry for entry in capped if entry.hypothesis_id == "h2")
+    assert kept.proposed_stake == pytest.approx(0.4)
+    assert dropped.proposed_stake == pytest.approx(0.0)
+    assert dropped.redundancy_capped_by == "h1"
+    assert dropped.redundancy_correlation > 0.7
 
 
 def test_record_daily_contributions_persists_to_same_db(tmp_path):
