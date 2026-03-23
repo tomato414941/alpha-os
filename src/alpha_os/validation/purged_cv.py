@@ -131,7 +131,10 @@ def purged_walk_forward_ic(
     For each fold, computes IC between the signal and residualized
     forward returns at the given horizon. No backtest engine needed.
     """
-    from alpha_os.alpha.cross_asset import _forward_returns, _residualize
+    from alpha_os.research.cross_asset import (
+        forward_returns,
+        residualize_forward_returns,
+    )
 
     n = len(prices)
     if n < min_train + embargo + horizon + 20:
@@ -152,8 +155,8 @@ def purged_walk_forward_ic(
         oos_signal = alpha_signal[test_start:test_end]
         oos_prices = prices[test_start:test_end]
 
-        fwd = _forward_returns(oos_prices, horizon)
-        fwd = _residualize(fwd, benchmark_returns, test_start, horizon)
+        fwd = forward_returns(oos_prices, horizon)
+        fwd = residualize_forward_returns(fwd, benchmark_returns, test_start, horizon)
         sig_for_ic = oos_signal[: len(fwd)]
 
         ic = metrics.rank_ic(sig_for_ic, fwd)
