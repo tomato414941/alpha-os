@@ -18,12 +18,12 @@ from ..legacy.admission_queue import (
     reset_candidates_to_pending,
 )
 from ..legacy.admission_replay import alpha_id_for_expression
-from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
+from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.purged_cv import purged_walk_forward_ic
 
