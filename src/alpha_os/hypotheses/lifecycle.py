@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .allocation_policy import (
     DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN,
@@ -16,7 +16,6 @@ from .allocation_policy import (
     DEFAULT_QUALITY_WEIGHT,
     bootstrap_trust,
     capital_eligibility_breakdown,
-    is_capital_eligible,
     live_promotion_blocker,
     target_stake,
 )
@@ -26,6 +25,7 @@ from .store import HypothesisStatus, HypothesisStore
 DEFAULT_LOOKBACK = 20
 DEFAULT_MIN_OBSERVATIONS = 5
 DEFAULT_STAKE_UPDATE_RATE = 0.10
+DEFAULT_BATCH_RESEARCH_CAPITAL_CANDIDATES_MAX = 12
 
 
 @dataclass(frozen=True)
@@ -47,8 +47,63 @@ class AllocationRebalanceEntry:
     raw_live_quality: float
     confidence: float
     marginal_contribution: float
+    research_quality_source: str = ""
+    research_candidate_capped: bool = False
     redundancy_capped_by: str = ""
     redundancy_correlation: float = 0.0
+
+
+def _apply_batch_research_candidate_gate(
+    plan: list[AllocationRebalanceEntry],
+    *,
+    max_candidates: int,
+    floor: float,
+) -> list[AllocationRebalanceEntry]:
+    if max_candidates <= 0:
+        return plan
+
+    ranked = sorted(
+        (
+            entry
+            for entry in plan
+            if entry.research_quality_source == "batch_research_score"
+            and entry.research_retained
+            and not entry.live_proven
+            and entry.proposed_stake > floor
+        ),
+        key=lambda entry: (
+            entry.bootstrap_trust_value,
+            entry.blended_quality,
+            entry.n_observations,
+            entry.hypothesis_id,
+        ),
+        reverse=True,
+    )
+    allowed_ids = {entry.hypothesis_id for entry in ranked[:max_candidates]}
+    if len(allowed_ids) == len(ranked):
+        return plan
+
+    gated: list[AllocationRebalanceEntry] = []
+    for entry in plan:
+        if (
+            entry.research_quality_source == "batch_research_score"
+            and entry.research_retained
+            and not entry.live_proven
+            and entry.proposed_stake > floor
+            and entry.hypothesis_id not in allowed_ids
+        ):
+            gated.append(
+                replace(
+                    entry,
+                    proposed_stake=float(floor),
+                    capital_eligible=False,
+                    capital_reason="research_candidate_capped",
+                    research_candidate_capped=True,
+                )
+            )
+            continue
+        gated.append(entry)
+    return gated
 
 
 def weighted_prediction(
@@ -167,6 +222,9 @@ def update_stakes_from_history(
     batch_research_normalized_quality_min: float = (
         DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
     ),
+    batch_research_capital_candidates_max: int = (
+        DEFAULT_BATCH_RESEARCH_CAPITAL_CANDIDATES_MAX
+    ),
     stake_update_rate: float = DEFAULT_STAKE_UPDATE_RATE,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
@@ -178,125 +236,47 @@ def update_stakes_from_history(
     archive_on_zero: bool = False,
     live_returns_for: Callable[[str], list[float]] | None = None,
 ) -> dict[str, float]:
-    updates: dict[str, float] = {}
-    for record in store.list_all():
-        research_quality_source = str(
-            record.metadata.get("prior_quality_source")
-            or record.metadata.get("research_quality_source")
-            or ""
-        )
-        history = store.contribution_history(record.hypothesis_id, limit=lookback)
-        recent = history[:lookback]
-        marginal = sum(recent) / len(recent) if recent else 0.0
-        live_returns = (
-            live_returns_for(record.hypothesis_id)
-            if live_returns_for is not None
-            else list(reversed(recent))
-        )
-        estimate = blend_quality(
-            record.oos_fitness(metric),
-            live_returns,
-            metric=metric,
-            rolling_window=lookback,
-            min_observations=min_observations,
-            full_weight_observations=full_weight_observations,
-            early_stage_full_weight_observations=early_stage_full_weight_observations,
-            sharpe_clip_abs=sharpe_clip_abs,
-            log_growth_clip_abs=log_growth_clip_abs,
-        )
-        target = target_stake(
-            estimate.blended_quality,
-            estimate.confidence,
-            marginal,
-            research_quality=record.oos_fitness(metric),
-            research_quality_source=research_quality_source,
-            metric=metric,
-            bootstrap_weight=bootstrap_weight,
-            batch_research_weight=batch_research_weight,
-            quality_weight=quality_weight,
-            marginal_contribution_weight=marginal_contribution_weight,
-            floor=floor,
-        )
-        if not is_capital_eligible(
-            research_quality=record.oos_fitness(metric),
-            research_quality_source=research_quality_source,
-            metric=metric,
-            bootstrap_weight=bootstrap_weight,
-            batch_research_weight=batch_research_weight,
-            batch_research_normalized_quality_min=batch_research_normalized_quality_min,
-            has_min_observations=estimate.has_min_observations,
-            live_quality=estimate.live_quality,
-            marginal_contribution=marginal,
-            live_proven_quality_min=live_proven_quality_min,
-            live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
-            bootstrap_retention_quality_min=bootstrap_retention_quality_min,
-            bootstrap_retention_marginal_contribution_min=bootstrap_retention_marginal_contribution_min,
-            floor=floor,
-        ):
-            target = floor
-        research_backed, research_retained, live_proven, capital_reason = (
-            capital_eligibility_breakdown(
-                research_quality=record.oos_fitness(metric),
-                research_quality_source=research_quality_source,
-                metric=metric,
-                bootstrap_weight=bootstrap_weight,
-                batch_research_weight=batch_research_weight,
-                batch_research_normalized_quality_min=batch_research_normalized_quality_min,
-                has_min_observations=estimate.has_min_observations,
-                live_quality=estimate.live_quality,
-                marginal_contribution=marginal,
-                live_proven_quality_min=live_proven_quality_min,
-                live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
-                bootstrap_retention_quality_min=bootstrap_retention_quality_min,
-                bootstrap_retention_marginal_contribution_min=(
-                    bootstrap_retention_marginal_contribution_min
-                ),
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric=metric,
+        lookback=lookback,
+        min_observations=min_observations,
+        full_weight_observations=full_weight_observations,
+        early_stage_full_weight_observations=early_stage_full_weight_observations,
+        sharpe_clip_abs=sharpe_clip_abs,
+        log_growth_clip_abs=log_growth_clip_abs,
+        quality_weight=quality_weight,
+        marginal_contribution_weight=marginal_contribution_weight,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        batch_research_normalized_quality_min=batch_research_normalized_quality_min,
+        batch_research_capital_candidates_max=batch_research_capital_candidates_max,
+        live_proven_quality_min=live_proven_quality_min,
+        live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+        bootstrap_retention_quality_min=bootstrap_retention_quality_min,
+        bootstrap_retention_marginal_contribution_min=bootstrap_retention_marginal_contribution_min,
+        floor=floor,
+        live_returns_for=live_returns_for,
+    )
+    smoothed_plan = [
+        replace(
+            entry,
+            proposed_stake=updated_stake(
+                entry.current_stake,
+                entry.proposed_stake,
+                stake_update_rate=stake_update_rate,
                 floor=floor,
-            )
+            ),
         )
-        new_stake = updated_stake(
-            record.stake,
-            target,
-            stake_update_rate=stake_update_rate,
-            floor=floor,
-        )
-        store.update_metadata(
-            record.hypothesis_id,
-            {
-                "lifecycle_live_quality": estimate.live_quality,
-                "lifecycle_raw_live_quality": estimate.raw_live_quality,
-                "lifecycle_blended_quality": estimate.blended_quality,
-                "lifecycle_quality_confidence": estimate.confidence,
-                "lifecycle_marginal_contribution": marginal,
-                "lifecycle_bootstrap_trust": bootstrap_trust(
-                    record.oos_fitness(metric),
-                    metric=metric,
-                    bootstrap_weight=bootstrap_weight,
-                    batch_research_weight=batch_research_weight,
-                    research_quality_source=research_quality_source,
-                ),
-                "lifecycle_research_quality_source": research_quality_source,
-                "lifecycle_n_observations": estimate.n_observations,
-                "lifecycle_research_backed": research_backed,
-                "lifecycle_research_retained": research_retained,
-                "lifecycle_live_proven": live_proven,
-                "lifecycle_capital_eligible": research_retained or live_proven,
-                "lifecycle_capital_reason": capital_reason,
-                "lifecycle_live_promotion_blocker": live_promotion_blocker(
-                    has_min_observations=estimate.has_min_observations,
-                    live_quality=estimate.live_quality,
-                    marginal_contribution=marginal,
-                    live_proven_quality_min=live_proven_quality_min,
-                    live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
-                ),
-                "lifecycle_target_stake": target,
-            },
-        )
-        if abs(new_stake - record.stake) > 1e-12:
-            store.update_stake(record.hypothesis_id, new_stake)
-            updates[record.hypothesis_id] = new_stake
-        if archive_on_zero and new_stake <= floor and record.status == HypothesisStatus.ACTIVE:
-            store.update_status(record.hypothesis_id, HypothesisStatus.ARCHIVED)
+        for entry in plan
+    ]
+    updates = apply_allocation_rebalance_plan(store, smoothed_plan)
+    if archive_on_zero:
+        for entry in smoothed_plan:
+            if entry.proposed_stake <= floor:
+                record = store.get(entry.hypothesis_id)
+                if record is not None and record.status == HypothesisStatus.ACTIVE:
+                    store.update_status(entry.hypothesis_id, HypothesisStatus.ARCHIVED)
     return updates
 
 
@@ -316,6 +296,9 @@ def build_allocation_rebalance_plan(
     batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
     batch_research_normalized_quality_min: float = (
         DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
+    batch_research_capital_candidates_max: int = (
+        DEFAULT_BATCH_RESEARCH_CAPITAL_CANDIDATES_MAX
     ),
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
@@ -398,6 +381,7 @@ def build_allocation_rebalance_plan(
         plan.append(
             AllocationRebalanceEntry(
                 hypothesis_id=record.hypothesis_id,
+                research_quality_source=research_quality_source,
                 current_stake=float(record.stake),
                 target_stake=float(target),
                 proposed_stake=float(proposed),
@@ -422,7 +406,11 @@ def build_allocation_rebalance_plan(
                 marginal_contribution=float(marginal),
             )
         )
-    return plan
+    return _apply_batch_research_candidate_gate(
+        plan,
+        max_candidates=batch_research_capital_candidates_max,
+        floor=floor,
+    )
 
 
 def apply_allocation_rebalance_plan(
@@ -440,12 +428,14 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_quality_confidence": entry.confidence,
                 "lifecycle_marginal_contribution": entry.marginal_contribution,
                 "lifecycle_bootstrap_trust": entry.bootstrap_trust_value,
+                "lifecycle_research_quality_source": entry.research_quality_source,
                 "lifecycle_n_observations": entry.n_observations,
                 "lifecycle_research_backed": entry.research_backed,
                 "lifecycle_research_retained": entry.research_retained,
                 "lifecycle_live_proven": entry.live_proven,
                 "lifecycle_capital_eligible": entry.capital_eligible,
                 "lifecycle_capital_reason": entry.capital_reason,
+                "lifecycle_research_candidate_capped": entry.research_candidate_capped,
                 "lifecycle_live_promotion_blocker": entry.live_promotion_blocker,
                 "lifecycle_target_stake": entry.target_stake,
                 "lifecycle_rebalance_proposed_stake": entry.proposed_stake,

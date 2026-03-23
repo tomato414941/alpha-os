@@ -217,6 +217,8 @@ def test_update_stakes_from_history_updates_store(tmp_path):
             estimate.blended_quality,
             estimate.confidence,
             (0.5 + 0.3 + 0.1) / 3,
+            research_quality=0.8,
+            metric="log_growth",
         ),
     )
 
@@ -312,7 +314,7 @@ def test_update_stakes_from_history_keeps_unscored_unproven_at_zero(tmp_path):
     assert updates == {}
     assert updated is not None
     assert updated.stake == pytest.approx(0.0)
-    assert updated.metadata["lifecycle_target_stake"] == pytest.approx(0.0)
+    assert updated.metadata["lifecycle_rebalance_proposed_stake"] == pytest.approx(0.0)
     store.close()
 
 
@@ -425,6 +427,59 @@ def test_build_allocation_rebalance_plan_demotes_weak_research_backed_hypothesis
     assert entry.capital_reason == "research_demoted"
     assert entry.live_promotion_blocker == "weak_live_quality_and_contribution"
     assert entry.proposed_stake == pytest.approx(0.0)
+    store.close()
+
+
+def test_build_allocation_rebalance_plan_caps_batch_research_candidates(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="strong",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "x"},
+            stake=0.0,
+            metadata={
+                "oos_sharpe": 1.2,
+                "research_quality_source": "batch_research_score",
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="weak",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "y"},
+            stake=0.0,
+            metadata={
+                "oos_sharpe": 0.8,
+                "research_quality_source": "batch_research_score",
+            },
+        )
+    )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=5,
+        full_weight_observations=63,
+        batch_research_normalized_quality_min=0.10,
+        batch_research_capital_candidates_max=1,
+        live_returns_for=lambda _hypothesis_id: [],
+    )
+
+    strong = next(entry for entry in plan if entry.hypothesis_id == "strong")
+    weak = next(entry for entry in plan if entry.hypothesis_id == "weak")
+    assert strong.research_backed is True
+    assert strong.capital_eligible is True
+    assert strong.capital_reason == "research_backed"
+    assert strong.proposed_stake > 0.0
+    assert strong.research_candidate_capped is False
+    assert weak.research_backed is True
+    assert weak.research_retained is True
+    assert weak.capital_eligible is False
+    assert weak.capital_reason == "research_candidate_capped"
+    assert weak.proposed_stake == pytest.approx(0.0)
+    assert weak.research_candidate_capped is True
     store.close()
 
 

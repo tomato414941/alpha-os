@@ -1443,6 +1443,9 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         bootstrap_weight=cfg.lifecycle.bootstrap_weight,
         batch_research_weight=cfg.lifecycle.batch_research_weight,
         batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+        batch_research_capital_candidates_max=(
+            cfg.lifecycle.batch_research_capital_candidates_max
+        ),
         live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
         live_proven_marginal_contribution_min=(
             cfg.lifecycle.live_proven_marginal_contribution_min
@@ -1871,6 +1874,9 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             bootstrap_weight=cfg.lifecycle.bootstrap_weight,
             batch_research_weight=cfg.lifecycle.batch_research_weight,
             batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+            batch_research_capital_candidates_max=(
+                cfg.lifecycle.batch_research_capital_candidates_max
+            ),
             live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min
@@ -1913,6 +1919,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
         research_backed = sum(1 for entry in plan if entry.research_backed)
         live_proven = sum(1 for entry in plan if entry.live_proven)
         redundancy_capped = sum(1 for entry in plan if entry.redundancy_capped_by)
+        research_candidate_capped = sum(1 for entry in plan if entry.research_candidate_capped)
         changed = sum(
             1 for entry in plan
             if abs(entry.proposed_stake - entry.current_stake) > 1e-12
@@ -1923,6 +1930,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             "  Summary: "
             f"active={len(plan)} changed={changed} zeroed={zeroed} "
             f"research_backed={research_backed} live_proven={live_proven} "
+            f"research_candidate_capped={research_candidate_capped} "
             f"redundancy_capped={redundancy_capped}"
         )
 
@@ -1938,6 +1946,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
                 f"(target={entry.target_stake:.3f} boot={entry.bootstrap_trust_value:.3f} "
                 f"conf={entry.confidence:.3f} n={entry.n_observations} "
                 f"research_backed={entry.research_backed} live_proven={entry.live_proven}"
+                f"{' research_candidate_capped=true' if entry.research_candidate_capped else ''}"
                 f"{f' capped_by={entry.redundancy_capped_by} corr={entry.redundancy_correlation:.3f}' if entry.redundancy_capped_by else ''})"
             )
 
@@ -2068,6 +2077,9 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             bootstrap_weight=cfg.lifecycle.bootstrap_weight,
             batch_research_weight=cfg.lifecycle.batch_research_weight,
             batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+            batch_research_capital_candidates_max=(
+                cfg.lifecycle.batch_research_capital_candidates_max
+            ),
             live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min
@@ -2432,6 +2444,7 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     live_proven = 0
     promoted_live = 0
     research_demoted = 0
+    research_candidate_capped = 0
     blocker_counts = {
         "insufficient_observations": 0,
         "weak_live_quality": 0,
@@ -2465,6 +2478,8 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
                 promoted_live += 1
         if bootstrap_trust > 0 and not bool(record.metadata.get("lifecycle_capital_eligible", stake > 0)):
             research_demoted += 1
+        if bool(record.metadata.get("lifecycle_research_candidate_capped", False)):
+            research_candidate_capped += 1
         if bootstrap_trust <= 0 and not bool(record.metadata.get("lifecycle_live_proven", False)):
             blocker = str(record.metadata.get("lifecycle_live_promotion_blocker", ""))
             if blocker in blocker_counts:
@@ -2478,6 +2493,7 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "live_proven": live_proven,
         "promoted_live": promoted_live,
         "research_demoted": research_demoted,
+        "research_candidate_capped": research_candidate_capped,
         "promotion_blockers": blocker_counts,
         "top_allocation": _top_runtime_hypotheses(records, "stake"),
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
@@ -2590,6 +2606,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"live_proven={hypothesis_summary['live_proven']} "
         f"promoted_live={hypothesis_summary['promoted_live']} "
         f"research_demoted={hypothesis_summary['research_demoted']} "
+        f"research_candidate_capped={hypothesis_summary['research_candidate_capped']} "
         f"capital_backed={hypothesis_summary['capital_backed']}"
     )
     blocker_counts = hypothesis_summary["promotion_blockers"]

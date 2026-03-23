@@ -1268,7 +1268,8 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
     assert "Hypotheses: active=2 paused=1 archived=1 live=2" in output
     assert (
         "Signals:   observed=2 bootstrap_backed=1 research_retained=0 "
-        "live_proven=0 promoted_live=0 research_demoted=0 capital_backed=2"
+        "live_proven=0 promoted_live=0 research_demoted=0 "
+        "research_candidate_capped=0 capital_backed=2"
     ) in output
     assert "TopAlloc:  h1=1.000(dsl/random_dsl), h4=0.500(technical/bootstrap_technical)" in output
     assert "TopEff:    h1=0.300(dsl/random_dsl), h4=0.200(technical/bootstrap_technical)" in output
@@ -1452,7 +1453,10 @@ def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path,
     cmd_rebalance_allocation_trust(Namespace(asset="BTC", config=None, dry_run=True))
     output = capsys.readouterr().out
     assert "Allocation trust rebalance [DRY RUN]: asset=BTC" in output
-    assert "Summary: active=2 changed=2 zeroed=1 research_backed=1 live_proven=0 redundancy_capped=0" in output
+    assert (
+        "Summary: active=2 changed=2 zeroed=1 research_backed=1 live_proven=0 "
+        "research_candidate_capped=0 redundancy_capped=0"
+    ) in output
 
     store = HypothesisStore(hdb)
     assert store.get("scored").stake == pytest.approx(1.0)
