@@ -134,9 +134,13 @@ The boundary between feature and domain depends on processing depth.
 A single time series (`iv_skew_btc`) is a feature. Logic that
 interprets it to produce a directional prediction is a hypothesis.
 
-Note: the codebase uses `alpha` (WorldQuant convention) as the legacy
-name for hypothesis. `AlphaRecord`, `alpha_id`, etc. remain in code
-for now. New code and documentation should prefer `hypothesis`.
+Note: the `alpha` package is now a legacy compatibility boundary. In
+the current terminology, `alpha` is reserved for excess return as an
+outcome, while predictive units are hypotheses. `AlphaRecord`,
+`alpha_id`, and similar identifiers remain in code for now as legacy
+names. New code and documentation should prefer `hypothesis` for the
+predictive unit and should not add new source-of-truth logic under
+`alpha/`.
 
 ## Principles
 

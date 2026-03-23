@@ -11,15 +11,15 @@ from datetime import date as date_cls
 import numpy as np
 import requests
 
-from ..alpha.expression_identity import expression_feature_names
-from ..alpha.evaluator import evaluate_expression
 from ..config import Config, SIGNAL_CACHE_DB
 from ..data.eval_universe import load_cached_eval_universe
 from ..data.signal_client import build_signal_client_from_config, signal_noise_api_key
 from ..data.store import DataStore
 from ..data.universe import init_universe, price_signal
 from ..dsl import parse, temporal_expression_issues
+from ..dsl.evaluator import evaluate_expression
 from ..predictions.store import Prediction, PredictionStore, SignalMeta
+from .identity import expression_feature_names
 from .store import HypothesisKind, HypothesisRecord, HypothesisStore
 
 logger = logging.getLogger(__name__)

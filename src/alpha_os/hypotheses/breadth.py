@@ -5,8 +5,8 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
-from ..alpha.evaluator import evaluate_expression, normalize_signal
 from ..dsl import parse, temporal_expression_issues
+from ..dsl.evaluator import evaluate_expression, normalize_signal
 from ..data.store import DataStore
 from ..data.universe import price_signal
 from .lifecycle import AllocationRebalanceEntry

@@ -4,7 +4,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ..alpha.quality import blend_quality
+from .quality import blend_quality
 from .store import HypothesisStatus, HypothesisStore
 
 DEFAULT_LOOKBACK = 20
