@@ -1,8 +1,11 @@
+import sqlite3
+
 import pytest
 
 from alpha_os.alpha.quality import blend_quality
 from alpha_os.hypotheses import (
     apply_allocation_rebalance_plan,
+    backfill_observation_returns,
     build_allocation_rebalance_plan,
     HypothesisKind,
     HypothesisRecord,
@@ -19,6 +22,8 @@ from alpha_os.hypotheses import (
     update_stakes_from_history,
     weighted_prediction,
 )
+from alpha_os.data.store import DataStore
+from alpha_os.forward.tracker import ForwardTracker
 
 
 def test_weighted_prediction_uses_stakes():
@@ -103,7 +108,7 @@ def test_target_stake_uses_bootstrap_trust_without_live_confidence():
     assert stake == pytest.approx(0.25 * min(0.8 / 0.20, 1.0))
 
 
-def test_is_capital_eligible_requires_bootstrap_or_min_observations():
+def test_is_capital_eligible_requires_bootstrap_or_live_proven_thresholds():
     assert is_capital_eligible(
         research_quality=0.8,
         metric="sharpe",
@@ -115,6 +120,8 @@ def test_is_capital_eligible_requires_bootstrap_or_min_observations():
         metric="sharpe",
         bootstrap_weight=0.25,
         has_min_observations=True,
+        live_quality=0.10,
+        marginal_contribution=0.01,
     ) is True
     assert is_capital_eligible(
         research_quality=0.0,
@@ -296,7 +303,91 @@ def test_build_allocation_rebalance_plan_zeroes_unscored_unproven_hypotheses(tmp
     assert len(plan) == 1
     entry = plan[0]
     assert entry.research_backed is False
+    assert entry.research_retained is False
     assert entry.live_proven is False
+    assert entry.capital_eligible is False
+    assert entry.capital_reason == "none"
+    assert entry.live_promotion_blocker == "insufficient_observations"
+    assert entry.proposed_stake == pytest.approx(0.0)
+    store.close()
+
+
+def test_build_allocation_rebalance_plan_promotes_live_proven_unscored_hypothesis(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "f1"},
+            stake=0.0,
+            metadata={},
+        )
+    )
+    for idx, contribution in enumerate([0.02, 0.03, 0.025], start=1):
+        store.record_contribution(
+            "h1",
+            date=f"2026-03-0{idx}",
+            contribution=contribution,
+        )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="log_growth",
+        min_observations=3,
+        full_weight_observations=3,
+        live_proven_quality_min=0.01,
+        live_proven_marginal_contribution_min=0.0,
+        live_returns_for=lambda _hypothesis_id: [0.02, 0.015, 0.01],
+    )
+
+    entry = plan[0]
+    assert entry.research_backed is False
+    assert entry.research_retained is False
+    assert entry.live_proven is True
+    assert entry.capital_eligible is True
+    assert entry.capital_reason == "live_proven"
+    assert entry.live_promotion_blocker == "eligible"
+    assert entry.proposed_stake > 0.0
+    store.close()
+
+
+def test_build_allocation_rebalance_plan_demotes_weak_research_backed_hypothesis(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.ML,
+            definition={"model_ref": "m1"},
+            stake=1.0,
+            metadata={"oos_sharpe": 0.8},
+        )
+    )
+    for idx, contribution in enumerate([-0.02, -0.03, -0.01], start=1):
+        store.record_contribution(
+            "h1",
+            date=f"2026-03-0{idx}",
+            contribution=contribution,
+        )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=3,
+        full_weight_observations=3,
+        bootstrap_retention_quality_min=0.0,
+        bootstrap_retention_marginal_contribution_min=0.0,
+        live_proven_quality_min=0.05,
+        live_proven_marginal_contribution_min=0.0,
+        live_returns_for=lambda _hypothesis_id: [-0.02, -0.015, -0.01],
+    )
+
+    entry = plan[0]
+    assert entry.research_backed is True
+    assert entry.research_retained is False
+    assert entry.live_proven is False
+    assert entry.capital_eligible is False
+    assert entry.capital_reason == "research_demoted"
+    assert entry.live_promotion_blocker == "weak_live_quality_and_contribution"
     assert entry.proposed_stake == pytest.approx(0.0)
     store.close()
 
@@ -326,9 +417,69 @@ def test_apply_allocation_rebalance_plan_updates_store(tmp_path):
     assert "h1" in updates
     assert updated is not None
     assert updated.stake == pytest.approx(plan[0].proposed_stake)
+    assert updated.metadata["lifecycle_research_retained"] is True
+    assert updated.metadata["lifecycle_live_proven"] is False
+    assert updated.metadata["lifecycle_capital_eligible"] is True
+    assert updated.metadata["lifecycle_capital_reason"] == "research_backed"
     assert updated.metadata["lifecycle_rebalance_proposed_stake"] == pytest.approx(
         plan[0].proposed_stake
     )
+    store.close()
+
+
+def test_backfill_observation_returns_records_history_from_cached_signals(tmp_path):
+    hdb = tmp_path / "hypotheses.db"
+    sdb = tmp_path / "signal_cache.db"
+    fdb = tmp_path / "forward_returns.db"
+
+    store = HypothesisStore(hdb)
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 1}},
+            stake=0.0,
+        )
+    )
+    conn = sqlite3.connect(sdb)
+    conn.execute(
+        "CREATE TABLE signals (name TEXT, date TEXT, value REAL, resolution TEXT DEFAULT '1d', PRIMARY KEY (name, date))"
+    )
+    conn.executemany(
+        "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+        [
+            ("btc_ohlcv", "2026-03-20", 100.0, "1d"),
+            ("btc_ohlcv", "2026-03-21", 101.0, "1d"),
+            ("btc_ohlcv", "2026-03-22", 102.0, "1d"),
+            ("btc_ohlcv", "2026-03-23", 103.0, "1d"),
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    data_store = DataStore(sdb)
+    forward_tracker = ForwardTracker(fdb)
+    summary = backfill_observation_returns(
+        hypothesis_store=store,
+        data_store=data_store,
+        forward_tracker=forward_tracker,
+        asset="BTC",
+        lookback_days=3,
+    )
+
+    records = forward_tracker.get_records("h1")
+    assert summary.n_hypotheses == 1
+    assert summary.n_days == 3
+    assert summary.n_records == 3
+    assert summary.n_failures == 0
+    assert [record.date for record in records] == [
+        "2026-03-21",
+        "2026-03-22",
+        "2026-03-23",
+    ]
+
+    forward_tracker.close()
+    data_store.close()
     store.close()
 
 

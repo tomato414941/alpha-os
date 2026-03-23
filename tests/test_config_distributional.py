@@ -163,6 +163,10 @@ def test_config_runtime_helpers_follow_current_settings():
     cfg.live_quality.log_growth_clip_abs = 0.15
     cfg.lifecycle.active_quality_min = 0.12
     cfg.lifecycle.bootstrap_weight = 0.25
+    cfg.lifecycle.live_proven_quality_min = 0.05
+    cfg.lifecycle.live_proven_marginal_contribution_min = 0.0
+    cfg.lifecycle.bootstrap_retention_quality_min = 0.0
+    cfg.lifecycle.bootstrap_retention_marginal_contribution_min = 0.0
     cfg.lifecycle.quality_weight = 1.0
     cfg.lifecycle.marginal_contribution_weight = 0.25
     cfg.lifecycle.stake_update_rate = 0.10
@@ -180,6 +184,10 @@ def test_config_runtime_helpers_follow_current_settings():
     assert cfg.live_quality.sharpe_clip_abs == pytest.approx(2.5)
     assert cfg.live_quality.log_growth_clip_abs == pytest.approx(0.15)
     assert cfg.lifecycle.bootstrap_weight == pytest.approx(0.25)
+    assert cfg.lifecycle.live_proven_quality_min == pytest.approx(0.05)
+    assert cfg.lifecycle.live_proven_marginal_contribution_min == pytest.approx(0.0)
+    assert cfg.lifecycle.bootstrap_retention_quality_min == pytest.approx(0.0)
+    assert cfg.lifecycle.bootstrap_retention_marginal_contribution_min == pytest.approx(0.0)
     assert cfg.lifecycle.quality_weight == pytest.approx(1.0)
     assert cfg.lifecycle.marginal_contribution_weight == pytest.approx(0.25)
     assert cfg.lifecycle.stake_update_rate == pytest.approx(0.10)

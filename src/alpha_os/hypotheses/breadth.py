@@ -5,6 +5,8 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
+from ..alpha.evaluator import evaluate_expression, normalize_signal
+from ..dsl import parse, temporal_expression_issues
 from ..data.store import DataStore
 from ..data.universe import price_signal
 from .lifecycle import AllocationRebalanceEntry
@@ -219,11 +221,37 @@ def hypothesis_signal_series(
     data: dict[str, np.ndarray],
     asset: str,
 ) -> np.ndarray | None:
+    if record.kind == HypothesisKind.DSL:
+        return _dsl_signal_series(record, data)
     if record.kind == HypothesisKind.TECHNICAL:
         return _technical_signal_series(record, data, asset)
     if record.kind == HypothesisKind.ML:
         return _ml_signal_series(record, data, asset)
     return None
+
+
+def _dsl_signal_series(
+    record: HypothesisRecord,
+    data: dict[str, np.ndarray],
+) -> np.ndarray | None:
+    expression = record.definition.get("expression", "")
+    if not expression or not data:
+        return None
+    try:
+        expr = parse(expression)
+    except SyntaxError:
+        return None
+    issues = temporal_expression_issues(expr)
+    if issues:
+        return None
+    sample = next(iter(data.values()))
+    try:
+        signal = evaluate_expression(expr, data, len(sample))
+    except Exception:
+        return None
+    if len(signal) == 0:
+        return None
+    return normalize_signal(signal)
 
 
 def _resolve_asset_series_name(asset: str) -> str:

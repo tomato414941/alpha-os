@@ -272,12 +272,19 @@ class Trader:
             returns,
         )
 
+    def _baseline_portfolio_value(self, snapshot=None) -> float:
+        """Use the persisted snapshot value as the paper baseline when available."""
+        if isinstance(self.executor, PaperExecutor) and snapshot is not None:
+            return float(snapshot.portfolio_value)
+        return float(self.executor.portfolio_value)
+
     def _predict_portfolio_signal(
         self,
         alpha_signals: dict[str, float],
         alpha_signal_arrays: dict[str, np.ndarray],
         data: dict[str, np.ndarray],
         alpha_stakes: dict[str, float] | None = None,
+        prev_value: float | None = None,
     ) -> PredictionOutput:
         """Prediction layer: combine alpha signals via stake or TC weighting."""
         strategic_signal = 0.0
@@ -285,7 +292,8 @@ class Trader:
         tactical_adjusted_signal = 0.0
         final_signal = 0.0
 
-        prev_value = self.executor.portfolio_value
+        if prev_value is None:
+            prev_value = self.executor.portfolio_value
         self.risk_manager.update_equity(prev_value)
         recent_returns = np.array(self.portfolio_tracker.get_returns())
         dd_s = self.risk_manager.dd_scale
@@ -569,7 +577,7 @@ class Trader:
                 )
 
         # 0. Circuit breaker check
-        prev_equity = self.executor.portfolio_value
+        prev_equity = self._baseline_portfolio_value(last_snapshot)
         live_hypotheses = self.registry.top_by_stake(n=200)
         if not live_hypotheses:
             raise RuntimeError(
@@ -672,7 +680,7 @@ class Trader:
                 profile_config_id=current_profile.config_id,
                 profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
-                vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
+                vol_scale=1.0, fills=[], portfolio_value=prev_equity,
                 n_registry_active=n_total_active,
                 n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
@@ -689,7 +697,7 @@ class Trader:
                 profile_config_id=current_profile.config_id,
                 profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
-                vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
+                vol_scale=1.0, fills=[], portfolio_value=prev_equity,
                 n_registry_active=n_total_active,
                 n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
@@ -817,14 +825,29 @@ class Trader:
             if record.alpha_id in alpha_signals
         }
         if len(selection_signal_ids) > max_trading:
+            from alpha_os.hypotheses.breadth import hypothesis_signal_series
+
             candidate_ids = [
                 aid for aid in alpha_signals.keys()
                 if aid in selection_signal_ids
             ]
             lookback = min(252, len(matrix))
-            sig_matrix = np.array([
-                alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
-            ])
+            signal_histories: list[np.ndarray] = []
+            filtered_candidate_ids: list[str] = []
+            record_map = {record.alpha_id: record for record in trading_candidates}
+            for aid in candidate_ids:
+                record = record_map.get(aid)
+                history = None
+                if record is not None:
+                    history = hypothesis_signal_series(record, data=data, asset=self.asset)
+                if history is None:
+                    history = alpha_signal_arrays.get(aid)
+                if history is None:
+                    continue
+                signal_histories.append(np.asarray(history[-lookback:], dtype=np.float64))
+                filtered_candidate_ids.append(aid)
+            candidate_ids = filtered_candidate_ids
+            sig_matrix = np.array(signal_histories)
             quality_for_sel = np.array([
                 quality_estimates[aid].blended_quality
                 for aid in candidate_ids
@@ -855,12 +878,13 @@ class Trader:
             for r in selected_records
             if r.alpha_id in alpha_signals
         }
-        prev_value = self.executor.portfolio_value
+        prev_value = prev_equity
         prediction = self._predict_portfolio_signal(
             alpha_signals=alpha_signals,
             alpha_signal_arrays=alpha_signal_arrays,
             data=data,
             alpha_stakes=alpha_stakes,
+            prev_value=prev_value,
         )
         self._last_raw_signal = prediction.final_signal
 

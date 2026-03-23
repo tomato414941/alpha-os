@@ -796,3 +796,88 @@ class TestTrader:
         assert result.n_selected_alphas == 1
         assert result.n_signals_evaluated == 2
         trader.close()
+
+    def test_run_cycle_uses_snapshot_portfolio_value_as_daily_pnl_baseline(
+        self, monkeypatch, tmp_path
+    ):
+        from alpha_os.config import Config
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os.paper.trader import Trader
+        from alpha_os.risk.circuit_breaker import CircuitBreaker
+
+        cfg = Config()
+        cfg.paper.max_position_pct = 0.5
+
+        portfolio_tracker = PaperPortfolioTracker(tmp_path / "paper.db")
+        portfolio_tracker.save_snapshot(PortfolioSnapshot(
+            date="2026-03-20T00:00:00",
+            cash=8500.0,
+            positions={"btc_ohlcv": 0.015},
+            portfolio_value=9950.0,
+            daily_pnl=-50.0,
+            daily_return=-0.005,
+            combined_signal=0.0,
+            dd_scale=1.0,
+            vol_scale=1.0,
+        ))
+        portfolio_tracker._conn.execute(
+            "UPDATE portfolio_snapshots SET recorded_at = 0 WHERE date = ?",
+            ("2026-03-20T00:00:00",),
+        )
+        portfolio_tracker._conn.commit()
+
+        matrix = pd.DataFrame(
+            {
+                "btc_ohlcv": [95000.0, 100000.0],
+            },
+            index=["2026-03-20", "2026-03-21"],
+        )
+        store = _RecordingMatrixStore(matrix)
+        record = HypothesisRecord(
+            hypothesis_id="h-store",
+            kind="manual",
+            definition={},
+            stake=1.0,
+        )
+
+        history = {
+            ("h-store", "BTC"): [
+                ("2026-03-20", 0.0),
+                ("2026-03-21", 0.0),
+            ]
+        }
+
+        class _PatchedPredictionStore(_FakePredictionStore):
+            def read_latest(self, date, assets=None):
+                return {"h-store": {"BTC": 0.0}}
+
+        monkeypatch.setattr(
+            "alpha_os.predictions.store.PredictionStore",
+            lambda *args, **kwargs: _PatchedPredictionStore(history),
+        )
+        monkeypatch.setattr(
+            "alpha_os.paper.trader._quick_healthcheck",
+            lambda _url: False,
+        )
+
+        trader = Trader(
+            asset="BTC",
+            config=cfg,
+            registry=_StaticRegistry([record]),
+            portfolio_tracker=portfolio_tracker,
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
+            store=store,
+        )
+
+        result = trader.run_cycle()
+
+        assert result.portfolio_value == pytest.approx(9997.75)
+        assert result.daily_pnl == pytest.approx(result.portfolio_value - 9950.0)
+        assert result.daily_return == pytest.approx(result.daily_pnl / 9950.0)
+        trader.close()

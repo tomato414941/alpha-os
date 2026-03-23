@@ -26,6 +26,10 @@ from .producer import (
     produce_active_hypothesis_predictions,
     write_hypothesis_predictions,
 )
+from .observation import (
+    ObservationBackfillSummary,
+    backfill_observation_returns,
+)
 
 __all__ = [
     "apply_allocation_rebalance_plan",
@@ -39,6 +43,8 @@ __all__ = [
     "HypothesisRecord",
     "HypothesisStatus",
     "HypothesisStore",
+    "ObservationBackfillSummary",
+    "backfill_observation_returns",
     "is_capital_eligible",
     "normalized_research_quality",
     "produce_active_hypothesis_predictions",

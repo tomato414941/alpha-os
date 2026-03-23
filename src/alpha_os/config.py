@@ -176,6 +176,10 @@ class LifecycleTomlConfig:
     correlation_max: float = 0.5
     bootstrap_redundancy_corr_max: float = 0.7
     bootstrap_weight: float = 0.25
+    live_proven_quality_min: float = 0.05
+    live_proven_marginal_contribution_min: float = 0.0
+    bootstrap_retention_quality_min: float = 0.0
+    bootstrap_retention_marginal_contribution_min: float = 0.0
     quality_weight: float = 1.0
     marginal_contribution_weight: float = 0.25
     stake_update_rate: float = 0.10

@@ -13,6 +13,10 @@ DEFAULT_BOOTSTRAP_WEIGHT = 0.25
 DEFAULT_QUALITY_WEIGHT = 1.0
 DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT = 0.25
 DEFAULT_STAKE_UPDATE_RATE = 0.10
+DEFAULT_LIVE_PROVEN_QUALITY_MIN = 0.05
+DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN = 0.0
+DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN = 0.0
+DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN = 0.0
 
 
 @dataclass(frozen=True)
@@ -22,7 +26,11 @@ class AllocationRebalanceEntry:
     target_stake: float
     proposed_stake: float
     research_backed: bool
+    research_retained: bool
     live_proven: bool
+    capital_eligible: bool
+    capital_reason: str
+    live_promotion_blocker: str
     n_observations: int
     bootstrap_trust_value: float
     blended_quality: float
@@ -172,16 +180,96 @@ def is_capital_eligible(
     metric: str,
     bootstrap_weight: float,
     has_min_observations: bool,
+    live_quality: float = 0.0,
+    marginal_contribution: float = 0.0,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
     floor: float = 0.0,
 ) -> bool:
-    return (
-        bootstrap_trust(
-            research_quality,
-            metric=metric,
-            bootstrap_weight=bootstrap_weight,
-        ) > floor
-        or has_min_observations
+    bootstrap_value = bootstrap_trust(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
     )
+    research_retained = bootstrap_value > floor and (
+        not has_min_observations
+        or live_quality >= bootstrap_retention_quality_min
+        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+    )
+    live_proven = has_min_observations and (
+        live_quality >= live_proven_quality_min
+        and marginal_contribution >= live_proven_marginal_contribution_min
+    )
+    return research_retained or live_proven
+
+
+def capital_eligibility_breakdown(
+    *,
+    research_quality: float,
+    metric: str,
+    bootstrap_weight: float,
+    has_min_observations: bool,
+    live_quality: float,
+    marginal_contribution: float,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
+    floor: float = 0.0,
+) -> tuple[bool, bool, bool, str]:
+    bootstrap_value = bootstrap_trust(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+    )
+    research_backed = bootstrap_value > floor
+    research_retained = research_backed and (
+        not has_min_observations
+        or live_quality >= bootstrap_retention_quality_min
+        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+    )
+    live_proven = has_min_observations and (
+        live_quality >= live_proven_quality_min
+        and marginal_contribution >= live_proven_marginal_contribution_min
+    )
+    if research_retained and live_proven:
+        reason = "research_and_live"
+    elif research_retained:
+        reason = "research_backed"
+    elif live_proven:
+        reason = "live_proven"
+    elif research_backed:
+        reason = "research_demoted"
+    else:
+        reason = "none"
+    return research_backed, research_retained, live_proven, reason
+
+
+def live_promotion_blocker(
+    *,
+    has_min_observations: bool,
+    live_quality: float,
+    marginal_contribution: float,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+) -> str:
+    if not has_min_observations:
+        return "insufficient_observations"
+    weak_quality = live_quality < live_proven_quality_min
+    weak_contribution = marginal_contribution < live_proven_marginal_contribution_min
+    if weak_quality and weak_contribution:
+        return "weak_live_quality_and_contribution"
+    if weak_quality:
+        return "weak_live_quality"
+    if weak_contribution:
+        return "weak_marginal_contribution"
+    return "eligible"
 
 
 def updated_stake(
@@ -231,6 +319,12 @@ def update_stakes_from_history(
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
     stake_update_rate: float = DEFAULT_STAKE_UPDATE_RATE,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
     floor: float = 0.0,
     archive_on_zero: bool = False,
     live_returns_for: Callable[[str], list[float]] | None = None,
@@ -272,9 +366,32 @@ def update_stakes_from_history(
             metric=metric,
             bootstrap_weight=bootstrap_weight,
             has_min_observations=estimate.has_min_observations,
+            live_quality=estimate.live_quality,
+            marginal_contribution=marginal,
+            live_proven_quality_min=live_proven_quality_min,
+            live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+            bootstrap_retention_quality_min=bootstrap_retention_quality_min,
+            bootstrap_retention_marginal_contribution_min=bootstrap_retention_marginal_contribution_min,
             floor=floor,
         ):
             target = floor
+        research_backed, research_retained, live_proven, capital_reason = (
+            capital_eligibility_breakdown(
+                research_quality=record.oos_fitness(metric),
+                metric=metric,
+                bootstrap_weight=bootstrap_weight,
+                has_min_observations=estimate.has_min_observations,
+                live_quality=estimate.live_quality,
+                marginal_contribution=marginal,
+                live_proven_quality_min=live_proven_quality_min,
+                live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+                bootstrap_retention_quality_min=bootstrap_retention_quality_min,
+                bootstrap_retention_marginal_contribution_min=(
+                    bootstrap_retention_marginal_contribution_min
+                ),
+                floor=floor,
+            )
+        )
         new_stake = updated_stake(
             record.stake,
             target,
@@ -293,6 +410,19 @@ def update_stakes_from_history(
                     record.oos_fitness(metric),
                     metric=metric,
                     bootstrap_weight=bootstrap_weight,
+                ),
+                "lifecycle_n_observations": estimate.n_observations,
+                "lifecycle_research_backed": research_backed,
+                "lifecycle_research_retained": research_retained,
+                "lifecycle_live_proven": live_proven,
+                "lifecycle_capital_eligible": research_retained or live_proven,
+                "lifecycle_capital_reason": capital_reason,
+                "lifecycle_live_promotion_blocker": live_promotion_blocker(
+                    has_min_observations=estimate.has_min_observations,
+                    live_quality=estimate.live_quality,
+                    marginal_contribution=marginal,
+                    live_proven_quality_min=live_proven_quality_min,
+                    live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
                 ),
                 "lifecycle_target_stake": target,
             },
@@ -318,6 +448,12 @@ def build_allocation_rebalance_plan(
     quality_weight: float = DEFAULT_QUALITY_WEIGHT,
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
     floor: float = 0.0,
     live_returns_for: Callable[[str], list[float]] | None = None,
 ) -> list[AllocationRebalanceEntry]:
@@ -359,9 +495,25 @@ def build_allocation_rebalance_plan(
             marginal_contribution_weight=marginal_contribution_weight,
             floor=floor,
         )
-        research_backed = bootstrap_value > floor
-        live_proven = estimate.has_min_observations
-        proposed = target if (research_backed or live_proven) else floor
+        research_backed, research_retained, live_proven, capital_reason = (
+            capital_eligibility_breakdown(
+                research_quality=research_quality,
+                metric=metric,
+                bootstrap_weight=bootstrap_weight,
+                has_min_observations=estimate.has_min_observations,
+                live_quality=estimate.live_quality,
+                marginal_contribution=marginal,
+                live_proven_quality_min=live_proven_quality_min,
+                live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+                bootstrap_retention_quality_min=bootstrap_retention_quality_min,
+                bootstrap_retention_marginal_contribution_min=(
+                    bootstrap_retention_marginal_contribution_min
+                ),
+                floor=floor,
+            )
+        )
+        capital_eligible = research_retained or live_proven
+        proposed = target if capital_eligible else floor
         plan.append(
             AllocationRebalanceEntry(
                 hypothesis_id=record.hypothesis_id,
@@ -369,7 +521,17 @@ def build_allocation_rebalance_plan(
                 target_stake=float(target),
                 proposed_stake=float(proposed),
                 research_backed=research_backed,
+                research_retained=research_retained,
                 live_proven=live_proven,
+                capital_eligible=capital_eligible,
+                capital_reason=capital_reason,
+                live_promotion_blocker=live_promotion_blocker(
+                    has_min_observations=estimate.has_min_observations,
+                    live_quality=estimate.live_quality,
+                    marginal_contribution=marginal,
+                    live_proven_quality_min=live_proven_quality_min,
+                    live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+                ),
                 n_observations=estimate.n_observations,
                 bootstrap_trust_value=float(bootstrap_value),
                 blended_quality=float(estimate.blended_quality),
@@ -397,6 +559,13 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_quality_confidence": entry.confidence,
                 "lifecycle_marginal_contribution": entry.marginal_contribution,
                 "lifecycle_bootstrap_trust": entry.bootstrap_trust_value,
+                "lifecycle_n_observations": entry.n_observations,
+                "lifecycle_research_backed": entry.research_backed,
+                "lifecycle_research_retained": entry.research_retained,
+                "lifecycle_live_proven": entry.live_proven,
+                "lifecycle_capital_eligible": entry.capital_eligible,
+                "lifecycle_capital_reason": entry.capital_reason,
+                "lifecycle_live_promotion_blocker": entry.live_promotion_blocker,
                 "lifecycle_target_stake": entry.target_stake,
                 "lifecycle_rebalance_proposed_stake": entry.proposed_stake,
                 "lifecycle_redundancy_capped_by": entry.redundancy_capped_by,

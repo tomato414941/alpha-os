@@ -612,6 +612,25 @@ class TestCombiner:
 
         assert selected
 
+    def test_select_low_correlation_keeps_strong_negative_correlation(self):
+        base = np.linspace(-1.0, 1.0, 120)
+        signals = np.array([
+            base,
+            -base,
+            base + np.random.RandomState(0).randn(120) * 0.001,
+        ])
+        sharpes = np.array([1.0, 0.9, 0.8])
+
+        selected = select_low_correlation(
+            signals,
+            sharpes,
+            config=CombinerConfig(max_alphas=3, max_correlation=0.3),
+        )
+
+        assert 0 in selected
+        assert 1 in selected
+        assert 2 not in selected
+
     def test_select_low_correlation_prefers_diverse_seed_when_quality_zero(self):
         base = np.linspace(-1.0, 1.0, 60)
         signals = np.array([

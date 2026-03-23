@@ -191,7 +191,7 @@ def select_low_correlation(
             corr = np.corrcoef(cand, base)[0, 1]
             if np.isnan(corr):
                 continue
-            if abs(corr) > cfg.max_correlation:
+            if corr > cfg.max_correlation:
                 too_correlated = True
                 break
 
