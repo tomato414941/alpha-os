@@ -308,6 +308,39 @@ def test_trade_once_status_reports_traded():
     assert _trade_once_status(result) == "traded"
 
 
+def test_compute_stake_weights_enforces_final_max_weight():
+    from alpha_os.hypotheses.combiner import compute_stake_weights
+
+    weights = compute_stake_weights(
+        {
+            "a": 10.0,
+            "b": 9.0,
+            "c": 8.0,
+            "d": 7.0,
+            "e": 6.0,
+            "f": 5.0,
+            "g": 4.0,
+            "h": 3.0,
+            "i": 2.0,
+            "j": 1.0,
+            "k": 1.0,
+            "l": 1.0,
+            "m": 1.0,
+            "n": 1.0,
+            "o": 1.0,
+            "p": 1.0,
+            "q": 1.0,
+            "r": 1.0,
+            "s": 1.0,
+            "t": 1.0,
+        },
+        max_weight=0.10,
+    )
+
+    assert sum(weights.values()) == pytest.approx(1.0)
+    assert max(weights.values()) <= 0.1000001
+
+
 def test_trade_once_status_reports_no_delta():
     from alpha_os.cli import _trade_once_status
 

@@ -75,12 +75,37 @@ def compute_stake_weights(
     if total <= 0:
         eq = 1.0 / len(ids) if ids else 0.0
         return {hypothesis_id: eq for hypothesis_id in ids}
+    n = len(ids)
+    if max_weight <= 0 or max_weight * n < 1.0:
+        eq = 1.0 / n
+        return {hypothesis_id: eq for hypothesis_id in ids}
+
     weights = raw / total
-    weights = np.minimum(weights, max_weight)
-    weight_total = weights.sum()
-    if weight_total > 0:
-        weights = weights / weight_total
-    return {hypothesis_id: float(weights[idx]) for idx, hypothesis_id in enumerate(ids)}
+    free = np.ones(n, dtype=bool)
+    capped = np.zeros(n, dtype=np.float64)
+    remaining = 1.0
+    eps = 1e-12
+
+    while free.any():
+        free_weights = weights[free]
+        free_total = float(free_weights.sum())
+        if free_total <= eps:
+            capped[free] = remaining / int(free.sum())
+            break
+
+        scaled = free_weights / free_total * remaining
+        over_mask = scaled > (max_weight + eps)
+        if not over_mask.any():
+            capped[free] = scaled
+            break
+
+        free_indices = np.flatnonzero(free)
+        over_indices = free_indices[over_mask]
+        capped[over_indices] = max_weight
+        remaining -= max_weight * len(over_indices)
+        free[over_indices] = False
+
+    return {hypothesis_id: float(capped[idx]) for idx, hypothesis_id in enumerate(ids)}
 
 
 @dataclass
