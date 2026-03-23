@@ -4,8 +4,8 @@ import numpy as np
 
 import pytest
 
-from alpha_os.alpha.diversity import analyze_diversity, infer_feature_families
-from alpha_os.alpha.managed_alphas import AlphaRecord
+from alpha_os.legacy.managed_alphas import AlphaRecord
+from alpha_os.research.diversity import analyze_diversity, infer_feature_families
 
 
 def test_infer_feature_families_uses_runtime_domains():

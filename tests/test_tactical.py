@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.data.store import DataStore
 from alpha_os.paper.tactical import TacticalTrader, TacticalSignal
 

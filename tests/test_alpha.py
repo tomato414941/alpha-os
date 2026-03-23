@@ -3,39 +3,39 @@
 import numpy as np
 import pytest
 
-from alpha_os.alpha.managed_alphas import (
+from alpha_os.hypotheses.combiner import (
+    CombinerConfig,
+    compute_diversity_scores,
+    compute_tc_scores,
+    compute_tc_weights,
+    signal_consensus,
+    weighted_combine,
+    weighted_combine_scalar,
+)
+from alpha_os.hypotheses.quality import QualityEstimate
+from alpha_os.hypotheses.state_lifecycle import (
+    LifecycleConfig,
+    ST_ACTIVE,
+    ST_CANDIDATE,
+    ST_DORMANT,
+    batch_transitions,
+    compute_transition,
+    passes_candidate_gate,
+)
+from alpha_os.legacy.admission_queue import prune_stale_pending_candidates
+from alpha_os.legacy.deployed_alphas import (
+    plan_deployed_alphas,
+    plan_registry_active_prune,
+)
+from alpha_os.legacy.managed_alphas import (
     ManagedAlphaStore,
     AlphaRecord,
     AlphaState,
     CandidateSeed,
 )
-from alpha_os.alpha.lifecycle import (
-    LifecycleConfig,
-    compute_transition,
-    batch_transitions,
-    passes_candidate_gate,
-    ST_CANDIDATE,
-    ST_ACTIVE,
-    ST_DORMANT,
-)
-from alpha_os.alpha.quality import QualityEstimate
-from alpha_os.alpha.deployed_alphas import (
-    plan_deployed_alphas,
-    plan_registry_active_prune,
-)
-from alpha_os.alpha.combiner import (
-    select_low_correlation,
-    CombinerConfig,
-    compute_diversity_scores,
-    compute_tc_scores,
-    compute_tc_weights,
-    weighted_combine,
-    weighted_combine_scalar,
-    signal_consensus,
-)
+from alpha_os.hypotheses.combiner import select_low_correlation
 from alpha_os.config import Config
 from alpha_os.daemon.admission import AdmissionDaemon
-from alpha_os.alpha.admission_queue import prune_stale_pending_candidates
 from alpha_os.dsl.canonical import canonical_string
 
 
@@ -446,10 +446,10 @@ class TestManagedAlphaStore:
         )
         reg.close()
         monkeypatch.setattr(
-            "alpha_os.alpha.admission_queue.asset_data_dir",
+            "alpha_os.legacy.admission_queue.asset_data_dir",
             lambda asset: tmp_path,
         )
-        monkeypatch.setattr("alpha_os.alpha.admission_queue.time.time", lambda: 10 * 86400)
+        monkeypatch.setattr("alpha_os.legacy.admission_queue.time.time", lambda: 10 * 86400)
 
         stats = prune_stale_pending_candidates("BTC", max_age_days=7)
 

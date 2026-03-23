@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore
+from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore
 from alpha_os.config import Config
 from alpha_os.daemon.alpha_generator import (
     enqueue_discovery_pool_candidates,

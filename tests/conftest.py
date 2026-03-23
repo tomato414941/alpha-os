@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.data.store import DataStore
 
 

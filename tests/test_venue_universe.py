@@ -18,7 +18,7 @@ from alpha_os.data.universe import (
     register_polymarket_market,
     POLYMARKET,
 )
-from alpha_os.alpha.combiner import cross_asset_neutralize
+from alpha_os.hypotheses.combiner import cross_asset_neutralize
 from alpha_os.risk.manager import (
     BinaryOutcomeRiskConfig,
     BinaryOutcomeRiskManager,

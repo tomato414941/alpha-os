@@ -5,14 +5,14 @@ from pathlib import Path
 
 import numpy as np
 
-from alpha_os.alpha.funnel import load_funnel_summary
-from alpha_os.alpha.managed_alphas import ManagedAlphaStore
 from alpha_os.evolution.discovery_pool import DiscoveryPool
+from alpha_os.legacy.funnel import load_funnel_summary
+from alpha_os.legacy.managed_alphas import ManagedAlphaStore
 from alpha_os.dsl.expr import Feature
 
 
 def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.alpha.funnel.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.legacy.funnel.asset_data_dir", lambda asset: tmp_path)
 
     pool = DiscoveryPool()
     signal = np.random.randn(100)

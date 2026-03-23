@@ -9,8 +9,8 @@ from alpha_os.experiments.replay import (
     parse_override_assignment,
     run_replay_experiment,
 )
-from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.config import Config
+from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.runtime_profile import build_runtime_profile
 
 

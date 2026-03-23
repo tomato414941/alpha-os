@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from alpha_os.alpha.quality import blend_quality
+from alpha_os.hypotheses.quality import blend_quality
 from alpha_os.hypotheses import (
     apply_allocation_rebalance_plan,
     backfill_observation_returns,

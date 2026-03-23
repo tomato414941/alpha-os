@@ -40,7 +40,7 @@ class TestAssetDataDir:
 class TestRegistryIsolation:
     def test_two_assets_isolated(self, tmp_path, monkeypatch):
         from alpha_os.config import asset_data_dir
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 
         btc_dir = asset_data_dir("BTC")
         eth_dir = asset_data_dir("ETH")

@@ -327,7 +327,7 @@ class TestPositionSizing:
         """Position sizing should use current portfolio value, not initial capital."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -449,7 +449,7 @@ class TestTrader:
         """Fresh trader should have initial capital."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -476,7 +476,7 @@ class TestTrader:
         """Trader should restore cash/positions from last snapshot."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -510,7 +510,7 @@ class TestTrader:
         """Trader should refresh executor state when a newer snapshot appears."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
@@ -553,7 +553,7 @@ class TestTrader:
         """Long-only mode should never emit a negative target position."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.governance.audit_log import AuditLog
 
@@ -586,7 +586,7 @@ class TestTrader:
         """Long/short mode should preserve negative target positions."""
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
-        from alpha_os.alpha.managed_alphas import ManagedAlphaStore
+        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
         from alpha_os.forward.tracker import ForwardTracker
         from alpha_os.governance.audit_log import AuditLog
 

@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.alpha.evaluator import (
+from alpha_os.dsl.evaluator import (
     FAILED_FITNESS,
     EvaluationError,
     evaluate_alpha,

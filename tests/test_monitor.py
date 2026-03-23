@@ -2,7 +2,7 @@
 import json
 import numpy as np
 
-from alpha_os.alpha.monitor import AlphaMonitor, MonitorConfig, MonitorStatus
+from alpha_os.hypotheses.monitor import AlphaMonitor, MonitorConfig, MonitorStatus
 from alpha_os.governance.audit_log import AuditLog
 from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 

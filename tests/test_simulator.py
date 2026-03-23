@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.alpha.managed_alphas import AlphaRecord, AlphaState
-from alpha_os.alpha.lifecycle import ST_ACTIVE, ST_CANDIDATE, ST_DORMANT
+from alpha_os.hypotheses.state_lifecycle import ST_ACTIVE, ST_CANDIDATE, ST_DORMANT
+from alpha_os.legacy.managed_alphas import AlphaRecord, AlphaState
 from alpha_os.config import Config
 from alpha_os.paper.simulator import (
     ST_EXCLUDED,
