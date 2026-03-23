@@ -333,37 +333,36 @@ Support classes:
 | `paper.trader`, `paper.tracker`, `daemon.hypothesis_seeder` | current | keep only the minimum code needed for bounded paper runtime and seeding |
 | `dsl`, `backtest`, `evolution`, `experiments`, `predictions.classical_producer` | research | keep available for offline work, but isolate from runtime assumptions |
 | `paper.simulator`, `paper.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
-| `alpha.managed_alphas`, `alpha.deployed_alphas`, `alpha.admission_replay`, `alpha.funnel`, `daemon.admission`, `daemon.lifecycle`, `daemon.unified_generator`, `pipeline` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
-| `alpha.monitor`, `alpha.handcrafted`, `alpha.diversity`, `paper.simulator`, `paper.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
-| `alpha.evaluator`, `alpha.quality`, `alpha.expression_identity`, `alpha.combiner`, `alpha.runtime_policy` | migrate | pure logic still referenced during extraction; move the source of truth into non-legacy modules, then keep only wrappers under `alpha/` |
-| `alpha.cross_asset`, `alpha.lifecycle` | wrapper | compatibility re-export only; do not add new logic |
+| `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `daemon.admission`, `daemon.lifecycle`, `daemon.unified_generator`, `pipeline` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
+| `research.diversity`, `research.handcrafted`, `paper.simulator`, `paper.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
+| `alpha` | wrapper | compatibility package only; do not add logic or internal dependencies |
 
 ### Alpha Package Classification
 
 `alpha/` is not a source-of-truth package in the recovery target. It is a
-mix of temporary wrappers, migration leftovers, and registry-era substrate.
+compatibility package only.
 
 | File | Class | Target |
 |------|-------|--------|
 | `alpha/cross_asset.py`, `alpha/lifecycle.py` | wrapper | keep only as import-compatibility shims |
-| `alpha/evaluator.py`, `alpha/expression_identity.py` | migrate | move source of truth to `dsl/` or `hypotheses/`, then leave wrappers behind |
-| `alpha/quality.py`, `alpha/combiner.py`, `alpha/runtime_policy.py` | migrate | move source of truth to `hypotheses/`, then leave wrappers behind |
-| `alpha/monitor.py`, `alpha/diversity.py`, `alpha/handcrafted.py` | research | keep only for offline analysis or seed generation; do not define runtime truth |
-| `alpha/admission_queue.py`, `alpha/admission_replay.py`, `alpha/managed_alphas.py`, `alpha/deployed_alphas.py`, `alpha/funnel.py` | legacy substrate | freeze behind the `legacy` CLI boundary and retire after migration |
+| `alpha/evaluator.py`, `alpha/expression_identity.py` | wrapper | source of truth lives in `dsl/` or `hypotheses/` |
+| `alpha/quality.py`, `alpha/combiner.py`, `alpha/runtime_policy.py` | wrapper | source of truth lives in `hypotheses/` |
+| `alpha/monitor.py`, `alpha/diversity.py`, `alpha/handcrafted.py` | wrapper | source of truth lives in `hypotheses/` or `research/` |
+| `alpha/admission_queue.py`, `alpha/admission_replay.py`, `alpha/managed_alphas.py`, `alpha/deployed_alphas.py`, `alpha/funnel.py` | wrapper | source of truth lives in `legacy/` |
 
-Extraction order:
+Wrapper deletion order:
 
-- remove `current` imports of `alpha.evaluator`, `alpha.expression_identity`, and `alpha.quality` first
-- keep `alpha.cross_asset` and `alpha.lifecycle` as wrappers until rename fallout is low
-- leave registry-era substrate untouched except for deletion, wrappers, or migration work
+- first remove repo-local imports and script usage
+- then remove wrappers whose source of truth is in `dsl/`, `hypotheses/`, or `research/`
+- remove `legacy` wrappers last, after any external operators or notebooks stop importing them
 
 ### Cleanup Rules
 
 - the default `alpha-os` CLI should expose `current` commands first and treat the rest as opt-in paths
 - `research` commands should move under an explicit namespace or separate entrypoint
 - `archive` code must not be a dependency of the bounded runtime path
-- `migrate` modules may be read by the current path only while extraction is in progress; they must converge to wrapper-only modules
 - no new source-of-truth logic should land under `alpha/`; either add it to a current package or keep it explicitly under `research` or `legacy`
+- repo code, scripts, and tests should not import `alpha/`; only external compatibility consumers may do so
 - no new features should land in `archive` areas; only extraction, migration, or deletion is allowed
 - if a legacy path is still needed, rewrite it around `hypotheses` inputs instead of preserving registry-era state machines
 
