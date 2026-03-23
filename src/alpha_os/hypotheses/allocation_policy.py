@@ -1,0 +1,232 @@
+from __future__ import annotations
+
+DEFAULT_BOOTSTRAP_WEIGHT = 0.25
+DEFAULT_BATCH_RESEARCH_WEIGHT = 0.10
+DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN = 0.10
+DEFAULT_QUALITY_WEIGHT = 1.0
+DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT = 0.25
+DEFAULT_LIVE_PROVEN_QUALITY_MIN = 0.05
+DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN = 0.0
+DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN = 0.0
+DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN = 0.0
+
+
+def trust_score(
+    blended_quality: float,
+    marginal_contribution: float,
+    *,
+    quality_weight: float = DEFAULT_QUALITY_WEIGHT,
+    marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
+) -> float:
+    score = (
+        quality_weight * float(blended_quality)
+        + marginal_contribution_weight * float(marginal_contribution)
+    )
+    return max(score, 0.0)
+
+
+def normalized_research_quality(
+    research_quality: float,
+    *,
+    metric: str = "sharpe",
+) -> float:
+    if metric == "sharpe":
+        scale = 2.0
+    elif metric == "log_growth":
+        scale = 0.20
+    else:
+        raise ValueError(f"Unsupported fitness metric: {metric}")
+    return min(max(float(research_quality) / scale, 0.0), 1.0)
+
+
+def bootstrap_trust(
+    research_quality: float,
+    *,
+    metric: str = "sharpe",
+    bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    research_quality_source: str = "bootstrap_seed",
+) -> float:
+    if research_quality_source == "batch_research_score":
+        weight = max(float(batch_research_weight), 0.0)
+    elif research_quality_source in {"bootstrap_seed", ""}:
+        weight = max(float(bootstrap_weight), 0.0)
+    else:
+        weight = 0.0
+    return weight * normalized_research_quality(research_quality, metric=metric)
+
+
+def is_research_backed(
+    research_quality: float,
+    *,
+    metric: str,
+    bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
+    research_quality_source: str = "bootstrap_seed",
+    floor: float = 0.0,
+) -> bool:
+    trust = bootstrap_trust(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
+    )
+    if trust <= floor:
+        return False
+    if research_quality_source == "batch_research_score":
+        return normalized_research_quality(
+            research_quality,
+            metric=metric,
+        ) >= float(batch_research_normalized_quality_min)
+    return True
+
+
+def target_stake(
+    blended_quality: float,
+    quality_confidence: float,
+    marginal_contribution: float,
+    *,
+    research_quality: float = 0.0,
+    research_quality_source: str = "bootstrap_seed",
+    metric: str = "sharpe",
+    bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    quality_weight: float = DEFAULT_QUALITY_WEIGHT,
+    marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
+    floor: float = 0.0,
+) -> float:
+    live_trust = trust_score(
+        blended_quality,
+        marginal_contribution,
+        quality_weight=quality_weight,
+        marginal_contribution_weight=marginal_contribution_weight,
+    )
+    confidence = min(max(float(quality_confidence), 0.0), 1.0)
+    initial_trust = bootstrap_trust(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
+    )
+    trust = (1.0 - confidence) * initial_trust + confidence * live_trust
+    return max(trust, floor)
+
+
+def is_capital_eligible(
+    *,
+    research_quality: float,
+    metric: str,
+    bootstrap_weight: float,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
+    research_quality_source: str = "bootstrap_seed",
+    has_min_observations: bool,
+    live_quality: float = 0.0,
+    marginal_contribution: float = 0.0,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
+    floor: float = 0.0,
+) -> bool:
+    research_backed = is_research_backed(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        batch_research_normalized_quality_min=batch_research_normalized_quality_min,
+        research_quality_source=research_quality_source,
+        floor=floor,
+    )
+    research_retained = research_backed and (
+        not has_min_observations
+        or live_quality >= bootstrap_retention_quality_min
+        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+    )
+    live_proven = has_min_observations and (
+        live_quality >= live_proven_quality_min
+        and marginal_contribution >= live_proven_marginal_contribution_min
+    )
+    return research_retained or live_proven
+
+
+def capital_eligibility_breakdown(
+    *,
+    research_quality: float,
+    metric: str,
+    bootstrap_weight: float,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
+    research_quality_source: str = "bootstrap_seed",
+    has_min_observations: bool,
+    live_quality: float,
+    marginal_contribution: float,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
+    bootstrap_retention_marginal_contribution_min: float = (
+        DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
+    ),
+    floor: float = 0.0,
+) -> tuple[bool, bool, bool, str]:
+    research_backed = is_research_backed(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        batch_research_normalized_quality_min=batch_research_normalized_quality_min,
+        research_quality_source=research_quality_source,
+        floor=floor,
+    )
+    research_retained = research_backed and (
+        not has_min_observations
+        or live_quality >= bootstrap_retention_quality_min
+        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+    )
+    live_proven = has_min_observations and (
+        live_quality >= live_proven_quality_min
+        and marginal_contribution >= live_proven_marginal_contribution_min
+    )
+    if research_retained and live_proven:
+        reason = "research_and_live"
+    elif research_retained:
+        reason = "research_backed"
+    elif live_proven:
+        reason = "live_proven"
+    elif research_backed:
+        reason = "research_demoted"
+    else:
+        reason = "none"
+    return research_backed, research_retained, live_proven, reason
+
+
+def live_promotion_blocker(
+    *,
+    has_min_observations: bool,
+    live_quality: float,
+    marginal_contribution: float,
+    live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+) -> str:
+    if not has_min_observations:
+        return "insufficient_observations"
+    weak_quality = live_quality < live_proven_quality_min
+    weak_contribution = marginal_contribution < live_proven_marginal_contribution_min
+    if weak_quality and weak_contribution:
+        return "weak_live_quality_and_contribution"
+    if weak_quality:
+        return "weak_live_quality"
+    if weak_contribution:
+        return "weak_marginal_contribution"
+    return "eligible"
