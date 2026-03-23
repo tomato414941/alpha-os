@@ -307,16 +307,16 @@ def test_trade_once_status_reports_traded():
     assert _trade_once_status(result) == "traded"
 
 
-def test_paper_replay_parser():
+def test_research_paper_replay_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
-        "paper", "--replay", "--start", "2025-09-01", "--end", "2026-03-05",
+        "research", "paper-replay", "--start", "2025-09-01", "--end", "2026-03-05",
     ])
 
-    assert args.command == "paper"
-    assert args.replay is True
+    assert args.command == "research"
+    assert args.research_command == "paper-replay"
     assert args.sizing_mode == "runtime"
 
 
@@ -693,11 +693,12 @@ def test_legacy_registry_commands_are_not_parsed(command):
         parser.parse_args([command])
 
 
-def test_replay_experiment_parser():
+def test_research_replay_experiment_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
+        "research",
         "replay-experiment",
         "--name", "confidence sweep",
         "--start", "2026-02-20",
@@ -709,7 +710,8 @@ def test_replay_experiment_parser():
         "--set", "live_quality.min_observations=30",
     ])
 
-    assert args.command == "replay-experiment"
+    assert args.command == "research"
+    assert args.research_command == "replay-experiment"
     assert args.name == "confidence sweep"
     assert args.managed_alpha_mode == "admission"
     assert args.source == "candidates"
@@ -720,17 +722,19 @@ def test_replay_experiment_parser():
     ]
 
 
-def test_replay_matrix_parser():
+def test_research_replay_matrix_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
+        "research",
         "replay-matrix",
         "--manifest", "experiments/deadband.toml",
         "--max-workers", "4",
     ])
 
-    assert args.command == "replay-matrix"
+    assert args.command == "research"
+    assert args.research_command == "replay-matrix"
     assert args.manifest == "experiments/deadband.toml"
     assert args.max_workers == 4
 
@@ -1202,7 +1206,10 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
     assert "Readiness: 3/10 days" in output
     assert "Runtime:   source=hypotheses live=2" in output
     assert "Hypotheses: active=2 paused=1 archived=1 live=2" in output
-    assert "Signals:   observed=2 bootstrap_backed=1 capital_backed=2" in output
+    assert (
+        "Signals:   observed=2 bootstrap_backed=1 research_retained=0 "
+        "live_proven=0 promoted_live=0 research_demoted=0 capital_backed=2"
+    ) in output
     assert "TopAlloc:  h1=1.000(dsl/random_dsl), h4=0.500(technical/bootstrap_technical)" in output
     assert "TopEff:    h1=0.300(dsl/random_dsl), h4=0.200(technical/bootstrap_technical)" in output
     assert "TopRaw:    h1=12.000(dsl/random_dsl), h4=8.000(technical/bootstrap_technical)" in output
@@ -1278,6 +1285,59 @@ def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, t
     output = capsys.readouterr().out
 
     assert "Observe:   ok" in output
+
+
+def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.validation.testnet import readiness_paths
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="h1",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=0.0,
+        metadata={
+            "lifecycle_live_promotion_blocker": "insufficient_observations",
+            "lifecycle_quality_confidence": 0.0,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h2",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=0.0,
+        metadata={
+            "lifecycle_live_promotion_blocker": "weak_live_quality",
+            "lifecycle_quality_confidence": 0.5,
+        },
+    ))
+    store.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 0,
+        "total_days_run": 0,
+        "last_success_date": None,
+        "last_run_date": None,
+        "last_profile_id": "",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text("")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "Promote:   obs=1 quality=1 contrib=0 both=0" in output
 
 
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):

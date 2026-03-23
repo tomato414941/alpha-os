@@ -29,19 +29,19 @@ from alpha_os.runtime_profile import build_runtime_profile
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alpha-os",
-        description="Agentic Alpha OS — generate, backtest, validate alpha factors",
+        description="Agentic Alpha OS — hypotheses-first runtime and research CLI",
     )
     sub = parser.add_subparsers(dest="command")
 
-    # generate
-    gen = sub.add_parser("generate", help="Generate alpha expressions")
+    # generate (legacy top-level alias; prefer `research generate`)
+    gen = sub.add_parser("generate", help=argparse.SUPPRESS)
     gen.add_argument("--count", type=int, default=5000)
     gen.add_argument("--asset", type=str, default="NVDA")
     gen.add_argument("--seed", type=int, default=42)
     gen.add_argument("--config", type=str, default=None)
 
-    # backtest
-    bt = sub.add_parser("backtest", help="Backtest generated alphas")
+    # backtest (legacy top-level alias; prefer `research backtest`)
+    bt = sub.add_parser("backtest", help=argparse.SUPPRESS)
     bt.add_argument("--count", type=int, default=5000)
     bt.add_argument("--top", type=int, default=20)
     bt.add_argument("--asset", type=str, default="NVDA")
@@ -54,8 +54,8 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Evaluation window in days (0=all data, e.g. 200 for recent)")
     bt.add_argument("--config", type=str, default=None)
 
-    # evolve
-    evo = sub.add_parser("evolve", help="Evolve alphas via GP + MAP-Elites")
+    # evolve (legacy top-level alias; prefer `research evolve`)
+    evo = sub.add_parser("evolve", help=argparse.SUPPRESS)
     evo.add_argument("--pop-size", type=int, default=200)
     evo.add_argument("--generations", type=int, default=30)
     evo.add_argument("--asset", type=str, default="NVDA")
@@ -71,8 +71,8 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     evo.add_argument("--config", type=str, default=None)
 
-    # validate
-    val = sub.add_parser("validate", help="Validate an alpha with purged WF CV")
+    # validate (legacy top-level alias; prefer `research validate`)
+    val = sub.add_parser("validate", help=argparse.SUPPRESS)
     val.add_argument("--expr", type=str, required=True)
     val.add_argument("--asset", type=str, default="NVDA")
     val.add_argument("--days", type=int, default=500,
@@ -86,8 +86,8 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
     val.add_argument("--config", type=str, default=None)
 
-    # evaluate — multi-horizon IC evaluation
-    eva = sub.add_parser("evaluate", help="Evaluate expression with multi-horizon IC")
+    # evaluate (legacy top-level alias; prefer `research evaluate`)
+    eva = sub.add_parser("evaluate", help=argparse.SUPPRESS)
     eva.add_argument("--expr", type=str, required=True, help="DSL expression string")
     eva.add_argument("--config", type=str, default=None)
 
@@ -101,34 +101,31 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     pp.add_argument("--config", type=str, default=None)
 
-    # produce-classical
-    pc = sub.add_parser("produce-classical", help="Compute classical indicators and write to prediction store")
+    # produce-classical (legacy top-level alias; prefer `research produce-classical`)
+    pc = sub.add_parser("produce-classical", help=argparse.SUPPRESS)
     pc.add_argument("--config", type=str, default=None)
 
     # paper
     ppr = sub.add_parser("paper", help="Paper trade with live hypotheses")
     ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    ppr.add_argument("--schedule", action="store_true", help="Run on interval")
-    ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
+    ppr.add_argument("--schedule", action="store_true", help=argparse.SUPPRESS)
+    ppr.add_argument("--summary", action="store_true", help=argparse.SUPPRESS)
     ppr.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
-    ppr.add_argument("--replay", action="store_true",
-                     help="Run legacy historical replay over date range")
-    ppr.add_argument("--start", type=str, default=None,
-                     help="Start date for replay (ISO format, e.g. 2025-06-01)")
-    ppr.add_argument("--end", type=str, default=None,
-                     help="End date for replay (ISO format, e.g. 2026-02-25)")
+    ppr.add_argument("--replay", action="store_true", help=argparse.SUPPRESS)
+    ppr.add_argument("--start", type=str, default=None, help=argparse.SUPPRESS)
+    ppr.add_argument("--end", type=str, default=None, help=argparse.SUPPRESS)
     ppr.add_argument("--sizing-mode", type=str, default="runtime",
                      choices=["runtime", "raw_mean", "compare"],
-                     help="Legacy replay sizing mode: runtime logic, raw_mean baseline, or compare both")
+                     help=argparse.SUPPRESS)
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
     # trade
     trd = sub.add_parser("trade", help="Trade on Binance (testnet by default)")
     trd.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    trd.add_argument("--schedule", action="store_true", help="Run on interval")
-    trd.add_argument("--summary", action="store_true", help="Print summary and exit")
+    trd.add_argument("--schedule", action="store_true", help=argparse.SUPPRESS)
+    trd.add_argument("--summary", action="store_true", help=argparse.SUPPRESS)
     trd.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
     trd.add_argument("--real", action="store_true",
@@ -144,16 +141,11 @@ def _build_parser() -> argparse.ArgumentParser:
     trd.add_argument("--assets", type=str, default=None,
                      help="Comma-separated asset list (e.g. BTC,ETH,SOL)")
     trd.add_argument("--config", type=str, default=None)
-    trd.add_argument("--evolve-interval", type=int, default=86400,
-                     help="Alpha evolution interval in seconds (default: 86400=24h, 0=disable)")
-    trd.add_argument("--pop-size", type=int, default=200,
-                     help="GP population size for evolution")
-    trd.add_argument("--generations", type=int, default=30,
-                     help="GP generations per evolution cycle")
-    trd.add_argument("--event-driven", action="store_true",
-                     help="Use event-driven execution instead of fixed interval")
-    trd.add_argument("--debounce", type=int, default=None,
-                     help="Min seconds between event-triggered evaluations (default: from config)")
+    trd.add_argument("--evolve-interval", type=int, default=86400, help=argparse.SUPPRESS)
+    trd.add_argument("--pop-size", type=int, default=200, help=argparse.SUPPRESS)
+    trd.add_argument("--generations", type=int, default=30, help=argparse.SUPPRESS)
+    trd.add_argument("--event-driven", action="store_true", help=argparse.SUPPRESS)
+    trd.add_argument("--debounce", type=int, default=None, help=argparse.SUPPRESS)
     trd.add_argument("--venue", type=str, default=None,
                      choices=["binance", "alpaca", "polymarket", "paper"],
                      help="Trading venue (default: auto-detect from asset)")
@@ -177,7 +169,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     pg = sub.add_parser(
         "enqueue-discovery-pool",
-        help="Enqueue top discovery-pool entries into the admission queue",
+        help=argparse.SUPPRESS,
     )
     pg.add_argument("--asset", type=str, default="BTC")
     pg.add_argument("--config", type=str, default=None)
@@ -185,13 +177,13 @@ def _build_parser() -> argparse.ArgumentParser:
     pg.add_argument("--dry-run", action="store_true")
 
     # admission-daemon (Pipeline v2)
-    adm_d = sub.add_parser("admission-daemon", help="Run candidate admission daemon")
+    adm_d = sub.add_parser("admission-daemon", help=argparse.SUPPRESS)
     adm_d.add_argument("--asset", type=str, default="BTC")
     adm_d.add_argument("--config", type=str, default=None)
 
     psc = sub.add_parser(
         "prune-stale-candidates",
-        help="Reject stale pending candidates outside the active discovery/manual sources",
+        help=argparse.SUPPRESS,
     )
     psc.add_argument("--asset", type=str, default="BTC")
     psc.add_argument("--max-age-days", type=int, default=7)
@@ -219,10 +211,23 @@ def _build_parser() -> argparse.ArgumentParser:
     alb.add_argument("--lookback", type=int, default=252)
     alb.add_argument("--top-pairs", type=int, default=5)
 
+    bor = sub.add_parser(
+        "backfill-observation-returns",
+        help="Backfill observation-only forward returns for active hypotheses from cached history",
+    )
+    bor.add_argument("--asset", type=str, default="BTC")
+    bor.add_argument("--config", type=str, default=None)
+    bor.add_argument("--days", type=int, default=30)
+    bor.add_argument(
+        "--apply-lifecycle",
+        action="store_true",
+        help="Recompute allocation trust after backfilling observation returns",
+    )
+
     # replay-experiment
     rex = sub.add_parser(
         "replay-experiment",
-        help="Run a legacy replay experiment and persist the artifact",
+        help=argparse.SUPPRESS,
     )
     rex.add_argument("--name", required=True, help="Experiment name")
     rex.add_argument("--asset", type=str, default="BTC")
@@ -272,7 +277,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # replay-matrix
     rmx = sub.add_parser(
         "replay-matrix",
-        help="Run a TOML-defined replay experiment matrix",
+        help=argparse.SUPPRESS,
     )
     rmx.add_argument("--manifest", required=True, help="Path to TOML matrix manifest")
     rmx.add_argument(
@@ -342,9 +347,179 @@ def _build_parser() -> argparse.ArgumentParser:
 
     afl = sub.add_parser(
         "alpha-funnel",
-        help="Show discovery-pool to deployed-alpha funnel counts",
+        help=argparse.SUPPRESS,
     )
     afl.add_argument("--asset", type=str, default="BTC")
+
+    research = sub.add_parser(
+        "research",
+        help="Run bounded research and replay commands",
+    )
+    research_sub = research.add_subparsers(dest="research_command", required=True)
+
+    rgen = research_sub.add_parser("generate", help="Generate alpha expressions")
+    rgen.add_argument("--count", type=int, default=5000)
+    rgen.add_argument("--asset", type=str, default="NVDA")
+    rgen.add_argument("--seed", type=int, default=42)
+    rgen.add_argument("--config", type=str, default=None)
+
+    rbt = research_sub.add_parser("backtest", help="Backtest generated alphas")
+    rbt.add_argument("--count", type=int, default=5000)
+    rbt.add_argument("--top", type=int, default=20)
+    rbt.add_argument("--asset", type=str, default="NVDA")
+    rbt.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    rbt.add_argument("--seed", type=int, default=42)
+    rbt.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    rbt.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    rbt.add_argument("--config", type=str, default=None)
+
+    revo = research_sub.add_parser("evolve", help="Evolve alphas via GP + MAP-Elites")
+    revo.add_argument("--pop-size", type=int, default=200)
+    revo.add_argument("--generations", type=int, default=30)
+    revo.add_argument("--asset", type=str, default="NVDA")
+    revo.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    revo.add_argument("--top", type=int, default=20)
+    revo.add_argument("--seed", type=int, default=42)
+    revo.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    revo.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    revo.add_argument(
+        "--layer",
+        type=int,
+        default=3,
+        choices=[2, 3],
+        help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)",
+    )
+    revo.add_argument("--config", type=str, default=None)
+
+    rval = research_sub.add_parser("validate", help="Validate an alpha with purged WF CV")
+    rval.add_argument("--expr", type=str, required=True)
+    rval.add_argument("--asset", type=str, default="NVDA")
+    rval.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    rval.add_argument("--seed", type=int, default=42)
+    rval.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    rval.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    rval.add_argument(
+        "--layer",
+        type=int,
+        default=3,
+        choices=[2, 3],
+        help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)",
+    )
+    rval.add_argument("--config", type=str, default=None)
+
+    reva = research_sub.add_parser("evaluate", help="Evaluate expression with multi-horizon IC")
+    reva.add_argument("--expr", type=str, required=True, help="DSL expression string")
+    reva.add_argument("--config", type=str, default=None)
+
+    rpc = research_sub.add_parser(
+        "produce-classical",
+        help="Compute classical indicators and write to prediction store",
+    )
+    rpc.add_argument("--config", type=str, default=None)
+
+    rpr = research_sub.add_parser(
+        "paper-replay",
+        help="Run the legacy historical paper replay path",
+    )
+    rpr.add_argument("--start", type=str, required=True, help="Start date for replay (ISO format)")
+    rpr.add_argument("--end", type=str, required=True, help="End date for replay (ISO format)")
+    rpr.add_argument(
+        "--sizing-mode",
+        type=str,
+        default="runtime",
+        choices=["runtime", "raw_mean", "compare"],
+        help="Legacy replay sizing mode",
+    )
+    rpr.add_argument("--asset", type=str, default="BTC")
+    rpr.add_argument("--config", type=str, default=None)
+
+    rrex = research_sub.add_parser(
+        "replay-experiment",
+        help="Run a legacy replay experiment and persist the artifact",
+    )
+    rrex.add_argument("--name", required=True, help="Experiment name")
+    rrex.add_argument("--asset", type=str, default="BTC")
+    rrex.add_argument("--config", type=str, default=None)
+    rrex.add_argument("--start", required=True, help="Replay start date (YYYY-MM-DD)")
+    rrex.add_argument("--end", required=True, help="Replay end date (YYYY-MM-DD)")
+    rrex.add_argument(
+        "--managed-alpha-mode",
+        choices=["current", "admission"],
+        default="current",
+        help="Use the current managed-alpha set as-is or rebuild it from admission rules first",
+    )
+    rrex.add_argument(
+        "--source",
+        choices=["alphas", "candidates"],
+        default="candidates",
+        help="Admission replay source when --managed-alpha-mode=admission",
+    )
+    rrex.add_argument(
+        "--fail-state",
+        choices=["rejected", "dormant"],
+        default="rejected",
+        help="Fallback state for records that fail admission replay",
+    )
+    rrex.add_argument(
+        "--deployment-mode",
+        choices=["current", "refresh"],
+        default="current",
+        help="Use the current deployed alpha set or refresh it inside the experiment",
+    )
+    rrex.add_argument(
+        "--sizing-mode",
+        type=str,
+        default="runtime",
+        choices=["runtime", "raw_mean"],
+        help="Replay sizing mode",
+    )
+    rrex.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="PATH=VALUE",
+        help="Override merged config via dotted path, e.g. lifecycle.candidate_quality_min=1.10",
+    )
+    rrex.add_argument("--notes", default="", help="Optional experiment notes")
+
+    rrmx = research_sub.add_parser(
+        "replay-matrix",
+        help="Run a TOML-defined replay experiment matrix",
+    )
+    rrmx.add_argument("--manifest", required=True, help="Path to TOML matrix manifest")
+    rrmx.add_argument(
+        "--max-workers",
+        type=int,
+        default=1,
+        help="Parallel workers for historical replay runs",
+    )
 
     return parser
 
@@ -837,6 +1012,11 @@ def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
     _print_replay_result(args.sizing_mode, result)
 
 
+def cmd_paper_replay(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    _cmd_paper_replay(args, cfg)
+
+
 def _build_pipeline_config(
     config: Config, pop_size: int, generations: int,
 ):
@@ -1188,6 +1368,14 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
         log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
         bootstrap_weight=cfg.lifecycle.bootstrap_weight,
+        live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
+        live_proven_marginal_contribution_min=(
+            cfg.lifecycle.live_proven_marginal_contribution_min
+        ),
+        bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
+        bootstrap_retention_marginal_contribution_min=(
+            cfg.lifecycle.bootstrap_retention_marginal_contribution_min
+        ),
         quality_weight=cfg.lifecycle.quality_weight,
         marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
         floor=cfg.lifecycle.target_stake_floor,
@@ -1591,6 +1779,14 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
             log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
             bootstrap_weight=cfg.lifecycle.bootstrap_weight,
+            live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
+            live_proven_marginal_contribution_min=(
+                cfg.lifecycle.live_proven_marginal_contribution_min
+            ),
+            bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
+            bootstrap_retention_marginal_contribution_min=(
+                cfg.lifecycle.bootstrap_retention_marginal_contribution_min
+            ),
             quality_weight=cfg.lifecycle.quality_weight,
             marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
             floor=cfg.lifecycle.target_stake_floor,
@@ -1715,6 +1911,96 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
         skipped = ", ".join(report.skipped_ids[:10])
         suffix = " ..." if len(report.skipped_ids) > 10 else ""
         print(f"  Skipped:   {skipped}{suffix}")
+
+
+def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
+    from alpha_os.data.store import DataStore
+    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.hypotheses import (
+        HypothesisStore,
+        apply_allocation_rebalance_plan,
+        backfill_observation_returns,
+        build_allocation_rebalance_plan,
+    )
+    from alpha_os.hypotheses.breadth import (
+        apply_bootstrap_redundancy_cap,
+        load_breadth_matrix,
+    )
+
+    cfg = _load_config(args.config)
+    adir = asset_data_dir(args.asset)
+    store = HypothesisStore(HYPOTHESES_DB)
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    try:
+        summary = backfill_observation_returns(
+            hypothesis_store=store,
+            data_store=data_store,
+            forward_tracker=forward_tracker,
+            asset=args.asset,
+            lookback_days=args.days,
+        )
+        print(
+            "Observation backfill: "
+            f"asset={args.asset} hypotheses={summary.n_hypotheses} "
+            f"days={summary.n_days} records={summary.n_records} "
+            f"failures={summary.n_failures}"
+        )
+
+        if not args.apply_lifecycle:
+            return
+
+        plan = build_allocation_rebalance_plan(
+            store,
+            metric=cfg.portfolio.objective,
+            lookback=cfg.forward.degradation_window,
+            min_observations=cfg.live_quality.min_observations,
+            full_weight_observations=cfg.live_quality.full_weight_observations,
+            early_stage_full_weight_observations=(
+                cfg.live_quality.early_stage_full_weight_observations
+            ),
+            sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
+            log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
+            bootstrap_weight=cfg.lifecycle.bootstrap_weight,
+            live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
+            live_proven_marginal_contribution_min=(
+                cfg.lifecycle.live_proven_marginal_contribution_min
+            ),
+            bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
+            bootstrap_retention_marginal_contribution_min=(
+                cfg.lifecycle.bootstrap_retention_marginal_contribution_min
+            ),
+            quality_weight=cfg.lifecycle.quality_weight,
+            marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
+            floor=cfg.lifecycle.target_stake_floor,
+            live_returns_for=forward_tracker.get_returns,
+        )
+        records = store.list_observation_active()
+        breadth_data = load_breadth_matrix(
+            data_store,
+            records,
+            asset=args.asset,
+            lookback=cfg.forward.degradation_window,
+        )
+        plan = apply_bootstrap_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=args.asset,
+            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+        )
+        updates = apply_allocation_rebalance_plan(store, plan)
+        print(
+            "Lifecycle refresh: "
+            f"updated={len(updates)} active={len(plan)} "
+            f"capital_backed={sum(1 for entry in plan if entry.proposed_stake > cfg.lifecycle.target_stake_floor)} "
+            f"live_proven={sum(1 for entry in plan if entry.live_proven)}"
+        )
+    finally:
+        forward_tracker.close()
+        data_store.close()
+        store.close()
 
 
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
@@ -1951,6 +2237,16 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     bootstrap_backed = 0
     observed = 0
     capital_backed = 0
+    research_retained = 0
+    live_proven = 0
+    promoted_live = 0
+    research_demoted = 0
+    blocker_counts = {
+        "insufficient_observations": 0,
+        "weak_live_quality": 0,
+        "weak_marginal_contribution": 0,
+        "weak_live_quality_and_contribution": 0,
+    }
     for record in records:
         try:
             stake = float(record.stake)
@@ -1959,20 +2255,39 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         if stake > 0:
             capital_backed += 1
         try:
-            if float(record.metadata.get("lifecycle_bootstrap_trust", 0.0)) > 0:
+            bootstrap_trust = float(record.metadata.get("lifecycle_bootstrap_trust", 0.0))
+            if bootstrap_trust > 0:
                 bootstrap_backed += 1
         except (TypeError, ValueError):
+            bootstrap_trust = 0.0
             pass
         try:
             if float(record.metadata.get("lifecycle_quality_confidence", 0.0)) > 0:
                 observed += 1
         except (TypeError, ValueError):
             pass
+        if bool(record.metadata.get("lifecycle_research_retained", False)):
+            research_retained += 1
+        if bool(record.metadata.get("lifecycle_live_proven", False)):
+            live_proven += 1
+            if bootstrap_trust <= 0:
+                promoted_live += 1
+        if bootstrap_trust > 0 and not bool(record.metadata.get("lifecycle_capital_eligible", stake > 0)):
+            research_demoted += 1
+        if bootstrap_trust <= 0 and not bool(record.metadata.get("lifecycle_live_proven", False)):
+            blocker = str(record.metadata.get("lifecycle_live_promotion_blocker", ""))
+            if blocker in blocker_counts:
+                blocker_counts[blocker] += 1
 
     return {
         "bootstrap_backed": bootstrap_backed,
         "observed": observed,
         "capital_backed": capital_backed,
+        "research_retained": research_retained,
+        "live_proven": live_proven,
+        "promoted_live": promoted_live,
+        "research_demoted": research_demoted,
+        "promotion_blockers": blocker_counts,
         "top_allocation": _top_runtime_hypotheses(records, "stake"),
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
         "top_raw_live": _top_runtime_hypotheses(records, "lifecycle_raw_live_quality"),
@@ -2078,8 +2393,21 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         "  Signals:   "
         f"observed={hypothesis_summary['observed']} "
         f"bootstrap_backed={hypothesis_summary['bootstrap_backed']} "
+        f"research_retained={hypothesis_summary['research_retained']} "
+        f"live_proven={hypothesis_summary['live_proven']} "
+        f"promoted_live={hypothesis_summary['promoted_live']} "
+        f"research_demoted={hypothesis_summary['research_demoted']} "
         f"capital_backed={hypothesis_summary['capital_backed']}"
     )
+    blocker_counts = hypothesis_summary["promotion_blockers"]
+    if any(blocker_counts.values()):
+        print(
+            "  Promote:   "
+            f"obs={blocker_counts['insufficient_observations']} "
+            f"quality={blocker_counts['weak_live_quality']} "
+            f"contrib={blocker_counts['weak_marginal_contribution']} "
+            f"both={blocker_counts['weak_live_quality_and_contribution']}"
+        )
     if hypothesis_summary["top_allocation"]:
         print("  TopAlloc:  " + ", ".join(hypothesis_summary["top_allocation"]))
     if hypothesis_summary["top_effective_live"]:
@@ -2458,6 +2786,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_rebalance_allocation_trust(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
+    elif args.command == "backfill-observation-returns":
+        cmd_backfill_observation_returns(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "replay-matrix":
@@ -2470,6 +2800,25 @@ def main(argv: list[str] | None = None) -> None:
         cmd_sync_signal_cache(args)
     elif args.command == "alpha-funnel":
         cmd_alpha_funnel(args)
+    elif args.command == "research":
+        if args.research_command == "generate":
+            cmd_generate(args)
+        elif args.research_command == "backtest":
+            cmd_backtest(args)
+        elif args.research_command == "evolve":
+            cmd_evolve(args)
+        elif args.research_command == "validate":
+            cmd_validate(args)
+        elif args.research_command == "evaluate":
+            cmd_evaluate_expression(args)
+        elif args.research_command == "produce-classical":
+            cmd_produce_classical(args)
+        elif args.research_command == "paper-replay":
+            cmd_paper_replay(args)
+        elif args.research_command == "replay-experiment":
+            cmd_replay_experiment(args)
+        elif args.research_command == "replay-matrix":
+            cmd_replay_matrix(args)
     elif args.command == "evaluate":
         cmd_evaluate_expression(args)
     elif args.command == "produce-predictions":
