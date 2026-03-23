@@ -15,7 +15,7 @@ class MonitorConfig:
 
 @dataclass
 class MonitorStatus:
-    alpha_id: str
+    hypothesis_id: str
     rolling_sharpe: float
     rolling_log_growth: float
     rolling_max_dd: float
@@ -28,28 +28,28 @@ class MonitorStatus:
         return getattr(self, self._ROLLING_FITNESS_MAP[metric])
 
 
-class AlphaMonitor:
+class HypothesisMonitor:
     def __init__(self, config: MonitorConfig | None = None):
         self.config = config or MonitorConfig()
         self._returns: dict[str, list[float]] = {}
 
-    def record(self, alpha_id: str, daily_return: float) -> None:
-        if alpha_id not in self._returns:
-            self._returns[alpha_id] = []
-        self._returns[alpha_id].append(daily_return)
+    def record(self, hypothesis_id: str, daily_return: float) -> None:
+        if hypothesis_id not in self._returns:
+            self._returns[hypothesis_id] = []
+        self._returns[hypothesis_id].append(daily_return)
 
-    def record_batch(self, alpha_id: str, returns: list[float] | np.ndarray) -> None:
-        if alpha_id not in self._returns:
-            self._returns[alpha_id] = []
-        self._returns[alpha_id].extend(float(r) for r in returns)
+    def record_batch(self, hypothesis_id: str, returns: list[float] | np.ndarray) -> None:
+        if hypothesis_id not in self._returns:
+            self._returns[hypothesis_id] = []
+        self._returns[hypothesis_id].extend(float(r) for r in returns)
 
-    def check(self, alpha_id: str) -> MonitorStatus:
+    def check(self, hypothesis_id: str) -> MonitorStatus:
         cfg = self.config
-        rets = self._returns.get(alpha_id, [])
+        rets = self._returns.get(hypothesis_id, [])
 
         if len(rets) < cfg.min_observations:
             return MonitorStatus(
-                alpha_id=alpha_id,
+                hypothesis_id=hypothesis_id,
                 rolling_sharpe=0.0,
                 rolling_log_growth=0.0,
                 rolling_max_dd=0.0,
@@ -75,7 +75,7 @@ class AlphaMonitor:
             reasons.append(f"Rolling MaxDD {rolling_max_dd:.1%} > {cfg.drawdown_threshold:.1%}")
 
         return MonitorStatus(
-            alpha_id=alpha_id,
+            hypothesis_id=hypothesis_id,
             rolling_sharpe=rolling_sharpe,
             rolling_log_growth=rolling_log_growth,
             rolling_max_dd=rolling_max_dd,
@@ -84,10 +84,10 @@ class AlphaMonitor:
         )
 
     def check_all(self) -> list[MonitorStatus]:
-        return [self.check(alpha_id) for alpha_id in self._returns]
+        return [self.check(hypothesis_id) for hypothesis_id in self._returns]
 
-    def clear(self, alpha_id: str) -> None:
-        self._returns.pop(alpha_id, None)
+    def clear(self, hypothesis_id: str) -> None:
+        self._returns.pop(hypothesis_id, None)
 
 
 @dataclass

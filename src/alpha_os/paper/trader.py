@@ -40,7 +40,7 @@ from ..hypotheses.combiner import (
     signal_consensus,
     weighted_combine_scalar,
 )
-from ..hypotheses.monitor import AlphaMonitor, RegimeDetector
+from ..hypotheses.monitor import HypothesisMonitor, RegimeDetector
 from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
 from ..hypotheses.runtime_policy import rank_trading_records
@@ -139,7 +139,7 @@ class Trader:
         registry: HypothesisStore | None = None,
         portfolio_tracker: PaperPortfolioTracker | None = None,
         forward_tracker: ForwardTracker | None = None,
-        monitor: AlphaMonitor | None = None,
+        monitor: HypothesisMonitor | None = None,
         executor: Executor | None = None,
         risk_manager: RiskManager | None = None,
         circuit_breaker: CircuitBreaker | None = None,
@@ -164,7 +164,7 @@ class Trader:
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 
         mon_cfg = config.to_monitor_config()
-        self.monitor = monitor or AlphaMonitor(config=mon_cfg)
+        self.monitor = monitor or HypothesisMonitor(config=mon_cfg)
 
         self.risk_manager = risk_manager or RiskManager(config.risk.to_manager_config())
         self.circuit_breaker = circuit_breaker or CircuitBreaker()

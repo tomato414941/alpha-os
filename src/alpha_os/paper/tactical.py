@@ -22,7 +22,7 @@ from ..data.universe import build_hourly_feature_list
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
-from ..hypotheses.monitor import AlphaMonitor, MonitorConfig
+from ..hypotheses.monitor import HypothesisMonitor, MonitorConfig
 from ..hypotheses.combiner import weighted_combine_scalar
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class TacticalTrader:
             self.store = DataStore(SIGNAL_CACHE_L2_DB, client)
 
         mon_cfg = MonitorConfig(rolling_window=config.forward.degradation_window)
-        self.monitor = AlphaMonitor(config=mon_cfg)
+        self.monitor = HypothesisMonitor(config=mon_cfg)
 
     def run_cycle(self, strategic_bias: float = 0.0) -> TacticalSignal:
         """Evaluate L2 alphas and modulate strategic bias.

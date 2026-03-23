@@ -1,42 +1,42 @@
-"""Tests for alpha monitor, audit log, and scheduler."""
+"""Tests for hypothesis monitor, audit log, and scheduler."""
 import json
 import numpy as np
 
-from alpha_os.hypotheses.monitor import AlphaMonitor, MonitorConfig, MonitorStatus
+from alpha_os.hypotheses.monitor import HypothesisMonitor, MonitorConfig, MonitorStatus
 from alpha_os.governance.audit_log import AuditLog
 from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
 
 # ---------------------------------------------------------------------------
-# Alpha Monitor
+# Hypothesis Monitor
 # ---------------------------------------------------------------------------
 
-class TestAlphaMonitor:
+class TestHypothesisMonitor:
     def test_record_and_check(self):
-        mon = AlphaMonitor()
+        mon = HypothesisMonitor()
         rng = np.random.RandomState(42)
         rets = rng.normal(0.001, 0.01, 100)
         mon.record_batch("a1", rets)
         status = mon.check("a1")
         assert isinstance(status, MonitorStatus)
-        assert status.alpha_id == "a1"
+        assert status.hypothesis_id == "a1"
         assert status.rolling_sharpe != 0.0
 
     def test_no_data(self):
-        mon = AlphaMonitor()
+        mon = HypothesisMonitor()
         status = mon.check("nonexistent")
         assert status.is_degraded is False
         assert status.rolling_sharpe == 0.0
 
     def test_insufficient_data(self):
-        mon = AlphaMonitor(config=MonitorConfig(min_observations=50))
+        mon = HypothesisMonitor(config=MonitorConfig(min_observations=50))
         for i in range(10):
             mon.record("a1", 0.001)
         status = mon.check("a1")
         assert status.is_degraded is False
 
     def test_degraded_negative_sharpe(self):
-        mon = AlphaMonitor(config=MonitorConfig(
+        mon = HypothesisMonitor(config=MonitorConfig(
             rolling_window=30, sharpe_threshold=0.0, min_observations=20,
         ))
         # Consistently negative returns
@@ -47,7 +47,7 @@ class TestAlphaMonitor:
         assert any("Sharpe" in r for r in status.degradation_reasons)
 
     def test_degraded_high_drawdown(self):
-        mon = AlphaMonitor(config=MonitorConfig(
+        mon = HypothesisMonitor(config=MonitorConfig(
             rolling_window=30, drawdown_threshold=0.05, min_observations=20,
         ))
         # Large loss
@@ -57,8 +57,8 @@ class TestAlphaMonitor:
         assert status.is_degraded is True
         assert any("MaxDD" in r for r in status.degradation_reasons)
 
-    def test_healthy_alpha(self):
-        mon = AlphaMonitor(config=MonitorConfig(
+    def test_healthy_hypothesis(self):
+        mon = HypothesisMonitor(config=MonitorConfig(
             rolling_window=63, sharpe_threshold=0.0, min_observations=20,
         ))
         rng = np.random.RandomState(42)
@@ -69,7 +69,7 @@ class TestAlphaMonitor:
         assert status.rolling_sharpe > 0
 
     def test_check_all(self):
-        mon = AlphaMonitor()
+        mon = HypothesisMonitor()
         rng = np.random.RandomState(42)
         mon.record_batch("a1", rng.normal(0.001, 0.01, 50))
         mon.record_batch("a2", rng.normal(-0.001, 0.01, 50))
@@ -77,7 +77,7 @@ class TestAlphaMonitor:
         assert len(results) == 2
 
     def test_clear(self):
-        mon = AlphaMonitor()
+        mon = HypothesisMonitor()
         mon.record("a1", 0.01)
         mon.clear("a1")
         status = mon.check("a1")
