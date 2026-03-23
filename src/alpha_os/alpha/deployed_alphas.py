@@ -1,4 +1,7 @@
 """Deployed alphas deployment policy."""
+# TODO: Legacy deployment policy for alpha_registry.db. Keep this outside the
+# hypotheses-first runtime mainline until live-hypothesis selection fully
+# replaces managed/deployed registry workflows.
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,8 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..config import Config
-from ..config import DATA_DIR
+from ..config import Config, SIGNAL_CACHE_DB
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
@@ -623,7 +625,7 @@ def _build_signal_map(
     if lookback <= 1 or config.deployment.signal_similarity_max >= 1.0:
         return {}
 
-    store = DataStore(DATA_DIR / "alpha_cache.db", None)
+    store = DataStore(SIGNAL_CACHE_DB, None)
     try:
         features = build_feature_list(asset)
         matrix = store.get_matrix(features)

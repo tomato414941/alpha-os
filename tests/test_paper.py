@@ -21,6 +21,52 @@ class _StaticMatrixStore:
         return None
 
 
+class _RecordingMatrixStore(_StaticMatrixStore):
+    def __init__(self, matrix: pd.DataFrame):
+        super().__init__(matrix)
+        self.synced: list[list[str]] = []
+
+    def sync(self, features, resolution="1d", *, min_history_days=0):
+        self.synced.append(list(features))
+
+
+class _FakePredictionStore:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def read_signal_history(self, signal_id, asset, n_days=60):
+        return self._rows[(signal_id, asset)][-n_days:]
+
+    def close(self):
+        return None
+
+
+class _StaticRegistry:
+    def __init__(self, records):
+        self._records = list(records)
+
+    def top_by_stake(self, n=30):
+        return self._records[:n]
+
+    def list_live(self):
+        return list(self._records)
+
+    def list_observation_active(self):
+        return list(self._records)
+
+    def close(self):
+        return None
+
+
+class _SplitRegistry(_StaticRegistry):
+    def __init__(self, live_records, observation_records):
+        super().__init__(live_records)
+        self._observation_records = list(observation_records)
+
+    def list_observation_active(self):
+        return list(self._observation_records)
+
+
 class TestPaperPortfolioTracker:
     def test_save_and_load_snapshot(self, tmp_path):
         db = tmp_path / "test.db"
@@ -190,6 +236,7 @@ class TestPaperPortfolioTracker:
         tracker = PaperPortfolioTracker(db)
         tracker.save_alpha_signals("2026-01-01", {"a1": 0.5, "a2": -0.3})
         tracker.save_alpha_signals("2026-01-01", {"a1": 0.6})  # upsert
+        assert tracker.get_alpha_signals("2026-01-01") == {"a1": 0.6, "a2": -0.3}
         tracker.close()
 
     def test_consecutive_no_fill_cycles(self, tmp_path):
@@ -317,6 +364,58 @@ class TestPositionSizing:
 
 
 class TestTrader:
+    def test_prediction_history_array_pads_to_matrix_length(self):
+        from alpha_os.paper.trader import Trader
+
+        store = _FakePredictionStore(
+            {
+                ("h1", "BTC"): [
+                    ("2026-03-21", 0.4),
+                    ("2026-03-20", 0.2),
+                ]
+            }
+        )
+
+        arr = Trader._prediction_history_array(
+            store,
+            "h1",
+            "BTC",
+            n_days=5,
+            fallback_value=0.4,
+        )
+
+        assert list(arr) == [0.2, 0.2, 0.2, 0.2, 0.4]
+
+    def test_prepare_runtime_inputs_prefers_prediction_store(self):
+        from alpha_os.paper.trader import Trader
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        store_backed = HypothesisRecord(
+            hypothesis_id="h-store",
+            kind="dsl",
+            definition={"expression": "(zscore foo)"},
+            stake=1.0,
+        )
+        expr_backed = HypothesisRecord(
+            hypothesis_id="h-expr",
+            kind="dsl",
+            definition={"expression": "(rank_10 bar)"},
+            stake=0.5,
+        )
+
+        runtime_signals, parsed_records, n_failed = Trader._prepare_runtime_inputs(
+            [store_backed, expr_backed],
+            "btc_ohlcv",
+            {"h-store": 0.4},
+        )
+
+        assert runtime_signals == ["bar", "btc_ohlcv"]
+        assert [(record.alpha_id, expr is None) for record, expr in parsed_records] == [
+            ("h-store", True),
+            ("h-expr", False),
+        ]
+        assert n_failed == 0
+
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""
         from alpha_os.paper.trader import Trader
@@ -488,4 +587,212 @@ class TestTrader:
         assert plan.target_positions == {"btc_ohlcv": pytest.approx(-50.0)}
         trader.close()
 
+    def test_run_cycle_syncs_only_runtime_signals(self, monkeypatch, tmp_path):
+        from alpha_os.config import Config
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os.paper.trader import Trader
+        from alpha_os.risk.circuit_breaker import CircuitBreaker
 
+        cfg = Config()
+        cfg.paper.max_position_pct = 0.5
+
+        matrix = pd.DataFrame(
+            {
+                "btc_ohlcv": [100.0, 105.0],
+                "unused_feature": [1.0, 2.0],
+            },
+            index=["2026-03-20", "2026-03-21"],
+        )
+        store = _RecordingMatrixStore(matrix)
+        record = HypothesisRecord(
+            hypothesis_id="h-store",
+            kind="manual",
+            definition={},
+            stake=1.0,
+        )
+
+        history = {
+            ("h-store", "BTC"): [
+                ("2026-03-20", 0.3),
+                ("2026-03-21", 0.3),
+            ]
+        }
+
+        class _PatchedPredictionStore(_FakePredictionStore):
+            def read_latest(self, date, assets=None):
+                return {"h-store": {"BTC": 0.3}}
+
+        monkeypatch.setattr(
+            "alpha_os.predictions.store.PredictionStore",
+            lambda *args, **kwargs: _PatchedPredictionStore(history),
+        )
+        monkeypatch.setattr(
+            "alpha_os.paper.trader._quick_healthcheck",
+            lambda _url: True,
+        )
+
+        trader = Trader(
+            asset="BTC",
+            config=cfg,
+            registry=_StaticRegistry([record]),
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
+            store=store,
+        )
+
+        result = trader.run_cycle()
+
+        assert store.synced == [["btc_ohlcv"]]
+        assert result.n_signals_evaluated == 1
+        trader.close()
+
+    def test_run_cycle_skips_runtime_sync_when_healthcheck_fails(self, monkeypatch, tmp_path):
+        from alpha_os.config import Config
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os.paper.trader import Trader
+        from alpha_os.risk.circuit_breaker import CircuitBreaker
+
+        cfg = Config()
+        cfg.paper.max_position_pct = 0.5
+
+        matrix = pd.DataFrame(
+            {
+                "btc_ohlcv": [100.0, 105.0],
+                "unused_feature": [1.0, 2.0],
+            },
+            index=["2026-03-20", "2026-03-21"],
+        )
+        store = _RecordingMatrixStore(matrix)
+        record = HypothesisRecord(
+            hypothesis_id="h-store",
+            kind="manual",
+            definition={},
+            stake=1.0,
+        )
+
+        history = {
+            ("h-store", "BTC"): [
+                ("2026-03-20", 0.3),
+                ("2026-03-21", 0.3),
+            ]
+        }
+
+        class _PatchedPredictionStore(_FakePredictionStore):
+            def read_latest(self, date, assets=None):
+                return {"h-store": {"BTC": 0.3}}
+
+        monkeypatch.setattr(
+            "alpha_os.predictions.store.PredictionStore",
+            lambda *args, **kwargs: _PatchedPredictionStore(history),
+        )
+        monkeypatch.setattr(
+            "alpha_os.paper.trader._quick_healthcheck",
+            lambda _url: False,
+        )
+
+        trader = Trader(
+            asset="BTC",
+            config=cfg,
+            registry=_StaticRegistry([record]),
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
+            store=store,
+        )
+
+        result = trader.run_cycle()
+
+        assert store.synced == []
+        assert result.n_signals_evaluated == 1
+        trader.close()
+
+    def test_run_cycle_selects_only_capital_backed_candidates(self, monkeypatch, tmp_path):
+        from alpha_os.config import Config
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os.paper.trader import Trader
+        from alpha_os.risk.circuit_breaker import CircuitBreaker
+
+        cfg = Config()
+        cfg.paper.max_trading_alphas = 1
+        cfg.paper.max_position_pct = 0.5
+
+        matrix = pd.DataFrame(
+            {
+                "btc_ohlcv": [100.0, 105.0],
+            },
+            index=["2026-03-20", "2026-03-21"],
+        )
+        store = _RecordingMatrixStore(matrix)
+        live_record = HypothesisRecord(
+            hypothesis_id="capital-backed",
+            kind="manual",
+            definition={},
+            stake=1.0,
+        )
+        observation_only = HypothesisRecord(
+            hypothesis_id="observation-only",
+            kind="manual",
+            definition={},
+            stake=0.0,
+        )
+
+        history = {
+            ("capital-backed", "BTC"): [
+                ("2026-03-20", 0.3),
+                ("2026-03-21", 0.3),
+            ],
+            ("observation-only", "BTC"): [
+                ("2026-03-20", 0.9),
+                ("2026-03-21", 0.9),
+            ],
+        }
+
+        class _PatchedPredictionStore(_FakePredictionStore):
+            def read_latest(self, date, assets=None):
+                return {
+                    "capital-backed": {"BTC": 0.3},
+                    "observation-only": {"BTC": 0.9},
+                }
+
+        monkeypatch.setattr(
+            "alpha_os.predictions.store.PredictionStore",
+            lambda *args, **kwargs: _PatchedPredictionStore(history),
+        )
+        monkeypatch.setattr(
+            "alpha_os.paper.trader._quick_healthcheck",
+            lambda _url: False,
+        )
+
+        trader = Trader(
+            asset="BTC",
+            config=cfg,
+            registry=_SplitRegistry([live_record], [live_record, observation_only]),
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
+            store=store,
+        )
+
+        result = trader.run_cycle()
+
+        assert result.n_live_hypotheses == 1
+        assert result.n_shortlist_candidates == 1
+        assert result.n_selected_alphas == 1
+        assert result.n_signals_evaluated == 2
+        trader.close()

@@ -1,4 +1,7 @@
 """Named replay experiments with persisted artifacts."""
+# TODO: This module still models legacy managed/deployed registry workflows.
+# Keep it outside the hypotheses-first runtime mainline until replay is
+# redesigned around hypothesis snapshots instead of alpha_registry.db.
 from __future__ import annotations
 
 import json
@@ -226,7 +229,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
             runtime_profile = build_runtime_profile(
                 asset=asset,
                 config=cfg,
-                deployed_alpha_ids=_deployed_alpha_ids(replay_db),
+                live_hypothesis_ids=_deployed_alpha_ids(replay_db),
                 commit=commit,
                 extra={
                     "managed_alpha_mode": spec.managed_alpha_mode,
@@ -247,7 +250,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
         runtime_profile = build_runtime_profile(
             asset=asset,
             config=cfg,
-            deployed_alpha_ids=_deployed_alpha_ids(registry_db),
+            live_hypothesis_ids=_deployed_alpha_ids(registry_db),
             commit=commit,
             extra={
                 "managed_alpha_mode": spec.managed_alpha_mode,

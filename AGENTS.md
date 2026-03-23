@@ -8,10 +8,15 @@ Python 3.12, S-expression DSL, pure MAP-Elites evolution, multi-venue execution.
 Asset classes: crypto (BTC/ETH/SOL), US stocks, ETFs, prediction markets (Polymarket).
 Venues: Binance (crypto), Alpaca (equities), Polymarket (prediction markets), Paper.
 
-3-Layer architecture:
-- **Layer 3 (Strategic)**: Daily signals → direction bias (MAP-Elites on daily DSL)
-- **Layer 2 (Tactical)**: Hourly signals → entry/exit timing (TacticalTrader, 17 hourly features)
-- **Layer 1 (Execution)**: Minute signals → optimal execution (ExecutionOptimizer, VPIN/spread/imbalance)
+Current trusted runtime:
+- `hypothesis-seeder`
+- `sync-signal-cache`
+- `produce-predictions`
+- `trade --once --venue paper`
+- `runtime-status`
+
+Legacy tactical, replay, and registry-era paths still exist in places, but are
+not the current mainline.
 
 ## Structure
 
@@ -22,7 +27,7 @@ src/alpha_os/       Main package
   evolution/        Pure MAP-Elites discovery pool (4D behavioral grid)
   execution/        Executor ABC, BinanceExecutor, AlpacaExecutor, PolymarketExecutor, ExecutionOptimizer
   risk/             Position sizing, circuit breaker, BinaryOutcomeRiskManager (Kelly)
-  paper/            PaperTrader, EventDrivenTrader, TacticalTrader
+  paper/            Single-asset runtime, legacy replay helpers
 config/             TOML configuration
 scripts/            Operational scripts (cron, e2e tests)
 tests/              pytest test suite
@@ -49,7 +54,7 @@ python -m alpha_os --help
 ## Conventions
 
 - **Dataclasses** for all data structures (Fill, Order, AlphaRecord, ExecutionConfig, etc.)
-- **SQLite** for persistence (alpha_cache.db, alpha_registry.db, paper_trading.db)
+- **SQLite** for persistence (`signal_cache.db`, `hypotheses.db`, `paper_trading.db`)
 - **S-expression DSL** for alpha expressions: `(neg f1)`, `(ts_mean f2 10)`, `(if_gt f1 f2 f3 f4)`
 - **Executor interface** (`Executor` ABC in `execution/executor.py`) — Paper, Binance, Alpaca, Polymarket implementations
 - **Venue auto-detection** — `infer_venue(asset)` maps asset → venue; CLI `--venue` for override
@@ -77,8 +82,9 @@ python -m alpha_os --help
 
 ## Data Files (gitignored)
 
-- `data/alpha_cache.db` — alpha evaluation cache
-- `data/alpha_registry.db` — adopted alphas registry
+- `data/signal_cache.db` — local signal data cache
+- `data/hypotheses.db` — canonical hypothesis store
+- `data/alpha_registry.db` — legacy registry substrate; not the current runtime source of truth
 - `data/forward_returns.db` — forward return data
 - `data/paper_trading.db` — paper trading history
 - `data/metrics/` — testnet readiness state and reports
@@ -101,7 +107,7 @@ All venues use `execution/secrets.py` (`load_secrets`, `get_env_or_secret`).
 - REST API at `http://127.0.0.1:8000` (same server)
 - WebSocket at `ws://127.0.0.1:8000/ws/signals` for real-time events
 - `DataStore.sync()` fetches incremental data via `SignalClient` (supports `resolution` param)
-- `alpha_cache.db` caches locally (works offline if API is down)
+- `signal_cache.db` caches signals locally (works offline if API is down)
 - EventDrivenTrader subscribes to signal events via WebSocket
 - ExecutionOptimizer reads realtime microstructure signals via `SignalClient.get_latest()`
 

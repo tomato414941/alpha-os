@@ -1,0 +1,12 @@
+[Unit]
+Description=Alpha-OS paper runtime chain (%i)
+After=network.target
+OnFailure=alpha-os-runtime-status@%i.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/dev/projects/alpha-os
+EnvironmentFile=-/home/dev/.secrets/alpha-os-env
+ExecStart=/bin/systemctl --user start --wait alpha-os-sync-signal-cache@%i.service
+ExecStart=/bin/systemctl --user start --wait alpha-os-produce-predictions@%i.service
+ExecStart=/bin/systemctl --user start --wait alpha-os-paper-trade@%i.service

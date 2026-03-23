@@ -211,6 +211,18 @@ class PaperPortfolioTracker:
         )
         self._conn.commit()
 
+    def get_alpha_signals(self, date: str) -> dict[str, float]:
+        rows = self._conn.execute(
+            """
+            SELECT alpha_id, signal_value
+            FROM alpha_signals
+            WHERE date = ?
+            ORDER BY alpha_id
+            """,
+            (date,),
+        ).fetchall()
+        return {row["alpha_id"]: row["signal_value"] for row in rows}
+
     def get_last_snapshot(self) -> PortfolioSnapshot | None:
         row = self._conn.execute(
             "SELECT * FROM portfolio_snapshots ORDER BY date DESC LIMIT 1"

@@ -6,6 +6,7 @@ import argparse
 import gc
 import json
 import logging
+import math
 import os
 import sys
 import time
@@ -16,7 +17,7 @@ import numpy as np
 
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.config import Config, DATA_DIR, asset_data_dir
+from alpha_os.config import Config, DATA_DIR, HYPOTHESES_DB, SIGNAL_CACHE_DB, SIGNAL_CACHE_L2_DB, asset_data_dir
 from alpha_os.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.signal_client import build_signal_client_from_config
@@ -90,15 +91,14 @@ def _build_parser() -> argparse.ArgumentParser:
     eva.add_argument("--expr", type=str, required=True, help="DSL expression string")
     eva.add_argument("--config", type=str, default=None)
 
-    # submit — submit expression to admission queue
-    smt = sub.add_parser("submit", help="Submit expression to admission queue")
-    smt.add_argument("--expr", type=str, required=True, help="DSL expression string")
-    smt.add_argument("--asset", type=str, default="BTC")
-    smt.add_argument("--config", type=str, default=None)
-
     # produce-predictions
     pp = sub.add_parser("produce-predictions", help="Evaluate active alphas and write to prediction store")
     pp.add_argument("--asset", type=str, default="BTC")
+    pp.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when no hypothesis predictions are written",
+    )
     pp.add_argument("--config", type=str, default=None)
 
     # produce-classical
@@ -106,23 +106,21 @@ def _build_parser() -> argparse.ArgumentParser:
     pc.add_argument("--config", type=str, default=None)
 
     # paper
-    ppr = sub.add_parser("paper", help="Paper trade with adopted alphas")
+    ppr = sub.add_parser("paper", help="Paper trade with live hypotheses")
     ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
     ppr.add_argument("--schedule", action="store_true", help="Run on interval")
     ppr.add_argument("--summary", action="store_true", help="Print summary and exit")
     ppr.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
     ppr.add_argument("--replay", action="store_true",
-                     help="Run historical replay over date range")
+                     help="Run legacy historical replay over date range")
     ppr.add_argument("--start", type=str, default=None,
                      help="Start date for replay (ISO format, e.g. 2025-06-01)")
     ppr.add_argument("--end", type=str, default=None,
                      help="End date for replay (ISO format, e.g. 2026-02-25)")
     ppr.add_argument("--sizing-mode", type=str, default="runtime",
                      choices=["runtime", "raw_mean", "compare"],
-                     help="Replay sizing mode: runtime logic, raw_mean baseline, or compare both")
-    ppr.add_argument("--tactical", action="store_true",
-                     help="Enable Layer 2 tactical modulation")
+                     help="Legacy replay sizing mode: runtime logic, raw_mean baseline, or compare both")
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
@@ -135,6 +133,11 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Override check_interval in seconds (default: from config)")
     trd.add_argument("--real", action="store_true",
                      help="Use real Binance (default is testnet)")
+    trd.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Disable interactive confirmation prompts for unattended runs",
+    )
     trd.add_argument("--capital", type=float, default=10000.0,
                      help="Initial capital for tracking (default: 10000)")
     trd.add_argument("--asset", type=str, default="BTC")
@@ -154,21 +157,21 @@ def _build_parser() -> argparse.ArgumentParser:
     trd.add_argument("--venue", type=str, default=None,
                      choices=["binance", "alpaca", "polymarket", "paper"],
                      help="Trading venue (default: auto-detect from asset)")
+    trd.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero on overlapping runs or empty/failed oneshot trade cycles",
+    )
 
-    # cross-trade (cross-sectional trading)
-    xst = sub.add_parser("cross-trade", help="Cross-sectional multi-asset trading")
-    xst.add_argument("--assets", type=str, required=True,
-                     help="Comma-separated tradeable assets (e.g. BTC,ETH,SOL)")
-    xst.add_argument("--once", action="store_true", help="Run one cycle and exit")
-    xst.add_argument("--schedule", action="store_true", help="Run on interval")
-    xst.add_argument("--interval", type=int, default=None)
-    xst.add_argument("--capital", type=float, default=10000.0)
-    xst.add_argument("--real", action="store_true")
-    xst.add_argument("--config", type=str, default=None)
+    hseed = sub.add_parser(
+        "hypothesis-seeder",
+        help="Register random DSL and fixed seed hypotheses into the hypotheses store",
+    )
+    hseed.add_argument("--config", type=str, default=None)
 
     ugen = sub.add_parser(
         "unified-generator",
-        help="Run cross-asset alpha generation daemon (evaluates across all assets)",
+        help=argparse.SUPPRESS,
     )
     ugen.add_argument("--config", type=str, default=None)
 
@@ -199,69 +202,27 @@ def _build_parser() -> argparse.ArgumentParser:
     lc_d.add_argument("--asset", type=str, default="BTC")
     lc_d.add_argument("--config", type=str, default=None)
 
-    # rebuild-managed-alphas
-    rb = sub.add_parser(
-        "rebuild-managed-alphas",
-        help="Replay admission gates and rebuild managed alpha states",
+    rat = sub.add_parser(
+        "rebalance-allocation-trust",
+        help="Rebase active hypothesis stake values onto the current allocation-trust model",
     )
-    rb.add_argument("--asset", type=str, default="BTC")
-    rb.add_argument("--config", type=str, default=None)
-    rb.add_argument(
-        "--source",
-        choices=["candidates", "alphas"],
-        default="candidates",
-        help="Source records used to rebuild managed alpha states",
-    )
-    rb.add_argument(
-        "--fail-state",
-        choices=["rejected", "dormant"],
-        default="rejected",
-        help="State assigned to records that fail the admission gate",
-    )
-    rb.add_argument("--dry-run", action="store_true", help="Print counts without writing")
-    rb.add_argument(
-        "--no-backup",
-        action="store_true",
-        help="Skip copying alpha_registry.db before rewrite",
-    )
+    rat.add_argument("--asset", type=str, default="BTC")
+    rat.add_argument("--config", type=str, default=None)
+    rat.add_argument("--dry-run", action="store_true")
 
-    # refresh-deployed-alphas
-    rda = sub.add_parser(
-        "refresh-deployed-alphas",
-        help="Refresh deployed alphas from managed alphas",
+    alb = sub.add_parser(
+        "analyze-live-breadth",
+        help="Analyze historical signal breadth for capital-backed bootstrap hypotheses",
     )
-    rda.add_argument("--asset", type=str, default="BTC")
-    rda.add_argument("--config", type=str, default=None)
-    rda.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
-    rda.add_argument(
-        "--no-backup",
-        action="store_true",
-        help="Skip copying alpha_registry.db before rewrite",
-    )
-
-    # prune-managed-alpha-duplicates
-    prd = sub.add_parser(
-        "prune-managed-alpha-duplicates",
-        help="Demote duplicate active managed alphas and refresh deployed alphas",
-    )
-    prd.add_argument("--asset", type=str, default="BTC")
-    prd.add_argument("--config", type=str, default=None)
-    prd.add_argument("--dry-run", action="store_true", help="Print the plan without writing")
-    prd.add_argument(
-        "--no-backup",
-        action="store_true",
-        help="Skip copying alpha_registry.db before rewrite",
-    )
-    prd.add_argument(
-        "--no-refresh-deployed",
-        action="store_true",
-        help="Do not refresh deployed alphas after demoting duplicates",
-    )
+    alb.add_argument("--asset", type=str, default="BTC")
+    alb.add_argument("--config", type=str, default=None)
+    alb.add_argument("--lookback", type=int, default=252)
+    alb.add_argument("--top-pairs", type=int, default=5)
 
     # replay-experiment
     rex = sub.add_parser(
         "replay-experiment",
-        help="Run a named replay experiment and persist the artifact",
+        help="Run a legacy replay experiment and persist the artifact",
     )
     rex.add_argument("--name", required=True, help="Experiment name")
     rex.add_argument("--asset", type=str, default="BTC")
@@ -338,65 +299,52 @@ def _build_parser() -> argparse.ArgumentParser:
     rst.add_argument("--asset", type=str, default="BTC")
     rst.add_argument("--config", type=str, default=None)
 
+    ssc = sub.add_parser(
+        "sync-signal-cache",
+        help="Sync a bounded set of signals into the local signal cache",
+    )
+    ssc.add_argument("--asset", type=str, default="BTC")
+    ssc.add_argument(
+        "--assets",
+        type=str,
+        default=None,
+        help="Comma-separated asset list (default: use --asset only)",
+    )
+    ssc.add_argument(
+        "--signals",
+        type=str,
+        default=None,
+        help="Comma-separated explicit signal names to sync",
+    )
+    ssc.add_argument(
+        "--from-hypotheses",
+        action="store_true",
+        help="Sync signals required by active hypotheses for the selected assets",
+    )
+    ssc.add_argument(
+        "--resolution",
+        type=str,
+        default="1d",
+        help="Signal resolution (default: 1d)",
+    )
+    ssc.add_argument(
+        "--min-history-days",
+        type=int,
+        default=0,
+        help="Require at least this many cached rows per signal",
+    )
+    ssc.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when sync cannot populate every requested signal",
+    )
+    ssc.add_argument("--config", type=str, default=None)
+
     afl = sub.add_parser(
         "alpha-funnel",
         help="Show discovery-pool to deployed-alpha funnel counts",
     )
     afl.add_argument("--asset", type=str, default="BTC")
-
-    # seed-handcrafted
-    shc = sub.add_parser(
-        "seed-handcrafted",
-        help="Queue hand-crafted alpha candidates into the admission queue",
-    )
-    shc.add_argument("--asset", type=str, default="BTC")
-    shc.add_argument(
-        "--alpha-set",
-        type=str,
-        default="baseline",
-        help="Named handcrafted alpha set for the asset",
-    )
-    shc.add_argument("--list", action="store_true", help="List available sets and exit")
-    shc.add_argument("--dry-run", action="store_true", help="Print expressions without writing")
-
-    # analyze-diversity
-    adv = sub.add_parser(
-        "analyze-diversity",
-        help="Analyze alpha diversity across signal, structure, and feature families",
-    )
-    adv.add_argument("--asset", type=str, default="BTC")
-    adv.add_argument("--config", type=str, default=None)
-    adv.add_argument(
-        "--scope",
-        choices=["deployed", "active"],
-        default="deployed",
-        help="Analyze the deployed alpha set or the registry-active pool",
-    )
-    adv.add_argument(
-        "--limit",
-        type=int,
-        default=0,
-        help="Optional record cap (0 = full scope)",
-    )
-    adv.add_argument(
-        "--metric",
-        choices=["sharpe", "log_growth"],
-        default="sharpe",
-        help="Ordering metric when limiting the registry-active pool",
-    )
-    adv.add_argument(
-        "--lookback",
-        type=int,
-        default=252,
-        help="Signal lookback window used for correlation analysis",
-    )
-    adv.add_argument(
-        "--top-pairs",
-        type=int,
-        default=10,
-        help="Number of most redundant pairs to print",
-    )
-    adv.add_argument("--json", action="store_true", help="Print full report as JSON")
 
     return parser
 
@@ -453,8 +401,7 @@ def _real_data(
     """Load real data: cache-first, import from signal-noise, sync from API."""
     from alpha_os.data.store import DataStore
 
-    db_name = "alpha_cache_l2.db" if resolution != "1d" else "alpha_cache.db"
-    db_path = DATA_DIR / db_name
+    db_path = SIGNAL_CACHE_L2_DB if resolution != "1d" else SIGNAL_CACHE_DB
 
     client = build_signal_client_from_config(config.api)
     store = DataStore(db_path, client)
@@ -778,8 +725,8 @@ def _print_paper_result(result) -> None:
         commit = getattr(result, "profile_commit", "")
         suffix = f" ({commit[:8]})" if commit else ""
         print(f"  Profile:    {result.profile_id[:12]}{suffix}")
-    print(f"  Managed:    {result.n_registry_active} active")
-    print(f"  Deployed:   {result.n_deployed_alphas} alphas")
+    print(f"  Active:     {result.n_registry_active} hypotheses")
+    print(f"  Live:       {result.n_live_hypotheses} hypotheses")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
     print(f"  Selected:   {result.n_selected_alphas} alphas")
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
@@ -802,13 +749,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
     from alpha_os.paper.trader import Trader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
-    tactical = _build_tactical_trader(
-        asset=args.asset,
-        cfg=cfg,
-        enabled=getattr(args, "tactical", False),
-    )
-
-    trader = Trader(asset=args.asset, config=cfg, tactical=tactical)
+    trader = Trader(asset=args.asset, config=cfg)
 
     if args.summary:
         trader.print_status()
@@ -816,10 +757,6 @@ def cmd_paper(args: argparse.Namespace) -> None:
         return
 
     if args.once or not args.schedule:
-        if tactical is not None and _needs_evolution_l2(tactical):
-            l2_cfg = _build_l2_pipeline_config(cfg, 200, 30)
-            print("No L2 alphas — running L2 evolution...")
-            _run_l2_evolution(tactical, cfg, l2_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
         trader.print_status()
@@ -827,10 +764,6 @@ def cmd_paper(args: argparse.Namespace) -> None:
         return
 
     def cycle():
-        if tactical is not None and _needs_evolution_l2(tactical):
-            l2_cfg = _build_l2_pipeline_config(cfg, 200, 30)
-            print("No L2 alphas — running L2 evolution...")
-            _run_l2_evolution(tactical, cfg, l2_cfg)
         result = trader.run_cycle()
         _print_paper_result(result)
 
@@ -851,9 +784,9 @@ def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
         print("Error: --replay requires --start and --end dates")
         sys.exit(1)
 
-    print(f"Running historical replay: {args.start} to {args.end} ({args.asset})")
+    print(f"Running legacy historical replay: {args.start} to {args.end} ({args.asset})")
     def _print_replay_result(label: str, result) -> None:
-        print(f"\nHistorical Replay [{label}]: {args.start} to {args.end}")
+        print(f"\nLegacy Historical Replay [{label}]: {args.start} to {args.end}")
         print(f"  Days:       {result.n_days}")
         print(f"  {'─'*36}")
         print(f"  Initial:    ${result.initial_capital:,.2f}")
@@ -989,108 +922,6 @@ def _run_evolution(trader, config: Config, pipeline_config) -> None:
     gc.collect()
 
 
-def _needs_evolution_l2(tactical) -> bool:
-    """Return True if L2 registry has no active alphas."""
-    from alpha_os.alpha.managed_alphas import AlphaState
-    active = tactical.registry.list_by_state(AlphaState.ACTIVE)
-    return len(active) == 0
-
-
-def _build_tactical_trader(asset: str, cfg: Config, enabled: bool):
-    """Return TacticalTrader only when Layer 2 is explicitly enabled."""
-    if not enabled:
-        return None
-    from alpha_os.paper.tactical import TacticalTrader
-    return TacticalTrader(asset=asset, config=cfg)
-
-
-def _build_l2_pipeline_config(config: Config, pop_size: int, generations: int):
-    """Build PipelineConfig for L2 hourly alpha evolution."""
-    from alpha_os.evolution.gp import GPConfig
-    from alpha_os.pipeline.runner import PipelineConfig
-
-    return PipelineConfig(
-        gp=GPConfig(
-            pop_size=pop_size,
-            n_generations=generations,
-            max_depth=config.generation.max_depth,
-            bloat_penalty=config.generation.bloat_penalty,
-            depth_penalty=config.generation.depth_penalty,
-            similarity_penalty=config.generation.similarity_penalty,
-        ),
-        oos_sharpe_min=config.validation.oos_sharpe_min,
-        pbo_max=config.validation.pbo_max,
-        dsr_pvalue_max=config.validation.dsr_pvalue_max,
-        min_n_days=168,  # 7 days * 24 hourly bars
-        commission_pct=config.backtest.commission_pct,
-        slippage_pct=config.backtest.slippage_pct,
-        n_cv_folds=config.validation.n_cv_folds,
-        embargo_days=config.validation.embargo_days,
-        eval_window_days=0,
-        allow_short=config.trading.supports_short,
-    )
-
-
-def _run_l2_evolution(tactical, config: Config, pipeline_config) -> None:
-    """Run L2 hourly alpha evolution using tactical trader's data and registry."""
-    from alpha_os.pipeline.runner import PipelineRunner
-    from alpha_os.data.universe import price_signal
-
-    logger = logging.getLogger(__name__)
-
-    try:
-        tactical.store.sync(tactical.features, resolution=tactical.resolution)
-    except Exception as exc:
-        logger.warning("L2 API sync failed before evolution — using cached data: %s", exc)
-
-    matrix = tactical.store.get_matrix(
-        tactical.features, resolution=tactical.resolution,
-    )
-    min_bars = pipeline_config.min_n_days
-    if len(matrix) < min_bars:
-        logger.warning(
-            "Insufficient L2 data for evolution (%d bars, need %d)",
-            len(matrix), min_bars,
-        )
-        return
-
-    matrix = matrix.fillna(0)
-    available_features = [
-        f for f in tactical.features
-        if f in matrix.columns and not (matrix[f] == 0).all()
-    ]
-    data = {col: matrix[col].values for col in matrix.columns}
-    price_col = price_signal(tactical.asset)
-    if price_col not in available_features:
-        logger.warning("L2 price signal missing for evolution: %s", price_col)
-        return
-    prices = data[price_col]
-    logger.info(
-        "L2 Evolution feature gate: %d/%d available features",
-        len(available_features), len(tactical.features),
-    )
-
-    runner = PipelineRunner(
-        features=available_features,
-        data=data,
-        prices=prices,
-        config=pipeline_config,
-        registry=tactical.registry,
-    )
-    result = runner.run()
-    logger.info(
-        "L2 Evolution: %d generated, %d validated, %d adopted (%.1fs)",
-        result.n_generated, result.n_validated, result.n_adopted, result.elapsed,
-    )
-    print(
-        f"L2 Evolution: {result.n_generated} generated, "
-        f"{result.n_validated} validated, {result.n_adopted} adopted "
-        f"({result.elapsed:.1f}s)"
-    )
-    del runner, data, matrix, result
-    gc.collect()
-
-
 def _print_testnet_report(report) -> None:
     print(f"\n--- Testnet Readiness Report ({report.date}) ---")
     if getattr(report, "profile_id", ""):
@@ -1099,8 +930,8 @@ def _print_testnet_report(report) -> None:
     print(f"  Cycle OK:       {report.cycle_completed}")
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
-    print(f"  Managed:        {report.n_registry_active} active")
-    print(f"  Deployed:       {report.n_deployed_alphas} alphas")
+    print(f"  Active:         {report.n_registry_active} hypotheses")
+    print(f"  Live:           {report.n_live_hypotheses} hypotheses")
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
     print(f"  Selected:       {report.n_selected_alphas} alphas")
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
@@ -1225,6 +1056,9 @@ def _configure_trade_logging() -> None:
 def _confirm_real_trading(args: argparse.Namespace) -> bool:
     if not args.real:
         return True
+    if getattr(args, "non_interactive", False):
+        print("Real trading mode: non-interactive confirmation bypass enabled.")
+        return True
     print("=" * 60)
     print("WARNING: REAL TRADING MODE — real money on Binance.")
     print("Press Ctrl+C within 5 seconds to abort...")
@@ -1287,10 +1121,18 @@ def _close_trade_contexts(contexts: dict[str, tuple]) -> None:
 
 
 def _needs_trade_evolution(trader) -> bool:
-    from alpha_os.alpha.managed_alphas import AlphaState
+    registry = trader.registry
 
-    active = trader.registry.list_by_state(AlphaState.ACTIVE)
-    return len(active) == 0
+    if hasattr(registry, "list_by_state"):
+        from alpha_os.alpha.managed_alphas import AlphaState
+
+        active = registry.list_by_state(AlphaState.ACTIVE)
+        return len(active) == 0
+    if hasattr(registry, "list_active"):
+        return len(registry.list_active()) == 0
+    if hasattr(registry, "top_by_stake"):
+        return len(registry.top_by_stake(n=1)) == 0
+    return True
 
 
 def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
@@ -1307,24 +1149,141 @@ def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
     readiness_checker.print_status()
 
 
+def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, float]:
+    from alpha_os.data.store import DataStore
+    from alpha_os.hypotheses import (
+        apply_allocation_rebalance_plan,
+        build_allocation_rebalance_plan,
+        record_daily_contributions,
+    )
+    from alpha_os.hypotheses.breadth import (
+        apply_bootstrap_redundancy_cap,
+        load_breadth_matrix,
+    )
+
+    signal_date = getattr(result, "date", "")
+    if not signal_date:
+        return {}
+    alpha_signals = trader.portfolio_tracker.get_alpha_signals(signal_date)
+    if not alpha_signals:
+        return {}
+
+    contribution_date = signal_date[:10]
+    record_daily_contributions(
+        trader.registry,
+        date=contribution_date,
+        predictions=alpha_signals,
+        realized_return=getattr(result, "daily_return", 0.0),
+    )
+    forward_tracker = getattr(trader, "forward_tracker", None)
+    plan = build_allocation_rebalance_plan(
+        trader.registry,
+        metric=cfg.portfolio.objective,
+        lookback=cfg.forward.degradation_window,
+        min_observations=cfg.live_quality.min_observations,
+        full_weight_observations=cfg.live_quality.full_weight_observations,
+        early_stage_full_weight_observations=(
+            cfg.live_quality.early_stage_full_weight_observations
+        ),
+        sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
+        log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
+        bootstrap_weight=cfg.lifecycle.bootstrap_weight,
+        quality_weight=cfg.lifecycle.quality_weight,
+        marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
+        floor=cfg.lifecycle.target_stake_floor,
+        live_returns_for=getattr(forward_tracker, "get_returns", None),
+    )
+    if hasattr(trader.registry, "list_observation_active") and hasattr(trader, "asset"):
+        data_store = DataStore(SIGNAL_CACHE_DB)
+        try:
+            records = trader.registry.list_observation_active()
+            breadth_data = load_breadth_matrix(
+                data_store,
+                records,
+                asset=trader.asset,
+                lookback=cfg.forward.degradation_window,
+            )
+        finally:
+            data_store.close()
+        plan = apply_bootstrap_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=trader.asset,
+            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+        )
+    updates = apply_allocation_rebalance_plan(trader.registry, plan)
+    if updates:
+        print(
+            "Lifecycle summary: "
+            f"date={contribution_date} updated={len(updates)} "
+            f"rate={cfg.lifecycle.stake_update_rate:.2f}"
+        )
+    return updates
+
+
 def _run_trade_once(
     *,
     asset_list: list[str],
     contexts: dict[str, tuple],
     cfg: Config,
     pipeline_cfg,
-) -> None:
+) -> list[tuple[str, object]]:
+    use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
+    results: list[tuple[str, object]] = []
     for asset in asset_list:
         print(f"\n{'='*40} {asset} {'='*40}")
         trader, cb, readiness_checker = contexts[asset]
         if _needs_trade_evolution(trader):
             print(f"No alphas for {asset} — running evolution...")
             _run_evolution(trader, cfg, pipeline_cfg)
-        result = trader.run_cycle()
+        result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
         _print_paper_result(result)
         recon = trader.reconcile()
         _run_trade_readiness_check(result, recon, cb, readiness_checker)
+        if not use_lifecycle_daemon:
+            _run_hypothesis_lifecycle_update(trader, cfg, result)
         trader.print_status()
+        print(
+            "Trade summary: "
+            f"asset={asset} "
+            f"status={_trade_once_status(result)} "
+            f"live={result.n_live_hypotheses} "
+            f"signals={result.n_signals_evaluated} "
+            f"fills={len(result.fills)} "
+            f"order_failures={result.order_failures}"
+        )
+        results.append((asset, result))
+    return results
+
+
+def _trade_once_strict_failure(asset: str, result) -> str | None:
+    if getattr(result, "n_live_hypotheses", 0) <= 0:
+        return f"{asset}: no live hypotheses"
+    if getattr(result, "n_signals_evaluated", 0) <= 0:
+        return f"{asset}: no signals evaluated"
+    if getattr(result, "order_failures", 0) > 0:
+        return f"{asset}: order failures={result.order_failures}"
+    return None
+
+
+def _trade_once_status(result) -> str:
+    if getattr(result, "n_live_hypotheses", 0) <= 0:
+        return "no_live_hypotheses"
+    if getattr(result, "n_signals_evaluated", 0) <= 0:
+        return "no_signals"
+    if getattr(result, "order_failures", 0) > 0:
+        return "order_failures"
+    if getattr(result, "fills", None):
+        return "traded"
+    if (
+        getattr(result, "n_skipped_deadband", 0) > 0
+        or getattr(result, "n_skipped_min_notional", 0) > 0
+        or getattr(result, "n_skipped_rounded_to_zero", 0) > 0
+    ):
+        return "skipped"
+    return "idle"
 
 
 def _build_trade_cycle_runner(
@@ -1345,6 +1304,7 @@ def _build_trade_cycle_runner(
     # Uses 1-cycle lag: neutralize based on prior signals.
     # Signals change slowly (daily), so lag is negligible.
     prev_raw_signals: dict[str, float] = {}
+    last_lifecycle_date: dict[str, str] = {a: "" for a in asset_list}
 
     def cycle() -> None:
         nonlocal prev_raw_signals
@@ -1380,6 +1340,11 @@ def _build_trade_cycle_runner(
             _print_paper_result(result)
             recon = trader.reconcile()
             _run_trade_readiness_check(result, recon, cb, readiness_checker)
+            if not use_lifecycle_daemon:
+                contribution_date = getattr(result, "date", "")[:10]
+                if contribution_date and contribution_date != last_lifecycle_date[asset]:
+                    _run_hypothesis_lifecycle_update(trader, cfg, result)
+                    last_lifecycle_date[asset] = contribution_date
             logger.info("--- %s cycle done ---", asset)
 
     return cycle
@@ -1464,6 +1429,8 @@ def cmd_trade(args: argparse.Namespace) -> None:
             "Trade runtime already active for "
             f"{','.join(asset_list)}; skipping overlapping invocation."
         )
+        if getattr(args, "strict", False):
+            sys.exit(1)
         return
 
     try:
@@ -1486,13 +1453,24 @@ def cmd_trade(args: argparse.Namespace) -> None:
         pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
 
         if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
-            _run_trade_once(
+            results = _run_trade_once(
                 asset_list=asset_list,
                 contexts=contexts,
                 cfg=cfg,
                 pipeline_cfg=pipeline_cfg,
             )
             _close_trade_contexts(contexts)
+            if getattr(args, "strict", False):
+                failures = [
+                    failure
+                    for asset, result in results
+                    if (failure := _trade_once_strict_failure(asset, result)) is not None
+                ]
+                if failures:
+                    print("Strict mode failures:")
+                    for failure in failures:
+                        print(f"  - {failure}")
+                    sys.exit(1)
             return
 
         cycle = _build_trade_cycle_runner(
@@ -1528,71 +1506,8 @@ def cmd_trade(args: argparse.Namespace) -> None:
         runtime_lock.__exit__(None, None, None)
 
 
-def cmd_cross_trade(args: argparse.Namespace) -> None:
-    """Run cross-sectional multi-asset trading."""
-    cfg = _load_config(args.config)
-    cfg.trading.initial_capital = args.capital
-    interval = args.interval or cfg.forward.check_interval
-    testnet = not args.real
-    asset_list = [a.strip().upper() for a in args.assets.split(",")]
-
-    _configure_trade_logging()
-    logging.getLogger().info(
-        "Cross-sectional trade: assets=%s, testnet=%s, capital=$%.0f",
-        asset_list, testnet, args.capital,
-    )
-
-    from alpha_os.paper.cross_sectional_trader import CrossSectionalTrader
-    from alpha_os.execution.binance import BinanceExecutor
-    from alpha_os.data.universe import price_signal as _price_signal
-
-    symbol_map = {}
-    for asset in asset_list:
-        try:
-            ps = _price_signal(asset)
-            symbol_map[ps] = f"{asset}/USDT"
-        except KeyError:
-            symbol_map[asset.lower()] = f"{asset}/USDT"
-
-    executor = BinanceExecutor(
-        testnet=testnet,
-        symbol_map=symbol_map,
-        initial_capital=args.capital,
-        cost_model=cfg.execution.to_cost_model(),
-    )
-
-    trader = CrossSectionalTrader(
-        tradeable_assets=asset_list,
-        config=cfg,
-        executor=executor,
-    )
-
-    if args.once:
-        result = trader.run_cycle()
-        print(f"Portfolio: ${result.portfolio_value:,.2f}")
-        print(f"Signals: {result.neutralized_signals}")
-        print(f"Fills: {len(result.fills)}")
-        trader.close()
-        return
-
-    from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
-
-    def cycle():
-        trader.run_cycle()
-        recon = trader.reconcile()
-        for asset, r in recon.items():
-            if not r["match"]:
-                logging.getLogger().warning("Reconciliation mismatch for %s: %s", asset, r)
-
-    scheduler = PipelineScheduler(cycle, SchedulerConfig(interval_seconds=interval))
-    try:
-        scheduler.start()
-    finally:
-        trader.close()
-
-
-def cmd_unified_generator(args: argparse.Namespace) -> None:
-    """Run the cross-asset alpha generation daemon."""
+def cmd_hypothesis_seeder(args: argparse.Namespace) -> None:
+    """Run the hypothesis seeder daemon."""
     cfg = _load_config(args.config)
 
     logging.basicConfig(
@@ -1601,10 +1516,15 @@ def cmd_unified_generator(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.daemon.unified_generator import UnifiedAlphaGeneratorDaemon
+    from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
 
-    daemon = UnifiedAlphaGeneratorDaemon(config=cfg)
+    daemon = HypothesisSeederDaemon(config=cfg)
     daemon.run()
+
+
+def cmd_unified_generator(args: argparse.Namespace) -> None:
+    """Backward-compatible alias for `hypothesis-seeder`."""
+    cmd_hypothesis_seeder(args)
 
 
 def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
@@ -1640,98 +1560,161 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
     daemon.run()
 
 
-def cmd_rebuild_managed_alphas(args: argparse.Namespace) -> None:
+def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
+    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.data.store import DataStore
+    from alpha_os.hypotheses.breadth import (
+        apply_bootstrap_redundancy_cap,
+        load_breadth_matrix,
+    )
+    from alpha_os.hypotheses import (
+        HypothesisStore,
+        apply_allocation_rebalance_plan,
+        build_allocation_rebalance_plan,
+    )
+
     cfg = _load_config(args.config)
-
-    from alpha_os.alpha.admission_replay import rebuild_registry
-
-    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
-    stats = rebuild_registry(
-        db_path,
-        cfg.to_lifecycle_config(),
-        source=args.source,
-        fail_state=args.fail_state,
-        dry_run=args.dry_run,
-        backup=not args.no_backup,
-        metric=cfg.portfolio.objective,
-    )
-
-    mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(
-        f"Managed-alpha rebuild [{mode}]: asset={args.asset} "
-        f"source={stats.source_name} db={stats.registry_db}"
-    )
-    print(f"  Source rows: {stats.source_rows}")
-    print(f"  Active:      {stats.active_count}")
-    print(f"  Dormant:     {stats.dormant_count}")
-    print(f"  Rejected:    {stats.rejected_count}")
-    if stats.backup_path is not None:
-        print(f"  Backup:      {stats.backup_path}")
-    if not args.dry_run:
-        print("  Registry rebuilt.")
-
-
-def cmd_refresh_deployed_alphas(args: argparse.Namespace) -> None:
-    cfg = _load_config(args.config)
-
-    from alpha_os.alpha.deployed_alphas import refresh_deployed_alphas
-
-    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
-    stats = refresh_deployed_alphas(
-        db_path,
-        cfg,
-        asset=args.asset,
-        dry_run=args.dry_run,
-        backup=not args.no_backup,
-    )
-
-    mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(f"Deployed alphas refresh [{mode}]: asset={args.asset} db={stats.registry_db}")
-    print(f"  Registry active: {stats.plan.active_count}")
-    print(f"  Deployed before: {stats.plan.current_count}")
-    print(f"  Deployed now:    {stats.plan.deployed_count}")
-    print(f"  Kept:            {len(stats.plan.kept_ids)}")
-    print(f"  Added:           {len(stats.plan.added_ids)}")
-    print(f"  Dropped:         {len(stats.plan.dropped_ids)}")
-    print(f"  Replacements:    {stats.plan.replacement_count}")
-    print(f"  Semantic dedup:  {len(stats.plan.skipped_semantic_duplicate_ids)}")
-    print(f"  Signal dedup:    {len(stats.plan.skipped_signal_duplicate_ids)}")
-    print(f"  Feature cap:     {len(stats.plan.skipped_feature_cap_ids)}")
-    if stats.backup_path is not None:
-        print(f"  Backup:          {stats.backup_path}")
-
-
-def cmd_prune_managed_alpha_duplicates(args: argparse.Namespace) -> None:
-    cfg = _load_config(args.config)
-
-    from alpha_os.alpha.deployed_alphas import prune_registry_active_duplicates
-
-    db_path = asset_data_dir(args.asset) / "alpha_registry.db"
-    stats = prune_registry_active_duplicates(
-        db_path,
-        cfg,
-        asset=args.asset,
-        dry_run=args.dry_run,
-        backup=not args.no_backup,
-        refresh_deployed=not args.no_refresh_deployed,
-    )
-
-    mode = "DRY RUN" if args.dry_run else "WRITE"
-    print(f"Managed-alpha duplicate prune [{mode}]: asset={args.asset} db={stats.registry_db}")
-    print(f"  Active before:    {stats.plan.active_count}")
-    print(f"  Active kept:      {stats.plan.kept_count}")
-    print(f"  Demoted:          {stats.plan.demoted_count}")
-    print(f"  Deployed before:  {stats.plan.current_deployed_count}")
-    print(f"  Deployed touched: {stats.plan.touched_deployed_count}")
-    print(f"  Semantic dedup:   {len(stats.plan.skipped_semantic_duplicate_ids)}")
-    print(f"  Signal dedup:     {len(stats.plan.skipped_signal_duplicate_ids)}")
-    if stats.deployed_refresh is not None:
-        print(
-            f"  Deployed refresh: {stats.deployed_refresh.plan.current_count}"
-            f" -> {stats.deployed_refresh.plan.deployed_count}"
+    adir = asset_data_dir(args.asset)
+    store = HypothesisStore(HYPOTHESES_DB)
+    forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    try:
+        plan = build_allocation_rebalance_plan(
+            store,
+            metric=cfg.portfolio.objective,
+            lookback=cfg.forward.degradation_window,
+            min_observations=cfg.live_quality.min_observations,
+            full_weight_observations=cfg.live_quality.full_weight_observations,
+            early_stage_full_weight_observations=(
+                cfg.live_quality.early_stage_full_weight_observations
+            ),
+            sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
+            log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
+            bootstrap_weight=cfg.lifecycle.bootstrap_weight,
+            quality_weight=cfg.lifecycle.quality_weight,
+            marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
+            floor=cfg.lifecycle.target_stake_floor,
+            live_returns_for=forward_tracker.get_returns,
         )
-    if stats.backup_path is not None:
-        print(f"  Backup:           {stats.backup_path}")
+        records = store.list_observation_active()
+        breadth_data = load_breadth_matrix(
+            data_store,
+            records,
+            asset=args.asset,
+            lookback=cfg.forward.degradation_window,
+        )
+        plan = apply_bootstrap_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=args.asset,
+            corr_max=cfg.lifecycle.bootstrap_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+        )
+        zeroed = sum(
+            1 for entry in plan
+            if entry.current_stake > 0 and entry.proposed_stake <= cfg.lifecycle.target_stake_floor
+        )
+        research_backed = sum(1 for entry in plan if entry.research_backed)
+        live_proven = sum(1 for entry in plan if entry.live_proven)
+        redundancy_capped = sum(1 for entry in plan if entry.redundancy_capped_by)
+        changed = sum(
+            1 for entry in plan
+            if abs(entry.proposed_stake - entry.current_stake) > 1e-12
+        )
+        mode = "DRY RUN" if args.dry_run else "APPLY"
+        print(f"Allocation trust rebalance [{mode}]: asset={args.asset.upper()}")
+        print(
+            "  Summary: "
+            f"active={len(plan)} changed={changed} zeroed={zeroed} "
+            f"research_backed={research_backed} live_proven={live_proven} "
+            f"redundancy_capped={redundancy_capped}"
+        )
+
+        ranked = sorted(
+            plan,
+            key=lambda entry: abs(entry.proposed_stake - entry.current_stake),
+            reverse=True,
+        )
+        for entry in ranked[:10]:
+            print(
+                "  "
+                f"{entry.hypothesis_id}: {entry.current_stake:.3f} -> {entry.proposed_stake:.3f} "
+                f"(target={entry.target_stake:.3f} boot={entry.bootstrap_trust_value:.3f} "
+                f"conf={entry.confidence:.3f} n={entry.n_observations} "
+                f"research_backed={entry.research_backed} live_proven={entry.live_proven}"
+                f"{f' capped_by={entry.redundancy_capped_by} corr={entry.redundancy_correlation:.3f}' if entry.redundancy_capped_by else ''})"
+            )
+
+        if args.dry_run:
+            return
+
+        updates = apply_allocation_rebalance_plan(store, plan)
+        print(
+            "Rebalance summary: "
+            f"updated={len(updates)} active={len(plan)} zeroed={zeroed}"
+        )
+    finally:
+        data_store.close()
+        forward_tracker.close()
+        store.close()
+
+
+def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
+    from alpha_os.data.store import DataStore
+    from alpha_os.hypotheses.breadth import (
+        analyze_capital_breadth,
+        load_bootstrap_capital_backed_records,
+        load_breadth_matrix,
+    )
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    _load_config(args.config)
+    store = HypothesisStore(HYPOTHESES_DB)
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    try:
+        records = load_bootstrap_capital_backed_records(store)
+        data = load_breadth_matrix(
+            data_store,
+            records,
+            asset=args.asset,
+            lookback=args.lookback,
+        )
+        report = analyze_capital_breadth(
+            records,
+            data=data,
+            asset=args.asset,
+            lookback=args.lookback,
+            top_pairs=args.top_pairs,
+        )
+    finally:
+        data_store.close()
+        store.close()
+
+    print(f"Live breadth ({args.asset.upper()})")
+    print(
+        "  Summary: "
+        f"records={report.n_records} analyzed={report.n_analyzed} skipped={report.n_skipped} "
+        f"lookback={report.lookback}"
+    )
+    print(
+        "  Breadth: "
+        f"mean_abs_corr={report.mean_abs_correlation:.3f} "
+        f"effective={report.effective_breadth:.2f}"
+    )
+    if report.top_pairs:
+        print("  TopPairs:")
+        for pair in report.top_pairs:
+            print(
+                "    "
+                f"{pair.left_id} <-> {pair.right_id}: "
+                f"corr={pair.correlation:+.3f} "
+                f"|corr|={pair.abs_correlation:.3f}"
+            )
+    if report.skipped_ids:
+        skipped = ", ".join(report.skipped_ids[:10])
+        suffix = " ..." if len(report.skipped_ids) > 10 else ""
+        print(f"  Skipped:   {skipped}{suffix}")
 
 
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
@@ -1902,24 +1885,104 @@ def _load_latest_report(report_path: Path) -> dict | None:
     return last
 
 
-def _managed_alpha_status(adir: Path) -> dict[str, int]:
-    from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaState
+def _hypothesis_status() -> dict[str, int]:
+    from alpha_os.hypotheses.store import HypothesisStatus, HypothesisStore
 
-    registry = ManagedAlphaStore(adir / "alpha_registry.db")
+    store = HypothesisStore(HYPOTHESES_DB)
     try:
+        live = len(store.list_active())
         return {
-            "active": registry.count(AlphaState.ACTIVE),
-            "dormant": registry.count(AlphaState.DORMANT),
-            "rejected": registry.count(AlphaState.REJECTED),
-            "deployed": registry.count_deployed_alphas(),
+            "active": store.count(status=HypothesisStatus.ACTIVE),
+            "paused": store.count(status=HypothesisStatus.PAUSED),
+            "archived": store.count(status=HypothesisStatus.ARCHIVED),
+            "live": live,
         }
     finally:
-        registry.close()
+        store.close()
+
+
+def _live_hypothesis_ids() -> list[str]:
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        return [record.hypothesis_id for record in store.list_active()]
+    finally:
+        store.close()
+
+
+def _format_runtime_hypothesis_entry(record, value: float) -> str:
+    return (
+        f"{record.hypothesis_id}={value:.3f}"
+        f"({record.kind}/{record.source or 'unknown'})"
+    )
+
+
+def _top_runtime_hypotheses(records, metric_key: str, *, n: int = 3) -> list[str]:
+    ranked: list[tuple[float, object]] = []
+    for record in records:
+        if metric_key == "stake":
+            raw = record.stake
+        else:
+            raw = record.metadata.get(metric_key)
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(value):
+            continue
+        ranked.append((value, record))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [
+        _format_runtime_hypothesis_entry(record, value)
+        for value, record in ranked[:n]
+    ]
+
+
+def _runtime_hypothesis_summary() -> dict[str, object]:
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        records = store.list_observation_active()
+    finally:
+        store.close()
+
+    bootstrap_backed = 0
+    observed = 0
+    capital_backed = 0
+    for record in records:
+        try:
+            stake = float(record.stake)
+        except (TypeError, ValueError):
+            stake = 0.0
+        if stake > 0:
+            capital_backed += 1
+        try:
+            if float(record.metadata.get("lifecycle_bootstrap_trust", 0.0)) > 0:
+                bootstrap_backed += 1
+        except (TypeError, ValueError):
+            pass
+        try:
+            if float(record.metadata.get("lifecycle_quality_confidence", 0.0)) > 0:
+                observed += 1
+        except (TypeError, ValueError):
+            pass
+
+    return {
+        "bootstrap_backed": bootstrap_backed,
+        "observed": observed,
+        "capital_backed": capital_backed,
+        "top_allocation": _top_runtime_hypotheses(records, "stake"),
+        "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
+        "top_raw_live": _top_runtime_hypotheses(records, "lifecycle_raw_live_quality"),
+        "top_bootstrap": _top_runtime_hypotheses(records, "lifecycle_bootstrap_trust"),
+    }
 
 
 def _runtime_observation_findings(
     latest: dict | None,
-    managed_alphas: dict[str, int],
+    current_live_count: int,
 ) -> list[str]:
     findings: list[str] = []
     if latest is None:
@@ -1937,36 +2000,40 @@ def _runtime_observation_findings(
     if not latest.get("reconciliation_match", False):
         findings.append("latest cycle failed reconciliation")
     if (
-        latest.get("n_registry_active", managed_alphas["active"])
-        != managed_alphas["active"]
+        latest.get("n_registry_active", current_live_count)
+        != current_live_count
     ):
-        findings.append("latest report is older than current managed-alpha state")
+        findings.append("latest report is older than current runtime selection state")
     return findings
 
 
-def _latest_deployed_count(latest: dict | None) -> int:
+def _runtime_observation_verdict(latest: dict | None, findings: list[str]) -> str:
+    if latest is None:
+        return "pending"
+    critical = {
+        "latest cycle has runtime errors",
+        "latest cycle had order failures",
+        "latest cycle failed reconciliation",
+    }
+    if any(finding in critical for finding in findings):
+        return "attention"
+    if findings:
+        return "watch"
+    return "ok"
+
+
+def _latest_live_count(latest: dict | None) -> int:
     if latest is None:
         return 0
-    return int(
-        latest.get(
-            "n_deployed_alphas",
-            latest.get("n_universe_deployed", 0),
-        )
-    )
+    return int(latest.get("n_live_hypotheses", 0))
 
 
-def _current_runtime_profile(cfg, adir: Path, asset: str):
-    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
-
-    registry = ManagedAlphaStore(adir / "alpha_registry.db")
-    try:
-        deployed_ids = [record.alpha_id for record in registry.list_deployed_alphas()]
-    finally:
-        registry.close()
+def _current_runtime_profile(cfg, asset: str):
+    live_ids = _live_hypothesis_ids()
     profile = build_runtime_profile(
         asset=asset,
         config=cfg,
-        deployed_alpha_ids=deployed_ids,
+        live_hypothesis_ids=live_ids,
     )
     return profile
 
@@ -1985,9 +2052,11 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
-    managed_alphas = _managed_alpha_status(adir)
-    current_profile = _current_runtime_profile(cfg, adir, args.asset)
-    findings = _runtime_observation_findings(latest, managed_alphas)
+    hypotheses = _hypothesis_status()
+    runtime_ids = _live_hypothesis_ids()
+    hypothesis_summary = _runtime_hypothesis_summary()
+    current_profile = _current_runtime_profile(cfg, args.asset)
+    findings = _runtime_observation_findings(latest, len(runtime_ids))
 
     print(f"Runtime Status ({args.asset.upper()})")
     print(
@@ -1999,9 +2068,26 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"(last_success={state.last_success_date or 'N/A'})"
     )
     print(
-        f"  Managed:   active={managed_alphas['active']} dormant={managed_alphas['dormant']} "
-        f"rejected={managed_alphas['rejected']} deployed={managed_alphas['deployed']}"
+        f"  Runtime:   source=hypotheses live={len(runtime_ids)}"
     )
+    print(
+        f"  Hypotheses: active={hypotheses['active']} paused={hypotheses['paused']} "
+        f"archived={hypotheses['archived']} live={hypotheses['live']}"
+    )
+    print(
+        "  Signals:   "
+        f"observed={hypothesis_summary['observed']} "
+        f"bootstrap_backed={hypothesis_summary['bootstrap_backed']} "
+        f"capital_backed={hypothesis_summary['capital_backed']}"
+    )
+    if hypothesis_summary["top_allocation"]:
+        print("  TopAlloc:  " + ", ".join(hypothesis_summary["top_allocation"]))
+    if hypothesis_summary["top_effective_live"]:
+        print("  TopEff:    " + ", ".join(hypothesis_summary["top_effective_live"]))
+    if hypothesis_summary["top_raw_live"]:
+        print("  TopRaw:    " + ", ".join(hypothesis_summary["top_raw_live"]))
+    if hypothesis_summary["top_bootstrap"]:
+        print("  TopBoot:   " + ", ".join(hypothesis_summary["top_bootstrap"]))
     commit_suffix = f" ({current_profile.git_commit[:8]})" if current_profile.git_commit else ""
     print(f"  Profile:   current={current_profile.profile_id[:12]}{commit_suffix}")
 
@@ -2020,21 +2106,22 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         latest_suffix = f" ({latest_profile_commit[:8]})" if latest_profile_commit else ""
         print(f"  Profile:   latest={latest_profile_id[:12]}{latest_suffix}")
         latest_config_id = latest.get("profile_config_id", "")
-        latest_deployed_set_id = latest.get("profile_deployed_set_id", "")
-        if latest_config_id or latest_deployed_set_id:
+        latest_live_set_id = latest.get("profile_live_set_id", "")
+        if latest_config_id or latest_live_set_id:
             print(
                 "  ProfileIDs: "
                 f"config={latest_config_id[:12] or 'n/a'} "
-                f"deployed={latest_deployed_set_id[:12] or 'n/a'}"
+                f"live={latest_live_set_id[:12] or 'n/a'}"
             )
             print(
                 "  CurrentIDs: "
                 f"config={current_profile.config_id[:12]} "
-                f"deployed={current_profile.deployed_set_id[:12]}"
+                f"live={current_profile.live_set_id[:12]}"
             )
     print(
-        f"  Selection: managed_active={latest['n_registry_active']} "
-        f"deployed={_latest_deployed_count(latest)} "
+        f"  Selection: current_live={len(runtime_ids)} "
+        f"latest_active={latest['n_registry_active']} "
+        f"live={_latest_live_count(latest)} "
         f"selected={latest['n_selected_alphas']}"
     )
     print(
@@ -2048,32 +2135,132 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"order_failures={latest['n_order_failures']} "
         f"halted={latest['circuit_breaker_halted']}"
     )
-    verdict = "pending"
-    if any(
-        finding in findings
-        for finding in (
-            "latest cycle has runtime errors",
-            "latest cycle had order failures",
-            "latest cycle failed reconciliation",
-        )
-    ):
-        verdict = "attention"
+    verdict = _runtime_observation_verdict(latest, findings)
     print(f"  Observe:   {verdict}")
     for finding in findings:
         print(f"    - {finding}")
     if latest_profile_id and latest_profile_id != current_profile.profile_id:
         print("    - latest report was recorded under a different runtime profile")
         latest_config_id = latest.get("profile_config_id", "")
-        latest_deployed_set_id = latest.get("profile_deployed_set_id", "")
+        latest_live_set_id = latest.get("profile_live_set_id", "")
         if latest_config_id and latest_config_id != current_profile.config_id:
             print("    - config fingerprint differs between current and latest")
-        if latest_deployed_set_id and latest_deployed_set_id != current_profile.deployed_set_id:
-            print("    - deployed alpha set fingerprint differs between current and latest")
-    if latest["n_registry_active"] != managed_alphas["active"]:
+        if latest_live_set_id and latest_live_set_id != current_profile.live_set_id:
+            print("    - live hypothesis set fingerprint differs between current and latest")
+    if latest["n_registry_active"] != len(runtime_ids):
         print(
-            "  Note:      managed-alpha DB count differs from latest readiness report; "
+            "  Note:      current runtime live count differs from latest readiness report; "
             "the next trade cycle will refresh the report."
         )
+
+
+def _resolve_signal_cache_targets(args: argparse.Namespace) -> list[str]:
+    from alpha_os.data.universe import price_signal
+
+    assets = [item.strip().upper() for item in (args.assets or args.asset).split(",") if item.strip()]
+    signals: set[str] = set()
+
+    if args.signals:
+        signals.update(item.strip() for item in args.signals.split(",") if item.strip())
+    else:
+        for asset in assets:
+            signals.add(price_signal(asset))
+
+    if args.from_hypotheses:
+        from alpha_os.hypotheses import HypothesisStore
+        from alpha_os.hypotheses.producer import collect_required_features
+
+        store = HypothesisStore(HYPOTHESES_DB)
+        try:
+            active = store.list_active()
+        finally:
+            store.close()
+        signals.update(collect_required_features(active, assets))
+
+    return sorted(signals)
+
+
+def cmd_sync_signal_cache(args: argparse.Namespace) -> None:
+    from alpha_os.data.store import DataStore
+    from alpha_os.hypotheses.producer import _quick_healthcheck
+
+    asset_list = [item.strip().upper() for item in (args.assets or args.asset).split(",") if item.strip()]
+    lock_path = runtime_lock_path("sync-signal-cache", asset_list)
+    try:
+        runtime_lock = hold_runtime_lock(lock_path)
+        runtime_lock.__enter__()
+    except RuntimeLockBusy:
+        print(
+            "Signal cache sync already active for "
+            f"{','.join(asset_list)}; skipping overlapping invocation."
+        )
+        print(f"Sync summary: assets={','.join(asset_list)} status=skipped_overlap")
+        if args.strict:
+            sys.exit(1)
+        return
+
+    cfg = Config.load(args.config)
+    try:
+        targets = _resolve_signal_cache_targets(args)
+        if not targets:
+            print("No signals selected for sync")
+            print(f"Sync summary: assets={','.join(asset_list)} status=skipped_no_targets")
+            if args.strict:
+                sys.exit(1)
+            return
+
+        db_path = SIGNAL_CACHE_L2_DB if args.resolution != "1d" else SIGNAL_CACHE_DB
+        client = build_signal_client_from_config(cfg.api)
+
+        if not _quick_healthcheck(cfg.api.base_url):
+            print(f"signal-noise unavailable at {cfg.api.base_url} — skipping sync")
+            print(
+                f"Sync summary: assets={','.join(asset_list)} "
+                "status=skipped_source_unavailable"
+            )
+            if args.strict:
+                sys.exit(1)
+            return
+
+        store = DataStore(db_path, client)
+        before = store.signal_row_counts(targets)
+        try:
+            store.sync(
+                targets,
+                resolution=args.resolution,
+                min_history_days=max(args.min_history_days, 0),
+            )
+            after = store.signal_row_counts(targets)
+        finally:
+            store.close()
+
+        populated = sum(1 for signal in targets if after.get(signal, 0) > 0)
+        improved = sum(1 for signal in targets if after.get(signal, 0) > before.get(signal, 0))
+        print(
+            f"Signal cache sync ({args.resolution}) "
+            f"targets={len(targets)} populated={populated} improved={improved}"
+        )
+        for signal in targets[:20]:
+            print(f"  {signal}: {before.get(signal, 0)} -> {after.get(signal, 0)}")
+        if len(targets) > 20:
+            print(f"  ... {len(targets) - 20} more")
+        if args.strict and populated < len(targets):
+            print(
+                f"Strict mode: {len(targets) - populated} signals remain empty after sync"
+            )
+            print(
+                "Sync summary: "
+                f"assets={','.join(asset_list)} status=incomplete "
+                f"targets={len(targets)} populated={populated} improved={improved}"
+            )
+            sys.exit(1)
+        print(
+            "Sync summary: "
+            f"assets={','.join(asset_list)} status=ok "
+            f"targets={len(targets)} populated={populated} improved={improved}"
+        )
+    finally:
+        runtime_lock.__exit__(None, None, None)
 
 
 def cmd_alpha_funnel(args: argparse.Namespace) -> None:
@@ -2132,7 +2319,7 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
 def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     """Evaluate expression with multi-horizon IC across eval universe."""
     from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
-    from alpha_os.config import Config, DATA_DIR
+    from alpha_os.config import Config
     from alpha_os.data.store import DataStore
     from alpha_os.data.signal_client import build_signal_client_from_config
     from alpha_os.data.universe import init_universe, load_daily_signals
@@ -2152,7 +2339,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     # Load data: eval universe prices + features referenced by expression
     from alpha_os.alpha.expression_identity import expression_feature_names
     expr_features = expression_feature_names(args.expr)
-    db_path = DATA_DIR / "alpha_cache.db"
+    db_path = SIGNAL_CACHE_DB
     store = DataStore(db_path, client)
     needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))
     matrix = store.get_matrix(needed)
@@ -2191,75 +2378,6 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
             print(f"  {asset:30s} IC={ic:+.4f}")
 
 
-def cmd_submit_expression(args: argparse.Namespace) -> None:
-    """Submit expression to admission queue."""
-    from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
-    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
-    from alpha_os.config import Config, DATA_DIR, asset_data_dir
-    from alpha_os.data.store import DataStore
-    from alpha_os.data.signal_client import build_signal_client_from_config
-    from alpha_os.data.universe import init_universe, load_daily_signals
-    from alpha_os.data.eval_universe import load_cached_eval_universe
-
-    cfg = Config.load(args.config)
-    client = build_signal_client_from_config(cfg.api)
-    init_universe(client)
-    all_signals = load_daily_signals(client)
-
-    eval_assets = load_cached_eval_universe()
-    if not eval_assets:
-        print("No cached eval universe. Run unified-generator first.")
-        return
-
-    from alpha_os.alpha.expression_identity import expression_feature_names
-    expr_features = expression_feature_names(args.expr)
-    db_path = DATA_DIR / "alpha_cache.db"
-    store = DataStore(db_path, client)
-    needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))
-    matrix = store.get_matrix(needed)
-    store.close()
-    eval_set = set(eval_assets)
-    for col in matrix.columns:
-        if col not in eval_set:
-            matrix[col] = matrix[col].fillna(0)
-    data = {col: matrix[col].values for col in matrix.columns}
-
-    # Evaluate
-    result = evaluate_cross_asset_multi_horizon(
-        args.expr, data, eval_assets,
-        horizons=DEFAULT_HORIZONS,
-        fitness_metric="ic",
-        benchmark_assets=cfg.backtest.benchmark_assets,
-    )
-
-    print(f"Expression: {args.expr}")
-    print(f"Best horizon: {result.best_horizon}d, IC: {result.best_fitness:+.4f}")
-
-    if result.best_fitness <= 0:
-        print("IC <= 0. Not submitting.")
-        return
-
-    # Submit to admission queue
-    registry = ManagedAlphaStore(asset_data_dir(args.asset) / "alpha_registry.db")
-    try:
-        inserted = registry.queue_candidate_expressions(
-            [args.expr],
-            source="human",
-            behavior_json={
-                "source": "human",
-                "best_horizon": result.best_horizon,
-                "fitness_by_horizon": {str(k): v for k, v in result.fitness_by_horizon.items()},
-            },
-        )
-    finally:
-        registry.close()
-
-    if inserted > 0:
-        print(f"Submitted to admission queue (source=human, horizon={result.best_horizon}d)")
-    else:
-        print("Already in queue (duplicate)")
-
-
 def cmd_produce_classical(args: argparse.Namespace) -> None:
     """Run classical indicator producer → prediction store."""
     from alpha_os.config import Config
@@ -2271,172 +2389,37 @@ def cmd_produce_classical(args: argparse.Namespace) -> None:
 
 
 def cmd_produce_predictions(args: argparse.Namespace) -> None:
-    """Run registry producer: evaluate active alphas → prediction store."""
+    """Run the active signal producer → prediction store."""
     from alpha_os.config import Config
-    from alpha_os.predictions.registry_producer import produce_daily_predictions
+    from alpha_os.hypotheses.producer import produce_active_hypothesis_predictions
 
-    cfg = Config.load(args.config)
-    n = produce_daily_predictions(args.asset, cfg)
-    print(f"Wrote {n} predictions to store")
-
-
-def cmd_seed_handcrafted(args: argparse.Namespace) -> None:
-    from alpha_os.alpha.handcrafted import (
-        get_handcrafted_expressions,
-        list_handcrafted_sets,
-    )
-    from alpha_os.alpha.managed_alphas import ManagedAlphaStore
-
-    asset = args.asset.upper()
-    available_sets = list_handcrafted_sets(asset)
-    if args.list:
-        print(f"Hand-crafted sets ({asset})")
-        if not available_sets:
-            print("  none")
-            return
-        for name in available_sets:
-            print(f"  - {name}")
-        return
-
+    asset_list = [args.asset.upper()]
+    lock_path = runtime_lock_path("produce-predictions", asset_list)
     try:
-        expressions = get_handcrafted_expressions(asset, args.alpha_set)
-    except KeyError as exc:
-        raise SystemExit(str(exc)) from exc
-
-    print(
-        f"Seed hand-crafted set: asset={asset} set={args.alpha_set} "
-        f"count={len(expressions)}"
-    )
-    for expression in expressions:
-        print(f"  {expression}")
-    if args.dry_run:
-        return
-
-    registry = ManagedAlphaStore(asset_data_dir(asset) / "alpha_registry.db")
-    try:
-        inserted = registry.queue_candidate_expressions(
-            expressions,
-            source=f"manual_{asset.lower()}_{args.alpha_set}",
-            behavior_json={"source": "handcrafted", "set": args.alpha_set, "asset": asset},
-        )
-    finally:
-        registry.close()
-    print(f"Queued: {inserted} new candidates")
-
-
-def cmd_analyze_diversity(args: argparse.Namespace) -> None:
-    from alpha_os.alpha.diversity import analyze_diversity
-    from alpha_os.alpha.managed_alphas import ManagedAlphaStore, AlphaState
-
-    cfg = _load_runtime_observation_config(getattr(args, "config", None))
-    features = build_feature_list(args.asset)
-    data, n_days = _real_data(features, cfg, eval_window=max(args.lookback, 0))
-
-    registry = ManagedAlphaStore(asset_data_dir(args.asset) / "alpha_registry.db")
-    try:
-        if args.scope == "deployed":
-            records = registry.list_deployed_alphas()
-            if args.limit > 0:
-                records = records[:args.limit]
-        else:
-            if args.limit > 0:
-                records = registry.top(
-                    args.limit,
-                    state=AlphaState.ACTIVE,
-                    metric=args.metric,
-                )
-            else:
-                records = registry.list_active()
-    finally:
-        registry.close()
-
-    report = analyze_diversity(
-        records,
-        data,
-        n_days,
-        lookback=args.lookback,
-        top_pairs=args.top_pairs,
-    )
-
-    if args.json:
-        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
-        return
-
-    summary = report.summary
-    print(
-        f"Diversity Analysis ({args.asset.upper()} {args.scope}, "
-        f"analyzed={summary.n_analyzed}/{summary.n_records}, lookback={summary.lookback})"
-    )
-    print(
-        "  Summary:   "
-        f"signal_div={summary.signal_diversity:.3f} "
-        f"feature_div={summary.feature_diversity:.3f} "
-        f"struct_div={summary.structure_diversity:.3f} "
-        f"composite_div={summary.composite_diversity:.3f}"
-    )
-    print(
-        "  Overlap:   "
-        f"signal={summary.mean_abs_signal_correlation:.3f} "
-        f"feature={summary.mean_feature_overlap:.3f} "
-        f"struct={summary.mean_structure_overlap:.3f} "
-        f"composite={summary.mean_composite_similarity:.3f}"
-    )
-    print(
-        "  Inputs:    "
-        f"unique={summary.n_unique_features} "
-        f"input_div={summary.input_diversity:.3f} "
-        f"input_corr={summary.mean_abs_input_correlation:.3f}"
-    )
-    if summary.family_counts:
-        family_blob = ", ".join(
-            f"{name}={count}" for name, count in summary.family_counts.items()
-        )
-        print(f"  Families:  {family_blob}")
-    if summary.feature_usage_counts:
-        top_usage = list(summary.feature_usage_counts.items())[:10]
-        usage_blob = ", ".join(f"{name}={count}" for name, count in top_usage)
-        print(f"  Features:  {usage_blob}")
-    if report.skipped_alpha_ids:
-        skipped_preview = ", ".join(report.skipped_alpha_ids[:5])
-        suffix = "" if len(report.skipped_alpha_ids) <= 5 else ", ..."
+        runtime_lock = hold_runtime_lock(lock_path)
+        runtime_lock.__enter__()
+    except RuntimeLockBusy:
         print(
-            f"  Skipped:   {len(report.skipped_alpha_ids)} "
-            f"({skipped_preview}{suffix})"
+            "Prediction production already active for "
+            f"{','.join(asset_list)}; skipping overlapping invocation."
         )
+        print(f"Prediction summary: asset={asset_list[0]} status=skipped_overlap")
+        if args.strict:
+            sys.exit(1)
+        return
 
-    if report.top_redundant_pairs:
-        print("  Top Pairs:")
-        for pair in report.top_redundant_pairs:
-            print(
-                "    "
-                f"{pair.alpha_id_a} <-> {pair.alpha_id_b} "
-                f"comp={pair.composite_similarity:.3f} "
-                f"sig={pair.abs_signal_correlation:.3f} "
-                f"feat={pair.feature_overlap:.3f} "
-                f"struct={pair.structure_overlap:.3f}"
-            )
-
-    if report.top_input_pairs:
-        print("  Top Inputs:")
-        for pair in report.top_input_pairs:
-            print(
-                "    "
-                f"{pair.feature_a} <-> {pair.feature_b} "
-                f"corr={pair.abs_input_correlation:.3f}"
-            )
-
-    if report.rows:
-        print("  Most Redundant:")
-        for row in report.rows[: min(10, len(report.rows))]:
-            families = ",".join(row.feature_families) or "-"
-            print(
-                "    "
-                f"{row.alpha_id} comp={row.avg_composite_similarity:.3f} "
-                f"sig={row.avg_abs_signal_correlation:.3f} "
-                f"feat={row.avg_feature_overlap:.3f} "
-                f"struct={row.avg_structure_overlap:.3f} "
-                f"nodes={row.node_count} families={families}"
-            )
+    try:
+        cfg = Config.load(args.config)
+        n = produce_active_hypothesis_predictions(cfg, assets=[args.asset])
+        print(f"Wrote {n} hypothesis predictions to store")
+        if args.strict and n <= 0:
+            print("Strict mode: no hypothesis predictions were written")
+            print(f"Prediction summary: asset={asset_list[0]} status=empty written={n}")
+            sys.exit(1)
+        status = "ok" if n > 0 else "empty"
+        print(f"Prediction summary: asset={asset_list[0]} status={status} written={n}")
+    finally:
+        runtime_lock.__exit__(None, None, None)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -2459,8 +2442,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_paper(args)
     elif args.command == "trade":
         cmd_trade(args)
-    elif args.command == "cross-trade":
-        cmd_cross_trade(args)
+    elif args.command == "hypothesis-seeder":
+        cmd_hypothesis_seeder(args)
     elif args.command == "unified-generator":
         cmd_unified_generator(args)
     elif args.command == "enqueue-discovery-pool":
@@ -2471,12 +2454,10 @@ def main(argv: list[str] | None = None) -> None:
         cmd_prune_stale_candidates(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
-    elif args.command == "rebuild-managed-alphas":
-        cmd_rebuild_managed_alphas(args)
-    elif args.command == "refresh-deployed-alphas":
-        cmd_refresh_deployed_alphas(args)
-    elif args.command == "prune-managed-alpha-duplicates":
-        cmd_prune_managed_alpha_duplicates(args)
+    elif args.command == "rebalance-allocation-trust":
+        cmd_rebalance_allocation_trust(args)
+    elif args.command == "analyze-live-breadth":
+        cmd_analyze_live_breadth(args)
     elif args.command == "replay-experiment":
         cmd_replay_experiment(args)
     elif args.command == "replay-matrix":
@@ -2485,16 +2466,12 @@ def main(argv: list[str] | None = None) -> None:
         cmd_testnet_readiness(args)
     elif args.command == "runtime-status":
         cmd_runtime_status(args)
+    elif args.command == "sync-signal-cache":
+        cmd_sync_signal_cache(args)
     elif args.command == "alpha-funnel":
         cmd_alpha_funnel(args)
-    elif args.command == "seed-handcrafted":
-        cmd_seed_handcrafted(args)
-    elif args.command == "analyze-diversity":
-        cmd_analyze_diversity(args)
     elif args.command == "evaluate":
         cmd_evaluate_expression(args)
-    elif args.command == "submit":
-        cmd_submit_expression(args)
     elif args.command == "produce-predictions":
         cmd_produce_predictions(args)
     elif args.command == "produce-classical":

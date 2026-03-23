@@ -1,0 +1,15 @@
+[Unit]
+Description=Alpha-OS signal cache sync (%i)
+After=network.target
+OnFailure=alpha-os-runtime-status@%i.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/dev/projects/alpha-os
+EnvironmentFile=-/home/dev/.secrets/alpha-os-env
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os sync-signal-cache --asset %i --from-hypotheses --strict --config "$CONFIG"'
+MemoryHigh=400M
+MemoryMax=700M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/sync-signal-cache.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/sync-signal-cache.log

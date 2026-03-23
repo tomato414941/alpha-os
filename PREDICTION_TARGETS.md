@@ -1,5 +1,18 @@
 # Prediction Targets
 
+Exploratory design note.
+
+This file captures categories of targets the system may eventually predict.
+It is not the current runtime contract, current CLI surface, or current trusted
+mainline.
+
+Prefer:
+
+- `README.md` for the current runtime path
+- `RECOVERY.md` for the current operating posture
+- `DESIGN.md` for the broader architecture
+- `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
+
 What can be profitably predicted? The more of these the system can predict,
 the more diversified and stable the returns.
 

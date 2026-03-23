@@ -1,5 +1,18 @@
 # Alpha-OS Design Notes
 
+Archived registry-era design material.
+
+This file is kept for historical context only. It is not the source of truth
+for the current hypotheses-first runtime, current operating posture, or current
+runtime naming.
+
+Prefer:
+
+- `README.md` for the current runtime path
+- `RECOVERY.md` for the current trusted / untrusted boundary
+- `DESIGN.md` for the active architectural rationale
+- `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
+
 ## Scope Of This Document
 
 This file is for design intent and architectural trade-offs.

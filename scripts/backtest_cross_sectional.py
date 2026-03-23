@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 from datetime import date
 
-from alpha_os.config import Config, DATA_DIR, asset_data_dir
+from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, price_signal
@@ -20,7 +20,7 @@ from alpha_os.alpha.combiner import (
     cross_asset_neutralize,
     weighted_combine_scalar,
 )
-from alpha_os.alpha.evaluator import evaluate_expression, normalize_signal, sanitize_signal
+from alpha_os.alpha.evaluator import normalize_signal, sanitize_signal
 from alpha_os.backtest.benchmark import build_benchmark_returns
 from alpha_os.backtest import metrics
 from alpha_os.dsl import parse
@@ -29,7 +29,7 @@ from alpha_os.dsl import parse
 def run_backtest():
     cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
     client = build_signal_client_from_config(cfg.api)
-    store = DataStore(DATA_DIR / "alpha_cache.db", client)
+    store = DataStore(SIGNAL_CACHE_DB, client)
 
     tradeable = ["BTC", "ETH", "SOL"]
     price_sigs = {a: price_signal(a) for a in tradeable}
@@ -78,8 +78,7 @@ def run_backtest():
     reg.close()
     print(f"Evaluable alphas: {len(alpha_signals)}")
 
-    # Benchmark
-    bm = build_benchmark_returns(data, cfg.backtest.benchmark_assets)
+    build_benchmark_returns(data, cfg.backtest.benchmark_assets)
 
     # Simulate day-by-day
     lookback = 252  # 1 year for TC computation
@@ -101,8 +100,6 @@ def run_backtest():
         asset_returns[asset] = rets
 
     # Portfolio simulation
-    initial_capital = 10000.0
-    portfolio_value = initial_capital
     daily_returns = []
     daily_signals = {a: [] for a in tradeable}
     max_per_asset_pct = 0.5
@@ -194,7 +191,7 @@ def run_backtest():
     # Compare vs buy-and-hold BTC
     btc_rets = asset_returns["BTC"][start_idx:start_idx + len(daily_returns)]
     btc_rets = btc_rets[np.isfinite(btc_rets)]
-    print(f"\n  --- vs Buy & Hold BTC ---")
+    print("\n  --- vs Buy & Hold BTC ---")
     print(f"  BTC Sharpe:      {metrics.sharpe_ratio(btc_rets):+.3f}")
     print(f"  BTC Ann Return:  {metrics.annual_return(btc_rets):+.2%}")
     print(f"  BTC Max DD:      {metrics.max_drawdown(btc_rets):.2%}")
@@ -202,7 +199,7 @@ def run_backtest():
     # Monthly breakdown
     n_months = len(daily_returns) // 21
     if n_months > 0:
-        print(f"\n  Monthly returns (last 12):")
+        print("\n  Monthly returns (last 12):")
         for m in range(max(0, n_months - 12), n_months):
             start = m * 21
             end = min(start + 21, len(daily_returns))
@@ -210,7 +207,7 @@ def run_backtest():
             print(f"    Month {m+1:2d}: {monthly:+.2%}")
 
     # Signal distribution
-    print(f"\n  Signal distribution (mean neutralized):")
+    print("\n  Signal distribution (mean neutralized):")
     for asset in tradeable:
         sigs = daily_signals[asset]
         if sigs:

@@ -6,7 +6,9 @@ import pytest
 from alpha_os.data.universe import (
     ETFS,
     STOCKS,
-    CRYPTO,
+    asset_for_price_signal,
+    backing_price_signal,
+    canonical_asset_id,
     is_crypto,
     is_equity,
     is_etf,
@@ -24,6 +26,10 @@ from alpha_os.risk.manager import (
 
 
 class TestAssetClassification:
+    def test_canonical_asset_id_uppercases(self):
+        assert canonical_asset_id("btc") == "BTC"
+        assert canonical_asset_id("NvDa") == "NVDA"
+
     def test_stock_detection(self):
         assert is_stock("NVDA")
         assert is_stock("JPM")
@@ -50,6 +56,16 @@ class TestAssetClassification:
         assert is_crypto("ETH")
         assert is_crypto("SOL")
         assert not is_crypto("SPY")
+
+    def test_backing_price_signal_resolves_known_assets(self):
+        assert backing_price_signal("BTC") == "btc_ohlcv"
+        assert backing_price_signal("ETH") == "eth_btc"
+        assert backing_price_signal("NVDA") == "nvda"
+
+    def test_asset_for_price_signal_resolves_known_series(self):
+        assert asset_for_price_signal("btc_ohlcv") == "BTC"
+        assert asset_for_price_signal("eth_btc") == "ETH"
+        assert asset_for_price_signal("unknown_series") is None
 
     def test_etf_catalog_size(self):
         assert len(ETFS) >= 10

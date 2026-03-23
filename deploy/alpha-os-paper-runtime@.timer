@@ -1,0 +1,11 @@
+[Unit]
+Description=Alpha-OS paper runtime schedule (%i)
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=alpha-os-paper-runtime@%i.service
+
+[Install]
+WantedBy=timers.target
+

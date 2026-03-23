@@ -1,5 +1,15 @@
 # Alpha-OS System Design
 
+This document captures architectural rationale and target design direction.
+It is not the source of truth for the current recovery posture or current
+runtime entrypoints.
+
+For current operating truth, prefer:
+
+- `README.md` for the current runtime path
+- `RECOVERY.md` for trust boundaries, scheduler policy, and recovery order
+- `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
+
 ## Glossary
 
 ### Core terms

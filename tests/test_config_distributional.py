@@ -158,7 +158,14 @@ def test_config_runtime_helpers_follow_current_settings():
     cfg.forward.degradation_window = 42
     cfg.live_quality.min_observations = 11
     cfg.live_quality.full_weight_observations = 50
+    cfg.live_quality.early_stage_full_weight_observations = 15
+    cfg.live_quality.sharpe_clip_abs = 2.5
+    cfg.live_quality.log_growth_clip_abs = 0.15
     cfg.lifecycle.active_quality_min = 0.12
+    cfg.lifecycle.bootstrap_weight = 0.25
+    cfg.lifecycle.quality_weight = 1.0
+    cfg.lifecycle.marginal_contribution_weight = 0.25
+    cfg.lifecycle.stake_update_rate = 0.10
 
     monitor_cfg = cfg.to_monitor_config()
     lifecycle_cfg = cfg.to_lifecycle_config()
@@ -169,6 +176,13 @@ def test_config_runtime_helpers_follow_current_settings():
     assert lifecycle_cfg.active_quality_min == pytest.approx(0.12)
     assert estimate.blended_quality == pytest.approx(0.8)
     assert estimate.confidence == pytest.approx(0.0)
+    assert cfg.live_quality.early_stage_full_weight_observations == 15
+    assert cfg.live_quality.sharpe_clip_abs == pytest.approx(2.5)
+    assert cfg.live_quality.log_growth_clip_abs == pytest.approx(0.15)
+    assert cfg.lifecycle.bootstrap_weight == pytest.approx(0.25)
+    assert cfg.lifecycle.quality_weight == pytest.approx(1.0)
+    assert cfg.lifecycle.marginal_contribution_weight == pytest.approx(0.25)
+    assert cfg.lifecycle.stake_update_rate == pytest.approx(0.10)
 
 
 def test_portfolio_objective_default():
@@ -195,3 +209,23 @@ def test_estimate_alpha_quality_respects_portfolio_objective():
     # With log_growth, live_quality uses log1p rather than sharpe
     assert estimate.n_observations == 90
     assert estimate.confidence > 0
+
+
+def test_live_quality_guardrails_load_from_toml(tmp_path):
+    p = tmp_path / "cfg.toml"
+    p.write_text(
+        "\n".join(
+            [
+                "[live_quality]",
+                "early_stage_full_weight_observations = 15",
+                "sharpe_clip_abs = 2.5",
+                "log_growth_clip_abs = 0.15",
+            ]
+        )
+    )
+
+    cfg = Config.load(p)
+
+    assert cfg.live_quality.early_stage_full_weight_observations == 15
+    assert cfg.live_quality.sharpe_clip_abs == pytest.approx(2.5)
+    assert cfg.live_quality.log_growth_clip_abs == pytest.approx(0.15)

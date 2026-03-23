@@ -11,7 +11,7 @@ from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
 from ..alpha.expression_identity import expression_semantic_key
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
-from ..config import Config, DATA_DIR, asset_data_dir
+from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..dsl import parse, to_string
 from ..data.universe import build_feature_list, price_signal
@@ -54,7 +54,7 @@ def _load_generator_data(
 ) -> tuple[dict[str, np.ndarray] | None, np.ndarray | None, list[str] | None]:
     from ..data.store import DataStore
 
-    db_path = DATA_DIR / "alpha_cache.db"
+    db_path = SIGNAL_CACHE_DB
     try:
         client = build_signal_client_from_config(config.api)
         store = DataStore(db_path, client)

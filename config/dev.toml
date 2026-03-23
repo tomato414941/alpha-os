@@ -1,0 +1,3 @@
+# Dev server overrides — signal-noise is on a separate host
+[api]
+base_url = "https://signal-noise.taildd87b4.ts.net"

@@ -24,13 +24,13 @@ class _MockCycleResult:
     profile_id: str = "profile-123"
     profile_commit: str = "deadbeefcafebabe"
     profile_config_id: str = "config-123"
-    profile_deployed_set_id: str = "deployed-123"
+    profile_live_set_id: str = "live-123"
     portfolio_value: float = 10000.0
     daily_pnl: float = 50.0
     daily_return: float = 0.005
     fills: list = None
     n_registry_active: int = 615
-    n_deployed_alphas: int = 150
+    n_live_hypotheses: int = 150
     n_shortlist_candidates: int = 150
     n_selected_alphas: int = 5
     n_signals_evaluated: int = 5
@@ -140,7 +140,7 @@ class TestDailyReport:
         assert report.profile_id == "profile-123"
         assert report.profile_commit == "deadbeefcafebabe"
         assert report.profile_config_id == "config-123"
-        assert report.profile_deployed_set_id == "deployed-123"
+        assert report.profile_live_set_id == "live-123"
         assert v.state.last_profile_id == "profile-123"
 
     def test_reconciliation_mismatch_is_error(self, tmp_path):

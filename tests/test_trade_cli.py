@@ -1,6 +1,7 @@
 """Tests for the trade CLI command, Trader rename, and Phase 4 features."""
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -84,15 +85,19 @@ def test_trade_parser():
     assert args.command == "trade"
     assert args.once is True
     assert args.real is False
+    assert args.non_interactive is False
+    assert args.strict is False
     assert args.capital == 10000.0
     assert args.asset == "BTC"
     assert not hasattr(args, "tactical")
 
     # Real mode
     args = parser.parse_args([
-        "trade", "--once", "--real", "--capital", "500",
+        "trade", "--once", "--real", "--non-interactive", "--strict", "--capital", "500",
     ])
     assert args.real is True
+    assert args.non_interactive is True
+    assert args.strict is True
     assert args.capital == 500.0
 
 
@@ -103,6 +108,23 @@ def test_trade_runtime_lock_path():
 
     assert path.name == "trade_BTC-ETH.lock"
     assert path.parent.name == "locks"
+
+
+def test_needs_trade_evolution_supports_hypothesis_registry():
+    from alpha_os.cli import _needs_trade_evolution
+
+    class _HypothesisRegistry:
+        def __init__(self, active_count):
+            self._active_count = active_count
+
+        def list_active(self):
+            return [object()] * self._active_count
+
+    trader = SimpleNamespace(registry=_HypothesisRegistry(active_count=1))
+    assert _needs_trade_evolution(trader) is False
+
+    empty_trader = SimpleNamespace(registry=_HypothesisRegistry(active_count=0))
+    assert _needs_trade_evolution(empty_trader) is True
 
 
 def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
@@ -118,9 +140,11 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
         config=None,
         interval=None,
         real=False,
+        non_interactive=False,
         asset="BTC",
         assets=None,
         capital=10000.0,
+        strict=False,
         summary=False,
         once=True,
         schedule=False,
@@ -150,6 +174,139 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
     assert "Trade runtime already active for BTC" in out
 
 
+def test_trade_strict_exits_on_overlapping_invocation(monkeypatch):
+    from alpha_os.cli import cmd_trade
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    cfg = SimpleNamespace(
+        forward=SimpleNamespace(check_interval=14400),
+        regime=SimpleNamespace(enabled=False),
+        paper=SimpleNamespace(),
+    )
+    args = SimpleNamespace(
+        config=None,
+        interval=None,
+        real=False,
+        non_interactive=False,
+        asset="BTC",
+        assets=None,
+        capital=10000.0,
+        strict=True,
+        summary=False,
+        once=True,
+        schedule=False,
+        event_driven=False,
+        evolve_interval=86400,
+        pop_size=200,
+        generations=30,
+        debounce=None,
+        venue=None,
+    )
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/trade_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: cfg)
+    monkeypatch.setattr("alpha_os.cli._normalize_trade_config", lambda _cfg: [])
+    monkeypatch.setattr("alpha_os.cli._resolve_asset_list", lambda _args: ["BTC"])
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+
+    with pytest.raises(SystemExit):
+        cmd_trade(args)
+
+
+def test_run_hypothesis_lifecycle_update_updates_stakes(tmp_path):
+    from types import SimpleNamespace
+
+    from alpha_os.cli import _run_hypothesis_lifecycle_update
+    from alpha_os.config import Config
+    from alpha_os.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "x"},
+            stake=1.0,
+            metadata={"oos_log_growth": 0.8},
+        )
+    )
+    tracker = PaperPortfolioTracker(tmp_path / "paper.db")
+    tracker.save_alpha_signals("2026-03-23T05:50:27", {"h1": 1.0})
+
+    trader = SimpleNamespace(
+        registry=store,
+        portfolio_tracker=tracker,
+    )
+    cfg = Config()
+    cfg.portfolio.objective = "log_growth"
+    cfg.forward.degradation_window = 3
+    cfg.live_quality.min_observations = 1
+    cfg.live_quality.full_weight_observations = 1
+
+    result = SimpleNamespace(
+        date="2026-03-23T05:50:27",
+        daily_return=0.2,
+    )
+
+    updates = _run_hypothesis_lifecycle_update(trader, cfg, result)
+    updated = store.get("h1")
+
+    assert "h1" in updates
+    assert updated is not None
+    assert updated.stake != pytest.approx(1.0)
+
+    tracker.close()
+    store.close()
+
+
+def test_trade_once_strict_failure_detects_empty_live_set():
+    from alpha_os.cli import _trade_once_strict_failure
+
+    result = SimpleNamespace(
+        n_live_hypotheses=0,
+        n_signals_evaluated=0,
+        order_failures=0,
+    )
+
+    assert _trade_once_strict_failure("BTC", result) == "BTC: no live hypotheses"
+
+
+def test_trade_once_strict_failure_detects_order_failures():
+    from alpha_os.cli import _trade_once_strict_failure
+
+    result = SimpleNamespace(
+        n_live_hypotheses=5,
+        n_signals_evaluated=5,
+        order_failures=2,
+    )
+
+    assert _trade_once_strict_failure("BTC", result) == "BTC: order failures=2"
+
+
+def test_trade_once_status_reports_traded():
+    from alpha_os.cli import _trade_once_status
+
+    result = SimpleNamespace(
+        n_live_hypotheses=5,
+        n_signals_evaluated=5,
+        order_failures=0,
+        fills=[object()],
+        n_skipped_deadband=0,
+        n_skipped_min_notional=0,
+        n_skipped_rounded_to_zero=0,
+    )
+
+    assert _trade_once_status(result) == "traded"
+
+
 def test_paper_replay_parser():
     from alpha_os.cli import _build_parser
 
@@ -176,57 +333,110 @@ def test_legacy_user_facing_commands_are_rejected():
         parser.parse_args(["validator"])
     with pytest.raises(SystemExit):
         parser.parse_args(["validate-testnet"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["cross-trade", "--assets", "BTC,ETH"])
 
 
-def test_rebuild_managed_alphas_parser():
-    from alpha_os.cli import _build_parser
+def test_produce_predictions_prefers_hypotheses(monkeypatch, capsys):
+    from alpha_os.cli import cmd_produce_predictions
 
-    parser = _build_parser()
-    args = parser.parse_args([
-        "rebuild-managed-alphas",
-        "--asset", "BTC",
-        "--source", "candidates",
-        "--fail-state", "dormant",
-        "--dry-run",
-    ])
+    args = SimpleNamespace(config=None, asset="BTC", strict=False)
+    calls = {}
 
-    assert args.command == "rebuild-managed-alphas"
-    assert args.asset == "BTC"
-    assert args.source == "candidates"
-    assert args.fail_state == "dormant"
-    assert args.dry_run is True
+    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
 
+    def _produce(cfg, *, assets=None, **_kwargs):
+        calls["assets"] = assets
+        return 7
 
-def test_refresh_deployed_alphas_parser():
-    from alpha_os.cli import _build_parser
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        _produce,
+    )
 
-    parser = _build_parser()
-    args = parser.parse_args([
-        "refresh-deployed-alphas",
-        "--asset", "BTC",
-        "--dry-run",
-    ])
+    cmd_produce_predictions(args)
 
-    assert args.command == "refresh-deployed-alphas"
-    assert args.asset == "BTC"
-    assert args.dry_run is True
+    assert calls["assets"] == ["BTC"]
+    out = capsys.readouterr().out
+    assert "Wrote 7 hypothesis predictions to store" in out
+    assert "Prediction summary: asset=BTC status=ok written=7" in out
 
 
-def test_prune_managed_alpha_duplicates_parser():
-    from alpha_os.cli import _build_parser
+def test_produce_predictions_no_longer_uses_registry_fallback(monkeypatch, capsys):
+    from alpha_os.cli import cmd_produce_predictions
 
-    parser = _build_parser()
-    args = parser.parse_args([
-        "prune-managed-alpha-duplicates",
-        "--asset", "BTC",
-        "--dry-run",
-        "--no-refresh-deployed",
-    ])
+    args = SimpleNamespace(config=None, asset="ETH", strict=False)
+    calls = {}
 
-    assert args.command == "prune-managed-alpha-duplicates"
-    assert args.asset == "BTC"
-    assert args.dry_run is True
-    assert args.no_refresh_deployed is True
+    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
+
+    def _produce(cfg, *, assets=None, **_kwargs):
+        calls["assets"] = assets
+        return 0
+
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        _produce,
+    )
+
+    cmd_produce_predictions(args)
+
+    assert calls["assets"] == ["ETH"]
+    assert "Wrote 0 hypothesis predictions to store" in capsys.readouterr().out
+
+
+def test_produce_predictions_strict_exits_on_zero(monkeypatch):
+    from alpha_os.cli import cmd_produce_predictions
+
+    args = SimpleNamespace(config=None, asset="ETH", strict=True)
+
+    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        lambda _cfg, *, assets=None, **_kwargs: 0,
+    )
+
+    with pytest.raises(SystemExit):
+        cmd_produce_predictions(args)
+
+
+def test_produce_predictions_skips_overlapping_invocation(monkeypatch, capsys):
+    from alpha_os.cli import cmd_produce_predictions
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    args = SimpleNamespace(config=None, asset="BTC", strict=False)
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/produce-predictions_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+
+    cmd_produce_predictions(args)
+
+    assert "Prediction production already active for BTC" in capsys.readouterr().out
+
+
+def test_produce_predictions_strict_exits_on_overlapping_invocation(monkeypatch):
+    from alpha_os.cli import cmd_produce_predictions
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    args = SimpleNamespace(config=None, asset="BTC", strict=True)
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/produce-predictions_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+
+    with pytest.raises(SystemExit):
+        cmd_produce_predictions(args)
 
 
 def test_runtime_status_parser():
@@ -240,6 +450,180 @@ def test_runtime_status_parser():
 
     assert args.command == "runtime-status"
     assert args.asset == "BTC"
+
+
+def test_sync_signal_cache_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "sync-signal-cache",
+        "--asset", "BTC",
+        "--from-hypotheses",
+        "--min-history-days", "30",
+    ])
+
+    assert args.command == "sync-signal-cache"
+    assert args.asset == "BTC"
+    assert args.from_hypotheses is True
+    assert args.min_history_days == 30
+    assert args.strict is False
+
+
+def test_sync_signal_cache_strict_exits_when_healthcheck_fails(monkeypatch):
+    from alpha_os.cli import cmd_sync_signal_cache
+
+    args = SimpleNamespace(
+        config=None,
+        asset="BTC",
+        assets=None,
+        signals=None,
+        from_hypotheses=False,
+        resolution="1d",
+        min_history_days=0,
+        strict=True,
+    )
+
+    monkeypatch.setattr(
+        "alpha_os.cli.Config.load",
+        lambda _path: SimpleNamespace(api=SimpleNamespace(base_url="https://example.test")),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.build_signal_client_from_config",
+        lambda _api: object(),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._resolve_signal_cache_targets",
+        lambda _args: ["btc_ohlcv"],
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.producer._quick_healthcheck",
+        lambda _url: False,
+    )
+
+    with pytest.raises(SystemExit):
+        cmd_sync_signal_cache(args)
+
+
+def test_sync_signal_cache_reports_summary_on_overlap(monkeypatch, capsys):
+    from alpha_os.cli import cmd_sync_signal_cache
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    args = SimpleNamespace(
+        config=None,
+        asset="BTC",
+        assets=None,
+        signals=None,
+        from_hypotheses=False,
+        resolution="1d",
+        min_history_days=0,
+        strict=False,
+    )
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/sync-signal-cache_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+
+    cmd_sync_signal_cache(args)
+
+    out = capsys.readouterr().out
+    assert "Signal cache sync already active for BTC" in out
+    assert "Sync summary: assets=BTC status=skipped_overlap" in out
+
+
+def test_sync_signal_cache_skips_overlapping_invocation(monkeypatch, capsys):
+    from alpha_os.cli import cmd_sync_signal_cache
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    args = SimpleNamespace(
+        config=None,
+        asset="BTC",
+        assets=None,
+        signals=None,
+        from_hypotheses=False,
+        resolution="1d",
+        min_history_days=0,
+        strict=False,
+    )
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/sync-signal-cache_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+
+    cmd_sync_signal_cache(args)
+
+    assert "Signal cache sync already active for BTC" in capsys.readouterr().out
+
+
+def test_sync_signal_cache_strict_exits_on_overlapping_invocation(monkeypatch):
+    from alpha_os.cli import cmd_sync_signal_cache
+    from alpha_os.runtime_lock import RuntimeLockBusy
+
+    args = SimpleNamespace(
+        config=None,
+        asset="BTC",
+        assets=None,
+        signals=None,
+        from_hypotheses=False,
+        resolution="1d",
+        min_history_days=0,
+        strict=True,
+    )
+
+    class BusyLock:
+        def __enter__(self):
+            raise RuntimeLockBusy(Path("/tmp/sync-signal-cache_BTC.lock"))
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+
+    with pytest.raises(SystemExit):
+        cmd_sync_signal_cache(args)
+
+
+def test_resolve_signal_cache_targets_defaults_to_price_signal():
+    from alpha_os.cli import _resolve_signal_cache_targets
+
+    args = SimpleNamespace(asset="BTC", assets=None, signals=None, from_hypotheses=False)
+
+    assert _resolve_signal_cache_targets(args) == ["btc_ohlcv"]
+
+
+def test_resolve_signal_cache_targets_can_include_hypothesis_features(tmp_path, monkeypatch):
+    from alpha_os.cli import _resolve_signal_cache_targets
+    from alpha_os.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "(sub fear_greed dxy)"},
+            stake=1.0,
+        )
+    )
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    args = SimpleNamespace(asset="BTC", assets=None, signals=None, from_hypotheses=True)
+
+    targets = _resolve_signal_cache_targets(args)
+
+    assert "btc_ohlcv" in targets
+    assert "fear_greed" in targets
+    assert "dxy" in targets
 
 
 def test_alpha_funnel_parser():
@@ -289,46 +673,24 @@ def test_prune_stale_candidates_parser():
     assert args.dry_run is True
 
 
-def test_seed_handcrafted_parser():
-    from alpha_os.cli import _build_parser
-
-    parser = _build_parser()
-    args = parser.parse_args([
+@pytest.mark.parametrize(
+    "command",
+    [
+        "rebuild-managed-alphas",
+        "refresh-deployed-alphas",
+        "prune-managed-alpha-duplicates",
         "seed-handcrafted",
-        "--asset", "BTC",
-        "--alpha-set", "baseline",
-        "--dry-run",
-    ])
-
-    assert args.command == "seed-handcrafted"
-    assert args.asset == "BTC"
-    assert args.alpha_set == "baseline"
-    assert args.dry_run is True
-
-
-def test_analyze_diversity_parser():
+        "analyze-diversity",
+        "submit",
+    ],
+)
+def test_legacy_registry_commands_are_not_parsed(command):
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
-    args = parser.parse_args([
-        "analyze-diversity",
-        "--asset", "BTC",
-        "--scope", "active",
-        "--limit", "50",
-        "--metric", "log_growth",
-        "--lookback", "126",
-        "--top-pairs", "5",
-        "--json",
-    ])
 
-    assert args.command == "analyze-diversity"
-    assert args.asset == "BTC"
-    assert args.scope == "active"
-    assert args.limit == 50
-    assert args.metric == "log_growth"
-    assert args.lookback == 126
-    assert args.top_pairs == 5
-    assert args.json is True
+    with pytest.raises(SystemExit):
+        parser.parse_args([command])
 
 
 def test_replay_experiment_parser():
@@ -519,30 +881,6 @@ def test_load_runtime_observation_config_prefers_user_prod(tmp_path, monkeypatch
     assert cfg.deployment.max_deployed_alphas == 150
 
 
-def test_build_tactical_trader_respects_enable_flag(monkeypatch):
-    """Layer 2 trader should only be built when explicitly enabled."""
-    from alpha_os import cli
-    from alpha_os.config import Config
-
-    created: list[tuple[str, Config]] = []
-
-    class DummyTacticalTrader:
-        def __init__(self, asset, config):
-            created.append((asset, config))
-
-    monkeypatch.setattr(
-        "alpha_os.paper.tactical.TacticalTrader",
-        DummyTacticalTrader,
-    )
-
-    cfg = Config.load()
-    assert cli._build_tactical_trader("BTC", cfg, enabled=False) is None
-
-    tactical = cli._build_tactical_trader("BTC", cfg, enabled=True)
-    assert isinstance(tactical, DummyTacticalTrader)
-    assert created == [("BTC", cfg)]
-
-
 def test_print_paper_result_shows_signal_stages(capsys):
     """CLI output should show raw and stage-adjusted signals."""
     from alpha_os.cli import _print_paper_result
@@ -558,7 +896,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
         dd_scale=1.0,
         vol_scale=1.0,
         n_registry_active=615,
-        n_deployed_alphas=150,
+        n_live_hypotheses=150,
         n_shortlist_candidates=150,
         n_selected_alphas=30,
         n_signals_evaluated=150,
@@ -576,8 +914,8 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Signal Reg: +0.4210" in output
     assert "Signal L2:  +0.5420" in output
     assert "Signal Fin: +0.5420" in output
-    assert "Managed:    615 active" in output
-    assert "Deployed:   150 alphas" in output
+    assert "Active:     615 hypotheses" in output
+    assert "Live:       150 hypotheses" in output
     assert "Shortlist:  150 candidates" in output
     assert "Selected:   30 alphas" in output
     assert "Signals:    150 evaluated" in output
@@ -597,7 +935,7 @@ def test_print_paper_result_shows_skip_metrics(capsys):
         dd_scale=1.0,
         vol_scale=1.0,
         n_registry_active=615,
-        n_deployed_alphas=30,
+        n_live_hypotheses=30,
         n_shortlist_candidates=30,
         n_selected_alphas=30,
         n_signals_evaluated=30,
@@ -771,20 +1109,56 @@ def test_reconcile_no_data():
     assert result["status"] == "no_data"
 
 
-def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, capsys):
+def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, capsys):
     import json
     from argparse import Namespace
 
-    from alpha_os.alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
     from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStatus, HypothesisStore
     from alpha_os.validation.testnet import readiness_paths
 
-    reg = ManagedAlphaStore(tmp_path / "alpha_registry.db")
-    reg.register(AlphaRecord(alpha_id="a1", expression="x", state=AlphaState.ACTIVE))
-    reg.register(AlphaRecord(alpha_id="a2", expression="y", state=AlphaState.DORMANT))
-    reg.register(AlphaRecord(alpha_id="a3", expression="z", state=AlphaState.REJECTED))
-    reg.replace_deployed_alphas(["a1"])
-    reg.close()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="h1",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_quality": 0.3,
+            "lifecycle_raw_live_quality": 12.0,
+            "lifecycle_bootstrap_trust": 0.0,
+            "lifecycle_quality_confidence": 0.5,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h4",
+        kind="technical",
+        definition={"indicator": "rsi"},
+        stake=0.5,
+        source="bootstrap_technical",
+        metadata={
+            "lifecycle_live_quality": 0.2,
+            "lifecycle_raw_live_quality": 8.0,
+            "lifecycle_bootstrap_trust": 0.05,
+            "lifecycle_quality_confidence": 0.25,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h2",
+        kind="dsl",
+        definition={"expression": "y"},
+        status=HypothesisStatus.PAUSED,
+        stake=1.0,
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h3",
+        kind="dsl",
+        definition={"expression": "z"},
+        status=HypothesisStatus.ARCHIVED,
+        stake=0.0,
+    ))
+    store.close()
 
     state_path, report_path = readiness_paths(tmp_path)
     state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -802,12 +1176,12 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
         "profile_id": "prof123456789",
         "profile_commit": "deadbeefcafebabe",
         "profile_config_id": "cfg123456789",
-        "profile_deployed_set_id": "dep123456789",
+        "profile_live_set_id": "live123456789",
         "portfolio_value": 9905.91,
         "daily_pnl": 0.0,
         "n_fills": 0,
         "n_registry_active": 7,
-        "n_deployed_alphas": 1,
+        "n_live_hypotheses": 1,
         "n_selected_alphas": 1,
         "n_skipped_deadband": 1,
         "n_skipped_min_notional": 0,
@@ -819,23 +1193,268 @@ def test_cmd_runtime_status_shows_registry_and_report(monkeypatch, tmp_path, cap
     }) + "\n")
 
     monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
 
     assert "Runtime Status (BTC)" in output
     assert "Readiness: 3/10 days" in output
-    assert "Managed:   active=1 dormant=1 rejected=1 deployed=1" in output
+    assert "Runtime:   source=hypotheses live=2" in output
+    assert "Hypotheses: active=2 paused=1 archived=1 live=2" in output
+    assert "Signals:   observed=2 bootstrap_backed=1 capital_backed=2" in output
+    assert "TopAlloc:  h1=1.000(dsl/random_dsl), h4=0.500(technical/bootstrap_technical)" in output
+    assert "TopEff:    h1=0.300(dsl/random_dsl), h4=0.200(technical/bootstrap_technical)" in output
+    assert "TopRaw:    h1=12.000(dsl/random_dsl), h4=8.000(technical/bootstrap_technical)" in output
+    assert "TopBoot:   h4=0.050(technical/bootstrap_technical), h1=0.000(dsl/random_dsl)" in output
     assert "Profile:   current=" in output
     assert "Profile:   latest=prof12345678" in output
-    assert "ProfileIDs: config=cfg123456789 deployed=dep123456789" in output
+    assert "ProfileIDs: config=cfg123456789 live=live12345678" in output
     assert "CurrentIDs: config=" in output
     assert "Latest:    2026-03-09 [OK]" in output
     assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
-    assert "Observe:   pending" in output
+    assert "Observe:   watch" in output
     assert "- latest cycle had zero fills" in output
     assert "- deadband skipped the latest cycle" in output
     assert "- latest report was recorded under a different runtime profile" in output
     assert "- config fingerprint differs between current and latest" in output
-    assert "- deployed alpha set fingerprint differs between current and latest" in output
-    assert "Note:      managed-alpha DB count differs" in output
+    assert "- live hypothesis set fingerprint differs between current and latest" in output
+    assert "Note:      current runtime live count differs" in output
+
+
+def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.validation.testnet import readiness_paths
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="h1",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+    ))
+    store.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 2,
+        "total_days_run": 2,
+        "last_success_date": "2026-03-23",
+        "last_run_date": "2026-03-23",
+        "last_profile_id": "",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text(json.dumps({
+        "date": "2026-03-23",
+        "profile_id": "",
+        "profile_commit": "",
+        "profile_config_id": "",
+        "profile_live_set_id": "",
+        "portfolio_value": 9986.38,
+        "daily_pnl": 279.60,
+        "n_fills": 1,
+        "n_registry_active": 1,
+        "n_live_hypotheses": 1,
+        "n_selected_alphas": 1,
+        "n_skipped_deadband": 0,
+        "n_skipped_min_notional": 0,
+        "n_skipped_rounded_to_zero": 0,
+        "n_order_failures": 0,
+        "reconciliation_match": True,
+        "circuit_breaker_halted": False,
+        "has_errors": False,
+    }) + "\n")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "Observe:   ok" in output
+
+
+def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_rebalance_allocation_trust
+    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="scored",
+        kind="ml",
+        definition={"model_ref": "m1"},
+        stake=1.0,
+        metadata={"oos_sharpe": 0.8},
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="unscored",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+    ))
+    store.close()
+
+    fwd = ForwardTracker(tmp_path / "forward_returns.db")
+    fwd.record("unscored", "2026-03-21", 1.0, 0.001)
+    fwd.record("unscored", "2026-03-23", 1.0, 0.0012)
+    fwd.close()
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", tmp_path / "signal_cache.db")
+
+    conn = sqlite3.connect(tmp_path / "signal_cache.db")
+    conn.execute(
+        "CREATE TABLE signals (name TEXT, date TEXT, value REAL, resolution TEXT DEFAULT '1d', PRIMARY KEY (name, date))"
+    )
+    conn.executemany(
+        "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+        [
+            ("btc_ohlcv", f"2026-01-{day:02d}", float(day), "1d")
+            for day in range(1, 32)
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    cmd_rebalance_allocation_trust(Namespace(asset="BTC", config=None, dry_run=True))
+    output = capsys.readouterr().out
+    assert "Allocation trust rebalance [DRY RUN]: asset=BTC" in output
+    assert "Summary: active=2 changed=2 zeroed=1 research_backed=1 live_proven=0 redundancy_capped=0" in output
+
+    store = HypothesisStore(hdb)
+    assert store.get("scored").stake == pytest.approx(1.0)
+    assert store.get("unscored").stake == pytest.approx(1.0)
+    store.close()
+
+    cmd_rebalance_allocation_trust(Namespace(asset="BTC", config=None, dry_run=False))
+    output = capsys.readouterr().out
+    assert "Allocation trust rebalance [APPLY]: asset=BTC" in output
+    assert "Rebalance summary: updated=2 active=2 zeroed=1" in output
+
+    store = HypothesisStore(hdb)
+    assert store.get("unscored").stake == pytest.approx(0.0)
+    assert store.get("scored").stake < 1.0
+    store.close()
+
+
+def test_cmd_rebalance_allocation_trust_caps_positive_correlation_bootstrap_pair(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_rebalance_allocation_trust
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    sdb = tmp_path / "signal_cache.db"
+    store = HypothesisStore(hdb)
+    for hypothesis_id in ("h_fast", "h_slow"):
+        store.register(HypothesisRecord(
+            hypothesis_id=hypothesis_id,
+            kind="technical",
+            definition={"indicator": "roc_momentum", "params": {"window": 20}},
+            stake=1.0,
+            source="bootstrap_technical",
+            metadata={"oos_sharpe": 0.8 if hypothesis_id == "h_fast" else 0.7},
+        ))
+    store.close()
+
+    conn = sqlite3.connect(sdb)
+    conn.execute(
+        "CREATE TABLE signals (name TEXT, date TEXT, value REAL, resolution TEXT DEFAULT '1d', PRIMARY KEY (name, date))"
+    )
+    conn.executemany(
+        "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+        [
+            ("btc_ohlcv", f"2026-01-{day:02d}", float(day), "1d")
+            for day in range(1, 32)
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", sdb)
+
+    cmd_rebalance_allocation_trust(Namespace(asset="BTC", config=None, dry_run=True))
+    output = capsys.readouterr().out
+    assert "redundancy_capped=1" in output
+    assert "capped_by=h_fast" in output
+
+
+def test_cmd_analyze_live_breadth_surfaces_redundant_bootstrap_pair(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_live_breadth
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    sdb = tmp_path / "signal_cache.db"
+
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="technical_roc_20_momentum",
+        kind="technical",
+        definition={"indicator": "roc_momentum", "params": {"window": 20}},
+        stake=0.5,
+        source="bootstrap_technical",
+        metadata={"lifecycle_bootstrap_trust": 0.1},
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="technical_volume_price_confirmation",
+        kind="technical",
+        definition={
+            "indicator": "volume_price_confirmation",
+            "params": {"price_window": 20, "volume_window": 20},
+        },
+        stake=0.4,
+        source="bootstrap_technical",
+        metadata={"lifecycle_bootstrap_trust": 0.1},
+    ))
+    store.close()
+
+    conn = sqlite3.connect(sdb)
+    conn.execute(
+        "CREATE TABLE signals (name TEXT, date TEXT, value REAL, resolution TEXT DEFAULT '1d', PRIMARY KEY (name, date))"
+    )
+    conn.executemany(
+        "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+        [
+            ("btc_ohlcv", f"2026-01-{day:02d}", float(day), "1d")
+            for day in range(1, 32)
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", sdb)
+
+    cmd_analyze_live_breadth(
+        Namespace(asset="BTC", config=None, lookback=30, top_pairs=3)
+    )
+    output = capsys.readouterr().out
+
+    assert "Live breadth (BTC)" in output
+    assert "records=2 analyzed=2 skipped=0 lookback=30" in output
+    assert "technical_roc_20_momentum <-> technical_volume_price_confirmation" in output
+    assert "corr=+1.000" in output
+    assert "|corr|=1.000" in output

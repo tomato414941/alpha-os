@@ -20,7 +20,7 @@ from ..alpha.admission_queue import (
 from ..alpha.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
-from ..config import Config, DATA_DIR, asset_data_dir
+from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.universe import build_feature_list, price_signal
 from ..dsl import parse
@@ -209,7 +209,7 @@ class AdmissionDaemon:
     def _load_data(self, features):
         from ..data.store import DataStore
 
-        db_path = DATA_DIR / "alpha_cache.db"
+        db_path = SIGNAL_CACHE_DB
         try:
             client = build_signal_client_from_config(self.config.api)
             store = DataStore(db_path, client)

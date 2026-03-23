@@ -1,7 +1,7 @@
 """Compare raw vs residual fitness for all deployed alphas."""
 import numpy as np
 from pathlib import Path
-from alpha_os.config import Config, DATA_DIR, asset_data_dir
+from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list
@@ -15,7 +15,7 @@ from datetime import date
 
 cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
 client = build_signal_client_from_config(cfg.api)
-store = DataStore(DATA_DIR / "alpha_cache.db", client)
+store = DataStore(SIGNAL_CACHE_DB, client)
 features = build_feature_list("BTC")
 matrix = store.get_matrix(features, end=date.today().isoformat())
 data = {col: matrix[col].values for col in matrix.columns}

@@ -4,6 +4,9 @@ Evaluates hourly derivative signals and produces a tactical score that
 modulates the strategic (Layer 3 daily) bias. When no L2 alphas exist,
 returns tactical_score=0 and combined=strategic_bias (transparent pass-through).
 """
+# TODO: L2 still depends on the legacy managed-alpha registry. Keep it outside
+# the hypotheses-first runtime mainline until hourly selection is redesigned
+# around hypothesis-native storage rather than alpha_registry_l2.db.
 from __future__ import annotations
 
 import logging
@@ -16,7 +19,7 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.combiner import weighted_combine_scalar
 from ..alpha.monitor import AlphaMonitor, MonitorConfig
-from ..config import Config, asset_data_dir
+from ..config import Config, SIGNAL_CACHE_L2_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_hourly_feature_list
@@ -39,7 +42,7 @@ class TacticalTrader:
     """Layer 2 hourly tactical alpha evaluator.
 
     Uses a separate registry and data cache (alpha_registry_l2.db,
-    alpha_cache_l2.db) to avoid conflicts with the daily Layer 3 system.
+    signal_cache_l2.db) to avoid conflicts with the daily Layer 3 system.
     """
 
     def __init__(
@@ -63,8 +66,7 @@ class TacticalTrader:
             self.store = store
         else:
             client = build_signal_client_from_config(config.api)
-            from ..config import DATA_DIR
-            self.store = DataStore(DATA_DIR / "alpha_cache_l2.db", client)
+            self.store = DataStore(SIGNAL_CACHE_L2_DB, client)
 
         mon_cfg = MonitorConfig(rolling_window=config.forward.degradation_window)
         self.monitor = AlphaMonitor(config=mon_cfg)

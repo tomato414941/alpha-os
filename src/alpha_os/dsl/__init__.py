@@ -14,6 +14,7 @@ from .expr import Expr, Feature, Constant, UnaryOp, BinaryOp, RollingOp, PairRol
 from .parser import parse, to_string
 from .generator import AlphaGenerator
 from .features import collect_feature_names
+from .validation import is_temporally_valid, temporal_expression_issues
 
 __all__ = [
     "OpType",
@@ -37,4 +38,6 @@ __all__ = [
     "to_string",
     "AlphaGenerator",
     "collect_feature_names",
+    "is_temporally_valid",
+    "temporal_expression_issues",
 ]

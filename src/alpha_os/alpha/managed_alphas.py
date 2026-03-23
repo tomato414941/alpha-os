@@ -1,4 +1,7 @@
 """Managed alpha store backed by SQLite."""
+# TODO: Legacy managed/deployed registry substrate. Keep this outside the
+# hypotheses-first runtime mainline until remaining replay/simulator paths are
+# retired or redesigned around hypotheses.db.
 from __future__ import annotations
 
 import json

@@ -2,6 +2,9 @@
 
 Phase 4 success criteria: 10 consecutive days without errors or unexpected state.
 """
+# TODO: Rename this module to a runtime-readiness/observation name once the
+# hypotheses-first reporting contract is stable; it now covers paper runtime
+# readiness more broadly than exchange testnet validation.
 from __future__ import annotations
 
 import json
@@ -36,7 +39,7 @@ class DailyReport:
     profile_id: str = ""
     profile_commit: str = ""
     profile_config_id: str = ""
-    profile_deployed_set_id: str = ""
+    profile_live_set_id: str = ""
     error_message: str = ""
     # Portfolio
     portfolio_value: float = 0.0
@@ -55,7 +58,7 @@ class DailyReport:
     circuit_breaker_reason: str = ""
     # Selection stats
     n_registry_active: int = 0
-    n_deployed_alphas: int = 0
+    n_live_hypotheses: int = 0
     n_shortlist_candidates: int = 0
     n_selected_alphas: int = 0
     n_signals_evaluated: int = 0
@@ -169,7 +172,7 @@ class ReadinessChecker:
             profile_id=getattr(cycle_result, "profile_id", ""),
             profile_commit=getattr(cycle_result, "profile_commit", ""),
             profile_config_id=getattr(cycle_result, "profile_config_id", ""),
-            profile_deployed_set_id=getattr(cycle_result, "profile_deployed_set_id", ""),
+            profile_live_set_id=getattr(cycle_result, "profile_live_set_id", ""),
             cycle_completed=cycle_ok,
             portfolio_value=cycle_result.portfolio_value,
             daily_pnl=cycle_result.daily_pnl,
@@ -183,7 +186,7 @@ class ReadinessChecker:
             circuit_breaker_halted=circuit_breaker.halted,
             circuit_breaker_reason=circuit_breaker.halt_reason,
             n_registry_active=cycle_result.n_registry_active,
-            n_deployed_alphas=cycle_result.n_deployed_alphas,
+            n_live_hypotheses=cycle_result.n_live_hypotheses,
             n_shortlist_candidates=cycle_result.n_shortlist_candidates,
             n_selected_alphas=cycle_result.n_selected_alphas,
             n_signals_evaluated=cycle_result.n_signals_evaluated,

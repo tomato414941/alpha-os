@@ -13,7 +13,12 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# ── Asset maps (for venue inference and price signal lookup) ──
+# ── Asset catalogs and raw backing price signals ──
+#
+# Asset IDs such as BTC / ETH / NVDA are the canonical identifiers used across
+# alpha-os. The mapped values below are raw signal-noise series names backing
+# the current price input for each asset. These raw names are compatibility
+# details, not canonical asset IDs.
 
 STOCKS: dict[str, str] = {
     "NVDA": "nvda", "AAPL": "aapl", "MSFT": "msft", "GOOGL": "googl",
@@ -64,6 +69,7 @@ HOURLY_SIGNALS = [
 POLYMARKET: dict[str, str] = {}
 
 _ALL_ASSETS = {**STOCKS, **ETFS, **CRYPTO}
+_SIGNAL_TO_ASSET = {signal: asset for asset, signal in _ALL_ASSETS.items()}
 
 # ── Signal catalog (API-driven with local cache) ──
 
@@ -257,14 +263,28 @@ def all_signals() -> list[str]:
     return list(_ALL_ASSETS.values()) + MACRO_SIGNALS
 
 
-def price_signal(asset: str) -> str:
-    if asset in _ALL_ASSETS:
-        return _ALL_ASSETS[asset]
+def canonical_asset_id(asset: str) -> str:
+    return asset.upper()
+
+
+def backing_price_signal(asset: str) -> str:
+    asset_id = canonical_asset_id(asset)
+    if asset_id in _ALL_ASSETS:
+        return _ALL_ASSETS[asset_id]
     lower = asset.lower()
     for signal in _ALL_ASSETS.values():
         if signal == lower:
             return signal
     raise KeyError(f"Unknown asset: {asset}")
+
+
+def asset_for_price_signal(signal: str) -> str | None:
+    return _SIGNAL_TO_ASSET.get(signal.lower())
+
+
+def price_signal(asset: str) -> str:
+    """Compatibility alias for the raw backing price signal name."""
+    return backing_price_signal(asset)
 
 
 def build_feature_list(asset: str, client: SignalClient | None = None) -> list[str]:

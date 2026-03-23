@@ -4,7 +4,7 @@ import time
 import numpy as np
 from pathlib import Path
 
-from alpha_os.config import Config, DATA_DIR, asset_data_dir
+from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, price_signal, stratified_feature_subset
@@ -12,8 +12,7 @@ from alpha_os.alpha.cross_asset import evaluate_cross_asset
 from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.alpha.admission_queue import CandidateSeed
 from alpha_os.alpha.managed_alphas import ManagedAlphaStore
-from alpha_os.backtest.benchmark import build_benchmark_returns
-from alpha_os.dsl import to_string
+from alpha_os.dsl import parse, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.evolution.behavior import compute_behavior
 from alpha_os.evolution.discovery_pool import DiscoveryPool
@@ -33,7 +32,7 @@ BUDGET = int(sys.argv[2]) if len(sys.argv) > 2 else 300
 def main():
     cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
     client = build_signal_client_from_config(cfg.api)
-    store = DataStore(DATA_DIR / "alpha_cache.db", client)
+    store = DataStore(SIGNAL_CACHE_DB, client)
 
     all_features = build_feature_list("BTC")
 
@@ -60,8 +59,6 @@ def main():
         if EVAL_UNIVERSE:
             save_eval_universe(EVAL_UNIVERSE)
     logger.info("Eval universe (%d): %s", len(EVAL_UNIVERSE), EVAL_UNIVERSE)
-
-    bm_returns = build_benchmark_returns(data, cfg.backtest.benchmark_assets)
 
     archive = DiscoveryPool()
     adir = asset_data_dir("BTC")

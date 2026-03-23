@@ -1,0 +1,16 @@
+[Unit]
+Description=Alpha-OS paper trade oneshot (%i)
+After=network.target alpha-os-produce-predictions@%i.service
+Requires=alpha-os-produce-predictions@%i.service
+OnFailure=alpha-os-runtime-status@%i.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/dev/projects/alpha-os
+EnvironmentFile=-/home/dev/.secrets/alpha-os-env
+ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs /home/dev/projects/alpha-os/data/%i/metrics
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os trade --once --asset %i --venue paper --strict --config "$CONFIG"'
+MemoryHigh=600M
+MemoryMax=900M
+StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/paper-trade.log
+StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/paper-trade.log

@@ -2,14 +2,14 @@
 import numpy as np
 from pathlib import Path
 from datetime import date
-from alpha_os.config import Config, DATA_DIR
+from alpha_os.config import Config, SIGNAL_CACHE_DB
 from alpha_os.data.store import DataStore
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, CROSS_ASSET_UNIVERSE
 
 cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
 client = build_signal_client_from_config(cfg.api)
-store = DataStore(DATA_DIR / "alpha_cache.db", client)
+store = DataStore(SIGNAL_CACHE_DB, client)
 features = build_feature_list("BTC")
 matrix = store.get_matrix(features, end=date.today().isoformat())
 data = {col: matrix[col].values for col in matrix.columns}
@@ -49,7 +49,7 @@ for sig in CROSS_ASSET_UNIVERSE:
     else:
         short.append((sig, n))
 
-print(f"\nUniverse coverage:")
+print("\nUniverse coverage:")
 print(f"  Total:      {len(CROSS_ASSET_UNIVERSE)}")
 print(f"  In data:    {in_data_count}")
 print(f"  Missing:    {len(missing)}")
@@ -62,7 +62,7 @@ if missing:
     crypto_m = [m for m in missing if m.startswith("yf_crypto_")]
     etf_m = [m for m in missing if m.startswith("etf_")]
     stock_m = [m for m in missing if not m.startswith("yf_crypto_") and not m.startswith("etf_")]
-    print(f"\nMissing breakdown:")
+    print("\nMissing breakdown:")
     print(f"  Crypto: {len(crypto_m)} (Yahoo format, may need different ticker)")
     print(f"  ETFs:   {len(etf_m)}")
     print(f"  Stocks: {len(stock_m)}")

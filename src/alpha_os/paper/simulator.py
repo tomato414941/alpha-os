@@ -1,4 +1,7 @@
 """Replay simulator — vectorized paper trading over historical dates."""
+# TODO: This simulator still depends on legacy managed/deployed registry state.
+# Keep it outside the hypotheses-first runtime mainline until replay can run
+# directly from hypothesis snapshots or live-hypothesis selections.
 from __future__ import annotations
 
 import logging
@@ -14,7 +17,7 @@ from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
 from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
-from ..config import Config, DATA_DIR, asset_data_dir
+from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -152,7 +155,7 @@ def run_replay(
     """
     # 1. Load full data range
     client = build_signal_client_from_config(config.api)
-    store = DataStore(DATA_DIR / "alpha_cache.db", client)
+    store = DataStore(SIGNAL_CACHE_DB, client)
     features = build_feature_list(asset)
     price_sig = features[0]
 

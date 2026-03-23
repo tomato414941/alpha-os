@@ -10,6 +10,7 @@ the current runtime shape or current server configuration.
 
 - for the current runtime and naming, prefer `README.md`
 - for the architectural rationale behind the current runtime, prefer `DESIGN.md`
+- for current portfolio / allocation design terminology, prefer `docs/portfolio-runtime-principles.md`
 - for current server-side operations, prefer `AGENTS.override.md`
 
 Some items below describe planned or exploratory directions rather than the

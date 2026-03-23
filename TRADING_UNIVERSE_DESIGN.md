@@ -1,5 +1,18 @@
 # Trading Universe Design
 
+Exploratory design note.
+
+This file describes a future multi-asset trading-universe mechanism. It is not
+the current trusted runtime shape, current asset scope, or current scheduler
+entrypoint set.
+
+Prefer:
+
+- `README.md` for the current single-asset runtime path
+- `RECOVERY.md` for the current recovery boundary
+- `DESIGN.md` for shared architectural rationale
+- `docs/portfolio-runtime-principles.md` for portfolio / allocation terminology
+
 ## Problem
 
 The system now evaluates 919 OHLCV assets for alpha exploration, but trading

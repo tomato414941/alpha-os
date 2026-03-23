@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>alpha-os System Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0e1a;
+    color: #c8d6e5;
+    padding: 40px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #f0f4f8;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #636e7b;
+    margin-bottom: 48px;
+  }
+  .warning {
+    max-width: 1200px;
+    margin: 0 auto 24px auto;
+    padding: 14px 18px;
+    border: 1px solid #6b4f1d;
+    background: linear-gradient(135deg, #2a1f0c, #1d160b);
+    color: #f3d9a2;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .diagram {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* External source */
+  .external {
+    background: linear-gradient(135deg, #1a1e2e, #1e2338);
+    border: 1px solid #2a3a5c;
+    border-radius: 16px;
+    padding: 24px 32px;
+    position: relative;
+  }
+  .external::before {
+    content: 'EXTERNAL';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #0a0e1a;
+    padding: 0 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #4a6fa5;
+    letter-spacing: 2px;
+  }
+
+  /* Flow arrow between sections */
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3d5a80;
+    font-size: 13px;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .flow-arrow .arrow {
+    font-size: 20px;
+    color: #4a90d9;
+  }
+  .flow-arrow .label {
+    color: #5a7a9a;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Section containers */
+  .section {
+    background: linear-gradient(135deg, #0f1525, #111a2e);
+    border: 1px solid #1e2d4a;
+    border-radius: 16px;
+    padding: 28px 32px;
+    position: relative;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4a6fa5;
+    margin-bottom: 20px;
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #0a0e1a;
+    padding: 0 10px;
+  }
+
+  /* Horizontal layout */
+  .h-flow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .h-flow.center { justify-content: center; }
+
+  /* Component boxes */
+  .comp {
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 120px;
+    position: relative;
+  }
+  .comp .sub {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* Color themes */
+  .c-signal {
+    background: linear-gradient(135deg, #1a3a5c, #1e4470);
+    border: 1px solid #2a5a8c;
+    color: #7cb8e8;
+  }
+  .c-evolution {
+    background: linear-gradient(135deg, #2a1a4c, #35206a);
+    border: 1px solid #5a3a9c;
+    color: #b088e8;
+  }
+  .c-eval {
+    background: linear-gradient(135deg, #1a3a3c, #1e4a4a);
+    border: 1px solid #2a6a6c;
+    color: #7ccac8;
+  }
+  .c-registry {
+    background: linear-gradient(135deg, #3a2a1a, #4a3520);
+    border: 1px solid #7a5a2a;
+    color: #d4a84a;
+  }
+  .c-trading {
+    background: linear-gradient(135deg, #1a3a2a, #1e4a35);
+    border: 1px solid #2a7a4a;
+    color: #5ad48a;
+  }
+  .c-risk {
+    background: linear-gradient(135deg, #3a1a1a, #4a2020);
+    border: 1px solid #7a2a2a;
+    color: #e87070;
+  }
+  .c-exec {
+    background: linear-gradient(135deg, #2a2a1a, #3a3a20);
+    border: 1px solid #6a6a2a;
+    color: #c8c85a;
+  }
+  .c-daemon {
+    background: linear-gradient(135deg, #1a2a3a, #203545);
+    border: 1px solid #305a7a;
+    color: #6aafe8;
+  }
+  .c-db {
+    background: linear-gradient(135deg, #1e1e2a, #252535);
+    border: 1px solid #3a3a5a;
+    color: #9898c8;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .c-external {
+    background: linear-gradient(135deg, #0e1a2a, #121e30);
+    border: 1px dashed #2a4a6a;
+    color: #5a8ab8;
+  }
+
+  /* Arrow between components */
+  .arrow-r {
+    color: #3a5a7a;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .arrow-d {
+    color: #3a5a7a;
+    font-size: 18px;
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  /* Grid layouts */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  /* Layer indicator */
+  .layer-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .l3 { background: #2a1a4c; color: #b088e8; }
+  .l2 { background: #1a3a3c; color: #7ccac8; }
+  .l1 { background: #3a2a1a; color: #d4a84a; }
+
+  /* Vertical section with inner flow */
+  .v-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Two-column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .note {
+    font-size: 11px;
+    color: #4a5a6a;
+    text-align: center;
+    padding: 4px;
+    font-style: italic;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #1e2d4a;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #636e7b;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<h1>alpha-os System Architecture</h1>
+<p class="subtitle">Autonomous Alpha Generation & Trading System — 3-Layer Architecture</p>
+<div class="warning">
+  This diagram reflects legacy registry-era architecture and is not the source
+  of truth for the current hypotheses-first runtime. Prefer <code>README.md</code>
+  and <code>RECOVERY.md</code> for current operating guidance.
+</div>
+
+<div class="diagram">
+
+  <!-- Signal Source -->
+  <div class="external">
+    <div class="section-title">Data Source</div>
+    <div class="h-flow center">
+      <div class="comp c-external" style="min-width: 280px;">
+        <div>signal-noise API</div>
+        <div class="sub">別 VPS (signal-noise) / ~3,000+ シグナル<br>REST + WebSocket / 価格・マクロ・オンチェーン・デリバティブ</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-signal">
+        <div>SignalClient</div>
+        <div class="sub">REST sync + WS subscribe</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-signal">
+        <div>DataStore</div>
+        <div class="sub">incremental sync<br>resolution: 1d / 1h / 5m / 1m</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-db">alpha_cache.db</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <span class="arrow">▼</span>
+    <span class="label">feature vectors</span>
+  </div>
+
+  <!-- Layer 3: Strategic -->
+  <div class="section">
+    <div class="section-title">Layer 3 — Strategic (Daily)</div>
+    <div class="two-col">
+      <div>
+        <!-- Discovery flow -->
+        <div class="h-flow">
+          <div class="comp c-evolution">
+            <span class="layer-badge l3">DISCOVERY</span>
+            <div>DSL Generator</div>
+            <div class="sub">S式: (ts_mean (sub f1 f2) 20)<br>GP 突然変異 + 交叉</div>
+          </div>
+          <span class="arrow-r">→</span>
+          <div class="comp c-evolution">
+            <div>MAP-Elites</div>
+            <div class="sub">4D behavioral grid<br>8⁴ = 4,096 cells<br>persistence × activity<br>× price_beta × vol_sens</div>
+          </div>
+          <span class="arrow-r">→</span>
+          <div class="comp c-eval">
+            <div>Cross-Asset Eval</div>
+            <div class="sub">IC @ horizon [1, 5, 20]d<br>残差リターン評価<br>20 資産ユニバース</div>
+          </div>
+          <span class="arrow-r">→</span>
+          <div class="comp c-eval">
+            <div>Admission Queue</div>
+            <div class="sub">候補キュー<br>pending → validating</div>
+          </div>
+        </div>
+
+        <div class="arrow-d">▼</div>
+
+        <!-- Validation flow -->
+        <div class="h-flow">
+          <div class="comp c-eval" style="min-width: 200px;">
+            <span class="layer-badge l3">VALIDATION</span>
+            <div>Purged Walk-Forward CV</div>
+            <div class="sub">5-fold / 5日 embargo<br>OOS IC / Sharpe / log-growth / CVaR</div>
+          </div>
+          <span class="arrow-r">→</span>
+          <div class="comp c-eval">
+            <div>Statistical Gates</div>
+            <div class="sub">PBO / DSR / FDR<br>多重検定補正</div>
+          </div>
+          <span class="arrow-r">→</span>
+          <div class="comp c-registry" style="min-width: 200px;">
+            <div>Managed Alphas Registry</div>
+            <div class="sub">active / dormant / rejected<br>cap: 600 active</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="comp c-daemon" style="min-width: auto;">
+          <div>🔄 Daemons</div>
+          <div class="sub" style="text-align: left;">
+            <b>unified-generator</b><br>GP進化 → 候補生成<br><br>
+            <b>admission</b><br>5分 poll → CV検証<br><br>
+            <b>lifecycle timer</b><br>daily TC評価 → 昇格/降格
+          </div>
+        </div>
+        <div class="comp c-db" style="min-width: auto;">alpha_registry.db</div>
+        <div class="comp c-db" style="min-width: auto;">discovery_pool.db</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <span class="arrow">▼</span>
+    <span class="label">deployed alphas (TC-weighted subset)</span>
+  </div>
+
+  <!-- Portfolio Construction -->
+  <div class="section">
+    <div class="section-title">Portfolio Construction & Risk</div>
+    <div class="h-flow center">
+      <div class="comp c-registry">
+        <div>Deployed Alphas</div>
+        <div class="sub">max 150 / daily refresh<br>registry → deployed 選択</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-trading">
+        <div>TC Combiner</div>
+        <div class="sub">Leave-one-out<br>Ensemble Sharpe<br>限界貢献度 → weight</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-trading">
+        <div>Signal Consensus</div>
+        <div class="sub">Rank-average<br>TC重み付き合成</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-risk">
+        <div>Risk Manager</div>
+        <div class="sub">DD stages: 5%/10%/15%<br>Vol targeting<br>Circuit breaker</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-trading">
+        <div>Target Position</div>
+        <div class="sub">signal × capital<br>× risk_scale</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <span class="arrow">▼</span>
+    <span class="label">execution intent</span>
+  </div>
+
+  <!-- Layer 2 + Layer 1 + Execution -->
+  <div class="section">
+    <div class="section-title">Layer 2 & 1 — Tactical + Execution</div>
+    <div class="h-flow center">
+      <div class="comp c-eval">
+        <span class="layer-badge l2">L2 TACTICAL</span>
+        <div>Hourly Signals</div>
+        <div class="sub">17特徴量: funding, OI,<br>liquidation, L/S ratio...<br>エントリータイミング調整</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-exec">
+        <span class="layer-badge l1">L1 EXECUTION</span>
+        <div>ExecutionOptimizer</div>
+        <div class="sub">VPIN / spread / imbalance<br>最適執行タイミング<br>注文分割 (TWAP)</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-exec">
+        <div>Execution Planning</div>
+        <div class="sub">current vs target<br>venue constraints<br>min notional / tick size</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="v-flow">
+        <div class="grid-2" style="gap: 8px;">
+          <div class="comp c-exec" style="min-width: 100px; padding: 10px;">
+            <div>Binance</div>
+            <div class="sub">crypto spot</div>
+          </div>
+          <div class="comp c-exec" style="min-width: 100px; padding: 10px;">
+            <div>Alpaca</div>
+            <div class="sub">US equities</div>
+          </div>
+          <div class="comp c-exec" style="min-width: 100px; padding: 10px;">
+            <div>Polymarket</div>
+            <div class="sub">prediction</div>
+          </div>
+          <div class="comp c-exec" style="min-width: 100px; padding: 10px;">
+            <div>Paper</div>
+            <div class="sub">simulation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <span class="arrow">▼</span>
+    <span class="label">fills + P&L</span>
+  </div>
+
+  <!-- Monitoring -->
+  <div class="section">
+    <div class="section-title">Monitoring & Feedback</div>
+    <div class="h-flow center">
+      <div class="comp c-trading">
+        <div>Portfolio Tracker</div>
+        <div class="sub">positions / fills / P&L<br>daily snapshots</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-eval">
+        <div>Forward Tracker</div>
+        <div class="sub">deployed alpha 性能監視<br>劣化検知 → lifecycle</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-eval">
+        <div>Testnet Readiness</div>
+        <div class="sub">10日連続成功<br>reconciliation / slippage</div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-db">paper_trading.db</div>
+    </div>
+    <div style="margin-top: 16px; text-align: center;">
+      <span class="note">TC ≤ 0 → dormant（自然淘汰） / TC > 0 → active 維持 ↩ Registry へフィードバック</span>
+    </div>
+  </div>
+
+  <!-- Prediction Store (Producer-Consumer) -->
+  <div class="section" style="border-style: dashed;">
+    <div class="section-title">Prediction Store (Producer-Consumer 分離)</div>
+    <div class="h-flow center">
+      <div class="v-flow">
+        <div class="comp c-evolution" style="min-width: 150px;">
+          <div>Registry Producer</div>
+          <div class="sub">deployed alphas → predictions</div>
+        </div>
+        <div class="comp c-evolution" style="min-width: 150px;">
+          <div>Classical Producer</div>
+          <div class="sub">RSI, zscore, carry,<br>vol, gold-dxy, F&G</div>
+        </div>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-db" style="padding: 16px; font-size: 13px;">
+        predictions.db<br>
+        <span style="font-size: 10px; color: #6a6a8a;">(signal_id, date, asset, value, horizon)</span>
+      </div>
+      <span class="arrow-r">→</span>
+      <div class="comp c-trading" style="min-width: 150px;">
+        <div>Pipeline Runner</div>
+        <div class="sub">read → score → weight → execute<br>producer を知らずに消費</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #1e4470;"></div>
+      Data / Signal
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #35206a;"></div>
+      Evolution / Discovery
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #1e4a4a;"></div>
+      Evaluation / Validation
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #4a3520;"></div>
+      Registry / Deployment
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #1e4a35;"></div>
+      Trading / Portfolio
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #4a2020;"></div>
+      Risk Management
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #3a3a20;"></div>
+      Execution / Venues
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #252535;"></div>
+      Database
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

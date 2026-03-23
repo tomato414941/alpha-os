@@ -17,12 +17,11 @@ from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_si
 from ..alpha.monitor import AlphaMonitor, RegimeDetector
 from ..alpha.quality import QualityEstimate
 from ..alpha.runtime_policy import rank_trading_records
-from ..alpha.managed_alphas import ManagedAlphaStore
-from ..config import Config, DATA_DIR, asset_data_dir
+from ..config import Config, HYPOTHESES_DB, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
-from ..dsl import parse, collect_feature_names
+from ..dsl import parse, collect_feature_names, temporal_expression_issues
 from ..execution.binance import BinanceExecutor
 from ..execution.executor import Executor, Fill
 from ..execution.planning import (
@@ -35,6 +34,7 @@ from ..execution.constraints import ExecutableOrder
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
+from ..hypotheses.producer import _quick_healthcheck
 from ..alpha.combiner import (
     CombinerConfig,
     compute_tc_scores,
@@ -46,6 +46,7 @@ from ..alpha.combiner import (
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from ..runtime_profile import RuntimeProfile, build_runtime_profile
+from ..hypotheses.store import HypothesisStore
 from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
@@ -66,14 +67,14 @@ class PaperCycleResult:
     dd_scale: float
     vol_scale: float
     n_registry_active: int
-    n_deployed_alphas: int
+    n_live_hypotheses: int
     n_shortlist_candidates: int
     n_selected_alphas: int
     n_signals_evaluated: int
     profile_id: str = ""
     profile_commit: str = ""
     profile_config_id: str = ""
-    profile_deployed_set_id: str = ""
+    profile_live_set_id: str = ""
     order_failures: int = 0
     n_skipped_deadband: int = 0
     n_skipped_min_notional: int = 0
@@ -116,6 +117,11 @@ class ExecutionOutcome:
     skipped_rounded_to_zero: int = 0
 
 
+# TODO: Split runtime input evaluation and trade recording out of Trader once
+# the hypotheses-first runtime contract is fully stabilized.
+# TODO: Move/rename this module out of paper/ once the runtime entrypoints are
+# fully hypotheses-first; Trader is the single-asset runtime engine, not a
+# paper-only helper.
 class Trader:
     """Trading orchestrator. Executor determines paper vs live.
 
@@ -127,7 +133,7 @@ class Trader:
         self,
         asset: str,
         config: Config,
-        registry: ManagedAlphaStore | None = None,
+        registry: HypothesisStore | None = None,
         portfolio_tracker: PaperPortfolioTracker | None = None,
         forward_tracker: ForwardTracker | None = None,
         monitor: AlphaMonitor | None = None,
@@ -145,7 +151,7 @@ class Trader:
         self.price_signal = self.features[0]
 
         adir = asset_data_dir(asset)
-        self.registry = registry or ManagedAlphaStore(db_path=adir / "alpha_registry.db")
+        self.registry = registry or self._build_default_registry()
         self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker(
             db_path=adir / "paper_trading.db"
         )
@@ -175,13 +181,18 @@ class Trader:
             self.store = store
         else:
             client = build_signal_client_from_config(config.api)
-            self.store = DataStore(DATA_DIR / "alpha_cache.db", client)
+            self.store = DataStore(SIGNAL_CACHE_DB, client)
 
         self.tactical = tactical
         self._executor_state_date = ""
         self._last_raw_signal: float = float("nan")
 
         self._restore_state()
+
+    def _build_default_registry(self):
+        from ..hypotheses.store import HypothesisStore
+
+        return HypothesisStore(HYPOTHESES_DB)
 
     @property
     def last_raw_signal(self) -> float:
@@ -433,15 +444,69 @@ class Trader:
             order_failures=order_failures,
         )
 
-    def _runtime_profile(self, deployed_records=None) -> RuntimeProfile:
-        records = deployed_records
+    def _runtime_profile(self, live_records=None) -> RuntimeProfile:
+        records = live_records
         if records is None:
-            records = self.registry.list_deployed_alphas()
+            records = self.registry.list_live()
         return build_runtime_profile(
             asset=self.asset,
             config=self.config,
-            deployed_alpha_ids=[record.alpha_id for record in records],
+            live_hypothesis_ids=[record.alpha_id for record in records],
         )
+
+    @staticmethod
+    def _prediction_history_array(
+        pred_store,
+        signal_id: str,
+        asset: str,
+        *,
+        n_days: int,
+        fallback_value: float,
+    ) -> np.ndarray:
+        rows = pred_store.read_signal_history(signal_id, asset, n_days=n_days)
+        values = [float(value) for _date, value in reversed(rows)]
+        if not values:
+            values = [fallback_value]
+        if len(values) < n_days:
+            values = [values[0]] * (n_days - len(values)) + values
+        return np.asarray(values[-n_days:], dtype=np.float64)
+
+    @staticmethod
+    def _prepare_runtime_inputs(
+        records,
+        price_signal: str,
+        store_signals: dict[str, float],
+    ) -> tuple[list[str], list[tuple], int]:
+        runtime_signals = {price_signal}
+        parsed_records: list[tuple] = []
+        n_failed = 0
+
+        for record in records:
+            if record.alpha_id in store_signals:
+                parsed_records.append((record, None))
+                continue
+            if not record.expression:
+                n_failed += 1
+                continue
+            try:
+                expr = parse(record.expression)
+            except SyntaxError as exc:
+                logger.warning("Failed to parse %s: %s", record.alpha_id, exc)
+                n_failed += 1
+                continue
+            issues = temporal_expression_issues(expr)
+            if issues:
+                logger.warning(
+                    "Skipping structurally invalid %s: %s",
+                    record.alpha_id,
+                    issues[0],
+                )
+                n_failed += 1
+                continue
+            runtime_signals.update(collect_feature_names(expr))
+            parsed_records.append((record, expr))
+
+        return sorted(runtime_signals), parsed_records, n_failed
 
     def _strategy_epoch(self, universe_records) -> str:
         return self._runtime_profile(universe_records).profile_id
@@ -488,7 +553,7 @@ class Trader:
                     profile_id=current_profile.profile_id,
                     profile_commit=current_profile.git_commit,
                     profile_config_id=current_profile.config_id,
-                    profile_deployed_set_id=current_profile.deployed_set_id,
+                    profile_live_set_id=current_profile.live_set_id,
                     combined_signal=last_snapshot.combined_signal,
                     fills=[],
                     portfolio_value=last_snapshot.portfolio_value,
@@ -497,7 +562,7 @@ class Trader:
                     dd_scale=last_snapshot.dd_scale,
                     vol_scale=last_snapshot.vol_scale,
                     n_registry_active=0,
-                    n_deployed_alphas=0,
+                    n_live_hypotheses=0,
                     n_shortlist_candidates=0,
                     n_selected_alphas=0,
                     n_signals_evaluated=0,
@@ -505,12 +570,12 @@ class Trader:
 
         # 0. Circuit breaker check
         prev_equity = self.executor.portfolio_value
-        deployed_universe = self.registry.top_by_stake(n=200)
-        if not deployed_universe:
+        live_hypotheses = self.registry.top_by_stake(n=200)
+        if not live_hypotheses:
             raise RuntimeError(
-                "No alphas with stake > 0. Run lifecycle or admission first."
+                "No live hypotheses with stake > 0. Run hypothesis-seeder or lifecycle first."
             )
-        current_profile = self._runtime_profile(deployed_universe)
+        current_profile = self._runtime_profile(live_hypotheses)
         self.circuit_breaker.sync_strategy_epoch(
             current_profile.profile_id,
             prev_equity,
@@ -523,27 +588,22 @@ class Trader:
                 date=cycle_key, profile_id=current_profile.profile_id,
                 profile_commit=current_profile.git_commit,
                 profile_config_id=current_profile.config_id,
-                profile_deployed_set_id=current_profile.deployed_set_id,
+                profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0,
-                n_registry_active=0, n_deployed_alphas=0,
+                n_registry_active=0, n_live_hypotheses=0,
                 n_shortlist_candidates=0,
                 n_selected_alphas=0, n_signals_evaluated=0,
             )
 
-        # 1. Sync data (skip in simulation mode — use cached data)
-        if simulation_date is None:
-            try:
-                logger.info("Syncing %d signals...", len(self.features))
-                self.store.sync(self.features)
-            except Exception as exc:
-                logger.warning("API sync failed — using cached data: %s", exc)
-
-        # 2. Get the deployed universe, then shortlist tradable candidates from it.
+        # 1. Build two sets:
+        #    - observation candidates: active hypotheses that should be evaluated
+        #    - live hypotheses: capital-eligible hypotheses with stake > 0
         max_trading = self.config.paper.max_trading_alphas
-        universe_records = deployed_universe
-        n_deployed_alphas = len(deployed_universe)
+        observation_candidates = self.registry.list_observation_active()
+        universe_records = live_hypotheses
+        n_live_hypotheses = len(live_hypotheses)
         trading_candidates = rank_trading_records(
             universe_records,
             lambda record: self._estimate_quality(
@@ -554,31 +614,67 @@ class Trader:
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric=self.config.portfolio.objective,
         )
-        all_alphas = trading_candidates
+        all_alphas = observation_candidates
 
         n_total_active = len(trading_candidates)
-        if n_deployed_alphas > max_trading or n_total_active > max_trading:
+        if n_live_hypotheses > max_trading or n_total_active > max_trading:
             logger.info(
-                "Selection pool: %d shortlist candidates from %d deployed alphas (%d registry-active)",
+                "Selection pool: %d shortlist candidates from %d live hypotheses (%d capital-backed, %d active)",
                 len(trading_candidates),
-                n_deployed_alphas,
+                n_live_hypotheses,
                 n_total_active,
+                len(observation_candidates),
             )
         selected_records = trading_candidates
 
+        store_signals: dict[str, float] = {}
+        try:
+            from alpha_os.predictions.store import PredictionStore
+            pred_store = PredictionStore()
+            try:
+                store_preds = pred_store.read_latest(today_date, assets=[self.asset])
+            finally:
+                pred_store.close()
+            for signal_id, assets in store_preds.items():
+                if self.asset in assets:
+                    store_signals[signal_id] = float(assets[self.asset])
+        except Exception:
+            pass
+
+        runtime_signals, parsed_records, n_failed = self._prepare_runtime_inputs(
+            all_alphas,
+            self.price_signal,
+            store_signals,
+        )
+
+        # 2. Sync data (skip in simulation mode — use cached data)
+        if simulation_date is None:
+            if _quick_healthcheck(self.config.api.base_url):
+                try:
+                    logger.info(
+                        "Syncing %d runtime signals for %d candidates...",
+                        len(runtime_signals),
+                        len(all_alphas),
+                    )
+                    self.store.sync(runtime_signals)
+                except Exception as exc:
+                    logger.warning("API sync failed — using cached data: %s", exc)
+            else:
+                logger.warning("Skipping runtime signal sync: signal-noise health probe failed")
+
         # 3. Evaluate each alpha's signal (uses daily data)
-        matrix = self.store.get_matrix(self.features, end=today_date)
+        matrix = self.store.get_matrix(runtime_signals, end=today_date)
         if len(matrix) < 2:
             logger.warning("Insufficient data for %s (%d rows)", today_date, len(matrix))
             return PaperCycleResult(
                 date=cycle_key, profile_id=current_profile.profile_id,
                 profile_commit=current_profile.git_commit,
                 profile_config_id=current_profile.config_id,
-                profile_deployed_set_id=current_profile.deployed_set_id,
+                profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
-                n_deployed_alphas=n_deployed_alphas,
+                n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
                 n_selected_alphas=0,
                 n_signals_evaluated=0,
@@ -591,11 +687,11 @@ class Trader:
                 date=cycle_key, profile_id=current_profile.profile_id,
                 profile_commit=current_profile.git_commit,
                 profile_config_id=current_profile.config_id,
-                profile_deployed_set_id=current_profile.deployed_set_id,
+                profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=self.executor.portfolio_value,
                 n_registry_active=n_total_active,
-                n_deployed_alphas=n_deployed_alphas,
+                n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
                 n_selected_alphas=0,
                 n_signals_evaluated=0,
@@ -607,47 +703,59 @@ class Trader:
         quality_estimates: dict[str, QualityEstimate] = {}
         alpha_exprs: dict[str, object] = {}  # aid → parsed Expr
         n_evaluated = 0
-        n_failed = 0
         n_feature_filtered = 0
         n_from_store = 0
-        parsed_records: list[tuple] = []
-        available_features = set(data.keys())
+        store_signal_arrays: dict[str, np.ndarray] = {}
+        available_features = {
+            col for col in matrix.columns
+            if col == self.price_signal or not matrix[col].isna().all()
+        }
 
-        # Try reading from prediction store first
-        store_signals: dict[str, float] = {}
-        try:
-            from alpha_os.predictions.store import PredictionStore
-            pred_store = PredictionStore()
-            store_preds = pred_store.read_latest(today_date, assets=[self.asset])
-            for signal_id, assets in store_preds.items():
-                if self.asset in assets:
-                    store_signals[signal_id] = assets[self.asset]
-            pred_store.close()
-        except Exception:
-            pass
-
-        for record in all_alphas:
+        if store_signals:
             try:
-                expr = parse(record.expression)
-            except SyntaxError as exc:
-                logger.warning("Failed to parse %s: %s", record.alpha_id, exc)
-                n_failed += 1
+                from alpha_os.predictions.store import PredictionStore
+                pred_store = PredictionStore()
+                try:
+                    for record, _expr in parsed_records:
+                        if record.alpha_id not in store_signals:
+                            continue
+                        value = store_signals[record.alpha_id]
+                        store_signal_arrays[record.alpha_id] = self._prediction_history_array(
+                            pred_store,
+                            record.alpha_id,
+                            self.asset,
+                            n_days=len(matrix),
+                            fallback_value=value,
+                        )
+                finally:
+                    pred_store.close()
+            except Exception:
+                store_signal_arrays = {}
+
+        filtered_records: list[tuple] = []
+        for record, expr in parsed_records:
+            if record.alpha_id in store_signals:
+                filtered_records.append((record, expr))
                 continue
             required = collect_feature_names(expr)
             if not required.issubset(available_features):
                 n_feature_filtered += 1
                 continue
-            parsed_records.append((record, expr))
+            filtered_records.append((record, expr))
 
-        for record, expr in parsed_records:
+        for record, expr in filtered_records:
             try:
                 # Use prediction store if available, else compute directly
                 if record.alpha_id in store_signals:
                     signal_yesterday = store_signals[record.alpha_id]
-                    signal = evaluate_expression(expr, data, len(matrix))
-                    signal_norm = normalize_signal(signal)
+                    signal_norm = store_signal_arrays.get(record.alpha_id)
+                    if signal_norm is None:
+                        signal_norm = np.full(len(matrix), signal_yesterday, dtype=np.float64)
                     n_from_store += 1
                 else:
+                    if expr is None:
+                        n_failed += 1
+                        continue
                     signal = evaluate_expression(expr, data, len(matrix))
                     signal_norm = normalize_signal(signal)
                     signal_yesterday = float(signal_norm[-2])
@@ -662,7 +770,8 @@ class Trader:
                 if np.isfinite(signal_yesterday):
                     alpha_signals[record.alpha_id] = signal_yesterday
                     alpha_signal_arrays[record.alpha_id] = signal_norm
-                    alpha_exprs[record.alpha_id] = expr
+                    if expr is not None:
+                        alpha_exprs[record.alpha_id] = expr
                 n_evaluated += 1
 
                 # Record per-alpha forward return (daily granularity)
@@ -702,9 +811,16 @@ class Trader:
 
         # TC computation removed — stake-based weights handle selection
 
-        # 3d. Correlation filter: select top-N decorrelated alphas
-        if len(alpha_signals) > max_trading:
-            candidate_ids = list(alpha_signals.keys())
+        # 3d. Correlation filter: select top-N decorrelated capital-backed alphas.
+        selection_signal_ids = {
+            record.alpha_id for record in trading_candidates
+            if record.alpha_id in alpha_signals
+        }
+        if len(selection_signal_ids) > max_trading:
+            candidate_ids = [
+                aid for aid in alpha_signals.keys()
+                if aid in selection_signal_ids
+            ]
             lookback = min(252, len(matrix))
             sig_matrix = np.array([
                 alpha_signal_arrays[aid][-lookback:] for aid in candidate_ids
@@ -718,12 +834,17 @@ class Trader:
                 CombinerConfig(max_alphas=max_trading),
             )
             selected_ids = {candidate_ids[i] for i in selected_idx}
-            n_before = len(alpha_signals)
+            n_before = len(selection_signal_ids)
             alpha_signals = {k: v for k, v in alpha_signals.items() if k in selected_ids}
             logger.info(
                 "Correlation filter: %d shortlist candidates → %d selected alphas (max_corr=%.2f)",
                 n_before, len(alpha_signals), CombinerConfig().max_correlation,
             )
+        else:
+            alpha_signals = {
+                aid: alpha_signals[aid]
+                for aid in selection_signal_ids
+            }
         selected_records = [
             r for r in trading_candidates if r.alpha_id in alpha_signals
         ]
@@ -809,7 +930,7 @@ class Trader:
             profile_id=current_profile.profile_id,
             profile_commit=current_profile.git_commit,
             profile_config_id=current_profile.config_id,
-            profile_deployed_set_id=current_profile.deployed_set_id,
+            profile_live_set_id=current_profile.live_set_id,
             combined_signal=prediction.combined_signal,
             fills=fills,
             portfolio_value=portfolio_value,
@@ -818,7 +939,7 @@ class Trader:
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
             n_registry_active=n_total_active,
-            n_deployed_alphas=n_deployed_alphas,
+            n_live_hypotheses=n_live_hypotheses,
             n_shortlist_candidates=len(trading_candidates),
             n_selected_alphas=len(selected_records),
             n_signals_evaluated=n_evaluated,
@@ -849,9 +970,9 @@ class Trader:
         print(f"  Cash:       ${summary.current_cash:,.2f}")
         if summary.current_positions:
             # Resolve traded asset ticker (btc_ohlcv → BTC)
-            from ..data.universe import CRYPTO, STOCKS
-            signal_to_asset = {v: k for k, v in {**CRYPTO, **STOCKS}.items()}
-            traded = signal_to_asset.get(self.price_signal, "").upper()
+            from ..data.universe import asset_for_price_signal
+
+            traded = (asset_for_price_signal(self.price_signal) or "").upper()
 
             shown = 0
             for sym, qty in summary.current_positions.items():
@@ -868,9 +989,9 @@ class Trader:
         if snapshot is None:
             return {"status": "no_data"}
 
-        from ..data.universe import CRYPTO, STOCKS
-        signal_to_asset = {v: k for k, v in {**CRYPTO, **STOCKS}.items()}
-        asset_ticker = signal_to_asset.get(self.price_signal, self.price_signal)
+        from ..data.universe import asset_for_price_signal
+
+        asset_ticker = asset_for_price_signal(self.price_signal) or self.price_signal
 
         internal_qty = self._snapshot_position_qty(snapshot.positions, asset_ticker)
         internal_cash = snapshot.cash

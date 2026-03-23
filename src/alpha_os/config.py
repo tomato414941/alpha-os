@@ -9,6 +9,9 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 CONFIG_DIR = PROJECT_DIR / "config"
 DATA_DIR = PROJECT_DIR / "data"
+SIGNAL_CACHE_DB = DATA_DIR / "signal_cache.db"
+SIGNAL_CACHE_L2_DB = DATA_DIR / "signal_cache_l2.db"
+HYPOTHESES_DB = DATA_DIR / "hypotheses.db"
 
 TRADING_MODE_SPOT_LONG_ONLY = "spot_long_only"
 TRADING_MODE_FUTURES_LONG_SHORT = "futures_long_short"
@@ -133,6 +136,9 @@ class EventDrivenConfig:
 class LiveQualityConfig:
     min_observations: int = 20
     full_weight_observations: int = 63
+    early_stage_full_weight_observations: int = 20
+    sharpe_clip_abs: float = 3.0
+    log_growth_clip_abs: float = 0.20
     shortlist_preselect_factor: int = 20
     dormant_revival_min_observations: int = 20
 
@@ -168,6 +174,12 @@ class LifecycleTomlConfig:
     active_quality_min: float = 0.0
     dormant_revival_quality: float = 0.0
     correlation_max: float = 0.5
+    bootstrap_redundancy_corr_max: float = 0.7
+    bootstrap_weight: float = 0.25
+    quality_weight: float = 1.0
+    marginal_contribution_weight: float = 0.25
+    stake_update_rate: float = 0.10
+    target_stake_floor: float = 0.0
 
 
 @dataclass
@@ -323,6 +335,11 @@ class Config:
             rolling_window=self.forward.degradation_window,
             min_observations=self.live_quality.min_observations,
             full_weight_observations=self.live_quality.full_weight_observations,
+            early_stage_full_weight_observations=(
+                self.live_quality.early_stage_full_weight_observations
+            ),
+            sharpe_clip_abs=self.live_quality.sharpe_clip_abs,
+            log_growth_clip_abs=self.live_quality.log_growth_clip_abs,
         )
 
     @staticmethod

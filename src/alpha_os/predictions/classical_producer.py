@@ -11,7 +11,7 @@ from datetime import date
 
 import numpy as np
 
-from ..config import Config, DATA_DIR
+from ..config import Config, SIGNAL_CACHE_DB
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import init_universe
@@ -179,7 +179,7 @@ def produce_classical_predictions(
     needed_features = {"sp500", "tsy_yield_2y", "dxy", "fear_greed", "gold", "vix_close"}
     all_needed = sorted(set(eval_assets) | needed_features)
 
-    db_path = DATA_DIR / "alpha_cache.db"
+    db_path = SIGNAL_CACHE_DB
     store = DataStore(db_path, client)
     matrix = store.get_matrix(all_needed)
     store.close()

@@ -1,4 +1,7 @@
 """Alpha combiner — signal combination with TC (True Contribution) weighting."""
+# TODO: Keep multi-asset allocation as a portfolio-level concept, but rebuild it
+# around hypothesis-native scores and allocators instead of reviving the retired
+# managed/deployed cross-sectional runtime.
 from __future__ import annotations
 
 import logging

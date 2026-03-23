@@ -1,9 +1,18 @@
 # alpha-os
 
-Autonomous alpha generation and trading system for any asset class — crypto, equities, commodities, derivatives, prediction markets, and beyond.
-3-layer architecture: strategic (daily), tactical (hourly), execution (minute).
-Generates trading signals using pure MAP-Elites evolution with 4D behavioral diversity,
-validates them with walk-forward cross-validation, and executes via pluggable executors (Binance, Alpaca, etc.).
+Hypotheses-first trading runtime under recovery.
+
+Current trusted path:
+
+- `hypothesis-seeder`
+- `sync-signal-cache`
+- `produce-predictions`
+- `trade --once --venue paper`
+- `runtime-status`
+
+The active recovery goal is not to restore every legacy subsystem. It is to
+make the bounded hypotheses-first runtime trustworthy again and only then
+decide which legacy research paths deserve a rewrite.
 
 ## Document Guide
 
@@ -11,173 +20,165 @@ Use the docs in this order:
 
 - `README.md`
   - current project entry point
-  - runtime concepts
-  - current operating posture
-  - where to look next
+  - current runtime path
+  - current document map
+- `RECOVERY.md`
+  - current recovery status
+  - trusted / untrusted boundary
+  - runtime operating model
+  - scheduler draft and exit criteria
 - `DESIGN.md`
   - architectural decisions
-  - lifecycle / deployment / sizing design
-  - known limitations and long-term direction
+  - longer-term design direction
 - `AGENTS.override.md`
   - server operations
   - deploy / restart / verification steps
-  - current testnet observation workflow
+  - current machine-specific commands
 - `ROADMAP.md`
-  - larger planned expansion work
+  - longer-range ideas; not current operating truth
+- `OLD_DESIGN.md`
+  - archived registry-era design material
+  - keep for history, not for current runtime decisions
+- `docs/portfolio-runtime-principles.md`
+  - portfolio / allocation design note
+  - quality, status, allocation-trust terminology
+- `PREDICTION_TARGETS.md`
+  - exploratory note on what the system may predict
+  - not the current runtime contract
+- `TRADING_UNIVERSE_DESIGN.md`
+  - exploratory note on future multi-asset universe selection
+  - not the current runtime contract
 
 If a topic appears in multiple files, prefer:
 
 - `README.md` for current practical guidance
+- `RECOVERY.md` for current repair order and runtime trust
 - `DESIGN.md` for deeper rationale
 - `AGENTS.override.md` for concrete commands
+- `OLD_DESIGN.md` only for legacy context
 
-## Pipeline Architecture
+## Document Roles
 
-The system has three independent services with distinct responsibilities:
+The repository docs are intentionally split by role.
+
+### Current Truth
+
+- `README.md`
+  - project entry point
+  - current runtime path
+  - current document map
+- `RECOVERY.md`
+  - trusted / untrusted boundary
+  - operating model
+  - scheduler draft
+  - current recovery order
+- `AGENTS.override.md`
+  - machine-specific operations
+  - restart / verify commands
+
+### Design Notes
+
+- `DESIGN.md`
+  - architectural rationale
+  - target design direction
+- `docs/portfolio-runtime-principles.md`
+  - portfolio construction and allocation-trust design
+- `PREDICTION_TARGETS.md`
+  - target taxonomy and research direction
+- `TRADING_UNIVERSE_DESIGN.md`
+  - future multi-asset trading-universe design
+- `ROADMAP.md`
+  - forward-looking expansion ideas
+
+### Archive / Legacy
+
+- `OLD_DESIGN.md`
+  - archived registry-era thinking
+- `docs/system-diagram.html`
+  - legacy registry-era architecture diagram
+
+## Current Runtime Path
+
+The current runtime is single-asset and hypotheses-first.
 
 ```
-signal-noise          Data collection (3,600+ signals, separate server)
-     │
-     ▼
-alpha-os-generator    Alpha discovery — generates DSL expressions,
-                      evaluates across multiple assets, registers candidates
-     │
-     ▼
-alpha-os-trader       Portfolio execution — combines deployed alphas into
-                      signals, constructs positions, executes orders
+signal-noise
+    │
+    ▼
+sync-signal-cache
+    │
+    ▼
+hypotheses.db  <-  hypothesis-seeder
+    │
+    ▼
+produce-predictions
+    │
+    ▼
+trade --once --venue paper
+    │
+    ▼
+runtime-status / readiness
 ```
 
-**alpha-os-generator** (`unified-generator` command)
-- Responsibility: discover new alpha expressions
-- Input: signal-noise data (prices, macro, crypto derivatives, etc.)
-- Output: candidates registered in the alpha registry
-- Method: MAP-Elites evolution + random generation, cross-asset residual fitness
-- Runs continuously, evaluating ~80 candidates/min
+What is current:
 
-**alpha-os-trader** (`cross-trade` command)
-- Responsibility: trade using deployed alphas
-- Input: deployed alpha registry + live signal data
-- Output: positions on Binance (testnet)
-- Method: TC-weighted signal combination, cross-sectional neutralization
-- Runs on 5-min schedule
+- canonical runtime store: `data/hypotheses.db`
+- canonical local market-data cache: `data/signal_cache.db`
+- canonical bounded trade entrypoint: `trade --once --venue paper`
+- readiness is accumulated from repeated bounded runs
 
-**Separation of concerns:** The generator creates alphas without trading.
-The trader uses alphas without creating them. Neither depends on the other
-being running. The trader is only useful when good alphas exist in the registry.
+What is no longer current:
+
+- `cross-trade`
+- `submit`
+- `refresh-deployed-alphas`
+- `rebuild-managed-alphas`
+- `seed-handcrafted`
+- `analyze-diversity`
+
+Those paths were tied to the legacy managed/deployed registry workflow and are
+either removed or treated as legacy experimental material.
 
 ### Current Status
 
-- **generator**: needs repair (archive=0, no evolution happening)
-- **trader**: running but limited value (residual Sharpe ~0, spot-only = no shorts)
-- **Priority**: fix generator first, then improve trader (futures support for shorting)
+- **operating posture**: `unsafe to run`
+- **trusted bounded path**: hypotheses-first `paper` runtime only
+- **current source of truth**: see `RECOVERY.md` for repair order and restart gate
+- **scheduler posture**: do not re-enable old units; use the recovery draft only as a template
 
-### Known Structural Limitations
+### Simplified Direction
 
-- **No shorting**: Binance spot testnet is long-only. Cross-sectional
-  neutralization produces negative signals that cannot be acted on.
-  Fix: migrate to Binance Futures.
-- **3 assets only**: BTC/ETH/SOL. Cross-sectional diversification requires
-  more assets. signal-noise now has 800+ daily assets available.
-- **Residual alpha is weak**: 91% of deployed alpha performance was market
-  direction bias. After removing beta, mean residual Sharpe is +0.039.
+The near-term simplification direction is:
 
-## Current Focus
+- one canonical table: `hypotheses`
+- one canonical target: `forward_residual_return`
+- one canonical horizon: `20D2L`
+- one canonical universe: `core_universe_1000`
+- no separate `candidates` or `deployed_alphas` in the target design
 
-**TC (True Contribution)** weighting is fully wired. The system uses a single
-Numerai-inspired metric for portfolio construction and lifecycle management.
+This is a deliberate temporary simplification to restore trust in the system.
+See `RECOVERY.md` for the current migration target.
 
-- **Pure MAP-Elites generator**: candidates generated directly (50% archive
-  mutation + 50% random), evaluated once, stored in the behavior grid
-- **4D behavioral descriptors**: persistence × activity × price_beta ×
-  vol_sensitivity (8×8×8×8 = 4,096 cells). All axes are behavioral
-- **TC weighting**: `compute_tc_scores()` / `compute_tc_weights()` — single
-  leave-one-out ensemble Sharpe metric replaces quality × diversity scoring
-- **TC lifecycle**: active alphas with TC ≤ 0 are demoted to dormant
-  (hurting the ensemble). Dormant revival remains quality-based
+### Legacy Experimental Paths
 
-## Naming And Boundary Plan
+These remain in the repo, but they are not the current runtime:
 
-The current direction is to keep the architecture idea, but make the names and
-surface APIs much more explicit.
+- `paper --replay`
+- `replay-experiment`
+- `simulator`
+- `managed_alphas` / `deployed_alphas`
+- archived registry-era documents in `OLD_DESIGN.md`
 
-What should stay:
+Treat them as legacy experimental or archival material unless they are
+explicitly rewritten around hypotheses-first inputs.
 
-- managed alphas remain the research ledger
-- deployed alphas remain the explicit runtime subset
-- admission, lifecycle, and deployment stay separate concerns
+## Architecture Notes
 
-What should change:
+For deeper rationale and longer-term design, prefer:
 
-- names that blur lifecycle and runtime allocation
-- config keys that hide which layer a limit applies to
-- logs and reports that say `active` without saying whether they mean
-  `managed active` or `deployed`
-
-Current working plan:
-
-1. keep the two-stage model (`managed_alphas` and `deployed_alphas`)
-2. document the boundary everywhere before making more renames
-3. prefer explicit names such as `managed active` and `deployed alphas`
-4. tighten config names over time when the observation window ends
-
-The project should not collapse the layers just because the current names are
-awkward. The design goal is still to separate research churn from deployed
-trading behavior.
-
-### Naming Rules
-
-Use these labels consistently in docs, logs, and reviews:
-
-- say `managed active` when you mean lifecycle eligibility in `alphas`
-- say `deployed alphas` when you mean the runtime subset in `deployed_alphas`
-- say `deployment` for runtime allocation policy, not `universe`
-- avoid plain `active` and plain `max_alphas` when the layer is ambiguous
-- prefer names that encode the layer, even if they are longer
-
-## Architecture
-
-```
-Layer 3: Strategic (Daily)    — Direction bias via MAP-Elites evolution on 3,022+ daily signals
-Layer 2: Tactical (Hourly)    — Entry/exit timing via 17 hourly features (funding, OI, liquidations)
-Layer 1: Execution (Minute)   — VPIN/spread/imbalance-based optimal execution timing
-
-src/alpha_os/
-├── dsl/          S-expression DSL (parser, evaluator, operators, GP templates)
-├── evolution/    Pure MAP-Elites discovery pool (4D behavioral grid)
-├── backtest/     Backtest engine, cost model, metrics
-├── validation/   Purged Walk-Forward CV, PBO, DSR, FDR
-├── alpha/        Alpha evaluator, managed alphas, lifecycle, combiner
-├── paper/        Paper trading simulator + tracker, EventDrivenTrader, TacticalTrader
-├── execution/    Trade executors (Paper, Binance), ExecutionOptimizer
-├── risk/         Position sizing, drawdown stages, circuit breaker
-├── data/         DataStore (signal-noise integration, subdaily resolution support)
-├── forward/      Ongoing alpha monitoring (legacy package name)
-├── governance/   Adoption gates, audit log
-└── pipeline/     Scheduler, pipeline runner
-```
-
-Data source: [signal-noise](https://github.com/tomato414941/signal-noise) — external time-series service currently providing about 3,022 signals to `alpha-os` via authenticated REST API.
-
-The `alpha-generator` now enqueues a capped set of newly discovered
-discovery-pool entries into the admission queue each round. The runtime path is
-therefore:
-
-- `discovery_pool` keeps a novelty-constrained frontier and replaces weaker
-  incumbents within a behavior cell
-- the admission queue receives a capped enqueued subset after obvious semantic
-  duplicates are filtered out
-- `admission-daemon` validates and adopts them into `managed_alphas`
-
-### Pipeline Simplification Direction
-
-Three layers stay: `discovery_pool` → `managed_alphas` → `deployed_alphas`.
-Scoring uses **TC (True Contribution)** — a single leave-one-out ensemble
-Sharpe metric for both weighting and lifecycle.
-
-- **Weighting**: `weight = TC(alpha, ensemble)` — positive TC gets higher weight
-- **Lifecycle**: demote when TC ≤ 0 (alpha hurts ensemble)
-- **Admission**: OOS Sharpe + PBO + DSR gates (thin sanity checks)
-- **Combination**: single TC-weighted consensus path
+- [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md)
+- [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md)
+- [OLD_DESIGN.md](/home/dev/projects/alpha-os/OLD_DESIGN.md)
 
 ## Setup
 
@@ -193,92 +194,31 @@ pip install signal-noise
 ## CLI
 
 ```bash
-# Generate alpha expressions
-python -m alpha_os generate --count 10000
+# Seed or refresh hypotheses
+python -m alpha_os hypothesis-seeder --config config/dev.toml
 
-# Backtest generated alphas
-python -m alpha_os backtest
+# Sync only the signals required by live hypotheses
+python -m alpha_os sync-signal-cache --asset BTC --from-hypotheses --strict --config config/dev.toml
 
-# Evolve alphas via GP + MAP-Elites
-python -m alpha_os evolve --generations 30
+# Produce bounded hypothesis predictions
+python -m alpha_os produce-predictions --asset BTC --strict --config config/dev.toml
 
-# Validate an alpha with purged walk-forward CV
-python -m alpha_os validate --expr '<dsl-expression>' --asset BTC
+# Run one bounded paper cycle
+python -m alpha_os trade --once --asset BTC --venue paper --strict --config config/dev.toml
 
-# Monitor adopted alphas
-python -m alpha_os monitor
+# Check readiness / runtime observation
+python -m alpha_os runtime-status --asset BTC --config config/dev.toml
 
-# Paper trade
-python -m alpha_os paper --once
-
-# Historical replay
+# Legacy experimental replay path
 python -m alpha_os paper --replay --start 2025-09-01 --end 2026-03-05
-
-# Trade command (Binance testnet by default; add --real for actual capital)
-python -m alpha_os trade --once --asset BTC
-
-# Event-driven mode (WebSocket, auto-triggers on market events)
-python -m alpha_os trade --event-driven --asset BTC
-
-# Layer 2 tactical evolution
-python -m alpha_os evolve --layer 2 --generations 30
-
-# Run the candidate admission daemon
-python -m alpha_os admission-daemon --asset BTC
-
-# Rebuild managed alpha states from validated candidates
-python -m alpha_os rebuild-managed-alphas --asset BTC --source candidates
-
-# Refresh deployed alphas from managed alphas
-python -m alpha_os refresh-deployed-alphas --asset BTC
-
-# Run a named replay experiment and persist the artifact
-python -m alpha_os replay-experiment \
-  --name "candidate-1.10" \
-  --start 2025-09-01 \
-  --end 2026-03-05 \
-  --managed-alpha-mode admission \
-  --deployment-mode refresh \
-  --source candidates \
-  --set lifecycle.candidate_quality_min=1.10
-
-# Check testnet readiness status
-python -m alpha_os testnet-readiness
-
-# Show the current observation snapshot
-python -m alpha_os runtime-status --asset BTC
-
-# Show discovery_pool -> managed -> deployed funnel counts
-python -m alpha_os alpha-funnel --asset BTC
-
-# Inspect deployed or registry-active alpha diversity
-python -m alpha_os analyze-diversity --asset BTC --scope deployed --lookback 252
-
-# Queue the hand-crafted BTC baseline into the local admission queue
-python -m alpha_os seed-handcrafted --asset BTC --alpha-set baseline
-
-# Compare the isolated hand-crafted BTC baseline against the current profile
-./scripts/run_handcrafted_baseline_replay.py \
-  --asset BTC \
-  --alpha-set baseline \
-  --start 2025-09-01 \
-  --end 2026-03-05
-
-# Run a TOML-defined historical replay matrix
-python -m alpha_os replay-matrix --manifest experiments/observation_window.toml --max-workers 2
-
-# Compare deployed-alpha policy variants around the current best range
-python -m alpha_os replay-matrix --manifest experiments/deployment_window.toml --max-workers 2
-
-# Run a champion / challenger replay set against the current BTC baseline
-python -m alpha_os replay-matrix --manifest experiments/champion_challenger.toml --max-workers 2
+python -m alpha_os replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
 ```
 
 ## Configuration
 
 Edit `config/default.toml` or override via environment.
 
-Key sections: `[api]` (signal-noise endpoint), `[generation]`, `[backtest]`, `[validation]` (OOS Sharpe, PBO gates), `[risk]` (drawdown stages), `[trading]` (initial capital), `[deployment]` (deployed alpha slots and replacement policy), `[execution]` (VPIN/spread/imbalance thresholds), `[testnet]`.
+Key sections: `[api]`, `[generation]`, `[backtest]`, `[validation]`, `[risk]`, `[trading]`, `[execution]`, `[testnet]`.
 
 If the remote `signal-noise` endpoint is protected, set `ALPHA_OS_SIGNAL_NOISE_API_KEY`
 in the runtime environment. `alpha-os` will automatically pass it to
@@ -286,204 +226,27 @@ in the runtime environment. `alpha-os` will automatically pass it to
 
 ## Terminology Notes
 
-Recent CLI cleanup now prefers standard terms:
+- prefer `hypothesis` for a predictive unit
+- reserve `alpha` for excess-return outcome or legacy code names
+- `live hypotheses` is the runtime subset
+- `paper --replay` and `replay-experiment` are legacy experimental paths
+- `trade --once --venue paper` is the current bounded runtime path
 
-- `trade` is the runtime trading command and defaults to Binance testnet.
-  Real-money trading is only `trade --real`.
-- Registry state names are `candidate`, `active`, `dormant`, and `rejected`.
-  The admission registry is a research ledger, not the live trading set.
-- `deployed alphas` means the deployed subset that `trade` actually reads.
-  It is refreshed explicitly with `refresh-deployed-alphas`.
-- `analyze-diversity` is a research/diagnostic command. It does not change
-  runtime behavior; it reports similarity across signal correlation,
-  expression structure, and feature families.
-- `monitor` is the ongoing post-adoption monitoring loop for registry alphas.
-- `paper --replay` is historical replay of the current runtime decision stack.
-- `testnet-readiness` is the operational readiness check for testnet trading.
-- `validate` remains statistical alpha validation via purged walk-forward CV.
-- The CLI and TOML both use `admission` / `admission-daemon`.
-- Logs and reports distinguish `registry active`, `shortlist candidates`,
-  `deployed alphas`, `shortlist candidates`, `selected alphas`, and
-  `signals evaluated`.
+## Current Observation
 
-State naming note:
+For the current `paper` runtime, watch these first:
 
-- `active` means `registry active`, not necessarily `currently traded`
-- `currently traded` means `deployed in deployed_alphas`
+- `runtime-status`
+- readiness files under `data/<ASSET>/metrics/`
+- `n_live_hypotheses`, `n_selected_alphas`, `n_signals_evaluated`
+- `fills`, `order_failures`, and skip counts
 
-This distinction is important. If logs or docs collapse those meanings, it
-quickly becomes technical debt.
+The current bounded path is:
 
-Near-term naming direction:
-
-- keep `active` as the lifecycle state name for now
-- prefer `registry active` in logs, docs, and discussions
-- prefer `deployed alphas` for the live runtime subset
-- treat ambiguous labels such as plain `active` or plain `max_alphas` as debt
-  to remove gradually, not as the desired end state
-
-Admission scope note:
-
-- keep `admission` thin: sanity, obvious duplicates, minimum quality/confidence
-- prefer moving portfolio-shaping diversity and live allocation logic toward
-  `deployment`
-
-## Registry Control
-
-The research registry is allowed to change continuously, but it should not
-grow without bound.
-
-## Champion / Challenger Experiments
-
-Use `replay-matrix` manifests to make one profile the explicit baseline
-(`champion`) and compare alternatives as `challengers`.
-
-Recommended shape:
-
-- one `champion-current` entry that matches the current testnet/runtime profile
-- a small number of challengers that change exactly one lever
-- compare runs by both `profile_id` and performance metrics
-
-Current example:
-
-- [champion_challenger.toml](/home/dev/projects/alpha-os/experiments/champion_challenger.toml)
-
-Practical rule:
-
-- change one runtime lever per challenger
-- keep the champion fixed until it is explicitly replaced
-- treat `profile_id` as the unit of comparison, not just the experiment name
-
-- `admission.max_active_alphas` is the hard cap for `alphas.state=active`.
-- `0` disables the cap. Any positive value enables it.
-- When the cap is reached, a weaker incoming alpha is rejected.
-- When the cap is reached and the incoming alpha is stronger, the weakest
-  active alpha is demoted to `dormant` first.
-- If the registry is already above the cap, admission first prunes the
-  weakest active rows down to the limit, then evaluates the new alpha.
-
-This is intentionally simple. It avoids adding a new pool or a second
-deployment lifecycle just to control registry growth.
-
-## Runtime Observation
-
-For current testnet operation, watch these values first:
-
-- registry DB counts: `active`, `dormant`, `rejected`
-- readiness report fields:
-  `n_registry_active`, `n_deployed_alphas`, `n_selected_alphas`
-- trading outcomes:
-  `n_fills`, `n_skipped_deadband`, `n_order_failures`, `daily_pnl`
-- service health:
-  `alpha-os@crypto-spot.service` and `alpha-os-admission@BTC.service` memory usage
-
-The readiness files have different roles:
-
-- `data/BTC/metrics/testnet_readiness.json`
-  aggregated readiness state such as consecutive success days
-- `data/BTC/metrics/testnet_readiness_reports.jsonl`
-  per-cycle reports with fills, skips, reconciliation, and registry counts
-
-The registry DB can change before the next scheduled trade cycle writes a new
-readiness report, so DB counts and the latest report may briefly disagree.
-
-### Observation Window
-
-Do not pause development for multiple days just to watch this strategy.
-
-- use a short observation window: about `24 hours` or `3-5` scheduled trade cycles
-- avoid large runtime changes during that window so the result stays attributable
-- after that window, make a go / no-go call instead of extending observation by default
-
-Typical no-go signals:
-
-- fills remain near zero
-- `n_skipped_deadband` dominates and the runtime rarely trades
-- daily PnL shows no improvement signal
-- `n_registry_active` or service memory becomes unstable again
-
-## Current Operating Posture
-
-Active development phase. Core runtime is stable; current work focuses on
-the TC transition and MAP-Elites behavior quality.
-
-Current server profile:
-
-- `admission.max_active_alphas = 600`, `deployment.max_alphas = 150`
-- `alpha-generator`: pure MAP-Elites, 80 candidates/min, 4D behavioral grid
-- `admission-daemon`: 5-min poll interval
-- Testnet readiness: PASSED (13/10 consecutive success days)
-- PV: ~$9,917 (from $10,000 initial, -0.8%)
-
-### Active Work
-
-- Observing TC weighting + TC lifecycle impact on live trading
-- Observe 4D behavioral grid coverage growth
-
-### Known Limitations
-
-- No durable edge demonstrated yet (PV slightly below initial capital)
-- Fills are sparse — system is often flat
-
-## System Map
-
-Read the current runtime through these four flows:
-
-1. `registry -> deployed_alphas -> trade`
-   - research candidates live in the registry
-   - deployed alphas live in `deployed_alphas`
-   - `trade` should only act on the deployed subset
-2. `signal -> target -> intent -> executable order`
-   - prediction, portfolio construction, execution planning, venue constraints
-3. `admission -> lifecycle`
-   - `admission` decides what enters `active`
-   - `lifecycle` decides what leaves `active`
-4. `replay -> testnet readiness`
-   - `replay` compares logic on history
-   - `testnet-readiness` measures runtime behavior that replay cannot fully capture
-
-Recommended first files:
-
-- [registry.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/registry.py)
-- [deployed_alphas.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/deployed_alphas.py)
-- [trader.py](/home/dev/projects/alpha-os/src/alpha_os/paper/trader.py)
-- [planning.py](/home/dev/projects/alpha-os/src/alpha_os/execution/planning.py)
-- [constraints.py](/home/dev/projects/alpha-os/src/alpha_os/execution/constraints.py)
-- [admission.py](/home/dev/projects/alpha-os/src/alpha_os/daemon/admission.py)
-- [lifecycle.py](/home/dev/projects/alpha-os/src/alpha_os/alpha/lifecycle.py)
-- [replay.py](/home/dev/projects/alpha-os/src/alpha_os/experiments/replay.py)
-- [testnet.py](/home/dev/projects/alpha-os/src/alpha_os/validation/testnet.py)
-
-## Research Notes
-
-### Numerai-Inspired Design (TC Transition)
-
-The key insight from Numerai: **reward marginal contribution, not individual
-performance.** TC naturally captures both quality and diversity in one metric.
-An alpha with high Sharpe but redundant with existing alphas gets low TC.
-An alpha with moderate Sharpe but unique behavior gets high TC.
-
-This simplifies the codebase (removes diversity infrastructure, combine modes)
-while producing a more principled weighting scheme.
-
-### MAP-Elites Behavioral Grid
-
-600 active alphas occupy only ~160 unique cells in the 4D behavioral grid,
-revealing significant behavioral redundancy in the current portfolio. The grid
-enables discovery of strategies in unexplored regions (e.g., "slow mean-reversion
-in volatile markets") that would never emerge from fitness-only search.
-
-### Open Questions
-
-- Is the current DSL expressive enough to generate genuinely profitable alphas,
-  or is the alpha quality ceiling too low regardless of search method?
-- Should the system target other venues (Numerai tournaments, prediction markets)
-  where alpha generation without execution risk is possible?
-- Is the 3,022-signal feature universe sufficient, or do we need fundamentally
-  different signal types?
-
-See [DESIGN.md](DESIGN.md) for detailed architecture and lifecycle design.
-See [ROADMAP.md](ROADMAP.md) for the multi-timeframe evolution roadmap.
+1. `sync-signal-cache --strict`
+2. `produce-predictions --strict`
+3. `trade --once --venue paper --strict`
+4. `runtime-status`
 
 ## Testing
 
@@ -492,18 +255,9 @@ pytest tests/
 ruff check src/
 ```
 
-## Experiment Workflow
+## Further Reading
 
-- Use `replay-experiment` for named historical experiments instead of ad-hoc shell notes.
-- Artifacts are written to `data/<ASSET>/experiments/`.
-- Each run appends a summary row to `index.jsonl` and stores the full payload in a timestamped `.json`.
-- `--registry-mode current` replays the current registry as-is.
-- `--registry-mode admission` rebuilds a temporary registry from `alphas` or `candidates` first, which is better for gate experiments.
-- `--deployment-mode current` uses the currently deployed alpha set if present.
-- `--deployment-mode refresh` refreshes a temporary deployed alpha set inside the experiment before replay.
-- Use repeated `--set path=value` flags for temporary config overrides.
-
-## Design
-
-See [DESIGN.md](DESIGN.md) for detailed architecture, alpha lifecycle, and DSL specification.
-See [ROADMAP.md](ROADMAP.md) for the multi-timeframe evolution roadmap (Phase 1-3 complete, Phase 4-5 planned).
+- [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md): current runtime truth, scheduler draft, and exit criteria
+- [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): architectural rationale and long-term direction
+- [ROADMAP.md](/home/dev/projects/alpha-os/ROADMAP.md): future ideas and expansion work
+- [OLD_DESIGN.md](/home/dev/projects/alpha-os/OLD_DESIGN.md): archived registry-era design material

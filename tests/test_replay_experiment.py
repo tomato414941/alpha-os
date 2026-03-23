@@ -114,13 +114,13 @@ def test_runtime_profile_id_ignores_git_commit():
     profile_a = build_runtime_profile(
         asset="BTC",
         config=cfg,
-        deployed_alpha_ids=["a1", "a2"],
+        live_hypothesis_ids=["a1", "a2"],
         commit="aaaaaaaa",
     )
     profile_b = build_runtime_profile(
         asset="BTC",
         config=cfg,
-        deployed_alpha_ids=["a1", "a2"],
+        live_hypothesis_ids=["a1", "a2"],
         commit="bbbbbbbb",
     )
 
@@ -128,4 +128,4 @@ def test_runtime_profile_id_ignores_git_commit():
     assert profile_a.git_commit == "aaaaaaaa"
     assert profile_b.git_commit == "bbbbbbbb"
     assert profile_a.config_id == profile_b.config_id
-    assert profile_a.deployed_set_id == profile_b.deployed_set_id
+    assert profile_a.live_set_id == profile_b.live_set_id
