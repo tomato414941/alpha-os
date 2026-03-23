@@ -7,6 +7,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src" / "alpha_os"
 ALPHA_PACKAGE = SRC_ROOT / "alpha"
+SCRIPTS_ROOT = PROJECT_ROOT / "scripts"
+TESTS_ROOT = PROJECT_ROOT / "tests"
 
 
 def _forbidden_alpha_imports(path: Path) -> list[str]:
@@ -39,5 +41,18 @@ def test_src_package_does_not_import_alpha_outside_compatibility_layer():
             continue
         for violation in _forbidden_alpha_imports(path):
             violations.append(f"{path.relative_to(PROJECT_ROOT)}: {violation}")
+
+    assert violations == []
+
+
+def test_scripts_and_tests_do_not_import_alpha_compatibility_package():
+    violations: list[str] = []
+
+    for root in (SCRIPTS_ROOT, TESTS_ROOT):
+        for path in sorted(root.rglob("*.py")):
+            if path.name == "test_architecture_boundaries.py":
+                continue
+            for violation in _forbidden_alpha_imports(path):
+                violations.append(f"{path.relative_to(PROJECT_ROOT)}: {violation}")
 
     assert violations == []
