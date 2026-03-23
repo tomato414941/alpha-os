@@ -626,48 +626,54 @@ def test_resolve_signal_cache_targets_can_include_hypothesis_features(tmp_path, 
     assert "dxy" in targets
 
 
-def test_alpha_funnel_parser():
+def test_legacy_alpha_funnel_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
+        "legacy",
         "alpha-funnel",
         "--asset", "BTC",
     ])
 
-    assert args.command == "alpha-funnel"
+    assert args.command == "legacy"
+    assert args.legacy_command == "alpha-funnel"
     assert args.asset == "BTC"
 
 
-def test_enqueue_discovery_pool_parser():
+def test_legacy_enqueue_discovery_pool_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
+        "legacy",
         "enqueue-discovery-pool",
         "--asset", "BTC",
         "--limit", "12",
         "--dry-run",
     ])
 
-    assert args.command == "enqueue-discovery-pool"
+    assert args.command == "legacy"
+    assert args.legacy_command == "enqueue-discovery-pool"
     assert args.asset == "BTC"
     assert args.limit == 12
     assert args.dry_run is True
 
 
-def test_prune_stale_candidates_parser():
+def test_legacy_prune_stale_candidates_parser():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
+        "legacy",
         "prune-stale-candidates",
         "--asset", "BTC",
         "--max-age-days", "14",
         "--dry-run",
     ])
 
-    assert args.command == "prune-stale-candidates"
+    assert args.command == "legacy"
+    assert args.legacy_command == "prune-stale-candidates"
     assert args.asset == "BTC"
     assert args.max_age_days == 14
     assert args.dry_run is True

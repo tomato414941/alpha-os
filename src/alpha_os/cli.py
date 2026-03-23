@@ -350,6 +350,48 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     afl.add_argument("--asset", type=str, default="BTC")
 
+    legacy = sub.add_parser(
+        "legacy",
+        help="Run archived registry and migration commands",
+    )
+    legacy_sub = legacy.add_subparsers(dest="legacy_command", required=True)
+
+    lgen = legacy_sub.add_parser(
+        "unified-generator",
+        help="Run the legacy unified generator flow",
+    )
+    lgen.add_argument("--config", type=str, default=None)
+
+    lpg = legacy_sub.add_parser(
+        "enqueue-discovery-pool",
+        help="Enqueue top discovery-pool entries into the admission queue",
+    )
+    lpg.add_argument("--asset", type=str, default="BTC")
+    lpg.add_argument("--config", type=str, default=None)
+    lpg.add_argument("--limit", type=int, default=None)
+    lpg.add_argument("--dry-run", action="store_true")
+
+    ladm = legacy_sub.add_parser(
+        "admission-daemon",
+        help="Run the legacy candidate admission daemon",
+    )
+    ladm.add_argument("--asset", type=str, default="BTC")
+    ladm.add_argument("--config", type=str, default=None)
+
+    lpsc = legacy_sub.add_parser(
+        "prune-stale-candidates",
+        help="Reject stale pending candidates outside the active discovery/manual sources",
+    )
+    lpsc.add_argument("--asset", type=str, default="BTC")
+    lpsc.add_argument("--max-age-days", type=int, default=7)
+    lpsc.add_argument("--dry-run", action="store_true")
+
+    lafl = legacy_sub.add_parser(
+        "alpha-funnel",
+        help="Show discovery-pool to deployed-alpha funnel counts",
+    )
+    lafl.add_argument("--asset", type=str, default="BTC")
+
     research = sub.add_parser(
         "research",
         help="Run bounded research and replay commands",
@@ -1306,9 +1348,7 @@ def _needs_trade_evolution(trader) -> bool:
     registry = trader.registry
 
     if hasattr(registry, "list_by_state"):
-        from alpha_os.alpha.managed_alphas import AlphaState
-
-        active = registry.list_by_state(AlphaState.ACTIVE)
+        active = registry.list_by_state("active")
         return len(active) == 0
     if hasattr(registry, "list_active"):
         return len(registry.list_active()) == 0
@@ -1502,7 +1542,7 @@ def _build_trade_cycle_runner(
         # Compute cross-asset neutralization from previous cycle
         signal_overrides: dict[str, float | None] = {a: None for a in asset_list}
         if len(asset_list) > 1 and len(prev_raw_signals) == len(asset_list):
-            from alpha_os.alpha.combiner import cross_asset_neutralize
+            from alpha_os.hypotheses.combiner import cross_asset_neutralize
             neutralized = cross_asset_neutralize(prev_raw_signals)
             signal_overrides = {a: neutralized.get(a) for a in asset_list}
             logger.info(
@@ -2654,6 +2694,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     from alpha_os.data.signal_client import build_signal_client_from_config
     from alpha_os.data.universe import init_universe, load_daily_signals
     from alpha_os.data.eval_universe import load_cached_eval_universe
+    from alpha_os.hypotheses.identity import expression_feature_names
 
     cfg = Config.load(args.config)
     client = build_signal_client_from_config(cfg.api)
@@ -2667,7 +2708,6 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
         return
 
     # Load data: eval universe prices + features referenced by expression
-    from alpha_os.alpha.expression_identity import expression_feature_names
     expr_features = expression_feature_names(args.expr)
     db_path = SIGNAL_CACHE_DB
     store = DataStore(db_path, client)
@@ -2802,6 +2842,17 @@ def main(argv: list[str] | None = None) -> None:
         cmd_sync_signal_cache(args)
     elif args.command == "alpha-funnel":
         cmd_alpha_funnel(args)
+    elif args.command == "legacy":
+        if args.legacy_command == "unified-generator":
+            cmd_unified_generator(args)
+        elif args.legacy_command == "enqueue-discovery-pool":
+            cmd_enqueue_discovery_pool(args)
+        elif args.legacy_command == "admission-daemon":
+            cmd_admission_daemon(args)
+        elif args.legacy_command == "prune-stale-candidates":
+            cmd_prune_stale_candidates(args)
+        elif args.legacy_command == "alpha-funnel":
+            cmd_alpha_funnel(args)
     elif args.command == "research":
         if args.research_command == "generate":
             cmd_generate(args)
