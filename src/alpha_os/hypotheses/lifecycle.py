@@ -10,6 +10,7 @@ from .store import HypothesisStatus, HypothesisStore
 DEFAULT_LOOKBACK = 20
 DEFAULT_MIN_OBSERVATIONS = 5
 DEFAULT_BOOTSTRAP_WEIGHT = 0.25
+DEFAULT_BATCH_RESEARCH_WEIGHT = 0.10
 DEFAULT_QUALITY_WEIGHT = 1.0
 DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT = 0.25
 DEFAULT_STAKE_UPDATE_RATE = 0.10
@@ -141,8 +142,15 @@ def bootstrap_trust(
     *,
     metric: str = "sharpe",
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    research_quality_source: str = "bootstrap_seed",
 ) -> float:
-    weight = max(float(bootstrap_weight), 0.0)
+    if research_quality_source == "batch_research_score":
+        weight = max(float(batch_research_weight), 0.0)
+    elif research_quality_source in {"bootstrap_seed", ""}:
+        weight = max(float(bootstrap_weight), 0.0)
+    else:
+        weight = 0.0
     return weight * normalized_research_quality(research_quality, metric=metric)
 
 
@@ -152,8 +160,10 @@ def target_stake(
     marginal_contribution: float,
     *,
     research_quality: float = 0.0,
+    research_quality_source: str = "bootstrap_seed",
     metric: str = "sharpe",
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
     quality_weight: float = DEFAULT_QUALITY_WEIGHT,
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     floor: float = 0.0,
@@ -169,6 +179,8 @@ def target_stake(
         research_quality,
         metric=metric,
         bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
     )
     trust = (1.0 - confidence) * initial_trust + confidence * live_trust
     return max(trust, floor)
@@ -179,6 +191,8 @@ def is_capital_eligible(
     research_quality: float,
     metric: str,
     bootstrap_weight: float,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    research_quality_source: str = "bootstrap_seed",
     has_min_observations: bool,
     live_quality: float = 0.0,
     marginal_contribution: float = 0.0,
@@ -194,6 +208,8 @@ def is_capital_eligible(
         research_quality,
         metric=metric,
         bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
     )
     research_retained = bootstrap_value > floor and (
         not has_min_observations
@@ -212,6 +228,8 @@ def capital_eligibility_breakdown(
     research_quality: float,
     metric: str,
     bootstrap_weight: float,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    research_quality_source: str = "bootstrap_seed",
     has_min_observations: bool,
     live_quality: float,
     marginal_contribution: float,
@@ -227,6 +245,8 @@ def capital_eligibility_breakdown(
         research_quality,
         metric=metric,
         bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
     )
     research_backed = bootstrap_value > floor
     research_retained = research_backed and (
@@ -318,6 +338,7 @@ def update_stakes_from_history(
     quality_weight: float = DEFAULT_QUALITY_WEIGHT,
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
     stake_update_rate: float = DEFAULT_STAKE_UPDATE_RATE,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
@@ -331,6 +352,11 @@ def update_stakes_from_history(
 ) -> dict[str, float]:
     updates: dict[str, float] = {}
     for record in store.list_all():
+        research_quality_source = str(
+            record.metadata.get("prior_quality_source")
+            or record.metadata.get("research_quality_source")
+            or ""
+        )
         history = store.contribution_history(record.hypothesis_id, limit=lookback)
         recent = history[:lookback]
         marginal = sum(recent) / len(recent) if recent else 0.0
@@ -355,16 +381,20 @@ def update_stakes_from_history(
             estimate.confidence,
             marginal,
             research_quality=record.oos_fitness(metric),
+            research_quality_source=research_quality_source,
             metric=metric,
             bootstrap_weight=bootstrap_weight,
+            batch_research_weight=batch_research_weight,
             quality_weight=quality_weight,
             marginal_contribution_weight=marginal_contribution_weight,
             floor=floor,
         )
         if not is_capital_eligible(
             research_quality=record.oos_fitness(metric),
+            research_quality_source=research_quality_source,
             metric=metric,
             bootstrap_weight=bootstrap_weight,
+            batch_research_weight=batch_research_weight,
             has_min_observations=estimate.has_min_observations,
             live_quality=estimate.live_quality,
             marginal_contribution=marginal,
@@ -378,8 +408,10 @@ def update_stakes_from_history(
         research_backed, research_retained, live_proven, capital_reason = (
             capital_eligibility_breakdown(
                 research_quality=record.oos_fitness(metric),
+                research_quality_source=research_quality_source,
                 metric=metric,
                 bootstrap_weight=bootstrap_weight,
+                batch_research_weight=batch_research_weight,
                 has_min_observations=estimate.has_min_observations,
                 live_quality=estimate.live_quality,
                 marginal_contribution=marginal,
@@ -410,7 +442,10 @@ def update_stakes_from_history(
                     record.oos_fitness(metric),
                     metric=metric,
                     bootstrap_weight=bootstrap_weight,
+                    batch_research_weight=batch_research_weight,
+                    research_quality_source=research_quality_source,
                 ),
+                "lifecycle_research_quality_source": research_quality_source,
                 "lifecycle_n_observations": estimate.n_observations,
                 "lifecycle_research_backed": research_backed,
                 "lifecycle_research_retained": research_retained,
@@ -448,6 +483,7 @@ def build_allocation_rebalance_plan(
     quality_weight: float = DEFAULT_QUALITY_WEIGHT,
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
@@ -459,6 +495,11 @@ def build_allocation_rebalance_plan(
 ) -> list[AllocationRebalanceEntry]:
     plan: list[AllocationRebalanceEntry] = []
     for record in store.list_observation_active():
+        research_quality_source = str(
+            record.metadata.get("prior_quality_source")
+            or record.metadata.get("research_quality_source")
+            or ""
+        )
         history = store.contribution_history(record.hypothesis_id, limit=lookback)
         recent = history[:lookback]
         marginal = sum(recent) / len(recent) if recent else 0.0
@@ -483,14 +524,18 @@ def build_allocation_rebalance_plan(
             research_quality,
             metric=metric,
             bootstrap_weight=bootstrap_weight,
+            batch_research_weight=batch_research_weight,
+            research_quality_source=research_quality_source,
         )
         target = target_stake(
             estimate.blended_quality,
             estimate.confidence,
             marginal,
             research_quality=research_quality,
+            research_quality_source=research_quality_source,
             metric=metric,
             bootstrap_weight=bootstrap_weight,
+            batch_research_weight=batch_research_weight,
             quality_weight=quality_weight,
             marginal_contribution_weight=marginal_contribution_weight,
             floor=floor,
@@ -498,8 +543,10 @@ def build_allocation_rebalance_plan(
         research_backed, research_retained, live_proven, capital_reason = (
             capital_eligibility_breakdown(
                 research_quality=research_quality,
+                research_quality_source=research_quality_source,
                 metric=metric,
                 bootstrap_weight=bootstrap_weight,
+                batch_research_weight=batch_research_weight,
                 has_min_observations=estimate.has_min_observations,
                 live_quality=estimate.live_quality,
                 marginal_contribution=marginal,

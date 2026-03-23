@@ -82,6 +82,13 @@ def test_normalized_research_quality_is_bounded():
 def test_bootstrap_trust_scales_research_quality_conservatively():
     assert bootstrap_trust(2.0, metric="sharpe", bootstrap_weight=0.25) == pytest.approx(0.25)
     assert bootstrap_trust(0.10, metric="log_growth", bootstrap_weight=0.25) == pytest.approx(0.125)
+    assert bootstrap_trust(
+        2.0,
+        metric="sharpe",
+        bootstrap_weight=0.25,
+        batch_research_weight=0.10,
+        research_quality_source="batch_research_score",
+    ) == pytest.approx(0.10)
 
 
 def test_target_stake_applies_confidence_scaling():
@@ -130,6 +137,14 @@ def test_is_capital_eligible_requires_bootstrap_or_live_proven_thresholds():
         bootstrap_weight=0.25,
         has_min_observations=False,
     ) is False
+    assert is_capital_eligible(
+        research_quality=0.8,
+        research_quality_source="batch_research_score",
+        metric="sharpe",
+        bootstrap_weight=0.25,
+        batch_research_weight=0.10,
+        has_min_observations=False,
+    ) is True
 
 
 def test_updated_stake_smooths_toward_target():
