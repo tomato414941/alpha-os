@@ -308,7 +308,7 @@ class Config:
 
     def to_monitor_config(self):
         """Build the monitor config used by live forward-quality checks."""
-        from alpha_os.alpha.monitor import MonitorConfig
+        from alpha_os.hypotheses.monitor import MonitorConfig
 
         return MonitorConfig(
             rolling_window=self.forward.degradation_window,
@@ -330,7 +330,7 @@ class Config:
 
     def estimate_alpha_quality(self, prior_quality: float, returns):
         """Blend historical and live quality using the current runtime config."""
-        from alpha_os.alpha.quality import blend_quality
+        from alpha_os.hypotheses.quality import blend_quality
 
         return blend_quality(
             prior_quality,

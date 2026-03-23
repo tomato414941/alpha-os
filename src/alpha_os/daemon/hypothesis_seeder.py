@@ -8,13 +8,13 @@ import signal
 import time
 from dataclasses import dataclass
 
-from alpha_os.alpha.expression_identity import expression_semantic_key
 from alpha_os.config import Config, DATA_DIR
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import build_feature_list, stratified_feature_subset
 from alpha_os.dsl import temporal_expression_issues, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
+from alpha_os.hypotheses.identity import expression_semantic_key
 from alpha_os.hypotheses.store import (
     HypothesisKind,
     HypothesisRecord,

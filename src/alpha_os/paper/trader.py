@@ -13,15 +13,12 @@ from datetime import date, datetime, timezone
 
 import numpy as np
 
-from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.monitor import AlphaMonitor, RegimeDetector
-from ..alpha.quality import QualityEstimate
-from ..alpha.runtime_policy import rank_trading_records
 from ..config import Config, HYPOTHESES_DB, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse, collect_feature_names, temporal_expression_issues
+from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..execution.binance import BinanceExecutor
 from ..execution.executor import Executor, Fill
 from ..execution.planning import (
@@ -34,15 +31,19 @@ from ..execution.constraints import ExecutableOrder
 from ..execution.paper import PaperExecutor
 from ..forward.tracker import ForwardTracker
 from ..governance.audit_log import AuditLog
-from ..hypotheses.producer import _quick_healthcheck
-from ..alpha.combiner import (
+from ..hypotheses.combiner import (
     CombinerConfig,
+    compute_stake_weights,
     compute_tc_scores,
     compute_tc_weights,
     select_low_correlation,
     signal_consensus,
     weighted_combine_scalar,
 )
+from ..hypotheses.monitor import AlphaMonitor, RegimeDetector
+from ..hypotheses.producer import _quick_healthcheck
+from ..hypotheses.quality import QualityEstimate
+from ..hypotheses.runtime_policy import rank_trading_records
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from ..runtime_profile import RuntimeProfile, build_runtime_profile
@@ -315,7 +316,6 @@ class Trader:
                 if s > 0 and aid in alpha_signals
             }
             if positive_stakes:
-                from alpha_os.alpha.combiner import compute_stake_weights
                 weights_dict = compute_stake_weights(positive_stakes)
             else:
                 weights_dict = compute_tc_weights(tc_scores)

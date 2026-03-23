@@ -19,7 +19,6 @@ from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
 from alpha_os.config import Config, DATA_DIR, HYPOTHESES_DB, SIGNAL_CACHE_DB, SIGNAL_CACHE_L2_DB, asset_data_dir
 from alpha_os.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
-from alpha_os.alpha.evaluator import FAILED_FITNESS, sanitize_signal
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
@@ -650,6 +649,8 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
 
 def cmd_backtest(args: argparse.Namespace) -> None:
+    from alpha_os.dsl.evaluator import FAILED_FITNESS
+
     cfg = _load_config(args.config)
     features = _make_features(args.asset)
     from alpha_os.dsl.generator import AlphaGenerator
@@ -735,6 +736,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 
 
 def cmd_evolve(args: argparse.Namespace) -> None:
+    from alpha_os.dsl.evaluator import FAILED_FITNESS, sanitize_signal
     from alpha_os.evolution.discovery_pool import DiscoveryPool
     from alpha_os.evolution.behavior import compute_behavior
     from alpha_os.evolution.gp import GPConfig, GPEvolver
