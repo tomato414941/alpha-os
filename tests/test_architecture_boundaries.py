@@ -9,6 +9,14 @@ SRC_ROOT = PROJECT_ROOT / "src" / "alpha_os"
 ALPHA_PACKAGE = SRC_ROOT / "alpha"
 SCRIPTS_ROOT = PROJECT_ROOT / "scripts"
 TESTS_ROOT = PROJECT_ROOT / "tests"
+ALLOWED_ALPHA_MODULES = {
+    "__init__.py",
+    "admission_queue.py",
+    "admission_replay.py",
+    "deployed_alphas.py",
+    "funnel.py",
+    "managed_alphas.py",
+}
 
 
 def _forbidden_alpha_imports(path: Path) -> list[str]:
@@ -56,3 +64,9 @@ def test_scripts_and_tests_do_not_import_alpha_compatibility_package():
                 violations.append(f"{path.relative_to(PROJECT_ROOT)}: {violation}")
 
     assert violations == []
+
+
+def test_alpha_compatibility_package_contains_only_legacy_wrappers():
+    actual_modules = {path.name for path in ALPHA_PACKAGE.glob("*.py")}
+
+    assert actual_modules == ALLOWED_ALPHA_MODULES
