@@ -275,6 +275,15 @@ class Trader:
             returns,
         )
 
+    def _quality_returns(self, alpha_id: str) -> list[float]:
+        getter = getattr(self.forward_tracker, "get_realizable_returns", None)
+        if getter is not None:
+            return getter(
+                alpha_id,
+                supports_short=self.executor.supports_short,
+            )
+        return self.forward_tracker.get_returns(alpha_id)
+
     def _baseline_portfolio_value(self, snapshot=None) -> float:
         """Use the persisted snapshot value as the paper baseline when available."""
         if isinstance(self.executor, PaperExecutor) and snapshot is not None:
@@ -619,7 +628,7 @@ class Trader:
             universe_records,
             lambda record: self._estimate_quality(
                 record,
-                self.forward_tracker.get_returns(record.alpha_id),
+                self._quality_returns(record.alpha_id),
             ),
             max_trading=max_trading,
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
@@ -791,7 +800,7 @@ class Trader:
                 )
 
                 # Monitor and quality estimate
-                all_returns = self.forward_tracker.get_returns(record.alpha_id)
+                all_returns = self._quality_returns(record.alpha_id)
                 recent_returns = all_returns[-self.config.forward.degradation_window:]
                 self.monitor.clear(record.alpha_id)
                 self.monitor.record_batch(record.alpha_id, recent_returns)

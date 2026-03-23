@@ -484,6 +484,23 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
     store.close()
 
 
+def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(tmp_path):
+    tracker = ForwardTracker(tmp_path / "forward_returns.db")
+    tracker.record("h1", "2026-03-21", 0.8, 0.016)
+    tracker.record("h1", "2026-03-22", -0.7, 0.021)
+    tracker.record("h1", "2026-03-23", 0.0, 0.0)
+
+    assert tracker.get_returns("h1") == pytest.approx([0.016, 0.021, 0.0])
+    assert tracker.get_realizable_returns("h1", supports_short=True) == pytest.approx(
+        [0.016, 0.021, 0.0]
+    )
+    assert tracker.get_realizable_returns("h1", supports_short=False) == pytest.approx(
+        [0.016, 0.0, 0.0]
+    )
+
+    tracker.close()
+
+
 def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
     from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
 
@@ -552,6 +569,70 @@ def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
         asset="BTC",
         corr_max=0.7,
         floor=0.0,
+    )
+
+    kept = next(entry for entry in capped if entry.hypothesis_id == "h1")
+    dropped = next(entry for entry in capped if entry.hypothesis_id == "h2")
+    assert kept.proposed_stake == pytest.approx(0.4)
+    assert dropped.proposed_stake == pytest.approx(0.0)
+    assert dropped.redundancy_capped_by == "h1"
+    assert dropped.redundancy_correlation > 0.7
+
+
+def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
+    from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
+
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="h1",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            capital_eligible=True,
+            capital_reason="live_proven",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.4,
+            live_quality=0.4,
+            raw_live_quality=0.4,
+            confidence=1.0,
+            marginal_contribution=0.02,
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="h2",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            capital_eligible=True,
+            capital_reason="live_proven",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.2,
+            live_quality=0.2,
+            raw_live_quality=0.2,
+            confidence=1.0,
+            marginal_contribution=0.01,
+        ),
+    ]
+
+    returns = {
+        "h1": [0.01, 0.02, 0.03, 0.02, 0.01, 0.03, 0.02, 0.01, 0.02, 0.03],
+        "h2": [0.01, 0.02, 0.03, 0.02, 0.01, 0.03, 0.02, 0.01, 0.02, 0.03],
+    }
+    capped = apply_live_proven_return_redundancy_cap(
+        plan,
+        live_returns_for=lambda hypothesis_id: returns[hypothesis_id],
+        corr_max=0.7,
+        floor=0.0,
+        min_observations=5,
     )
 
     kept = next(entry for entry in capped if entry.hypothesis_id == "h1")

@@ -194,6 +194,38 @@ def apply_capital_redundancy_cap(
     )
 
 
+def apply_live_proven_return_redundancy_cap(
+    plan: list[AllocationRebalanceEntry],
+    *,
+    live_returns_for,
+    corr_max: float,
+    floor: float = 0.0,
+    min_observations: int = 10,
+) -> list[AllocationRebalanceEntry]:
+    series_by_id: dict[str, np.ndarray] = {}
+    for entry in plan:
+        if not entry.live_proven or entry.research_backed or entry.proposed_stake <= floor:
+            continue
+        returns = np.asarray(live_returns_for(entry.hypothesis_id), dtype=np.float64)
+        returns = np.nan_to_num(returns, nan=0.0, posinf=0.0, neginf=0.0)
+        if returns.size < min_observations or float(np.nanstd(returns)) <= 1e-12:
+            continue
+        series_by_id[entry.hypothesis_id] = returns
+
+    return _apply_series_redundancy_cap(
+        plan,
+        series_by_id=series_by_id,
+        corr_max=corr_max,
+        floor=floor,
+        rank_key=lambda entry: (
+            entry.proposed_stake,
+            entry.live_quality,
+            entry.blended_quality,
+            entry.hypothesis_id,
+        ),
+    )
+
+
 def _apply_redundancy_cap(
     plan: list[AllocationRebalanceEntry],
     records: list[HypothesisRecord],
@@ -221,6 +253,28 @@ def _apply_redundancy_cap(
             continue
         series_by_id[entry.hypothesis_id] = arr
 
+    return _apply_series_redundancy_cap(
+        plan,
+        series_by_id=series_by_id,
+        corr_max=corr_max,
+        floor=floor,
+        rank_key=lambda entry: (
+            entry.proposed_stake,
+            entry.bootstrap_trust_value,
+            entry.blended_quality,
+            entry.hypothesis_id,
+        ),
+    )
+
+
+def _apply_series_redundancy_cap(
+    plan: list[AllocationRebalanceEntry],
+    *,
+    series_by_id: dict[str, np.ndarray],
+    corr_max: float,
+    floor: float,
+    rank_key,
+) -> list[AllocationRebalanceEntry]:
     if len(series_by_id) <= 1:
         return plan
 
@@ -228,12 +282,7 @@ def _apply_redundancy_cap(
     blocked: dict[str, tuple[str, float]] = {}
     ranked = sorted(
         (entry for entry in plan if entry.hypothesis_id in series_by_id),
-        key=lambda entry: (
-            entry.proposed_stake,
-            entry.bootstrap_trust_value,
-            entry.blended_quality,
-            entry.hypothesis_id,
-        ),
+        key=rank_key,
         reverse=True,
     )
 

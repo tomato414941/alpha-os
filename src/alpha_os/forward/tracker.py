@@ -1,6 +1,7 @@
 """Forward tracker — SQLite-backed daily return persistence for forward-tested alphas."""
 from __future__ import annotations
 
+import math
 import sqlite3
 import time
 from dataclasses import dataclass
@@ -113,6 +114,29 @@ class ForwardTracker:
             (alpha_id,),
         ).fetchall()
         return [row["daily_return"] for row in rows]
+
+    def get_realizable_returns(
+        self,
+        alpha_id: str,
+        *,
+        supports_short: bool,
+    ) -> list[float]:
+        if supports_short:
+            return self.get_returns(alpha_id)
+        rows = self._conn.execute(
+            "SELECT signal_value, daily_return FROM forward_returns "
+            "WHERE alpha_id = ? ORDER BY date",
+            (alpha_id,),
+        ).fetchall()
+        realized: list[float] = []
+        for row in rows:
+            signal_value = float(row["signal_value"])
+            daily_return = float(row["daily_return"])
+            if not math.isfinite(signal_value) or not math.isfinite(daily_return):
+                realized.append(0.0)
+                continue
+            realized.append(daily_return if signal_value > 0.0 else 0.0)
+        return realized
 
     def get_records(self, alpha_id: str) -> list[ForwardRecord]:
         rows = self._conn.execute(

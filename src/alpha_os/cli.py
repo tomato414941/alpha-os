@@ -1375,6 +1375,19 @@ def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
     readiness_checker.print_status()
 
 
+def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
+    if forward_tracker is None:
+        return None
+    getter = getattr(forward_tracker, "get_realizable_returns", None)
+    if getter is None:
+        return getattr(forward_tracker, "get_returns", None)
+
+    def live_returns_for(hypothesis_id: str):
+        return getter(hypothesis_id, supports_short=supports_short)
+
+    return live_returns_for
+
+
 def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, float]:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses import (
@@ -1384,6 +1397,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     )
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
+        apply_live_proven_return_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -1402,6 +1416,10 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         realized_return=getattr(result, "daily_return", 0.0),
     )
     forward_tracker = getattr(trader, "forward_tracker", None)
+    live_returns_for = _build_live_returns_getter(
+        forward_tracker,
+        supports_short=cfg.trading.supports_short,
+    )
     plan = build_allocation_rebalance_plan(
         trader.registry,
         metric=cfg.portfolio.objective,
@@ -1425,7 +1443,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         quality_weight=cfg.lifecycle.quality_weight,
         marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
         floor=cfg.lifecycle.target_stake_floor,
-        live_returns_for=getattr(forward_tracker, "get_returns", None),
+        live_returns_for=live_returns_for,
     )
     if hasattr(trader.registry, "list_observation_active") and hasattr(trader, "asset"):
         data_store = DataStore(SIGNAL_CACHE_DB)
@@ -1447,6 +1465,14 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
             corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
         )
+        if forward_tracker is not None:
+            plan = apply_live_proven_return_redundancy_cap(
+                plan,
+                live_returns_for=live_returns_for,
+                corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+                floor=cfg.lifecycle.target_stake_floor,
+                min_observations=cfg.live_quality.min_observations,
+            )
     updates = apply_allocation_rebalance_plan(trader.registry, plan)
     if updates:
         print(
@@ -1801,6 +1827,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
+        apply_live_proven_return_redundancy_cap,
         load_breadth_matrix,
     )
     from alpha_os.hypotheses import (
@@ -1815,6 +1842,10 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     forward_tracker = ForwardTracker(adir / "forward_returns.db")
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
+        live_returns_for = _build_live_returns_getter(
+            forward_tracker,
+            supports_short=cfg.trading.supports_short,
+        )
         plan = build_allocation_rebalance_plan(
             store,
             metric=cfg.portfolio.objective,
@@ -1838,7 +1869,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             quality_weight=cfg.lifecycle.quality_weight,
             marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
             floor=cfg.lifecycle.target_stake_floor,
-            live_returns_for=forward_tracker.get_returns,
+            live_returns_for=live_returns_for,
         )
         records = store.list_observation_active()
         breadth_data = load_breadth_matrix(
@@ -1854,6 +1885,13 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             asset=args.asset,
             corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
+        )
+        plan = apply_live_proven_return_redundancy_cap(
+            plan,
+            live_returns_for=live_returns_for,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+            min_observations=cfg.live_quality.min_observations,
         )
         zeroed = sum(
             1 for entry in plan
@@ -1972,6 +2010,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     )
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
+        apply_live_proven_return_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -1981,6 +2020,10 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     data_store = DataStore(SIGNAL_CACHE_DB)
     forward_tracker = ForwardTracker(adir / "forward_returns.db")
     try:
+        live_returns_for = _build_live_returns_getter(
+            forward_tracker,
+            supports_short=cfg.trading.supports_short,
+        )
         summary = backfill_observation_returns(
             hypothesis_store=store,
             data_store=data_store,
@@ -2021,7 +2064,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             quality_weight=cfg.lifecycle.quality_weight,
             marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
             floor=cfg.lifecycle.target_stake_floor,
-            live_returns_for=forward_tracker.get_returns,
+            live_returns_for=live_returns_for,
         )
         records = store.list_observation_active()
         breadth_data = load_breadth_matrix(
@@ -2037,6 +2080,13 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             asset=args.asset,
             corr_max=cfg.lifecycle.capital_redundancy_corr_max,
             floor=cfg.lifecycle.target_stake_floor,
+        )
+        plan = apply_live_proven_return_redundancy_cap(
+            plan,
+            live_returns_for=live_returns_for,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+            min_observations=cfg.live_quality.min_observations,
         )
         updates = apply_allocation_rebalance_plan(store, plan)
         print(
