@@ -30,6 +30,11 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "current: tests for hypotheses-first runtime and maintained paths",
+    "research: tests for offline experiments, replay, and lab helpers",
+    "legacy: tests for registry-era substrate and compatibility paths",
+]
 
 [tool.ruff]
 target-version = "py312"

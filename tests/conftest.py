@@ -1,6 +1,8 @@
 """Shared fixtures for alpha-os tests."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -9,6 +11,38 @@ from alpha_os.data.store import DataStore
 
 
 FEATURES = ["f1", "f2", "f3"]
+
+LEGACY_TEST_MODULES = {
+    "test_admission_replay.py",
+    "test_alpha.py",
+    "test_alpha_generator.py",
+    "test_asset_isolation.py",
+    "test_funnel.py",
+    "test_pipeline.py",
+}
+
+RESEARCH_TEST_MODULES = {
+    "test_backtest.py",
+    "test_diversity.py",
+    "test_event_driven.py",
+    "test_evolution.py",
+    "test_handcrafted.py",
+    "test_replay_experiment.py",
+    "test_replay_matrix.py",
+    "test_simulator.py",
+    "test_tactical.py",
+}
+
+
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        filename = Path(str(item.fspath)).name
+        if filename in LEGACY_TEST_MODULES:
+            item.add_marker(pytest.mark.legacy)
+        elif filename in RESEARCH_TEST_MODULES:
+            item.add_marker(pytest.mark.research)
+        else:
+            item.add_marker(pytest.mark.current)
 
 
 @pytest.fixture
