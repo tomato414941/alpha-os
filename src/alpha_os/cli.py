@@ -951,6 +951,8 @@ def _print_paper_result(result) -> None:
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
     if result.n_skipped_deadband > 0:
         print(f"  Skips:      deadband={result.n_skipped_deadband}")
+    if getattr(result, "n_skipped_no_delta", 0) > 0:
+        print(f"  Skips:      no_delta={result.n_skipped_no_delta}")
     if result.n_skipped_min_notional > 0:
         print(f"  Skips:      min_notional={result.n_skipped_min_notional}")
     if result.n_skipped_rounded_to_zero > 0:
@@ -1161,6 +1163,8 @@ def _print_testnet_report(report) -> None:
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
     if report.n_skipped_deadband > 0:
         print(f"  Skips:          deadband={report.n_skipped_deadband}")
+    if getattr(report, "n_skipped_no_delta", 0) > 0:
+        print(f"  Skips:          no_delta={report.n_skipped_no_delta}")
     if report.n_skipped_min_notional > 0:
         print(f"  Skips:          min_notional={report.n_skipped_min_notional}")
     if report.n_skipped_rounded_to_zero > 0:
@@ -1507,6 +1511,8 @@ def _trade_once_status(result) -> str:
         return "order_failures"
     if getattr(result, "fills", None):
         return "traded"
+    if getattr(result, "n_skipped_no_delta", 0) > 0:
+        return "no_delta"
     if (
         getattr(result, "n_skipped_deadband", 0) > 0
         or getattr(result, "n_skipped_min_notional", 0) > 0
@@ -2350,6 +2356,8 @@ def _runtime_observation_findings(
         findings.append("latest cycle has runtime errors")
     if latest.get("n_fills", 0) == 0:
         findings.append("latest cycle had zero fills")
+    if latest.get("n_skipped_no_delta", 0) > 0 and latest.get("n_fills", 0) == 0:
+        findings.append("latest cycle had no_delta in long-only mode")
     if latest.get("n_skipped_deadband", 0) > 0 and latest.get("n_fills", 0) == 0:
         findings.append("deadband skipped the latest cycle")
     if latest.get("n_order_failures", 0) > 0:
@@ -2497,6 +2505,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     print(
         "  Skips:     "
         f"deadband={latest['n_skipped_deadband']} "
+        f"no_delta={latest.get('n_skipped_no_delta', 0)} "
         f"min_notional={latest['n_skipped_min_notional']} "
         f"rounded_to_zero={latest['n_skipped_rounded_to_zero']}"
     )
@@ -2688,13 +2697,16 @@ def cmd_alpha_funnel(args: argparse.Namespace) -> None:
 
 def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     """Evaluate expression with multi-horizon IC across eval universe."""
-    from alpha_os.alpha.cross_asset import evaluate_cross_asset_multi_horizon, DEFAULT_HORIZONS
     from alpha_os.config import Config
     from alpha_os.data.store import DataStore
     from alpha_os.data.signal_client import build_signal_client_from_config
     from alpha_os.data.universe import init_universe, load_daily_signals
     from alpha_os.data.eval_universe import load_cached_eval_universe
     from alpha_os.hypotheses.identity import expression_feature_names
+    from alpha_os.research.cross_asset import (
+        DEFAULT_HORIZONS,
+        evaluate_cross_asset_multi_horizon,
+    )
 
     cfg = Config.load(args.config)
     client = build_signal_client_from_config(cfg.api)

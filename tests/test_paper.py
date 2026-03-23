@@ -5,6 +5,7 @@ import sqlite3
 
 import pandas as pd
 import pytest
+from unittest.mock import MagicMock
 
 from alpha_os.execution.executor import Fill
 from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
@@ -364,6 +365,34 @@ class TestPositionSizing:
 
 
 class TestTrader:
+    def test_execute_allocation_counts_no_delta_skip(self):
+        from alpha_os.execution.planning import TargetPosition
+        from alpha_os.paper.trader import AllocationPlan, Trader
+
+        trader = object.__new__(Trader)
+        trader.price_signal = "btc_ohlcv"
+        trader.rebalance_deadband_usd = 10.0
+        trader.executor = MagicMock()
+        trader.executor.set_price.return_value = None
+        trader.executor.get_position.return_value = 0.0
+
+        plan = AllocationPlan(
+            current_price=100000.0,
+            target_position=TargetPosition(
+                symbol="btc_ohlcv",
+                qty=0.0,
+                reference_price=100000.0,
+                dollar_target=0.0,
+            ),
+        )
+
+        outcome = Trader._execute_allocation(trader, plan)
+
+        assert outcome.fills == []
+        assert outcome.order_failures == 0
+        assert outcome.skipped_no_delta == 1
+        assert outcome.skipped_deadband == 0
+
     def test_prediction_history_array_pads_to_matrix_length(self):
         from alpha_os.paper.trader import Trader
 

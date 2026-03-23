@@ -35,6 +35,7 @@ class _MockCycleResult:
     n_selected_alphas: int = 5
     n_signals_evaluated: int = 5
     n_skipped_deadband: int = 0
+    n_skipped_no_delta: int = 0
     n_skipped_min_notional: int = 0
     n_skipped_rounded_to_zero: int = 0
 
@@ -287,6 +288,7 @@ class TestSkipMetrics:
         report = v.validate_cycle(
             _MockCycleResult(
                 n_skipped_deadband=1,
+                n_skipped_no_delta=2,
                 n_skipped_min_notional=2,
                 n_skipped_rounded_to_zero=3,
             ),
@@ -297,6 +299,7 @@ class TestSkipMetrics:
         )
 
         assert report.n_skipped_deadband == 1
+        assert report.n_skipped_no_delta == 2
         assert report.n_skipped_min_notional == 2
         assert report.n_skipped_rounded_to_zero == 3
 

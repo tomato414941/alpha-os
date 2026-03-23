@@ -78,6 +78,7 @@ class PaperCycleResult:
     profile_live_set_id: str = ""
     order_failures: int = 0
     n_skipped_deadband: int = 0
+    n_skipped_no_delta: int = 0
     n_skipped_min_notional: int = 0
     n_skipped_rounded_to_zero: int = 0
     strategic_signal: float | None = None
@@ -114,6 +115,7 @@ class ExecutionOutcome:
     fills: list[Fill]
     order_failures: int
     skipped_deadband: int = 0
+    skipped_no_delta: int = 0
     skipped_min_notional: int = 0
     skipped_rounded_to_zero: int = 0
 
@@ -429,6 +431,7 @@ class Trader:
                 fills=[],
                 order_failures=0,
                 skipped_deadband=1 if decision.skip_reason == "deadband" else 0,
+                skipped_no_delta=1 if decision.skip_reason == "no_delta" else 0,
             )
 
         constrained = self.executor.constrain_intent(intent)
@@ -969,6 +972,7 @@ class Trader:
             n_signals_evaluated=n_evaluated,
             order_failures=order_failures,
             n_skipped_deadband=execution.skipped_deadband,
+            n_skipped_no_delta=execution.skipped_no_delta,
             n_skipped_min_notional=execution.skipped_min_notional,
             n_skipped_rounded_to_zero=execution.skipped_rounded_to_zero,
             strategic_signal=prediction.strategic_signal,

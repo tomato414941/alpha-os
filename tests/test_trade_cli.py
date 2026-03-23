@@ -300,11 +300,29 @@ def test_trade_once_status_reports_traded():
         order_failures=0,
         fills=[object()],
         n_skipped_deadband=0,
+        n_skipped_no_delta=0,
         n_skipped_min_notional=0,
         n_skipped_rounded_to_zero=0,
     )
 
     assert _trade_once_status(result) == "traded"
+
+
+def test_trade_once_status_reports_no_delta():
+    from alpha_os.cli import _trade_once_status
+
+    result = SimpleNamespace(
+        n_live_hypotheses=5,
+        n_signals_evaluated=5,
+        order_failures=0,
+        fills=[],
+        n_skipped_deadband=0,
+        n_skipped_no_delta=1,
+        n_skipped_min_notional=0,
+        n_skipped_rounded_to_zero=0,
+    )
+
+    assert _trade_once_status(result) == "no_delta"
 
 
 def test_research_paper_replay_parser():
@@ -950,6 +968,7 @@ def test_print_paper_result_shows_skip_metrics(capsys):
         n_selected_alphas=30,
         n_signals_evaluated=30,
         n_skipped_deadband=1,
+        n_skipped_no_delta=2,
         n_skipped_min_notional=2,
         n_skipped_rounded_to_zero=3,
     )
@@ -958,6 +977,7 @@ def test_print_paper_result_shows_skip_metrics(capsys):
     output = capsys.readouterr().out
 
     assert "Skips:      deadband=1" in output
+    assert "Skips:      no_delta=2" in output
     assert "Skips:      min_notional=2" in output
     assert "Skips:      rounded_to_zero=3" in output
 
@@ -1194,6 +1214,7 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
         "n_live_hypotheses": 1,
         "n_selected_alphas": 1,
         "n_skipped_deadband": 1,
+        "n_skipped_no_delta": 2,
         "n_skipped_min_notional": 0,
         "n_skipped_rounded_to_zero": 0,
         "n_order_failures": 0,
@@ -1225,9 +1246,10 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
     assert "ProfileIDs: config=cfg123456789 live=live12345678" in output
     assert "CurrentIDs: config=" in output
     assert "Latest:    2026-03-09 [OK]" in output
-    assert "Skips:     deadband=1 min_notional=0 rounded_to_zero=0" in output
+    assert "Skips:     deadband=1 no_delta=2 min_notional=0 rounded_to_zero=0" in output
     assert "Observe:   watch" in output
     assert "- latest cycle had zero fills" in output
+    assert "- latest cycle had no_delta in long-only mode" in output
     assert "- deadband skipped the latest cycle" in output
     assert "- latest report was recorded under a different runtime profile" in output
     assert "- config fingerprint differs between current and latest" in output
@@ -1276,6 +1298,7 @@ def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, t
         "n_live_hypotheses": 1,
         "n_selected_alphas": 1,
         "n_skipped_deadband": 0,
+        "n_skipped_no_delta": 0,
         "n_skipped_min_notional": 0,
         "n_skipped_rounded_to_zero": 0,
         "n_order_failures": 0,
