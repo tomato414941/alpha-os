@@ -8,9 +8,9 @@ def test_bootstrap_hypotheses_have_expected_kind_counts():
     technical = [row for row in hypotheses if row.kind == HypothesisKind.TECHNICAL]
     ml = [row for row in hypotheses if row.kind == HypothesisKind.ML]
 
-    assert len(technical) == 10
+    assert len(technical) == 9
     assert len(ml) == 2
-    assert len(hypotheses) == 12
+    assert len(hypotheses) == 11
     assert all(row.status == HypothesisStatus.ACTIVE for row in hypotheses)
     assert all(row.stake > 0 for row in hypotheses)
 

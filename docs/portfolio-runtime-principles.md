@@ -1551,3 +1551,387 @@ That means:
 
 Only after that should the runtime use cost and crowding penalties in the
 selection score itself.
+
+## Research Quality Supply Gap
+
+The hypotheses-first runtime still has an asymmetric `research_quality` path.
+
+Current state:
+
+- bootstrap technical and ML hypotheses enter with explicit
+  `oos_sharpe` / `oos_log_growth`
+- random DSL hypotheses generally enter without explicit registration-time
+  research quality
+- this means the runtime still relies on:
+  - `research_backed` bootstrap seeds
+  - `live_proven` promotions
+  more than on a uniform research-quality pipeline
+
+This is functional, but not the desired end state.
+
+The desired end state is:
+
+- every hypothesis that is eligible for live observation should have one of:
+  - explicit `research_quality`
+  - explicit `unscored/exploratory` status
+- registration should make that distinction visible at insertion time
+- lifecycle should not need to guess whether a zero-quality hypothesis was:
+  - intentionally exploratory
+  - or simply missing research metadata
+
+In other words:
+
+- `research_quality` should be a first-class registration output
+- not an optional metadata path that only some seed families populate
+
+## Before Profitability
+
+The system should not treat short-term paper operation as proof of
+profitability. Before the runtime can plausibly claim it is beginning to
+produce real edge, the following work remains.
+
+### 1. Uniform Registration Semantics
+
+Needed:
+
+- a clean distinction between:
+  - `research_backed`
+  - `exploratory`
+  - `live_proven`
+- a consistent `research_quality` supply path for hypotheses-first registration
+
+Why it matters:
+
+- without this, the runtime still depends too heavily on bootstrap seeds and
+  late-stage promotion heuristics
+
+### 2. Venue-Actionable Quality
+
+Needed:
+
+- quality estimates that reflect what the venue can actually monetize
+- for example:
+  - long-only venues should not reward bearish hypotheses in the same way as
+    long-short venues
+
+Why it matters:
+
+- a hypothesis can be directionally correct but operationally unusable on a
+  given venue
+
+### 3. Observation Eligibility vs Capital Eligibility
+
+Needed:
+
+- a true separation between:
+  - observation-active hypotheses
+  - capital-backed hypotheses
+
+Current limitation:
+
+- `stake > 0` still acts as both:
+  - allocation trust
+  - capital eligibility switch
+
+Why it matters:
+
+- exploratory hypotheses should be observable without automatically receiving
+  capital
+
+### 4. Better Capital Set Diversity
+
+Needed:
+
+- cluster-aware control for both:
+  - bootstrap seeds
+  - promoted live hypotheses
+- breadth logic that reflects actual portfolio bets rather than raw count
+
+Why it matters:
+
+- many hypotheses can still collapse into a few effective bets
+
+### 5. Selection / Weighting / Venue Alignment
+
+Needed:
+
+- agreement between:
+  - who is capital-backed
+  - who is selected
+  - who produces an actionable long signal
+
+Current symptom:
+
+- the system can have a non-trivial capital-backed set and still end in
+  `no_delta` because the final combined view is bearish on a long-only venue
+
+### 6. Cost and Turnover Awareness
+
+Needed:
+
+- explicit lifecycle and allocation penalties for:
+  - turnover
+  - modeled slippage
+  - execution-unfriendly hypotheses
+
+Why it matters:
+
+- paper-correct hypotheses can still be negative after realistic trading costs
+
+### 7. More Than One Asset and Regime
+
+Needed:
+
+- validation beyond a single BTC paper loop
+- at minimum:
+  - more than one asset
+  - more than one market regime
+  - more than one observation window
+
+Why it matters:
+
+- profitability claims from one asset and one short regime are not credible
+
+### 8. Longer Forward Evidence
+
+Needed:
+
+- materially more live forward observations than the current short horizon
+
+Why it matters:
+
+- until the runtime accumulates more evidence, many choices remain dominated by
+  uncertainty rather than demonstrated edge
+
+## What To Do Next
+
+The practical order should be:
+
+1. continue bounded paper observation in the background
+2. avoid BTC-specific or provisional-hypothesis-specific tuning
+3. improve general structure only
+4. prioritize:
+   - uniform registration semantics
+   - venue-actionable quality
+   - observation/capital separation
+5. defer aggressive optimization until more forward evidence exists
+
+This keeps the project moving without pretending that current paper behavior is
+already a profitability proof.
+
+## Exploration Layer
+
+The runtime should not treat all generated hypotheses as the same kind of
+object.
+
+The exploration stack should eventually separate at least three streams:
+
+### 1. Bootstrap / Research-Backed Seeds
+
+These are hypotheses that enter with explicit registration-time quality.
+
+Examples:
+
+- technical bootstrap hypotheses
+- ML bootstrap hypotheses
+- future manually-reviewed or batch-scored seeds
+
+Role:
+
+- provide stable anchors
+- define a minimum research-backed capital set
+- act as a baseline against which exploratory promotion can be measured
+
+### 2. Exploratory Random Search
+
+These are hypotheses created primarily to explore the search space.
+
+Examples:
+
+- random DSL proposals
+- broad feature/operator sampling
+
+Role:
+
+- discover regions of the hypothesis space the system would not reach by hand
+- create observation-only candidates
+- provide raw material for later research scoring or live promotion
+
+Constraints:
+
+- they should not be assumed research-backed at registration time
+- they should normally enter as observation-active, not capital-backed
+
+### 3. Guided Search
+
+This is the layer that should eventually become the main search engine.
+
+Examples:
+
+- mutation of promising hypotheses
+- recombination of compatible hypotheses
+- neighborhood search around live-proven or research-backed ideas
+- cluster-aware search that prefers underrepresented bets
+
+Role:
+
+- improve on what already appears promising
+- spend search budget near productive regions instead of remaining purely random
+- raise the probability that new candidates are both distinct and useful
+
+## Exploration Principle
+
+Random search is acceptable as an entry mechanism, but it should not remain the
+center of the system.
+
+The desired balance is:
+
+- keep random exploration alive as a source of novelty
+- use research-backed seeds as stable anchors
+- move the main search budget toward guided exploration over time
+
+In other words:
+
+- `random` should remain a source of idea generation
+- not the final form of portfolio construction
+
+## What This Means Right Now
+
+In the current runtime, the correct near-term posture is:
+
+- keep random DSL hypotheses as explicit `exploratory/unscored` registrations
+- do not grant them capital by default
+- let them earn promotion through either:
+  - later research scoring
+  - meaningful live evidence
+
+The next design step after uniform registration semantics is therefore not
+"more random generation". It is:
+
+- define a separate research-scoring stage for exploratory hypotheses
+- design guided search so that the system does not rely on pure randomness as
+  its main engine
+
+## Research Scoring Stage
+
+The next hypotheses-first addition should be a separate `research scorer`
+stage.
+
+Its job is not to trade and not to allocate capital. Its job is to turn
+explicitly exploratory hypotheses into explicitly scored hypotheses when enough
+offline evidence exists.
+
+### Why It Should Be Separate
+
+The runtime should not force `hypothesis-seeder` to do research evaluation at
+insert time.
+
+Reasons:
+
+- generation and evaluation have different cost profiles
+- generation should remain cheap and broad
+- research scoring should be batchable and restartable
+- poor or partial offline scoring should not block observation registration
+
+Therefore the clean split is:
+
+1. `hypothesis-seeder`
+   - generates and registers exploratory hypotheses
+2. `research scorer`
+   - evaluates selected exploratory hypotheses offline
+   - writes `research_quality`
+3. `lifecycle`
+   - decides capital eligibility and allocation trust
+
+### Inputs
+
+The first version of the `research scorer` should consume:
+
+- hypotheses from `hypotheses.db`
+- only hypotheses that are:
+  - `status='active'`
+  - `source='random_dsl'` or another exploratory source
+  - `research_quality_status='unscored'`
+- cached data from `signal_cache.db`
+- the same portfolio objective already used by the runtime
+
+The first version should not depend on:
+
+- live paper results
+- current stake values
+- capital-backed status
+
+### Outputs
+
+The `research scorer` should write only metadata updates, not status changes by
+default.
+
+Minimum outputs:
+
+- `oos_sharpe`
+- `oos_log_growth`
+- `prior_quality_source='batch_research_score'`
+- `research_quality_status='scored'`
+- `research_scored_at`
+- optional diagnostics such as:
+  - `research_eval_window_days`
+  - `research_eval_min_days`
+  - `research_eval_result`
+
+It should not automatically:
+
+- set `stake`
+- set `capital_backed`
+- set `live_proven`
+- change `status`
+
+Those remain lifecycle responsibilities.
+
+### Selection of What To Score
+
+The first scorer should not evaluate every exploratory hypothesis blindly.
+
+A reasonable first filter is:
+
+- structurally valid
+- not archived
+- not already scored
+- not obviously redundant by semantic key
+
+Later versions may prioritize:
+
+- hypotheses with enough observation history
+- hypotheses that are semantically novel
+- hypotheses that sit near promising clusters
+
+### Failure Semantics
+
+Failure to score is not the same as failure to observe.
+
+The `research scorer` should distinguish:
+
+- `scored`
+- `failed_evaluation`
+- `insufficient_history`
+- `skipped_redundant`
+
+That distinction should be visible in metadata, so lifecycle does not confuse:
+
+- "not yet scored"
+- with
+- "scored and weak"
+
+### First Implementation Boundary
+
+The first implementation should be intentionally narrow.
+
+It should:
+
+- score exploratory DSL hypotheses only
+- compute the same OOS metrics already used elsewhere in the codebase
+- update hypothesis metadata in place
+- leave `status` and `stake` untouched
+
+The point of the first scorer is not to complete the full research pipeline.
+It is to create a clean, hypotheses-first source of `research_quality` outside
+of bootstrap seeds.

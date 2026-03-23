@@ -30,6 +30,13 @@ RETIRED_BOOTSTRAP_HYPOTHESES = {
     ),
 }
 
+RANDOM_DSL_METADATA = {
+    "generator": "hypothesis-seeder",
+    "research_quality_source": "exploratory_unscored",
+    "research_quality_status": "unscored",
+    "registration_stage": "observation_only",
+}
+
 
 @dataclass(frozen=True)
 class SeedingRoundStats:
@@ -156,7 +163,9 @@ class HypothesisSeederDaemon:
                 skipped += 1
                 continue
             seen_ids.add(hypothesis_id)
-            if self._store.get(hypothesis_id) is not None:
+            existing = self._store.get(hypothesis_id)
+            if existing is not None:
+                self._backfill_random_dsl_metadata(existing)
                 skipped += 1
                 continue
 
@@ -167,9 +176,12 @@ class HypothesisSeederDaemon:
                     name=expression[:120],
                     definition={"expression": expression},
                     status=HypothesisStatus.ACTIVE,
-                    stake=1.0,
+                    stake=0.0,
                     source="random_dsl",
-                    metadata={"generator": "hypothesis-seeder", "round": self._round},
+                    metadata={
+                        **RANDOM_DSL_METADATA,
+                        "round": self._round,
+                    },
                 )
             )
             inserted += 1
@@ -209,6 +221,19 @@ class HypothesisSeederDaemon:
         merged = dict(existing.metadata)
         changed = False
         for key, value in bootstrap_record.metadata.items():
+            if key in merged:
+                continue
+            merged[key] = value
+            changed = True
+        if changed:
+            self._store.update_metadata(existing.hypothesis_id, merged, merge=False)
+
+    def _backfill_random_dsl_metadata(self, existing: HypothesisRecord) -> None:
+        if existing.source != "random_dsl":
+            return
+        merged = dict(existing.metadata)
+        changed = False
+        for key, value in RANDOM_DSL_METADATA.items():
             if key in merged:
                 continue
             merged[key] = value

@@ -1,6 +1,7 @@
 from alpha_os.config import Config
 from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
 from alpha_os.dsl.expr import Constant, Feature, LagOp
+from alpha_os.dsl import to_string
 from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
 from alpha_os.hypotheses import HypothesisStore
 from alpha_os.hypotheses.store import HypothesisRecord
@@ -40,16 +41,22 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
 
     stats = daemon._run_round()
     rows = store.list_all()
+    dsl_rows = [row for row in rows if row.kind == "dsl"]
+    technical_rows = [row for row in rows if row.kind == "technical"]
+    ml_rows = [row for row in rows if row.kind == "ml"]
 
     assert stats.generated_dsl == 2
     assert stats.inserted_dsl == 2
     assert stats.inserted_bootstrap == 11
     assert len(rows) == 13
-    assert len([row for row in rows if row.kind == "dsl"]) == 2
-    assert len([row for row in rows if row.kind == "technical"]) == 9
-    assert len([row for row in rows if row.kind == "ml"]) == 2
+    assert len(dsl_rows) == 2
+    assert len(technical_rows) == 9
+    assert len(ml_rows) == 2
     assert all(row.status == "active" for row in rows)
-    assert all(row.stake > 0 for row in rows)
+    assert all(row.stake == 0 for row in dsl_rows)
+    assert all(row.metadata["research_quality_source"] == "exploratory_unscored" for row in dsl_rows)
+    assert all(row.metadata["research_quality_status"] == "unscored" for row in dsl_rows)
+    assert all(row.stake > 0 for row in technical_rows + ml_rows)
 
     daemon.close()
 
@@ -146,6 +153,56 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     assert updated.metadata["prior_quality_source"] == "bootstrap_seed"
     assert updated.metadata["oos_sharpe"] == original.metadata["oos_sharpe"]
     assert updated.metadata["oos_log_growth"] == original.metadata["oos_log_growth"]
+
+    daemon.close()
+
+
+def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_dsl(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+    expr = Feature("fear_greed")
+    expression = to_string(expr)
+    hypothesis_id = daemon._dsl_hypothesis_id(expression)
+
+    store.register(
+        HypothesisRecord(
+            hypothesis_id=hypothesis_id,
+            kind="dsl",
+            name=expression,
+            definition={"expression": expression},
+            status="active",
+            stake=0.0,
+            source="random_dsl",
+            metadata={"generator": "hypothesis-seeder"},
+        )
+    )
+
+    inserted, skipped = daemon._register_random_dsl([expr])
+    updated = store.get(hypothesis_id)
+
+    assert inserted == 0
+    assert skipped == 1
+    assert updated is not None
+    assert updated.metadata["research_quality_source"] == "exploratory_unscored"
+    assert updated.metadata["research_quality_status"] == "unscored"
+    assert updated.metadata["registration_stage"] == "observation_only"
 
     daemon.close()
 

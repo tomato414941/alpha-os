@@ -160,6 +160,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     hseed.add_argument("--config", type=str, default=None)
 
+    seh = sub.add_parser(
+        "score-exploratory-hypotheses",
+        help="Compute research-quality metadata for exploratory random DSL hypotheses",
+    )
+    seh.add_argument("--asset", type=str, default="BTC")
+    seh.add_argument("--config", type=str, default=None)
+    seh.add_argument("--limit", type=int, default=None)
+    seh.add_argument("--dry-run", action="store_true")
+
     ugen = sub.add_parser(
         "unified-generator",
         help=argparse.SUPPRESS,
@@ -2101,6 +2110,84 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
         store.close()
 
 
+def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
+    from alpha_os.hypotheses.research_scoring import (
+        exploratory_scoring_candidates,
+        required_research_features,
+        score_exploratory_hypotheses,
+    )
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        candidates = exploratory_scoring_candidates(
+            store.list_observation_active(),
+            limit=args.limit,
+        )
+        mode = "DRY RUN" if args.dry_run else "APPLY"
+        if not candidates:
+            print(
+                f"Research scoring [{mode}]: asset={args.asset.upper()} "
+                "candidates=0 scored=0 failed=0"
+            )
+            return
+
+        price_feature = price_signal(args.asset)
+        features = required_research_features(candidates, price_feature)
+        data, _ = _real_data(
+            features,
+            cfg,
+            eval_window=cfg.backtest.eval_window_days,
+        )
+        prices = data[price_feature]
+        batch = score_exploratory_hypotheses(
+            candidates,
+            data=data,
+            prices=prices,
+            commission_pct=cfg.backtest.commission_pct,
+            slippage_pct=cfg.backtest.slippage_pct,
+            allow_short=cfg.trading.supports_short,
+            n_cv_folds=cfg.validation.n_cv_folds,
+            embargo_days=cfg.validation.embargo_days,
+        )
+
+        print(
+            f"Research scoring [{mode}]: asset={args.asset.upper()} "
+            f"candidates={len(candidates)} scored={len(batch.updates)} failed={len(batch.failures)}"
+        )
+        for update in batch.updates[:10]:
+            print(
+                "  "
+                f"{update.hypothesis_id}: "
+                f"oos_sharpe={update.oos_sharpe:+.3f} "
+                f"oos_log_growth={update.oos_log_growth:+.3f} "
+                f"folds={update.n_folds}"
+            )
+        if len(batch.updates) > 10:
+            print(f"  ... {len(batch.updates) - 10} more scored hypotheses")
+        for failure in batch.failures[:10]:
+            print(f"  FAIL {failure.hypothesis_id}: {failure.reason}")
+        if len(batch.failures) > 10:
+            print(f"  ... {len(batch.failures) - 10} more failures")
+
+        if args.dry_run:
+            return
+
+        for update in batch.updates:
+            store.update_metadata(
+                update.hypothesis_id,
+                update.metadata_update(),
+                merge=True,
+            )
+        print(
+            "Research scoring summary: "
+            f"updated={len(batch.updates)} active={store.count(status='active')}"
+        )
+    finally:
+        store.close()
+
+
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
     from alpha_os.experiments.replay import (
         ReplayExperimentSpec,
@@ -2876,6 +2963,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_trade(args)
     elif args.command == "hypothesis-seeder":
         cmd_hypothesis_seeder(args)
+    elif args.command == "score-exploratory-hypotheses":
+        cmd_score_exploratory_hypotheses(args)
     elif args.command == "unified-generator":
         cmd_unified_generator(args)
     elif args.command == "enqueue-discovery-pool":
