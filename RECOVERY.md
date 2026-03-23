@@ -335,26 +335,17 @@ Support classes:
 | `paper.simulator`, `paper.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
 | `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `daemon.admission`, `daemon.lifecycle`, `daemon.unified_generator`, `pipeline` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
 | `research.diversity`, `research.handcrafted`, `paper.simulator`, `paper.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
-| `alpha` | wrapper | compatibility package only; do not add logic or internal dependencies |
+| `alpha` | compatibility shell | reserved package name only; no internal imports or wrapper modules remain |
 
 ### Alpha Package Classification
 
 `alpha/` is not a source-of-truth package in the recovery target. It is a
-compatibility package only.
+retired compatibility shell kept only to reserve the package name and to
+document the terminology boundary.
 
 | File | Class | Target |
 |------|-------|--------|
-| `alpha/cross_asset.py`, `alpha/lifecycle.py` | wrapper | keep only as import-compatibility shims |
-| `alpha/evaluator.py`, `alpha/expression_identity.py` | wrapper | source of truth lives in `dsl/` or `hypotheses/` |
-| `alpha/quality.py`, `alpha/combiner.py`, `alpha/runtime_policy.py` | wrapper | source of truth lives in `hypotheses/` |
-| `alpha/monitor.py`, `alpha/diversity.py`, `alpha/handcrafted.py` | wrapper | source of truth lives in `hypotheses/` or `research/` |
-| `alpha/admission_queue.py`, `alpha/admission_replay.py`, `alpha/managed_alphas.py`, `alpha/deployed_alphas.py`, `alpha/funnel.py` | wrapper | source of truth lives in `legacy/` |
-
-Wrapper deletion order:
-
-- first remove repo-local imports and script usage
-- then remove wrappers whose source of truth is in `dsl/`, `hypotheses/`, or `research/`
-- remove `legacy` wrappers last, after any external operators or notebooks stop importing them
+| `alpha/__init__.py` | compatibility shell | keep package name reserved; do not reintroduce submodules |
 
 ### Cleanup Rules
 
@@ -362,7 +353,8 @@ Wrapper deletion order:
 - `research` commands should move under an explicit namespace or separate entrypoint
 - `archive` code must not be a dependency of the bounded runtime path
 - no new source-of-truth logic should land under `alpha/`; either add it to a current package or keep it explicitly under `research` or `legacy`
-- repo code, scripts, and tests should not import `alpha/`; only external compatibility consumers may do so
+- repo code, scripts, and tests should not import `alpha/`
+- do not reintroduce `alpha` submodules; if a compatibility shim is truly needed again, add it only with an explicit migration rationale
 - no new features should land in `archive` areas; only extraction, migration, or deletion is allowed
 - if a legacy path is still needed, rewrite it around `hypotheses` inputs instead of preserving registry-era state machines
 
