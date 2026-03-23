@@ -12,9 +12,6 @@ from pathlib import Path
 
 import numpy as np
 
-from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.lifecycle import batch_live_transitions, ST_ACTIVE, ST_DORMANT
-from ..alpha.runtime_policy import dormant_indices, rank_trading_indices
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
 from ..alpha.deployed_alphas import refresh_deployed_alphas
 from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
@@ -22,16 +19,19 @@ from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
+from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..execution.paper import PaperExecutor
 from ..execution.planning import build_target_position, plan_execution_intent
-from ..alpha.combiner import (
+from ..hypotheses.combiner import (
     CombinerConfig,
     compute_tc_scores,
     compute_tc_weights,
     select_low_correlation,
 )
-from ..alpha.monitor import RegimeDetector
 from ..risk.manager import RiskManager
+from ..hypotheses.monitor import RegimeDetector
+from ..hypotheses.runtime_policy import dormant_indices, rank_trading_indices
+from ..hypotheses.state_lifecycle import ST_ACTIVE, ST_DORMANT, batch_live_transitions
 
 logger = logging.getLogger(__name__)
 ST_EXCLUDED = -1

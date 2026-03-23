@@ -183,7 +183,7 @@ class GPEvolver:
         return unique
 
     def _evaluate_batch(self, exprs: list[Expr]) -> list[float]:
-        from ..alpha.evaluator import FAILED_FITNESS
+        from ..dsl.evaluator import FAILED_FITNESS
 
         results = []
         n_failed = 0

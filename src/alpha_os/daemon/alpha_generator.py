@@ -6,9 +6,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..alpha.evaluator import FAILED_FITNESS, sanitize_signal
+from ..dsl.evaluator import FAILED_FITNESS, sanitize_signal
 from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
-from ..alpha.expression_identity import expression_semantic_key
+from ..hypotheses.identity import expression_semantic_key
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir

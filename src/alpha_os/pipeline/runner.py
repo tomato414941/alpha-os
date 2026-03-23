@@ -7,15 +7,15 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..alpha.combiner import (
+from ..hypotheses.combiner import (
     compute_tc_scores,
     compute_tc_weights,
     weighted_combine,
 )
-from ..alpha.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
+from ..dsl.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
 from ..dsl import to_string
 from ..dsl.expr import Expr
 from ..evolution.discovery_pool import DiscoveryPool

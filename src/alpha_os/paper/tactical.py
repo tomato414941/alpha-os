@@ -15,15 +15,15 @@ from datetime import date
 
 import numpy as np
 
-from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
-from ..alpha.combiner import weighted_combine_scalar
-from ..alpha.monitor import AlphaMonitor, MonitorConfig
 from ..config import Config, SIGNAL_CACHE_L2_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_hourly_feature_list
 from ..dsl import parse
+from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
+from ..hypotheses.monitor import AlphaMonitor, MonitorConfig
+from ..hypotheses.combiner import weighted_combine_scalar
 
 logger = logging.getLogger(__name__)
 
