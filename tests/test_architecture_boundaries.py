@@ -11,11 +11,6 @@ SCRIPTS_ROOT = PROJECT_ROOT / "scripts"
 TESTS_ROOT = PROJECT_ROOT / "tests"
 ALLOWED_ALPHA_MODULES = {
     "__init__.py",
-    "admission_queue.py",
-    "admission_replay.py",
-    "deployed_alphas.py",
-    "funnel.py",
-    "managed_alphas.py",
 }
 
 
