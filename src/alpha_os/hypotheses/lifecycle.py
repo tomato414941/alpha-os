@@ -11,6 +11,7 @@ DEFAULT_LOOKBACK = 20
 DEFAULT_MIN_OBSERVATIONS = 5
 DEFAULT_BOOTSTRAP_WEIGHT = 0.25
 DEFAULT_BATCH_RESEARCH_WEIGHT = 0.10
+DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN = 0.10
 DEFAULT_QUALITY_WEIGHT = 1.0
 DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT = 0.25
 DEFAULT_STAKE_UPDATE_RATE = 0.10
@@ -154,6 +155,35 @@ def bootstrap_trust(
     return weight * normalized_research_quality(research_quality, metric=metric)
 
 
+def is_research_backed(
+    research_quality: float,
+    *,
+    metric: str,
+    bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
+    batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
+    research_quality_source: str = "bootstrap_seed",
+    floor: float = 0.0,
+) -> bool:
+    trust = bootstrap_trust(
+        research_quality,
+        metric=metric,
+        bootstrap_weight=bootstrap_weight,
+        batch_research_weight=batch_research_weight,
+        research_quality_source=research_quality_source,
+    )
+    if trust <= floor:
+        return False
+    if research_quality_source == "batch_research_score":
+        return normalized_research_quality(
+            research_quality,
+            metric=metric,
+        ) >= float(batch_research_normalized_quality_min)
+    return True
+
+
 def target_stake(
     blended_quality: float,
     quality_confidence: float,
@@ -192,6 +222,9 @@ def is_capital_eligible(
     metric: str,
     bootstrap_weight: float,
     batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
     research_quality_source: str = "bootstrap_seed",
     has_min_observations: bool,
     live_quality: float = 0.0,
@@ -204,14 +237,16 @@ def is_capital_eligible(
     ),
     floor: float = 0.0,
 ) -> bool:
-    bootstrap_value = bootstrap_trust(
+    research_backed = is_research_backed(
         research_quality,
         metric=metric,
         bootstrap_weight=bootstrap_weight,
         batch_research_weight=batch_research_weight,
+        batch_research_normalized_quality_min=batch_research_normalized_quality_min,
         research_quality_source=research_quality_source,
+        floor=floor,
     )
-    research_retained = bootstrap_value > floor and (
+    research_retained = research_backed and (
         not has_min_observations
         or live_quality >= bootstrap_retention_quality_min
         or marginal_contribution >= bootstrap_retention_marginal_contribution_min
@@ -229,6 +264,9 @@ def capital_eligibility_breakdown(
     metric: str,
     bootstrap_weight: float,
     batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
     research_quality_source: str = "bootstrap_seed",
     has_min_observations: bool,
     live_quality: float,
@@ -241,14 +279,15 @@ def capital_eligibility_breakdown(
     ),
     floor: float = 0.0,
 ) -> tuple[bool, bool, bool, str]:
-    bootstrap_value = bootstrap_trust(
+    research_backed = is_research_backed(
         research_quality,
         metric=metric,
         bootstrap_weight=bootstrap_weight,
         batch_research_weight=batch_research_weight,
+        batch_research_normalized_quality_min=batch_research_normalized_quality_min,
         research_quality_source=research_quality_source,
+        floor=floor,
     )
-    research_backed = bootstrap_value > floor
     research_retained = research_backed and (
         not has_min_observations
         or live_quality >= bootstrap_retention_quality_min
@@ -339,6 +378,9 @@ def update_stakes_from_history(
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
     batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
     stake_update_rate: float = DEFAULT_STAKE_UPDATE_RATE,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
@@ -395,6 +437,7 @@ def update_stakes_from_history(
             metric=metric,
             bootstrap_weight=bootstrap_weight,
             batch_research_weight=batch_research_weight,
+            batch_research_normalized_quality_min=batch_research_normalized_quality_min,
             has_min_observations=estimate.has_min_observations,
             live_quality=estimate.live_quality,
             marginal_contribution=marginal,
@@ -412,6 +455,7 @@ def update_stakes_from_history(
                 metric=metric,
                 bootstrap_weight=bootstrap_weight,
                 batch_research_weight=batch_research_weight,
+                batch_research_normalized_quality_min=batch_research_normalized_quality_min,
                 has_min_observations=estimate.has_min_observations,
                 live_quality=estimate.live_quality,
                 marginal_contribution=marginal,
@@ -484,6 +528,9 @@ def build_allocation_rebalance_plan(
     marginal_contribution_weight: float = DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     bootstrap_weight: float = DEFAULT_BOOTSTRAP_WEIGHT,
     batch_research_weight: float = DEFAULT_BATCH_RESEARCH_WEIGHT,
+    batch_research_normalized_quality_min: float = (
+        DEFAULT_BATCH_RESEARCH_NORMALIZED_QUALITY_MIN
+    ),
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
@@ -547,6 +594,7 @@ def build_allocation_rebalance_plan(
                 metric=metric,
                 bootstrap_weight=bootstrap_weight,
                 batch_research_weight=batch_research_weight,
+                batch_research_normalized_quality_min=batch_research_normalized_quality_min,
                 has_min_observations=estimate.has_min_observations,
                 live_quality=estimate.live_quality,
                 marginal_contribution=marginal,

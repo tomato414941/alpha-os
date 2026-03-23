@@ -1442,6 +1442,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
         bootstrap_weight=cfg.lifecycle.bootstrap_weight,
         batch_research_weight=cfg.lifecycle.batch_research_weight,
+        batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
         live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
         live_proven_marginal_contribution_min=(
             cfg.lifecycle.live_proven_marginal_contribution_min
@@ -1869,6 +1870,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
             bootstrap_weight=cfg.lifecycle.bootstrap_weight,
             batch_research_weight=cfg.lifecycle.batch_research_weight,
+            batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
             live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min
@@ -2065,6 +2067,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
             bootstrap_weight=cfg.lifecycle.bootstrap_weight,
             batch_research_weight=cfg.lifecycle.batch_research_weight,
+            batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
             live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min

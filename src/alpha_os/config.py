@@ -177,6 +177,7 @@ class LifecycleTomlConfig:
     capital_redundancy_corr_max: float = 0.7
     bootstrap_weight: float = 0.25
     batch_research_weight: float = 0.10
+    batch_research_normalized_quality_min: float = 0.10
     live_proven_quality_min: float = 0.05
     live_proven_marginal_contribution_min: float = 0.0
     bootstrap_retention_quality_min: float = 0.0

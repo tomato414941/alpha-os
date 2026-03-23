@@ -12,6 +12,7 @@ from alpha_os.hypotheses import (
     HypothesisStore,
     bootstrap_trust,
     compute_daily_contributions,
+    is_research_backed,
     normalized_research_quality,
     record_daily_contributions,
     rolling_stake,
@@ -145,6 +146,25 @@ def test_is_capital_eligible_requires_bootstrap_or_live_proven_thresholds():
         batch_research_weight=0.10,
         has_min_observations=False,
     ) is True
+
+
+def test_is_research_backed_requires_quality_gate_for_batch_scores():
+    assert is_research_backed(
+        0.8,
+        metric="sharpe",
+        bootstrap_weight=0.25,
+        batch_research_weight=0.10,
+        batch_research_normalized_quality_min=0.10,
+        research_quality_source="batch_research_score",
+    ) is True
+    assert is_research_backed(
+        0.1,
+        metric="sharpe",
+        bootstrap_weight=0.25,
+        batch_research_weight=0.10,
+        batch_research_normalized_quality_min=0.10,
+        research_quality_source="batch_research_score",
+    ) is False
 
 
 def test_updated_stake_smooths_toward_target():
