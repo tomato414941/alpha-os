@@ -1271,6 +1271,7 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
         "live_proven=0 promoted_live=0 research_demoted=0 "
         "research_candidate_capped=0 capital_backed=2"
     ) in output
+    assert "Cohorts:   bootstrap=0/2 batch=0/0 live=0/0" in output
     assert "TopAlloc:  h1=1.000(dsl/random_dsl), h4=0.500(technical/bootstrap_technical)" in output
     assert "TopEff:    h1=0.300(dsl/random_dsl), h4=0.200(technical/bootstrap_technical)" in output
     assert "TopRaw:    h1=12.000(dsl/random_dsl), h4=8.000(technical/bootstrap_technical)" in output
@@ -1400,6 +1401,7 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
 
+    assert "Cohorts:   bootstrap=0/0 batch=0/0 live=0/0" in output
     assert "Promote:   obs=1 quality=1 contrib=0 both=0" in output
 
 

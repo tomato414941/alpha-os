@@ -194,6 +194,30 @@ def apply_capital_redundancy_cap(
     )
 
 
+def apply_weak_research_redundancy_cap(
+    plan: list[AllocationRebalanceEntry],
+    records: list[HypothesisRecord],
+    *,
+    data: dict[str, np.ndarray],
+    asset: str,
+    corr_max: float,
+    floor: float = 0.0,
+) -> list[AllocationRebalanceEntry]:
+    return _apply_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset=asset,
+        corr_max=corr_max,
+        floor=floor,
+        eligibility=lambda entry: (
+            entry.research_retained
+            and entry.research_quality_source == "batch_research_score"
+            and not entry.live_proven
+        ),
+    )
+
+
 def apply_live_proven_return_redundancy_cap(
     plan: list[AllocationRebalanceEntry],
     *,

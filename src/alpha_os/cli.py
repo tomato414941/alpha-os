@@ -1407,6 +1407,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
         apply_live_proven_return_redundancy_cap,
+        apply_weak_research_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -1471,6 +1472,14 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
             )
         finally:
             data_store.close()
+        plan = apply_weak_research_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=trader.asset,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
+        )
         plan = apply_capital_redundancy_cap(
             plan,
             records,
@@ -1842,6 +1851,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
         apply_live_proven_return_redundancy_cap,
+        apply_weak_research_redundancy_cap,
         load_breadth_matrix,
     )
     from alpha_os.hypotheses import (
@@ -1896,6 +1906,14 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             records,
             asset=args.asset,
             lookback=cfg.forward.degradation_window,
+        )
+        plan = apply_weak_research_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=args.asset,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
         )
         plan = apply_capital_redundancy_cap(
             plan,
@@ -2033,6 +2051,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
         apply_live_proven_return_redundancy_cap,
+        apply_weak_research_redundancy_cap,
         load_breadth_matrix,
     )
 
@@ -2099,6 +2118,14 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             records,
             asset=args.asset,
             lookback=cfg.forward.degradation_window,
+        )
+        plan = apply_weak_research_redundancy_cap(
+            plan,
+            records,
+            data=breadth_data,
+            asset=args.asset,
+            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
+            floor=cfg.lifecycle.target_stake_floor,
         )
         plan = apply_capital_redundancy_cap(
             plan,
@@ -2441,10 +2468,15 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     observed = 0
     capital_backed = 0
     research_retained = 0
+    bootstrap_research_retained = 0
+    batch_research_retained = 0
     live_proven = 0
     promoted_live = 0
     research_demoted = 0
     research_candidate_capped = 0
+    bootstrap_capital_backed = 0
+    batch_research_capital_backed = 0
+    live_proven_capital_backed = 0
     blocker_counts = {
         "insufficient_observations": 0,
         "weak_live_quality": 0,
@@ -2472,10 +2504,23 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
             pass
         if bool(record.metadata.get("lifecycle_research_retained", False)):
             research_retained += 1
+            source = str(record.metadata.get("lifecycle_research_quality_source", ""))
+            if source == "batch_research_score":
+                batch_research_retained += 1
+            else:
+                bootstrap_research_retained += 1
         if bool(record.metadata.get("lifecycle_live_proven", False)):
             live_proven += 1
             if bootstrap_trust <= 0:
                 promoted_live += 1
+        if stake > 0:
+            source = str(record.metadata.get("lifecycle_research_quality_source", ""))
+            if bool(record.metadata.get("lifecycle_live_proven", False)):
+                live_proven_capital_backed += 1
+            elif source == "batch_research_score":
+                batch_research_capital_backed += 1
+            else:
+                bootstrap_capital_backed += 1
         if bootstrap_trust > 0 and not bool(record.metadata.get("lifecycle_capital_eligible", stake > 0)):
             research_demoted += 1
         if bool(record.metadata.get("lifecycle_research_candidate_capped", False)):
@@ -2490,10 +2535,15 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "observed": observed,
         "capital_backed": capital_backed,
         "research_retained": research_retained,
+        "bootstrap_research_retained": bootstrap_research_retained,
+        "batch_research_retained": batch_research_retained,
         "live_proven": live_proven,
         "promoted_live": promoted_live,
         "research_demoted": research_demoted,
         "research_candidate_capped": research_candidate_capped,
+        "bootstrap_capital_backed": bootstrap_capital_backed,
+        "batch_research_capital_backed": batch_research_capital_backed,
+        "live_proven_capital_backed": live_proven_capital_backed,
         "promotion_blockers": blocker_counts,
         "top_allocation": _top_runtime_hypotheses(records, "stake"),
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
@@ -2608,6 +2658,15 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"research_demoted={hypothesis_summary['research_demoted']} "
         f"research_candidate_capped={hypothesis_summary['research_candidate_capped']} "
         f"capital_backed={hypothesis_summary['capital_backed']}"
+    )
+    print(
+        "  Cohorts:   "
+        f"bootstrap={hypothesis_summary['bootstrap_research_retained']}/"
+        f"{hypothesis_summary['bootstrap_capital_backed']} "
+        f"batch={hypothesis_summary['batch_research_retained']}/"
+        f"{hypothesis_summary['batch_research_capital_backed']} "
+        f"live={hypothesis_summary['live_proven']}/"
+        f"{hypothesis_summary['live_proven_capital_backed']}"
     )
     blocker_counts = hypothesis_summary["promotion_blockers"]
     if any(blocker_counts.values()):

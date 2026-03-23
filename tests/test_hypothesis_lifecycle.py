@@ -669,6 +669,86 @@ def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
     assert dropped.redundancy_correlation > 0.7
 
 
+def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
+    from alpha_os.hypotheses.breadth import apply_weak_research_redundancy_cap
+
+    records = [
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+        HypothesisRecord(
+            hypothesis_id="h2",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+    ]
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="h1",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.08,
+            blended_quality=0.4,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="h2",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.04,
+            blended_quality=0.2,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+        ),
+    ]
+    data = {
+        "btc_ohlcv": [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0, 116.0, 118.0, 120.0],
+    }
+
+    capped = apply_weak_research_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset="BTC",
+        corr_max=0.7,
+        floor=0.0,
+    )
+
+    kept = next(entry for entry in capped if entry.hypothesis_id == "h1")
+    dropped = next(entry for entry in capped if entry.hypothesis_id == "h2")
+    assert kept.proposed_stake == pytest.approx(0.4)
+    assert dropped.proposed_stake == pytest.approx(0.0)
+    assert dropped.redundancy_capped_by == "h1"
+    assert dropped.redundancy_correlation > 0.7
+
+
 def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
     from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
 
