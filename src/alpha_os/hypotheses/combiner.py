@@ -133,6 +133,22 @@ def select_low_correlation(
     return selected
 
 
+def cross_asset_neutralize(
+    signals: dict[str, float],
+) -> dict[str, float]:
+    if len(signals) <= 1:
+        return dict(signals)
+    values = np.array(list(signals.values()))
+    finite_mask = np.isfinite(values)
+    if not finite_mask.any():
+        return {key: 0.0 for key in signals}
+    mean = float(np.mean(values[finite_mask]))
+    return {
+        key: (float(value - mean) if np.isfinite(value) else 0.0)
+        for key, value in signals.items()
+    }
+
+
 def weighted_combine_scalar(
     signals: dict[str, float],
     weights: dict[str, float],
