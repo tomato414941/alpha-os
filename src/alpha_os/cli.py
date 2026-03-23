@@ -2187,7 +2187,7 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
 
 
 def cmd_prune_stale_candidates(args: argparse.Namespace) -> None:
-    from alpha_os.alpha.admission_queue import prune_stale_pending_candidates
+    from alpha_os.legacy.admission_queue import prune_stale_pending_candidates
 
     stats = prune_stale_pending_candidates(
         args.asset,
@@ -2693,7 +2693,7 @@ def cmd_sync_signal_cache(args: argparse.Namespace) -> None:
 
 
 def cmd_alpha_funnel(args: argparse.Namespace) -> None:
-    from alpha_os.alpha.funnel import load_funnel_summary
+    from alpha_os.legacy.funnel import load_funnel_summary
 
     summary = load_funnel_summary(args.asset)
     print(f"Alpha Funnel ({summary.asset.upper()})")

@@ -15,13 +15,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..alpha.admission_replay import (
+from ..legacy.admission_replay import (
     apply_registry_snapshot,
     load_source_records,
     materialize_admission_snapshot,
 )
-from ..alpha.managed_alphas import ManagedAlphaStore, AlphaState
-from ..alpha.deployed_alphas import refresh_deployed_alphas
+from ..legacy.deployed_alphas import refresh_deployed_alphas
+from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
 from ..config import Config, asset_data_dir
 from ..paper.simulator import run_replay
 from ..runtime_profile import build_runtime_profile, git_commit

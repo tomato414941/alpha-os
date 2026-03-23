@@ -8,7 +8,7 @@ import time
 
 import numpy as np
 
-from ..alpha.admission_queue import (
+from ..legacy.admission_queue import (
     adopt_candidate,
     count_pending_candidates,
     fetch_pending_candidates,
@@ -17,9 +17,9 @@ from ..alpha.admission_queue import (
     reject_candidate,
     reset_candidates_to_pending,
 )
-from ..alpha.admission_replay import alpha_id_for_expression
+from ..legacy.admission_replay import alpha_id_for_expression
 from ..alpha.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.universe import build_feature_list, price_signal

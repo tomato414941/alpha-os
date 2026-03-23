@@ -7,7 +7,7 @@ import time
 
 import numpy as np
 
-from ..alpha.managed_alphas import ManagedAlphaStore
+from ..legacy.managed_alphas import ManagedAlphaStore
 from ..config import Config, asset_data_dir
 from ..forward.tracker import ForwardTracker
 

@@ -1,0 +1,1 @@
+"""Legacy registry-era substrate."""

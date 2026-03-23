@@ -12,7 +12,6 @@ from ..hypotheses.combiner import (
     compute_tc_weights,
     weighted_combine,
 )
-from ..alpha.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
 from ..dsl.evaluator import FAILED_FITNESS, EvaluationError, evaluate_expression, normalize_signal
@@ -21,6 +20,7 @@ from ..dsl.expr import Expr
 from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
+from ..legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import CVResult, purged_walk_forward

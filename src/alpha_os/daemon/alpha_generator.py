@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..dsl.evaluator import FAILED_FITNESS, sanitize_signal
-from ..alpha.managed_alphas import CandidateSeed, ManagedAlphaStore
 from ..hypotheses.identity import expression_semantic_key
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
@@ -16,6 +15,7 @@ from ..data.signal_client import build_signal_client_from_config
 from ..dsl import parse, to_string
 from ..data.universe import build_feature_list, price_signal
 from ..evolution.discovery_pool import DiscoveryPool
+from ..legacy.managed_alphas import CandidateSeed, ManagedAlphaStore
 
 logger = logging.getLogger(__name__)
 
