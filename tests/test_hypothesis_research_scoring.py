@@ -141,6 +141,63 @@ def test_exploratory_scoring_candidates_prioritize_novel_families(tmp_path):
     store.close()
 
 
+def test_exploratory_scoring_candidates_prefer_families_with_better_scored_outcomes(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_scored_good",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={
+                "research_quality_status": "scored",
+                "lifecycle_research_retained": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="event_scored_weak",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "gdelt_sentiment_btc"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={
+                "research_quality_status": "scored",
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="event_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "nasa_solar_flux"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_hashrate"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+
+    candidates = exploratory_scoring_candidates(store.list_observation_active())
+
+    assert [record.hypothesis_id for record in candidates] == [
+        "onchain_candidate",
+        "event_candidate",
+    ]
+    store.close()
+
+
 def test_score_exploratory_hypotheses_parser():
     parser = _build_parser()
     args = parser.parse_args(["score-exploratory-hypotheses", "--asset", "BTC", "--dry-run"])

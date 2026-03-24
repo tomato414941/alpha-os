@@ -69,6 +69,8 @@ def exploratory_scoring_candidates(
         return []
 
     family_counts: Counter[str] = Counter()
+    family_totals: Counter[str] = Counter()
+    family_successes: Counter[str] = Counter()
     for record in records:
         if record.source != "random_dsl":
             continue
@@ -78,13 +80,43 @@ def exploratory_scoring_candidates(
             continue
         for family in set(expression_feature_families(record.expression)):
             family_counts[family] += 1
+    for record in records:
+        if record.source != "random_dsl":
+            continue
+        if str(record.metadata.get("research_quality_status", "")) != "scored":
+            continue
+        families = set(expression_feature_families(record.expression))
+        if not families:
+            continue
+        success = (
+            float(record.stake) > 0
+            or bool(record.metadata.get("lifecycle_research_retained", False))
+            or bool(record.metadata.get("lifecycle_actionable_live", False))
+        )
+        for family in families:
+            family_totals[family] += 1
+            if success:
+                family_successes[family] += 1
 
-    if family_counts:
-        def _priority(record: HypothesisRecord) -> tuple[float, float, str]:
+    if family_counts or family_totals:
+        def _priority(record: HypothesisRecord) -> tuple[float, float, float, str]:
             families = set(expression_feature_families(record.expression))
             overlap = float(sum(family_counts.get(family, 0) for family in families))
             novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
-            return overlap, -novelty, record.hypothesis_id
+            if families:
+                family_quality = float(
+                    sum(
+                        (
+                            family_successes.get(family, 0) / family_totals[family]
+                            if family_totals.get(family, 0) > 0
+                            else 0.5
+                        )
+                        for family in families
+                    ) / len(families)
+                )
+            else:
+                family_quality = 0.0
+            return overlap, -family_quality, -novelty, record.hypothesis_id
 
         candidates.sort(key=_priority)
 
