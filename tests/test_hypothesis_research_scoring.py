@@ -67,6 +67,51 @@ def test_exploratory_scoring_candidates_filter_and_features(tmp_path):
     store.close()
 
 
+def test_exploratory_scoring_candidates_prioritize_novel_families(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="incumbent",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=1.0,
+            metadata={
+                "lifecycle_actionable_live": True,
+                "research_quality_status": "scored",
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="macro_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "dxy"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="novel_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+
+    candidates = exploratory_scoring_candidates(store.list_observation_active())
+
+    assert [record.hypothesis_id for record in candidates] == [
+        "novel_candidate",
+        "macro_candidate",
+    ]
+    store.close()
+
+
 def test_score_exploratory_hypotheses_parser():
     parser = _build_parser()
     args = parser.parse_args(["score-exploratory-hypotheses", "--asset", "BTC", "--dry-run"])

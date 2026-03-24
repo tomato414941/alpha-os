@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
@@ -10,7 +11,7 @@ from ..backtest.engine import BacktestEngine
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression
 from ..validation.purged_cv import purged_walk_forward
-from .identity import expression_feature_names
+from .identity import expression_feature_families, expression_feature_names
 from .store import HypothesisKind, HypothesisRecord
 
 
@@ -63,6 +64,29 @@ def exploratory_scoring_candidates(
     limit: int | None = None,
 ) -> list[HypothesisRecord]:
     candidates = [record for record in records if is_exploratory_unscored(record)]
+    if not candidates:
+        return []
+
+    family_counts: Counter[str] = Counter()
+    for record in records:
+        if record.source != "random_dsl":
+            continue
+        if float(record.stake) <= 0 and not bool(
+            record.metadata.get("lifecycle_actionable_live", False)
+        ):
+            continue
+        for family in set(expression_feature_families(record.expression)):
+            family_counts[family] += 1
+
+    if family_counts:
+        def _priority(record: HypothesisRecord) -> tuple[float, float, str]:
+            families = set(expression_feature_families(record.expression))
+            overlap = float(sum(family_counts.get(family, 0) for family in families))
+            novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
+            return overlap, -novelty, record.hypothesis_id
+
+        candidates.sort(key=_priority)
+
     if limit is None:
         return candidates
     return candidates[: max(limit, 0)]
