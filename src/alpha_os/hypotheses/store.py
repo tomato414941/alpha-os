@@ -67,7 +67,7 @@ class HypothesisRecord:
 
     @property
     def alpha_id(self) -> str:
-        """Compatibility alias for legacy runtime code."""
+        """Compatibility alias for non-current migration paths."""
         return self.hypothesis_id
 
     @property

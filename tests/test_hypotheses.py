@@ -171,7 +171,7 @@ class TestHypothesisStore:
         record = store.get("h1")
 
         assert record is not None
-        assert record.alpha_id == "h1"
+        assert record.hypothesis_id == "h1"
         assert record.expression == "(sub fear_greed dxy)"
         assert record.oos_fitness("sharpe") == 1.5
         assert record.oos_fitness("log_growth") == 0.3
