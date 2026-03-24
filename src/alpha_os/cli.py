@@ -91,7 +91,7 @@ def _build_parser() -> argparse.ArgumentParser:
     eva.add_argument("--config", type=str, default=None)
 
     # produce-predictions
-    pp = sub.add_parser("produce-predictions", help="Evaluate active alphas and write to prediction store")
+    pp = sub.add_parser("produce-predictions", help="Evaluate active hypotheses and write to prediction store")
     pp.add_argument("--asset", type=str, default="BTC")
     pp.add_argument(
         "--strict",
@@ -961,10 +961,10 @@ def _print_paper_result(result) -> None:
         commit = getattr(result, "profile_commit", "")
         suffix = f" ({commit[:8]})" if commit else ""
         print(f"  Profile:    {result.profile_id[:12]}{suffix}")
-    print(f"  Active:     {result.n_registry_active} hypotheses")
+    print(f"  Active:     {result.n_active_hypotheses} hypotheses")
     print(f"  Live:       {result.n_live_hypotheses} hypotheses")
     print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
-    print(f"  Selected:   {result.n_selected_alphas} alphas")
+    print(f"  Selected:   {result.n_selected_hypotheses} hypotheses")
     print(f"  Signals:    {result.n_signals_evaluated} evaluated")
     if result.n_skipped_deadband > 0:
         print(f"  Skips:      deadband={result.n_skipped_deadband}")
@@ -1173,10 +1173,10 @@ def _print_testnet_report(report) -> None:
     print(f"  Cycle OK:       {report.cycle_completed}")
     print(f"  Recon match:    {report.reconciliation_match}")
     print(f"  CB halted:      {report.circuit_breaker_halted}")
-    print(f"  Active:         {report.n_registry_active} hypotheses")
+    print(f"  Active:         {report.n_active_hypotheses} hypotheses")
     print(f"  Live:           {report.n_live_hypotheses} hypotheses")
     print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
-    print(f"  Selected:       {report.n_selected_alphas} alphas")
+    print(f"  Selected:       {report.n_selected_hypotheses} hypotheses")
     print(f"  Signals:        {report.n_signals_evaluated} evaluated")
     if report.n_skipped_deadband > 0:
         print(f"  Skips:          deadband={report.n_skipped_deadband}")
@@ -2591,10 +2591,10 @@ def _runtime_observation_findings(
         findings.append("latest cycle had order failures")
     if not latest.get("reconciliation_match", False):
         findings.append("latest cycle failed reconciliation")
-    if (
-        latest.get("n_registry_active", current_live_count)
-        != current_live_count
-    ):
+    latest_active = int(
+        latest.get("n_active_hypotheses", latest.get("n_registry_active", current_live_count))
+    )
+    if latest_active != current_live_count:
         findings.append("latest report is older than current runtime selection state")
     return findings
 
@@ -2735,9 +2735,9 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             )
     print(
         f"  Selection: current_live={len(runtime_ids)} "
-        f"latest_active={latest['n_registry_active']} "
+        f"latest_active={latest.get('n_active_hypotheses', latest.get('n_registry_active', 0))} "
         f"live={_latest_live_count(latest)} "
-        f"selected={latest['n_selected_alphas']}"
+        f"selected={latest.get('n_selected_hypotheses', latest.get('n_selected_alphas', 0))}"
     )
     print(
         "  Skips:     "
@@ -2763,7 +2763,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             print("    - config fingerprint differs between current and latest")
         if latest_live_set_id and latest_live_set_id != current_profile.live_set_id:
             print("    - live hypothesis set fingerprint differs between current and latest")
-    if latest["n_registry_active"] != len(runtime_ids):
+    latest_active = int(latest.get("n_active_hypotheses", latest.get("n_registry_active", 0)))
+    if latest_active != len(runtime_ids):
         print(
             "  Note:      current runtime live count differs from latest readiness report; "
             "the next trade cycle will refresh the report."
@@ -2808,6 +2809,7 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
         ranked: list[tuple[float, str, str, float, float]] = []
         missing_current = 0
         dropped_current = 0
+        dropped_reasons: dict[str, int] = {}
         for alpha_id, signal in signals.items():
             record = record_map.get(alpha_id)
             if record is None:
@@ -2817,6 +2819,10 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             weight = float(weights.get(alpha_id, 0.0))
             if weight <= 0.0:
                 dropped_current += 1
+                reason = str(record.metadata.get("lifecycle_capital_reason") or "other")
+                if record.metadata.get("lifecycle_redundancy_capped_by"):
+                    reason = "redundancy_capped"
+                dropped_reasons[reason] = dropped_reasons.get(reason, 0) + 1
                 continue
             contribution = weight * float(signal)
             cohorts[cohort]["n"] += 1
@@ -2838,6 +2844,9 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             f"current_backed={sum(cohort['n'] for cohort in cohorts.values())} "
             f"dropped={dropped_current} missing={missing_current}"
         )
+        if dropped_reasons:
+            parts = [f"{key}={value}" for key, value in sorted(dropped_reasons.items())]
+            print(f"  Dropped:   {' '.join(parts)}")
         print(
             "  Cohorts:   "
             f"bootstrap n={cohorts['bootstrap']['n']} w={cohorts['bootstrap']['weight']:.3f} "

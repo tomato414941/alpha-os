@@ -971,10 +971,10 @@ def test_print_paper_result_shows_signal_stages(capsys):
         daily_return=0.00006,
         dd_scale=1.0,
         vol_scale=1.0,
-        n_registry_active=615,
+        n_active_hypotheses=615,
         n_live_hypotheses=150,
         n_shortlist_candidates=150,
-        n_selected_alphas=30,
+        n_selected_hypotheses=30,
         n_signals_evaluated=150,
         strategic_signal=0.4210,
         regime_adjusted_signal=0.4210,
@@ -993,7 +993,7 @@ def test_print_paper_result_shows_signal_stages(capsys):
     assert "Active:     615 hypotheses" in output
     assert "Live:       150 hypotheses" in output
     assert "Shortlist:  150 candidates" in output
-    assert "Selected:   30 alphas" in output
+    assert "Selected:   30 hypotheses" in output
     assert "Signals:    150 evaluated" in output
 
 
@@ -1010,10 +1010,10 @@ def test_print_paper_result_shows_skip_metrics(capsys):
         daily_return=0.0,
         dd_scale=1.0,
         vol_scale=1.0,
-        n_registry_active=615,
+        n_active_hypotheses=615,
         n_live_hypotheses=30,
         n_shortlist_candidates=30,
-        n_selected_alphas=30,
+        n_selected_hypotheses=30,
         n_signals_evaluated=30,
         n_skipped_deadband=1,
         n_skipped_no_delta=2,
@@ -1258,9 +1258,9 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
         "portfolio_value": 9905.91,
         "daily_pnl": 0.0,
         "n_fills": 0,
-        "n_registry_active": 7,
+        "n_active_hypotheses": 7,
         "n_live_hypotheses": 1,
-        "n_selected_alphas": 1,
+        "n_selected_hypotheses": 1,
         "n_skipped_deadband": 1,
         "n_skipped_no_delta": 2,
         "n_skipped_min_notional": 0,
@@ -1344,9 +1344,9 @@ def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, t
         "portfolio_value": 9986.38,
         "daily_pnl": 279.60,
         "n_fills": 1,
-        "n_registry_active": 1,
+        "n_active_hypotheses": 1,
         "n_live_hypotheses": 1,
-        "n_selected_alphas": 1,
+        "n_selected_hypotheses": 1,
         "n_skipped_deadband": 0,
         "n_skipped_no_delta": 0,
         "n_skipped_min_notional": 0,
@@ -1518,7 +1518,10 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
         kind="dsl",
         definition={"expression": "y"},
         stake=0.0,
-        metadata={"lifecycle_live_proven": True},
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_capital_reason": "live_proven",
+        },
     ))
     store.close()
 
@@ -1548,8 +1551,67 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
     output = capsys.readouterr().out
 
     assert "Snapshot:  selected=2 current_backed=1 dropped=1 missing=0" in output
+    assert "Dropped:   live_proven=1" in output
     assert "Top:       kept cohort=live" in output
     assert "Top:       dropped" not in output
+
+
+def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_latest_combine
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="kept",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+        metadata={"lifecycle_live_proven": True},
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="capped",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=0.0,
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_capital_reason": "live_proven",
+            "lifecycle_redundancy_capped_by": "kept",
+        },
+    ))
+    store.close()
+
+    tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
+    tracker.save_snapshot(PortfolioSnapshot(
+        date="2026-03-23T00:00:00",
+        cash=1000.0,
+        positions={},
+        portfolio_value=1000.0,
+        daily_pnl=0.0,
+        daily_return=0.0,
+        combined_signal=0.1234,
+        dd_scale=1.0,
+        vol_scale=1.0,
+        final_signal=0.1234,
+    ))
+    tracker.save_alpha_signals(
+        "2026-03-23T00:00:00",
+        {"kept": 0.3, "capped": -0.2},
+    )
+    tracker.close()
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
+    output = capsys.readouterr().out
+
+    assert "Snapshot:  selected=2 current_backed=1 dropped=1 missing=0" in output
+    assert "Dropped:   redundancy_capped=1" in output
 
 
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):
