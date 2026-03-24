@@ -3041,9 +3041,9 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             for record in store.list_observation_active()
         }
         stakes = {
-            alpha_id: float(record_map[alpha_id].stake)
-            for alpha_id in signals
-            if alpha_id in record_map and float(record_map[alpha_id].stake) > 0
+            hypothesis_id: float(record_map[hypothesis_id].stake)
+            for hypothesis_id in signals
+            if hypothesis_id in record_map and float(record_map[hypothesis_id].stake) > 0
         }
         weights = compute_stake_weights(stakes)
         cohorts = {
@@ -3057,13 +3057,13 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
         dropped_current = 0
         dropped_reasons: dict[str, int] = {}
         nonzero_current = 0
-        for alpha_id, signal in signals.items():
-            record = record_map.get(alpha_id)
+        for hypothesis_id, signal in signals.items():
+            record = record_map.get(hypothesis_id)
             if record is None:
                 missing_current += 1
                 continue
             cohort = _runtime_cohort(record)
-            weight = float(weights.get(alpha_id, 0.0))
+            weight = float(weights.get(hypothesis_id, 0.0))
             if weight <= 0.0:
                 dropped_current += 1
                 reason = str(record.metadata.get("lifecycle_capital_reason") or "other")
@@ -3079,7 +3079,7 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             cohorts[cohort]["n"] += 1
             cohorts[cohort]["weight"] += weight
             cohorts[cohort]["weighted_signal"] += contribution
-            ranked.append((abs(contribution), alpha_id, cohort, weight, float(signal)))
+            ranked.append((abs(contribution), hypothesis_id, cohort, weight, float(signal)))
 
         current_combined = sum(
             cohort["weighted_signal"]
@@ -3116,11 +3116,11 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
         )
         ranked.sort(reverse=True)
         top_n = max(int(args.top), 1)
-        for _, alpha_id, cohort, weight, signal in ranked[:top_n]:
+        for _, hypothesis_id, cohort, weight, signal in ranked[:top_n]:
             contribution = weight * signal
             print(
                 "  Top:       "
-                f"{alpha_id} cohort={cohort} weight={weight:.4f} "
+                f"{hypothesis_id} cohort={cohort} weight={weight:.4f} "
                 f"signal={signal:+.4f} contrib={contribution:+.6f}"
             )
     finally:

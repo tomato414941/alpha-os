@@ -439,7 +439,7 @@ class TestTrader:
         )
 
         assert runtime_signals == ["bar", "btc_ohlcv"]
-        assert [(record.alpha_id, expr is None) for record, expr in parsed_records] == [
+        assert [(record.hypothesis_id, expr is None) for record, expr in parsed_records] == [
             ("h-store", True),
             ("h-expr", False),
         ]

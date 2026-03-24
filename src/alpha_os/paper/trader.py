@@ -484,7 +484,7 @@ class Trader:
         return build_runtime_profile(
             asset=self.asset,
             config=self.config,
-            live_hypothesis_ids=[record.alpha_id for record in records],
+            live_hypothesis_ids=[record.hypothesis_id for record in records],
         )
 
     @staticmethod
@@ -515,7 +515,7 @@ class Trader:
         n_failed = 0
 
         for record in records:
-            if record.alpha_id in store_signals:
+            if record.hypothesis_id in store_signals:
                 parsed_records.append((record, None))
                 continue
             if not record.expression:
@@ -524,14 +524,14 @@ class Trader:
             try:
                 expr = parse(record.expression)
             except SyntaxError as exc:
-                logger.warning("Failed to parse %s: %s", record.alpha_id, exc)
+                logger.warning("Failed to parse %s: %s", record.hypothesis_id, exc)
                 n_failed += 1
                 continue
             issues = temporal_expression_issues(expr)
             if issues:
                 logger.warning(
                     "Skipping structurally invalid %s: %s",
-                    record.alpha_id,
+                    record.hypothesis_id,
                     issues[0],
                 )
                 n_failed += 1
@@ -641,7 +641,7 @@ class Trader:
             universe_records,
             lambda record: self._estimate_quality(
                 record,
-                self._quality_returns(record.alpha_id),
+                self._quality_returns(record.hypothesis_id),
             ),
             max_trading=max_trading,
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
@@ -749,12 +749,12 @@ class Trader:
                 pred_store = PredictionStore()
                 try:
                     for record, _expr in parsed_records:
-                        if record.alpha_id not in store_signals:
+                        if record.hypothesis_id not in store_signals:
                             continue
-                        value = store_signals[record.alpha_id]
-                        store_signal_arrays[record.alpha_id] = self._prediction_history_array(
+                        value = store_signals[record.hypothesis_id]
+                        store_signal_arrays[record.hypothesis_id] = self._prediction_history_array(
                             pred_store,
-                            record.alpha_id,
+                            record.hypothesis_id,
                             self.asset,
                             n_days=len(matrix),
                             fallback_value=value,
@@ -766,7 +766,7 @@ class Trader:
 
         filtered_records: list[tuple] = []
         for record, expr in parsed_records:
-            if record.alpha_id in store_signals:
+            if record.hypothesis_id in store_signals:
                 filtered_records.append((record, expr))
                 continue
             required = collect_feature_names(expr)
@@ -778,9 +778,9 @@ class Trader:
         for record, expr in filtered_records:
             try:
                 # Use prediction store if available, else compute directly
-                if record.alpha_id in store_signals:
-                    signal_yesterday = store_signals[record.alpha_id]
-                    signal_norm = store_signal_arrays.get(record.alpha_id)
+                if record.hypothesis_id in store_signals:
+                    signal_yesterday = store_signals[record.hypothesis_id]
+                    signal_norm = store_signal_arrays.get(record.hypothesis_id)
                     if signal_norm is None:
                         signal_norm = np.full(len(matrix), signal_yesterday, dtype=np.float64)
                     n_from_store += 1
@@ -800,25 +800,25 @@ class Trader:
                 daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
                 if np.isfinite(signal_yesterday):
-                    hypothesis_signals[record.alpha_id] = signal_yesterday
-                    hypothesis_signal_arrays[record.alpha_id] = signal_norm
+                    hypothesis_signals[record.hypothesis_id] = signal_yesterday
+                    hypothesis_signal_arrays[record.hypothesis_id] = signal_norm
                 n_evaluated += 1
 
                 # Record per-hypothesis forward return (daily granularity)
                 self.forward_tracker.record(
-                    record.alpha_id, today_date, signal_yesterday, daily_return,
+                    record.hypothesis_id, today_date, signal_yesterday, daily_return,
                 )
 
                 # Monitor and quality estimate
-                all_returns = self._quality_returns(record.alpha_id)
+                all_returns = self._quality_returns(record.hypothesis_id)
                 recent_returns = all_returns[-self.config.forward.degradation_window:]
-                self.monitor.clear(record.alpha_id)
-                self.monitor.record_batch(record.alpha_id, recent_returns)
+                self.monitor.clear(record.hypothesis_id)
+                self.monitor.record_batch(record.hypothesis_id, recent_returns)
                 estimate = self._estimate_quality(record, all_returns)
-                quality_estimates[record.alpha_id] = estimate
+                quality_estimates[record.hypothesis_id] = estimate
 
             except EvaluationError as exc:
-                logger.warning("Failed to evaluate %s: %s", record.alpha_id, exc)
+                logger.warning("Failed to evaluate %s: %s", record.hypothesis_id, exc)
                 n_failed += 1
 
         if n_from_store:
@@ -843,8 +843,8 @@ class Trader:
 
         # 3d. Correlation filter: select top-N decorrelated capital-backed hypotheses.
         selection_signal_ids = {
-            record.alpha_id for record in trading_candidates
-            if record.alpha_id in hypothesis_signals
+            record.hypothesis_id for record in trading_candidates
+            if record.hypothesis_id in hypothesis_signals
         }
         if len(selection_signal_ids) > max_trading:
             from alpha_os.hypotheses.breadth import hypothesis_signal_series
@@ -856,18 +856,18 @@ class Trader:
             lookback = min(252, len(matrix))
             signal_histories: list[np.ndarray] = []
             filtered_candidate_ids: list[str] = []
-            record_map = {record.alpha_id: record for record in trading_candidates}
-            for aid in candidate_ids:
-                record = record_map.get(aid)
+            record_map = {record.hypothesis_id: record for record in trading_candidates}
+            for hypothesis_id in candidate_ids:
+                record = record_map.get(hypothesis_id)
                 history = None
                 if record is not None:
                     history = hypothesis_signal_series(record, data=data, asset=self.asset)
                 if history is None:
-                    history = hypothesis_signal_arrays.get(aid)
+                    history = hypothesis_signal_arrays.get(hypothesis_id)
                 if history is None:
                     continue
                 signal_histories.append(np.asarray(history[-lookback:], dtype=np.float64))
-                filtered_candidate_ids.append(aid)
+                filtered_candidate_ids.append(hypothesis_id)
             candidate_ids = filtered_candidate_ids
             sig_matrix = np.array(signal_histories)
             quality_for_sel = np.array([
@@ -887,18 +887,18 @@ class Trader:
             )
         else:
             hypothesis_signals = {
-                aid: hypothesis_signals[aid]
-                for aid in selection_signal_ids
+                hypothesis_id: hypothesis_signals[hypothesis_id]
+                for hypothesis_id in selection_signal_ids
             }
         selected_records = [
-            r for r in trading_candidates if r.alpha_id in hypothesis_signals
+            r for r in trading_candidates if r.hypothesis_id in hypothesis_signals
         ]
 
         # 4. Prediction layer: hypothesis signals -> final portfolio signal
         hypothesis_stakes = {
-            r.alpha_id: r.stake
+            r.hypothesis_id: r.stake
             for r in selected_records
-            if r.alpha_id in hypothesis_signals
+            if r.hypothesis_id in hypothesis_signals
         }
         prev_value = prev_equity
         prediction = self._predict_portfolio_signal(
