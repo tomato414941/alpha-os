@@ -1420,6 +1420,64 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     assert "Promote:   obs=1 quality=1 contrib=0 both=0 signal=0" in output
 
 
+def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.validation.testnet import readiness_paths
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="h1",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+        metadata={"lifecycle_actionable_live": True, "lifecycle_live_proven": True},
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h2",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=0.0,
+        metadata={
+            "lifecycle_actionable_live": True,
+            "lifecycle_live_proven": True,
+            "lifecycle_redundancy_capped_by": "h1",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h3",
+        kind="dsl",
+        definition={"expression": "z"},
+        stake=0.0,
+        metadata={"lifecycle_actionable_live": True, "lifecycle_live_proven": True},
+    ))
+    store.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 0,
+        "total_days_run": 0,
+        "last_success_date": None,
+        "last_run_date": None,
+        "last_profile_id": "",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text("")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "Actionable: backed=1 redundancy_capped=1 other_dropped=1" in output
+
+
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

@@ -2548,6 +2548,8 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     bootstrap_capital_backed = 0
     batch_research_capital_backed = 0
     actionable_live_capital_backed = 0
+    actionable_redundancy_capped = 0
+    actionable_other_dropped = 0
     blocker_counts = {
         "insufficient_observations": 0,
         "weak_live_quality": 0,
@@ -2587,6 +2589,11 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
                 promoted_live += 1
         if bool(record.metadata.get("lifecycle_actionable_live", False)):
             actionable_live += 1
+            if stake <= 0:
+                if record.metadata.get("lifecycle_redundancy_capped_by"):
+                    actionable_redundancy_capped += 1
+                else:
+                    actionable_other_dropped += 1
         if stake > 0:
             if cohort == "live":
                 actionable_live_capital_backed += 1
@@ -2618,6 +2625,8 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "bootstrap_capital_backed": bootstrap_capital_backed,
         "batch_research_capital_backed": batch_research_capital_backed,
         "actionable_live_capital_backed": actionable_live_capital_backed,
+        "actionable_redundancy_capped": actionable_redundancy_capped,
+        "actionable_other_dropped": actionable_other_dropped,
         "promotion_blockers": blocker_counts,
         "top_allocation": _top_runtime_hypotheses(records, "stake"),
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
@@ -2743,6 +2752,16 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"live={hypothesis_summary['live_proven']}/"
         f"{hypothesis_summary['actionable_live_capital_backed']}"
     )
+    if (
+        hypothesis_summary["actionable_redundancy_capped"] > 0
+        or hypothesis_summary["actionable_other_dropped"] > 0
+    ):
+        print(
+            "  Actionable:"
+            f" backed={hypothesis_summary['actionable_live_capital_backed']}"
+            f" redundancy_capped={hypothesis_summary['actionable_redundancy_capped']}"
+            f" other_dropped={hypothesis_summary['actionable_other_dropped']}"
+        )
     blocker_counts = hypothesis_summary["promotion_blockers"]
     if any(blocker_counts.values()):
         print(
