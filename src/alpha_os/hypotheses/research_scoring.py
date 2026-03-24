@@ -55,6 +55,7 @@ def is_exploratory_unscored(record: HypothesisRecord) -> bool:
         and record.kind == HypothesisKind.DSL
         and record.source == "random_dsl"
         and str(record.metadata.get("research_quality_status", "unscored")) == "unscored"
+        and bool(expression_feature_names(record.expression))
     )
 
 

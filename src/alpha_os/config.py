@@ -235,6 +235,7 @@ class AlphaGeneratorConfig:
     round_interval: int = 300
     memory_limit_mb: int = 400
     feature_subset_k: int = 27
+    min_feature_catalog_size: int = 100
     mutate_ratio: float = 0.5
     promote_per_round: int = 25
     promotion_min_fitness: float = 0.0

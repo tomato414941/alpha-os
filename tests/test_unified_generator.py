@@ -37,6 +37,7 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     cfg = Config()
     cfg.alpha_generator.pop_size = 2
     cfg.alpha_generator.feature_subset_k = 3
+    cfg.alpha_generator.min_feature_catalog_size = 1
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
@@ -94,6 +95,7 @@ def test_hypothesis_seeder_skips_structurally_invalid_dsl_candidates(
     cfg = Config()
     cfg.alpha_generator.pop_size = 2
     cfg.alpha_generator.feature_subset_k = 3
+    cfg.alpha_generator.min_feature_catalog_size = 1
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
@@ -127,6 +129,7 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     )
 
     cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
 
@@ -177,6 +180,7 @@ def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_ds
     )
 
     cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
     expr = Feature("fear_greed")
@@ -219,7 +223,7 @@ def test_hypothesis_seeder_skips_random_dsl_that_matches_live_diversity_key(
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "btc_usdt"],
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed", "dxy", "btc_usdt"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -227,6 +231,7 @@ def test_hypothesis_seeder_skips_random_dsl_that_matches_live_diversity_key(
     )
 
     cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
 
@@ -256,6 +261,77 @@ def test_hypothesis_seeder_skips_random_dsl_that_matches_live_diversity_key(
     assert skipped == 1
     assert len(rows) == 2
     assert any(row.definition["expression"] == to_string(Feature("btc_usdt")) for row in rows)
+
+    daemon.close()
+
+
+def test_hypothesis_seeder_skips_featureless_random_dsl(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed"],
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    inserted, skipped = daemon._register_random_dsl([Constant(1.23), Feature("fear_greed")])
+    rows = [row for row in store.list_all() if row.source == "random_dsl"]
+
+    assert inserted == 1
+    assert skipped == 1
+    assert len(rows) == 1
+    assert rows[0].definition["expression"] == "fear_greed"
+
+    daemon.close()
+
+
+def test_hypothesis_seeder_retries_api_when_cached_catalog_is_too_small(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    calls: list[tuple[bool, bool]] = []
+
+    def _build_feature_list(asset, client=None, prefer_cache=False, refresh_catalog=False):
+        calls.append((prefer_cache, refresh_catalog))
+        if prefer_cache:
+            return ["btc_ohlcv", "sig_60", "sig_86400"]
+        return ["btc_ohlcv"] + [f"sig_{idx}" for idx in range(150)]
+
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        _build_feature_list,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.pop_size = 2
+    cfg.alpha_generator.feature_subset_k = 3
+    cfg.alpha_generator.min_feature_catalog_size = 100
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    stats = daemon._run_round()
+
+    assert calls == [(True, False), (False, True)]
+    assert stats.generated_dsl == 2
+    assert stats.inserted_dsl == 2
 
     daemon.close()
 
@@ -294,7 +370,7 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -302,6 +378,7 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(
     )
 
     cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
     store = HypothesisStore(tmp_path / "hypotheses.db")
     daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
 

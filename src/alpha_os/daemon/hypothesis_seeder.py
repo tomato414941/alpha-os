@@ -115,8 +115,27 @@ class HypothesisSeederDaemon:
             self._client,
             prefer_cache=True,
         )
+        if len(all_features) < self.generator_cfg.min_feature_catalog_size:
+            logger.warning(
+                "Cached feature catalog too small for seeding: %d < %d; retrying API/catalog refresh",
+                len(all_features),
+                self.generator_cfg.min_feature_catalog_size,
+            )
+            all_features = build_feature_list(
+                self.primary_asset,
+                self._client,
+                prefer_cache=False,
+                refresh_catalog=True,
+            )
         if not all_features:
             logger.warning("No features available, skipping round")
+            return SeedingRoundStats(0, 0, 0, 0, 0, 0.0)
+        if len(all_features) < self.generator_cfg.min_feature_catalog_size:
+            logger.warning(
+                "Feature catalog too small after refresh: %d < %d; skipping round",
+                len(all_features),
+                self.generator_cfg.min_feature_catalog_size,
+            )
             return SeedingRoundStats(0, 0, 0, 0, 0, 0.0)
 
         feature_subset = stratified_feature_subset(
@@ -170,6 +189,10 @@ class HypothesisSeederDaemon:
                 logger.debug("Skipping invalid DSL candidate %r: %s", expr, issues[0])
                 continue
             expression = to_string(expr)
+            if not expression_feature_names(expression):
+                skipped += 1
+                logger.debug("Skipping featureless DSL candidate %r", expression)
+                continue
             hypothesis_id = self._dsl_hypothesis_id(expression)
             if hypothesis_id in seen_ids:
                 skipped += 1

@@ -96,6 +96,11 @@ def signal_catalog_status() -> SignalCatalogStatus:
     return _signal_catalog_status
 
 
+def _is_daily_signal(entry: dict) -> bool:
+    interval = entry.get("interval")
+    return interval in (None, 86400)
+
+
 def _classify_error(exc: Exception) -> str:
     name = exc.__class__.__name__.lower()
     message = str(exc).lower()
@@ -196,17 +201,21 @@ def load_daily_signals(
     client: SignalClient | None = None,
     *,
     prefer_cache: bool = False,
+    refresh: bool = False,
 ) -> list[str]:
     """Load available signal names from signal-noise API.
 
     Falls back to local cache, then to static list.
     The client parameter should come from Config — no hardcoded URLs.
     """
-    global _daily_signal_cache
+    global _daily_signal_cache, _signal_catalog_cache
+    if refresh:
+        _daily_signal_cache = None
+        _signal_catalog_cache = None
     if _daily_signal_cache is not None:
         return _daily_signal_cache
     catalog = _load_signal_catalog(client, prefer_cache=prefer_cache)
-    names = sorted(s["name"] for s in catalog)
+    names = sorted(s["name"] for s in catalog if _is_daily_signal(s))
     _daily_signal_cache = names
     return names
 
@@ -310,13 +319,18 @@ def build_feature_list(
     client: SignalClient | None = None,
     *,
     prefer_cache: bool = False,
+    refresh_catalog: bool = False,
 ) -> list[str]:
     """Build deduplicated feature list: price signal first, then all daily signals."""
     try:
         price = price_signal(asset)
     except KeyError:
         price = asset.lower()
-    daily = load_daily_signals(client, prefer_cache=prefer_cache)
+    daily = load_daily_signals(
+        client,
+        prefer_cache=prefer_cache,
+        refresh=refresh_catalog,
+    )
     seen = {price}
     result = [price]
     for s in daily:

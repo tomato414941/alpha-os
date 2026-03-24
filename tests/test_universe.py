@@ -28,7 +28,7 @@ class _FakeClient:
 def test_load_daily_signals_from_client(monkeypatch):
     client = _FakeClient()
     names = universe.load_daily_signals(client)
-    assert names == ["sig_3600", "sig_60", "sig_86400"]
+    assert names == ["sig_86400"]
     status = universe.signal_catalog_status()
     assert status.source == "api"
     assert status.signal_count == 3
@@ -56,7 +56,7 @@ def test_load_daily_signals_falls_back_to_cached_catalog(monkeypatch, tmp_path):
     monkeypatch.setattr(universe, "_CATALOG_CACHE_PATH", cache_path)
 
     names = universe.load_daily_signals(_BrokenClient())
-    assert names == ["sig_cached_a", "sig_cached_b"]
+    assert names == ["sig_cached_b"]
     status = universe.signal_catalog_status()
     assert status.source == "cache"
     assert status.api_error_kind == "timeout"
@@ -105,6 +105,23 @@ def test_load_daily_signals_prefer_cache_skips_client(monkeypatch, tmp_path):
     assert names == ["cached_sig"]
 
 
+def test_load_daily_signals_refresh_bypasses_process_cache(monkeypatch):
+    calls = {"n": 0}
+
+    class _Client:
+        def list_signals(self):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return [{"name": "cached_sig", "interval": 86400}]
+            return [{"name": "fresh_sig", "interval": 86400}]
+
+    first = universe.load_daily_signals(_Client())
+    second = universe.load_daily_signals(_Client(), refresh=True)
+
+    assert first == ["cached_sig"]
+    assert second == ["fresh_sig"]
+
+
 def test_init_universe():
     universe.CROSS_ASSET_UNIVERSE = []
     universe.FEATURE_CATALOG = []
@@ -113,5 +130,5 @@ def test_init_universe():
     # Only OHLCV signals in universe
     assert result == ["sig_86400"]
     assert universe.CROSS_ASSET_UNIVERSE == ["sig_86400"]
-    # All signals in feature catalog
-    assert len(universe.FEATURE_CATALOG) == 3
+    # Daily-only signals in feature catalog
+    assert universe.FEATURE_CATALOG == ["sig_86400"]

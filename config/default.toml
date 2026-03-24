@@ -133,6 +133,7 @@ pop_size = 80              # candidates per round (random + archive mutation)
 round_interval = 60        # seconds between rounds
 memory_limit_mb = 700      # soft RSS limit, halve budget if exceeded
 feature_subset_k = 27      # features per stratified subset
+min_feature_catalog_size = 100 # skip/retry if cached catalog is too narrow
 mutate_ratio = 0.5         # fraction of budget from archive mutation (rest is random)
 promote_per_round = 25     # max discovery-pool entries queued into candidates each round
 promotion_min_fitness = 0.0

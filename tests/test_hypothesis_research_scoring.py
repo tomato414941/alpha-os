@@ -67,6 +67,35 @@ def test_exploratory_scoring_candidates_filter_and_features(tmp_path):
     store.close()
 
 
+def test_exploratory_scoring_candidates_skip_featureless_random_dsl(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="dsl_constant",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "1.23"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="dsl_featured",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+
+    candidates = exploratory_scoring_candidates(store.list_observation_active())
+
+    assert [record.hypothesis_id for record in candidates] == ["dsl_featured"]
+    store.close()
+
+
 def test_exploratory_scoring_candidates_prioritize_novel_families(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(
