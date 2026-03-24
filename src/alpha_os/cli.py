@@ -2672,6 +2672,84 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     }
 
 
+def _runtime_actionable_window_summary(
+    *,
+    asset: str,
+    lookback: int,
+    supports_short: bool,
+) -> dict[str, float] | None:
+    from alpha_os.hypotheses.store import HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker
+
+    tracker = PaperPortfolioTracker(db_path=asset_data_dir(asset) / "paper_trading.db")
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        records = store.list_active()
+        if not records:
+            return None
+
+        ratios: list[float] = []
+        mean_actions: list[float] = []
+        rows: list[np.ndarray] = []
+        expressing = 0
+
+        for record in records:
+            history = tracker.get_alpha_signal_history(record.hypothesis_id, limit=lookback)
+            if not history:
+                continue
+            values = np.asarray([float(v) for v in history], dtype=np.float64)
+            if supports_short:
+                actionable = np.abs(values)
+            else:
+                actionable = np.maximum(values, 0.0)
+            actionable = np.nan_to_num(actionable, nan=0.0, posinf=0.0, neginf=0.0)
+            if actionable.size == 0:
+                continue
+            ratio = float(np.count_nonzero(actionable > 1e-12) / actionable.size)
+            mean_action = float(actionable.mean())
+            ratios.append(ratio)
+            mean_actions.append(mean_action)
+            if np.any(actionable > 1e-12):
+                expressing += 1
+            if actionable.size >= 2 and float(np.nanstd(actionable)) > 1e-12:
+                rows.append(actionable)
+
+        tracked = len(ratios)
+        if tracked == 0:
+            return None
+
+        breadth = 0.0
+        if len(rows) == 1:
+            breadth = 1.0
+        elif len(rows) >= 2:
+            min_len = min(len(row) for row in rows)
+            if min_len >= 2:
+                aligned = np.vstack([row[-min_len:] for row in rows])
+                non_constant = aligned[np.nanstd(aligned, axis=1) > 1e-12]
+                if non_constant.shape[0] == 1:
+                    breadth = 1.0
+                elif non_constant.shape[0] >= 2:
+                    corr = np.corrcoef(non_constant)
+                    corr = np.nan_to_num(corr, nan=0.0, posinf=0.0, neginf=0.0)
+                    eigvals = np.linalg.eigvalsh(corr)
+                    eigvals = np.clip(np.real(eigvals), 0.0, None)
+                    denom = float(np.square(eigvals).sum())
+                    if denom > 1e-12:
+                        breadth = float(np.square(eigvals.sum()) / denom)
+
+        return {
+            "lookback": float(lookback),
+            "tracked": float(tracked),
+            "expressing": float(expressing),
+            "mean_ratio": float(sum(ratios) / tracked),
+            "mean_action": float(sum(mean_actions) / tracked),
+            "breadth": breadth,
+        }
+    finally:
+        store.close()
+        tracker.close()
+
+
 def _runtime_observation_findings(
     latest: dict | None,
     current_live_count: int,
@@ -2749,6 +2827,11 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     hypotheses = _hypothesis_status()
     runtime_ids = _live_hypothesis_ids()
     hypothesis_summary = _runtime_hypothesis_summary()
+    actionable_window = _runtime_actionable_window_summary(
+        asset=args.asset,
+        lookback=cfg.forward.degradation_window,
+        supports_short=cfg.trading.supports_short,
+    )
     current_profile = _current_runtime_profile(cfg, args.asset)
     findings = _runtime_observation_findings(latest, len(runtime_ids))
 
@@ -2801,6 +2884,16 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         )
     if hypothesis_summary["top_actionable_capped"]:
         print("  TopCap:    " + ", ".join(hypothesis_summary["top_actionable_capped"]))
+    if actionable_window is not None:
+        print(
+            "  ActionWin: "
+            f"lookback={int(actionable_window['lookback'])} "
+            f"tracked={int(actionable_window['tracked'])} "
+            f"expressing={int(actionable_window['expressing'])} "
+            f"mean_ratio={actionable_window['mean_ratio']:.3f} "
+            f"mean_action={actionable_window['mean_action']:.3f} "
+            f"breadth={actionable_window['breadth']:.2f}"
+        )
     blocker_counts = hypothesis_summary["promotion_blockers"]
     if any(blocker_counts.values()):
         print(

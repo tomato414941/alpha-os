@@ -1515,6 +1515,58 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
     assert "TopCap:    h2->h1(corr=0.91)" in output
 
 
+def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker
+    from alpha_os.validation.testnet import readiness_paths
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="h1",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="h2",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=1.0,
+    ))
+    store.close()
+
+    tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
+    for idx, (h1, h2) in enumerate([(0.3, 0.0), (0.0, 0.2), (0.1, 0.0)], start=1):
+        date = f"2026-03-0{idx}T00:00:00"
+        tracker.save_alpha_signals(date, {"h1": h1, "h2": h2})
+    tracker.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 0,
+        "total_days_run": 0,
+        "last_success_date": None,
+        "last_run_date": None,
+        "last_profile_id": "",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text("")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "ActionWin: lookback=63 tracked=2 expressing=2" in output
+
+
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
