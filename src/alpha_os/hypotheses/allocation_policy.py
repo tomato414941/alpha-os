@@ -147,14 +147,18 @@ def is_capital_eligible(
         research_quality_source=research_quality_source,
         floor=floor,
     )
-    research_retained = research_backed and (
-        not has_min_observations
-        or live_quality >= bootstrap_retention_quality_min
-        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
-    )
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
+    )
+    research_retained = (
+        research_backed
+        and not live_proven
+        and (
+            not has_min_observations
+            or live_quality >= bootstrap_retention_quality_min
+            or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+        )
     )
     return research_retained or live_proven
 
@@ -189,21 +193,23 @@ def capital_eligibility_breakdown(
         research_quality_source=research_quality_source,
         floor=floor,
     )
-    research_retained = research_backed and (
-        not has_min_observations
-        or live_quality >= bootstrap_retention_quality_min
-        or marginal_contribution >= bootstrap_retention_marginal_contribution_min
-    )
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
     )
-    if research_retained and live_proven:
-        reason = "research_and_live"
+    research_retained = (
+        research_backed
+        and not live_proven
+        and (
+            not has_min_observations
+            or live_quality >= bootstrap_retention_quality_min
+            or marginal_contribution >= bootstrap_retention_marginal_contribution_min
+        )
+    )
+    if live_proven:
+        reason = "live_proven"
     elif research_retained:
         reason = "research_backed"
-    elif live_proven:
-        reason = "live_proven"
     elif research_backed:
         reason = "research_demoted"
     else:
