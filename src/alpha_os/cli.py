@@ -1405,7 +1405,7 @@ def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
     return live_returns_for
 
 
-def _build_signal_activity_getter(portfolio_tracker, *, lookback: int):
+def _build_signal_activity_getter(portfolio_tracker, *, lookback: int, supports_short: bool):
     if portfolio_tracker is None:
         return None
     getter = getattr(portfolio_tracker, "get_alpha_signal_history", None)
@@ -1416,9 +1416,15 @@ def _build_signal_activity_getter(portfolio_tracker, *, lookback: int):
         values = [float(v) for v in getter(hypothesis_id, limit=lookback)]
         if not values:
             return 0.0, 0.0
-        nonzero = sum(1 for v in values if abs(v) > 1e-12)
-        mean_abs = sum(abs(v) for v in values) / len(values)
-        return nonzero / len(values), mean_abs
+        if supports_short:
+            nonzero = sum(1 for v in values if abs(v) > 1e-12)
+            mean_abs = sum(abs(v) for v in values) / len(values)
+            return nonzero / len(values), mean_abs
+        positive = [v for v in values if v > 1e-12]
+        if not positive:
+            return 0.0, 0.0
+        mean_positive = sum(positive) / len(values)
+        return len(positive) / len(values), mean_positive
 
     return signal_activity_for
 
@@ -1459,6 +1465,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     signal_activity_for = _build_signal_activity_getter(
         trader.portfolio_tracker,
         lookback=cfg.forward.degradation_window,
+        supports_short=cfg.trading.supports_short,
     )
     plan = build_allocation_rebalance_plan(
         trader.registry,
@@ -1910,6 +1917,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
         signal_activity_for = _build_signal_activity_getter(
             portfolio_tracker,
             lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
         )
         plan = build_allocation_rebalance_plan(
             store,
@@ -2117,6 +2125,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
         signal_activity_for = _build_signal_activity_getter(
             portfolio_tracker,
             lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
         )
         summary = backfill_observation_returns(
             hypothesis_store=store,

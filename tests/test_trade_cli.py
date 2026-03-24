@@ -110,6 +110,40 @@ def test_trade_runtime_lock_path():
     assert path.parent.name == "locks"
 
 
+def test_build_signal_activity_getter_uses_positive_activity_for_long_only():
+    from alpha_os.cli import _build_signal_activity_getter
+
+    class _Tracker:
+        def get_alpha_signal_history(self, alpha_id, limit=20):
+            assert alpha_id == "h1"
+            assert limit == 5
+            return [-1.0, -0.5, 0.0, 0.2, 0.4]
+
+    getter = _build_signal_activity_getter(_Tracker(), lookback=5, supports_short=False)
+
+    assert getter is not None
+    ratio, mean_signal = getter("h1")
+    assert ratio == pytest.approx(2 / 5)
+    assert mean_signal == pytest.approx((0.2 + 0.4) / 5)
+
+
+def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
+    from alpha_os.cli import _build_signal_activity_getter
+
+    class _Tracker:
+        def get_alpha_signal_history(self, alpha_id, limit=20):
+            assert alpha_id == "h1"
+            assert limit == 5
+            return [-1.0, -0.5, 0.0, 0.2, 0.4]
+
+    getter = _build_signal_activity_getter(_Tracker(), lookback=5, supports_short=True)
+
+    assert getter is not None
+    ratio, mean_signal = getter("h1")
+    assert ratio == pytest.approx(4 / 5)
+    assert mean_signal == pytest.approx((1.0 + 0.5 + 0.2 + 0.4) / 5)
+
+
 def test_needs_trade_evolution_supports_hypothesis_registry():
     from alpha_os.cli import _needs_trade_evolution
 
