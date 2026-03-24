@@ -284,13 +284,18 @@ class Trader:
         )
 
     def _quality_returns(self, alpha_id: str) -> list[float]:
-        getter = getattr(self.forward_tracker, "get_realizable_returns", None)
+        getter = getattr(self.forward_tracker, "get_hypothesis_realizable_returns", None)
+        if getter is None:
+            getter = getattr(self.forward_tracker, "get_realizable_returns", None)
         if getter is not None:
             return getter(
                 alpha_id,
                 supports_short=self.executor.supports_short,
             )
-        return self.forward_tracker.get_returns(alpha_id)
+        getter = getattr(self.forward_tracker, "get_hypothesis_returns", None)
+        if getter is None:
+            getter = self.forward_tracker.get_returns
+        return getter(alpha_id)
 
     def _baseline_portfolio_value(self, snapshot=None) -> float:
         """Use the persisted snapshot value as the paper baseline when available."""

@@ -1396,9 +1396,14 @@ def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
 def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
     if forward_tracker is None:
         return None
-    getter = getattr(forward_tracker, "get_realizable_returns", None)
+    getter = getattr(forward_tracker, "get_hypothesis_realizable_returns", None)
     if getter is None:
-        return getattr(forward_tracker, "get_returns", None)
+        getter = getattr(forward_tracker, "get_realizable_returns", None)
+    if getter is None:
+        return (
+            getattr(forward_tracker, "get_hypothesis_returns", None)
+            or getattr(forward_tracker, "get_returns", None)
+        )
 
     def live_returns_for(hypothesis_id: str):
         return getter(hypothesis_id, supports_short=supports_short)
