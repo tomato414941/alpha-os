@@ -503,6 +503,21 @@ def test_runtime_status_parser():
     assert args.asset == "BTC"
 
 
+def test_analyze_latest_combine_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "analyze-latest-combine",
+        "--asset", "BTC",
+        "--top", "3",
+    ])
+
+    assert args.command == "analyze-latest-combine"
+    assert args.asset == "BTC"
+    assert args.top == 3
+
+
 def test_sync_signal_cache_parser():
     from alpha_os.cli import _build_parser
 
@@ -1403,6 +1418,82 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
 
     assert "Cohorts:   bootstrap=0/0 batch=0/0 live=0/0" in output
     assert "Promote:   obs=1 quality=1 contrib=0 both=0" in output
+
+
+def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_latest_combine
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="boot",
+        kind="technical",
+        definition={"indicator": "x"},
+        stake=1.0,
+        metadata={
+            "lifecycle_research_retained": True,
+            "lifecycle_research_quality_source": "bootstrap_seed",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="batch",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+        metadata={
+            "lifecycle_research_retained": True,
+            "lifecycle_research_quality_source": "batch_research_score",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="live",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=1.0,
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_research_quality_source": "batch_research_score",
+        },
+    ))
+    store.close()
+
+    tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
+    tracker.save_snapshot(PortfolioSnapshot(
+        date="2026-03-23T00:00:00",
+        cash=1000.0,
+        positions={},
+        portfolio_value=1000.0,
+        daily_pnl=0.0,
+        daily_return=0.0,
+        combined_signal=0.1234,
+        dd_scale=1.0,
+        vol_scale=1.0,
+        final_signal=0.1234,
+    ))
+    tracker.save_alpha_signals(
+        "2026-03-23T00:00:00",
+        {"boot": 0.3, "batch": -0.2, "live": 0.1},
+    )
+    tracker.close()
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
+    output = capsys.readouterr().out
+
+    assert "Latest Combine (BTC)" in output
+    assert "Combined:  stored=+0.123400" in output
+    assert "Cohorts:   bootstrap n=1" in output
+    assert "batch n=1" in output
+    assert "live n=1" in output
+    assert "Top:       boot cohort=bootstrap" in output
+    assert "Top:       batch cohort=batch" in output
+    assert "Top:       live cohort=live" in output
 
 
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):

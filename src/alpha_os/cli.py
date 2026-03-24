@@ -219,6 +219,14 @@ def _build_parser() -> argparse.ArgumentParser:
     alb.add_argument("--lookback", type=int, default=252)
     alb.add_argument("--top-pairs", type=int, default=5)
 
+    alc = sub.add_parser(
+        "analyze-latest-combine",
+        help="Decompose the latest selected alpha signals by runtime cohort",
+    )
+    alc.add_argument("--asset", type=str, default="BTC")
+    alc.add_argument("--config", type=str, default=None)
+    alc.add_argument("--top", type=int, default=5)
+
     bor = sub.add_parser(
         "backfill-observation-returns",
         help="Backfill observation-only forward returns for active hypotheses from cached history",
@@ -2455,6 +2463,17 @@ def _top_runtime_hypotheses(records, metric_key: str, *, n: int = 3) -> list[str
     ]
 
 
+def _runtime_cohort(record) -> str:
+    metadata = getattr(record, "metadata", {}) or {}
+    if bool(metadata.get("lifecycle_live_proven", False)):
+        return "live"
+    if bool(metadata.get("lifecycle_research_retained", False)):
+        if str(metadata.get("lifecycle_research_quality_source", "")) == "batch_research_score":
+            return "batch"
+        return "bootstrap"
+    return "other"
+
+
 def _runtime_hypothesis_summary() -> dict[str, object]:
     from alpha_os.hypotheses.store import HypothesisStore
 
@@ -2502,22 +2521,21 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
                 observed += 1
         except (TypeError, ValueError):
             pass
+        cohort = _runtime_cohort(record)
         if bool(record.metadata.get("lifecycle_research_retained", False)):
             research_retained += 1
-            source = str(record.metadata.get("lifecycle_research_quality_source", ""))
-            if source == "batch_research_score":
+            if cohort == "batch":
                 batch_research_retained += 1
-            else:
+            elif cohort == "bootstrap":
                 bootstrap_research_retained += 1
         if bool(record.metadata.get("lifecycle_live_proven", False)):
             live_proven += 1
             if bootstrap_trust <= 0:
                 promoted_live += 1
         if stake > 0:
-            source = str(record.metadata.get("lifecycle_research_quality_source", ""))
-            if bool(record.metadata.get("lifecycle_live_proven", False)):
+            if cohort == "live":
                 live_proven_capital_backed += 1
-            elif source == "batch_research_score":
+            elif cohort == "batch":
                 batch_research_capital_backed += 1
             else:
                 bootstrap_capital_backed += 1
@@ -2750,6 +2768,86 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             "  Note:      current runtime live count differs from latest readiness report; "
             "the next trade cycle will refresh the report."
         )
+
+
+def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
+    from alpha_os.hypotheses.combiner import compute_stake_weights
+    from alpha_os.hypotheses.store import HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker
+
+    tracker = PaperPortfolioTracker(db_path=asset_data_dir(args.asset) / "paper_trading.db")
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        snapshot = tracker.get_last_snapshot()
+        print(f"Latest Combine ({args.asset.upper()})")
+        if snapshot is None:
+            print("  No portfolio snapshots yet.")
+            return
+
+        signals = tracker.get_alpha_signals(snapshot.date)
+        if not signals:
+            print(f"  No alpha signals saved for snapshot {snapshot.date}.")
+            return
+
+        record_map = {
+            record.hypothesis_id: record
+            for record in store.list_observation_active()
+        }
+        stakes = {
+            alpha_id: float(record_map[alpha_id].stake)
+            for alpha_id in signals
+            if alpha_id in record_map and float(record_map[alpha_id].stake) > 0
+        }
+        weights = compute_stake_weights(stakes)
+        cohorts = {
+            "bootstrap": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "batch": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "live": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "other": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
+        }
+        ranked: list[tuple[float, str, str, float, float]] = []
+        for alpha_id, signal in signals.items():
+            record = record_map.get(alpha_id)
+            if record is None:
+                continue
+            cohort = _runtime_cohort(record)
+            weight = float(weights.get(alpha_id, 0.0))
+            contribution = weight * float(signal)
+            cohorts[cohort]["n"] += 1
+            cohorts[cohort]["weight"] += weight
+            cohorts[cohort]["weighted_signal"] += contribution
+            ranked.append((abs(contribution), alpha_id, cohort, weight, float(signal)))
+
+        current_combined = sum(
+            cohort["weighted_signal"]
+            for cohort in cohorts.values()
+        )
+        print(f"  Date:      {snapshot.date}")
+        print(
+            f"  Combined:  stored={float(snapshot.combined_signal):+.6f} "
+            f"current_weighted={current_combined:+.6f} selected={len(signals)}"
+        )
+        print(
+            "  Cohorts:   "
+            f"bootstrap n={cohorts['bootstrap']['n']} w={cohorts['bootstrap']['weight']:.3f} "
+            f"sig={cohorts['bootstrap']['weighted_signal']:+.6f} | "
+            f"batch n={cohorts['batch']['n']} w={cohorts['batch']['weight']:.3f} "
+            f"sig={cohorts['batch']['weighted_signal']:+.6f} | "
+            f"live n={cohorts['live']['n']} w={cohorts['live']['weight']:.3f} "
+            f"sig={cohorts['live']['weighted_signal']:+.6f}"
+        )
+        ranked.sort(reverse=True)
+        top_n = max(int(args.top), 1)
+        for _, alpha_id, cohort, weight, signal in ranked[:top_n]:
+            contribution = weight * signal
+            print(
+                "  Top:       "
+                f"{alpha_id} cohort={cohort} weight={weight:.4f} "
+                f"signal={signal:+.4f} contrib={contribution:+.6f}"
+            )
+    finally:
+        store.close()
+        tracker.close()
 
 
 def _resolve_signal_cache_targets(args: argparse.Namespace) -> list[str]:
@@ -3061,6 +3159,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_rebalance_allocation_trust(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
+    elif args.command == "analyze-latest-combine":
+        cmd_analyze_latest_combine(args)
     elif args.command == "backfill-observation-returns":
         cmd_backfill_observation_returns(args)
     elif args.command == "replay-experiment":
