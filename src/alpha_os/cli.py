@@ -10,6 +10,7 @@ import math
 import os
 import sys
 import time
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -2566,6 +2567,20 @@ def _runtime_cohort(record) -> str:
     return "other"
 
 
+def _top_batch_family_counts(records, *, backed_only: bool, n: int = 3) -> list[str]:
+    from alpha_os.hypotheses.identity import expression_feature_families
+
+    counts: Counter[str] = Counter()
+    for record in records:
+        if _runtime_cohort(record) != "batch":
+            continue
+        if backed_only and float(record.stake) <= 0:
+            continue
+        for family in set(expression_feature_families(record.expression)):
+            counts[family] += 1
+    return [f"{family}:{count}" for family, count in counts.most_common(n)]
+
+
 def _runtime_hypothesis_summary() -> dict[str, object]:
     from alpha_os.hypotheses.store import HypothesisStore
 
@@ -2674,6 +2689,8 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "top_raw_live": _top_runtime_hypotheses(records, "lifecycle_raw_live_quality"),
         "top_bootstrap": _top_runtime_hypotheses(records, "lifecycle_bootstrap_trust"),
         "top_actionable_capped": _top_actionable_redundancy_caps(records),
+        "batch_retained_families": _top_batch_family_counts(records, backed_only=False),
+        "batch_backed_families": _top_batch_family_counts(records, backed_only=True),
     }
 
 
@@ -2889,6 +2906,13 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         )
     if hypothesis_summary["top_actionable_capped"]:
         print("  TopCap:    " + ", ".join(hypothesis_summary["top_actionable_capped"]))
+    if (
+        hypothesis_summary["batch_retained_families"]
+        or hypothesis_summary["batch_backed_families"]
+    ):
+        retained = ", ".join(hypothesis_summary["batch_retained_families"]) or "-"
+        backed = ", ".join(hypothesis_summary["batch_backed_families"]) or "-"
+        print(f"  BatchFam:  retained={retained} backed={backed}")
     if actionable_window is not None:
         print(
             "  ActionWin: "

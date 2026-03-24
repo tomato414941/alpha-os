@@ -1515,6 +1515,63 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
     assert "TopCap:    h2->h1(corr=0.91)" in output
 
 
+def test_cmd_runtime_status_shows_batch_family_summary(monkeypatch, tmp_path, capsys):
+    import json
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_runtime_status
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.validation.testnet import readiness_paths
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(HypothesisRecord(
+        hypothesis_id="b1",
+        kind="dsl",
+        definition={"expression": "funding_rate_eth"},
+        stake=1.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_research_retained": True,
+            "lifecycle_research_quality_source": "batch_research_score",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="b2",
+        kind="dsl",
+        definition={"expression": "oi_eth"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_research_retained": True,
+            "lifecycle_research_quality_source": "batch_research_score",
+        },
+    ))
+    store.close()
+
+    state_path, report_path = readiness_paths(tmp_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "consecutive_success_days": 0,
+        "total_days_run": 0,
+        "last_success_date": None,
+        "last_run_date": None,
+        "last_profile_id": "",
+        "target_days": 10,
+        "passed": False,
+    }))
+    report_path.write_text("")
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+
+    cmd_runtime_status(Namespace(asset="BTC", config=None))
+    output = capsys.readouterr().out
+
+    assert "BatchFam:" in output
+    assert "retained=derivatives:2" in output
+    assert "backed=derivatives:1" in output
+
+
 def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_path, capsys):
     import json
     from argparse import Namespace
