@@ -19,7 +19,7 @@ MIN_STAKE_OBSERVATIONS = 10
 
 def _compute_daily_marginal_contributions(
     forward_db_path: str,
-    alpha_ids: list[str],
+    hypothesis_ids: list[str],
     stakes: dict[str, float],
     date: str,
 ) -> dict[str, float]:
@@ -29,11 +29,11 @@ def _compute_daily_marginal_contributions(
     portfolio_pnl = portfolio × price_return
     marginal_j = portfolio_pnl - portfolio_without_j_pnl
 
-    Returns {alpha_id: marginal_contribution}.
+    Returns {hypothesis_id: marginal_contribution}.
     """
     conn = sqlite3.connect(forward_db_path)
     rows = conn.execute(
-        "SELECT alpha_id, signal_value, daily_return FROM forward_returns WHERE date = ?",
+        "SELECT hypothesis_id, signal_value, daily_return FROM forward_returns WHERE date = ?",
         (date,),
     ).fetchall()
     conn.close()
@@ -43,16 +43,21 @@ def _compute_daily_marginal_contributions(
 
     # Build signal/return arrays for alphas with stake > 0
     signals: dict[str, float] = {}
-    for aid, sig_val, daily_ret in rows:
-        if aid in stakes and stakes[aid] > 0 and np.isfinite(sig_val):
-            signals[aid] = sig_val
+    for hypothesis_id, sig_val, daily_ret in rows:
+        if (
+            hypothesis_id in hypothesis_ids
+            and hypothesis_id in stakes
+            and stakes[hypothesis_id] > 0
+            and np.isfinite(sig_val)
+        ):
+            signals[hypothesis_id] = sig_val
 
     if len(signals) < 2:
         return {}
 
     # Infer price return from any alpha: daily_return = signal_value × price_return
     price_return = None
-    for aid, sig_val, daily_ret in rows:
+    for hypothesis_id, sig_val, daily_ret in rows:
         if abs(sig_val) > 1e-8 and np.isfinite(daily_ret):
             price_return = daily_ret / sig_val
             break
@@ -72,16 +77,16 @@ def _compute_daily_marginal_contributions(
 
     # Leave-one-out marginal for each alpha
     marginals: dict[str, float] = {}
-    for i, aid in enumerate(ids):
+    for i, hypothesis_id in enumerate(ids):
         remaining_stake = total_stake - stake_arr[i]
         if remaining_stake <= 0:
-            marginals[aid] = full_pnl
+            marginals[hypothesis_id] = full_pnl
             continue
         portfolio_without = float(
             (np.dot(stake_arr, sig_arr) - stake_arr[i] * sig_arr[i]) / remaining_stake
         )
         pnl_without = portfolio_without * price_return
-        marginals[aid] = full_pnl - pnl_without
+        marginals[hypothesis_id] = full_pnl - pnl_without
 
     return marginals
 

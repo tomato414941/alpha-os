@@ -232,12 +232,40 @@ class TestPaperPortfolioTracker:
         assert tracker.summary() is None
         tracker.close()
 
-    def test_alpha_signals(self, tmp_path):
+    def test_hypothesis_signals(self, tmp_path):
         db = tmp_path / "test.db"
         tracker = PaperPortfolioTracker(db)
         tracker.save_hypothesis_signals("2026-01-01", {"a1": 0.5, "a2": -0.3})
         tracker.save_hypothesis_signals("2026-01-01", {"a1": 0.6})  # upsert
         assert tracker.get_hypothesis_signals("2026-01-01") == {"a1": 0.6, "a2": -0.3}
+        tracker.close()
+
+    def test_legacy_alpha_signal_table_is_migrated(self, tmp_path):
+        db = tmp_path / "legacy_signals.db"
+        conn = sqlite3.connect(db)
+        conn.execute(
+            """
+            CREATE TABLE alpha_signals (
+                date TEXT NOT NULL,
+                alpha_id TEXT NOT NULL,
+                signal_value REAL NOT NULL,
+                PRIMARY KEY (date, alpha_id)
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO alpha_signals (date, alpha_id, signal_value) VALUES (?, ?, ?)",
+            ("2026-01-01", "h1", 0.25),
+        )
+        conn.commit()
+        conn.close()
+
+        tracker = PaperPortfolioTracker(db)
+        assert tracker.get_hypothesis_signals("2026-01-01") == {"h1": 0.25}
+        columns = {
+            row[1] for row in tracker._conn.execute("PRAGMA table_info(hypothesis_signals)")
+        }
+        assert "hypothesis_id" in columns
         tracker.close()
 
     def test_consecutive_no_fill_cycles(self, tmp_path):

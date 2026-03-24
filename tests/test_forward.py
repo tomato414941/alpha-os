@@ -1,5 +1,7 @@
 """Tests for forward testing — tracker."""
 
+import sqlite3
+
 import numpy as np
 import pytest
 
@@ -114,4 +116,57 @@ class TestForwardTracker:
         assert len(records) == 2
         assert records[0].cumulative_return == pytest.approx(1.01)
         assert records[1].cumulative_return == pytest.approx(1.01 * 0.99)
+        tracker.close()
+
+    def test_legacy_forward_schema_is_migrated(self, tmp_path):
+        db = tmp_path / "legacy_fwd.db"
+        conn = sqlite3.connect(db)
+        conn.execute(
+            """
+            CREATE TABLE forward_returns (
+                alpha_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                signal_value REAL NOT NULL,
+                daily_return REAL NOT NULL,
+                cumulative_return REAL NOT NULL,
+                recorded_at REAL NOT NULL,
+                PRIMARY KEY (alpha_id, date)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE forward_meta (
+                alpha_id TEXT PRIMARY KEY,
+                forward_start_date TEXT NOT NULL,
+                adopted_at REAL NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO forward_meta (alpha_id, forward_start_date, adopted_at) VALUES (?, ?, ?)",
+            ("h1", "2025-01-01", 1.0),
+        )
+        conn.execute(
+            """
+            INSERT INTO forward_returns
+            (alpha_id, date, signal_value, daily_return, cumulative_return, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("h1", "2025-01-02", 0.5, 0.01, 1.01, 1.0),
+        )
+        conn.commit()
+        conn.close()
+
+        tracker = ForwardTracker(db_path=db)
+        assert tracker.get_hypothesis_start_date("h1") == "2025-01-01"
+        assert tracker.get_hypothesis_returns("h1") == pytest.approx([0.01])
+        returns_columns = {
+            row[1] for row in tracker._conn.execute("PRAGMA table_info(forward_returns)")
+        }
+        meta_columns = {
+            row[1] for row in tracker._conn.execute("PRAGMA table_info(forward_meta)")
+        }
+        assert "hypothesis_id" in returns_columns
+        assert "hypothesis_id" in meta_columns
         tracker.close()

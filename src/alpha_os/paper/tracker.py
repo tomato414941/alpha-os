@@ -94,15 +94,16 @@ class PaperPortfolioTracker:
                 recorded_at REAL NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_fills_date ON paper_fills(date);
-            CREATE TABLE IF NOT EXISTS alpha_signals (
+            CREATE TABLE IF NOT EXISTS hypothesis_signals (
                 date TEXT NOT NULL,
-                alpha_id TEXT NOT NULL,
+                hypothesis_id TEXT NOT NULL,
                 signal_value REAL NOT NULL,
-                PRIMARY KEY (date, alpha_id)
+                PRIMARY KEY (date, hypothesis_id)
             );
         """)
         self._migrate_snapshot_columns()
         self._migrate_fills_columns()
+        self._migrate_hypothesis_signal_table()
 
     def _migrate_snapshot_columns(self) -> None:
         """Add signal stage columns if missing (existing DB migration)."""
@@ -143,6 +144,40 @@ class PaperPortfolioTracker:
         if "latency_ms" not in existing:
             self._conn.execute(
                 "ALTER TABLE paper_fills ADD COLUMN latency_ms REAL NOT NULL DEFAULT 0.0"
+            )
+        self._conn.commit()
+
+    def _migrate_hypothesis_signal_table(self) -> None:
+        tables = {
+            row["name"]
+            for row in self._conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
+        }
+        if "alpha_signals" in tables and "hypothesis_signals" in tables:
+            legacy_columns = {
+                row[1] for row in self._conn.execute("PRAGMA table_info(alpha_signals)")
+            }
+            legacy_id_column = (
+                "hypothesis_id" if "hypothesis_id" in legacy_columns else "alpha_id"
+            )
+            self._conn.execute(
+                f"""
+                INSERT OR REPLACE INTO hypothesis_signals (date, hypothesis_id, signal_value)
+                SELECT date, {legacy_id_column}, signal_value
+                FROM alpha_signals
+                """
+            )
+            self._conn.execute("DROP TABLE alpha_signals")
+        elif "alpha_signals" in tables:
+            self._conn.execute("ALTER TABLE alpha_signals RENAME TO hypothesis_signals")
+
+        columns = {
+            row[1] for row in self._conn.execute("PRAGMA table_info(hypothesis_signals)")
+        }
+        if "alpha_id" in columns and "hypothesis_id" not in columns:
+            self._conn.execute(
+                "ALTER TABLE hypothesis_signals RENAME COLUMN alpha_id TO hypothesis_id"
             )
         self._conn.commit()
 
@@ -203,8 +238,8 @@ class PaperPortfolioTracker:
     def save_hypothesis_signals(self, date: str, signals: dict[str, float]) -> None:
         rows = [(date, aid, val) for aid, val in signals.items()]
         self._conn.executemany(
-            """INSERT OR REPLACE INTO alpha_signals
-            (date, alpha_id, signal_value) VALUES (?, ?, ?)""",
+            """INSERT OR REPLACE INTO hypothesis_signals
+            (date, hypothesis_id, signal_value) VALUES (?, ?, ?)""",
             rows,
         )
         self._conn.commit()
@@ -212,21 +247,21 @@ class PaperPortfolioTracker:
     def get_hypothesis_signals(self, date: str) -> dict[str, float]:
         rows = self._conn.execute(
             """
-            SELECT alpha_id, signal_value
-            FROM alpha_signals
+            SELECT hypothesis_id, signal_value
+            FROM hypothesis_signals
             WHERE date = ?
-            ORDER BY alpha_id
+            ORDER BY hypothesis_id
             """,
             (date,),
         ).fetchall()
-        return {row["alpha_id"]: row["signal_value"] for row in rows}
+        return {row["hypothesis_id"]: row["signal_value"] for row in rows}
 
     def get_hypothesis_signal_history(self, hypothesis_id: str, limit: int = 20) -> list[float]:
         rows = self._conn.execute(
             """
             SELECT signal_value
-            FROM alpha_signals
-            WHERE alpha_id = ?
+            FROM hypothesis_signals
+            WHERE hypothesis_id = ?
             ORDER BY date DESC
             LIMIT ?
             """,

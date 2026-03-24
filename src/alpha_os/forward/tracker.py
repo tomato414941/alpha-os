@@ -47,31 +47,45 @@ class ForwardTracker:
     def _create_tables(self) -> None:
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS forward_returns (
-                alpha_id TEXT NOT NULL,
+                hypothesis_id TEXT NOT NULL,
                 date TEXT NOT NULL,
                 signal_value REAL NOT NULL,
                 daily_return REAL NOT NULL,
                 cumulative_return REAL NOT NULL,
                 recorded_at REAL NOT NULL,
-                PRIMARY KEY (alpha_id, date)
+                PRIMARY KEY (hypothesis_id, date)
             )
         """)
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS forward_meta (
-                alpha_id TEXT PRIMARY KEY,
+                hypothesis_id TEXT PRIMARY KEY,
                 forward_start_date TEXT NOT NULL,
                 adopted_at REAL NOT NULL
             )
         """)
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_fwd_alpha_date
-            ON forward_returns(alpha_id, date)
-        """)
+        self._migrate_schema()
         self._conn.commit()
+
+    def _migrate_schema(self) -> None:
+        for table in ("forward_returns", "forward_meta"):
+            columns = {
+                row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")
+            }
+            if "alpha_id" in columns and "hypothesis_id" not in columns:
+                self._conn.execute(
+                    f"ALTER TABLE {table} RENAME COLUMN alpha_id TO hypothesis_id"
+                )
+        self._conn.execute("DROP INDEX IF EXISTS idx_fwd_alpha_date")
+        self._conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fwd_hypothesis_date
+            ON forward_returns(hypothesis_id, date)
+            """
+        )
 
     def register_hypothesis(self, hypothesis_id: str, start_date: str) -> None:
         self._conn.execute(
-            "INSERT OR IGNORE INTO forward_meta (alpha_id, forward_start_date, adopted_at) "
+            "INSERT OR IGNORE INTO forward_meta (hypothesis_id, forward_start_date, adopted_at) "
             "VALUES (?, ?, ?)",
             (hypothesis_id, start_date, time.time()),
         )
@@ -79,7 +93,7 @@ class ForwardTracker:
 
     def get_hypothesis_start_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
-            "SELECT forward_start_date FROM forward_meta WHERE alpha_id = ?",
+            "SELECT forward_start_date FROM forward_meta WHERE hypothesis_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["forward_start_date"] if row else None
@@ -93,7 +107,7 @@ class ForwardTracker:
     ) -> None:
         prev = self._conn.execute(
             "SELECT cumulative_return FROM forward_returns "
-            "WHERE alpha_id = ? AND date < ? ORDER BY date DESC LIMIT 1",
+            "WHERE hypothesis_id = ? AND date < ? ORDER BY date DESC LIMIT 1",
             (hypothesis_id, date),
         ).fetchone()
         prev_cum = prev["cumulative_return"] if prev else 1.0
@@ -101,7 +115,7 @@ class ForwardTracker:
 
         self._conn.execute(
             "INSERT OR REPLACE INTO forward_returns "
-            "(alpha_id, date, signal_value, daily_return, cumulative_return, recorded_at) "
+            "(hypothesis_id, date, signal_value, daily_return, cumulative_return, recorded_at) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (hypothesis_id, date, signal_value, daily_return, cum, time.time()),
         )
@@ -110,7 +124,7 @@ class ForwardTracker:
     def get_hypothesis_returns(self, hypothesis_id: str) -> list[float]:
         rows = self._conn.execute(
             "SELECT daily_return FROM forward_returns "
-            "WHERE alpha_id = ? ORDER BY date",
+            "WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
         return [row["daily_return"] for row in rows]
@@ -125,7 +139,7 @@ class ForwardTracker:
             return self.get_hypothesis_returns(hypothesis_id)
         rows = self._conn.execute(
             "SELECT signal_value, daily_return FROM forward_returns "
-            "WHERE alpha_id = ? ORDER BY date",
+            "WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
         realized: list[float] = []
@@ -140,12 +154,12 @@ class ForwardTracker:
 
     def get_hypothesis_records(self, hypothesis_id: str) -> list[ForwardRecord]:
         rows = self._conn.execute(
-            "SELECT * FROM forward_returns WHERE alpha_id = ? ORDER BY date",
+            "SELECT * FROM forward_returns WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
         return [
             ForwardRecord(
-                hypothesis_id=row["alpha_id"],
+                hypothesis_id=row["hypothesis_id"],
                 date=row["date"],
                 signal_value=row["signal_value"],
                 daily_return=row["daily_return"],
@@ -156,7 +170,7 @@ class ForwardTracker:
 
     def get_hypothesis_last_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
-            "SELECT MAX(date) as last_date FROM forward_returns WHERE alpha_id = ?",
+            "SELECT MAX(date) as last_date FROM forward_returns WHERE hypothesis_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["last_date"] if row and row["last_date"] else None
@@ -198,9 +212,9 @@ class ForwardTracker:
 
     def tracked_hypothesis_ids(self) -> list[str]:
         rows = self._conn.execute(
-            "SELECT alpha_id FROM forward_meta ORDER BY alpha_id"
+            "SELECT hypothesis_id FROM forward_meta ORDER BY hypothesis_id"
         ).fetchall()
-        return [row["alpha_id"] for row in rows]
+        return [row["hypothesis_id"] for row in rows]
 
     def close(self) -> None:
         self._conn.close()
