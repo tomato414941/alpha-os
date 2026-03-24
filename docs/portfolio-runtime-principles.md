@@ -9,6 +9,23 @@ It complements [RECOVERY.md](../RECOVERY.md) and [DESIGN.md](../DESIGN.md).
 This note is not a runbook and not the current operating truth. It is a
 statement of design intent for the next stage of the hypotheses-first runtime.
 
+This file is the right place for:
+
+- portfolio / allocation terminology used by the current mainline
+- near-term hypotheses-first design decisions
+- current bottlenecks between research, observation, allocation, and execution
+
+This file is not the right place for:
+
+- full greenfield architecture
+- migration-era archival detail
+- operational runbooks
+
+For those, prefer:
+
+- [RECOVERY.md](../RECOVERY.md) for current operating truth
+- [DESIGN.md](../DESIGN.md) for greenfield baseline and long-horizon architecture
+
 The current trusted mainline remains:
 
 1. `hypothesis-seeder`
@@ -1935,3 +1952,105 @@ It should:
 The point of the first scorer is not to complete the full research pipeline.
 It is to create a clean, hypotheses-first source of `research_quality` outside
 of bootstrap seeds.
+
+## If Rebuilding From Scratch
+
+This section records the main architectural lessons from the current runtime.
+The detailed greenfield baseline lives in [DESIGN.md](../DESIGN.md). The goal
+here is narrower: capture what the current mainline has taught us about what
+should and should not be coupled.
+
+### What Would Stay The Same
+
+These concepts still look correct:
+
+- `hypotheses.db` as the source of truth
+- explicit separation between:
+  - `research_quality`
+  - `live_quality`
+  - `allocation_trust`
+- exploratory hypotheses entering as observation-only first
+- venue-aware quality rather than venue-agnostic scoring
+- breadth measured as effective independent bets rather than raw count
+
+In other words, the current design direction appears stronger than the current
+code shape.
+
+### What Would Be Different
+
+A fresh implementation would likely avoid several transitional couplings:
+
+- `stake` would not also serve as the capital-eligibility switch
+- `observation-active` and `capital-backed` would be distinct persisted sets
+- `lifecycle` would not own as much policy surface
+- `Trader` would not own as much orchestration, selection, weighting, tracking,
+  and reporting at once
+- daily, hourly, and non-daily signal catalogs would be separated from the
+  beginning
+- bootstrap, batch-scored, and live-proven hypotheses would enter the capital
+  path through a unified policy model rather than accumulated migrations
+
+### Main Greenfield Differences
+
+If rebuilt from zero, the biggest differences would be:
+
+1. `stake` would start as pure persisted `allocation_trust`
+   - it would not double as the capital-eligibility switch
+2. observation and capital would be separate from day one
+   - `observation-active`
+   - `capital-eligible`
+   - `capital-backed`
+3. the runtime would start with thinner orchestration boundaries
+   - CLI would only dispatch
+   - scoring, backfill, and rebalance would live in services
+4. research scoring would be a first-class stage from the start
+   - not something bootstrap seeds have and exploratory hypotheses gain later
+5. signal catalogs would be resolution-aware from the beginning
+   - daily, hourly, and sparse event families would not share one implicit path
+
+This is close to what the current code is converging toward, but it would have
+been cleaner to start there than to migrate there.
+
+### What Has Already Moved In That Direction
+
+The current codebase has now taken a small but meaningful step toward that
+decomposition:
+
+- `HypothesisStore` exposes separate queries for:
+  - `observation-active`
+  - `capital-eligible`
+  - `capital-backed`
+- rebalance plan construction and cap application no longer live only in CLI
+  orchestration; they have started moving into a dedicated service layer
+- trading candidate ranking now prefers explicit capital eligibility rather
+  than treating `stake > 0` as the only source of truth
+
+This is still transitional:
+
+- `stake` remains the persisted storage field for `allocation_trust`
+- `stake > 0` still functions as the concrete backed/not-backed boundary in
+  several places
+- `capital_eligible` is still represented through lifecycle metadata rather
+  than its own first-class persisted field
+
+So the current state is not the clean final model yet, but it is no longer
+purely implicit either.
+
+### Why The Current Project Still Matters
+
+The current project has still surfaced design truths that are worth preserving
+in any rebuild:
+
+- `live_proven` and `actionable_live` are not the same
+- bearish-but-correct hypotheses should not be treated as directly actionable
+  in a long-only venue
+- `no_delta` is a normal outcome, not necessarily a runtime failure
+- guided diversity matters more than simply increasing hypothesis count
+- exploratory generation, research scoring, and capital allocation should be
+  separate stages
+
+So the main lesson is:
+
+- the current implementation still contains migration-era seams
+- but the underlying design vocabulary is now much better than it was at the
+  start of the recovery

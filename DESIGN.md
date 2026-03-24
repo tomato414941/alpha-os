@@ -10,6 +10,18 @@ For current operating truth, prefer:
 - `RECOVERY.md` for trust boundaries, scheduler policy, and recovery order
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 
+This file is the right place for:
+
+- greenfield baseline thinking
+- long-horizon architecture
+- domain model and module-boundary rationale
+
+This file is not the source of truth for:
+
+- current CLI entrypoints
+- current scheduler policy
+- current portfolio gates and drop reasons
+
 ## Glossary
 
 ### Core terms
@@ -141,6 +153,59 @@ outcome, while predictive units are hypotheses. `AlphaRecord`,
 names. New code and documentation should prefer `hypothesis` for the
 predictive unit and should not add new source-of-truth logic under
 `alpha/`.
+
+## Greenfield Baseline vs Current Repo
+
+If this project were started from scratch today, the design would be
+meaningfully simpler than the current repository.
+
+The point of this section is not to criticize the current repository for still
+containing migration-era code. The point is to define the cleaner target shape
+so current changes can be judged against it.
+
+The greenfield version would start with one domain model:
+
+- `hypothesis`: predictive unit
+- `prediction`: daily or intraday output of a hypothesis
+- `observation`: realized outcome used to score predictions
+- `allocation`: capital assignment across live hypotheses
+- `execution`: bounded trade application
+- `alpha`: excess return as an outcome, not a package or record type
+
+That version would not carry migration baggage:
+
+- no `alpha` package or `alpha_id` compatibility aliases
+- no registry-era `managed_alphas` / `deployed_alphas` layer
+- no `legacy` package in the runtime path
+- no read-compatibility fallbacks for old JSON keys or old method names
+- no mixed CLI surface where runtime, research, and archive commands were
+  introduced together and split later
+
+The current repository differs because it is not a greenfield build. It
+is a recovery and migration repo that has been moving from a registry-era
+`alpha` model toward a hypotheses-first runtime. That means some code
+still exists only to preserve continuity during the transition:
+
+- compatibility shells
+- legacy storage and replay helpers
+- fallback properties and methods
+- old field names retained for bounded migrations
+- tests that verify migration safety, not just steady-state behavior
+
+So the target architecture should be evaluated against a greenfield
+baseline, but the repository itself should be understood as an in-place
+migration. The right standard is not "why does any legacy remain?" but
+"is legacy strictly isolated, shrinking, and prevented from re-entering
+the runtime source of truth?"
+
+The division of labor between documents should therefore be:
+
+- `RECOVERY.md`
+  - what is trusted today
+- `docs/portfolio-runtime-principles.md`
+  - current hypotheses-first portfolio semantics and near-term design choices
+- `DESIGN.md`
+  - what the architecture would look like without migration baggage
 
 ## Principles
 
