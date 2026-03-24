@@ -7,6 +7,8 @@ DEFAULT_QUALITY_WEIGHT = 1.0
 DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT = 0.25
 DEFAULT_LIVE_PROVEN_QUALITY_MIN = 0.05
 DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN = 0.0
+DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN = 0.20
+DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN = 0.05
 DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN = 0.0
 DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN = 0.0
 
@@ -130,8 +132,12 @@ def is_capital_eligible(
     has_min_observations: bool,
     live_quality: float = 0.0,
     marginal_contribution: float = 0.0,
+    signal_nonzero_ratio: float = 0.0,
+    signal_mean_abs: float = 0.0,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    live_proven_signal_nonzero_ratio_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN,
+    live_proven_signal_mean_abs_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
     bootstrap_retention_marginal_contribution_min: float = (
         DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
@@ -150,6 +156,8 @@ def is_capital_eligible(
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
+        and signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
+        and signal_mean_abs >= live_proven_signal_mean_abs_min
     )
     research_retained = research_backed and not has_min_observations
     return research_retained or live_proven
@@ -168,8 +176,12 @@ def capital_eligibility_breakdown(
     has_min_observations: bool,
     live_quality: float,
     marginal_contribution: float,
+    signal_nonzero_ratio: float = 0.0,
+    signal_mean_abs: float = 0.0,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    live_proven_signal_nonzero_ratio_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN,
+    live_proven_signal_mean_abs_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
     bootstrap_retention_marginal_contribution_min: float = (
         DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
@@ -188,6 +200,8 @@ def capital_eligibility_breakdown(
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
+        and signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
+        and signal_mean_abs >= live_proven_signal_mean_abs_min
     )
     research_retained = research_backed and not has_min_observations
     if live_proven:
@@ -206,17 +220,27 @@ def live_promotion_blocker(
     has_min_observations: bool,
     live_quality: float,
     marginal_contribution: float,
+    signal_nonzero_ratio: float = 0.0,
+    signal_mean_abs: float = 0.0,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    live_proven_signal_nonzero_ratio_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN,
+    live_proven_signal_mean_abs_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
 ) -> str:
     if not has_min_observations:
         return "insufficient_observations"
     weak_quality = live_quality < live_proven_quality_min
     weak_contribution = marginal_contribution < live_proven_marginal_contribution_min
+    weak_signal_activity = (
+        signal_nonzero_ratio < live_proven_signal_nonzero_ratio_min
+        or signal_mean_abs < live_proven_signal_mean_abs_min
+    )
     if weak_quality and weak_contribution:
         return "weak_live_quality_and_contribution"
     if weak_quality:
         return "weak_live_quality"
     if weak_contribution:
         return "weak_marginal_contribution"
+    if weak_signal_activity:
+        return "weak_signal_activity"
     return "eligible"

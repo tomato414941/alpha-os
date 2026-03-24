@@ -181,6 +181,8 @@ class LifecycleTomlConfig:
     batch_research_capital_candidates_max: int = 12
     live_proven_quality_min: float = 0.05
     live_proven_marginal_contribution_min: float = 0.0
+    live_proven_signal_nonzero_ratio_min: float = 0.20
+    live_proven_signal_mean_abs_min: float = 0.05
     bootstrap_retention_quality_min: float = 0.0
     bootstrap_retention_marginal_contribution_min: float = 0.0
     quality_weight: float = 1.0

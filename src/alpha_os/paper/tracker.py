@@ -223,6 +223,19 @@ class PaperPortfolioTracker:
         ).fetchall()
         return {row["alpha_id"]: row["signal_value"] for row in rows}
 
+    def get_alpha_signal_history(self, alpha_id: str, limit: int = 20) -> list[float]:
+        rows = self._conn.execute(
+            """
+            SELECT signal_value
+            FROM alpha_signals
+            WHERE alpha_id = ?
+            ORDER BY date DESC
+            LIMIT ?
+            """,
+            (alpha_id, int(limit)),
+        ).fetchall()
+        return [float(row["signal_value"]) for row in rows]
+
     def get_last_snapshot(self) -> PortfolioSnapshot | None:
         row = self._conn.execute(
             "SELECT * FROM portfolio_snapshots ORDER BY date DESC LIMIT 1"

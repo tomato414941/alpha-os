@@ -1417,7 +1417,7 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     output = capsys.readouterr().out
 
     assert "Cohorts:   bootstrap=0/0 batch=0/0 live=0/0" in output
-    assert "Promote:   obs=1 quality=1 contrib=0 both=0" in output
+    assert "Promote:   obs=1 quality=1 contrib=0 both=0 signal=0" in output
 
 
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):

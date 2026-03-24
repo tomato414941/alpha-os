@@ -12,6 +12,8 @@ from .allocation_policy import (
     DEFAULT_BOOTSTRAP_WEIGHT,
     DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
     DEFAULT_LIVE_PROVEN_QUALITY_MIN,
+    DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
+    DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN,
     DEFAULT_MARGINAL_CONTRIBUTION_WEIGHT,
     DEFAULT_QUALITY_WEIGHT,
     bootstrap_trust,
@@ -47,6 +49,8 @@ class AllocationRebalanceEntry:
     raw_live_quality: float
     confidence: float
     marginal_contribution: float
+    signal_nonzero_ratio: float = 0.0
+    signal_mean_abs: float = 0.0
     research_quality_source: str = ""
     research_candidate_capped: bool = False
     redundancy_capped_by: str = ""
@@ -228,6 +232,10 @@ def update_stakes_from_history(
     stake_update_rate: float = DEFAULT_STAKE_UPDATE_RATE,
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    live_proven_signal_nonzero_ratio_min: float = (
+        DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN
+    ),
+    live_proven_signal_mean_abs_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
     bootstrap_retention_marginal_contribution_min: float = (
         DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
@@ -235,6 +243,7 @@ def update_stakes_from_history(
     floor: float = 0.0,
     archive_on_zero: bool = False,
     live_returns_for: Callable[[str], list[float]] | None = None,
+    signal_activity_for: Callable[[str], tuple[float, float]] | None = None,
 ) -> dict[str, float]:
     plan = build_allocation_rebalance_plan(
         store,
@@ -253,10 +262,13 @@ def update_stakes_from_history(
         batch_research_capital_candidates_max=batch_research_capital_candidates_max,
         live_proven_quality_min=live_proven_quality_min,
         live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+        live_proven_signal_nonzero_ratio_min=live_proven_signal_nonzero_ratio_min,
+        live_proven_signal_mean_abs_min=live_proven_signal_mean_abs_min,
         bootstrap_retention_quality_min=bootstrap_retention_quality_min,
         bootstrap_retention_marginal_contribution_min=bootstrap_retention_marginal_contribution_min,
         floor=floor,
         live_returns_for=live_returns_for,
+        signal_activity_for=signal_activity_for,
     )
     smoothed_plan = [
         replace(
@@ -302,12 +314,17 @@ def build_allocation_rebalance_plan(
     ),
     live_proven_quality_min: float = DEFAULT_LIVE_PROVEN_QUALITY_MIN,
     live_proven_marginal_contribution_min: float = DEFAULT_LIVE_PROVEN_MARGINAL_CONTRIBUTION_MIN,
+    live_proven_signal_nonzero_ratio_min: float = (
+        DEFAULT_LIVE_PROVEN_SIGNAL_NONZERO_RATIO_MIN
+    ),
+    live_proven_signal_mean_abs_min: float = DEFAULT_LIVE_PROVEN_SIGNAL_MEAN_ABS_MIN,
     bootstrap_retention_quality_min: float = DEFAULT_BOOTSTRAP_RETENTION_QUALITY_MIN,
     bootstrap_retention_marginal_contribution_min: float = (
         DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
     ),
     floor: float = 0.0,
     live_returns_for: Callable[[str], list[float]] | None = None,
+    signal_activity_for: Callable[[str], tuple[float, float]] | None = None,
 ) -> list[AllocationRebalanceEntry]:
     plan: list[AllocationRebalanceEntry] = []
     for record in store.list_observation_active():
@@ -325,6 +342,11 @@ def build_allocation_rebalance_plan(
             else list(reversed(recent))
         )
         research_quality = record.oos_fitness(metric)
+        signal_nonzero_ratio, signal_mean_abs = (
+            signal_activity_for(record.hypothesis_id)
+            if signal_activity_for is not None
+            else (0.0, 0.0)
+        )
         estimate = blend_quality(
             research_quality,
             live_returns,
@@ -367,8 +389,12 @@ def build_allocation_rebalance_plan(
                 has_min_observations=estimate.has_min_observations,
                 live_quality=estimate.live_quality,
                 marginal_contribution=marginal,
+                signal_nonzero_ratio=signal_nonzero_ratio,
+                signal_mean_abs=signal_mean_abs,
                 live_proven_quality_min=live_proven_quality_min,
                 live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+                live_proven_signal_nonzero_ratio_min=live_proven_signal_nonzero_ratio_min,
+                live_proven_signal_mean_abs_min=live_proven_signal_mean_abs_min,
                 bootstrap_retention_quality_min=bootstrap_retention_quality_min,
                 bootstrap_retention_marginal_contribution_min=(
                     bootstrap_retention_marginal_contribution_min
@@ -394,8 +420,12 @@ def build_allocation_rebalance_plan(
                     has_min_observations=estimate.has_min_observations,
                     live_quality=estimate.live_quality,
                     marginal_contribution=marginal,
+                    signal_nonzero_ratio=signal_nonzero_ratio,
+                    signal_mean_abs=signal_mean_abs,
                     live_proven_quality_min=live_proven_quality_min,
                     live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
+                    live_proven_signal_nonzero_ratio_min=live_proven_signal_nonzero_ratio_min,
+                    live_proven_signal_mean_abs_min=live_proven_signal_mean_abs_min,
                 ),
                 n_observations=estimate.n_observations,
                 bootstrap_trust_value=float(bootstrap_value),
@@ -404,6 +434,8 @@ def build_allocation_rebalance_plan(
                 raw_live_quality=float(estimate.raw_live_quality),
                 confidence=float(estimate.confidence),
                 marginal_contribution=float(marginal),
+                signal_nonzero_ratio=float(signal_nonzero_ratio),
+                signal_mean_abs=float(signal_mean_abs),
             )
         )
     return _apply_batch_research_candidate_gate(
@@ -427,6 +459,8 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_blended_quality": entry.blended_quality,
                 "lifecycle_quality_confidence": entry.confidence,
                 "lifecycle_marginal_contribution": entry.marginal_contribution,
+                "lifecycle_signal_nonzero_ratio": entry.signal_nonzero_ratio,
+                "lifecycle_signal_mean_abs": entry.signal_mean_abs,
                 "lifecycle_bootstrap_trust": entry.bootstrap_trust_value,
                 "lifecycle_research_quality_source": entry.research_quality_source,
                 "lifecycle_n_observations": entry.n_observations,

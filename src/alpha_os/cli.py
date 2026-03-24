@@ -1900,6 +1900,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     adir = asset_data_dir(args.asset)
     store = HypothesisStore(HYPOTHESES_DB)
     forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
         live_returns_for = _build_live_returns_getter(
@@ -1907,7 +1908,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             supports_short=cfg.trading.supports_short,
         )
         signal_activity_for = _build_signal_activity_getter(
-            PaperPortfolioTracker(db_path=adir / "paper_trading.db"),
+            portfolio_tracker,
             lookback=cfg.forward.degradation_window,
         )
         plan = build_allocation_rebalance_plan(
@@ -2022,6 +2023,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             f"updated={len(updates)} active={len(plan)} zeroed={zeroed}"
         )
     finally:
+        portfolio_tracker.close()
         data_store.close()
         forward_tracker.close()
         store.close()
@@ -2087,6 +2089,7 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
 def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.paper.tracker import PaperPortfolioTracker
     from alpha_os.hypotheses import (
         HypothesisStore,
         apply_allocation_rebalance_plan,
@@ -2105,10 +2108,15 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     store = HypothesisStore(HYPOTHESES_DB)
     data_store = DataStore(SIGNAL_CACHE_DB)
     forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     try:
         live_returns_for = _build_live_returns_getter(
             forward_tracker,
             supports_short=cfg.trading.supports_short,
+        )
+        signal_activity_for = _build_signal_activity_getter(
+            portfolio_tracker,
+            lookback=cfg.forward.degradation_window,
         )
         summary = backfill_observation_returns(
             hypothesis_store=store,
@@ -2148,6 +2156,10 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min
             ),
+            live_proven_signal_nonzero_ratio_min=(
+                cfg.lifecycle.live_proven_signal_nonzero_ratio_min
+            ),
+            live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
             bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
             bootstrap_retention_marginal_contribution_min=(
                 cfg.lifecycle.bootstrap_retention_marginal_contribution_min
@@ -2156,6 +2168,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
             floor=cfg.lifecycle.target_stake_floor,
             live_returns_for=live_returns_for,
+            signal_activity_for=signal_activity_for,
         )
         records = store.list_observation_active()
         breadth_data = load_breadth_matrix(
@@ -2195,6 +2208,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             f"live_proven={sum(1 for entry in plan if entry.live_proven)}"
         )
     finally:
+        portfolio_tracker.close()
         forward_tracker.close()
         data_store.close()
         store.close()
@@ -2538,6 +2552,7 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "weak_live_quality": 0,
         "weak_marginal_contribution": 0,
         "weak_live_quality_and_contribution": 0,
+        "weak_signal_activity": 0,
     }
     for record in records:
         try:
@@ -2730,7 +2745,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             f"obs={blocker_counts['insufficient_observations']} "
             f"quality={blocker_counts['weak_live_quality']} "
             f"contrib={blocker_counts['weak_marginal_contribution']} "
-            f"both={blocker_counts['weak_live_quality_and_contribution']}"
+            f"both={blocker_counts['weak_live_quality_and_contribution']} "
+            f"signal={blocker_counts['weak_signal_activity']}"
         )
     if hypothesis_summary["top_allocation"]:
         print("  TopAlloc:  " + ", ".join(hypothesis_summary["top_allocation"]))

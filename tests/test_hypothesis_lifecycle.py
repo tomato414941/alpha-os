@@ -131,6 +131,8 @@ def test_is_capital_eligible_requires_bootstrap_or_live_proven_thresholds():
         has_min_observations=True,
         live_quality=0.10,
         marginal_contribution=0.01,
+        signal_nonzero_ratio=1.0,
+        signal_mean_abs=0.5,
     ) is True
     assert is_capital_eligible(
         research_quality=0.0,
@@ -201,6 +203,7 @@ def test_update_stakes_from_history_updates_store(tmp_path):
         lookback=3,
         min_observations=3,
         full_weight_observations=3,
+        signal_activity_for=lambda _hypothesis_id: (1.0, 0.5),
     )
     updated = store.get("h1")
     estimate = blend_quality(
@@ -277,6 +280,7 @@ def test_update_stakes_from_history_uses_live_returns_for_quality(tmp_path):
         min_observations=1,
         full_weight_observations=1,
         live_returns_for=lambda _hypothesis_id: [0.2],
+        signal_activity_for=lambda _hypothesis_id: (1.0, 0.5),
     )
     updated = store.get("h1")
 
@@ -376,6 +380,7 @@ def test_build_allocation_rebalance_plan_promotes_live_proven_unscored_hypothesi
         live_proven_quality_min=0.01,
         live_proven_marginal_contribution_min=0.0,
         live_returns_for=lambda _hypothesis_id: [0.02, 0.015, 0.01],
+        signal_activity_for=lambda _hypothesis_id: (1.0, 0.5),
     )
 
     entry = plan[0]
@@ -486,6 +491,7 @@ def test_build_allocation_rebalance_plan_prefers_live_proven_over_research_overl
         bootstrap_retention_quality_min=0.0,
         bootstrap_retention_marginal_contribution_min=0.0,
         live_returns_for=lambda _hypothesis_id: [0.03, 0.02, 0.01],
+        signal_activity_for=lambda _hypothesis_id: (1.0, 0.5),
     )
 
     entry = plan[0]
@@ -494,6 +500,38 @@ def test_build_allocation_rebalance_plan_prefers_live_proven_over_research_overl
     assert entry.live_proven is True
     assert entry.capital_eligible is True
     assert entry.capital_reason == "live_proven"
+    store.close()
+
+
+def test_build_allocation_rebalance_plan_blocks_sparse_signal_activity(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "f1"},
+            stake=0.0,
+            metadata={},
+        )
+    )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="log_growth",
+        min_observations=3,
+        full_weight_observations=3,
+        live_proven_quality_min=0.01,
+        live_proven_marginal_contribution_min=0.0,
+        live_proven_signal_nonzero_ratio_min=0.20,
+        live_proven_signal_mean_abs_min=0.05,
+        live_returns_for=lambda _hypothesis_id: [0.02, 0.015, 0.01],
+        signal_activity_for=lambda _hypothesis_id: (0.0, 0.0),
+    )
+
+    entry = plan[0]
+    assert entry.live_proven is False
+    assert entry.capital_eligible is False
+    assert entry.live_promotion_blocker == "weak_signal_activity"
     store.close()
 
 
