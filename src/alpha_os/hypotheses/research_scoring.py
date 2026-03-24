@@ -98,31 +98,75 @@ def exploratory_scoring_candidates(
             if success:
                 family_successes[family] += 1
 
-    if family_counts or family_totals:
-        def _priority(record: HypothesisRecord) -> tuple[float, float, float, str]:
-            families = set(expression_feature_families(record.expression))
-            overlap = float(sum(family_counts.get(family, 0) for family in families))
-            novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
-            if families:
-                family_quality = float(
-                    sum(
-                        (
-                            family_successes.get(family, 0) / family_totals[family]
-                            if family_totals.get(family, 0) > 0
-                            else 0.5
-                        )
-                        for family in families
-                    ) / len(families)
-                )
-            else:
-                family_quality = 0.0
-            return overlap, -family_quality, -novelty, record.hypothesis_id
+    def _family_quality(family: str) -> float:
+        total = family_totals.get(family, 0)
+        if total <= 0:
+            return 0.5
+        return float(family_successes.get(family, 0) / total)
 
-        candidates.sort(key=_priority)
+    def _record_families(record: HypothesisRecord) -> tuple[str, ...]:
+        families = tuple(sorted(set(expression_feature_families(record.expression))))
+        return families
+
+    def _priority(record: HypothesisRecord) -> tuple[float, float, float, str]:
+        families = _record_families(record)
+        overlap = float(sum(family_counts.get(family, 0) for family in families))
+        novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
+        if families:
+            family_quality = float(sum(_family_quality(family) for family in families) / len(families))
+        else:
+            family_quality = 0.0
+        return overlap, -family_quality, -novelty, record.hypothesis_id
+
+    candidates.sort(key=_priority)
 
     if limit is None:
         return candidates
-    return candidates[: max(limit, 0)]
+    limit = max(limit, 0)
+    if limit <= 0:
+        return []
+
+    buckets: dict[str, list[HypothesisRecord]] = {}
+    for record in candidates:
+        families = _record_families(record)
+        if families:
+            representative_family = min(
+                families,
+                key=lambda family: (
+                    family_counts.get(family, 0),
+                    -_family_quality(family),
+                    family,
+                ),
+            )
+        else:
+            representative_family = "other"
+        buckets.setdefault(representative_family, []).append(record)
+
+    if len(buckets) <= 1:
+        return candidates[:limit]
+
+    family_order = sorted(
+        buckets,
+        key=lambda family: (
+            family_counts.get(family, 0),
+            -_family_quality(family),
+            family,
+        ),
+    )
+    diversified: list[HypothesisRecord] = []
+    while len(diversified) < limit:
+        added = False
+        for family in family_order:
+            bucket = buckets[family]
+            if not bucket:
+                continue
+            diversified.append(bucket.pop(0))
+            added = True
+            if len(diversified) >= limit:
+                break
+        if not added:
+            break
+    return diversified
 
 
 def required_research_features(records: list[HypothesisRecord], price_feature: str) -> list[str]:

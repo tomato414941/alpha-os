@@ -198,6 +198,77 @@ def test_exploratory_scoring_candidates_prefer_families_with_better_scored_outco
     store.close()
 
 
+def test_exploratory_scoring_candidates_limit_preserves_family_diversity(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="price_scored_good",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={
+                "research_quality_status": "scored",
+                "lifecycle_research_retained": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_scored_good",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={
+                "research_quality_status": "scored",
+                "lifecycle_research_retained": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="price_candidate_a",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "dxy"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="price_candidate_b",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "gold"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_hashrate"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+
+    candidates = exploratory_scoring_candidates(
+        store.list_observation_active(),
+        limit=2,
+    )
+
+    assert sorted(record.hypothesis_id for record in candidates) == [
+        "onchain_candidate",
+        "price_candidate_a",
+    ]
+    store.close()
+
+
 def test_score_exploratory_hypotheses_parser():
     parser = _build_parser()
     args = parser.parse_args(["score-exploratory-hypotheses", "--asset", "BTC", "--dry-run"])
