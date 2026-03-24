@@ -1488,12 +1488,68 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
 
     assert "Latest Combine (BTC)" in output
     assert "Combined:  stored=+0.123400" in output
+    assert "Snapshot:  selected=3 current_backed=3 dropped=0 missing=0" in output
     assert "Cohorts:   bootstrap n=1" in output
     assert "batch n=1" in output
     assert "live n=1" in output
     assert "Top:       boot cohort=bootstrap" in output
     assert "Top:       batch cohort=batch" in output
     assert "Top:       live cohort=live" in output
+
+
+def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_latest_combine
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="kept",
+        kind="dsl",
+        definition={"expression": "x"},
+        stake=1.0,
+        metadata={"lifecycle_live_proven": True},
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="dropped",
+        kind="dsl",
+        definition={"expression": "y"},
+        stake=0.0,
+        metadata={"lifecycle_live_proven": True},
+    ))
+    store.close()
+
+    tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
+    tracker.save_snapshot(PortfolioSnapshot(
+        date="2026-03-23T00:00:00",
+        cash=1000.0,
+        positions={},
+        portfolio_value=1000.0,
+        daily_pnl=0.0,
+        daily_return=0.0,
+        combined_signal=0.1234,
+        dd_scale=1.0,
+        vol_scale=1.0,
+        final_signal=0.1234,
+    ))
+    tracker.save_alpha_signals(
+        "2026-03-23T00:00:00",
+        {"kept": 0.3, "dropped": -0.2},
+    )
+    tracker.close()
+
+    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
+    output = capsys.readouterr().out
+
+    assert "Snapshot:  selected=2 current_backed=1 dropped=1 missing=0" in output
+    assert "Top:       kept cohort=live" in output
+    assert "Top:       dropped" not in output
 
 
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):

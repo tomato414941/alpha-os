@@ -2806,12 +2806,18 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             "other": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
         }
         ranked: list[tuple[float, str, str, float, float]] = []
+        missing_current = 0
+        dropped_current = 0
         for alpha_id, signal in signals.items():
             record = record_map.get(alpha_id)
             if record is None:
+                missing_current += 1
                 continue
             cohort = _runtime_cohort(record)
             weight = float(weights.get(alpha_id, 0.0))
+            if weight <= 0.0:
+                dropped_current += 1
+                continue
             contribution = weight * float(signal)
             cohorts[cohort]["n"] += 1
             cohorts[cohort]["weight"] += weight
@@ -2825,7 +2831,12 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
         print(f"  Date:      {snapshot.date}")
         print(
             f"  Combined:  stored={float(snapshot.combined_signal):+.6f} "
-            f"current_weighted={current_combined:+.6f} selected={len(signals)}"
+            f"current_weighted={current_combined:+.6f}"
+        )
+        print(
+            f"  Snapshot:  selected={len(signals)} "
+            f"current_backed={sum(cohort['n'] for cohort in cohorts.values())} "
+            f"dropped={dropped_current} missing={missing_current}"
         )
         print(
             "  Cohorts:   "
