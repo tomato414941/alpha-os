@@ -2040,6 +2040,8 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
         f"drop_sharpe_p90={quality_drop_sharpe['p90']:.2f} "
         f"drop_folds_p50={quality_drop_folds['p50']:.0f}"
     )
+    if summary["family_quality_lines"]:
+        print("  FamilyQ:  " + " | ".join(summary["family_quality_lines"]))
     if summary["near_miss_entries"]:
         print("  NearMiss: " + ", ".join(summary["near_miss_entries"]))
     for entry in summary["top_entries"]:
@@ -2516,6 +2518,15 @@ def _distribution_summary(values: list[float]) -> dict[str, float]:
     }
 
 
+def _format_distribution_line(label: str, summary: dict[str, float]) -> str:
+    return (
+        f"{label}:n={int(summary['count'])}"
+        f"/p50={summary['p50']:.2f}"
+        f"/p90={summary['p90']:.2f}"
+        f"/max={summary['max']:.2f}"
+    )
+
+
 def _batch_research_summary(
     *,
     top: int = 5,
@@ -2543,6 +2554,8 @@ def _batch_research_summary(
     quality_dropped_log_growths: list[float] = []
     quality_dropped_folds: list[float] = []
     backed_norms: list[float] = []
+    family_norms: dict[str, list[float]] = {}
+    quality_family_norms: dict[str, list[float]] = {}
 
     for record in records:
         metadata = getattr(record, "metadata", {}) or {}
@@ -2563,6 +2576,8 @@ def _batch_research_summary(
         for family in families:
             counter[family] += 1
         norm_quality = normalized_research_quality(record.oos_fitness("sharpe"), metric="sharpe")
+        for family in families:
+            family_norms.setdefault(family, []).append(norm_quality)
         ranked.append(
             (
                 norm_quality,
@@ -2577,6 +2592,8 @@ def _batch_research_summary(
             quality_dropped_norms.append(norm_quality)
             quality_dropped_sharpes.append(record.oos_fitness("sharpe"))
             quality_dropped_log_growths.append(record.oos_fitness("log_growth"))
+            for family in families:
+                quality_family_norms.setdefault(family, []).append(norm_quality)
             try:
                 quality_dropped_folds.append(float(metadata.get("research_score_n_folds", 0)))
             except (TypeError, ValueError):
@@ -2600,6 +2617,20 @@ def _batch_research_summary(
         reason: [f"{family}:{count}" for family, count in counts.most_common(3)]
         for reason, counts in family_counts.items()
     }
+    family_quality_summary = sorted(
+        (
+            _distribution_summary(values)["p90"],
+            family,
+            _distribution_summary(values),
+            _distribution_summary(quality_family_norms.get(family, [])),
+        )
+        for family, values in family_norms.items()
+    )
+    family_quality_lines = [
+        f"{family}({_format_distribution_line('all', all_summary)};"
+        f"{_format_distribution_line('drop', drop_summary)})"
+        for _, family, all_summary, drop_summary in reversed(family_quality_summary[: max(top, 0)])
+    ]
     return {
         "total": len(records),
         "retained": retained,
@@ -2615,6 +2646,7 @@ def _batch_research_summary(
         "quality_drop_folds": _distribution_summary(quality_dropped_folds),
         "backed_norm": _distribution_summary(backed_norms),
         "near_miss_entries": near_miss_entries,
+        "family_quality_lines": family_quality_lines,
     }
 
 
