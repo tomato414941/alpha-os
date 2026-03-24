@@ -14,7 +14,11 @@ from alpha_os.data.universe import build_feature_list, stratified_feature_subset
 from alpha_os.dsl import temporal_expression_issues, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
-from alpha_os.hypotheses.identity import expression_semantic_key
+from alpha_os.hypotheses.identity import (
+    expression_feature_families,
+    expression_feature_names,
+    expression_semantic_key,
+)
 from alpha_os.hypotheses.store import (
     HypothesisKind,
     HypothesisRecord,
@@ -154,6 +158,7 @@ class HypothesisSeederDaemon:
         inserted = 0
         skipped = 0
         seen_ids: set[str] = set()
+        diversity_keys = self._active_random_dsl_diversity_keys()
         for expr in candidates:
             issues = temporal_expression_issues(expr)
             if issues:
@@ -166,6 +171,10 @@ class HypothesisSeederDaemon:
                 skipped += 1
                 continue
             seen_ids.add(hypothesis_id)
+            diversity_key = self._random_dsl_diversity_key(expression)
+            if diversity_key is not None and diversity_key in diversity_keys:
+                skipped += 1
+                continue
             existing = self._store.get(hypothesis_id)
             if existing is not None:
                 self._backfill_random_dsl_metadata(existing)
@@ -243,6 +252,30 @@ class HypothesisSeederDaemon:
             changed = True
         if changed:
             self._store.update_metadata(existing.hypothesis_id, merged, merge=False)
+
+    def _active_random_dsl_diversity_keys(self) -> set[tuple[tuple[str, ...], int]]:
+        keys: set[tuple[tuple[str, ...], int]] = set()
+        for record in self._store.list_observation_active():
+            if record.source != "random_dsl":
+                continue
+            if record.stake <= 0 and not bool(
+                record.metadata.get("lifecycle_actionable_live", False)
+            ):
+                continue
+            diversity_key = self._random_dsl_diversity_key(record.expression)
+            if diversity_key is not None:
+                keys.add(diversity_key)
+        return keys
+
+    @staticmethod
+    def _random_dsl_diversity_key(expression: str) -> tuple[tuple[str, ...], int] | None:
+        feature_names = expression_feature_names(expression)
+        if not feature_names:
+            return None
+        feature_families = expression_feature_families(expression)
+        if not feature_families:
+            return None
+        return feature_families, len(feature_names)
 
     @staticmethod
     def _dsl_hypothesis_id(expression: str) -> str:

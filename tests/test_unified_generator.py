@@ -1,7 +1,7 @@
 import pytest
 
 from alpha_os.config import Config
-from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
+from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon, RANDOM_DSL_METADATA
 from alpha_os.dsl.expr import Constant, Feature, LagOp
 from alpha_os.dsl import to_string
 from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
@@ -205,6 +205,57 @@ def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_ds
     assert updated.metadata["research_quality_source"] == "exploratory_unscored"
     assert updated.metadata["research_quality_status"] == "unscored"
     assert updated.metadata["registration_stage"] == "observation_only"
+
+    daemon.close()
+
+
+def test_hypothesis_seeder_skips_random_dsl_that_matches_live_diversity_key(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None: ["fear_greed", "dxy", "btc_usdt"],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    existing_expression = to_string(Feature("fear_greed"))
+    store.register(
+        HypothesisRecord(
+            hypothesis_id=daemon._dsl_hypothesis_id(existing_expression),
+            kind="dsl",
+            name=existing_expression,
+            definition={"expression": existing_expression},
+            status="active",
+            stake=0.0,
+            source="random_dsl",
+            metadata={
+                **RANDOM_DSL_METADATA,
+                "lifecycle_actionable_live": True,
+            },
+        )
+    )
+
+    inserted, skipped = daemon._register_random_dsl(
+        [Feature("dxy"), Feature("btc_usdt")]
+    )
+    rows = [row for row in store.list_all() if row.source == "random_dsl"]
+
+    assert inserted == 1
+    assert skipped == 1
+    assert len(rows) == 2
+    assert any(row.definition["expression"] == to_string(Feature("btc_usdt")) for row in rows)
 
     daemon.close()
 
