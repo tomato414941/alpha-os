@@ -67,10 +67,10 @@ class PaperCycleResult:
     daily_return: float
     dd_scale: float
     vol_scale: float
-    n_registry_active: int
+    n_active_hypotheses: int
     n_live_hypotheses: int
     n_shortlist_candidates: int
-    n_selected_alphas: int
+    n_selected_hypotheses: int
     n_signals_evaluated: int
     profile_id: str = ""
     profile_commit: str = ""
@@ -85,6 +85,14 @@ class PaperCycleResult:
     regime_adjusted_signal: float | None = None
     tactical_adjusted_signal: float | None = None
     final_signal: float | None = None
+
+    @property
+    def n_registry_active(self) -> int:
+        return self.n_active_hypotheses
+
+    @property
+    def n_selected_alphas(self) -> int:
+        return self.n_selected_hypotheses
 
 
 @dataclass
@@ -581,10 +589,10 @@ class Trader:
                     daily_return=last_snapshot.daily_return,
                     dd_scale=last_snapshot.dd_scale,
                     vol_scale=last_snapshot.vol_scale,
-                    n_registry_active=0,
+                    n_active_hypotheses=0,
                     n_live_hypotheses=0,
                     n_shortlist_candidates=0,
-                    n_selected_alphas=0,
+                    n_selected_hypotheses=0,
                     n_signals_evaluated=0,
                 )
 
@@ -612,9 +620,9 @@ class Trader:
                 combined_signal=0.0, fills=[],
                 portfolio_value=prev_equity, daily_pnl=0.0, daily_return=0.0,
                 dd_scale=1.0, vol_scale=1.0,
-                n_registry_active=0, n_live_hypotheses=0,
+                n_active_hypotheses=0, n_live_hypotheses=0,
                 n_shortlist_candidates=0,
-                n_selected_alphas=0, n_signals_evaluated=0,
+                n_selected_hypotheses=0, n_signals_evaluated=0,
             )
 
         # 1. Build two sets:
@@ -634,7 +642,7 @@ class Trader:
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric=self.config.portfolio.objective,
         )
-        all_alphas = observation_candidates
+        all_hypotheses = observation_candidates
 
         n_total_active = len(trading_candidates)
         if n_live_hypotheses > max_trading or n_total_active > max_trading:
@@ -662,7 +670,7 @@ class Trader:
             pass
 
         runtime_signals, parsed_records, n_failed = self._prepare_runtime_inputs(
-            all_alphas,
+            all_hypotheses,
             self.price_signal,
             store_signals,
         )
@@ -674,7 +682,7 @@ class Trader:
                     logger.info(
                         "Syncing %d runtime signals for %d candidates...",
                         len(runtime_signals),
-                        len(all_alphas),
+                        len(all_hypotheses),
                     )
                     self.store.sync(runtime_signals)
                 except Exception as exc:
@@ -693,10 +701,10 @@ class Trader:
                 profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=prev_equity,
-                n_registry_active=n_total_active,
+                n_active_hypotheses=n_total_active,
                 n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
-                n_selected_alphas=0,
+                n_selected_hypotheses=0,
                 n_signals_evaluated=0,
             )
 
@@ -710,10 +718,10 @@ class Trader:
                 profile_live_set_id=current_profile.live_set_id,
                 combined_signal=0.0, dd_scale=1.0,
                 vol_scale=1.0, fills=[], portfolio_value=prev_equity,
-                n_registry_active=n_total_active,
+                n_active_hypotheses=n_total_active,
                 n_live_hypotheses=n_live_hypotheses,
                 n_shortlist_candidates=len(trading_candidates),
-                n_selected_alphas=0,
+                n_selected_hypotheses=0,
                 n_signals_evaluated=0,
             )
         price_return = (prices_arr[-1] - prices_arr[-2]) / prices_arr[-2]
@@ -815,18 +823,18 @@ class Trader:
             logger.info("Cycle: %d/%d signals from prediction store", n_from_store, n_evaluated)
         if n_feature_filtered:
             logger.info(
-                "Cycle: %d/%d alphas skipped (missing features in current data)",
-                n_feature_filtered, len(all_alphas),
+                "Cycle: %d/%d hypotheses skipped (missing features in current data)",
+                n_feature_filtered, len(all_hypotheses),
             )
         if n_failed:
-            logger.info("Cycle: %d/%d alphas failed evaluation", n_failed, len(all_alphas))
+            logger.info("Cycle: %d/%d hypotheses failed evaluation", n_failed, len(all_hypotheses))
         total_skipped = n_feature_filtered + n_failed
-        if all_alphas and total_skipped / len(all_alphas) > 0.7:
+        if all_hypotheses and total_skipped / len(all_hypotheses) > 0.7:
             logger.warning(
-                "High alpha skip ratio: %.1f%% (%d/%d)",
-                100.0 * total_skipped / len(all_alphas),
+                "High hypothesis skip ratio: %.1f%% (%d/%d)",
+                100.0 * total_skipped / len(all_hypotheses),
                 total_skipped,
-                len(all_alphas),
+                len(all_hypotheses),
             )
 
         # TC computation removed — stake-based weights handle selection
@@ -872,7 +880,7 @@ class Trader:
             n_before = len(selection_signal_ids)
             alpha_signals = {k: v for k, v in alpha_signals.items() if k in selected_ids}
             logger.info(
-                "Correlation filter: %d shortlist candidates → %d selected alphas (max_corr=%.2f)",
+                "Correlation filter: %d shortlist candidates → %d selected hypotheses (max_corr=%.2f)",
                 n_before, len(alpha_signals), CombinerConfig().max_correlation,
             )
         else:
@@ -974,10 +982,10 @@ class Trader:
             daily_return=daily_return,
             dd_scale=prediction.dd_scale,
             vol_scale=1.0,
-            n_registry_active=n_total_active,
+            n_active_hypotheses=n_total_active,
             n_live_hypotheses=n_live_hypotheses,
             n_shortlist_candidates=len(trading_candidates),
-            n_selected_alphas=len(selected_records),
+            n_selected_hypotheses=len(selected_records),
             n_signals_evaluated=n_evaluated,
             order_failures=order_failures,
             n_skipped_deadband=execution.skipped_deadband,

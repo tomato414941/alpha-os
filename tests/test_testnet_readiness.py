@@ -29,10 +29,10 @@ class _MockCycleResult:
     daily_pnl: float = 50.0
     daily_return: float = 0.005
     fills: list = None
-    n_registry_active: int = 615
+    n_active_hypotheses: int = 615
     n_live_hypotheses: int = 150
     n_shortlist_candidates: int = 150
-    n_selected_alphas: int = 5
+    n_selected_hypotheses: int = 5
     n_signals_evaluated: int = 5
     n_skipped_deadband: int = 0
     n_skipped_no_delta: int = 0

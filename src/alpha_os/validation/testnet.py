@@ -57,10 +57,10 @@ class DailyReport:
     circuit_breaker_halted: bool = False
     circuit_breaker_reason: str = ""
     # Selection stats
-    n_registry_active: int = 0
+    n_active_hypotheses: int = 0
     n_live_hypotheses: int = 0
     n_shortlist_candidates: int = 0
-    n_selected_alphas: int = 0
+    n_selected_hypotheses: int = 0
     n_signals_evaluated: int = 0
     # Order failures
     n_order_failures: int = 0
@@ -71,6 +71,14 @@ class DailyReport:
     # Readiness result
     has_errors: bool = False
     error_details: list[str] = field(default_factory=list)
+
+    @property
+    def n_registry_active(self) -> int:
+        return self.n_active_hypotheses
+
+    @property
+    def n_selected_alphas(self) -> int:
+        return self.n_selected_hypotheses
 
 
 @dataclass
@@ -186,10 +194,18 @@ class ReadinessChecker:
             cash_diff=reconciliation.get("cash_diff", 0.0),
             circuit_breaker_halted=circuit_breaker.halted,
             circuit_breaker_reason=circuit_breaker.halt_reason,
-            n_registry_active=cycle_result.n_registry_active,
+            n_active_hypotheses=getattr(
+                cycle_result,
+                "n_active_hypotheses",
+                getattr(cycle_result, "n_registry_active", 0),
+            ),
             n_live_hypotheses=cycle_result.n_live_hypotheses,
             n_shortlist_candidates=cycle_result.n_shortlist_candidates,
-            n_selected_alphas=cycle_result.n_selected_alphas,
+            n_selected_hypotheses=getattr(
+                cycle_result,
+                "n_selected_hypotheses",
+                getattr(cycle_result, "n_selected_alphas", 0),
+            ),
             n_signals_evaluated=cycle_result.n_signals_evaluated,
             n_order_failures=order_failures,
             n_skipped_deadband=getattr(cycle_result, "n_skipped_deadband", 0),

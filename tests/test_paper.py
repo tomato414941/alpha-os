@@ -822,7 +822,7 @@ class TestTrader:
 
         assert result.n_live_hypotheses == 1
         assert result.n_shortlist_candidates == 1
-        assert result.n_selected_alphas == 1
+        assert result.n_selected_hypotheses == 1
         assert result.n_signals_evaluated == 2
         trader.close()
 
