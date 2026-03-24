@@ -4,13 +4,15 @@ from __future__ import annotations
 import gc
 import hashlib
 import logging
+import random
 import signal
 import time
+from collections import Counter
 from dataclasses import dataclass
 
 from alpha_os.config import Config, DATA_DIR
 from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import build_feature_list, stratified_feature_subset
+from alpha_os.data.universe import build_feature_list, infer_feature_family, stratified_feature_subset
 from alpha_os.dsl import temporal_expression_issues, to_string
 from alpha_os.dsl.generator import AlphaGenerator
 from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
@@ -138,7 +140,7 @@ class HypothesisSeederDaemon:
             )
             return SeedingRoundStats(0, 0, 0, 0, 0, 0.0)
 
-        feature_subset = stratified_feature_subset(
+        feature_subset = self._guided_feature_subset(
             all_features,
             k=self.generator_cfg.feature_subset_k,
             seed=seed,
@@ -293,6 +295,72 @@ class HypothesisSeederDaemon:
             if diversity_key is not None:
                 keys.add(diversity_key)
         return keys
+
+    def _random_dsl_family_success_scores(self) -> dict[str, float]:
+        totals: Counter[str] = Counter()
+        successes: Counter[str] = Counter()
+        for record in self._store.list_observation_active():
+            if record.source != "random_dsl":
+                continue
+            if str(record.metadata.get("research_quality_status", "")) != "scored":
+                continue
+            families = set(expression_feature_families(record.expression))
+            if not families:
+                continue
+            success = (
+                float(record.stake) > 0
+                or bool(record.metadata.get("lifecycle_research_retained", False))
+                or bool(record.metadata.get("lifecycle_actionable_live", False))
+            )
+            for family in families:
+                totals[family] += 1
+                if success:
+                    successes[family] += 1
+        return {
+            family: float(successes.get(family, 0) / count)
+            for family, count in totals.items()
+            if count > 0
+        }
+
+    def _guided_feature_subset(
+        self,
+        features: list[str],
+        *,
+        k: int,
+        seed: int | None = None,
+    ) -> frozenset[str]:
+        if k <= 0 or not features:
+            return frozenset()
+        family_scores = self._random_dsl_family_success_scores()
+        if not family_scores:
+            return stratified_feature_subset(features, k=k, seed=seed)
+        rng = random.Random(seed)
+        grouped: dict[str, list[str]] = {}
+        for feature in features:
+            grouped.setdefault(infer_feature_family(feature), []).append(feature)
+        for bucket in grouped.values():
+            rng.shuffle(bucket)
+        family_order = list(grouped)
+        family_order.sort(
+            key=lambda family: (
+                -family_scores.get(family, 0.5),
+                rng.random(),
+            )
+        )
+        selected: list[str] = []
+        while len(selected) < min(k, len(features)):
+            added = False
+            for family in family_order:
+                bucket = grouped[family]
+                if not bucket:
+                    continue
+                selected.append(bucket.pop())
+                added = True
+                if len(selected) >= min(k, len(features)):
+                    break
+            if not added:
+                break
+        return frozenset(selected)
 
     @staticmethod
     def _random_dsl_diversity_key(expression: str) -> tuple[tuple[str, ...], int] | None:

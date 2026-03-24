@@ -336,6 +336,60 @@ def test_hypothesis_seeder_retries_api_when_cached_catalog_is_too_small(
     daemon.close()
 
 
+def test_hypothesis_seeder_guided_feature_subset_prefers_stronger_families(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+
+    cfg = Config()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_good",
+            kind="dsl",
+            name="btc_hashrate",
+            definition={"expression": "btc_hashrate"},
+            status="active",
+            stake=1.0,
+            source="random_dsl",
+            metadata={
+                "research_quality_status": "scored",
+                "lifecycle_research_retained": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="event_weak",
+            kind="dsl",
+            name="gdelt_doc_crypto",
+            definition={"expression": "gdelt_doc_crypto"},
+            status="active",
+            stake=0.0,
+            source="random_dsl",
+            metadata={
+                "research_quality_status": "scored",
+            },
+        )
+    )
+
+    subset = daemon._guided_feature_subset(
+        ["btc_hashrate", "gdelt_doc_crypto"],
+        k=1,
+        seed=7,
+    )
+
+    assert subset == frozenset({"btc_hashrate"})
+
+    daemon.close()
+
+
 @pytest.mark.parametrize(
     ("hypothesis_id", "name", "definition"),
     [
