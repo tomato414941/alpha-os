@@ -88,6 +88,23 @@ def test_load_daily_signals_no_client_uses_cache(monkeypatch, tmp_path):
     assert names == ["cached_sig"]
 
 
+def test_load_daily_signals_prefer_cache_skips_client(monkeypatch, tmp_path):
+    class _ExplodingClient:
+        def list_signals(self):
+            raise AssertionError("client should not be called")
+
+    cache_path = tmp_path / "signal_catalog.json"
+    cache_path.write_text(
+        json.dumps([{"name": "cached_sig", "interval": 86400}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(universe, "_CATALOG_CACHE_PATH", cache_path)
+
+    names = universe.load_daily_signals(_ExplodingClient(), prefer_cache=True)
+
+    assert names == ["cached_sig"]
+
+
 def test_init_universe():
     universe.CROSS_ASSET_UNIVERSE = []
     universe.FEATURE_CATALOG = []

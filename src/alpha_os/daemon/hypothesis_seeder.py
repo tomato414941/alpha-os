@@ -110,7 +110,11 @@ class HypothesisSeederDaemon:
         t0 = time.perf_counter()
         seed = int(time.time()) ^ self._round
 
-        all_features = build_feature_list(self.primary_asset, self._client)
+        all_features = build_feature_list(
+            self.primary_asset,
+            self._client,
+            prefer_cache=True,
+        )
         if not all_features:
             logger.warning("No features available, skipping round")
             return SeedingRoundStats(0, 0, 0, 0, 0, 0.0)

@@ -27,7 +27,7 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -84,7 +84,7 @@ def test_hypothesis_seeder_skips_structurally_invalid_dsl_candidates(
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -119,7 +119,7 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -169,7 +169,7 @@ def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_ds
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
@@ -294,7 +294,7 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_feature_list",
-        lambda asset, client=None: ["fear_greed", "dxy", "gold"],
+        lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",

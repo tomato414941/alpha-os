@@ -126,11 +126,25 @@ def _load_catalog_cache() -> list[dict] | None:
         return None
 
 
-def _load_signal_catalog(client: SignalClient | None = None) -> list[dict]:
+def _load_signal_catalog(
+    client: SignalClient | None = None,
+    *,
+    prefer_cache: bool = False,
+) -> list[dict]:
     """Load full signal catalog (list of dicts) from API, cache, or static fallback."""
     global _signal_catalog_cache, _signal_catalog_status
     if _signal_catalog_cache is not None:
         return _signal_catalog_cache
+
+    # Cache-first path for non-latency-sensitive workflows such as exploratory seeding.
+    if prefer_cache:
+        cached = _load_catalog_cache()
+        if cached:
+            _signal_catalog_status = SignalCatalogStatus(
+                source="cache", signal_count=len(cached), intervals=None,
+            )
+            log.warning("Signal catalog source=cache count=%d", len(cached))
+            return cached
 
     # Try API
     if client is not None:
@@ -178,7 +192,11 @@ def _load_signal_catalog(client: SignalClient | None = None) -> list[dict]:
     return static
 
 
-def load_daily_signals(client: SignalClient | None = None) -> list[str]:
+def load_daily_signals(
+    client: SignalClient | None = None,
+    *,
+    prefer_cache: bool = False,
+) -> list[str]:
     """Load available signal names from signal-noise API.
 
     Falls back to local cache, then to static list.
@@ -187,7 +205,7 @@ def load_daily_signals(client: SignalClient | None = None) -> list[str]:
     global _daily_signal_cache
     if _daily_signal_cache is not None:
         return _daily_signal_cache
-    catalog = _load_signal_catalog(client)
+    catalog = _load_signal_catalog(client, prefer_cache=prefer_cache)
     names = sorted(s["name"] for s in catalog)
     _daily_signal_cache = names
     return names
@@ -287,13 +305,18 @@ def price_signal(asset: str) -> str:
     return backing_price_signal(asset)
 
 
-def build_feature_list(asset: str, client: SignalClient | None = None) -> list[str]:
+def build_feature_list(
+    asset: str,
+    client: SignalClient | None = None,
+    *,
+    prefer_cache: bool = False,
+) -> list[str]:
     """Build deduplicated feature list: price signal first, then all daily signals."""
     try:
         price = price_signal(asset)
     except KeyError:
         price = asset.lower()
-    daily = load_daily_signals(client)
+    daily = load_daily_signals(client, prefer_cache=prefer_cache)
     seen = {price}
     result = [price]
     for s in daily:
