@@ -156,11 +156,13 @@ def is_capital_eligible(
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
-        and signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
+    )
+    actionable_live = live_proven and (
+        signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
         and signal_mean_abs >= live_proven_signal_mean_abs_min
     )
     research_retained = research_backed and not has_min_observations
-    return research_retained or live_proven
+    return research_retained or actionable_live
 
 
 def capital_eligibility_breakdown(
@@ -187,7 +189,7 @@ def capital_eligibility_breakdown(
         DEFAULT_BOOTSTRAP_RETENTION_MARGINAL_CONTRIBUTION_MIN
     ),
     floor: float = 0.0,
-) -> tuple[bool, bool, bool, str]:
+) -> tuple[bool, bool, bool, bool, str]:
     research_backed = is_research_backed(
         research_quality,
         metric=metric,
@@ -200,19 +202,23 @@ def capital_eligibility_breakdown(
     live_proven = has_min_observations and (
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
-        and signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
+    )
+    actionable_live = live_proven and (
+        signal_nonzero_ratio >= live_proven_signal_nonzero_ratio_min
         and signal_mean_abs >= live_proven_signal_mean_abs_min
     )
     research_retained = research_backed and not has_min_observations
-    if live_proven:
-        reason = "live_proven"
+    if actionable_live:
+        reason = "actionable_live"
     elif research_retained:
         reason = "research_backed"
+    elif live_proven:
+        reason = "live_not_actionable"
     elif research_backed:
         reason = "research_demoted"
     else:
         reason = "none"
-    return research_backed, research_retained, live_proven, reason
+    return research_backed, research_retained, live_proven, actionable_live, reason
 
 
 def live_promotion_blocker(

@@ -387,8 +387,9 @@ def test_build_allocation_rebalance_plan_promotes_live_proven_unscored_hypothesi
     assert entry.research_backed is False
     assert entry.research_retained is False
     assert entry.live_proven is True
+    assert entry.actionable_live is True
     assert entry.capital_eligible is True
-    assert entry.capital_reason == "live_proven"
+    assert entry.capital_reason == "actionable_live"
     assert entry.live_promotion_blocker == "eligible"
     assert entry.proposed_stake > 0.0
     store.close()
@@ -498,8 +499,9 @@ def test_build_allocation_rebalance_plan_prefers_live_proven_over_research_overl
     assert entry.research_backed is True
     assert entry.research_retained is False
     assert entry.live_proven is True
+    assert entry.actionable_live is True
     assert entry.capital_eligible is True
-    assert entry.capital_reason == "live_proven"
+    assert entry.capital_reason == "actionable_live"
     store.close()
 
 
@@ -529,8 +531,10 @@ def test_build_allocation_rebalance_plan_blocks_sparse_signal_activity(tmp_path)
     )
 
     entry = plan[0]
-    assert entry.live_proven is False
+    assert entry.live_proven is True
+    assert entry.actionable_live is False
     assert entry.capital_eligible is False
+    assert entry.capital_reason == "live_not_actionable"
     assert entry.live_promotion_blocker == "weak_signal_activity"
     store.close()
 
@@ -722,8 +726,9 @@ def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
             research_backed=False,
             research_retained=False,
             live_proven=True,
+            actionable_live=True,
             capital_eligible=True,
-            capital_reason="live_proven",
+            capital_reason="actionable_live",
             live_promotion_blocker="eligible",
             n_observations=30,
             bootstrap_trust_value=0.0,
@@ -741,8 +746,9 @@ def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
             research_backed=False,
             research_retained=False,
             live_proven=True,
+            actionable_live=True,
             capital_eligible=True,
-            capital_reason="live_proven",
+            capital_reason="actionable_live",
             live_promotion_blocker="eligible",
             n_observations=30,
             bootstrap_trust_value=0.0,
@@ -800,6 +806,7 @@ def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
             research_backed=True,
             research_retained=True,
             live_proven=False,
+            actionable_live=False,
             capital_eligible=True,
             capital_reason="research_backed",
             live_promotion_blocker="insufficient_observations",
@@ -820,6 +827,7 @@ def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
             research_backed=True,
             research_retained=True,
             live_proven=False,
+            actionable_live=False,
             capital_eligible=True,
             capital_reason="research_backed",
             live_promotion_blocker="insufficient_observations",
@@ -866,8 +874,9 @@ def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
             research_backed=False,
             research_retained=False,
             live_proven=True,
+            actionable_live=True,
             capital_eligible=True,
-            capital_reason="live_proven",
+            capital_reason="actionable_live",
             live_promotion_blocker="eligible",
             n_observations=30,
             bootstrap_trust_value=0.0,
@@ -885,8 +894,9 @@ def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
             research_backed=False,
             research_retained=False,
             live_proven=True,
+            actionable_live=True,
             capital_eligible=True,
-            capital_reason="live_proven",
+            capital_reason="actionable_live",
             live_promotion_blocker="eligible",
             n_observations=30,
             bootstrap_trust_value=0.0,

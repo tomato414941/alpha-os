@@ -2541,12 +2541,13 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
     bootstrap_research_retained = 0
     batch_research_retained = 0
     live_proven = 0
+    actionable_live = 0
     promoted_live = 0
     research_demoted = 0
     research_candidate_capped = 0
     bootstrap_capital_backed = 0
     batch_research_capital_backed = 0
-    live_proven_capital_backed = 0
+    actionable_live_capital_backed = 0
     blocker_counts = {
         "insufficient_observations": 0,
         "weak_live_quality": 0,
@@ -2584,9 +2585,11 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
             live_proven += 1
             if bootstrap_trust <= 0:
                 promoted_live += 1
+        if bool(record.metadata.get("lifecycle_actionable_live", False)):
+            actionable_live += 1
         if stake > 0:
             if cohort == "live":
-                live_proven_capital_backed += 1
+                actionable_live_capital_backed += 1
             elif cohort == "batch":
                 batch_research_capital_backed += 1
             else:
@@ -2595,7 +2598,7 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
             research_demoted += 1
         if bool(record.metadata.get("lifecycle_research_candidate_capped", False)):
             research_candidate_capped += 1
-        if bootstrap_trust <= 0 and not bool(record.metadata.get("lifecycle_live_proven", False)):
+        if bootstrap_trust <= 0 and not bool(record.metadata.get("lifecycle_actionable_live", False)):
             blocker = str(record.metadata.get("lifecycle_live_promotion_blocker", ""))
             if blocker in blocker_counts:
                 blocker_counts[blocker] += 1
@@ -2608,12 +2611,13 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "bootstrap_research_retained": bootstrap_research_retained,
         "batch_research_retained": batch_research_retained,
         "live_proven": live_proven,
+        "actionable_live": actionable_live,
         "promoted_live": promoted_live,
         "research_demoted": research_demoted,
         "research_candidate_capped": research_candidate_capped,
         "bootstrap_capital_backed": bootstrap_capital_backed,
         "batch_research_capital_backed": batch_research_capital_backed,
-        "live_proven_capital_backed": live_proven_capital_backed,
+        "actionable_live_capital_backed": actionable_live_capital_backed,
         "promotion_blockers": blocker_counts,
         "top_allocation": _top_runtime_hypotheses(records, "stake"),
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
@@ -2724,6 +2728,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"bootstrap_backed={hypothesis_summary['bootstrap_backed']} "
         f"research_retained={hypothesis_summary['research_retained']} "
         f"live_proven={hypothesis_summary['live_proven']} "
+        f"actionable_live={hypothesis_summary['actionable_live']} "
         f"promoted_live={hypothesis_summary['promoted_live']} "
         f"research_demoted={hypothesis_summary['research_demoted']} "
         f"research_candidate_capped={hypothesis_summary['research_candidate_capped']} "
@@ -2736,7 +2741,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         f"batch={hypothesis_summary['batch_research_retained']}/"
         f"{hypothesis_summary['batch_research_capital_backed']} "
         f"live={hypothesis_summary['live_proven']}/"
-        f"{hypothesis_summary['live_proven_capital_backed']}"
+        f"{hypothesis_summary['actionable_live_capital_backed']}"
     )
     blocker_counts = hypothesis_summary["promotion_blockers"]
     if any(blocker_counts.values()):

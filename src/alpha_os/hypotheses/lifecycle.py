@@ -39,6 +39,7 @@ class AllocationRebalanceEntry:
     research_backed: bool
     research_retained: bool
     live_proven: bool
+    actionable_live: bool
     capital_eligible: bool
     capital_reason: str
     live_promotion_blocker: str
@@ -378,7 +379,7 @@ def build_allocation_rebalance_plan(
             marginal_contribution_weight=marginal_contribution_weight,
             floor=floor,
         )
-        research_backed, research_retained, live_proven, capital_reason = (
+        research_backed, research_retained, live_proven, actionable_live, capital_reason = (
             capital_eligibility_breakdown(
                 research_quality=research_quality,
                 research_quality_source=research_quality_source,
@@ -402,7 +403,7 @@ def build_allocation_rebalance_plan(
                 floor=floor,
             )
         )
-        capital_eligible = research_retained or live_proven
+        capital_eligible = research_retained or actionable_live
         proposed = target if capital_eligible else floor
         plan.append(
             AllocationRebalanceEntry(
@@ -414,6 +415,7 @@ def build_allocation_rebalance_plan(
                 research_backed=research_backed,
                 research_retained=research_retained,
                 live_proven=live_proven,
+                actionable_live=actionable_live,
                 capital_eligible=capital_eligible,
                 capital_reason=capital_reason,
                 live_promotion_blocker=live_promotion_blocker(
@@ -467,6 +469,7 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_research_backed": entry.research_backed,
                 "lifecycle_research_retained": entry.research_retained,
                 "lifecycle_live_proven": entry.live_proven,
+                "lifecycle_actionable_live": entry.actionable_live,
                 "lifecycle_capital_eligible": entry.capital_eligible,
                 "lifecycle_capital_reason": entry.capital_reason,
                 "lifecycle_research_candidate_capped": entry.research_candidate_capped,

@@ -1283,7 +1283,7 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
     assert "Hypotheses: active=2 paused=1 archived=1 live=2" in output
     assert (
         "Signals:   observed=2 bootstrap_backed=1 research_retained=0 "
-        "live_proven=0 promoted_live=0 research_demoted=0 "
+        "live_proven=0 actionable_live=0 promoted_live=0 research_demoted=0 "
         "research_candidate_capped=0 capital_backed=2"
     ) in output
     assert "Cohorts:   bootstrap=0/2 batch=0/0 live=0/0" in output
