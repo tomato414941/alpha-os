@@ -1,3 +1,5 @@
+import pytest
+
 from alpha_os.config import Config
 from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
 from alpha_os.dsl.expr import Constant, Feature, LagOp
@@ -47,10 +49,10 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
 
     assert stats.generated_dsl == 2
     assert stats.inserted_dsl == 2
-    assert stats.inserted_bootstrap == 11
-    assert len(rows) == 13
+    assert stats.inserted_bootstrap == 10
+    assert len(rows) == 12
     assert len(dsl_rows) == 2
-    assert len(technical_rows) == 9
+    assert len(technical_rows) == 8
     assert len(ml_rows) == 2
     assert all(row.status == "active" for row in rows)
     assert all(row.stake == 0 for row in dsl_rows)
@@ -145,7 +147,7 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     inserted, skipped = daemon._register_bootstrap_hypotheses()
     updated = store.get(original.hypothesis_id)
 
-    assert inserted == 10
+    assert inserted == 9
     assert skipped == 1
     assert updated is not None
     assert updated.stake == 0.37
@@ -207,7 +209,34 @@ def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_ds
     daemon.close()
 
 
-def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("hypothesis_id", "name", "definition"),
+    [
+        (
+            "technical_volume_price_confirmation",
+            "Volume Price Confirmation",
+            {
+                "indicator": "volume_price_confirmation",
+                "params": {"price_window": 20, "volume_window": 20},
+            },
+        ),
+        (
+            "technical_roc_5_mean_reversion",
+            "ROC 5 Mean Reversion",
+            {
+                "indicator": "roc_reversion",
+                "params": {"window": 5},
+            },
+        ),
+    ],
+)
+def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(
+    tmp_path,
+    monkeypatch,
+    hypothesis_id,
+    name,
+    definition,
+):
     monkeypatch.setattr(
         "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
@@ -227,13 +256,10 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(tmp_path, monke
 
     store.register(
         HypothesisRecord(
-            hypothesis_id="technical_volume_price_confirmation",
+            hypothesis_id=hypothesis_id,
             kind="technical",
-            name="Volume Price Confirmation",
-            definition={
-                "indicator": "volume_price_confirmation",
-                "params": {"price_window": 20, "volume_window": 20},
-            },
+            name=name,
+            definition=definition,
             stake=1.0,
             status="active",
             source="bootstrap_technical",
@@ -241,7 +267,7 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(tmp_path, monke
     )
 
     daemon._register_bootstrap_hypotheses()
-    retired = store.get("technical_volume_price_confirmation")
+    retired = store.get(hypothesis_id)
 
     assert retired is not None
     assert retired.status == "archived"

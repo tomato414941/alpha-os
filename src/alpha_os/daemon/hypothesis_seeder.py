@@ -28,6 +28,9 @@ RETIRED_BOOTSTRAP_HYPOTHESES = {
     "technical_volume_price_confirmation": (
         "Retired until the runtime has a real volume-backed implementation."
     ),
+    "technical_roc_5_mean_reversion": (
+        "Retired because the bootstrap set already keeps a stronger short-horizon mean-reversion seed."
+    ),
 }
 
 RANDOM_DSL_METADATA = {

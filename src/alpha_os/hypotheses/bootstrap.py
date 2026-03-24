@@ -42,16 +42,6 @@ def _technical_hypotheses() -> list[HypothesisRecord]:
             {"oos_sharpe": 0.55, "oos_log_growth": 0.10},
         ),
         (
-            "technical_roc_5_mean_reversion",
-            "ROC 5 Mean Reversion",
-            {
-                "indicator": "roc_reversion",
-                "params": {"window": 5},
-                "inputs": ["core_universe_1000"],
-            },
-            {"oos_sharpe": 0.35, "oos_log_growth": 0.06},
-        ),
-        (
             "technical_macd_trend",
             "MACD Trend",
             {
