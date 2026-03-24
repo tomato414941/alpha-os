@@ -948,7 +948,7 @@ class Trader:
         )
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
-        self.portfolio_tracker.save_alpha_signals(cycle_key, hypothesis_signals)
+        self.portfolio_tracker.save_hypothesis_signals(cycle_key, hypothesis_signals)
         self._executor_state_date = snapshot.date
         no_fill_streak = self.portfolio_tracker.count_consecutive_no_fill_cycles()
         if no_fill_streak >= 6:

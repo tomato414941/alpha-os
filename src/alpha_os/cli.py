@@ -1408,7 +1408,9 @@ def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
 def _build_signal_activity_getter(portfolio_tracker, *, lookback: int, supports_short: bool):
     if portfolio_tracker is None:
         return None
-    getter = getattr(portfolio_tracker, "get_alpha_signal_history", None)
+    getter = getattr(portfolio_tracker, "get_hypothesis_signal_history", None)
+    if getter is None:
+        getter = getattr(portfolio_tracker, "get_alpha_signal_history", None)
     if getter is None:
         return None
 
@@ -1446,15 +1448,18 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     signal_date = getattr(result, "date", "")
     if not signal_date:
         return {}
-    alpha_signals = trader.portfolio_tracker.get_alpha_signals(signal_date)
-    if not alpha_signals:
+    getter = getattr(trader.portfolio_tracker, "get_hypothesis_signals", None)
+    if getter is None:
+        getter = trader.portfolio_tracker.get_alpha_signals
+    hypothesis_signals = getter(signal_date)
+    if not hypothesis_signals:
         return {}
 
     contribution_date = signal_date[:10]
     record_daily_contributions(
         trader.registry,
         date=contribution_date,
-        predictions=alpha_signals,
+        predictions=hypothesis_signals,
         realized_return=getattr(result, "daily_return", 0.0),
     )
     forward_tracker = getattr(trader, "forward_tracker", None)
@@ -2994,9 +2999,12 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             print("  No portfolio snapshots yet.")
             return
 
-        signals = tracker.get_alpha_signals(snapshot.date)
+        getter = getattr(tracker, "get_hypothesis_signals", None)
+        if getter is None:
+            getter = tracker.get_alpha_signals
+        signals = getter(snapshot.date)
         if not signals:
-            print(f"  No alpha signals saved for snapshot {snapshot.date}.")
+            print(f"  No hypothesis signals saved for snapshot {snapshot.date}.")
             return
 
         record_map = {

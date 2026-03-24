@@ -235,9 +235,9 @@ class TestPaperPortfolioTracker:
     def test_alpha_signals(self, tmp_path):
         db = tmp_path / "test.db"
         tracker = PaperPortfolioTracker(db)
-        tracker.save_alpha_signals("2026-01-01", {"a1": 0.5, "a2": -0.3})
-        tracker.save_alpha_signals("2026-01-01", {"a1": 0.6})  # upsert
-        assert tracker.get_alpha_signals("2026-01-01") == {"a1": 0.6, "a2": -0.3}
+        tracker.save_hypothesis_signals("2026-01-01", {"a1": 0.5, "a2": -0.3})
+        tracker.save_hypothesis_signals("2026-01-01", {"a1": 0.6})  # upsert
+        assert tracker.get_hypothesis_signals("2026-01-01") == {"a1": 0.6, "a2": -0.3}
         tracker.close()
 
     def test_consecutive_no_fill_cycles(self, tmp_path):
