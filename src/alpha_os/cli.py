@@ -235,6 +235,12 @@ def _build_parser() -> argparse.ArgumentParser:
     abr.add_argument("--asset", type=str, default="BTC")
     abr.add_argument("--config", type=str, default=None)
     abr.add_argument("--top", type=int, default=5)
+    abr.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
 
     bor = sub.add_parser(
         "backfill-observation-returns",
@@ -1979,12 +1985,22 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
 
 def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
     summary = _batch_research_summary(
         top=args.top,
         quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+        families=family_filter,
     )
     reasons = summary["reasons"]
-    print(f"Batch Research ({args.asset.upper()})")
+    title = f"Batch Research ({args.asset.upper()})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    print(title)
     print(
         "  Summary:  "
         f"scored={summary['total']} retained={summary['retained']} "
@@ -2528,14 +2544,24 @@ def _batch_research_summary(
     *,
     top: int = 5,
     quality_min: float = 0.10,
+    families: tuple[str, ...] | None = None,
 ) -> dict[str, object]:
     from alpha_os.hypotheses.allocation_policy import normalized_research_quality
     from alpha_os.hypotheses.identity import expression_feature_families
     from alpha_os.hypotheses.store import HypothesisStore
 
+    family_filter = set(families or ())
     store = HypothesisStore(HYPOTHESES_DB)
     try:
-        records = [record for record in store.list_observation_active() if _is_batch_research_record(record)]
+        records = [
+            record
+            for record in store.list_observation_active()
+            if _is_batch_research_record(record)
+            and (
+                not family_filter
+                or bool(set(expression_feature_families(record.expression)) & family_filter)
+            )
+        ]
     finally:
         store.close()
 

@@ -1721,6 +1721,53 @@ def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, ca
     assert "Top:      backed reason=backed" in output
 
 
+def test_cmd_analyze_batch_research_filters_families(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_batch_research
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="onchain_backed",
+        kind="dsl",
+        definition={"expression": "btc_difficulty"},
+        stake=0.2,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 0.9,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="price_dropped",
+        kind="dsl",
+        definition={"expression": "fear_greed"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 0.0,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_batch_research(
+        Namespace(asset="BTC", config=None, top=3, families="onchain,derivatives")
+    )
+    output = capsys.readouterr().out
+
+    assert "Batch Research (BTC) [onchain,derivatives]" in output
+    assert "Summary:  scored=1 retained=0 actionable=0 backed=1" in output
+    assert "Top:      onchain_backed reason=backed" in output
+    assert "price_dropped" not in output
+
+
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
