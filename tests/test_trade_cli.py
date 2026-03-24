@@ -1444,7 +1444,9 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
         metadata={
             "lifecycle_actionable_live": True,
             "lifecycle_live_proven": True,
+            "lifecycle_live_quality": 0.4,
             "lifecycle_redundancy_capped_by": "h1",
+            "lifecycle_redundancy_correlation": 0.91,
         },
     ))
     store.register(HypothesisRecord(
@@ -1476,6 +1478,7 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
     output = capsys.readouterr().out
 
     assert "Actionable: backed=1 redundancy_capped=1 other_dropped=1" in output
+    assert "TopCap:    h2->h1(corr=0.91)" in output
 
 
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):

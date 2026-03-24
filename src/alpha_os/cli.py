@@ -2514,6 +2514,33 @@ def _top_runtime_hypotheses(records, metric_key: str, *, n: int = 3) -> list[str
     ]
 
 
+def _top_actionable_redundancy_caps(records, *, n: int = 3) -> list[str]:
+    ranked: list[tuple[float, str]] = []
+    for record in records:
+        metadata = getattr(record, "metadata", {}) or {}
+        if not bool(metadata.get("lifecycle_actionable_live", False)):
+            continue
+        blocker = str(metadata.get("lifecycle_redundancy_capped_by") or "")
+        if not blocker:
+            continue
+        try:
+            live_quality = float(metadata.get("lifecycle_live_quality", 0.0))
+        except (TypeError, ValueError):
+            live_quality = 0.0
+        try:
+            corr = float(metadata.get("lifecycle_redundancy_correlation", 0.0))
+        except (TypeError, ValueError):
+            corr = 0.0
+        ranked.append(
+            (
+                live_quality,
+                f"{record.hypothesis_id}->{blocker}(corr={corr:.2f})",
+            )
+        )
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [entry for _, entry in ranked[:n]]
+
+
 def _runtime_cohort(record) -> str:
     metadata = getattr(record, "metadata", {}) or {}
     if bool(metadata.get("lifecycle_live_proven", False)):
@@ -2632,6 +2659,7 @@ def _runtime_hypothesis_summary() -> dict[str, object]:
         "top_effective_live": _top_runtime_hypotheses(records, "lifecycle_live_quality"),
         "top_raw_live": _top_runtime_hypotheses(records, "lifecycle_raw_live_quality"),
         "top_bootstrap": _top_runtime_hypotheses(records, "lifecycle_bootstrap_trust"),
+        "top_actionable_capped": _top_actionable_redundancy_caps(records),
     }
 
 
@@ -2762,6 +2790,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             f" redundancy_capped={hypothesis_summary['actionable_redundancy_capped']}"
             f" other_dropped={hypothesis_summary['actionable_other_dropped']}"
         )
+    if hypothesis_summary["top_actionable_capped"]:
+        print("  TopCap:    " + ", ".join(hypothesis_summary["top_actionable_capped"]))
     blocker_counts = hypothesis_summary["promotion_blockers"]
     if any(blocker_counts.values()):
         print(
