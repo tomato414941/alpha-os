@@ -430,6 +430,40 @@ def test_build_allocation_rebalance_plan_demotes_weak_research_backed_hypothesis
     store.close()
 
 
+def test_build_allocation_rebalance_plan_demotes_observed_research_backed_without_live_proof(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="h1",
+            kind=HypothesisKind.ML,
+            definition={"model_ref": "m1"},
+            stake=1.0,
+            metadata={"oos_sharpe": 0.8},
+        )
+    )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=3,
+        full_weight_observations=3,
+        bootstrap_retention_quality_min=0.0,
+        bootstrap_retention_marginal_contribution_min=0.0,
+        live_proven_quality_min=0.05,
+        live_proven_marginal_contribution_min=0.0,
+        live_returns_for=lambda _hypothesis_id: [0.001, 0.001, 0.001],
+    )
+
+    entry = plan[0]
+    assert entry.research_backed is True
+    assert entry.research_retained is False
+    assert entry.live_proven is False
+    assert entry.capital_eligible is False
+    assert entry.capital_reason == "research_demoted"
+    assert entry.proposed_stake == pytest.approx(0.0)
+    store.close()
+
+
 def test_build_allocation_rebalance_plan_prefers_live_proven_over_research_overlap(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(

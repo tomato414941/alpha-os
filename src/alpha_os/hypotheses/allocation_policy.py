@@ -151,15 +151,7 @@ def is_capital_eligible(
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
     )
-    research_retained = (
-        research_backed
-        and not live_proven
-        and (
-            not has_min_observations
-            or live_quality >= bootstrap_retention_quality_min
-            or marginal_contribution >= bootstrap_retention_marginal_contribution_min
-        )
-    )
+    research_retained = research_backed and not has_min_observations
     return research_retained or live_proven
 
 
@@ -197,15 +189,7 @@ def capital_eligibility_breakdown(
         live_quality >= live_proven_quality_min
         and marginal_contribution >= live_proven_marginal_contribution_min
     )
-    research_retained = (
-        research_backed
-        and not live_proven
-        and (
-            not has_min_observations
-            or live_quality >= bootstrap_retention_quality_min
-            or marginal_contribution >= bootstrap_retention_marginal_contribution_min
-        )
-    )
+    research_retained = research_backed and not has_min_observations
     if live_proven:
         reason = "live_proven"
     elif research_retained:
