@@ -21,7 +21,12 @@ def rank_trading_records(
         n_candidates,
         max_trading * max(shortlist_preselect_factor, 1),
     )
-    tradable = [record for record in records if record.stake > 0]
+    tradable = [
+        record
+        for record in records
+        if bool(record.metadata.get("lifecycle_capital_eligible", record.stake > 0))
+        and record.stake > 0
+    ]
     tradable.sort(key=lambda record: record.stake, reverse=True)
     preselected = tradable[:preselect_n]
     preselected.sort(

@@ -127,14 +127,7 @@ def load_bootstrap_capital_backed_records(store, *, floor: float = 0.0) -> list[
 
 
 def load_capital_backed_records(store, *, floor: float = 0.0) -> list[HypothesisRecord]:
-    records = []
-    for record in store.list_observation_active():
-        capital_eligible = bool(
-            record.metadata.get("lifecycle_capital_eligible", record.stake > floor)
-        )
-        if capital_eligible and record.stake > floor:
-            records.append(record)
-    return records
+    return store.list_capital_backed(floor=floor)
 
 
 def load_breadth_matrix(

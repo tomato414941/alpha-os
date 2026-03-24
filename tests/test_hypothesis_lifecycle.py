@@ -3,6 +3,7 @@ import sqlite3
 import pytest
 
 from alpha_os.hypotheses.quality import blend_quality
+from alpha_os.hypotheses.runtime_policy import rank_trading_records
 from alpha_os.hypotheses import (
     apply_allocation_rebalance_plan,
     backfill_observation_returns,
@@ -35,6 +36,86 @@ def test_weighted_prediction_uses_stakes():
     )
 
     assert value == 0.5
+
+
+def test_hypothesis_store_separates_observation_and_capital_backed_sets(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="obs_only",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            status="active",
+            stake=0.0,
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="eligible_only",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            status="active",
+            stake=0.0,
+            metadata={"lifecycle_capital_eligible": True},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="backed",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            status="active",
+            stake=0.2,
+            metadata={"lifecycle_capital_eligible": True},
+        )
+    )
+
+    assert [r.hypothesis_id for r in store.list_observation_active()] == [
+        "backed",
+        "eligible_only",
+        "obs_only",
+    ]
+    assert [r.hypothesis_id for r in store.list_capital_eligible()] == [
+        "backed",
+        "eligible_only",
+    ]
+    assert [r.hypothesis_id for r in store.list_capital_backed()] == ["backed"]
+    assert [r.hypothesis_id for r in store.list_live()] == ["backed"]
+    store.close()
+
+
+def test_rank_trading_records_respects_capital_eligibility():
+    backed = HypothesisRecord(
+        hypothesis_id="backed",
+        kind=HypothesisKind.DSL,
+        definition={"expression": "fear_greed"},
+        stake=0.2,
+        metadata={"lifecycle_capital_eligible": True},
+    )
+    shadow = HypothesisRecord(
+        hypothesis_id="shadow",
+        kind=HypothesisKind.DSL,
+        definition={"expression": "fear_greed"},
+        stake=0.9,
+        metadata={"lifecycle_capital_eligible": False},
+    )
+
+    ranked = rank_trading_records(
+        [shadow, backed],
+        estimate_for=lambda _record: blend_quality(
+            0.1,
+            [0.1, 0.1, 0.1],
+            metric="log_growth",
+            rolling_window=3,
+            min_observations=1,
+            full_weight_observations=1,
+        ),
+        max_trading=5,
+        shortlist_preselect_factor=1,
+        metric="log_growth",
+    )
+
+    assert [record.hypothesis_id for record in ranked] == ["backed"]
 
 
 def test_compute_daily_contributions_penalizes_redundant_hypotheses():

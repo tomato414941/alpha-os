@@ -1438,17 +1438,10 @@ def _build_signal_activity_getter(portfolio_tracker, *, lookback: int, supports_
 
 
 def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, float]:
-    from alpha_os.data.store import DataStore
     from alpha_os.hypotheses import (
         apply_allocation_rebalance_plan,
-        build_allocation_rebalance_plan,
+        build_capped_allocation_rebalance_plan,
         record_daily_contributions,
-    )
-    from alpha_os.hypotheses.breadth import (
-        apply_capital_redundancy_cap,
-        apply_live_proven_return_redundancy_cap,
-        apply_weak_research_redundancy_cap,
-        load_breadth_matrix,
     )
 
     signal_date = getattr(result, "date", "")
@@ -1478,77 +1471,14 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         lookback=cfg.forward.degradation_window,
         supports_short=cfg.trading.supports_short,
     )
-    plan = build_allocation_rebalance_plan(
+    asset = getattr(trader, "asset", "BTC")
+    plan = build_capped_allocation_rebalance_plan(
         trader.registry,
-        metric=cfg.portfolio.objective,
-        lookback=cfg.forward.degradation_window,
-        min_observations=cfg.live_quality.min_observations,
-        full_weight_observations=cfg.live_quality.full_weight_observations,
-        early_stage_full_weight_observations=(
-            cfg.live_quality.early_stage_full_weight_observations
-        ),
-        sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
-        log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
-        bootstrap_weight=cfg.lifecycle.bootstrap_weight,
-        batch_research_weight=cfg.lifecycle.batch_research_weight,
-        batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
-        batch_research_capital_candidates_max=(
-            cfg.lifecycle.batch_research_capital_candidates_max
-        ),
-        live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
-        live_proven_marginal_contribution_min=(
-            cfg.lifecycle.live_proven_marginal_contribution_min
-        ),
-        live_proven_signal_nonzero_ratio_min=(
-            cfg.lifecycle.live_proven_signal_nonzero_ratio_min
-        ),
-        live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
-        bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
-        bootstrap_retention_marginal_contribution_min=(
-            cfg.lifecycle.bootstrap_retention_marginal_contribution_min
-        ),
-        quality_weight=cfg.lifecycle.quality_weight,
-        marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
-        floor=cfg.lifecycle.target_stake_floor,
+        asset=asset,
+        config=cfg,
         live_returns_for=live_returns_for,
         signal_activity_for=signal_activity_for,
     )
-    if hasattr(trader.registry, "list_observation_active") and hasattr(trader, "asset"):
-        data_store = DataStore(SIGNAL_CACHE_DB)
-        try:
-            records = trader.registry.list_observation_active()
-            breadth_data = load_breadth_matrix(
-                data_store,
-                records,
-                asset=trader.asset,
-                lookback=cfg.forward.degradation_window,
-            )
-        finally:
-            data_store.close()
-        plan = apply_weak_research_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=trader.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        plan = apply_capital_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=trader.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        if forward_tracker is not None:
-            plan = apply_live_proven_return_redundancy_cap(
-                plan,
-                live_returns_for=live_returns_for,
-                corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-                floor=cfg.lifecycle.target_stake_floor,
-                min_observations=cfg.live_quality.min_observations,
-            )
     updates = apply_allocation_rebalance_plan(trader.registry, plan)
     if updates:
         print(
@@ -1902,16 +1832,10 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     from alpha_os.forward.tracker import ForwardTracker
     from alpha_os.data.store import DataStore
     from alpha_os.paper.tracker import PaperPortfolioTracker
-    from alpha_os.hypotheses.breadth import (
-        apply_capital_redundancy_cap,
-        apply_live_proven_return_redundancy_cap,
-        apply_weak_research_redundancy_cap,
-        load_breadth_matrix,
-    )
     from alpha_os.hypotheses import (
         HypothesisStore,
         apply_allocation_rebalance_plan,
-        build_allocation_rebalance_plan,
+        build_capped_allocation_rebalance_plan,
     )
 
     cfg = _load_config(args.config)
@@ -1930,70 +1854,13 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             lookback=cfg.forward.degradation_window,
             supports_short=cfg.trading.supports_short,
         )
-        plan = build_allocation_rebalance_plan(
+        plan = build_capped_allocation_rebalance_plan(
             store,
-            metric=cfg.portfolio.objective,
-            lookback=cfg.forward.degradation_window,
-            min_observations=cfg.live_quality.min_observations,
-            full_weight_observations=cfg.live_quality.full_weight_observations,
-            early_stage_full_weight_observations=(
-                cfg.live_quality.early_stage_full_weight_observations
-            ),
-            sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
-            log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
-            bootstrap_weight=cfg.lifecycle.bootstrap_weight,
-            batch_research_weight=cfg.lifecycle.batch_research_weight,
-            batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
-            batch_research_capital_candidates_max=(
-                cfg.lifecycle.batch_research_capital_candidates_max
-            ),
-            live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
-            live_proven_marginal_contribution_min=(
-                cfg.lifecycle.live_proven_marginal_contribution_min
-            ),
-            live_proven_signal_nonzero_ratio_min=(
-                cfg.lifecycle.live_proven_signal_nonzero_ratio_min
-            ),
-            live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
-            bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
-            bootstrap_retention_marginal_contribution_min=(
-                cfg.lifecycle.bootstrap_retention_marginal_contribution_min
-            ),
-            quality_weight=cfg.lifecycle.quality_weight,
-            marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
-            floor=cfg.lifecycle.target_stake_floor,
+            asset=args.asset,
+            config=cfg,
             live_returns_for=live_returns_for,
             signal_activity_for=signal_activity_for,
-        )
-        records = store.list_observation_active()
-        breadth_data = load_breadth_matrix(
-            data_store,
-            records,
-            asset=args.asset,
-            lookback=cfg.forward.degradation_window,
-        )
-        plan = apply_weak_research_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=args.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        plan = apply_capital_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=args.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        plan = apply_live_proven_return_redundancy_cap(
-            plan,
-            live_returns_for=live_returns_for,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-            min_observations=cfg.live_quality.min_observations,
+            data_store=data_store,
         )
         zeroed = sum(
             1 for entry in plan
@@ -2113,13 +1980,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
         HypothesisStore,
         apply_allocation_rebalance_plan,
         backfill_observation_returns,
-        build_allocation_rebalance_plan,
-    )
-    from alpha_os.hypotheses.breadth import (
-        apply_capital_redundancy_cap,
-        apply_live_proven_return_redundancy_cap,
-        apply_weak_research_redundancy_cap,
-        load_breadth_matrix,
+        build_capped_allocation_rebalance_plan,
     )
 
     cfg = _load_config(args.config)
@@ -2155,70 +2016,13 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
         if not args.apply_lifecycle:
             return
 
-        plan = build_allocation_rebalance_plan(
+        plan = build_capped_allocation_rebalance_plan(
             store,
-            metric=cfg.portfolio.objective,
-            lookback=cfg.forward.degradation_window,
-            min_observations=cfg.live_quality.min_observations,
-            full_weight_observations=cfg.live_quality.full_weight_observations,
-            early_stage_full_weight_observations=(
-                cfg.live_quality.early_stage_full_weight_observations
-            ),
-            sharpe_clip_abs=cfg.live_quality.sharpe_clip_abs,
-            log_growth_clip_abs=cfg.live_quality.log_growth_clip_abs,
-            bootstrap_weight=cfg.lifecycle.bootstrap_weight,
-            batch_research_weight=cfg.lifecycle.batch_research_weight,
-            batch_research_normalized_quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
-            batch_research_capital_candidates_max=(
-                cfg.lifecycle.batch_research_capital_candidates_max
-            ),
-            live_proven_quality_min=cfg.lifecycle.live_proven_quality_min,
-            live_proven_marginal_contribution_min=(
-                cfg.lifecycle.live_proven_marginal_contribution_min
-            ),
-            live_proven_signal_nonzero_ratio_min=(
-                cfg.lifecycle.live_proven_signal_nonzero_ratio_min
-            ),
-            live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
-            bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
-            bootstrap_retention_marginal_contribution_min=(
-                cfg.lifecycle.bootstrap_retention_marginal_contribution_min
-            ),
-            quality_weight=cfg.lifecycle.quality_weight,
-            marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
-            floor=cfg.lifecycle.target_stake_floor,
+            asset=args.asset,
+            config=cfg,
             live_returns_for=live_returns_for,
             signal_activity_for=signal_activity_for,
-        )
-        records = store.list_observation_active()
-        breadth_data = load_breadth_matrix(
-            data_store,
-            records,
-            asset=args.asset,
-            lookback=cfg.forward.degradation_window,
-        )
-        plan = apply_weak_research_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=args.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        plan = apply_capital_redundancy_cap(
-            plan,
-            records,
-            data=breadth_data,
-            asset=args.asset,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-        )
-        plan = apply_live_proven_return_redundancy_cap(
-            plan,
-            live_returns_for=live_returns_for,
-            corr_max=cfg.lifecycle.capital_redundancy_corr_max,
-            floor=cfg.lifecycle.target_stake_floor,
-            min_observations=cfg.live_quality.min_observations,
+            data_store=data_store,
         )
         updates = apply_allocation_rebalance_plan(store, plan)
         print(

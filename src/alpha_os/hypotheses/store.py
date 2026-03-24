@@ -204,6 +204,31 @@ class HypothesisStore:
         return [self._row_to_record(row) for row in rows]
 
     def list_active(self) -> list[HypothesisRecord]:
+        return self.list_capital_backed()
+
+    def list_capital_eligible(self) -> list[HypothesisRecord]:
+        records = self.list_observation_active()
+        return [
+            record
+            for record in records
+            if bool(record.metadata.get("lifecycle_capital_eligible", record.stake > 0))
+        ]
+
+    def list_capital_backed(self, *, floor: float = 0.0) -> list[HypothesisRecord]:
+        records = self.list_capital_eligible()
+        return [record for record in records if float(record.stake) > floor]
+
+    def list_live(self) -> list[HypothesisRecord]:
+        return self.list_capital_backed()
+
+    def top_by_stake(self, n: int = 30) -> list[HypothesisRecord]:
+        records = self.list_capital_backed()
+        return sorted(
+            records,
+            key=lambda record: (-float(record.stake), -float(record.updated_at)),
+        )[:n]
+
+    def list_active_sql_legacy(self) -> list[HypothesisRecord]:
         rows = self._conn.execute(
             """
             SELECT *
@@ -238,22 +263,6 @@ class HypothesisStore:
             (HypothesisStatus.canonical(status),),
         ).fetchall()
         return [self._row_to_record(row) for row in rows]
-
-    def top_by_stake(self, n: int = 30) -> list[HypothesisRecord]:
-        rows = self._conn.execute(
-            """
-            SELECT *
-            FROM hypotheses
-            WHERE status = ? AND stake > 0
-            ORDER BY stake DESC, updated_at DESC
-            LIMIT ?
-            """,
-            (HypothesisStatus.ACTIVE, n),
-        ).fetchall()
-        return [self._row_to_record(row) for row in rows]
-
-    def list_live(self) -> list[HypothesisRecord]:
-        return self.list_active()
 
     def count(self, *, status: str | None = None) -> int:
         if status is None:

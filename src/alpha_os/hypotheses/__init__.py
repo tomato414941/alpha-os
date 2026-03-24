@@ -25,6 +25,9 @@ from .allocation_policy import (
     target_stake,
     trust_score,
 )
+from .allocation_rebalance_service import (
+    build_capped_allocation_rebalance_plan,
+)
 from .producer import (
     collect_required_features,
     compute_hypothesis_prediction,
@@ -40,6 +43,7 @@ __all__ = [
     "apply_allocation_rebalance_plan",
     "build_allocation_rebalance_plan",
     "bootstrap_trust",
+    "build_capped_allocation_rebalance_plan",
     "capital_eligibility_breakdown",
     "collect_required_features",
     "compute_hypothesis_prediction",
