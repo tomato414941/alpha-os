@@ -24,6 +24,15 @@ CURRENT_HYPOTHESIS_ALIAS_PATHS = [
     TESTS_ROOT / "test_paper.py",
     TESTS_ROOT / "test_trade_cli.py",
 ]
+FORBIDDEN_TRACKER_ALIAS_ATTRS = {
+    "register_alpha",
+    "get_start_date",
+    "get_realizable_returns",
+    "tracked_alpha_ids",
+    "save_alpha_signals",
+    "get_alpha_signals",
+    "get_alpha_signal_history",
+}
 
 
 def _forbidden_alpha_imports(path: Path) -> list[str]:
@@ -87,5 +96,20 @@ def test_current_runtime_code_does_not_use_hypothesis_alpha_id_alias():
         for path in paths:
             if "record.alpha_id" in path.read_text():
                 violations.append(str(path.relative_to(PROJECT_ROOT)))
+
+    assert violations == []
+
+
+def test_repo_does_not_call_legacy_tracker_alias_methods():
+    violations: list[str] = []
+
+    for root in (SRC_ROOT, SCRIPTS_ROOT, TESTS_ROOT):
+        for path in sorted(root.rglob("*.py")):
+            if path == __file__:
+                continue
+            tree = ast.parse(path.read_text())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute) and node.attr in FORBIDDEN_TRACKER_ALIAS_ATTRS:
+                    violations.append(f"{path.relative_to(PROJECT_ROOT)}: {node.attr}")
 
     assert violations == []

@@ -20,10 +20,6 @@ class ForwardRecord:
     daily_return: float
     cumulative_return: float
 
-    @property
-    def alpha_id(self) -> str:
-        return self.hypothesis_id
-
 
 @dataclass
 class ForwardSummary:
@@ -34,10 +30,6 @@ class ForwardSummary:
     sharpe: float
     max_dd: float
     last_date: str
-
-    @property
-    def alpha_id(self) -> str:
-        return self.hypothesis_id
 
 
 class ForwardTracker:
@@ -85,18 +77,12 @@ class ForwardTracker:
         )
         self._conn.commit()
 
-    def register_alpha(self, alpha_id: str, start_date: str) -> None:
-        self.register_hypothesis(alpha_id, start_date)
-
     def get_hypothesis_start_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
             "SELECT forward_start_date FROM forward_meta WHERE alpha_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["forward_start_date"] if row else None
-
-    def get_start_date(self, alpha_id: str) -> str | None:
-        return self.get_hypothesis_start_date(alpha_id)
 
     def record(
         self,
@@ -129,9 +115,6 @@ class ForwardTracker:
         ).fetchall()
         return [row["daily_return"] for row in rows]
 
-    def get_returns(self, alpha_id: str) -> list[float]:
-        return self.get_hypothesis_returns(alpha_id)
-
     def get_hypothesis_realizable_returns(
         self,
         hypothesis_id: str,
@@ -155,17 +138,6 @@ class ForwardTracker:
             realized.append(daily_return if signal_value > 0.0 else 0.0)
         return realized
 
-    def get_realizable_returns(
-        self,
-        alpha_id: str,
-        *,
-        supports_short: bool,
-    ) -> list[float]:
-        return self.get_hypothesis_realizable_returns(
-            alpha_id,
-            supports_short=supports_short,
-        )
-
     def get_hypothesis_records(self, hypothesis_id: str) -> list[ForwardRecord]:
         rows = self._conn.execute(
             "SELECT * FROM forward_returns WHERE alpha_id = ? ORDER BY date",
@@ -182,18 +154,12 @@ class ForwardTracker:
             for row in rows
         ]
 
-    def get_records(self, alpha_id: str) -> list[ForwardRecord]:
-        return self.get_hypothesis_records(alpha_id)
-
     def get_hypothesis_last_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
             "SELECT MAX(date) as last_date FROM forward_returns WHERE alpha_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["last_date"] if row and row["last_date"] else None
-
-    def get_last_date(self, alpha_id: str) -> str | None:
-        return self.get_hypothesis_last_date(alpha_id)
 
     def hypothesis_summary(self, hypothesis_id: str) -> ForwardSummary | None:
         start_date = self.get_hypothesis_start_date(hypothesis_id)
@@ -230,17 +196,11 @@ class ForwardTracker:
             last_date=last_date,
         )
 
-    def summary(self, alpha_id: str) -> ForwardSummary | None:
-        return self.hypothesis_summary(alpha_id)
-
     def tracked_hypothesis_ids(self) -> list[str]:
         rows = self._conn.execute(
             "SELECT alpha_id FROM forward_meta ORDER BY alpha_id"
         ).fetchall()
         return [row["alpha_id"] for row in rows]
-
-    def tracked_alpha_ids(self) -> list[str]:
-        return self.tracked_hypothesis_ids()
 
     def close(self) -> None:
         self._conn.close()

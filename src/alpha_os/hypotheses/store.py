@@ -66,11 +66,6 @@ class HypothesisRecord:
     _OOS_FITNESS_MAP = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
 
     @property
-    def alpha_id(self) -> str:
-        """Compatibility alias for non-current migration paths."""
-        return self.hypothesis_id
-
-    @property
     def expression(self) -> str:
         """Return the DSL expression when this hypothesis is DSL-backed."""
         return str(self.definition.get("expression", ""))

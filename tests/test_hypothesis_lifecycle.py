@@ -771,10 +771,10 @@ def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(t
     tracker.record("h1", "2026-03-23", 0.0, 0.0)
 
     assert tracker.get_hypothesis_returns("h1") == pytest.approx([0.016, 0.021, 0.0])
-    assert tracker.get_realizable_returns("h1", supports_short=True) == pytest.approx(
+    assert tracker.get_hypothesis_realizable_returns("h1", supports_short=True) == pytest.approx(
         [0.016, 0.021, 0.0]
     )
-    assert tracker.get_realizable_returns("h1", supports_short=False) == pytest.approx(
+    assert tracker.get_hypothesis_realizable_returns("h1", supports_short=False) == pytest.approx(
         [0.016, 0.0, 0.0]
     )
 

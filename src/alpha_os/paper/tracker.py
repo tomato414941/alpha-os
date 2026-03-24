@@ -209,9 +209,6 @@ class PaperPortfolioTracker:
         )
         self._conn.commit()
 
-    def save_alpha_signals(self, date: str, signals: dict[str, float]) -> None:
-        self.save_hypothesis_signals(date, signals)
-
     def get_hypothesis_signals(self, date: str) -> dict[str, float]:
         rows = self._conn.execute(
             """
@@ -223,9 +220,6 @@ class PaperPortfolioTracker:
             (date,),
         ).fetchall()
         return {row["alpha_id"]: row["signal_value"] for row in rows}
-
-    def get_alpha_signals(self, date: str) -> dict[str, float]:
-        return self.get_hypothesis_signals(date)
 
     def get_hypothesis_signal_history(self, hypothesis_id: str, limit: int = 20) -> list[float]:
         rows = self._conn.execute(
@@ -239,9 +233,6 @@ class PaperPortfolioTracker:
             (hypothesis_id, int(limit)),
         ).fetchall()
         return [float(row["signal_value"]) for row in rows]
-
-    def get_alpha_signal_history(self, alpha_id: str, limit: int = 20) -> list[float]:
-        return self.get_hypothesis_signal_history(alpha_id, limit=limit)
 
     def get_last_snapshot(self) -> PortfolioSnapshot | None:
         row = self._conn.execute(

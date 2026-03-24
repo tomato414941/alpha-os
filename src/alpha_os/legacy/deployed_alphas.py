@@ -360,7 +360,7 @@ def refresh_deployed_alphas(
             registry.deployed_alpha_ids(),
             lambda record: config.estimate_alpha_quality(
                 record.oos_fitness(objective),
-                tracker.get_returns(record.alpha_id),
+                tracker.get_hypothesis_returns(record.alpha_id),
             ),
             max_alphas=config.deployment.max_deployed_alphas,
             max_replacements=config.deployment.max_replacements,
@@ -481,7 +481,7 @@ def prune_registry_active_duplicates(
             current_deployed_ids,
             lambda record: config.estimate_alpha_quality(
                 record.oos_fitness(objective),
-                tracker.get_returns(record.alpha_id),
+                tracker.get_hypothesis_returns(record.alpha_id),
             ),
             metric=objective,
             signal_by_id=signal_by_id,

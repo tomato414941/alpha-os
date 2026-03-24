@@ -114,8 +114,8 @@ def test_build_signal_activity_getter_uses_positive_activity_for_long_only():
     from alpha_os.cli import _build_signal_activity_getter
 
     class _Tracker:
-        def get_alpha_signal_history(self, alpha_id, limit=20):
-            assert alpha_id == "h1"
+        def get_hypothesis_signal_history(self, hypothesis_id, limit=20):
+            assert hypothesis_id == "h1"
             assert limit == 5
             return [-1.0, -0.5, 0.0, 0.2, 0.4]
 
@@ -131,8 +131,8 @@ def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
     from alpha_os.cli import _build_signal_activity_getter
 
     class _Tracker:
-        def get_alpha_signal_history(self, alpha_id, limit=20):
-            assert alpha_id == "h1"
+        def get_hypothesis_signal_history(self, hypothesis_id, limit=20):
+            assert hypothesis_id == "h1"
             assert limit == 5
             return [-1.0, -0.5, 0.0, 0.2, 0.4]
 
@@ -273,7 +273,7 @@ def test_run_hypothesis_lifecycle_update_updates_stakes(tmp_path):
         )
     )
     tracker = PaperPortfolioTracker(tmp_path / "paper.db")
-    tracker.save_alpha_signals("2026-03-23T05:50:27", {"h1": 1.0})
+    tracker.save_hypothesis_signals("2026-03-23T05:50:27", {"h1": 1.0})
 
     trader = SimpleNamespace(
         registry=store,
@@ -1599,7 +1599,7 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
     for idx, (h1, h2) in enumerate([(0.3, 0.0), (0.0, 0.2), (0.1, 0.0)], start=1):
         date = f"2026-03-0{idx}T00:00:00"
-        tracker.save_alpha_signals(date, {"h1": h1, "h2": h2})
+        tracker.save_hypothesis_signals(date, {"h1": h1, "h2": h2})
     tracker.close()
 
     state_path, report_path = readiness_paths(tmp_path)
@@ -1775,7 +1775,7 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
         vol_scale=1.0,
         final_signal=0.1234,
     ))
-    tracker.save_alpha_signals(
+    tracker.save_hypothesis_signals(
         "2026-03-23T00:00:00",
         {"boot": 0.3, "batch": -0.2, "live": 0.1},
     )
@@ -1840,7 +1840,7 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
         vol_scale=1.0,
         final_signal=0.1234,
     ))
-    tracker.save_alpha_signals(
+    tracker.save_hypothesis_signals(
         "2026-03-23T00:00:00",
         {"kept": 0.3, "dropped": -0.2},
     )
@@ -1901,7 +1901,7 @@ def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, 
         vol_scale=1.0,
         final_signal=0.1234,
     ))
-    tracker.save_alpha_signals(
+    tracker.save_hypothesis_signals(
         "2026-03-23T00:00:00",
         {"kept": 0.3, "capped": -0.2},
     )

@@ -1404,17 +1404,19 @@ def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
 def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
     if forward_tracker is None:
         return None
-    getter = getattr(forward_tracker, "get_hypothesis_realizable_returns", None)
+    realizable_getter = getattr(forward_tracker, "get_hypothesis_realizable_returns", None)
+    if realizable_getter is not None:
+        def live_returns_for(hypothesis_id: str):
+            return realizable_getter(hypothesis_id, supports_short=supports_short)
+
+        return live_returns_for
+
+    getter = getattr(forward_tracker, "get_hypothesis_returns", None)
     if getter is None:
-        getter = getattr(forward_tracker, "get_realizable_returns", None)
-    if getter is None:
-        return (
-            getattr(forward_tracker, "get_hypothesis_returns", None)
-            or getattr(forward_tracker, "get_returns", None)
-        )
+        return None
 
     def live_returns_for(hypothesis_id: str):
-        return getter(hypothesis_id, supports_short=supports_short)
+        return getter(hypothesis_id)
 
     return live_returns_for
 
@@ -1423,8 +1425,6 @@ def _build_signal_activity_getter(portfolio_tracker, *, lookback: int, supports_
     if portfolio_tracker is None:
         return None
     getter = getattr(portfolio_tracker, "get_hypothesis_signal_history", None)
-    if getter is None:
-        getter = getattr(portfolio_tracker, "get_alpha_signal_history", None)
     if getter is None:
         return None
 
@@ -1455,10 +1455,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     signal_date = getattr(result, "date", "")
     if not signal_date:
         return {}
-    getter = getattr(trader.portfolio_tracker, "get_hypothesis_signals", None)
-    if getter is None:
-        getter = trader.portfolio_tracker.get_alpha_signals
-    hypothesis_signals = getter(signal_date)
+    hypothesis_signals = trader.portfolio_tracker.get_hypothesis_signals(signal_date)
     if not hypothesis_signals:
         return {}
 
@@ -2785,7 +2782,7 @@ def _runtime_actionable_window_summary(
         expressing = 0
 
         for record in records:
-            history = tracker.get_alpha_signal_history(record.hypothesis_id, limit=lookback)
+            history = tracker.get_hypothesis_signal_history(record.hypothesis_id, limit=lookback)
             if not history:
                 continue
             values = np.asarray([float(v) for v in history], dtype=np.float64)
@@ -3092,10 +3089,7 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             print("  No portfolio snapshots yet.")
             return
 
-        getter = getattr(tracker, "get_hypothesis_signals", None)
-        if getter is None:
-            getter = tracker.get_alpha_signals
-        signals = getter(snapshot.date)
+        signals = tracker.get_hypothesis_signals(snapshot.date)
         if not signals:
             print(f"  No hypothesis signals saved for snapshot {snapshot.date}.")
             return
