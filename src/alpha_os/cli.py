@@ -2801,15 +2801,16 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
         }
         weights = compute_stake_weights(stakes)
         cohorts = {
-            "bootstrap": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "batch": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "live": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "other": {"n": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "bootstrap": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "batch": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "live": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+            "other": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
         }
         ranked: list[tuple[float, str, str, float, float]] = []
         missing_current = 0
         dropped_current = 0
         dropped_reasons: dict[str, int] = {}
+        nonzero_current = 0
         for alpha_id, signal in signals.items():
             record = record_map.get(alpha_id)
             if record is None:
@@ -2824,6 +2825,10 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
                     reason = "redundancy_capped"
                 dropped_reasons[reason] = dropped_reasons.get(reason, 0) + 1
                 continue
+            signal_value = float(signal)
+            if abs(signal_value) > 1e-12:
+                nonzero_current += 1
+                cohorts[cohort]["nonzero"] += 1
             contribution = weight * float(signal)
             cohorts[cohort]["n"] += 1
             cohorts[cohort]["weight"] += weight
@@ -2844,16 +2849,23 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             f"current_backed={sum(cohort['n'] for cohort in cohorts.values())} "
             f"dropped={dropped_current} missing={missing_current}"
         )
+        print(
+            f"  Current:   nonzero={nonzero_current} "
+            f"zero={sum(cohort['n'] for cohort in cohorts.values()) - nonzero_current}"
+        )
         if dropped_reasons:
             parts = [f"{key}={value}" for key, value in sorted(dropped_reasons.items())]
             print(f"  Dropped:   {' '.join(parts)}")
         print(
             "  Cohorts:   "
-            f"bootstrap n={cohorts['bootstrap']['n']} w={cohorts['bootstrap']['weight']:.3f} "
+            f"bootstrap n={cohorts['bootstrap']['n']}/{cohorts['bootstrap']['nonzero']} "
+            f"w={cohorts['bootstrap']['weight']:.3f} "
             f"sig={cohorts['bootstrap']['weighted_signal']:+.6f} | "
-            f"batch n={cohorts['batch']['n']} w={cohorts['batch']['weight']:.3f} "
+            f"batch n={cohorts['batch']['n']}/{cohorts['batch']['nonzero']} "
+            f"w={cohorts['batch']['weight']:.3f} "
             f"sig={cohorts['batch']['weighted_signal']:+.6f} | "
-            f"live n={cohorts['live']['n']} w={cohorts['live']['weight']:.3f} "
+            f"live n={cohorts['live']['n']}/{cohorts['live']['nonzero']} "
+            f"w={cohorts['live']['weight']:.3f} "
             f"sig={cohorts['live']['weighted_signal']:+.6f}"
         )
         ranked.sort(reverse=True)

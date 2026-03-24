@@ -1489,9 +1489,10 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
     assert "Latest Combine (BTC)" in output
     assert "Combined:  stored=+0.123400" in output
     assert "Snapshot:  selected=3 current_backed=3 dropped=0 missing=0" in output
-    assert "Cohorts:   bootstrap n=1" in output
-    assert "batch n=1" in output
-    assert "live n=1" in output
+    assert "Current:   nonzero=3 zero=0" in output
+    assert "Cohorts:   bootstrap n=1/1" in output
+    assert "batch n=1/1" in output
+    assert "live n=1/1" in output
     assert "Top:       boot cohort=bootstrap" in output
     assert "Top:       batch cohort=batch" in output
     assert "Top:       live cohort=live" in output
@@ -1551,6 +1552,7 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
     output = capsys.readouterr().out
 
     assert "Snapshot:  selected=2 current_backed=1 dropped=1 missing=0" in output
+    assert "Current:   nonzero=1 zero=0" in output
     assert "Dropped:   live_proven=1" in output
     assert "Top:       kept cohort=live" in output
     assert "Top:       dropped" not in output
@@ -1611,6 +1613,7 @@ def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, 
     output = capsys.readouterr().out
 
     assert "Snapshot:  selected=2 current_backed=1 dropped=1 missing=0" in output
+    assert "Current:   nonzero=1 zero=0" in output
     assert "Dropped:   redundancy_capped=1" in output
 
 
