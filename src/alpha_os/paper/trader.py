@@ -300,13 +300,13 @@ class Trader:
 
     def _predict_portfolio_signal(
         self,
-        alpha_signals: dict[str, float],
-        alpha_signal_arrays: dict[str, np.ndarray],
+        hypothesis_signals: dict[str, float],
+        hypothesis_signal_arrays: dict[str, np.ndarray],
         data: dict[str, np.ndarray],
-        alpha_stakes: dict[str, float] | None = None,
+        hypothesis_stakes: dict[str, float] | None = None,
         prev_value: float | None = None,
     ) -> PredictionOutput:
-        """Prediction layer: combine alpha signals via stake or TC weighting."""
+        """Prediction layer: combine hypothesis signals via stake or TC weighting."""
         strategic_signal = 0.0
         regime_adjusted_signal = 0.0
         tactical_adjusted_signal = 0.0
@@ -319,7 +319,7 @@ class Trader:
         dd_s = self.risk_manager.dd_scale
 
         tc_scores: dict[str, float] | None = None
-        if alpha_signals:
+        if hypothesis_signals:
             # Compute asset returns for TC (monitoring only)
             prices_arr = data.get(self.price_signal)
             if prices_arr is not None and len(prices_arr) >= 2:
@@ -327,26 +327,26 @@ class Trader:
             else:
                 asset_returns = np.array([])
 
-            tc_scores = compute_tc_scores(alpha_signal_arrays, asset_returns)
+            tc_scores = compute_tc_scores(hypothesis_signal_arrays, asset_returns)
 
             # Stake-based weights with TC fallback
             positive_stakes = {
-                aid: s for aid, s in (alpha_stakes or {}).items()
-                if s > 0 and aid in alpha_signals
+                aid: s for aid, s in (hypothesis_stakes or {}).items()
+                if s > 0 and aid in hypothesis_signals
             }
             if positive_stakes:
                 weights_dict = compute_stake_weights(positive_stakes)
             else:
                 weights_dict = compute_tc_weights(tc_scores)
 
-            combined = weighted_combine_scalar(alpha_signals, weights_dict)
-            sig_mean, sig_std, consensus = signal_consensus(alpha_signals, weights_dict)
+            combined = weighted_combine_scalar(hypothesis_signals, weights_dict)
+            sig_mean, sig_std, consensus = signal_consensus(hypothesis_signals, weights_dict)
             strategic_signal = float(np.sign(sig_mean)) * consensus * dd_s
             strategic_signal = float(np.clip(strategic_signal, -1, 1))
             n_positive_tc = sum(1 for v in tc_scores.values() if v > 0)
             logger.info(
-                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d alphas, %d TC>0) combined=%.4f",
-                dd_s, consensus, sig_mean, sig_std, len(alpha_signals), n_positive_tc, combined,
+                "Sizing: dd=%.2f cons=%.3f sig=%.4f±%.4f (%d hypotheses, %d TC>0) combined=%.4f",
+                dd_s, consensus, sig_mean, sig_std, len(hypothesis_signals), n_positive_tc, combined,
             )
         else:
             combined = 0.0
@@ -726,10 +726,9 @@ class Trader:
             )
         price_return = (prices_arr[-1] - prices_arr[-2]) / prices_arr[-2]
 
-        alpha_signals: dict[str, float] = {}
-        alpha_signal_arrays: dict[str, np.ndarray] = {}
+        hypothesis_signals: dict[str, float] = {}
+        hypothesis_signal_arrays: dict[str, np.ndarray] = {}
         quality_estimates: dict[str, QualityEstimate] = {}
-        alpha_exprs: dict[str, object] = {}  # aid → parsed Expr
         n_evaluated = 0
         n_feature_filtered = 0
         n_from_store = 0
@@ -796,13 +795,11 @@ class Trader:
                 daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
                 if np.isfinite(signal_yesterday):
-                    alpha_signals[record.alpha_id] = signal_yesterday
-                    alpha_signal_arrays[record.alpha_id] = signal_norm
-                    if expr is not None:
-                        alpha_exprs[record.alpha_id] = expr
+                    hypothesis_signals[record.alpha_id] = signal_yesterday
+                    hypothesis_signal_arrays[record.alpha_id] = signal_norm
                 n_evaluated += 1
 
-                # Record per-alpha forward return (daily granularity)
+                # Record per-hypothesis forward return (daily granularity)
                 self.forward_tracker.record(
                     record.alpha_id, today_date, signal_yesterday, daily_return,
                 )
@@ -839,16 +836,16 @@ class Trader:
 
         # TC computation removed — stake-based weights handle selection
 
-        # 3d. Correlation filter: select top-N decorrelated capital-backed alphas.
+        # 3d. Correlation filter: select top-N decorrelated capital-backed hypotheses.
         selection_signal_ids = {
             record.alpha_id for record in trading_candidates
-            if record.alpha_id in alpha_signals
+            if record.alpha_id in hypothesis_signals
         }
         if len(selection_signal_ids) > max_trading:
             from alpha_os.hypotheses.breadth import hypothesis_signal_series
 
             candidate_ids = [
-                aid for aid in alpha_signals.keys()
+                aid for aid in hypothesis_signals.keys()
                 if aid in selection_signal_ids
             ]
             lookback = min(252, len(matrix))
@@ -861,7 +858,7 @@ class Trader:
                 if record is not None:
                     history = hypothesis_signal_series(record, data=data, asset=self.asset)
                 if history is None:
-                    history = alpha_signal_arrays.get(aid)
+                    history = hypothesis_signal_arrays.get(aid)
                 if history is None:
                     continue
                 signal_histories.append(np.asarray(history[-lookback:], dtype=np.float64))
@@ -878,32 +875,32 @@ class Trader:
             )
             selected_ids = {candidate_ids[i] for i in selected_idx}
             n_before = len(selection_signal_ids)
-            alpha_signals = {k: v for k, v in alpha_signals.items() if k in selected_ids}
+            hypothesis_signals = {k: v for k, v in hypothesis_signals.items() if k in selected_ids}
             logger.info(
                 "Correlation filter: %d shortlist candidates → %d selected hypotheses (max_corr=%.2f)",
-                n_before, len(alpha_signals), CombinerConfig().max_correlation,
+                n_before, len(hypothesis_signals), CombinerConfig().max_correlation,
             )
         else:
-            alpha_signals = {
-                aid: alpha_signals[aid]
+            hypothesis_signals = {
+                aid: hypothesis_signals[aid]
                 for aid in selection_signal_ids
             }
         selected_records = [
-            r for r in trading_candidates if r.alpha_id in alpha_signals
+            r for r in trading_candidates if r.alpha_id in hypothesis_signals
         ]
 
-        # 4. Prediction layer: alpha signals -> final portfolio signal
-        alpha_stakes = {
+        # 4. Prediction layer: hypothesis signals -> final portfolio signal
+        hypothesis_stakes = {
             r.alpha_id: r.stake
             for r in selected_records
-            if r.alpha_id in alpha_signals
+            if r.alpha_id in hypothesis_signals
         }
         prev_value = prev_equity
         prediction = self._predict_portfolio_signal(
-            alpha_signals=alpha_signals,
-            alpha_signal_arrays=alpha_signal_arrays,
+            hypothesis_signals=hypothesis_signals,
+            hypothesis_signal_arrays=hypothesis_signal_arrays,
             data=data,
-            alpha_stakes=alpha_stakes,
+            hypothesis_stakes=hypothesis_stakes,
             prev_value=prev_value,
         )
         self._last_raw_signal = prediction.final_signal
@@ -951,7 +948,7 @@ class Trader:
         )
         self.portfolio_tracker.save_snapshot(snapshot)
         self.portfolio_tracker.save_fills(cycle_key, fills)
-        self.portfolio_tracker.save_alpha_signals(cycle_key, alpha_signals)
+        self.portfolio_tracker.save_alpha_signals(cycle_key, hypothesis_signals)
         self._executor_state_date = snapshot.date
         no_fill_streak = self.portfolio_tracker.count_consecutive_no_fill_cycles()
         if no_fill_streak >= 6:

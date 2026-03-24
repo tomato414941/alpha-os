@@ -1405,6 +1405,24 @@ def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
     return live_returns_for
 
 
+def _build_signal_activity_getter(portfolio_tracker, *, lookback: int):
+    if portfolio_tracker is None:
+        return None
+    getter = getattr(portfolio_tracker, "get_alpha_signal_history", None)
+    if getter is None:
+        return None
+
+    def signal_activity_for(hypothesis_id: str):
+        values = [float(v) for v in getter(hypothesis_id, limit=lookback)]
+        if not values:
+            return 0.0, 0.0
+        nonzero = sum(1 for v in values if abs(v) > 1e-12)
+        mean_abs = sum(abs(v) for v in values) / len(values)
+        return nonzero / len(values), mean_abs
+
+    return signal_activity_for
+
+
 def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, float]:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses import (
@@ -1438,6 +1456,10 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         forward_tracker,
         supports_short=cfg.trading.supports_short,
     )
+    signal_activity_for = _build_signal_activity_getter(
+        trader.portfolio_tracker,
+        lookback=cfg.forward.degradation_window,
+    )
     plan = build_allocation_rebalance_plan(
         trader.registry,
         metric=cfg.portfolio.objective,
@@ -1459,6 +1481,10 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         live_proven_marginal_contribution_min=(
             cfg.lifecycle.live_proven_marginal_contribution_min
         ),
+        live_proven_signal_nonzero_ratio_min=(
+            cfg.lifecycle.live_proven_signal_nonzero_ratio_min
+        ),
+        live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
         bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
         bootstrap_retention_marginal_contribution_min=(
             cfg.lifecycle.bootstrap_retention_marginal_contribution_min
@@ -1467,6 +1493,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
         floor=cfg.lifecycle.target_stake_floor,
         live_returns_for=live_returns_for,
+        signal_activity_for=signal_activity_for,
     )
     if hasattr(trader.registry, "list_observation_active") and hasattr(trader, "asset"):
         data_store = DataStore(SIGNAL_CACHE_DB)
@@ -1856,6 +1883,7 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
 def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     from alpha_os.forward.tracker import ForwardTracker
     from alpha_os.data.store import DataStore
+    from alpha_os.paper.tracker import PaperPortfolioTracker
     from alpha_os.hypotheses.breadth import (
         apply_capital_redundancy_cap,
         apply_live_proven_return_redundancy_cap,
@@ -1878,6 +1906,10 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             forward_tracker,
             supports_short=cfg.trading.supports_short,
         )
+        signal_activity_for = _build_signal_activity_getter(
+            PaperPortfolioTracker(db_path=adir / "paper_trading.db"),
+            lookback=cfg.forward.degradation_window,
+        )
         plan = build_allocation_rebalance_plan(
             store,
             metric=cfg.portfolio.objective,
@@ -1899,6 +1931,10 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             live_proven_marginal_contribution_min=(
                 cfg.lifecycle.live_proven_marginal_contribution_min
             ),
+            live_proven_signal_nonzero_ratio_min=(
+                cfg.lifecycle.live_proven_signal_nonzero_ratio_min
+            ),
+            live_proven_signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
             bootstrap_retention_quality_min=cfg.lifecycle.bootstrap_retention_quality_min,
             bootstrap_retention_marginal_contribution_min=(
                 cfg.lifecycle.bootstrap_retention_marginal_contribution_min
@@ -1907,6 +1943,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             marginal_contribution_weight=cfg.lifecycle.marginal_contribution_weight,
             floor=cfg.lifecycle.target_stake_floor,
             live_returns_for=live_returns_for,
+            signal_activity_for=signal_activity_for,
         )
         records = store.list_observation_active()
         breadth_data = load_breadth_matrix(
