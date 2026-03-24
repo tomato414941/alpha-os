@@ -1711,10 +1711,12 @@ def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, ca
 
     assert "Batch Research (BTC)" in output
     assert "Summary:  scored=5 retained=1 actionable=0 backed=1" in output
-    assert "Drop:     quality=1 obs=1 signal=1" in output
+    assert "Drop:     research_q=1 live_q=0 obs=1 signal=1" in output
     assert "redundancy=1" in output
     assert "backed=1" in output
     assert "Fam:" in output
+    assert "Quality:  min=0.10" in output
+    assert "Inputs:   drop_sharpe_p50=" in output
     assert "Top:      backed reason=backed" in output
 
 

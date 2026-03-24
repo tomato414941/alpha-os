@@ -1981,7 +1981,11 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
 
 
 def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
-    summary = _batch_research_summary(top=args.top)
+    cfg = _load_config(args.config)
+    summary = _batch_research_summary(
+        top=args.top,
+        quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+    )
     reasons = summary["reasons"]
     print(f"Batch Research ({args.asset.upper()})")
     print(
@@ -1991,7 +1995,8 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
     )
     print(
         "  Drop:     "
-        f"quality={reasons.get('quality', 0)} "
+        f"research_q={reasons.get('research_quality', 0)} "
+        f"live_q={reasons.get('live_quality', 0)} "
         f"obs={reasons.get('observation', 0)} "
         f"signal={reasons.get('signal', 0)} "
         f"contrib={reasons.get('contribution', 0)} "
@@ -2004,7 +2009,8 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
     family_bits = []
     for reason in (
         "backed",
-        "quality",
+        "research_quality",
+        "live_quality",
         "observation",
         "signal",
         "contribution",
@@ -2016,6 +2022,26 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
             family_bits.append(f"{reason}=" + ",".join(values))
     if family_bits:
         print("  Fam:      " + " | ".join(family_bits))
+    quality_drop_norm = summary["quality_drop_norm"]
+    quality_drop_sharpe = summary["quality_drop_sharpe"]
+    quality_drop_folds = summary["quality_drop_folds"]
+    backed_norm = summary["backed_norm"]
+    print(
+        "  Quality:  "
+        f"min={summary['quality_threshold']:.2f} "
+        f"dropped_p50={quality_drop_norm['p50']:.2f} "
+        f"dropped_p90={quality_drop_norm['p90']:.2f} "
+        f"dropped_max={quality_drop_norm['max']:.2f} "
+        f"backed_p50={backed_norm['p50']:.2f}"
+    )
+    print(
+        "  Inputs:   "
+        f"drop_sharpe_p50={quality_drop_sharpe['p50']:.2f} "
+        f"drop_sharpe_p90={quality_drop_sharpe['p90']:.2f} "
+        f"drop_folds_p50={quality_drop_folds['p50']:.0f}"
+    )
+    if summary["near_miss_entries"]:
+        print("  NearMiss: " + ", ".join(summary["near_miss_entries"]))
     for entry in summary["top_entries"]:
         print(f"  Top:      {entry}")
 
@@ -2464,7 +2490,7 @@ def _batch_research_drop_reason(record) -> str:
     if bool(metadata.get("lifecycle_research_candidate_capped", False)):
         return "candidate_cap"
     if not bool(metadata.get("lifecycle_research_backed", False)):
-        return "quality"
+        return "research_quality"
     blocker = str(metadata.get("lifecycle_live_promotion_blocker", ""))
     if blocker == "insufficient_observations":
         return "observation"
@@ -2473,11 +2499,28 @@ def _batch_research_drop_reason(record) -> str:
     if blocker in {"weak_marginal_contribution", "weak_live_quality_and_contribution"}:
         return "contribution"
     if blocker == "weak_live_quality":
-        return "quality"
+        return "live_quality"
     return "other"
 
 
-def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
+def _distribution_summary(values: list[float]) -> dict[str, float]:
+    if not values:
+        return {"count": 0.0, "mean": 0.0, "p50": 0.0, "p90": 0.0, "max": 0.0}
+    arr = np.asarray(values, dtype=np.float64)
+    return {
+        "count": float(arr.size),
+        "mean": float(arr.mean()),
+        "p50": float(np.quantile(arr, 0.50)),
+        "p90": float(np.quantile(arr, 0.90)),
+        "max": float(arr.max()),
+    }
+
+
+def _batch_research_summary(
+    *,
+    top: int = 5,
+    quality_min: float = 0.10,
+) -> dict[str, object]:
     from alpha_os.hypotheses.allocation_policy import normalized_research_quality
     from alpha_os.hypotheses.identity import expression_feature_families
     from alpha_os.hypotheses.store import HypothesisStore
@@ -2491,9 +2534,15 @@ def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
     reason_counts: Counter[str] = Counter()
     family_counts: dict[str, Counter[str]] = {}
     ranked: list[tuple[float, object, str, str]] = []
+    near_miss: list[tuple[float, object, str]] = []
     retained = 0
     actionable = 0
     backed = 0
+    quality_dropped_norms: list[float] = []
+    quality_dropped_sharpes: list[float] = []
+    quality_dropped_log_growths: list[float] = []
+    quality_dropped_folds: list[float] = []
+    backed_norms: list[float] = []
 
     for record in records:
         metadata = getattr(record, "metadata", {}) or {}
@@ -2513,14 +2562,27 @@ def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
         counter = family_counts.setdefault(reason, Counter())
         for family in families:
             counter[family] += 1
+        norm_quality = normalized_research_quality(record.oos_fitness("sharpe"), metric="sharpe")
         ranked.append(
             (
-                normalized_research_quality(record.oos_fitness("sharpe"), metric="sharpe"),
+                norm_quality,
                 record,
                 reason,
                 ",".join(sorted(families)),
             )
         )
+        if reason == "backed":
+            backed_norms.append(norm_quality)
+        if reason in {"research_quality", "live_quality"}:
+            quality_dropped_norms.append(norm_quality)
+            quality_dropped_sharpes.append(record.oos_fitness("sharpe"))
+            quality_dropped_log_growths.append(record.oos_fitness("log_growth"))
+            try:
+                quality_dropped_folds.append(float(metadata.get("research_score_n_folds", 0)))
+            except (TypeError, ValueError):
+                pass
+            if reason == "research_quality" and norm_quality >= max(float(quality_min) - 0.02, 0.0):
+                near_miss.append((norm_quality, record, ",".join(sorted(families))))
 
     ranked.sort(key=lambda item: item[0], reverse=True)
     top_entries = []
@@ -2528,6 +2590,11 @@ def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
         top_entries.append(
             f"{record.hypothesis_id} reason={reason} q={quality:.2f} fam={families}"
         )
+    near_miss.sort(key=lambda item: item[0], reverse=True)
+    near_miss_entries = [
+        f"{record.hypothesis_id} q={quality:.2f} fam={families}"
+        for quality, record, families in near_miss[: max(top, 0)]
+    ]
 
     family_summary = {
         reason: [f"{family}:{count}" for family, count in counts.most_common(3)]
@@ -2541,6 +2608,13 @@ def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
         "reasons": reason_counts,
         "families": family_summary,
         "top_entries": top_entries,
+        "quality_threshold": float(quality_min),
+        "quality_drop_norm": _distribution_summary(quality_dropped_norms),
+        "quality_drop_sharpe": _distribution_summary(quality_dropped_sharpes),
+        "quality_drop_log_growth": _distribution_summary(quality_dropped_log_growths),
+        "quality_drop_folds": _distribution_summary(quality_dropped_folds),
+        "backed_norm": _distribution_summary(backed_norms),
+        "near_miss_entries": near_miss_entries,
     }
 
 
