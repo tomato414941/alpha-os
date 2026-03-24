@@ -1624,6 +1624,100 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     assert "ActionWin: lookback=63 tracked=2 expressing=2" in output
 
 
+def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_batch_research
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="backed",
+        kind="dsl",
+        definition={"expression": "funding_rate_eth"},
+        stake=1.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 1.2,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+            "lifecycle_research_backed": True,
+            "lifecycle_capital_eligible": True,
+            "lifecycle_research_retained": True,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="quality",
+        kind="dsl",
+        definition={"expression": "close"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 0.1,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+            "lifecycle_research_backed": False,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="obs",
+        kind="dsl",
+        definition={"expression": "funding_rate_eth"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 0.8,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+            "lifecycle_research_backed": True,
+            "lifecycle_live_promotion_blocker": "insufficient_observations",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="signal",
+        kind="dsl",
+        definition={"expression": "oi_eth"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 0.9,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+            "lifecycle_research_backed": True,
+            "lifecycle_live_promotion_blocker": "weak_signal_activity",
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="redundancy",
+        kind="dsl",
+        definition={"expression": "funding_rate_eth"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "oos_sharpe": 1.0,
+            "research_quality_source": "batch_research_score",
+            "research_quality_status": "scored",
+            "lifecycle_research_backed": True,
+            "lifecycle_redundancy_capped_by": "backed",
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_batch_research(Namespace(asset="BTC", config=None, top=3))
+    output = capsys.readouterr().out
+
+    assert "Batch Research (BTC)" in output
+    assert "Summary:  scored=5 retained=1 actionable=0 backed=1" in output
+    assert "Drop:     quality=1 obs=1 signal=1" in output
+    assert "redundancy=1" in output
+    assert "backed=1" in output
+    assert "Fam:" in output
+    assert "Top:      backed reason=backed" in output
+
+
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

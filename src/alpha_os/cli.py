@@ -228,6 +228,14 @@ def _build_parser() -> argparse.ArgumentParser:
     alc.add_argument("--config", type=str, default=None)
     alc.add_argument("--top", type=int, default=5)
 
+    abr = sub.add_parser(
+        "analyze-batch-research",
+        help="Summarize batch-research exploratory hypotheses and why they are or are not capital-backed",
+    )
+    abr.add_argument("--asset", type=str, default="BTC")
+    abr.add_argument("--config", type=str, default=None)
+    abr.add_argument("--top", type=int, default=5)
+
     bor = sub.add_parser(
         "backfill-observation-returns",
         help="Backfill observation-only forward returns for active hypotheses from cached history",
@@ -1972,6 +1980,46 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
         print(f"  Skipped:   {skipped}{suffix}")
 
 
+def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
+    summary = _batch_research_summary(top=args.top)
+    reasons = summary["reasons"]
+    print(f"Batch Research ({args.asset.upper()})")
+    print(
+        "  Summary:  "
+        f"scored={summary['total']} retained={summary['retained']} "
+        f"actionable={summary['actionable']} backed={summary['backed']}"
+    )
+    print(
+        "  Drop:     "
+        f"quality={reasons.get('quality', 0)} "
+        f"obs={reasons.get('observation', 0)} "
+        f"signal={reasons.get('signal', 0)} "
+        f"contrib={reasons.get('contribution', 0)} "
+        f"candidate_cap={reasons.get('candidate_cap', 0)} "
+        f"redundancy={reasons.get('redundancy', 0)} "
+        f"other={reasons.get('other', 0)} "
+        f"backed={reasons.get('backed', 0)}"
+    )
+    families = summary["families"]
+    family_bits = []
+    for reason in (
+        "backed",
+        "quality",
+        "observation",
+        "signal",
+        "contribution",
+        "candidate_cap",
+        "redundancy",
+    ):
+        values = families.get(reason) or []
+        if values:
+            family_bits.append(f"{reason}=" + ",".join(values))
+    if family_bits:
+        print("  Fam:      " + " | ".join(family_bits))
+    for entry in summary["top_entries"]:
+        print(f"  Top:      {entry}")
+
+
 def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.forward.tracker import ForwardTracker
@@ -2388,6 +2436,112 @@ def _top_batch_family_counts(records, *, backed_only: bool, n: int = 3) -> list[
         for family in set(expression_feature_families(record.expression)):
             counts[family] += 1
     return [f"{family}:{count}" for family, count in counts.most_common(n)]
+
+
+def _is_batch_research_record(record) -> bool:
+    metadata = getattr(record, "metadata", {}) or {}
+    source = str(
+        metadata.get("research_quality_source")
+        or metadata.get("lifecycle_research_quality_source")
+        or ""
+    )
+    status = str(metadata.get("research_quality_status", ""))
+    return record.source == "random_dsl" and (
+        source == "batch_research_score" or status == "scored"
+    )
+
+
+def _batch_research_drop_reason(record) -> str:
+    metadata = getattr(record, "metadata", {}) or {}
+    try:
+        stake = float(record.stake)
+    except (TypeError, ValueError):
+        stake = 0.0
+    if stake > 0 and bool(metadata.get("lifecycle_capital_eligible", stake > 0)):
+        return "backed"
+    if str(metadata.get("lifecycle_redundancy_capped_by") or ""):
+        return "redundancy"
+    if bool(metadata.get("lifecycle_research_candidate_capped", False)):
+        return "candidate_cap"
+    if not bool(metadata.get("lifecycle_research_backed", False)):
+        return "quality"
+    blocker = str(metadata.get("lifecycle_live_promotion_blocker", ""))
+    if blocker == "insufficient_observations":
+        return "observation"
+    if blocker == "weak_signal_activity":
+        return "signal"
+    if blocker in {"weak_marginal_contribution", "weak_live_quality_and_contribution"}:
+        return "contribution"
+    if blocker == "weak_live_quality":
+        return "quality"
+    return "other"
+
+
+def _batch_research_summary(*, top: int = 5) -> dict[str, object]:
+    from alpha_os.hypotheses.allocation_policy import normalized_research_quality
+    from alpha_os.hypotheses.identity import expression_feature_families
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        records = [record for record in store.list_observation_active() if _is_batch_research_record(record)]
+    finally:
+        store.close()
+
+    reason_counts: Counter[str] = Counter()
+    family_counts: dict[str, Counter[str]] = {}
+    ranked: list[tuple[float, object, str, str]] = []
+    retained = 0
+    actionable = 0
+    backed = 0
+
+    for record in records:
+        metadata = getattr(record, "metadata", {}) or {}
+        if bool(metadata.get("lifecycle_research_retained", False)):
+            retained += 1
+        if bool(metadata.get("lifecycle_actionable_live", False)):
+            actionable += 1
+        try:
+            stake = float(record.stake)
+        except (TypeError, ValueError):
+            stake = 0.0
+        if stake > 0:
+            backed += 1
+        reason = _batch_research_drop_reason(record)
+        reason_counts[reason] += 1
+        families = set(expression_feature_families(record.expression)) or {"unknown"}
+        counter = family_counts.setdefault(reason, Counter())
+        for family in families:
+            counter[family] += 1
+        ranked.append(
+            (
+                normalized_research_quality(record.oos_fitness("sharpe"), metric="sharpe"),
+                record,
+                reason,
+                ",".join(sorted(families)),
+            )
+        )
+
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    top_entries = []
+    for quality, record, reason, families in ranked[: max(top, 0)]:
+        top_entries.append(
+            f"{record.hypothesis_id} reason={reason} q={quality:.2f} fam={families}"
+        )
+
+    family_summary = {
+        reason: [f"{family}:{count}" for family, count in counts.most_common(3)]
+        for reason, counts in family_counts.items()
+    }
+    return {
+        "total": len(records),
+        "retained": retained,
+        "actionable": actionable,
+        "backed": backed,
+        "reasons": reason_counts,
+        "families": family_summary,
+        "top_entries": top_entries,
+    }
 
 
 def _runtime_hypothesis_summary() -> dict[str, object]:
@@ -3241,6 +3395,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_rebalance_allocation_trust(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
+    elif args.command == "analyze-batch-research":
+        cmd_analyze_batch_research(args)
     elif args.command == "analyze-latest-combine":
         cmd_analyze_latest_combine(args)
     elif args.command == "backfill-observation-returns":
