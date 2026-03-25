@@ -23,7 +23,7 @@ from alpha_os.hypotheses.state_lifecycle import (
     passes_candidate_gate,
 )
 from alpha_os.legacy.admission_queue import prune_stale_pending_candidates
-from alpha_os.legacy.deployed_alphas import (
+from alpha_os.research.deployment_planner import (
     plan_deployed_alphas,
     plan_registry_active_prune,
 )
