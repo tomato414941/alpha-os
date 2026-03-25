@@ -9,7 +9,6 @@ import logging
 import os
 import sys
 import time
-from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -1991,6 +1990,11 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
 
 
 def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
+    from alpha_os.hypotheses.batch_research_diagnostics import (
+        build_batch_research_summary,
+    )
+    from alpha_os.hypotheses.store import HypothesisStore
+
     cfg = _load_config(args.config)
     family_filter = None
     raw_families = getattr(args, "families", None)
@@ -1998,11 +2002,16 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
         family_filter = tuple(
             family.strip() for family in raw_families.split(",") if family.strip()
         ) or None
-    summary = _batch_research_summary(
-        top=args.top,
-        quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
-        families=family_filter,
-    )
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_batch_research_summary(
+            store.list_observation_active(),
+            top=args.top,
+            quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+            families=family_filter,
+        )
+    finally:
+        store.close()
     reasons = summary["reasons"]
     title = f"Batch Research ({args.asset.upper()})"
     if family_filter:
@@ -2412,200 +2421,6 @@ def _runtime_cohort(record) -> str:
     from alpha_os.hypotheses.sleeve_status import runtime_cohort
 
     return runtime_cohort(record)
-
-
-def _is_batch_research_record(record) -> bool:
-    metadata = getattr(record, "metadata", {}) or {}
-    source = str(
-        metadata.get("research_quality_source")
-        or metadata.get("lifecycle_research_quality_source")
-        or ""
-    )
-    status = str(metadata.get("research_quality_status", ""))
-    return record.source == "random_dsl" and (
-        source == "batch_research_score" or status == "scored"
-    )
-
-
-def _batch_research_drop_reason(record) -> str:
-    metadata = getattr(record, "metadata", {}) or {}
-    try:
-        stake = float(record.stake)
-    except (TypeError, ValueError):
-        stake = 0.0
-    if stake > 0 and bool(metadata.get("lifecycle_capital_eligible", stake > 0)):
-        return "backed"
-    if str(metadata.get("lifecycle_redundancy_capped_by") or ""):
-        return "redundancy"
-    if bool(metadata.get("lifecycle_research_candidate_capped", False)):
-        return "candidate_cap"
-    if not bool(metadata.get("lifecycle_research_backed", False)):
-        return "research_quality"
-    blocker = str(metadata.get("lifecycle_live_promotion_blocker", ""))
-    if blocker == "insufficient_observations":
-        return "observation"
-    if blocker == "weak_signal_activity":
-        return "signal"
-    if blocker in {"weak_marginal_contribution", "weak_live_quality_and_contribution"}:
-        return "contribution"
-    if blocker == "weak_live_quality":
-        return "live_quality"
-    return "other"
-
-
-def _distribution_summary(values: list[float]) -> dict[str, float]:
-    if not values:
-        return {"count": 0.0, "mean": 0.0, "p50": 0.0, "p90": 0.0, "max": 0.0}
-    arr = np.asarray(values, dtype=np.float64)
-    return {
-        "count": float(arr.size),
-        "mean": float(arr.mean()),
-        "p50": float(np.quantile(arr, 0.50)),
-        "p90": float(np.quantile(arr, 0.90)),
-        "max": float(arr.max()),
-    }
-
-
-def _format_distribution_line(label: str, summary: dict[str, float]) -> str:
-    return (
-        f"{label}:n={int(summary['count'])}"
-        f"/p50={summary['p50']:.2f}"
-        f"/p90={summary['p90']:.2f}"
-        f"/max={summary['max']:.2f}"
-    )
-
-
-def _batch_research_summary(
-    *,
-    top: int = 5,
-    quality_min: float = 0.10,
-    families: tuple[str, ...] | None = None,
-) -> dict[str, object]:
-    from alpha_os.hypotheses.allocation_policy import normalized_research_quality
-    from alpha_os.hypotheses.identity import expression_feature_families
-    from alpha_os.hypotheses.store import HypothesisStore
-
-    family_filter = set(families or ())
-    store = HypothesisStore(HYPOTHESES_DB)
-    try:
-        records = [
-            record
-            for record in store.list_observation_active()
-            if _is_batch_research_record(record)
-            and (
-                not family_filter
-                or bool(set(expression_feature_families(record.expression)) & family_filter)
-            )
-        ]
-    finally:
-        store.close()
-
-    reason_counts: Counter[str] = Counter()
-    family_counts: dict[str, Counter[str]] = {}
-    ranked: list[tuple[float, object, str, str]] = []
-    near_miss: list[tuple[float, object, str]] = []
-    retained = 0
-    actionable = 0
-    backed = 0
-    quality_dropped_norms: list[float] = []
-    quality_dropped_sharpes: list[float] = []
-    quality_dropped_log_growths: list[float] = []
-    quality_dropped_folds: list[float] = []
-    backed_norms: list[float] = []
-    family_norms: dict[str, list[float]] = {}
-    quality_family_norms: dict[str, list[float]] = {}
-
-    for record in records:
-        metadata = getattr(record, "metadata", {}) or {}
-        if bool(metadata.get("lifecycle_research_retained", False)):
-            retained += 1
-        if bool(metadata.get("lifecycle_actionable_live", False)):
-            actionable += 1
-        try:
-            stake = float(record.stake)
-        except (TypeError, ValueError):
-            stake = 0.0
-        if stake > 0:
-            backed += 1
-        reason = _batch_research_drop_reason(record)
-        reason_counts[reason] += 1
-        families = set(expression_feature_families(record.expression)) or {"unknown"}
-        counter = family_counts.setdefault(reason, Counter())
-        for family in families:
-            counter[family] += 1
-        norm_quality = normalized_research_quality(record.oos_fitness("sharpe"), metric="sharpe")
-        for family in families:
-            family_norms.setdefault(family, []).append(norm_quality)
-        ranked.append(
-            (
-                norm_quality,
-                record,
-                reason,
-                ",".join(sorted(families)),
-            )
-        )
-        if reason == "backed":
-            backed_norms.append(norm_quality)
-        if reason in {"research_quality", "live_quality"}:
-            quality_dropped_norms.append(norm_quality)
-            quality_dropped_sharpes.append(record.oos_fitness("sharpe"))
-            quality_dropped_log_growths.append(record.oos_fitness("log_growth"))
-            for family in families:
-                quality_family_norms.setdefault(family, []).append(norm_quality)
-            try:
-                quality_dropped_folds.append(float(metadata.get("research_score_n_folds", 0)))
-            except (TypeError, ValueError):
-                pass
-            if reason == "research_quality" and norm_quality >= max(float(quality_min) - 0.02, 0.0):
-                near_miss.append((norm_quality, record, ",".join(sorted(families))))
-
-    ranked.sort(key=lambda item: item[0], reverse=True)
-    top_entries = []
-    for quality, record, reason, families in ranked[: max(top, 0)]:
-        top_entries.append(
-            f"{record.hypothesis_id} reason={reason} q={quality:.2f} fam={families}"
-        )
-    near_miss.sort(key=lambda item: item[0], reverse=True)
-    near_miss_entries = [
-        f"{record.hypothesis_id} q={quality:.2f} fam={families}"
-        for quality, record, families in near_miss[: max(top, 0)]
-    ]
-
-    family_summary = {
-        reason: [f"{family}:{count}" for family, count in counts.most_common(3)]
-        for reason, counts in family_counts.items()
-    }
-    family_quality_summary = sorted(
-        (
-            _distribution_summary(values)["p90"],
-            family,
-            _distribution_summary(values),
-            _distribution_summary(quality_family_norms.get(family, [])),
-        )
-        for family, values in family_norms.items()
-    )
-    family_quality_lines = [
-        f"{family}({_format_distribution_line('all', all_summary)};"
-        f"{_format_distribution_line('drop', drop_summary)})"
-        for _, family, all_summary, drop_summary in reversed(family_quality_summary[: max(top, 0)])
-    ]
-    return {
-        "total": len(records),
-        "retained": retained,
-        "actionable": actionable,
-        "backed": backed,
-        "reasons": reason_counts,
-        "families": family_summary,
-        "top_entries": top_entries,
-        "quality_threshold": float(quality_min),
-        "quality_drop_norm": _distribution_summary(quality_dropped_norms),
-        "quality_drop_sharpe": _distribution_summary(quality_dropped_sharpes),
-        "quality_drop_log_growth": _distribution_summary(quality_dropped_log_growths),
-        "quality_drop_folds": _distribution_summary(quality_dropped_folds),
-        "backed_norm": _distribution_summary(backed_norms),
-        "near_miss_entries": near_miss_entries,
-        "family_quality_lines": family_quality_lines,
-    }
 
 
 def _runtime_hypothesis_summary() -> dict[str, object]:
