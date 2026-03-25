@@ -207,6 +207,44 @@ The division of labor between documents should therefore be:
 - `DESIGN.md`
   - what the architecture would look like without migration baggage
 
+### Current Repo Shape vs Greenfield Target
+
+The current repository is no longer in the earlier mixed state where
+`alpha`, `research`, and runtime paths were all treated as peers. It is
+closer to the target shape, but still not identical to a greenfield build.
+
+Today, the intended shape is:
+
+- `hypotheses.db`
+  - canonical runtime source of truth for predictive units and stake
+- `hypothesis_observations.db`
+  - runtime observation store for realized post-prediction outcomes
+- `paper_trading.db`
+  - bounded paper execution state, fills, and per-cycle signal snapshots
+- `research.*`
+  - bounded analysis and offline experimentation
+- `legacy.*`
+  - replay, migration, and registry-era archive workflows
+
+That means the main remaining gap from the greenfield target is no longer
+package confusion in the runtime path. The remaining gap is that the repo
+still carries:
+
+- legacy registry-era code for replay and migration
+- research helpers that have not been redesigned around runtime-native inputs
+- some API and type names that still reflect transition-era language
+
+So the practical architectural standard should now be:
+
+- current runtime code must stay hypotheses-first
+- runtime persistence must use hypothesis-centered names and contracts
+- research may read runtime outputs but must not define runtime truth
+- legacy must stay isolated and continue shrinking
+
+This is the point where architectural work shifts from "separate mixed
+systems" to "finish the renames, remove remaining migration residue, and keep
+the runtime narrow."
+
 ## Principles
 
 **1. Prediction-first, metadata-enriched.**

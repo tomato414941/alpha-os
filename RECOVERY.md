@@ -375,6 +375,92 @@ Recovery work should use `hypothesis` as the default term for a predictive unit.
 - when describing future simplified state, prefer names like
   `live hypotheses` over `deployed alphas`
 
+## Current Architecture Snapshot
+
+The repo is now organized around a hypotheses-first runtime with explicit
+support boundaries.
+
+### Current Runtime
+
+- source of truth: `hypotheses.db` via `hypotheses.store.HypothesisStore`
+- bounded runtime chain:
+  1. `hypothesis-seeder`
+  2. `sync-signal-cache`
+  3. `produce-predictions`
+  4. `trade --once --venue paper`
+  5. `runtime-status`
+- paper runtime state:
+  - `paper_trading.db` stores portfolio snapshots, fills, and per-cycle hypothesis signals
+  - `hypothesis_observations.db` stores realized observation history for live hypotheses
+- current runtime packages:
+  - `hypotheses`
+  - `data`
+  - `predictions`
+  - `paper.trader`
+  - `paper.tracker`
+  - `forward.tracker`
+  - `execution`
+  - `risk`
+  - `validation.testnet`
+
+### Observation Model
+
+`hypothesis_observations.db` is part of the current runtime, but it is not a
+source-of-truth registry.
+
+- role: observation/history store for realized post-prediction outcomes
+- file: `hypothesis_observations.db`
+- tables:
+  - `hypothesis_observations`
+  - `hypothesis_observation_meta`
+- typical uses:
+  - live-quality estimation
+  - allocation rebalance inputs
+  - observation backfill
+  - readiness and runtime diagnosis support
+
+The canonical record of which hypotheses exist and what stake they carry
+remains `hypotheses.db`.
+
+### Research Boundary
+
+Research code remains available, but it is not the runtime source of truth.
+
+- examples:
+  - `dsl`
+  - `backtest`
+  - `evolution`
+  - `experiments`
+  - `paper.simulator`
+  - `paper.tactical`
+  - `research.*`
+
+Research paths may read runtime outputs, but runtime paths should not depend on
+research-only orchestration.
+
+### Legacy Boundary
+
+Legacy code is now isolated behind the `legacy` package.
+
+- examples:
+  - `legacy.managed_alphas`
+  - `legacy.deployed_alphas`
+  - `legacy.admission_replay`
+  - `legacy.funnel`
+  - `daemon.admission`
+  - `daemon.lifecycle`
+
+These paths may still exist for replay, migration, or archive workflows, but
+they are not the hypotheses-first runtime mainline.
+
+### Compatibility Boundary
+
+`alpha/` is no longer an implementation package.
+
+- keep only `alpha/__init__.py`
+- do not reintroduce `alpha` submodules
+- do not add new runtime, research, or legacy logic under `alpha/`
+
 ## Target Persistent State
 
 The target steady state is one canonical table: `hypotheses`.
