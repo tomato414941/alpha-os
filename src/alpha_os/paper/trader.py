@@ -631,9 +631,9 @@ class Trader:
                 n_selected_hypotheses=0, n_signals_evaluated=0,
             )
 
-        # 1. Build two sets:
-        #    - observation candidates: active hypotheses that should be evaluated
-        #    - live hypotheses: capital-eligible hypotheses with stake > 0
+        # 1. Build runtime sets:
+        #    - observation candidates: active hypotheses tracked outside the cycle
+        #    - trading candidates: bounded capital-backed shortlist for this cycle
         max_trading = self.config.paper.max_trading_alphas
         observation_candidates = self.registry.list_observation_active()
         universe_records = live_hypotheses
@@ -648,16 +648,16 @@ class Trader:
             shortlist_preselect_factor=self.config.live_quality.shortlist_preselect_factor,
             metric=self.config.portfolio.objective,
         )
-        all_hypotheses = observation_candidates
+        eval_hypotheses = trading_candidates
 
-        n_total_active = len(trading_candidates)
+        n_total_active = len(observation_candidates)
         if n_live_hypotheses > max_trading or n_total_active > max_trading:
             logger.info(
                 "Selection pool: %d shortlist candidates from %d live hypotheses (%d capital-backed, %d active)",
                 len(trading_candidates),
                 n_live_hypotheses,
+                len(trading_candidates),
                 n_total_active,
-                len(observation_candidates),
             )
         selected_records = trading_candidates
 
@@ -676,7 +676,7 @@ class Trader:
             pass
 
         runtime_signals, parsed_records, n_failed = self._prepare_runtime_inputs(
-            all_hypotheses,
+            eval_hypotheses,
             self.price_signal,
             store_signals,
         )
@@ -688,7 +688,7 @@ class Trader:
                     logger.info(
                         "Syncing %d runtime signals for %d candidates...",
                         len(runtime_signals),
-                        len(all_hypotheses),
+                        len(eval_hypotheses),
                     )
                     self.store.sync(runtime_signals)
                 except Exception as exc:
@@ -827,17 +827,21 @@ class Trader:
         if n_feature_filtered:
             logger.info(
                 "Cycle: %d/%d hypotheses skipped (missing features in current data)",
-                n_feature_filtered, len(all_hypotheses),
+                n_feature_filtered, len(eval_hypotheses),
             )
         if n_failed:
-            logger.info("Cycle: %d/%d hypotheses failed evaluation", n_failed, len(all_hypotheses))
+            logger.info(
+                "Cycle: %d/%d hypotheses failed evaluation",
+                n_failed,
+                len(eval_hypotheses),
+            )
         total_skipped = n_feature_filtered + n_failed
-        if all_hypotheses and total_skipped / len(all_hypotheses) > 0.7:
+        if eval_hypotheses and total_skipped / len(eval_hypotheses) > 0.7:
             logger.warning(
                 "High hypothesis skip ratio: %.1f%% (%d/%d)",
-                100.0 * total_skipped / len(all_hypotheses),
+                100.0 * total_skipped / len(eval_hypotheses),
                 total_skipped,
-                len(all_hypotheses),
+                len(eval_hypotheses),
             )
 
         # TC computation removed — stake-based weights handle selection

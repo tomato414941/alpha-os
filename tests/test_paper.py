@@ -848,10 +848,11 @@ class TestTrader:
 
         result = trader.run_cycle()
 
+        assert result.n_active_hypotheses == 2
         assert result.n_live_hypotheses == 1
         assert result.n_shortlist_candidates == 1
         assert result.n_selected_hypotheses == 1
-        assert result.n_signals_evaluated == 2
+        assert result.n_signals_evaluated == 1
         trader.close()
 
     def test_run_cycle_uses_snapshot_portfolio_value_as_daily_pnl_baseline(
