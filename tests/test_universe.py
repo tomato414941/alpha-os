@@ -132,3 +132,41 @@ def test_init_universe():
     assert universe.CROSS_ASSET_UNIVERSE == ["sig_86400"]
     # Daily-only signals in feature catalog
     assert universe.FEATURE_CATALOG == ["sig_86400"]
+
+
+def test_build_feature_list_adds_daily_derived_features_for_onchain_and_derivatives(monkeypatch):
+    monkeypatch.setattr(
+        universe,
+        "load_daily_signals",
+        lambda *args, **kwargs: [
+            "btc_hashrate",
+            "funding_rate_btc",
+            "fear_greed",
+        ],
+    )
+
+    features = universe.build_feature_list("BTC")
+
+    assert "btc_hashrate" in features
+    assert "funding_rate_btc" in features
+    assert "fear_greed" in features
+    assert "delta_1__btc_hashrate" in features
+    assert "roc_5__btc_hashrate" in features
+    assert "zscore_20__btc_hashrate" in features
+    assert "delta_1__funding_rate_btc" in features
+    assert "roc_5__funding_rate_btc" in features
+    assert "zscore_20__funding_rate_btc" in features
+    assert "delta_1__fear_greed" not in features
+
+
+def test_derived_feature_names_resolve_to_raw_family_and_signal():
+    assert universe.parse_derived_feature_name("roc_5__funding_rate_btc") == (
+        "roc",
+        5,
+        "funding_rate_btc",
+    )
+    assert universe.base_signal_name("roc_5__funding_rate_btc") == "funding_rate_btc"
+    assert universe.infer_feature_family("roc_5__funding_rate_btc") == "derivatives"
+    assert universe.required_raw_signals(
+        ["roc_5__funding_rate_btc", "zscore_20__btc_hashrate", "fear_greed"]
+    ) == ["btc_hashrate", "fear_greed", "funding_rate_btc"]

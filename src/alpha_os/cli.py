@@ -3379,7 +3379,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
     from alpha_os.config import Config
     from alpha_os.data.store import DataStore
     from alpha_os.data.signal_client import build_signal_client_from_config
-    from alpha_os.data.universe import init_universe, load_daily_signals
+    from alpha_os.data.universe import init_universe, load_daily_signals, required_raw_signals
     from alpha_os.data.eval_universe import load_cached_eval_universe
     from alpha_os.hypotheses.identity import expression_feature_names
     from alpha_os.research.cross_asset import (
@@ -3399,7 +3399,7 @@ def cmd_evaluate_expression(args: argparse.Namespace) -> None:
         return
 
     # Load data: eval universe prices + features referenced by expression
-    expr_features = expression_feature_names(args.expr)
+    expr_features = required_raw_signals(expression_feature_names(args.expr))
     db_path = SIGNAL_CACHE_DB
     store = DataStore(db_path, client)
     needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))

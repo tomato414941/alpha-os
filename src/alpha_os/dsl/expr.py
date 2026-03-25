@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from ..data.universe import parse_derived_feature_name
 from .tokens import UNARY_OPS, BINARY_OPS, ROLLING_OPS, PAIR_ROLLING_OPS, CONDITIONAL_OPS, LAG_OPS
 
 
@@ -25,9 +26,17 @@ class Feature(Expr):
     name: str
 
     def evaluate(self, data: dict[str, np.ndarray]) -> np.ndarray:
-        if self.name not in data:
-            raise KeyError(f"Feature '{self.name}' not found in data")
-        return np.asarray(data[self.name], dtype=np.float64)
+        if self.name in data:
+            return np.asarray(data[self.name], dtype=np.float64)
+        derived = parse_derived_feature_name(self.name)
+        if derived is not None:
+            op, window, base_name = derived
+            if base_name in data:
+                base = np.asarray(data[base_name], dtype=np.float64)
+                value = _eval_derived_feature(op, window, base)
+                data[self.name] = value
+                return value
+        raise KeyError(f"Feature '{self.name}' not found in data")
 
     def __repr__(self) -> str:
         return self.name
@@ -199,6 +208,16 @@ def _eval_unary(op: str, x: np.ndarray) -> np.ndarray:
     raise ValueError(f"Unknown unary op: {op}")
 
 
+def _eval_derived_feature(op: str, window: int, x: np.ndarray) -> np.ndarray:
+    if op == "delta":
+        return _eval_rolling("delta", window, x)
+    if op == "roc":
+        return _eval_rolling("roc", window, x)
+    if op == "zscore":
+        return _zscore_windowed(x, window)
+    raise ValueError(f"Unknown derived feature op: {op}")
+
+
 def _eval_binary(op: str, lhs: np.ndarray, rhs: np.ndarray) -> np.ndarray:
     if op == "add":
         return lhs + rhs
@@ -285,3 +304,10 @@ def _eval_lag(op: str, window: int, x: np.ndarray) -> np.ndarray:
         result[window:] = x[:-window]
         return result
     raise ValueError(f"Unknown lag op: {op}")
+
+
+def _zscore_windowed(x: np.ndarray, window: int) -> np.ndarray:
+    s = pd.Series(x)
+    mean = s.rolling(window, min_periods=window).mean()
+    std = s.rolling(window, min_periods=window).std(ddof=1)
+    return ((s - mean) / (std + 1e-10)).to_numpy()

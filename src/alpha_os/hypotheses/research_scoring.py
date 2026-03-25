@@ -8,6 +8,7 @@ import numpy as np
 
 from ..backtest.cost_model import CostModel
 from ..backtest.engine import BacktestEngine
+from ..data.universe import required_raw_signals
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression
 from ..validation.purged_cv import purged_walk_forward
@@ -177,7 +178,10 @@ def required_research_features(records: list[HypothesisRecord], price_feature: s
             continue
         feature_names.update(expression_feature_names(expression))
     ordered = [price_feature]
-    ordered.extend(sorted(name for name in feature_names if name != price_feature))
+    ordered.extend(
+        name for name in required_raw_signals(feature_names)
+        if name != price_feature
+    )
     return ordered
 
 

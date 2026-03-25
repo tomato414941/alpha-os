@@ -15,7 +15,7 @@ from ..config import Config, SIGNAL_CACHE_DB
 from ..data.eval_universe import load_cached_eval_universe
 from ..data.signal_client import build_signal_client_from_config, signal_noise_api_key
 from ..data.store import DataStore
-from ..data.universe import init_universe, price_signal
+from ..data.universe import init_universe, price_signal, required_raw_signals
 from ..dsl import parse, temporal_expression_issues
 from ..dsl.evaluator import evaluate_expression
 from ..predictions.store import Prediction, PredictionStore, SignalMeta
@@ -144,7 +144,7 @@ def collect_required_features(
     for record in hypotheses:
         if record.kind == HypothesisKind.DSL:
             expression = record.definition.get("expression", "")
-            needed.update(expression_feature_names(expression))
+            needed.update(required_raw_signals(expression_feature_names(expression)))
         elif record.kind == HypothesisKind.ML:
             needed.update(record.definition.get("features", []))
     return needed

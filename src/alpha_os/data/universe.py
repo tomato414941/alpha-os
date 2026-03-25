@@ -76,6 +76,12 @@ _SIGNAL_TO_ASSET = {signal: asset for asset, signal in _ALL_ASSETS.items()}
 _CATALOG_CACHE_PATH = DATA_DIR / "signal_catalog.json"
 _daily_signal_cache: list[str] | None = None
 _signal_catalog_cache: list[dict] | None = None
+_DERIVED_DAILY_FAMILIES = frozenset({"onchain", "derivatives"})
+_DERIVED_DAILY_SPECS: tuple[tuple[str, int], ...] = (
+    ("delta", 1),
+    ("roc", 5),
+    ("zscore", 20),
+)
 
 
 @dataclass(frozen=True)
@@ -337,6 +343,10 @@ def build_feature_list(
         if s not in seen:
             seen.add(s)
             result.append(s)
+    for s in derived_daily_feature_names(daily):
+        if s not in seen:
+            seen.add(s)
+            result.append(s)
     return result
 
 
@@ -369,6 +379,9 @@ def build_microstructure_feature_list(asset: str) -> list[str]:
 
 
 def infer_feature_family(name: str) -> str:
+    parsed = parse_derived_feature_name(name)
+    if parsed is not None:
+        return infer_feature_family(parsed[2])
     lowered = name.lower()
     if lowered in {"sp500", "nasdaq", "vix_close", "fear_greed", "dxy",
                    "gold", "oil_wti", "russell2000", "tsy_yield_10y", "tsy_yield_2y"}:
@@ -388,6 +401,41 @@ def infer_feature_family(name: str) -> str:
     }:
         return "price"
     return "other"
+
+
+def parse_derived_feature_name(name: str) -> tuple[str, int, str] | None:
+    head, sep, base = name.partition("__")
+    if not sep or not base or "__" in base:
+        return None
+    op, _, window_str = head.partition("_")
+    if op not in {"delta", "roc", "zscore"}:
+        return None
+    if not window_str.isdigit():
+        return None
+    return op, int(window_str), base
+
+
+def base_signal_name(name: str) -> str:
+    parsed = parse_derived_feature_name(name)
+    if parsed is None:
+        return name
+    return parsed[2]
+
+
+def required_raw_signals(feature_names: list[str] | set[str]) -> list[str]:
+    return sorted({base_signal_name(name) for name in feature_names})
+
+
+def derived_daily_feature_names(signals: list[str]) -> list[str]:
+    derived: list[str] = []
+    for signal in signals:
+        if parse_derived_feature_name(signal) is not None:
+            continue
+        if infer_feature_family(signal) not in _DERIVED_DAILY_FAMILIES:
+            continue
+        for op, window in _DERIVED_DAILY_SPECS:
+            derived.append(f"{op}_{window}__{signal}")
+    return derived
 
 
 def stratified_feature_subset(

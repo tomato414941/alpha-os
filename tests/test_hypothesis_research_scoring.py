@@ -9,6 +9,7 @@ from alpha_os.cli import _build_parser, cmd_score_exploratory_hypotheses
 from alpha_os.data.universe import price_signal
 from alpha_os.hypotheses.research_scoring import (
     exploratory_scoring_candidates,
+    score_exploratory_hypotheses,
     required_research_features,
 )
 from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord, HypothesisStore
@@ -277,6 +278,45 @@ def test_score_exploratory_hypotheses_parser():
     assert args.asset == "BTC"
     assert args.dry_run is True
     assert args.limit is None
+
+
+def test_required_research_features_and_scoring_support_derived_daily_features(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    record = HypothesisRecord(
+        hypothesis_id="dsl_derived",
+        kind=HypothesisKind.DSL,
+        definition={"expression": "roc_5__funding_rate_btc"},
+        source="random_dsl",
+        stake=0.0,
+        metadata={"research_quality_status": "unscored"},
+    )
+    store.register(record)
+
+    candidates = exploratory_scoring_candidates(store.list_observation_active())
+    features = required_research_features(candidates, price_signal("BTC"))
+    assert features == [price_signal("BTC"), "funding_rate_btc"]
+
+    n_days = 260
+    returns = np.array([0.0015 if idx % 2 == 0 else 0.0005 for idx in range(n_days - 1)])
+    prices = 100.0 * np.cumprod(np.concatenate(([1.0], 1.0 + returns)))
+    data = {
+        price_signal("BTC"): prices,
+        "funding_rate_btc": np.linspace(0.0, 1.0, n_days, dtype=float),
+    }
+    batch = score_exploratory_hypotheses(
+        candidates,
+        data=data,
+        prices=prices,
+        commission_pct=0.0,
+        slippage_pct=0.0,
+        allow_short=False,
+        n_cv_folds=3,
+        embargo_days=1,
+    )
+
+    assert [update.hypothesis_id for update in batch.updates] == ["dsl_derived"]
+    assert batch.failures == []
+    store.close()
 
 
 def test_cmd_score_exploratory_hypotheses_dry_run_and_apply(monkeypatch, tmp_path, capsys):
