@@ -245,6 +245,45 @@ This is the point where architectural work shifts from "separate mixed
 systems" to "finish the renames, remove remaining migration residue, and keep
 the runtime narrow."
 
+### Multi-Asset Expansion Baseline
+
+A greenfield multi-asset system would not be built by taking a BTC-only runtime
+and appending more symbols to it. It would make asset boundaries first-class
+from the beginning.
+
+The practical implication is:
+
+- BTC-only runtime is useful as a proving sleeve
+- but broad expansion should be treated as a partial redesign, not as a toggle
+
+The architecture should make these boundaries explicit:
+
+- observation state by asset
+- research scoring by asset
+- capital eligibility by asset
+- portfolio allocation across assets
+
+That implies a two-stage allocation model:
+
+1. choose and score hypotheses within each asset sleeve
+2. allocate capital across sleeves after sleeve-local selection
+
+Without this separation, BTC-era assumptions leak into every new asset:
+
+- family winners from BTC dominate other sleeves
+- long-only BTC actionability rules become accidental global defaults
+- diagnostics mix within-asset and cross-asset failures
+
+So the correct expansion path is:
+
+1. keep BTC as the reference sleeve
+2. make sleeve boundaries explicit in the runtime model
+3. add a small number of observation-only sleeves
+4. only then admit weak capital entry outside BTC
+
+This is slower than "just add ETH," but safer and much closer to the target
+architecture.
+
 ## Principles
 
 **1. Prediction-first, metadata-enriched.**

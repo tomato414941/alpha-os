@@ -2054,3 +2054,69 @@ So the main lesson is:
 - the current implementation still contains migration-era seams
 - but the underlying design vocabulary is now much better than it was at the
   start of the recovery
+
+## Multi-Asset Expansion
+
+The next expansion should not be "add another asset" on top of the current BTC
+runtime shape. It should be treated as a controlled move toward a multi-asset
+runtime model.
+
+BTC-only runtime work is still useful, but it has narrow limits:
+
+- single-asset long-only runtime underuses breadth
+- many correct bearish or relative-value hypotheses are not directly
+  monetizable there
+- BTC-specific runtime assumptions can leak into policy if expansion is added
+  too mechanically
+
+So the next step should be:
+
+1. preserve the current BTC runtime as the reference sleeve
+2. redesign the runtime model so asset boundaries are explicit
+3. only then add a small number of new assets under observation-first rules
+
+### What Should Be Explicit Before Broad Expansion
+
+Before adding more assets aggressively, these boundaries should become more
+explicit:
+
+- hypothesis state should be asset-aware
+  - `research_quality`, `live_quality`, `actionable_live`, and
+    `allocation_trust` should be interpretable per asset, not only globally
+- observation and capital should remain separate across assets
+  - adding assets should increase observable breadth without forcing capital
+    entry
+- allocation should become two-stage
+  - first choose `capital_backed` hypotheses within each asset
+  - then decide capital allocation across assets
+- research scoring and family diagnostics should become asset-aware
+  - a family that works for BTC should not implicitly dominate another asset
+
+### Safe Expansion Order
+
+The safe order is:
+
+1. make the runtime model multi-asset aware
+2. add 2-3 assets as observation-only sleeves
+3. run research scoring and diagnostics there
+4. allow weak capital entry only after the same promotion logic holds
+
+This avoids the dangerous path:
+
+- force assets into the current BTC-shaped runtime
+- react to failures with local thresholds
+- slowly accumulate asset-specific exceptions
+
+### Practical Interpretation
+
+Multi-asset expansion should be treated as a partial redesign, not a feature
+toggle.
+
+The immediate goal is not:
+
+- "make ETH trade too"
+
+The immediate goal is:
+
+- "make the runtime capable of carrying multiple asset sleeves without BTC
+  assumptions leaking everywhere"
