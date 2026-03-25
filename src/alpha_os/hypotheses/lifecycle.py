@@ -21,6 +21,7 @@ from .allocation_policy import (
     live_promotion_blocker,
     target_stake,
 )
+from .identity import expression_feature_families
 from .quality import blend_quality
 from .store import HypothesisStatus, HypothesisStore
 
@@ -53,6 +54,7 @@ class AllocationRebalanceEntry:
     signal_nonzero_ratio: float = 0.0
     signal_mean_abs: float = 0.0
     research_quality_source: str = ""
+    representative_family: str = ""
     research_candidate_capped: bool = False
     redundancy_capped_by: str = ""
     redundancy_correlation: float = 0.0
@@ -84,7 +86,33 @@ def _apply_batch_research_candidate_gate(
         ),
         reverse=True,
     )
-    allowed_ids = {entry.hypothesis_id for entry in ranked[:max_candidates]}
+    family_counts: dict[str, int] = {}
+    for entry in ranked:
+        family = entry.representative_family or "other"
+        family_counts[family] = family_counts.get(family, 0) + 1
+
+    diversified: list[AllocationRebalanceEntry] = []
+    seen_families: set[str] = set()
+    for entry in ranked:
+        family = entry.representative_family or "other"
+        if family in seen_families:
+            continue
+        diversified.append(entry)
+        seen_families.add(family)
+        if len(diversified) >= max_candidates:
+            break
+
+    if len(diversified) < max_candidates:
+        selected_ids = {entry.hypothesis_id for entry in diversified}
+        for entry in ranked:
+            if entry.hypothesis_id in selected_ids:
+                continue
+            diversified.append(entry)
+            selected_ids.add(entry.hypothesis_id)
+            if len(diversified) >= max_candidates:
+                break
+
+    allowed_ids = {entry.hypothesis_id for entry in diversified}
     if len(allowed_ids) == len(ranked):
         return plan
 
@@ -348,6 +376,15 @@ def build_allocation_rebalance_plan(
             if signal_activity_for is not None
             else (0.0, 0.0)
         )
+        families = expression_feature_families(record.expression)
+        representative_family = (
+            min(
+                families,
+                key=lambda family: (families.count(family), family),
+            )
+            if families
+            else "other"
+        )
         estimate = blend_quality(
             research_quality,
             live_returns,
@@ -438,6 +475,7 @@ def build_allocation_rebalance_plan(
                 marginal_contribution=float(marginal),
                 signal_nonzero_ratio=float(signal_nonzero_ratio),
                 signal_mean_abs=float(signal_mean_abs),
+                representative_family=representative_family,
             )
         )
     return _apply_batch_research_candidate_gate(

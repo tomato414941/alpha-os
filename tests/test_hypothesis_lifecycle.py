@@ -673,6 +673,68 @@ def test_build_allocation_rebalance_plan_caps_batch_research_candidates(tmp_path
     store.close()
 
 
+def test_build_allocation_rebalance_plan_keeps_family_diversity_in_batch_candidate_cap(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="price_strong",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_ohlcv"},
+            stake=0.0,
+            metadata={
+                "oos_sharpe": 1.4,
+                "research_quality_source": "batch_research_score",
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="price_weaker",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "eth_btc"},
+            stake=0.0,
+            metadata={
+                "oos_sharpe": 1.3,
+                "research_quality_source": "batch_research_score",
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="onchain_strong",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            stake=0.0,
+            metadata={
+                "oos_sharpe": 1.2,
+                "research_quality_source": "batch_research_score",
+            },
+        )
+    )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=5,
+        full_weight_observations=63,
+        batch_research_normalized_quality_min=0.10,
+        batch_research_capital_candidates_max=2,
+        live_returns_for=lambda _hypothesis_id: [],
+    )
+
+    price_strong = next(entry for entry in plan if entry.hypothesis_id == "price_strong")
+    price_weaker = next(entry for entry in plan if entry.hypothesis_id == "price_weaker")
+    onchain_strong = next(entry for entry in plan if entry.hypothesis_id == "onchain_strong")
+
+    assert price_strong.capital_eligible is True
+    assert price_strong.research_candidate_capped is False
+    assert onchain_strong.capital_eligible is True
+    assert onchain_strong.research_candidate_capped is False
+    assert price_weaker.capital_eligible is False
+    assert price_weaker.research_candidate_capped is True
+    store.close()
+
+
 def test_apply_allocation_rebalance_plan_updates_store(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(
