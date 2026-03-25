@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from ..legacy.managed_alphas import AlphaRecord
+from ..legacy.registry_types import AlphaRecord
 from ..data.universe import infer_feature_family
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal

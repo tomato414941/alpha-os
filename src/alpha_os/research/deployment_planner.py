@@ -7,7 +7,7 @@ import numpy as np
 
 from ..hypotheses.identity import expression_feature_names, expression_semantic_key
 from ..hypotheses.quality import QualityEstimate
-from ..legacy.managed_alphas import AlphaRecord, AlphaState
+from ..legacy.registry_types import AlphaRecord, AlphaState
 
 
 @dataclass(frozen=True)

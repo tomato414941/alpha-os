@@ -18,7 +18,8 @@ from ..legacy.admission_queue import (
     reset_candidates_to_pending,
 )
 from ..legacy.admission_replay import alpha_id_for_expression
-from ..legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import ManagedAlphaStore
+from ..legacy.registry_types import AlphaRecord, AlphaState
 from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.universe import build_feature_list, price_signal

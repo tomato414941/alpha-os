@@ -22,7 +22,8 @@ from ..research.deployment_planner import (
     plan_registry_active_prune,
 )
 from .admission_replay import backup_registry_db
-from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from .managed_alphas import ManagedAlphaStore
+from .registry_types import AlphaRecord, AlphaState
 
 
 @dataclass(frozen=True)

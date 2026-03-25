@@ -21,7 +21,8 @@ from ..legacy.admission_replay import (
     materialize_admission_snapshot,
 )
 from ..legacy.deployed_alphas import refresh_deployed_alphas
-from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import ManagedAlphaStore
+from ..legacy.registry_types import AlphaState
 from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, asset_data_dir
 from ..research.replay_simulator import run_replay
 from ..runtime_profile import build_runtime_profile, git_commit

@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..hypotheses.state_lifecycle import LifecycleConfig, passes_candidate_gate
-from .managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from .managed_alphas import ManagedAlphaStore
+from .registry_types import AlphaRecord, AlphaState
 
 
 @dataclass(frozen=True)

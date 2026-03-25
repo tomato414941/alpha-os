@@ -21,7 +21,8 @@ from ..data.store import DataStore
 from ..data.universe import build_hourly_feature_list
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import ManagedAlphaStore
+from ..legacy.registry_types import AlphaState
 from ..hypotheses.monitor import HypothesisMonitor, MonitorConfig
 from ..hypotheses.combiner import weighted_combine_scalar
 

@@ -20,7 +20,8 @@ from ..dsl.expr import Expr
 from ..evolution.discovery_pool import DiscoveryPool
 from ..evolution.behavior import compute_behavior
 from ..evolution.gp import GPConfig, GPEvolver
-from ..legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import ManagedAlphaStore
+from ..legacy.registry_types import AlphaRecord, AlphaState
 from ..validation.deflated_sharpe import deflated_sharpe_ratio
 from ..validation.pbo import probability_of_backtest_overfitting
 from ..validation.purged_cv import CVResult, purged_walk_forward

@@ -21,7 +21,8 @@ from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_sign
 from ..execution.paper import PaperExecutor
 from ..execution.planning import build_target_position, plan_execution_intent
 from ..legacy.deployed_alphas import refresh_deployed_alphas
-from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
+from ..legacy.managed_alphas import ManagedAlphaStore
+from ..legacy.registry_types import AlphaState
 from ..hypotheses.combiner import (
     CombinerConfig,
     compute_tc_scores,
