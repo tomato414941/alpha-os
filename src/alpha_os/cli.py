@@ -248,6 +248,20 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Comma-separated feature families to focus on",
     )
 
+    att = sub.add_parser(
+        "analyze-trade-transition",
+        help="Run one paper trade cycle and summarize pre/post batch research transitions",
+    )
+    att.add_argument("--asset", type=str, default="BTC")
+    att.add_argument("--config", type=str, default=None)
+    att.add_argument("--top", type=int, default=5)
+    att.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
+
     bor = sub.add_parser(
         "backfill-observation-returns",
         help="Backfill observation-only forward returns for active hypotheses from cached history",
@@ -2084,6 +2098,87 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
         print(f"  Top:      {entry}")
 
 
+def cmd_analyze_trade_transition(args: argparse.Namespace) -> None:
+    from alpha_os.hypotheses.trade_transition_diagnostics import (
+        build_trade_transition_summary,
+        capture_batch_transition_snapshot,
+    )
+
+    cfg = _load_config(args.config)
+    asset = args.asset.upper()
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
+
+    contexts = _build_trade_contexts(
+        asset_list=[asset],
+        cfg=cfg,
+        testnet=True,
+        capital=cfg.trading.initial_capital,
+        venue="paper",
+    )
+    trader, cb, readiness_checker = contexts[asset]
+    try:
+        pre = capture_batch_transition_snapshot(
+            trader.registry.list_observation_active(),
+            families=family_filter,
+        )
+        result = trader.run_cycle(skip_lifecycle=cfg.lifecycle_daemon.enabled)
+        _print_paper_result(result)
+        recon = trader.reconcile()
+        _run_trade_readiness_check(result, recon, cb, readiness_checker)
+        if not cfg.lifecycle_daemon.enabled:
+            _run_hypothesis_lifecycle_update(trader, cfg, result)
+        post = capture_batch_transition_snapshot(
+            trader.registry.list_observation_active(),
+            families=family_filter,
+        )
+    finally:
+        _close_trade_contexts(contexts)
+
+    summary = build_trade_transition_summary(pre, post, top=max(args.top, 0))
+    title = f"Trade Transition ({asset})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    print(title)
+    print(
+        "  Summary:  "
+        f"scoped_pre={summary['scoped_pre']} "
+        f"scoped_post={summary['scoped_post']} "
+        f"pre_backed={summary['pre_backed']} "
+        f"post_backed={summary['post_backed']} "
+        f"entered={summary['entered']} "
+        f"exited={summary['exited']}"
+    )
+    if summary["exit_reasons"]:
+        print(
+            "  Exit:     "
+            + " ".join(
+                f"{name}={count}"
+                for name, count in summary["exit_reasons"].most_common()
+            )
+        )
+    else:
+        print("  Exit:     none")
+    if summary["entry_reasons"]:
+        print(
+            "  Enter:    "
+            + " ".join(
+                f"{name}={count}"
+                for name, count in summary["entry_reasons"].most_common()
+            )
+        )
+    else:
+        print("  Enter:    none")
+    for entry in summary["top_exits"]:
+        print(f"  TopExit:  {entry}")
+    for entry in summary["top_entries"]:
+        print(f"  TopEnter: {entry}")
+
+
 def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.forward.tracker import HypothesisObservationTracker
@@ -3103,6 +3198,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_analyze_live_breadth(args)
     elif args.command == "analyze-batch-research":
         cmd_analyze_batch_research(args)
+    elif args.command == "analyze-trade-transition":
+        cmd_analyze_trade_transition(args)
     elif args.command == "analyze-latest-combine":
         cmd_analyze_latest_combine(args)
     elif args.command == "backfill-observation-returns":
