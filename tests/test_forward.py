@@ -170,3 +170,48 @@ class TestForwardTracker:
         assert "hypothesis_id" in returns_columns
         assert "hypothesis_id" in meta_columns
         tracker.close()
+
+    def test_legacy_forward_file_name_is_renamed(self, tmp_path):
+        legacy_db = tmp_path / "forward_returns.db"
+        conn = sqlite3.connect(legacy_db)
+        conn.execute(
+            """
+            CREATE TABLE forward_returns (
+                hypothesis_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                signal_value REAL NOT NULL,
+                daily_return REAL NOT NULL,
+                cumulative_return REAL NOT NULL,
+                recorded_at REAL NOT NULL,
+                PRIMARY KEY (hypothesis_id, date)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE forward_meta (
+                hypothesis_id TEXT PRIMARY KEY,
+                forward_start_date TEXT NOT NULL,
+                adopted_at REAL NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO forward_meta (hypothesis_id, forward_start_date, adopted_at) VALUES (?, ?, ?)",
+            ("h1", "2025-01-01", 1.0),
+        )
+        conn.execute(
+            """
+            INSERT INTO forward_returns
+            (hypothesis_id, date, signal_value, daily_return, cumulative_return, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("h1", "2025-01-02", 0.5, 0.01, 1.01, 1.0),
+        )
+        conn.commit()
+        conn.close()
+
+        tracker = ForwardTracker(db_path=tmp_path / "hypothesis_observations.db")
+        assert legacy_db.exists() is False
+        assert tracker.get_hypothesis_returns("h1") == pytest.approx([0.01])
+        tracker.close()

@@ -9,7 +9,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ..config import DATA_DIR
+from ..config import (
+    DATA_DIR,
+    HYPOTHESIS_OBSERVATIONS_DB_NAME,
+    LEGACY_FORWARD_RETURNS_DB_NAME,
+)
 
 
 @dataclass
@@ -36,13 +40,22 @@ class ForwardTracker:
     """Persist and query daily forward returns for adopted hypotheses."""
 
     def __init__(self, db_path: Path | None = None):
-        self._db_path = db_path or DATA_DIR / "forward_returns.db"
+        self._db_path = self._resolve_db_path(db_path)
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self._db_path))
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA busy_timeout=30000")
         self._conn.row_factory = sqlite3.Row
         self._create_tables()
+
+    @classmethod
+    def _resolve_db_path(cls, db_path: Path | None) -> Path:
+        resolved = db_path or DATA_DIR / HYPOTHESIS_OBSERVATIONS_DB_NAME
+        if resolved.name == HYPOTHESIS_OBSERVATIONS_DB_NAME and not resolved.exists():
+            legacy_path = resolved.with_name(LEGACY_FORWARD_RETURNS_DB_NAME)
+            if legacy_path.exists():
+                legacy_path.rename(resolved)
+        return resolved
 
     def _create_tables(self) -> None:
         self._conn.execute("""

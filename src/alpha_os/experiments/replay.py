@@ -22,7 +22,7 @@ from ..legacy.admission_replay import (
 )
 from ..legacy.deployed_alphas import refresh_deployed_alphas
 from ..legacy.managed_alphas import ManagedAlphaStore, AlphaState
-from ..config import Config, asset_data_dir
+from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, asset_data_dir
 from ..paper.simulator import run_replay
 from ..runtime_profile import build_runtime_profile, git_commit
 
@@ -208,7 +208,7 @@ def run_replay_experiment(spec: ReplayExperimentSpec) -> ReplayExperimentRun:
                     replay_db,
                     cfg,
                     asset=asset,
-                    forward_db_path=asset_data_dir(asset) / "forward_returns.db",
+                    forward_db_path=asset_data_dir(asset) / HYPOTHESIS_OBSERVATIONS_DB_NAME,
                     dry_run=False,
                     backup=False,
                 )

@@ -12,6 +12,8 @@ DATA_DIR = PROJECT_DIR / "data"
 SIGNAL_CACHE_DB = DATA_DIR / "signal_cache.db"
 SIGNAL_CACHE_L2_DB = DATA_DIR / "signal_cache_l2.db"
 HYPOTHESES_DB = DATA_DIR / "hypotheses.db"
+HYPOTHESIS_OBSERVATIONS_DB_NAME = "hypothesis_observations.db"
+LEGACY_FORWARD_RETURNS_DB_NAME = "forward_returns.db"
 
 TRADING_MODE_SPOT_LONG_ONLY = "spot_long_only"
 TRADING_MODE_FUTURES_LONG_SHORT = "futures_long_short"

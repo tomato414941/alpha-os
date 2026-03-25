@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..config import Config, SIGNAL_CACHE_DB, asset_data_dir
+from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, SIGNAL_CACHE_DB, asset_data_dir
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -195,7 +195,7 @@ def run_replay(
                 sim_reg_path,
                 config,
                 asset=asset,
-                forward_db_path=asset_data_dir(asset) / "forward_returns.db",
+                forward_db_path=asset_data_dir(asset) / HYPOTHESIS_OBSERVATIONS_DB_NAME,
                 dry_run=False,
                 backup=False,
             )

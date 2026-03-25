@@ -18,7 +18,15 @@ import numpy as np
 
 from alpha_os.backtest.cost_model import CostModel
 from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.config import Config, DATA_DIR, HYPOTHESES_DB, SIGNAL_CACHE_DB, SIGNAL_CACHE_L2_DB, asset_data_dir
+from alpha_os.config import (
+    Config,
+    DATA_DIR,
+    HYPOTHESIS_OBSERVATIONS_DB_NAME,
+    HYPOTHESES_DB,
+    SIGNAL_CACHE_DB,
+    SIGNAL_CACHE_L2_DB,
+    asset_data_dir,
+)
 from alpha_os.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
 from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
@@ -1852,7 +1860,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     adir = asset_data_dir(args.asset)
     store = HypothesisStore(HYPOTHESES_DB)
-    forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    forward_tracker = ForwardTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
     portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
@@ -2076,7 +2084,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     adir = asset_data_dir(args.asset)
     store = HypothesisStore(HYPOTHESES_DB)
     data_store = DataStore(SIGNAL_CACHE_DB)
-    forward_tracker = ForwardTracker(adir / "forward_returns.db")
+    forward_tracker = ForwardTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
     portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     try:
         live_returns_for = _build_live_returns_getter(

@@ -13,7 +13,13 @@ from datetime import date, datetime, timezone
 
 import numpy as np
 
-from ..config import Config, HYPOTHESES_DB, SIGNAL_CACHE_DB, asset_data_dir
+from ..config import (
+    Config,
+    HYPOTHESIS_OBSERVATIONS_DB_NAME,
+    HYPOTHESES_DB,
+    SIGNAL_CACHE_DB,
+    asset_data_dir,
+)
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
@@ -167,7 +173,7 @@ class Trader:
             db_path=adir / "paper_trading.db"
         )
         self.forward_tracker = forward_tracker or ForwardTracker(
-            db_path=adir / "forward_returns.db"
+            db_path=adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
         )
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")
 

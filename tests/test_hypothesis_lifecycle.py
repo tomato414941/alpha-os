@@ -711,7 +711,7 @@ def test_apply_allocation_rebalance_plan_updates_store(tmp_path):
 def test_backfill_observation_returns_records_history_from_cached_signals(tmp_path):
     hdb = tmp_path / "hypotheses.db"
     sdb = tmp_path / "signal_cache.db"
-    fdb = tmp_path / "forward_returns.db"
+    fdb = tmp_path / "hypothesis_observations.db"
 
     store = HypothesisStore(hdb)
     store.register(
@@ -765,7 +765,7 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
 
 
 def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(tmp_path):
-    tracker = ForwardTracker(tmp_path / "forward_returns.db")
+    tracker = ForwardTracker(tmp_path / "hypothesis_observations.db")
     tracker.record("h1", "2026-03-21", 0.8, 0.016)
     tracker.record("h1", "2026-03-22", -0.7, 0.021)
     tracker.record("h1", "2026-03-23", 0.0, 0.0)

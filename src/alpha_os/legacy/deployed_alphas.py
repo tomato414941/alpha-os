@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..config import Config, SIGNAL_CACHE_DB
+from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, SIGNAL_CACHE_DB
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
@@ -344,7 +344,7 @@ def refresh_deployed_alphas(
 ) -> DeployedAlphaRefreshStats:
     registry = ManagedAlphaStore(db_path)
     tracker = ForwardTracker(
-        db_path=forward_db_path or db_path.with_name("forward_returns.db"),
+        db_path=forward_db_path or db_path.with_name(HYPOTHESIS_OBSERVATIONS_DB_NAME),
     )
     try:
         resolved_asset = (asset or db_path.parent.name).upper()
@@ -464,7 +464,7 @@ def prune_registry_active_duplicates(
 ) -> RegistryActivePruneStats:
     registry = ManagedAlphaStore(db_path)
     tracker = ForwardTracker(
-        db_path=forward_db_path or db_path.with_name("forward_returns.db"),
+        db_path=forward_db_path or db_path.with_name(HYPOTHESIS_OBSERVATIONS_DB_NAME),
     )
     try:
         resolved_asset = (asset or db_path.parent.name).upper()
