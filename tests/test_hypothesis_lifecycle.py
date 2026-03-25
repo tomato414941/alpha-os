@@ -735,6 +735,46 @@ def test_build_allocation_rebalance_plan_keeps_family_diversity_in_batch_candida
     store.close()
 
 
+def test_build_allocation_rebalance_plan_round_robins_batch_candidate_families(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    for hypothesis_id, expr, sharpe in (
+        ("price_1", "btc_ohlcv", 1.5),
+        ("price_2", "eth_btc", 1.4),
+        ("onchain_1", "btc_difficulty", 1.3),
+        ("onchain_2", "btc_active_addresses", 1.2),
+    ):
+        store.register(
+            HypothesisRecord(
+                hypothesis_id=hypothesis_id,
+                kind=HypothesisKind.DSL,
+                definition={"expression": expr},
+                stake=0.0,
+                metadata={
+                    "oos_sharpe": sharpe,
+                    "research_quality_source": "batch_research_score",
+                },
+            )
+        )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=5,
+        full_weight_observations=63,
+        batch_research_normalized_quality_min=0.10,
+        batch_research_capital_candidates_max=3,
+        live_returns_for=lambda _hypothesis_id: [],
+    )
+
+    by_id = {entry.hypothesis_id: entry for entry in plan}
+    assert by_id["price_1"].capital_eligible is True
+    assert by_id["onchain_1"].capital_eligible is True
+    assert by_id["price_2"].capital_eligible is True
+    assert by_id["onchain_2"].capital_eligible is False
+    assert by_id["onchain_2"].research_candidate_capped is True
+    store.close()
+
+
 def test_apply_allocation_rebalance_plan_updates_store(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(

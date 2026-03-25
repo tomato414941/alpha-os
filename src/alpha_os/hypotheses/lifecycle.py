@@ -86,31 +86,31 @@ def _apply_batch_research_candidate_gate(
         ),
         reverse=True,
     )
-    family_counts: dict[str, int] = {}
+    family_buckets: dict[str, list[AllocationRebalanceEntry]] = {}
+    family_order: list[str] = []
     for entry in ranked:
         family = entry.representative_family or "other"
-        family_counts[family] = family_counts.get(family, 0) + 1
+        if family not in family_buckets:
+            family_buckets[family] = []
+            family_order.append(family)
+        family_buckets[family].append(entry)
 
     diversified: list[AllocationRebalanceEntry] = []
-    seen_families: set[str] = set()
-    for entry in ranked:
-        family = entry.representative_family or "other"
-        if family in seen_families:
-            continue
-        diversified.append(entry)
-        seen_families.add(family)
-        if len(diversified) >= max_candidates:
-            break
-
-    if len(diversified) < max_candidates:
-        selected_ids = {entry.hypothesis_id for entry in diversified}
-        for entry in ranked:
-            if entry.hypothesis_id in selected_ids:
+    family_offsets = {family: 0 for family in family_order}
+    while len(diversified) < max_candidates:
+        added = False
+        for family in family_order:
+            offset = family_offsets[family]
+            bucket = family_buckets[family]
+            if offset >= len(bucket):
                 continue
-            diversified.append(entry)
-            selected_ids.add(entry.hypothesis_id)
+            diversified.append(bucket[offset])
+            family_offsets[family] = offset + 1
+            added = True
             if len(diversified) >= max_candidates:
                 break
+        if not added:
+            break
 
     allowed_ids = {entry.hypothesis_id for entry in diversified}
     if len(allowed_ids) == len(ranked):
