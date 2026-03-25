@@ -97,7 +97,7 @@ def main() -> int:
     )
     from alpha_os.config import Config
     from alpha_os.config import asset_data_dir
-    from alpha_os.paper.simulator import run_replay
+    from alpha_os.research.replay_simulator import run_replay
 
     registry_db = asset_data_dir(args.asset) / "alpha_registry.db"
     source_records = load_source_records(registry_db, args.source)

@@ -1,1 +1,1 @@
-"""Pipeline v2: separated process daemons (alpha generation, admission, lifecycle)."""
+"""Pipeline v2: separated process daemons for current runtime flows."""

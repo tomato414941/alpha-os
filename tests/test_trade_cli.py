@@ -779,6 +779,23 @@ def test_legacy_prune_stale_candidates_parser():
     assert args.dry_run is True
 
 
+def test_legacy_lifecycle_parser():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args([
+        "legacy",
+        "lifecycle",
+        "--asset", "ETH",
+        "--config", "prod.toml",
+    ])
+
+    assert args.command == "legacy"
+    assert args.legacy_command == "lifecycle"
+    assert args.asset == "ETH"
+    assert args.config == "prod.toml"
+
+
 @pytest.mark.parametrize(
     "command",
     [

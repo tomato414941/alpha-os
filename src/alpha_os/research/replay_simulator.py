@@ -1,4 +1,4 @@
-"""Replay simulator — vectorized paper trading over historical dates."""
+"""Legacy replay simulator — vectorized paper trading over historical dates."""
 # TODO: This simulator still depends on legacy managed/deployed registry state.
 # Keep it outside the hypotheses-first runtime mainline until replay can run
 # directly from hypothesis snapshots or live-hypothesis selections.

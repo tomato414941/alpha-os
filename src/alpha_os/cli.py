@@ -204,8 +204,8 @@ def _build_parser() -> argparse.ArgumentParser:
     psc.add_argument("--max-age-days", type=int, default=7)
     psc.add_argument("--dry-run", action="store_true")
 
-    # lifecycle (Pipeline v2)
-    lc_d = sub.add_parser("lifecycle", help="Run daily lifecycle evaluation (oneshot)")
+    # lifecycle (legacy compat alias)
+    lc_d = sub.add_parser("lifecycle", help=argparse.SUPPRESS)
     lc_d.add_argument("--asset", type=str, default="BTC")
     lc_d.add_argument("--config", type=str, default=None)
 
@@ -423,6 +423,13 @@ def _build_parser() -> argparse.ArgumentParser:
     lpsc.add_argument("--asset", type=str, default="BTC")
     lpsc.add_argument("--max-age-days", type=int, default=7)
     lpsc.add_argument("--dry-run", action="store_true")
+
+    llc = legacy_sub.add_parser(
+        "lifecycle",
+        help="Run the legacy daily stake-update daemon",
+    )
+    llc.add_argument("--asset", type=str, default="BTC")
+    llc.add_argument("--config", type=str, default=None)
 
     lafl = legacy_sub.add_parser(
         "alpha-funnel",
@@ -1037,7 +1044,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
 
 
 def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
-    from alpha_os.paper.simulator import run_replay
+    from alpha_os.research.replay_simulator import run_replay
 
     if not args.start or not args.end:
         print("Error: --replay requires --start and --end dates")
@@ -1830,7 +1837,7 @@ def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
 
 
 def cmd_lifecycle(args: argparse.Namespace) -> None:
-    """Run daily lifecycle evaluation (Pipeline v2, oneshot)."""
+    """Run the legacy daily stake-update daemon."""
     cfg = _load_config(args.config)
 
     logging.basicConfig(
@@ -1839,7 +1846,7 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.daemon.lifecycle import LifecycleDaemon
+    from alpha_os.legacy.lifecycle import LifecycleDaemon
 
     daemon = LifecycleDaemon(asset=args.asset, config=cfg)
     daemon.run()
@@ -3121,6 +3128,8 @@ def main(argv: list[str] | None = None) -> None:
             cmd_admission_daemon(args)
         elif args.legacy_command == "prune-stale-candidates":
             cmd_prune_stale_candidates(args)
+        elif args.legacy_command == "lifecycle":
+            cmd_lifecycle(args)
         elif args.legacy_command == "alpha-funnel":
             cmd_alpha_funnel(args)
     elif args.command == "research":

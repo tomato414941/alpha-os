@@ -1,4 +1,4 @@
-"""Lifecycle daemon — daily stake update via marginal contribution."""
+"""Legacy daily stake update via marginal contribution."""
 from __future__ import annotations
 
 import logging
@@ -7,9 +7,9 @@ import time
 
 import numpy as np
 
-from ..legacy.managed_alphas import ManagedAlphaStore
 from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, asset_data_dir
 from ..forward.tracker import HypothesisObservationTracker
+from .managed_alphas import ManagedAlphaStore
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +23,7 @@ def _compute_daily_marginal_contributions(
     stakes: dict[str, float],
     date: str,
 ) -> dict[str, float]:
-    """Compute leave-one-out marginal contribution for each alpha on one day.
-
-    portfolio = Σ(stake_i × signal_i) / Σ(stake_i)
-    portfolio_pnl = portfolio × price_return
-    marginal_j = portfolio_pnl - portfolio_without_j_pnl
-
-    Returns {hypothesis_id: marginal_contribution}.
-    """
+    """Compute leave-one-out marginal contribution for each legacy stake on one day."""
     conn = sqlite3.connect(forward_db_path)
     rows = conn.execute(
         "SELECT hypothesis_id, signal_value, daily_return "
@@ -42,7 +35,6 @@ def _compute_daily_marginal_contributions(
     if not rows:
         return {}
 
-    # Build signal/return arrays for alphas with stake > 0
     signals: dict[str, float] = {}
     for hypothesis_id, sig_val, daily_ret in rows:
         if (
@@ -56,19 +48,17 @@ def _compute_daily_marginal_contributions(
     if len(signals) < 2:
         return {}
 
-    # Infer price return from any alpha: daily_return = signal_value × price_return
     price_return = None
-    for hypothesis_id, sig_val, daily_ret in rows:
+    for _hypothesis_id, sig_val, daily_ret in rows:
         if abs(sig_val) > 1e-8 and np.isfinite(daily_ret):
             price_return = daily_ret / sig_val
             break
     if price_return is None:
         return {}
 
-    # Compute full portfolio
     ids = list(signals.keys())
-    stake_arr = np.array([stakes.get(aid, 0.0) for aid in ids])
-    sig_arr = np.array([signals[aid] for aid in ids])
+    stake_arr = np.array([stakes.get(hypothesis_id, 0.0) for hypothesis_id in ids])
+    sig_arr = np.array([signals[hypothesis_id] for hypothesis_id in ids])
     total_stake = stake_arr.sum()
     if total_stake <= 0:
         return {}
@@ -76,7 +66,6 @@ def _compute_daily_marginal_contributions(
     portfolio = float(np.dot(stake_arr, sig_arr) / total_stake)
     full_pnl = portfolio * price_return
 
-    # Leave-one-out marginal for each alpha
     marginals: dict[str, float] = {}
     for i, hypothesis_id in enumerate(ids):
         remaining_stake = total_stake - stake_arr[i]
@@ -106,12 +95,7 @@ def _compute_rolling_marginal_stake(
 
 
 class LifecycleDaemon:
-    """Daily stake update via leave-one-out marginal contribution.
-
-    Designed to run as a daily oneshot (via systemd timer).
-    For each recent day, computes each alpha's marginal contribution
-    to portfolio P&L. Stake = rolling mean of marginal contributions.
-    """
+    """Legacy daily stake update against the registry substrate."""
 
     def __init__(self, asset: str, config: Config):
         self.asset = asset
@@ -122,20 +106,20 @@ class LifecycleDaemon:
         adir = asset_data_dir(self.asset)
 
         registry = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
-        forward_tracker = HypothesisObservationTracker(
+        observation_tracker = HypothesisObservationTracker(
             db_path=adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
         )
-        forward_db = str(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+        observation_db = str(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
 
-        all_alphas = [r for r in registry.list_all() if r.stake > 0]
-        stakes = {r.alpha_id: r.stake for r in all_alphas}
+        legacy_records = [record for record in registry.list_all() if record.stake > 0]
+        stakes = {record.alpha_id: record.stake for record in legacy_records}
 
-        logger.info("Stake update: %d alphas with stake > 0", len(all_alphas))
+        logger.info("Legacy stake update: %d records with stake > 0", len(legacy_records))
 
-        # Get available dates
-        conn = sqlite3.connect(forward_db)
+        conn = sqlite3.connect(observation_db)
         dates = [
-            row[0] for row in conn.execute(
+            row[0]
+            for row in conn.execute(
                 "SELECT DISTINCT date FROM hypothesis_observations ORDER BY date DESC LIMIT ?",
                 (STAKE_LOOKBACK_DAYS,),
             ).fetchall()
@@ -143,30 +127,33 @@ class LifecycleDaemon:
         conn.close()
 
         if not dates:
-            logger.info("No forward return dates available")
+            logger.info("No observation dates available for legacy stake update")
             registry.close()
-            forward_tracker.close()
+            observation_tracker.close()
             return
 
-        # Compute marginal contributions for each date
-        # marginal_history[alpha_id] = [marginal_day1, marginal_day2, ...]
-        marginal_history: dict[str, list[float]] = {r.alpha_id: [] for r in all_alphas}
+        marginal_history: dict[str, list[float]] = {
+            record.alpha_id: [] for record in legacy_records
+        }
 
-        for d in reversed(dates):  # oldest first
+        for date in reversed(dates):
             marginals = _compute_daily_marginal_contributions(
-                forward_db, [r.alpha_id for r in all_alphas], stakes, d,
+                observation_db,
+                [record.alpha_id for record in legacy_records],
+                stakes,
+                date,
             )
-            for aid in marginal_history:
-                marginal_history[aid].append(marginals.get(aid, 0.0))
+            for hypothesis_id in marginal_history:
+                marginal_history[hypothesis_id].append(marginals.get(hypothesis_id, 0.0))
 
-        # Update stakes from rolling marginal
         n_stake_updated = 0
         stake_updates: dict[str, float] = {}
 
-        for record in all_alphas:
+        for record in legacy_records:
             history = marginal_history.get(record.alpha_id, [])
             new_stake = _compute_rolling_marginal_stake(
-                history, prior_stake=record.stake,
+                history,
+                prior_stake=record.stake,
             )
             if abs(new_stake - record.stake) > 1e-6:
                 stake_updates[record.alpha_id] = new_stake
@@ -176,10 +163,13 @@ class LifecycleDaemon:
             registry.bulk_update_stakes(stake_updates)
 
         registry.close()
-        forward_tracker.close()
+        observation_tracker.close()
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            "Stake update complete: %d evaluated, %d dates, %d updated, %.1fs",
-            len(all_alphas), len(dates), n_stake_updated, elapsed,
+            "Legacy stake update complete: %d evaluated, %d dates, %d updated, %.1fs",
+            len(legacy_records),
+            len(dates),
+            n_stake_updated,
+            elapsed,
         )

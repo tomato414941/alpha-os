@@ -38,6 +38,10 @@ FORBIDDEN_FORWARD_TYPE_NAMES = {
     "ForwardRecord",
     "ForwardSummary",
 }
+FORBIDDEN_CURRENT_MODULES = {
+    SRC_ROOT / "daemon" / "lifecycle.py",
+    SRC_ROOT / "paper" / "simulator.py",
+}
 
 
 def _forbidden_alpha_imports(path: Path) -> list[str]:
@@ -137,3 +141,7 @@ def test_repo_does_not_use_legacy_forward_type_names():
                     violations.append(f"{path.relative_to(PROJECT_ROOT)}: {name}")
 
     assert violations == []
+
+
+def test_legacy_runtime_modules_do_not_reappear_in_current_packages():
+    assert [path for path in FORBIDDEN_CURRENT_MODULES if path.exists()] == []
