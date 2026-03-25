@@ -2144,50 +2144,34 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
 
 
 def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
-    from alpha_os.hypotheses.research_scoring import (
-        exploratory_scoring_candidates,
-        required_research_features,
-        score_exploratory_hypotheses,
+    from alpha_os.hypotheses.research_scoring_service import (
+        run_exploratory_research_scoring,
     )
     from alpha_os.hypotheses.store import HypothesisStore
 
     cfg = _load_config(args.config)
     store = HypothesisStore(HYPOTHESES_DB)
     try:
-        candidates = exploratory_scoring_candidates(
-            store.list_observation_active(),
+        run = run_exploratory_research_scoring(
+            store=store,
+            config=cfg,
+            asset=args.asset,
             limit=args.limit,
+            dry_run=args.dry_run,
+            load_data=_real_data,
         )
         mode = "DRY RUN" if args.dry_run else "APPLY"
-        if not candidates:
+        if run.candidate_count == 0:
             print(
                 f"Research scoring [{mode}]: asset={args.asset.upper()} "
                 "candidates=0 scored=0 failed=0"
             )
             return
-
-        price_feature = price_signal(args.asset)
-        features = required_research_features(candidates, price_feature)
-        data, _ = _real_data(
-            features,
-            cfg,
-            eval_window=cfg.backtest.eval_window_days,
-        )
-        prices = data[price_feature]
-        batch = score_exploratory_hypotheses(
-            candidates,
-            data=data,
-            prices=prices,
-            commission_pct=cfg.backtest.commission_pct,
-            slippage_pct=cfg.backtest.slippage_pct,
-            allow_short=cfg.trading.supports_short,
-            n_cv_folds=cfg.validation.n_cv_folds,
-            embargo_days=cfg.validation.embargo_days,
-        )
+        batch = run.batch
 
         print(
             f"Research scoring [{mode}]: asset={args.asset.upper()} "
-            f"candidates={len(candidates)} scored={len(batch.updates)} failed={len(batch.failures)}"
+            f"candidates={run.candidate_count} scored={len(batch.updates)} failed={len(batch.failures)}"
         )
         for update in batch.updates[:10]:
             print(
@@ -2206,13 +2190,6 @@ def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
 
         if args.dry_run:
             return
-
-        for update in batch.updates:
-            store.update_metadata(
-                update.hypothesis_id,
-                update.metadata_update(),
-                merge=True,
-            )
         print(
             "Research scoring summary: "
             f"updated={len(batch.updates)} active={store.count(status='active')}"
