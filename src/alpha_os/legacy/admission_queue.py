@@ -118,6 +118,22 @@ def queue_candidates(
     return len(rows) - len(existing)
 
 
+def list_candidate_expressions(
+    conn: sqlite3.Connection,
+    *,
+    statuses: tuple[str, ...] | None = None,
+) -> list[str]:
+    if statuses:
+        placeholders = ", ".join("?" for _ in statuses)
+        rows = conn.execute(
+            f"SELECT expression FROM candidates WHERE status IN ({placeholders})",
+            statuses,
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT expression FROM candidates").fetchall()
+    return [row["expression"] for row in rows]
+
+
 def count_pending_candidates(conn: sqlite3.Connection) -> int:
     row = conn.execute(
         "SELECT COUNT(*) FROM candidates WHERE status = 'pending'"

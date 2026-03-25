@@ -10,7 +10,19 @@ import time
 from pathlib import Path
 
 from ..config import DATA_DIR
-from .admission_queue import CandidateSeed, queue_candidate_expressions, queue_candidates
+from .admission_queue import (
+    CandidateSeed,
+    list_candidate_expressions,
+    queue_candidate_expressions,
+    queue_candidates,
+)
+from .deployed_registry import (
+    clear_deployed_alphas,
+    count_deployed_alphas,
+    list_deployed_alpha_entries,
+    list_deployed_alphas,
+    replace_deployed_alphas,
+)
 from .registry_types import AlphaRecord, AlphaState, DeployedAlphaEntry
 
 
@@ -150,8 +162,7 @@ class ManagedAlphaStore:
         return [self._row_to_record(r) for r in rows]
 
     def clear_deployed_alphas(self) -> None:
-        self._conn.execute("DELETE FROM deployed_alphas")
-        self._conn.commit()
+        clear_deployed_alphas(self._conn)
 
     def queue_candidate_expressions(
         self,
@@ -179,17 +190,7 @@ class ManagedAlphaStore:
         *,
         statuses: tuple[str, ...] | None = None,
     ) -> list[str]:
-        if statuses:
-            placeholders = ", ".join("?" for _ in statuses)
-            rows = self._conn.execute(
-                f"SELECT expression FROM candidates WHERE status IN ({placeholders})",
-                statuses,
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT expression FROM candidates"
-            ).fetchall()
-        return [row["expression"] for row in rows]
+        return list_candidate_expressions(self._conn, statuses=statuses)
 
     def register(self, record: AlphaRecord) -> None:
         now = time.time()
@@ -226,41 +227,16 @@ class ManagedAlphaStore:
         return self.list_by_state(AlphaState.ACTIVE)
 
     def list_deployed_alphas(self) -> list[AlphaRecord]:
-        rows = self._conn.execute(
-            """
-            SELECT a.*
-            FROM deployed_alphas u
-            JOIN alphas a ON a.alpha_id = u.alpha_id
-            ORDER BY u.slot ASC
-            """
-        ).fetchall()
-        return [self._row_to_record(r) for r in rows]
+        return list_deployed_alphas(self._conn, row_to_record=self._row_to_record)
 
     def list_deployed_alpha_entries(self) -> list[DeployedAlphaEntry]:
-        rows = self._conn.execute(
-            """
-            SELECT alpha_id, slot, deployed_at, deployment_score, metadata
-            FROM deployed_alphas
-            ORDER BY slot ASC
-            """
-        ).fetchall()
-        return [
-            DeployedAlphaEntry(
-                alpha_id=row["alpha_id"],
-                slot=row["slot"],
-                deployed_at=row["deployed_at"],
-                deployment_score=row["deployment_score"],
-                metadata=json.loads(row["metadata"]),
-            )
-            for row in rows
-        ]
+        return list_deployed_alpha_entries(self._conn)
 
     def deployed_alpha_ids(self) -> list[str]:
         return [entry.alpha_id for entry in self.list_deployed_alpha_entries()]
 
     def count_deployed_alphas(self) -> int:
-        row = self._conn.execute("SELECT COUNT(*) FROM deployed_alphas").fetchone()
-        return row[0]
+        return count_deployed_alphas(self._conn)
 
     def replace_deployed_alphas(
         self,
@@ -270,41 +246,13 @@ class ManagedAlphaStore:
         metadata: dict[str, dict] | None = None,
         deployed_at: float | None = None,
     ) -> None:
-        unique_ids = list(dict.fromkeys(alpha_ids))
-        if unique_ids:
-            placeholders = ", ".join("?" for _ in unique_ids)
-            rows = self._conn.execute(
-                f"SELECT alpha_id FROM alphas WHERE alpha_id IN ({placeholders})",
-                unique_ids,
-            ).fetchall()
-            existing_ids = {row["alpha_id"] for row in rows}
-            missing = [alpha_id for alpha_id in unique_ids if alpha_id not in existing_ids]
-            if missing:
-                raise KeyError(f"Unknown alpha ids for deployed alphas: {missing[:5]}")
-
-        stamp = deployed_at or time.time()
-        self._conn.execute("DELETE FROM deployed_alphas")
-        if unique_ids:
-            rows = []
-            for slot, alpha_id in enumerate(unique_ids):
-                rows.append(
-                    (
-                        alpha_id,
-                        slot,
-                        stamp,
-                        float((scores or {}).get(alpha_id, 0.0)),
-                        json.dumps((metadata or {}).get(alpha_id, {})),
-                    )
-                )
-            self._conn.executemany(
-                """
-                INSERT INTO deployed_alphas
-                    (alpha_id, slot, deployed_at, deployment_score, metadata)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
-        self._conn.commit()
+        replace_deployed_alphas(
+            self._conn,
+            alpha_ids,
+            scores=scores,
+            metadata=metadata,
+            deployed_at=deployed_at,
+        )
 
     def update_state(self, alpha_id: str, new_state: str) -> None:
         new_state = AlphaState.canonical(new_state)
