@@ -1237,6 +1237,71 @@ def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
     assert dropped.redundancy_correlation > 0.7
 
 
+def test_apply_live_proven_return_redundancy_cap_aligns_mismatched_series_lengths():
+    from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
+
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="h1",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="eligible",
+            n_observations=32,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.4,
+            live_quality=0.4,
+            raw_live_quality=0.4,
+            confidence=1.0,
+            marginal_contribution=0.02,
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="h2",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="eligible",
+            n_observations=31,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.2,
+            live_quality=0.2,
+            raw_live_quality=0.2,
+            confidence=1.0,
+            marginal_contribution=0.01,
+        ),
+    ]
+
+    returns = {
+        "h1": [0.00, 0.01, 0.02, 0.03, 0.02, 0.01, 0.03, 0.02, 0.01, 0.02, 0.03],
+        "h2": [0.01, 0.02, 0.03, 0.02, 0.01, 0.03, 0.02, 0.01, 0.02, 0.03],
+    }
+    capped = apply_live_proven_return_redundancy_cap(
+        plan,
+        live_returns_for=lambda hypothesis_id: returns[hypothesis_id],
+        corr_max=0.7,
+        floor=0.0,
+        min_observations=5,
+    )
+
+    kept = next(entry for entry in capped if entry.hypothesis_id == "h1")
+    dropped = next(entry for entry in capped if entry.hypothesis_id == "h2")
+    assert kept.proposed_stake == pytest.approx(0.4)
+    assert dropped.proposed_stake == pytest.approx(0.0)
+    assert dropped.redundancy_capped_by == "h1"
+
+
 def test_record_daily_contributions_persists_to_same_db(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(

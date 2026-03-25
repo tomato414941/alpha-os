@@ -346,7 +346,7 @@ def _apply_series_redundancy_cap(
             selected_entry = entry_by_id[selected_id]
             if should_compare is not None and not should_compare(entry, selected_entry):
                 continue
-            corr = float(np.corrcoef(candidate, series_by_id[selected_id])[0, 1])
+            corr = _aligned_corr(candidate, series_by_id[selected_id])
             if np.isfinite(corr) and corr > corr_max:
                 blocker = (selected_id, corr)
                 break
@@ -370,6 +370,19 @@ def _apply_series_redundancy_cap(
             )
         )
     return capped
+
+
+def _aligned_corr(lhs: np.ndarray, rhs: np.ndarray) -> float:
+    min_size = min(lhs.size, rhs.size)
+    if min_size < 2:
+        return float("nan")
+    if lhs.size != min_size:
+        lhs = lhs[-min_size:]
+    if rhs.size != min_size:
+        rhs = rhs[-min_size:]
+    if float(np.nanstd(lhs)) <= 1e-12 or float(np.nanstd(rhs)) <= 1e-12:
+        return float("nan")
+    return float(np.corrcoef(lhs, rhs)[0, 1])
 
 
 def hypothesis_signal_series(
