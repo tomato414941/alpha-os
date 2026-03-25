@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from alpha_os.experiments.replay import (
+from alpha_os.research.replay_experiment import (
     ReplayExperimentSpec,
     apply_config_overrides,
     parse_override_assignment,
@@ -51,15 +51,15 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     registry.close()
 
     monkeypatch.setattr(
-        "alpha_os.experiments.replay.asset_data_dir",
+        "alpha_os.research.replay_experiment.asset_data_dir",
         lambda asset: asset_root,
     )
     monkeypatch.setattr(
-        "alpha_os.experiments.replay.git_commit",
+        "alpha_os.research.replay_experiment.git_commit",
         lambda: "deadbeef",
     )
     monkeypatch.setattr(
-        "alpha_os.experiments.replay.run_replay",
+        "alpha_os.research.replay_experiment.run_replay",
         lambda **_: SimpleNamespace(
             n_days=10,
             initial_capital=10000.0,

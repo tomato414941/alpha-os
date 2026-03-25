@@ -1,6 +1,10 @@
 """Experiment helpers for repeatable replay runs."""
 
-from .replay import ReplayExperimentSpec, ReplayExperimentRun, run_replay_experiment
+from ..research.replay_experiment import (
+    ReplayExperimentSpec,
+    ReplayExperimentRun,
+    run_replay_experiment,
+)
 
 __all__ = [
     "ReplayExperimentSpec",

@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .replay import ReplayExperimentRun, ReplayExperimentSpec, run_replay_experiment
+from ..research.replay_experiment import (
+    ReplayExperimentRun,
+    ReplayExperimentSpec,
+    run_replay_experiment,
+)
 
 
 @dataclass(frozen=True)

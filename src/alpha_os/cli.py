@@ -2206,7 +2206,7 @@ def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
 
 
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
-    from alpha_os.experiments.replay import (
+    from alpha_os.research.replay_experiment import (
         ReplayExperimentSpec,
         parse_override_assignment,
         run_replay_experiment,

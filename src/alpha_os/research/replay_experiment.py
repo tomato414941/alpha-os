@@ -1,4 +1,4 @@
-"""Named replay experiments with persisted artifacts."""
+"""Research replay experiments with persisted artifacts."""
 # TODO: This module still models legacy managed/deployed registry workflows.
 # Keep it outside the hypotheses-first runtime mainline until replay is
 # redesigned around hypothesis snapshots instead of alpha_registry.db.
