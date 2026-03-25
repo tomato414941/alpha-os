@@ -106,6 +106,36 @@ class ActionableWindowSummary:
 
 
 @dataclass(frozen=True)
+class CombineCohortStats:
+    n: int = 0
+    nonzero: int = 0
+    weight: float = 0.0
+    weighted_signal: float = 0.0
+
+
+@dataclass(frozen=True)
+class CombineTopEntry:
+    hypothesis_id: str
+    cohort: str
+    weight: float
+    signal: float
+    contribution: float
+
+
+@dataclass(frozen=True)
+class LatestCombineSummary:
+    current_combined: float
+    current_backed: int
+    dropped_current: int
+    missing_current: int
+    nonzero_current: int
+    zero_current: int
+    dropped_reasons: dict[str, int] = field(default_factory=dict)
+    cohorts: dict[str, CombineCohortStats] = field(default_factory=dict)
+    top_entries: list[CombineTopEntry] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class AssetSleeveSummary:
     observed: int
     bootstrap_backed: int
@@ -317,4 +347,80 @@ def build_actionable_window_summary(
         mean_ratio=float(sum(ratios) / tracked),
         mean_action=float(sum(mean_actions) / tracked),
         breadth=breadth,
+    )
+
+
+def build_latest_combine_summary(
+    *,
+    record_map: dict[str, object],
+    signals: dict[str, float],
+    weights: dict[str, float],
+    top_n: int,
+) -> LatestCombineSummary:
+    cohort_data = {
+        "bootstrap": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+        "batch": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+        "live": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+        "other": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+    }
+    ranked: list[tuple[float, CombineTopEntry]] = []
+    dropped_reasons: dict[str, int] = {}
+    missing_current = 0
+    dropped_current = 0
+    nonzero_current = 0
+
+    for hypothesis_id, raw_signal in signals.items():
+        record = record_map.get(hypothesis_id)
+        if record is None:
+            missing_current += 1
+            continue
+        cohort = runtime_cohort(record)
+        weight = float(weights.get(hypothesis_id, 0.0))
+        if weight <= 0.0:
+            dropped_current += 1
+            metadata = getattr(record, "metadata", {}) or {}
+            reason = str(metadata.get("lifecycle_capital_reason") or "other")
+            if metadata.get("lifecycle_redundancy_capped_by"):
+                reason = "redundancy_capped"
+            dropped_reasons[reason] = dropped_reasons.get(reason, 0) + 1
+            continue
+        signal = float(raw_signal)
+        if abs(signal) > 1e-12:
+            nonzero_current += 1
+            cohort_data[cohort]["nonzero"] += 1
+        contribution = weight * signal
+        cohort_data[cohort]["n"] += 1
+        cohort_data[cohort]["weight"] += weight
+        cohort_data[cohort]["weighted_signal"] += contribution
+        ranked.append(
+            (
+                abs(contribution),
+                CombineTopEntry(
+                    hypothesis_id=hypothesis_id,
+                    cohort=cohort,
+                    weight=weight,
+                    signal=signal,
+                    contribution=contribution,
+                ),
+            )
+        )
+
+    cohorts = {
+        name: CombineCohortStats(**values)
+        for name, values in cohort_data.items()
+    }
+    current_backed = sum(item.n for item in cohorts.values())
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    top_entries = [entry for _, entry in ranked[: max(int(top_n), 1)]]
+
+    return LatestCombineSummary(
+        current_combined=sum(item.weighted_signal for item in cohorts.values()),
+        current_backed=current_backed,
+        dropped_current=dropped_current,
+        missing_current=missing_current,
+        nonzero_current=nonzero_current,
+        zero_current=current_backed - nonzero_current,
+        dropped_reasons=dropped_reasons,
+        cohorts=cohorts,
+        top_entries=top_entries,
     )

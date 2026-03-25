@@ -2919,6 +2919,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
 
 def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.combiner import compute_stake_weights
+    from alpha_os.hypotheses.sleeve_status import build_latest_combine_summary
     from alpha_os.hypotheses.store import HypothesisStore
     from alpha_os.paper.tracker import PaperPortfolioTracker
 
@@ -2946,82 +2947,46 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
             if hypothesis_id in record_map and float(record_map[hypothesis_id].stake) > 0
         }
         weights = compute_stake_weights(stakes)
-        cohorts = {
-            "bootstrap": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "batch": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "live": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
-            "other": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
-        }
-        ranked: list[tuple[float, str, str, float, float]] = []
-        missing_current = 0
-        dropped_current = 0
-        dropped_reasons: dict[str, int] = {}
-        nonzero_current = 0
-        for hypothesis_id, signal in signals.items():
-            record = record_map.get(hypothesis_id)
-            if record is None:
-                missing_current += 1
-                continue
-            cohort = _runtime_cohort(record)
-            weight = float(weights.get(hypothesis_id, 0.0))
-            if weight <= 0.0:
-                dropped_current += 1
-                reason = str(record.metadata.get("lifecycle_capital_reason") or "other")
-                if record.metadata.get("lifecycle_redundancy_capped_by"):
-                    reason = "redundancy_capped"
-                dropped_reasons[reason] = dropped_reasons.get(reason, 0) + 1
-                continue
-            signal_value = float(signal)
-            if abs(signal_value) > 1e-12:
-                nonzero_current += 1
-                cohorts[cohort]["nonzero"] += 1
-            contribution = weight * float(signal)
-            cohorts[cohort]["n"] += 1
-            cohorts[cohort]["weight"] += weight
-            cohorts[cohort]["weighted_signal"] += contribution
-            ranked.append((abs(contribution), hypothesis_id, cohort, weight, float(signal)))
-
-        current_combined = sum(
-            cohort["weighted_signal"]
-            for cohort in cohorts.values()
+        summary = build_latest_combine_summary(
+            record_map=record_map,
+            signals=signals,
+            weights=weights,
+            top_n=max(int(args.top), 1),
         )
         print(f"  Date:      {snapshot.date}")
         print(
             f"  Combined:  stored={float(snapshot.combined_signal):+.6f} "
-            f"current_weighted={current_combined:+.6f}"
+            f"current_weighted={summary.current_combined:+.6f}"
         )
         print(
             f"  Snapshot:  selected={len(signals)} "
-            f"current_backed={sum(cohort['n'] for cohort in cohorts.values())} "
-            f"dropped={dropped_current} missing={missing_current}"
+            f"current_backed={summary.current_backed} "
+            f"dropped={summary.dropped_current} missing={summary.missing_current}"
         )
         print(
-            f"  Current:   nonzero={nonzero_current} "
-            f"zero={sum(cohort['n'] for cohort in cohorts.values()) - nonzero_current}"
+            f"  Current:   nonzero={summary.nonzero_current} "
+            f"zero={summary.zero_current}"
         )
-        if dropped_reasons:
-            parts = [f"{key}={value}" for key, value in sorted(dropped_reasons.items())]
+        if summary.dropped_reasons:
+            parts = [f"{key}={value}" for key, value in sorted(summary.dropped_reasons.items())]
             print(f"  Dropped:   {' '.join(parts)}")
         print(
             "  Cohorts:   "
-            f"bootstrap n={cohorts['bootstrap']['n']}/{cohorts['bootstrap']['nonzero']} "
-            f"w={cohorts['bootstrap']['weight']:.3f} "
-            f"sig={cohorts['bootstrap']['weighted_signal']:+.6f} | "
-            f"batch n={cohorts['batch']['n']}/{cohorts['batch']['nonzero']} "
-            f"w={cohorts['batch']['weight']:.3f} "
-            f"sig={cohorts['batch']['weighted_signal']:+.6f} | "
-            f"live n={cohorts['live']['n']}/{cohorts['live']['nonzero']} "
-            f"w={cohorts['live']['weight']:.3f} "
-            f"sig={cohorts['live']['weighted_signal']:+.6f}"
+            f"bootstrap n={summary.cohorts['bootstrap'].n}/{summary.cohorts['bootstrap'].nonzero} "
+            f"w={summary.cohorts['bootstrap'].weight:.3f} "
+            f"sig={summary.cohorts['bootstrap'].weighted_signal:+.6f} | "
+            f"batch n={summary.cohorts['batch'].n}/{summary.cohorts['batch'].nonzero} "
+            f"w={summary.cohorts['batch'].weight:.3f} "
+            f"sig={summary.cohorts['batch'].weighted_signal:+.6f} | "
+            f"live n={summary.cohorts['live'].n}/{summary.cohorts['live'].nonzero} "
+            f"w={summary.cohorts['live'].weight:.3f} "
+            f"sig={summary.cohorts['live'].weighted_signal:+.6f}"
         )
-        ranked.sort(reverse=True)
-        top_n = max(int(args.top), 1)
-        for _, hypothesis_id, cohort, weight, signal in ranked[:top_n]:
-            contribution = weight * signal
+        for entry in summary.top_entries:
             print(
                 "  Top:       "
-                f"{hypothesis_id} cohort={cohort} weight={weight:.4f} "
-                f"signal={signal:+.4f} contrib={contribution:+.6f}"
+                f"{entry.hypothesis_id} cohort={entry.cohort} weight={entry.weight:.4f} "
+                f"signal={entry.signal:+.4f} contrib={entry.contribution:+.6f}"
             )
     finally:
         store.close()
