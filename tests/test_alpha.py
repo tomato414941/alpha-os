@@ -35,7 +35,7 @@ from alpha_os.legacy.managed_alphas import (
 )
 from alpha_os.hypotheses.combiner import select_low_correlation
 from alpha_os.config import Config
-from alpha_os.daemon.admission import AdmissionDaemon
+from alpha_os.legacy.admission import AdmissionDaemon
 from alpha_os.dsl.canonical import canonical_string
 
 

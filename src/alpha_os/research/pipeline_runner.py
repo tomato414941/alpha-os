@@ -1,4 +1,4 @@
-"""Pipeline runner — generate → validate → combine → trade integrated loop."""
+"""Research pipeline runner — evolve, validate, and combine legacy candidates."""
 from __future__ import annotations
 
 import logging

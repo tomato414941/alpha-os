@@ -1,4 +1,4 @@
-"""TacticalTrader — Layer 2 hourly alpha evaluation.
+"""Research tactical trader — Layer 2 hourly alpha evaluation.
 
 Evaluates hourly derivative signals and produces a tactical score that
 modulates the strategic (Layer 3 daily) bias. When no L2 alphas exist,

@@ -1113,7 +1113,7 @@ def _build_pipeline_config(
 ):
     """Build PipelineConfig from global Config + CLI args."""
     from alpha_os.evolution.gp import GPConfig
-    from alpha_os.pipeline.runner import PipelineConfig
+    from alpha_os.research.pipeline_runner import PipelineConfig
 
     return PipelineConfig(
         gp=GPConfig(
@@ -1139,7 +1139,7 @@ def _build_pipeline_config(
 
 def _run_evolution(trader, config: Config, pipeline_config) -> None:
     """Run alpha evolution using trader's data and registry."""
-    from alpha_os.pipeline.runner import PipelineRunner
+    from alpha_os.research.pipeline_runner import PipelineRunner
 
     logger = logging.getLogger(__name__)
 
@@ -1822,7 +1822,7 @@ def cmd_unified_generator(args: argparse.Namespace) -> None:
 def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
 
-    from alpha_os.daemon.alpha_generator import enqueue_discovery_pool_candidates
+    from alpha_os.legacy.alpha_generator import enqueue_discovery_pool_candidates
 
     selected, inserted = enqueue_discovery_pool_candidates(
         args.asset,
@@ -2284,7 +2284,7 @@ def cmd_admission_daemon(args: argparse.Namespace) -> None:
         force=True,
     )
 
-    from alpha_os.daemon.admission import AdmissionDaemon
+    from alpha_os.legacy.admission import AdmissionDaemon
 
     daemon = AdmissionDaemon(asset=args.asset, config=cfg)
     daemon.run()

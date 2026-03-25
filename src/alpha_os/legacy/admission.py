@@ -1,4 +1,4 @@
-"""Admission daemon — poll candidates queue, validate via OOS IC, adopt to registry."""
+"""Legacy admission daemon — validate queued candidates into the registry."""
 from __future__ import annotations
 
 import logging

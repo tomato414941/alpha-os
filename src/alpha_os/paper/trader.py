@@ -10,6 +10,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -54,8 +55,10 @@ from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from ..runtime_profile import RuntimeProfile, build_runtime_profile
 from ..hypotheses.store import HypothesisStore
-from .tactical import TacticalTrader
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
+
+if TYPE_CHECKING:
+    from ..research.tactical import TacticalTrader
 
 logger = logging.getLogger(__name__)
 

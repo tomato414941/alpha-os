@@ -39,8 +39,12 @@ FORBIDDEN_FORWARD_TYPE_NAMES = {
     "ForwardSummary",
 }
 FORBIDDEN_CURRENT_MODULES = {
+    SRC_ROOT / "daemon" / "admission.py",
+    SRC_ROOT / "daemon" / "alpha_generator.py",
     SRC_ROOT / "daemon" / "lifecycle.py",
+    SRC_ROOT / "paper" / "tactical.py",
     SRC_ROOT / "paper" / "simulator.py",
+    SRC_ROOT / "pipeline" / "runner.py",
 }
 
 

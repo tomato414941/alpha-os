@@ -1,4 +1,4 @@
-"""Discovery pool enqueue utilities."""
+"""Legacy discovery-pool enqueue utilities."""
 from __future__ import annotations
 
 import logging
