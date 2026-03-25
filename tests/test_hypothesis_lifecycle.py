@@ -25,7 +25,7 @@ from alpha_os.hypotheses import (
     weighted_prediction,
 )
 from alpha_os.data.store import DataStore
-from alpha_os.forward.tracker import ForwardTracker
+from alpha_os.forward.tracker import HypothesisObservationTracker
 from alpha_os.hypotheses.lifecycle import AllocationRebalanceEntry
 
 
@@ -801,7 +801,7 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
     conn.close()
 
     data_store = DataStore(sdb)
-    forward_tracker = ForwardTracker(fdb)
+    forward_tracker = HypothesisObservationTracker(fdb)
     summary = backfill_observation_returns(
         hypothesis_store=store,
         data_store=data_store,
@@ -827,7 +827,7 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
 
 
 def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(tmp_path):
-    tracker = ForwardTracker(tmp_path / "hypothesis_observations.db")
+    tracker = HypothesisObservationTracker(tmp_path / "hypothesis_observations.db")
     tracker.record("h1", "2026-03-21", 0.8, 0.016)
     tracker.record("h1", "2026-03-22", -0.7, 0.021)
     tracker.record("h1", "2026-03-23", 0.0, 0.0)
@@ -1003,6 +1003,172 @@ def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
     assert dropped.proposed_stake == pytest.approx(0.0)
     assert dropped.redundancy_capped_by == "h1"
     assert dropped.redundancy_correlation > 0.7
+
+
+def test_apply_weak_research_redundancy_cap_does_not_cross_cap_different_families():
+    from alpha_os.hypotheses.breadth import apply_weak_research_redundancy_cap
+
+    records = [
+        HypothesisRecord(
+            hypothesis_id="macro",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+        HypothesisRecord(
+            hypothesis_id="onchain",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+    ]
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="macro",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            actionable_live=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.08,
+            blended_quality=0.4,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+            representative_family="macro",
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="onchain",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            actionable_live=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.04,
+            blended_quality=0.2,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+            representative_family="onchain",
+        ),
+    ]
+    data = {
+        "btc_ohlcv": [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0, 116.0, 118.0, 120.0],
+    }
+
+    capped = apply_weak_research_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset="BTC",
+        corr_max=0.7,
+        floor=0.0,
+    )
+
+    macro = next(entry for entry in capped if entry.hypothesis_id == "macro")
+    onchain = next(entry for entry in capped if entry.hypothesis_id == "onchain")
+    assert macro.proposed_stake == pytest.approx(0.4)
+    assert onchain.proposed_stake == pytest.approx(0.2)
+    assert onchain.redundancy_capped_by == ""
+
+
+def test_apply_capital_redundancy_cap_does_not_cross_cap_weak_batch_families():
+    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+
+    records = [
+        HypothesisRecord(
+            hypothesis_id="macro",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+        HypothesisRecord(
+            hypothesis_id="onchain",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+    ]
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="macro",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            actionable_live=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.08,
+            blended_quality=0.4,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+            representative_family="macro",
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="onchain",
+            current_stake=0.0,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=True,
+            research_retained=True,
+            live_proven=False,
+            actionable_live=False,
+            capital_eligible=True,
+            capital_reason="research_backed",
+            live_promotion_blocker="insufficient_observations",
+            n_observations=0,
+            bootstrap_trust_value=0.04,
+            blended_quality=0.2,
+            live_quality=0.0,
+            raw_live_quality=0.0,
+            confidence=0.0,
+            marginal_contribution=0.0,
+            research_quality_source="batch_research_score",
+            representative_family="onchain",
+        ),
+    ]
+    data = {
+        "btc_ohlcv": [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0, 116.0, 118.0, 120.0],
+    }
+
+    capped = apply_capital_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset="BTC",
+        corr_max=0.7,
+        floor=0.0,
+    )
+
+    macro = next(entry for entry in capped if entry.hypothesis_id == "macro")
+    onchain = next(entry for entry in capped if entry.hypothesis_id == "onchain")
+    assert macro.proposed_stake == pytest.approx(0.4)
+    assert onchain.proposed_stake == pytest.approx(0.2)
+    assert onchain.redundancy_capped_by == ""
 
 
 def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():

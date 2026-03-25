@@ -35,7 +35,7 @@ from ..execution.planning import (
 )
 from ..execution.constraints import ExecutableOrder
 from ..execution.paper import PaperExecutor
-from ..forward.tracker import ForwardTracker
+from ..forward.tracker import HypothesisObservationTracker
 from ..governance.audit_log import AuditLog
 from ..hypotheses.combiner import (
     CombinerConfig,
@@ -152,7 +152,7 @@ class Trader:
         config: Config,
         registry: HypothesisStore | None = None,
         portfolio_tracker: PaperPortfolioTracker | None = None,
-        forward_tracker: ForwardTracker | None = None,
+        forward_tracker: HypothesisObservationTracker | None = None,
         monitor: HypothesisMonitor | None = None,
         executor: Executor | None = None,
         risk_manager: RiskManager | None = None,
@@ -172,7 +172,7 @@ class Trader:
         self.portfolio_tracker = portfolio_tracker or PaperPortfolioTracker(
             db_path=adir / "paper_trading.db"
         )
-        self.forward_tracker = forward_tracker or ForwardTracker(
+        self.forward_tracker = forward_tracker or HypothesisObservationTracker(
             db_path=adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
         )
         self.audit_log = audit_log or AuditLog(log_path=adir / "audit.jsonl")

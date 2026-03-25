@@ -33,6 +33,11 @@ FORBIDDEN_TRACKER_ALIAS_ATTRS = {
     "get_alpha_signals",
     "get_alpha_signal_history",
 }
+FORBIDDEN_FORWARD_TYPE_NAMES = {
+    "ForwardTracker",
+    "ForwardRecord",
+    "ForwardSummary",
+}
 
 
 def _forbidden_alpha_imports(path: Path) -> list[str]:
@@ -111,5 +116,24 @@ def test_repo_does_not_call_legacy_tracker_alias_methods():
             for node in ast.walk(tree):
                 if isinstance(node, ast.Attribute) and node.attr in FORBIDDEN_TRACKER_ALIAS_ATTRS:
                     violations.append(f"{path.relative_to(PROJECT_ROOT)}: {node.attr}")
+
+    assert violations == []
+
+
+def test_repo_does_not_use_legacy_forward_type_names():
+    violations: list[str] = []
+
+    for root in (SRC_ROOT, SCRIPTS_ROOT, TESTS_ROOT):
+        for path in sorted(root.rglob("*.py")):
+            if path in {
+                SRC_ROOT / "forward" / "tracker.py",
+                TESTS_ROOT / "test_forward.py",
+                Path(__file__),
+            }:
+                continue
+            text = path.read_text()
+            for name in FORBIDDEN_FORWARD_TYPE_NAMES:
+                if name in text:
+                    violations.append(f"{path.relative_to(PROJECT_ROOT)}: {name}")
 
     assert violations == []

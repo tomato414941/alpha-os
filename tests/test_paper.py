@@ -356,7 +356,7 @@ class TestPositionSizing:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
         from alpha_os.governance.audit_log import AuditLog
@@ -371,7 +371,7 @@ class TestPositionSizing:
             config=cfg,
             portfolio_tracker=pt,
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=executor,
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=DataStore(tmp_path / "cache.db"),
@@ -478,7 +478,7 @@ class TestTrader:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
         from alpha_os.governance.audit_log import AuditLog
@@ -492,7 +492,7 @@ class TestTrader:
             config=cfg,
             portfolio_tracker=pt,
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=DataStore(tmp_path / "cache.db"),
@@ -505,7 +505,7 @@ class TestTrader:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
         from alpha_os.governance.audit_log import AuditLog
@@ -525,7 +525,7 @@ class TestTrader:
             config=cfg,
             portfolio_tracker=pt,
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=DataStore(tmp_path / "cache.db"),
@@ -539,7 +539,7 @@ class TestTrader:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.data.store import DataStore
         from alpha_os.execution.paper import PaperExecutor
         from alpha_os.governance.audit_log import AuditLog
@@ -559,7 +559,7 @@ class TestTrader:
             config=cfg,
             portfolio_tracker=pt,
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=DataStore(tmp_path / "cache.db"),
@@ -582,7 +582,7 @@ class TestTrader:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
 
         cfg = Config()
@@ -592,7 +592,7 @@ class TestTrader:
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=store,
         )
@@ -615,7 +615,7 @@ class TestTrader:
         from alpha_os.paper.trader import Trader
         from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
         from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
 
         cfg = Config()
@@ -626,7 +626,7 @@ class TestTrader:
             config=cfg,
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
             registry=ManagedAlphaStore(tmp_path / "reg.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             store=store,
         )
@@ -647,7 +647,7 @@ class TestTrader:
     def test_run_cycle_syncs_only_runtime_signals(self, monkeypatch, tmp_path):
         from alpha_os.config import Config
         from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
         from alpha_os.hypotheses.store import HypothesisRecord
         from alpha_os.paper.trader import Trader
@@ -696,7 +696,7 @@ class TestTrader:
             config=cfg,
             registry=_StaticRegistry([record]),
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
@@ -712,7 +712,7 @@ class TestTrader:
     def test_run_cycle_skips_runtime_sync_when_healthcheck_fails(self, monkeypatch, tmp_path):
         from alpha_os.config import Config
         from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
         from alpha_os.hypotheses.store import HypothesisRecord
         from alpha_os.paper.trader import Trader
@@ -761,7 +761,7 @@ class TestTrader:
             config=cfg,
             registry=_StaticRegistry([record]),
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
@@ -777,7 +777,7 @@ class TestTrader:
     def test_run_cycle_selects_only_capital_backed_candidates(self, monkeypatch, tmp_path):
         from alpha_os.config import Config
         from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
         from alpha_os.hypotheses.store import HypothesisRecord
         from alpha_os.paper.trader import Trader
@@ -839,7 +839,7 @@ class TestTrader:
             config=cfg,
             registry=_SplitRegistry([live_record], [live_record, observation_only]),
             portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
@@ -859,7 +859,7 @@ class TestTrader:
     ):
         from alpha_os.config import Config
         from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import ForwardTracker
+        from alpha_os.forward.tracker import HypothesisObservationTracker
         from alpha_os.governance.audit_log import AuditLog
         from alpha_os.hypotheses.store import HypothesisRecord
         from alpha_os.paper.trader import Trader
@@ -925,7 +925,7 @@ class TestTrader:
             config=cfg,
             registry=_StaticRegistry([record]),
             portfolio_tracker=portfolio_tracker,
-            forward_tracker=ForwardTracker(tmp_path / "fwd.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
             executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
             audit_log=AuditLog(tmp_path / "audit.jsonl"),
             circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),

@@ -1,4 +1,4 @@
-"""Forward tracker — SQLite-backed daily return persistence for forward-tested hypotheses."""
+"""Observation tracker — SQLite-backed realized outcome persistence for hypotheses."""
 from __future__ import annotations
 
 import math
@@ -17,7 +17,7 @@ from ..config import (
 
 
 @dataclass
-class ForwardRecord:
+class HypothesisObservationRecord:
     hypothesis_id: str
     date: str
     signal_value: float
@@ -26,18 +26,22 @@ class ForwardRecord:
 
 
 @dataclass
-class ForwardSummary:
+class HypothesisObservationSummary:
     hypothesis_id: str
-    forward_start_date: str
+    observation_start_date: str
     n_days: int
     total_return: float
     sharpe: float
     max_dd: float
     last_date: str
 
+    @property
+    def forward_start_date(self) -> str:
+        return self.observation_start_date
 
-class ForwardTracker:
-    """Persist and query daily forward returns for adopted hypotheses."""
+
+class HypothesisObservationTracker:
+    """Persist and query realized observation history for adopted hypotheses."""
 
     _OBSERVATIONS_TABLE = "hypothesis_observations"
     _OBSERVATION_META_TABLE = "hypothesis_observation_meta"
@@ -77,7 +81,7 @@ class ForwardTracker:
         self._conn.execute(f"""
             CREATE TABLE IF NOT EXISTS {self._OBSERVATION_META_TABLE} (
                 hypothesis_id TEXT PRIMARY KEY,
-                forward_start_date TEXT NOT NULL,
+                observation_start_date TEXT NOT NULL,
                 adopted_at REAL NOT NULL
             )
         """)
@@ -100,6 +104,11 @@ class ForwardTracker:
             if "alpha_id" in columns and "hypothesis_id" not in columns:
                 self._conn.execute(
                     f"ALTER TABLE {table} RENAME COLUMN alpha_id TO hypothesis_id"
+                )
+            if "forward_start_date" in columns and "observation_start_date" not in columns:
+                self._conn.execute(
+                    f"ALTER TABLE {table} RENAME COLUMN forward_start_date "
+                    "TO observation_start_date"
                 )
         self._conn.execute("DROP INDEX IF EXISTS idx_fwd_alpha_date")
         self._conn.execute("DROP INDEX IF EXISTS idx_fwd_hypothesis_date")
@@ -133,7 +142,7 @@ class ForwardTracker:
                 ),
                 self._LEGACY_META_TABLE: (
                     id_column,
-                    "forward_start_date",
+                    "observation_start_date" if "observation_start_date" in columns else "forward_start_date",
                     "adopted_at",
                 ),
             }[legacy]
@@ -148,7 +157,7 @@ class ForwardTracker:
                 ),
                 self._LEGACY_META_TABLE: (
                     "hypothesis_id",
-                    "forward_start_date",
+                    "observation_start_date",
                     "adopted_at",
                 ),
             }[legacy]
@@ -167,19 +176,22 @@ class ForwardTracker:
     def register_hypothesis(self, hypothesis_id: str, start_date: str) -> None:
         self._conn.execute(
             f"INSERT OR IGNORE INTO {self._OBSERVATION_META_TABLE} "
-            "(hypothesis_id, forward_start_date, adopted_at) "
+            "(hypothesis_id, observation_start_date, adopted_at) "
             "VALUES (?, ?, ?)",
             (hypothesis_id, start_date, time.time()),
         )
         self._conn.commit()
 
-    def get_hypothesis_start_date(self, hypothesis_id: str) -> str | None:
+    def get_hypothesis_observation_start_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
-            f"SELECT forward_start_date FROM {self._OBSERVATION_META_TABLE} "
+            f"SELECT observation_start_date FROM {self._OBSERVATION_META_TABLE} "
             "WHERE hypothesis_id = ?",
             (hypothesis_id,),
         ).fetchone()
-        return row["forward_start_date"] if row else None
+        return row["observation_start_date"] if row else None
+
+    def get_hypothesis_start_date(self, hypothesis_id: str) -> str | None:
+        return self.get_hypothesis_observation_start_date(hypothesis_id)
 
     def record(
         self,
@@ -235,13 +247,13 @@ class ForwardTracker:
             realized.append(daily_return if signal_value > 0.0 else 0.0)
         return realized
 
-    def get_hypothesis_records(self, hypothesis_id: str) -> list[ForwardRecord]:
+    def get_hypothesis_records(self, hypothesis_id: str) -> list[HypothesisObservationRecord]:
         rows = self._conn.execute(
             f"SELECT * FROM {self._OBSERVATIONS_TABLE} WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
         return [
-            ForwardRecord(
+            HypothesisObservationRecord(
                 hypothesis_id=row["hypothesis_id"],
                 date=row["date"],
                 signal_value=row["signal_value"],
@@ -259,15 +271,17 @@ class ForwardTracker:
         ).fetchone()
         return row["last_date"] if row and row["last_date"] else None
 
-    def hypothesis_summary(self, hypothesis_id: str) -> ForwardSummary | None:
-        start_date = self.get_hypothesis_start_date(hypothesis_id)
+    def hypothesis_observation_summary(
+        self, hypothesis_id: str
+    ) -> HypothesisObservationSummary | None:
+        start_date = self.get_hypothesis_observation_start_date(hypothesis_id)
         if start_date is None:
             return None
         returns = self.get_hypothesis_returns(hypothesis_id)
         if not returns:
-            return ForwardSummary(
+            return HypothesisObservationSummary(
                 hypothesis_id=hypothesis_id,
-                forward_start_date=start_date,
+                observation_start_date=start_date,
                 n_days=0,
                 total_return=0.0,
                 sharpe=0.0,
@@ -284,15 +298,18 @@ class ForwardTracker:
         total_return = float(cum[-1] - 1.0)
         last_date = self.get_hypothesis_last_date(hypothesis_id) or start_date
 
-        return ForwardSummary(
+        return HypothesisObservationSummary(
             hypothesis_id=hypothesis_id,
-            forward_start_date=start_date,
+            observation_start_date=start_date,
             n_days=len(returns),
             total_return=total_return,
             sharpe=sharpe,
             max_dd=max_dd,
             last_date=last_date,
         )
+
+    def hypothesis_summary(self, hypothesis_id: str) -> HypothesisObservationSummary | None:
+        return self.hypothesis_observation_summary(hypothesis_id)
 
     def tracked_hypothesis_ids(self) -> list[str]:
         rows = self._conn.execute(
@@ -303,3 +320,8 @@ class ForwardTracker:
 
     def close(self) -> None:
         self._conn.close()
+
+
+ForwardRecord = HypothesisObservationRecord
+ForwardSummary = HypothesisObservationSummary
+ForwardTracker = HypothesisObservationTracker

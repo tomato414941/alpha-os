@@ -1848,7 +1848,7 @@ def cmd_lifecycle(args: argparse.Namespace) -> None:
 
 
 def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
-    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.data.store import DataStore
     from alpha_os.paper.tracker import PaperPortfolioTracker
     from alpha_os.hypotheses import (
@@ -1860,7 +1860,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     adir = asset_data_dir(args.asset)
     store = HypothesisStore(HYPOTHESES_DB)
-    forward_tracker = ForwardTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+    forward_tracker = HypothesisObservationTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
     portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
@@ -2071,7 +2071,7 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
 
 def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
-    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.paper.tracker import PaperPortfolioTracker
     from alpha_os.hypotheses import (
         HypothesisStore,
@@ -2084,7 +2084,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     adir = asset_data_dir(args.asset)
     store = HypothesisStore(HYPOTHESES_DB)
     data_store = DataStore(SIGNAL_CACHE_DB)
-    forward_tracker = ForwardTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+    forward_tracker = HypothesisObservationTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
     portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     try:
         live_returns_for = _build_live_returns_getter(

@@ -1969,7 +1969,7 @@ def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path,
     from argparse import Namespace
 
     from alpha_os.cli import cmd_rebalance_allocation_trust
-    from alpha_os.forward.tracker import ForwardTracker
+    from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
@@ -1989,7 +1989,7 @@ def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path,
     ))
     store.close()
 
-    fwd = ForwardTracker(tmp_path / "hypothesis_observations.db")
+    fwd = HypothesisObservationTracker(tmp_path / "hypothesis_observations.db")
     fwd.record("unscored", "2026-03-21", 1.0, 0.001)
     fwd.record("unscored", "2026-03-23", 1.0, 0.0012)
     fwd.close()

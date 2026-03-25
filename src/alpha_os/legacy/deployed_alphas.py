@@ -14,7 +14,7 @@ from ..data.store import DataStore
 from ..data.universe import build_feature_list
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
-from ..forward.tracker import ForwardTracker
+from ..forward.tracker import HypothesisObservationTracker
 from ..hypotheses.identity import expression_feature_names, expression_semantic_key
 from ..hypotheses.quality import QualityEstimate
 from .admission_replay import backup_registry_db
@@ -343,7 +343,7 @@ def refresh_deployed_alphas(
     backup: bool = True,
 ) -> DeployedAlphaRefreshStats:
     registry = ManagedAlphaStore(db_path)
-    tracker = ForwardTracker(
+    tracker = HypothesisObservationTracker(
         db_path=forward_db_path or db_path.with_name(HYPOTHESIS_OBSERVATIONS_DB_NAME),
     )
     try:
@@ -463,7 +463,7 @@ def prune_registry_active_duplicates(
     refresh_deployed: bool = True,
 ) -> RegistryActivePruneStats:
     registry = ManagedAlphaStore(db_path)
-    tracker = ForwardTracker(
+    tracker = HypothesisObservationTracker(
         db_path=forward_db_path or db_path.with_name(HYPOTHESIS_OBSERVATIONS_DB_NAME),
     )
     try:

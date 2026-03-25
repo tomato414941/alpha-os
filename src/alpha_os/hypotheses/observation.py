@@ -7,7 +7,7 @@ import numpy as np
 
 from ..data.store import DataStore
 from ..data.universe import price_signal
-from ..forward.tracker import ForwardTracker
+from ..forward.tracker import HypothesisObservationTracker
 from .producer import collect_required_features, compute_hypothesis_prediction
 from .store import HypothesisStore
 
@@ -24,7 +24,7 @@ def backfill_observation_returns(
     *,
     hypothesis_store: HypothesisStore,
     data_store: DataStore,
-    forward_tracker: ForwardTracker,
+    forward_tracker: HypothesisObservationTracker,
     asset: str,
     lookback_days: int = 30,
 ) -> ObservationBackfillSummary:

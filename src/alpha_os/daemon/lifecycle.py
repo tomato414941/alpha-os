@@ -9,7 +9,7 @@ import numpy as np
 
 from ..legacy.managed_alphas import ManagedAlphaStore
 from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, asset_data_dir
-from ..forward.tracker import ForwardTracker
+from ..forward.tracker import HypothesisObservationTracker
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,9 @@ class LifecycleDaemon:
         adir = asset_data_dir(self.asset)
 
         registry = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
-        forward_tracker = ForwardTracker(db_path=adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+        forward_tracker = HypothesisObservationTracker(
+            db_path=adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
+        )
         forward_db = str(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
 
         all_alphas = [r for r in registry.list_all() if r.stake > 0]
