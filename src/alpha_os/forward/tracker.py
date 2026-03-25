@@ -39,6 +39,11 @@ class ForwardSummary:
 class ForwardTracker:
     """Persist and query daily forward returns for adopted hypotheses."""
 
+    _OBSERVATIONS_TABLE = "hypothesis_observations"
+    _OBSERVATION_META_TABLE = "hypothesis_observation_meta"
+    _LEGACY_OBSERVATIONS_TABLE = "forward_returns"
+    _LEGACY_META_TABLE = "forward_meta"
+
     def __init__(self, db_path: Path | None = None):
         self._db_path = self._resolve_db_path(db_path)
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -58,8 +63,8 @@ class ForwardTracker:
         return resolved
 
     def _create_tables(self) -> None:
-        self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS forward_returns (
+        self._conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS {self._OBSERVATIONS_TABLE} (
                 hypothesis_id TEXT NOT NULL,
                 date TEXT NOT NULL,
                 signal_value REAL NOT NULL,
@@ -69,8 +74,8 @@ class ForwardTracker:
                 PRIMARY KEY (hypothesis_id, date)
             )
         """)
-        self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS forward_meta (
+        self._conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS {self._OBSERVATION_META_TABLE} (
                 hypothesis_id TEXT PRIMARY KEY,
                 forward_start_date TEXT NOT NULL,
                 adopted_at REAL NOT NULL
@@ -80,7 +85,15 @@ class ForwardTracker:
         self._conn.commit()
 
     def _migrate_schema(self) -> None:
-        for table in ("forward_returns", "forward_meta"):
+        self._migrate_table_name(
+            legacy=self._LEGACY_OBSERVATIONS_TABLE,
+            current=self._OBSERVATIONS_TABLE,
+        )
+        self._migrate_table_name(
+            legacy=self._LEGACY_META_TABLE,
+            current=self._OBSERVATION_META_TABLE,
+        )
+        for table in (self._OBSERVATIONS_TABLE, self._OBSERVATION_META_TABLE):
             columns = {
                 row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")
             }
@@ -89,16 +102,72 @@ class ForwardTracker:
                     f"ALTER TABLE {table} RENAME COLUMN alpha_id TO hypothesis_id"
                 )
         self._conn.execute("DROP INDEX IF EXISTS idx_fwd_alpha_date")
+        self._conn.execute("DROP INDEX IF EXISTS idx_fwd_hypothesis_date")
         self._conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_fwd_hypothesis_date
-            ON forward_returns(hypothesis_id, date)
+            f"""
+            CREATE INDEX IF NOT EXISTS idx_hypothesis_observations_hypothesis_date
+            ON {self._OBSERVATIONS_TABLE}(hypothesis_id, date)
             """
         )
 
+    def _migrate_table_name(self, *, legacy: str, current: str) -> None:
+        tables = {
+            row["name"]
+            for row in self._conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
+        }
+        if legacy in tables and current in tables:
+            columns = {
+                row[1] for row in self._conn.execute(f"PRAGMA table_info({legacy})")
+            }
+            id_column = "hypothesis_id" if "hypothesis_id" in columns else "alpha_id"
+            column_list = {
+                self._LEGACY_OBSERVATIONS_TABLE: (
+                    "date",
+                    id_column,
+                    "signal_value",
+                    "daily_return",
+                    "cumulative_return",
+                    "recorded_at",
+                ),
+                self._LEGACY_META_TABLE: (
+                    id_column,
+                    "forward_start_date",
+                    "adopted_at",
+                ),
+            }[legacy]
+            target_columns = {
+                self._LEGACY_OBSERVATIONS_TABLE: (
+                    "date",
+                    "hypothesis_id",
+                    "signal_value",
+                    "daily_return",
+                    "cumulative_return",
+                    "recorded_at",
+                ),
+                self._LEGACY_META_TABLE: (
+                    "hypothesis_id",
+                    "forward_start_date",
+                    "adopted_at",
+                ),
+            }[legacy]
+            self._conn.execute(
+                f"""
+                INSERT OR REPLACE INTO {current} ({", ".join(target_columns)})
+                SELECT {", ".join(column_list)}
+                FROM {legacy}
+                """
+            )
+            self._conn.execute(f"DROP TABLE {legacy}")
+            return
+        if legacy in tables:
+            self._conn.execute(f"ALTER TABLE {legacy} RENAME TO {current}")
+
     def register_hypothesis(self, hypothesis_id: str, start_date: str) -> None:
         self._conn.execute(
-            "INSERT OR IGNORE INTO forward_meta (hypothesis_id, forward_start_date, adopted_at) "
+            f"INSERT OR IGNORE INTO {self._OBSERVATION_META_TABLE} "
+            "(hypothesis_id, forward_start_date, adopted_at) "
             "VALUES (?, ?, ?)",
             (hypothesis_id, start_date, time.time()),
         )
@@ -106,7 +175,8 @@ class ForwardTracker:
 
     def get_hypothesis_start_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
-            "SELECT forward_start_date FROM forward_meta WHERE hypothesis_id = ?",
+            f"SELECT forward_start_date FROM {self._OBSERVATION_META_TABLE} "
+            "WHERE hypothesis_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["forward_start_date"] if row else None
@@ -119,7 +189,7 @@ class ForwardTracker:
         daily_return: float,
     ) -> None:
         prev = self._conn.execute(
-            "SELECT cumulative_return FROM forward_returns "
+            f"SELECT cumulative_return FROM {self._OBSERVATIONS_TABLE} "
             "WHERE hypothesis_id = ? AND date < ? ORDER BY date DESC LIMIT 1",
             (hypothesis_id, date),
         ).fetchone()
@@ -127,7 +197,7 @@ class ForwardTracker:
         cum = prev_cum * (1.0 + daily_return)
 
         self._conn.execute(
-            "INSERT OR REPLACE INTO forward_returns "
+            f"INSERT OR REPLACE INTO {self._OBSERVATIONS_TABLE} "
             "(hypothesis_id, date, signal_value, daily_return, cumulative_return, recorded_at) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (hypothesis_id, date, signal_value, daily_return, cum, time.time()),
@@ -136,7 +206,7 @@ class ForwardTracker:
 
     def get_hypothesis_returns(self, hypothesis_id: str) -> list[float]:
         rows = self._conn.execute(
-            "SELECT daily_return FROM forward_returns "
+            f"SELECT daily_return FROM {self._OBSERVATIONS_TABLE} "
             "WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
@@ -151,7 +221,7 @@ class ForwardTracker:
         if supports_short:
             return self.get_hypothesis_returns(hypothesis_id)
         rows = self._conn.execute(
-            "SELECT signal_value, daily_return FROM forward_returns "
+            f"SELECT signal_value, daily_return FROM {self._OBSERVATIONS_TABLE} "
             "WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
@@ -167,7 +237,7 @@ class ForwardTracker:
 
     def get_hypothesis_records(self, hypothesis_id: str) -> list[ForwardRecord]:
         rows = self._conn.execute(
-            "SELECT * FROM forward_returns WHERE hypothesis_id = ? ORDER BY date",
+            f"SELECT * FROM {self._OBSERVATIONS_TABLE} WHERE hypothesis_id = ? ORDER BY date",
             (hypothesis_id,),
         ).fetchall()
         return [
@@ -183,7 +253,8 @@ class ForwardTracker:
 
     def get_hypothesis_last_date(self, hypothesis_id: str) -> str | None:
         row = self._conn.execute(
-            "SELECT MAX(date) as last_date FROM forward_returns WHERE hypothesis_id = ?",
+            f"SELECT MAX(date) as last_date FROM {self._OBSERVATIONS_TABLE} "
+            "WHERE hypothesis_id = ?",
             (hypothesis_id,),
         ).fetchone()
         return row["last_date"] if row and row["last_date"] else None
@@ -225,7 +296,8 @@ class ForwardTracker:
 
     def tracked_hypothesis_ids(self) -> list[str]:
         rows = self._conn.execute(
-            "SELECT hypothesis_id FROM forward_meta ORDER BY hypothesis_id"
+            f"SELECT hypothesis_id FROM {self._OBSERVATION_META_TABLE} "
+            "ORDER BY hypothesis_id"
         ).fetchall()
         return [row["hypothesis_id"] for row in rows]
 

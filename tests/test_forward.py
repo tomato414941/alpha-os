@@ -162,10 +162,12 @@ class TestForwardTracker:
         assert tracker.get_hypothesis_start_date("h1") == "2025-01-01"
         assert tracker.get_hypothesis_returns("h1") == pytest.approx([0.01])
         returns_columns = {
-            row[1] for row in tracker._conn.execute("PRAGMA table_info(forward_returns)")
+            row[1]
+            for row in tracker._conn.execute("PRAGMA table_info(hypothesis_observations)")
         }
         meta_columns = {
-            row[1] for row in tracker._conn.execute("PRAGMA table_info(forward_meta)")
+            row[1]
+            for row in tracker._conn.execute("PRAGMA table_info(hypothesis_observation_meta)")
         }
         assert "hypothesis_id" in returns_columns
         assert "hypothesis_id" in meta_columns

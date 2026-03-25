@@ -33,7 +33,8 @@ def _compute_daily_marginal_contributions(
     """
     conn = sqlite3.connect(forward_db_path)
     rows = conn.execute(
-        "SELECT hypothesis_id, signal_value, daily_return FROM forward_returns WHERE date = ?",
+        "SELECT hypothesis_id, signal_value, daily_return "
+        "FROM hypothesis_observations WHERE date = ?",
         (date,),
     ).fetchall()
     conn.close()
@@ -133,7 +134,7 @@ class LifecycleDaemon:
         conn = sqlite3.connect(forward_db)
         dates = [
             row[0] for row in conn.execute(
-                "SELECT DISTINCT date FROM forward_returns ORDER BY date DESC LIMIT ?",
+                "SELECT DISTINCT date FROM hypothesis_observations ORDER BY date DESC LIMIT ?",
                 (STAKE_LOOKBACK_DAYS,),
             ).fetchall()
         ]
