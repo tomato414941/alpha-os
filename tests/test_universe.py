@@ -170,3 +170,9 @@ def test_derived_feature_names_resolve_to_raw_family_and_signal():
     assert universe.required_raw_signals(
         ["roc_5__funding_rate_btc", "zscore_20__btc_hashrate", "fear_greed"]
     ) == ["btc_hashrate", "fear_greed", "funding_rate_btc"]
+
+
+def test_infer_feature_family_treats_futures_and_basis_like_derivatives():
+    assert universe.infer_feature_family("futures_taker_ratio_btc") == "derivatives"
+    assert universe.infer_feature_family("basis_btc_annualized") == "derivatives"
+    assert universe.infer_feature_family("premium_eth_perp") == "derivatives"

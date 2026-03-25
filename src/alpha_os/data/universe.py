@@ -388,7 +388,19 @@ def infer_feature_family(name: str) -> str:
         return "macro"
     if lowered.startswith(("book_", "spread_", "trade_flow_", "vpin_", "large_trade_")):
         return "microstructure"
-    if lowered.startswith(("funding_", "oi_", "liq_", "ls_", "iv_", "put_call_", "max_pain_", "gamma_")):
+    if lowered.startswith((
+        "funding_",
+        "oi_",
+        "liq_",
+        "ls_",
+        "iv_",
+        "put_call_",
+        "max_pain_",
+        "gamma_",
+        "futures_",
+        "basis_",
+        "premium_",
+    )):
         return "derivatives"
     if lowered.startswith(("btc_mempool_", "btc_hashrate", "btc_active_", "btc_difficulty")):
         return "onchain"

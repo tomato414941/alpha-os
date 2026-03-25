@@ -184,6 +184,11 @@ def apply_capital_redundancy_cap(
         corr_max=corr_max,
         floor=floor,
         eligibility=lambda entry: entry.capital_eligible,
+        should_compare=lambda entry, selected_entry: (
+            _should_compare_weak_research_family(entry, selected_entry)
+            if _both_weak_batch_research(entry, selected_entry)
+            else True
+        ),
     )
 
 
@@ -208,6 +213,33 @@ def apply_weak_research_redundancy_cap(
             and entry.research_quality_source == "batch_research_score"
             and not entry.live_proven
         ),
+        should_compare=lambda entry, selected_entry: (
+            _should_compare_weak_research_family(entry, selected_entry)
+        ),
+    )
+
+
+def _both_weak_batch_research(
+    entry: AllocationRebalanceEntry,
+    selected_entry: AllocationRebalanceEntry,
+) -> bool:
+    return (
+        entry.research_retained
+        and selected_entry.research_retained
+        and entry.research_quality_source == "batch_research_score"
+        and selected_entry.research_quality_source == "batch_research_score"
+        and not entry.live_proven
+        and not selected_entry.live_proven
+    )
+
+
+def _should_compare_weak_research_family(
+    entry: AllocationRebalanceEntry,
+    selected_entry: AllocationRebalanceEntry,
+) -> bool:
+    return (
+        (entry.representative_family or "other")
+        == (selected_entry.representative_family or "other")
     )
 
 
@@ -252,6 +284,7 @@ def _apply_redundancy_cap(
     corr_max: float,
     floor: float,
     eligibility,
+    should_compare=None,
 ) -> list[AllocationRebalanceEntry]:
     record_by_id = {record.hypothesis_id: record for record in records}
     series_by_id: dict[str, np.ndarray] = {}
@@ -281,6 +314,7 @@ def _apply_redundancy_cap(
             entry.blended_quality,
             entry.hypothesis_id,
         ),
+        should_compare=should_compare,
     )
 
 
@@ -291,12 +325,14 @@ def _apply_series_redundancy_cap(
     corr_max: float,
     floor: float,
     rank_key,
+    should_compare=None,
 ) -> list[AllocationRebalanceEntry]:
     if len(series_by_id) <= 1:
         return plan
 
     selected: list[str] = []
     blocked: dict[str, tuple[str, float]] = {}
+    entry_by_id = {entry.hypothesis_id: entry for entry in plan}
     ranked = sorted(
         (entry for entry in plan if entry.hypothesis_id in series_by_id),
         key=rank_key,
@@ -307,6 +343,9 @@ def _apply_series_redundancy_cap(
         candidate = series_by_id[entry.hypothesis_id]
         blocker: tuple[str, float] | None = None
         for selected_id in selected:
+            selected_entry = entry_by_id[selected_id]
+            if should_compare is not None and not should_compare(entry, selected_entry):
+                continue
             corr = float(np.corrcoef(candidate, series_by_id[selected_id])[0, 1])
             if np.isfinite(corr) and corr > corr_max:
                 blocker = (selected_id, corr)
