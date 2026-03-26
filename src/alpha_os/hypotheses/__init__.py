@@ -16,12 +16,19 @@ from .lifecycle import (
     weighted_prediction,
 )
 from .allocation_policy import (
+    abs_signal_correlation,
+    apply_ranked_feature_usage_cap,
+    apply_ranked_replacement_policy,
     bootstrap_trust,
     capital_eligibility_breakdown,
+    dedupe_ranked_ids_by_semantic_key,
+    dedupe_ranked_ids_by_signal_similarity,
     is_capital_eligible,
     is_research_backed,
     live_promotion_blocker,
     normalized_research_quality,
+    resolve_ranked_current_ids,
+    seed_ranked_selection,
     target_stake,
     trust_score,
 )
@@ -40,7 +47,10 @@ from .observation import (
 )
 
 __all__ = [
+    "abs_signal_correlation",
     "apply_allocation_rebalance_plan",
+    "apply_ranked_feature_usage_cap",
+    "apply_ranked_replacement_policy",
     "build_allocation_rebalance_plan",
     "bootstrap_trust",
     "build_capped_allocation_rebalance_plan",
@@ -48,6 +58,8 @@ __all__ = [
     "collect_required_features",
     "compute_hypothesis_prediction",
     "compute_daily_contributions",
+    "dedupe_ranked_ids_by_semantic_key",
+    "dedupe_ranked_ids_by_signal_similarity",
     "HypothesisContribution",
     "HypothesisKind",
     "HypothesisRecord",
@@ -61,7 +73,9 @@ __all__ = [
     "normalized_research_quality",
     "produce_active_hypothesis_predictions",
     "record_daily_contributions",
+    "resolve_ranked_current_ids",
     "rolling_stake",
+    "seed_ranked_selection",
     "target_stake",
     "trust_score",
     "updated_stake",
