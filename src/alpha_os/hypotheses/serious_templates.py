@@ -20,6 +20,7 @@ class SeriousTemplateBinding:
     bindings: dict[str, str]
     oos_sharpe: float
     oos_log_growth: float
+    expression_template_override: str | None = None
 
 
 @dataclass(frozen=True)
@@ -172,6 +173,7 @@ _BINDINGS: dict[str, list[SeriousTemplateBinding]] = {
             template_id="derivatives_open_interest_trend",
             hypothesis_id="serious_eth_derivatives_open_interest_trend_v1",
             bindings={"asset_label": "ETH", "open_interest": "oi_eth_1h"},
+            expression_template_override="(rank_20 zscore_20__{open_interest})",
             oos_sharpe=0.68,
             oos_log_growth=0.11,
         ),
@@ -180,6 +182,7 @@ _BINDINGS: dict[str, list[SeriousTemplateBinding]] = {
             template_id="derivatives_funding_crowding",
             hypothesis_id="serious_eth_derivatives_funding_crowding_v1",
             bindings={"asset_label": "ETH", "funding_rate": "funding_rate_eth"},
+            expression_template_override="(rank_20 zscore_20__{funding_rate})",
             oos_sharpe=0.64,
             oos_log_growth=0.10,
         ),
@@ -188,6 +191,9 @@ _BINDINGS: dict[str, list[SeriousTemplateBinding]] = {
             template_id="macro_sentiment_acceleration",
             hypothesis_id="serious_eth_macro_sentiment_acceleration_v1",
             bindings={"asset_label": "ETH"},
+            expression_template_override=(
+                "(sub (rank_20 delta_1__fear_greed) (rank_20 roc_5__dxy))"
+            ),
             oos_sharpe=0.61,
             oos_log_growth=0.09,
         ),
@@ -203,7 +209,7 @@ _BINDINGS: dict[str, list[SeriousTemplateBinding]] = {
             asset="ETH",
             template_id="price_regime_shift",
             hypothesis_id="serious_eth_price_regime_shift_v1",
-            bindings={"asset_label": "ETH", "price_signal": "eth_btc"},
+            bindings={"asset_label": "ETH", "price_signal": "eth_ohlcv"},
             oos_sharpe=0.59,
             oos_log_growth=0.08,
         ),
@@ -226,11 +232,14 @@ def serious_seed_specs(asset: str) -> list[SeriousSeedSpec]:
         template = _TEMPLATES[binding.template_id]
         render_args = dict(binding.bindings)
         render_args.setdefault("asset_label", asset)
+        expression_template = (
+            binding.expression_template_override or template.expression_template
+        )
         specs.append(
             SeriousSeedSpec(
                 hypothesis_id=binding.hypothesis_id,
                 name=template.name_template.format(**render_args).strip(),
-                expression=template.expression_template.format(**render_args),
+                expression=expression_template.format(**render_args),
                 family=template.family,
                 oos_sharpe=binding.oos_sharpe,
                 oos_log_growth=binding.oos_log_growth,

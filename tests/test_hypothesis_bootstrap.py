@@ -53,6 +53,27 @@ def test_bootstrap_hypotheses_can_build_eth_serious_seeds():
     }
 
 
+def test_bootstrap_hypotheses_use_eth_specific_serious_binding_overrides():
+    serious = {row.hypothesis_id: row for row in bootstrap_hypotheses("ETH")}
+
+    assert (
+        serious["serious_eth_derivatives_open_interest_trend_v1"].definition["expression"]
+        == "(rank_20 zscore_20__oi_eth_1h)"
+    )
+    assert (
+        serious["serious_eth_derivatives_funding_crowding_v1"].definition["expression"]
+        == "(rank_20 zscore_20__funding_rate_eth)"
+    )
+    assert (
+        serious["serious_eth_macro_sentiment_acceleration_v1"].definition["expression"]
+        == "(sub (rank_20 delta_1__fear_greed) (rank_20 roc_5__dxy))"
+    )
+    assert (
+        serious["serious_eth_price_regime_shift_v1"].definition["expression"]
+        == "(rank_20 zscore_20__eth_ohlcv)"
+    )
+
+
 def test_list_observation_active_includes_zero_stake_active_hypotheses(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(

@@ -270,6 +270,32 @@ class HypothesisSeederDaemon:
         existing: HypothesisRecord,
         bootstrap_record: HypothesisRecord,
     ) -> None:
+        refreshed = False
+        if (
+            bootstrap_record.source == "bootstrap_serious"
+            and (
+                existing.name != bootstrap_record.name
+                or existing.definition != bootstrap_record.definition
+            )
+        ):
+            updated = HypothesisRecord(
+                hypothesis_id=existing.hypothesis_id,
+                kind=existing.kind,
+                name=bootstrap_record.name,
+                definition=bootstrap_record.definition,
+                status=existing.status,
+                stake=existing.stake,
+                target_kind=existing.target_kind,
+                horizon=existing.horizon,
+                source=existing.source,
+                scope=existing.scope,
+                metadata=dict(existing.metadata),
+                created_at=existing.created_at,
+                updated_at=existing.updated_at,
+            )
+            self._store.register(updated)
+            existing = updated
+            refreshed = True
         merged = dict(existing.metadata)
         changed = False
         for key, value in bootstrap_record.metadata.items():
@@ -277,7 +303,7 @@ class HypothesisSeederDaemon:
                 continue
             merged[key] = value
             changed = True
-        if changed:
+        if changed or refreshed:
             self._store.update_metadata(existing.hypothesis_id, merged, merge=False)
         if (
             bootstrap_record.source == "bootstrap_serious"

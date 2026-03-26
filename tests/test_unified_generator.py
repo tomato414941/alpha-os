@@ -264,6 +264,67 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     daemon.close()
 
 
+def test_hypothesis_seeder_refreshes_existing_serious_bootstrap_definition(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
+            "eth_ohlcv",
+            "funding_rate_eth",
+            "oi_eth_1h",
+            "fear_greed",
+            "dxy",
+        ],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.min_feature_catalog_size = 1
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(
+        cfg,
+        primary_asset="ETH",
+        include_bootstrap=True,
+        store=store,
+        client=None,
+    )
+
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="serious_eth_price_regime_shift_v1",
+            kind="dsl",
+            name="stale",
+            definition={"expression": "(rank_20 zscore_20__eth_btc)"},
+            status="active",
+            stake=0.0,
+            source="bootstrap_serious",
+            scope={"asset": "ETH", "universe": "core_universe_1000"},
+            metadata={"seed_family": "serious"},
+        )
+    )
+
+    inserted, skipped = daemon._register_bootstrap_hypotheses()
+    updated = store.get("serious_eth_price_regime_shift_v1")
+
+    assert inserted == 5
+    assert skipped == 1
+    assert updated is not None
+    assert updated.name == "ETH Price Regime Shift V1"
+    assert updated.definition["expression"] == "(rank_20 zscore_20__eth_ohlcv)"
+    assert updated.metadata["serious_template"] == "price_regime_shift"
+
+    daemon.close()
+
+
 def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_dsl(
     tmp_path,
     monkeypatch,
