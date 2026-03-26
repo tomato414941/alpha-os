@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from alpha_os.hypotheses.quality import blend_quality
+from alpha_os.hypotheses.identity import representative_feature_family
 from alpha_os.hypotheses.runtime_policy import (
     build_trading_signal_history_map,
     rank_trading_records,
@@ -254,6 +255,12 @@ def test_normalized_research_quality_is_bounded():
     assert normalized_research_quality(3.0, metric="sharpe") == pytest.approx(1.0)
     assert normalized_research_quality(0.1, metric="log_growth") == pytest.approx(0.5)
     assert normalized_research_quality(-1.0, metric="sharpe") == pytest.approx(0.0)
+
+
+def test_representative_feature_family_prefers_specific_family():
+    assert representative_feature_family(["other", "onchain"]) == "onchain"
+    assert representative_feature_family(["unknown", "macro"]) == "macro"
+    assert representative_feature_family([]) == "other"
 
 
 def test_bootstrap_trust_scales_research_quality_conservatively():

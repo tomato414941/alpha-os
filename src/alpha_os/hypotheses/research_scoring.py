@@ -12,7 +12,11 @@ from ..data.universe import required_raw_signals
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression
 from ..validation.purged_cv import purged_walk_forward
-from .identity import expression_feature_families, expression_feature_names
+from .identity import (
+    expression_feature_families,
+    expression_feature_names,
+    representative_feature_family,
+)
 from .store import HypothesisKind, HypothesisRecord
 
 
@@ -131,13 +135,15 @@ def exploratory_scoring_candidates(
     for record in candidates:
         families = _record_families(record)
         if families:
-            representative_family = min(
-                families,
-                key=lambda family: (
-                    family_counts.get(family, 0),
-                    -_family_quality(family),
-                    family,
-                ),
+            representative_family = representative_feature_family(
+                sorted(
+                    families,
+                    key=lambda family: (
+                        family_counts.get(family, 0),
+                        -_family_quality(family),
+                        family,
+                    ),
+                )
             )
         else:
             representative_family = "other"

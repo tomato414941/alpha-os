@@ -1860,6 +1860,55 @@ def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, 
     assert "Top:      backed reason=backed" in output
 
 
+def test_cmd_analyze_actionable_live_reports_redundancy_families(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_actionable_live
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="leader",
+        kind="dsl",
+        definition={"expression": "btc_difficulty"},
+        stake=0.2,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": True,
+            "lifecycle_capital_eligible": True,
+            "lifecycle_capital_backed": True,
+            "lifecycle_signal_nonzero_ratio": 0.8,
+            "lifecycle_signal_mean_abs": 0.2,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="shadow",
+        kind="dsl",
+        definition={"expression": "btc_difficulty"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": True,
+            "lifecycle_capital_eligible": True,
+            "lifecycle_capital_backed": False,
+            "lifecycle_redundancy_capped_by": "leader",
+            "lifecycle_signal_nonzero_ratio": 0.7,
+            "lifecycle_signal_mean_abs": 0.1,
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_actionable_live(Namespace(asset="BTC", config=None, top=3, families=None))
+    output = capsys.readouterr().out
+
+    assert "RedFam:   onchain->onchain:1" in output
+
+
 def test_cmd_analyze_actionable_live_filters_families(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

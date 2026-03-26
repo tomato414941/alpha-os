@@ -26,6 +26,16 @@ def expression_feature_families(expression: str) -> tuple[str, ...]:
     return tuple(sorted(infer_feature_family(name) for name in expression_feature_names(expression)))
 
 
+def representative_feature_family(families: Iterable[str]) -> str:
+    unique = sorted({family for family in families if family})
+    if not unique:
+        return "other"
+    specific = [family for family in unique if family not in {"other", "unknown"}]
+    if specific:
+        return specific[0]
+    return unique[0]
+
+
 def count_expression_features(expressions: Iterable[str]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for expression in expressions:

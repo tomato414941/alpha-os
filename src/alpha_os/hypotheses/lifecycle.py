@@ -21,7 +21,7 @@ from .allocation_policy import (
     live_promotion_blocker,
     target_stake,
 )
-from .identity import expression_feature_families
+from .identity import expression_feature_families, representative_feature_family
 from .quality import blend_quality
 from .store import HypothesisStatus, HypothesisStore
 
@@ -383,14 +383,7 @@ def build_allocation_rebalance_plan(
             else (0.0, 0.0)
         )
         families = expression_feature_families(record.expression)
-        representative_family = (
-            min(
-                families,
-                key=lambda family: (families.count(family), family),
-            )
-            if families
-            else "other"
-        )
+        representative_family = representative_feature_family(families)
         estimate = blend_quality(
             research_quality,
             live_returns,
@@ -510,6 +503,7 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_signal_mean_abs": entry.signal_mean_abs,
                 "lifecycle_bootstrap_trust": entry.bootstrap_trust_value,
                 "lifecycle_research_quality_source": entry.research_quality_source,
+                "lifecycle_representative_family": entry.representative_family,
                 "lifecycle_n_observations": entry.n_observations,
                 "lifecycle_research_backed": entry.research_backed,
                 "lifecycle_research_retained": entry.research_retained,

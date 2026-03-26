@@ -2215,6 +2215,9 @@ def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
     family_signal_lines = summary.get("family_signal_lines") or []
     if family_signal_lines:
         print("  FamSig:   " + " | ".join(family_signal_lines[:3]))
+    redundancy_family_lines = summary.get("redundancy_family_lines") or []
+    if redundancy_family_lines:
+        print("  RedFam:   " + " | ".join(redundancy_family_lines[:3]))
     ratio_drop = summary["ratio_drop"]
     mean_abs_drop = summary["mean_abs_drop"]
     ratio_backed = summary["ratio_backed"]

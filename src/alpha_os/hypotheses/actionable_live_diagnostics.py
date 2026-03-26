@@ -4,7 +4,16 @@ from collections import Counter
 
 import numpy as np
 
-from .identity import expression_feature_families
+from .identity import expression_feature_families, representative_feature_family
+
+
+def _representative_family(record) -> str:
+    metadata = getattr(record, "metadata", {}) or {}
+    family = str(metadata.get("lifecycle_representative_family", "")).strip()
+    if family:
+        return family
+    families = set(expression_feature_families(record.expression)) or {"unknown"}
+    return representative_feature_family(families)
 
 
 def actionable_live_drop_reason(
@@ -79,6 +88,7 @@ def build_actionable_live_summary(
 
     reasons: Counter[str] = Counter()
     family_counts: dict[str, Counter[str]] = {}
+    redundancy_family_pairs: Counter[str] = Counter()
     family_signal_values: dict[str, dict[str, list[float]]] = {}
     ranked: list[tuple[float, float, object, str, str]] = []
     ratio_drop_values: list[float] = []
@@ -102,7 +112,7 @@ def build_actionable_live_summary(
         counter = family_counts.setdefault(reason, Counter())
         for family in record_families:
             counter[family] += 1
-            stats = family_signal_values.setdefault(
+            family_signal_values.setdefault(
                 family,
                 {
                     "ratio": [],
@@ -111,6 +121,19 @@ def build_actionable_live_summary(
                     "backed": [],
                 },
             )
+        if reason == "redundancy":
+            blocker_id = str(metadata.get("lifecycle_redundancy_capped_by") or "")
+            blocker_label = "unknown"
+            if blocker_id:
+                blocker_record = next(
+                    (candidate for candidate in filtered if candidate.hypothesis_id == blocker_id),
+                    None,
+                )
+                if blocker_record is not None:
+                    blocker_label = _representative_family(blocker_record)
+            redundancy_family_pairs[
+                f"{_representative_family(record)}->{blocker_label}"
+            ] += 1
 
         signal_ratio = float(metadata.get("lifecycle_signal_nonzero_ratio", 0.0) or 0.0)
         signal_mean_abs = float(metadata.get("lifecycle_signal_mean_abs", 0.0) or 0.0)
@@ -186,6 +209,10 @@ def build_actionable_live_summary(
         "reasons": reasons,
         "families": family_summary,
         "family_signal_lines": family_signal_lines,
+        "redundancy_family_lines": [
+            f"{label}:{count}"
+            for label, count in redundancy_family_pairs.most_common(5)
+        ],
         "ratio_drop": _distribution_summary(ratio_drop_values),
         "mean_abs_drop": _distribution_summary(mean_abs_drop_values),
         "ratio_backed": _distribution_summary(backed_ratio_values),
