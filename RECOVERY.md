@@ -331,10 +331,10 @@ Support classes:
 |------------|-------|------|
 | `hypotheses`, `predictions.store`, `data`, `execution`, `risk`, `validation.testnet`, `runtime_lock`, `runtime_profile` | current | these form the bounded recovery runtime and should be the main maintenance target |
 | `paper.trader`, `paper.tracker`, `daemon.hypothesis_seeder` | current | keep only the minimum code needed for bounded paper runtime and seeding |
-| `dsl`, `backtest`, `evolution`, `experiments`, `predictions.classical_producer` | research | keep available for offline work, but isolate from runtime assumptions |
-| `paper.simulator`, `paper.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
-| `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `daemon.admission`, `daemon.lifecycle`, `daemon.unified_generator`, `pipeline` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
-| `research.diversity`, `research.handcrafted`, `paper.simulator`, `paper.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
+| `dsl`, `backtest`, `evolution`, `experiments.matrix`, `predictions.classical_producer` | research | keep available for offline work, but isolate from runtime assumptions |
+| `research.replay_simulator`, `research.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
+| `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `legacy.admission`, `legacy.lifecycle`, `legacy.alpha_generator` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
+| `research.diversity`, `research.handcrafted`, `research.replay_experiment`, `research.deployment_planner`, `research.pipeline_runner`, `research.replay_simulator`, `research.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
 | `alpha` | compatibility shell | reserved package name only; no internal imports or wrapper modules remain |
 
 ### Alpha Package Classification
@@ -444,14 +444,48 @@ Legacy code is now isolated behind the `legacy` package.
 
 - examples:
   - `legacy.managed_alphas`
+  - `legacy.registry_types`
+  - `legacy.admission_queue`
+  - `legacy.deployed_registry`
   - `legacy.deployed_alphas`
   - `legacy.admission_replay`
+  - `legacy.admission`
+  - `legacy.lifecycle`
+  - `legacy.alpha_generator`
   - `legacy.funnel`
-  - `daemon.admission`
-  - `daemon.lifecycle`
 
 These paths may still exist for replay, migration, or archive workflows, but
 they are not the hypotheses-first runtime mainline.
+
+The remaining legacy API surface should be treated as a shrinking compatibility
+layer.
+
+- keep for now:
+  - `ManagedAlphaStore`
+  - `AlphaRecord`, `AlphaState`, `DeployedAlphaEntry`
+  - `admission_queue`, `deployed_registry`
+  - `deployed_alphas`, `admission_replay`
+  - `admission`, `lifecycle`, `alpha_generator`, `funnel`
+- do not add new business logic directly to `ManagedAlphaStore`
+- prefer extracting pure planning or scoring logic into `research.*`
+- prefer extracting table-specific I/O into focused `legacy.*` helpers
+- preserve legacy entrypoints only while tests, scripts, or replay flows still depend on them
+
+Near-term shrink candidates:
+
+- `legacy.alpha_generator`
+- `legacy.lifecycle`
+- `legacy.deployed_alphas`
+- `legacy.managed_alphas`
+- `legacy.funnel`
+
+Intended end state:
+
+- `legacy.registry_types`
+  - frozen compatibility data model
+- `legacy.*` helpers
+  - thin table-specific I/O wrappers
+- no scheduler-facing or runtime-truth logic under `legacy`
 
 ### Compatibility Boundary
 
