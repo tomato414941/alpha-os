@@ -23,7 +23,7 @@ from ..config import (
 )
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
-from ..data.universe import build_feature_list
+from ..data.universe import build_feature_list, required_raw_signals
 from ..dsl import parse, collect_feature_names, temporal_expression_issues
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
 from ..execution.binance import BinanceExecutor
@@ -537,7 +537,7 @@ class Trader:
                 )
                 n_failed += 1
                 continue
-            runtime_signals.update(collect_feature_names(expr))
+            runtime_signals.update(required_raw_signals(collect_feature_names(expr)))
             parsed_records.append((record, expr))
 
         return sorted(runtime_signals), parsed_records, n_failed
@@ -770,7 +770,7 @@ class Trader:
             if record.hypothesis_id in store_signals:
                 filtered_records.append((record, expr))
                 continue
-            required = collect_feature_names(expr)
+            required = set(required_raw_signals(collect_feature_names(expr)))
             if not required.issubset(available_features):
                 n_feature_filtered += 1
                 continue

@@ -473,6 +473,29 @@ class TestTrader:
         ]
         assert n_failed == 0
 
+    def test_prepare_runtime_inputs_uses_raw_signals_for_derived_features(self):
+        from alpha_os.paper.trader import Trader
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        derived_backed = HypothesisRecord(
+            hypothesis_id="h-derived",
+            kind="dsl",
+            definition={"expression": "(rank_10 delta_1__btc_active_addresses)"},
+            stake=1.0,
+        )
+
+        runtime_signals, parsed_records, n_failed = Trader._prepare_runtime_inputs(
+            [derived_backed],
+            "eth_btc",
+            {},
+        )
+
+        assert runtime_signals == ["btc_active_addresses", "eth_btc"]
+        assert [(record.hypothesis_id, expr is None) for record, expr in parsed_records] == [
+            ("h-derived", False),
+        ]
+        assert n_failed == 0
+
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""
         from alpha_os.paper.trader import Trader
@@ -852,6 +875,58 @@ class TestTrader:
         assert result.n_live_hypotheses == 1
         assert result.n_shortlist_candidates == 1
         assert result.n_selected_hypotheses == 1
+        assert result.n_signals_evaluated == 1
+        trader.close()
+
+    def test_run_cycle_evaluates_derived_features_from_raw_current_data(self, monkeypatch, tmp_path):
+        from alpha_os.config import Config
+        from alpha_os.execution.paper import PaperExecutor
+        from alpha_os.forward.tracker import HypothesisObservationTracker
+        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os.paper.trader import Trader
+        from alpha_os.risk.circuit_breaker import CircuitBreaker
+
+        cfg = Config()
+        cfg.paper.max_trading_alphas = 1
+        cfg.paper.max_position_pct = 0.5
+
+        matrix = pd.DataFrame(
+            {
+                "eth_btc": [0.03, 0.031],
+                "btc_active_addresses": [100.0, 103.0],
+            },
+            index=["2026-03-20", "2026-03-21"],
+        )
+        store = _RecordingMatrixStore(matrix)
+        derived_record = HypothesisRecord(
+            hypothesis_id="derived-capital-backed",
+            kind="dsl",
+            definition={"expression": "(rank_10 delta_1__btc_active_addresses)"},
+            stake=1.0,
+        )
+
+        monkeypatch.setattr(
+            "alpha_os.paper.trader._quick_healthcheck",
+            lambda _url: False,
+        )
+
+        trader = Trader(
+            asset="ETH",
+            config=cfg,
+            registry=_StaticRegistry([derived_record]),
+            portfolio_tracker=PaperPortfolioTracker(tmp_path / "paper.db"),
+            forward_tracker=HypothesisObservationTracker(tmp_path / "fwd.db"),
+            executor=PaperExecutor(initial_cash=cfg.trading.initial_capital),
+            audit_log=AuditLog(tmp_path / "audit.jsonl"),
+            circuit_breaker=CircuitBreaker(_state_path=tmp_path / "circuit_breaker.json"),
+            store=store,
+        )
+
+        result = trader.run_cycle()
+
+        assert store.synced == []
+        assert result.n_live_hypotheses == 1
         assert result.n_signals_evaluated == 1
         trader.close()
 
