@@ -251,6 +251,58 @@ def test_exploratory_scoring_candidates_prefer_undercovered_serious_families(tmp
     store.close()
 
 
+def test_exploratory_scoring_candidates_prefer_missing_serious_template_within_family(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="serious_macro_sentiment",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="bootstrap_serious",
+            stake=0.0,
+            scope={"asset": "BTC"},
+            metadata={
+                "serious_family": "macro",
+                "serious_template": "macro_sentiment_acceleration",
+                "lifecycle_capital_backed": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="macro_sentiment_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=0.0,
+            scope={"asset": "BTC"},
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="macro_dollar_candidate",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "dxy"},
+            source="random_dsl",
+            stake=0.0,
+            scope={"asset": "BTC"},
+            metadata={"research_quality_status": "unscored"},
+        )
+    )
+
+    candidates = exploratory_scoring_candidates(
+        store.list_observation_active(asset="BTC"),
+        asset="BTC",
+    )
+
+    assert [record.hypothesis_id for record in candidates] == [
+        "macro_dollar_candidate",
+        "macro_sentiment_candidate",
+    ]
+    store.close()
+
+
 def test_exploratory_scoring_candidates_limit_preserves_family_diversity(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(

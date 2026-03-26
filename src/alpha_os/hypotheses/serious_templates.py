@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from collections import Counter
 
+from .identity import expression_feature_names
+
 
 @dataclass(frozen=True)
 class SeriousTemplate:
@@ -277,3 +279,48 @@ def serious_family_gap_scores(asset: str, records) -> dict[str, float]:
         current = covered.get(family, 0)
         gaps[family] = max(0.0, float(target - current) / float(target))
     return gaps
+
+
+def serious_template_gap_scores(asset: str, records) -> dict[str, float]:
+    asset = str(asset).upper()
+    targets: Counter[str] = Counter(
+        spec.template_id for spec in serious_seed_specs(asset)
+    )
+    if not targets:
+        return {}
+
+    covered: Counter[str] = Counter()
+    for record in records:
+        if str(getattr(record, "source", "") or "") != "bootstrap_serious":
+            continue
+        scope = getattr(record, "scope", {}) or {}
+        if str(scope.get("asset", "")).upper() != asset:
+            continue
+        metadata = getattr(record, "metadata", {}) or {}
+        if not bool(metadata.get("lifecycle_capital_backed", False)):
+            continue
+        template_id = str(metadata.get("serious_template", "") or "")
+        if template_id:
+            covered[template_id] += 1
+
+    gaps: dict[str, float] = {}
+    for template_id, target in targets.items():
+        current = covered.get(template_id, 0)
+        gaps[template_id] = max(0.0, float(target - current) / float(target))
+    return gaps
+
+
+def serious_template_feature_gap_scores(asset: str, records) -> dict[str, float]:
+    asset = str(asset).upper()
+    template_gaps = serious_template_gap_scores(asset, records)
+    if not template_gaps:
+        return {}
+
+    feature_scores: Counter[str] = Counter()
+    for spec in serious_seed_specs(asset):
+        gap = float(template_gaps.get(spec.template_id, 0.0))
+        if gap <= 0.0:
+            continue
+        for feature in expression_feature_names(spec.expression):
+            feature_scores[feature] += gap
+    return {feature: float(score) for feature, score in feature_scores.items() if score > 0.0}

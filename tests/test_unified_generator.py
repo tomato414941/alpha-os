@@ -595,6 +595,48 @@ def test_hypothesis_seeder_guided_feature_subset_prefers_undercovered_serious_fa
     daemon.close()
 
 
+def test_hypothesis_seeder_guided_feature_subset_prefers_missing_serious_template_feature(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+
+    cfg = Config()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="serious_macro_sentiment",
+            kind="dsl",
+            name="fear_greed",
+            definition={"expression": "fear_greed"},
+            status="active",
+            stake=0.0,
+            scope={"asset": "BTC"},
+            source="bootstrap_serious",
+            metadata={
+                "serious_family": "macro",
+                "serious_template": "macro_sentiment_acceleration",
+                "lifecycle_capital_backed": True,
+            },
+        )
+    )
+
+    subset = daemon._guided_feature_subset(
+        ["fear_greed", "dxy"],
+        k=1,
+        seed=7,
+    )
+
+    assert subset == frozenset({"dxy"})
+
+    daemon.close()
+
+
 @pytest.mark.parametrize(
     ("hypothesis_id", "name", "definition"),
     [

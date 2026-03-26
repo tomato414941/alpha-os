@@ -17,7 +17,12 @@ from .identity import (
     expression_feature_names,
     representative_feature_family,
 )
-from .serious_templates import serious_family_gap_scores
+from .serious_templates import (
+    serious_family_gap_scores,
+    serious_seed_specs,
+    serious_template_feature_gap_scores,
+    serious_template_gap_scores,
+)
 from .store import HypothesisKind, HypothesisRecord
 
 
@@ -75,6 +80,9 @@ def exploratory_scoring_candidates(
     if not candidates:
         return []
     serious_gaps = serious_family_gap_scores(asset or "BTC", records)
+    template_gaps = serious_template_gap_scores(asset or "BTC", records)
+    template_feature_gaps = serious_template_feature_gap_scores(asset or "BTC", records)
+    template_specs = serious_seed_specs(asset or "BTC")
 
     family_counts: Counter[str] = Counter()
     family_totals: Counter[str] = Counter()
@@ -116,8 +124,40 @@ def exploratory_scoring_candidates(
         families = tuple(sorted(set(expression_feature_families(record.expression))))
         return families
 
+    def _record_template_gap(record: HypothesisRecord) -> float:
+        features = set(expression_feature_names(record.expression))
+        families = set(_record_families(record))
+        if not features or not families:
+            return 0.0
+        best = 0.0
+        for spec in template_specs:
+            gap = float(template_gaps.get(spec.template_id, 0.0))
+            if gap <= 0.0 or spec.family not in families:
+                continue
+            template_features = set(expression_feature_names(spec.expression))
+            if not template_features:
+                continue
+            overlap = len(features & template_features)
+            if overlap <= 0:
+                continue
+            score = gap * (float(overlap) / float(len(template_features)))
+            if score > best:
+                best = score
+        return best
+
+    def _record_template_feature_gap(record: HypothesisRecord) -> float:
+        features = expression_feature_names(record.expression)
+        if not features:
+            return 0.0
+        return float(
+            sum(template_feature_gaps.get(feature, 0.0) for feature in features)
+            / len(features)
+        )
+
     def _priority(record: HypothesisRecord) -> tuple[float, float, float, float, str]:
         families = _record_families(record)
+        template_gap = _record_template_gap(record)
+        template_feature_gap = _record_template_feature_gap(record)
         overlap = float(sum(family_counts.get(family, 0) for family in families))
         novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
         if families:
@@ -128,7 +168,15 @@ def exploratory_scoring_candidates(
         else:
             serious_gap = 0.0
             family_quality = 0.0
-        return overlap, -serious_gap, -family_quality, -novelty, record.hypothesis_id
+        return (
+            overlap,
+            -template_gap,
+            -template_feature_gap,
+            -serious_gap,
+            -family_quality,
+            -novelty,
+            record.hypothesis_id,
+        )
 
     candidates.sort(key=_priority)
 
@@ -147,6 +195,14 @@ def exploratory_scoring_candidates(
                     families,
                     key=lambda family: (
                         family_counts.get(family, 0),
+                        -max(
+                            (
+                                template_gaps.get(spec.template_id, 0.0)
+                                for spec in template_specs
+                                if spec.family == family
+                            ),
+                            default=0.0,
+                        ),
                         -serious_gaps.get(family, 0.0),
                         -_family_quality(family),
                         family,
@@ -164,6 +220,14 @@ def exploratory_scoring_candidates(
         buckets,
         key=lambda family: (
             family_counts.get(family, 0),
+            -max(
+                (
+                    template_gaps.get(spec.template_id, 0.0)
+                    for spec in template_specs
+                    if spec.family == family
+                ),
+                default=0.0,
+            ),
             -serious_gaps.get(family, 0.0),
             -_family_quality(family),
             family,

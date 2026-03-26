@@ -21,7 +21,12 @@ from alpha_os.hypotheses.identity import (
     expression_feature_names,
     expression_semantic_key,
 )
-from alpha_os.hypotheses.serious_templates import serious_family_gap_scores
+from alpha_os.hypotheses.serious_templates import (
+    serious_family_gap_scores,
+    serious_seed_specs,
+    serious_template_feature_gap_scores,
+    serious_template_gap_scores,
+)
 from alpha_os.hypotheses.sleeve_scope import with_scope_asset
 from alpha_os.hypotheses.store import (
     HypothesisKind,
@@ -377,7 +382,13 @@ class HypothesisSeederDaemon:
         records = self._store.list_observation_active(asset=self.primary_asset)
         family_scores = self._random_dsl_family_success_scores()
         serious_gaps = serious_family_gap_scores(self.primary_asset, records)
-        if not family_scores and not serious_gaps:
+        template_gaps = serious_template_gap_scores(self.primary_asset, records)
+        template_feature_gaps = serious_template_feature_gap_scores(
+            self.primary_asset,
+            records,
+        )
+        template_specs = serious_seed_specs(self.primary_asset)
+        if not family_scores and not serious_gaps and not template_feature_gaps:
             return stratified_feature_subset(features, k=k, seed=seed)
         rng = random.Random(seed)
         grouped: dict[str, list[str]] = {}
@@ -386,8 +397,27 @@ class HypothesisSeederDaemon:
         for bucket in grouped.values():
             rng.shuffle(bucket)
         family_order = list(grouped)
+
+        def _family_template_gap(family: str) -> float:
+            return max(
+                (
+                    float(template_gaps.get(spec.template_id, 0.0))
+                    for spec in template_specs
+                    if spec.family == family
+                ),
+                default=0.0,
+            )
+
+        def _family_template_feature_gap(family: str) -> float:
+            bucket = grouped.get(family, [])
+            if not bucket:
+                return 0.0
+            return max(float(template_feature_gaps.get(feature, 0.0)) for feature in bucket)
+
         family_order.sort(
             key=lambda family: (
+                -_family_template_gap(family),
+                -_family_template_feature_gap(family),
                 -serious_gaps.get(family, 0.0),
                 -family_scores.get(family, 0.5),
                 rng.random(),
