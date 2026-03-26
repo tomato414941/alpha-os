@@ -44,6 +44,12 @@ Prefer:
 - [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
 - [`AGENTS.override.md`](../AGENTS.override.md) for machine-specific operations
 
+Namespace rule:
+
+- root CLI = current bounded runtime
+- `research ...` = bounded research / offline experiments
+- `legacy ...` = legacy registry-era maintenance or archive paths
+
 ### "What is trusted today vs still unsafe?"
 
 Prefer:

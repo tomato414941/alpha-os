@@ -243,7 +243,7 @@ Support classes:
 | `runtime-status` | current | keep as the runtime observation entrypoint |
 | `testnet-readiness` | current | keep as readiness accounting for repeated bounded runs |
 | `lifecycle`, `rebalance-allocation-trust`, `analyze-live-breadth` | current | keep only if they operate on `hypotheses` and remain bounded |
-| `generate`, `backtest`, `evolve`, `validate`, `evaluate`, `produce-classical` | research | move under an explicit research boundary; do not treat as runtime commands |
+| `research generate`, `research backtest`, `research evolve`, `research validate`, `research evaluate`, `research produce-classical` | research | keep under the explicit research namespace; do not treat as runtime commands |
 | `research paper-replay`, `research replay-experiment`, `research replay-matrix` | legacy | keep only for offline experiments until rewritten around current inputs |
 | `legacy admission-daemon`, `legacy prune-stale-candidates`, `enqueue-discovery-pool`, `unified-generator`, `alpha-funnel` | archive | legacy registry/discovery surface; freeze and remove from the default runtime path |
 | `paper --schedule`, `trade --schedule`, `paper --summary`, `trade --summary`, event-driven trade flags | archive | recovery model prefers bounded oneshot jobs; always-on convenience paths are out of scope |

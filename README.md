@@ -16,6 +16,12 @@ The active recovery goal is not to restore every legacy subsystem. It is to
 make the bounded hypotheses-first runtime trustworthy again and only then
 decide which legacy research paths deserve a rewrite.
 
+Command-surface rule:
+
+- current runtime commands live at the root
+- research-only commands live under `research ...`
+- legacy / archive commands live under `legacy ...`
+
 ## Document Guide
 
 Prefer this order:
