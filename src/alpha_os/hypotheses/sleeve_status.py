@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .identity import expression_feature_families
+from .serious_templates import serious_family_gap_scores, serious_seed_specs
 
 
 def _format_runtime_hypothesis_entry(record, value: float) -> str:
@@ -115,6 +116,47 @@ def _top_serious_template_counts(records, *, backed_only: bool, n: int = 3) -> l
     return [f"{template}:{count}" for template, count in counts.most_common(n)]
 
 
+def _records_scope_asset(records) -> str | None:
+    for record in records:
+        scope = getattr(record, "scope", {}) or {}
+        asset = str(scope.get("asset", "") or "").upper()
+        if asset:
+            return asset
+    return None
+
+
+def _serious_template_coverage(records) -> tuple[int, int, int, list[str]]:
+    asset = _records_scope_asset(records)
+    if not asset:
+        return 0, 0, 0, []
+    total = len(serious_seed_specs(asset))
+    if total <= 0:
+        return 0, 0, 0, []
+
+    retained = 0
+    backed = 0
+    for record in records:
+        if str(getattr(record, "source", "") or "") != "bootstrap_serious":
+            continue
+        metadata = getattr(record, "metadata", {}) or {}
+        if bool(metadata.get("lifecycle_research_retained", False)) or bool(
+            metadata.get("lifecycle_live_proven", False)
+        ):
+            retained += 1
+        if bool(metadata.get("lifecycle_capital_backed", False)):
+            backed += 1
+    gaps = serious_family_gap_scores(asset, records)
+    gap_items = [
+        f"{family}:{gap:.2f}"
+        for family, gap in sorted(
+            gaps.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+        if gap > 0.0
+    ]
+    return retained, backed, total, gap_items[:3]
+
+
 @dataclass(frozen=True)
 class HypothesisStatusCounts:
     active: int
@@ -171,6 +213,9 @@ class AssetSleeveSummary:
     research_retained: int
     bootstrap_research_retained: int
     serious_research_retained: int
+    serious_template_retained_count: int
+    serious_template_backed_count: int
+    serious_template_target_count: int
     batch_research_retained: int
     live_proven: int
     actionable_live: int
@@ -193,6 +238,7 @@ class AssetSleeveSummary:
     batch_backed_families: list[str] = field(default_factory=list)
     serious_retained_templates: list[str] = field(default_factory=list)
     serious_backed_templates: list[str] = field(default_factory=list)
+    serious_family_gaps: list[str] = field(default_factory=list)
 
 
 def build_hypothesis_status_counts(store, *, asset: str | None = None) -> HypothesisStatusCounts:
@@ -237,6 +283,12 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         "weak_live_quality_and_contribution": 0,
         "weak_signal_activity": 0,
     }
+    (
+        serious_template_retained_count,
+        serious_template_backed_count,
+        serious_template_target_count,
+        serious_family_gaps,
+    ) = _serious_template_coverage(records)
 
     for record in records:
         metadata = getattr(record, "metadata", {}) or {}
@@ -307,6 +359,9 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         research_retained=research_retained,
         bootstrap_research_retained=bootstrap_research_retained,
         serious_research_retained=serious_research_retained,
+        serious_template_retained_count=serious_template_retained_count,
+        serious_template_backed_count=serious_template_backed_count,
+        serious_template_target_count=serious_template_target_count,
         batch_research_retained=batch_research_retained,
         live_proven=live_proven,
         actionable_live=actionable_live,
@@ -329,6 +384,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         batch_backed_families=_top_batch_family_counts(records, backed_only=True),
         serious_retained_templates=_top_serious_template_counts(records, backed_only=False),
         serious_backed_templates=_top_serious_template_counts(records, backed_only=True),
+        serious_family_gaps=serious_family_gaps,
     )
 
 

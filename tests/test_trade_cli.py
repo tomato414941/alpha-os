@@ -401,6 +401,9 @@ def test_build_asset_sleeve_summary_counts_live_serious_source():
     assert summary.serious_research_retained == 1
     assert summary.serious_capital_backed == 1
     assert summary.actionable_live_capital_backed == 0
+    assert summary.serious_template_target_count == 9
+    assert summary.serious_template_retained_count == 1
+    assert summary.serious_template_backed_count == 1
     assert summary.serious_retained_templates == ["macro_dollar_pressure:1"]
     assert summary.serious_backed_templates == ["macro_dollar_pressure:1"]
 
@@ -2012,6 +2015,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                 "capital_backed": 20,
                 "serious_research_retained": 0,
                 "serious_capital_backed": 0,
+                "serious_template_backed_count": 0,
+                "serious_template_target_count": 9,
             },
             "ETH": {
                 "live_proven": 58,
@@ -2019,6 +2024,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                 "capital_backed": 16,
                 "serious_research_retained": 0,
                 "serious_capital_backed": 0,
+                "serious_template_backed_count": 2,
+                "serious_template_target_count": 6,
             },
         }[asset],
     )
@@ -2052,8 +2059,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
