@@ -101,6 +101,20 @@ def test_trade_parser():
     assert args.capital == 500.0
 
 
+def test_hypothesis_seeder_parser_supports_asset_once_and_skip_bootstrap():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args(
+        ["hypothesis-seeder", "--asset", "ETH", "--once", "--skip-bootstrap"]
+    )
+
+    assert args.command == "hypothesis-seeder"
+    assert args.asset == "ETH"
+    assert args.once is True
+    assert args.skip_bootstrap is True
+
+
 def test_trade_runtime_lock_path():
     from alpha_os.runtime_lock import runtime_lock_path
 

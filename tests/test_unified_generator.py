@@ -59,7 +59,56 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     assert all(row.stake == 0 for row in dsl_rows)
     assert all(row.metadata["research_quality_source"] == "exploratory_unscored" for row in dsl_rows)
     assert all(row.metadata["research_quality_status"] == "unscored" for row in dsl_rows)
+    assert all(row.scope["asset"] == "BTC" for row in dsl_rows)
     assert all(row.stake > 0 for row in technical_rows + ml_rows)
+
+    daemon.close()
+
+
+def test_hypothesis_seeder_can_seed_non_btc_observation_only_sleeve(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
+            "eth_price",
+            "eth_volume",
+            "eth_open_interest",
+        ],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.pop_size = 2
+    cfg.alpha_generator.feature_subset_k = 3
+    cfg.alpha_generator.min_feature_catalog_size = 1
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(
+        cfg,
+        primary_asset="ETH",
+        include_bootstrap=False,
+        store=store,
+        client=None,
+    )
+
+    stats = daemon._run_round()
+    rows = store.list_all()
+
+    assert stats.generated_dsl == 2
+    assert stats.inserted_dsl == 2
+    assert stats.inserted_bootstrap == 0
+    assert len(rows) == 2
+    assert all(row.scope["asset"] == "ETH" for row in rows)
+    assert all(row.stake == 0.0 for row in rows)
 
     daemon.close()
 

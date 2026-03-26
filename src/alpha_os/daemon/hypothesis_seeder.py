@@ -65,12 +65,17 @@ class HypothesisSeederDaemon:
         self,
         config: Config,
         *,
+        primary_asset: str = "BTC",
+        include_bootstrap: bool | None = None,
         store: HypothesisStore | None = None,
         client=None,
     ):
         self.config = config
         self.generator_cfg = config.alpha_generator
-        self.primary_asset = "BTC"
+        self.primary_asset = str(primary_asset).upper()
+        if include_bootstrap is None:
+            include_bootstrap = self.primary_asset == "BTC"
+        self.include_bootstrap = bool(include_bootstrap)
         self._budget = self.generator_cfg.pop_size
         self._round = 0
         self._running = False
@@ -83,9 +88,10 @@ class HypothesisSeederDaemon:
         signal.signal(signal.SIGINT, self._handle_signal)
 
         logger.info(
-            "HypothesisSeeder started: budget=%d bootstrap=%d",
+            "HypothesisSeeder started: asset=%s budget=%d bootstrap=%d",
+            self.primary_asset,
             self._budget,
-            len(bootstrap_hypotheses()),
+            len(bootstrap_hypotheses()) if self.include_bootstrap else 0,
         )
 
         try:
@@ -231,6 +237,8 @@ class HypothesisSeederDaemon:
         return inserted, skipped
 
     def _register_bootstrap_hypotheses(self) -> tuple[int, int]:
+        if not self.include_bootstrap:
+            return 0, 0
         self._retire_obsolete_bootstrap_hypotheses()
         inserted = 0
         skipped = 0

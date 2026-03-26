@@ -165,6 +165,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "hypothesis-seeder",
         help="Register random DSL and fixed seed hypotheses into the hypotheses store",
     )
+    hseed.add_argument("--asset", type=str, default="BTC")
+    hseed.add_argument("--once", action="store_true")
+    hseed.add_argument("--skip-bootstrap", action="store_true")
     hseed.add_argument("--config", type=str, default=None)
 
     seh = sub.add_parser(
@@ -1834,8 +1837,25 @@ def cmd_hypothesis_seeder(args: argparse.Namespace) -> None:
 
     from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
 
-    daemon = HypothesisSeederDaemon(config=cfg)
-    daemon.run()
+    daemon = HypothesisSeederDaemon(
+        config=cfg,
+        primary_asset=args.asset,
+        include_bootstrap=not args.skip_bootstrap,
+    )
+    try:
+        if args.once:
+            stats = daemon._run_round()
+            print(
+                "Hypothesis seeding [ONCE]: "
+                f"asset={args.asset.upper()} generated_dsl={stats.generated_dsl} "
+                f"inserted_dsl={stats.inserted_dsl} skipped_dsl={stats.skipped_dsl} "
+                f"inserted_bootstrap={stats.inserted_bootstrap} "
+                f"skipped_bootstrap={stats.skipped_bootstrap}"
+            )
+            return
+        daemon.run()
+    finally:
+        daemon.close()
 
 
 def cmd_unified_generator(args: argparse.Namespace) -> None:
