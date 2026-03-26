@@ -293,6 +293,132 @@ So the correct expansion path is:
 This is slower than "just add ETH," but safer and much closer to the target
 architecture.
 
+### Thousand-Asset Scaling Baseline
+
+The current repository is now asset-aware, but it is not designed for
+thousand-asset scale.
+
+What exists today is enough for:
+
+- a reference sleeve (`BTC`)
+- a small number of additional sleeves (`ETH`, later a few more)
+- incremental validation that the same hypothesis state machine works
+  across assets
+
+What does **not** exist today is the architecture required for:
+
+- hundreds or thousands of sleeves
+- large-scale batched research scoring
+- global portfolio construction across many assets
+
+The reason is structural, not just performance tuning.
+
+#### Why the current shape does not scale to 1000 assets
+
+1. sleeves are still executed largely one by one
+   - seeding, scoring, rebalance, trading, and diagnostics are issued per asset
+2. hypotheses are still stored as mostly asset-specific runtime records
+   - this multiplies row count, lifecycle updates, and diagnostics linearly
+3. storage is optimized for bounded local workflows
+   - SQLite and per-asset local DBs are appropriate for a few sleeves, not
+     for high-cardinality batched operation
+4. compute is sleeve-centric, not vectorized
+   - feature evaluation, signal generation, and observation updates should be
+     batched across assets, not repeated in per-asset loops
+5. allocation is still missing a true global layer
+   - the current runtime can choose within a sleeve, but not yet run a
+     dedicated global allocator across hundreds of sleeves
+
+So the scaling problem is not "make the current loop faster." The scaling
+problem is "change the unit of computation and the unit of persistence."
+
+#### Greenfield scaling model: template + sleeve binding
+
+A thousand-asset greenfield design would not treat each asset-specific
+hypothesis as the primary object.
+
+It would split the concept into three layers:
+
+1. `hypothesis_template`
+   - the reusable predictive logic
+   - examples:
+     - `rank_20(delta_1(active_addresses))`
+     - `sub(funding_rate, mean_5(funding_rate))`
+     - `mean_20(rank_10(open_interest))`
+2. `feature_binding`
+   - how that template maps onto a specific asset's raw features
+   - examples:
+     - BTC: `active_addresses -> btc_active_addresses`
+     - ETH: `active_addresses -> eth_active_addresses`
+3. `sleeve_state`
+   - asset-local runtime state for that template binding
+   - observation counts
+   - research/live/actionable/capital state
+   - allocation trust
+
+In other words:
+
+- template = reusable idea
+- binding = asset-specific data mapping
+- sleeve state = runtime belief and allocation for that bound idea
+
+This matters because at 1000 assets the system must avoid duplicating
+"the same idea" into 1000 unrelated records without shared structure.
+
+#### Control plane vs data plane
+
+A large-scale system should separate:
+
+- `control plane`
+  - hypothesis templates
+  - bindings
+  - sleeve state
+  - allocation policy
+  - diagnostics and lifecycle decisions
+- `data plane`
+  - batched feature loading
+  - batched signal evaluation
+  - batched observation updates
+  - large-scale correlation and redundancy computation
+
+The current repository mixes these concerns more than a 1000-asset system can
+afford. That is acceptable for the current scale. It would not be acceptable
+for a fleet-scale runtime.
+
+#### Allocation must become three-stage
+
+At thousand-asset scale, allocation should be decomposed into:
+
+1. hypothesis selection within a sleeve
+2. sleeve selection within an asset
+3. asset allocation within the global portfolio
+
+The current runtime mostly covers stage 1 and only a minimal version of stage 2.
+Stage 3 is still future work.
+
+#### Practical implication for the current repo
+
+The current repository should not try to "grow into" 1000 assets by simply
+adding more sleeves.
+
+The correct path is:
+
+1. keep validating the sleeve state machine on a few assets
+2. preserve all new logic in asset-aware modules
+3. avoid adding new assumptions that require per-asset bespoke code
+4. document the future template/binding split before large-scale expansion
+
+So the greenfield target for large scale is:
+
+- not `asset-specific hypothesis record` as the primary object
+- but `template + binding + sleeve state`
+
+That is the architectural pivot point between:
+
+- a multi-asset research runtime for a few sleeves
+- and a portfolio OS that can plausibly scale to hundreds or thousands of
+  assets
+
 ## Principles
 
 **1. Prediction-first, metadata-enriched.**
