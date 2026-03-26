@@ -1,6 +1,7 @@
 """Tests for the trade CLI command, Trader rename, and Phase 4 features."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -2413,13 +2414,39 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
             }[asset]
 
     monkeypatch.setattr("alpha_os.validation.testnet.ReadinessChecker", _FakeReadinessChecker)
+    snapshot_path = Path("/tmp/test-sleeve-compare.jsonl")
+    snapshot_path.write_text(
+        json.dumps(
+            {
+                "timestamp_utc": "2026-03-25T00:00:00+00:00",
+                "assets": ["BTC", "ETH"],
+                "rows": [
+                    {
+                        "asset": "BTC",
+                        "serious_template_gaps": [
+                            "onchain_activity_acceleration:1.00",
+                            "derivatives_open_interest_trend:1.00",
+                        ],
+                    },
+                    {
+                        "asset": "ETH",
+                        "serious_template_gaps": [
+                            "derivatives_open_interest_trend:1.00",
+                        ],
+                    },
+                ],
+            }
+        ) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("alpha_os.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
 
     cmd_compare_sleeves(Namespace(asset="BTC", assets="BTC,ETH", config=None))
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):

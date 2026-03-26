@@ -1931,10 +1931,10 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
 
 def cmd_compare_sleeves(args: argparse.Namespace) -> None:
-    rows = _build_sleeve_compare_rows(
+    rows = _attach_template_gap_history(_build_sleeve_compare_rows(
         asset_list=_resolve_asset_list(args),
         cfg=_load_runtime_observation_config(getattr(args, "config", None)),
-    )
+    ))
 
     print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
     for row in rows:
@@ -1948,6 +1948,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"serious={row['serious_retained']}/{row['serious_backed']} "
             f"templates={row['serious_template_backed']}/{row['serious_template_total']} "
             f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
+            f"tpl_delta={row['serious_template_gap_delta']} "
             f"breadth={row['breadth']:.2f} "
             f"latest={row['latest']} "
             f"fills={row['fills']} "
@@ -2654,6 +2655,60 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
             }
         )
     return rows
+
+
+def _load_previous_sleeve_compare_rows() -> dict[str, dict[str, object]]:
+    path = _sleeve_compare_snapshot_path()
+    if not path.exists():
+        return {}
+    last_payload: dict[str, object] | None = None
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                last_payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+    if not isinstance(last_payload, dict):
+        return {}
+    rows = last_payload.get("rows")
+    if not isinstance(rows, list):
+        return {}
+    previous_rows: dict[str, dict[str, object]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        asset = str(row.get("asset", "")).upper()
+        if asset:
+            previous_rows[asset] = row
+    return previous_rows
+
+
+def _attach_template_gap_history(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    previous_rows = _load_previous_sleeve_compare_rows()
+    enriched: list[dict[str, object]] = []
+    for row in rows:
+        asset = str(row["asset"]).upper()
+        current_gaps = {
+            str(item) for item in row.get("serious_template_gaps", []) if str(item)
+        }
+        previous_row = previous_rows.get(asset)
+        if previous_row is None:
+            row["serious_template_gap_delta"] = "first"
+            enriched.append(row)
+            continue
+        previous_gaps = {
+            str(item)
+            for item in previous_row.get("serious_template_gaps", [])
+            if str(item)
+        }
+        closed = len(previous_gaps - current_gaps)
+        new = len(current_gaps - previous_gaps)
+        row["serious_template_gap_delta"] = f"closed:{closed},new:{new}"
+        enriched.append(row)
+    return enriched
 
 
 def _write_sleeve_compare_snapshot(*, asset_list: list[str], config_path: str | None) -> Path:
