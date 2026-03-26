@@ -2088,6 +2088,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                 argparse.Namespace(
                     asset=asset,
                     once=True,
+                    include_bootstrap=asset in bootstrap_assets,
                     skip_bootstrap=asset not in bootstrap_assets,
                     config=args.config,
                 )

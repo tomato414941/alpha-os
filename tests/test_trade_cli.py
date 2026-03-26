@@ -201,6 +201,43 @@ def test_cmd_hypothesis_seeder_can_force_bootstrap(monkeypatch):
     assert captured == {"asset": "ETH", "include_bootstrap": True}
 
 
+def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
+    from alpha_os.cli import cmd_run_sleeves_once
+
+    seed_calls = []
+
+    monkeypatch.setattr("alpha_os.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli.cmd_rebalance_allocation_trust", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+
+    def _seed(args):
+        seed_calls.append((args.asset, args.include_bootstrap, args.skip_bootstrap))
+
+    monkeypatch.setattr("alpha_os.cli.cmd_hypothesis_seeder", _seed)
+
+    cmd_run_sleeves_once(
+        SimpleNamespace(
+            asset="BTC",
+            assets="BTC,ETH",
+            config=None,
+            score_limit=12,
+            bootstrap_assets="BTC",
+            skip_seed=False,
+            skip_score=True,
+            skip_rebalance=True,
+            skip_trade=True,
+            skip_status=True,
+        )
+    )
+
+    assert seed_calls == [
+        ("BTC", True, False),
+        ("ETH", False, True),
+    ]
+
+
 def test_backfill_observation_returns_parser_supports_source_filter():
     from alpha_os.cli import _build_parser
 
