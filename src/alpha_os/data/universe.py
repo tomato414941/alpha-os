@@ -404,9 +404,11 @@ def infer_feature_family(name: str) -> str:
         return "derivatives"
     if lowered.startswith(("btc_mempool_", "btc_hashrate", "btc_active_", "btc_difficulty")):
         return "onchain"
+    if lowered.startswith(("power_",)):
+        return "macro"
     if lowered.startswith(("earthquake_", "sunspot_", "enso_", "github_", "steam_")):
         return "alt"
-    if lowered.startswith(("gdelt_", "eonet_", "fr24_", "glad_", "nasa_")):
+    if lowered.startswith(("gdelt_", "eonet_", "fr24_", "glad_", "nasa_", "infosec_")):
         return "event"
     if lowered.endswith(("_ohlcv", "_usdt", "_btc")) or lowered in {
         "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla", "amd",

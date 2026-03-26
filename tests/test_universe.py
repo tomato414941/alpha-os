@@ -184,3 +184,8 @@ def test_infer_feature_family_treats_futures_and_basis_like_derivatives():
     assert universe.infer_feature_family("futures_taker_ratio_btc") == "derivatives"
     assert universe.infer_feature_family("basis_btc_annualized") == "derivatives"
     assert universe.infer_feature_family("premium_eth_perp") == "derivatives"
+
+
+def test_infer_feature_family_classifies_infosec_and_power_signals():
+    assert universe.infer_feature_family("infosec_exchange_domains") == "event"
+    assert universe.infer_feature_family("power_solar_tokyo") == "macro"
