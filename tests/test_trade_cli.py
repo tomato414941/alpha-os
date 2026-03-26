@@ -392,6 +392,7 @@ def test_build_asset_sleeve_summary_counts_live_serious_source():
                 "lifecycle_actionable_live": True,
                 "lifecycle_capital_backed": True,
                 "lifecycle_bootstrap_trust": 0.08,
+                "serious_template": "macro_dollar_pressure",
             },
         )
     ])
@@ -400,6 +401,8 @@ def test_build_asset_sleeve_summary_counts_live_serious_source():
     assert summary.serious_research_retained == 1
     assert summary.serious_capital_backed == 1
     assert summary.actionable_live_capital_backed == 0
+    assert summary.serious_retained_templates == ["macro_dollar_pressure:1"]
+    assert summary.serious_backed_templates == ["macro_dollar_pressure:1"]
 
 
 def test_needs_trade_evolution_supports_hypothesis_registry():

@@ -2881,6 +2881,8 @@ def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object
         "top_actionable_capped": summary.top_actionable_capped,
         "batch_retained_families": summary.batch_retained_families,
         "batch_backed_families": summary.batch_backed_families,
+        "serious_retained_templates": summary.serious_retained_templates,
+        "serious_backed_templates": summary.serious_backed_templates,
     }
 
 
@@ -3120,6 +3122,13 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         retained = ", ".join(hypothesis_summary["batch_retained_families"]) or "-"
         backed = ", ".join(hypothesis_summary["batch_backed_families"]) or "-"
         print(f"  BatchFam:  retained={retained} backed={backed}")
+    if (
+        hypothesis_summary["serious_retained_templates"]
+        or hypothesis_summary["serious_backed_templates"]
+    ):
+        retained = ", ".join(hypothesis_summary["serious_retained_templates"]) or "-"
+        backed = ", ".join(hypothesis_summary["serious_backed_templates"]) or "-"
+        print(f"  SeriousTpl: retained={retained} backed={backed}")
     if actionable_window is not None:
         print(
             "  ActionWin: "

@@ -95,6 +95,26 @@ def _top_batch_family_counts(records, *, backed_only: bool, n: int = 3) -> list[
     return [f"{family}:{count}" for family, count in counts.most_common(n)]
 
 
+def _top_serious_template_counts(records, *, backed_only: bool, n: int = 3) -> list[str]:
+    counts: Counter[str] = Counter()
+    for record in records:
+        if str(getattr(record, "source", "") or "") != "bootstrap_serious":
+            continue
+        metadata = getattr(record, "metadata", {}) or {}
+        retained = bool(metadata.get("lifecycle_research_retained", False)) or bool(
+            metadata.get("lifecycle_live_proven", False)
+        )
+        if not retained:
+            continue
+        if backed_only and not bool(metadata.get("lifecycle_capital_backed", False)):
+            continue
+        template_id = str(metadata.get("serious_template", "") or "")
+        if not template_id:
+            continue
+        counts[template_id] += 1
+    return [f"{template}:{count}" for template, count in counts.most_common(n)]
+
+
 @dataclass(frozen=True)
 class HypothesisStatusCounts:
     active: int
@@ -171,6 +191,8 @@ class AssetSleeveSummary:
     top_actionable_capped: list[str] = field(default_factory=list)
     batch_retained_families: list[str] = field(default_factory=list)
     batch_backed_families: list[str] = field(default_factory=list)
+    serious_retained_templates: list[str] = field(default_factory=list)
+    serious_backed_templates: list[str] = field(default_factory=list)
 
 
 def build_hypothesis_status_counts(store, *, asset: str | None = None) -> HypothesisStatusCounts:
@@ -305,6 +327,8 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         top_actionable_capped=_top_actionable_redundancy_caps(records),
         batch_retained_families=_top_batch_family_counts(records, backed_only=False),
         batch_backed_families=_top_batch_family_counts(records, backed_only=True),
+        serious_retained_templates=_top_serious_template_counts(records, backed_only=False),
+        serious_backed_templates=_top_serious_template_counts(records, backed_only=True),
     )
 
 
