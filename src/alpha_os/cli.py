@@ -43,64 +43,6 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command")
 
-    # generate (legacy top-level alias; prefer `research generate`)
-    gen = sub.add_parser("generate", help=argparse.SUPPRESS)
-    gen.add_argument("--count", type=int, default=5000)
-    gen.add_argument("--asset", type=str, default="NVDA")
-    gen.add_argument("--seed", type=int, default=42)
-    gen.add_argument("--config", type=str, default=None)
-
-    # backtest (legacy top-level alias; prefer `research backtest`)
-    bt = sub.add_parser("backtest", help=argparse.SUPPRESS)
-    bt.add_argument("--count", type=int, default=5000)
-    bt.add_argument("--top", type=int, default=20)
-    bt.add_argument("--asset", type=str, default="NVDA")
-    bt.add_argument("--days", type=int, default=500,
-                    help="Number of days (--synthetic only)")
-    bt.add_argument("--seed", type=int, default=42)
-    bt.add_argument("--synthetic", action="store_true",
-                    help="Use synthetic random-walk data instead of real data")
-    bt.add_argument("--eval-window", type=int, default=0,
-                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
-    bt.add_argument("--config", type=str, default=None)
-
-    # evolve (legacy top-level alias; prefer `research evolve`)
-    evo = sub.add_parser("evolve", help=argparse.SUPPRESS)
-    evo.add_argument("--pop-size", type=int, default=200)
-    evo.add_argument("--generations", type=int, default=30)
-    evo.add_argument("--asset", type=str, default="NVDA")
-    evo.add_argument("--days", type=int, default=500,
-                    help="Number of days (--synthetic only)")
-    evo.add_argument("--top", type=int, default=20)
-    evo.add_argument("--seed", type=int, default=42)
-    evo.add_argument("--synthetic", action="store_true",
-                    help="Use synthetic random-walk data instead of real data")
-    evo.add_argument("--eval-window", type=int, default=0,
-                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
-    evo.add_argument("--layer", type=int, default=3, choices=[2, 3],
-                    help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
-    evo.add_argument("--config", type=str, default=None)
-
-    # validate (legacy top-level alias; prefer `research validate`)
-    val = sub.add_parser("validate", help=argparse.SUPPRESS)
-    val.add_argument("--expr", type=str, required=True)
-    val.add_argument("--asset", type=str, default="NVDA")
-    val.add_argument("--days", type=int, default=500,
-                    help="Number of days (--synthetic only)")
-    val.add_argument("--seed", type=int, default=42)
-    val.add_argument("--synthetic", action="store_true",
-                    help="Use synthetic random-walk data instead of real data")
-    val.add_argument("--eval-window", type=int, default=0,
-                    help="Evaluation window in days (0=all data, e.g. 200 for recent)")
-    val.add_argument("--layer", type=int, default=3, choices=[2, 3],
-                    help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)")
-    val.add_argument("--config", type=str, default=None)
-
-    # evaluate (legacy top-level alias; prefer `research evaluate`)
-    eva = sub.add_parser("evaluate", help=argparse.SUPPRESS)
-    eva.add_argument("--expr", type=str, required=True, help="DSL expression string")
-    eva.add_argument("--config", type=str, default=None)
-
     # produce-predictions
     pp = sub.add_parser("produce-predictions", help="Evaluate active hypotheses and write to prediction store")
     pp.add_argument("--asset", type=str, default="BTC")
@@ -110,10 +52,6 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Exit non-zero when no hypothesis predictions are written",
     )
     pp.add_argument("--config", type=str, default=None)
-
-    # produce-classical (legacy top-level alias; prefer `research produce-classical`)
-    pc = sub.add_parser("produce-classical", help=argparse.SUPPRESS)
-    pc.add_argument("--config", type=str, default=None)
 
     # paper
     ppr = sub.add_parser("paper", help="Paper trade with live hypotheses")
@@ -3364,15 +3302,7 @@ def main(argv: list[str] | None = None) -> None:
         parser.print_help()
         sys.exit(1)
 
-    if args.command == "generate":
-        cmd_generate(args)
-    elif args.command == "backtest":
-        cmd_backtest(args)
-    elif args.command == "evolve":
-        cmd_evolve(args)
-    elif args.command == "validate":
-        cmd_validate(args)
-    elif args.command == "paper":
+    if args.command == "paper":
         cmd_paper(args)
     elif args.command == "trade":
         cmd_trade(args)
@@ -3448,9 +3378,5 @@ def main(argv: list[str] | None = None) -> None:
             cmd_replay_experiment(args)
         elif args.research_command == "replay-matrix":
             cmd_replay_matrix(args)
-    elif args.command == "evaluate":
-        cmd_evaluate_expression(args)
     elif args.command == "produce-predictions":
         cmd_produce_predictions(args)
-    elif args.command == "produce-classical":
-        cmd_produce_classical(args)

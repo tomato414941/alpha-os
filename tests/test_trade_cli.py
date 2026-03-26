@@ -1129,6 +1129,12 @@ def test_legacy_lifecycle_parser():
         "replay-experiment",
         "replay-matrix",
         "paper",
+        "generate",
+        "backtest",
+        "evolve",
+        "validate",
+        "evaluate",
+        "produce-classical",
     ],
 )
 def test_legacy_registry_commands_are_not_parsed(command):
