@@ -2098,6 +2098,12 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     def _should_rebalance_asset(asset: str) -> bool:
         return _should_refresh_asset(asset) or _should_run_serious(asset)
 
+    def _score_limit_for_asset(asset: str) -> int:
+        return _template_gap_driven_score_limit(
+            asset=asset,
+            base_limit=args.score_limit,
+        )
+
     print(
         "Sleeve loop [ONCE]: "
         f"assets={','.join(asset_list)} "
@@ -2114,7 +2120,11 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         for asset in asset_list:
             if not _should_refresh_asset(asset):
                 continue
+            score_limit = _score_limit_for_asset(asset)
             print(f"\n--- Seed {asset} ---")
+            if score_limit <= 0:
+                print("Seed skipped: no serious template gaps remain.")
+                continue
             cmd_hypothesis_seeder(
                 argparse.Namespace(
                     asset=asset,
@@ -2158,12 +2168,16 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         for asset in asset_list:
             if not _should_refresh_asset(asset):
                 continue
+            score_limit = _score_limit_for_asset(asset)
             print(f"\n--- Score {asset} ---")
+            if score_limit <= 0:
+                print("Score skipped: no serious template gaps remain.")
+                continue
             cmd_score_exploratory_hypotheses(
                 argparse.Namespace(
                     asset=asset,
                     config=args.config,
-                    limit=args.score_limit,
+                    limit=score_limit,
                     dry_run=False,
                 )
             )
@@ -3021,6 +3035,37 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
             }
         )
     return rows
+
+
+def _template_gap_driven_score_limit(*, asset: str, base_limit: int) -> int:
+    from alpha_os.hypotheses.serious_templates import (
+        serious_seed_specs,
+        serious_template_gap_scores,
+    )
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    try:
+        limit = int(base_limit)
+    except (TypeError, ValueError):
+        limit = 0
+    if limit <= 0:
+        return 0
+    if not serious_seed_specs(asset):
+        return limit
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        gaps = serious_template_gap_scores(
+            asset,
+            store.list_observation_active(asset=asset),
+        )
+    finally:
+        store.close()
+
+    gap_count = sum(1 for gap in gaps.values() if float(gap) > 0.0)
+    if gap_count <= 0:
+        return 0
+    return min(limit, max(4, gap_count * 2))
 
 
 def _write_sleeve_compare_snapshot(*, asset_list: list[str], config_path: str | None) -> Path:
