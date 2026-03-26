@@ -134,11 +134,13 @@ def test_init_universe():
     assert universe.FEATURE_CATALOG == ["sig_86400"]
 
 
-def test_build_feature_list_adds_daily_derived_features_for_onchain_and_derivatives(monkeypatch):
+def test_build_feature_list_adds_daily_derived_features_for_macro_onchain_derivatives_and_backing_price(monkeypatch):
     monkeypatch.setattr(
         universe,
         "load_daily_signals",
         lambda *args, **kwargs: [
+            "btc_ohlcv",
+            "sol_usdt",
             "btc_hashrate",
             "funding_rate_btc",
             "fear_greed",
@@ -156,7 +158,13 @@ def test_build_feature_list_adds_daily_derived_features_for_onchain_and_derivati
     assert "delta_1__funding_rate_btc" in features
     assert "roc_5__funding_rate_btc" in features
     assert "zscore_20__funding_rate_btc" in features
-    assert "delta_1__fear_greed" not in features
+    assert "delta_1__fear_greed" in features
+    assert "roc_5__fear_greed" in features
+    assert "zscore_20__fear_greed" in features
+    assert "delta_1__btc_ohlcv" in features
+    assert "roc_5__btc_ohlcv" in features
+    assert "zscore_20__btc_ohlcv" in features
+    assert "delta_1__sol_usdt" not in features
 
 
 def test_derived_feature_names_resolve_to_raw_family_and_signal():
