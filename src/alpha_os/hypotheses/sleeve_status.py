@@ -29,6 +29,12 @@ def runtime_cohort(record) -> str:
     return "other"
 
 
+def combine_cohort(record) -> str:
+    if str(getattr(record, "source", "")) == "bootstrap_serious":
+        return "serious"
+    return runtime_cohort(record)
+
+
 def _top_runtime_hypotheses(records, metric_key: str, *, n: int = 3) -> list[str]:
     ranked: list[tuple[float, object]] = []
     for record in records:
@@ -374,6 +380,7 @@ def build_latest_combine_summary(
 ) -> LatestCombineSummary:
     cohort_data = {
         "bootstrap": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
+        "serious": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
         "batch": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
         "live": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
         "other": {"n": 0, "nonzero": 0, "weight": 0.0, "weighted_signal": 0.0},
@@ -389,7 +396,7 @@ def build_latest_combine_summary(
         if record is None:
             missing_current += 1
             continue
-        cohort = runtime_cohort(record)
+        cohort = combine_cohort(record)
         weight = float(weights.get(hypothesis_id, 0.0))
         if weight <= 0.0:
             dropped_current += 1

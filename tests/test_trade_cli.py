@@ -2181,6 +2181,19 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
         },
     ))
     store.register(HypothesisRecord(
+        hypothesis_id="serious",
+        kind="dsl",
+        definition={"expression": "z"},
+        source="bootstrap_serious",
+        stake=1.0,
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": True,
+            "lifecycle_capital_backed": True,
+            "lifecycle_research_quality_source": "bootstrap_seed",
+        },
+    ))
+    store.register(HypothesisRecord(
         hypothesis_id="live",
         kind="dsl",
         definition={"expression": "y"},
@@ -2207,24 +2220,26 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
     ))
     tracker.save_hypothesis_signals(
         "2026-03-23T00:00:00",
-        {"boot": 0.3, "batch": -0.2, "live": 0.1},
+        {"boot": 0.3, "batch": -0.2, "serious": 0.25, "live": 0.1},
     )
     tracker.close()
 
     monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
     monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
 
-    cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
+    cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=4))
     output = capsys.readouterr().out
 
     assert "Latest Combine (BTC)" in output
     assert "Combined:  stored=+0.123400" in output
-    assert "Snapshot:  selected=3 current_backed=3 dropped=0 missing=0" in output
-    assert "Current:   nonzero=3 zero=0" in output
+    assert "Snapshot:  selected=4 current_backed=4 dropped=0 missing=0" in output
+    assert "Current:   nonzero=4 zero=0" in output
     assert "Cohorts:   bootstrap n=1/1" in output
+    assert "serious n=1/1" in output
     assert "batch n=1/1" in output
     assert "live n=1/1" in output
     assert "Top:       boot cohort=bootstrap" in output
+    assert "Top:       serious cohort=serious" in output
     assert "Top:       batch cohort=batch" in output
     assert "Top:       live cohort=live" in output
 
