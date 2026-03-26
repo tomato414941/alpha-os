@@ -9,6 +9,8 @@ Current trusted path:
 - `produce-predictions`
 - `trade --once --venue paper`
 - `runtime-status`
+- `run-sleeves-once`
+- `compare-sleeves`
 
 The active recovery goal is not to restore every legacy subsystem. It is to
 make the bounded hypotheses-first runtime trustworthy again and only then
@@ -45,25 +47,26 @@ Exploratory or archival files are intentionally lower priority:
 
 ## Current Runtime Path
 
-The current runtime is single-asset and hypotheses-first.
+The current runtime is bounded, multi-sleeve, and hypotheses-first.
+Today that means:
+
+- `BTC` as the bounded reference sleeve
+- `ETH` as the first non-reference validation sleeve
+- repeated bounded oneshot runs instead of always-on services
 
 ```
 signal-noise
     │
     ▼
-sync-signal-cache
-    │
-    ▼
-hypotheses.db  <-  hypothesis-seeder
-    │
-    ▼
-produce-predictions
-    │
-    ▼
-trade --once --venue paper
-    │
-    ▼
-runtime-status / readiness
+hypothesis-seeder  ->  hypotheses.db
+    │                     │
+    └──── sync-signal-cache / produce-predictions
+                          │
+                          ▼
+              trade --once --venue paper
+                          │
+                          ▼
+          runtime-status / compare-sleeves / readiness
 ```
 
 What is current:
@@ -109,9 +112,11 @@ See `OPERATING_BOUNDARIES.md` for the current migration target.
 
 These remain in the repo, but they are not the current runtime:
 
-- `paper --replay`
-- `replay-experiment`
-- `simulator`
+- `research paper-replay`
+- `research replay-experiment`
+- `research replay-matrix`
+- `legacy admission-daemon`
+- `legacy prune-stale-candidates`
 - `managed_alphas` / `deployed_alphas`
 
 Treat them as legacy experimental or archival material unless they are
@@ -153,9 +158,13 @@ python -m alpha_os trade --once --asset BTC --venue paper --strict --config conf
 # Check readiness / runtime observation
 python -m alpha_os runtime-status --asset BTC --config config/dev.toml
 
+# Run the bounded multi-sleeve loop
+python -m alpha_os run-sleeves-once --assets BTC,ETH --config config/dev.toml --score-limit 12
+python -m alpha_os compare-sleeves --assets BTC,ETH --config config/dev.toml
+
 # Legacy experimental replay path
-python -m alpha_os paper --replay --start 2025-09-01 --end 2026-03-05
-python -m alpha_os replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
+python -m alpha_os research paper-replay --start 2025-09-01 --end 2026-03-05
+python -m alpha_os research replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
 ```
 
 ## Configuration
@@ -173,7 +182,7 @@ in the runtime environment. `alpha-os` will automatically pass it to
 - prefer `hypothesis` for a predictive unit
 - reserve `alpha` for excess-return outcome or legacy code names
 - `live hypotheses` is the runtime subset
-- `paper --replay` and `replay-experiment` are legacy experimental paths
+- `research paper-replay` and `research replay-experiment` are legacy experimental paths
 - `trade --once --venue paper` is the current bounded runtime path
 
 ## Current Observation

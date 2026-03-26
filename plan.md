@@ -124,6 +124,14 @@ The remaining residue should be handled as active cleanup work here:
 - keep legacy replay and archive workflows readable, but not on the current
   runtime path
 
+Recent progress:
+
+- moved `pipeline_runner`, `replay_experiment`, and `replay_simulator` under
+  `legacy/`
+- moved `deployment_planner` and `registry_signal_map` under `legacy/`
+- moved legacy replay / admission command handlers into `legacy.cli_commands`
+- `cli.py` now acts as a thinner dispatcher for those legacy surfaces
+
 ## Notes Moved From Design Docs
 
 These items live here on purpose because they are expected to change often:

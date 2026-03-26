@@ -244,8 +244,8 @@ Support classes:
 | `testnet-readiness` | current | keep as readiness accounting for repeated bounded runs |
 | `lifecycle`, `rebalance-allocation-trust`, `analyze-live-breadth` | current | keep only if they operate on `hypotheses` and remain bounded |
 | `generate`, `backtest`, `evolve`, `validate`, `evaluate`, `produce-classical` | research | move under an explicit research boundary; do not treat as runtime commands |
-| `paper --replay`, `replay-experiment`, `replay-matrix` | research | keep only for offline experiments until rewritten around current inputs |
-| `admission-daemon`, `prune-stale-candidates`, `enqueue-discovery-pool`, `unified-generator`, `alpha-funnel` | archive | legacy registry/discovery surface; freeze and remove from the default runtime path |
+| `research paper-replay`, `research replay-experiment`, `research replay-matrix` | legacy | keep only for offline experiments until rewritten around current inputs |
+| `legacy admission-daemon`, `legacy prune-stale-candidates`, `enqueue-discovery-pool`, `unified-generator`, `alpha-funnel` | archive | legacy registry/discovery surface; freeze and remove from the default runtime path |
 | `paper --schedule`, `trade --schedule`, `paper --summary`, `trade --summary`, event-driven trade flags | archive | recovery model prefers bounded oneshot jobs; always-on convenience paths are out of scope |
 
 ### Module Classification
@@ -255,9 +255,8 @@ Support classes:
 | `hypotheses`, `predictions.store`, `data`, `execution`, `risk`, `validation.testnet`, `runtime_lock`, `runtime_profile` | current | these form the bounded recovery runtime and should be the main maintenance target |
 | `paper.trader`, `paper.tracker`, `daemon.hypothesis_seeder` | current | keep only the minimum code needed for bounded paper runtime and seeding |
 | `dsl`, `backtest`, `evolution`, `experiments.matrix`, `predictions.classical_producer` | research | keep available for offline work, but isolate from runtime assumptions |
-| `research.replay_simulator`, `research.tactical`, `paper.event_driven` | research | keep only as lab code; they must not define scheduler or runtime truth |
-| `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `legacy.admission`, `legacy.lifecycle`, `legacy.alpha_generator` | archive | registry-era orchestration; no new features unless a concrete rewrite is approved |
-| `research.diversity`, `research.handcrafted`, `research.replay_experiment`, `research.deployment_planner`, `research.pipeline_runner`, `research.replay_simulator`, `research.tactical` | research | bounded lab helpers and replay utilities; keep out of the runtime source of truth |
+| `paper.event_driven`, `research.diversity`, `research.handcrafted` | research | bounded lab helpers; keep out of the runtime source of truth |
+| `legacy.managed_alphas`, `legacy.deployed_alphas`, `legacy.admission_replay`, `legacy.funnel`, `legacy.admission`, `legacy.lifecycle`, `legacy.alpha_generator`, `legacy.pipeline_runner`, `legacy.replay_experiment`, `legacy.replay_simulator`, `legacy.deployment_planner`, `legacy.registry_signal_map`, `legacy.tactical`, `legacy.cli_commands` | archive | registry-era orchestration and replay helpers; no new features unless a concrete rewrite is approved |
 | `alpha` | compatibility shell | reserved package name only; no internal imports or wrapper modules remain |
 
 ### Alpha Package Classification
@@ -404,6 +403,13 @@ Legacy code is now isolated behind the `legacy` package.
   - `legacy.lifecycle`
   - `legacy.alpha_generator`
   - `legacy.funnel`
+  - `legacy.pipeline_runner`
+  - `legacy.replay_experiment`
+  - `legacy.replay_simulator`
+  - `legacy.deployment_planner`
+  - `legacy.registry_signal_map`
+  - `legacy.tactical`
+  - `legacy.cli_commands`
 
 These paths may still exist for replay, migration, or archive workflows, but
 they are not the hypotheses-first runtime mainline.
@@ -417,8 +423,11 @@ layer.
   - `admission_queue`, `deployed_registry`
   - `deployed_alphas`, `admission_replay`
   - `admission`, `lifecycle`, `alpha_generator`, `funnel`
+  - `pipeline_runner`, `replay_experiment`, `replay_simulator`
+  - `deployment_planner`, `registry_signal_map`, `tactical`, `cli_commands`
 - do not add new business logic directly to `ManagedAlphaStore`
-- prefer extracting pure planning or scoring logic into `research.*`
+- prefer extracting registry-era helpers into focused `legacy.*` modules
+- keep `research.*` for bounded analysis that does not define runtime truth
 - prefer extracting table-specific I/O into focused `legacy.*` helpers
 - preserve legacy entrypoints only while tests, scripts, or replay flows still depend on them
 
@@ -429,6 +438,9 @@ Near-term shrink candidates:
 - `legacy.deployed_alphas`
 - `legacy.managed_alphas`
 - `legacy.funnel`
+- `legacy.pipeline_runner`
+- `legacy.replay_experiment`
+- `legacy.replay_simulator`
 
 Intended end state:
 
