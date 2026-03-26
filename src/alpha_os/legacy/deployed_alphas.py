@@ -7,13 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
-
-from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME, SIGNAL_CACHE_DB
-from ..data.store import DataStore
-from ..data.universe import build_feature_list
-from ..dsl import parse
-from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
+from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME
 from ..forward.tracker import HypothesisObservationTracker
 from ..research.deployment_planner import (
     DeployedAlphaPlan,
@@ -21,9 +15,10 @@ from ..research.deployment_planner import (
     plan_deployed_alphas,
     plan_registry_active_prune,
 )
+from ..research.registry_signal_map import build_registry_signal_map
 from .admission_replay import backup_registry_db
 from .managed_alphas import ManagedAlphaStore
-from .registry_types import AlphaRecord, AlphaState
+from .registry_types import AlphaState
 
 
 @dataclass(frozen=True)
@@ -57,7 +52,7 @@ def refresh_deployed_alphas(
     try:
         resolved_asset = (asset or db_path.parent.name).upper()
         records = registry.list_all()
-        signal_by_id = _build_signal_map(
+        signal_by_id = build_registry_signal_map(
             resolved_asset,
             config,
             records,
@@ -116,7 +111,7 @@ def prune_registry_active_duplicates(
         resolved_asset = (asset or db_path.parent.name).upper()
         records = registry.list_all()
         current_deployed_ids = registry.deployed_alpha_ids()
-        signal_by_id = _build_signal_map(
+        signal_by_id = build_registry_signal_map(
             resolved_asset,
             config,
             records,
@@ -158,45 +153,3 @@ def prune_registry_active_duplicates(
     finally:
         tracker.close()
         registry.close()
-
-
-
-
-def _build_signal_map(
-    asset: str,
-    config: Config,
-    records: list[AlphaRecord],
-) -> dict[str, np.ndarray]:
-    active_records = [
-        record for record in records
-        if AlphaState.canonical(record.state) == AlphaState.ACTIVE
-    ]
-    if not active_records:
-        return {}
-
-    lookback = max(int(config.deployment.signal_similarity_lookback), 0)
-    if lookback <= 1 or config.deployment.signal_similarity_max >= 1.0:
-        return {}
-
-    store = DataStore(SIGNAL_CACHE_DB, None)
-    try:
-        features = build_feature_list(asset)
-        matrix = store.get_matrix(features)
-    finally:
-        store.close()
-    if matrix.empty:
-        return {}
-
-    if lookback > 0:
-        matrix = matrix.tail(lookback)
-    data = {column: matrix[column].to_numpy(dtype=np.float64) for column in matrix.columns}
-    n_days = len(matrix)
-    signal_by_id: dict[str, np.ndarray] = {}
-    for record in active_records:
-        try:
-            expr = parse(record.expression)
-            signal = normalize_signal(evaluate_expression(expr, data, n_days))
-        except (EvaluationError, Exception):
-            continue
-        signal_by_id[record.alpha_id] = np.asarray(signal, dtype=np.float64)
-    return signal_by_id
