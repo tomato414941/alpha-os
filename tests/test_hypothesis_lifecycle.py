@@ -5,6 +5,7 @@ import pytest
 
 from alpha_os.hypotheses.quality import blend_quality
 from alpha_os.hypotheses.runtime_policy import (
+    build_trading_signal_history_map,
     rank_trading_records,
     select_decorrelated_trading_ids,
 )
@@ -29,6 +30,7 @@ from alpha_os.hypotheses import (
     weighted_prediction,
 )
 from alpha_os.data.store import DataStore
+from alpha_os.dsl.evaluator import normalize_signal
 from alpha_os.forward.tracker import HypothesisObservationTracker
 from alpha_os.hypotheses.lifecycle import AllocationRebalanceEntry
 
@@ -179,6 +181,36 @@ def test_select_decorrelated_trading_ids_skips_highly_correlated_candidates():
     )
 
     assert selected == ["a", "c"]
+
+
+def test_build_trading_signal_history_map_uses_dsl_or_fallback_history():
+    records = [
+        HypothesisRecord(
+            hypothesis_id="dsl",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+        ),
+        HypothesisRecord(
+            hypothesis_id="fallback",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "(unknown x)"},
+        ),
+    ]
+
+    history_by_id = build_trading_signal_history_map(
+        records,
+        candidate_ids=["dsl", "fallback", "missing"],
+        data={"fear_greed": np.array([1.0, 2.0, 3.0, 4.0])},
+        asset="BTC",
+        fallback_signal_arrays={"fallback": np.array([0.1, 0.2, 0.3, 0.4])},
+        lookback=3,
+    )
+
+    assert list(history_by_id) == ["dsl", "fallback"]
+    assert history_by_id["dsl"].tolist() == normalize_signal(
+        np.array([1.0, 2.0, 3.0, 4.0])
+    )[-3:].tolist()
+    assert history_by_id["fallback"].tolist() == [0.2, 0.3, 0.4]
 
 
 def test_compute_daily_contributions_penalizes_redundant_hypotheses():

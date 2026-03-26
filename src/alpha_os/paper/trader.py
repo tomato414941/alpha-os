@@ -50,6 +50,7 @@ from ..hypotheses.monitor import HypothesisMonitor, RegimeDetector
 from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
 from ..hypotheses.runtime_policy import (
+    build_trading_signal_history_map,
     rank_trading_records,
     select_decorrelated_trading_ids,
 )
@@ -854,38 +855,26 @@ class Trader:
             if record.hypothesis_id in hypothesis_signals
         }
         if len(selection_signal_ids) > max_trading:
-            from alpha_os.hypotheses.breadth import hypothesis_signal_series
-
             candidate_ids = [
                 aid for aid in hypothesis_signals.keys()
                 if aid in selection_signal_ids
             ]
             lookback = min(252, len(matrix))
-            signal_histories: list[np.ndarray] = []
-            filtered_candidate_ids: list[str] = []
-            record_map = {record.hypothesis_id: record for record in trading_candidates}
-            for hypothesis_id in candidate_ids:
-                record = record_map.get(hypothesis_id)
-                history = None
-                if record is not None:
-                    history = hypothesis_signal_series(record, data=data, asset=self.asset)
-                if history is None:
-                    history = hypothesis_signal_arrays.get(hypothesis_id)
-                if history is None:
-                    continue
-                signal_histories.append(np.asarray(history[-lookback:], dtype=np.float64))
-                filtered_candidate_ids.append(hypothesis_id)
-            candidate_ids = filtered_candidate_ids
+            signal_history_by_id = build_trading_signal_history_map(
+                trading_candidates,
+                candidate_ids=candidate_ids,
+                data=data,
+                asset=self.asset,
+                fallback_signal_arrays=hypothesis_signal_arrays,
+                lookback=lookback,
+            )
             selected_ids = set(
                 select_decorrelated_trading_ids(
                     candidate_ids,
-                    signal_history_by_id={
-                        hypothesis_id: signal_histories[idx]
-                        for idx, hypothesis_id in enumerate(candidate_ids)
-                    },
+                    signal_history_by_id=signal_history_by_id,
                     blended_quality_by_id={
                         hypothesis_id: quality_estimates[hypothesis_id].blended_quality
-                        for hypothesis_id in candidate_ids
+                        for hypothesis_id in signal_history_by_id
                     },
                     max_trading=max_trading,
                     max_correlation=CombinerConfig().max_correlation,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from .breadth import hypothesis_signal_series
 from .combiner import CombinerConfig, select_low_correlation
 from .state_lifecycle import ST_ACTIVE, ST_DORMANT
 from .quality import QualityEstimate
@@ -115,6 +116,30 @@ def select_decorrelated_trading_ids(
         config,
     )
     return [filtered_candidate_ids[idx] for idx in selected_idx]
+
+
+def build_trading_signal_history_map(
+    records: list,
+    *,
+    candidate_ids: list[str],
+    data: dict[str, np.ndarray],
+    asset: str,
+    fallback_signal_arrays: dict[str, np.ndarray],
+    lookback: int,
+) -> dict[str, np.ndarray]:
+    record_map = {record.hypothesis_id: record for record in records}
+    signal_history_by_id: dict[str, np.ndarray] = {}
+    for hypothesis_id in candidate_ids:
+        record = record_map.get(hypothesis_id)
+        history = None
+        if record is not None:
+            history = hypothesis_signal_series(record, data=data, asset=asset)
+        if history is None:
+            history = fallback_signal_arrays.get(hypothesis_id)
+        if history is None:
+            continue
+        signal_history_by_id[hypothesis_id] = np.asarray(history[-lookback:], dtype=np.float64)
+    return signal_history_by_id
 
 
 def dormant_indices(state_codes) -> list[int]:
