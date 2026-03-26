@@ -7,7 +7,7 @@ runtime entrypoints.
 For current operating truth, prefer:
 
 - `README.md` for the current runtime path
-- `RECOVERY.md` for trust boundaries, scheduler policy, and recovery order
+- `OPERATING_BOUNDARIES.md` for trust boundaries and scheduler policy
 - `docs/README.md` for the documentation map
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 
@@ -203,7 +203,7 @@ the runtime source of truth?"
 
 The division of labor between documents should therefore be:
 
-- `RECOVERY.md`
+- `OPERATING_BOUNDARIES.md`
   - what is trusted today
 - `docs/portfolio-runtime-principles.md`
   - current hypotheses-first portfolio semantics and near-term design choices

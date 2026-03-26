@@ -9,7 +9,7 @@ runtime naming.
 Prefer:
 
 - `README.md` for the current runtime path
-- `RECOVERY.md` for the current trusted / untrusted boundary
+- `OPERATING_BOUNDARIES.md` for the current trusted / untrusted boundary
 - `DESIGN.md` for the active architectural rationale
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 

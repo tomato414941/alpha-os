@@ -9,7 +9,7 @@ mainline.
 Prefer:
 
 - `README.md` for the current runtime path
-- `RECOVERY.md` for the current operating posture
+- `OPERATING_BOUNDARIES.md` for the current operating posture
 - `DESIGN.md` for the broader architecture
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 

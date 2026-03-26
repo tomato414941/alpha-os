@@ -2,7 +2,7 @@
 
 Design note. This document captures the current discussion around what the
 hypotheses-first runtime should optimize for after the mainline is working.
-It complements [RECOVERY.md](../RECOVERY.md) and [DESIGN.md](../DESIGN.md).
+It complements [OPERATING_BOUNDARIES.md](../OPERATING_BOUNDARIES.md) and [DESIGN.md](../DESIGN.md).
 
 ## Scope
 
@@ -25,7 +25,7 @@ This file is not the right place for:
 
 For those, prefer:
 
-- [RECOVERY.md](../RECOVERY.md) for current operating truth
+- [OPERATING_BOUNDARIES.md](../OPERATING_BOUNDARIES.md) for current operating truth
 - [DESIGN.md](../DESIGN.md) for greenfield baseline and long-horizon architecture
 - [docs/README.md](./README.md) for the documentation map
 

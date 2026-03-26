@@ -9,7 +9,7 @@ entrypoint set.
 Prefer:
 
 - `README.md` for the current single-asset runtime path
-- `RECOVERY.md` for the current recovery boundary
+- `OPERATING_BOUNDARIES.md` for the current recovery boundary
 - `DESIGN.md` for shared architectural rationale
 - `docs/portfolio-runtime-principles.md` for portfolio / allocation terminology
 

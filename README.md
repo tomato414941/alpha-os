@@ -21,7 +21,7 @@ Prefer this order:
 1. `README.md`
    - project entry point
    - current runtime path
-2. `RECOVERY.md`
+2. `OPERATING_BOUNDARIES.md`
    - current operating truth
    - trusted / untrusted boundary
 3. `docs/README.md`
@@ -90,7 +90,7 @@ either removed or treated as legacy experimental material.
 
 - **operating posture**: `unsafe to run`
 - **trusted bounded path**: hypotheses-first `paper` runtime only
-- **current source of truth**: see `RECOVERY.md` for repair order and restart gate
+- **current source of truth**: see `OPERATING_BOUNDARIES.md` for runtime boundaries and restart gate
 - **scheduler posture**: do not re-enable old units; use the recovery draft only as a template
 
 ### Simplified Direction
@@ -104,7 +104,7 @@ The near-term simplification direction is:
 - no separate `candidates` or `deployed_alphas` in the target design
 
 This is a deliberate temporary simplification to restore trust in the system.
-See `RECOVERY.md` for the current migration target.
+See `OPERATING_BOUNDARIES.md` for the current migration target.
 
 ### Legacy Experimental Paths
 
@@ -124,7 +124,7 @@ explicitly rewritten around hypotheses-first inputs.
 For deeper rationale and longer-term design, prefer:
 
 - [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md)
-- [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md)
+- [OPERATING_BOUNDARIES.md](/home/dev/projects/alpha-os/OPERATING_BOUNDARIES.md)
 - [OLD_DESIGN.md](/home/dev/projects/alpha-os/docs/archive/OLD_DESIGN.md)
 
 ## Setup
@@ -204,7 +204,7 @@ ruff check src/
 
 ## Further Reading
 
-- [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md): current runtime truth, scheduler draft, and exit criteria
+- [OPERATING_BOUNDARIES.md](/home/dev/projects/alpha-os/OPERATING_BOUNDARIES.md): current runtime truth, safety boundaries, and exit criteria
 - [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): architectural rationale and long-term direction
 - [ROADMAP.md](/home/dev/projects/alpha-os/docs/exploratory/ROADMAP.md): future ideas and expansion work
 - [OLD_DESIGN.md](/home/dev/projects/alpha-os/docs/archive/OLD_DESIGN.md): archived registry-era design material

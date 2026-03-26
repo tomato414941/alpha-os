@@ -16,10 +16,10 @@ For most work, read in this order:
    - project entry point
    - current trusted runtime path
    - quick orientation
-2. [`RECOVERY.md`](../RECOVERY.md)
+2. [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
    - current operating posture
    - trusted / untrusted boundary
-   - current recovery order
+   - current safety boundaries
 3. One design note, depending on the question:
    - [`DESIGN.md`](../DESIGN.md)
      - greenfield architecture
@@ -41,14 +41,14 @@ For most work, read in this order:
 Prefer:
 
 - [`README.md`](../README.md)
-- [`RECOVERY.md`](../RECOVERY.md)
+- [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
 - [`AGENTS.override.md`](../AGENTS.override.md) for machine-specific operations
 
-### "What is trusted today vs still under repair?"
+### "What is trusted today vs still unsafe?"
 
 Prefer:
 
-- [`RECOVERY.md`](../RECOVERY.md)
+- [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
 
 ### "What does the current portfolio runtime mean by research/live/actionable/capital?"
 
@@ -91,9 +91,9 @@ Prefer:
 - [`README.md`](../README.md)
   - current runtime path
   - entrypoint commands
-- [`RECOVERY.md`](../RECOVERY.md)
+- [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
   - current operating truth
-  - repair sequence
+  - safety boundaries
 - [`AGENTS.override.md`](../AGENTS.override.md)
   - machine-local commands and procedures
 - [`plan.md`](../plan.md)
@@ -135,7 +135,7 @@ Prefer:
 If two documents seem to disagree, prefer:
 
 1. `README.md` for current entrypoints
-2. `RECOVERY.md` for current runtime truth
+2. `OPERATING_BOUNDARIES.md` for current runtime truth
 3. `portfolio-runtime-principles.md` for current portfolio semantics
 4. `DESIGN.md` for target architecture
 5. archive / roadmap files only for context

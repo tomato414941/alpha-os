@@ -2,7 +2,7 @@
 
 This file is a short working plan for the current mainline.
 It is not the source of truth for runtime operations. For that, prefer
-`README.md`, `RECOVERY.md`, and `docs/README.md`.
+`README.md`, `OPERATING_BOUNDARIES.md`, and `docs/README.md`.
 
 ## Current Position
 
@@ -61,7 +61,7 @@ Right now:
 
 ## Recovery-Derived Active Work
 
-These items came out of `RECOVERY.md` and are still active enough to deserve a
+These items came out of `OPERATING_BOUNDARIES.md` and are still active enough to deserve a
 working-plan slot:
 
 1. keep all runtime stages bounded and externally schedulable

@@ -1,4 +1,4 @@
-# alpha-os Recovery Plan
+# alpha-os Operating Boundaries
 
 ## Operating Posture (2026-03-26)
 
