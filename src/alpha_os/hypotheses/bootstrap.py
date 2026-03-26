@@ -210,6 +210,34 @@ def _serious_hypotheses() -> list[HypothesisRecord]:
             "derivatives",
             {"oos_sharpe": 0.66, "oos_log_growth": 0.11},
         ),
+        (
+            "serious_macro_sentiment_acceleration_v1",
+            "Macro Sentiment Acceleration V1",
+            "(rank_20 delta_1__fear_greed)",
+            "macro",
+            {"oos_sharpe": 0.64, "oos_log_growth": 0.10},
+        ),
+        (
+            "serious_macro_dollar_pressure_v1",
+            "Macro Dollar Pressure V1",
+            "(rank_20 roc_5__dxy)",
+            "macro",
+            {"oos_sharpe": 0.63, "oos_log_growth": 0.10},
+        ),
+        (
+            "serious_price_regime_shift_v1",
+            "Price Regime Shift V1",
+            "(rank_20 zscore_20__btc_ohlcv)",
+            "price",
+            {"oos_sharpe": 0.61, "oos_log_growth": 0.09},
+        ),
+        (
+            "serious_price_short_term_impulse_v1",
+            "Price Short-Term Impulse V1",
+            "(rank_20 delta_1__btc_ohlcv)",
+            "price",
+            {"oos_sharpe": 0.60, "oos_log_growth": 0.09},
+        ),
     ]
     return [
         HypothesisRecord(
@@ -223,7 +251,7 @@ def _serious_hypotheses() -> list[HypothesisRecord]:
             scope=with_scope_asset(None, "BTC"),
             metadata={
                 "seed_family": "serious",
-                "serious_program": "onchain_derivatives_v1",
+                "serious_program": "multi_family_v2",
                 "serious_family": serious_family,
                 "prior_quality_source": "bootstrap_seed",
                 **prior_quality,

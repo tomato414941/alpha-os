@@ -51,10 +51,10 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
 
     assert stats.generated_dsl == 2
     assert stats.inserted_dsl == 2
-    assert stats.inserted_bootstrap == 15
-    assert len(rows) == 17
+    assert stats.inserted_bootstrap == 19
+    assert len(rows) == 21
     assert len(dsl_rows) == 2
-    assert len(serious_rows) == 5
+    assert len(serious_rows) == 9
     assert len(technical_rows) == 8
     assert len(ml_rows) == 2
     assert all(row.status == "active" for row in rows)
@@ -202,7 +202,7 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     inserted, skipped = daemon._register_bootstrap_hypotheses()
     updated = store.get(original.hypothesis_id)
 
-    assert inserted == 14
+    assert inserted == 18
     assert skipped == 1
     assert updated is not None
     assert updated.stake == 0.37

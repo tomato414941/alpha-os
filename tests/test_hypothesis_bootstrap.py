@@ -9,10 +9,10 @@ def test_bootstrap_hypotheses_have_expected_kind_counts():
     technical = [row for row in hypotheses if row.kind == HypothesisKind.TECHNICAL]
     ml = [row for row in hypotheses if row.kind == HypothesisKind.ML]
 
-    assert len(dsl) == 5
+    assert len(dsl) == 9
     assert len(technical) == 8
     assert len(ml) == 2
-    assert len(hypotheses) == 15
+    assert len(hypotheses) == 19
     assert all(row.status == HypothesisStatus.ACTIVE for row in hypotheses)
     assert all(row.stake > 0 for row in technical + ml)
     assert all(row.stake == 0.0 for row in dsl)
@@ -30,10 +30,10 @@ def test_bootstrap_hypotheses_include_prior_quality_metadata():
 def test_bootstrap_hypotheses_include_serious_program_seeds():
     serious = [row for row in bootstrap_hypotheses() if row.source == "bootstrap_serious"]
 
-    assert len(serious) == 5
+    assert len(serious) == 9
     assert all(row.kind == HypothesisKind.DSL for row in serious)
     assert all(row.metadata["seed_family"] == "serious" for row in serious)
-    assert all(row.metadata["serious_program"] == "onchain_derivatives_v1" for row in serious)
+    assert all(row.metadata["serious_program"] == "multi_family_v2" for row in serious)
     assert all(row.stake == 0.0 for row in serious)
 
 
