@@ -1778,6 +1778,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.search_budget_service import (
         build_template_gap_search_budget,
     )
+    from alpha_os.hypotheses.sleeve_compare_service import load_latest_sleeve_compare_rows
     from alpha_os.hypotheses.serious_template_service import (
         run_serious_template_maintenance,
     )
@@ -1788,7 +1789,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
     skip_serious = bool(getattr(args, "skip_serious", False))
-    previous_compare_rows = _load_previous_sleeve_compare_rows()
+    previous_compare_rows = load_latest_sleeve_compare_rows(_sleeve_compare_snapshot_path())
     budget_by_asset: dict[str, object] = {}
 
     def _should_refresh_asset(asset: str) -> bool:
@@ -1963,15 +1964,17 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
 
 def cmd_compare_sleeves(args: argparse.Namespace) -> None:
-    rows = _attach_latest_snapshot_metrics(
-        _attach_latest_snapshot_budget(
-            _attach_template_gap_history(
-                _build_sleeve_compare_rows(
-                    asset_list=_resolve_asset_list(args),
-                    cfg=_load_runtime_observation_config(getattr(args, "config", None)),
-                )
-            )
-        )
+    from alpha_os.hypotheses.sleeve_compare_service import (
+        enrich_sleeve_compare_rows,
+        load_latest_sleeve_compare_rows,
+    )
+
+    rows = enrich_sleeve_compare_rows(
+        _build_sleeve_compare_rows(
+            asset_list=_resolve_asset_list(args),
+            cfg=_load_runtime_observation_config(getattr(args, "config", None)),
+        ),
+        previous_rows=load_latest_sleeve_compare_rows(_sleeve_compare_snapshot_path()),
     )
 
     print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
@@ -2773,86 +2776,6 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
             }
         )
     return rows
-
-
-def _load_previous_sleeve_compare_rows() -> dict[str, dict[str, object]]:
-    path = _sleeve_compare_snapshot_path()
-    if not path.exists():
-        return {}
-    last_payload: dict[str, object] | None = None
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                last_payload = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-    if not isinstance(last_payload, dict):
-        return {}
-    rows = last_payload.get("rows")
-    if not isinstance(rows, list):
-        return {}
-    previous_rows: dict[str, dict[str, object]] = {}
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        asset = str(row.get("asset", "")).upper()
-        if asset:
-            previous_rows[asset] = row
-    return previous_rows
-
-
-def _attach_template_gap_history(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    previous_rows = _load_previous_sleeve_compare_rows()
-    enriched: list[dict[str, object]] = []
-    for row in rows:
-        asset = str(row["asset"]).upper()
-        current_gaps = {
-            str(item) for item in row.get("serious_template_gaps", []) if str(item)
-        }
-        previous_row = previous_rows.get(asset)
-        if previous_row is None:
-            row["serious_template_gap_delta"] = "first"
-            enriched.append(row)
-            continue
-        previous_gaps = {
-            str(item)
-            for item in previous_row.get("serious_template_gaps", [])
-            if str(item)
-        }
-        closed = len(previous_gaps - current_gaps)
-        new = len(current_gaps - previous_gaps)
-        row["serious_template_gap_delta"] = f"closed:{closed},new:{new}"
-        enriched.append(row)
-    return enriched
-
-
-def _attach_latest_snapshot_budget(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    previous_rows = _load_previous_sleeve_compare_rows()
-    enriched: list[dict[str, object]] = []
-    for row in rows:
-        previous_row = previous_rows.get(str(row["asset"]).upper(), {})
-        row["score_budget_requested"] = int(previous_row.get("score_budget_requested", 0))
-        row["score_budget_effective"] = int(previous_row.get("score_budget_effective", 0))
-        enriched.append(row)
-    return enriched
-
-
-def _attach_latest_snapshot_metrics(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    previous_rows = _load_previous_sleeve_compare_rows()
-    enriched: list[dict[str, object]] = []
-    for row in rows:
-        previous_row = previous_rows.get(str(row["asset"]).upper(), {})
-        previous_backed = int(previous_row.get("backed", 0))
-        previous_templates = int(previous_row.get("serious_template_backed", 0))
-        previous_breadth = float(previous_row.get("breadth", 0.0))
-        row["backed_delta"] = int(row["backed"]) - previous_backed
-        row["template_backed_delta"] = int(row["serious_template_backed"]) - previous_templates
-        row["breadth_delta"] = float(row["breadth"]) - previous_breadth
-        enriched.append(row)
-    return enriched
 
 
 def _write_sleeve_compare_snapshot(

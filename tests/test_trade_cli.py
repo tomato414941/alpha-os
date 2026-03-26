@@ -2321,7 +2321,10 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
     monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
-    monkeypatch.setattr("alpha_os.cli._load_previous_sleeve_compare_rows", lambda: {})
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
+        lambda *_args, **_kwargs: {},
+    )
 
     cmd_run_sleeves_once(
         SimpleNamespace(
