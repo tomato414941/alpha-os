@@ -29,6 +29,10 @@ For most work, read in this order:
      - current portfolio semantics
      - lifecycle / allocation terminology
      - near-term portfolio bottlenecks and design choices
+4. [`plan.md`](../plan.md)
+   - current working plan
+   - active priority order
+   - short-lived execution sequencing
 
 ## Source Of Truth By Question
 
@@ -58,6 +62,12 @@ Prefer:
 
 - [`DESIGN.md`](../DESIGN.md)
 
+### "What are we doing next right now?"
+
+Prefer:
+
+- [`plan.md`](../plan.md)
+
 ### "How should this scale to many assets?"
 
 Prefer:
@@ -86,6 +96,9 @@ Prefer:
   - repair sequence
 - [`AGENTS.override.md`](../AGENTS.override.md)
   - machine-local commands and procedures
+- [`plan.md`](../plan.md)
+  - current working order
+  - active priority sequencing
 
 ### Current Design Notes
 
