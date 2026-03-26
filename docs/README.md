@@ -79,7 +79,6 @@ Prefer:
 
 Prefer:
 
-- [`OLD_DESIGN.md`](./archive/OLD_DESIGN.md)
 - [`ROADMAP.md`](./exploratory/ROADMAP.md)
 - [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
 - [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
@@ -125,8 +124,12 @@ Prefer:
 
 ### Archive / Legacy
 
-- [`OLD_DESIGN.md`](./archive/OLD_DESIGN.md)
-  - registry-era history
+No standalone archive design note is kept anymore.
+Legacy registry-era context should be read from:
+
+- git history
+- `DESIGN.md` greenfield-vs-current sections
+- `plan.md` legacy residue cleanup items
 
 ## Practical Rule
 
