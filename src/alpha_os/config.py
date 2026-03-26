@@ -182,7 +182,7 @@ class LifecycleTomlConfig:
     batch_research_normalized_quality_min: float = 0.10
     batch_research_capital_candidates_max: int = 12
     reference_capital_backed_max: int = 64
-    reference_rebalance_candidates_max: int = 2048
+    reference_rebalance_candidates_max: int = 512
     live_proven_quality_min: float = 0.05
     live_proven_marginal_contribution_min: float = 0.0
     live_proven_signal_nonzero_ratio_min: float = 0.20
