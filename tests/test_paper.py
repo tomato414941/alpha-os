@@ -485,6 +485,69 @@ class TestTrader:
         assert list(arrays) == ["h1"]
         assert list(arrays["h1"]) == [0.4, 0.4, 0.4]
 
+    def test_evaluate_runtime_signal_uses_prediction_store_history_when_available(self):
+        from alpha_os.hypotheses.runtime_inputs import evaluate_runtime_signal
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        record = HypothesisRecord(
+            hypothesis_id="h1",
+            kind="dsl",
+            definition={"expression": "(rank_10 foo)"},
+            stake=1.0,
+        )
+
+        result = evaluate_runtime_signal(
+            record,
+            None,
+            data={"foo": [1.0, 2.0, 3.0]},
+            n_days=3,
+            store_signals={"h1": 0.4},
+            store_signal_arrays={"h1": [0.1, 0.2, 0.4]},
+        )
+
+        assert result is not None
+        assert result.used_prediction_store is True
+        assert result.signal_yesterday == pytest.approx(0.4)
+        assert list(result.signal_series) == [0.1, 0.2, 0.4]
+
+    def test_evaluate_runtime_signal_uses_latest_finite_fallback_from_series(self, monkeypatch):
+        import numpy as np
+
+        from alpha_os.dsl import parse
+        from alpha_os.hypotheses import runtime_inputs
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        record = HypothesisRecord(
+            hypothesis_id="h1",
+            kind="dsl",
+            definition={"expression": "foo"},
+            stake=1.0,
+        )
+
+        monkeypatch.setattr(
+            runtime_inputs,
+            "evaluate_expression",
+            lambda expr, data, n_days: np.array([0.0, 0.5, np.nan, 1.0]),
+        )
+        monkeypatch.setattr(
+            runtime_inputs,
+            "normalize_signal",
+            lambda signal: signal,
+        )
+
+        result = runtime_inputs.evaluate_runtime_signal(
+            record,
+            parse("foo"),
+            data={"foo": np.array([0.0, 0.5, np.nan, 1.0])},
+            n_days=4,
+            store_signals={},
+            store_signal_arrays={},
+        )
+
+        assert result is not None
+        assert result.used_prediction_store is False
+        assert result.signal_yesterday == pytest.approx(0.5)
+
     def test_prepare_runtime_inputs_prefers_prediction_store(self):
         from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
         from alpha_os.hypotheses.store import HypothesisRecord

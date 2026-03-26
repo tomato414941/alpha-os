@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 import numpy as np
 
 from ..data.universe import required_raw_signals
 from ..dsl import collect_feature_names, parse, temporal_expression_issues
+from ..dsl.evaluator import evaluate_expression, normalize_signal
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class RuntimeSignalEvaluation:
+    signal_yesterday: float
+    signal_series: np.ndarray
+    used_prediction_store: bool
 
 
 def prepare_runtime_inputs(
@@ -108,3 +117,49 @@ def load_prediction_signal_arrays(
             fallback_value=value,
         )
     return signal_arrays
+
+
+def evaluate_runtime_signal(
+    record,
+    expr,
+    *,
+    data: dict[str, np.ndarray],
+    n_days: int,
+    store_signals: dict[str, float],
+    store_signal_arrays: dict[str, np.ndarray],
+) -> RuntimeSignalEvaluation | None:
+    if record.hypothesis_id in store_signals:
+        signal_yesterday = float(store_signals[record.hypothesis_id])
+        signal_series = store_signal_arrays.get(record.hypothesis_id)
+        if signal_series is None:
+            signal_series = np.full(n_days, signal_yesterday, dtype=np.float64)
+        return RuntimeSignalEvaluation(
+            signal_yesterday=signal_yesterday,
+            signal_series=signal_series,
+            used_prediction_store=True,
+        )
+
+    if expr is None:
+        return None
+
+    signal = evaluate_expression(expr, data, n_days)
+    signal_series = normalize_signal(signal)
+    signal_yesterday = _finite_signal_tail(signal_series)
+    return RuntimeSignalEvaluation(
+        signal_yesterday=signal_yesterday,
+        signal_series=signal_series,
+        used_prediction_store=False,
+    )
+
+
+def _finite_signal_tail(signal_series: np.ndarray) -> float:
+    if len(signal_series) < 2:
+        return 0.0
+    signal_yesterday = float(signal_series[-2])
+    if np.isfinite(signal_yesterday):
+        return signal_yesterday
+    for offset in range(3, min(10, len(signal_series))):
+        fallback = float(signal_series[-offset])
+        if np.isfinite(fallback):
+            return fallback
+    return signal_yesterday

@@ -24,7 +24,7 @@ from ..config import (
 from ..data.signal_client import build_signal_client_from_config
 from ..data.store import DataStore
 from ..data.universe import build_feature_list
-from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
+from ..dsl.evaluator import EvaluationError
 from ..execution.binance import BinanceExecutor
 from ..execution.executor import Executor, Fill
 from ..execution.planning import (
@@ -49,6 +49,7 @@ from ..hypotheses.monitor import HypothesisMonitor, RegimeDetector
 from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
 from ..hypotheses.runtime_inputs import (
+    evaluate_runtime_signal,
     filter_runtime_records_by_available_features,
     load_prediction_signal_arrays,
     prepare_runtime_inputs,
@@ -722,26 +723,21 @@ class Trader:
 
         for record, expr in filtered_records:
             try:
-                # Use prediction store if available, else compute directly
-                if record.hypothesis_id in store_signals:
-                    signal_yesterday = store_signals[record.hypothesis_id]
-                    signal_norm = store_signal_arrays.get(record.hypothesis_id)
-                    if signal_norm is None:
-                        signal_norm = np.full(len(matrix), signal_yesterday, dtype=np.float64)
+                evaluation = evaluate_runtime_signal(
+                    record,
+                    expr,
+                    data=data,
+                    n_days=len(matrix),
+                    store_signals=store_signals,
+                    store_signal_arrays=store_signal_arrays,
+                )
+                if evaluation is None:
+                    n_failed += 1
+                    continue
+                signal_yesterday = evaluation.signal_yesterday
+                signal_norm = evaluation.signal_series
+                if evaluation.used_prediction_store:
                     n_from_store += 1
-                else:
-                    if expr is None:
-                        n_failed += 1
-                        continue
-                    signal = evaluate_expression(expr, data, len(matrix))
-                    signal_norm = normalize_signal(signal)
-                    signal_yesterday = float(signal_norm[-2])
-                    if not np.isfinite(signal_yesterday):
-                        for offset in range(3, min(10, len(signal_norm))):
-                            fallback = float(signal_norm[-offset])
-                            if np.isfinite(fallback):
-                                signal_yesterday = fallback
-                                break
                 daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
 
                 if np.isfinite(signal_yesterday):
