@@ -68,7 +68,7 @@ class _SplitRegistry(_StaticRegistry):
         return list(self._observation_records)
 
 
-class _RecordingForwardTracker:
+class _RecordingObservationTracker:
     def __init__(self, returns_by_id):
         self.returns_by_id = returns_by_id
         self.recorded: list[tuple[str, str, float, float]] = []
@@ -582,7 +582,7 @@ class TestTrader:
             definition={"expression": "foo"},
             stake=1.0,
         )
-        tracker = _RecordingForwardTracker({"h1": [0.1, 0.2, 0.3]})
+        tracker = _RecordingObservationTracker({"h1": [0.1, 0.2, 0.3]})
         monitor = _RecordingMonitor()
 
         result = record_runtime_observation(

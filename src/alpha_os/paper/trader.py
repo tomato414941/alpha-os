@@ -67,7 +67,7 @@ from ..hypotheses.store import HypothesisStore
 from .tracker import PaperPortfolioTracker, PortfolioSnapshot
 
 if TYPE_CHECKING:
-    from ..research.tactical import TacticalTrader
+    from ..legacy.tactical import TacticalTrader
 
 logger = logging.getLogger(__name__)
 

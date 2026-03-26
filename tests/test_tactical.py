@@ -8,7 +8,7 @@ import pytest
 
 from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 from alpha_os.data.store import DataStore
-from alpha_os.research.tactical import TacticalTrader, TacticalSignal
+from alpha_os.legacy.tactical import TacticalTrader, TacticalSignal
 
 
 @pytest.fixture

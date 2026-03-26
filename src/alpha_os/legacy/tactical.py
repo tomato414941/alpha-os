@@ -1,12 +1,11 @@
-"""Research tactical trader — Layer 2 hourly alpha evaluation.
+"""Legacy tactical trader — Layer 2 hourly alpha evaluation.
 
 Evaluates hourly derivative signals and produces a tactical score that
 modulates the strategic (Layer 3 daily) bias. When no L2 alphas exist,
 returns tactical_score=0 and combined=strategic_bias (transparent pass-through).
 """
-# TODO: L2 still depends on the legacy managed-alpha registry. Keep it outside
-# the hypotheses-first runtime mainline until hourly selection is redesigned
-# around hypothesis-native storage rather than alpha_registry_l2.db.
+# This module is intentionally kept under legacy/ because L2 still depends on
+# the managed-alpha registry and alpha_registry_l2.db.
 from __future__ import annotations
 
 import logging
