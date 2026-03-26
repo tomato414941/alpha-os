@@ -224,6 +224,7 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
             config=None,
             score_limit=12,
             bootstrap_assets="BTC",
+            refresh_bootstrap_assets=True,
             skip_seed=False,
             skip_score=True,
             skip_rebalance=True,
@@ -235,6 +236,50 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
     assert seed_calls == [
         ("BTC", True, False),
         ("ETH", False, True),
+    ]
+
+
+def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch):
+    from alpha_os.cli import cmd_run_sleeves_once
+
+    calls = []
+
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_hypothesis_seeder",
+        lambda args: calls.append(("seed", args.asset)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        lambda args: calls.append(("score", args.asset)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        lambda args: calls.append(("rebalance", args.asset)),
+    )
+    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+
+    cmd_run_sleeves_once(
+        SimpleNamespace(
+            asset="BTC",
+            assets="BTC,ETH",
+            config=None,
+            score_limit=12,
+            bootstrap_assets="BTC",
+            refresh_bootstrap_assets=False,
+            skip_seed=False,
+            skip_score=False,
+            skip_rebalance=False,
+            skip_trade=True,
+            skip_status=True,
+        )
+    )
+
+    assert calls == [
+        ("seed", "ETH"),
+        ("score", "ETH"),
+        ("rebalance", "ETH"),
     ]
 
 
@@ -1894,6 +1939,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
             config=None,
             score_limit=12,
             bootstrap_assets="BTC",
+            refresh_bootstrap_assets=True,
             skip_seed=False,
             skip_score=False,
             skip_rebalance=False,

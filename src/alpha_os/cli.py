@@ -236,6 +236,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default="BTC",
         help="Comma-separated assets that should include bootstrap seeds during seeding",
     )
+    rso.add_argument(
+        "--refresh-bootstrap-assets",
+        action="store_true",
+        help="Also run seed/score/rebalance for bootstrap reference sleeves",
+    )
     rso.add_argument("--skip-seed", action="store_true")
     rso.add_argument("--skip-score", action="store_true")
     rso.add_argument("--skip-rebalance", action="store_true")
@@ -2069,6 +2074,10 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
 def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     asset_list = _resolve_asset_list(args)
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
+    refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
+
+    def _should_refresh_asset(asset: str) -> bool:
+        return refresh_bootstrap_assets or asset not in bootstrap_assets
 
     print(
         "Sleeve loop [ONCE]: "
@@ -2083,6 +2092,8 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
     if not args.skip_seed:
         for asset in asset_list:
+            if not _should_refresh_asset(asset):
+                continue
             print(f"\n--- Seed {asset} ---")
             cmd_hypothesis_seeder(
                 argparse.Namespace(
@@ -2096,6 +2107,8 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
     if not args.skip_score:
         for asset in asset_list:
+            if not _should_refresh_asset(asset):
+                continue
             print(f"\n--- Score {asset} ---")
             cmd_score_exploratory_hypotheses(
                 argparse.Namespace(
@@ -2108,6 +2121,8 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
     if not args.skip_rebalance:
         for asset in asset_list:
+            if not _should_refresh_asset(asset):
+                continue
             print(f"\n--- Rebalance {asset} ---")
             cmd_rebalance_allocation_trust(
                 argparse.Namespace(
