@@ -1725,6 +1725,82 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
 
 
+def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
+    from argparse import Namespace
+    from types import SimpleNamespace
+
+    from alpha_os.cli import cmd_compare_sleeves
+
+    monkeypatch.setattr(
+        "alpha_os.cli._load_runtime_observation_config",
+        lambda _config: SimpleNamespace(
+            testnet=SimpleNamespace(target_success_days=10, max_acceptable_slippage_bps=10.0),
+            forward=SimpleNamespace(degradation_window=63),
+            trading=SimpleNamespace(supports_short=False),
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.asset_data_dir",
+        lambda asset: __import__("pathlib").Path(f"/tmp/{asset.lower()}"),
+    )
+    monkeypatch.setattr(
+        "alpha_os.validation.testnet.readiness_paths",
+        lambda adir: (adir / "state.json", adir / "report.json"),
+    )
+
+    latest_by_asset = {
+        "BTC": {"has_errors": False, "n_fills": 1},
+        "ETH": {"has_errors": False, "n_fills": 0},
+    }
+    monkeypatch.setattr(
+        "alpha_os.cli._load_latest_report",
+        lambda report_path: latest_by_asset[report_path.parent.name.upper()],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._live_hypothesis_ids",
+        lambda asset=None: ["a"] * {"BTC": 20, "ETH": 16}[asset],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._runtime_hypothesis_summary",
+        lambda asset=None: {
+            "BTC": {"live_proven": 12, "actionable_live": 12, "capital_backed": 20},
+            "ETH": {"live_proven": 58, "actionable_live": 44, "capital_backed": 16},
+        }[asset],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._runtime_actionable_window_summary",
+        lambda asset=None, lookback=None, supports_short=None: {
+            "BTC": {"breadth": 1.00},
+            "ETH": {"breadth": 7.46},
+        }[asset],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._runtime_observation_findings",
+        lambda latest, current_live_count: ([] if latest.get("n_fills", 0) > 0 else ["zero_fills"]),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._runtime_observation_verdict",
+        lambda latest, findings: ("ok" if not findings else "watch"),
+    )
+
+    class _FakeReadinessChecker:
+        def __init__(self, *, state_path, report_path, target_days, max_slippage_bps):
+            asset = state_path.parent.name.upper()
+            self.state = {
+                "BTC": SimpleNamespace(consecutive_success_days=5, target_days=10),
+                "ETH": SimpleNamespace(consecutive_success_days=1, target_days=10),
+            }[asset]
+
+    monkeypatch.setattr("alpha_os.validation.testnet.ReadinessChecker", _FakeReadinessChecker)
+
+    cmd_compare_sleeves(Namespace(asset="BTC", assets="BTC,ETH", config=None))
+    output = capsys.readouterr().out
+
+    assert "Sleeve Compare: BTC,ETH" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 breadth=7.46 latest=OK fills=0 observe=watch" in output
+
+
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

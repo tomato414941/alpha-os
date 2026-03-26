@@ -241,6 +241,15 @@ def _build_parser() -> argparse.ArgumentParser:
     rso.add_argument("--skip-trade", action="store_true")
     rso.add_argument("--skip-status", action="store_true")
 
+    cmp = sub.add_parser(
+        "compare-sleeves",
+        help="Compare runtime sleeve state across one or more assets",
+    )
+    cmp.add_argument("--asset", type=str, default="BTC")
+    cmp.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH)")
+    cmp.add_argument("--config", type=str, default=None)
+
     alb = sub.add_parser(
         "analyze-live-breadth",
         help="Analyze historical signal breadth for capital-backed bootstrap hypotheses",
@@ -2119,6 +2128,54 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
             )
 
 
+def cmd_compare_sleeves(args: argparse.Namespace) -> None:
+    from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
+    asset_list = _resolve_asset_list(args)
+
+    print(f"Sleeve Compare: {','.join(asset_list)}")
+    for asset in asset_list:
+        adir = asset_data_dir(asset)
+        state_path, report_path = readiness_paths(adir)
+        readiness_checker = ReadinessChecker(
+            state_path=state_path,
+            report_path=report_path,
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+        state = readiness_checker.state
+        latest = _load_latest_report(report_path)
+        runtime_ids = _live_hypothesis_ids(asset=asset)
+        hypothesis_summary = _runtime_hypothesis_summary(asset=asset)
+        actionable_window = _runtime_actionable_window_summary(
+            asset=asset,
+            lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
+        )
+        findings = _runtime_observation_findings(latest, len(runtime_ids))
+        observe = _runtime_observation_verdict(latest, findings)
+        latest_status = (
+            "none"
+            if latest is None
+            else ("ERROR" if latest.get("has_errors") else "OK")
+        )
+        latest_fills = 0 if latest is None else int(latest.get("n_fills", 0))
+        breadth = 0.0 if actionable_window is None else actionable_window["breadth"]
+        print(
+            f"  {asset.upper()}: "
+            f"readiness={state.consecutive_success_days}/{state.target_days} "
+            f"live={len(runtime_ids)} "
+            f"proven={hypothesis_summary['live_proven']} "
+            f"actionable={hypothesis_summary['actionable_live']} "
+            f"backed={hypothesis_summary['capital_backed']} "
+            f"breadth={breadth:.2f} "
+            f"latest={latest_status} "
+            f"fills={latest_fills} "
+            f"observe={observe}"
+        )
+
+
 def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses.breadth import (
@@ -3450,6 +3507,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_rebalance_allocation_trust(args)
     elif args.command == "run-sleeves-once":
         cmd_run_sleeves_once(args)
+    elif args.command == "compare-sleeves":
+        cmd_compare_sleeves(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
     elif args.command == "analyze-batch-research":
