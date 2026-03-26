@@ -218,7 +218,7 @@ def _serious_hypotheses() -> list[HypothesisRecord]:
             name=name,
             definition={"expression": expression},
             status=HypothesisStatus.ACTIVE,
-            stake=INITIAL_STAKE,
+            stake=0.0,
             source="bootstrap_serious",
             scope=with_scope_asset(None, "BTC"),
             metadata={

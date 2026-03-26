@@ -278,6 +278,12 @@ class HypothesisSeederDaemon:
             changed = True
         if changed:
             self._store.update_metadata(existing.hypothesis_id, merged, merge=False)
+        if (
+            bootstrap_record.source == "bootstrap_serious"
+            and "lifecycle_capital_backed" not in existing.metadata
+            and float(existing.stake) > 0.0
+        ):
+            self._store.update_stake(existing.hypothesis_id, 0.0)
 
     def _backfill_random_dsl_metadata(self, existing: HypothesisRecord) -> None:
         if existing.source != "random_dsl":

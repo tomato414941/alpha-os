@@ -62,7 +62,8 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     assert all(row.metadata["research_quality_source"] == "exploratory_unscored" for row in dsl_rows)
     assert all(row.metadata["research_quality_status"] == "unscored" for row in dsl_rows)
     assert all(row.scope["asset"] == "BTC" for row in dsl_rows)
-    assert all(row.stake > 0 for row in serious_rows + technical_rows + ml_rows)
+    assert all(row.stake == 0.0 for row in serious_rows)
+    assert all(row.stake > 0 for row in technical_rows + ml_rows)
 
     daemon.close()
 

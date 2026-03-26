@@ -14,7 +14,8 @@ def test_bootstrap_hypotheses_have_expected_kind_counts():
     assert len(ml) == 2
     assert len(hypotheses) == 15
     assert all(row.status == HypothesisStatus.ACTIVE for row in hypotheses)
-    assert all(row.stake > 0 for row in hypotheses)
+    assert all(row.stake > 0 for row in technical + ml)
+    assert all(row.stake == 0.0 for row in dsl)
 
 
 def test_bootstrap_hypotheses_include_prior_quality_metadata():
@@ -33,6 +34,7 @@ def test_bootstrap_hypotheses_include_serious_program_seeds():
     assert all(row.kind == HypothesisKind.DSL for row in serious)
     assert all(row.metadata["seed_family"] == "serious" for row in serious)
     assert all(row.metadata["serious_program"] == "onchain_derivatives_v1" for row in serious)
+    assert all(row.stake == 0.0 for row in serious)
 
 
 def test_list_observation_active_includes_zero_stake_active_hypotheses(tmp_path):
