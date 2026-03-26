@@ -21,6 +21,7 @@ from alpha_os.hypotheses.identity import (
     expression_feature_names,
     expression_semantic_key,
 )
+from alpha_os.hypotheses.serious_templates import serious_family_gap_scores
 from alpha_os.hypotheses.sleeve_scope import with_scope_asset
 from alpha_os.hypotheses.store import (
     HypothesisKind,
@@ -347,8 +348,10 @@ class HypothesisSeederDaemon:
     ) -> frozenset[str]:
         if k <= 0 or not features:
             return frozenset()
+        records = self._store.list_observation_active(asset=self.primary_asset)
         family_scores = self._random_dsl_family_success_scores()
-        if not family_scores:
+        serious_gaps = serious_family_gap_scores(self.primary_asset, records)
+        if not family_scores and not serious_gaps:
             return stratified_feature_subset(features, k=k, seed=seed)
         rng = random.Random(seed)
         grouped: dict[str, list[str]] = {}
@@ -359,6 +362,7 @@ class HypothesisSeederDaemon:
         family_order = list(grouped)
         family_order.sort(
             key=lambda family: (
+                -serious_gaps.get(family, 0.0),
                 -family_scores.get(family, 0.5),
                 rng.random(),
             )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import Counter
 
 
 @dataclass(frozen=True)
@@ -237,3 +238,32 @@ def serious_seed_specs(asset: str) -> list[SeriousSeedSpec]:
             )
         )
     return specs
+
+
+def serious_family_gap_scores(asset: str, records) -> dict[str, float]:
+    asset = str(asset).upper()
+    targets: Counter[str] = Counter(
+        spec.family for spec in serious_seed_specs(asset)
+    )
+    if not targets:
+        return {}
+
+    covered: Counter[str] = Counter()
+    for record in records:
+        if str(getattr(record, "source", "") or "") != "bootstrap_serious":
+            continue
+        scope = getattr(record, "scope", {}) or {}
+        if str(scope.get("asset", "")).upper() != asset:
+            continue
+        metadata = getattr(record, "metadata", {}) or {}
+        if not bool(metadata.get("lifecycle_capital_backed", False)):
+            continue
+        family = str(metadata.get("serious_family", "") or "")
+        if family:
+            covered[family] += 1
+
+    gaps: dict[str, float] = {}
+    for family, target in targets.items():
+        current = covered.get(family, 0)
+        gaps[family] = max(0.0, float(target - current) / float(target))
+    return gaps

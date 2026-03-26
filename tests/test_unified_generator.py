@@ -492,6 +492,48 @@ def test_hypothesis_seeder_guided_feature_subset_prefers_stronger_families(
     daemon.close()
 
 
+def test_hypothesis_seeder_guided_feature_subset_prefers_undercovered_serious_family(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+
+    cfg = Config()
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(cfg, store=store, client=None)
+
+    for idx in range(2):
+        store.register(
+            HypothesisRecord(
+                hypothesis_id=f"serious_macro_{idx}",
+                kind="dsl",
+                name="fear_greed",
+                definition={"expression": "fear_greed"},
+                status="active",
+                stake=0.0,
+                scope={"asset": "BTC"},
+                source="bootstrap_serious",
+                metadata={
+                    "serious_family": "macro",
+                    "lifecycle_capital_backed": True,
+                },
+            )
+        )
+
+    subset = daemon._guided_feature_subset(
+        ["dxy", "funding_rate_btc"],
+        k=1,
+        seed=7,
+    )
+
+    assert subset == frozenset({"funding_rate_btc"})
+
+    daemon.close()
+
+
 @pytest.mark.parametrize(
     ("hypothesis_id", "name", "definition"),
     [

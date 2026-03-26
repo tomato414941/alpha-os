@@ -17,6 +17,7 @@ from .identity import (
     expression_feature_names,
     representative_feature_family,
 )
+from .serious_templates import serious_family_gap_scores
 from .store import HypothesisKind, HypothesisRecord
 
 
@@ -67,11 +68,13 @@ def is_exploratory_unscored(record: HypothesisRecord) -> bool:
 def exploratory_scoring_candidates(
     records: list[HypothesisRecord],
     *,
+    asset: str | None = None,
     limit: int | None = None,
 ) -> list[HypothesisRecord]:
     candidates = [record for record in records if is_exploratory_unscored(record)]
     if not candidates:
         return []
+    serious_gaps = serious_family_gap_scores(asset or "BTC", records)
 
     family_counts: Counter[str] = Counter()
     family_totals: Counter[str] = Counter()
@@ -113,15 +116,19 @@ def exploratory_scoring_candidates(
         families = tuple(sorted(set(expression_feature_families(record.expression))))
         return families
 
-    def _priority(record: HypothesisRecord) -> tuple[float, float, float, str]:
+    def _priority(record: HypothesisRecord) -> tuple[float, float, float, float, str]:
         families = _record_families(record)
         overlap = float(sum(family_counts.get(family, 0) for family in families))
         novelty = float(sum(1 for family in families if family_counts.get(family, 0) == 0))
         if families:
+            serious_gap = float(
+                sum(serious_gaps.get(family, 0.0) for family in families) / len(families)
+            )
             family_quality = float(sum(_family_quality(family) for family in families) / len(families))
         else:
+            serious_gap = 0.0
             family_quality = 0.0
-        return overlap, -family_quality, -novelty, record.hypothesis_id
+        return overlap, -serious_gap, -family_quality, -novelty, record.hypothesis_id
 
     candidates.sort(key=_priority)
 
@@ -140,6 +147,7 @@ def exploratory_scoring_candidates(
                     families,
                     key=lambda family: (
                         family_counts.get(family, 0),
+                        -serious_gaps.get(family, 0.0),
                         -_family_quality(family),
                         family,
                     ),
@@ -156,6 +164,7 @@ def exploratory_scoring_candidates(
         buckets,
         key=lambda family: (
             family_counts.get(family, 0),
+            -serious_gaps.get(family, 0.0),
             -_family_quality(family),
             family,
         ),
