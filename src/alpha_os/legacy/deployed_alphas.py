@@ -9,13 +9,13 @@ from pathlib import Path
 
 from ..config import Config, HYPOTHESIS_OBSERVATIONS_DB_NAME
 from ..forward.tracker import HypothesisObservationTracker
-from ..research.deployment_planner import (
+from ..legacy.deployment_planner import (
     DeployedAlphaPlan,
     RegistryActivePrunePlan,
     plan_deployed_alphas,
     plan_registry_active_prune,
 )
-from ..research.registry_signal_map import build_registry_signal_map
+from ..legacy.registry_signal_map import build_registry_signal_map
 from .admission_replay import backup_registry_db
 from .managed_alphas import ManagedAlphaStore
 from .registry_types import AlphaState
