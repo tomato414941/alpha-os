@@ -114,9 +114,14 @@ def analyze_capital_breadth(
     )
 
 
-def load_bootstrap_capital_backed_records(store, *, floor: float = 0.0) -> list[HypothesisRecord]:
+def load_bootstrap_capital_backed_records(
+    store,
+    *,
+    floor: float = 0.0,
+    asset: str | None = None,
+) -> list[HypothesisRecord]:
     records = []
-    for record in store.list_live():
+    for record in store.list_live(asset=asset):
         try:
             bootstrap_value = float(record.metadata.get("lifecycle_bootstrap_trust", 0.0))
         except (TypeError, ValueError):
@@ -126,8 +131,13 @@ def load_bootstrap_capital_backed_records(store, *, floor: float = 0.0) -> list[
     return records
 
 
-def load_capital_backed_records(store, *, floor: float = 0.0) -> list[HypothesisRecord]:
-    return store.list_capital_backed(floor=floor)
+def load_capital_backed_records(
+    store,
+    *,
+    floor: float = 0.0,
+    asset: str | None = None,
+) -> list[HypothesisRecord]:
+    return store.list_capital_backed(floor=floor, asset=asset)
 
 
 def load_breadth_matrix(

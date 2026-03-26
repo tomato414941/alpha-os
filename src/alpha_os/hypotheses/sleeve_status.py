@@ -163,20 +163,20 @@ class AssetSleeveSummary:
     batch_backed_families: list[str] = field(default_factory=list)
 
 
-def build_hypothesis_status_counts(store) -> HypothesisStatusCounts:
+def build_hypothesis_status_counts(store, *, asset: str | None = None) -> HypothesisStatusCounts:
     from .store import HypothesisStatus
 
-    live = len(store.list_live())
+    live = len(store.list_live(asset=asset))
     return HypothesisStatusCounts(
-        active=store.count(status=HypothesisStatus.ACTIVE),
-        paused=store.count(status=HypothesisStatus.PAUSED),
-        archived=store.count(status=HypothesisStatus.ARCHIVED),
+        active=len(store.list_by_status(HypothesisStatus.ACTIVE, asset=asset)),
+        paused=len(store.list_by_status(HypothesisStatus.PAUSED, asset=asset)),
+        archived=len(store.list_by_status(HypothesisStatus.ARCHIVED, asset=asset)),
         live=live,
     )
 
 
-def live_hypothesis_ids(store) -> list[str]:
-    return [record.hypothesis_id for record in store.list_live()]
+def live_hypothesis_ids(store, *, asset: str | None = None) -> list[str]:
+    return [record.hypothesis_id for record in store.list_live(asset=asset)]
 
 
 def build_asset_sleeve_summary(records) -> AssetSleeveSummary:

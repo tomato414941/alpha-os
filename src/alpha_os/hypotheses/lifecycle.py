@@ -220,13 +220,14 @@ def updated_stake(
 def record_daily_contributions(
     store: HypothesisStore,
     *,
+    asset: str | None = None,
     date: str,
     predictions: dict[str, float],
     realized_return: float,
 ) -> dict[str, float]:
     stakes = {
         record.hypothesis_id: record.stake
-        for record in store.list_active()
+        for record in store.list_active(asset=asset)
     }
     contributions = compute_daily_contributions(predictions, realized_return, stakes)
     for hypothesis_id, contribution in contributions.items():
@@ -241,6 +242,7 @@ def record_daily_contributions(
 def update_stakes_from_history(
     store: HypothesisStore,
     *,
+    asset: str | None = None,
     metric: str = "sharpe",
     lookback: int = DEFAULT_LOOKBACK,
     min_observations: int = DEFAULT_MIN_OBSERVATIONS,
@@ -276,6 +278,7 @@ def update_stakes_from_history(
 ) -> dict[str, float]:
     plan = build_allocation_rebalance_plan(
         store,
+        asset=asset,
         metric=metric,
         lookback=lookback,
         min_observations=min_observations,
@@ -324,6 +327,7 @@ def update_stakes_from_history(
 def build_allocation_rebalance_plan(
     store: HypothesisStore,
     *,
+    asset: str | None = None,
     metric: str = "sharpe",
     lookback: int = DEFAULT_LOOKBACK,
     min_observations: int = DEFAULT_MIN_OBSERVATIONS,
@@ -356,7 +360,7 @@ def build_allocation_rebalance_plan(
     signal_activity_for: Callable[[str], tuple[float, float]] | None = None,
 ) -> list[AllocationRebalanceEntry]:
     plan: list[AllocationRebalanceEntry] = []
-    for record in store.list_observation_active():
+    for record in store.list_observation_active(asset=asset):
         research_quality_source = str(
             record.metadata.get("prior_quality_source")
             or record.metadata.get("research_quality_source")

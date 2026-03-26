@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .sleeve_scope import with_scope_asset
 from .store import HypothesisKind, HypothesisRecord, HypothesisStatus
 
 INITIAL_STAKE = 1.0
@@ -103,6 +104,7 @@ def _technical_hypotheses() -> list[HypothesisRecord]:
             status=HypothesisStatus.ACTIVE,
             stake=INITIAL_STAKE,
             source="bootstrap_technical",
+            scope=with_scope_asset(None, "BTC"),
             metadata={
                 "seed_family": "technical",
                 "prior_quality_source": "bootstrap_seed",
@@ -160,6 +162,7 @@ def _ml_hypotheses() -> list[HypothesisRecord]:
             status=HypothesisStatus.ACTIVE,
             stake=INITIAL_STAKE,
             source="bootstrap_ml",
+            scope=with_scope_asset(None, "BTC"),
             metadata={
                 "seed_family": "ml",
                 "prior_quality_source": "bootstrap_seed",

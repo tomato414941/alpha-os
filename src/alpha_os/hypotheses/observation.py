@@ -28,7 +28,7 @@ def backfill_observation_returns(
     asset: str,
     lookback_days: int = 30,
 ) -> ObservationBackfillSummary:
-    records = hypothesis_store.list_observation_active()
+    records = hypothesis_store.list_observation_active(asset=asset)
     if not records:
         return ObservationBackfillSummary(
             n_hypotheses=0,

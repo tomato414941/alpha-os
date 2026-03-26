@@ -1409,14 +1409,23 @@ def _close_trade_contexts(contexts: dict[str, tuple]) -> None:
 
 def _needs_trade_evolution(trader) -> bool:
     registry = trader.registry
+    asset = getattr(trader, "asset", None)
 
     if hasattr(registry, "list_by_state"):
         active = registry.list_by_state("active")
         return len(active) == 0
     if hasattr(registry, "list_active"):
-        return len(registry.list_active()) == 0
+        try:
+            active = registry.list_active(asset=asset)
+        except TypeError:
+            active = registry.list_active()
+        return len(active) == 0
     if hasattr(registry, "top_by_stake"):
-        return len(registry.top_by_stake(n=1)) == 0
+        try:
+            top = registry.top_by_stake(n=1, asset=asset)
+        except TypeError:
+            top = registry.top_by_stake(n=1)
+        return len(top) == 0
     return True
 
 
@@ -1495,6 +1504,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
     contribution_date = signal_date[:10]
     record_daily_contributions(
         trader.registry,
+        asset=getattr(trader, "asset", "BTC"),
         date=contribution_date,
         predictions=hypothesis_signals,
         realized_return=getattr(result, "daily_return", 0.0),
@@ -1966,7 +1976,7 @@ def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
     store = HypothesisStore(HYPOTHESES_DB)
     data_store = DataStore(SIGNAL_CACHE_DB)
     try:
-        records = load_capital_backed_records(store)
+        records = load_capital_backed_records(store, asset=args.asset)
         data = load_breadth_matrix(
             data_store,
             records,
@@ -2026,7 +2036,7 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
     store = HypothesisStore(HYPOTHESES_DB)
     try:
         summary = build_batch_research_summary(
-            store.list_observation_active(),
+            store.list_observation_active(asset=args.asset),
             top=args.top,
             quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
             families=family_filter,
@@ -2123,7 +2133,7 @@ def cmd_analyze_trade_transition(args: argparse.Namespace) -> None:
     trader, cb, readiness_checker = contexts[asset]
     try:
         pre = capture_batch_transition_snapshot(
-            trader.registry.list_observation_active(),
+            trader.registry.list_observation_active(asset=asset),
             families=family_filter,
         )
         result = trader.run_cycle(skip_lifecycle=cfg.lifecycle_daemon.enabled)
@@ -2133,7 +2143,7 @@ def cmd_analyze_trade_transition(args: argparse.Namespace) -> None:
         if not cfg.lifecycle_daemon.enabled:
             _run_hypothesis_lifecycle_update(trader, cfg, result)
         post = capture_batch_transition_snapshot(
-            trader.registry.list_observation_active(),
+            trader.registry.list_observation_active(asset=asset),
             families=family_filter,
         )
     finally:
@@ -2468,13 +2478,13 @@ def _load_latest_report(report_path: Path) -> dict | None:
     return last
 
 
-def _hypothesis_status() -> dict[str, int]:
+def _hypothesis_status(*, asset: str | None = None) -> dict[str, int]:
     from alpha_os.hypotheses.sleeve_status import build_hypothesis_status_counts
     from alpha_os.hypotheses.store import HypothesisStore
 
     store = HypothesisStore(HYPOTHESES_DB)
     try:
-        counts = build_hypothesis_status_counts(store)
+        counts = build_hypothesis_status_counts(store, asset=asset)
         return {
             "active": counts.active,
             "paused": counts.paused,
@@ -2485,13 +2495,13 @@ def _hypothesis_status() -> dict[str, int]:
         store.close()
 
 
-def _live_hypothesis_ids() -> list[str]:
+def _live_hypothesis_ids(*, asset: str | None = None) -> list[str]:
     from alpha_os.hypotheses.sleeve_status import live_hypothesis_ids
     from alpha_os.hypotheses.store import HypothesisStore
 
     store = HypothesisStore(HYPOTHESES_DB)
     try:
-        return live_hypothesis_ids(store)
+        return live_hypothesis_ids(store, asset=asset)
     finally:
         store.close()
 
@@ -2502,13 +2512,13 @@ def _runtime_cohort(record) -> str:
     return runtime_cohort(record)
 
 
-def _runtime_hypothesis_summary() -> dict[str, object]:
+def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object]:
     from alpha_os.hypotheses.sleeve_status import build_asset_sleeve_summary
     from alpha_os.hypotheses.store import HypothesisStore
 
     store = HypothesisStore(HYPOTHESES_DB)
     try:
-        summary = build_asset_sleeve_summary(store.list_observation_active())
+        summary = build_asset_sleeve_summary(store.list_observation_active(asset=asset))
     finally:
         store.close()
 
@@ -2554,7 +2564,7 @@ def _runtime_actionable_window_summary(
     store = HypothesisStore(HYPOTHESES_DB)
     try:
         summary = build_actionable_window_summary(
-            store.list_live(),
+            store.list_live(asset=asset),
             tracker=tracker,
             lookback=lookback,
             supports_short=supports_short,
@@ -2625,7 +2635,7 @@ def _latest_live_count(latest: dict | None) -> int:
 
 
 def _current_runtime_profile(cfg, asset: str):
-    live_ids = _live_hypothesis_ids()
+    live_ids = _live_hypothesis_ids(asset=asset)
     profile = build_runtime_profile(
         asset=asset,
         config=cfg,
@@ -2648,9 +2658,9 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
     )
     state = readiness_checker.state
     latest = _load_latest_report(report_path)
-    hypotheses = _hypothesis_status()
-    runtime_ids = _live_hypothesis_ids()
-    hypothesis_summary = _runtime_hypothesis_summary()
+    hypotheses = _hypothesis_status(asset=args.asset)
+    runtime_ids = _live_hypothesis_ids(asset=args.asset)
+    hypothesis_summary = _runtime_hypothesis_summary(asset=args.asset)
     actionable_window = _runtime_actionable_window_summary(
         asset=args.asset,
         lookback=cfg.forward.degradation_window,
@@ -2833,7 +2843,7 @@ def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
 
         record_map = {
             record.hypothesis_id: record
-            for record in store.list_observation_active()
+            for record in store.list_observation_active(asset=args.asset)
         }
         stakes = {
             hypothesis_id: float(record_map[hypothesis_id].stake)
@@ -2902,10 +2912,11 @@ def _resolve_signal_cache_targets(args: argparse.Namespace) -> list[str]:
     if args.from_hypotheses:
         from alpha_os.hypotheses import HypothesisStore
         from alpha_os.hypotheses.producer import collect_required_features
+        from alpha_os.hypotheses.sleeve_scope import filter_records_by_assets
 
         store = HypothesisStore(HYPOTHESES_DB)
         try:
-            active = store.list_active()
+            active = filter_records_by_assets(store.list_active(), assets)
         finally:
             store.close()
         signals.update(collect_required_features(active, assets))

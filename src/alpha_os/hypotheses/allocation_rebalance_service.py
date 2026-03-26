@@ -23,6 +23,7 @@ def build_capped_allocation_rebalance_plan(
 ) -> list[AllocationRebalanceEntry]:
     plan = build_allocation_rebalance_plan(
         store,
+        asset=asset,
         metric=config.portfolio.objective,
         lookback=config.forward.degradation_window,
         min_observations=config.live_quality.min_observations,
@@ -58,7 +59,7 @@ def build_capped_allocation_rebalance_plan(
         live_returns_for=live_returns_for,
         signal_activity_for=signal_activity_for,
     )
-    records = store.list_observation_active()
+    records = store.list_observation_active(asset=asset)
     close_data_store = data_store is None
     if data_store is None:
         data_store = DataStore(SIGNAL_CACHE_DB)

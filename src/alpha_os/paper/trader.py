@@ -481,7 +481,7 @@ class Trader:
     def _runtime_profile(self, live_records=None) -> RuntimeProfile:
         records = live_records
         if records is None:
-            records = self.registry.list_live()
+            records = self.registry.list_live(asset=self.asset)
         return build_runtime_profile(
             asset=self.asset,
             config=self.config,
@@ -604,7 +604,7 @@ class Trader:
 
         # 0. Circuit breaker check
         prev_equity = self._baseline_portfolio_value(last_snapshot)
-        live_hypotheses = self.registry.top_by_stake(n=200)
+        live_hypotheses = self.registry.top_by_stake(n=200, asset=self.asset)
         if not live_hypotheses:
             raise RuntimeError(
                 "No live hypotheses with stake > 0. Run hypothesis-seeder or lifecycle first."
@@ -635,7 +635,7 @@ class Trader:
         #    - observation candidates: active hypotheses tracked outside the cycle
         #    - trading candidates: bounded capital-backed shortlist for this cycle
         max_trading = self.config.paper.max_trading_alphas
-        observation_candidates = self.registry.list_observation_active()
+        observation_candidates = self.registry.list_observation_active(asset=self.asset)
         universe_records = live_hypotheses
         n_live_hypotheses = len(live_hypotheses)
         trading_candidates = rank_trading_records(

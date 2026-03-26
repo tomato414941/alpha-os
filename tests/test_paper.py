@@ -46,13 +46,13 @@ class _StaticRegistry:
     def __init__(self, records):
         self._records = list(records)
 
-    def top_by_stake(self, n=30):
+    def top_by_stake(self, n=30, *, asset=None):
         return self._records[:n]
 
-    def list_live(self):
+    def list_live(self, *, asset=None):
         return list(self._records)
 
-    def list_observation_active(self):
+    def list_observation_active(self, *, asset=None):
         return list(self._records)
 
     def close(self):
@@ -64,7 +64,7 @@ class _SplitRegistry(_StaticRegistry):
         super().__init__(live_records)
         self._observation_records = list(observation_records)
 
-    def list_observation_active(self):
+    def list_observation_active(self, *, asset=None):
         return list(self._observation_records)
 
 

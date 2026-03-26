@@ -31,7 +31,7 @@ class TestHypothesisStore:
         assert got.definition["expression"] == "(sub fear_greed dxy)"
         assert got.horizon == "20D2L"
         assert got.target_kind == "forward_residual_return"
-        assert got.scope == {"universe": "core_universe_1000"}
+        assert got.scope == {"asset": "BTC", "universe": "core_universe_1000"}
         assert got.metadata["tag"] == "seed"
         store.close()
 
@@ -207,6 +207,49 @@ class TestHypothesisStore:
 
         assert [row.hypothesis_id for row in store.top_by_stake(2)] == ["h2", "h1"]
         assert [row.hypothesis_id for row in store.list_live()] == ["h2", "h1"]
+        store.close()
+
+    def test_asset_scoped_runtime_queries(self, tmp_path):
+        store = self._make_store(tmp_path)
+        store.register(
+            HypothesisRecord(
+                hypothesis_id="btc_backed",
+                kind=HypothesisKind.DSL,
+                definition={"expression": "f1"},
+                stake=1.0,
+                scope={"asset": "BTC", "universe": "core_universe_1000"},
+                metadata={"lifecycle_capital_eligible": True},
+            )
+        )
+        store.register(
+            HypothesisRecord(
+                hypothesis_id="eth_backed",
+                kind=HypothesisKind.DSL,
+                definition={"expression": "f2"},
+                stake=2.0,
+                scope={"asset": "ETH", "universe": "core_universe_1000"},
+                metadata={"lifecycle_capital_eligible": True},
+            )
+        )
+        store.register(
+            HypothesisRecord(
+                hypothesis_id="legacy_btc",
+                kind=HypothesisKind.DSL,
+                definition={"expression": "f3"},
+                stake=0.0,
+                metadata={"lifecycle_capital_eligible": False},
+            )
+        )
+
+        assert [row.hypothesis_id for row in store.list_observation_active(asset="BTC")] == [
+            "btc_backed",
+            "legacy_btc",
+        ]
+        assert [row.hypothesis_id for row in store.list_observation_active(asset="ETH")] == [
+            "eth_backed",
+        ]
+        assert [row.hypothesis_id for row in store.list_live(asset="BTC")] == ["btc_backed"]
+        assert [row.hypothesis_id for row in store.list_live(asset="ETH")] == ["eth_backed"]
         store.close()
 
     def test_record_and_list_contributions(self, tmp_path):

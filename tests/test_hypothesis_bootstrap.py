@@ -21,6 +21,7 @@ def test_bootstrap_hypotheses_include_prior_quality_metadata():
     assert all(row.metadata["prior_quality_source"] == "bootstrap_seed" for row in hypotheses)
     assert all(float(row.metadata["oos_sharpe"]) > 0 for row in hypotheses)
     assert all(float(row.metadata["oos_log_growth"]) > 0 for row in hypotheses)
+    assert all(row.scope == {"asset": "BTC", "universe": "core_universe_1000"} for row in hypotheses)
 
 
 def test_list_observation_active_includes_zero_stake_active_hypotheses(tmp_path):

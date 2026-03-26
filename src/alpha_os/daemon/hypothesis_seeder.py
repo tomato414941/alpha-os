@@ -21,6 +21,7 @@ from alpha_os.hypotheses.identity import (
     expression_feature_names,
     expression_semantic_key,
 )
+from alpha_os.hypotheses.sleeve_scope import with_scope_asset
 from alpha_os.hypotheses.store import (
     HypothesisKind,
     HypothesisRecord,
@@ -218,6 +219,7 @@ class HypothesisSeederDaemon:
                     definition={"expression": expression},
                     status=HypothesisStatus.ACTIVE,
                     stake=0.0,
+                    scope=with_scope_asset(None, self.primary_asset),
                     source="random_dsl",
                     metadata={
                         **RANDOM_DSL_METADATA,
@@ -284,7 +286,7 @@ class HypothesisSeederDaemon:
 
     def _active_random_dsl_diversity_keys(self) -> set[tuple[tuple[str, ...], int]]:
         keys: set[tuple[tuple[str, ...], int]] = set()
-        for record in self._store.list_observation_active():
+        for record in self._store.list_observation_active(asset=self.primary_asset):
             if record.source != "random_dsl":
                 continue
             if record.stake <= 0 and not bool(
@@ -299,7 +301,7 @@ class HypothesisSeederDaemon:
     def _random_dsl_family_success_scores(self) -> dict[str, float]:
         totals: Counter[str] = Counter()
         successes: Counter[str] = Counter()
-        for record in self._store.list_observation_active():
+        for record in self._store.list_observation_active(asset=self.primary_asset):
             if record.source != "random_dsl":
                 continue
             if str(record.metadata.get("research_quality_status", "")) != "scored":

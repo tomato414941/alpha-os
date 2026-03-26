@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..config import DATA_DIR
+from .sleeve_scope import DEFAULT_SCOPE, filter_records_by_assets
 
 
 class HypothesisKind:
@@ -58,7 +59,7 @@ class HypothesisRecord:
     target_kind: str = "forward_residual_return"
     horizon: str = "20D2L"
     source: str = ""
-    scope: dict = field(default_factory=lambda: {"universe": "core_universe_1000"})
+    scope: dict = field(default_factory=lambda: dict(DEFAULT_SCOPE))
     metadata: dict = field(default_factory=dict)
     created_at: float = 0.0
     updated_at: float = 0.0
@@ -109,7 +110,7 @@ class HypothesisStore:
                 target_kind     TEXT NOT NULL DEFAULT 'forward_residual_return',
                 horizon         TEXT NOT NULL DEFAULT '20D2L',
                 source          TEXT NOT NULL DEFAULT '',
-                scope_json      TEXT NOT NULL DEFAULT '{"universe":"core_universe_1000"}',
+                scope_json      TEXT NOT NULL DEFAULT '{"asset":"BTC","universe":"core_universe_1000"}',
                 definition_json TEXT NOT NULL,
                 metadata_json   TEXT NOT NULL DEFAULT '{}',
                 created_at      REAL NOT NULL,
@@ -198,26 +199,31 @@ class HypothesisStore:
         ).fetchall()
         return [self._row_to_record(row) for row in rows]
 
-    def list_active(self) -> list[HypothesisRecord]:
-        return self.list_capital_backed()
+    def list_active(self, *, asset: str | None = None) -> list[HypothesisRecord]:
+        return self.list_capital_backed(asset=asset)
 
-    def list_capital_eligible(self) -> list[HypothesisRecord]:
-        records = self.list_observation_active()
+    def list_capital_eligible(self, *, asset: str | None = None) -> list[HypothesisRecord]:
+        records = self.list_observation_active(asset=asset)
         return [
             record
             for record in records
             if bool(record.metadata.get("lifecycle_capital_eligible", record.stake > 0))
         ]
 
-    def list_capital_backed(self, *, floor: float = 0.0) -> list[HypothesisRecord]:
-        records = self.list_capital_eligible()
+    def list_capital_backed(
+        self,
+        *,
+        floor: float = 0.0,
+        asset: str | None = None,
+    ) -> list[HypothesisRecord]:
+        records = self.list_capital_eligible(asset=asset)
         return [record for record in records if float(record.stake) > floor]
 
-    def list_live(self) -> list[HypothesisRecord]:
-        return self.list_capital_backed()
+    def list_live(self, *, asset: str | None = None) -> list[HypothesisRecord]:
+        return self.list_capital_backed(asset=asset)
 
-    def top_by_stake(self, n: int = 30) -> list[HypothesisRecord]:
-        records = self.list_capital_backed()
+    def top_by_stake(self, n: int = 30, *, asset: str | None = None) -> list[HypothesisRecord]:
+        records = self.list_capital_backed(asset=asset)
         return sorted(
             records,
             key=lambda record: (-float(record.stake), -float(record.updated_at)),
@@ -235,7 +241,7 @@ class HypothesisStore:
         ).fetchall()
         return [self._row_to_record(row) for row in rows]
 
-    def list_observation_active(self) -> list[HypothesisRecord]:
+    def list_observation_active(self, *, asset: str | None = None) -> list[HypothesisRecord]:
         rows = self._conn.execute(
             """
             SELECT *
@@ -245,9 +251,12 @@ class HypothesisStore:
             """,
             (HypothesisStatus.ACTIVE,),
         ).fetchall()
-        return [self._row_to_record(row) for row in rows]
+        records = [self._row_to_record(row) for row in rows]
+        if asset is None:
+            return records
+        return filter_records_by_assets(records, [asset])
 
-    def list_by_status(self, status: str) -> list[HypothesisRecord]:
+    def list_by_status(self, status: str, *, asset: str | None = None) -> list[HypothesisRecord]:
         rows = self._conn.execute(
             """
             SELECT *
@@ -257,7 +266,10 @@ class HypothesisStore:
             """,
             (HypothesisStatus.canonical(status),),
         ).fetchall()
-        return [self._row_to_record(row) for row in rows]
+        records = [self._row_to_record(row) for row in rows]
+        if asset is None:
+            return records
+        return filter_records_by_assets(records, [asset])
 
     def count(self, *, status: str | None = None) -> int:
         if status is None:

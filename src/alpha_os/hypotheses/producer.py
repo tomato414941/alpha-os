@@ -20,6 +20,7 @@ from ..dsl import parse, temporal_expression_issues
 from ..dsl.evaluator import evaluate_expression
 from ..predictions.store import Prediction, PredictionStore, SignalMeta
 from .identity import expression_feature_names
+from .sleeve_scope import filter_records_by_assets
 from .store import HypothesisKind, HypothesisRecord, HypothesisStore
 
 logger = logging.getLogger(__name__)
@@ -37,12 +38,6 @@ def produce_active_hypothesis_predictions(
     hypothesis_store = hypothesis_store or HypothesisStore()
     prediction_store = prediction_store or PredictionStore()
 
-    active = hypothesis_store.list_observation_active()
-    if not active:
-        prediction_store.close()
-        hypothesis_store.close()
-        return 0
-
     client = build_signal_client_from_config(config.api)
     universe_assets = assets
     if universe_assets is None:
@@ -55,6 +50,15 @@ def produce_active_hypothesis_predictions(
     if not universe_assets:
         hypothesis_store.close()
         prediction_store.close()
+        return 0
+
+    active = filter_records_by_assets(
+        hypothesis_store.list_observation_active(),
+        universe_assets,
+    )
+    if not active:
+        prediction_store.close()
+        hypothesis_store.close()
         return 0
 
     needed_features = collect_required_features(active, universe_assets)

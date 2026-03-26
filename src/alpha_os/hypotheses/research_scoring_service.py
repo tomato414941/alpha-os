@@ -32,7 +32,7 @@ def run_exploratory_research_scoring(
     load_data,
 ) -> ExploratoryResearchScoringRun:
     candidates = exploratory_scoring_candidates(
-        store.list_observation_active(),
+        store.list_observation_active(asset=asset),
         limit=limit,
     )
     if not candidates:
