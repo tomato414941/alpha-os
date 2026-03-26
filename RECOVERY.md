@@ -1,18 +1,33 @@
 # alpha-os Recovery Plan
 
-## Operating Posture (2026-03-21)
+## Operating Posture (2026-03-26)
 
-`alpha-os` is currently classified as `unsafe to run`.
+`alpha-os` is currently classified as `unsafe to run unattended or live`.
 
 What this means:
 
 - do not re-enable `systemd` units yet
-- do not treat manual trade runs as validation
+- do not treat bounded paper runs alone as sufficient validation
 - do not start live-trading migration work
-- only run isolated tests and bounded smoke checks tied to a single recovery unit
+- prefer bounded paper loops and explicit status checks
 
 The goal is not to "stabilize everything at once". The goal is to recover one
 closed unit at a time and only then reconnect it to the runtime.
+
+## Document Role
+
+This file is the source of truth for:
+
+- current recovery posture
+- what is still unsafe
+- which boundaries are trusted vs still provisional
+
+This file is **not** the source of truth for:
+
+- the current tactical implementation queue
+- the current working priority order
+
+For those, prefer [plan.md](./plan.md).
 
 ## Runtime Operating Model
 
@@ -165,109 +180,17 @@ Promotion path:
 
 For the current recovery phase, readiness matters more than uptime.
 
-### Current Oneshot Audit (2026-03-23)
+### Current Oneshot Audit
 
-The current entrypoints are not equally ready for scheduled operation.
+The detailed implementation queue for oneshot stages now lives in
+[plan.md](./plan.md).
 
-The draft `systemd` units accept `ALPHA_OS_CONFIG` from
-`/home/dev/.secrets/alpha-os-env`. If unset, they default to the local recovery
-config at `/home/dev/projects/alpha-os/config/dev.toml`.
+The stable recovery conclusions are:
 
-#### `trade --once`
-
-Current assessment: closest to the target operating model.
-
-What it already has:
-
-- runtime lock at the CLI entrypoint
-- bounded single-cycle execution
-- readiness reporting on `paper` / testnet paths
-- log file output under `data/logs/`
-
-What is still mixed in:
-
-- scheduler mode and oneshot mode share the same command surface
-- inline evolution still exists as a convenience path
-- real-trading confirmation is interactive, which is correct for manual use but not for unattended scheduling
-
-Current recommendation:
-
-- use this as the canonical scheduled trade entrypoint
-- prefer `trade --once --venue paper` for readiness accumulation
-
-#### `paper --once`
-
-Current assessment: bounded, but not the canonical scheduled runtime.
-
-What it already has:
-
-- bounded single-cycle execution
-- simple output for local validation
-
-What it is missing:
-
-- runtime lock at the CLI boundary
-- readiness integration as the primary path
-- clear separation between local convenience use and scheduler-safe use
-
-Current recommendation:
-
-- keep this for local smoke checks and manual inspection
-- do not treat it as the primary scheduled entrypoint
-
-#### `produce-predictions`
-
-Current assessment: structurally suitable as a stage job, but operational policy is incomplete.
-
-What it already has:
-
-- bounded execution
-- hypothesis-native input path
-- explicit count of written predictions
-
-What it is missing:
-
-- lock / single-writer policy
-- strict failure semantics for "0 predictions written"
-- explicit freshness / degrade reporting suitable for automation
-
-Current recommendation:
-
-- keep this as a scheduler stage
-- later add stricter exit policy or a `--strict` mode
-
-#### `sync-signal-cache`
-
-Current assessment: bounded, but currently too lenient for unattended automation.
-
-What it already has:
-
-- bounded sync scope
-- explicit target reporting
-- cheap health check before sync
-
-What it is missing:
-
-- lock / single-writer policy
-- explicit distinction between "degraded but acceptable" and "failed closed"
-- non-zero exit behavior when required sync freshness is not met
-
-Current recommendation:
-
-- keep this as a scheduler stage
-- later add policy-aware exit behavior for unattended runs
-
-### Immediate Scheduling Guidance
-
-If scheduling is introduced during recovery, the preferred chain is:
-
-1. `sync-signal-cache`
-2. `produce-predictions`
-3. `trade --once --venue paper`
-4. `runtime-status`
-
-The first production-grade scheduler integration should use that chain rather
-than `paper --once`.
+- `trade --once --venue paper` remains the canonical bounded trade entrypoint
+- `paper --once` remains a local convenience path, not the main scheduler target
+- stage jobs should remain bounded and externally scheduled
+- scheduler re-enable remains out of scope until recovery residue is smaller
 
 ### Recovery-Mode `systemd` Draft
 
@@ -389,6 +312,9 @@ support boundaries.
   3. `produce-predictions`
   4. `trade --once --venue paper`
   5. `runtime-status`
+- bounded multi-sleeve orchestration also exists:
+  - `run-sleeves-once`
+  - `compare-sleeves`
 - paper runtime state:
   - `paper_trading.db` stores portfolio snapshots, fills, and per-cycle hypothesis signals
   - `hypothesis_observations.db` stores realized observation history for live hypotheses
@@ -439,6 +365,13 @@ source-of-truth registry.
 
 The canonical record of which hypotheses exist and what stake they carry
 remains `hypotheses.db`.
+
+The current runtime is now sleeve-aware:
+
+- BTC is the reference sleeve
+- ETH is the first non-reference sleeve
+- `serious` maintenance is independent from random seeding
+- reference sleeve growth is explicitly capped
 
 ### Research Boundary
 
@@ -514,6 +447,18 @@ Intended end state:
 - do not add new runtime, research, or legacy logic under `alpha/`
 
 ## Target Persistent State
+
+This section is a historical migration baseline, not the exact current runtime
+shape.
+
+It is still useful for understanding the simplification direction, but parts of
+it are now stale relative to the sleeve-aware mainline. In particular:
+
+- runtime capital state is no longer adequately described by `stake > 0` alone
+- the current system is no longer only a single-asset BTC path
+- sleeve-local lifecycle metadata now matters in the runtime boundary
+
+For current execution priority, use [plan.md](./plan.md).
 
 The target steady state is one canonical table: `hypotheses`.
 
@@ -784,73 +729,34 @@ WHERE status = 'active' AND stake > 0
 ORDER BY stake DESC;
 ```
 
-## Recovery Units
+## Current Recovery Residue
 
-| Unit | Status | Why it is in this state | Exit criteria |
-|------|--------|--------------------------|---------------|
-| order-constraint-boundary | broken | Observed runtime failure in venue precision path (`SOL/USDT` precision error in `constrain_intent()` flow) | Invalid venue quantities are rejected before submit; no exception escapes from intent constrainting; regression tests cover the observed failure path |
-| managed-state-accounting | untrusted | Internal cash/position tracking may drift after fills; later checks depend on this state being correct | Fill application rules are deterministic and covered by tests for buy/sell/partial fill cases |
-| reconciliation | broken | Observed BTC/ETH/SOL mismatch between internal state and exchange state | Baseline semantics are documented; isolated tests cover clean-account and shared-account cases; latest bounded run reports `match=True` |
-| runtime-reporting-readiness | untrusted | `runtime-status` reports profile/report drift and stale readiness context | Report generation uses one clear source of truth; profile/deployed-set identifiers align with the current run; stale-report warnings disappear in bounded verification |
-| scheduler-service-lifecycle | broken | Services are disabled, naming drift existed, and manual single-run traces were mixed into runtime observation | Unit inventory is cleaned; one canonical run path exists; restart/stop/status commands match docs; bounded service smoke check passes |
-| generator-discovery-pipeline | untrusted | README already marks generator side as needing repair; current trust is insufficient for continuous runtime | Generator health metrics are defined; archive/admission flow passes bounded smoke checks; failures are observable from one command |
-| ops-docs-boundary | untrusted | Current state was spread across README, override notes, logs, and ad hoc observations | Runtime posture, repair order, and restart conditions are documented in one place and referenced from entry docs |
+The original unit-by-unit recovery list is now partly obsolete.
 
-## Recovery Order
+The current remaining recovery work is narrower:
 
-Work in this order. Do not skip ahead unless the current unit is explicitly
-blocked by external dependency work.
+1. scheduler and service lifecycle remain disabled
+   - bounded oneshot loops work
+   - unattended `systemd` re-enable is still out of scope
+2. runtime reporting is better but still not a final production-grade
+   observability layer
+3. search and maintenance are still only partially template-aware
+4. multi-sleeve operation is real, but still validated on a small number of
+   sleeves rather than a broad fleet
 
-1. `order-constraint-boundary`
-2. `managed-state-accounting`
-3. `reconciliation`
-4. `runtime-reporting-readiness`
-5. `scheduler-service-lifecycle`
-6. `generator-discovery-pipeline`
-7. `ops-docs-boundary`
-
-## First Unit: order-constraint-boundary
-
-This is the first focus because it is the smallest closed unit with direct
-runtime impact.
-
-Scope:
-
-- `src/alpha_os/execution/binance.py`
-- `src/alpha_os/execution/constraints.py`
-- `tests/test_binance_executor.py`
-- `tests/test_execution.py`
-
-Non-goals:
-
-- reconciliation redesign
-- `systemd` recovery
-- generator repairs
-- readiness/reporting cleanup beyond what this unit strictly needs
-
-Definition of done:
-
-- `ExecutionIntent -> constrain_intent()` never crashes on venue precision errors
-- venue-invalid quantities return `order=None` with an explicit rejection reason
-- min-notional and precision application order is consistent
-- a regression test reproduces the observed `SOL` failure mode
-- targeted tests pass
-
-Suggested verification:
-
-```bash
-pytest tests/test_binance_executor.py tests/test_execution.py -q
-```
+Use [plan.md](./plan.md) for the current execution order and active next steps.
 
 ## Restart Gate
 
-`alpha-os` remains `unsafe to run` until at least these units are `trusted`:
+`alpha-os` remains unsafe for unattended or live operation until all of the
+following are true:
 
-- `order-constraint-boundary`
-- `managed-state-accounting`
-- `reconciliation`
-- `runtime-reporting-readiness`
-- `scheduler-service-lifecycle`
+- bounded paper loops are stable over repeated runs
+- reporting and readiness are trustworthy enough to operate from snapshots
+- reference sleeve growth stays bounded without manual repair
+- serious and exploratory maintenance behave predictably across sleeves
+- scheduler/service lifecycle is intentionally re-enabled rather than drifting
+  back on by convenience
 
-Before that point, any runtime execution should be treated as debugging only,
-not as evidence of recovery.
+Before that point, any runtime execution should still be treated as bounded
+verification rather than recovery completion.

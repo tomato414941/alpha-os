@@ -59,6 +59,17 @@ Right now:
 - but the broader search / scoring / maintenance loop is not yet fully driven
   by template coverage
 
+## Recovery-Derived Active Work
+
+These items came out of `RECOVERY.md` and are still active enough to deserve a
+working-plan slot:
+
+1. keep all runtime stages bounded and externally schedulable
+2. do not re-enable unattended `systemd` operation yet
+3. keep `trade --once --venue paper` as the canonical bounded trade entrypoint
+4. continue operating from snapshots and explicit runtime status rather than
+   intuition
+
 ## Highest-Value Next Steps
 
 1. make search maintenance template-aware end to end
