@@ -2363,6 +2363,60 @@ def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, 
     assert "Dropped:   redundancy_capped=1" in output
 
 
+def test_cmd_analyze_actionable_live_can_filter_by_source(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_actionable_live
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="serious_live",
+        kind="dsl",
+        definition={"expression": "x"},
+        source="bootstrap_serious",
+        stake=1.0,
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": True,
+            "lifecycle_capital_backed": True,
+            "lifecycle_signal_nonzero_ratio": 0.7,
+            "lifecycle_signal_mean_abs": 0.4,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="batch_live",
+        kind="dsl",
+        definition={"expression": "y"},
+        source="random_dsl",
+        stake=0.0,
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_signal_nonzero_ratio": 0.0,
+            "lifecycle_signal_mean_abs": 0.0,
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_actionable_live(
+        Namespace(
+            asset="BTC",
+            config=None,
+            top=5,
+            families=None,
+            source="bootstrap_serious",
+        )
+    )
+    output = capsys.readouterr().out
+
+    assert "Actionable Live (BTC) <bootstrap_serious>" in output
+    assert "live_proven=1 actionable=1 backed=1" in output
+    assert "batch_live" not in output
+
+
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

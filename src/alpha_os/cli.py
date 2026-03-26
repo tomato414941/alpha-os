@@ -294,6 +294,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Comma-separated feature families to focus on",
     )
+    aal.add_argument(
+        "--source",
+        type=str,
+        default=None,
+        help="Restrict to one or more hypothesis sources",
+    )
 
     att = sub.add_parser(
         "analyze-trade-transition",
@@ -2325,6 +2331,12 @@ def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
         family_filter = tuple(
             family.strip() for family in raw_families.split(",") if family.strip()
         ) or None
+    source_filter = None
+    raw_source = getattr(args, "source", None)
+    if raw_source:
+        source_filter = tuple(
+            source.strip() for source in raw_source.split(",") if source.strip()
+        ) or None
     store = HypothesisStore(HYPOTHESES_DB)
     try:
         summary = build_actionable_live_summary(
@@ -2333,6 +2345,7 @@ def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
             signal_nonzero_ratio_min=cfg.lifecycle.live_proven_signal_nonzero_ratio_min,
             signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
             families=family_filter,
+            sources=source_filter,
         )
     finally:
         store.close()
@@ -2341,6 +2354,8 @@ def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
     title = f"Actionable Live ({args.asset.upper()})"
     if family_filter:
         title += f" [{','.join(family_filter)}]"
+    if source_filter:
+        title += f" <{','.join(source_filter)}>"
     print(title)
     print(
         "  Summary:  "

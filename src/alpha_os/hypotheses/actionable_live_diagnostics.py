@@ -74,12 +74,16 @@ def build_actionable_live_summary(
     signal_nonzero_ratio_min: float,
     signal_mean_abs_min: float,
     families: tuple[str, ...] | None = None,
+    sources: tuple[str, ...] | None = None,
 ) -> dict[str, object]:
     family_filter = set(families or ())
+    source_filter = set(sources or ())
     filtered = []
     for record in records:
         metadata = getattr(record, "metadata", {}) or {}
         if not bool(metadata.get("lifecycle_live_proven", False)):
+            continue
+        if source_filter and str(getattr(record, "source", "")) not in source_filter:
             continue
         record_families = set(expression_feature_families(record.expression))
         if family_filter and not (record_families & family_filter):
