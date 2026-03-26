@@ -1779,6 +1779,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
     skip_serious = bool(getattr(args, "skip_serious", False))
+    previous_compare_rows = _load_previous_sleeve_compare_rows()
 
     def _should_refresh_asset(asset: str) -> bool:
         return refresh_bootstrap_assets or asset not in bootstrap_assets
@@ -1793,9 +1794,11 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         return _should_refresh_asset(asset) or _should_run_serious(asset)
 
     def _score_budget_for_asset(asset: str):
+        previous_row = previous_compare_rows.get(asset.upper(), {})
         return build_template_gap_search_budget(
             asset=asset,
             base_limit=args.score_limit,
+            previous_template_gaps=list(previous_row.get("serious_template_gaps", [])),
         )
 
     print(

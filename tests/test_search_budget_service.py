@@ -75,3 +75,44 @@ def test_build_template_gap_search_budget_scales_with_missing_templates(monkeypa
     assert budget.requested_limit == 12
     assert budget.effective_limit == 4
     assert budget.missing_template_count == 2
+    assert budget.closed_template_count == 0
+    assert budget.new_template_count == 2
+
+
+def test_build_template_gap_search_budget_boosts_stalled_gaps(monkeypatch):
+    from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
+
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.search_budget_service.serious_seed_specs",
+        lambda asset: [object()],
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.search_budget_service.HypothesisStore",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            list_observation_active=lambda **_kwargs: [],
+            close=lambda: None,
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.search_budget_service.serious_template_gap_scores",
+        lambda asset, records: {
+            "macro_template": 1.0,
+            "price_template": 0.5,
+        },
+    )
+
+    budget = build_template_gap_search_budget(
+        asset="ETH",
+        base_limit=12,
+        previous_template_gaps=[
+            "macro_template:1.00",
+            "price_template:0.50",
+        ],
+    )
+
+    assert budget.asset == "ETH"
+    assert budget.requested_limit == 12
+    assert budget.effective_limit == 6
+    assert budget.missing_template_count == 2
+    assert budget.closed_template_count == 0
+    assert budget.new_template_count == 0

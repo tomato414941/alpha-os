@@ -209,11 +209,13 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
 
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=base_limit,
             missing_template_count=1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr("alpha_os.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
@@ -265,11 +267,13 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
     )
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=base_limit,
             missing_template_count=1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr(
@@ -2026,11 +2030,13 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     )
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=base_limit,
             missing_template_count=1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr(
@@ -2175,11 +2181,13 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
 
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=0 if asset == "ETH" else base_limit,
             missing_template_count=0 if asset == "ETH" else 1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr(
@@ -2256,11 +2264,13 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
 
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=6 if asset == "ETH" else base_limit,
             missing_template_count=3 if asset == "ETH" else 1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr(
@@ -2308,6 +2318,7 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
     monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os.cli._load_previous_sleeve_compare_rows", lambda: {})
 
     cmd_run_sleeves_once(
         SimpleNamespace(
