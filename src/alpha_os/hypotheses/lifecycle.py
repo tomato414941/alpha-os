@@ -419,6 +419,7 @@ def build_allocation_rebalance_plan(
             capital_eligibility_breakdown(
                 research_quality=research_quality,
                 research_quality_source=research_quality_source,
+                hypothesis_source=str(getattr(record, "source", "") or ""),
                 metric=metric,
                 bootstrap_weight=bootstrap_weight,
                 batch_research_weight=batch_research_weight,
@@ -461,6 +462,7 @@ def build_allocation_rebalance_plan(
                     marginal_contribution=marginal,
                     signal_nonzero_ratio=signal_nonzero_ratio,
                     signal_mean_abs=signal_mean_abs,
+                    hypothesis_source=str(getattr(record, "source", "") or ""),
                     live_proven_quality_min=live_proven_quality_min,
                     live_proven_marginal_contribution_min=live_proven_marginal_contribution_min,
                     live_proven_signal_nonzero_ratio_min=live_proven_signal_nonzero_ratio_min,

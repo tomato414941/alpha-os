@@ -688,6 +688,41 @@ def test_build_allocation_rebalance_plan_prefers_live_proven_over_research_overl
     store.close()
 
 
+def test_build_allocation_rebalance_plan_allows_serious_seed_with_weak_contribution(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="serious_1",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "x"},
+            source="bootstrap_serious",
+            stake=0.0,
+            metadata={"oos_sharpe": 0.8},
+        )
+    )
+
+    plan = build_allocation_rebalance_plan(
+        store,
+        metric="sharpe",
+        min_observations=3,
+        full_weight_observations=3,
+        live_proven_quality_min=0.05,
+        live_proven_marginal_contribution_min=0.0,
+        live_proven_signal_nonzero_ratio_min=0.20,
+        live_proven_signal_mean_abs_min=0.05,
+        live_returns_for=lambda _hypothesis_id: [0.03, 0.02, 0.01],
+        signal_activity_for=lambda _hypothesis_id: (0.6, 0.2),
+    )
+
+    entry = plan[0]
+    assert entry.live_proven is True
+    assert entry.actionable_live is True
+    assert entry.capital_eligible is True
+    assert entry.capital_reason == "actionable_live"
+    assert entry.live_promotion_blocker == "eligible"
+    store.close()
+
+
 def test_build_allocation_rebalance_plan_blocks_sparse_signal_activity(tmp_path):
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(
