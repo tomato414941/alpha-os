@@ -8,14 +8,6 @@ from pathlib import Path
 from ..config import Config
 
 
-def add_hidden_root_legacy_commands(sub) -> None:
-    rex = sub.add_parser("replay-experiment", help=argparse.SUPPRESS)
-    _add_replay_experiment_arguments(rex)
-
-    rmx = sub.add_parser("replay-matrix", help=argparse.SUPPRESS)
-    _add_replay_matrix_arguments(rmx)
-
-
 def add_legacy_subcommands(legacy_sub) -> None:
     ladm = legacy_sub.add_parser(
         "admission-daemon",

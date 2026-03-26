@@ -1124,6 +1124,10 @@ def test_legacy_lifecycle_parser():
         "seed-handcrafted",
         "analyze-diversity",
         "submit",
+        "admission-daemon",
+        "prune-stale-candidates",
+        "replay-experiment",
+        "replay-matrix",
     ],
 )
 def test_legacy_registry_commands_are_not_parsed(command):

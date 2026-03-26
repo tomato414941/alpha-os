@@ -30,7 +30,6 @@ from alpha_os.data.signal_client import build_signal_client_from_config
 from alpha_os.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
 from alpha_os.dsl import parse, to_string
 from alpha_os.legacy.cli_commands import (
-    add_hidden_root_legacy_commands,
     add_legacy_research_subcommands,
     add_legacy_subcommands,
 )
@@ -200,19 +199,6 @@ def _build_parser() -> argparse.ArgumentParser:
     pg.add_argument("--limit", type=int, default=None)
     pg.add_argument("--dry-run", action="store_true")
 
-    # admission-daemon (Pipeline v2)
-    adm_d = sub.add_parser("admission-daemon", help=argparse.SUPPRESS)
-    adm_d.add_argument("--asset", type=str, default="BTC")
-    adm_d.add_argument("--config", type=str, default=None)
-
-    psc = sub.add_parser(
-        "prune-stale-candidates",
-        help=argparse.SUPPRESS,
-    )
-    psc.add_argument("--asset", type=str, default="BTC")
-    psc.add_argument("--max-age-days", type=int, default=7)
-    psc.add_argument("--dry-run", action="store_true")
-
     # lifecycle (legacy compat alias)
     lc_d = sub.add_parser("lifecycle", help=argparse.SUPPRESS)
     lc_d.add_argument("--asset", type=str, default="BTC")
@@ -345,8 +331,6 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Recompute allocation trust after backfilling observation returns",
     )
-
-    add_hidden_root_legacy_commands(sub)
 
     # testnet-readiness
     tnr = sub.add_parser("testnet-readiness", help="Check Phase 4 testnet readiness status")
@@ -3418,10 +3402,6 @@ def main(argv: list[str] | None = None) -> None:
         cmd_unified_generator(args)
     elif args.command == "enqueue-discovery-pool":
         cmd_enqueue_discovery_pool(args)
-    elif args.command == "admission-daemon":
-        cmd_admission_daemon(args)
-    elif args.command == "prune-stale-candidates":
-        cmd_prune_stale_candidates(args)
     elif args.command == "lifecycle":
         cmd_lifecycle(args)
     elif args.command == "rebalance-allocation-trust":
