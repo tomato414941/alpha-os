@@ -133,7 +133,12 @@ def test_build_signal_activity_getter_uses_positive_activity_for_long_only():
             assert limit == 5
             return [-1.0, -0.5, 0.0, 0.2, 0.4]
 
-    getter = _build_signal_activity_getter(_Tracker(), lookback=5, supports_short=False)
+    getter = _build_signal_activity_getter(
+        _Tracker(),
+        None,
+        lookback=5,
+        supports_short=False,
+    )
 
     assert getter is not None
     ratio, mean_signal = getter("h1")
@@ -150,7 +155,12 @@ def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
             assert limit == 5
             return [-1.0, -0.5, 0.0, 0.2, 0.4]
 
-    getter = _build_signal_activity_getter(_Tracker(), lookback=5, supports_short=True)
+    getter = _build_signal_activity_getter(
+        _Tracker(),
+        None,
+        lookback=5,
+        supports_short=True,
+    )
 
     assert getter is not None
     ratio, mean_signal = getter("h1")

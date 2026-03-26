@@ -1480,10 +1480,18 @@ def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
     return live_returns_for
 
 
-def _build_signal_activity_getter(portfolio_tracker, *, lookback: int, supports_short: bool):
-    if portfolio_tracker is None:
-        return None
-    getter = getattr(portfolio_tracker, "get_hypothesis_signal_history", None)
+def _build_signal_activity_getter(
+    forward_tracker,
+    portfolio_tracker,
+    *,
+    lookback: int,
+    supports_short: bool,
+):
+    getter = None
+    if forward_tracker is not None:
+        getter = getattr(forward_tracker, "get_hypothesis_signal_history", None)
+    if getter is None and portfolio_tracker is not None:
+        getter = getattr(portfolio_tracker, "get_hypothesis_signal_history", None)
     if getter is None:
         return None
 
@@ -1532,6 +1540,7 @@ def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, f
         supports_short=cfg.trading.supports_short,
     )
     signal_activity_for = _build_signal_activity_getter(
+        forward_tracker,
         trader.portfolio_tracker,
         lookback=cfg.forward.degradation_window,
         supports_short=cfg.trading.supports_short,
@@ -1932,6 +1941,7 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
             supports_short=cfg.trading.supports_short,
         )
         signal_activity_for = _build_signal_activity_getter(
+            forward_tracker,
             portfolio_tracker,
             lookback=cfg.forward.degradation_window,
             supports_short=cfg.trading.supports_short,
@@ -2324,6 +2334,7 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             supports_short=cfg.trading.supports_short,
         )
         signal_activity_for = _build_signal_activity_getter(
+            forward_tracker,
             portfolio_tracker,
             lookback=cfg.forward.degradation_window,
             supports_short=cfg.trading.supports_short,

@@ -224,6 +224,14 @@ class HypothesisObservationTracker:
         ).fetchall()
         return [row["daily_return"] for row in rows]
 
+    def get_hypothesis_signal_history(self, hypothesis_id: str, limit: int = 20) -> list[float]:
+        rows = self._conn.execute(
+            f"SELECT signal_value FROM {self._OBSERVATIONS_TABLE} "
+            "WHERE hypothesis_id = ? ORDER BY date DESC LIMIT ?",
+            (hypothesis_id, int(limit)),
+        ).fetchall()
+        return [float(row["signal_value"]) for row in rows]
+
     def get_hypothesis_realizable_returns(
         self,
         hypothesis_id: str,

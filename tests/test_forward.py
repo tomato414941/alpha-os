@@ -32,6 +32,18 @@ class TestHypothesisObservationTracker:
         assert returns[1] == pytest.approx(-0.005)
         tracker.close()
 
+    def test_get_hypothesis_signal_history(self, tmp_path):
+        tracker = HypothesisObservationTracker(db_path=tmp_path / "fwd.db")
+        tracker.register_hypothesis("a1", "2025-01-01")
+        tracker.record("a1", "2025-01-02", 0.5, 0.01)
+        tracker.record("a1", "2025-01-03", -0.3, -0.005)
+        tracker.record("a1", "2025-01-04", 0.1, 0.002)
+
+        signals = tracker.get_hypothesis_signal_history("a1", limit=2)
+
+        assert signals == pytest.approx([0.1, -0.3])
+        tracker.close()
+
     def test_cumulative_return(self, tmp_path):
         tracker = HypothesisObservationTracker(db_path=tmp_path / "fwd.db")
         tracker.register_hypothesis("a1", "2025-01-01")
