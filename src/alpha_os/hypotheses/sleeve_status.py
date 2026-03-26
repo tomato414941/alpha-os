@@ -219,6 +219,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
     for record in records:
         metadata = getattr(record, "metadata", {}) or {}
         cohort = runtime_cohort(record)
+        source = str(getattr(record, "source", "") or "")
         try:
             stake = float(record.stake)
         except (TypeError, ValueError):
@@ -239,14 +240,17 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
             research_retained += 1
             if cohort == "batch":
                 batch_research_retained += 1
-            elif cohort == "serious":
-                serious_research_retained += 1
-            else:
+            elif cohort != "serious":
                 bootstrap_research_retained += 1
         if bool(metadata.get("lifecycle_live_proven", False)):
             live_proven += 1
             if bootstrap_trust <= 0:
                 promoted_live += 1
+        if source == "bootstrap_serious" and (
+            bool(metadata.get("lifecycle_research_retained", False))
+            or bool(metadata.get("lifecycle_live_proven", False))
+        ):
+            serious_research_retained += 1
         if bool(metadata.get("lifecycle_actionable_live", False)):
             actionable_live += 1
             if not capital_backed_now:
@@ -255,7 +259,9 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
                 else:
                     actionable_other_dropped += 1
         if capital_backed_now:
-            if cohort == "live":
+            if source == "bootstrap_serious":
+                serious_capital_backed += 1
+            elif cohort == "live":
                 actionable_live_capital_backed += 1
             elif cohort == "batch":
                 batch_research_capital_backed += 1

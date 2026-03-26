@@ -331,6 +331,32 @@ def test_build_asset_sleeve_summary_tracks_serious_cohort():
     assert summary.bootstrap_capital_backed == 0
 
 
+def test_build_asset_sleeve_summary_counts_live_serious_source():
+    from alpha_os.hypotheses.sleeve_status import build_asset_sleeve_summary
+    from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord
+
+    summary = build_asset_sleeve_summary([
+        HypothesisRecord(
+            hypothesis_id="serious_live",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            source="bootstrap_serious",
+            stake=0.3,
+            metadata={
+                "lifecycle_live_proven": True,
+                "lifecycle_actionable_live": True,
+                "lifecycle_capital_backed": True,
+                "lifecycle_bootstrap_trust": 0.08,
+            },
+        )
+    ])
+
+    assert summary.live_proven == 1
+    assert summary.serious_research_retained == 1
+    assert summary.serious_capital_backed == 1
+    assert summary.actionable_live_capital_backed == 0
+
+
 def test_needs_trade_evolution_supports_hypothesis_registry():
     from alpha_os.cli import _needs_trade_evolution
 
