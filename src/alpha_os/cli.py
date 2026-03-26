@@ -3089,6 +3089,20 @@ def _latest_live_count(latest: dict | None) -> int:
     return int(latest.get("n_live_hypotheses", 0))
 
 
+def _latest_active_count(latest: dict | None, default: int = 0) -> int:
+    if latest is None:
+        return default
+    return int(latest.get("n_active_hypotheses", latest.get("n_registry_active", default)))
+
+
+def _latest_selected_count(latest: dict | None, default: int = 0) -> int:
+    if latest is None:
+        return default
+    return int(
+        latest.get("n_selected_hypotheses", latest.get("n_selected_alphas", default))
+    )
+
+
 def _current_runtime_profile(cfg, asset: str):
     live_ids = _live_hypothesis_ids(asset=asset)
     profile = build_runtime_profile(
@@ -3261,9 +3275,9 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             )
     print(
         f"  Selection: current_live={len(runtime_ids)} "
-        f"latest_active={latest.get('n_active_hypotheses', latest.get('n_registry_active', 0))} "
+        f"latest_active={_latest_active_count(latest)} "
         f"live={_latest_live_count(latest)} "
-        f"selected={latest.get('n_selected_hypotheses', latest.get('n_selected_alphas', 0))}"
+        f"selected={_latest_selected_count(latest)}"
     )
     print(
         "  Skips:     "
@@ -3289,7 +3303,7 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
             print("    - config fingerprint differs between current and latest")
         if latest_live_set_id and latest_live_set_id != current_profile.live_set_id:
             print("    - live hypothesis set fingerprint differs between current and latest")
-    latest_active = int(latest.get("n_active_hypotheses", latest.get("n_registry_active", 0)))
+    latest_active = _latest_active_count(latest)
     if latest_active != len(runtime_ids):
         print(
             "  Note:      current runtime live count differs from latest readiness report; "
