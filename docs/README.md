@@ -79,10 +79,10 @@ Prefer:
 
 Prefer:
 
-- [`OLD_DESIGN.md`](../OLD_DESIGN.md)
-- [`ROADMAP.md`](../ROADMAP.md)
-- [`PREDICTION_TARGETS.md`](../PREDICTION_TARGETS.md)
-- [`TRADING_UNIVERSE_DESIGN.md`](../TRADING_UNIVERSE_DESIGN.md)
+- [`OLD_DESIGN.md`](./archive/OLD_DESIGN.md)
+- [`ROADMAP.md`](./exploratory/ROADMAP.md)
+- [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
+- [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
 
 ## Document Roles
 
@@ -116,16 +116,16 @@ Prefer:
 
 ### Exploratory / Future-Facing
 
-- [`ROADMAP.md`](../ROADMAP.md)
+- [`ROADMAP.md`](./exploratory/ROADMAP.md)
   - forward-looking ideas
-- [`PREDICTION_TARGETS.md`](../PREDICTION_TARGETS.md)
+- [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
   - target taxonomy
-- [`TRADING_UNIVERSE_DESIGN.md`](../TRADING_UNIVERSE_DESIGN.md)
+- [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
   - future universe expansion ideas
 
 ### Archive / Legacy
 
-- [`OLD_DESIGN.md`](../OLD_DESIGN.md)
+- [`OLD_DESIGN.md`](./archive/OLD_DESIGN.md)
   - registry-era history
 - [`system-diagram.html`](./system-diagram.html)
   - legacy diagram

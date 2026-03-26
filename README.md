@@ -39,10 +39,10 @@ After that:
 
 Exploratory or archival files are intentionally lower priority:
 
-- `ROADMAP.md`
-- `PREDICTION_TARGETS.md`
-- `TRADING_UNIVERSE_DESIGN.md`
-- `OLD_DESIGN.md`
+- `docs/exploratory/ROADMAP.md`
+- `docs/exploratory/PREDICTION_TARGETS.md`
+- `docs/exploratory/TRADING_UNIVERSE_DESIGN.md`
+- `docs/archive/OLD_DESIGN.md`
 
 ## Current Runtime Path
 
@@ -114,7 +114,7 @@ These remain in the repo, but they are not the current runtime:
 - `replay-experiment`
 - `simulator`
 - `managed_alphas` / `deployed_alphas`
-- archived registry-era documents in `OLD_DESIGN.md`
+- archived registry-era documents in `docs/archive/OLD_DESIGN.md`
 
 Treat them as legacy experimental or archival material unless they are
 explicitly rewritten around hypotheses-first inputs.
@@ -125,7 +125,7 @@ For deeper rationale and longer-term design, prefer:
 
 - [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md)
 - [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md)
-- [OLD_DESIGN.md](/home/dev/projects/alpha-os/OLD_DESIGN.md)
+- [OLD_DESIGN.md](/home/dev/projects/alpha-os/docs/archive/OLD_DESIGN.md)
 
 ## Setup
 
@@ -206,5 +206,5 @@ ruff check src/
 
 - [RECOVERY.md](/home/dev/projects/alpha-os/RECOVERY.md): current runtime truth, scheduler draft, and exit criteria
 - [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): architectural rationale and long-term direction
-- [ROADMAP.md](/home/dev/projects/alpha-os/ROADMAP.md): future ideas and expansion work
-- [OLD_DESIGN.md](/home/dev/projects/alpha-os/OLD_DESIGN.md): archived registry-era design material
+- [ROADMAP.md](/home/dev/projects/alpha-os/docs/exploratory/ROADMAP.md): future ideas and expansion work
+- [OLD_DESIGN.md](/home/dev/projects/alpha-os/docs/archive/OLD_DESIGN.md): archived registry-era design material
