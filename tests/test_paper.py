@@ -444,7 +444,7 @@ class TestTrader:
         assert list(arr) == [0.2, 0.2, 0.2, 0.2, 0.4]
 
     def test_prepare_runtime_inputs_prefers_prediction_store(self):
-        from alpha_os.paper.trader import Trader
+        from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
         from alpha_os.hypotheses.store import HypothesisRecord
 
         store_backed = HypothesisRecord(
@@ -460,10 +460,10 @@ class TestTrader:
             stake=0.5,
         )
 
-        runtime_signals, parsed_records, n_failed = Trader._prepare_runtime_inputs(
+        runtime_signals, parsed_records, n_failed = prepare_runtime_inputs(
             [store_backed, expr_backed],
-            "btc_ohlcv",
-            {"h-store": 0.4},
+            price_signal="btc_ohlcv",
+            store_signals={"h-store": 0.4},
         )
 
         assert runtime_signals == ["bar", "btc_ohlcv"]
@@ -474,7 +474,7 @@ class TestTrader:
         assert n_failed == 0
 
     def test_prepare_runtime_inputs_uses_raw_signals_for_derived_features(self):
-        from alpha_os.paper.trader import Trader
+        from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
         from alpha_os.hypotheses.store import HypothesisRecord
 
         derived_backed = HypothesisRecord(
@@ -484,10 +484,10 @@ class TestTrader:
             stake=1.0,
         )
 
-        runtime_signals, parsed_records, n_failed = Trader._prepare_runtime_inputs(
+        runtime_signals, parsed_records, n_failed = prepare_runtime_inputs(
             [derived_backed],
-            "eth_btc",
-            {},
+            price_signal="eth_btc",
+            store_signals={},
         )
 
         assert runtime_signals == ["btc_active_addresses", "eth_btc"]
@@ -495,6 +495,40 @@ class TestTrader:
             ("h-derived", False),
         ]
         assert n_failed == 0
+
+    def test_filter_runtime_records_by_available_features_skips_missing_inputs(self):
+        from alpha_os.hypotheses.runtime_inputs import (
+            filter_runtime_records_by_available_features,
+            prepare_runtime_inputs,
+        )
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        supported = HypothesisRecord(
+            hypothesis_id="h-supported",
+            kind="dsl",
+            definition={"expression": "(rank_10 bar)"},
+            stake=1.0,
+        )
+        missing = HypothesisRecord(
+            hypothesis_id="h-missing",
+            kind="dsl",
+            definition={"expression": "(rank_10 baz)"},
+            stake=1.0,
+        )
+
+        _signals, parsed_records, _failed = prepare_runtime_inputs(
+            [supported, missing],
+            price_signal="btc_ohlcv",
+            store_signals={},
+        )
+        filtered_records, n_feature_filtered = filter_runtime_records_by_available_features(
+            parsed_records,
+            available_features={"btc_ohlcv", "bar"},
+            store_signals={},
+        )
+
+        assert [record.hypothesis_id for record, _expr in filtered_records] == ["h-supported"]
+        assert n_feature_filtered == 1
 
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""
