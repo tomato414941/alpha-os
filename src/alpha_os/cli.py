@@ -317,6 +317,12 @@ def _build_parser() -> argparse.ArgumentParser:
     bor.add_argument("--config", type=str, default=None)
     bor.add_argument("--days", type=int, default=30)
     bor.add_argument(
+        "--source",
+        type=str,
+        default=None,
+        help="Only backfill hypotheses from the given source cohort",
+    )
+    bor.add_argument(
         "--apply-lifecycle",
         action="store_true",
         help="Recompute allocation trust after backfilling observation returns",
@@ -2489,6 +2495,9 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
     forward_tracker = HypothesisObservationTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
     portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
     try:
+        records = store.list_observation_active(asset=args.asset)
+        if args.source:
+            records = [record for record in records if record.source == args.source]
         live_returns_for = _build_live_returns_getter(
             forward_tracker,
             supports_short=cfg.trading.supports_short,
@@ -2505,12 +2514,14 @@ def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
             forward_tracker=forward_tracker,
             asset=args.asset,
             lookback_days=args.days,
+            records=records,
         )
         print(
             "Observation backfill: "
             f"asset={args.asset} hypotheses={summary.n_hypotheses} "
             f"days={summary.n_days} records={summary.n_records} "
             f"failures={summary.n_failures}"
+            f"{'' if not args.source else f' source={args.source}'}"
         )
 
         if not args.apply_lifecycle:

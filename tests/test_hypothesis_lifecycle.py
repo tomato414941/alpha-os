@@ -968,6 +968,65 @@ def test_backfill_observation_returns_records_history_from_cached_signals(tmp_pa
     store.close()
 
 
+def test_backfill_observation_returns_can_target_specific_records(tmp_path):
+    hdb = tmp_path / "hypotheses.db"
+    sdb = tmp_path / "signal_cache.db"
+    fdb = tmp_path / "hypothesis_observations.db"
+
+    store = HypothesisStore(hdb)
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="serious_1",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 1}},
+            source="bootstrap_serious",
+            stake=0.0,
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="random_1",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 1}},
+            source="random_dsl",
+            stake=0.0,
+        )
+    )
+    conn = sqlite3.connect(sdb)
+    conn.execute(
+        "CREATE TABLE signals (name TEXT, date TEXT, value REAL, resolution TEXT DEFAULT '1d', PRIMARY KEY (name, date))"
+    )
+    conn.executemany(
+        "INSERT INTO signals (name, date, value, resolution) VALUES (?, ?, ?, ?)",
+        [
+            ("btc_ohlcv", "2026-03-20", 100.0, "1d"),
+            ("btc_ohlcv", "2026-03-21", 101.0, "1d"),
+            ("btc_ohlcv", "2026-03-22", 102.0, "1d"),
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    data_store = DataStore(sdb)
+    forward_tracker = HypothesisObservationTracker(fdb)
+    summary = backfill_observation_returns(
+        hypothesis_store=store,
+        data_store=data_store,
+        forward_tracker=forward_tracker,
+        asset="BTC",
+        lookback_days=2,
+        records=[store.get("serious_1")],
+    )
+
+    assert summary.n_hypotheses == 1
+    assert len(forward_tracker.get_hypothesis_records("serious_1")) == 2
+    assert forward_tracker.get_hypothesis_records("random_1") == []
+
+    forward_tracker.close()
+    data_store.close()
+    store.close()
+
+
 def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(tmp_path):
     tracker = HypothesisObservationTracker(tmp_path / "hypothesis_observations.db")
     tracker.record("h1", "2026-03-21", 0.8, 0.016)

@@ -27,8 +27,9 @@ def backfill_observation_returns(
     forward_tracker: HypothesisObservationTracker,
     asset: str,
     lookback_days: int = 30,
+    records: list | None = None,
 ) -> ObservationBackfillSummary:
-    records = hypothesis_store.list_observation_active(asset=asset)
+    records = list(records) if records is not None else hypothesis_store.list_observation_active(asset=asset)
     if not records:
         return ObservationBackfillSummary(
             n_hypotheses=0,

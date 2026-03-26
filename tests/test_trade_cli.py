@@ -115,6 +115,20 @@ def test_hypothesis_seeder_parser_supports_asset_once_and_skip_bootstrap():
     assert args.skip_bootstrap is True
 
 
+def test_backfill_observation_returns_parser_supports_source_filter():
+    from alpha_os.cli import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args(
+        ["backfill-observation-returns", "--asset", "BTC", "--days", "15", "--source", "bootstrap_serious"]
+    )
+
+    assert args.command == "backfill-observation-returns"
+    assert args.asset == "BTC"
+    assert args.days == 15
+    assert args.source == "bootstrap_serious"
+
+
 def test_trade_runtime_lock_path():
     from alpha_os.runtime_lock import runtime_lock_path
 
