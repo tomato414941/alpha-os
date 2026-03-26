@@ -7,7 +7,11 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .identity import expression_feature_families
-from .serious_templates import serious_family_gap_scores, serious_seed_specs
+from .serious_templates import (
+    serious_family_gap_scores,
+    serious_seed_specs,
+    serious_template_gap_scores,
+)
 
 
 def _format_runtime_hypothesis_entry(record, value: float) -> str:
@@ -125,13 +129,13 @@ def _records_scope_asset(records) -> str | None:
     return None
 
 
-def _serious_template_coverage(records) -> tuple[int, int, int, list[str]]:
+def _serious_template_coverage(records) -> tuple[int, int, int, list[str], list[str]]:
     asset = _records_scope_asset(records)
     if not asset:
-        return 0, 0, 0, []
+        return 0, 0, 0, [], []
     total = len(serious_seed_specs(asset))
     if total <= 0:
-        return 0, 0, 0, []
+        return 0, 0, 0, [], []
 
     retained = 0
     backed = 0
@@ -146,6 +150,7 @@ def _serious_template_coverage(records) -> tuple[int, int, int, list[str]]:
         if bool(metadata.get("lifecycle_capital_backed", False)):
             backed += 1
     gaps = serious_family_gap_scores(asset, records)
+    template_gaps = serious_template_gap_scores(asset, records)
     gap_items = [
         f"{family}:{gap:.2f}"
         for family, gap in sorted(
@@ -154,7 +159,15 @@ def _serious_template_coverage(records) -> tuple[int, int, int, list[str]]:
         )
         if gap > 0.0
     ]
-    return retained, backed, total, gap_items[:3]
+    template_gap_items = [
+        f"{template_id}:{gap:.2f}"
+        for template_id, gap in sorted(
+            template_gaps.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+        if gap > 0.0
+    ]
+    return retained, backed, total, template_gap_items[:3], gap_items[:3]
 
 
 @dataclass(frozen=True)
@@ -238,6 +251,7 @@ class AssetSleeveSummary:
     batch_backed_families: list[str] = field(default_factory=list)
     serious_retained_templates: list[str] = field(default_factory=list)
     serious_backed_templates: list[str] = field(default_factory=list)
+    serious_template_gaps: list[str] = field(default_factory=list)
     serious_family_gaps: list[str] = field(default_factory=list)
 
 
@@ -287,6 +301,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         serious_template_retained_count,
         serious_template_backed_count,
         serious_template_target_count,
+        serious_template_gaps,
         serious_family_gaps,
     ) = _serious_template_coverage(records)
 
@@ -384,6 +399,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         batch_backed_families=_top_batch_family_counts(records, backed_only=True),
         serious_retained_templates=_top_serious_template_counts(records, backed_only=False),
         serious_backed_templates=_top_serious_template_counts(records, backed_only=True),
+        serious_template_gaps=serious_template_gaps,
         serious_family_gaps=serious_family_gaps,
     )
 

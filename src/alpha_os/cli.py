@@ -2239,6 +2239,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"backed={row['backed']} "
             f"serious={row['serious_retained']}/{row['serious_backed']} "
             f"templates={row['serious_template_backed']}/{row['serious_template_total']} "
+            f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
             f"breadth={row['breadth']:.2f} "
             f"latest={row['latest']} "
             f"fills={row['fills']} "
@@ -2936,6 +2937,7 @@ def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object
         "batch_backed_families": summary.batch_backed_families,
         "serious_retained_templates": summary.serious_retained_templates,
         "serious_backed_templates": summary.serious_backed_templates,
+        "serious_template_gaps": summary.serious_template_gaps,
         "serious_family_gaps": summary.serious_family_gaps,
     }
 
@@ -3011,6 +3013,7 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
                 "serious_backed": hypothesis_summary["serious_capital_backed"],
                 "serious_template_backed": hypothesis_summary["serious_template_backed_count"],
                 "serious_template_total": hypothesis_summary["serious_template_target_count"],
+                "serious_template_gaps": hypothesis_summary["serious_template_gaps"],
                 "breadth": 0.0 if actionable_window is None else actionable_window["breadth"],
                 "latest": "none" if latest is None else ("ERROR" if latest.get("has_errors") else "OK"),
                 "fills": 0 if latest is None else int(latest.get("n_fills", 0)),
@@ -3186,15 +3189,17 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         backed = ", ".join(hypothesis_summary["serious_backed_templates"]) or "-"
         print(f"  SeriousTpl: retained={retained} backed={backed}")
     if hypothesis_summary["serious_template_target_count"] > 0:
-        gaps = ", ".join(hypothesis_summary["serious_family_gaps"]) or "-"
+        template_gaps = ", ".join(hypothesis_summary["serious_template_gaps"]) or "-"
+        family_gaps = ", ".join(hypothesis_summary["serious_family_gaps"]) or "-"
         print(
             "  SeriousCov:"
             f" retained={hypothesis_summary['serious_template_retained_count']}/"
             f"{hypothesis_summary['serious_template_target_count']}"
             f" backed={hypothesis_summary['serious_template_backed_count']}/"
             f"{hypothesis_summary['serious_template_target_count']}"
-            f" gaps={gaps}"
+            f" gaps={template_gaps}"
         )
+        print(f"  SeriousGap: families={family_gaps}")
     if actionable_window is not None:
         print(
             "  ActionWin: "
