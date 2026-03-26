@@ -242,6 +242,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Also run seed/score/rebalance for bootstrap reference sleeves",
     )
     rso.add_argument("--skip-seed", action="store_true")
+    rso.add_argument("--skip-serious", action="store_true")
     rso.add_argument("--skip-score", action="store_true")
     rso.add_argument("--skip-rebalance", action="store_true")
     rso.add_argument("--skip-trade", action="store_true")
@@ -2075,7 +2076,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.hypotheses.serious_template_service import (
-        run_serious_template_reconcile,
+        run_serious_template_maintenance,
     )
     from alpha_os.hypotheses.serious_templates import serious_seed_specs
     from alpha_os.hypotheses.store import HypothesisStore
@@ -2083,16 +2084,26 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     asset_list = _resolve_asset_list(args)
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
+    skip_serious = bool(getattr(args, "skip_serious", False))
 
     def _should_refresh_asset(asset: str) -> bool:
         return refresh_bootstrap_assets or asset not in bootstrap_assets
+
+    def _has_serious_templates(asset: str) -> bool:
+        return bool(serious_seed_specs(asset))
+
+    def _should_run_serious(asset: str) -> bool:
+        return (not skip_serious) and _has_serious_templates(asset)
+
+    def _should_rebalance_asset(asset: str) -> bool:
+        return _should_refresh_asset(asset) or _should_run_serious(asset)
 
     print(
         "Sleeve loop [ONCE]: "
         f"assets={','.join(asset_list)} "
         f"stages="
         f"{'seed,' if not args.skip_seed else ''}"
-        f"{'serious,' if not args.skip_seed else ''}"
+        f"{'serious,' if not skip_serious else ''}"
         f"{'score,' if not args.skip_score else ''}"
         f"{'rebalance,' if not args.skip_rebalance else ''}"
         f"{'trade,' if not args.skip_trade else ''}"
@@ -2113,32 +2124,35 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                     config=args.config,
                 )
             )
-            if serious_seed_specs(asset):
-                print(f"\n--- Serious {asset} ---")
-                adir = asset_data_dir(asset)
-                store = HypothesisStore(HYPOTHESES_DB)
-                data_store = DataStore(SIGNAL_CACHE_DB)
-                forward_tracker = HypothesisObservationTracker(
-                    adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
+    if not skip_serious:
+        for asset in asset_list:
+            if not _has_serious_templates(asset):
+                continue
+            print(f"\n--- Serious {asset} ---")
+            adir = asset_data_dir(asset)
+            store = HypothesisStore(HYPOTHESES_DB)
+            data_store = DataStore(SIGNAL_CACHE_DB)
+            forward_tracker = HypothesisObservationTracker(
+                adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
+            )
+            try:
+                run = run_serious_template_maintenance(
+                    store=store,
+                    data_store=data_store,
+                    forward_tracker=forward_tracker,
+                    asset=asset,
+                    lookback_days=30,
                 )
-                try:
-                    run = run_serious_template_reconcile(
-                        store=store,
-                        data_store=data_store,
-                        forward_tracker=forward_tracker,
-                        asset=asset,
-                        lookback_days=30,
-                    )
-                finally:
-                    forward_tracker.close()
-                    data_store.close()
-                    store.close()
-                print(
-                    "Serious reconcile [APPLY]: "
-                    f"asset={run.asset} templates={run.template_total} "
-                    f"inserted={run.inserted} refreshed={run.refreshed} "
-                    f"records={run.backfill.n_records} failures={run.backfill.n_failures}"
-                )
+            finally:
+                forward_tracker.close()
+                data_store.close()
+                store.close()
+            print(
+                "Serious maintenance [APPLY]: "
+                f"asset={run.asset} templates={run.template_total} "
+                f"inserted={run.inserted} refreshed={run.refreshed} "
+                f"records={run.backfill.n_records} failures={run.backfill.n_failures}"
+            )
 
     if not args.skip_score:
         for asset in asset_list:
@@ -2156,7 +2170,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
     if not args.skip_rebalance:
         for asset in asset_list:
-            if not _should_refresh_asset(asset):
+            if not _should_rebalance_asset(asset):
                 continue
             print(f"\n--- Rebalance {asset} ---")
             cmd_rebalance_allocation_trust(

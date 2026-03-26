@@ -9,7 +9,7 @@ from .serious_templates import serious_seed_specs
 
 
 @dataclass(frozen=True)
-class SeriousTemplateReconcileRun:
+class SeriousTemplateMaintenanceRun:
     asset: str
     template_total: int
     inserted: int
@@ -60,14 +60,14 @@ def _refresh_serious_bootstrap_records(*, store, asset: str) -> tuple[int, int]:
     return inserted, refreshed
 
 
-def run_serious_template_reconcile(
+def run_serious_template_maintenance(
     *,
     store,
     data_store,
     forward_tracker: HypothesisObservationTracker,
     asset: str,
     lookback_days: int = 30,
-) -> SeriousTemplateReconcileRun:
+) -> SeriousTemplateMaintenanceRun:
     inserted, refreshed = _refresh_serious_bootstrap_records(store=store, asset=asset)
     serious_ids = {spec.hypothesis_id for spec in serious_seed_specs(asset)}
     records = [
@@ -83,7 +83,7 @@ def run_serious_template_reconcile(
         lookback_days=lookback_days,
         records=records,
     )
-    return SeriousTemplateReconcileRun(
+    return SeriousTemplateMaintenanceRun(
         asset=str(asset).upper(),
         template_total=len(serious_ids),
         inserted=inserted,

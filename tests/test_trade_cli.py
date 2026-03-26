@@ -241,6 +241,7 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
 
 def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch):
     from alpha_os.cli import cmd_run_sleeves_once
+    from types import SimpleNamespace
 
     calls = []
 
@@ -251,6 +252,37 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
     monkeypatch.setattr(
         "alpha_os.cli.cmd_score_exploratory_hypotheses",
         lambda args: calls.append(("score", args.asset)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.asset_data_dir",
+        lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.store.HypothesisStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.data.store.DataStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        lambda **kwargs: calls.append(("serious", kwargs["asset"]))
+        or SimpleNamespace(
+            asset=kwargs["asset"],
+            template_total=6,
+            inserted=0,
+            refreshed=0,
+            backfill=SimpleNamespace(n_records=0, n_failures=0),
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        lambda asset: [object()],
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
@@ -278,7 +310,10 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
 
     assert calls == [
         ("seed", "ETH"),
+        ("serious", "BTC"),
+        ("serious", "ETH"),
         ("score", "ETH"),
+        ("rebalance", "BTC"),
         ("rebalance", "ETH"),
     ]
 
@@ -1935,7 +1970,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_reconcile",
+        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: calls.append(("serious", kwargs["asset"], kwargs["lookback_days"]))
         or SimpleNamespace(
             asset=kwargs["asset"],
@@ -1979,6 +2014,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
             bootstrap_assets="BTC",
             refresh_bootstrap_assets=True,
             skip_seed=False,
+            skip_serious=False,
             skip_score=False,
             skip_rebalance=False,
             skip_trade=False,
@@ -2001,8 +2037,81 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
 
     output = capsys.readouterr().out
     assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
-    assert "Serious reconcile [APPLY]: asset=ETH" in output
+    assert "Serious maintenance [APPLY]: asset=ETH" in output
     assert "Sleeve snapshot: /tmp/sleeves.jsonl" in output
+
+
+def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch, capsys):
+    from argparse import Namespace
+    from types import SimpleNamespace
+
+    from alpha_os.cli import cmd_run_sleeves_once
+
+    calls: list[tuple[str, str, object]] = []
+
+    monkeypatch.setattr(
+        "alpha_os.cli.asset_data_dir",
+        lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.store.HypothesisStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.data.store.DataStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        lambda **kwargs: calls.append(("serious", kwargs["asset"], kwargs["lookback_days"]))
+        or SimpleNamespace(
+            asset=kwargs["asset"],
+            template_total=6,
+            inserted=0,
+            refreshed=0,
+            backfill=SimpleNamespace(n_records=180, n_failures=0),
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        lambda asset: [object()] if asset == "BTC" else [],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli._write_sleeve_compare_snapshot",
+        lambda asset_list, config_path: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
+    )
+
+    cmd_run_sleeves_once(
+        Namespace(
+            asset="BTC",
+            assets="BTC",
+            config=None,
+            score_limit=6,
+            bootstrap_assets="BTC",
+            refresh_bootstrap_assets=False,
+            skip_seed=True,
+            skip_serious=False,
+            skip_score=True,
+            skip_rebalance=False,
+            skip_trade=True,
+            skip_status=True,
+        )
+    )
+
+    assert calls == [
+        ("serious", "BTC", 30),
+        ("rebalance", "BTC", False),
+    ]
+    output = capsys.readouterr().out
+    assert "stages=serious,rebalance" in output
 
 
 def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
