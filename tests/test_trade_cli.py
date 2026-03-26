@@ -1128,6 +1128,7 @@ def test_legacy_lifecycle_parser():
         "prune-stale-candidates",
         "replay-experiment",
         "replay-matrix",
+        "paper",
     ],
 )
 def test_legacy_registry_commands_are_not_parsed(command):
@@ -1135,8 +1136,12 @@ def test_legacy_registry_commands_are_not_parsed(command):
 
     parser = _build_parser()
 
+    argv = [command]
+    if command == "paper":
+        argv = ["paper", "--replay", "--start", "2025-09-01", "--end", "2026-03-05"]
+
     with pytest.raises(SystemExit):
-        parser.parse_args([command])
+        parser.parse_args(argv)
 
 
 def test_research_replay_experiment_parser():

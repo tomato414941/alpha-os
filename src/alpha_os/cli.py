@@ -122,12 +122,6 @@ def _build_parser() -> argparse.ArgumentParser:
     ppr.add_argument("--summary", action="store_true", help=argparse.SUPPRESS)
     ppr.add_argument("--interval", type=int, default=None,
                      help="Override check_interval in seconds (default: from config)")
-    ppr.add_argument("--replay", action="store_true", help=argparse.SUPPRESS)
-    ppr.add_argument("--start", type=str, default=None, help=argparse.SUPPRESS)
-    ppr.add_argument("--end", type=str, default=None, help=argparse.SUPPRESS)
-    ppr.add_argument("--sizing-mode", type=str, default="runtime",
-                     choices=["runtime", "raw_mean", "compare"],
-                     help=argparse.SUPPRESS)
     ppr.add_argument("--asset", type=str, default="BTC")
     ppr.add_argument("--config", type=str, default=None)
 
@@ -928,10 +922,6 @@ def cmd_paper(args: argparse.Namespace) -> None:
     cfg = _load_config(args.config)
     interval = args.interval or cfg.forward.check_interval
 
-    if args.replay:
-        _cmd_paper_replay(args, cfg)
-        return
-
     from alpha_os.paper.trader import Trader
     from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
@@ -961,14 +951,6 @@ def cmd_paper(args: argparse.Namespace) -> None:
         scheduler.start()
     finally:
         trader.close()
-
-
-def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
-    from alpha_os.legacy.cli_commands import _cmd_paper_replay as _legacy_cmd_paper_replay
-
-    _legacy_cmd_paper_replay(args, cfg)
-
-
 def cmd_paper_replay(args: argparse.Namespace) -> None:
     from alpha_os.legacy.cli_commands import cmd_paper_replay as _legacy_cmd_paper_replay
 
