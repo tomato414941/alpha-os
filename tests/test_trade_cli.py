@@ -2053,7 +2053,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     )
     monkeypatch.setattr(
         "alpha_os.cli._write_sleeve_compare_snapshot",
-        lambda asset_list, config_path: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
+        lambda asset_list, config_path, budget_by_asset=None: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
     )
 
     cmd_run_sleeves_once(
@@ -2088,6 +2088,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
 
     output = capsys.readouterr().out
     assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
+    assert "Search budget: requested=12 effective=12 missing=1 closed=0 new=0" in output
     assert "Serious maintenance [APPLY]: asset=ETH" in output
     assert "Sleeve snapshot: /tmp/sleeves.jsonl" in output
 
@@ -2133,11 +2134,13 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
     )
     monkeypatch.setattr(
         "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
-        lambda *, asset, base_limit: SimpleNamespace(
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
             effective_limit=base_limit,
             missing_template_count=1,
+            closed_template_count=0,
+            new_template_count=0,
         ),
     )
     monkeypatch.setattr(
@@ -2146,7 +2149,7 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
     )
     monkeypatch.setattr(
         "alpha_os.cli._write_sleeve_compare_snapshot",
-        lambda asset_list, config_path: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
+        lambda asset_list, config_path, budget_by_asset=None: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
     )
 
     cmd_run_sleeves_once(
@@ -2438,12 +2441,16 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                             "onchain_activity_acceleration:1.00",
                             "derivatives_open_interest_trend:1.00",
                         ],
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 9,
                     },
                     {
                         "asset": "ETH",
                         "serious_template_gaps": [
                             "derivatives_open_interest_trend:1.00",
                         ],
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 6,
                     },
                 ],
             }
@@ -2456,8 +2463,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 budget=9/12 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 budget=6/12 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):

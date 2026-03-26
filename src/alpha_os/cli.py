@@ -1780,6 +1780,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
     skip_serious = bool(getattr(args, "skip_serious", False))
     previous_compare_rows = _load_previous_sleeve_compare_rows()
+    budget_by_asset: dict[str, object] = {}
 
     def _should_refresh_asset(asset: str) -> bool:
         return refresh_bootstrap_assets or asset not in bootstrap_assets
@@ -1795,11 +1796,13 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
     def _score_budget_for_asset(asset: str):
         previous_row = previous_compare_rows.get(asset.upper(), {})
-        return build_template_gap_search_budget(
+        budget = build_template_gap_search_budget(
             asset=asset,
             base_limit=args.score_limit,
             previous_template_gaps=list(previous_row.get("serious_template_gaps", [])),
         )
+        budget_by_asset[asset.upper()] = budget
+        return budget
 
     print(
         "Sleeve loop [ONCE]: "
@@ -1819,6 +1822,14 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                 continue
             score_budget = _score_budget_for_asset(asset)
             print(f"\n--- Seed {asset} ---")
+            print(
+                "Search budget: "
+                f"requested={score_budget.requested_limit} "
+                f"effective={score_budget.effective_limit} "
+                f"missing={score_budget.missing_template_count} "
+                f"closed={score_budget.closed_template_count} "
+                f"new={score_budget.new_template_count}"
+            )
             if score_budget.effective_limit <= 0:
                 print("Seed skipped: no serious template gaps remain.")
                 continue
@@ -1867,6 +1878,14 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                 continue
             score_budget = _score_budget_for_asset(asset)
             print(f"\n--- Score {asset} ---")
+            print(
+                "Search budget: "
+                f"requested={score_budget.requested_limit} "
+                f"effective={score_budget.effective_limit} "
+                f"missing={score_budget.missing_template_count} "
+                f"closed={score_budget.closed_template_count} "
+                f"new={score_budget.new_template_count}"
+            )
             if score_budget.effective_limit <= 0:
                 print("Score skipped: no serious template gaps remain.")
                 continue
@@ -1929,15 +1948,16 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     snapshot_path = _write_sleeve_compare_snapshot(
         asset_list=asset_list,
         config_path=args.config,
+        budget_by_asset=budget_by_asset,
     )
     print(f"\nSleeve snapshot: {snapshot_path}")
 
 
 def cmd_compare_sleeves(args: argparse.Namespace) -> None:
-    rows = _attach_template_gap_history(_build_sleeve_compare_rows(
+    rows = _attach_latest_snapshot_budget(_attach_template_gap_history(_build_sleeve_compare_rows(
         asset_list=_resolve_asset_list(args),
         cfg=_load_runtime_observation_config(getattr(args, "config", None)),
-    ))
+    )))
 
     print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
     for row in rows:
@@ -1952,6 +1972,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"templates={row['serious_template_backed']}/{row['serious_template_total']} "
             f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
             f"tpl_delta={row['serious_template_gap_delta']} "
+            f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
             f"breadth={row['breadth']:.2f} "
             f"latest={row['latest']} "
             f"fills={row['fills']} "
@@ -2714,9 +2735,33 @@ def _attach_template_gap_history(rows: list[dict[str, object]]) -> list[dict[str
     return enriched
 
 
-def _write_sleeve_compare_snapshot(*, asset_list: list[str], config_path: str | None) -> Path:
+def _attach_latest_snapshot_budget(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    previous_rows = _load_previous_sleeve_compare_rows()
+    enriched: list[dict[str, object]] = []
+    for row in rows:
+        previous_row = previous_rows.get(str(row["asset"]).upper(), {})
+        row["score_budget_requested"] = int(previous_row.get("score_budget_requested", 0))
+        row["score_budget_effective"] = int(previous_row.get("score_budget_effective", 0))
+        enriched.append(row)
+    return enriched
+
+
+def _write_sleeve_compare_snapshot(
+    *,
+    asset_list: list[str],
+    config_path: str | None,
+    budget_by_asset: dict[str, object] | None = None,
+) -> Path:
     cfg = _load_runtime_observation_config(config_path)
     rows = _build_sleeve_compare_rows(asset_list=asset_list, cfg=cfg)
+    budget_by_asset = budget_by_asset or {}
+    for row in rows:
+        budget = budget_by_asset.get(str(row["asset"]).upper())
+        row["score_budget_requested"] = 0 if budget is None else int(budget.requested_limit)
+        row["score_budget_effective"] = 0 if budget is None else int(budget.effective_limit)
+        row["score_budget_missing"] = 0 if budget is None else int(budget.missing_template_count)
+        row["score_budget_closed"] = 0 if budget is None else int(budget.closed_template_count)
+        row["score_budget_new"] = 0 if budget is None else int(budget.new_template_count)
     path = _sleeve_compare_snapshot_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
