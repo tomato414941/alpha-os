@@ -4,12 +4,27 @@
 # retired or redesigned around hypotheses.db.
 from __future__ import annotations
 
-import json
 import sqlite3
-import time
 from pathlib import Path
 
 from ..config import DATA_DIR
+from .alpha_registry import (
+    bulk_update_states,
+    bulk_update_stakes,
+    count,
+    ensure_alpha_tables,
+    get,
+    list_all,
+    list_by_state,
+    register,
+    replace_all,
+    row_to_record,
+    top,
+    top_by_stake,
+    update_metrics,
+    update_stake,
+    update_state,
+)
 from .admission_queue import (
     CandidateSeed,
     list_candidate_expressions,
@@ -39,40 +54,7 @@ class ManagedAlphaStore:
         self._create_tables()
 
     def _create_tables(self) -> None:
-        self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS alphas (
-                alpha_id TEXT PRIMARY KEY,
-                expression TEXT NOT NULL,
-                state TEXT NOT NULL DEFAULT 'candidate',
-                fitness REAL DEFAULT 0.0,
-                oos_sharpe REAL DEFAULT 0.0,
-                pbo REAL DEFAULT 1.0,
-                dsr_pvalue REAL DEFAULT 1.0,
-                turnover REAL DEFAULT 0.0,
-                correlation_avg REAL DEFAULT 0.0,
-                created_at REAL NOT NULL,
-                updated_at REAL NOT NULL,
-                metadata TEXT DEFAULT '{}',
-                stake REAL DEFAULT 0.0
-            )
-        """)
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_state ON alphas(state)
-        """)
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_oos_sharpe ON alphas(oos_sharpe DESC)
-        """)
-        # Migrate: add stake column to existing tables
-        cols = {row[1] for row in self._conn.execute("PRAGMA table_info(alphas)")}
-        if "stake" not in cols:
-            self._conn.execute("ALTER TABLE alphas ADD COLUMN stake REAL DEFAULT 0.0")
-            self._conn.execute(
-                "UPDATE alphas SET stake = MAX(oos_sharpe, 0.0) WHERE state = 'active'"
-            )
-            self._conn.commit()
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_stake ON alphas(stake DESC)
-        """)
+        ensure_alpha_tables(self._conn)
         # Pipeline v2: candidate queue for alpha generator → admission flow
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS candidates (
@@ -111,13 +93,6 @@ class ManagedAlphaStore:
             CREATE INDEX IF NOT EXISTS idx_deployed_alphas_slot
             ON deployed_alphas(slot)
         """)
-        # Migration: add oos_log_growth column if missing
-        try:
-            self._conn.execute(
-                "ALTER TABLE alphas ADD COLUMN oos_log_growth REAL DEFAULT 0.0"
-            )
-        except sqlite3.OperationalError:
-            pass
         try:
             self._conn.execute(
                 "ALTER TABLE candidates ADD COLUMN source TEXT NOT NULL DEFAULT ''"
@@ -136,30 +111,14 @@ class ManagedAlphaStore:
             CREATE INDEX IF NOT EXISTS idx_candidates_source_status_created
             ON candidates(source, status, created_at DESC)
         """)
-        self._conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_oos_log_growth
-            ON alphas(oos_log_growth DESC)
-        """)
         self._conn.commit()
 
     def replace_all(self, records: list[AlphaRecord]) -> None:
-        values = [self._record_values(record) for record in records]
         self._conn.execute("DELETE FROM deployed_alphas")
-        self._conn.execute("DELETE FROM alphas")
-        if values:
-            self._conn.executemany(
-                """INSERT INTO alphas
-                   (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
-                    pbo, dsr_pvalue, turnover, correlation_avg,
-                    created_at, updated_at, metadata)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                values,
-            )
-        self._conn.commit()
+        replace_all(self._conn, records)
 
     def list_all(self) -> list[AlphaRecord]:
-        rows = self._conn.execute("SELECT * FROM alphas").fetchall()
-        return [self._row_to_record(r) for r in rows]
+        return list_all(self._conn)
 
     def clear_deployed_alphas(self) -> None:
         clear_deployed_alphas(self._conn)
@@ -193,41 +152,19 @@ class ManagedAlphaStore:
         return list_candidate_expressions(self._conn, statuses=statuses)
 
     def register(self, record: AlphaRecord) -> None:
-        now = time.time()
-        if record.created_at == 0.0:
-            record.created_at = now
-        record.updated_at = now
-        self._conn.execute(
-            """INSERT OR REPLACE INTO alphas
-               (alpha_id, expression, state, fitness, oos_sharpe, oos_log_growth,
-                pbo, dsr_pvalue, turnover, correlation_avg,
-                created_at, updated_at, metadata)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            self._record_values(record),
-        )
-        self._conn.commit()
+        register(self._conn, record)
 
     def get(self, alpha_id: str) -> AlphaRecord | None:
-        row = self._conn.execute(
-            "SELECT * FROM alphas WHERE alpha_id = ?", (alpha_id,)
-        ).fetchone()
-        if row is None:
-            return None
-        return self._row_to_record(row)
+        return get(self._conn, alpha_id)
 
     def list_by_state(self, state: str) -> list[AlphaRecord]:
-        state = AlphaState.canonical(state)
-        rows = self._conn.execute(
-            "SELECT * FROM alphas WHERE state = ? ORDER BY oos_sharpe DESC",
-            (state,),
-        ).fetchall()
-        return [self._row_to_record(r) for r in rows]
+        return list_by_state(self._conn, state)
 
     def list_active(self) -> list[AlphaRecord]:
         return self.list_by_state(AlphaState.ACTIVE)
 
     def list_deployed_alphas(self) -> list[AlphaRecord]:
-        return list_deployed_alphas(self._conn, row_to_record=self._row_to_record)
+        return list_deployed_alphas(self._conn, row_to_record=row_to_record)
 
     def list_deployed_alpha_entries(self) -> list[DeployedAlphaEntry]:
         return list_deployed_alpha_entries(self._conn)
@@ -255,143 +192,37 @@ class ManagedAlphaStore:
         )
 
     def update_state(self, alpha_id: str, new_state: str) -> None:
-        new_state = AlphaState.canonical(new_state)
-        self._conn.execute(
-            "UPDATE alphas SET state = ?, updated_at = ? WHERE alpha_id = ?",
-            (new_state, time.time(), alpha_id),
-        )
-        self._conn.commit()
+        update_state(self._conn, alpha_id, new_state)
 
     def bulk_update_states(self, alpha_ids: list[str], new_state: str) -> None:
-        alpha_ids = list(dict.fromkeys(alpha_ids))
-        if not alpha_ids:
-            return
-        new_state = AlphaState.canonical(new_state)
-        stamp = time.time()
-        self._conn.executemany(
-            "UPDATE alphas SET state = ?, updated_at = ? WHERE alpha_id = ?",
-            [(new_state, stamp, alpha_id) for alpha_id in alpha_ids],
-        )
-        self._conn.commit()
+        bulk_update_states(self._conn, alpha_ids, new_state)
 
     def update_stake(self, alpha_id: str, stake: float) -> None:
-        self._conn.execute(
-            "UPDATE alphas SET stake = ?, updated_at = ? WHERE alpha_id = ?",
-            (stake, time.time(), alpha_id),
-        )
-        self._conn.commit()
+        update_stake(self._conn, alpha_id, stake)
 
     def bulk_update_stakes(self, stakes: dict[str, float]) -> None:
-        if not stakes:
-            return
-        stamp = time.time()
-        self._conn.executemany(
-            "UPDATE alphas SET stake = ?, updated_at = ? WHERE alpha_id = ?",
-            [(s, stamp, aid) for aid, s in stakes.items()],
-        )
-        self._conn.commit()
+        bulk_update_stakes(self._conn, stakes)
 
     def top_by_stake(self, n: int = 30) -> list[AlphaRecord]:
-        rows = self._conn.execute(
-            "SELECT * FROM alphas WHERE stake > 0 ORDER BY stake DESC LIMIT ?",
-            (n,),
-        ).fetchall()
-        return [self._row_to_record(r) for r in rows]
+        return top_by_stake(self._conn, n)
 
     def update_metrics(
         self, alpha_id: str, oos_sharpe: float | None = None,
         pbo: float | None = None, dsr_pvalue: float | None = None,
     ) -> None:
-        updates = []
-        params: list = []
-        if oos_sharpe is not None:
-            updates.append("oos_sharpe = ?")
-            params.append(oos_sharpe)
-        if pbo is not None:
-            updates.append("pbo = ?")
-            params.append(pbo)
-        if dsr_pvalue is not None:
-            updates.append("dsr_pvalue = ?")
-            params.append(dsr_pvalue)
-        if not updates:
-            return
-        updates.append("updated_at = ?")
-        params.append(time.time())
-        params.append(alpha_id)
-        self._conn.execute(
-            f"UPDATE alphas SET {', '.join(updates)} WHERE alpha_id = ?",
-            params,
+        update_metrics(
+            self._conn,
+            alpha_id,
+            oos_sharpe=oos_sharpe,
+            pbo=pbo,
+            dsr_pvalue=dsr_pvalue,
         )
-        self._conn.commit()
 
     def count(self, state: str | None = None) -> int:
-        if state:
-            state = AlphaState.canonical(state)
-            row = self._conn.execute(
-                "SELECT COUNT(*) FROM alphas WHERE state = ?", (state,)
-            ).fetchone()
-        else:
-            row = self._conn.execute("SELECT COUNT(*) FROM alphas").fetchone()
-        return row[0]
-
-    _ORDER_COLUMN = {"sharpe": "oos_sharpe", "log_growth": "oos_log_growth"}
+        return count(self._conn, state)
 
     def top(self, n: int = 10, state: str | None = None, metric: str = "sharpe") -> list[AlphaRecord]:
-        col = self._ORDER_COLUMN[metric]
-        if state:
-            rows = self._conn.execute(
-                f"SELECT * FROM alphas WHERE state = ? ORDER BY {col} DESC LIMIT ?",
-                (state, n),
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                f"SELECT * FROM alphas ORDER BY {col} DESC LIMIT ?", (n,)
-            ).fetchall()
-        return [self._row_to_record(r) for r in rows]
+        return top(self._conn, n=n, state=state, metric=metric)
 
     def close(self) -> None:
         self._conn.close()
-
-    @staticmethod
-    def _record_values(record: AlphaRecord) -> tuple:
-        now = time.time()
-        if record.created_at == 0.0:
-            record.created_at = now
-        if record.updated_at == 0.0:
-            record.updated_at = now
-        state = AlphaState.canonical(record.state)
-        return (
-            record.alpha_id,
-            record.expression,
-            state,
-            record.fitness,
-            record.oos_sharpe,
-            record.oos_log_growth,
-            record.pbo,
-            record.dsr_pvalue,
-            record.turnover,
-            record.correlation_avg,
-            record.created_at,
-            record.updated_at,
-            json.dumps(record.metadata),
-        )
-
-    @staticmethod
-    def _row_to_record(row: sqlite3.Row) -> AlphaRecord:
-        keys = row.keys()
-        return AlphaRecord(
-            alpha_id=row["alpha_id"],
-            expression=row["expression"],
-            state=AlphaState.canonical(row["state"]),
-            fitness=row["fitness"],
-            oos_sharpe=row["oos_sharpe"],
-            oos_log_growth=row["oos_log_growth"] if "oos_log_growth" in keys else 0.0,
-            pbo=row["pbo"],
-            dsr_pvalue=row["dsr_pvalue"],
-            turnover=row["turnover"],
-            correlation_avg=row["correlation_avg"],
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
-            metadata=json.loads(row["metadata"]),
-            stake=row["stake"] if "stake" in keys else 0.0,
-        )
