@@ -17,9 +17,10 @@ def test_build_template_gap_search_budget_returns_requested_limit_without_templa
     assert budget.requested_limit == 12
     assert budget.effective_limit == 12
     assert budget.missing_template_count == 0
+    assert budget.coverage_retention == 1.0
 
 
-def test_build_template_gap_search_budget_closes_when_no_gap(monkeypatch):
+def test_build_template_gap_search_budget_closes_when_sleeve_is_healthy(monkeypatch):
     from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
@@ -27,15 +28,17 @@ def test_build_template_gap_search_budget_closes_when_no_gap(monkeypatch):
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.HypothesisStore",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            list_observation_active=lambda **_kwargs: [],
-            close=lambda: None,
+        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        lambda *, asset: SimpleNamespace(
+            asset=asset,
+            template_gap_count=0,
+            template_gaps=[],
+            serious_template_backed_count=6,
+            serious_template_target_count=6,
+            coverage_retention=1.0,
+            capital_conversion=0.75,
+            breadth_trend=0.2,
         ),
-    )
-    monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_template_gap_scores",
-        lambda asset, records: {"macro_template": 0.0},
     )
 
     budget = build_template_gap_search_budget(asset="ETH", base_limit=12)
@@ -46,7 +49,7 @@ def test_build_template_gap_search_budget_closes_when_no_gap(monkeypatch):
     assert budget.missing_template_count == 0
 
 
-def test_build_template_gap_search_budget_scales_with_missing_templates(monkeypatch):
+def test_build_template_gap_search_budget_scales_with_template_gaps(monkeypatch):
     from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
@@ -54,32 +57,33 @@ def test_build_template_gap_search_budget_scales_with_missing_templates(monkeypa
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.HypothesisStore",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            list_observation_active=lambda **_kwargs: [],
-            close=lambda: None,
+        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        lambda *, asset: SimpleNamespace(
+            asset=asset,
+            template_gap_count=2,
+            template_gaps=[
+                "macro_template:1.00",
+                "price_template:0.50",
+            ],
+            serious_template_backed_count=1,
+            serious_template_target_count=3,
+            coverage_retention=0.5,
+            capital_conversion=0.4,
+            breadth_trend=-0.1,
         ),
-    )
-    monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_template_gap_scores",
-        lambda asset, records: {
-            "macro_template": 1.0,
-            "price_template": 0.5,
-            "derivatives_template": 0.0,
-        },
     )
 
     budget = build_template_gap_search_budget(asset="ETH", base_limit=12)
 
     assert budget.asset == "ETH"
     assert budget.requested_limit == 12
-    assert budget.effective_limit == 4
+    assert budget.effective_limit == 8
     assert budget.missing_template_count == 2
     assert budget.closed_template_count == 0
     assert budget.new_template_count == 2
 
 
-def test_build_template_gap_search_budget_boosts_stalled_gaps(monkeypatch):
+def test_build_template_gap_search_budget_boosts_stalled_sleeves(monkeypatch):
     from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
@@ -87,18 +91,20 @@ def test_build_template_gap_search_budget_boosts_stalled_gaps(monkeypatch):
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.HypothesisStore",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            list_observation_active=lambda **_kwargs: [],
-            close=lambda: None,
+        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        lambda *, asset: SimpleNamespace(
+            asset=asset,
+            template_gap_count=2,
+            template_gaps=[
+                "macro_template:1.00",
+                "price_template:0.50",
+            ],
+            serious_template_backed_count=1,
+            serious_template_target_count=3,
+            coverage_retention=0.2,
+            capital_conversion=0.1,
+            breadth_trend=-0.8,
         ),
-    )
-    monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_template_gap_scores",
-        lambda asset, records: {
-            "macro_template": 1.0,
-            "price_template": 0.5,
-        },
     )
 
     budget = build_template_gap_search_budget(
@@ -112,7 +118,9 @@ def test_build_template_gap_search_budget_boosts_stalled_gaps(monkeypatch):
 
     assert budget.asset == "ETH"
     assert budget.requested_limit == 12
-    assert budget.effective_limit == 6
+    assert budget.effective_limit == 12
     assert budget.missing_template_count == 2
     assert budget.closed_template_count == 0
     assert budget.new_template_count == 0
+    assert budget.coverage_retention == 0.2
+    assert budget.capital_conversion == 0.1

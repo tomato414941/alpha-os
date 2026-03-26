@@ -4,31 +4,47 @@ import json
 from pathlib import Path
 
 
-def load_latest_sleeve_compare_rows(path: Path) -> dict[str, dict[str, object]]:
-    if not path.exists():
+def load_recent_sleeve_compare_history(
+    path: Path,
+    *,
+    limit: int = 2,
+) -> dict[str, list[dict[str, object]]]:
+    if limit <= 0 or not path.exists():
         return {}
-    last_payload: dict[str, object] | None = None
+    payloads: list[dict[str, object]] = []
     with open(path, encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if not line:
                 continue
             try:
-                last_payload = json.loads(line)
+                payload = json.loads(line)
             except json.JSONDecodeError:
                 continue
-    if not isinstance(last_payload, dict):
+            if isinstance(payload, dict):
+                payloads.append(payload)
+    if not payloads:
         return {}
-    rows = last_payload.get("rows")
-    if not isinstance(rows, list):
-        return {}
-    previous_rows: dict[str, dict[str, object]] = {}
-    for row in rows:
-        if not isinstance(row, dict):
+    history: dict[str, list[dict[str, object]]] = {}
+    for payload in reversed(payloads[-limit:]):
+        rows = payload.get("rows")
+        if not isinstance(rows, list):
             continue
-        asset = str(row.get("asset", "")).upper()
-        if asset:
-            previous_rows[asset] = row
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            asset = str(row.get("asset", "")).upper()
+            if not asset:
+                continue
+            history.setdefault(asset, []).append(row)
+    return history
+
+
+def load_latest_sleeve_compare_rows(path: Path) -> dict[str, dict[str, object]]:
+    previous_rows: dict[str, dict[str, object]] = {}
+    for asset, rows in load_recent_sleeve_compare_history(path, limit=1).items():
+        if rows:
+            previous_rows[asset] = rows[0]
     return previous_rows
 
 
