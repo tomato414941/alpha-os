@@ -1954,10 +1954,16 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
 
 
 def cmd_compare_sleeves(args: argparse.Namespace) -> None:
-    rows = _attach_latest_snapshot_budget(_attach_template_gap_history(_build_sleeve_compare_rows(
-        asset_list=_resolve_asset_list(args),
-        cfg=_load_runtime_observation_config(getattr(args, "config", None)),
-    )))
+    rows = _attach_latest_snapshot_metrics(
+        _attach_latest_snapshot_budget(
+            _attach_template_gap_history(
+                _build_sleeve_compare_rows(
+                    asset_list=_resolve_asset_list(args),
+                    cfg=_load_runtime_observation_config(getattr(args, "config", None)),
+                )
+            )
+        )
+    )
 
     print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
     for row in rows:
@@ -1973,6 +1979,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
             f"tpl_delta={row['serious_template_gap_delta']} "
             f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
+            f"delta=backed:{row['backed_delta']:+d},tpl:{row['template_backed_delta']:+d},breadth:{row['breadth_delta']:+.2f} "
             f"breadth={row['breadth']:.2f} "
             f"latest={row['latest']} "
             f"fills={row['fills']} "
@@ -2742,6 +2749,21 @@ def _attach_latest_snapshot_budget(rows: list[dict[str, object]]) -> list[dict[s
         previous_row = previous_rows.get(str(row["asset"]).upper(), {})
         row["score_budget_requested"] = int(previous_row.get("score_budget_requested", 0))
         row["score_budget_effective"] = int(previous_row.get("score_budget_effective", 0))
+        enriched.append(row)
+    return enriched
+
+
+def _attach_latest_snapshot_metrics(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    previous_rows = _load_previous_sleeve_compare_rows()
+    enriched: list[dict[str, object]] = []
+    for row in rows:
+        previous_row = previous_rows.get(str(row["asset"]).upper(), {})
+        previous_backed = int(previous_row.get("backed", 0))
+        previous_templates = int(previous_row.get("serious_template_backed", 0))
+        previous_breadth = float(previous_row.get("breadth", 0.0))
+        row["backed_delta"] = int(row["backed"]) - previous_backed
+        row["template_backed_delta"] = int(row["serious_template_backed"]) - previous_templates
+        row["breadth_delta"] = float(row["breadth"]) - previous_breadth
         enriched.append(row)
     return enriched
 

@@ -2441,6 +2441,9 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                             "onchain_activity_acceleration:1.00",
                             "derivatives_open_interest_trend:1.00",
                         ],
+                        "backed": 18,
+                        "serious_template_backed": 1,
+                        "breadth": 0.75,
                         "score_budget_requested": 12,
                         "score_budget_effective": 9,
                     },
@@ -2449,6 +2452,9 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                         "serious_template_gaps": [
                             "derivatives_open_interest_trend:1.00",
                         ],
+                        "backed": 15,
+                        "serious_template_backed": 1,
+                        "breadth": 6.50,
                         "score_budget_requested": 12,
                         "score_budget_effective": 6,
                     },
@@ -2463,8 +2469,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 budget=9/12 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 budget=6/12 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 budget=9/12 delta=backed:+2,tpl:-1,breadth:+0.25 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 budget=6/12 delta=backed:+1,tpl:+1,breadth:+0.96 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
