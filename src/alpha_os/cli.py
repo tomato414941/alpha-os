@@ -2072,6 +2072,14 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
 
 
 def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
+    from alpha_os.data.store import DataStore
+    from alpha_os.forward.tracker import HypothesisObservationTracker
+    from alpha_os.hypotheses.serious_template_service import (
+        run_serious_template_reconcile,
+    )
+    from alpha_os.hypotheses.serious_templates import serious_seed_specs
+    from alpha_os.hypotheses.store import HypothesisStore
+
     asset_list = _resolve_asset_list(args)
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
@@ -2084,6 +2092,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         f"assets={','.join(asset_list)} "
         f"stages="
         f"{'seed,' if not args.skip_seed else ''}"
+        f"{'serious,' if not args.skip_seed else ''}"
         f"{'score,' if not args.skip_score else ''}"
         f"{'rebalance,' if not args.skip_rebalance else ''}"
         f"{'trade,' if not args.skip_trade else ''}"
@@ -2104,6 +2113,32 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                     config=args.config,
                 )
             )
+            if serious_seed_specs(asset):
+                print(f"\n--- Serious {asset} ---")
+                adir = asset_data_dir(asset)
+                store = HypothesisStore(HYPOTHESES_DB)
+                data_store = DataStore(SIGNAL_CACHE_DB)
+                forward_tracker = HypothesisObservationTracker(
+                    adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
+                )
+                try:
+                    run = run_serious_template_reconcile(
+                        store=store,
+                        data_store=data_store,
+                        forward_tracker=forward_tracker,
+                        asset=asset,
+                        lookback_days=30,
+                    )
+                finally:
+                    forward_tracker.close()
+                    data_store.close()
+                    store.close()
+                print(
+                    "Serious reconcile [APPLY]: "
+                    f"asset={run.asset} templates={run.template_total} "
+                    f"inserted={run.inserted} refreshed={run.refreshed} "
+                    f"records={run.backfill.n_records} failures={run.backfill.n_failures}"
+                )
 
     if not args.skip_score:
         for asset in asset_list:

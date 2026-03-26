@@ -1908,6 +1908,7 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
 
 def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     from argparse import Namespace
+    from types import SimpleNamespace
 
     from alpha_os.cli import cmd_run_sleeves_once
 
@@ -1916,6 +1917,37 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     monkeypatch.setattr(
         "alpha_os.cli.cmd_hypothesis_seeder",
         lambda args: calls.append(("seed", args.asset, args.skip_bootstrap)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.asset_data_dir",
+        lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.store.HypothesisStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.data.store.DataStore",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_template_service.run_serious_template_reconcile",
+        lambda **kwargs: calls.append(("serious", kwargs["asset"], kwargs["lookback_days"]))
+        or SimpleNamespace(
+            asset=kwargs["asset"],
+            template_total=6,
+            inserted=0,
+            refreshed=1,
+            backfill=SimpleNamespace(n_records=180, n_failures=0),
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        lambda asset: [object()] if asset == "ETH" else [],
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_score_exploratory_hypotheses",
@@ -1957,6 +1989,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     assert calls == [
         ("seed", "BTC", False),
         ("seed", "ETH", True),
+        ("serious", "ETH", 30),
         ("score", "BTC", 12),
         ("score", "ETH", 12),
         ("rebalance", "BTC", False),
@@ -1968,6 +2001,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
 
     output = capsys.readouterr().out
     assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
+    assert "Serious reconcile [APPLY]: asset=ETH" in output
     assert "Sleeve snapshot: /tmp/sleeves.jsonl" in output
 
 
