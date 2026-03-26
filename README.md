@@ -162,9 +162,10 @@ python -m alpha_os runtime-status --asset BTC --config config/dev.toml
 python -m alpha_os run-sleeves-once --assets BTC,ETH --config config/dev.toml --score-limit 12
 python -m alpha_os compare-sleeves --assets BTC,ETH --config config/dev.toml
 
-# Legacy experimental replay path
+# Legacy experimental paths
 python -m alpha_os research paper-replay --start 2025-09-01 --end 2026-03-05
 python -m alpha_os research replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
+python -m alpha_os legacy admission-daemon --asset BTC --config config/dev.toml
 ```
 
 ## Configuration

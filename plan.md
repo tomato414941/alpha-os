@@ -117,7 +117,7 @@ The old registry-era design note is no longer the right place to track these.
 The remaining residue should be handled as active cleanup work here:
 
 - remove remaining `legacy/` runtime dependencies from the current mainline
-- keep `admission-daemon`, `managed_alphas`, and `deployed_alphas` out of the
+- keep `legacy admission-daemon`, `managed_alphas`, and `deployed_alphas` out of the
   trusted sleeve runtime
 - continue replacing `alpha_id` / registry-era naming in non-legacy paths
 - isolate or retire research helpers that still depend on `alpha_registry.db`
