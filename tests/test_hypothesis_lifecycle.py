@@ -1,9 +1,13 @@
 import sqlite3
 
+import numpy as np
 import pytest
 
 from alpha_os.hypotheses.quality import blend_quality
-from alpha_os.hypotheses.runtime_policy import rank_trading_records
+from alpha_os.hypotheses.runtime_policy import (
+    rank_trading_records,
+    select_decorrelated_trading_ids,
+)
 from alpha_os.hypotheses import (
     apply_allocation_rebalance_plan,
     backfill_observation_returns,
@@ -116,6 +120,27 @@ def test_rank_trading_records_respects_capital_eligibility():
     )
 
     assert [record.hypothesis_id for record in ranked] == ["backed"]
+
+
+def test_select_decorrelated_trading_ids_skips_highly_correlated_candidates():
+    base = np.linspace(-1.0, 1.0, 80)
+
+    selected = select_decorrelated_trading_ids(
+        ["a", "b", "c"],
+        signal_history_by_id={
+            "a": base,
+            "b": base * 0.999,
+            "c": np.sin(np.linspace(0.0, 4.0, 80)),
+        },
+        blended_quality_by_id={
+            "a": 1.3,
+            "b": 1.2,
+            "c": 1.1,
+        },
+        max_trading=2,
+    )
+
+    assert selected == ["a", "c"]
 
 
 def test_compute_daily_contributions_penalizes_redundant_hypotheses():

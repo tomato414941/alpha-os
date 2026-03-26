@@ -43,14 +43,16 @@ from ..hypotheses.combiner import (
     compute_stake_weights,
     compute_tc_scores,
     compute_tc_weights,
-    select_low_correlation,
     signal_consensus,
     weighted_combine_scalar,
 )
 from ..hypotheses.monitor import HypothesisMonitor, RegimeDetector
 from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
-from ..hypotheses.runtime_policy import rank_trading_records
+from ..hypotheses.runtime_policy import (
+    rank_trading_records,
+    select_decorrelated_trading_ids,
+)
 from ..risk.circuit_breaker import CircuitBreaker
 from ..risk.manager import RiskManager
 from ..runtime_profile import RuntimeProfile, build_runtime_profile
@@ -874,16 +876,21 @@ class Trader:
                 signal_histories.append(np.asarray(history[-lookback:], dtype=np.float64))
                 filtered_candidate_ids.append(hypothesis_id)
             candidate_ids = filtered_candidate_ids
-            sig_matrix = np.array(signal_histories)
-            quality_for_sel = np.array([
-                quality_estimates[aid].blended_quality
-                for aid in candidate_ids
-            ])
-            selected_idx = select_low_correlation(
-                sig_matrix, quality_for_sel,
-                CombinerConfig(max_alphas=max_trading),
+            selected_ids = set(
+                select_decorrelated_trading_ids(
+                    candidate_ids,
+                    signal_history_by_id={
+                        hypothesis_id: signal_histories[idx]
+                        for idx, hypothesis_id in enumerate(candidate_ids)
+                    },
+                    blended_quality_by_id={
+                        hypothesis_id: quality_estimates[hypothesis_id].blended_quality
+                        for hypothesis_id in candidate_ids
+                    },
+                    max_trading=max_trading,
+                    max_correlation=CombinerConfig().max_correlation,
+                )
             )
-            selected_ids = {candidate_ids[i] for i in selected_idx}
             n_before = len(selection_signal_ids)
             hypothesis_signals = {k: v for k, v in hypothesis_signals.items() if k in selected_ids}
             logger.info(
