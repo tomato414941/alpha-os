@@ -18,6 +18,7 @@ LEGACY_TEST_MODULES = {
     "test_alpha_generator.py",
     "test_asset_isolation.py",
     "test_funnel.py",
+    "test_legacy_lifecycle.py",
     "test_pipeline.py",
 }
 
