@@ -1693,6 +1693,10 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         "alpha_os.cli.cmd_runtime_status",
         lambda args: calls.append(("status", args.asset, None)),
     )
+    monkeypatch.setattr(
+        "alpha_os.cli._write_sleeve_compare_snapshot",
+        lambda asset_list, config_path: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
+    )
 
     cmd_run_sleeves_once(
         Namespace(
@@ -1723,6 +1727,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
 
     output = capsys.readouterr().out
     assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
+    assert "Sleeve snapshot: /tmp/sleeves.jsonl" in output
 
 
 def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):

@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -1300,6 +1300,10 @@ def _resolve_optional_asset_set(value: str | None) -> set[str]:
     return {item.strip().upper() for item in value.split(",") if item.strip()}
 
 
+def _sleeve_compare_snapshot_path() -> Path:
+    return DATA_DIR / "metrics" / "sleeve_compare_reports.jsonl"
+
+
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
     venue: str | None = None,
@@ -2127,52 +2131,32 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                 )
             )
 
+    snapshot_path = _write_sleeve_compare_snapshot(
+        asset_list=asset_list,
+        config_path=args.config,
+    )
+    print(f"\nSleeve snapshot: {snapshot_path}")
+
 
 def cmd_compare_sleeves(args: argparse.Namespace) -> None:
-    from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+    rows = _build_sleeve_compare_rows(
+        asset_list=_resolve_asset_list(args),
+        cfg=_load_runtime_observation_config(getattr(args, "config", None)),
+    )
 
-    cfg = _load_runtime_observation_config(getattr(args, "config", None))
-    asset_list = _resolve_asset_list(args)
-
-    print(f"Sleeve Compare: {','.join(asset_list)}")
-    for asset in asset_list:
-        adir = asset_data_dir(asset)
-        state_path, report_path = readiness_paths(adir)
-        readiness_checker = ReadinessChecker(
-            state_path=state_path,
-            report_path=report_path,
-            target_days=cfg.testnet.target_success_days,
-            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
-        )
-        state = readiness_checker.state
-        latest = _load_latest_report(report_path)
-        runtime_ids = _live_hypothesis_ids(asset=asset)
-        hypothesis_summary = _runtime_hypothesis_summary(asset=asset)
-        actionable_window = _runtime_actionable_window_summary(
-            asset=asset,
-            lookback=cfg.forward.degradation_window,
-            supports_short=cfg.trading.supports_short,
-        )
-        findings = _runtime_observation_findings(latest, len(runtime_ids))
-        observe = _runtime_observation_verdict(latest, findings)
-        latest_status = (
-            "none"
-            if latest is None
-            else ("ERROR" if latest.get("has_errors") else "OK")
-        )
-        latest_fills = 0 if latest is None else int(latest.get("n_fills", 0))
-        breadth = 0.0 if actionable_window is None else actionable_window["breadth"]
+    print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
+    for row in rows:
         print(
-            f"  {asset.upper()}: "
-            f"readiness={state.consecutive_success_days}/{state.target_days} "
-            f"live={len(runtime_ids)} "
-            f"proven={hypothesis_summary['live_proven']} "
-            f"actionable={hypothesis_summary['actionable_live']} "
-            f"backed={hypothesis_summary['capital_backed']} "
-            f"breadth={breadth:.2f} "
-            f"latest={latest_status} "
-            f"fills={latest_fills} "
-            f"observe={observe}"
+            f"  {row['asset']}: "
+            f"readiness={row['readiness']} "
+            f"live={row['live']} "
+            f"proven={row['proven']} "
+            f"actionable={row['actionable']} "
+            f"backed={row['backed']} "
+            f"breadth={row['breadth']:.2f} "
+            f"latest={row['latest']} "
+            f"fills={row['fills']} "
+            f"observe={row['observe']}"
         )
 
 
@@ -2882,6 +2866,61 @@ def _runtime_actionable_window_summary(
     finally:
         store.close()
         tracker.close()
+
+
+def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, object]]:
+    from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+
+    rows: list[dict[str, object]] = []
+    for asset in asset_list:
+        adir = asset_data_dir(asset)
+        state_path, report_path = readiness_paths(adir)
+        readiness_checker = ReadinessChecker(
+            state_path=state_path,
+            report_path=report_path,
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+        state = readiness_checker.state
+        latest = _load_latest_report(report_path)
+        runtime_ids = _live_hypothesis_ids(asset=asset)
+        hypothesis_summary = _runtime_hypothesis_summary(asset=asset)
+        actionable_window = _runtime_actionable_window_summary(
+            asset=asset,
+            lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
+        )
+        findings = _runtime_observation_findings(latest, len(runtime_ids))
+        rows.append(
+            {
+                "asset": asset.upper(),
+                "readiness": f"{state.consecutive_success_days}/{state.target_days}",
+                "live": len(runtime_ids),
+                "proven": hypothesis_summary["live_proven"],
+                "actionable": hypothesis_summary["actionable_live"],
+                "backed": hypothesis_summary["capital_backed"],
+                "breadth": 0.0 if actionable_window is None else actionable_window["breadth"],
+                "latest": "none" if latest is None else ("ERROR" if latest.get("has_errors") else "OK"),
+                "fills": 0 if latest is None else int(latest.get("n_fills", 0)),
+                "observe": _runtime_observation_verdict(latest, findings),
+            }
+        )
+    return rows
+
+
+def _write_sleeve_compare_snapshot(*, asset_list: list[str], config_path: str | None) -> Path:
+    cfg = _load_runtime_observation_config(config_path)
+    rows = _build_sleeve_compare_rows(asset_list=asset_list, cfg=cfg)
+    path = _sleeve_compare_snapshot_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "assets": [row["asset"] for row in rows],
+        "rows": rows,
+    }
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload, ensure_ascii=True) + "\n")
+    return path
 
 
 def _runtime_observation_findings(
