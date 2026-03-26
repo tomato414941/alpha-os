@@ -220,6 +220,27 @@ def _build_parser() -> argparse.ArgumentParser:
     rat.add_argument("--config", type=str, default=None)
     rat.add_argument("--dry-run", action="store_true")
 
+    rso = sub.add_parser(
+        "run-sleeves-once",
+        help="Run seeding, scoring, rebalance, trade, and status sequentially for one or more asset sleeves",
+    )
+    rso.add_argument("--asset", type=str, default="BTC")
+    rso.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH)")
+    rso.add_argument("--config", type=str, default=None)
+    rso.add_argument("--score-limit", type=int, default=12)
+    rso.add_argument(
+        "--bootstrap-assets",
+        type=str,
+        default="BTC",
+        help="Comma-separated assets that should include bootstrap seeds during seeding",
+    )
+    rso.add_argument("--skip-seed", action="store_true")
+    rso.add_argument("--skip-score", action="store_true")
+    rso.add_argument("--skip-rebalance", action="store_true")
+    rso.add_argument("--skip-trade", action="store_true")
+    rso.add_argument("--skip-status", action="store_true")
+
     alb = sub.add_parser(
         "analyze-live-breadth",
         help="Analyze historical signal breadth for capital-backed bootstrap hypotheses",
@@ -1264,6 +1285,12 @@ def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
     return [args.asset.upper()]
 
 
+def _resolve_optional_asset_set(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    return {item.strip().upper() for item in value.split(",") if item.strip()}
+
+
 def _setup_asset_context(
     asset: str, cfg, testnet: bool, capital: float,
     venue: str | None = None,
@@ -2005,6 +2032,91 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
         data_store.close()
         forward_tracker.close()
         store.close()
+
+
+def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
+    asset_list = _resolve_asset_list(args)
+    bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
+
+    print(
+        "Sleeve loop [ONCE]: "
+        f"assets={','.join(asset_list)} "
+        f"stages="
+        f"{'seed,' if not args.skip_seed else ''}"
+        f"{'score,' if not args.skip_score else ''}"
+        f"{'rebalance,' if not args.skip_rebalance else ''}"
+        f"{'trade,' if not args.skip_trade else ''}"
+        f"{'status' if not args.skip_status else ''}".rstrip(",")
+    )
+
+    if not args.skip_seed:
+        for asset in asset_list:
+            print(f"\n--- Seed {asset} ---")
+            cmd_hypothesis_seeder(
+                argparse.Namespace(
+                    asset=asset,
+                    once=True,
+                    skip_bootstrap=asset not in bootstrap_assets,
+                    config=args.config,
+                )
+            )
+
+    if not args.skip_score:
+        for asset in asset_list:
+            print(f"\n--- Score {asset} ---")
+            cmd_score_exploratory_hypotheses(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                    limit=args.score_limit,
+                    dry_run=False,
+                )
+            )
+
+    if not args.skip_rebalance:
+        for asset in asset_list:
+            print(f"\n--- Rebalance {asset} ---")
+            cmd_rebalance_allocation_trust(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                    dry_run=False,
+                )
+            )
+
+    if not args.skip_trade:
+        print(f"\n--- Trade {','.join(asset_list)} ---")
+        cmd_trade(
+            argparse.Namespace(
+                once=True,
+                schedule=False,
+                summary=False,
+                interval=None,
+                real=False,
+                non_interactive=True,
+                capital=10000.0,
+                asset=asset_list[0],
+                assets=",".join(asset_list),
+                config=args.config,
+                evolve_interval=86400,
+                pop_size=200,
+                generations=30,
+                event_driven=False,
+                debounce=None,
+                venue="paper",
+                strict=False,
+            )
+        )
+
+    if not args.skip_status:
+        for asset in asset_list:
+            print(f"\n--- Status {asset} ---")
+            cmd_runtime_status(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                )
+            )
 
 
 def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
@@ -3336,6 +3448,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_lifecycle(args)
     elif args.command == "rebalance-allocation-trust":
         cmd_rebalance_allocation_trust(args)
+    elif args.command == "run-sleeves-once":
+        cmd_run_sleeves_once(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
     elif args.command == "analyze-batch-research":

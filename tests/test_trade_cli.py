@@ -1666,6 +1666,65 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     assert "ActionWin: lookback=63 tracked=2 expressing=2" in output
 
 
+def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_run_sleeves_once
+
+    calls: list[tuple[str, str, object]] = []
+
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_hypothesis_seeder",
+        lambda args: calls.append(("seed", args.asset, args.skip_bootstrap)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        lambda args: calls.append(("score", args.asset, args.limit)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_trade",
+        lambda args: calls.append(("trade", args.assets, args.venue)),
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_runtime_status",
+        lambda args: calls.append(("status", args.asset, None)),
+    )
+
+    cmd_run_sleeves_once(
+        Namespace(
+            asset="BTC",
+            assets="BTC,ETH",
+            config=None,
+            score_limit=12,
+            bootstrap_assets="BTC",
+            skip_seed=False,
+            skip_score=False,
+            skip_rebalance=False,
+            skip_trade=False,
+            skip_status=False,
+        )
+    )
+
+    assert calls == [
+        ("seed", "BTC", False),
+        ("seed", "ETH", True),
+        ("score", "BTC", 12),
+        ("score", "ETH", 12),
+        ("rebalance", "BTC", False),
+        ("rebalance", "ETH", False),
+        ("trade", "BTC,ETH", "paper"),
+        ("status", "BTC", None),
+        ("status", "ETH", None),
+    ]
+
+    output = capsys.readouterr().out
+    assert "Sleeve loop [ONCE]: assets=BTC,ETH" in output
+
+
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
