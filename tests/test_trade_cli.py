@@ -470,7 +470,7 @@ def test_needs_trade_evolution_supports_hypothesis_registry():
         def __init__(self, active_count):
             self._active_count = active_count
 
-        def list_active(self):
+        def list_observation_active(self, *, asset=None):
             return [object()] * self._active_count
 
     trader = SimpleNamespace(registry=_HypothesisRegistry(active_count=1))

@@ -416,7 +416,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # runtime-status
     rst = sub.add_parser(
         "runtime-status",
-        help="Show current runtime observation status from registry and readiness files",
+        help="Show current runtime observation status from hypotheses store and readiness files",
     )
     rst.add_argument("--asset", type=str, default="BTC")
     rst.add_argument("--config", type=str, default=None)
@@ -1484,25 +1484,9 @@ def _close_trade_contexts(contexts: dict[str, tuple]) -> None:
 
 
 def _needs_trade_evolution(trader) -> bool:
-    registry = trader.registry
+    store = trader.registry
     asset = getattr(trader, "asset", None)
-
-    if hasattr(registry, "list_by_state"):
-        active = registry.list_by_state("active")
-        return len(active) == 0
-    if hasattr(registry, "list_active"):
-        try:
-            active = registry.list_active(asset=asset)
-        except TypeError:
-            active = registry.list_active()
-        return len(active) == 0
-    if hasattr(registry, "top_by_stake"):
-        try:
-            top = registry.top_by_stake(n=1, asset=asset)
-        except TypeError:
-            top = registry.top_by_stake(n=1)
-        return len(top) == 0
-    return True
+    return len(store.list_observation_active(asset=asset)) == 0
 
 
 def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
