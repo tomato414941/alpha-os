@@ -1855,6 +1855,7 @@ def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, 
     assert "Summary:  live_proven=2 actionable=1 backed=1" in output
     assert "Drop:     signal_both=1" in output
     assert "backed=1" in output
+    assert "FamSig:   " in output
     assert "Signal:   min=0.20/0.05" in output
     assert "Top:      backed reason=backed" in output
 

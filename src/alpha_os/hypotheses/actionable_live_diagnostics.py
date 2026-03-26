@@ -73,6 +73,7 @@ def build_actionable_live_summary(
 
     reasons: Counter[str] = Counter()
     family_counts: dict[str, Counter[str]] = {}
+    family_signal_values: dict[str, dict[str, list[float]]] = {}
     ranked: list[tuple[float, float, object, str, str]] = []
     ratio_drop_values: list[float] = []
     mean_abs_drop_values: list[float] = []
@@ -95,13 +96,28 @@ def build_actionable_live_summary(
         counter = family_counts.setdefault(reason, Counter())
         for family in record_families:
             counter[family] += 1
+            stats = family_signal_values.setdefault(
+                family,
+                {
+                    "ratio": [],
+                    "mean_abs": [],
+                    "actionable": [],
+                    "backed": [],
+                },
+            )
 
         signal_ratio = float(metadata.get("lifecycle_signal_nonzero_ratio", 0.0) or 0.0)
         signal_mean_abs = float(metadata.get("lifecycle_signal_mean_abs", 0.0) or 0.0)
         ranked.append((signal_ratio, signal_mean_abs, record, reason, family_label))
+        for family in record_families:
+            stats = family_signal_values[family]
+            stats["ratio"].append(signal_ratio)
+            stats["mean_abs"].append(signal_mean_abs)
 
         if bool(metadata.get("lifecycle_actionable_live", False)):
             actionable += 1
+            for family in record_families:
+                family_signal_values[family]["actionable"].append(1.0)
             try:
                 stake = float(record.stake)
             except (TypeError, ValueError):
@@ -110,6 +126,8 @@ def build_actionable_live_summary(
                 backed += 1
                 backed_ratio_values.append(signal_ratio)
                 backed_mean_abs_values.append(signal_mean_abs)
+                for family in record_families:
+                    family_signal_values[family]["backed"].append(1.0)
         else:
             ratio_drop_values.append(signal_ratio)
             mean_abs_drop_values.append(signal_mean_abs)
@@ -126,6 +144,28 @@ def build_actionable_live_summary(
         reason: [f"{family}:{count}" for family, count in counts.most_common(3)]
         for reason, counts in family_counts.items()
     }
+    family_signal_lines = []
+    for family, stats in sorted(
+        family_signal_values.items(),
+        key=lambda item: (
+            len(item[1]["backed"]),
+            len(item[1]["actionable"]),
+            len(item[1]["ratio"]),
+            item[0],
+        ),
+        reverse=True,
+    ):
+        ratio_summary = _distribution_summary(stats["ratio"])
+        mean_summary = _distribution_summary(stats["mean_abs"])
+        family_signal_lines.append(
+            f"{family}:n={int(ratio_summary['count'])}"
+            f"/a={len(stats['actionable'])}"
+            f"/b={len(stats['backed'])}"
+            f" ratio_p50={ratio_summary['p50']:.2f}"
+            f" ratio_p90={ratio_summary['p90']:.2f}"
+            f" mean_p50={mean_summary['p50']:.2f}"
+            f" mean_p90={mean_summary['p90']:.2f}"
+        )
 
     return {
         "total": len(filtered),
@@ -133,6 +173,7 @@ def build_actionable_live_summary(
         "backed": backed,
         "reasons": reasons,
         "families": family_summary,
+        "family_signal_lines": family_signal_lines,
         "ratio_drop": _distribution_summary(ratio_drop_values),
         "mean_abs_drop": _distribution_summary(mean_abs_drop_values),
         "ratio_backed": _distribution_summary(backed_ratio_values),

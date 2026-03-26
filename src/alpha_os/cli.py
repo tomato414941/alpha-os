@@ -2212,6 +2212,9 @@ def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
             family_bits.append(f"{reason}=" + ",".join(values))
     if family_bits:
         print("  Fam:      " + " | ".join(family_bits))
+    family_signal_lines = summary.get("family_signal_lines") or []
+    if family_signal_lines:
+        print("  FamSig:   " + " | ".join(family_signal_lines[:3]))
     ratio_drop = summary["ratio_drop"]
     mean_abs_drop = summary["mean_abs_drop"]
     ratio_backed = summary["ratio_backed"]
