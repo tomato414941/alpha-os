@@ -219,4 +219,4 @@ ruff check src/
 
 - [OPERATING_BOUNDARIES.md](/home/dev/projects/alpha-os/OPERATING_BOUNDARIES.md): current runtime truth, safety boundaries, and exit criteria
 - [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): architectural rationale and long-term direction
-- [ROADMAP.md](/home/dev/projects/alpha-os/docs/exploratory/ROADMAP.md): future ideas and expansion work
+- [ROADMAP.md](/home/dev/projects/alpha-os/docs/exploratory/ROADMAP.md): future options not yet promoted into the active plan

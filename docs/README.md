@@ -122,7 +122,7 @@ Prefer:
 ### Exploratory / Future-Facing
 
 - [`ROADMAP.md`](./exploratory/ROADMAP.md)
-  - forward-looking ideas
+  - future options not yet promoted into active work
 - [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
   - target taxonomy
 - [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
