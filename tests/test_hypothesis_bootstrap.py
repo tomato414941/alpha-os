@@ -5,12 +5,14 @@ from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord, Hypothes
 def test_bootstrap_hypotheses_have_expected_kind_counts():
     hypotheses = bootstrap_hypotheses()
 
+    dsl = [row for row in hypotheses if row.kind == HypothesisKind.DSL]
     technical = [row for row in hypotheses if row.kind == HypothesisKind.TECHNICAL]
     ml = [row for row in hypotheses if row.kind == HypothesisKind.ML]
 
+    assert len(dsl) == 5
     assert len(technical) == 8
     assert len(ml) == 2
-    assert len(hypotheses) == 10
+    assert len(hypotheses) == 15
     assert all(row.status == HypothesisStatus.ACTIVE for row in hypotheses)
     assert all(row.stake > 0 for row in hypotheses)
 
@@ -22,6 +24,15 @@ def test_bootstrap_hypotheses_include_prior_quality_metadata():
     assert all(float(row.metadata["oos_sharpe"]) > 0 for row in hypotheses)
     assert all(float(row.metadata["oos_log_growth"]) > 0 for row in hypotheses)
     assert all(row.scope == {"asset": "BTC", "universe": "core_universe_1000"} for row in hypotheses)
+
+
+def test_bootstrap_hypotheses_include_serious_program_seeds():
+    serious = [row for row in bootstrap_hypotheses() if row.source == "bootstrap_serious"]
+
+    assert len(serious) == 5
+    assert all(row.kind == HypothesisKind.DSL for row in serious)
+    assert all(row.metadata["seed_family"] == "serious" for row in serious)
+    assert all(row.metadata["serious_program"] == "onchain_derivatives_v1" for row in serious)
 
 
 def test_list_observation_active_includes_zero_stake_active_hypotheses(tmp_path):

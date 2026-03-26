@@ -44,15 +44,17 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
 
     stats = daemon._run_round()
     rows = store.list_all()
-    dsl_rows = [row for row in rows if row.kind == "dsl"]
+    dsl_rows = [row for row in rows if row.kind == "dsl" and row.source == "random_dsl"]
+    serious_rows = [row for row in rows if row.source == "bootstrap_serious"]
     technical_rows = [row for row in rows if row.kind == "technical"]
     ml_rows = [row for row in rows if row.kind == "ml"]
 
     assert stats.generated_dsl == 2
     assert stats.inserted_dsl == 2
-    assert stats.inserted_bootstrap == 10
-    assert len(rows) == 12
+    assert stats.inserted_bootstrap == 15
+    assert len(rows) == 17
     assert len(dsl_rows) == 2
+    assert len(serious_rows) == 5
     assert len(technical_rows) == 8
     assert len(ml_rows) == 2
     assert all(row.status == "active" for row in rows)
@@ -60,7 +62,7 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     assert all(row.metadata["research_quality_source"] == "exploratory_unscored" for row in dsl_rows)
     assert all(row.metadata["research_quality_status"] == "unscored" for row in dsl_rows)
     assert all(row.scope["asset"] == "BTC" for row in dsl_rows)
-    assert all(row.stake > 0 for row in technical_rows + ml_rows)
+    assert all(row.stake > 0 for row in serious_rows + technical_rows + ml_rows)
 
     daemon.close()
 
@@ -155,7 +157,7 @@ def test_hypothesis_seeder_skips_structurally_invalid_dsl_candidates(
     assert stats.generated_dsl == 2
     assert stats.inserted_dsl == 1
     assert stats.skipped_dsl == 1
-    assert len([row for row in rows if row.kind == "dsl"]) == 1
+    assert len([row for row in rows if row.kind == "dsl" and row.source == "random_dsl"]) == 1
 
     daemon.close()
 
@@ -199,7 +201,7 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     inserted, skipped = daemon._register_bootstrap_hypotheses()
     updated = store.get(original.hypothesis_id)
 
-    assert inserted == 9
+    assert inserted == 14
     assert skipped == 1
     assert updated is not None
     assert updated.stake == 0.37

@@ -7,7 +7,7 @@ INITIAL_STAKE = 1.0
 
 
 def bootstrap_hypotheses() -> list[HypothesisRecord]:
-    return _technical_hypotheses() + _ml_hypotheses()
+    return _technical_hypotheses() + _ml_hypotheses() + _serious_hypotheses()
 
 
 def _technical_hypotheses() -> list[HypothesisRecord]:
@@ -170,4 +170,64 @@ def _ml_hypotheses() -> list[HypothesisRecord]:
             },
         )
         for hypothesis_id, name, definition, prior_quality in items
+    ]
+
+
+def _serious_hypotheses() -> list[HypothesisRecord]:
+    items = [
+        (
+            "serious_onchain_activity_acceleration_v1",
+            "Onchain Activity Acceleration V1",
+            "(rank_20 delta_1__btc_active_addresses)",
+            "onchain",
+            {"oos_sharpe": 0.72, "oos_log_growth": 0.13},
+        ),
+        (
+            "serious_onchain_difficulty_regime_v1",
+            "Onchain Difficulty Regime V1",
+            "(rank_20 (sign btc_difficulty))",
+            "onchain",
+            {"oos_sharpe": 0.71, "oos_log_growth": 0.12},
+        ),
+        (
+            "serious_onchain_difficulty_momentum_v1",
+            "Onchain Difficulty Momentum V1",
+            "(rank_5 (roc_5 btc_difficulty))",
+            "onchain",
+            {"oos_sharpe": 0.68, "oos_log_growth": 0.11},
+        ),
+        (
+            "serious_derivatives_open_interest_trend_v1",
+            "Derivatives Open Interest Trend V1",
+            "(mean_20 (rank_10 oi_btc_1h))",
+            "derivatives",
+            {"oos_sharpe": 0.72, "oos_log_growth": 0.13},
+        ),
+        (
+            "serious_derivatives_funding_crowding_v1",
+            "Derivatives Funding Crowding V1",
+            "(sub funding_rate_btc (mean_5 funding_rate_btc))",
+            "derivatives",
+            {"oos_sharpe": 0.66, "oos_log_growth": 0.11},
+        ),
+    ]
+    return [
+        HypothesisRecord(
+            hypothesis_id=hypothesis_id,
+            kind=HypothesisKind.DSL,
+            name=name,
+            definition={"expression": expression},
+            status=HypothesisStatus.ACTIVE,
+            stake=INITIAL_STAKE,
+            source="bootstrap_serious",
+            scope=with_scope_asset(None, "BTC"),
+            metadata={
+                "seed_family": "serious",
+                "serious_program": "onchain_derivatives_v1",
+                "serious_family": serious_family,
+                "prior_quality_source": "bootstrap_seed",
+                **prior_quality,
+            },
+        )
+        for hypothesis_id, name, expression, serious_family, prior_quality in items
     ]
