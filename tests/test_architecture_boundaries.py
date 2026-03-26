@@ -46,6 +46,9 @@ FORBIDDEN_CURRENT_MODULES = {
     SRC_ROOT / "paper" / "tactical.py",
     SRC_ROOT / "paper" / "simulator.py",
     SRC_ROOT / "pipeline" / "runner.py",
+    SRC_ROOT / "research" / "pipeline_runner.py",
+    SRC_ROOT / "research" / "replay_experiment.py",
+    SRC_ROOT / "research" / "replay_simulator.py",
 }
 
 

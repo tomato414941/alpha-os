@@ -1185,10 +1185,10 @@ def test_cmd_replay_experiment_prints_profile(capsys, monkeypatch):
     from argparse import Namespace
 
     from alpha_os.cli import cmd_replay_experiment
-    from alpha_os.research.replay_experiment import ReplayExperimentRun
+    from alpha_os.legacy.replay_experiment import ReplayExperimentRun
 
     monkeypatch.setattr(
-        "alpha_os.research.replay_experiment.run_replay_experiment",
+        "alpha_os.legacy.replay_experiment.run_replay_experiment",
         lambda spec: ReplayExperimentRun(
             experiment_id="exp-1",
             detail_path=Path("/tmp/detail.json"),
@@ -1235,7 +1235,7 @@ def test_cmd_replay_matrix_prints_profiles(capsys, monkeypatch):
 
     from alpha_os.cli import cmd_replay_matrix
     from alpha_os.experiments.matrix import ReplayMatrixSpec
-    from alpha_os.research.replay_experiment import ReplayExperimentRun, ReplayExperimentSpec
+    from alpha_os.legacy.replay_experiment import ReplayExperimentRun, ReplayExperimentSpec
 
     monkeypatch.setattr(
         "alpha_os.experiments.matrix.load_replay_matrix",

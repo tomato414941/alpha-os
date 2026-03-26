@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..research.replay_experiment import (
+from ..legacy.replay_experiment import (
     ReplayExperimentRun,
     ReplayExperimentSpec,
     run_replay_experiment,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from alpha_os.experiments.matrix import load_replay_matrix, run_replay_matrix
-from alpha_os.research.replay_experiment import ReplayExperimentRun
+from alpha_os.legacy.replay_experiment import ReplayExperimentRun
 
 
 def test_load_replay_matrix_merges_defaults(tmp_path):

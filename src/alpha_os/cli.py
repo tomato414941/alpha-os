@@ -1124,7 +1124,7 @@ def cmd_paper(args: argparse.Namespace) -> None:
 
 
 def _cmd_paper_replay(args: argparse.Namespace, cfg) -> None:
-    from alpha_os.research.replay_simulator import run_replay
+    from alpha_os.legacy.replay_simulator import run_replay
 
     if not args.start or not args.end:
         print("Error: --replay requires --start and --end dates")
@@ -1193,7 +1193,7 @@ def _build_pipeline_config(
 ):
     """Build PipelineConfig from global Config + CLI args."""
     from alpha_os.evolution.gp import GPConfig
-    from alpha_os.research.pipeline_runner import PipelineConfig
+    from alpha_os.legacy.pipeline_runner import PipelineConfig
 
     return PipelineConfig(
         gp=GPConfig(
@@ -1219,7 +1219,7 @@ def _build_pipeline_config(
 
 def _run_evolution(trader, config: Config, pipeline_config) -> None:
     """Run alpha evolution using trader's data and registry."""
-    from alpha_os.research.pipeline_runner import PipelineRunner
+    from alpha_os.legacy.pipeline_runner import PipelineRunner
 
     logger = logging.getLogger(__name__)
 
@@ -2695,7 +2695,7 @@ def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
 
 
 def cmd_replay_experiment(args: argparse.Namespace) -> None:
-    from alpha_os.research.replay_experiment import (
+    from alpha_os.legacy.replay_experiment import (
         ReplayExperimentSpec,
         parse_override_assignment,
         run_replay_experiment,
