@@ -10,6 +10,10 @@ from alpha_os.hypotheses.runtime_policy import (
     rank_trading_records,
     select_decorrelated_trading_ids,
 )
+from alpha_os.hypotheses.allocation_rebalance_service import (
+    apply_capital_backed_count_cap,
+    prefilter_reference_rebalance_records,
+)
 from alpha_os.hypotheses import (
     apply_allocation_rebalance_plan,
     backfill_observation_returns,
@@ -1803,3 +1807,113 @@ def test_record_daily_contributions_persists_to_same_db(tmp_path):
     assert rows_h1[0].date == "2026-03-21"
     assert rows_h2[0].date == "2026-03-21"
     store.close()
+
+
+def test_apply_capital_backed_count_cap_keeps_top_ranked_entries():
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="top_a",
+            current_stake=0.1,
+            target_stake=0.8,
+            proposed_stake=0.8,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="",
+            n_observations=40,
+            bootstrap_trust_value=0.0,
+            blended_quality=1.0,
+            live_quality=1.0,
+            raw_live_quality=1.0,
+            confidence=1.0,
+            marginal_contribution=0.1,
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="top_b",
+            current_stake=0.1,
+            target_stake=0.7,
+            proposed_stake=0.7,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="",
+            n_observations=40,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.9,
+            live_quality=0.9,
+            raw_live_quality=0.9,
+            confidence=1.0,
+            marginal_contribution=0.1,
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="overflow",
+            current_stake=0.1,
+            target_stake=0.2,
+            proposed_stake=0.2,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="",
+            n_observations=40,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.2,
+            live_quality=0.2,
+            raw_live_quality=0.2,
+            confidence=1.0,
+            marginal_contribution=0.1,
+        ),
+    ]
+
+    capped = apply_capital_backed_count_cap(plan, max_backed=2, floor=0.0)
+    capped_by_id = {entry.hypothesis_id: entry for entry in capped}
+
+    assert capped_by_id["top_a"].capital_eligible is True
+    assert capped_by_id["top_b"].capital_eligible is True
+    assert capped_by_id["overflow"].capital_eligible is False
+    assert capped_by_id["overflow"].proposed_stake == 0.0
+    assert capped_by_id["overflow"].capital_reason == "reference_capital_capped"
+
+
+def test_prefilter_reference_rebalance_records_prioritizes_bootstrap_and_backed():
+    records = [
+        HypothesisRecord(
+            hypothesis_id="weak_random",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=0.0,
+            metadata={},
+        ),
+        HypothesisRecord(
+            hypothesis_id="backed_random",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="random_dsl",
+            stake=0.3,
+            metadata={"lifecycle_capital_backed": True},
+        ),
+        HypothesisRecord(
+            hypothesis_id="bootstrap_seed",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            source="bootstrap_serious",
+            stake=0.0,
+            metadata={},
+        ),
+    ]
+
+    filtered = prefilter_reference_rebalance_records(records, max_records=2)
+
+    assert [record.hypothesis_id for record in filtered] == [
+        "bootstrap_seed",
+        "backed_random",
+    ]

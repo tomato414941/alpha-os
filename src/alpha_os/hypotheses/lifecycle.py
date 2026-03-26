@@ -330,6 +330,7 @@ def build_allocation_rebalance_plan(
     store: HypothesisStore,
     *,
     asset: str | None = None,
+    records: list | None = None,
     metric: str = "sharpe",
     lookback: int = DEFAULT_LOOKBACK,
     min_observations: int = DEFAULT_MIN_OBSERVATIONS,
@@ -362,7 +363,9 @@ def build_allocation_rebalance_plan(
     signal_activity_for: Callable[[str], tuple[float, float]] | None = None,
 ) -> list[AllocationRebalanceEntry]:
     plan: list[AllocationRebalanceEntry] = []
-    for record in store.list_observation_active(asset=asset):
+    if records is None:
+        records = store.list_observation_active(asset=asset)
+    for record in records:
         research_quality_source = str(
             record.metadata.get("prior_quality_source")
             or record.metadata.get("research_quality_source")
