@@ -319,7 +319,7 @@ def test_hypothesis_seeder_refreshes_existing_serious_bootstrap_definition(
     assert skipped == 1
     assert updated is not None
     assert updated.name == "ETH Price Regime Shift V1"
-    assert updated.definition["expression"] == "(rank_20 zscore_20__eth_ohlcv)"
+    assert updated.definition["expression"] == "(neg (zscore eth_btc))"
     assert updated.metadata["serious_template"] == "price_regime_shift"
 
     daemon.close()

@@ -58,7 +58,7 @@ def test_bootstrap_hypotheses_use_eth_specific_serious_binding_overrides():
 
     assert (
         serious["serious_eth_derivatives_open_interest_trend_v1"].definition["expression"]
-        == "(rank_20 zscore_20__oi_eth_1h)"
+        == "(sub funding_rate_eth (mean_5 funding_rate_eth))"
     )
     assert (
         serious["serious_eth_derivatives_funding_crowding_v1"].definition["expression"]
@@ -70,7 +70,7 @@ def test_bootstrap_hypotheses_use_eth_specific_serious_binding_overrides():
     )
     assert (
         serious["serious_eth_price_regime_shift_v1"].definition["expression"]
-        == "(rank_20 zscore_20__eth_ohlcv)"
+        == "(neg (zscore eth_btc))"
     )
 
 
