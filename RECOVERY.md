@@ -403,6 +403,24 @@ support boundaries.
   - `risk`
   - `validation.testnet`
 
+### Current Runtime Boundary
+
+The current paper runtime now has a narrower internal split than earlier
+recovery phases.
+
+- `paper.trader`
+  - orchestration only
+  - owns the trading cycle, data sync timing, monitoring side effects, and execution
+- `hypotheses.runtime_policy`
+  - current selection policy
+  - owns shortlist ranking, decorrelation selection, and trading signal history preparation
+- `hypotheses.runtime_inputs`
+  - current runtime input preparation
+  - owns DSL parse validation, raw signal discovery, available-feature filtering, and prediction-history array loading
+
+This means current runtime policy and input-prep logic should prefer
+`hypotheses.*` modules over new helper methods on `paper.trader`.
+
 ### Observation Model
 
 `hypothesis_observations.db` is part of the current runtime, but it is not a

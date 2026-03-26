@@ -226,6 +226,15 @@ Today, the intended shape is:
 - `legacy.*`
   - replay, migration, and registry-era archive workflows
 
+Inside the bounded paper runtime, the intended internal split is:
+
+- `paper.trader`
+  - orchestration and side-effect coordination
+- `hypotheses.runtime_policy`
+  - runtime shortlist and decorrelation policy
+- `hypotheses.runtime_inputs`
+  - runtime parse/filter/history input preparation
+
 That means the main remaining gap from the greenfield target is no longer
 package confusion in the runtime path. The remaining gap is that the repo
 still carries:
