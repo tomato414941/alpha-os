@@ -116,6 +116,56 @@ def test_hypothesis_seeder_can_seed_non_btc_observation_only_sleeve(
     daemon.close()
 
 
+def test_hypothesis_seeder_can_seed_eth_serious_bootstrap_only(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        lambda config: None,
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
+            "eth_btc",
+            "funding_rate_eth",
+            "oi_eth_1h",
+            "fear_greed",
+            "dxy",
+        ],
+    )
+    monkeypatch.setattr(
+        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        _FakeAlphaGenerator,
+    )
+
+    cfg = Config()
+    cfg.alpha_generator.pop_size = 2
+    cfg.alpha_generator.feature_subset_k = 3
+    cfg.alpha_generator.min_feature_catalog_size = 1
+
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    daemon = HypothesisSeederDaemon(
+        cfg,
+        primary_asset="ETH",
+        include_bootstrap=True,
+        store=store,
+        client=None,
+    )
+
+    stats = daemon._run_round()
+    rows = store.list_all()
+    serious_rows = [row for row in rows if row.source == "bootstrap_serious"]
+
+    assert stats.inserted_bootstrap == 6
+    assert len(serious_rows) == 6
+    assert all(row.scope["asset"] == "ETH" for row in serious_rows)
+    assert all(row.metadata["serious_program"] == "eth_multi_family_v2" for row in serious_rows)
+    assert all(row.stake == 0.0 for row in serious_rows)
+
+    daemon.close()
+
+
 class _InvalidAlphaGenerator:
     def __init__(self, features, feature_subset=None, seed=None):
         self.features = features

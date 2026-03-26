@@ -101,7 +101,7 @@ def test_trade_parser():
     assert args.capital == 500.0
 
 
-def test_hypothesis_seeder_parser_supports_asset_once_and_skip_bootstrap():
+def test_hypothesis_seeder_parser_supports_asset_once_and_bootstrap_flags():
     from alpha_os.cli import _build_parser
 
     parser = _build_parser()
@@ -113,6 +113,92 @@ def test_hypothesis_seeder_parser_supports_asset_once_and_skip_bootstrap():
     assert args.asset == "ETH"
     assert args.once is True
     assert args.skip_bootstrap is True
+    assert args.include_bootstrap is False
+
+    args = parser.parse_args(
+        ["hypothesis-seeder", "--asset", "ETH", "--once", "--include-bootstrap"]
+    )
+
+    assert args.include_bootstrap is True
+    assert args.skip_bootstrap is False
+
+
+def test_cmd_hypothesis_seeder_uses_asset_default_bootstrap_policy(monkeypatch):
+    from alpha_os.cli import cmd_hypothesis_seeder
+
+    captured = {}
+
+    class _Daemon:
+        def __init__(self, *, config, primary_asset, include_bootstrap):
+            captured["asset"] = primary_asset
+            captured["include_bootstrap"] = include_bootstrap
+
+        def _run_round(self):
+            return SimpleNamespace(
+                generated_dsl=0,
+                inserted_dsl=0,
+                skipped_dsl=0,
+                inserted_bootstrap=0,
+                skipped_bootstrap=0,
+            )
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: object())
+    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
+
+    cmd_hypothesis_seeder(
+        SimpleNamespace(
+            config=None,
+            asset="ETH",
+            once=True,
+            include_bootstrap=False,
+            skip_bootstrap=False,
+        )
+    )
+
+    assert captured == {"asset": "ETH", "include_bootstrap": None}
+
+
+def test_cmd_hypothesis_seeder_can_force_bootstrap(monkeypatch):
+    from alpha_os.cli import cmd_hypothesis_seeder
+
+    captured = {}
+
+    class _Daemon:
+        def __init__(self, *, config, primary_asset, include_bootstrap):
+            captured["asset"] = primary_asset
+            captured["include_bootstrap"] = include_bootstrap
+
+        def _run_round(self):
+            return SimpleNamespace(
+                generated_dsl=0,
+                inserted_dsl=0,
+                skipped_dsl=0,
+                inserted_bootstrap=0,
+                skipped_bootstrap=0,
+            )
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: object())
+    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
+
+    cmd_hypothesis_seeder(
+        SimpleNamespace(
+            config=None,
+            asset="ETH",
+            once=True,
+            include_bootstrap=True,
+            skip_bootstrap=False,
+        )
+    )
+
+    assert captured == {"asset": "ETH", "include_bootstrap": True}
 
 
 def test_backfill_observation_returns_parser_supports_source_filter():

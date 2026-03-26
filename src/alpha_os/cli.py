@@ -167,6 +167,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     hseed.add_argument("--asset", type=str, default="BTC")
     hseed.add_argument("--once", action="store_true")
+    hseed.add_argument("--include-bootstrap", action="store_true")
     hseed.add_argument("--skip-bootstrap", action="store_true")
     hseed.add_argument("--config", type=str, default=None)
 
@@ -1912,10 +1913,16 @@ def cmd_hypothesis_seeder(args: argparse.Namespace) -> None:
 
     from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon
 
+    include_bootstrap: bool | None = None
+    if args.include_bootstrap:
+        include_bootstrap = True
+    elif args.skip_bootstrap:
+        include_bootstrap = False
+
     daemon = HypothesisSeederDaemon(
         config=cfg,
         primary_asset=args.asset,
-        include_bootstrap=not args.skip_bootstrap,
+        include_bootstrap=include_bootstrap,
     )
     try:
         if args.once:

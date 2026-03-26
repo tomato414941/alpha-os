@@ -91,7 +91,7 @@ class HypothesisSeederDaemon:
             "HypothesisSeeder started: asset=%s budget=%d bootstrap=%d",
             self.primary_asset,
             self._budget,
-            len(bootstrap_hypotheses()) if self.include_bootstrap else 0,
+            len(bootstrap_hypotheses(self.primary_asset)) if self.include_bootstrap else 0,
         )
 
         try:
@@ -242,7 +242,7 @@ class HypothesisSeederDaemon:
         self._retire_obsolete_bootstrap_hypotheses()
         inserted = 0
         skipped = 0
-        for record in bootstrap_hypotheses():
+        for record in bootstrap_hypotheses(self.primary_asset):
             existing = self._store.get(record.hypothesis_id)
             if existing is not None:
                 self._backfill_bootstrap_metadata(existing, record)
