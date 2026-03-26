@@ -1775,6 +1775,9 @@ def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
 def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.forward.tracker import HypothesisObservationTracker
+    from alpha_os.hypotheses.sleeve_attention_service import (
+        build_sleeve_attention_plan,
+    )
     from alpha_os.hypotheses.search_budget_service import (
         build_template_gap_search_budget,
     )
@@ -1785,12 +1788,15 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.serious_templates import serious_seed_specs
     from alpha_os.hypotheses.store import HypothesisStore
 
+    cfg = _load_config(args.config)
     asset_list = _resolve_asset_list(args)
     bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
     refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
     skip_serious = bool(getattr(args, "skip_serious", False))
     previous_compare_rows = load_latest_sleeve_compare_rows(_sleeve_compare_snapshot_path())
     budget_by_asset: dict[str, object] = {}
+    attention_by_asset: dict[str, object] = {}
+    stage_work_by_asset: dict[str, bool] = {asset.upper(): False for asset in asset_list}
 
     def _should_refresh_asset(asset: str) -> bool:
         return refresh_bootstrap_assets or asset not in bootstrap_assets
@@ -1813,6 +1819,13 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         )
         budget_by_asset[asset.upper()] = budget
         return budget
+
+    def _attention_for_asset(asset: str):
+        attention = attention_by_asset.get(asset.upper())
+        if attention is None:
+            attention = build_sleeve_attention_plan(asset=asset, config=cfg)
+            attention_by_asset[asset.upper()] = attention
+        return attention
 
     print(
         "Sleeve loop [ONCE]: "
@@ -1843,6 +1856,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
             if score_budget.effective_limit <= 0:
                 print("Seed skipped: no serious template gaps remain.")
                 continue
+            stage_work_by_asset[asset.upper()] = True
             cmd_hypothesis_seeder(
                 argparse.Namespace(
                     asset=asset,
@@ -1856,7 +1870,14 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
         for asset in asset_list:
             if not _has_serious_templates(asset):
                 continue
+            attention = _attention_for_asset(asset)
             print(f"\n--- Serious {asset} ---")
+            print(
+                "Attention: "
+                f"level={attention.level} "
+                f"lookback={attention.maintenance_lookback_days}d "
+                f"rebalance={'yes' if attention.rebalance_required else 'no'}"
+            )
             adir = asset_data_dir(asset)
             store = HypothesisStore(HYPOTHESES_DB)
             data_store = DataStore(SIGNAL_CACHE_DB)
@@ -1869,12 +1890,13 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
                     data_store=data_store,
                     forward_tracker=forward_tracker,
                     asset=asset,
-                    lookback_days=30,
+                    lookback_days=attention.maintenance_lookback_days,
                 )
             finally:
                 forward_tracker.close()
                 data_store.close()
                 store.close()
+            stage_work_by_asset[asset.upper()] = True
             print(
                 "Serious maintenance [APPLY]: "
                 f"asset={run.asset} templates={run.template_total} "
@@ -1899,6 +1921,7 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
             if score_budget.effective_limit <= 0:
                 print("Score skipped: no serious template gaps remain.")
                 continue
+            stage_work_by_asset[asset.upper()] = True
             cmd_score_exploratory_hypotheses(
                 argparse.Namespace(
                     asset=asset,
@@ -1911,6 +1934,14 @@ def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
     if not args.skip_rebalance:
         for asset in asset_list:
             if not _should_rebalance_asset(asset):
+                continue
+            attention = _attention_for_asset(asset)
+            if (
+                not stage_work_by_asset.get(asset.upper(), False)
+                and not attention.rebalance_required
+            ):
+                print(f"\n--- Rebalance {asset} ---")
+                print("Rebalance skipped: sleeve attention is light and no upstream work ran.")
                 continue
             print(f"\n--- Rebalance {asset} ---")
             cmd_rebalance_allocation_trust(

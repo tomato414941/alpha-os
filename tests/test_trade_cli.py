@@ -218,6 +218,15 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
             new_template_count=0,
         ),
     )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
+        ),
+    )
     monkeypatch.setattr("alpha_os.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli.cmd_rebalance_allocation_trust", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
@@ -274,6 +283,15 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
             missing_template_count=1,
             closed_template_count=0,
             new_template_count=0,
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
         ),
     )
     monkeypatch.setattr(
@@ -2040,6 +2058,15 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
+        ),
+    )
+    monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
     )
@@ -2144,6 +2171,15 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
         ),
     )
     monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
+        ),
+    )
+    monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
     )
@@ -2232,6 +2268,15 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
         lambda asset: [object()],
     )
     monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
+        ),
+    )
+    monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
         lambda *_args, **_kwargs: None,
     )
@@ -2315,6 +2360,15 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
         lambda asset: [object()],
     )
     monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="high",
+            maintenance_lookback_days=30,
+            rebalance_required=True,
+        ),
+    )
+    monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
         lambda *_args, **_kwargs: None,
     )
@@ -2344,6 +2398,69 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
     )
 
     assert calls == [("ETH", 6)]
+
+
+def test_run_sleeves_once_skips_light_attention_rebalance_without_upstream_work(monkeypatch, capsys):
+    from alpha_os.cli import cmd_run_sleeves_once
+    from types import SimpleNamespace
+
+    calls = []
+
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=0,
+            missing_template_count=0,
+            closed_template_count=0,
+            new_template_count=0,
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        lambda *, asset, config: SimpleNamespace(
+            asset=asset,
+            level="light",
+            maintenance_lookback_days=14,
+            rebalance_required=False,
+        ),
+    )
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        lambda asset: [],
+    )
+    monkeypatch.setattr(
+        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        lambda args: calls.append(("rebalance", args.asset)),
+    )
+    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr(
+        "alpha_os.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
+        lambda *_args, **_kwargs: {},
+    )
+
+    cmd_run_sleeves_once(
+        SimpleNamespace(
+            asset="ETH",
+            assets="ETH",
+            config=None,
+            score_limit=12,
+            bootstrap_assets="BTC",
+            refresh_bootstrap_assets=True,
+            skip_seed=True,
+            skip_serious=False,
+            skip_score=True,
+            skip_rebalance=False,
+            skip_trade=True,
+            skip_status=True,
+        )
+    )
+
+    assert calls == []
+    assert "Rebalance skipped: sleeve attention is light and no upstream work ran." in capsys.readouterr().out
 
 
 def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
