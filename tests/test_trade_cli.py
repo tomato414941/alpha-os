@@ -2473,6 +2473,77 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 budget=6/12 delta=backed:+1,tpl:+1,breadth:+0.96 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
+def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys, tmp_path):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_compare_sleeve_history
+
+    snapshot_path = tmp_path / "sleeve_compare_reports.jsonl"
+    snapshot_path.write_text(
+        (
+            json.dumps({
+                "timestamp_utc": "2026-03-25T00:00:00+00:00",
+                "assets": ["BTC", "ETH"],
+                "rows": [
+                    {
+                        "asset": "BTC",
+                        "backed": 10,
+                        "serious_template_backed": 1,
+                        "breadth": 1.5,
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 6,
+                        "serious_template_gaps": ["macro:1.00"],
+                    },
+                    {
+                        "asset": "ETH",
+                        "backed": 8,
+                        "serious_template_backed": 2,
+                        "breadth": 4.0,
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 9,
+                        "serious_template_gaps": ["derivatives:1.00"],
+                    },
+                ],
+            }) + "\n" +
+            json.dumps({
+                "timestamp_utc": "2026-03-26T00:00:00+00:00",
+                "assets": ["BTC", "ETH"],
+                "rows": [
+                    {
+                        "asset": "BTC",
+                        "backed": 12,
+                        "serious_template_backed": 2,
+                        "breadth": 2.0,
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 8,
+                        "serious_template_gaps": ["macro:1.00"],
+                    },
+                    {
+                        "asset": "ETH",
+                        "backed": 9,
+                        "serious_template_backed": 3,
+                        "breadth": 4.5,
+                        "score_budget_requested": 12,
+                        "score_budget_effective": 10,
+                        "serious_template_gaps": ["-"],
+                    },
+                ],
+            }) + "\n"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("alpha_os.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
+
+    cmd_compare_sleeve_history(Namespace(asset="BTC", assets="BTC,ETH", limit=2))
+    output = capsys.readouterr().out
+
+    assert "Sleeve Compare History: BTC,ETH limit=2" in output
+    assert "BTC:" in output
+    assert "2026-03-25T00:00:00+00:00: budget=6/12 backed=10(+0) templates=1(+0) breadth=1.50(+0.00) tpl_gaps=macro:1.00" in output
+    assert "2026-03-26T00:00:00+00:00: budget=8/12 backed=12(+2) templates=2(+1) breadth=2.00(+0.50) tpl_gaps=macro:1.00" in output
+    assert "ETH:" in output
+
+
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

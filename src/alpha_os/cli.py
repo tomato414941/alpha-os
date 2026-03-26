@@ -180,6 +180,15 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="Comma-separated asset list (e.g. BTC,ETH)")
     cmp.add_argument("--config", type=str, default=None)
 
+    cmph = sub.add_parser(
+        "compare-sleeve-history",
+        help="Show recent sleeve comparison snapshots across one or more assets",
+    )
+    cmph.add_argument("--asset", type=str, default="BTC")
+    cmph.add_argument("--assets", type=str, default=None,
+                      help="Comma-separated asset list (e.g. BTC,ETH)")
+    cmph.add_argument("--limit", type=int, default=5)
+
     alb = sub.add_parser(
         "analyze-live-breadth",
         help="Analyze historical signal breadth for capital-backed bootstrap hypotheses",
@@ -1987,6 +1996,84 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_compare_sleeve_history(args: argparse.Namespace) -> None:
+    asset_set = {asset.upper() for asset in _resolve_asset_list(args)}
+    limit = max(int(getattr(args, "limit", 5)), 1)
+    path = _sleeve_compare_snapshot_path()
+    if not path.exists():
+        print("Sleeve Compare History: no snapshots")
+        return
+
+    history: list[dict[str, object]] = []
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            timestamp = str(payload.get("timestamp_utc", ""))
+            rows = payload.get("rows")
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                asset = str(row.get("asset", "")).upper()
+                if asset not in asset_set:
+                    continue
+                history.append({
+                    "timestamp_utc": timestamp,
+                    "asset": asset,
+                    "backed": int(row.get("backed", 0)),
+                    "serious_template_backed": int(row.get("serious_template_backed", 0)),
+                    "breadth": float(row.get("breadth", 0.0)),
+                    "score_budget_requested": int(row.get("score_budget_requested", 0)),
+                    "score_budget_effective": int(row.get("score_budget_effective", 0)),
+                    "serious_template_gaps": list(row.get("serious_template_gaps", [])),
+                })
+
+    if not history:
+        print("Sleeve Compare History: no matching snapshots")
+        return
+
+    history.sort(key=lambda item: (str(item["asset"]), str(item["timestamp_utc"])))
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for item in history:
+        grouped.setdefault(str(item["asset"]), []).append(item)
+
+    print(f"Sleeve Compare History: {','.join(sorted(asset_set))} limit={limit}")
+    for asset in sorted(asset_set):
+        rows = grouped.get(asset, [])
+        if not rows:
+            continue
+        print(f"  {asset}:")
+        recent = rows[-limit:]
+        previous_backed = None
+        previous_templates = None
+        previous_breadth = None
+        for row in recent:
+            backed = int(row["backed"])
+            templates = int(row["serious_template_backed"])
+            breadth = float(row["breadth"])
+            backed_delta = 0 if previous_backed is None else backed - previous_backed
+            template_delta = 0 if previous_templates is None else templates - previous_templates
+            breadth_delta = 0.0 if previous_breadth is None else breadth - previous_breadth
+            print(
+                f"    {row['timestamp_utc']}: "
+                f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
+                f"backed={backed}({backed_delta:+d}) "
+                f"templates={templates}({template_delta:+d}) "
+                f"breadth={breadth:.2f}({breadth_delta:+.2f}) "
+                f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'}"
+            )
+            previous_backed = backed
+            previous_templates = templates
+            previous_breadth = breadth
+
+
 def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
     from alpha_os.data.store import DataStore
     from alpha_os.hypotheses.breadth import (
@@ -3447,6 +3534,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_run_sleeves_once(args)
     elif args.command == "compare-sleeves":
         cmd_compare_sleeves(args)
+    elif args.command == "compare-sleeve-history":
+        cmd_compare_sleeve_history(args)
     elif args.command == "analyze-live-breadth":
         cmd_analyze_live_breadth(args)
     elif args.command == "analyze-batch-research":
