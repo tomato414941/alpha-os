@@ -2,80 +2,91 @@
 
 Exploratory design note.
 
-This file describes a future multi-asset trading-universe mechanism. It is not
-the current trusted runtime shape, current asset scope, or current scheduler
-entrypoint set.
+This file describes future options for how the system might decide which assets
+or sleeves deserve active capital. It is not the current trusted runtime shape,
+current sleeve set, or current scheduler contract.
 
 Prefer:
 
-- `README.md` for the current single-asset runtime path
-- `OPERATING_BOUNDARIES.md` for the current recovery boundary
-- `DESIGN.md` for shared architectural rationale
-- `docs/portfolio-runtime-principles.md` for portfolio / allocation terminology
+- `README.md` for the current bounded runtime path
+- `OPERATING_BOUNDARIES.md` for the current operating boundary
+- `DESIGN.md` for the long-horizon architecture
+- `plan.md` for active implementation order
 
-## Problem
+## Core Question
 
-The system now evaluates 919 OHLCV assets for alpha exploration, but trading
-is hardcoded to 3 assets (BTC, ETH, SOL). The evaluation universe (20 assets)
-is selected for diversity of validation, not for profitability. There is no
-mechanism to decide **which assets to trade** based on where alphas actually
-have predictive power.
+The future question is not only "which hypotheses should we trade?" but also:
 
-## Key Distinction
+- which assets should have active sleeves
+- which sleeves should graduate from observation to capital
+- which execution venues are worth serving
 
-| Universe | Purpose | Selection criteria | Size |
-|----------|---------|-------------------|------|
-| price_signals | Exploration — evaluate expressions broadly | signal_type == "ohlcv" | ~919 |
-| eval_universe | Validation — ensure alpha isn't overfit to one asset | Low pairwise correlation, long history | 20 |
-| **trading_universe** | Profit — trade where we have edge | IC > 0, tradeable, liquid | Dynamic |
+This is broader than the current bounded `BTC` reference sleeve plus `ETH`
+validation sleeve.
 
-## Design
+## Universe Layers
 
-```
-admitted alphas (each carries per-asset IC from cross-asset evaluation)
-    |
-    v
-aggregate IC per asset (across all active alphas)
-    |
-    v
-filter:
-  - aggregate IC > threshold
-  - venue available (Binance, Alpaca, etc.)
-  - sufficient liquidity (volume, spread)
-    |
-    v
-trading_universe (top N assets, recomputed periodically)
-    |
-    v
-TC-weighted allocation across trading_universe
-```
+Future universe design will likely need to separate at least four layers:
 
-### What assets to trade is determined by alpha predictive power, not by humans.
+| Layer | Purpose | Example |
+|------|---------|---------|
+| research universe | where ideas are explored broadly | many assets, many features |
+| validation universe | where sleeves prove they generalize | small multi-asset set |
+| capital universe | where sleeves are allowed to receive budget | bounded trusted set |
+| execution universe | where actual orders can be placed | venue- and liquidity-constrained |
 
-## Prerequisites (Current Gaps)
+The current runtime only partially separates these layers.
 
-1. **admission is BTC-fixed** — `--asset BTC` hardcoded, registry at `data/BTC/`.
-   Needs to become asset-agnostic.
-2. **per-asset IC not stored** — `evaluate_cross_asset` returns `{asset: ic}` but
-   this is discarded after fitness averaging. Needs to be saved in alpha record.
-3. **No trading_universe module** — Needs a new module that computes trading
-   universe from aggregate per-asset IC + venue/liquidity filters.
-4. **trader assumes static asset list** — `cross-trade --assets BTC,ETH,SOL`
-   needs to accept dynamic universe from the trading_universe module.
-5. **registry is asset-scoped** — `data/BTC/alpha_registry.db` assumes one
-   asset. Cross-asset alphas need a single shared registry.
+## Future Options
 
-## Implementation Order
+### 1. Template-Coverage-Driven Sleeve Expansion
 
-1. Save per-asset IC in alpha record (admission + registry schema change)
-2. Make admission asset-agnostic (single shared registry)
-3. Build trading_universe module (aggregate IC + filters)
-4. Connect trader to dynamic trading_universe
-5. Remove hardcoded `--assets` from trader service
+Possible direction:
 
-## Constraints
+- open new sleeves where template gaps remain large
+- keep bounded reference sleeves stable
+- promote new sleeves only after serious coverage and capital-path evidence
 
-- Venue availability: Binance (crypto), Alpaca (US stocks/ETFs), Paper (anything)
-- Liquidity: minimum daily volume, maximum spread
-- Memory: current server (7.6GB) limits concurrent data loading
-- Start with paper trading on dynamic universe, graduate to real per venue
+### 2. Signal-Support-Driven Asset Selection
+
+Possible direction:
+
+- prefer assets with stronger feature support
+- require enough data quality and actionability before adding budget
+- avoid opening sleeves where the runtime cannot support the target ideas
+
+### 3. Predictive-Power-Driven Capital Universe
+
+Possible direction:
+
+- use sleeve-level live quality, actionability, and contribution
+- prefer assets where hypotheses repeatedly convert into backed sleeves
+- remove sleeves that remain observational but never become capital-relevant
+
+### 4. Venue- and Liquidity-Constrained Execution Universe
+
+Possible direction:
+
+- separate "interesting to study" from "safe to trade"
+- require venue availability, liquidity, and execution quality
+- keep execution universe narrower than research universe
+
+## Not Yet Active
+
+This note does not imply that the project should immediately build:
+
+- a global trading-universe module
+- a dynamic many-asset allocator
+- a cross-sectional execution engine
+
+Those would only make sense after the current template-aware bounded sleeve
+runtime is more mature.
+
+## Promotion Rule
+
+Move material out of this file when it becomes either:
+
+1. current implementation work
+2. architectural baseline
+
+If it is neither, it should stay exploratory.

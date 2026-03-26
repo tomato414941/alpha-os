@@ -16,9 +16,9 @@ Prefer:
 - `DESIGN.md` for the broader architecture
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 
-What can be profitably predicted? This note focuses first on market-facing
-targets, but predictive targets can also exist at the hypothesis, allocation,
-and execution layers.
+What might eventually be worth predicting? This note focuses first on
+market-facing targets, but predictive targets can also exist at the
+hypothesis, allocation, and execution layers.
 
 ## Cross-sectional
 - Which assets will outperform others over the next N days
@@ -73,9 +73,12 @@ and execution layers.
 
 ---
 
-## Design implications
+## Future Implications If Promoted
 
-- The DSL and feature catalog should cover inputs relevant to all categories above
-- Evaluation should reward prediction accuracy (IC) not just backtest returns (Sharpe)
-- Cross-sectional predictions are market-direction-neutral and thus more robust
-- Multiple weak predictions across categories compound into a strong edge
+- The DSL and feature catalog would need to cover inputs relevant to the chosen
+  target classes
+- Evaluation might need target-specific metrics rather than one shared metric
+- Cross-sectional targets would require a different runtime contract from the
+  current bounded per-sleeve directional flow
+- Operational targets such as execution quality or hypothesis health would
+  likely need different observation and scoring pipelines from market targets
