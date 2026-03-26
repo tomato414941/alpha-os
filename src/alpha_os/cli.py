@@ -2686,10 +2686,12 @@ def _runtime_actionable_window_summary(
     supports_short: bool,
 ) -> dict[str, float] | None:
     from alpha_os.hypotheses.sleeve_status import build_actionable_window_summary
+    from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.hypotheses.store import HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker
 
-    tracker = PaperPortfolioTracker(db_path=asset_data_dir(asset) / "paper_trading.db")
+    tracker = HypothesisObservationTracker(
+        asset_data_dir(asset) / HYPOTHESIS_OBSERVATIONS_DB_NAME
+    )
     store = HypothesisStore(HYPOTHESES_DB)
     try:
         summary = build_actionable_window_summary(

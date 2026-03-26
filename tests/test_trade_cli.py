@@ -1618,8 +1618,8 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     from argparse import Namespace
 
     from alpha_os.cli import cmd_runtime_status
+    from alpha_os.forward.tracker import HypothesisObservationTracker
     from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker
     from alpha_os.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
@@ -1637,10 +1637,11 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     ))
     store.close()
 
-    tracker = PaperPortfolioTracker(db_path=tmp_path / "paper_trading.db")
+    tracker = HypothesisObservationTracker(tmp_path / "forward_returns.db")
     for idx, (h1, h2) in enumerate([(0.3, 0.0), (0.0, 0.2), (0.1, 0.0)], start=1):
-        date = f"2026-03-0{idx}T00:00:00"
-        tracker.save_hypothesis_signals(date, {"h1": h1, "h2": h2})
+        date = f"2026-03-0{idx}"
+        tracker.record("h1", date, h1, 0.0)
+        tracker.record("h2", date, h2, 0.0)
     tracker.close()
 
     state_path, report_path = readiness_paths(tmp_path)
