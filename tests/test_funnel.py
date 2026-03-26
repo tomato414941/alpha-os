@@ -7,6 +7,7 @@ import numpy as np
 
 from alpha_os.evolution.discovery_pool import DiscoveryPool
 from alpha_os.legacy.funnel import load_funnel_summary
+from alpha_os.legacy.funnel_summary import reject_axis, summarize_funnel
 from alpha_os.legacy.managed_alphas import ManagedAlphaStore
 from alpha_os.dsl.expr import Feature
 
@@ -138,3 +139,46 @@ def test_load_funnel_summary_counts_pipeline_state(tmp_path, monkeypatch):
         ("diversity: feature cap 50: dxy", 1),
         ("quality: OOS Sharpe 0.100 < 0.5", 1),
     ]
+
+
+def test_summarize_funnel_aggregates_rows_without_io():
+    summary = summarize_funnel(
+        asset="BTC",
+        discovery_pool_entries=3,
+        candidate_rows=[
+            {
+                "source": "",
+                "status": "validating",
+                "behavior_json": "{broken",
+                "error_message": "",
+            },
+            {
+                "source": "manual",
+                "status": "rejected",
+                "behavior_json": '{"source":"handcrafted"}',
+                "error_message": "deployability: gate failed",
+            },
+        ],
+        managed_rows=[
+            {"state": "candidate"},
+            {"state": "active"},
+            {"state": "rejected"},
+        ],
+        deployed_total=2,
+    )
+
+    assert summary.discovery_pool_entries == 3
+    assert summary.candidate_total == 2
+    assert summary.candidate_validating == 1
+    assert summary.candidate_rejected == 1
+    assert summary.managed_candidate == 1
+    assert summary.managed_active == 1
+    assert summary.managed_rejected == 1
+    assert summary.deployed_total == 2
+    assert summary.reject_axes == [("deployability", 1)]
+    assert [row.source for row in summary.source_summaries] == ["manual", "<legacy>"]
+
+
+def test_reject_axis_falls_back_to_uncategorized():
+    assert reject_axis("quality: sharpe < 0.5") == "quality"
+    assert reject_axis("unexpected failure") == "uncategorized"
