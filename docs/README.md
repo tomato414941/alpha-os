@@ -1,0 +1,128 @@
+# Documentation Map
+
+This file is the index for project documentation.
+
+Use it to answer:
+
+- which document is the source of truth for a given question
+- which document is current operational truth vs design intent
+- which files are archival or exploratory only
+
+## Read Order
+
+For most work, read in this order:
+
+1. [`README.md`](../README.md)
+   - project entry point
+   - current trusted runtime path
+   - quick orientation
+2. [`RECOVERY.md`](../RECOVERY.md)
+   - current operating posture
+   - trusted / untrusted boundary
+   - current recovery order
+3. One design note, depending on the question:
+   - [`DESIGN.md`](../DESIGN.md)
+     - greenfield architecture
+     - long-horizon module boundaries
+     - multi-asset / thousand-asset scaling model
+   - [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
+     - current portfolio semantics
+     - lifecycle / allocation terminology
+     - near-term portfolio bottlenecks and design choices
+
+## Source Of Truth By Question
+
+### "How do I run the current system?"
+
+Prefer:
+
+- [`README.md`](../README.md)
+- [`RECOVERY.md`](../RECOVERY.md)
+- [`AGENTS.override.md`](../AGENTS.override.md) for machine-specific operations
+
+### "What is trusted today vs still under repair?"
+
+Prefer:
+
+- [`RECOVERY.md`](../RECOVERY.md)
+
+### "What does the current portfolio runtime mean by research/live/actionable/capital?"
+
+Prefer:
+
+- [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
+
+### "What would the architecture look like without migration baggage?"
+
+Prefer:
+
+- [`DESIGN.md`](../DESIGN.md)
+
+### "How should this scale to many assets?"
+
+Prefer:
+
+- [`DESIGN.md`](../DESIGN.md)
+  - especially the multi-asset and thousand-asset sections
+
+### "What is an old idea, archive, or exploratory note?"
+
+Prefer:
+
+- [`OLD_DESIGN.md`](../OLD_DESIGN.md)
+- [`ROADMAP.md`](../ROADMAP.md)
+- [`PREDICTION_TARGETS.md`](../PREDICTION_TARGETS.md)
+- [`TRADING_UNIVERSE_DESIGN.md`](../TRADING_UNIVERSE_DESIGN.md)
+
+## Document Roles
+
+### Current Truth
+
+- [`README.md`](../README.md)
+  - current runtime path
+  - entrypoint commands
+- [`RECOVERY.md`](../RECOVERY.md)
+  - current operating truth
+  - repair sequence
+- [`AGENTS.override.md`](../AGENTS.override.md)
+  - machine-local commands and procedures
+
+### Current Design Notes
+
+- [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
+  - current portfolio semantics
+  - sleeve lifecycle
+  - allocation / actionable / capital design
+
+### Long-Horizon Design
+
+- [`DESIGN.md`](../DESIGN.md)
+  - greenfield baseline
+  - architecture without migration baggage
+  - scaling model for many sleeves / assets
+
+### Exploratory / Future-Facing
+
+- [`ROADMAP.md`](../ROADMAP.md)
+  - forward-looking ideas
+- [`PREDICTION_TARGETS.md`](../PREDICTION_TARGETS.md)
+  - target taxonomy
+- [`TRADING_UNIVERSE_DESIGN.md`](../TRADING_UNIVERSE_DESIGN.md)
+  - future universe expansion ideas
+
+### Archive / Legacy
+
+- [`OLD_DESIGN.md`](../OLD_DESIGN.md)
+  - registry-era history
+- [`system-diagram.html`](./system-diagram.html)
+  - legacy diagram
+
+## Practical Rule
+
+If two documents seem to disagree, prefer:
+
+1. `README.md` for current entrypoints
+2. `RECOVERY.md` for current runtime truth
+3. `portfolio-runtime-principles.md` for current portfolio semantics
+4. `DESIGN.md` for target architecture
+5. archive / roadmap files only for context

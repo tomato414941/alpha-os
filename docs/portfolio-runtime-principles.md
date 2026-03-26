@@ -14,10 +14,12 @@ This file is the right place for:
 - portfolio / allocation terminology used by the current mainline
 - near-term hypotheses-first design decisions
 - current bottlenecks between research, observation, allocation, and execution
+- current sleeve lifecycle semantics
 
 This file is not the right place for:
 
 - full greenfield architecture
+- thousand-asset control-plane design
 - migration-era archival detail
 - operational runbooks
 
@@ -25,6 +27,7 @@ For those, prefer:
 
 - [RECOVERY.md](../RECOVERY.md) for current operating truth
 - [DESIGN.md](../DESIGN.md) for greenfield baseline and long-horizon architecture
+- [docs/README.md](./README.md) for the documentation map
 
 The current trusted mainline remains:
 

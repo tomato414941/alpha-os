@@ -8,6 +8,7 @@ For current operating truth, prefer:
 
 - `README.md` for the current runtime path
 - `RECOVERY.md` for trust boundaries, scheduler policy, and recovery order
+- `docs/README.md` for the documentation map
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 
 This file is the right place for:
@@ -15,12 +16,14 @@ This file is the right place for:
 - greenfield baseline thinking
 - long-horizon architecture
 - domain model and module-boundary rationale
+- multi-asset and thousand-asset scaling design
 
 This file is not the source of truth for:
 
 - current CLI entrypoints
 - current scheduler policy
 - current portfolio gates and drop reasons
+- the current document map
 
 ## Glossary
 

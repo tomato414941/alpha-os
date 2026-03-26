@@ -16,86 +16,33 @@ decide which legacy research paths deserve a rewrite.
 
 ## Document Guide
 
-Use the docs in this order:
+Prefer this order:
 
-- `README.md`
-  - current project entry point
-  - current runtime path
-  - current document map
-- `RECOVERY.md`
-  - current recovery status
-  - trusted / untrusted boundary
-  - runtime operating model
-  - scheduler draft and exit criteria
-- `DESIGN.md`
-  - architectural decisions
-  - longer-term design direction
-- `AGENTS.override.md`
-  - server operations
-  - deploy / restart / verification steps
-  - current machine-specific commands
-- `ROADMAP.md`
-  - longer-range ideas; not current operating truth
-- `OLD_DESIGN.md`
-  - archived registry-era design material
-  - keep for history, not for current runtime decisions
+1. `README.md`
+   - project entry point
+   - current runtime path
+2. `RECOVERY.md`
+   - current operating truth
+   - trusted / untrusted boundary
+3. `docs/README.md`
+   - document index
+   - which design note to read next
+
+After that:
+
 - `docs/portfolio-runtime-principles.md`
-  - portfolio / allocation design note
-  - quality, status, allocation-trust terminology
-- `PREDICTION_TARGETS.md`
-  - exploratory note on what the system may predict
-  - not the current runtime contract
-- `TRADING_UNIVERSE_DESIGN.md`
-  - exploratory note on future multi-asset universe selection
-  - not the current runtime contract
-
-If a topic appears in multiple files, prefer:
-
-- `README.md` for current practical guidance
-- `RECOVERY.md` for current repair order and runtime trust
-- `DESIGN.md` for deeper rationale
-- `AGENTS.override.md` for concrete commands
-- `OLD_DESIGN.md` only for legacy context
-
-## Document Roles
-
-The repository docs are intentionally split by role.
-
-### Current Truth
-
-- `README.md`
-  - project entry point
-  - current runtime path
-  - current document map
-- `RECOVERY.md`
-  - trusted / untrusted boundary
-  - operating model
-  - scheduler draft
-  - current recovery order
-- `AGENTS.override.md`
-  - machine-specific operations
-  - restart / verify commands
-
-### Design Notes
-
+  - current portfolio / allocation semantics
 - `DESIGN.md`
-  - architectural rationale
-  - target design direction
-- `docs/portfolio-runtime-principles.md`
-  - portfolio construction and allocation-trust design
-- `PREDICTION_TARGETS.md`
-  - target taxonomy and research direction
-- `TRADING_UNIVERSE_DESIGN.md`
-  - future multi-asset trading-universe design
+  - greenfield and long-horizon architecture
+- `AGENTS.override.md`
+  - machine-local operations
+
+Exploratory or archival files are intentionally lower priority:
+
 - `ROADMAP.md`
-  - forward-looking expansion ideas
-
-### Archive / Legacy
-
+- `PREDICTION_TARGETS.md`
+- `TRADING_UNIVERSE_DESIGN.md`
 - `OLD_DESIGN.md`
-  - archived registry-era thinking
-- `docs/system-diagram.html`
-  - legacy registry-era architecture diagram
 
 ## Current Runtime Path
 
