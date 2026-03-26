@@ -2153,6 +2153,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"proven={row['proven']} "
             f"actionable={row['actionable']} "
             f"backed={row['backed']} "
+            f"serious={row['serious_retained']}/{row['serious_backed']} "
             f"breadth={row['breadth']:.2f} "
             f"latest={row['latest']} "
             f"fills={row['fills']} "
@@ -2810,6 +2811,7 @@ def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object
         "capital_backed": summary.capital_backed,
         "research_retained": summary.research_retained,
         "bootstrap_research_retained": summary.bootstrap_research_retained,
+        "serious_research_retained": summary.serious_research_retained,
         "batch_research_retained": summary.batch_research_retained,
         "live_proven": summary.live_proven,
         "actionable_live": summary.actionable_live,
@@ -2817,6 +2819,7 @@ def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object
         "research_demoted": summary.research_demoted,
         "research_candidate_capped": summary.research_candidate_capped,
         "bootstrap_capital_backed": summary.bootstrap_capital_backed,
+        "serious_capital_backed": summary.serious_capital_backed,
         "batch_research_capital_backed": summary.batch_research_capital_backed,
         "actionable_live_capital_backed": summary.actionable_live_capital_backed,
         "actionable_redundancy_capped": summary.actionable_redundancy_capped,
@@ -2899,6 +2902,8 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
                 "proven": hypothesis_summary["live_proven"],
                 "actionable": hypothesis_summary["actionable_live"],
                 "backed": hypothesis_summary["capital_backed"],
+                "serious_retained": hypothesis_summary["serious_research_retained"],
+                "serious_backed": hypothesis_summary["serious_capital_backed"],
                 "breadth": 0.0 if actionable_window is None else actionable_window["breadth"],
                 "latest": "none" if latest is None else ("ERROR" if latest.get("has_errors") else "OK"),
                 "fills": 0 if latest is None else int(latest.get("n_fills", 0)),
@@ -3040,6 +3045,8 @@ def cmd_runtime_status(args: argparse.Namespace) -> None:
         "  Cohorts:   "
         f"bootstrap={hypothesis_summary['bootstrap_research_retained']}/"
         f"{hypothesis_summary['bootstrap_capital_backed']} "
+        f"serious={hypothesis_summary['serious_research_retained']}/"
+        f"{hypothesis_summary['serious_capital_backed']} "
         f"batch={hypothesis_summary['batch_research_retained']}/"
         f"{hypothesis_summary['batch_research_capital_backed']} "
         f"live={hypothesis_summary['live_proven']}/"

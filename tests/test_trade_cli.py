@@ -168,6 +168,32 @@ def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
     assert mean_signal == pytest.approx((1.0 + 0.5 + 0.2 + 0.4) / 5)
 
 
+def test_build_asset_sleeve_summary_tracks_serious_cohort():
+    from alpha_os.hypotheses.sleeve_status import build_asset_sleeve_summary
+    from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord
+
+    summary = build_asset_sleeve_summary([
+        HypothesisRecord(
+            hypothesis_id="serious_retained",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "btc_difficulty"},
+            source="bootstrap_serious",
+            stake=0.2,
+            metadata={
+                "lifecycle_research_retained": True,
+                "lifecycle_capital_backed": True,
+                "lifecycle_bootstrap_trust": 0.09,
+            },
+        )
+    ])
+
+    assert summary.research_retained == 1
+    assert summary.serious_research_retained == 1
+    assert summary.serious_capital_backed == 1
+    assert summary.bootstrap_research_retained == 0
+    assert summary.bootstrap_capital_backed == 0
+
+
 def test_needs_trade_evolution_supports_hypothesis_registry():
     from alpha_os.cli import _needs_trade_evolution
 
@@ -1361,7 +1387,7 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
         "live_proven=0 actionable_live=0 promoted_live=0 research_demoted=0 "
         "research_candidate_capped=0 capital_backed=2"
     ) in output
-    assert "Cohorts:   bootstrap=0/2 batch=0/0 live=0/0" in output
+    assert "Cohorts:   bootstrap=0/2 serious=0/0 batch=0/0 live=0/0" in output
     assert "TopAlloc:  h1=1.000(dsl/random_dsl), h4=0.500(technical/bootstrap_technical)" in output
     assert "TopEff:    h1=0.300(dsl/random_dsl), h4=0.200(technical/bootstrap_technical)" in output
     assert "TopRaw:    h1=12.000(dsl/random_dsl), h4=8.000(technical/bootstrap_technical)" in output
@@ -1491,7 +1517,7 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
 
-    assert "Cohorts:   bootstrap=0/0 batch=0/0 live=0/0" in output
+    assert "Cohorts:   bootstrap=0/0 serious=0/0 batch=0/0 live=0/0" in output
     assert "Promote:   obs=1 quality=1 contrib=0 both=0 signal=0" in output
 
 
@@ -1768,8 +1794,20 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     monkeypatch.setattr(
         "alpha_os.cli._runtime_hypothesis_summary",
         lambda asset=None: {
-            "BTC": {"live_proven": 12, "actionable_live": 12, "capital_backed": 20},
-            "ETH": {"live_proven": 58, "actionable_live": 44, "capital_backed": 16},
+            "BTC": {
+                "live_proven": 12,
+                "actionable_live": 12,
+                "capital_backed": 20,
+                "serious_research_retained": 0,
+                "serious_capital_backed": 0,
+            },
+            "ETH": {
+                "live_proven": 58,
+                "actionable_live": 44,
+                "capital_backed": 16,
+                "serious_research_retained": 0,
+                "serious_capital_backed": 0,
+            },
         }[asset],
     )
     monkeypatch.setattr(
@@ -1802,8 +1840,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):

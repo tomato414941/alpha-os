@@ -21,6 +21,8 @@ def runtime_cohort(record) -> str:
     if bool(metadata.get("lifecycle_live_proven", False)):
         return "live"
     if bool(metadata.get("lifecycle_research_retained", False)):
+        if str(getattr(record, "source", "")) == "bootstrap_serious":
+            return "serious"
         if str(metadata.get("lifecycle_research_quality_source", "")) == "batch_research_score":
             return "batch"
         return "bootstrap"
@@ -142,6 +144,7 @@ class AssetSleeveSummary:
     capital_backed: int
     research_retained: int
     bootstrap_research_retained: int
+    serious_research_retained: int
     batch_research_retained: int
     live_proven: int
     actionable_live: int
@@ -149,6 +152,7 @@ class AssetSleeveSummary:
     research_demoted: int
     research_candidate_capped: int
     bootstrap_capital_backed: int
+    serious_capital_backed: int
     batch_research_capital_backed: int
     actionable_live_capital_backed: int
     actionable_redundancy_capped: int
@@ -185,6 +189,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
     capital_backed = 0
     research_retained = 0
     bootstrap_research_retained = 0
+    serious_research_retained = 0
     batch_research_retained = 0
     live_proven = 0
     actionable_live = 0
@@ -192,6 +197,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
     research_demoted = 0
     research_candidate_capped = 0
     bootstrap_capital_backed = 0
+    serious_capital_backed = 0
     batch_research_capital_backed = 0
     actionable_live_capital_backed = 0
     actionable_redundancy_capped = 0
@@ -227,6 +233,8 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
             research_retained += 1
             if cohort == "batch":
                 batch_research_retained += 1
+            elif cohort == "serious":
+                serious_research_retained += 1
             else:
                 bootstrap_research_retained += 1
         if bool(metadata.get("lifecycle_live_proven", False)):
@@ -245,6 +253,8 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
                 actionable_live_capital_backed += 1
             elif cohort == "batch":
                 batch_research_capital_backed += 1
+            elif cohort == "serious":
+                serious_capital_backed += 1
             else:
                 bootstrap_capital_backed += 1
         if bootstrap_trust > 0 and not bool(metadata.get("lifecycle_capital_eligible", capital_backed_now)):
@@ -262,6 +272,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         capital_backed=capital_backed,
         research_retained=research_retained,
         bootstrap_research_retained=bootstrap_research_retained,
+        serious_research_retained=serious_research_retained,
         batch_research_retained=batch_research_retained,
         live_proven=live_proven,
         actionable_live=actionable_live,
@@ -269,6 +280,7 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
         research_demoted=research_demoted,
         research_candidate_capped=research_candidate_capped,
         bootstrap_capital_backed=bootstrap_capital_backed,
+        serious_capital_backed=serious_capital_backed,
         batch_research_capital_backed=batch_research_capital_backed,
         actionable_live_capital_backed=actionable_live_capital_backed,
         actionable_redundancy_capped=actionable_redundancy_capped,
