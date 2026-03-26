@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .serious_templates import serious_seed_specs
 from .sleeve_scope import with_scope_asset
 from .store import HypothesisKind, HypothesisRecord, HypothesisStatus
 
@@ -175,131 +176,14 @@ def _ml_hypotheses() -> list[HypothesisRecord]:
         for hypothesis_id, name, definition, prior_quality in items
     ]
 
-
-def _serious_seed_specs(asset: str) -> list[tuple[str, str, str, str, dict[str, float]]]:
-    asset = str(asset).upper()
-    if asset == "BTC":
-        return [
-            (
-                "serious_onchain_activity_acceleration_v1",
-                "Onchain Activity Acceleration V1",
-                "(rank_20 delta_1__btc_active_addresses)",
-                "onchain",
-                {"oos_sharpe": 0.72, "oos_log_growth": 0.13},
-            ),
-            (
-                "serious_onchain_difficulty_regime_v1",
-                "Onchain Difficulty Regime V1",
-                "(rank_20 (sign btc_difficulty))",
-                "onchain",
-                {"oos_sharpe": 0.71, "oos_log_growth": 0.12},
-            ),
-            (
-                "serious_onchain_difficulty_momentum_v1",
-                "Onchain Difficulty Momentum V1",
-                "(rank_5 (roc_5 btc_difficulty))",
-                "onchain",
-                {"oos_sharpe": 0.68, "oos_log_growth": 0.11},
-            ),
-            (
-                "serious_derivatives_open_interest_trend_v1",
-                "Derivatives Open Interest Trend V1",
-                "(mean_20 (rank_10 oi_btc_1h))",
-                "derivatives",
-                {"oos_sharpe": 0.72, "oos_log_growth": 0.13},
-            ),
-            (
-                "serious_derivatives_funding_crowding_v1",
-                "Derivatives Funding Crowding V1",
-                "(sub funding_rate_btc (mean_5 funding_rate_btc))",
-                "derivatives",
-                {"oos_sharpe": 0.66, "oos_log_growth": 0.11},
-            ),
-            (
-                "serious_macro_sentiment_acceleration_v1",
-                "Macro Sentiment Acceleration V1",
-                "(rank_20 delta_1__fear_greed)",
-                "macro",
-                {"oos_sharpe": 0.64, "oos_log_growth": 0.10},
-            ),
-            (
-                "serious_macro_dollar_pressure_v1",
-                "Macro Dollar Pressure V1",
-                "(rank_20 roc_5__dxy)",
-                "macro",
-                {"oos_sharpe": 0.63, "oos_log_growth": 0.10},
-            ),
-            (
-                "serious_price_regime_shift_v1",
-                "Price Regime Shift V1",
-                "(rank_20 zscore_20__btc_ohlcv)",
-                "price",
-                {"oos_sharpe": 0.61, "oos_log_growth": 0.09},
-            ),
-            (
-                "serious_price_short_term_impulse_v1",
-                "Price Short-Term Impulse V1",
-                "(rank_20 delta_1__btc_ohlcv)",
-                "price",
-                {"oos_sharpe": 0.60, "oos_log_growth": 0.09},
-            ),
-        ]
-    if asset == "ETH":
-        return [
-            (
-                "serious_eth_derivatives_open_interest_trend_v1",
-                "ETH Derivatives Open Interest Trend V1",
-                "(mean_20 (rank_10 oi_eth_1h))",
-                "derivatives",
-                {"oos_sharpe": 0.68, "oos_log_growth": 0.11},
-            ),
-            (
-                "serious_eth_derivatives_funding_crowding_v1",
-                "ETH Derivatives Funding Crowding V1",
-                "(sub funding_rate_eth (mean_5 funding_rate_eth))",
-                "derivatives",
-                {"oos_sharpe": 0.64, "oos_log_growth": 0.10},
-            ),
-            (
-                "serious_eth_macro_sentiment_acceleration_v1",
-                "ETH Macro Sentiment Acceleration V1",
-                "(rank_20 delta_1__fear_greed)",
-                "macro",
-                {"oos_sharpe": 0.61, "oos_log_growth": 0.09},
-            ),
-            (
-                "serious_eth_macro_dollar_pressure_v1",
-                "ETH Macro Dollar Pressure V1",
-                "(rank_20 roc_5__dxy)",
-                "macro",
-                {"oos_sharpe": 0.60, "oos_log_growth": 0.09},
-            ),
-            (
-                "serious_eth_price_regime_shift_v1",
-                "ETH Price Regime Shift V1",
-                "(rank_20 zscore_20__eth_btc)",
-                "price",
-                {"oos_sharpe": 0.59, "oos_log_growth": 0.08},
-            ),
-            (
-                "serious_eth_price_short_term_impulse_v1",
-                "ETH Price Short-Term Impulse V1",
-                "(rank_20 delta_1__eth_btc)",
-                "price",
-                {"oos_sharpe": 0.58, "oos_log_growth": 0.08},
-            ),
-        ]
-    return []
-
-
 def _serious_hypotheses(asset: str) -> list[HypothesisRecord]:
-    items = _serious_seed_specs(asset)
+    items = serious_seed_specs(asset)
     return [
         HypothesisRecord(
-            hypothesis_id=hypothesis_id,
+            hypothesis_id=item.hypothesis_id,
             kind=HypothesisKind.DSL,
-            name=name,
-            definition={"expression": expression},
+            name=item.name,
+            definition={"expression": item.expression},
             status=HypothesisStatus.ACTIVE,
             stake=0.0,
             source="bootstrap_serious",
@@ -307,10 +191,12 @@ def _serious_hypotheses(asset: str) -> list[HypothesisRecord]:
             metadata={
                 "seed_family": "serious",
                 "serious_program": f"{asset.lower()}_multi_family_v2",
-                "serious_family": serious_family,
+                "serious_family": item.family,
+                "serious_template": item.template_id,
                 "prior_quality_source": "bootstrap_seed",
-                **prior_quality,
+                "oos_sharpe": item.oos_sharpe,
+                "oos_log_growth": item.oos_log_growth,
             },
         )
-        for hypothesis_id, name, expression, serious_family, prior_quality in items
+        for item in items
     ]

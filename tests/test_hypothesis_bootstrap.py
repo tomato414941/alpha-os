@@ -34,6 +34,7 @@ def test_bootstrap_hypotheses_include_serious_program_seeds():
     assert all(row.kind == HypothesisKind.DSL for row in serious)
     assert all(row.metadata["seed_family"] == "serious" for row in serious)
     assert all(row.metadata["serious_program"] == "btc_multi_family_v2" for row in serious)
+    assert all("serious_template" in row.metadata for row in serious)
     assert all(row.stake == 0.0 for row in serious)
 
 
@@ -44,6 +45,7 @@ def test_bootstrap_hypotheses_can_build_eth_serious_seeds():
     assert all(row.source == "bootstrap_serious" for row in serious)
     assert all(row.scope["asset"] == "ETH" for row in serious)
     assert all(row.metadata["serious_program"] == "eth_multi_family_v2" for row in serious)
+    assert all("serious_template" in row.metadata for row in serious)
     assert {row.metadata["serious_family"] for row in serious} == {
         "derivatives",
         "macro",
