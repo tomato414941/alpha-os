@@ -2531,6 +2531,25 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         }[asset],
     )
     monkeypatch.setattr(
+        "alpha_os.cli._runtime_control_metrics_summary",
+        lambda asset=None: {
+            "BTC": {
+                "template_gap_count": 1,
+                "template_gaps": ["onchain_activity_acceleration:1.00"],
+                "coverage_retention": 0.80,
+                "capital_conversion": 0.65,
+                "breadth_trend": 0.25,
+            },
+            "ETH": {
+                "template_gap_count": 1,
+                "template_gaps": ["derivatives_open_interest_trend:1.00"],
+                "coverage_retention": 0.50,
+                "capital_conversion": 0.36,
+                "breadth_trend": -0.20,
+            },
+        }[asset],
+    )
+    monkeypatch.setattr(
         "alpha_os.cli._runtime_observation_findings",
         lambda latest, current_live_count: ([] if latest.get("n_fills", 0) > 0 else ["zero_fills"]),
     )
@@ -2589,8 +2608,8 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "Sleeve Compare: BTC,ETH" in output
-    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 budget=9/12 delta=backed:+2,tpl:-1,breadth:+0.25 breadth=1.00 latest=OK fills=1 observe=ok" in output
-    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 budget=6/12 delta=backed:+1,tpl:+1,breadth:+0.96 breadth=7.46 latest=OK fills=0 observe=watch" in output
+    assert "BTC: readiness=5/10 live=20 proven=12 actionable=12 backed=20 serious=0/0 templates=0/9 tpl_gaps=onchain_activity_acceleration:1.00 tpl_delta=closed:1,new:0 control=cover:0.80,convert:0.65,btrend:+0.25 budget=9/12 delta=backed:+2,tpl:-1,breadth:+0.25 breadth=1.00 latest=OK fills=1 observe=ok" in output
+    assert "ETH: readiness=1/10 live=16 proven=58 actionable=44 backed=16 serious=0/0 templates=2/6 tpl_gaps=derivatives_open_interest_trend:1.00 tpl_delta=closed:0,new:0 control=cover:0.50,convert:0.36,btrend:-0.20 budget=6/12 delta=backed:+1,tpl:+1,breadth:+0.96 breadth=7.46 latest=OK fills=0 observe=watch" in output
 
 
 def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys, tmp_path):
@@ -2610,6 +2629,9 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
                         "backed": 10,
                         "serious_template_backed": 1,
                         "breadth": 1.5,
+                        "control_coverage_retention": 0.60,
+                        "control_capital_conversion": 0.40,
+                        "control_breadth_trend": 0.10,
                         "score_budget_requested": 12,
                         "score_budget_effective": 6,
                         "serious_template_gaps": ["macro:1.00"],
@@ -2619,6 +2641,9 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
                         "backed": 8,
                         "serious_template_backed": 2,
                         "breadth": 4.0,
+                        "control_coverage_retention": 0.75,
+                        "control_capital_conversion": 0.55,
+                        "control_breadth_trend": -0.20,
                         "score_budget_requested": 12,
                         "score_budget_effective": 9,
                         "serious_template_gaps": ["derivatives:1.00"],
@@ -2634,6 +2659,9 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
                         "backed": 12,
                         "serious_template_backed": 2,
                         "breadth": 2.0,
+                        "control_coverage_retention": 0.80,
+                        "control_capital_conversion": 0.50,
+                        "control_breadth_trend": 0.25,
                         "score_budget_requested": 12,
                         "score_budget_effective": 8,
                         "serious_template_gaps": ["macro:1.00"],
@@ -2643,6 +2671,9 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
                         "backed": 9,
                         "serious_template_backed": 3,
                         "breadth": 4.5,
+                        "control_coverage_retention": 1.00,
+                        "control_capital_conversion": 0.60,
+                        "control_breadth_trend": 0.30,
                         "score_budget_requested": 12,
                         "score_budget_effective": 10,
                         "serious_template_gaps": ["-"],
@@ -2659,8 +2690,8 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
 
     assert "Sleeve Compare History: BTC,ETH limit=2" in output
     assert "BTC:" in output
-    assert "2026-03-25T00:00:00+00:00: budget=6/12 backed=10(+0) templates=1(+0) breadth=1.50(+0.00) tpl_gaps=macro:1.00" in output
-    assert "2026-03-26T00:00:00+00:00: budget=8/12 backed=12(+2) templates=2(+1) breadth=2.00(+0.50) tpl_gaps=macro:1.00" in output
+    assert "2026-03-25T00:00:00+00:00: budget=6/12 backed=10(+0) templates=1(+0) control=cover:0.60,convert:0.40,btrend:+0.10 breadth=1.50(+0.00) tpl_gaps=macro:1.00" in output
+    assert "2026-03-26T00:00:00+00:00: budget=8/12 backed=12(+2) templates=2(+1) control=cover:0.80,convert:0.50,btrend:+0.25 breadth=2.00(+0.50) tpl_gaps=macro:1.00" in output
     assert "ETH:" in output
 
 

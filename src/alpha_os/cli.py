@@ -2021,6 +2021,7 @@ def cmd_compare_sleeves(args: argparse.Namespace) -> None:
             f"templates={row['serious_template_backed']}/{row['serious_template_total']} "
             f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
             f"tpl_delta={row['serious_template_gap_delta']} "
+            f"control=cover:{row['control_coverage_retention']:.2f},convert:{row['control_capital_conversion']:.2f},btrend:{row['control_breadth_trend']:+.2f} "
             f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
             f"delta=backed:{row['backed_delta']:+d},tpl:{row['template_backed_delta']:+d},breadth:{row['breadth_delta']:+.2f} "
             f"breadth={row['breadth']:.2f} "
@@ -2064,6 +2065,9 @@ def cmd_compare_sleeve_history(args: argparse.Namespace) -> None:
                     "backed": int(row.get("backed", 0)),
                     "serious_template_backed": int(row.get("serious_template_backed", 0)),
                     "breadth": float(row.get("breadth", 0.0)),
+                    "control_coverage_retention": float(row.get("control_coverage_retention", 0.0)),
+                    "control_capital_conversion": float(row.get("control_capital_conversion", 0.0)),
+                    "control_breadth_trend": float(row.get("control_breadth_trend", 0.0)),
                     "score_budget_requested": int(row.get("score_budget_requested", 0)),
                     "score_budget_effective": int(row.get("score_budget_effective", 0)),
                     "serious_template_gaps": list(row.get("serious_template_gaps", [])),
@@ -2100,6 +2104,7 @@ def cmd_compare_sleeve_history(args: argparse.Namespace) -> None:
                 f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
                 f"backed={backed}({backed_delta:+d}) "
                 f"templates={templates}({template_delta:+d}) "
+                f"control=cover:{row['control_coverage_retention']:.2f},convert:{row['control_capital_conversion']:.2f},btrend:{row['control_breadth_trend']:+.2f} "
                 f"breadth={breadth:.2f}({breadth_delta:+.2f}) "
                 f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'}"
             )
@@ -2764,6 +2769,19 @@ def _runtime_actionable_window_summary(
         tracker.close()
 
 
+def _runtime_control_metrics_summary(*, asset: str) -> dict[str, float | int | list[str]]:
+    from alpha_os.hypotheses.sleeve_control_metrics import load_sleeve_control_metrics
+
+    metrics = load_sleeve_control_metrics(asset=asset)
+    return {
+        "template_gap_count": int(metrics.template_gap_count),
+        "template_gaps": list(metrics.template_gaps),
+        "coverage_retention": float(metrics.coverage_retention),
+        "capital_conversion": float(metrics.capital_conversion),
+        "breadth_trend": float(metrics.breadth_trend),
+    }
+
+
 def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, object]]:
     from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
 
@@ -2786,6 +2804,7 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
             lookback=cfg.forward.degradation_window,
             supports_short=cfg.trading.supports_short,
         )
+        control_metrics = _runtime_control_metrics_summary(asset=asset)
         findings = _runtime_observation_findings(latest, len(runtime_ids))
         rows.append(
             {
@@ -2800,6 +2819,10 @@ def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, 
                 "serious_template_backed": hypothesis_summary["serious_template_backed_count"],
                 "serious_template_total": hypothesis_summary["serious_template_target_count"],
                 "serious_template_gaps": hypothesis_summary["serious_template_gaps"],
+                "control_template_gap_count": control_metrics["template_gap_count"],
+                "control_coverage_retention": control_metrics["coverage_retention"],
+                "control_capital_conversion": control_metrics["capital_conversion"],
+                "control_breadth_trend": control_metrics["breadth_trend"],
                 "breadth": 0.0 if actionable_window is None else actionable_window["breadth"],
                 "latest": "none" if latest is None else ("ERROR" if latest.get("has_errors") else "OK"),
                 "fills": 0 if latest is None else int(latest.get("n_fills", 0)),
