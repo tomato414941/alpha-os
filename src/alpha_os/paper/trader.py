@@ -50,6 +50,7 @@ from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
 from ..hypotheses.runtime_inputs import (
     filter_runtime_records_by_available_features,
+    load_prediction_signal_arrays,
     prepare_runtime_inputs,
 )
 from ..hypotheses.runtime_policy import (
@@ -494,23 +495,6 @@ class Trader:
             live_hypothesis_ids=[record.hypothesis_id for record in records],
         )
 
-    @staticmethod
-    def _prediction_history_array(
-        pred_store,
-        signal_id: str,
-        asset: str,
-        *,
-        n_days: int,
-        fallback_value: float,
-    ) -> np.ndarray:
-        rows = pred_store.read_signal_history(signal_id, asset, n_days=n_days)
-        values = [float(value) for _date, value in reversed(rows)]
-        if not values:
-            values = [fallback_value]
-        if len(values) < n_days:
-            values = [values[0]] * (n_days - len(values)) + values
-        return np.asarray(values[-n_days:], dtype=np.float64)
-
     def _strategy_epoch(self, universe_records) -> str:
         return self._runtime_profile(universe_records).profile_id
 
@@ -718,17 +702,13 @@ class Trader:
                 from alpha_os.predictions.store import PredictionStore
                 pred_store = PredictionStore()
                 try:
-                    for record, _expr in parsed_records:
-                        if record.hypothesis_id not in store_signals:
-                            continue
-                        value = store_signals[record.hypothesis_id]
-                        store_signal_arrays[record.hypothesis_id] = self._prediction_history_array(
-                            pred_store,
-                            record.hypothesis_id,
-                            self.asset,
-                            n_days=len(matrix),
-                            fallback_value=value,
-                        )
+                    store_signal_arrays = load_prediction_signal_arrays(
+                        pred_store,
+                        parsed_records,
+                        asset=self.asset,
+                        store_signals=store_signals,
+                        n_days=len(matrix),
+                    )
                 finally:
                     pred_store.close()
             except Exception:

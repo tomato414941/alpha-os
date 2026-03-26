@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 
+import numpy as np
+
 from ..data.universe import required_raw_signals
 from ..dsl import collect_feature_names, parse, temporal_expression_issues
 
@@ -66,3 +68,43 @@ def filter_runtime_records_by_available_features(
         filtered_records.append((record, expr))
 
     return filtered_records, n_feature_filtered
+
+
+def prediction_history_array(
+    prediction_store,
+    signal_id: str,
+    asset: str,
+    *,
+    n_days: int,
+    fallback_value: float,
+) -> np.ndarray:
+    rows = prediction_store.read_signal_history(signal_id, asset, n_days=n_days)
+    values = [float(value) for _date, value in reversed(rows)]
+    if not values:
+        values = [fallback_value]
+    if len(values) < n_days:
+        values = [values[0]] * (n_days - len(values)) + values
+    return np.asarray(values[-n_days:], dtype=np.float64)
+
+
+def load_prediction_signal_arrays(
+    prediction_store,
+    parsed_records: list[tuple],
+    *,
+    asset: str,
+    store_signals: dict[str, float],
+    n_days: int,
+) -> dict[str, np.ndarray]:
+    signal_arrays: dict[str, np.ndarray] = {}
+    for record, _expr in parsed_records:
+        if record.hypothesis_id not in store_signals:
+            continue
+        value = store_signals[record.hypothesis_id]
+        signal_arrays[record.hypothesis_id] = prediction_history_array(
+            prediction_store,
+            record.hypothesis_id,
+            asset,
+            n_days=n_days,
+            fallback_value=value,
+        )
+    return signal_arrays

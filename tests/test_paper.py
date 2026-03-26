@@ -422,7 +422,7 @@ class TestTrader:
         assert outcome.skipped_deadband == 0
 
     def test_prediction_history_array_pads_to_matrix_length(self):
-        from alpha_os.paper.trader import Trader
+        from alpha_os.hypotheses.runtime_inputs import prediction_history_array
 
         store = _FakePredictionStore(
             {
@@ -433,7 +433,7 @@ class TestTrader:
             }
         )
 
-        arr = Trader._prediction_history_array(
+        arr = prediction_history_array(
             store,
             "h1",
             "BTC",
@@ -442,6 +442,48 @@ class TestTrader:
         )
 
         assert list(arr) == [0.2, 0.2, 0.2, 0.2, 0.4]
+
+    def test_load_prediction_signal_arrays_uses_store_backed_ids_only(self):
+        from alpha_os.hypotheses.runtime_inputs import load_prediction_signal_arrays
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        parsed_records = [
+            (
+                HypothesisRecord(
+                    hypothesis_id="h1",
+                    kind="dsl",
+                    definition={"expression": "(rank_10 foo)"},
+                    stake=1.0,
+                ),
+                None,
+            ),
+            (
+                HypothesisRecord(
+                    hypothesis_id="h2",
+                    kind="dsl",
+                    definition={"expression": "(rank_10 bar)"},
+                    stake=1.0,
+                ),
+                None,
+            ),
+        ]
+        store = _FakePredictionStore(
+            {
+                ("h1", "BTC"): [("2026-03-21", 0.4)],
+                ("h2", "BTC"): [("2026-03-21", 0.1)],
+            }
+        )
+
+        arrays = load_prediction_signal_arrays(
+            store,
+            parsed_records,
+            asset="BTC",
+            store_signals={"h1": 0.4},
+            n_days=3,
+        )
+
+        assert list(arrays) == ["h1"]
+        assert list(arrays["h1"]) == [0.4, 0.4, 0.4]
 
     def test_prepare_runtime_inputs_prefers_prediction_store(self):
         from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
