@@ -68,6 +68,30 @@ class _SplitRegistry(_StaticRegistry):
         return list(self._observation_records)
 
 
+class _RecordingForwardTracker:
+    def __init__(self, returns_by_id):
+        self.returns_by_id = returns_by_id
+        self.recorded: list[tuple[str, str, float, float]] = []
+
+    def record(self, hypothesis_id, date, signal_yesterday, daily_return):
+        self.recorded.append((hypothesis_id, date, signal_yesterday, daily_return))
+
+    def get_hypothesis_realizable_returns(self, hypothesis_id, *, supports_short):
+        return list(self.returns_by_id[hypothesis_id])
+
+
+class _RecordingMonitor:
+    def __init__(self):
+        self.cleared: list[str] = []
+        self.batches: list[tuple[str, list[float]]] = []
+
+    def clear(self, hypothesis_id):
+        self.cleared.append(hypothesis_id)
+
+    def record_batch(self, hypothesis_id, returns):
+        self.batches.append((hypothesis_id, list(returns)))
+
+
 class TestPaperPortfolioTracker:
     def test_save_and_load_snapshot(self, tmp_path):
         db = tmp_path / "test.db"
@@ -547,6 +571,41 @@ class TestTrader:
         assert result is not None
         assert result.used_prediction_store is False
         assert result.signal_yesterday == pytest.approx(0.5)
+
+    def test_record_runtime_observation_updates_tracker_monitor_and_quality(self):
+        from alpha_os.hypotheses.runtime_observation import record_runtime_observation
+        from alpha_os.hypotheses.store import HypothesisRecord
+
+        record = HypothesisRecord(
+            hypothesis_id="h1",
+            kind="dsl",
+            definition={"expression": "foo"},
+            stake=1.0,
+        )
+        tracker = _RecordingForwardTracker({"h1": [0.1, 0.2, 0.3]})
+        monitor = _RecordingMonitor()
+
+        result = record_runtime_observation(
+            record,
+            signal_yesterday=0.5,
+            today_date="2026-03-21",
+            price_return=0.1,
+            forward_tracker=tracker,
+            monitor=monitor,
+            degradation_window=2,
+            estimate_quality=lambda rec, returns: {
+                "id": rec.hypothesis_id,
+                "n": len(returns),
+            },
+            supports_short=True,
+        )
+
+        assert tracker.recorded == [("h1", "2026-03-21", 0.5, 0.05)]
+        assert monitor.cleared == ["h1"]
+        assert monitor.batches == [("h1", [0.2, 0.3])]
+        assert result.daily_return == pytest.approx(0.05)
+        assert result.recent_returns == [0.2, 0.3]
+        assert result.quality_estimate == {"id": "h1", "n": 3}
 
     def test_prepare_runtime_inputs_prefers_prediction_store(self):
         from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs

@@ -46,6 +46,7 @@ from ..hypotheses.combiner import (
     weighted_combine_scalar,
 )
 from ..hypotheses.monitor import HypothesisMonitor, RegimeDetector
+from ..hypotheses.runtime_observation import record_runtime_observation
 from ..hypotheses.producer import _quick_healthcheck
 from ..hypotheses.quality import QualityEstimate
 from ..hypotheses.runtime_inputs import (
@@ -738,25 +739,23 @@ class Trader:
                 signal_norm = evaluation.signal_series
                 if evaluation.used_prediction_store:
                     n_from_store += 1
-                daily_return = signal_yesterday * price_return if np.isfinite(signal_yesterday) else 0.0
-
                 if np.isfinite(signal_yesterday):
                     hypothesis_signals[record.hypothesis_id] = signal_yesterday
                     hypothesis_signal_arrays[record.hypothesis_id] = signal_norm
                 n_evaluated += 1
 
-                # Record per-hypothesis forward return (daily granularity)
-                self.forward_tracker.record(
-                    record.hypothesis_id, today_date, signal_yesterday, daily_return,
+                observation = record_runtime_observation(
+                    record,
+                    signal_yesterday=signal_yesterday,
+                    today_date=today_date,
+                    price_return=price_return,
+                    forward_tracker=self.forward_tracker,
+                    monitor=self.monitor,
+                    degradation_window=self.config.forward.degradation_window,
+                    estimate_quality=self._estimate_quality,
+                    supports_short=self.executor.supports_short,
                 )
-
-                # Monitor and quality estimate
-                all_returns = self._quality_returns(record.hypothesis_id)
-                recent_returns = all_returns[-self.config.forward.degradation_window:]
-                self.monitor.clear(record.hypothesis_id)
-                self.monitor.record_batch(record.hypothesis_id, recent_returns)
-                estimate = self._estimate_quality(record, all_returns)
-                quality_estimates[record.hypothesis_id] = estimate
+                quality_estimates[record.hypothesis_id] = observation.quality_estimate
 
             except EvaluationError as exc:
                 logger.warning("Failed to evaluate %s: %s", record.hypothesis_id, exc)
