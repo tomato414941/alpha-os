@@ -6,6 +6,9 @@ This file captures categories of targets the system may eventually predict.
 It is not the current runtime contract, current CLI surface, or current trusted
 mainline.
 
+The list below is not exhaustive. It is a map of plausible target classes, not
+a complete backlog or commitment.
+
 Prefer:
 
 - `README.md` for the current runtime path
@@ -13,8 +16,9 @@ Prefer:
 - `DESIGN.md` for the broader architecture
 - `docs/portfolio-runtime-principles.md` for current portfolio / allocation terminology
 
-What can be profitably predicted? The more of these the system can predict,
-the more diversified and stable the returns.
+What can be profitably predicted? This note focuses first on market-facing
+targets, but predictive targets can also exist at the hypothesis, allocation,
+and execution layers.
 
 ## Cross-sectional
 - Which assets will outperform others over the next N days
@@ -50,6 +54,22 @@ the more diversified and stable the returns.
 ## On-chain (crypto-specific)
 - Large exchange inflows (sell pressure signal)
 - Miner/whale wallet movements
+
+## Hypothesis / model health
+- Which hypotheses are likely to retain predictive power over the next N cycles
+- Which hypotheses are decaying due to crowding or regime change
+- Which newly retained hypotheses are likely to become actionable live
+
+## Allocation / portfolio construction
+- Which sleeves should receive more capital over the next rebalance window
+- Which hypotheses should be included or excluded from the current shortlist
+- Which clusters are likely to be redundant despite strong standalone quality
+
+## Execution / runtime quality
+- Whether a signal is likely to persist long enough to trade
+- Whether current market conditions justify trading now versus waiting
+- Whether expected execution quality is too poor for a nominally valid signal
+- Whether current data quality is sufficient to trust the runtime decision
 
 ---
 

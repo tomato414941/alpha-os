@@ -146,3 +146,163 @@ The long-term scaling direction remains:
 The goal is not to stretch the current per-asset loop to 1000 assets.
 The goal is to keep introducing the right abstractions so a later batched
 control plane becomes possible.
+
+## Greenfield Target-Centric Build
+
+If the project were rebuilt from scratch to support a broader predictive OS,
+the implementation plan should be target-centric rather than
+hypothesis-centric.
+
+The intended target classes are not only market-facing targets such as:
+
+- directional return
+- volatility / regime
+- cross-sectional relative return
+- correlation / structure
+- liquidity / microstructure
+- sentiment / macro
+- on-chain
+
+They also include operational targets such as:
+
+- hypothesis / model health
+- allocation / shortlist inclusion
+- execution / signal persistence
+- runtime data trust
+
+### Phase 1. Fix The Domain Model
+
+Define these first-class objects:
+
+- `target_template`
+- `target_binding`
+- `predictor_template`
+- `predictor_binding`
+- `prediction_record`
+- `observation_record`
+- `decision_record`
+
+Do not collapse predictor and target into the same source-of-truth record.
+
+### Phase 2. Define Runtime Contracts Per Target
+
+For each target class, define:
+
+- prediction schema
+- observation schema
+- scoring metric
+- actionable semantics
+- capital semantics
+
+Examples:
+
+- `market.directional`
+- `market.volatility_regime`
+- `market.cross_sectional`
+- `hypothesis.decay_risk`
+- `execution.signal_persistence`
+
+### Phase 3. Build Target-Centric Storage
+
+Use storage that centers:
+
+- templates
+- bindings
+- predictions
+- observations
+- scores
+- allocation / execution decisions
+
+Avoid an asset-specific hypothesis record as the primary abstraction.
+
+### Phase 4. Build A Batched Data Plane
+
+Evaluation should run by:
+
+- target template
+- predictor template
+- asset batch
+
+not by one sleeve loop at a time.
+
+### Phase 5. Split The Control Plane
+
+Keep these responsibilities separate:
+
+- target registry
+- predictor registry
+- evaluation service
+- decision service
+- portfolio allocator
+
+CLI should orchestrate these services, not contain their policy.
+
+### Phase 6. Start With A Small Target Set
+
+The first greenfield targets should be:
+
+1. `market.directional`
+2. `market.volatility_regime`
+3. `hypothesis.actionable_probability`
+4. `execution.signal_persistence`
+
+Do not start with every target class at once.
+
+### Phase 7. Make Scoring Target-Specific
+
+Examples:
+
+- directional: Sharpe, calibration, hit-rate
+- cross-sectional: IC, rank IC
+- decay: Brier, AUC
+- execution persistence: calibration, realized retention
+
+Then derive a common meta-score from:
+
+- predictive quality
+- actionability
+- capital value
+
+### Phase 8. Make Allocation Three-Level
+
+Allocation should happen at:
+
+1. predictor within target
+2. target within sleeve
+3. sleeve within global portfolio
+
+This is the level required for serious multi-target and thousand-asset scale.
+
+### Phase 9. Keep Explanations As First-Class State
+
+Every retained / rejected / traded decision should write reasons such as:
+
+- why retained
+- why actionable
+- why not capital-backed
+- why not traded
+
+This should be decision log state, not only diagnostics.
+
+### Phase 10. Rollout Order
+
+Implement in this order:
+
+1. domain model and schema
+2. `market.directional`
+3. `market.volatility_regime`
+4. `hypothesis.actionable_probability`
+5. `execution.signal_persistence`
+6. sleeve allocation
+7. `market.cross_sectional`
+8. global portfolio allocation
+
+### Greenfield Non-Goals
+
+Do not repeat these mistakes in a greenfield build:
+
+- overloading `stake` with multiple meanings
+- treating predictor and target as the same record
+- growing from single-asset assumptions and retrofitting multi-asset later
+- using one scoring philosophy for every target class
+- placing policy in CLI entrypoints

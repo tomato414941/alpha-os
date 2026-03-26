@@ -127,8 +127,6 @@ Prefer:
 
 - [`OLD_DESIGN.md`](./archive/OLD_DESIGN.md)
   - registry-era history
-- [`system-diagram.html`](./system-diagram.html)
-  - legacy diagram
 
 ## Practical Rule
 
