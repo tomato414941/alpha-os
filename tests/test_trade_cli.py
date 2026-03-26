@@ -1799,6 +1799,105 @@ def test_cmd_analyze_batch_research_filters_families(monkeypatch, tmp_path, caps
     assert "price_dropped" not in output
 
 
+def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_actionable_live
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="backed",
+        kind="dsl",
+        definition={"expression": "btc_difficulty"},
+        stake=0.2,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": True,
+            "lifecycle_signal_nonzero_ratio": 0.8,
+            "lifecycle_signal_mean_abs": 0.2,
+            "lifecycle_capital_eligible": True,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="signal_drop",
+        kind="dsl",
+        definition={"expression": "funding_rate_eth"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": False,
+            "lifecycle_signal_nonzero_ratio": 0.05,
+            "lifecycle_signal_mean_abs": 0.01,
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_actionable_live(Namespace(asset="BTC", config=None, top=3, families=None))
+    output = capsys.readouterr().out
+
+    assert "Actionable Live (BTC)" in output
+    assert "Summary:  live_proven=2 actionable=1 backed=1" in output
+    assert "Drop:     signal_both=1" in output
+    assert "backed=1" in output
+    assert "Signal:   min=0.20/0.05" in output
+    assert "Top:      backed reason=backed" in output
+
+
+def test_cmd_analyze_actionable_live_filters_families(monkeypatch, tmp_path, capsys):
+    from argparse import Namespace
+
+    from alpha_os.cli import cmd_analyze_actionable_live
+    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+
+    hdb = tmp_path / "hypotheses.db"
+    store = HypothesisStore(hdb)
+    store.register(HypothesisRecord(
+        hypothesis_id="onchain_live",
+        kind="dsl",
+        definition={"expression": "btc_difficulty"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": False,
+            "lifecycle_signal_nonzero_ratio": 0.1,
+            "lifecycle_signal_mean_abs": 0.01,
+        },
+    ))
+    store.register(HypothesisRecord(
+        hypothesis_id="price_live",
+        kind="dsl",
+        definition={"expression": "fear_greed"},
+        stake=0.0,
+        source="random_dsl",
+        metadata={
+            "lifecycle_live_proven": True,
+            "lifecycle_actionable_live": False,
+            "lifecycle_signal_nonzero_ratio": 0.1,
+            "lifecycle_signal_mean_abs": 0.01,
+        },
+    ))
+    store.close()
+
+    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+
+    cmd_analyze_actionable_live(
+        Namespace(asset="BTC", config=None, top=3, families="onchain,derivatives")
+    )
+    output = capsys.readouterr().out
+
+    assert "Actionable Live (BTC) [onchain,derivatives]" in output
+    assert "Summary:  live_proven=1 actionable=0 backed=0" in output
+    assert "onchain_live" in output
+    assert "price_live" not in output
+
+
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 

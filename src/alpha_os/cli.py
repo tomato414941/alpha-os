@@ -251,6 +251,20 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Comma-separated feature families to focus on",
     )
 
+    aal = sub.add_parser(
+        "analyze-actionable-live",
+        help="Summarize why live-proven hypotheses do or do not become actionable-live",
+    )
+    aal.add_argument("--asset", type=str, default="BTC")
+    aal.add_argument("--config", type=str, default=None)
+    aal.add_argument("--top", type=int, default=5)
+    aal.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
+
     att = sub.add_parser(
         "analyze-trade-transition",
         help="Run one paper trade cycle and summarize pre/post batch research transitions",
@@ -2128,6 +2142,84 @@ def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
         print(f"  Top:      {entry}")
 
 
+def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
+    from alpha_os.hypotheses.actionable_live_diagnostics import (
+        build_actionable_live_summary,
+    )
+    from alpha_os.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_actionable_live_summary(
+            store.list_observation_active(asset=args.asset),
+            top=args.top,
+            signal_nonzero_ratio_min=cfg.lifecycle.live_proven_signal_nonzero_ratio_min,
+            signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
+            families=family_filter,
+        )
+    finally:
+        store.close()
+
+    reasons = summary["reasons"]
+    title = f"Actionable Live ({args.asset.upper()})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    print(title)
+    print(
+        "  Summary:  "
+        f"live_proven={summary['total']} actionable={summary['actionable']} "
+        f"backed={summary['backed']}"
+    )
+    print(
+        "  Drop:     "
+        f"signal_both={reasons.get('signal_both', 0)} "
+        f"signal_ratio={reasons.get('signal_ratio', 0)} "
+        f"signal_mean_abs={reasons.get('signal_mean_abs', 0)} "
+        f"redundancy={reasons.get('redundancy', 0)} "
+        f"actionable_unbacked={reasons.get('actionable_unbacked', 0)} "
+        f"other={reasons.get('other', 0)} "
+        f"backed={reasons.get('backed', 0)}"
+    )
+    families = summary["families"]
+    family_bits = []
+    for reason in (
+        "backed",
+        "signal_both",
+        "signal_ratio",
+        "signal_mean_abs",
+        "redundancy",
+        "actionable_unbacked",
+    ):
+        values = families.get(reason) or []
+        if values:
+            family_bits.append(f"{reason}=" + ",".join(values))
+    if family_bits:
+        print("  Fam:      " + " | ".join(family_bits))
+    ratio_drop = summary["ratio_drop"]
+    mean_abs_drop = summary["mean_abs_drop"]
+    ratio_backed = summary["ratio_backed"]
+    mean_abs_backed = summary["mean_abs_backed"]
+    print(
+        "  Signal:   "
+        f"min={summary['signal_nonzero_ratio_min']:.2f}/{summary['signal_mean_abs_min']:.2f} "
+        f"drop_ratio_p50={ratio_drop['p50']:.2f} "
+        f"drop_ratio_p90={ratio_drop['p90']:.2f} "
+        f"drop_mean_p50={mean_abs_drop['p50']:.2f} "
+        f"drop_mean_p90={mean_abs_drop['p90']:.2f} "
+        f"backed_ratio_p50={ratio_backed['p50']:.2f} "
+        f"backed_mean_p50={mean_abs_backed['p50']:.2f}"
+    )
+    for entry in summary["top_entries"]:
+        print(f"  Top:      {entry}")
+
+
 def cmd_analyze_trade_transition(args: argparse.Namespace) -> None:
     from alpha_os.hypotheses.trade_transition_diagnostics import (
         build_trade_transition_summary,
@@ -3229,6 +3321,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_analyze_live_breadth(args)
     elif args.command == "analyze-batch-research":
         cmd_analyze_batch_research(args)
+    elif args.command == "analyze-actionable-live":
+        cmd_analyze_actionable_live(args)
     elif args.command == "analyze-trade-transition":
         cmd_analyze_trade_transition(args)
     elif args.command == "analyze-latest-combine":
