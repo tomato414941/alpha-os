@@ -21,6 +21,7 @@ class BatchTransitionState:
     live_proven: bool
     actionable_live: bool
     capital_eligible: bool
+    capital_backed: bool
     capital_reason: str
     live_promotion_blocker: str
     redundancy_capped_by: str
@@ -54,6 +55,13 @@ def capture_batch_transition_snapshot(
             live_proven=bool(metadata.get("lifecycle_live_proven", False)),
             actionable_live=bool(metadata.get("lifecycle_actionable_live", False)),
             capital_eligible=bool(metadata.get("lifecycle_capital_eligible", False)),
+            capital_backed=bool(
+                metadata.get(
+                    "lifecycle_capital_backed",
+                    bool(metadata.get("lifecycle_capital_eligible", False))
+                    and float(record.stake) > 0,
+                )
+            ),
             capital_reason=str(metadata.get("lifecycle_capital_reason", "")),
             live_promotion_blocker=str(metadata.get("lifecycle_live_promotion_blocker", "")),
             redundancy_capped_by=str(metadata.get("lifecycle_redundancy_capped_by", "")),
@@ -65,7 +73,7 @@ def capture_batch_transition_snapshot(
 
 
 def batch_transition_drop_reason(state: BatchTransitionState) -> str:
-    if state.stake > 0 and state.capital_eligible:
+    if state.capital_backed:
         return "backed"
     if state.redundancy_capped_by:
         return "redundancy"
@@ -103,14 +111,14 @@ def build_trade_transition_summary(
     entry_reasons: Counter[str] = Counter()
     changed: list[tuple[float, str]] = []
 
-    pre_backed = sum(1 for state in pre_snapshot.values() if state.stake > 0)
-    post_backed = sum(1 for state in post_snapshot.values() if state.stake > 0)
+    pre_backed = sum(1 for state in pre_snapshot.values() if state.capital_backed)
+    post_backed = sum(1 for state in post_snapshot.values() if state.capital_backed)
 
     for hypothesis_id in all_ids:
         pre = pre_snapshot.get(hypothesis_id)
         post = post_snapshot.get(hypothesis_id)
-        pre_backed_now = pre is not None and pre.stake > 0
-        post_backed_now = post is not None and post.stake > 0
+        pre_backed_now = pre is not None and pre.capital_backed
+        post_backed_now = post is not None and post.capital_backed
         if not pre_backed_now and post_backed_now:
             entries.append(hypothesis_id)
             if post is not None:

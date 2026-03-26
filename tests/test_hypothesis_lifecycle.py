@@ -70,7 +70,10 @@ def test_hypothesis_store_separates_observation_and_capital_backed_sets(tmp_path
             definition={"expression": "fear_greed"},
             status="active",
             stake=0.2,
-            metadata={"lifecycle_capital_eligible": True},
+            metadata={
+                "lifecycle_capital_eligible": True,
+                "lifecycle_capital_backed": True,
+            },
         )
     )
 
@@ -94,7 +97,10 @@ def test_rank_trading_records_respects_capital_eligibility():
         kind=HypothesisKind.DSL,
         definition={"expression": "fear_greed"},
         stake=0.2,
-        metadata={"lifecycle_capital_eligible": True},
+        metadata={
+            "lifecycle_capital_eligible": True,
+            "lifecycle_capital_backed": True,
+        },
     )
     shadow = HypothesisRecord(
         hypothesis_id="shadow",
@@ -120,6 +126,38 @@ def test_rank_trading_records_respects_capital_eligibility():
     )
 
     assert [record.hypothesis_id for record in ranked] == ["backed"]
+
+
+def test_list_capital_backed_uses_metadata_not_only_stake(tmp_path):
+    store = HypothesisStore(tmp_path / "hypotheses.db")
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="shadow_backed",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            stake=0.0,
+            metadata={
+                "lifecycle_capital_eligible": True,
+                "lifecycle_capital_backed": True,
+            },
+        )
+    )
+    store.register(
+        HypothesisRecord(
+            hypothesis_id="positive_stake_not_backed",
+            kind=HypothesisKind.DSL,
+            definition={"expression": "fear_greed"},
+            stake=0.3,
+            metadata={
+                "lifecycle_capital_eligible": True,
+                "lifecycle_capital_backed": False,
+            },
+        )
+    )
+
+    assert [r.hypothesis_id for r in store.list_capital_backed()] == ["shadow_backed"]
+    assert [r.hypothesis_id for r in store.list_live()] == ["shadow_backed"]
+    store.close()
 
 
 def test_select_decorrelated_trading_ids_skips_highly_correlated_candidates():
@@ -1234,6 +1272,87 @@ def test_apply_capital_redundancy_cap_does_not_cross_cap_weak_batch_families():
     assert macro.proposed_stake == pytest.approx(0.4)
     assert onchain.proposed_stake == pytest.approx(0.2)
     assert onchain.redundancy_capped_by == ""
+
+
+def test_apply_capital_redundancy_cap_does_not_cross_cap_actionable_families():
+    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+
+    records = [
+        HypothesisRecord(
+            hypothesis_id="price_live",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+        HypothesisRecord(
+            hypothesis_id="onchain_live",
+            kind=HypothesisKind.TECHNICAL,
+            definition={"indicator": "roc_momentum", "params": {"window": 2}},
+            stake=0.0,
+        ),
+    ]
+    plan = [
+        AllocationRebalanceEntry(
+            hypothesis_id="price_live",
+            current_stake=0.0,
+            target_stake=0.4,
+            proposed_stake=0.4,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.4,
+            live_quality=0.4,
+            raw_live_quality=0.4,
+            confidence=1.0,
+            marginal_contribution=0.02,
+            representative_family="price",
+        ),
+        AllocationRebalanceEntry(
+            hypothesis_id="onchain_live",
+            current_stake=0.0,
+            target_stake=0.3,
+            proposed_stake=0.3,
+            research_backed=False,
+            research_retained=False,
+            live_proven=True,
+            actionable_live=True,
+            capital_eligible=True,
+            capital_reason="actionable_live",
+            live_promotion_blocker="eligible",
+            n_observations=30,
+            bootstrap_trust_value=0.0,
+            blended_quality=0.3,
+            live_quality=0.3,
+            raw_live_quality=0.3,
+            confidence=1.0,
+            marginal_contribution=0.01,
+            representative_family="onchain",
+        ),
+    ]
+    data = {
+        "btc_ohlcv": [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0, 116.0, 118.0, 120.0],
+    }
+
+    capped = apply_capital_redundancy_cap(
+        plan,
+        records,
+        data=data,
+        asset="BTC",
+        corr_max=0.7,
+        floor=0.0,
+    )
+
+    price_live = next(entry for entry in capped if entry.hypothesis_id == "price_live")
+    onchain_live = next(entry for entry in capped if entry.hypothesis_id == "onchain_live")
+    assert price_live.proposed_stake == pytest.approx(0.4)
+    assert onchain_live.proposed_stake == pytest.approx(0.3)
+    assert onchain_live.redundancy_capped_by == ""
 
 
 def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():

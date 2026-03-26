@@ -211,11 +211,14 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
             stake = float(record.stake)
         except (TypeError, ValueError):
             stake = 0.0
+        capital_backed_now = bool(
+            metadata.get("lifecycle_capital_backed", stake > 0)
+        )
         try:
             bootstrap_trust = float(metadata.get("lifecycle_bootstrap_trust", 0.0))
         except (TypeError, ValueError):
             bootstrap_trust = 0.0
-        if stake > 0:
+        if capital_backed_now:
             capital_backed += 1
         if bootstrap_trust > 0:
             bootstrap_backed += 1
@@ -232,19 +235,19 @@ def build_asset_sleeve_summary(records) -> AssetSleeveSummary:
                 promoted_live += 1
         if bool(metadata.get("lifecycle_actionable_live", False)):
             actionable_live += 1
-            if stake <= 0:
+            if not capital_backed_now:
                 if metadata.get("lifecycle_redundancy_capped_by"):
                     actionable_redundancy_capped += 1
                 else:
                     actionable_other_dropped += 1
-        if stake > 0:
+        if capital_backed_now:
             if cohort == "live":
                 actionable_live_capital_backed += 1
             elif cohort == "batch":
                 batch_research_capital_backed += 1
             else:
                 bootstrap_capital_backed += 1
-        if bootstrap_trust > 0 and not bool(metadata.get("lifecycle_capital_eligible", stake > 0)):
+        if bootstrap_trust > 0 and not bool(metadata.get("lifecycle_capital_eligible", capital_backed_now)):
             research_demoted += 1
         if bool(metadata.get("lifecycle_research_candidate_capped", False)):
             research_candidate_capped += 1

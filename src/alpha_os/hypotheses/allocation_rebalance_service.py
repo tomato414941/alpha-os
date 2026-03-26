@@ -9,6 +9,7 @@ from .breadth import (
     load_breadth_matrix,
 )
 from .lifecycle import AllocationRebalanceEntry, build_allocation_rebalance_plan
+from .lifecycle import finalize_capital_backing
 from .store import HypothesisStore
 
 
@@ -97,4 +98,7 @@ def build_capped_allocation_rebalance_plan(
             floor=config.lifecycle.target_stake_floor,
             min_observations=config.live_quality.min_observations,
         )
-    return plan
+    return finalize_capital_backing(
+        plan,
+        floor=config.lifecycle.target_stake_floor,
+    )

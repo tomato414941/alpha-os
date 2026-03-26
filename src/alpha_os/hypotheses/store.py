@@ -217,7 +217,15 @@ class HypothesisStore:
         asset: str | None = None,
     ) -> list[HypothesisRecord]:
         records = self.list_capital_eligible(asset=asset)
-        return [record for record in records if float(record.stake) > floor]
+        backed: list[HypothesisRecord] = []
+        for record in records:
+            metadata = getattr(record, "metadata", {}) or {}
+            is_backed = bool(
+                metadata.get("lifecycle_capital_backed", float(record.stake) > floor)
+            )
+            if is_backed:
+                backed.append(record)
+        return backed
 
     def list_live(self, *, asset: str | None = None) -> list[HypothesisRecord]:
         return self.list_capital_backed(asset=asset)

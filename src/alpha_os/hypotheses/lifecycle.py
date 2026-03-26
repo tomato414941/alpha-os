@@ -58,6 +58,7 @@ class AllocationRebalanceEntry:
     research_candidate_capped: bool = False
     redundancy_capped_by: str = ""
     redundancy_correlation: float = 0.0
+    capital_backed: bool = False
 
 
 def _apply_batch_research_candidate_gate(
@@ -314,6 +315,7 @@ def update_stakes_from_history(
         )
         for entry in plan
     ]
+    smoothed_plan = finalize_capital_backing(smoothed_plan, floor=floor)
     updates = apply_allocation_rebalance_plan(store, smoothed_plan)
     if archive_on_zero:
         for entry in smoothed_plan:
@@ -458,6 +460,7 @@ def build_allocation_rebalance_plan(
                 live_proven=live_proven,
                 actionable_live=actionable_live,
                 capital_eligible=capital_eligible,
+                capital_backed=False,
                 capital_reason=capital_reason,
                 live_promotion_blocker=live_promotion_blocker(
                     has_min_observations=estimate.has_min_observations,
@@ -513,6 +516,7 @@ def apply_allocation_rebalance_plan(
                 "lifecycle_live_proven": entry.live_proven,
                 "lifecycle_actionable_live": entry.actionable_live,
                 "lifecycle_capital_eligible": entry.capital_eligible,
+                "lifecycle_capital_backed": entry.capital_backed,
                 "lifecycle_capital_reason": entry.capital_reason,
                 "lifecycle_research_candidate_capped": entry.research_candidate_capped,
                 "lifecycle_live_promotion_blocker": entry.live_promotion_blocker,
@@ -526,3 +530,17 @@ def apply_allocation_rebalance_plan(
             store.update_stake(entry.hypothesis_id, entry.proposed_stake)
             updates[entry.hypothesis_id] = entry.proposed_stake
     return updates
+
+
+def finalize_capital_backing(
+    plan: list[AllocationRebalanceEntry],
+    *,
+    floor: float,
+) -> list[AllocationRebalanceEntry]:
+    finalized: list[AllocationRebalanceEntry] = []
+    for entry in plan:
+        capital_backed = bool(
+            entry.capital_eligible and float(entry.proposed_stake) > float(floor)
+        )
+        finalized.append(replace(entry, capital_backed=capital_backed))
+    return finalized

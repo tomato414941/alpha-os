@@ -27,7 +27,13 @@ def batch_research_drop_reason(record) -> str:
         stake = float(record.stake)
     except (TypeError, ValueError):
         stake = 0.0
-    if stake > 0 and bool(metadata.get("lifecycle_capital_eligible", stake > 0)):
+    capital_backed = bool(
+        metadata.get(
+            "lifecycle_capital_backed",
+            bool(metadata.get("lifecycle_capital_eligible", stake > 0)) and stake > 0,
+        )
+    )
+    if capital_backed:
         return "backed"
     if str(metadata.get("lifecycle_redundancy_capped_by") or ""):
         return "redundancy"
@@ -112,7 +118,12 @@ def build_batch_research_summary(
             stake = float(record.stake)
         except (TypeError, ValueError):
             stake = 0.0
-        if stake > 0:
+        if bool(
+            metadata.get(
+                "lifecycle_capital_backed",
+                bool(metadata.get("lifecycle_capital_eligible", stake > 0)) and stake > 0,
+            )
+        ):
             backed += 1
         reason = batch_research_drop_reason(record)
         reason_counts[reason] += 1

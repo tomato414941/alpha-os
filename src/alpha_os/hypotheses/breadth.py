@@ -197,7 +197,11 @@ def apply_capital_redundancy_cap(
         should_compare=lambda entry, selected_entry: (
             _should_compare_weak_research_family(entry, selected_entry)
             if _both_weak_batch_research(entry, selected_entry)
-            else True
+            else (
+                _should_compare_weak_research_family(entry, selected_entry)
+                if _both_actionable_live(entry, selected_entry)
+                else True
+            )
         ),
     )
 
@@ -241,6 +245,13 @@ def _both_weak_batch_research(
         and not entry.live_proven
         and not selected_entry.live_proven
     )
+
+
+def _both_actionable_live(
+    entry: AllocationRebalanceEntry,
+    selected_entry: AllocationRebalanceEntry,
+) -> bool:
+    return entry.actionable_live and selected_entry.actionable_live
 
 
 def _should_compare_weak_research_family(

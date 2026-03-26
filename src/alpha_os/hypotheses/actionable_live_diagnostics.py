@@ -20,8 +20,14 @@ def actionable_live_drop_reason(
         stake = float(record.stake)
     except (TypeError, ValueError):
         stake = 0.0
+    capital_backed = bool(
+        metadata.get(
+            "lifecycle_capital_backed",
+            bool(metadata.get("lifecycle_capital_eligible", stake > 0)) and stake > 0,
+        )
+    )
     if bool(metadata.get("lifecycle_actionable_live", False)):
-        if stake > 0 and bool(metadata.get("lifecycle_capital_eligible", stake > 0)):
+        if capital_backed:
             return "backed"
         if str(metadata.get("lifecycle_redundancy_capped_by") or ""):
             return "redundancy"
@@ -122,7 +128,13 @@ def build_actionable_live_summary(
                 stake = float(record.stake)
             except (TypeError, ValueError):
                 stake = 0.0
-            if stake > 0:
+            capital_backed = bool(
+                metadata.get(
+                    "lifecycle_capital_backed",
+                    bool(metadata.get("lifecycle_capital_eligible", stake > 0)) and stake > 0,
+                )
+            )
+            if capital_backed:
                 backed += 1
                 backed_ratio_values.append(signal_ratio)
                 backed_mean_abs_values.append(signal_mean_abs)
