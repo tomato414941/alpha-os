@@ -2120,3 +2120,106 @@ The immediate goal is:
 
 - "make the runtime capable of carrying multiple asset sleeves without BTC
   assumptions leaking everywhere"
+
+## Current Sleeve Transition
+
+The runtime has now crossed an important boundary:
+
+- asset scope is explicit in the mainline runtime model
+- non-BTC sleeves can be created as observation-only first
+- BTC is still the reference sleeve, but it is no longer the only sleeve the
+  runtime can carry
+
+This matters because the next design problems are no longer BTC-only problems.
+They are sleeve-state problems.
+
+### What Has Already Been Proven
+
+The current implementation has already demonstrated the following:
+
+1. hypothesis registration can be sleeve-aware
+   - `scope.asset` is now carried through seeding, scoring, rebalance, and
+     runtime status
+2. a new sleeve can be added without forcing bootstrap capital
+   - ETH can be seeded as observation-only
+3. research scoring can run per sleeve
+   - ETH exploratory hypotheses can be scored without going through BTC paths
+4. derived daily research features can be widened in a general way
+   - the runtime is no longer limited to BTC-shaped research inputs
+5. runtime evaluation now respects raw-vs-derived feature boundaries
+   - derived runtime expressions are evaluated from raw signals rather than
+     being dropped as "missing features in current data"
+
+These are not final portfolio results, but they are meaningful architectural
+milestones.
+
+### What ETH Has Taught Us
+
+ETH has been useful as the first non-BTC sleeve because it exposed a different
+failure mode.
+
+The progression observed so far is:
+
+1. `observation_active` can be created cleanly
+2. `research_quality` is initially much weaker than BTC
+3. widening daily derived features can create at least a weak
+   `research_backed` entry
+4. after observation backfill, many ETH hypotheses can become `live_proven`
+5. but `actionable_live` can still remain zero
+
+This means the next bottleneck is not simply:
+
+- better ETH seeding
+- lower research thresholds
+- more exploratory volume
+
+The next bottleneck is:
+
+- how `live_proven` becomes `actionable_live` in a sleeve where signals may be
+  sparse, weak, or not venue-actionable
+
+### Why This Matters
+
+This is an important design lesson.
+
+Until now, the project mostly learned:
+
+- how hypotheses enter research
+- how they become retained
+- how they become capital-backed
+
+ETH added the next lesson:
+
+- a sleeve can have many `live_proven` hypotheses and still have no
+  `actionable_live` hypotheses
+
+So the runtime must continue to distinguish:
+
+- "predictively alive"
+- "tradably actionable"
+
+This is not a BTC-specific concern. It is now a general sleeve design concern.
+
+## Immediate Project-Wide Priority
+
+The highest-priority next design task is now:
+
+- define and diagnose `actionable_live` more cleanly across sleeves
+
+This should be treated as a project-wide problem, not a BTC tuning problem and
+not an ETH exception.
+
+The current evidence suggests:
+
+- `research_quality` is no longer the only gate worth studying
+- `live_proven -> actionable_live` is becoming the central runtime transition
+- multi-asset expansion should now be organized around that transition
+
+In practical terms, the next useful work is:
+
+1. diagnose why a sleeve with many `live_proven` hypotheses still has weak or
+   zero `actionable_live`
+2. define the general rule that separates "good live hypothesis" from
+   "tradeable live hypothesis"
+3. only then decide whether new policy, new features, or new sleeves should be
+   added
