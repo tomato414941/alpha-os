@@ -207,8 +207,13 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
     seed_calls = []
 
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=base_limit,
+            missing_template_count=1,
+        ),
     )
     monkeypatch.setattr("alpha_os.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("alpha_os.cli.cmd_rebalance_allocation_trust", lambda *_args, **_kwargs: None)
@@ -258,8 +263,13 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
         lambda args: calls.append(("score", args.asset)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=base_limit,
+            missing_template_count=1,
+        ),
     )
     monkeypatch.setattr(
         "alpha_os.cli.asset_data_dir",
@@ -1999,8 +2009,13 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         lambda args: calls.append(("score", args.asset, args.limit)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=base_limit,
+            missing_template_count=1,
+        ),
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
@@ -2095,8 +2110,13 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
         lambda asset: [object()] if asset == "BTC" else [],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=base_limit,
+            missing_template_count=1,
+        ),
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_rebalance_allocation_trust",
@@ -2138,8 +2158,13 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: 0 if asset == "ETH" else base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=0 if asset == "ETH" else base_limit,
+            missing_template_count=0 if asset == "ETH" else 1,
+        ),
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_hypothesis_seeder",
@@ -2214,8 +2239,13 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.cli._template_gap_driven_score_limit",
-        lambda *, asset, base_limit: 6 if asset == "ETH" else base_limit,
+        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        lambda *, asset, base_limit: SimpleNamespace(
+            asset=asset,
+            requested_limit=base_limit,
+            effective_limit=6 if asset == "ETH" else base_limit,
+            missing_template_count=3 if asset == "ETH" else 1,
+        ),
     )
     monkeypatch.setattr(
         "alpha_os.cli.cmd_hypothesis_seeder",
