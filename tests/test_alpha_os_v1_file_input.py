@@ -37,7 +37,7 @@ def test_run_cycle_accepts_json_fixture(tmp_path, capsys):
     conn = sqlite3.connect(db_path)
     try:
         row = conn.execute(
-            "SELECT hypothesis_id, prediction_value, observation_value FROM cycle_snapshots"
+            "SELECT hypothesis_id, prediction_value, observation_value FROM evaluation_snapshots"
         ).fetchone()
         assert row == ("hyp_fixture", 0.4, 0.15)
     finally:
@@ -61,7 +61,7 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
 
     conn = sqlite3.connect(db_path)
     try:
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
             SELECT quality, allocation_trust, prediction_count, observation_count

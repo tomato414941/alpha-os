@@ -45,8 +45,10 @@ def _resolve_hypothesis_definition(
     *,
     hypothesis_id: str,
     signal_name: str | None,
+    definition: HypothesisDefinition | None = None,
 ) -> HypothesisDefinition:
-    definition = get_hypothesis_definition(hypothesis_id)
+    if definition is None:
+        definition = get_hypothesis_definition(hypothesis_id)
     if signal_name is not None and signal_name != definition.signal_name:
         raise ValueError(
             f"signal_name override does not match hypothesis definition: "
@@ -89,12 +91,14 @@ def build_cycle_input_from_frame(
     date: str,
     hypothesis_id: str,
     signal_name: str | None = None,
+    definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
     target: str = DEFAULT_TARGET,
 ) -> CycleInput:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
+        definition=definition,
     )
     daily_close = _daily_close_series(frame)
     daily_returns = daily_close.pct_change()
@@ -135,6 +139,7 @@ def build_cycle_inputs_from_frame(
     end_date: str,
     hypothesis_id: str,
     signal_name: str | None = None,
+    definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
     target: str = DEFAULT_TARGET,
 ) -> list[CycleInput]:
@@ -150,6 +155,7 @@ def build_cycle_inputs_from_frame(
             date=date,
             hypothesis_id=hypothesis_id,
             signal_name=signal_name,
+            definition=definition,
             asset=asset,
             target=target,
         )
@@ -163,10 +169,12 @@ def build_cycle_input_from_signal_noise(
     hypothesis_id: str,
     base_url: str,
     signal_name: str | None = DEFAULT_PRICE_SIGNAL,
+    definition: HypothesisDefinition | None = None,
 ) -> CycleInput:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
+        definition=definition,
     )
     frame = _load_price_frame_from_signal_noise(
         base_url=base_url,
@@ -177,6 +185,7 @@ def build_cycle_input_from_signal_noise(
         date=date,
         hypothesis_id=hypothesis_id,
         signal_name=definition.signal_name,
+        definition=definition,
     )
 
 
@@ -187,10 +196,12 @@ def build_cycle_inputs_from_signal_noise(
     hypothesis_id: str,
     base_url: str,
     signal_name: str | None = DEFAULT_PRICE_SIGNAL,
+    definition: HypothesisDefinition | None = None,
 ) -> list[CycleInput]:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
+        definition=definition,
     )
     frame = _load_price_frame_from_signal_noise(
         base_url=base_url,
@@ -202,6 +213,7 @@ def build_cycle_inputs_from_signal_noise(
         end_date=end_date,
         hypothesis_id=hypothesis_id,
         signal_name=definition.signal_name,
+        definition=definition,
     )
 
 

@@ -212,7 +212,7 @@ python -m alpha_os apply-backfill --db data/v1/runtime.db --start-date 2026-03-2
 
 # Inspect aggregate state and per-evaluation provenance
 python -m alpha_os status --db data/v1/runtime.db
-python -m alpha_os show-cycles --db data/v1/runtime.db --limit 10
+python -m alpha_os show-evaluations --db data/v1/runtime.db --limit 10
 ```
 
 ## Configuration

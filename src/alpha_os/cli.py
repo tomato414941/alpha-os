@@ -16,6 +16,7 @@ from .config import (
     DEFAULT_TARGET,
     build_config,
 )
+from .hypothesis_registry import HypothesisDefinition
 from .inputs import CycleInput, load_cycle_input, load_cycle_inputs
 from .store import V1Store
 
@@ -81,6 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "generate-cycle-input",
         help="Generate one deterministic evaluation-input JSON from signal-noise daily closes",
     )
+    build.add_argument("--db", type=str, default=None)
     build.add_argument("--date", type=str, required=True)
     build.add_argument("--hypothesis-id", type=str, required=True)
     build.add_argument("--out", type=str, required=True)
@@ -91,6 +93,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "generate-cycle-inputs",
         help="Generate deterministic evaluation-input JSON for a date range from signal-noise daily closes",
     )
+    builds.add_argument("--db", type=str, default=None)
     builds.add_argument("--start-date", type=str, required=True)
     builds.add_argument("--end-date", type=str, required=True)
     builds.add_argument("--hypothesis-id", type=str, required=True)
@@ -147,7 +150,10 @@ def _build_parser() -> argparse.ArgumentParser:
     status = sub.add_parser("status", help="Show the latest BTC sleeve state")
     status.add_argument("--db", type=str, default=None)
 
-    show = sub.add_parser("show-cycles", help="Show recent evaluation snapshots with provenance")
+    show = sub.add_parser(
+        "show-evaluations",
+        help="Show recent evaluation snapshots with provenance",
+    )
     show.add_argument("--db", type=str, default=None)
     show.add_argument("--limit", type=int, default=10)
 
@@ -156,6 +162,31 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
     return f"{asset}:{target}:{date}"
+
+
+def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -> HypothesisDefinition:
+    cfg = build_config(db_path=db_path)
+    store = V1Store(cfg.db_path)
+    try:
+        store.ensure_schema()
+        hypothesis = store.get_hypothesis(hypothesis_id)
+    finally:
+        store.close()
+    if hypothesis is None:
+        raise ValueError(f"hypothesis must be registered before generation: {hypothesis_id}")
+    if hypothesis.kind is None or hypothesis.signal_name is None or hypothesis.lookback is None:
+        raise ValueError(
+            "registered hypothesis does not define an executable generation rule: "
+            f"{hypothesis_id}"
+        )
+    return HypothesisDefinition(
+        hypothesis_id=hypothesis.hypothesis_id,
+        kind=hypothesis.kind,
+        signal_name=hypothesis.signal_name,
+        lookback=hypothesis.lookback,
+        asset=hypothesis.asset,
+        target=hypothesis.target,
+    )
 
 
 def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
@@ -373,11 +404,16 @@ def cmd_update_state(args: argparse.Namespace) -> int:
 
 
 def cmd_build_cycle_input(args: argparse.Namespace) -> int:
+    definition = _runtime_hypothesis_definition(
+        db_path=args.db,
+        hypothesis_id=args.hypothesis_id,
+    )
     cycle_input = build_cycle_input_from_signal_noise(
         date=args.date,
         hypothesis_id=args.hypothesis_id,
         base_url=args.base_url,
         signal_name=args.signal_name,
+        definition=definition,
     )
     output_path = write_cycle_input(args.out, cycle_input)
     print(f"Generated evaluation input: {output_path}")
@@ -390,12 +426,17 @@ def cmd_build_cycle_input(args: argparse.Namespace) -> int:
 
 
 def cmd_build_cycle_inputs(args: argparse.Namespace) -> int:
+    definition = _runtime_hypothesis_definition(
+        db_path=args.db,
+        hypothesis_id=args.hypothesis_id,
+    )
     cycle_inputs = build_cycle_inputs_from_signal_noise(
         start_date=args.start_date,
         end_date=args.end_date,
         hypothesis_id=args.hypothesis_id,
         base_url=args.base_url,
         signal_name=args.signal_name,
+        definition=definition,
     )
     output_path = write_cycle_inputs(args.out, cycle_inputs)
     print(f"Generated evaluation inputs: {output_path}")
@@ -492,12 +533,17 @@ def _run_cycle_inputs(
 
 def cmd_run_backfill(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
+    definition = _runtime_hypothesis_definition(
+        db_path=args.db,
+        hypothesis_id=args.hypothesis_id,
+    )
     cycle_inputs = build_cycle_inputs_from_signal_noise(
         start_date=args.start_date,
         end_date=args.end_date,
         hypothesis_id=args.hypothesis_id,
         base_url=args.base_url,
         signal_name=args.signal_name,
+        definition=definition,
     )
     if args.out is not None:
         output_path = write_cycle_inputs(args.out, cycle_inputs)
@@ -549,7 +595,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_show_cycles(args: argparse.Namespace) -> int:
+def cmd_show_evaluations(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
     store = V1Store(cfg.db_path)
     try:
@@ -611,8 +657,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_backfill(args)
         if args.command == "status":
             return cmd_status(args)
-        if args.command == "show-cycles":
-            return cmd_show_cycles(args)
+        if args.command == "show-evaluations":
+            return cmd_show_evaluations(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")

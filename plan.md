@@ -23,9 +23,9 @@ This section is the source of truth for the next greenfield-style build.
 
 V1 is complete when all of the following are true:
 
-- `generate-cycle-inputs -> apply-backfill -> status -> show-cycles` works as one bounded end-to-end path
+- `generate-cycle-inputs -> apply-backfill -> status -> show-evaluations` works as one bounded end-to-end path
 - the v1 smoke test fixes that path as the completion gate
-- `cycle_snapshots` preserve enough provenance to audit input source and date range
+- `evaluation_snapshots` preserve enough provenance to audit input source and date range
 - v1 remains within the contract scope: `1 asset`, `paper-only`, `1 target`, `1 cycle model`
 - new ideas that do not strengthen that bounded path are kept out of the v1 runtime
 
@@ -63,7 +63,7 @@ V2 is complete when all of the following are true:
 - `register-hypothesis -> record-prediction -> finalize-observation -> update-state` works as the primary bounded path
 - the v2 smoke test fixes that primary path as the completion gate
 - `apply-cycle` and `apply-backfill` remain available as convenience wrappers over that same path
-- `evaluation_id` and per-evaluation provenance remain auditable through `show-cycles`
+- `evaluation_id` and per-evaluation provenance remain auditable through `show-evaluations`
 - missing or conflicting prediction / observation records fail explicitly
 - v2 stays within scope: `BTC-only`, `paper-only`, `1 target`
 

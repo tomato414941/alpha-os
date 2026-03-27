@@ -91,7 +91,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
             SELECT quality_after, quality_delta,
                    allocation_trust_after, allocation_trust_delta, generated_weight,
                    input_source
-            FROM cycle_snapshots
+            FROM evaluation_snapshots
             """
         ).fetchone()
         assert row is not None
@@ -135,7 +135,7 @@ def test_run_cycle_is_idempotent_for_same_evaluation_id(tmp_path, capsys):
 
     conn = sqlite3.connect(db_path)
     try:
-        count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         prediction_count = conn.execute(
             "SELECT prediction_count FROM hypotheses WHERE hypothesis_id = 'hyp_1'"
         ).fetchone()[0]
@@ -341,7 +341,7 @@ def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):
     conn = sqlite3.connect(db_path)
     try:
         prediction_count = conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0]
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         assert prediction_count == 1
         assert snapshot_count == 1
     finally:
@@ -382,7 +382,7 @@ def test_run_cycle_reuses_pre_recorded_observation(tmp_path, capsys):
     conn = sqlite3.connect(db_path)
     try:
         observation_count = conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         assert observation_count == 1
         assert snapshot_count == 1
     finally:
@@ -418,7 +418,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
 
     conn = sqlite3.connect(db_path)
     try:
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
             SELECT status, prediction_count, observation_count
@@ -460,7 +460,7 @@ def test_update_state_is_idempotent_for_same_evaluation(tmp_path, capsys):
 
     conn = sqlite3.connect(db_path)
     try:
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
             SELECT status, prediction_count, observation_count
@@ -530,11 +530,11 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
     try:
         prediction_count = conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0]
         observation_count = conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
-        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         rows = conn.execute(
             """
             SELECT evaluation_id, hypothesis_id
-            FROM cycle_snapshots
+            FROM evaluation_snapshots
             ORDER BY hypothesis_id
             """
         ).fetchall()
@@ -647,7 +647,7 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
     assert "Latest:   BTC:residual_return_1d:2026-03-26 / hyp_1" in status_output
     assert "Trust:    total=" in status_output
 
-    assert main(["show-cycles", "--db", str(db_path), "--limit", "5"]) == 0
+    assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
     assert "alpha-os v1 evaluations" in cycles_output
     assert "Count:    1" in cycles_output
@@ -659,7 +659,7 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
             "hypotheses": conn.execute("SELECT COUNT(*) FROM hypotheses").fetchone()[0],
             "predictions": conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0],
             "observations": conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0],
-            "snapshots": conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0],
+            "snapshots": conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0],
         }
         status_row = conn.execute(
             "SELECT status FROM hypotheses WHERE hypothesis_id = 'hyp_1'"

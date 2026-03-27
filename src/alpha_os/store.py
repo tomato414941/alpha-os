@@ -186,13 +186,13 @@ class V1Store:
     def close(self) -> None:
         self.conn.close()
 
-    def _ensure_cycle_snapshot_column(self, name: str, definition: str) -> None:
+    def _ensure_evaluation_snapshot_column(self, name: str, definition: str) -> None:
         columns = {
             str(row["name"])
-            for row in self.conn.execute("PRAGMA table_info(cycle_snapshots)").fetchall()
+            for row in self.conn.execute("PRAGMA table_info(evaluation_snapshots)").fetchall()
         }
         if name not in columns:
-            self.conn.execute(f"ALTER TABLE cycle_snapshots ADD COLUMN {name} {definition}")
+            self.conn.execute(f"ALTER TABLE evaluation_snapshots ADD COLUMN {name} {definition}")
 
     def _ensure_hypothesis_column(self, name: str, definition: str) -> None:
         columns = {
@@ -219,6 +219,12 @@ class V1Store:
         return {
             str(row["name"]) for row in self.conn.execute(f"PRAGMA table_info({name})").fetchall()
         }
+
+    def _migrate_snapshot_table_to_evaluation_snapshots(self) -> None:
+        if not self._table_exists("cycle_snapshots") or self._table_exists("evaluation_snapshots"):
+            return
+        with self.conn:
+            self.conn.execute("ALTER TABLE cycle_snapshots RENAME TO evaluation_snapshots")
 
     def _migrate_predictions_to_evaluation_id(self) -> None:
         columns = self._table_columns("predictions")
@@ -277,14 +283,16 @@ class V1Store:
             self.conn.execute("DROP TABLE observations_legacy")
 
     def _migrate_snapshots_to_evaluation_id(self) -> None:
-        columns = self._table_columns("cycle_snapshots")
+        columns = self._table_columns("evaluation_snapshots")
         if not columns or "evaluation_id" in columns:
             return
         with self.conn:
-            self.conn.execute("ALTER TABLE cycle_snapshots RENAME TO cycle_snapshots_legacy")
+            self.conn.execute(
+                "ALTER TABLE evaluation_snapshots RENAME TO evaluation_snapshots_legacy"
+            )
             self.conn.execute(
                 """
-                CREATE TABLE cycle_snapshots (
+                CREATE TABLE evaluation_snapshots (
                     evaluation_id TEXT NOT NULL,
                     asset TEXT NOT NULL,
                     target TEXT NOT NULL,
@@ -311,7 +319,7 @@ class V1Store:
             )
             self.conn.execute(
                 """
-                INSERT INTO cycle_snapshots (
+                INSERT INTO evaluation_snapshots (
                     evaluation_id, asset, target, hypothesis_id, prediction_value,
                     observation_value, signed_edge, absolute_error, quality_before,
                     quality_after, quality_delta, allocation_trust_before,
@@ -325,10 +333,10 @@ class V1Store:
                        allocation_trust_after, allocation_trust_delta, generated_weight,
                        input_source, input_range_start, input_range_end, signal_name,
                        created_at
-                FROM cycle_snapshots_legacy
+                FROM evaluation_snapshots_legacy
                 """
             )
-            self.conn.execute("DROP TABLE cycle_snapshots_legacy")
+            self.conn.execute("DROP TABLE evaluation_snapshots_legacy")
 
     def _migrate_sleeve_state_to_evaluation_id(self) -> None:
         columns = self._table_columns("sleeve_state")
@@ -366,7 +374,7 @@ class V1Store:
                        legacy.latest_cycle_id,
                        (
                            SELECT hypothesis_id
-                           FROM cycle_snapshots AS snapshots
+                           FROM evaluation_snapshots AS snapshots
                            WHERE snapshots.evaluation_id = legacy.latest_cycle_id
                            ORDER BY snapshots.created_at DESC, snapshots.hypothesis_id DESC
                            LIMIT 1
@@ -378,6 +386,7 @@ class V1Store:
             self.conn.execute("DROP TABLE sleeve_state_legacy")
 
     def ensure_schema(self) -> None:
+        self._migrate_snapshot_table_to_evaluation_snapshots()
         self._migrate_predictions_to_evaluation_id()
         self._migrate_observations_to_evaluation_id()
         self._migrate_snapshots_to_evaluation_id()
@@ -430,7 +439,7 @@ class V1Store:
                 PRIMARY KEY (asset, target)
             );
 
-            CREATE TABLE IF NOT EXISTS cycle_snapshots (
+            CREATE TABLE IF NOT EXISTS evaluation_snapshots (
                 evaluation_id TEXT NOT NULL,
                 asset TEXT NOT NULL,
                 target TEXT NOT NULL,
@@ -458,15 +467,15 @@ class V1Store:
         self._ensure_hypothesis_column("kind", "TEXT")
         self._ensure_hypothesis_column("signal_name", "TEXT")
         self._ensure_hypothesis_column("lookback", "INTEGER")
-        self._ensure_cycle_snapshot_column("quality_delta", "REAL NOT NULL DEFAULT 0.0")
-        self._ensure_cycle_snapshot_column(
+        self._ensure_evaluation_snapshot_column("quality_delta", "REAL NOT NULL DEFAULT 0.0")
+        self._ensure_evaluation_snapshot_column(
             "allocation_trust_delta",
             "REAL NOT NULL DEFAULT 0.0",
         )
-        self._ensure_cycle_snapshot_column("input_source", "TEXT")
-        self._ensure_cycle_snapshot_column("input_range_start", "TEXT")
-        self._ensure_cycle_snapshot_column("input_range_end", "TEXT")
-        self._ensure_cycle_snapshot_column("signal_name", "TEXT")
+        self._ensure_evaluation_snapshot_column("input_source", "TEXT")
+        self._ensure_evaluation_snapshot_column("input_range_start", "TEXT")
+        self._ensure_evaluation_snapshot_column("input_range_end", "TEXT")
+        self._ensure_evaluation_snapshot_column("signal_name", "TEXT")
         self.conn.execute(
             """
             UPDATE hypotheses
@@ -597,7 +606,7 @@ class V1Store:
                    allocation_trust_after, allocation_trust_delta, generated_weight,
                    input_source, input_range_start, input_range_end, signal_name,
                    created_at
-            FROM cycle_snapshots
+            FROM evaluation_snapshots
             WHERE evaluation_id = ? AND hypothesis_id = ?
             """,
             (evaluation_id, hypothesis_id),
@@ -639,7 +648,7 @@ class V1Store:
                    allocation_trust_after, allocation_trust_delta, generated_weight,
                    input_source, input_range_start, input_range_end, signal_name,
                    created_at
-            FROM cycle_snapshots
+            FROM evaluation_snapshots
             ORDER BY created_at DESC, evaluation_id DESC, hypothesis_id DESC
             LIMIT ?
             """,
@@ -838,7 +847,7 @@ class V1Store:
 
             self.conn.execute(
                 """
-                INSERT INTO cycle_snapshots (
+                INSERT INTO evaluation_snapshots (
                     evaluation_id, asset, target, hypothesis_id, prediction_value,
                     observation_value, signed_edge, absolute_error, quality_before,
                     quality_after, quality_delta, allocation_trust_before,

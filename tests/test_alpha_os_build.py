@@ -172,25 +172,30 @@ def test_cmd_build_cycle_input_writes_json(tmp_path, monkeypatch, capsys):
     from alpha_os.cli import main
     from alpha_os.inputs import CycleInput
 
+    db_path = tmp_path / "runtime.db"
     output_path = tmp_path / "cycle.json"
 
     monkeypatch.setattr(
         "alpha_os.cli.build_cycle_input_from_signal_noise",
         lambda **_kwargs: CycleInput(
             date="2026-03-27",
-            hypothesis_id="hyp_momo",
+            hypothesis_id="momentum_1d",
             prediction=0.05,
             observation=-0.02,
         ),
     )
+    _register_hypothesis(main, db_path, "momentum_1d")
+    capsys.readouterr()
 
     rc = main(
         [
             "generate-cycle-input",
+            "--db",
+            str(db_path),
             "--date",
             "2026-03-27",
             "--hypothesis-id",
-            "hyp_momo",
+            "momentum_1d",
             "--out",
             str(output_path),
         ]
@@ -199,7 +204,7 @@ def test_cmd_build_cycle_input_writes_json(tmp_path, monkeypatch, capsys):
 
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["date"] == "2026-03-27"
-    assert payload["hypothesis_id"] == "hyp_momo"
+    assert payload["hypothesis_id"] == "momentum_1d"
     assert payload["prediction"] == 0.05
     assert payload["observation"] == -0.02
 
@@ -212,6 +217,7 @@ def test_cmd_build_cycle_inputs_writes_json_array(tmp_path, monkeypatch, capsys)
     from alpha_os.cli import main
     from alpha_os.inputs import CycleInput
 
+    db_path = tmp_path / "runtime.db"
     output_path = tmp_path / "cycles.json"
 
     monkeypatch.setattr(
@@ -219,28 +225,32 @@ def test_cmd_build_cycle_inputs_writes_json_array(tmp_path, monkeypatch, capsys)
         lambda **_kwargs: [
             CycleInput(
                 date="2026-03-27",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=0.05,
                 observation=-0.02,
             ),
             CycleInput(
                 date="2026-03-28",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=-0.02,
                 observation=0.03,
             ),
         ],
     )
+    _register_hypothesis(main, db_path, "momentum_1d")
+    capsys.readouterr()
 
     rc = main(
         [
             "generate-cycle-inputs",
+            "--db",
+            str(db_path),
             "--start-date",
             "2026-03-27",
             "--end-date",
             "2026-03-28",
             "--hypothesis-id",
-            "hyp_momo",
+            "momentum_1d",
             "--out",
             str(output_path),
         ]
@@ -268,21 +278,23 @@ def test_built_cycle_input_can_feed_run_cycle(tmp_path, monkeypatch):
         "alpha_os.cli.build_cycle_input_from_signal_noise",
         lambda **_kwargs: CycleInput(
             date="2026-03-27",
-            hypothesis_id="hyp_momo",
+            hypothesis_id="momentum_1d",
             prediction=0.05,
             observation=-0.02,
         ),
     )
-    _register_hypothesis(main, db_path, "hyp_momo")
+    _register_hypothesis(main, db_path, "momentum_1d")
 
     assert (
         main(
             [
                 "generate-cycle-input",
+                "--db",
+                str(db_path),
                 "--date",
                 "2026-03-27",
                 "--hypothesis-id",
-                "hyp_momo",
+                "momentum_1d",
                 "--out",
                 str(input_path),
             ]
@@ -307,19 +319,19 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
         lambda **_kwargs: [
             CycleInput(
                 date="2026-03-27",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=0.05,
                 observation=-0.02,
             ),
             CycleInput(
                 date="2026-03-28",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=-0.02,
                 observation=0.03,
             ),
         ],
     )
-    _register_hypothesis(main, db_path, "hyp_momo")
+    _register_hypothesis(main, db_path, "momentum_1d")
     capsys.readouterr()
 
     rc = main(
@@ -332,7 +344,7 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
             "--end-date",
             "2026-03-28",
             "--hypothesis-id",
-            "hyp_momo",
+            "momentum_1d",
             "--out",
             str(output_path),
         ]
@@ -349,7 +361,7 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
         rows = conn.execute(
             """
             SELECT input_source, input_range_start, input_range_end, signal_name
-            FROM cycle_snapshots
+            FROM evaluation_snapshots
             ORDER BY evaluation_id
             """
         ).fetchall()
@@ -376,19 +388,19 @@ def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
         lambda **_kwargs: [
             CycleInput(
                 date="2026-03-27",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=0.05,
                 observation=-0.02,
             ),
             CycleInput(
                 date="2026-03-28",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=-0.02,
                 observation=0.03,
             ),
         ],
     )
-    _register_hypothesis(main, db_path, "hyp_momo")
+    _register_hypothesis(main, db_path, "momentum_1d")
     capsys.readouterr()
 
     assert (
@@ -402,14 +414,14 @@ def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
                 "--end-date",
                 "2026-03-28",
                 "--hypothesis-id",
-                "hyp_momo",
+                "momentum_1d",
             ]
         )
         == 0
     )
     capsys.readouterr()
 
-    assert main(["show-cycles", "--db", str(db_path), "--limit", "2"]) == 0
+    assert main(["show-evaluations", "--db", str(db_path), "--limit", "2"]) == 0
     output = capsys.readouterr().out
     assert "alpha-os v1 evaluations" in output
     assert "source=signal_noise_backfill" in output
@@ -429,31 +441,33 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
         lambda **_kwargs: [
             CycleInput(
                 date="2026-03-27",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=0.05,
                 observation=-0.02,
             ),
             CycleInput(
                 date="2026-03-28",
-                hypothesis_id="hyp_momo",
+                hypothesis_id="momentum_1d",
                 prediction=-0.02,
                 observation=0.03,
             ),
         ],
     )
-    _register_hypothesis(main, db_path, "hyp_momo")
+    _register_hypothesis(main, db_path, "momentum_1d")
     capsys.readouterr()
 
     assert (
         main(
             [
                 "generate-cycle-inputs",
+                "--db",
+                str(db_path),
                 "--start-date",
                 "2026-03-27",
                 "--end-date",
                 "2026-03-28",
                 "--hypothesis-id",
-                "hyp_momo",
+                "momentum_1d",
                 "--out",
                 str(input_path),
             ]
@@ -477,7 +491,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
                 "--end-date",
                 "2026-03-28",
                 "--hypothesis-id",
-                "hyp_momo",
+                "momentum_1d",
             ]
         )
         == 0
@@ -488,13 +502,98 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
     assert "alpha-os v1 status" in status_output
-    assert "Latest:   BTC:residual_return_1d:2026-03-28 / hyp_momo" in status_output
+    assert "Latest:   BTC:residual_return_1d:2026-03-28 / momentum_1d" in status_output
     assert "Live:     " in status_output
     assert "Trust:    total=" in status_output
 
-    assert main(["show-cycles", "--db", str(db_path), "--limit", "5"]) == 0
+    assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
     assert "alpha-os v1 evaluations" in cycles_output
     assert "Count:    2" in cycles_output
     assert "source=signal_noise_backfill" in cycles_output
     assert "range=2026-03-27->2026-03-28" in cycles_output
+
+
+def test_generate_cycle_input_requires_registered_hypothesis(tmp_path):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+    output_path = tmp_path / "cycle.json"
+
+    try:
+        main(
+            [
+                "generate-cycle-input",
+                "--db",
+                str(db_path),
+                "--date",
+                "2026-03-27",
+                "--hypothesis-id",
+                "momentum_1d",
+                "--out",
+                str(output_path),
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("expected parser exit for unregistered hypothesis generation")
+
+
+def test_generate_cycle_input_uses_registered_definition_from_db(tmp_path, monkeypatch):
+    from alpha_os.cli import main
+    from alpha_os.store import V1Store
+
+    db_path = tmp_path / "runtime.db"
+    output_path = tmp_path / "cycle.json"
+    _register_hypothesis(main, db_path, "momentum_1d")
+
+    store = V1Store(db_path)
+    try:
+        store.ensure_schema()
+        store.conn.execute(
+            """
+            UPDATE hypotheses
+            SET kind = 'momentum', signal_name = 'btc_ohlcv', lookback = 3
+            WHERE hypothesis_id = 'momentum_1d'
+            """
+        )
+        store.conn.commit()
+    finally:
+        store.close()
+
+    class FakeClient:
+        def get_data(self, name: str, since: str | None = None, resolution: str | None = None):
+            return pd.DataFrame(
+                [
+                    {"timestamp": "2026-03-24T00:00:00+00:00", "value": 100.0},
+                    {"timestamp": "2026-03-25T00:00:00+00:00", "value": 110.0},
+                    {"timestamp": "2026-03-26T00:00:00+00:00", "value": 121.0},
+                    {"timestamp": "2026-03-27T00:00:00+00:00", "value": 133.1},
+                    {"timestamp": "2026-03-28T00:00:00+00:00", "value": 146.41},
+                ]
+            )
+
+    monkeypatch.setattr("alpha_os.build.build_signal_client", lambda **_kwargs: FakeClient())
+
+    assert (
+        main(
+            [
+                "generate-cycle-input",
+                "--db",
+                str(db_path),
+                "--date",
+                "2026-03-27",
+                "--hypothesis-id",
+                "momentum_1d",
+                "--out",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["hypothesis_id"] == "momentum_1d"
+    assert payload["prediction"] == pytest.approx(0.1)
+    assert payload["observation"] == pytest.approx(0.1)
