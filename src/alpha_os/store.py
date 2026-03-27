@@ -517,6 +517,25 @@ class V1Store:
         ).fetchone()
         return _row_to_hypothesis(row)
 
+    def list_hypotheses(
+        self,
+        *,
+        asset: str = DEFAULT_ASSET,
+        target: str = DEFAULT_TARGET,
+    ) -> list[HypothesisState]:
+        rows = self.conn.execute(
+            """
+            SELECT hypothesis_id, asset, target, quality, allocation_trust,
+                   kind, signal_name, lookback, status,
+                   prediction_count, observation_count
+            FROM hypotheses
+            WHERE asset = ? AND target = ?
+            ORDER BY allocation_trust DESC, quality DESC, prediction_count DESC, hypothesis_id ASC
+            """,
+            (asset, target),
+        ).fetchall()
+        return [_row_to_hypothesis(row) for row in rows if row is not None]
+
     def set_hypothesis_status(
         self,
         hypothesis_id: str,

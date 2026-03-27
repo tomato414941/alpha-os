@@ -377,6 +377,99 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
     assert "Batch complete: evaluations=2 created=2 existing=0" in output
 
 
+def test_apply_hypotheses_backfill_applies_multiple_hypotheses(tmp_path, monkeypatch, capsys):
+    from alpha_os.cli import main
+    from alpha_os.inputs import CycleInput
+
+    db_path = tmp_path / "runtime.db"
+
+    def fake_build_cycle_inputs_from_signal_noise(**kwargs):
+        hypothesis_id = kwargs["hypothesis_id"]
+        if hypothesis_id == "momentum_1d":
+            return [
+                CycleInput(
+                    date="2026-03-27",
+                    hypothesis_id="momentum_1d",
+                    prediction=0.05,
+                    observation=-0.02,
+                ),
+                CycleInput(
+                    date="2026-03-28",
+                    hypothesis_id="momentum_1d",
+                    prediction=-0.02,
+                    observation=0.03,
+                ),
+            ]
+        if hypothesis_id == "reversal_1d":
+            return [
+                CycleInput(
+                    date="2026-03-27",
+                    hypothesis_id="reversal_1d",
+                    prediction=-0.05,
+                    observation=-0.02,
+                ),
+                CycleInput(
+                    date="2026-03-28",
+                    hypothesis_id="reversal_1d",
+                    prediction=0.02,
+                    observation=0.03,
+                ),
+            ]
+        raise AssertionError(f"unexpected hypothesis: {hypothesis_id}")
+
+    monkeypatch.setattr(
+        "alpha_os.cli.build_cycle_inputs_from_signal_noise",
+        fake_build_cycle_inputs_from_signal_noise,
+    )
+    _register_hypothesis(main, db_path, "momentum_1d")
+    _register_hypothesis(main, db_path, "reversal_1d")
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "apply-hypotheses-backfill",
+                "--db",
+                str(db_path),
+                "--start-date",
+                "2026-03-27",
+                "--end-date",
+                "2026-03-28",
+                "--hypothesis-id",
+                "momentum_1d",
+                "--hypothesis-id",
+                "reversal_1d",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "Batch complete: hypotheses=2 evaluations=4 created=4 existing=0" in output
+    assert "alpha-os v1 hypothesis competition" in output
+    assert "momentum_1d " in output
+    assert "reversal_1d " in output
+    assert "evals=2" in output
+
+    import sqlite3
+
+    conn = sqlite3.connect(db_path)
+    try:
+        counts = {
+            "predictions": conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0],
+            "observations": conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0],
+            "snapshots": conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0],
+        }
+    finally:
+        conn.close()
+
+    assert counts == {
+        "predictions": 4,
+        "observations": 2,
+        "snapshots": 4,
+    }
+
+
 def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
     from alpha_os.cli import main
     from alpha_os.inputs import CycleInput

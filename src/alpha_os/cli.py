@@ -147,6 +147,23 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the generated cycle-input JSON array",
     )
 
+    backfill_many = sub.add_parser(
+        "apply-hypotheses-backfill",
+        help="Generate and apply deterministic evaluation inputs for multiple registered hypotheses over one date range",
+    )
+    backfill_many.add_argument("--db", type=str, default=None)
+    backfill_many.add_argument("--start-date", type=str, required=True)
+    backfill_many.add_argument("--end-date", type=str, required=True)
+    backfill_many.add_argument(
+        "--hypothesis-id",
+        type=str,
+        action="append",
+        required=True,
+        help="Repeat to include multiple registered hypotheses",
+    )
+    backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
+    backfill_many.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
+
     status = sub.add_parser("status", help="Show the latest BTC sleeve state")
     status.add_argument("--db", type=str, default=None)
 
@@ -210,6 +227,46 @@ def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
         f"(delta={snapshot.allocation_trust_delta:+.6f})"
     )
     print(f"  Weight:   {snapshot.generated_weight:.6f}")
+
+
+def _unique_hypothesis_ids(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            ordered.append(value)
+    return ordered
+
+
+def _print_hypothesis_competition_summary(
+    store: V1Store,
+    *,
+    asset: str,
+    target: str,
+    hypothesis_ids: list[str],
+) -> None:
+    selected = set(hypothesis_ids)
+    hypotheses = [
+        item
+        for item in store.list_hypotheses(asset=asset, target=target)
+        if item.hypothesis_id in selected
+    ]
+    print("alpha-os v1 hypothesis competition")
+    print(f"  Count:    {len(hypotheses)}")
+    for hypothesis in hypotheses:
+        live_label = "yes" if hypothesis.status == "registered" and hypothesis.allocation_trust > 0.0 else "no"
+        kind = hypothesis.kind or "-"
+        signal_name = hypothesis.signal_name or "-"
+        lookback = "-" if hypothesis.lookback is None else str(hypothesis.lookback)
+        print(
+            f"  {hypothesis.hypothesis_id} "
+            f"kind={kind} signal={signal_name} lookback={lookback} "
+            f"status={hypothesis.status} live={live_label} "
+            f"q={hypothesis.quality:.6f} "
+            f"t={hypothesis.allocation_trust:.6f} "
+            f"evals={hypothesis.observation_count}"
+        )
 
 
 def _resolve_cycle_input(args: argparse.Namespace) -> CycleInput:
@@ -558,6 +615,72 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
     )
 
 
+def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
+    cfg = build_config(db_path=args.db)
+    hypothesis_ids = _unique_hypothesis_ids(args.hypothesis_id)
+    total_evaluations = 0
+    created_count = 0
+    existing_count = 0
+    latest_snapshot = None
+
+    store = V1Store(cfg.db_path)
+    try:
+        store.ensure_schema()
+        for hypothesis_id in hypothesis_ids:
+            definition = _runtime_hypothesis_definition(
+                db_path=args.db,
+                hypothesis_id=hypothesis_id,
+            )
+            cycle_inputs = build_cycle_inputs_from_signal_noise(
+                start_date=args.start_date,
+                end_date=args.end_date,
+                hypothesis_id=hypothesis_id,
+                base_url=args.base_url,
+                signal_name=args.signal_name,
+                definition=definition,
+            )
+            total_evaluations += len(cycle_inputs)
+            for cycle_input in cycle_inputs:
+                evaluation_id = cycle_input.evaluation_id or _default_evaluation_id(
+                    asset=cfg.asset,
+                    target=cfg.target,
+                    date=cycle_input.date,
+                )
+                latest_snapshot, created = store.run_cycle(
+                    evaluation_id=evaluation_id,
+                    hypothesis_id=cycle_input.hypothesis_id,
+                    prediction_value=cycle_input.prediction,
+                    observation_value=cycle_input.observation,
+                    input_source="signal_noise_backfill",
+                    input_range_start=args.start_date,
+                    input_range_end=args.end_date,
+                    signal_name=args.signal_name,
+                )
+                if created:
+                    created_count += 1
+                else:
+                    existing_count += 1
+        print(
+            "Batch complete: "
+            f"hypotheses={len(hypothesis_ids)} "
+            f"evaluations={total_evaluations} "
+            f"created={created_count} existing={existing_count}"
+        )
+        if latest_snapshot is not None:
+            print(
+                f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.hypothesis_id}"
+            )
+        _print_hypothesis_competition_summary(
+            store,
+            asset=cfg.asset,
+            target=cfg.target,
+            hypothesis_ids=hypothesis_ids,
+        )
+    finally:
+        store.close()
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
     store = V1Store(cfg.db_path)
@@ -655,6 +778,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_cycles(args)
         if args.command == "apply-backfill":
             return cmd_run_backfill(args)
+        if args.command == "apply-hypotheses-backfill":
+            return cmd_run_hypotheses_backfill(args)
         if args.command == "status":
             return cmd_status(args)
         if args.command == "show-evaluations":
