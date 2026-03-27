@@ -399,7 +399,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("live", 1, 1)
+        assert state_row == ("registered", 1, 1)
     finally:
         conn.close()
 
@@ -441,7 +441,7 @@ def test_update_state_is_idempotent_for_same_cycle(tmp_path, capsys):
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("live", 1, 1)
+        assert state_row == ("registered", 1, 1)
     finally:
         conn.close()
 
@@ -559,7 +559,7 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
             "observations": 1,
             "snapshots": 1,
         }
-        assert status_row == ("live",)
+        assert status_row == ("registered",)
     finally:
         conn.close()
 
@@ -764,3 +764,31 @@ def test_init_db_creates_empty_runtime(tmp_path, capsys):
     output = capsys.readouterr().out
     assert "Initialized v1 db" in output
     assert "no cycles recorded" in output
+
+
+def test_ensure_schema_normalizes_legacy_active_and_live_statuses(tmp_path):
+    from alpha_os.store import V1Store
+
+    db_path = tmp_path / "runtime.db"
+    store = V1Store(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("hyp_active")
+        store.register_hypothesis("hyp_live")
+        store.conn.execute(
+            "UPDATE hypotheses SET status = 'active' WHERE hypothesis_id = 'hyp_active'"
+        )
+        store.conn.execute(
+            "UPDATE hypotheses SET status = 'live' WHERE hypothesis_id = 'hyp_live'"
+        )
+        store.conn.commit()
+        store.ensure_schema()
+
+        active = store.get_hypothesis("hyp_active")
+        live = store.get_hypothesis("hyp_live")
+        assert active is not None
+        assert live is not None
+        assert active.status == "registered"
+        assert live.status == "registered"
+    finally:
+        store.close()

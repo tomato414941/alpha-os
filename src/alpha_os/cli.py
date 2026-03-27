@@ -37,7 +37,7 @@ def _build_parser() -> argparse.ArgumentParser:
     register.add_argument("--db", type=str, default=None)
     register.add_argument("--hypothesis-id", type=str, required=True)
 
-    pause = sub.add_parser("pause-hypothesis", help="Pause one live hypothesis")
+    pause = sub.add_parser("pause-hypothesis", help="Pause one allocation-eligible hypothesis")
     pause.add_argument("--db", type=str, default=None)
     pause.add_argument("--hypothesis-id", type=str, required=True)
 
@@ -45,7 +45,7 @@ def _build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--db", type=str, default=None)
     resume.add_argument("--hypothesis-id", type=str, required=True)
 
-    retire = sub.add_parser("retire-hypothesis", help="Retire one active or paused hypothesis")
+    retire = sub.add_parser("retire-hypothesis", help="Retire one registered or paused hypothesis")
     retire.add_argument("--db", type=str, default=None)
     retire.add_argument("--hypothesis-id", type=str, required=True)
 

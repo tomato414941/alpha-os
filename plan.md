@@ -150,6 +150,39 @@ V4 is complete when all of the following are true:
 - the bounded path remains auditable and deterministic
 - v4 stays within scope: `BTC-only`, `paper-only`, `1 target`
 
+## V5 Rules
+
+V5 focuses on state minimization rather than new state introduction.
+
+- Keep scope fixed: `BTC-only`, `paper-only`, `1 target`
+- Do not add new persisted state just to make the runtime easier to inspect
+- Separate `persisted state` from `derived label`
+- Re-evaluate hypothesis states one by one:
+  - `registered`
+  - `active`
+  - `live`
+  - `paused`
+  - `retired`
+- Keep a state only when one of the following is true:
+  - it captures operator intent that cannot be derived later
+  - it enforces a transition constraint that cannot be expressed safely from existing records
+  - it marks an irreversible boundary that should survive recomputation
+- Prefer derived policy labels when a value can be recomputed safely from:
+  - recorded predictions
+  - finalized observations
+  - allocation trust
+  - cycle snapshots
+- Treat `active` and `live` as removal candidates first
+- Do not add cycle lifecycle states in v5 unless existing records prove insufficient
+- Do not add multi-asset, global allocation, live execution, or new read-only surfaces in v5
+
+V5 is complete when all of the following are true:
+
+- each persisted hypothesis state has an explicit justification
+- removable states have either been deleted or defended with a concrete constraint
+- derived labels are computed by policy rather than stored by default
+- the bounded path remains auditable and deterministic after any simplification
+
 ## Current Position
 
 - hypotheses-first runtime is established

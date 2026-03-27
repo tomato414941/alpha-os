@@ -262,6 +262,13 @@ class V1Store:
         self._ensure_cycle_snapshot_column("input_range_start", "TEXT")
         self._ensure_cycle_snapshot_column("input_range_end", "TEXT")
         self._ensure_cycle_snapshot_column("signal_name", "TEXT")
+        self.conn.execute(
+            """
+            UPDATE hypotheses
+            SET status = 'registered'
+            WHERE status IN ('active', 'live')
+            """
+        )
         self.conn.commit()
 
     def get_hypothesis(self, hypothesis_id: str) -> HypothesisState | None:
@@ -287,7 +294,11 @@ class V1Store:
         hypothesis = self.get_hypothesis(hypothesis_id)
         if hypothesis is None:
             raise ValueError(f"hypothesis is not registered: {hypothesis_id}")
-        decision = decide_operator_transition(current_status=hypothesis.status, action=action)
+        decision = decide_operator_transition(
+            current_status=hypothesis.status,
+            allocation_trust=hypothesis.allocation_trust,
+            action=action,
+        )
 
         timestamp = recorded_at or _utc_now()
         with self.conn:
@@ -558,7 +569,12 @@ class V1Store:
                 SELECT
                     COALESCE(SUM(allocation_trust), 0.0) AS total_trust,
                     COALESCE(AVG(quality), 0.0) AS mean_quality,
-                    SUM(CASE WHEN status = 'live' THEN 1 ELSE 0 END) AS live_count
+                    SUM(
+                        CASE
+                            WHEN status = 'registered' AND allocation_trust > 0.0 THEN 1
+                            ELSE 0
+                        END
+                    ) AS live_count
                 FROM hypotheses
                 WHERE asset = ? AND target = ?
                 """,
