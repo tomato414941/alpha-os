@@ -7,15 +7,14 @@ import numpy as np
 import pandas as pd
 
 
-DEFAULT_SCORE_WINDOW = 20
+DEFAULT_METRIC_WINDOW = 20
 _NORMAL = NormalDist()
 
 
 @dataclass(frozen=True)
-class HypothesisScore:
+class HypothesisMetrics:
     corr: float
     mmc: float
-    score: float
     sample_count: int
     window_size: int
 
@@ -77,17 +76,13 @@ def meta_model_contribution(
     return mmc
 
 
-def combine_score(*, corr: float, mmc: float) -> float:
-    return float(corr) + float(mmc)
-
-
-def score_hypothesis(
+def compute_hypothesis_metrics(
     *,
     predictions: pd.Series,
     target: pd.Series,
     meta_model: pd.Series | None,
-    window_size: int = DEFAULT_SCORE_WINDOW,
-) -> HypothesisScore:
+    window_size: int = DEFAULT_METRIC_WINDOW,
+) -> HypothesisMetrics:
     aligned_predictions, aligned_target = _aligned_series(predictions, target)
     sample_count = len(aligned_predictions)
     corr = numerai_corr(aligned_predictions, aligned_target)
@@ -96,10 +91,9 @@ def score_hypothesis(
         meta_model,
         aligned_target,
     )
-    return HypothesisScore(
+    return HypothesisMetrics(
         corr=corr,
         mmc=mmc,
-        score=combine_score(corr=corr, mmc=mmc),
         sample_count=sample_count,
         window_size=int(window_size),
     )

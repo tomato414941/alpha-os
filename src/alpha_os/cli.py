@@ -256,14 +256,14 @@ def _print_hypothesis_competition_summary(
         for item in store.list_hypotheses(asset=asset, target=target)
         if item.hypothesis_id in selected
     }
-    scores = {item.hypothesis_id: item for item in store.list_hypothesis_scores(hypothesis_ids=hypothesis_ids)}
+    metrics = {item.hypothesis_id: item for item in store.list_hypothesis_metrics(hypothesis_ids=hypothesis_ids)}
     print("alpha-os v1 hypothesis competition")
     print(f"  Count:    {len(hypotheses)}")
     for hypothesis_id in hypothesis_ids:
         hypothesis = hypotheses.get(hypothesis_id)
         if hypothesis is None:
             continue
-        score = scores.get(hypothesis_id)
+        metric = metrics.get(hypothesis_id)
         kind = hypothesis.kind or "-"
         signal_name = hypothesis.signal_name or "-"
         lookback = "-" if hypothesis.lookback is None else str(hypothesis.lookback)
@@ -271,10 +271,9 @@ def _print_hypothesis_competition_summary(
             f"  {hypothesis.hypothesis_id} "
             f"kind={kind} signal={signal_name} lookback={lookback} "
             f"status={hypothesis.status} "
-            f"corr={0.0 if score is None else score.corr:.6f} "
-            f"mmc={0.0 if score is None else score.mmc:.6f} "
-            f"score={0.0 if score is None else score.score:.6f} "
-            f"evals={hypothesis.observation_count if score is None else score.sample_count}"
+            f"corr={0.0 if metric is None else metric.corr:.6f} "
+            f"mmc={0.0 if metric is None else metric.mmc:.6f} "
+            f"evals={hypothesis.observation_count if metric is None else metric.sample_count}"
         )
 
 

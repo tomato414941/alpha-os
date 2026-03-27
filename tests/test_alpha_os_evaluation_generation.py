@@ -454,7 +454,6 @@ def test_apply_hypotheses_backfill_applies_multiple_hypotheses(tmp_path, monkeyp
     assert "reversal_1d " in output
     assert "corr=" in output
     assert "mmc=" in output
-    assert "score=" in output
     assert "evals=2" in output
 
     import sqlite3
@@ -465,7 +464,7 @@ def test_apply_hypotheses_backfill_applies_multiple_hypotheses(tmp_path, monkeyp
             "predictions": conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0],
             "observations": conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0],
             "snapshots": conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0],
-            "scores": conn.execute("SELECT COUNT(*) FROM hypothesis_scores").fetchone()[0],
+            "metrics": conn.execute("SELECT COUNT(*) FROM hypothesis_metrics").fetchone()[0],
         }
     finally:
         conn.close()
@@ -474,7 +473,7 @@ def test_apply_hypotheses_backfill_applies_multiple_hypotheses(tmp_path, monkeyp
         "predictions": 4,
         "observations": 2,
         "snapshots": 4,
-        "scores": 2,
+        "metrics": 2,
     }
 
 

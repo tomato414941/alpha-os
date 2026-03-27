@@ -10,7 +10,7 @@ import pandas as pd
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
 from .policy import build_cycle_update
-from .scoring import DEFAULT_SCORE_WINDOW, score_hypothesis
+from .scoring import DEFAULT_METRIC_WINDOW, compute_hypothesis_metrics
 from .transition_policy import decide_operator_transition, decide_status_after_update
 
 
@@ -89,11 +89,10 @@ class SleeveState:
 
 
 @dataclass(frozen=True)
-class HypothesisScoreState:
+class HypothesisMetricState:
     hypothesis_id: str
     corr: float
     mmc: float
-    score: float
     sample_count: int
     window_size: int
     start_evaluation_id: str | None
@@ -192,14 +191,13 @@ def _row_to_observation(row: sqlite3.Row | None) -> ObservationRecord | None:
     )
 
 
-def _row_to_hypothesis_score(row: sqlite3.Row | None) -> HypothesisScoreState | None:
+def _row_to_hypothesis_metric(row: sqlite3.Row | None) -> HypothesisMetricState | None:
     if row is None:
         return None
-    return HypothesisScoreState(
+    return HypothesisMetricState(
         hypothesis_id=str(row["hypothesis_id"]),
         corr=float(row["corr"]),
         mmc=float(row["mmc"]),
-        score=float(row["score"]),
         sample_count=int(row["sample_count"]),
         window_size=int(row["window_size"]),
         start_evaluation_id=None
@@ -259,6 +257,38 @@ class V1Store:
             return
         with self.conn:
             self.conn.execute("ALTER TABLE cycle_snapshots RENAME TO evaluation_snapshots")
+
+    def _migrate_hypothesis_score_table_to_metrics(self) -> None:
+        if not self._table_exists("hypothesis_scores") or self._table_exists("hypothesis_metrics"):
+            return
+        with self.conn:
+            self.conn.execute("ALTER TABLE hypothesis_scores RENAME TO hypothesis_scores_legacy")
+            self.conn.execute(
+                """
+                CREATE TABLE hypothesis_metrics (
+                    hypothesis_id TEXT PRIMARY KEY,
+                    corr REAL NOT NULL,
+                    mmc REAL NOT NULL,
+                    sample_count INTEGER NOT NULL,
+                    window_size INTEGER NOT NULL,
+                    start_evaluation_id TEXT,
+                    end_evaluation_id TEXT,
+                    updated_at TEXT NOT NULL
+                )
+                """
+            )
+            self.conn.execute(
+                """
+                INSERT INTO hypothesis_metrics (
+                    hypothesis_id, corr, mmc, sample_count, window_size,
+                    start_evaluation_id, end_evaluation_id, updated_at
+                )
+                SELECT hypothesis_id, corr, mmc, sample_count, window_size,
+                       start_evaluation_id, end_evaluation_id, updated_at
+                FROM hypothesis_scores_legacy
+                """
+            )
+            self.conn.execute("DROP TABLE hypothesis_scores_legacy")
 
     def _migrate_predictions_to_evaluation_id(self) -> None:
         columns = self._table_columns("predictions")
@@ -421,6 +451,7 @@ class V1Store:
 
     def ensure_schema(self) -> None:
         self._migrate_snapshot_table_to_evaluation_snapshots()
+        self._migrate_hypothesis_score_table_to_metrics()
         self._migrate_predictions_to_evaluation_id()
         self._migrate_observations_to_evaluation_id()
         self._migrate_snapshots_to_evaluation_id()
@@ -473,11 +504,10 @@ class V1Store:
                 PRIMARY KEY (asset, target)
             );
 
-            CREATE TABLE IF NOT EXISTS hypothesis_scores (
+            CREATE TABLE IF NOT EXISTS hypothesis_metrics (
                 hypothesis_id TEXT PRIMARY KEY,
                 corr REAL NOT NULL,
                 mmc REAL NOT NULL,
-                score REAL NOT NULL,
                 sample_count INTEGER NOT NULL,
                 window_size INTEGER NOT NULL,
                 start_evaluation_id TEXT,
@@ -582,55 +612,55 @@ class V1Store:
         ).fetchall()
         return [_row_to_hypothesis(row) for row in rows if row is not None]
 
-    def get_hypothesis_score(self, hypothesis_id: str) -> HypothesisScoreState | None:
+    def get_hypothesis_metric(self, hypothesis_id: str) -> HypothesisMetricState | None:
         row = self.conn.execute(
             """
-            SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+            SELECT hypothesis_id, corr, mmc, sample_count, window_size,
                    start_evaluation_id, end_evaluation_id, updated_at
-            FROM hypothesis_scores
+            FROM hypothesis_metrics
             WHERE hypothesis_id = ?
             """,
             (hypothesis_id,),
         ).fetchone()
-        return _row_to_hypothesis_score(row)
+        return _row_to_hypothesis_metric(row)
 
-    def list_hypothesis_scores(
+    def list_hypothesis_metrics(
         self,
         *,
         hypothesis_ids: list[str] | None = None,
-    ) -> list[HypothesisScoreState]:
+    ) -> list[HypothesisMetricState]:
         if not hypothesis_ids:
             rows = self.conn.execute(
                 """
-                SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+                SELECT hypothesis_id, corr, mmc, sample_count, window_size,
                        start_evaluation_id, end_evaluation_id, updated_at
-                FROM hypothesis_scores
-                ORDER BY score DESC, corr DESC, mmc DESC, hypothesis_id ASC
+                FROM hypothesis_metrics
+                ORDER BY corr DESC, mmc DESC, hypothesis_id ASC
                 """
             ).fetchall()
-            return [_row_to_hypothesis_score(row) for row in rows if row is not None]
+            return [_row_to_hypothesis_metric(row) for row in rows if row is not None]
 
         placeholders = ", ".join("?" for _ in hypothesis_ids)
         rows = self.conn.execute(
             f"""
-            SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+            SELECT hypothesis_id, corr, mmc, sample_count, window_size,
                    start_evaluation_id, end_evaluation_id, updated_at
-            FROM hypothesis_scores
+            FROM hypothesis_metrics
             WHERE hypothesis_id IN ({placeholders})
-            ORDER BY score DESC, corr DESC, mmc DESC, hypothesis_id ASC
+            ORDER BY corr DESC, mmc DESC, hypothesis_id ASC
             """,
             tuple(hypothesis_ids),
         ).fetchall()
-        return [_row_to_hypothesis_score(row) for row in rows if row is not None]
+        return [_row_to_hypothesis_metric(row) for row in rows if row is not None]
 
-    def _refresh_hypothesis_score(
+    def _refresh_hypothesis_metrics(
         self,
         *,
         hypothesis_id: str,
         asset: str,
         target: str,
         recorded_at: str,
-        window_size: int = DEFAULT_SCORE_WINDOW,
+        window_size: int = DEFAULT_METRIC_WINDOW,
     ) -> None:
         rows = self.conn.execute(
             """
@@ -647,15 +677,14 @@ class V1Store:
         if not rows:
             self.conn.execute(
                 """
-                INSERT INTO hypothesis_scores (
-                    hypothesis_id, corr, mmc, score, sample_count, window_size,
+                INSERT INTO hypothesis_metrics (
+                    hypothesis_id, corr, mmc, sample_count, window_size,
                     start_evaluation_id, end_evaluation_id, updated_at
                 )
-                VALUES (?, 0.0, 0.0, 0.0, 0, ?, NULL, NULL, ?)
+                VALUES (?, 0.0, 0.0, 0, ?, NULL, NULL, ?)
                 ON CONFLICT(hypothesis_id) DO UPDATE SET
                     corr = excluded.corr,
                     mmc = excluded.mmc,
-                    score = excluded.score,
                     sample_count = excluded.sample_count,
                     window_size = excluded.window_size,
                     start_evaluation_id = excluded.start_evaluation_id,
@@ -702,7 +731,7 @@ class V1Store:
                 dtype=float,
             )
 
-        scored = score_hypothesis(
+        metrics = compute_hypothesis_metrics(
             predictions=predictions,
             target=observations,
             meta_model=meta_model,
@@ -710,15 +739,14 @@ class V1Store:
         )
         self.conn.execute(
             """
-            INSERT INTO hypothesis_scores (
-                hypothesis_id, corr, mmc, score, sample_count, window_size,
+            INSERT INTO hypothesis_metrics (
+                hypothesis_id, corr, mmc, sample_count, window_size,
                 start_evaluation_id, end_evaluation_id, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(hypothesis_id) DO UPDATE SET
                 corr = excluded.corr,
                 mmc = excluded.mmc,
-                score = excluded.score,
                 sample_count = excluded.sample_count,
                 window_size = excluded.window_size,
                 start_evaluation_id = excluded.start_evaluation_id,
@@ -727,11 +755,10 @@ class V1Store:
             """,
             (
                 hypothesis_id,
-                scored.corr,
-                scored.mmc,
-                scored.score,
-                scored.sample_count,
-                scored.window_size,
+                metrics.corr,
+                metrics.mmc,
+                metrics.sample_count,
+                metrics.window_size,
                 evaluation_ids[0],
                 evaluation_ids[-1],
                 recorded_at,
@@ -1127,7 +1154,7 @@ class V1Store:
                     timestamp,
                 ),
             )
-            self._refresh_hypothesis_score(
+            self._refresh_hypothesis_metrics(
                 hypothesis_id=hypothesis_id,
                 asset=asset,
                 target=target,
