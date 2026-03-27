@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .policy import build_cycle_update
+from .transition_policy import decide_operator_transition, decide_status_after_update
 
 
 def _utc_now() -> str:
@@ -279,20 +280,14 @@ class V1Store:
         self,
         hypothesis_id: str,
         *,
-        new_status: str,
-        allowed_from: tuple[str, ...],
+        action: str,
         recorded_at: str | None = None,
     ) -> HypothesisState:
         self.ensure_schema()
         hypothesis = self.get_hypothesis(hypothesis_id)
         if hypothesis is None:
             raise ValueError(f"hypothesis is not registered: {hypothesis_id}")
-        if hypothesis.status not in allowed_from:
-            allowed = ", ".join(allowed_from)
-            raise ValueError(
-                f"invalid hypothesis transition for {hypothesis_id}: "
-                f"{hypothesis.status} -> {new_status} (allowed from: {allowed})"
-            )
+        decision = decide_operator_transition(current_status=hypothesis.status, action=action)
 
         timestamp = recorded_at or _utc_now()
         with self.conn:
@@ -302,7 +297,7 @@ class V1Store:
                 SET status = ?, updated_at = ?
                 WHERE hypothesis_id = ?
                 """,
-                (new_status, timestamp, hypothesis_id),
+                (decision.next_status, timestamp, hypothesis_id),
             )
 
         updated = self.get_hypothesis(hypothesis_id)
@@ -515,11 +510,6 @@ class V1Store:
             raise ValueError(
                 f"hypothesis must be registered before updating state: {hypothesis_id}"
             )
-        if before_state.status in {"paused", "retired"}:
-            raise ValueError(
-                f"state cannot be updated while hypothesis is {before_state.status}: "
-                f"{hypothesis_id}"
-            )
         prediction = self.get_prediction(cycle_id, hypothesis_id)
         if prediction is None:
             raise ValueError(
@@ -537,8 +527,10 @@ class V1Store:
             prediction_value=prediction.value,
             observation_value=observation.value,
         )
-
-        next_status = "live" if update.allocation_trust_after > 0.0 else "active"
+        decision = decide_status_after_update(
+            current_status=before_state.status,
+            allocation_trust_after=update.allocation_trust_after,
+        )
 
         with self.conn:
             self.conn.execute(
@@ -553,7 +545,7 @@ class V1Store:
                 WHERE hypothesis_id = ?
                 """,
                 (
-                    next_status,
+                    decision.next_status,
                     update.quality_after,
                     update.allocation_trust_after,
                     timestamp,

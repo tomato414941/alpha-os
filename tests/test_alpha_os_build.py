@@ -95,6 +95,35 @@ def test_build_cycle_inputs_from_frame_uses_date_range():
     assert all(item.hypothesis_id == "hyp_momo" for item in cycle_inputs)
 
 
+def test_build_cycle_input_from_signal_noise_uses_value_series(monkeypatch):
+    from alpha_os.build import build_cycle_input_from_signal_noise
+
+    calls: list[tuple[str, str]] = []
+
+    class FakeClient:
+        def get_data(self, name: str, since: str | None = None, resolution: str | None = None):
+            calls.append((name, resolution or ""))
+            return pd.DataFrame(
+                [
+                    {"timestamp": "2026-03-26T00:00:00+00:00", "value": 100.0},
+                    {"timestamp": "2026-03-27T00:00:00+00:00", "value": 110.0},
+                    {"timestamp": "2026-03-28T00:00:00+00:00", "value": 121.0},
+                ]
+            )
+
+    monkeypatch.setattr("alpha_os.build.build_signal_client", lambda **_kwargs: FakeClient())
+
+    cycle_input = build_cycle_input_from_signal_noise(
+        date="2026-03-27",
+        hypothesis_id="hyp_momo",
+        base_url="https://signal-noise.example",
+    )
+
+    assert cycle_input.prediction == pytest.approx(0.1)
+    assert cycle_input.observation == pytest.approx(0.1)
+    assert calls == [("btc_ohlcv", "1d")]
+
+
 def test_cmd_build_cycle_input_writes_json(tmp_path, monkeypatch, capsys):
     from alpha_os.cli import main
     from alpha_os.inputs import CycleInput

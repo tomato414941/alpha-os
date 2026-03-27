@@ -11,6 +11,11 @@ from .inputs import CycleInput
 from .signal_client import build_signal_client
 
 
+def _load_price_frame_from_signal_noise(*, base_url: str, signal_name: str) -> pd.DataFrame:
+    client = build_signal_client(base_url=base_url)
+    return client.get_data(signal_name, resolution="1d")
+
+
 def _daily_close_series(frame: pd.DataFrame) -> pd.Series:
     if frame.empty:
         raise ValueError("signal-noise returned no rows")
@@ -106,11 +111,7 @@ def build_cycle_input_from_signal_noise(
     base_url: str,
     signal_name: str = DEFAULT_PRICE_SIGNAL,
 ) -> CycleInput:
-    client = build_signal_client(base_url=base_url)
-    batch = client.get_batch([signal_name], columns=["close"], resolution="1d")
-    frame = batch.get(signal_name)
-    if frame is None:
-        raise ValueError(f"signal-noise batch did not return signal: {signal_name}")
+    frame = _load_price_frame_from_signal_noise(base_url=base_url, signal_name=signal_name)
     return build_cycle_input_from_frame(
         frame=frame,
         date=date,
@@ -126,11 +127,7 @@ def build_cycle_inputs_from_signal_noise(
     base_url: str,
     signal_name: str = DEFAULT_PRICE_SIGNAL,
 ) -> list[CycleInput]:
-    client = build_signal_client(base_url=base_url)
-    batch = client.get_batch([signal_name], columns=["close"], resolution="1d")
-    frame = batch.get(signal_name)
-    if frame is None:
-        raise ValueError(f"signal-noise batch did not return signal: {signal_name}")
+    frame = _load_price_frame_from_signal_noise(base_url=base_url, signal_name=signal_name)
     return build_cycle_inputs_from_frame(
         frame=frame,
         start_date=start_date,

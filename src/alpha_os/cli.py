@@ -244,8 +244,7 @@ def cmd_register_hypothesis(args: argparse.Namespace) -> int:
 def _cmd_change_hypothesis_status(
     args: argparse.Namespace,
     *,
-    new_status: str,
-    allowed_from: tuple[str, ...],
+    action: str,
     verb: str,
 ) -> int:
     cfg = build_config(db_path=args.db)
@@ -253,8 +252,7 @@ def _cmd_change_hypothesis_status(
     try:
         hypothesis = store.set_hypothesis_status(
             args.hypothesis_id,
-            new_status=new_status,
-            allowed_from=allowed_from,
+            action=action,
         )
     finally:
         store.close()
@@ -270,8 +268,7 @@ def _cmd_change_hypothesis_status(
 def cmd_pause_hypothesis(args: argparse.Namespace) -> int:
     return _cmd_change_hypothesis_status(
         args,
-        new_status="paused",
-        allowed_from=("live",),
+        action="pause",
         verb="paused",
     )
 
@@ -279,8 +276,7 @@ def cmd_pause_hypothesis(args: argparse.Namespace) -> int:
 def cmd_resume_hypothesis(args: argparse.Namespace) -> int:
     return _cmd_change_hypothesis_status(
         args,
-        new_status="active",
-        allowed_from=("paused",),
+        action="resume",
         verb="resumed",
     )
 
@@ -288,8 +284,7 @@ def cmd_resume_hypothesis(args: argparse.Namespace) -> int:
 def cmd_retire_hypothesis(args: argparse.Namespace) -> int:
     return _cmd_change_hypothesis_status(
         args,
-        new_status="retired",
-        allowed_from=("active", "paused"),
+        action="retire",
         verb="retired",
     )
 
