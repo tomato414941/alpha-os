@@ -1,178 +1,361 @@
-"""Intensive alpha generation session — run many rounds with high budget."""
-import sys
+"""Intensive random DSL discovery for the current hypotheses-first runtime."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import logging
+import random
 import time
-import numpy as np
+from datetime import date
 from pathlib import Path
 
-from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
-from alpha_os.data.store import DataStore
-from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import build_feature_list, price_signal, stratified_feature_subset
-from alpha_os.dsl import parse, to_string
-from alpha_os.dsl.generator import AlphaGenerator
-from alpha_os.dsl.evaluator import FAILED_FITNESS, sanitize_signal
-from alpha_os.evolution.behavior import compute_behavior
-from alpha_os.evolution.discovery_pool import DiscoveryPool
-from alpha_os.legacy.admission_queue import CandidateSeed
-from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-from alpha_os.research.cross_asset import evaluate_cross_asset
-from datetime import date
-import random
-import logging
+import numpy as np
+
+from alpha_os_recovery.config import Config, HYPOTHESES_DB, SIGNAL_CACHE_DB
+from alpha_os_recovery.data.eval_universe import (
+    load_cached_eval_universe,
+    save_eval_universe,
+    select_eval_universe,
+)
+from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.data.universe import (
+    CROSS_ASSET_UNIVERSE,
+    build_feature_list,
+    price_signal,
+    stratified_feature_subset,
+)
+from alpha_os_recovery.dsl import parse, to_string
+from alpha_os_recovery.dsl.evaluator import FAILED_FITNESS, sanitize_signal
+from alpha_os_recovery.dsl.generator import AlphaGenerator
+from alpha_os_recovery.evolution.behavior import compute_behavior
+from alpha_os_recovery.evolution.discovery_pool import DiscoveryPool
+from alpha_os_recovery.hypotheses.identity import expression_feature_names, expression_semantic_key
+from alpha_os_recovery.hypotheses.sleeve_scope import with_scope_asset
+from alpha_os_recovery.hypotheses.store import (
+    HypothesisKind,
+    HypothesisRecord,
+    HypothesisStatus,
+    HypothesisStore,
+)
+from alpha_os_recovery.research.cross_asset import evaluate_cross_asset
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-EVAL_UNIVERSE = None  # auto-selected at runtime
+RANDOM_DSL_METADATA = {
+    "generator": "generate_boost",
+    "research_quality_source": "exploratory_unscored",
+    "research_quality_status": "unscored",
+    "registration_stage": "observation_only",
+}
 
-N_ROUNDS = int(sys.argv[1]) if len(sys.argv) > 1 else 20
-BUDGET = int(sys.argv[2]) if len(sys.argv) > 2 else 300
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run an intensive random DSL discovery session against hypotheses.db",
+    )
+    parser.add_argument("rounds", nargs="?", type=int, default=20)
+    parser.add_argument("budget", nargs="?", type=int, default=300)
+    parser.add_argument("--asset", type=str, default="BTC")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="/home/dev/.config/alpha-os/prod.toml",
+    )
+    return parser.parse_args()
 
 
-def main():
-    cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
-    client = build_signal_client_from_config(cfg.api)
-    store = DataStore(SIGNAL_CACHE_DB, client)
+def dsl_hypothesis_id(expression: str) -> str:
+    semantic_key = expression_semantic_key(expression)
+    digest = hashlib.md5(
+        semantic_key.encode(),
+        usedforsecurity=False,
+    ).hexdigest()[:16]
+    return f"dsl_{digest}"
 
-    all_features = build_feature_list("BTC")
 
-    # Load data once
-    logger.info("Loading data...")
-    from alpha_os.data.universe import CROSS_ASSET_UNIVERSE
-    ps = price_signal("BTC")
-    load_features = sorted({ps} | set(CROSS_ASSET_UNIVERSE) | set(all_features[:100]))
-    matrix = store.get_matrix(load_features, end=date.today().isoformat())
-    if matrix is None or len(matrix) < 200:
-        logger.error("Insufficient data")
-        return
-    data = {col: matrix[col].values for col in matrix.columns}
-    prices = data[ps]
-    first_valid = np.argmax(np.isfinite(prices))
-    logger.info("Data loaded: %d rows, %d features, BTC from index %d", len(matrix), len(data), first_valid)
+def load_runtime_dsl_records(
+    hypothesis_store: HypothesisStore,
+    *,
+    asset: str,
+) -> list[HypothesisRecord]:
+    records = hypothesis_store.list_capital_backed(asset=asset)
+    return [
+        record
+        for record in records
+        if record.kind == HypothesisKind.DSL and record.expression
+    ]
 
-    # Use cached eval universe; recompute only if missing
-    global EVAL_UNIVERSE
-    from alpha_os.data.eval_universe import load_cached_eval_universe, save_eval_universe, select_eval_universe
-    EVAL_UNIVERSE = load_cached_eval_universe()
-    if not EVAL_UNIVERSE:
-        EVAL_UNIVERSE = select_eval_universe(data, CROSS_ASSET_UNIVERSE, n_clusters=20, min_finite_days=500)
-        if EVAL_UNIVERSE:
-            save_eval_universe(EVAL_UNIVERSE)
-    logger.info("Eval universe (%d): %s", len(EVAL_UNIVERSE), EVAL_UNIVERSE)
 
-    archive = DiscoveryPool()
-    adir = asset_data_dir("BTC")
-    reg = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
-
-    # Seed archive with existing deployed alphas (known positive residual fitness)
-    deployed_ids = reg.deployed_alpha_ids()
-    n_seeded = 0
-    for aid in deployed_ids:
-        record = reg.get(aid)
-        if not record:
-            continue
+def seed_archive(
+    archive: DiscoveryPool,
+    *,
+    records: list[HypothesisRecord],
+    objective: str,
+    data: dict[str, np.ndarray],
+    prices: np.ndarray,
+) -> tuple[int, int]:
+    seeded = 0
+    skipped = 0
+    for record in records:
         try:
             expr = parse(record.expression)
             sig = sanitize_signal(expr.evaluate(data))
             if sig.ndim == 0:
                 sig = np.full(len(prices), float(sig))
             behavior = compute_behavior(sig, expr, prices=prices)
-            archive.store_candidate(expr, behavior, sig, fitness=record.fitness)
-            n_seeded += 1
+            archive.store_candidate(
+                expr,
+                behavior,
+                sig,
+                fitness=record.oos_fitness(objective),
+            )
+            seeded += 1
         except Exception:
-            continue
-    logger.info("Seeded archive with %d deployed alphas (archive size: %d)", n_seeded, archive.size)
+            skipped += 1
+    return seeded, skipped
 
-    total_candidates = 0
-    total_positive = 0
-    total_queued = 0
 
-    for round_idx in range(N_ROUNDS):
-        t0 = time.perf_counter()
-        seed = int(time.time()) ^ round_idx
-        rng = random.Random(seed)
+def register_candidate(
+    hypothesis_store: HypothesisStore,
+    *,
+    expression: str,
+    asset: str,
+    fitness: float,
+    round_idx: int,
+) -> bool:
+    hypothesis_id = dsl_hypothesis_id(expression)
+    existing = hypothesis_store.get(hypothesis_id)
+    if existing is not None:
+        return False
 
-        k = cfg.alpha_generator.feature_subset_k
-        subset = stratified_feature_subset(all_features, k=k, seed=seed)
-        available = [f for f in list(subset) if f in data]
+    hypothesis_store.register(
+        HypothesisRecord(
+            hypothesis_id=hypothesis_id,
+            kind=HypothesisKind.DSL,
+            name=expression[:120],
+            definition={"expression": expression},
+            status=HypothesisStatus.ACTIVE,
+            stake=0.0,
+            scope=with_scope_asset(None, asset),
+            source="random_dsl",
+            metadata={
+                **RANDOM_DSL_METADATA,
+                "boost_mean_cross_asset_fitness": float(fitness),
+                "boost_round": int(round_idx),
+                "boost_registered_at": time.time(),
+            },
+        )
+    )
+    return True
 
-        generator = AlphaGenerator(
-            list(data.keys()),
-            feature_subset=frozenset(available),
-            seed=seed,
+
+def fallback_eval_universe(
+    data: dict[str, np.ndarray],
+    *,
+    asset_price_signal: str,
+) -> list[str]:
+    fallback = [
+        signal
+        for signal in CROSS_ASSET_UNIVERSE
+        if signal in data and int(np.isfinite(data[signal]).sum()) >= 200
+    ]
+    if fallback:
+        return fallback
+    if asset_price_signal in data:
+        return [asset_price_signal]
+    return []
+
+
+def main() -> None:
+    args = parse_args()
+    asset = str(args.asset).upper()
+    cfg = Config.load(Path(args.config))
+    client = build_signal_client_from_config(cfg.api)
+    store = DataStore(SIGNAL_CACHE_DB, client)
+    hypothesis_store = HypothesisStore(HYPOTHESES_DB)
+
+    seed_records = load_runtime_dsl_records(hypothesis_store, asset=asset)
+    seed_required_features = {
+        feature
+        for record in seed_records
+        for feature in expression_feature_names(record.expression)
+    }
+
+    all_features = build_feature_list(asset)
+
+    logger.info("Loading data...")
+    asset_price_signal = price_signal(asset)
+    load_features = sorted(
+        {asset_price_signal}
+        | set(CROSS_ASSET_UNIVERSE)
+        | set(all_features[:100])
+        | seed_required_features
+    )
+    matrix = store.get_matrix(load_features, end=date.today().isoformat())
+    store.close()
+    if matrix is None or len(matrix) < 200:
+        logger.error("Insufficient data")
+        return
+    data = {col: matrix[col].values for col in matrix.columns}
+    prices = data[asset_price_signal]
+    first_valid = int(np.argmax(np.isfinite(prices)))
+    logger.info(
+        "Data loaded: %d rows, %d features, %s from index %d",
+        len(matrix),
+        len(data),
+        asset,
+        first_valid,
+    )
+
+    eval_universe = load_cached_eval_universe()
+    if not eval_universe:
+        eval_universe = select_eval_universe(
+            data,
+            CROSS_ASSET_UNIVERSE,
+            n_clusters=20,
+            min_finite_days=500,
+        )
+        if eval_universe:
+            save_eval_universe(eval_universe)
+    if not eval_universe:
+        eval_universe = fallback_eval_universe(
+            data,
+            asset_price_signal=asset_price_signal,
+        )
+        if eval_universe:
+            logger.warning(
+                "Falling back to a non-clustered evaluation universe (%d assets)",
+                len(eval_universe),
+            )
+    if not eval_universe:
+        logger.error("No evaluation universe available")
+        return
+    logger.info("Eval universe (%d): %s", len(eval_universe), eval_universe)
+
+    archive = DiscoveryPool()
+    try:
+        seeded, skipped_seed = seed_archive(
+            archive,
+            records=seed_records,
+            objective=cfg.portfolio.objective,
+            data=data,
+            prices=prices,
+        )
+        logger.info(
+            "Seeded archive with %d runtime hypotheses (skipped=%d, archive size=%d)",
+            seeded,
+            skipped_seed,
+            archive.size,
         )
 
-        # Generate candidates: 70% archive mutations + 30% random
-        candidates = []
-        if archive.size > 0:
-            n_mutate = int(BUDGET * 0.7)
-            elites = archive.sample(min(n_mutate, archive.size), rng=rng)
-            for entry in elites:
-                candidates.append(generator.mutate(entry.expr))
+        total_candidates = 0
+        total_positive = 0
+        total_registered = 0
 
-        n_random = BUDGET - len(candidates)
-        candidates.extend(generator.generate_random(n_random, max_depth=cfg.generation.max_depth))
+        for round_idx in range(args.rounds):
+            started = time.perf_counter()
+            seed = int(time.time()) ^ round_idx
+            rng = random.Random(seed)
 
-        n_positive = 0
-        queued = []
+            subset = stratified_feature_subset(
+                all_features,
+                k=cfg.alpha_generator.feature_subset_k,
+                seed=seed,
+            )
+            available = [feature for feature in subset if feature in data]
 
-        for expr in candidates:
-            try:
-                expr_str = to_string(expr)
-                per_asset = evaluate_cross_asset(
-                    expr_str, data, EVAL_UNIVERSE,
-                    fitness_metric=cfg.fitness_metric,
-                    commission_pct=cfg.backtest.commission_pct,
-                    slippage_pct=cfg.backtest.slippage_pct,
-                    allow_short=True,
-                    benchmark_assets=cfg.backtest.benchmark_assets,
+            generator = AlphaGenerator(
+                list(data.keys()),
+                feature_subset=frozenset(available),
+                seed=seed,
+            )
+
+            candidates = []
+            if archive.size > 0:
+                n_mutate = int(args.budget * 0.7)
+                elites = archive.sample(min(n_mutate, archive.size), rng=rng)
+                for entry in elites:
+                    candidates.append(generator.mutate(entry.expr))
+
+            n_random = args.budget - len(candidates)
+            candidates.extend(
+                generator.generate_random(
+                    n_random,
+                    max_depth=cfg.generation.max_depth,
                 )
-                if not per_asset:
-                    continue
-                fitness = float(np.mean(list(per_asset.values())))
-                if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
-                    continue
+            )
 
-                n_positive += 1
+            positive = 0
+            registered = 0
 
-                sig = sanitize_signal(expr.evaluate(data))
-                if sig.ndim == 0:
-                    sig = np.full(len(prices), float(sig))
-                behavior = compute_behavior(sig, expr, prices=prices)
-                archive.store_candidate(expr, behavior, sig, fitness=fitness)
+            for expr in candidates:
+                try:
+                    expr_str = to_string(expr)
+                    per_asset = evaluate_cross_asset(
+                        expr_str,
+                        data,
+                        eval_universe,
+                        fitness_metric=cfg.portfolio.objective,
+                        commission_pct=cfg.backtest.commission_pct,
+                        slippage_pct=cfg.backtest.slippage_pct,
+                        allow_short=True,
+                        benchmark_assets=cfg.backtest.benchmark_assets,
+                    )
+                    if not per_asset:
+                        continue
+                    fitness = float(np.mean(list(per_asset.values())))
+                    if not np.isfinite(fitness) or fitness <= FAILED_FITNESS:
+                        continue
 
-                if fitness > 0:
-                    queued.append(CandidateSeed(
+                    positive += 1
+
+                    sig = sanitize_signal(expr.evaluate(data))
+                    if sig.ndim == 0:
+                        sig = np.full(len(prices), float(sig))
+                    behavior = compute_behavior(sig, expr, prices=prices)
+                    archive.store_candidate(expr, behavior, sig, fitness=fitness)
+
+                    if fitness > 0 and register_candidate(
+                        hypothesis_store,
                         expression=expr_str,
-                        source="generate_boost",
+                        asset=asset,
                         fitness=fitness,
-                    ))
-            except Exception:
-                continue
+                        round_idx=round_idx + 1,
+                    ):
+                        registered += 1
+                except Exception:
+                    continue
 
-        if queued:
-            n_q = reg.queue_candidates(queued)
-            total_queued += n_q
+            total_candidates += len(candidates)
+            total_positive += positive
+            total_registered += registered
+            elapsed = time.perf_counter() - started
 
-        total_candidates += len(candidates)
-        total_positive += n_positive
-        elapsed = time.perf_counter() - t0
+            logger.info(
+                "Round %d/%d: %d candidates, %d positive (%.1f%%), %d registered, %.1fs, archive=%d",
+                round_idx + 1,
+                args.rounds,
+                len(candidates),
+                positive,
+                100 * positive / max(len(candidates), 1),
+                registered,
+                elapsed,
+                archive.size,
+            )
 
         logger.info(
-            "Round %d/%d: %d candidates, %d positive (%.1f%%), %d queued, %.1fs, archive=%d",
-            round_idx + 1, N_ROUNDS, len(candidates), n_positive,
-            100 * n_positive / max(len(candidates), 1),
-            len(queued), elapsed, archive.size,
+            "DONE: %d rounds, %d total candidates, %d positive (%.1f%%), %d registered to hypotheses.db",
+            args.rounds,
+            total_candidates,
+            total_positive,
+            100 * total_positive / max(total_candidates, 1),
+            total_registered,
         )
-
-    reg.close()
-
-    logger.info(
-        "DONE: %d rounds, %d total candidates, %d positive (%.1f%%), %d queued to registry",
-        N_ROUNDS, total_candidates, total_positive,
-        100 * total_positive / max(total_candidates, 1),
-        total_queued,
-    )
+    finally:
+        hypothesis_store.close()
 
 
 if __name__ == "__main__":

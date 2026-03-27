@@ -1,29 +1,44 @@
 """Historical backtest of the cross-sectional trading strategy.
 
-Simulates the CrossSectionalTrader logic over 2 years of data:
-1. Load deployed alphas from BTC registry
-2. For each day: evaluate alphas → per-asset TC signal → neutralize → allocate
+Simulates a bounded cross-sectional runtime over historical data:
+1. Load capital-backed BTC DSL hypotheses from `hypotheses.db`
+2. For each day: evaluate hypotheses -> per-asset TC signal -> neutralize -> allocate
 3. Track portfolio P&L across BTC, ETH, SOL
 """
-import numpy as np
-from pathlib import Path
-from datetime import date
 
-from alpha_os.config import Config, SIGNAL_CACHE_DB, asset_data_dir
-from alpha_os.data.store import DataStore
-from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import build_feature_list, price_signal
-from alpha_os.dsl import parse
-from alpha_os.dsl.evaluator import normalize_signal, sanitize_signal
-from alpha_os.hypotheses.combiner import (
+from datetime import date
+from pathlib import Path
+
+import numpy as np
+
+from alpha_os_recovery.config import Config, HYPOTHESES_DB, SIGNAL_CACHE_DB
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+from alpha_os_recovery.data.universe import build_feature_list, price_signal
+from alpha_os_recovery.dsl import parse
+from alpha_os_recovery.dsl.evaluator import normalize_signal, sanitize_signal
+from alpha_os_recovery.hypotheses.combiner import (
     compute_tc_scores,
     compute_tc_weights,
     cross_asset_neutralize,
     weighted_combine_scalar,
 )
-from alpha_os.backtest.benchmark import build_benchmark_returns
-from alpha_os.backtest import metrics
-from alpha_os.legacy.managed_alphas import ManagedAlphaStore
+from alpha_os_recovery.backtest.benchmark import build_benchmark_returns
+from alpha_os_recovery.backtest import metrics
+from alpha_os_recovery.hypotheses.store import HypothesisKind, HypothesisStore
+
+
+def load_runtime_dsl_hypotheses(*, asset: str) -> list:
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        records = store.list_capital_backed(asset=asset)
+    finally:
+        store.close()
+    return [
+        record
+        for record in records
+        if record.kind == HypothesisKind.DSL and record.expression
+    ]
 
 
 def run_backtest():
@@ -35,8 +50,15 @@ def run_backtest():
     price_sigs = {a: price_signal(a) for a in tradeable}
 
     # Load data
-    features = build_feature_list("BTC")
+    features = sorted(
+        {
+            feature
+            for asset in tradeable
+            for feature in build_feature_list(asset)
+        }
+    )
     matrix = store.get_matrix(features, end=date.today().isoformat())
+    store.close()
     data = {col: matrix[col].values for col in matrix.columns}
     print(f"Data: {len(matrix)} rows, {len(data)} features")
 
@@ -55,28 +77,22 @@ def run_backtest():
     T = len(matrix) - common_start
     print(f"Common range: index {common_start} to {len(matrix)} ({T} days)")
 
-    # Load deployed alphas
-    adir = asset_data_dir("BTC")
-    reg = ManagedAlphaStore(db_path=adir / "alpha_registry.db")
-    deployed_ids = reg.deployed_alpha_ids()
-    print(f"Deployed alphas: {len(deployed_ids)}")
+    records = load_runtime_dsl_hypotheses(asset="BTC")
+    print(f"Capital-backed DSL hypotheses: {len(records)}")
 
-    # Parse and pre-evaluate all alphas
-    alpha_signals = {}  # alpha_id -> full signal array
-    for aid in deployed_ids:
-        record = reg.get(aid)
-        if not record:
-            continue
+    # Parse and pre-evaluate all hypotheses
+    hypothesis_signals = {}
+    skipped = 0
+    for record in records:
         try:
             expr = parse(record.expression)
             sig = sanitize_signal(expr.evaluate(data))
             if sig.ndim == 0:
                 sig = np.full(len(matrix), float(sig))
-            alpha_signals[aid] = normalize_signal(sig)
+            hypothesis_signals[record.hypothesis_id] = normalize_signal(sig)
         except Exception:
-            continue
-    reg.close()
-    print(f"Evaluable alphas: {len(alpha_signals)}")
+            skipped += 1
+    print(f"Evaluable hypotheses: {len(hypothesis_signals)} (skipped={skipped})")
 
     build_benchmark_returns(data, cfg.backtest.benchmark_assets)
 
@@ -108,11 +124,11 @@ def run_backtest():
         # Get alpha signals at time t (use t-1 as "yesterday")
         day_alpha_signals = {}
         day_alpha_arrays = {}
-        for aid, sig_arr in alpha_signals.items():
+        for hypothesis_id, sig_arr in hypothesis_signals.items():
             val = float(sig_arr[t - 1])
             if np.isfinite(val):
-                day_alpha_signals[aid] = val
-                day_alpha_arrays[aid] = sig_arr[:t]
+                day_alpha_signals[hypothesis_id] = val
+                day_alpha_arrays[hypothesis_id] = sig_arr[:t]
 
         if not day_alpha_signals:
             daily_returns.append(0.0)

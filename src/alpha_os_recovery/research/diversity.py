@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from typing import Protocol
 
 import numpy as np
 
-from ..legacy.registry_types import AlphaRecord
 from ..data.universe import infer_feature_family
 from ..dsl import parse
 from ..dsl.evaluator import EvaluationError, evaluate_expression, normalize_signal
@@ -91,8 +91,22 @@ class DiversityReport:
         }
 
 
+class SupportsExpression(Protocol):
+    expression: str
+
+
 def infer_feature_families(feature_names: set[str]) -> list[str]:
     return sorted({infer_feature_family(name) for name in feature_names})
+
+
+def _record_id(record: object) -> str:
+    hypothesis_id = getattr(record, "hypothesis_id", None)
+    if isinstance(hypothesis_id, str) and hypothesis_id:
+        return hypothesis_id
+    alpha_id = getattr(record, "alpha_id", None)
+    if isinstance(alpha_id, str) and alpha_id:
+        return alpha_id
+    raise AttributeError("diversity records must expose hypothesis_id or alpha_id")
 
 
 def expression_structure_signature(expr: Expr) -> set[str]:
@@ -182,14 +196,14 @@ def _signal_abs_correlation_matrix(signals: np.ndarray) -> np.ndarray:
 
 
 def analyze_diversity(
-    records: list[AlphaRecord],
+    records: list[SupportsExpression],
     data: dict[str, np.ndarray],
     n_days: int,
     *,
     lookback: int = 252,
     top_pairs: int = 10,
 ) -> DiversityReport:
-    analyzed_records: list[AlphaRecord] = []
+    analyzed_ids: list[str] = []
     feature_sets: list[set[str]] = []
     family_sets: list[list[str]] = []
     structure_sets: list[set[str]] = []
@@ -199,11 +213,12 @@ def analyze_diversity(
     feature_usage_counts: dict[str, int] = {}
 
     for record in records:
+        record_id = _record_id(record)
         try:
             expr = parse(record.expression)
             signal = normalize_signal(evaluate_expression(expr, data, n_days))
         except (EvaluationError, Exception):
-            skipped_ids.append(record.alpha_id)
+            skipped_ids.append(record_id)
             continue
 
         names = collect_feature_names(expr)
@@ -212,11 +227,11 @@ def analyze_diversity(
         structure_sets.append(expression_structure_signature(expr))
         node_counts.append(len(_collect_nodes(expr)))
         signal_rows.append(np.asarray(signal, dtype=np.float64)[-lookback:])
-        analyzed_records.append(record)
+        analyzed_ids.append(record_id)
         for name in names:
             feature_usage_counts[name] = feature_usage_counts.get(name, 0) + 1
 
-    n_analyzed = len(analyzed_records)
+    n_analyzed = len(analyzed_ids)
     if n_analyzed == 0:
         summary = DiversitySummary(
             n_records=len(records),
@@ -278,7 +293,7 @@ def analyze_diversity(
 
     rows: list[AlphaDiversityRow] = []
     redundant_pairs: list[AlphaPairSimilarity] = []
-    for idx, record in enumerate(analyzed_records):
+    for idx, record_id in enumerate(analyzed_ids):
         if n_analyzed > 1:
             mean_signal = float(
                 np.delete(signal_corr[idx], idx).mean()
@@ -299,7 +314,7 @@ def analyze_diversity(
             mean_composite = 0.0
         rows.append(
             AlphaDiversityRow(
-                alpha_id=record.alpha_id,
+                alpha_id=record_id,
                 feature_names=sorted(feature_sets[idx]),
                 feature_families=family_sets[idx],
                 node_count=node_counts[idx],
@@ -312,8 +327,8 @@ def analyze_diversity(
         for other_idx in range(idx + 1, n_analyzed):
             redundant_pairs.append(
                 AlphaPairSimilarity(
-                    alpha_id_a=record.alpha_id,
-                    alpha_id_b=analyzed_records[other_idx].alpha_id,
+                    alpha_id_a=record_id,
+                    alpha_id_b=analyzed_ids[other_idx],
                     abs_signal_correlation=float(signal_corr[idx, other_idx]),
                     feature_overlap=float(feature_overlap[idx, other_idx]),
                     structure_overlap=float(structure_overlap[idx, other_idx]),

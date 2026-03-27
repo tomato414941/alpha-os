@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 
 import pytest
 
-from alpha_os.legacy.managed_alphas import AlphaRecord
-from alpha_os.research.diversity import analyze_diversity, infer_feature_families
+from alpha_os_recovery.research.diversity import analyze_diversity, infer_feature_families
+
+
+@dataclass(frozen=True)
+class HypothesisRecord:
+    hypothesis_id: str
+    expression: str
 
 
 def test_infer_feature_families_uses_runtime_domains():
@@ -26,9 +33,9 @@ def test_analyze_diversity_surfaces_redundant_pairs():
         "sp500": np.sin(np.linspace(0.0, 4.0, 80)),
     }
     records = [
-        AlphaRecord(alpha_id="a", expression="book_imbalance_btc"),
-        AlphaRecord(alpha_id="b", expression="(neg book_imbalance_btc)"),
-        AlphaRecord(alpha_id="c", expression="sp500"),
+        HypothesisRecord(hypothesis_id="a", expression="book_imbalance_btc"),
+        HypothesisRecord(hypothesis_id="b", expression="(neg book_imbalance_btc)"),
+        HypothesisRecord(hypothesis_id="c", expression="sp500"),
     ]
 
     report = analyze_diversity(records, data, n_days=80, lookback=60, top_pairs=2)
