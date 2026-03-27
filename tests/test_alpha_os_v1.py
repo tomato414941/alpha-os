@@ -62,7 +62,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     capsys.readouterr()
     rc = main(
         [
-            "run-cycle",
+            "apply-cycle",
             "--db",
             str(db_path),
             "--date",
@@ -80,7 +80,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     status_rc = main(["status", "--db", str(db_path)])
     assert status_rc == 0
     output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
     assert "alpha-os v1 status" in output
     assert "Live:     1" in output
 
@@ -105,14 +105,14 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
         conn.close()
 
 
-def test_run_cycle_is_idempotent_for_same_cycle_id(tmp_path, capsys):
+def test_run_cycle_is_idempotent_for_same_evaluation_id(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
     _register_hypothesis(main, db_path, "hyp_1")
     capsys.readouterr()
     args = [
-        "run-cycle",
+        "apply-cycle",
         "--db",
         str(db_path),
         "--date",
@@ -127,11 +127,11 @@ def test_run_cycle_is_idempotent_for_same_cycle_id(tmp_path, capsys):
 
     assert main(args) == 0
     first_output = capsys.readouterr().out
-    assert "Cycle [created]" in first_output
+    assert "Evaluation [created]" in first_output
 
     assert main(args) == 0
     second_output = capsys.readouterr().out
-    assert "Cycle [existing]" in second_output
+    assert "Evaluation [existing]" in second_output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -150,24 +150,52 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
 
     db_path = tmp_path / "runtime.db"
 
-    _register_hypothesis(main, db_path, "hyp_1")
+    _register_hypothesis(main, db_path, "momentum_1d")
     first_output = capsys.readouterr().out
-    assert "Hypothesis [created] hyp_1" in first_output
+    assert "Hypothesis [created] momentum_1d" in first_output
+    assert "Kind:     momentum" in first_output
+    assert "Signal:   btc_ohlcv" in first_output
+    assert "Lookback: 1" in first_output
 
-    _register_hypothesis(main, db_path, "hyp_1")
+    _register_hypothesis(main, db_path, "momentum_1d")
     second_output = capsys.readouterr().out
-    assert "Hypothesis [existing] hyp_1" in second_output
+    assert "Hypothesis [existing] momentum_1d" in second_output
 
     conn = sqlite3.connect(db_path)
     try:
         row = conn.execute(
             """
-            SELECT status, quality, allocation_trust, prediction_count, observation_count
+            SELECT kind, signal_name, lookback, status, quality, allocation_trust,
+                   prediction_count, observation_count
+            FROM hypotheses
+            WHERE hypothesis_id = 'momentum_1d'
+            """
+        ).fetchone()
+        assert row == ("momentum", "btc_ohlcv", 1, "registered", 0.0, 0.0, 0, 0)
+    finally:
+        conn.close()
+
+
+def test_register_hypothesis_keeps_unknown_definition_nullable(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    _register_hypothesis(main, db_path, "hyp_1")
+    output = capsys.readouterr().out
+    assert "Hypothesis [created] hyp_1" in output
+    assert "Kind:" not in output
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT kind, signal_name, lookback, status
             FROM hypotheses
             WHERE hypothesis_id = 'hyp_1'
             """
         ).fetchone()
-        assert row == ("registered", 0.0, 0.0, 0, 0)
+        assert row == (None, None, None, "registered")
     finally:
         conn.close()
 
@@ -205,7 +233,7 @@ def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):
             """
             SELECT value
             FROM predictions
-            WHERE cycle_id = 'BTC:residual_return_1d:2026-03-26'
+            WHERE evaluation_id = 'BTC:residual_return_1d:2026-03-26'
               AND hypothesis_id = 'hyp_1'
             """
         ).fetchone()
@@ -269,7 +297,7 @@ def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
             """
             SELECT value
             FROM observations
-            WHERE cycle_id = 'BTC:residual_return_1d:2026-03-26'
+            WHERE evaluation_id = 'BTC:residual_return_1d:2026-03-26'
             """
         ).fetchone()
         count = conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
@@ -291,7 +319,7 @@ def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):
     assert (
         main(
             [
-                "run-cycle",
+                "apply-cycle",
                 "--db",
                 str(db_path),
                 "--date",
@@ -308,7 +336,7 @@ def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):
     )
 
     output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -332,7 +360,7 @@ def test_run_cycle_reuses_pre_recorded_observation(tmp_path, capsys):
     assert (
         main(
             [
-                "run-cycle",
+                "apply-cycle",
                 "--db",
                 str(db_path),
                 "--date",
@@ -349,7 +377,7 @@ def test_run_cycle_reuses_pre_recorded_observation(tmp_path, capsys):
     )
 
     output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -386,7 +414,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
     )
 
     output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -404,7 +432,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
         conn.close()
 
 
-def test_update_state_is_idempotent_for_same_cycle(tmp_path, capsys):
+def test_update_state_is_idempotent_for_same_evaluation(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -424,11 +452,11 @@ def test_update_state_is_idempotent_for_same_cycle(tmp_path, capsys):
     ]
     assert main(args) == 0
     first_output = capsys.readouterr().out
-    assert "Cycle [created]" in first_output
+    assert "Evaluation [created]" in first_output
 
     assert main(args) == 0
     second_output = capsys.readouterr().out
-    assert "Cycle [existing]" in second_output
+    assert "Evaluation [existing]" in second_output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -442,6 +470,89 @@ def test_update_state_is_idempotent_for_same_cycle(tmp_path, capsys):
         ).fetchone()
         assert snapshot_count == 1
         assert state_row == ("registered", 1, 1)
+    finally:
+        conn.close()
+
+
+def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+    _register_hypothesis(main, db_path, "momentum_1d")
+    _register_hypothesis(main, db_path, "reversal_1d")
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "apply-cycle",
+                "--db",
+                str(db_path),
+                "--date",
+                "2026-03-26",
+                "--hypothesis-id",
+                "momentum_1d",
+                "--prediction",
+                "0.25",
+                "--observation",
+                "0.1",
+            ]
+        )
+        == 0
+    )
+    first_output = capsys.readouterr().out
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in first_output
+    assert "Hyp:      momentum_1d" in first_output
+
+    assert (
+        main(
+            [
+                "apply-cycle",
+                "--db",
+                str(db_path),
+                "--date",
+                "2026-03-26",
+                "--hypothesis-id",
+                "reversal_1d",
+                "--prediction",
+                "-0.25",
+                "--observation",
+                "0.1",
+            ]
+        )
+        == 0
+    )
+    second_output = capsys.readouterr().out
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in second_output
+    assert "Hyp:      reversal_1d" in second_output
+
+    conn = sqlite3.connect(db_path)
+    try:
+        prediction_count = conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0]
+        observation_count = conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
+        snapshot_count = conn.execute("SELECT COUNT(*) FROM cycle_snapshots").fetchone()[0]
+        rows = conn.execute(
+            """
+            SELECT evaluation_id, hypothesis_id
+            FROM cycle_snapshots
+            ORDER BY hypothesis_id
+            """
+        ).fetchall()
+        latest = conn.execute(
+            """
+            SELECT latest_evaluation_id, latest_hypothesis_id
+            FROM sleeve_state
+            WHERE asset = 'BTC' AND target = 'residual_return_1d'
+            """
+        ).fetchone()
+        assert prediction_count == 2
+        assert observation_count == 1
+        assert snapshot_count == 2
+        assert rows == [
+            ("BTC:residual_return_1d:2026-03-26", "momentum_1d"),
+            ("BTC:residual_return_1d:2026-03-26", "reversal_1d"),
+        ]
+        assert latest == ("BTC:residual_return_1d:2026-03-26", "reversal_1d")
     finally:
         conn.close()
 
@@ -528,17 +639,17 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
         == 0
     )
     update_output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-26" in update_output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in update_output
 
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
     assert "alpha-os v1 status" in status_output
-    assert "Latest:   BTC:residual_return_1d:2026-03-26" in status_output
+    assert "Latest:   BTC:residual_return_1d:2026-03-26 / hyp_1" in status_output
     assert "Trust:    total=" in status_output
 
     assert main(["show-cycles", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
-    assert "alpha-os v1 cycles" in cycles_output
+    assert "alpha-os v1 evaluations" in cycles_output
     assert "Count:    1" in cycles_output
     assert "source=-" in cycles_output
 
@@ -708,7 +819,7 @@ def test_run_cycle_rejects_mismatched_pre_recorded_observation(tmp_path):
     try:
         main(
             [
-                "run-cycle",
+                "apply-cycle",
                 "--db",
                 str(db_path),
                 "--date",
@@ -735,7 +846,7 @@ def test_run_cycle_rejects_unregistered_hypothesis(tmp_path):
     try:
         main(
             [
-                "run-cycle",
+                "apply-cycle",
                 "--db",
                 str(db_path),
                 "--date",
@@ -763,7 +874,7 @@ def test_init_db_creates_empty_runtime(tmp_path, capsys):
 
     output = capsys.readouterr().out
     assert "Initialized v1 db" in output
-    assert "no cycles recorded" in output
+    assert "no evaluations recorded" in output
 
 
 def test_ensure_schema_normalizes_legacy_active_and_live_statuses(tmp_path):

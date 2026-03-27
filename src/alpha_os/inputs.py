@@ -13,7 +13,7 @@ class CycleInput:
     hypothesis_id: str
     prediction: float
     observation: float
-    cycle_id: str | None = None
+    evaluation_id: str | None = None
     asset: str = DEFAULT_ASSET
     target: str = DEFAULT_TARGET
 
@@ -37,14 +37,14 @@ def _parse_cycle_input(item: object, *, source: Path) -> CycleInput:
     except KeyError as exc:
         raise ValueError(f"{source}: missing required key {exc.args[0]}") from exc
 
-    cycle_id_obj = item.get("cycle_id")
-    cycle_id = None if cycle_id_obj is None else str(cycle_id_obj)
+    evaluation_id_obj = item.get("evaluation_id")
+    evaluation_id = None if evaluation_id_obj is None else str(evaluation_id_obj)
     return CycleInput(
         date=date,
         hypothesis_id=hypothesis_id,
         prediction=prediction,
         observation=observation,
-        cycle_id=cycle_id,
+        evaluation_id=evaluation_id,
         asset=asset,
         target=target,
     )

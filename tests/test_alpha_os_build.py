@@ -36,11 +36,11 @@ def test_build_cycle_input_from_frame_uses_prev_and_next_close():
     cycle_input = build_cycle_input_from_frame(
         frame=frame,
         date="2026-03-27",
-        hypothesis_id="hyp_momo",
+        hypothesis_id="momentum_1d",
     )
 
     assert cycle_input.date == "2026-03-27"
-    assert cycle_input.hypothesis_id == "hyp_momo"
+    assert cycle_input.hypothesis_id == "momentum_1d"
     assert cycle_input.prediction == pytest.approx(0.1)
     assert cycle_input.observation == pytest.approx(0.1)
 
@@ -59,10 +59,10 @@ def test_build_cycle_input_rejects_missing_neighbor_rows():
         build_cycle_input_from_frame(
             frame=frame,
             date="2026-03-27",
-            hypothesis_id="hyp_momo",
+            hypothesis_id="momentum_1d",
         )
     except ValueError as exc:
-        assert "previous close" in str(exc)
+        assert "prior daily returns" in str(exc)
     else:
         raise AssertionError("expected previous-close validation error")
 
@@ -84,7 +84,7 @@ def test_build_cycle_inputs_from_frame_uses_date_range():
         frame=frame,
         start_date="2026-03-26",
         end_date="2026-03-28",
-        hypothesis_id="hyp_momo",
+        hypothesis_id="momentum_1d",
     )
 
     assert [item.date for item in cycle_inputs] == [
@@ -92,7 +92,51 @@ def test_build_cycle_inputs_from_frame_uses_date_range():
         "2026-03-27",
         "2026-03-28",
     ]
-    assert all(item.hypothesis_id == "hyp_momo" for item in cycle_inputs)
+    assert all(item.hypothesis_id == "momentum_1d" for item in cycle_inputs)
+
+
+def test_build_cycle_input_from_frame_supports_momentum_3d():
+    from alpha_os.build import build_cycle_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+        ]
+    )
+
+    cycle_input = build_cycle_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="momentum_3d",
+    )
+
+    assert cycle_input.prediction == pytest.approx(0.1)
+    assert cycle_input.observation == pytest.approx(0.1)
+
+
+def test_build_cycle_input_from_frame_supports_reversal_1d():
+    from alpha_os.build import build_cycle_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 121.0},
+        ]
+    )
+
+    cycle_input = build_cycle_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="reversal_1d",
+    )
+
+    assert cycle_input.prediction == pytest.approx(-0.1)
+    assert cycle_input.observation == pytest.approx(0.1)
 
 
 def test_build_cycle_input_from_signal_noise_uses_value_series(monkeypatch):
@@ -115,7 +159,7 @@ def test_build_cycle_input_from_signal_noise_uses_value_series(monkeypatch):
 
     cycle_input = build_cycle_input_from_signal_noise(
         date="2026-03-27",
-        hypothesis_id="hyp_momo",
+        hypothesis_id="momentum_1d",
         base_url="https://signal-noise.example",
     )
 
@@ -142,7 +186,7 @@ def test_cmd_build_cycle_input_writes_json(tmp_path, monkeypatch, capsys):
 
     rc = main(
         [
-            "build-cycle-input",
+            "generate-cycle-input",
             "--date",
             "2026-03-27",
             "--hypothesis-id",
@@ -160,7 +204,7 @@ def test_cmd_build_cycle_input_writes_json(tmp_path, monkeypatch, capsys):
     assert payload["observation"] == -0.02
 
     output = capsys.readouterr().out
-    assert "Built cycle input:" in output
+    assert "Generated evaluation input:" in output
     assert "Signal:   pred=0.050000 obs=-0.020000" in output
 
 
@@ -190,7 +234,7 @@ def test_cmd_build_cycle_inputs_writes_json_array(tmp_path, monkeypatch, capsys)
 
     rc = main(
         [
-            "build-cycle-inputs",
+            "generate-cycle-inputs",
             "--start-date",
             "2026-03-27",
             "--end-date",
@@ -209,7 +253,7 @@ def test_cmd_build_cycle_inputs_writes_json_array(tmp_path, monkeypatch, capsys)
     assert payload[1]["date"] == "2026-03-28"
 
     output = capsys.readouterr().out
-    assert "Built cycle inputs:" in output
+    assert "Generated evaluation inputs:" in output
     assert "Count:    2" in output
 
 
@@ -234,7 +278,7 @@ def test_built_cycle_input_can_feed_run_cycle(tmp_path, monkeypatch):
     assert (
         main(
             [
-                "build-cycle-input",
+                "generate-cycle-input",
                 "--date",
                 "2026-03-27",
                 "--hypothesis-id",
@@ -245,7 +289,7 @@ def test_built_cycle_input_can_feed_run_cycle(tmp_path, monkeypatch):
         )
         == 0
     )
-    assert main(["run-cycle", "--db", str(db_path), "--input", str(input_path)]) == 0
+    assert main(["apply-cycle", "--db", str(db_path), "--input", str(input_path)]) == 0
 
     status_output = Path(db_path)
     assert status_output.exists()
@@ -280,7 +324,7 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
 
     rc = main(
         [
-            "run-backfill",
+            "apply-backfill",
             "--db",
             str(db_path),
             "--start-date",
@@ -306,7 +350,7 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
             """
             SELECT input_source, input_range_start, input_range_end, signal_name
             FROM cycle_snapshots
-            ORDER BY cycle_id
+            ORDER BY evaluation_id
             """
         ).fetchall()
         assert rows == [
@@ -317,8 +361,8 @@ def test_run_backfill_builds_and_applies_range(tmp_path, monkeypatch, capsys):
         conn.close()
 
     output = capsys.readouterr().out
-    assert "Wrote cycle inputs:" in output
-    assert "Batch complete: cycles=2 created=2 existing=0" in output
+    assert "Wrote evaluation inputs:" in output
+    assert "Batch complete: evaluations=2 created=2 existing=0" in output
 
 
 def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
@@ -350,7 +394,7 @@ def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
     assert (
         main(
             [
-                "run-backfill",
+            "apply-backfill",
                 "--db",
                 str(db_path),
                 "--start-date",
@@ -367,7 +411,7 @@ def test_show_cycles_prints_provenance(tmp_path, monkeypatch, capsys):
 
     assert main(["show-cycles", "--db", str(db_path), "--limit", "2"]) == 0
     output = capsys.readouterr().out
-    assert "alpha-os v1 cycles" in output
+    assert "alpha-os v1 evaluations" in output
     assert "source=signal_noise_backfill" in output
     assert "signal=btc_ohlcv" in output
     assert "range=2026-03-27->2026-03-28" in output
@@ -403,7 +447,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert (
         main(
             [
-                "build-cycle-inputs",
+                "generate-cycle-inputs",
                 "--start-date",
                 "2026-03-27",
                 "--end-date",
@@ -417,7 +461,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
         == 0
     )
     build_output = capsys.readouterr().out
-    assert "Built cycle inputs:" in build_output
+    assert "Generated evaluation inputs:" in build_output
     assert "Count:    2" in build_output
     payload = json.loads(input_path.read_text(encoding="utf-8"))
     assert [item["date"] for item in payload] == ["2026-03-27", "2026-03-28"]
@@ -425,7 +469,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert (
         main(
             [
-                "run-backfill",
+                "apply-backfill",
                 "--db",
                 str(db_path),
                 "--start-date",
@@ -439,18 +483,18 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
         == 0
     )
     backfill_output = capsys.readouterr().out
-    assert "Batch complete: cycles=2 created=2 existing=0" in backfill_output
+    assert "Batch complete: evaluations=2 created=2 existing=0" in backfill_output
 
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
     assert "alpha-os v1 status" in status_output
-    assert "Latest:   BTC:residual_return_1d:2026-03-28" in status_output
+    assert "Latest:   BTC:residual_return_1d:2026-03-28 / hyp_momo" in status_output
     assert "Live:     " in status_output
     assert "Trust:    total=" in status_output
 
     assert main(["show-cycles", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
-    assert "alpha-os v1 cycles" in cycles_output
+    assert "alpha-os v1 evaluations" in cycles_output
     assert "Count:    2" in cycles_output
     assert "source=signal_noise_backfill" in cycles_output
     assert "range=2026-03-27->2026-03-28" in cycles_output

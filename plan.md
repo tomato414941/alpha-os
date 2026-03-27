@@ -12,7 +12,7 @@ This section is the source of truth for the next greenfield-style build.
 - Required path: `prediction -> observation -> quality update -> allocation_trust update -> snapshot`
 - Execution can stop at virtual portfolio weights; real order routing is not required for v1
 - Runtime state must have a single source of truth; do not split the canonical cycle state
-- Every artifact in one cycle must share the same `cycle_id`
+- Every artifact in one cycle must share the same `evaluation_id`
 - Multi-asset, global allocator, live trading, and legacy compatibility are out of scope for v1
 - New tables or runtime states require proof that the current model cannot express them
 - New improvement ideas go to a `post-v1 backlog`; do not merge them into the v1 path mid-build
@@ -23,7 +23,7 @@ This section is the source of truth for the next greenfield-style build.
 
 V1 is complete when all of the following are true:
 
-- `build-cycle-inputs -> run-backfill -> status -> show-cycles` works as one bounded end-to-end path
+- `generate-cycle-inputs -> apply-backfill -> status -> show-cycles` works as one bounded end-to-end path
 - the v1 smoke test fixes that path as the completion gate
 - `cycle_snapshots` preserve enough provenance to audit input source and date range
 - v1 remains within the contract scope: `1 asset`, `paper-only`, `1 target`, `1 cycle model`
@@ -51,7 +51,7 @@ This section defines the next step after v1 freeze.
   - `finalize-observation`
   - `update-state`
 - Keep the v1 bounded cycle intact; v2 may refactor the path, but must not remove auditability
-- `cycle_id` remains mandatory across all cycle artifacts
+- `evaluation_id` remains mandatory across all cycle artifacts
 - Do not add multi-asset, global allocation, or live routing in v2
 - Do not redesign the scoring model and lifecycle model in the same step
 - V2 is done when hypothesis registration is explicit and the same end-to-end audit path still works
@@ -62,8 +62,8 @@ V2 is complete when all of the following are true:
 
 - `register-hypothesis -> record-prediction -> finalize-observation -> update-state` works as the primary bounded path
 - the v2 smoke test fixes that primary path as the completion gate
-- `run-cycle` and `run-backfill` remain available as convenience wrappers over that same path
-- `cycle_id` and per-cycle provenance remain auditable through `show-cycles`
+- `apply-cycle` and `apply-backfill` remain available as convenience wrappers over that same path
+- `evaluation_id` and per-evaluation provenance remain auditable through `show-cycles`
 - missing or conflicting prediction / observation records fail explicitly
 - v2 stays within scope: `BTC-only`, `paper-only`, `1 target`
 
@@ -98,7 +98,7 @@ This section defines the next step after v2 completion.
   - `live hypothesis` means allocation-eligible inside the runtime
   - `live trading` remains out of scope
 - Reject invalid transitions explicitly rather than silently repairing them
-- Keep `run-cycle` and `run-backfill` as convenience wrappers over the same bounded path
+- Keep `apply-cycle` and `apply-backfill` as convenience wrappers over the same bounded path
 - Do not add multi-asset, global allocation, or live execution in v3
 - Do not redesign the scoring model and the lifecycle state machine in the same step
 

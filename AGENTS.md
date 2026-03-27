@@ -70,6 +70,7 @@ python -m alpha_os_recovery --help
 ## Terminology Policy
 
 - Prefer standard industry terminology in new docs, config keys, commands, and logs.
+- Do not add CLI aliases. Rename commands directly and update docs/tests in the same change.
 - Keep legacy project-specific names only when needed for backward compatibility.
 - Distinguish statistical alpha validation (`validate`) from operational validation
   (`admission-daemon`, `testnet-readiness`).

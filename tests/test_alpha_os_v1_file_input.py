@@ -27,11 +27,11 @@ def test_run_cycle_accepts_json_fixture(tmp_path, capsys):
     _register_hypothesis(main, db_path, "hyp_fixture")
     capsys.readouterr()
 
-    rc = main(["run-cycle", "--db", str(db_path), "--input", str(fixture_path)])
+    rc = main(["apply-cycle", "--db", str(db_path), "--input", str(fixture_path)])
     assert rc == 0
 
     output = capsys.readouterr().out
-    assert "Cycle [created] BTC:residual_return_1d:2026-03-27" in output
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-27" in output
     assert "Hyp:      hyp_fixture" in output
 
     conn = sqlite3.connect(db_path)
@@ -52,12 +52,12 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
     _register_hypothesis(main, db_path, "hyp_fixture")
     capsys.readouterr()
 
-    rc = main(["run-cycles", "--db", str(db_path), "--input", str(fixture_path)])
+    rc = main(["apply-cycles", "--db", str(db_path), "--input", str(fixture_path)])
     assert rc == 0
 
     output = capsys.readouterr().out
-    assert "Batch complete: cycles=3 created=3 existing=0" in output
-    assert "Latest:   BTC:residual_return_1d:2026-03-29" in output
+    assert "Batch complete: evaluations=3 created=3 existing=0" in output
+    assert "Latest:   BTC:residual_return_1d:2026-03-29 / hyp_fixture" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -69,16 +69,20 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
             WHERE hypothesis_id = 'hyp_fixture'
             """
         ).fetchone()
-        latest_cycle_id = conn.execute(
-            "SELECT latest_cycle_id FROM sleeve_state WHERE asset = 'BTC' AND target = 'residual_return_1d'"
-        ).fetchone()[0]
+        latest_row = conn.execute(
+            """
+            SELECT latest_evaluation_id, latest_hypothesis_id
+            FROM sleeve_state
+            WHERE asset = 'BTC' AND target = 'residual_return_1d'
+            """
+        ).fetchone()
         assert snapshot_count == 3
         assert state_row is not None
         assert state_row[0] != 0.0
         assert state_row[1] >= 0.0
         assert state_row[2] == 3
         assert state_row[3] == 3
-        assert latest_cycle_id == "BTC:residual_return_1d:2026-03-29"
+        assert latest_row == ("BTC:residual_return_1d:2026-03-29", "hyp_fixture")
     finally:
         conn.close()
 
@@ -102,7 +106,7 @@ def test_run_cycle_rejects_non_v1_asset_in_fixture(tmp_path):
     )
 
     try:
-        main(["run-cycle", "--db", str(db_path), "--input", str(bad_fixture)])
+        main(["apply-cycle", "--db", str(db_path), "--input", str(bad_fixture)])
     except SystemExit as exc:
         assert exc.code == 2
     else:

@@ -187,7 +187,7 @@ Current scope:
 - primary bounded path:
   `register-hypothesis -> record-prediction -> finalize-observation -> update-state`
 - convenience wrapper:
-  `run-cycle`
+  `apply-cycle`
 
 Primary bounded path:
 
@@ -201,16 +201,16 @@ python -m alpha_os update-state --db data/v1/runtime.db --date 2026-03-27 --hypo
 Convenience wrapper path:
 
 ```bash
-# Build one or more deterministic cycle inputs from signal-noise BTC daily closes
-python -m alpha_os build-cycle-input --date 2026-03-27 --hypothesis-id hyp_momo --out data/v1/cycle.json
-python -m alpha_os build-cycle-inputs --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
+# Generate one or more deterministic evaluation inputs from signal-noise BTC daily closes
+python -m alpha_os generate-cycle-input --date 2026-03-27 --hypothesis-id hyp_momo --out data/v1/cycle.json
+python -m alpha_os generate-cycle-inputs --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
 
-# Apply one cycle or a deterministic backfill range through the wrapper path
+# Apply one evaluation or a deterministic backfill range through the wrapper path
 python -m alpha_os register-hypothesis --db data/v1/runtime.db --hypothesis-id hyp_momo
-python -m alpha_os run-cycle --db data/v1/runtime.db --input data/v1/cycle.json
-python -m alpha_os run-backfill --db data/v1/runtime.db --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
+python -m alpha_os apply-cycle --db data/v1/runtime.db --input data/v1/cycle.json
+python -m alpha_os apply-backfill --db data/v1/runtime.db --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
 
-# Inspect aggregate state and per-cycle provenance
+# Inspect aggregate state and per-evaluation provenance
 python -m alpha_os status --db data/v1/runtime.db
 python -m alpha_os show-cycles --db data/v1/runtime.db --limit 10
 ```
