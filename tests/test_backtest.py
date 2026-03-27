@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.backtest.cost_model import CostModel
-from alpha_os.backtest.engine import BacktestEngine, BacktestResult
-from alpha_os.backtest import metrics
+from alpha_os_recovery.backtest.cost_model import CostModel
+from alpha_os_recovery.backtest.engine import BacktestEngine, BacktestResult
+from alpha_os_recovery.backtest import metrics
 
 
 class TestCostModel:

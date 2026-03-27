@@ -4,17 +4,17 @@ from types import SimpleNamespace
 
 
 def test_load_sleeve_control_metrics_uses_current_summary_and_snapshot_history(monkeypatch):
-    from alpha_os.hypotheses.sleeve_control_metrics import load_sleeve_control_metrics
+    from alpha_os_recovery.hypotheses.sleeve_control_metrics import load_sleeve_control_metrics
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_control_metrics.HypothesisStore",
+        "alpha_os_recovery.hypotheses.sleeve_control_metrics.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(
             list_observation_active=lambda **_kwargs: [object()],
             close=lambda: None,
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_control_metrics.build_asset_sleeve_summary",
+        "alpha_os_recovery.hypotheses.sleeve_control_metrics.build_asset_sleeve_summary",
         lambda _records: SimpleNamespace(
             serious_template_gaps=[
                 "macro_template:1.00",
@@ -27,7 +27,7 @@ def test_load_sleeve_control_metrics_uses_current_summary_and_snapshot_history(m
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_control_metrics.load_recent_sleeve_compare_history",
+        "alpha_os_recovery.hypotheses.sleeve_control_metrics.load_recent_sleeve_compare_history",
         lambda *_args, **_kwargs: {
             "ETH": [
                 {

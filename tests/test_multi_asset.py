@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import argparse
 
-from alpha_os.cli import _resolve_asset_list
-from alpha_os.data.universe import is_crypto
+from alpha_os_recovery.cli import _resolve_asset_list
+from alpha_os_recovery.data.universe import is_crypto
 
 
 class TestResolveAssetList:

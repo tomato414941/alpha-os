@@ -1,12 +1,12 @@
 import pytest
 
-from alpha_os.config import Config
-from alpha_os.daemon.hypothesis_seeder import HypothesisSeederDaemon, RANDOM_DSL_METADATA
-from alpha_os.dsl.expr import Constant, Feature, LagOp
-from alpha_os.dsl import to_string
-from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
-from alpha_os.hypotheses import HypothesisStore
-from alpha_os.hypotheses.store import HypothesisRecord
+from alpha_os_recovery.config import Config
+from alpha_os_recovery.daemon.hypothesis_seeder import HypothesisSeederDaemon, RANDOM_DSL_METADATA
+from alpha_os_recovery.dsl.expr import Constant, Feature, LagOp
+from alpha_os_recovery.dsl import to_string
+from alpha_os_recovery.hypotheses.bootstrap import bootstrap_hypotheses
+from alpha_os_recovery.hypotheses import HypothesisStore
+from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
 
 class _FakeAlphaGenerator:
@@ -22,15 +22,15 @@ def test_hypothesis_seeder_registers_random_dsl_and_bootstrap_hypotheses(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -73,11 +73,11 @@ def test_hypothesis_seeder_can_seed_non_btc_observation_only_sleeve(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
             "eth_price",
             "eth_volume",
@@ -85,7 +85,7 @@ def test_hypothesis_seeder_can_seed_non_btc_observation_only_sleeve(
         ],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -121,11 +121,11 @@ def test_hypothesis_seeder_can_seed_eth_serious_bootstrap_only(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
             "eth_btc",
             "funding_rate_eth",
@@ -135,7 +135,7 @@ def test_hypothesis_seeder_can_seed_eth_serious_bootstrap_only(
         ],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -182,15 +182,15 @@ def test_hypothesis_seeder_skips_structurally_invalid_dsl_candidates(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _InvalidAlphaGenerator,
     )
 
@@ -218,15 +218,15 @@ def test_hypothesis_seeder_backfills_bootstrap_prior_quality_for_existing_record
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -269,11 +269,11 @@ def test_hypothesis_seeder_refreshes_existing_serious_bootstrap_definition(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: [
             "eth_ohlcv",
             "funding_rate_eth",
@@ -283,7 +283,7 @@ def test_hypothesis_seeder_refreshes_existing_serious_bootstrap_definition(
         ],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -330,15 +330,15 @@ def test_hypothesis_seeder_backfills_exploratory_metadata_for_existing_random_ds
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -381,15 +381,15 @@ def test_hypothesis_seeder_skips_random_dsl_that_matches_live_diversity_key(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed", "dxy", "btc_usdt"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -433,11 +433,11 @@ def test_hypothesis_seeder_skips_featureless_random_dsl(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed"],
     )
 
@@ -462,7 +462,7 @@ def test_hypothesis_seeder_retries_api_when_cached_catalog_is_too_small(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     calls: list[tuple[bool, bool]] = []
@@ -474,11 +474,11 @@ def test_hypothesis_seeder_retries_api_when_cached_catalog_is_too_small(
         return ["btc_ohlcv"] + [f"sig_{idx}" for idx in range(150)]
 
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         _build_feature_list,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 
@@ -504,7 +504,7 @@ def test_hypothesis_seeder_guided_feature_subset_prefers_stronger_families(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
 
@@ -558,7 +558,7 @@ def test_hypothesis_seeder_guided_feature_subset_prefers_undercovered_serious_fa
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
 
@@ -600,7 +600,7 @@ def test_hypothesis_seeder_guided_feature_subset_prefers_missing_serious_templat
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
 
@@ -666,15 +666,15 @@ def test_hypothesis_seeder_retires_obsolete_bootstrap_hypothesis(
     definition,
 ):
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_signal_client_from_config",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_signal_client_from_config",
         lambda config: None,
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.build_feature_list",
+        "alpha_os_recovery.daemon.hypothesis_seeder.build_feature_list",
         lambda asset, client=None, prefer_cache=False, refresh_catalog=False: ["fear_greed", "dxy", "gold"],
     )
     monkeypatch.setattr(
-        "alpha_os.daemon.hypothesis_seeder.AlphaGenerator",
+        "alpha_os_recovery.daemon.hypothesis_seeder.AlphaGenerator",
         _FakeAlphaGenerator,
     )
 

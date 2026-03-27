@@ -7,6 +7,6 @@ Type=oneshot
 WorkingDirectory=/home/dev/projects/alpha-os
 EnvironmentFile=-/home/dev/.secrets/alpha-os-env
 ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs /home/dev/projects/alpha-os/data/%i/metrics
-ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os runtime-status --asset %i --config "$CONFIG"'
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os_recovery runtime-status --asset %i --config "$CONFIG"'
 StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/runtime-status.log
 StandardError=append:/home/dev/projects/alpha-os/data/%i/logs/runtime-status.log

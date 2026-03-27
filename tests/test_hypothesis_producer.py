@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from alpha_os.hypotheses import (
+from alpha_os_recovery.hypotheses import (
     HypothesisKind,
     HypothesisRecord,
     HypothesisStore,
 )
-from alpha_os.hypotheses.producer import (
+from alpha_os_recovery.hypotheses.producer import (
     _quick_healthcheck,
     _resolve_asset_series_name,
     _should_sync_required_features,
@@ -16,8 +16,8 @@ from alpha_os.hypotheses.producer import (
     produce_active_hypothesis_predictions,
     write_hypothesis_predictions,
 )
-from alpha_os.predictions.store import PredictionStore
-from alpha_os.config import Config
+from alpha_os_recovery.predictions.store import PredictionStore
+from alpha_os_recovery.config import Config
 
 
 def _sample_data():
@@ -244,7 +244,7 @@ def test_produce_active_hypothesis_predictions_includes_zero_stake_active_hypoth
     tmp_path,
     monkeypatch,
 ):
-    from alpha_os.hypotheses.producer import produce_active_hypothesis_predictions
+    from alpha_os_recovery.hypotheses.producer import produce_active_hypothesis_predictions
 
     class _FakeDataStore:
         def __init__(self, db_path, client):
@@ -257,10 +257,10 @@ def test_produce_active_hypothesis_predictions_includes_zero_stake_active_hypoth
         def close(self):
             return None
 
-    monkeypatch.setattr("alpha_os.hypotheses.producer.DataStore", _FakeDataStore)
-    monkeypatch.setattr("alpha_os.hypotheses.producer._should_sync_required_features", lambda *_args, **_kwargs: False)
-    monkeypatch.setattr("alpha_os.hypotheses.producer.load_cached_eval_universe", lambda: ["asset_a"])
-    monkeypatch.setattr("alpha_os.hypotheses.producer.build_signal_client_from_config", lambda _cfg: object())
+    monkeypatch.setattr("alpha_os_recovery.hypotheses.producer.DataStore", _FakeDataStore)
+    monkeypatch.setattr("alpha_os_recovery.hypotheses.producer._should_sync_required_features", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr("alpha_os_recovery.hypotheses.producer.load_cached_eval_universe", lambda: ["asset_a"])
+    monkeypatch.setattr("alpha_os_recovery.hypotheses.producer.build_signal_client_from_config", lambda _cfg: object())
 
     cfg = Config()
     store = HypothesisStore(tmp_path / "hypotheses.db")
@@ -330,19 +330,19 @@ def test_produce_active_hypothesis_predictions_syncs_needed_features(tmp_path, m
             return None
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.build_signal_client_from_config",
+        "alpha_os_recovery.hypotheses.producer.build_signal_client_from_config",
         lambda api: _FakeClient(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.init_universe",
+        "alpha_os_recovery.hypotheses.producer.init_universe",
         lambda client: None,
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.DataStore",
+        "alpha_os_recovery.hypotheses.producer.DataStore",
         _FakeStore,
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer._quick_healthcheck",
+        "alpha_os_recovery.hypotheses.producer._quick_healthcheck",
         lambda base_url, timeout=3.0: True,
     )
 
@@ -394,19 +394,19 @@ def test_produce_active_hypothesis_predictions_skips_universe_refresh_when_asset
             return None
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.build_signal_client_from_config",
+        "alpha_os_recovery.hypotheses.producer.build_signal_client_from_config",
         lambda api: object(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.init_universe",
+        "alpha_os_recovery.hypotheses.producer.init_universe",
         lambda client: (_ for _ in ()).throw(AssertionError("init_universe should not be called")),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.DataStore",
+        "alpha_os_recovery.hypotheses.producer.DataStore",
         _FakeStore,
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer._quick_healthcheck",
+        "alpha_os_recovery.hypotheses.producer._quick_healthcheck",
         lambda base_url, timeout=3.0: False,
     )
 
@@ -433,7 +433,7 @@ def test_produce_active_hypothesis_predictions_skips_universe_refresh_when_asset
 
 
 def test_should_sync_required_features_uses_cache_depth(tmp_path):
-    from alpha_os.data.store import DataStore
+    from alpha_os_recovery.data.store import DataStore
 
     store = DataStore(tmp_path / "cache.db")
     store._conn.executemany(

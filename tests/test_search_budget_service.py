@@ -4,10 +4,10 @@ from types import SimpleNamespace
 
 
 def test_build_template_gap_search_budget_returns_requested_limit_without_templates(monkeypatch):
-    from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
+    from alpha_os_recovery.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.search_budget_service.serious_seed_specs",
         lambda asset: [],
     )
 
@@ -21,14 +21,14 @@ def test_build_template_gap_search_budget_returns_requested_limit_without_templa
 
 
 def test_build_template_gap_search_budget_closes_when_sleeve_is_healthy(monkeypatch):
-    from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
+    from alpha_os_recovery.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.search_budget_service.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        "alpha_os_recovery.hypotheses.search_budget_service.load_sleeve_control_metrics",
         lambda *, asset: SimpleNamespace(
             asset=asset,
             template_gap_count=0,
@@ -50,14 +50,14 @@ def test_build_template_gap_search_budget_closes_when_sleeve_is_healthy(monkeypa
 
 
 def test_build_template_gap_search_budget_scales_with_template_gaps(monkeypatch):
-    from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
+    from alpha_os_recovery.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.search_budget_service.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        "alpha_os_recovery.hypotheses.search_budget_service.load_sleeve_control_metrics",
         lambda *, asset: SimpleNamespace(
             asset=asset,
             template_gap_count=2,
@@ -84,14 +84,14 @@ def test_build_template_gap_search_budget_scales_with_template_gaps(monkeypatch)
 
 
 def test_build_template_gap_search_budget_boosts_stalled_sleeves(monkeypatch):
-    from alpha_os.hypotheses.search_budget_service import build_template_gap_search_budget
+    from alpha_os_recovery.hypotheses.search_budget_service import build_template_gap_search_budget
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.search_budget_service.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.load_sleeve_control_metrics",
+        "alpha_os_recovery.hypotheses.search_budget_service.load_sleeve_control_metrics",
         lambda *, asset: SimpleNamespace(
             asset=asset,
             template_gap_count=2,

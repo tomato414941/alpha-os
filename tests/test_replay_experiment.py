@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from alpha_os.legacy.replay_experiment import (
+from alpha_os_recovery.legacy.replay_experiment import (
     ReplayExperimentSpec,
     apply_config_overrides,
     parse_override_assignment,
     run_replay_experiment,
 )
-from alpha_os.config import Config
-from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
-from alpha_os.runtime_profile import build_runtime_profile
+from alpha_os_recovery.config import Config
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os_recovery.runtime_profile import build_runtime_profile
 
 
 def test_parse_override_assignment_uses_toml_types():
@@ -51,15 +51,15 @@ def test_run_replay_experiment_writes_artifacts(tmp_path, monkeypatch):
     registry.close()
 
     monkeypatch.setattr(
-        "alpha_os.legacy.replay_experiment.asset_data_dir",
+        "alpha_os_recovery.legacy.replay_experiment.asset_data_dir",
         lambda asset: asset_root,
     )
     monkeypatch.setattr(
-        "alpha_os.legacy.replay_experiment.git_commit",
+        "alpha_os_recovery.legacy.replay_experiment.git_commit",
         lambda: "deadbeef",
     )
     monkeypatch.setattr(
-        "alpha_os.legacy.replay_experiment.run_replay",
+        "alpha_os_recovery.legacy.replay_experiment.run_replay",
         lambda **_: SimpleNamespace(
             n_days=10,
             initial_capital=10000.0,

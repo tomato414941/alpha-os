@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.dsl.evaluator import (
+from alpha_os_recovery.dsl.evaluator import (
     FAILED_FITNESS,
     EvaluationError,
     evaluate_alpha,
@@ -10,7 +10,7 @@ from alpha_os.dsl.evaluator import (
     normalize_signal,
     sanitize_signal,
 )
-from alpha_os.dsl.expr import Feature, Constant
+from alpha_os_recovery.dsl.expr import Feature, Constant
 
 
 class TestNormalizeSignal:

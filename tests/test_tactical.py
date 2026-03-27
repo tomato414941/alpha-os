@@ -6,9 +6,9 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
-from alpha_os.data.store import DataStore
-from alpha_os.legacy.tactical import TacticalTrader, TacticalSignal
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.legacy.tactical import TacticalTrader, TacticalSignal
 
 
 @pytest.fixture
@@ -129,8 +129,8 @@ class TestWithL2Alphas:
 class TestTraderIntegration:
     def test_trader_without_tactical(self, tmp_path):
         """Verify Trader works without tactical (default None)."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
 
         cfg = Config.load()
         store = DataStore(tmp_path / "cache.db")
@@ -158,8 +158,8 @@ class TestTraderIntegration:
 
     def test_trader_close_with_tactical(self, tmp_path):
         """Verify Trader.close() cleans up tactical resources."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
 
         cfg = Config.load()
         store = DataStore(tmp_path / "cache.db")

@@ -4,12 +4,12 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from alpha_os.backtest.benchmark import build_benchmark_returns
-from alpha_os.backtest.cost_model import CostModel
-from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.backtest.metrics import rank_ic, risk_adjusted_ic
-from alpha_os.dsl import parse
-from alpha_os.dsl.evaluator import sanitize_signal
+from alpha_os_recovery.backtest.benchmark import build_benchmark_returns
+from alpha_os_recovery.backtest.cost_model import CostModel
+from alpha_os_recovery.backtest.engine import BacktestEngine
+from alpha_os_recovery.backtest.metrics import rank_ic, risk_adjusted_ic
+from alpha_os_recovery.dsl import parse
+from alpha_os_recovery.dsl.evaluator import sanitize_signal
 
 IC_METRICS = {"ic", "ric"}
 DEFAULT_HORIZONS = (1, 5, 20)

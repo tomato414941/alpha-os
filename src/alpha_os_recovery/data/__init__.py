@@ -1,7 +1,7 @@
 from signal_noise.client import SignalClient
 
-from alpha_os.data.store import DataStore
-from alpha_os.data.universe import (
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.data.universe import (
     CRYPTO,
     ETFS,
     MACRO_SIGNALS,

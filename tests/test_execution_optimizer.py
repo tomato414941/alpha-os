@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from alpha_os.execution.optimizer import ExecutionConfig, ExecutionOptimizer
+from alpha_os_recovery.execution.optimizer import ExecutionConfig, ExecutionOptimizer
 
 
 def _make_client(signals: dict[str, float | None], *, latest_ts: str = "2026-03-01T10:00:00Z"):

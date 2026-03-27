@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from alpha_os.backtest.cost_model import CostModel
-from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.validation.purged_cv import purged_walk_forward
+from alpha_os_recovery.backtest.cost_model import CostModel
+from alpha_os_recovery.backtest.engine import BacktestEngine
+from alpha_os_recovery.validation.purged_cv import purged_walk_forward
 
 
 def test_purged_walk_forward_includes_distributional_metrics():

@@ -7,9 +7,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from alpha_os.execution.costs import CostEstimate
-from alpha_os.execution.executor import Fill
-from alpha_os.validation.testnet import ReadinessChecker, readiness_paths
+from alpha_os_recovery.execution.costs import CostEstimate
+from alpha_os_recovery.execution.executor import Fill
+from alpha_os_recovery.validation.testnet import ReadinessChecker, readiness_paths
 
 
 def test_readiness_paths_are_under_metrics_dir(tmp_path):
@@ -321,7 +321,7 @@ class TestFillFields:
 
 class TestTrackerSlippageStats:
     def test_slippage_stats_with_fills(self, tmp_path):
-        from alpha_os.paper.tracker import PaperPortfolioTracker
+        from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
 
         tracker = PaperPortfolioTracker(db_path=tmp_path / "test.db")
         fills = [
@@ -352,7 +352,7 @@ class TestTrackerSlippageStats:
         tracker.close()
 
     def test_empty_slippage_stats(self, tmp_path):
-        from alpha_os.paper.tracker import PaperPortfolioTracker
+        from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
 
         tracker = PaperPortfolioTracker(db_path=tmp_path / "test.db")
         stats = tracker.get_slippage_stats()

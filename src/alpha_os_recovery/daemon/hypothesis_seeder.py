@@ -10,25 +10,25 @@ import time
 from collections import Counter
 from dataclasses import dataclass
 
-from alpha_os.config import Config, DATA_DIR
-from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import build_feature_list, infer_feature_family, stratified_feature_subset
-from alpha_os.dsl import temporal_expression_issues, to_string
-from alpha_os.dsl.generator import AlphaGenerator
-from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
-from alpha_os.hypotheses.identity import (
+from alpha_os_recovery.config import Config, DATA_DIR
+from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+from alpha_os_recovery.data.universe import build_feature_list, infer_feature_family, stratified_feature_subset
+from alpha_os_recovery.dsl import temporal_expression_issues, to_string
+from alpha_os_recovery.dsl.generator import AlphaGenerator
+from alpha_os_recovery.hypotheses.bootstrap import bootstrap_hypotheses
+from alpha_os_recovery.hypotheses.identity import (
     expression_feature_families,
     expression_feature_names,
     expression_semantic_key,
 )
-from alpha_os.hypotheses.serious_templates import (
+from alpha_os_recovery.hypotheses.serious_templates import (
     serious_family_gap_scores,
     serious_seed_specs,
     serious_template_feature_gap_scores,
     serious_template_gap_scores,
 )
-from alpha_os.hypotheses.sleeve_scope import with_scope_asset
-from alpha_os.hypotheses.store import (
+from alpha_os_recovery.hypotheses.sleeve_scope import with_scope_asset
+from alpha_os_recovery.hypotheses.store import (
     HypothesisKind,
     HypothesisRecord,
     HypothesisStatus,

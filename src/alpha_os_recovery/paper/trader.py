@@ -618,7 +618,7 @@ class Trader:
 
         store_signals: dict[str, float] = {}
         try:
-            from alpha_os.predictions.store import PredictionStore
+            from alpha_os_recovery.predictions.store import PredictionStore
             pred_store = PredictionStore()
             try:
                 store_preds = pred_store.read_latest(today_date, assets=[self.asset])
@@ -701,7 +701,7 @@ class Trader:
 
         if store_signals:
             try:
-                from alpha_os.predictions.store import PredictionStore
+                from alpha_os_recovery.predictions.store import PredictionStore
                 pred_store = PredictionStore()
                 try:
                     store_signal_arrays = load_prediction_signal_arrays(

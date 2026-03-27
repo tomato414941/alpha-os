@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from alpha_os.paper.event_driven import EventDrivenTrader, EventTriggerConfig
+from alpha_os_recovery.paper.event_driven import EventDrivenTrader, EventTriggerConfig
 
 
 def _make_trader_mock():

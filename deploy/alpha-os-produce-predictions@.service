@@ -9,7 +9,7 @@ Type=oneshot
 WorkingDirectory=/home/dev/projects/alpha-os
 EnvironmentFile=-/home/dev/.secrets/alpha-os-env
 ExecStartPre=/bin/mkdir -p /home/dev/projects/alpha-os/data/%i/logs
-ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os produce-predictions --asset %i --strict --config "$CONFIG"'
+ExecStart=/bin/bash -lc 'source .venv/bin/activate && CONFIG="${ALPHA_OS_CONFIG:-/home/dev/projects/alpha-os/config/dev.toml}" && exec python3 -m alpha_os_recovery produce-predictions --asset %i --strict --config "$CONFIG"'
 MemoryHigh=500M
 MemoryMax=800M
 StandardOutput=append:/home/dev/projects/alpha-os/data/%i/logs/produce-predictions.log

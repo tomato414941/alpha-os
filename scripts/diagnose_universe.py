@@ -2,10 +2,10 @@
 import numpy as np
 from pathlib import Path
 from datetime import date
-from alpha_os.config import Config, SIGNAL_CACHE_DB
-from alpha_os.data.store import DataStore
-from alpha_os.data.signal_client import build_signal_client_from_config
-from alpha_os.data.universe import build_feature_list, CROSS_ASSET_UNIVERSE
+from alpha_os_recovery.config import Config, SIGNAL_CACHE_DB
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+from alpha_os_recovery.data.universe import build_feature_list, CROSS_ASSET_UNIVERSE
 
 cfg = Config.load(Path("/home/dev/.config/alpha-os/prod.toml"))
 client = build_signal_client_from_config(cfg.api)

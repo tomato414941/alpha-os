@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from unittest.mock import MagicMock
 
-from alpha_os.execution.executor import Fill
-from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+from alpha_os_recovery.execution.executor import Fill
+from alpha_os_recovery.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
 
 
 class _StaticMatrixStore:
@@ -377,13 +377,13 @@ class TestSignalDeltaExit:
 class TestPositionSizing:
     def test_dollar_pos_scales_with_portfolio_value(self, tmp_path):
         """Position sizing should use current portfolio value, not initial capital."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.data.store import DataStore
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.data.store import DataStore
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         cfg = Config()
         pt = PaperPortfolioTracker(tmp_path / "paper.db")
@@ -418,8 +418,8 @@ class TestPositionSizing:
 
 class TestTrader:
     def test_execute_allocation_counts_no_delta_skip(self):
-        from alpha_os.execution.planning import TargetPosition
-        from alpha_os.paper.trader import AllocationPlan, Trader
+        from alpha_os_recovery.execution.planning import TargetPosition
+        from alpha_os_recovery.paper.trader import AllocationPlan, Trader
 
         trader = object.__new__(Trader)
         trader.price_signal = "btc_ohlcv"
@@ -446,7 +446,7 @@ class TestTrader:
         assert outcome.skipped_deadband == 0
 
     def test_prediction_history_array_pads_to_matrix_length(self):
-        from alpha_os.hypotheses.runtime_inputs import prediction_history_array
+        from alpha_os_recovery.hypotheses.runtime_inputs import prediction_history_array
 
         store = _FakePredictionStore(
             {
@@ -468,8 +468,8 @@ class TestTrader:
         assert list(arr) == [0.2, 0.2, 0.2, 0.2, 0.4]
 
     def test_load_prediction_signal_arrays_uses_store_backed_ids_only(self):
-        from alpha_os.hypotheses.runtime_inputs import load_prediction_signal_arrays
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.runtime_inputs import load_prediction_signal_arrays
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         parsed_records = [
             (
@@ -510,8 +510,8 @@ class TestTrader:
         assert list(arrays["h1"]) == [0.4, 0.4, 0.4]
 
     def test_evaluate_runtime_signal_uses_prediction_store_history_when_available(self):
-        from alpha_os.hypotheses.runtime_inputs import evaluate_runtime_signal
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.runtime_inputs import evaluate_runtime_signal
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         record = HypothesisRecord(
             hypothesis_id="h1",
@@ -537,9 +537,9 @@ class TestTrader:
     def test_evaluate_runtime_signal_uses_latest_finite_fallback_from_series(self, monkeypatch):
         import numpy as np
 
-        from alpha_os.dsl import parse
-        from alpha_os.hypotheses import runtime_inputs
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.dsl import parse
+        from alpha_os_recovery.hypotheses import runtime_inputs
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         record = HypothesisRecord(
             hypothesis_id="h1",
@@ -573,8 +573,8 @@ class TestTrader:
         assert result.signal_yesterday == pytest.approx(0.5)
 
     def test_record_runtime_observation_updates_tracker_monitor_and_quality(self):
-        from alpha_os.hypotheses.runtime_observation import record_runtime_observation
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.runtime_observation import record_runtime_observation
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         record = HypothesisRecord(
             hypothesis_id="h1",
@@ -608,8 +608,8 @@ class TestTrader:
         assert result.quality_estimate == {"id": "h1", "n": 3}
 
     def test_prepare_runtime_inputs_prefers_prediction_store(self):
-        from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.runtime_inputs import prepare_runtime_inputs
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         store_backed = HypothesisRecord(
             hypothesis_id="h-store",
@@ -638,8 +638,8 @@ class TestTrader:
         assert n_failed == 0
 
     def test_prepare_runtime_inputs_uses_raw_signals_for_derived_features(self):
-        from alpha_os.hypotheses.runtime_inputs import prepare_runtime_inputs
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.runtime_inputs import prepare_runtime_inputs
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         derived_backed = HypothesisRecord(
             hypothesis_id="h-derived",
@@ -661,11 +661,11 @@ class TestTrader:
         assert n_failed == 0
 
     def test_filter_runtime_records_by_available_features_skips_missing_inputs(self):
-        from alpha_os.hypotheses.runtime_inputs import (
+        from alpha_os_recovery.hypotheses.runtime_inputs import (
             filter_runtime_records_by_available_features,
             prepare_runtime_inputs,
         )
-        from alpha_os.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
 
         supported = HypothesisRecord(
             hypothesis_id="h-supported",
@@ -696,13 +696,13 @@ class TestTrader:
 
     def test_restore_state_empty(self, tmp_path):
         """Fresh trader should have initial capital."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.data.store import DataStore
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.data.store import DataStore
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         db = tmp_path / "paper.db"
         cfg = Config()
@@ -723,13 +723,13 @@ class TestTrader:
 
     def test_restore_state_from_snapshot(self, tmp_path):
         """Trader should restore cash/positions from last snapshot."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.data.store import DataStore
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.data.store import DataStore
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         db = tmp_path / "paper.db"
         pt = PaperPortfolioTracker(db)
@@ -757,13 +757,13 @@ class TestTrader:
 
     def test_sync_state_from_newer_snapshot(self, tmp_path):
         """Trader should refresh executor state when a newer snapshot appears."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.data.store import DataStore
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.data.store import DataStore
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         db = tmp_path / "paper.db"
         pt = PaperPortfolioTracker(db)
@@ -800,11 +800,11 @@ class TestTrader:
 
     def test_build_allocation_plan_clamps_short_target_in_long_only_mode(self, tmp_path):
         """Long-only mode should never emit a negative target position."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         cfg = Config()
         store = _StaticMatrixStore(pd.DataFrame({"btc_ohlcv": [100.0]}))
@@ -833,11 +833,11 @@ class TestTrader:
 
     def test_build_allocation_plan_keeps_short_target_when_supported(self, tmp_path):
         """Long/short mode should preserve negative target positions."""
-        from alpha_os.paper.trader import Trader
-        from alpha_os.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.config import Config, TRADING_MODE_FUTURES_LONG_SHORT
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
 
         cfg = Config()
         cfg.trading.mode = TRADING_MODE_FUTURES_LONG_SHORT
@@ -866,13 +866,13 @@ class TestTrader:
         trader.close()
 
     def test_run_cycle_syncs_only_runtime_signals(self, monkeypatch, tmp_path):
-        from alpha_os.config import Config
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
-        from alpha_os.hypotheses.store import HypothesisRecord
-        from alpha_os.paper.trader import Trader
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cfg = Config()
         cfg.paper.max_position_pct = 0.5
@@ -904,11 +904,11 @@ class TestTrader:
                 return {"h-store": {"BTC": 0.3}}
 
         monkeypatch.setattr(
-            "alpha_os.predictions.store.PredictionStore",
+            "alpha_os_recovery.predictions.store.PredictionStore",
             lambda *args, **kwargs: _PatchedPredictionStore(history),
         )
         monkeypatch.setattr(
-            "alpha_os.paper.trader._quick_healthcheck",
+            "alpha_os_recovery.paper.trader._quick_healthcheck",
             lambda _url: True,
         )
 
@@ -931,13 +931,13 @@ class TestTrader:
         trader.close()
 
     def test_run_cycle_skips_runtime_sync_when_healthcheck_fails(self, monkeypatch, tmp_path):
-        from alpha_os.config import Config
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
-        from alpha_os.hypotheses.store import HypothesisRecord
-        from alpha_os.paper.trader import Trader
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cfg = Config()
         cfg.paper.max_position_pct = 0.5
@@ -969,11 +969,11 @@ class TestTrader:
                 return {"h-store": {"BTC": 0.3}}
 
         monkeypatch.setattr(
-            "alpha_os.predictions.store.PredictionStore",
+            "alpha_os_recovery.predictions.store.PredictionStore",
             lambda *args, **kwargs: _PatchedPredictionStore(history),
         )
         monkeypatch.setattr(
-            "alpha_os.paper.trader._quick_healthcheck",
+            "alpha_os_recovery.paper.trader._quick_healthcheck",
             lambda _url: False,
         )
 
@@ -996,13 +996,13 @@ class TestTrader:
         trader.close()
 
     def test_run_cycle_selects_only_capital_backed_candidates(self, monkeypatch, tmp_path):
-        from alpha_os.config import Config
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
-        from alpha_os.hypotheses.store import HypothesisRecord
-        from alpha_os.paper.trader import Trader
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cfg = Config()
         cfg.paper.max_trading_alphas = 1
@@ -1047,11 +1047,11 @@ class TestTrader:
                 }
 
         monkeypatch.setattr(
-            "alpha_os.predictions.store.PredictionStore",
+            "alpha_os_recovery.predictions.store.PredictionStore",
             lambda *args, **kwargs: _PatchedPredictionStore(history),
         )
         monkeypatch.setattr(
-            "alpha_os.paper.trader._quick_healthcheck",
+            "alpha_os_recovery.paper.trader._quick_healthcheck",
             lambda _url: False,
         )
 
@@ -1077,13 +1077,13 @@ class TestTrader:
         trader.close()
 
     def test_run_cycle_evaluates_derived_features_from_raw_current_data(self, monkeypatch, tmp_path):
-        from alpha_os.config import Config
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
-        from alpha_os.hypotheses.store import HypothesisRecord
-        from alpha_os.paper.trader import Trader
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cfg = Config()
         cfg.paper.max_trading_alphas = 1
@@ -1105,7 +1105,7 @@ class TestTrader:
         )
 
         monkeypatch.setattr(
-            "alpha_os.paper.trader._quick_healthcheck",
+            "alpha_os_recovery.paper.trader._quick_healthcheck",
             lambda _url: False,
         )
 
@@ -1131,13 +1131,13 @@ class TestTrader:
     def test_run_cycle_uses_snapshot_portfolio_value_as_daily_pnl_baseline(
         self, monkeypatch, tmp_path
     ):
-        from alpha_os.config import Config
-        from alpha_os.execution.paper import PaperExecutor
-        from alpha_os.forward.tracker import HypothesisObservationTracker
-        from alpha_os.governance.audit_log import AuditLog
-        from alpha_os.hypotheses.store import HypothesisRecord
-        from alpha_os.paper.trader import Trader
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.config import Config
+        from alpha_os_recovery.execution.paper import PaperExecutor
+        from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+        from alpha_os_recovery.governance.audit_log import AuditLog
+        from alpha_os_recovery.hypotheses.store import HypothesisRecord
+        from alpha_os_recovery.paper.trader import Trader
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cfg = Config()
         cfg.paper.max_position_pct = 0.5
@@ -1186,11 +1186,11 @@ class TestTrader:
                 return {"h-store": {"BTC": 0.0}}
 
         monkeypatch.setattr(
-            "alpha_os.predictions.store.PredictionStore",
+            "alpha_os_recovery.predictions.store.PredictionStore",
             lambda *args, **kwargs: _PatchedPredictionStore(history),
         )
         monkeypatch.setattr(
-            "alpha_os.paper.trader._quick_healthcheck",
+            "alpha_os_recovery.paper.trader._quick_healthcheck",
             lambda _url: False,
         )
 

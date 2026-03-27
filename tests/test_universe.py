@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from alpha_os.data import universe
+from alpha_os_recovery.data import universe
 
 
 @pytest.fixture(autouse=True)

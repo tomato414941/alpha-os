@@ -1,8 +1,8 @@
 """Tests for pipeline runner — integration test."""
 import numpy as np
 
-from alpha_os.evolution.gp import GPConfig
-from alpha_os.legacy.pipeline_runner import PipelineConfig, PipelineRunner, PipelineResult
+from alpha_os_recovery.evolution.gp import GPConfig
+from alpha_os_recovery.legacy.pipeline_runner import PipelineConfig, PipelineRunner, PipelineResult
 
 
 class TestPipelineRunner:

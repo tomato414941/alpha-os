@@ -4,15 +4,15 @@ from argparse import Namespace
 
 import numpy as np
 
-from alpha_os.config import Config
-from alpha_os.cli import _build_parser, cmd_score_exploratory_hypotheses
-from alpha_os.data.universe import price_signal
-from alpha_os.hypotheses.research_scoring import (
+from alpha_os_recovery.config import Config
+from alpha_os_recovery.cli import _build_parser, cmd_score_exploratory_hypotheses
+from alpha_os_recovery.data.universe import price_signal
+from alpha_os_recovery.hypotheses.research_scoring import (
     exploratory_scoring_candidates,
     score_exploratory_hypotheses,
     required_research_features,
 )
-from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord, HypothesisStore
+from alpha_os_recovery.hypotheses.store import HypothesisKind, HypothesisRecord, HypothesisStore
 
 
 def _scoring_data(asset: str = "BTC", n_days: int = 260) -> tuple[dict[str, np.ndarray], int]:
@@ -448,9 +448,9 @@ def test_cmd_score_exploratory_hypotheses_dry_run_and_apply(monkeypatch, tmp_pat
     )
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
-    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: Config())
-    monkeypatch.setattr("alpha_os.cli._real_data", lambda features, config, eval_window=0: _scoring_data())
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli._load_config", lambda _path: Config())
+    monkeypatch.setattr("alpha_os_recovery.cli._real_data", lambda features, config, eval_window=0: _scoring_data())
 
     cmd_score_exploratory_hypotheses(
         Namespace(asset="BTC", config=None, limit=None, dry_run=True)

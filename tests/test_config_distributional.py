@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from alpha_os.config import Config, PortfolioConfig
-from alpha_os.config import TRADING_MODE_FUTURES_LONG_SHORT, TradingConfig
+from alpha_os_recovery.config import Config, PortfolioConfig
+from alpha_os_recovery.config import TRADING_MODE_FUTURES_LONG_SHORT, TradingConfig
 
 
 def test_unknown_toml_keys_ignored(tmp_path):
@@ -47,7 +47,7 @@ def test_override_file_inherits_default_toml(tmp_path, monkeypatch):
         )
     )
 
-    monkeypatch.setattr("alpha_os.config.CONFIG_DIR", default_dir)
+    monkeypatch.setattr("alpha_os_recovery.config.CONFIG_DIR", default_dir)
 
     cfg = Config.load(override)
     assert cfg.paper.max_trading_alphas == 30

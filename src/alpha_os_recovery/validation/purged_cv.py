@@ -6,8 +6,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.backtest import metrics
+from alpha_os_recovery.backtest.engine import BacktestEngine
+from alpha_os_recovery.backtest import metrics
 
 
 @dataclass
@@ -131,7 +131,7 @@ def purged_walk_forward_ic(
     For each fold, computes IC between the signal and residualized
     forward returns at the given horizon. No backtest engine needed.
     """
-    from alpha_os.research.cross_asset import (
+    from alpha_os_recovery.research.cross_asset import (
         forward_returns,
         residualize_forward_returns,
     )

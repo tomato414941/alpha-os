@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.dsl import (
+from alpha_os_recovery.dsl import (
     Feature,
     Constant,
     UnaryOp,
@@ -489,7 +489,7 @@ class TestGenerator:
 class TestMicrostructureTemplates:
 
     def test_templates_parse_and_stringify(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         assert len(templates) == 6
@@ -499,42 +499,42 @@ class TestMicrostructureTemplates:
             assert to_string(roundtrip) == s
 
     def test_vpin_spike_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[0])
         assert s == "(if_gt vpin_btc 0.7 1.0 0.0)"
 
     def test_imbalance_momentum_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[1])
         assert s == "(sub book_imbalance_btc (mean_5 book_imbalance_btc))"
 
     def test_spread_filter_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[2])
         assert s == "(if_gt spread_bps_btc 10.0 0.0 1.0)"
 
     def test_flow_vpin_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[3])
         assert s == "(mul trade_flow_btc (neg vpin_btc))"
 
     def test_depth_ratio_divergence_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[4])
         assert s == "(sub book_depth_ratio_btc (mean_20 book_depth_ratio_btc))"
 
     def test_large_trade_spike_template(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         templates = generate_microstructure_templates()
         s = to_string(templates[5])
@@ -542,7 +542,7 @@ class TestMicrostructureTemplates:
         assert "trade_flow_btc" in s
 
     def test_templates_evaluable(self):
-        from alpha_os.dsl.generator import generate_microstructure_templates
+        from alpha_os_recovery.dsl.generator import generate_microstructure_templates
 
         rng = np.random.default_rng(42)
         n = 100
@@ -566,14 +566,14 @@ class TestMicrostructureTemplates:
 class TestMicrostructureFeatureList:
 
     def test_build_microstructure_feature_list_crypto(self):
-        from alpha_os.data.universe import build_microstructure_feature_list, MICROSTRUCTURE_SIGNALS
+        from alpha_os_recovery.data.universe import build_microstructure_feature_list, MICROSTRUCTURE_SIGNALS
         features = build_microstructure_feature_list("BTC")
         assert features[0] == "btc_ohlcv"
         for sig in MICROSTRUCTURE_SIGNALS:
             assert sig in features
 
     def test_build_microstructure_feature_list_no_duplicates(self):
-        from alpha_os.data.universe import build_microstructure_feature_list
+        from alpha_os_recovery.data.universe import build_microstructure_feature_list
         features = build_microstructure_feature_list("BTC")
         assert len(features) == len(set(features))
 

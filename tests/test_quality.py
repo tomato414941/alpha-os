@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.hypotheses.quality import (
+from alpha_os_recovery.hypotheses.quality import (
     blend_quality,
     rolling_fitness,
 )

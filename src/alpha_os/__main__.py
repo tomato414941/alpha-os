@@ -2,4 +2,5 @@
 
 from alpha_os.cli import main
 
-main()
+raise SystemExit(main())
+

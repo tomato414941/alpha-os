@@ -2,9 +2,9 @@
 import json
 import numpy as np
 
-from alpha_os.hypotheses.monitor import HypothesisMonitor, MonitorConfig, MonitorStatus
-from alpha_os.governance.audit_log import AuditLog
-from alpha_os.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+from alpha_os_recovery.hypotheses.monitor import HypothesisMonitor, MonitorConfig, MonitorStatus
+from alpha_os_recovery.governance.audit_log import AuditLog
+from alpha_os_recovery.pipeline.scheduler import PipelineScheduler, SchedulerConfig
 
 
 # ---------------------------------------------------------------------------

@@ -3,8 +3,8 @@ import json
 import numpy as np
 import pytest
 
-from alpha_os.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant, ConditionalOp, LagOp
-from alpha_os.evolution.gp import (
+from alpha_os_recovery.dsl.expr import Feature, UnaryOp, BinaryOp, RollingOp, Constant, ConditionalOp, LagOp
+from alpha_os_recovery.evolution.gp import (
     GPConfig,
     GPEvolver,
     _tree_depth,
@@ -12,8 +12,8 @@ from alpha_os.evolution.gp import (
     _ast_signature,
     _jaccard_similarity,
 )
-from alpha_os.evolution.discovery_pool import DiscoveryPool, DiscoveryPoolConfig, passes_sanity_filter
-from alpha_os.evolution.behavior import (
+from alpha_os_recovery.evolution.discovery_pool import DiscoveryPool, DiscoveryPoolConfig, passes_sanity_filter
+from alpha_os_recovery.evolution.behavior import (
     compute_behavior,
     _persistence,
     _activity,
@@ -188,7 +188,7 @@ class TestGPEvolver:
         assert fit < raw
 
     def test_custom_generator(self):
-        from alpha_os.dsl.generator import AlphaGenerator
+        from alpha_os_recovery.dsl.generator import AlphaGenerator
         gen = AlphaGenerator.with_random_subset(FEATURES, k=2, seed=42)
         cfg = GPConfig(pop_size=10, n_generations=1, max_depth=2)
         evolver = GPEvolver(FEATURES, self._make_evaluate_fn(), config=cfg, seed=42, generator=gen)
@@ -196,7 +196,7 @@ class TestGPEvolver:
         assert len(results) > 0
         # All expressions should only use subset features
         for expr, _ in results:
-            from alpha_os.dsl import collect_feature_names
+            from alpha_os_recovery.dsl import collect_feature_names
             used = collect_feature_names(expr)
             assert used.issubset(gen.feature_subset)
 

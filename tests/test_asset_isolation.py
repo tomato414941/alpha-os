@@ -10,13 +10,13 @@ import pytest
 @pytest.fixture(autouse=True)
 def _patch_data_dir(tmp_path, monkeypatch):
     """Redirect DATA_DIR to tmp_path for all tests."""
-    monkeypatch.setattr("alpha_os.config.DATA_DIR", tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.config.DATA_DIR", tmp_path)
     yield
 
 
 class TestAssetDataDir:
     def test_creates_directory(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
+        from alpha_os_recovery.config import asset_data_dir
         d = asset_data_dir("ETH")
         assert d == tmp_path / "ETH"
         assert d.is_dir()
@@ -24,12 +24,12 @@ class TestAssetDataDir:
         assert (d / "logs").is_dir()
 
     def test_normalizes_case(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
+        from alpha_os_recovery.config import asset_data_dir
         assert asset_data_dir("btc") == asset_data_dir("BTC")
         assert asset_data_dir("Eth") == tmp_path / "ETH"
 
     def test_different_assets_different_dirs(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
+        from alpha_os_recovery.config import asset_data_dir
         btc = asset_data_dir("BTC")
         eth = asset_data_dir("ETH")
         assert btc != eth
@@ -39,8 +39,8 @@ class TestAssetDataDir:
 
 class TestRegistryIsolation:
     def test_two_assets_isolated(self, tmp_path, monkeypatch):
-        from alpha_os.config import asset_data_dir
-        from alpha_os.legacy.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
+        from alpha_os_recovery.config import asset_data_dir
+        from alpha_os_recovery.legacy.managed_alphas import ManagedAlphaStore, AlphaRecord, AlphaState
 
         btc_dir = asset_data_dir("BTC")
         eth_dir = asset_data_dir("ETH")
@@ -68,7 +68,7 @@ class TestRegistryIsolation:
 
 class TestCircuitBreakerPath:
     def test_saves_to_asset_path(self, tmp_path):
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         cb_path = tmp_path / "BTC" / "metrics" / "circuit_breaker.json"
         cb = CircuitBreaker.load(path=cb_path)
@@ -79,7 +79,7 @@ class TestCircuitBreakerPath:
         assert data["daily_pnl"] == -100
 
     def test_load_preserves_path(self, tmp_path):
-        from alpha_os.risk.circuit_breaker import CircuitBreaker
+        from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
 
         path1 = tmp_path / "BTC" / "metrics" / "cb.json"
         path2 = tmp_path / "ETH" / "metrics" / "cb.json"

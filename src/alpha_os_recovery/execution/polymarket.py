@@ -32,7 +32,7 @@ def _create_clob_client(host: str = "https://clob.polymarket.com"):
     except ImportError:
         raise ImportError(
             "py-clob-client is required for Polymarket trading. "
-            "Install with: pip install 'alpha-os[polymarket]'"
+            "Install with: pip install 'alpha-os-recovery[polymarket]'"
         )
 
     private_key, api_key = _get_credentials()

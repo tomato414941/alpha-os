@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from alpha_os.legacy.managed_alphas import CandidateSeed, ManagedAlphaStore
-from alpha_os.research.handcrafted import get_handcrafted_expressions, list_handcrafted_sets
+from alpha_os_recovery.legacy.managed_alphas import CandidateSeed, ManagedAlphaStore
+from alpha_os_recovery.research.handcrafted import get_handcrafted_expressions, list_handcrafted_sets
 
 
 def test_list_handcrafted_sets_for_btc():

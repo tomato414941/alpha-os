@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from alpha_os.hypotheses.monitor import RegimeDetector
+from alpha_os_recovery.hypotheses.monitor import RegimeDetector
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from alpha_os.legacy.stake_update import (
+from alpha_os_recovery.legacy.stake_update import (
     compute_daily_marginal_contributions,
     compute_rolling_marginal_stake,
 )

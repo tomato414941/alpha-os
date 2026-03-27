@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import sqlite3
 
-from alpha_os.hypotheses.state_lifecycle import LifecycleConfig
-from alpha_os.legacy.admission_replay import (
+from alpha_os_recovery.hypotheses.state_lifecycle import LifecycleConfig
+from alpha_os_recovery.legacy.admission_replay import (
     alpha_id_for_expression,
     load_candidate_records,
     rebuild_registry,
 )
-from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
 
 
 def test_alpha_id_for_expression_is_stable():

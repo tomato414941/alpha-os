@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from alpha_os.risk.manager import RiskManager, RiskManagerConfig
-from alpha_os.risk.position import (
+from alpha_os_recovery.risk.manager import RiskManager, RiskManagerConfig
+from alpha_os_recovery.risk.position import (
     PositionConfig,
     signal_to_positions,
     compute_pnl,

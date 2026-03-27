@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = PROJECT_ROOT / "src" / "alpha_os"
+SRC_ROOT = PROJECT_ROOT / "src" / "alpha_os_recovery"
 ALPHA_PACKAGE = SRC_ROOT / "alpha"
 SCRIPTS_ROOT = PROJECT_ROOT / "scripts"
 TESTS_ROOT = PROJECT_ROOT / "tests"
@@ -61,12 +61,12 @@ def _forbidden_alpha_imports(path: Path) -> list[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name == "alpha_os.alpha" or alias.name.startswith("alpha_os.alpha."):
+                if alias.name == "alpha_os_recovery.alpha" or alias.name.startswith("alpha_os_recovery.alpha."):
                     violations.append(f"import {alias.name}")
         elif isinstance(node, ast.ImportFrom):
             if node.level == 0:
                 module = node.module or ""
-                if module == "alpha_os.alpha" or module.startswith("alpha_os.alpha."):
+                if module == "alpha_os_recovery.alpha" or module.startswith("alpha_os_recovery.alpha."):
                     violations.append(f"from {module} import ...")
             else:
                 module = node.module or ""

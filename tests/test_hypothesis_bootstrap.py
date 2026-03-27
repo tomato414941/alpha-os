@@ -1,5 +1,5 @@
-from alpha_os.hypotheses.bootstrap import bootstrap_hypotheses
-from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord, HypothesisStatus, HypothesisStore
+from alpha_os_recovery.hypotheses.bootstrap import bootstrap_hypotheses
+from alpha_os_recovery.hypotheses.store import HypothesisKind, HypothesisRecord, HypothesisStatus, HypothesisStore
 
 
 def test_bootstrap_hypotheses_have_expected_kind_counts():

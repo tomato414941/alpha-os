@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from alpha_os.data.store import DataStore
+from alpha_os_recovery.data.store import DataStore
 
 
 @pytest.fixture

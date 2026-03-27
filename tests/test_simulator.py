@@ -3,10 +3,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from alpha_os.hypotheses.state_lifecycle import ST_ACTIVE, ST_CANDIDATE, ST_DORMANT
-from alpha_os.legacy.managed_alphas import AlphaRecord, AlphaState
-from alpha_os.config import Config
-from alpha_os.legacy.replay_simulator import (
+from alpha_os_recovery.hypotheses.state_lifecycle import ST_ACTIVE, ST_CANDIDATE, ST_DORMANT
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, AlphaState
+from alpha_os_recovery.config import Config
+from alpha_os_recovery.legacy.replay_simulator import (
     ST_EXCLUDED,
     _apply_regime_adjustment,
     _replay_signals_to_position_intent,
@@ -114,7 +114,7 @@ def test_apply_regime_adjustment_is_noop_when_not_triggered(monkeypatch):
         def detect(self, returns):
             return type("Regime", (), {"drift_score": 0.2})()
 
-    monkeypatch.setattr("alpha_os.legacy.replay_simulator.RegimeDetector", DummyDetector)
+    monkeypatch.setattr("alpha_os_recovery.legacy.replay_simulator.RegimeDetector", DummyDetector)
 
     adjusted = _apply_regime_adjustment(
         0.6,
@@ -139,7 +139,7 @@ def test_apply_regime_adjustment_scales_signal_when_triggered(monkeypatch):
         def detect(self, returns):
             return type("Regime", (), {"drift_score": 0.7})()
 
-    monkeypatch.setattr("alpha_os.legacy.replay_simulator.RegimeDetector", DummyDetector)
+    monkeypatch.setattr("alpha_os_recovery.legacy.replay_simulator.RegimeDetector", DummyDetector)
 
     adjusted = _apply_regime_adjustment(
         0.6,

@@ -3,18 +3,18 @@ import sqlite3
 import numpy as np
 import pytest
 
-from alpha_os.hypotheses.quality import blend_quality
-from alpha_os.hypotheses.identity import representative_feature_family
-from alpha_os.hypotheses.runtime_policy import (
+from alpha_os_recovery.hypotheses.quality import blend_quality
+from alpha_os_recovery.hypotheses.identity import representative_feature_family
+from alpha_os_recovery.hypotheses.runtime_policy import (
     build_trading_signal_history_map,
     rank_trading_records,
     select_decorrelated_trading_ids,
 )
-from alpha_os.hypotheses.allocation_rebalance_service import (
+from alpha_os_recovery.hypotheses.allocation_rebalance_service import (
     apply_capital_backed_count_cap,
     prefilter_reference_rebalance_records,
 )
-from alpha_os.hypotheses import (
+from alpha_os_recovery.hypotheses import (
     apply_allocation_rebalance_plan,
     backfill_observation_returns,
     build_allocation_rebalance_plan,
@@ -34,10 +34,10 @@ from alpha_os.hypotheses import (
     update_stakes_from_history,
     weighted_prediction,
 )
-from alpha_os.data.store import DataStore
-from alpha_os.dsl.evaluator import normalize_signal
-from alpha_os.forward.tracker import HypothesisObservationTracker
-from alpha_os.hypotheses.lifecycle import AllocationRebalanceEntry
+from alpha_os_recovery.data.store import DataStore
+from alpha_os_recovery.dsl.evaluator import normalize_signal
+from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+from alpha_os_recovery.hypotheses.lifecycle import AllocationRebalanceEntry
 
 
 def test_weighted_prediction_uses_stakes():
@@ -1084,7 +1084,7 @@ def test_forward_tracker_get_realizable_returns_zeroes_short_side_in_long_only(t
 
 
 def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
-    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_capital_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1164,7 +1164,7 @@ def test_apply_capital_redundancy_cap_caps_live_proven_duplicates():
 
 
 def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
-    from alpha_os.hypotheses.breadth import apply_weak_research_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_weak_research_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1246,7 +1246,7 @@ def test_apply_weak_research_redundancy_cap_caps_batch_research_duplicates():
 
 
 def test_apply_weak_research_redundancy_cap_does_not_cross_cap_different_families():
-    from alpha_os.hypotheses.breadth import apply_weak_research_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_weak_research_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1329,7 +1329,7 @@ def test_apply_weak_research_redundancy_cap_does_not_cross_cap_different_familie
 
 
 def test_apply_capital_redundancy_cap_does_not_cross_cap_weak_batch_families():
-    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_capital_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1412,7 +1412,7 @@ def test_apply_capital_redundancy_cap_does_not_cross_cap_weak_batch_families():
 
 
 def test_apply_capital_redundancy_cap_does_not_cross_cap_actionable_families():
-    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_capital_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1493,7 +1493,7 @@ def test_apply_capital_redundancy_cap_does_not_cross_cap_actionable_families():
 
 
 def test_apply_capital_redundancy_cap_does_not_cross_cap_actionable_against_research_family():
-    from alpha_os.hypotheses.breadth import apply_capital_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_capital_redundancy_cap
 
     records = [
         HypothesisRecord(
@@ -1574,7 +1574,7 @@ def test_apply_capital_redundancy_cap_does_not_cross_cap_actionable_against_rese
 
 
 def test_apply_live_proven_return_redundancy_cap_does_not_cross_cap_families():
-    from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_live_proven_return_redundancy_cap
 
     plan = [
         AllocationRebalanceEntry(
@@ -1641,7 +1641,7 @@ def test_apply_live_proven_return_redundancy_cap_does_not_cross_cap_families():
 
 
 def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
-    from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_live_proven_return_redundancy_cap
 
     plan = [
         AllocationRebalanceEntry(
@@ -1707,7 +1707,7 @@ def test_apply_live_proven_return_redundancy_cap_caps_positive_corr_cluster():
 
 
 def test_apply_live_proven_return_redundancy_cap_aligns_mismatched_series_lengths():
-    from alpha_os.hypotheses.breadth import apply_live_proven_return_redundancy_cap
+    from alpha_os_recovery.hypotheses.breadth import apply_live_proven_return_redundancy_cap
 
     plan = [
         AllocationRebalanceEntry(

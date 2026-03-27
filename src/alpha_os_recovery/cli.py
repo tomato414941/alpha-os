@@ -1,0 +1,3573 @@
+"""CLI for alpha-os-recovery: generate, backtest, validate alpha factors."""
+
+from __future__ import annotations
+
+import argparse
+import gc
+import json
+import logging
+import os
+import sys
+import time
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+import numpy as np
+
+from alpha_os_recovery.backtest.cost_model import CostModel
+from alpha_os_recovery.backtest.engine import BacktestEngine
+from alpha_os_recovery.config import (
+    Config,
+    DATA_DIR,
+    HYPOTHESIS_OBSERVATIONS_DB_NAME,
+    HYPOTHESES_DB,
+    SIGNAL_CACHE_DB,
+    SIGNAL_CACHE_L2_DB,
+    asset_data_dir,
+)
+from alpha_os_recovery.runtime_lock import RuntimeLockBusy, hold_runtime_lock, runtime_lock_path
+from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+from alpha_os_recovery.data.universe import is_crypto, is_equity, infer_venue, price_signal, build_feature_list, build_hourly_feature_list
+from alpha_os_recovery.dsl import parse, to_string
+from alpha_os_recovery.legacy.cli_commands import (
+    add_legacy_research_subcommands,
+    add_legacy_subcommands,
+)
+from alpha_os_recovery.runtime_profile import build_runtime_profile
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="alpha-os-recovery",
+        description="Agentic Alpha OS — hypotheses-first runtime and research CLI",
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    # produce-predictions
+    pp = sub.add_parser("produce-predictions", help="Evaluate active hypotheses and write to prediction store")
+    pp.add_argument("--asset", type=str, default="BTC")
+    pp.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when no hypothesis predictions are written",
+    )
+    pp.add_argument("--config", type=str, default=None)
+
+    # paper
+    ppr = sub.add_parser("paper", help="Paper trade with live hypotheses")
+    ppr.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    ppr.add_argument("--schedule", action="store_true", help=argparse.SUPPRESS)
+    ppr.add_argument("--summary", action="store_true", help=argparse.SUPPRESS)
+    ppr.add_argument("--interval", type=int, default=None,
+                     help="Override check_interval in seconds (default: from config)")
+    ppr.add_argument("--asset", type=str, default="BTC")
+    ppr.add_argument("--config", type=str, default=None)
+
+    # trade
+    trd = sub.add_parser("trade", help="Trade on Binance (testnet by default)")
+    trd.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    trd.add_argument("--schedule", action="store_true", help=argparse.SUPPRESS)
+    trd.add_argument("--summary", action="store_true", help=argparse.SUPPRESS)
+    trd.add_argument("--interval", type=int, default=None,
+                     help="Override check_interval in seconds (default: from config)")
+    trd.add_argument("--real", action="store_true",
+                     help="Use real Binance (default is testnet)")
+    trd.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Disable interactive confirmation prompts for unattended runs",
+    )
+    trd.add_argument("--capital", type=float, default=10000.0,
+                     help="Initial capital for tracking (default: 10000)")
+    trd.add_argument("--asset", type=str, default="BTC")
+    trd.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH,SOL)")
+    trd.add_argument("--config", type=str, default=None)
+    trd.add_argument("--evolve-interval", type=int, default=86400, help=argparse.SUPPRESS)
+    trd.add_argument("--pop-size", type=int, default=200, help=argparse.SUPPRESS)
+    trd.add_argument("--generations", type=int, default=30, help=argparse.SUPPRESS)
+    trd.add_argument("--event-driven", action="store_true", help=argparse.SUPPRESS)
+    trd.add_argument("--debounce", type=int, default=None, help=argparse.SUPPRESS)
+    trd.add_argument("--venue", type=str, default=None,
+                     choices=["binance", "alpaca", "polymarket", "paper"],
+                     help="Trading venue (default: auto-detect from asset)")
+    trd.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero on overlapping runs or empty/failed oneshot trade cycles",
+    )
+
+    hseed = sub.add_parser(
+        "hypothesis-seeder",
+        help="Register random DSL and fixed seed hypotheses into the hypotheses store",
+    )
+    hseed.add_argument("--asset", type=str, default="BTC")
+    hseed.add_argument("--once", action="store_true")
+    hseed.add_argument("--include-bootstrap", action="store_true")
+    hseed.add_argument("--skip-bootstrap", action="store_true")
+    hseed.add_argument("--config", type=str, default=None)
+
+    seh = sub.add_parser(
+        "score-exploratory-hypotheses",
+        help="Compute research-quality metadata for exploratory random DSL hypotheses",
+    )
+    seh.add_argument("--asset", type=str, default="BTC")
+    seh.add_argument("--config", type=str, default=None)
+    seh.add_argument("--limit", type=int, default=None)
+    seh.add_argument("--dry-run", action="store_true")
+
+    ugen = sub.add_parser(
+        "unified-generator",
+        help=argparse.SUPPRESS,
+    )
+    ugen.add_argument("--config", type=str, default=None)
+
+    pg = sub.add_parser(
+        "enqueue-discovery-pool",
+        help=argparse.SUPPRESS,
+    )
+    pg.add_argument("--asset", type=str, default="BTC")
+    pg.add_argument("--config", type=str, default=None)
+    pg.add_argument("--limit", type=int, default=None)
+    pg.add_argument("--dry-run", action="store_true")
+
+    # lifecycle (legacy compat alias)
+    lc_d = sub.add_parser("lifecycle", help=argparse.SUPPRESS)
+    lc_d.add_argument("--asset", type=str, default="BTC")
+    lc_d.add_argument("--config", type=str, default=None)
+
+    rat = sub.add_parser(
+        "rebalance-allocation-trust",
+        help="Rebase active hypothesis stake values onto the current allocation-trust model",
+    )
+    rat.add_argument("--asset", type=str, default="BTC")
+    rat.add_argument("--config", type=str, default=None)
+    rat.add_argument("--dry-run", action="store_true")
+
+    rso = sub.add_parser(
+        "run-sleeves-once",
+        help="Run seeding, scoring, rebalance, trade, and status sequentially for one or more asset sleeves",
+    )
+    rso.add_argument("--asset", type=str, default="BTC")
+    rso.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH)")
+    rso.add_argument("--config", type=str, default=None)
+    rso.add_argument("--score-limit", type=int, default=12)
+    rso.add_argument(
+        "--bootstrap-assets",
+        type=str,
+        default="BTC",
+        help="Comma-separated assets that should include bootstrap seeds during seeding",
+    )
+    rso.add_argument(
+        "--refresh-bootstrap-assets",
+        action="store_true",
+        help="Also run seed/score/rebalance for bootstrap reference sleeves",
+    )
+    rso.add_argument("--skip-seed", action="store_true")
+    rso.add_argument("--skip-serious", action="store_true")
+    rso.add_argument("--skip-score", action="store_true")
+    rso.add_argument("--skip-rebalance", action="store_true")
+    rso.add_argument("--skip-trade", action="store_true")
+    rso.add_argument("--skip-status", action="store_true")
+
+    cmp = sub.add_parser(
+        "compare-sleeves",
+        help="Compare runtime sleeve state across one or more assets",
+    )
+    cmp.add_argument("--asset", type=str, default="BTC")
+    cmp.add_argument("--assets", type=str, default=None,
+                     help="Comma-separated asset list (e.g. BTC,ETH)")
+    cmp.add_argument("--config", type=str, default=None)
+
+    cmph = sub.add_parser(
+        "compare-sleeve-history",
+        help="Show recent sleeve comparison snapshots across one or more assets",
+    )
+    cmph.add_argument("--asset", type=str, default="BTC")
+    cmph.add_argument("--assets", type=str, default=None,
+                      help="Comma-separated asset list (e.g. BTC,ETH)")
+    cmph.add_argument("--limit", type=int, default=5)
+
+    alb = sub.add_parser(
+        "analyze-live-breadth",
+        help="Analyze historical signal breadth for capital-backed bootstrap hypotheses",
+    )
+    alb.add_argument("--asset", type=str, default="BTC")
+    alb.add_argument("--config", type=str, default=None)
+    alb.add_argument("--lookback", type=int, default=252)
+    alb.add_argument("--top-pairs", type=int, default=5)
+
+    alc = sub.add_parser(
+        "analyze-latest-combine",
+        help="Decompose the latest selected alpha signals by runtime cohort",
+    )
+    alc.add_argument("--asset", type=str, default="BTC")
+    alc.add_argument("--config", type=str, default=None)
+    alc.add_argument("--top", type=int, default=5)
+
+    abr = sub.add_parser(
+        "analyze-batch-research",
+        help="Summarize batch-research exploratory hypotheses and why they are or are not capital-backed",
+    )
+    abr.add_argument("--asset", type=str, default="BTC")
+    abr.add_argument("--config", type=str, default=None)
+    abr.add_argument("--top", type=int, default=5)
+    abr.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
+
+    aal = sub.add_parser(
+        "analyze-actionable-live",
+        help="Summarize why live-proven hypotheses do or do not become actionable-live",
+    )
+    aal.add_argument("--asset", type=str, default="BTC")
+    aal.add_argument("--config", type=str, default=None)
+    aal.add_argument("--top", type=int, default=5)
+    aal.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
+    aal.add_argument(
+        "--source",
+        type=str,
+        default=None,
+        help="Restrict to one or more hypothesis sources",
+    )
+
+    att = sub.add_parser(
+        "analyze-trade-transition",
+        help="Run one paper trade cycle and summarize pre/post batch research transitions",
+    )
+    att.add_argument("--asset", type=str, default="BTC")
+    att.add_argument("--config", type=str, default=None)
+    att.add_argument("--top", type=int, default=5)
+    att.add_argument(
+        "--families",
+        type=str,
+        default=None,
+        help="Comma-separated feature families to focus on",
+    )
+
+    bor = sub.add_parser(
+        "backfill-observation-returns",
+        help="Backfill observation-only forward returns for active hypotheses from cached history",
+    )
+    bor.add_argument("--asset", type=str, default="BTC")
+    bor.add_argument("--config", type=str, default=None)
+    bor.add_argument("--days", type=int, default=30)
+    bor.add_argument(
+        "--source",
+        type=str,
+        default=None,
+        help="Only backfill hypotheses from the given source cohort",
+    )
+    bor.add_argument(
+        "--apply-lifecycle",
+        action="store_true",
+        help="Recompute allocation trust after backfilling observation returns",
+    )
+
+    # testnet-readiness
+    tnr = sub.add_parser("testnet-readiness", help="Check Phase 4 testnet readiness status")
+    tnr.add_argument("--reports", action="store_true", help="Show all daily reports")
+    tnr.add_argument("--slippage", action="store_true", help="Show slippage distribution")
+    tnr.add_argument("--latency", action="store_true", help="Show fill latency distribution")
+    tnr.add_argument("--reset", action="store_true", help="Reset consecutive day counter")
+    tnr.add_argument("--asset", type=str, default="BTC")
+    tnr.add_argument("--config", type=str, default=None)
+
+    # runtime-status
+    rst = sub.add_parser(
+        "runtime-status",
+        help="Show current runtime observation status from hypotheses store and readiness files",
+    )
+    rst.add_argument("--asset", type=str, default="BTC")
+    rst.add_argument("--config", type=str, default=None)
+
+    ssc = sub.add_parser(
+        "sync-signal-cache",
+        help="Sync a bounded set of signals into the local signal cache",
+    )
+    ssc.add_argument("--asset", type=str, default="BTC")
+    ssc.add_argument(
+        "--assets",
+        type=str,
+        default=None,
+        help="Comma-separated asset list (default: use --asset only)",
+    )
+    ssc.add_argument(
+        "--signals",
+        type=str,
+        default=None,
+        help="Comma-separated explicit signal names to sync",
+    )
+    ssc.add_argument(
+        "--from-hypotheses",
+        action="store_true",
+        help="Sync signals required by active hypotheses for the selected assets",
+    )
+    ssc.add_argument(
+        "--resolution",
+        type=str,
+        default="1d",
+        help="Signal resolution (default: 1d)",
+    )
+    ssc.add_argument(
+        "--min-history-days",
+        type=int,
+        default=0,
+        help="Require at least this many cached rows per signal",
+    )
+    ssc.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when sync cannot populate every requested signal",
+    )
+    ssc.add_argument("--config", type=str, default=None)
+
+    afl = sub.add_parser(
+        "alpha-funnel",
+        help=argparse.SUPPRESS,
+    )
+    afl.add_argument("--asset", type=str, default="BTC")
+
+    legacy = sub.add_parser(
+        "legacy",
+        help="Run archived registry and migration commands",
+    )
+    legacy_sub = legacy.add_subparsers(dest="legacy_command", required=True)
+
+    lgen = legacy_sub.add_parser(
+        "unified-generator",
+        help="Run the legacy unified generator flow",
+    )
+    lgen.add_argument("--config", type=str, default=None)
+
+    lpg = legacy_sub.add_parser(
+        "enqueue-discovery-pool",
+        help="Enqueue top discovery-pool entries into the admission queue",
+    )
+    lpg.add_argument("--asset", type=str, default="BTC")
+    lpg.add_argument("--config", type=str, default=None)
+    lpg.add_argument("--limit", type=int, default=None)
+    lpg.add_argument("--dry-run", action="store_true")
+
+    add_legacy_subcommands(legacy_sub)
+
+    llc = legacy_sub.add_parser(
+        "lifecycle",
+        help="Run the legacy daily stake-update daemon",
+    )
+    llc.add_argument("--asset", type=str, default="BTC")
+    llc.add_argument("--config", type=str, default=None)
+
+    lafl = legacy_sub.add_parser(
+        "alpha-funnel",
+        help="Show discovery-pool to deployed-alpha funnel counts",
+    )
+    lafl.add_argument("--asset", type=str, default="BTC")
+
+    research = sub.add_parser(
+        "research",
+        help="Run bounded research and replay commands",
+    )
+    research_sub = research.add_subparsers(dest="research_command", required=True)
+
+    rgen = research_sub.add_parser("generate", help="Generate alpha expressions")
+    rgen.add_argument("--count", type=int, default=5000)
+    rgen.add_argument("--asset", type=str, default="NVDA")
+    rgen.add_argument("--seed", type=int, default=42)
+    rgen.add_argument("--config", type=str, default=None)
+
+    rbt = research_sub.add_parser("backtest", help="Backtest generated alphas")
+    rbt.add_argument("--count", type=int, default=5000)
+    rbt.add_argument("--top", type=int, default=20)
+    rbt.add_argument("--asset", type=str, default="NVDA")
+    rbt.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    rbt.add_argument("--seed", type=int, default=42)
+    rbt.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    rbt.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    rbt.add_argument("--config", type=str, default=None)
+
+    revo = research_sub.add_parser("evolve", help="Evolve alphas via GP + MAP-Elites")
+    revo.add_argument("--pop-size", type=int, default=200)
+    revo.add_argument("--generations", type=int, default=30)
+    revo.add_argument("--asset", type=str, default="NVDA")
+    revo.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    revo.add_argument("--top", type=int, default=20)
+    revo.add_argument("--seed", type=int, default=42)
+    revo.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    revo.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    revo.add_argument(
+        "--layer",
+        type=int,
+        default=3,
+        choices=[2, 3],
+        help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)",
+    )
+    revo.add_argument("--config", type=str, default=None)
+
+    rval = research_sub.add_parser("validate", help="Validate an alpha with purged WF CV")
+    rval.add_argument("--expr", type=str, required=True)
+    rval.add_argument("--asset", type=str, default="NVDA")
+    rval.add_argument("--days", type=int, default=500, help="Number of days (--synthetic only)")
+    rval.add_argument("--seed", type=int, default=42)
+    rval.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="Use synthetic random-walk data instead of real data",
+    )
+    rval.add_argument(
+        "--eval-window",
+        type=int,
+        default=0,
+        help="Evaluation window in days (0=all data, e.g. 200 for recent)",
+    )
+    rval.add_argument(
+        "--layer",
+        type=int,
+        default=3,
+        choices=[2, 3],
+        help="Alpha layer: 2=hourly tactical, 3=daily strategic (default)",
+    )
+    rval.add_argument("--config", type=str, default=None)
+
+    reva = research_sub.add_parser("evaluate", help="Evaluate expression with multi-horizon IC")
+    reva.add_argument("--expr", type=str, required=True, help="DSL expression string")
+    reva.add_argument("--config", type=str, default=None)
+
+    rpc = research_sub.add_parser(
+        "produce-classical",
+        help="Compute classical indicators and write to prediction store",
+    )
+    rpc.add_argument("--config", type=str, default=None)
+
+    add_legacy_research_subcommands(research_sub)
+
+    return parser
+
+
+def _load_config(config_path: str | None) -> Config:
+    cfg = Config.load(Path(config_path)) if config_path else Config.load()
+    os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+    return cfg
+
+
+def _load_runtime_observation_config(config_path: str | None) -> Config:
+    if config_path:
+        cfg = Config.load(Path(config_path))
+        os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+        return cfg
+    user_prod = Path.home() / ".config" / "alpha-os" / "prod.toml"
+    if user_prod.exists():
+        cfg = Config.load(user_prod)
+        os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+        return cfg
+    cfg = Config.load()
+    os.environ["ALPHA_OS_SIGNAL_NOISE_URL"] = cfg.api.base_url
+    return cfg
+
+
+def _normalize_trade_config(cfg: Config) -> list[str]:
+    """Trade runtime now respects the configured profile as-is."""
+    return []
+
+
+def _make_features(asset: str) -> list[str]:
+    """Feature names available for alpha generation."""
+    return build_feature_list(asset)
+
+
+def _synthetic_data(features: list[str], n_days: int, seed: int) -> dict[str, np.ndarray]:
+    """Generate synthetic price/signal data for offline testing."""
+    print("[SYNTHETIC] Using synthetic random-walk data — not suitable for real decisions")
+    rng = np.random.default_rng(seed)
+    data: dict[str, np.ndarray] = {}
+    for feat in features:
+        drift = rng.uniform(-0.0005, 0.001)
+        vol = rng.uniform(0.005, 0.03)
+        returns = rng.normal(drift, vol, n_days)
+        prices = 100.0 * np.cumprod(1.0 + returns)
+        data[feat] = prices
+    return data
+
+
+def _real_data(
+    features: list[str], config: Config, eval_window: int = 0,
+    resolution: str = "1d",
+) -> tuple[dict[str, np.ndarray], int]:
+    """Load real data: cache-first, import from signal-noise, sync from API."""
+    from alpha_os_recovery.data.store import DataStore
+
+    db_path = SIGNAL_CACHE_L2_DB if resolution != "1d" else SIGNAL_CACHE_DB
+
+    client = build_signal_client_from_config(config.api)
+    store = DataStore(db_path, client)
+
+    # Sync from REST API (incremental, best-effort)
+    try:
+        if client.health():
+            print(f"Syncing from {config.api.base_url} (resolution={resolution}) ...")
+            store.sync(features, resolution=resolution)
+        else:
+            print(f"API unavailable at {config.api.base_url} — using cache")
+    except Exception as exc:
+        print(f"API sync failed — using cache: {exc}")
+
+    matrix = store.get_matrix(features, resolution=resolution)
+
+    # Only require price signal (first feature) to be present
+    price_col = features[0]
+    if price_col in matrix.columns:
+        matrix = matrix[matrix[price_col].notna()]
+
+    matrix = matrix.fillna(0)
+
+    available = [f for f in features if f in matrix.columns and not (matrix[f] == 0).all()]
+    missing = [f for f in features if f not in available]
+    if missing:
+        print(f"Missing/empty: {len(missing)} signals")
+    print(f"Available: {len(available)} signals")
+
+    store.close()
+
+    if len(matrix) < 60:
+        raise RuntimeError(
+            f"Insufficient data: {len(matrix)} rows (need >= 60). "
+            f"Missing signals: {missing}. "
+            "Run with API access first to populate cache, "
+            "or use --synthetic for testing."
+        )
+
+    data = {col: matrix[col].values for col in matrix.columns}
+    n_days = len(matrix)
+    print(f"Loaded {n_days} daily data points, {len(features)} features")
+
+    # Apply evaluation window
+    if eval_window > 0 and n_days > eval_window:
+        data = {k: v[-eval_window:] for k, v in data.items()}
+        n_days = eval_window
+        print(f"Eval window: using last {eval_window} days")
+
+    return data, n_days
+
+
+def cmd_generate(args: argparse.Namespace) -> None:
+    features = _make_features(args.asset)
+    from alpha_os_recovery.dsl.generator import AlphaGenerator
+    gen = AlphaGenerator(features=features, seed=args.seed)
+
+    t0 = time.perf_counter()
+    alphas = gen.generate_random(args.count, max_depth=3)
+    templates = gen.generate_from_templates()
+    elapsed = time.perf_counter() - t0
+
+    total = len(alphas) + len(templates)
+    print(f"Generated {total} alphas ({len(alphas)} random + {len(templates)} template) in {elapsed:.2f}s")
+    print("\nSample random alphas:")
+    for a in alphas[:5]:
+        print(f"  {to_string(a)}")
+    print("\nSample template alphas:")
+    for a in templates[:5]:
+        print(f"  {to_string(a)}")
+
+
+def cmd_backtest(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.dsl.evaluator import FAILED_FITNESS
+
+    cfg = _load_config(args.config)
+    features = _make_features(args.asset)
+    from alpha_os_recovery.dsl.generator import AlphaGenerator
+    gen = AlphaGenerator(features=features, seed=args.seed)
+
+    # Generate alphas
+    t0 = time.perf_counter()
+    alphas = gen.generate_random(args.count, max_depth=3)
+    templates = gen.generate_from_templates()
+    all_alphas = alphas + templates
+    gen_time = time.perf_counter() - t0
+
+    # Data source
+    if args.synthetic:
+        data = _synthetic_data(features, args.days, seed=args.seed + 1000)
+        n_days = args.days
+    else:
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window)
+
+    price_feat = features[0]
+    prices = data[price_feat]
+
+    # Evaluate all alphas to signal arrays
+    t1 = time.perf_counter()
+    signals = []
+    valid_alphas = []
+    for expr in all_alphas:
+        try:
+            sig = expr.evaluate(data)
+            if isinstance(sig, (int, float, np.floating)):
+                sig = np.full(n_days, float(sig))
+            if len(sig) != n_days:
+                continue
+            if np.all(np.isnan(sig)):
+                continue
+            if not np.all(np.isfinite(sig)):
+                sig = np.where(np.isfinite(sig), sig, 0.0)
+            signals.append(sig)
+            valid_alphas.append(expr)
+        except Exception:
+            continue
+    eval_time = time.perf_counter() - t1
+
+    if not signals:
+        print("No valid alphas to backtest.")
+        return
+
+    # Batch backtest
+    t2 = time.perf_counter()
+    sig_matrix = np.array(signals)
+    engine = BacktestEngine(
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
+    )
+    results = engine.run_batch(
+        sig_matrix, prices,
+        alpha_ids=[f"alpha_{i}" for i in range(len(signals))],
+    )
+    bt_time = time.perf_counter() - t2
+
+    # Rank by Sharpe (NaN → bottom)
+    ranked = sorted(
+        zip(valid_alphas, results),
+        key=lambda x: x[1].sharpe if np.isfinite(x[1].sharpe) else FAILED_FITNESS,
+        reverse=True,
+    )
+
+    total_time = time.perf_counter() - t0
+    print(f"Pipeline: {len(all_alphas)} generated, {len(signals)} valid, backtested in {total_time:.2f}s")
+    print(f"  Generate: {gen_time:.2f}s | Evaluate: {eval_time:.2f}s | Backtest: {bt_time:.2f}s")
+    print(f"\nTop {args.top} alphas by Sharpe ratio:")
+    print(
+        f"{'Rank':>4}  {'Sharpe':>8}  {'Return':>8}  {'MaxDD':>8}  {'CVaR95':>8}  "
+        f"{'TailHit':>8}  {'Turnover':>8}  Expression"
+    )
+    print("-" * 120)
+    for i, (expr, res) in enumerate(ranked[: args.top]):
+        print(
+            f"{i + 1:>4}  {res.sharpe:>8.3f}  {res.annual_return:>7.1%}  "
+            f"{res.max_drawdown:>7.1%}  {res.cvar_95:>8.3%}  {res.tail_hit_rate:>7.1%}  "
+            f"{res.turnover:>8.3f}  {to_string(expr)}"
+        )
+
+
+def cmd_evolve(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.dsl.evaluator import FAILED_FITNESS, sanitize_signal
+    from alpha_os_recovery.evolution.discovery_pool import DiscoveryPool
+    from alpha_os_recovery.evolution.behavior import compute_behavior
+    from alpha_os_recovery.evolution.gp import GPConfig, GPEvolver
+
+    cfg = _load_config(args.config)
+    layer = getattr(args, "layer", 3)
+    if layer == 2:
+        features = build_hourly_feature_list(args.asset)
+    else:
+        features = _make_features(args.asset)
+
+    if args.synthetic:
+        n_days = args.days
+        data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+    else:
+        resolution = "1h" if layer == 2 else "1d"
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window, resolution=resolution)
+
+    price_feat = features[0]
+    prices = data[price_feat]
+
+    engine = BacktestEngine(
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
+    )
+
+    def evaluate_fn(expr):
+        try:
+            sig = expr.evaluate(data)
+            sig = np.asarray(sig, dtype=float)
+            if sig.ndim == 0:
+                sig = np.full(n_days, float(sig))
+            if len(sig) != n_days:
+                return FAILED_FITNESS
+            if not np.all(np.isfinite(sig)):
+                sig = np.where(np.isfinite(sig), sig, 0.0)
+            result = engine.run(sig, prices)
+            return result.sharpe if np.isfinite(result.sharpe) else FAILED_FITNESS
+        except Exception:
+            return FAILED_FITNESS
+
+    gp_cfg = GPConfig(
+        pop_size=args.pop_size,
+        n_generations=args.generations,
+        max_depth=cfg.generation.max_depth,
+        bloat_penalty=cfg.generation.bloat_penalty,
+        depth_penalty=cfg.generation.depth_penalty,
+        similarity_penalty=cfg.generation.similarity_penalty,
+    )
+    evolver = GPEvolver(features, evaluate_fn, config=gp_cfg, seed=args.seed)
+
+    t0 = time.perf_counter()
+    results = evolver.run()
+    evolve_time = time.perf_counter() - t0
+
+    # Fill discovery pool
+    pool = DiscoveryPool()
+    live_signals: list[np.ndarray] = []
+    added = 0
+    for expr, fitness in results:
+        try:
+            sig = expr.evaluate(data)
+            sig = sanitize_signal(sig)
+            if sig.ndim == 0:
+                sig = np.full(n_days, float(sig))
+            behavior = compute_behavior(sig, expr, prices=prices)
+            if pool.add(expr, fitness, behavior):
+                added += 1
+                live_signals.append(sig)
+        except Exception:
+            continue
+
+    total_time = time.perf_counter() - t0
+    layer_label = f"Layer {layer}" if layer == 2 else "Layer 3"
+    print(f"Evolution ({layer_label}): {len(results)} unique alphas in {evolve_time:.2f}s")
+    print(f"Pool: {pool.size}/{pool.capacity} cells filled ({pool.coverage:.1%} coverage)")
+    print(f"Total time: {total_time:.2f}s\n")
+
+    top = pool.best(args.top)
+    print(f"Top {min(args.top, len(top))} alphas by fitness:")
+    print(f"{'Rank':>4}  {'Fitness':>8}  Expression")
+    print("-" * 70)
+    for i, (expr, fit) in enumerate(top):
+        print(f"{i + 1:>4}  {fit:>8.3f}  {to_string(expr)}")
+
+
+def cmd_validate(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.validation.purged_cv import purged_walk_forward
+
+    cfg = _load_config(args.config)
+    layer = getattr(args, "layer", 3)
+
+    if layer == 2:
+        features = build_hourly_feature_list(args.asset)
+    else:
+        features = _make_features(args.asset)
+
+    # Parse expression
+    expr = parse(args.expr)
+    print(f"Alpha: {to_string(expr)}")
+
+    if args.synthetic:
+        n_days = args.days
+        data = _synthetic_data(features, n_days, seed=args.seed + 1000)
+    else:
+        resolution = "1h" if layer == 2 else "1d"
+        data, n_days = _real_data(features, cfg, eval_window=args.eval_window,
+                                   resolution=resolution)
+
+    price_feat = features[0]
+    prices = data[price_feat]
+
+    # Evaluate
+    sig = expr.evaluate(data)
+    if isinstance(sig, (int, float, np.floating)):
+        sig = np.full(n_days, float(sig))
+
+    # Purged Walk-Forward CV
+    engine = BacktestEngine(
+        CostModel(cfg.backtest.commission_pct, cfg.backtest.slippage_pct),
+        allow_short=cfg.trading.supports_short,
+    )
+    cv = purged_walk_forward(
+        sig, prices, engine,
+        n_folds=cfg.validation.n_cv_folds,
+        embargo=cfg.validation.embargo_days,
+    )
+
+    layer_label = "hourly" if layer == 2 else "daily"
+    print(f"\nPurged Walk-Forward CV ({layer_label}, {cv.n_folds} folds):")
+    print(f"  OOS Sharpe:     {cv.oos_sharpe:>8.3f} +/- {cv.oos_sharpe_std:.3f}")
+    print(f"  OOS Return:     {cv.oos_return:>7.1%}")
+    print(f"  OOS Max DD:     {cv.oos_max_dd:>7.1%}")
+    print(f"  OOS CVaR95:     {cv.oos_cvar_95:>7.3%}")
+    print(f"  OOS Log Growth: {cv.oos_expected_log_growth:>8.3f}")
+    print(f"  OOS Tail Hit:   {cv.oos_tail_hit_rate:>7.1%}")
+    print(f"  Fold Sharpes:   {[f'{s:.3f}' for s in cv.fold_sharpes]}")
+
+    passed = cv.oos_sharpe >= cfg.validation.oos_sharpe_min
+    print(f"\n  Gate (OOS Sharpe >= {cfg.validation.oos_sharpe_min}): {'PASS' if passed else 'FAIL'}")
+
+
+def _print_paper_result(result) -> None:
+    print(f"\n{'='*60}")
+    print(f"Paper Trading Cycle: {result.date}")
+    print(f"{'='*60}")
+    print(f"  Signal Raw: {result.combined_signal:+.4f}")
+    if result.strategic_signal is not None:
+        print(f"  Signal L3:  {result.strategic_signal:+.4f}")
+    if result.regime_adjusted_signal is not None:
+        print(f"  Signal Reg: {result.regime_adjusted_signal:+.4f}")
+    if result.tactical_adjusted_signal is not None:
+        print(f"  Signal L2:  {result.tactical_adjusted_signal:+.4f}")
+    if result.final_signal is not None:
+        print(f"  Signal Fin: {result.final_signal:+.4f}")
+    print(f"  Risk Scale: DD={result.dd_scale:.2f} Vol={result.vol_scale:.2f}")
+    print(f"  Trades:     {len(result.fills)}")
+    for f in result.fills:
+        print(f"    {f.side.upper():>4} {f.qty:.6f} {f.symbol} @ ${f.price:,.2f}")
+    print(f"  Portfolio:  ${result.portfolio_value:,.2f}")
+    print(f"  Daily P&L:  ${result.daily_pnl:+,.2f} ({result.daily_return:+.2%})")
+    if getattr(result, "profile_id", ""):
+        commit = getattr(result, "profile_commit", "")
+        suffix = f" ({commit[:8]})" if commit else ""
+        print(f"  Profile:    {result.profile_id[:12]}{suffix}")
+    print(f"  Active:     {result.n_active_hypotheses} hypotheses")
+    print(f"  Live:       {result.n_live_hypotheses} hypotheses")
+    print(f"  Shortlist:  {result.n_shortlist_candidates} candidates")
+    print(f"  Selected:   {result.n_selected_hypotheses} hypotheses")
+    print(f"  Signals:    {result.n_signals_evaluated} evaluated")
+    if result.n_skipped_deadband > 0:
+        print(f"  Skips:      deadband={result.n_skipped_deadband}")
+    if getattr(result, "n_skipped_no_delta", 0) > 0:
+        print(f"  Skips:      no_delta={result.n_skipped_no_delta}")
+    if result.n_skipped_min_notional > 0:
+        print(f"  Skips:      min_notional={result.n_skipped_min_notional}")
+    if result.n_skipped_rounded_to_zero > 0:
+        print(f"  Skips:      rounded_to_zero={result.n_skipped_rounded_to_zero}")
+
+
+def cmd_paper(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    interval = args.interval or cfg.forward.check_interval
+
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    trader = Trader(asset=args.asset, config=cfg)
+
+    if args.summary:
+        trader.print_status()
+        trader.close()
+        return
+
+    if args.once or not args.schedule:
+        result = trader.run_cycle()
+        _print_paper_result(result)
+        trader.print_status()
+        trader.close()
+        return
+
+    def cycle():
+        result = trader.run_cycle()
+        _print_paper_result(result)
+
+    scheduler = PipelineScheduler(
+        run_fn=cycle,
+        config=SchedulerConfig(interval_seconds=interval),
+    )
+    try:
+        scheduler.start()
+    finally:
+        trader.close()
+def cmd_paper_replay(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.cli_commands import cmd_paper_replay as _legacy_cmd_paper_replay
+
+    _legacy_cmd_paper_replay(args)
+
+
+def _build_pipeline_config(
+    config: Config, pop_size: int, generations: int,
+):
+    """Build PipelineConfig from global Config + CLI args."""
+    from alpha_os_recovery.evolution.gp import GPConfig
+    from alpha_os_recovery.legacy.pipeline_runner import PipelineConfig
+
+    return PipelineConfig(
+        gp=GPConfig(
+            pop_size=pop_size,
+            n_generations=generations,
+            max_depth=config.generation.max_depth,
+            bloat_penalty=config.generation.bloat_penalty,
+            depth_penalty=config.generation.depth_penalty,
+            similarity_penalty=config.generation.similarity_penalty,
+        ),
+        oos_sharpe_min=config.validation.oos_sharpe_min,
+        pbo_max=config.validation.pbo_max,
+        dsr_pvalue_max=config.validation.dsr_pvalue_max,
+        min_n_days=config.backtest.min_days,
+        commission_pct=config.backtest.commission_pct,
+        slippage_pct=config.backtest.slippage_pct,
+        n_cv_folds=config.validation.n_cv_folds,
+        embargo_days=config.validation.embargo_days,
+        eval_window_days=config.backtest.eval_window_days,
+        allow_short=config.trading.supports_short,
+    )
+
+
+def _run_evolution(trader, config: Config, pipeline_config) -> None:
+    """Run alpha evolution using trader's data and registry."""
+    from alpha_os_recovery.legacy.pipeline_runner import PipelineRunner
+
+    logger = logging.getLogger(__name__)
+
+    # Sync data before evolution
+    try:
+        trader.store.sync(trader.features)
+    except Exception as exc:
+        logger.warning("API sync failed before evolution — using cached data: %s", exc)
+
+    matrix = trader.store.get_matrix(trader.features)
+    if len(matrix) < config.backtest.min_days:
+        logger.warning(
+            "Insufficient data for evolution (%d rows, need %d)",
+            len(matrix), config.backtest.min_days,
+        )
+        return
+
+    matrix = matrix.fillna(0)
+    available_features = [
+        f for f in trader.features
+        if f in matrix.columns and not (matrix[f] == 0).all()
+    ]
+    if trader.price_signal not in available_features:
+        logger.warning("Price signal missing for evolution: %s", trader.price_signal)
+        return
+    data = {col: matrix[col].values for col in matrix.columns}
+    prices = data[trader.price_signal]
+    logger.info(
+        "Evolution feature gate: %d/%d available features",
+        len(available_features), len(trader.features),
+    )
+
+    runner = PipelineRunner(
+        features=available_features,
+        data=data,
+        prices=prices,
+        config=pipeline_config,
+        registry=trader.registry,
+    )
+    result = runner.run()
+    logger.info(
+        "Evolution: %d generated, %d validated, %d adopted (%.1fs)",
+        result.n_generated, result.n_validated, result.n_adopted, result.elapsed,
+    )
+    print(
+        f"Evolution: {result.n_generated} generated, "
+        f"{result.n_validated} validated, {result.n_adopted} adopted "
+        f"({result.elapsed:.1f}s)"
+    )
+    del runner, data, matrix, result
+    gc.collect()
+
+
+def _print_testnet_report(report) -> None:
+    print(f"\n--- Testnet Readiness Report ({report.date}) ---")
+    if getattr(report, "profile_id", ""):
+        suffix = f" ({report.profile_commit[:8]})" if report.profile_commit else ""
+        print(f"  Profile:        {report.profile_id[:12]}{suffix}")
+    print(f"  Cycle OK:       {report.cycle_completed}")
+    print(f"  Recon match:    {report.reconciliation_match}")
+    print(f"  CB halted:      {report.circuit_breaker_halted}")
+    print(f"  Active:         {report.n_active_hypotheses} hypotheses")
+    print(f"  Live:           {report.n_live_hypotheses} hypotheses")
+    print(f"  Shortlist:      {report.n_shortlist_candidates} candidates")
+    print(f"  Selected:       {report.n_selected_hypotheses} hypotheses")
+    print(f"  Signals:        {report.n_signals_evaluated} evaluated")
+    if report.n_skipped_deadband > 0:
+        print(f"  Skips:          deadband={report.n_skipped_deadband}")
+    if getattr(report, "n_skipped_no_delta", 0) > 0:
+        print(f"  Skips:          no_delta={report.n_skipped_no_delta}")
+    if report.n_skipped_min_notional > 0:
+        print(f"  Skips:          min_notional={report.n_skipped_min_notional}")
+    if report.n_skipped_rounded_to_zero > 0:
+        print(f"  Skips:          rounded_to_zero={report.n_skipped_rounded_to_zero}")
+    if report.n_fills > 0:
+        print(f"  Fills:          {report.n_fills}")
+        print(f"  Avg slippage:   {report.mean_slippage_bps:.1f} bps")
+        print(f"  Avg latency:    {report.mean_latency_ms:.0f} ms")
+    if report.has_errors:
+        print("  ERRORS:")
+        for e in report.error_details:
+            print(f"    - {e}")
+    else:
+        print("  Status:         OK")
+
+
+def _resolve_asset_list(args: argparse.Namespace) -> list[str]:
+    """Return list of assets from --assets or --asset."""
+    if args.assets:
+        return [a.strip().upper() for a in args.assets.split(",")]
+    return [args.asset.upper()]
+
+
+def _resolve_optional_asset_set(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    return {item.strip().upper() for item in value.split(",") if item.strip()}
+
+
+def _sleeve_compare_snapshot_path() -> Path:
+    return DATA_DIR / "metrics" / "sleeve_compare_reports.jsonl"
+
+
+def _setup_asset_context(
+    asset: str, cfg, testnet: bool, capital: float,
+    venue: str | None = None,
+):
+    """Create trader, circuit breaker, and readiness checker for one asset."""
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.risk.circuit_breaker import CircuitBreaker
+
+    adir = asset_data_dir(asset)
+    cb = CircuitBreaker.load(path=adir / "metrics" / "circuit_breaker.json")
+    cfg.trading.initial_capital = capital
+
+    resolved_venue = venue or infer_venue(asset)
+
+    executor = None
+    if resolved_venue == "binance" and is_crypto(asset):
+        from alpha_os_recovery.execution.binance import BinanceExecutor
+        from alpha_os_recovery.execution.optimizer import ExecutionOptimizer, ExecutionConfig
+        signal_name = price_signal(asset)
+        market_symbol = f"{asset}/USDT"
+        symbol_map = {signal_name: market_symbol}
+
+        client = build_signal_client_from_config(cfg.api)
+        exec_cfg = ExecutionConfig(
+            imbalance_threshold=cfg.execution.imbalance_threshold,
+            vpin_threshold=cfg.execution.vpin_threshold,
+            spread_threshold_bps=cfg.execution.spread_threshold_bps,
+            max_slices=cfg.execution.max_slices,
+            signal_lookback_minutes=cfg.execution.signal_lookback_minutes,
+            max_signal_age_seconds=cfg.execution.max_signal_age_seconds,
+        )
+        optimizer = ExecutionOptimizer(client, exec_cfg)
+        executor = BinanceExecutor(
+            testnet=testnet, symbol_map=symbol_map, optimizer=optimizer,
+            initial_capital=capital,
+            cost_model=cfg.execution.to_cost_model(),
+        )
+    elif resolved_venue == "alpaca" and is_equity(asset):
+        from alpha_os_recovery.execution.alpaca import AlpacaExecutor
+        from alpha_os_recovery.execution.costs import ExecutionCostModel
+        executor = AlpacaExecutor(
+            paper=cfg.alpaca.paper,
+            initial_capital=capital,
+            cost_model=ExecutionCostModel(
+                commission_pct=cfg.alpaca.commission_pct,
+                modeled_slippage_pct=cfg.alpaca.modeled_slippage_pct,
+            ),
+            max_slippage_bps=cfg.alpaca.max_slippage_bps,
+        )
+    elif resolved_venue == "polymarket":
+        from alpha_os_recovery.execution.polymarket import PolymarketExecutor
+        from alpha_os_recovery.execution.costs import PolymarketCostModel
+        executor = PolymarketExecutor(
+            max_position_per_market_usd=cfg.polymarket.max_position_per_market_usd,
+            initial_capital=capital,
+            cost_model=PolymarketCostModel(
+                maker_fee_pct=cfg.polymarket.maker_fee_pct,
+                taker_fee_pct=cfg.polymarket.taker_fee_pct,
+            ),
+        )
+
+    trader = Trader(asset=asset, config=cfg, executor=executor,
+                    circuit_breaker=cb)
+
+    readiness_checker = None
+    if testnet and is_crypto(asset):
+        from alpha_os_recovery.validation.testnet import ReadinessChecker, readiness_paths
+        state_path, report_path = readiness_paths(adir)
+        readiness_checker = ReadinessChecker(
+            state_path=state_path,
+            report_path=report_path,
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+
+    return trader, cb, readiness_checker
+
+
+def _configure_trade_logging() -> None:
+    log_dir = DATA_DIR / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"trade_{date.today().isoformat()}.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(),
+        ],
+        force=True,
+    )
+
+
+def _confirm_real_trading(args: argparse.Namespace) -> bool:
+    if not args.real:
+        return True
+    if getattr(args, "non_interactive", False):
+        print("Real trading mode: non-interactive confirmation bypass enabled.")
+        return True
+    print("=" * 60)
+    print("WARNING: REAL TRADING MODE — real money on Binance.")
+    print("Press Ctrl+C within 5 seconds to abort...")
+    print("=" * 60)
+    try:
+        time.sleep(5)
+    except KeyboardInterrupt:
+        print("\nAborted.")
+        return False
+    return True
+
+
+def _print_trade_runtime_banner(
+    *,
+    asset_list: list[str],
+    interval: int,
+    testnet: bool,
+    profile_changes: list[str],
+    cfg: Config,
+) -> None:
+    mode = "TESTNET" if testnet else "REAL"
+    print(f"Trade runtime [{mode}]: assets={','.join(asset_list)}, interval={interval}s")
+    if profile_changes:
+        print("Trade profile overrides: " + ", ".join(profile_changes))
+    regime_state = "on" if cfg.regime.enabled else "off"
+    print(f"Trade profile: TC-weighted consensus L3, regime {regime_state}, L2 off")
+
+
+def _build_trade_contexts(
+    *,
+    asset_list: list[str],
+    cfg: Config,
+    testnet: bool,
+    capital: float,
+    venue: str | None = None,
+) -> dict[str, tuple]:
+    contexts: dict[str, tuple] = {}
+    for asset in asset_list:
+        resolved_venue = venue or infer_venue(asset)
+        trader, cb, readiness_checker = _setup_asset_context(
+            asset,
+            cfg,
+            testnet,
+            capital,
+            venue=resolved_venue,
+        )
+        contexts[asset] = (trader, cb, readiness_checker)
+        venue_label = resolved_venue
+        try:
+            sig = price_signal(asset)
+        except KeyError:
+            sig = asset.lower()
+        print(f"  {asset}: {sig} via {venue_label}")
+    return contexts
+
+
+def _close_trade_contexts(contexts: dict[str, tuple]) -> None:
+    for trader, _, _ in contexts.values():
+        trader.close()
+
+
+def _needs_trade_evolution(trader) -> bool:
+    store = trader.registry
+    asset = getattr(trader, "asset", None)
+    return len(store.list_observation_active(asset=asset)) == 0
+
+
+def _run_trade_readiness_check(result, recon, cb, readiness_checker) -> None:
+    if readiness_checker is None:
+        return
+    report = readiness_checker.validate_cycle(
+        result,
+        recon,
+        cb,
+        result.fills,
+        order_failures=getattr(result, "order_failures", 0),
+    )
+    _print_testnet_report(report)
+    readiness_checker.print_status()
+
+
+def _build_live_returns_getter(forward_tracker, *, supports_short: bool):
+    if forward_tracker is None:
+        return None
+    realizable_getter = getattr(forward_tracker, "get_hypothesis_realizable_returns", None)
+    if realizable_getter is not None:
+        def live_returns_for(hypothesis_id: str):
+            return realizable_getter(hypothesis_id, supports_short=supports_short)
+
+        return live_returns_for
+
+    getter = getattr(forward_tracker, "get_hypothesis_returns", None)
+    if getter is None:
+        return None
+
+    def live_returns_for(hypothesis_id: str):
+        return getter(hypothesis_id)
+
+    return live_returns_for
+
+
+def _build_signal_activity_getter(
+    forward_tracker,
+    portfolio_tracker,
+    *,
+    lookback: int,
+    supports_short: bool,
+):
+    getter = None
+    if forward_tracker is not None:
+        getter = getattr(forward_tracker, "get_hypothesis_signal_history", None)
+    if getter is None and portfolio_tracker is not None:
+        getter = getattr(portfolio_tracker, "get_hypothesis_signal_history", None)
+    if getter is None:
+        return None
+
+    def signal_activity_for(hypothesis_id: str):
+        values = [float(v) for v in getter(hypothesis_id, limit=lookback)]
+        if not values:
+            return 0.0, 0.0
+        if supports_short:
+            nonzero = sum(1 for v in values if abs(v) > 1e-12)
+            mean_abs = sum(abs(v) for v in values) / len(values)
+            return nonzero / len(values), mean_abs
+        positive = [v for v in values if v > 1e-12]
+        if not positive:
+            return 0.0, 0.0
+        mean_positive = sum(positive) / len(values)
+        return len(positive) / len(values), mean_positive
+
+    return signal_activity_for
+
+
+def _run_hypothesis_lifecycle_update(trader, cfg: Config, result) -> dict[str, float]:
+    from alpha_os_recovery.hypotheses import (
+        apply_allocation_rebalance_plan,
+        build_capped_allocation_rebalance_plan,
+        record_daily_contributions,
+    )
+
+    signal_date = getattr(result, "date", "")
+    if not signal_date:
+        return {}
+    hypothesis_signals = trader.portfolio_tracker.get_hypothesis_signals(signal_date)
+    if not hypothesis_signals:
+        return {}
+
+    contribution_date = signal_date[:10]
+    record_daily_contributions(
+        trader.registry,
+        asset=getattr(trader, "asset", "BTC"),
+        date=contribution_date,
+        predictions=hypothesis_signals,
+        realized_return=getattr(result, "daily_return", 0.0),
+    )
+    forward_tracker = getattr(trader, "forward_tracker", None)
+    live_returns_for = _build_live_returns_getter(
+        forward_tracker,
+        supports_short=cfg.trading.supports_short,
+    )
+    signal_activity_for = _build_signal_activity_getter(
+        forward_tracker,
+        trader.portfolio_tracker,
+        lookback=cfg.forward.degradation_window,
+        supports_short=cfg.trading.supports_short,
+    )
+    asset = getattr(trader, "asset", "BTC")
+    plan = build_capped_allocation_rebalance_plan(
+        trader.registry,
+        asset=asset,
+        config=cfg,
+        live_returns_for=live_returns_for,
+        signal_activity_for=signal_activity_for,
+    )
+    updates = apply_allocation_rebalance_plan(trader.registry, plan)
+    if updates:
+        print(
+            "Lifecycle summary: "
+            f"date={contribution_date} updated={len(updates)} "
+            f"rate={cfg.lifecycle.stake_update_rate:.2f}"
+        )
+    return updates
+
+
+def _run_trade_once(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    pipeline_cfg,
+) -> list[tuple[str, object]]:
+    use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
+    results: list[tuple[str, object]] = []
+    for asset in asset_list:
+        print(f"\n{'='*40} {asset} {'='*40}")
+        trader, cb, readiness_checker = contexts[asset]
+        if _needs_trade_evolution(trader):
+            print(f"No alphas for {asset} — running evolution...")
+            _run_evolution(trader, cfg, pipeline_cfg)
+        result = trader.run_cycle(skip_lifecycle=use_lifecycle_daemon)
+        _print_paper_result(result)
+        recon = trader.reconcile()
+        _run_trade_readiness_check(result, recon, cb, readiness_checker)
+        if not use_lifecycle_daemon:
+            _run_hypothesis_lifecycle_update(trader, cfg, result)
+        trader.print_status()
+        print(
+            "Trade summary: "
+            f"asset={asset} "
+            f"status={_trade_once_status(result)} "
+            f"live={result.n_live_hypotheses} "
+            f"signals={result.n_signals_evaluated} "
+            f"fills={len(result.fills)} "
+            f"order_failures={result.order_failures}"
+        )
+        results.append((asset, result))
+    return results
+
+
+def _trade_once_strict_failure(asset: str, result) -> str | None:
+    if getattr(result, "n_live_hypotheses", 0) <= 0:
+        return f"{asset}: no live hypotheses"
+    if getattr(result, "n_signals_evaluated", 0) <= 0:
+        return f"{asset}: no signals evaluated"
+    if getattr(result, "order_failures", 0) > 0:
+        return f"{asset}: order failures={result.order_failures}"
+    return None
+
+
+def _trade_once_status(result) -> str:
+    if getattr(result, "n_live_hypotheses", 0) <= 0:
+        return "no_live_hypotheses"
+    if getattr(result, "n_signals_evaluated", 0) <= 0:
+        return "no_signals"
+    if getattr(result, "order_failures", 0) > 0:
+        return "order_failures"
+    if getattr(result, "fills", None):
+        return "traded"
+    if getattr(result, "n_skipped_no_delta", 0) > 0:
+        return "no_delta"
+    if (
+        getattr(result, "n_skipped_deadband", 0) > 0
+        or getattr(result, "n_skipped_min_notional", 0) > 0
+        or getattr(result, "n_skipped_rounded_to_zero", 0) > 0
+    ):
+        return "skipped"
+    return "idle"
+
+
+def _build_trade_cycle_runner(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    args: argparse.Namespace,
+    pipeline_cfg,
+):
+    logger = logging.getLogger(__name__)
+    last_evolve: dict[str, float] = {a: 0.0 for a in asset_list}
+    use_lifecycle_daemon = cfg.lifecycle_daemon.enabled
+    if use_lifecycle_daemon:
+        logger.info("Pipeline v2: lifecycle daemon enabled — skipping inline lifecycle")
+
+    # Cache previous cycle's raw signals for cross-asset neutralization.
+    # Uses 1-cycle lag: neutralize based on prior signals.
+    # Signals change slowly (daily), so lag is negligible.
+    prev_raw_signals: dict[str, float] = {}
+    last_lifecycle_date: dict[str, str] = {a: "" for a in asset_list}
+
+    def cycle() -> None:
+        nonlocal prev_raw_signals
+
+        # Compute cross-asset neutralization from previous cycle
+        signal_overrides: dict[str, float | None] = {a: None for a in asset_list}
+        if len(asset_list) > 1 and len(prev_raw_signals) == len(asset_list):
+            from alpha_os_recovery.hypotheses.combiner import cross_asset_neutralize
+            neutralized = cross_asset_neutralize(prev_raw_signals)
+            signal_overrides = {a: neutralized.get(a) for a in asset_list}
+            logger.info(
+                "Cross-asset neutralization: raw=%s -> neutralized=%s",
+                {a: f"{v:.4f}" for a, v in prev_raw_signals.items()},
+                {a: f"{v:.4f}" for a, v in neutralized.items()},
+            )
+
+        for asset in asset_list:
+            trader, cb, readiness_checker = contexts[asset]
+            logger.info("--- %s cycle start ---", asset)
+            now = time.time()
+            evolve_interval = args.evolve_interval
+            if evolve_interval > 0:
+                if _needs_trade_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
+                    logger.info("Running alpha evolution for %s...", asset)
+                    _run_evolution(trader, cfg, pipeline_cfg)
+                    last_evolve[asset] = now
+            result = trader.run_cycle(
+                skip_lifecycle=use_lifecycle_daemon,
+                signal_override=signal_overrides[asset],
+            )
+            # Cache raw signal for next cycle's neutralization
+            prev_raw_signals[asset] = trader.last_raw_signal
+            _print_paper_result(result)
+            recon = trader.reconcile()
+            _run_trade_readiness_check(result, recon, cb, readiness_checker)
+            if not use_lifecycle_daemon:
+                contribution_date = getattr(result, "date", "")[:10]
+                if contribution_date and contribution_date != last_lifecycle_date[asset]:
+                    _run_hypothesis_lifecycle_update(trader, cfg, result)
+                    last_lifecycle_date[asset] = contribution_date
+            logger.info("--- %s cycle done ---", asset)
+
+    return cycle
+
+
+def _run_event_driven_trade(
+    *,
+    asset_list: list[str],
+    contexts: dict[str, tuple],
+    cfg: Config,
+    args: argparse.Namespace,
+    pipeline_cfg,
+) -> None:
+    import asyncio as _asyncio
+
+    from alpha_os_recovery.paper.event_driven import EventDrivenTrader, EventTriggerConfig
+
+    asset = asset_list[0]
+    trader, _, _ = contexts[asset]
+    client = build_signal_client_from_config(cfg.api)
+    last_evolve: dict[str, float] = {asset: 0.0}
+
+    ed_cfg = EventTriggerConfig(
+        min_interval=cfg.event_driven.min_interval,
+        max_interval=cfg.event_driven.max_interval,
+        subscribe_pattern=cfg.event_driven.subscribe_pattern,
+        anomaly_trigger=cfg.event_driven.anomaly_trigger,
+    )
+    if args.debounce is not None:
+        ed_cfg.min_interval = float(args.debounce)
+
+    print(
+        f"Event-driven mode: debounce={ed_cfg.min_interval:.0f}s, "
+        f"fallback={ed_cfg.max_interval:.0f}s, "
+        f"pattern={ed_cfg.subscribe_pattern}"
+    )
+
+    def _pre_cycle() -> None:
+        now = time.time()
+        evolve_interval = args.evolve_interval
+        if evolve_interval > 0:
+            if _needs_trade_evolution(trader) or (now - last_evolve[asset]) >= evolve_interval:
+                logging.getLogger(__name__).info("Running alpha evolution for %s...", asset)
+                _run_evolution(trader, cfg, pipeline_cfg)
+                last_evolve[asset] = now
+
+    ed_trader = EventDrivenTrader(
+        trader=trader,
+        client=client,
+        config=ed_cfg,
+        pre_cycle_hook=_pre_cycle,
+    )
+    _asyncio.run(ed_trader.run())
+
+
+def cmd_trade(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+    profile_changes = _normalize_trade_config(cfg)
+    interval = args.interval or cfg.forward.check_interval
+    testnet = not args.real
+    asset_list = _resolve_asset_list(args)
+    _configure_trade_logging()
+
+    from alpha_os_recovery.pipeline.scheduler import PipelineScheduler, SchedulerConfig
+
+    if not _confirm_real_trading(args):
+        return
+    _print_trade_runtime_banner(
+        asset_list=asset_list,
+        interval=interval,
+        testnet=testnet,
+        profile_changes=profile_changes,
+        cfg=cfg,
+    )
+
+    lock_path = runtime_lock_path("trade", asset_list)
+    try:
+        runtime_lock = hold_runtime_lock(lock_path)
+        runtime_lock.__enter__()
+    except RuntimeLockBusy:
+        print(
+            "Trade runtime already active for "
+            f"{','.join(asset_list)}; skipping overlapping invocation."
+        )
+        if getattr(args, "strict", False):
+            sys.exit(1)
+        return
+
+    try:
+        venue = getattr(args, "venue", None)
+        contexts = _build_trade_contexts(
+            asset_list=asset_list,
+            cfg=cfg,
+            testnet=testnet,
+            capital=args.capital,
+            venue=venue,
+        )
+
+        if args.summary:
+            for asset in asset_list:
+                print(f"\n--- {asset} ---")
+                contexts[asset][0].print_status()
+            _close_trade_contexts(contexts)
+            return
+
+        pipeline_cfg = _build_pipeline_config(cfg, args.pop_size, args.generations)
+
+        if args.once or (not args.schedule and not getattr(args, "event_driven", False)):
+            results = _run_trade_once(
+                asset_list=asset_list,
+                contexts=contexts,
+                cfg=cfg,
+                pipeline_cfg=pipeline_cfg,
+            )
+            _close_trade_contexts(contexts)
+            if getattr(args, "strict", False):
+                failures = [
+                    failure
+                    for asset, result in results
+                    if (failure := _trade_once_strict_failure(asset, result)) is not None
+                ]
+                if failures:
+                    print("Strict mode failures:")
+                    for failure in failures:
+                        print(f"  - {failure}")
+                    sys.exit(1)
+            return
+
+        cycle = _build_trade_cycle_runner(
+            asset_list=asset_list,
+            contexts=contexts,
+            cfg=cfg,
+            args=args,
+            pipeline_cfg=pipeline_cfg,
+        )
+
+        if getattr(args, "event_driven", False):
+            try:
+                _run_event_driven_trade(
+                    asset_list=asset_list,
+                    contexts=contexts,
+                    cfg=cfg,
+                    args=args,
+                    pipeline_cfg=pipeline_cfg,
+                )
+            finally:
+                _close_trade_contexts(contexts)
+            return
+
+        scheduler = PipelineScheduler(
+            run_fn=cycle,
+            config=SchedulerConfig(interval_seconds=interval),
+        )
+        try:
+            scheduler.start()
+        finally:
+            _close_trade_contexts(contexts)
+    finally:
+        runtime_lock.__exit__(None, None, None)
+
+
+def cmd_hypothesis_seeder(args: argparse.Namespace) -> None:
+    """Run the hypothesis seeder daemon."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os_recovery.daemon.hypothesis_seeder import HypothesisSeederDaemon
+
+    include_bootstrap: bool | None = None
+    if args.include_bootstrap:
+        include_bootstrap = True
+    elif args.skip_bootstrap:
+        include_bootstrap = False
+
+    daemon = HypothesisSeederDaemon(
+        config=cfg,
+        primary_asset=args.asset,
+        include_bootstrap=include_bootstrap,
+    )
+    try:
+        if args.once:
+            stats = daemon._run_round()
+            print(
+                "Hypothesis seeding [ONCE]: "
+                f"asset={args.asset.upper()} generated_dsl={stats.generated_dsl} "
+                f"inserted_dsl={stats.inserted_dsl} skipped_dsl={stats.skipped_dsl} "
+                f"inserted_bootstrap={stats.inserted_bootstrap} "
+                f"skipped_bootstrap={stats.skipped_bootstrap}"
+            )
+            return
+        daemon.run()
+    finally:
+        daemon.close()
+
+
+def cmd_unified_generator(args: argparse.Namespace) -> None:
+    """Backward-compatible alias for `hypothesis-seeder`."""
+    cmd_hypothesis_seeder(args)
+
+
+def cmd_enqueue_discovery_pool(args: argparse.Namespace) -> None:
+    cfg = _load_config(args.config)
+
+    from alpha_os_recovery.legacy.alpha_generator import enqueue_discovery_pool_candidates
+
+    selected, inserted = enqueue_discovery_pool_candidates(
+        args.asset,
+        cfg,
+        limit=args.limit,
+        dry_run=args.dry_run,
+    )
+    mode = "DRY RUN" if args.dry_run else "WRITE"
+    print(f"Discovery-pool enqueue [{mode}]: asset={args.asset}")
+    print(f"  Selected: {selected}")
+    print(f"  Queued:   {inserted}")
+
+
+def cmd_lifecycle(args: argparse.Namespace) -> None:
+    """Run the legacy daily stake-update daemon."""
+    cfg = _load_config(args.config)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        force=True,
+    )
+
+    from alpha_os_recovery.legacy.lifecycle import LifecycleDaemon
+
+    daemon = LifecycleDaemon(asset=args.asset, config=cfg)
+    daemon.run()
+
+
+def cmd_rebalance_allocation_trust(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
+    from alpha_os_recovery.hypotheses import (
+        HypothesisStore,
+        apply_allocation_rebalance_plan,
+        build_capped_allocation_rebalance_plan,
+    )
+
+    cfg = _load_config(args.config)
+    adir = asset_data_dir(args.asset)
+    store = HypothesisStore(HYPOTHESES_DB)
+    forward_tracker = HypothesisObservationTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+    portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    try:
+        live_returns_for = _build_live_returns_getter(
+            forward_tracker,
+            supports_short=cfg.trading.supports_short,
+        )
+        signal_activity_for = _build_signal_activity_getter(
+            forward_tracker,
+            portfolio_tracker,
+            lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
+        )
+        plan = build_capped_allocation_rebalance_plan(
+            store,
+            asset=args.asset,
+            config=cfg,
+            live_returns_for=live_returns_for,
+            signal_activity_for=signal_activity_for,
+            data_store=data_store,
+        )
+        zeroed = sum(
+            1 for entry in plan
+            if entry.current_stake > 0 and entry.proposed_stake <= cfg.lifecycle.target_stake_floor
+        )
+        research_backed = sum(1 for entry in plan if entry.research_backed)
+        live_proven = sum(1 for entry in plan if entry.live_proven)
+        redundancy_capped = sum(1 for entry in plan if entry.redundancy_capped_by)
+        research_candidate_capped = sum(1 for entry in plan if entry.research_candidate_capped)
+        changed = sum(
+            1 for entry in plan
+            if abs(entry.proposed_stake - entry.current_stake) > 1e-12
+        )
+        mode = "DRY RUN" if args.dry_run else "APPLY"
+        print(f"Allocation trust rebalance [{mode}]: asset={args.asset.upper()}")
+        print(
+            "  Summary: "
+            f"active={len(plan)} changed={changed} zeroed={zeroed} "
+            f"research_backed={research_backed} live_proven={live_proven} "
+            f"research_candidate_capped={research_candidate_capped} "
+            f"redundancy_capped={redundancy_capped}"
+        )
+
+        ranked = sorted(
+            plan,
+            key=lambda entry: abs(entry.proposed_stake - entry.current_stake),
+            reverse=True,
+        )
+        for entry in ranked[:10]:
+            print(
+                "  "
+                f"{entry.hypothesis_id}: {entry.current_stake:.3f} -> {entry.proposed_stake:.3f} "
+                f"(target={entry.target_stake:.3f} boot={entry.bootstrap_trust_value:.3f} "
+                f"conf={entry.confidence:.3f} n={entry.n_observations} "
+                f"research_backed={entry.research_backed} live_proven={entry.live_proven}"
+                f"{' research_candidate_capped=true' if entry.research_candidate_capped else ''}"
+                f"{f' capped_by={entry.redundancy_capped_by} corr={entry.redundancy_correlation:.3f}' if entry.redundancy_capped_by else ''})"
+            )
+
+        if args.dry_run:
+            return
+
+        updates = apply_allocation_rebalance_plan(store, plan)
+        print(
+            "Rebalance summary: "
+            f"updated={len(updates)} active={len(plan)} zeroed={zeroed}"
+        )
+    finally:
+        portfolio_tracker.close()
+        data_store.close()
+        forward_tracker.close()
+        store.close()
+
+
+def cmd_run_sleeves_once(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.hypotheses.sleeve_attention_service import (
+        build_sleeve_attention_plan,
+    )
+    from alpha_os_recovery.hypotheses.search_budget_service import (
+        build_template_gap_search_budget,
+    )
+    from alpha_os_recovery.hypotheses.sleeve_compare_service import load_latest_sleeve_compare_rows
+    from alpha_os_recovery.hypotheses.serious_template_service import (
+        run_serious_template_maintenance,
+    )
+    from alpha_os_recovery.hypotheses.serious_templates import serious_seed_specs
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    asset_list = _resolve_asset_list(args)
+    bootstrap_assets = _resolve_optional_asset_set(args.bootstrap_assets)
+    refresh_bootstrap_assets = bool(args.refresh_bootstrap_assets)
+    skip_serious = bool(getattr(args, "skip_serious", False))
+    previous_compare_rows = load_latest_sleeve_compare_rows(_sleeve_compare_snapshot_path())
+    budget_by_asset: dict[str, object] = {}
+    attention_by_asset: dict[str, object] = {}
+    stage_work_by_asset: dict[str, bool] = {asset.upper(): False for asset in asset_list}
+
+    def _should_refresh_asset(asset: str) -> bool:
+        return refresh_bootstrap_assets or asset not in bootstrap_assets
+
+    def _has_serious_templates(asset: str) -> bool:
+        return bool(serious_seed_specs(asset))
+
+    def _should_run_serious(asset: str) -> bool:
+        return (not skip_serious) and _has_serious_templates(asset)
+
+    def _should_rebalance_asset(asset: str) -> bool:
+        return _should_refresh_asset(asset) or _should_run_serious(asset)
+
+    def _score_budget_for_asset(asset: str):
+        previous_row = previous_compare_rows.get(asset.upper(), {})
+        budget = build_template_gap_search_budget(
+            asset=asset,
+            base_limit=args.score_limit,
+            previous_template_gaps=list(previous_row.get("serious_template_gaps", [])),
+        )
+        budget_by_asset[asset.upper()] = budget
+        return budget
+
+    def _attention_for_asset(asset: str):
+        attention = attention_by_asset.get(asset.upper())
+        if attention is None:
+            attention = build_sleeve_attention_plan(asset=asset, config=cfg)
+            attention_by_asset[asset.upper()] = attention
+        return attention
+
+    print(
+        "Sleeve loop [ONCE]: "
+        f"assets={','.join(asset_list)} "
+        f"stages="
+        f"{'seed,' if not args.skip_seed else ''}"
+        f"{'serious,' if not skip_serious else ''}"
+        f"{'score,' if not args.skip_score else ''}"
+        f"{'rebalance,' if not args.skip_rebalance else ''}"
+        f"{'trade,' if not args.skip_trade else ''}"
+        f"{'status' if not args.skip_status else ''}".rstrip(",")
+    )
+
+    if not args.skip_seed:
+        for asset in asset_list:
+            if not _should_refresh_asset(asset):
+                continue
+            score_budget = _score_budget_for_asset(asset)
+            print(f"\n--- Seed {asset} ---")
+            print(
+                "Search budget: "
+                f"requested={score_budget.requested_limit} "
+                f"effective={score_budget.effective_limit} "
+                f"missing={score_budget.missing_template_count} "
+                f"closed={score_budget.closed_template_count} "
+                f"new={score_budget.new_template_count}"
+            )
+            if score_budget.effective_limit <= 0:
+                print("Seed skipped: no serious template gaps remain.")
+                continue
+            stage_work_by_asset[asset.upper()] = True
+            cmd_hypothesis_seeder(
+                argparse.Namespace(
+                    asset=asset,
+                    once=True,
+                    include_bootstrap=asset in bootstrap_assets,
+                    skip_bootstrap=asset not in bootstrap_assets,
+                    config=args.config,
+                )
+            )
+    if not skip_serious:
+        for asset in asset_list:
+            if not _has_serious_templates(asset):
+                continue
+            attention = _attention_for_asset(asset)
+            print(f"\n--- Serious {asset} ---")
+            print(
+                "Attention: "
+                f"level={attention.level} "
+                f"lookback={attention.maintenance_lookback_days}d "
+                f"rebalance={'yes' if attention.rebalance_required else 'no'}"
+            )
+            adir = asset_data_dir(asset)
+            store = HypothesisStore(HYPOTHESES_DB)
+            data_store = DataStore(SIGNAL_CACHE_DB)
+            forward_tracker = HypothesisObservationTracker(
+                adir / HYPOTHESIS_OBSERVATIONS_DB_NAME
+            )
+            try:
+                run = run_serious_template_maintenance(
+                    store=store,
+                    data_store=data_store,
+                    forward_tracker=forward_tracker,
+                    asset=asset,
+                    lookback_days=attention.maintenance_lookback_days,
+                )
+            finally:
+                forward_tracker.close()
+                data_store.close()
+                store.close()
+            stage_work_by_asset[asset.upper()] = True
+            print(
+                "Serious maintenance [APPLY]: "
+                f"asset={run.asset} templates={run.template_total} "
+                f"inserted={run.inserted} refreshed={run.refreshed} "
+                f"records={run.backfill.n_records} failures={run.backfill.n_failures}"
+            )
+
+    if not args.skip_score:
+        for asset in asset_list:
+            if not _should_refresh_asset(asset):
+                continue
+            score_budget = _score_budget_for_asset(asset)
+            print(f"\n--- Score {asset} ---")
+            print(
+                "Search budget: "
+                f"requested={score_budget.requested_limit} "
+                f"effective={score_budget.effective_limit} "
+                f"missing={score_budget.missing_template_count} "
+                f"closed={score_budget.closed_template_count} "
+                f"new={score_budget.new_template_count}"
+            )
+            if score_budget.effective_limit <= 0:
+                print("Score skipped: no serious template gaps remain.")
+                continue
+            stage_work_by_asset[asset.upper()] = True
+            cmd_score_exploratory_hypotheses(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                    limit=score_budget.effective_limit,
+                    dry_run=False,
+                )
+            )
+
+    if not args.skip_rebalance:
+        for asset in asset_list:
+            if not _should_rebalance_asset(asset):
+                continue
+            attention = _attention_for_asset(asset)
+            if (
+                not stage_work_by_asset.get(asset.upper(), False)
+                and not attention.rebalance_required
+            ):
+                print(f"\n--- Rebalance {asset} ---")
+                print("Rebalance skipped: sleeve attention is light and no upstream work ran.")
+                continue
+            print(f"\n--- Rebalance {asset} ---")
+            cmd_rebalance_allocation_trust(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                    dry_run=False,
+                )
+            )
+
+    if not args.skip_trade:
+        print(f"\n--- Trade {','.join(asset_list)} ---")
+        cmd_trade(
+            argparse.Namespace(
+                once=True,
+                schedule=False,
+                summary=False,
+                interval=None,
+                real=False,
+                non_interactive=True,
+                capital=10000.0,
+                asset=asset_list[0],
+                assets=",".join(asset_list),
+                config=args.config,
+                evolve_interval=86400,
+                pop_size=200,
+                generations=30,
+                event_driven=False,
+                debounce=None,
+                venue="paper",
+                strict=False,
+            )
+        )
+
+    if not args.skip_status:
+        for asset in asset_list:
+            print(f"\n--- Status {asset} ---")
+            cmd_runtime_status(
+                argparse.Namespace(
+                    asset=asset,
+                    config=args.config,
+                )
+            )
+
+    snapshot_path = _write_sleeve_compare_snapshot(
+        asset_list=asset_list,
+        config_path=args.config,
+        budget_by_asset=budget_by_asset,
+    )
+    print(f"\nSleeve snapshot: {snapshot_path}")
+
+
+def cmd_compare_sleeves(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.sleeve_compare_service import (
+        enrich_sleeve_compare_rows,
+        load_latest_sleeve_compare_rows,
+    )
+
+    rows = enrich_sleeve_compare_rows(
+        _build_sleeve_compare_rows(
+            asset_list=_resolve_asset_list(args),
+            cfg=_load_runtime_observation_config(getattr(args, "config", None)),
+        ),
+        previous_rows=load_latest_sleeve_compare_rows(_sleeve_compare_snapshot_path()),
+    )
+
+    print(f"Sleeve Compare: {','.join(row['asset'] for row in rows)}")
+    for row in rows:
+        print(
+            f"  {row['asset']}: "
+            f"readiness={row['readiness']} "
+            f"live={row['live']} "
+            f"proven={row['proven']} "
+            f"actionable={row['actionable']} "
+            f"backed={row['backed']} "
+            f"serious={row['serious_retained']}/{row['serious_backed']} "
+            f"templates={row['serious_template_backed']}/{row['serious_template_total']} "
+            f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'} "
+            f"tpl_delta={row['serious_template_gap_delta']} "
+            f"control=cover:{row['control_coverage_retention']:.2f},convert:{row['control_capital_conversion']:.2f},btrend:{row['control_breadth_trend']:+.2f} "
+            f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
+            f"delta=backed:{row['backed_delta']:+d},tpl:{row['template_backed_delta']:+d},breadth:{row['breadth_delta']:+.2f} "
+            f"breadth={row['breadth']:.2f} "
+            f"latest={row['latest']} "
+            f"fills={row['fills']} "
+            f"observe={row['observe']}"
+        )
+
+
+def cmd_compare_sleeve_history(args: argparse.Namespace) -> None:
+    asset_set = {asset.upper() for asset in _resolve_asset_list(args)}
+    limit = max(int(getattr(args, "limit", 5)), 1)
+    path = _sleeve_compare_snapshot_path()
+    if not path.exists():
+        print("Sleeve Compare History: no snapshots")
+        return
+
+    history: list[dict[str, object]] = []
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            timestamp = str(payload.get("timestamp_utc", ""))
+            rows = payload.get("rows")
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                asset = str(row.get("asset", "")).upper()
+                if asset not in asset_set:
+                    continue
+                history.append({
+                    "timestamp_utc": timestamp,
+                    "asset": asset,
+                    "backed": int(row.get("backed", 0)),
+                    "serious_template_backed": int(row.get("serious_template_backed", 0)),
+                    "breadth": float(row.get("breadth", 0.0)),
+                    "control_coverage_retention": float(row.get("control_coverage_retention", 0.0)),
+                    "control_capital_conversion": float(row.get("control_capital_conversion", 0.0)),
+                    "control_breadth_trend": float(row.get("control_breadth_trend", 0.0)),
+                    "score_budget_requested": int(row.get("score_budget_requested", 0)),
+                    "score_budget_effective": int(row.get("score_budget_effective", 0)),
+                    "serious_template_gaps": list(row.get("serious_template_gaps", [])),
+                })
+
+    if not history:
+        print("Sleeve Compare History: no matching snapshots")
+        return
+
+    history.sort(key=lambda item: (str(item["asset"]), str(item["timestamp_utc"])))
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for item in history:
+        grouped.setdefault(str(item["asset"]), []).append(item)
+
+    print(f"Sleeve Compare History: {','.join(sorted(asset_set))} limit={limit}")
+    for asset in sorted(asset_set):
+        rows = grouped.get(asset, [])
+        if not rows:
+            continue
+        print(f"  {asset}:")
+        recent = rows[-limit:]
+        previous_backed = None
+        previous_templates = None
+        previous_breadth = None
+        for row in recent:
+            backed = int(row["backed"])
+            templates = int(row["serious_template_backed"])
+            breadth = float(row["breadth"])
+            backed_delta = 0 if previous_backed is None else backed - previous_backed
+            template_delta = 0 if previous_templates is None else templates - previous_templates
+            breadth_delta = 0.0 if previous_breadth is None else breadth - previous_breadth
+            print(
+                f"    {row['timestamp_utc']}: "
+                f"budget={row['score_budget_effective']}/{row['score_budget_requested']} "
+                f"backed={backed}({backed_delta:+d}) "
+                f"templates={templates}({template_delta:+d}) "
+                f"control=cover:{row['control_coverage_retention']:.2f},convert:{row['control_capital_conversion']:.2f},btrend:{row['control_breadth_trend']:+.2f} "
+                f"breadth={breadth:.2f}({breadth_delta:+.2f}) "
+                f"tpl_gaps={','.join(row['serious_template_gaps']) or '-'}"
+            )
+            previous_backed = backed
+            previous_templates = templates
+            previous_breadth = breadth
+
+
+def cmd_analyze_live_breadth(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.hypotheses.breadth import (
+        analyze_capital_breadth,
+        load_capital_backed_records,
+        load_breadth_matrix,
+    )
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    _load_config(args.config)
+    store = HypothesisStore(HYPOTHESES_DB)
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    try:
+        records = load_capital_backed_records(store, asset=args.asset)
+        data = load_breadth_matrix(
+            data_store,
+            records,
+            asset=args.asset,
+            lookback=args.lookback,
+        )
+        report = analyze_capital_breadth(
+            records,
+            data=data,
+            asset=args.asset,
+            lookback=args.lookback,
+            top_pairs=args.top_pairs,
+        )
+    finally:
+        data_store.close()
+        store.close()
+
+    print(f"Live breadth ({args.asset.upper()})")
+    print(
+        "  Summary: "
+        f"records={report.n_records} analyzed={report.n_analyzed} skipped={report.n_skipped} "
+        f"lookback={report.lookback}"
+    )
+    print(
+        "  Breadth: "
+        f"mean_abs_corr={report.mean_abs_correlation:.3f} "
+        f"effective={report.effective_breadth:.2f}"
+    )
+    if report.top_pairs:
+        print("  TopPairs:")
+        for pair in report.top_pairs:
+            print(
+                "    "
+                f"{pair.left_id} <-> {pair.right_id}: "
+                f"corr={pair.correlation:+.3f} "
+                f"|corr|={pair.abs_correlation:.3f}"
+            )
+    if report.skipped_ids:
+        skipped = ", ".join(report.skipped_ids[:10])
+        suffix = " ..." if len(report.skipped_ids) > 10 else ""
+        print(f"  Skipped:   {skipped}{suffix}")
+
+
+def cmd_analyze_batch_research(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.batch_research_diagnostics import (
+        build_batch_research_summary,
+    )
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_batch_research_summary(
+            store.list_observation_active(asset=args.asset),
+            top=args.top,
+            quality_min=cfg.lifecycle.batch_research_normalized_quality_min,
+            families=family_filter,
+        )
+    finally:
+        store.close()
+    reasons = summary["reasons"]
+    title = f"Batch Research ({args.asset.upper()})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    print(title)
+    print(
+        "  Summary:  "
+        f"scored={summary['total']} retained={summary['retained']} "
+        f"actionable={summary['actionable']} backed={summary['backed']}"
+    )
+    print(
+        "  Drop:     "
+        f"research_q={reasons.get('research_quality', 0)} "
+        f"live_q={reasons.get('live_quality', 0)} "
+        f"obs={reasons.get('observation', 0)} "
+        f"signal={reasons.get('signal', 0)} "
+        f"contrib={reasons.get('contribution', 0)} "
+        f"candidate_cap={reasons.get('candidate_cap', 0)} "
+        f"redundancy={reasons.get('redundancy', 0)} "
+        f"other={reasons.get('other', 0)} "
+        f"backed={reasons.get('backed', 0)}"
+    )
+    families = summary["families"]
+    family_bits = []
+    for reason in (
+        "backed",
+        "research_quality",
+        "live_quality",
+        "observation",
+        "signal",
+        "contribution",
+        "candidate_cap",
+        "redundancy",
+    ):
+        values = families.get(reason) or []
+        if values:
+            family_bits.append(f"{reason}=" + ",".join(values))
+    if family_bits:
+        print("  Fam:      " + " | ".join(family_bits))
+    quality_drop_norm = summary["quality_drop_norm"]
+    quality_drop_sharpe = summary["quality_drop_sharpe"]
+    quality_drop_folds = summary["quality_drop_folds"]
+    backed_norm = summary["backed_norm"]
+    print(
+        "  Quality:  "
+        f"min={summary['quality_threshold']:.2f} "
+        f"dropped_p50={quality_drop_norm['p50']:.2f} "
+        f"dropped_p90={quality_drop_norm['p90']:.2f} "
+        f"dropped_max={quality_drop_norm['max']:.2f} "
+        f"backed_p50={backed_norm['p50']:.2f}"
+    )
+    print(
+        "  Inputs:   "
+        f"drop_sharpe_p50={quality_drop_sharpe['p50']:.2f} "
+        f"drop_sharpe_p90={quality_drop_sharpe['p90']:.2f} "
+        f"drop_folds_p50={quality_drop_folds['p50']:.0f}"
+    )
+    if summary["family_quality_lines"]:
+        print("  FamilyQ:  " + " | ".join(summary["family_quality_lines"]))
+    if summary["near_miss_entries"]:
+        print("  NearMiss: " + ", ".join(summary["near_miss_entries"]))
+    for entry in summary["top_entries"]:
+        print(f"  Top:      {entry}")
+
+
+def cmd_analyze_actionable_live(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.actionable_live_diagnostics import (
+        build_actionable_live_summary,
+    )
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
+    source_filter = None
+    raw_source = getattr(args, "source", None)
+    if raw_source:
+        source_filter = tuple(
+            source.strip() for source in raw_source.split(",") if source.strip()
+        ) or None
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_actionable_live_summary(
+            store.list_observation_active(asset=args.asset),
+            top=args.top,
+            signal_nonzero_ratio_min=cfg.lifecycle.live_proven_signal_nonzero_ratio_min,
+            signal_mean_abs_min=cfg.lifecycle.live_proven_signal_mean_abs_min,
+            families=family_filter,
+            sources=source_filter,
+        )
+    finally:
+        store.close()
+
+    reasons = summary["reasons"]
+    title = f"Actionable Live ({args.asset.upper()})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    if source_filter:
+        title += f" <{','.join(source_filter)}>"
+    print(title)
+    print(
+        "  Summary:  "
+        f"live_proven={summary['total']} actionable={summary['actionable']} "
+        f"backed={summary['backed']}"
+    )
+    print(
+        "  Drop:     "
+        f"signal_both={reasons.get('signal_both', 0)} "
+        f"signal_ratio={reasons.get('signal_ratio', 0)} "
+        f"signal_mean_abs={reasons.get('signal_mean_abs', 0)} "
+        f"redundancy={reasons.get('redundancy', 0)} "
+        f"actionable_unbacked={reasons.get('actionable_unbacked', 0)} "
+        f"other={reasons.get('other', 0)} "
+        f"backed={reasons.get('backed', 0)}"
+    )
+    families = summary["families"]
+    family_bits = []
+    for reason in (
+        "backed",
+        "signal_both",
+        "signal_ratio",
+        "signal_mean_abs",
+        "redundancy",
+        "actionable_unbacked",
+    ):
+        values = families.get(reason) or []
+        if values:
+            family_bits.append(f"{reason}=" + ",".join(values))
+    if family_bits:
+        print("  Fam:      " + " | ".join(family_bits))
+    family_signal_lines = summary.get("family_signal_lines") or []
+    if family_signal_lines:
+        print("  FamSig:   " + " | ".join(family_signal_lines[:3]))
+    redundancy_family_lines = summary.get("redundancy_family_lines") or []
+    if redundancy_family_lines:
+        print("  RedFam:   " + " | ".join(redundancy_family_lines[:3]))
+    ratio_drop = summary["ratio_drop"]
+    mean_abs_drop = summary["mean_abs_drop"]
+    ratio_backed = summary["ratio_backed"]
+    mean_abs_backed = summary["mean_abs_backed"]
+    print(
+        "  Signal:   "
+        f"min={summary['signal_nonzero_ratio_min']:.2f}/{summary['signal_mean_abs_min']:.2f} "
+        f"drop_ratio_p50={ratio_drop['p50']:.2f} "
+        f"drop_ratio_p90={ratio_drop['p90']:.2f} "
+        f"drop_mean_p50={mean_abs_drop['p50']:.2f} "
+        f"drop_mean_p90={mean_abs_drop['p90']:.2f} "
+        f"backed_ratio_p50={ratio_backed['p50']:.2f} "
+        f"backed_mean_p50={mean_abs_backed['p50']:.2f}"
+    )
+    for entry in summary["top_entries"]:
+        print(f"  Top:      {entry}")
+
+
+def cmd_analyze_trade_transition(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.trade_transition_diagnostics import (
+        build_trade_transition_summary,
+        capture_batch_transition_snapshot,
+    )
+
+    cfg = _load_config(args.config)
+    asset = args.asset.upper()
+    family_filter = None
+    raw_families = getattr(args, "families", None)
+    if raw_families:
+        family_filter = tuple(
+            family.strip() for family in raw_families.split(",") if family.strip()
+        ) or None
+
+    contexts = _build_trade_contexts(
+        asset_list=[asset],
+        cfg=cfg,
+        testnet=True,
+        capital=cfg.trading.initial_capital,
+        venue="paper",
+    )
+    trader, cb, readiness_checker = contexts[asset]
+    try:
+        pre = capture_batch_transition_snapshot(
+            trader.registry.list_observation_active(asset=asset),
+            families=family_filter,
+        )
+        result = trader.run_cycle(skip_lifecycle=cfg.lifecycle_daemon.enabled)
+        _print_paper_result(result)
+        recon = trader.reconcile()
+        _run_trade_readiness_check(result, recon, cb, readiness_checker)
+        if not cfg.lifecycle_daemon.enabled:
+            _run_hypothesis_lifecycle_update(trader, cfg, result)
+        post = capture_batch_transition_snapshot(
+            trader.registry.list_observation_active(asset=asset),
+            families=family_filter,
+        )
+    finally:
+        _close_trade_contexts(contexts)
+
+    summary = build_trade_transition_summary(pre, post, top=max(args.top, 0))
+    title = f"Trade Transition ({asset})"
+    if family_filter:
+        title += f" [{','.join(family_filter)}]"
+    print(title)
+    print(
+        "  Summary:  "
+        f"scoped_pre={summary['scoped_pre']} "
+        f"scoped_post={summary['scoped_post']} "
+        f"pre_backed={summary['pre_backed']} "
+        f"post_backed={summary['post_backed']} "
+        f"entered={summary['entered']} "
+        f"exited={summary['exited']}"
+    )
+    if summary["exit_reasons"]:
+        print(
+            "  Exit:     "
+            + " ".join(
+                f"{name}={count}"
+                for name, count in summary["exit_reasons"].most_common()
+            )
+        )
+    else:
+        print("  Exit:     none")
+    if summary["entry_reasons"]:
+        print(
+            "  Enter:    "
+            + " ".join(
+                f"{name}={count}"
+                for name, count in summary["entry_reasons"].most_common()
+            )
+        )
+    else:
+        print("  Enter:    none")
+    for entry in summary["top_exits"]:
+        print(f"  TopExit:  {entry}")
+    for entry in summary["top_entries"]:
+        print(f"  TopEnter: {entry}")
+
+
+def cmd_backfill_observation_returns(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
+    from alpha_os_recovery.hypotheses import (
+        HypothesisStore,
+        apply_allocation_rebalance_plan,
+        backfill_observation_returns,
+        build_capped_allocation_rebalance_plan,
+    )
+
+    cfg = _load_config(args.config)
+    adir = asset_data_dir(args.asset)
+    store = HypothesisStore(HYPOTHESES_DB)
+    data_store = DataStore(SIGNAL_CACHE_DB)
+    forward_tracker = HypothesisObservationTracker(adir / HYPOTHESIS_OBSERVATIONS_DB_NAME)
+    portfolio_tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
+    try:
+        records = store.list_observation_active(asset=args.asset)
+        if args.source:
+            records = [record for record in records if record.source == args.source]
+        live_returns_for = _build_live_returns_getter(
+            forward_tracker,
+            supports_short=cfg.trading.supports_short,
+        )
+        signal_activity_for = _build_signal_activity_getter(
+            forward_tracker,
+            portfolio_tracker,
+            lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
+        )
+        summary = backfill_observation_returns(
+            hypothesis_store=store,
+            data_store=data_store,
+            forward_tracker=forward_tracker,
+            asset=args.asset,
+            lookback_days=args.days,
+            records=records,
+        )
+        print(
+            "Observation backfill: "
+            f"asset={args.asset} hypotheses={summary.n_hypotheses} "
+            f"days={summary.n_days} records={summary.n_records} "
+            f"failures={summary.n_failures}"
+            f"{'' if not args.source else f' source={args.source}'}"
+        )
+
+        if not args.apply_lifecycle:
+            return
+
+        plan = build_capped_allocation_rebalance_plan(
+            store,
+            asset=args.asset,
+            config=cfg,
+            live_returns_for=live_returns_for,
+            signal_activity_for=signal_activity_for,
+            data_store=data_store,
+        )
+        updates = apply_allocation_rebalance_plan(store, plan)
+        print(
+            "Lifecycle refresh: "
+            f"updated={len(updates)} active={len(plan)} "
+            f"capital_backed={sum(1 for entry in plan if entry.proposed_stake > cfg.lifecycle.target_stake_floor)} "
+            f"live_proven={sum(1 for entry in plan if entry.live_proven)}"
+        )
+    finally:
+        portfolio_tracker.close()
+        forward_tracker.close()
+        data_store.close()
+        store.close()
+
+
+def cmd_score_exploratory_hypotheses(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.research_scoring_service import (
+        run_exploratory_research_scoring,
+    )
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    cfg = _load_config(args.config)
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        run = run_exploratory_research_scoring(
+            store=store,
+            config=cfg,
+            asset=args.asset,
+            limit=args.limit,
+            dry_run=args.dry_run,
+            load_data=_real_data,
+        )
+        mode = "DRY RUN" if args.dry_run else "APPLY"
+        if run.candidate_count == 0:
+            print(
+                f"Research scoring [{mode}]: asset={args.asset.upper()} "
+                "candidates=0 scored=0 failed=0"
+            )
+            return
+        batch = run.batch
+
+        print(
+            f"Research scoring [{mode}]: asset={args.asset.upper()} "
+            f"candidates={run.candidate_count} scored={len(batch.updates)} failed={len(batch.failures)}"
+        )
+        for update in batch.updates[:10]:
+            print(
+                "  "
+                f"{update.hypothesis_id}: "
+                f"oos_sharpe={update.oos_sharpe:+.3f} "
+                f"oos_log_growth={update.oos_log_growth:+.3f} "
+                f"folds={update.n_folds}"
+            )
+        if len(batch.updates) > 10:
+            print(f"  ... {len(batch.updates) - 10} more scored hypotheses")
+        for failure in batch.failures[:10]:
+            print(f"  FAIL {failure.hypothesis_id}: {failure.reason}")
+        if len(batch.failures) > 10:
+            print(f"  ... {len(batch.failures) - 10} more failures")
+
+        if args.dry_run:
+            return
+        print(
+            "Research scoring summary: "
+            f"updated={len(batch.updates)} active={store.count(status='active')}"
+        )
+    finally:
+        store.close()
+
+
+def cmd_replay_experiment(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.cli_commands import cmd_replay_experiment as _legacy_cmd_replay_experiment
+
+    _legacy_cmd_replay_experiment(args)
+
+
+def cmd_replay_matrix(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.cli_commands import cmd_replay_matrix as _legacy_cmd_replay_matrix
+
+    _legacy_cmd_replay_matrix(args)
+
+
+def cmd_admission_daemon(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.cli_commands import cmd_admission_daemon as _legacy_cmd_admission_daemon
+
+    _legacy_cmd_admission_daemon(args)
+
+
+def cmd_prune_stale_candidates(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.cli_commands import (
+        cmd_prune_stale_candidates as _legacy_cmd_prune_stale_candidates,
+    )
+
+    _legacy_cmd_prune_stale_candidates(args)
+
+
+def cmd_testnet_readiness(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.validation.testnet import ReadinessChecker, readiness_paths
+
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
+    adir = asset_data_dir(args.asset)
+    state_path, report_path = readiness_paths(adir)
+
+    readiness_checker = ReadinessChecker(
+        state_path=state_path,
+        report_path=report_path,
+        target_days=cfg.testnet.target_success_days,
+        max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+    )
+
+    if args.reset:
+        readiness_checker._state.consecutive_success_days = 0
+        readiness_checker._state.passed = False
+        readiness_checker._save_state()
+        print("Reset consecutive success counter to 0.")
+        return
+
+    readiness_checker.print_status()
+
+    if args.slippage or args.latency:
+        from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
+        tracker = PaperPortfolioTracker(db_path=adir / "paper_trading.db")
+        if args.slippage:
+            stats = tracker.get_slippage_stats()
+            print(f"\nSlippage Distribution ({stats['count']} fills)")
+            print(f"  Mean:  {stats['mean_bps']:.1f} bps")
+            print(f"  P50:   {stats['p50_bps']:.1f} bps")
+            print(f"  P95:   {stats['p95_bps']:.1f} bps")
+            print(f"  Max:   {stats['max_bps']:.1f} bps")
+        if args.latency:
+            stats = tracker.get_latency_stats()
+            print(f"\nFill Latency Distribution ({stats['count']} fills)")
+            print(f"  Mean:  {stats['mean_ms']:.0f} ms")
+            print(f"  P50:   {stats['p50_ms']:.0f} ms")
+            print(f"  P95:   {stats['p95_ms']:.0f} ms")
+            print(f"  Max:   {stats['max_ms']:.0f} ms")
+        tracker.close()
+
+    if args.reports:
+        if not report_path.exists():
+            print("\nNo reports yet.")
+            return
+        print("\nDaily Reports:")
+        for line in report_path.read_text().splitlines():
+            r = json.loads(line)
+            status = "OK" if not r["has_errors"] else "ERROR"
+            print(
+                f"  {r['date']} [{status}] PV=${r['portfolio_value']:,.2f} "
+                f"PnL=${r['daily_pnl']:+,.2f} fills={r['n_fills']}"
+            )
+
+
+def _load_latest_report(report_path: Path) -> dict | None:
+    if not report_path.exists():
+        return None
+    last: dict | None = None
+    for line in report_path.read_text().splitlines():
+        line = line.strip()
+        if line:
+            last = json.loads(line)
+    return last
+
+
+def _hypothesis_status(*, asset: str | None = None) -> dict[str, int]:
+    from alpha_os_recovery.hypotheses.sleeve_status import build_hypothesis_status_counts
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        counts = build_hypothesis_status_counts(store, asset=asset)
+        return {
+            "active": counts.active,
+            "paused": counts.paused,
+            "archived": counts.archived,
+            "live": counts.live,
+        }
+    finally:
+        store.close()
+
+
+def _live_hypothesis_ids(*, asset: str | None = None) -> list[str]:
+    from alpha_os_recovery.hypotheses.sleeve_status import live_hypothesis_ids
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        return live_hypothesis_ids(store, asset=asset)
+    finally:
+        store.close()
+
+
+def _runtime_cohort(record) -> str:
+    from alpha_os_recovery.hypotheses.sleeve_status import runtime_cohort
+
+    return runtime_cohort(record)
+
+
+def _runtime_hypothesis_summary(*, asset: str | None = None) -> dict[str, object]:
+    from alpha_os_recovery.hypotheses.sleeve_status import build_asset_sleeve_summary
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_asset_sleeve_summary(store.list_observation_active(asset=asset))
+    finally:
+        store.close()
+
+    return {
+        "bootstrap_backed": summary.bootstrap_backed,
+        "observed": summary.observed,
+        "capital_backed": summary.capital_backed,
+        "research_retained": summary.research_retained,
+        "bootstrap_research_retained": summary.bootstrap_research_retained,
+        "serious_research_retained": summary.serious_research_retained,
+        "serious_template_retained_count": summary.serious_template_retained_count,
+        "serious_template_backed_count": summary.serious_template_backed_count,
+        "serious_template_target_count": summary.serious_template_target_count,
+        "batch_research_retained": summary.batch_research_retained,
+        "live_proven": summary.live_proven,
+        "actionable_live": summary.actionable_live,
+        "promoted_live": summary.promoted_live,
+        "research_demoted": summary.research_demoted,
+        "research_candidate_capped": summary.research_candidate_capped,
+        "bootstrap_capital_backed": summary.bootstrap_capital_backed,
+        "serious_capital_backed": summary.serious_capital_backed,
+        "batch_research_capital_backed": summary.batch_research_capital_backed,
+        "actionable_live_capital_backed": summary.actionable_live_capital_backed,
+        "actionable_redundancy_capped": summary.actionable_redundancy_capped,
+        "actionable_other_dropped": summary.actionable_other_dropped,
+        "promotion_blockers": summary.promotion_blockers,
+        "top_allocation": summary.top_allocation,
+        "top_effective_live": summary.top_effective_live,
+        "top_raw_live": summary.top_raw_live,
+        "top_bootstrap": summary.top_bootstrap,
+        "top_actionable_capped": summary.top_actionable_capped,
+        "batch_retained_families": summary.batch_retained_families,
+        "batch_backed_families": summary.batch_backed_families,
+        "serious_retained_templates": summary.serious_retained_templates,
+        "serious_backed_templates": summary.serious_backed_templates,
+        "serious_template_gaps": summary.serious_template_gaps,
+        "serious_family_gaps": summary.serious_family_gaps,
+    }
+
+
+def _runtime_actionable_window_summary(
+    *,
+    asset: str,
+    lookback: int,
+    supports_short: bool,
+) -> dict[str, float] | None:
+    from alpha_os_recovery.hypotheses.sleeve_status import build_actionable_window_summary
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+
+    tracker = HypothesisObservationTracker(
+        asset_data_dir(asset) / HYPOTHESIS_OBSERVATIONS_DB_NAME
+    )
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        summary = build_actionable_window_summary(
+            store.list_live(asset=asset),
+            tracker=tracker,
+            lookback=lookback,
+            supports_short=supports_short,
+        )
+        if summary is None:
+            return None
+        return {
+            "lookback": float(summary.lookback),
+            "tracked": float(summary.tracked),
+            "expressing": float(summary.expressing),
+            "mean_ratio": summary.mean_ratio,
+            "mean_action": summary.mean_action,
+            "breadth": summary.breadth,
+        }
+    finally:
+        store.close()
+        tracker.close()
+
+
+def _runtime_control_metrics_summary(*, asset: str) -> dict[str, float | int | list[str]]:
+    from alpha_os_recovery.hypotheses.sleeve_control_metrics import load_sleeve_control_metrics
+
+    metrics = load_sleeve_control_metrics(asset=asset)
+    return {
+        "template_gap_count": int(metrics.template_gap_count),
+        "template_gaps": list(metrics.template_gaps),
+        "coverage_retention": float(metrics.coverage_retention),
+        "capital_conversion": float(metrics.capital_conversion),
+        "breadth_trend": float(metrics.breadth_trend),
+    }
+
+
+def _build_sleeve_compare_rows(*, asset_list: list[str], cfg) -> list[dict[str, object]]:
+    from alpha_os_recovery.validation.testnet import ReadinessChecker, readiness_paths
+
+    rows: list[dict[str, object]] = []
+    for asset in asset_list:
+        adir = asset_data_dir(asset)
+        state_path, report_path = readiness_paths(adir)
+        readiness_checker = ReadinessChecker(
+            state_path=state_path,
+            report_path=report_path,
+            target_days=cfg.testnet.target_success_days,
+            max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+        )
+        state = readiness_checker.state
+        latest = _load_latest_report(report_path)
+        runtime_ids = _live_hypothesis_ids(asset=asset)
+        hypothesis_summary = _runtime_hypothesis_summary(asset=asset)
+        actionable_window = _runtime_actionable_window_summary(
+            asset=asset,
+            lookback=cfg.forward.degradation_window,
+            supports_short=cfg.trading.supports_short,
+        )
+        control_metrics = _runtime_control_metrics_summary(asset=asset)
+        findings = _runtime_observation_findings(latest, len(runtime_ids))
+        rows.append(
+            {
+                "asset": asset.upper(),
+                "readiness": f"{state.consecutive_success_days}/{state.target_days}",
+                "live": len(runtime_ids),
+                "proven": hypothesis_summary["live_proven"],
+                "actionable": hypothesis_summary["actionable_live"],
+                "backed": hypothesis_summary["capital_backed"],
+                "serious_retained": hypothesis_summary["serious_research_retained"],
+                "serious_backed": hypothesis_summary["serious_capital_backed"],
+                "serious_template_backed": hypothesis_summary["serious_template_backed_count"],
+                "serious_template_total": hypothesis_summary["serious_template_target_count"],
+                "serious_template_gaps": hypothesis_summary["serious_template_gaps"],
+                "control_template_gap_count": control_metrics["template_gap_count"],
+                "control_coverage_retention": control_metrics["coverage_retention"],
+                "control_capital_conversion": control_metrics["capital_conversion"],
+                "control_breadth_trend": control_metrics["breadth_trend"],
+                "breadth": 0.0 if actionable_window is None else actionable_window["breadth"],
+                "latest": "none" if latest is None else ("ERROR" if latest.get("has_errors") else "OK"),
+                "fills": 0 if latest is None else int(latest.get("n_fills", 0)),
+                "observe": _runtime_observation_verdict(latest, findings),
+            }
+        )
+    return rows
+
+
+def _write_sleeve_compare_snapshot(
+    *,
+    asset_list: list[str],
+    config_path: str | None,
+    budget_by_asset: dict[str, object] | None = None,
+) -> Path:
+    cfg = _load_runtime_observation_config(config_path)
+    rows = _build_sleeve_compare_rows(asset_list=asset_list, cfg=cfg)
+    budget_by_asset = budget_by_asset or {}
+    for row in rows:
+        budget = budget_by_asset.get(str(row["asset"]).upper())
+        row["score_budget_requested"] = 0 if budget is None else int(budget.requested_limit)
+        row["score_budget_effective"] = 0 if budget is None else int(budget.effective_limit)
+        row["score_budget_missing"] = 0 if budget is None else int(budget.missing_template_count)
+        row["score_budget_closed"] = 0 if budget is None else int(budget.closed_template_count)
+        row["score_budget_new"] = 0 if budget is None else int(budget.new_template_count)
+    path = _sleeve_compare_snapshot_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "assets": [row["asset"] for row in rows],
+        "rows": rows,
+    }
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload, ensure_ascii=True) + "\n")
+    return path
+
+
+def _runtime_observation_findings(
+    latest: dict | None,
+    current_live_count: int,
+) -> list[str]:
+    findings: list[str] = []
+    if latest is None:
+        findings.append("no readiness reports yet")
+        return findings
+
+    if latest.get("has_errors"):
+        findings.append("latest cycle has runtime errors")
+    if latest.get("n_fills", 0) == 0:
+        findings.append("latest cycle had zero fills")
+    if latest.get("n_skipped_no_delta", 0) > 0 and latest.get("n_fills", 0) == 0:
+        findings.append("latest cycle had no_delta in long-only mode")
+    if latest.get("n_skipped_deadband", 0) > 0 and latest.get("n_fills", 0) == 0:
+        findings.append("deadband skipped the latest cycle")
+    if latest.get("n_order_failures", 0) > 0:
+        findings.append("latest cycle had order failures")
+    if not latest.get("reconciliation_match", False):
+        findings.append("latest cycle failed reconciliation")
+    latest_active = int(
+        latest.get("n_active_hypotheses", latest.get("n_registry_active", current_live_count))
+    )
+    if latest_active != current_live_count:
+        findings.append("latest report is older than current runtime selection state")
+    return findings
+
+
+def _runtime_observation_verdict(latest: dict | None, findings: list[str]) -> str:
+    if latest is None:
+        return "pending"
+    critical = {
+        "latest cycle has runtime errors",
+        "latest cycle had order failures",
+        "latest cycle failed reconciliation",
+    }
+    if any(finding in critical for finding in findings):
+        return "attention"
+    if findings:
+        return "watch"
+    return "ok"
+
+
+def _latest_live_count(latest: dict | None) -> int:
+    if latest is None:
+        return 0
+    return int(latest.get("n_live_hypotheses", 0))
+
+
+def _latest_active_count(latest: dict | None, default: int = 0) -> int:
+    if latest is None:
+        return default
+    return int(latest.get("n_active_hypotheses", latest.get("n_registry_active", default)))
+
+
+def _latest_selected_count(latest: dict | None, default: int = 0) -> int:
+    if latest is None:
+        return default
+    return int(
+        latest.get("n_selected_hypotheses", latest.get("n_selected_alphas", default))
+    )
+
+
+def _current_runtime_profile(cfg, asset: str):
+    live_ids = _live_hypothesis_ids(asset=asset)
+    profile = build_runtime_profile(
+        asset=asset,
+        config=cfg,
+        live_hypothesis_ids=live_ids,
+    )
+    return profile
+
+
+def cmd_runtime_status(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.validation.testnet import ReadinessChecker, readiness_paths
+
+    cfg = _load_runtime_observation_config(getattr(args, "config", None))
+    adir = asset_data_dir(args.asset)
+    state_path, report_path = readiness_paths(adir)
+    readiness_checker = ReadinessChecker(
+        state_path=state_path,
+        report_path=report_path,
+        target_days=cfg.testnet.target_success_days,
+        max_slippage_bps=cfg.testnet.max_acceptable_slippage_bps,
+    )
+    state = readiness_checker.state
+    latest = _load_latest_report(report_path)
+    hypotheses = _hypothesis_status(asset=args.asset)
+    runtime_ids = _live_hypothesis_ids(asset=args.asset)
+    hypothesis_summary = _runtime_hypothesis_summary(asset=args.asset)
+    actionable_window = _runtime_actionable_window_summary(
+        asset=args.asset,
+        lookback=cfg.forward.degradation_window,
+        supports_short=cfg.trading.supports_short,
+    )
+    current_profile = _current_runtime_profile(cfg, args.asset)
+    findings = _runtime_observation_findings(latest, len(runtime_ids))
+
+    print(f"Runtime Status ({args.asset.upper()})")
+    print(
+        f"  Readiness: {state.consecutive_success_days}/{state.target_days} "
+        f"days, total={state.total_days_run}, passed={state.passed}"
+    )
+    print(
+        f"  Last Run:  {state.last_run_date or 'N/A'} "
+        f"(last_success={state.last_success_date or 'N/A'})"
+    )
+    print(
+        f"  Runtime:   source=hypotheses live={len(runtime_ids)}"
+    )
+    print(
+        f"  Hypotheses: active={hypotheses['active']} paused={hypotheses['paused']} "
+        f"archived={hypotheses['archived']} live={hypotheses['live']}"
+    )
+    print(
+        "  Signals:   "
+        f"observed={hypothesis_summary['observed']} "
+        f"bootstrap_backed={hypothesis_summary['bootstrap_backed']} "
+        f"research_retained={hypothesis_summary['research_retained']} "
+        f"live_proven={hypothesis_summary['live_proven']} "
+        f"actionable_live={hypothesis_summary['actionable_live']} "
+        f"promoted_live={hypothesis_summary['promoted_live']} "
+        f"research_demoted={hypothesis_summary['research_demoted']} "
+        f"research_candidate_capped={hypothesis_summary['research_candidate_capped']} "
+        f"capital_backed={hypothesis_summary['capital_backed']}"
+    )
+    print(
+        "  Cohorts:   "
+        f"bootstrap={hypothesis_summary['bootstrap_research_retained']}/"
+        f"{hypothesis_summary['bootstrap_capital_backed']} "
+        f"serious={hypothesis_summary['serious_research_retained']}/"
+        f"{hypothesis_summary['serious_capital_backed']} "
+        f"batch={hypothesis_summary['batch_research_retained']}/"
+        f"{hypothesis_summary['batch_research_capital_backed']} "
+        f"live={hypothesis_summary['live_proven']}/"
+        f"{hypothesis_summary['actionable_live_capital_backed']}"
+    )
+    if (
+        hypothesis_summary["actionable_redundancy_capped"] > 0
+        or hypothesis_summary["actionable_other_dropped"] > 0
+    ):
+        print(
+            "  Actionable:"
+            f" backed={hypothesis_summary['actionable_live_capital_backed']}"
+            f" redundancy_capped={hypothesis_summary['actionable_redundancy_capped']}"
+            f" other_dropped={hypothesis_summary['actionable_other_dropped']}"
+        )
+    if hypothesis_summary["top_actionable_capped"]:
+        print("  TopCap:    " + ", ".join(hypothesis_summary["top_actionable_capped"]))
+    if (
+        hypothesis_summary["batch_retained_families"]
+        or hypothesis_summary["batch_backed_families"]
+    ):
+        retained = ", ".join(hypothesis_summary["batch_retained_families"]) or "-"
+        backed = ", ".join(hypothesis_summary["batch_backed_families"]) or "-"
+        print(f"  BatchFam:  retained={retained} backed={backed}")
+    if (
+        hypothesis_summary["serious_retained_templates"]
+        or hypothesis_summary["serious_backed_templates"]
+    ):
+        retained = ", ".join(hypothesis_summary["serious_retained_templates"]) or "-"
+        backed = ", ".join(hypothesis_summary["serious_backed_templates"]) or "-"
+        print(f"  SeriousTpl: retained={retained} backed={backed}")
+    if hypothesis_summary["serious_template_target_count"] > 0:
+        template_gaps = ", ".join(hypothesis_summary["serious_template_gaps"]) or "-"
+        family_gaps = ", ".join(hypothesis_summary["serious_family_gaps"]) or "-"
+        print(
+            "  SeriousCov:"
+            f" retained={hypothesis_summary['serious_template_retained_count']}/"
+            f"{hypothesis_summary['serious_template_target_count']}"
+            f" backed={hypothesis_summary['serious_template_backed_count']}/"
+            f"{hypothesis_summary['serious_template_target_count']}"
+            f" gaps={template_gaps}"
+        )
+        print(f"  SeriousGap: families={family_gaps}")
+    if actionable_window is not None:
+        print(
+            "  ActionWin: "
+            f"lookback={int(actionable_window['lookback'])} "
+            f"tracked={int(actionable_window['tracked'])} "
+            f"expressing={int(actionable_window['expressing'])} "
+            f"mean_ratio={actionable_window['mean_ratio']:.3f} "
+            f"mean_action={actionable_window['mean_action']:.3f} "
+            f"breadth={actionable_window['breadth']:.2f}"
+        )
+    blocker_counts = hypothesis_summary["promotion_blockers"]
+    if any(blocker_counts.values()):
+        print(
+            "  Promote:   "
+            f"obs={blocker_counts['insufficient_observations']} "
+            f"quality={blocker_counts['weak_live_quality']} "
+            f"contrib={blocker_counts['weak_marginal_contribution']} "
+            f"both={blocker_counts['weak_live_quality_and_contribution']} "
+            f"signal={blocker_counts['weak_signal_activity']}"
+        )
+    if hypothesis_summary["top_allocation"]:
+        print("  TopAlloc:  " + ", ".join(hypothesis_summary["top_allocation"]))
+    if hypothesis_summary["top_effective_live"]:
+        print("  TopEff:    " + ", ".join(hypothesis_summary["top_effective_live"]))
+    if hypothesis_summary["top_raw_live"]:
+        print("  TopRaw:    " + ", ".join(hypothesis_summary["top_raw_live"]))
+    if hypothesis_summary["top_bootstrap"]:
+        print("  TopBoot:   " + ", ".join(hypothesis_summary["top_bootstrap"]))
+    commit_suffix = f" ({current_profile.git_commit[:8]})" if current_profile.git_commit else ""
+    print(f"  Profile:   current={current_profile.profile_id[:12]}{commit_suffix}")
+
+    if latest is None:
+        print("  Latest:    no readiness reports yet")
+        return
+
+    status = "ERROR" if latest.get("has_errors") else "OK"
+    print(
+        f"  Latest:    {latest['date']} [{status}] PV=${latest['portfolio_value']:,.2f} "
+        f"PnL=${latest['daily_pnl']:+,.2f} fills={latest['n_fills']}"
+    )
+    latest_profile_id = latest.get("profile_id", "")
+    latest_profile_commit = latest.get("profile_commit", "")
+    if latest_profile_id:
+        latest_suffix = f" ({latest_profile_commit[:8]})" if latest_profile_commit else ""
+        print(f"  Profile:   latest={latest_profile_id[:12]}{latest_suffix}")
+        latest_config_id = latest.get("profile_config_id", "")
+        latest_live_set_id = latest.get("profile_live_set_id", "")
+        if latest_config_id or latest_live_set_id:
+            print(
+                "  ProfileIDs: "
+                f"config={latest_config_id[:12] or 'n/a'} "
+                f"live={latest_live_set_id[:12] or 'n/a'}"
+            )
+            print(
+                "  CurrentIDs: "
+                f"config={current_profile.config_id[:12]} "
+                f"live={current_profile.live_set_id[:12]}"
+            )
+    print(
+        f"  Selection: current_live={len(runtime_ids)} "
+        f"latest_active={_latest_active_count(latest)} "
+        f"live={_latest_live_count(latest)} "
+        f"selected={_latest_selected_count(latest)}"
+    )
+    print(
+        "  Skips:     "
+        f"deadband={latest['n_skipped_deadband']} "
+        f"no_delta={latest.get('n_skipped_no_delta', 0)} "
+        f"min_notional={latest['n_skipped_min_notional']} "
+        f"rounded_to_zero={latest['n_skipped_rounded_to_zero']}"
+    )
+    print(
+        f"  Health:    reconciliation={latest['reconciliation_match']} "
+        f"order_failures={latest['n_order_failures']} "
+        f"halted={latest['circuit_breaker_halted']}"
+    )
+    verdict = _runtime_observation_verdict(latest, findings)
+    print(f"  Observe:   {verdict}")
+    for finding in findings:
+        print(f"    - {finding}")
+    if latest_profile_id and latest_profile_id != current_profile.profile_id:
+        print("    - latest report was recorded under a different runtime profile")
+        latest_config_id = latest.get("profile_config_id", "")
+        latest_live_set_id = latest.get("profile_live_set_id", "")
+        if latest_config_id and latest_config_id != current_profile.config_id:
+            print("    - config fingerprint differs between current and latest")
+        if latest_live_set_id and latest_live_set_id != current_profile.live_set_id:
+            print("    - live hypothesis set fingerprint differs between current and latest")
+    latest_active = _latest_active_count(latest)
+    if latest_active != len(runtime_ids):
+        print(
+            "  Note:      current runtime live count differs from latest readiness report; "
+            "the next trade cycle will refresh the report."
+        )
+
+
+def cmd_analyze_latest_combine(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.hypotheses.combiner import compute_stake_weights
+    from alpha_os_recovery.hypotheses.sleeve_status import build_latest_combine_summary
+    from alpha_os_recovery.hypotheses.store import HypothesisStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
+
+    tracker = PaperPortfolioTracker(db_path=asset_data_dir(args.asset) / "paper_trading.db")
+    store = HypothesisStore(HYPOTHESES_DB)
+    try:
+        snapshot = tracker.get_last_snapshot()
+        print(f"Latest Combine ({args.asset.upper()})")
+        if snapshot is None:
+            print("  No portfolio snapshots yet.")
+            return
+
+        signals = tracker.get_hypothesis_signals(snapshot.date)
+        if not signals:
+            print(f"  No hypothesis signals saved for snapshot {snapshot.date}.")
+            return
+
+        record_map = {
+            record.hypothesis_id: record
+            for record in store.list_observation_active(asset=args.asset)
+        }
+        stakes = {
+            hypothesis_id: float(record_map[hypothesis_id].stake)
+            for hypothesis_id in signals
+            if hypothesis_id in record_map and float(record_map[hypothesis_id].stake) > 0
+        }
+        weights = compute_stake_weights(stakes)
+        summary = build_latest_combine_summary(
+            record_map=record_map,
+            signals=signals,
+            weights=weights,
+            top_n=max(int(args.top), 1),
+        )
+        print(f"  Date:      {snapshot.date}")
+        print(
+            f"  Combined:  stored={float(snapshot.combined_signal):+.6f} "
+            f"current_weighted={summary.current_combined:+.6f}"
+        )
+        print(
+            f"  Snapshot:  selected={len(signals)} "
+            f"current_backed={summary.current_backed} "
+            f"dropped={summary.dropped_current} missing={summary.missing_current}"
+        )
+        print(
+            f"  Current:   nonzero={summary.nonzero_current} "
+            f"zero={summary.zero_current}"
+        )
+        if summary.dropped_reasons:
+            parts = [f"{key}={value}" for key, value in sorted(summary.dropped_reasons.items())]
+            print(f"  Dropped:   {' '.join(parts)}")
+        print(
+            "  Cohorts:   "
+            f"bootstrap n={summary.cohorts['bootstrap'].n}/{summary.cohorts['bootstrap'].nonzero} "
+            f"w={summary.cohorts['bootstrap'].weight:.3f} "
+            f"sig={summary.cohorts['bootstrap'].weighted_signal:+.6f} | "
+            f"serious n={summary.cohorts['serious'].n}/{summary.cohorts['serious'].nonzero} "
+            f"w={summary.cohorts['serious'].weight:.3f} "
+            f"sig={summary.cohorts['serious'].weighted_signal:+.6f} | "
+            f"batch n={summary.cohorts['batch'].n}/{summary.cohorts['batch'].nonzero} "
+            f"w={summary.cohorts['batch'].weight:.3f} "
+            f"sig={summary.cohorts['batch'].weighted_signal:+.6f} | "
+            f"live n={summary.cohorts['live'].n}/{summary.cohorts['live'].nonzero} "
+            f"w={summary.cohorts['live'].weight:.3f} "
+            f"sig={summary.cohorts['live'].weighted_signal:+.6f}"
+        )
+        for entry in summary.top_entries:
+            print(
+                "  Top:       "
+                f"{entry.hypothesis_id} cohort={entry.cohort} weight={entry.weight:.4f} "
+                f"signal={entry.signal:+.4f} contrib={entry.contribution:+.6f}"
+            )
+    finally:
+        store.close()
+        tracker.close()
+
+
+def _resolve_signal_cache_targets(args: argparse.Namespace) -> list[str]:
+    from alpha_os_recovery.data.universe import price_signal
+
+    assets = [item.strip().upper() for item in (args.assets or args.asset).split(",") if item.strip()]
+    signals: set[str] = set()
+
+    if args.signals:
+        signals.update(item.strip() for item in args.signals.split(",") if item.strip())
+    else:
+        for asset in assets:
+            signals.add(price_signal(asset))
+
+    if args.from_hypotheses:
+        from alpha_os_recovery.hypotheses import HypothesisStore
+        from alpha_os_recovery.hypotheses.producer import collect_required_features
+        from alpha_os_recovery.hypotheses.sleeve_scope import filter_records_by_assets
+
+        store = HypothesisStore(HYPOTHESES_DB)
+        try:
+            active = filter_records_by_assets(store.list_active(), assets)
+        finally:
+            store.close()
+        signals.update(collect_required_features(active, assets))
+
+    return sorted(signals)
+
+
+def cmd_sync_signal_cache(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.hypotheses.producer import _quick_healthcheck
+
+    asset_list = [item.strip().upper() for item in (args.assets or args.asset).split(",") if item.strip()]
+    lock_path = runtime_lock_path("sync-signal-cache", asset_list)
+    try:
+        runtime_lock = hold_runtime_lock(lock_path)
+        runtime_lock.__enter__()
+    except RuntimeLockBusy:
+        print(
+            "Signal cache sync already active for "
+            f"{','.join(asset_list)}; skipping overlapping invocation."
+        )
+        print(f"Sync summary: assets={','.join(asset_list)} status=skipped_overlap")
+        if args.strict:
+            sys.exit(1)
+        return
+
+    cfg = Config.load(args.config)
+    try:
+        targets = _resolve_signal_cache_targets(args)
+        if not targets:
+            print("No signals selected for sync")
+            print(f"Sync summary: assets={','.join(asset_list)} status=skipped_no_targets")
+            if args.strict:
+                sys.exit(1)
+            return
+
+        db_path = SIGNAL_CACHE_L2_DB if args.resolution != "1d" else SIGNAL_CACHE_DB
+        client = build_signal_client_from_config(cfg.api)
+
+        if not _quick_healthcheck(cfg.api.base_url):
+            print(f"signal-noise unavailable at {cfg.api.base_url} — skipping sync")
+            print(
+                f"Sync summary: assets={','.join(asset_list)} "
+                "status=skipped_source_unavailable"
+            )
+            if args.strict:
+                sys.exit(1)
+            return
+
+        store = DataStore(db_path, client)
+        before = store.signal_row_counts(targets)
+        try:
+            store.sync(
+                targets,
+                resolution=args.resolution,
+                min_history_days=max(args.min_history_days, 0),
+            )
+            after = store.signal_row_counts(targets)
+        finally:
+            store.close()
+
+        populated = sum(1 for signal in targets if after.get(signal, 0) > 0)
+        improved = sum(1 for signal in targets if after.get(signal, 0) > before.get(signal, 0))
+        print(
+            f"Signal cache sync ({args.resolution}) "
+            f"targets={len(targets)} populated={populated} improved={improved}"
+        )
+        for signal in targets[:20]:
+            print(f"  {signal}: {before.get(signal, 0)} -> {after.get(signal, 0)}")
+        if len(targets) > 20:
+            print(f"  ... {len(targets) - 20} more")
+        if args.strict and populated < len(targets):
+            print(
+                f"Strict mode: {len(targets) - populated} signals remain empty after sync"
+            )
+            print(
+                "Sync summary: "
+                f"assets={','.join(asset_list)} status=incomplete "
+                f"targets={len(targets)} populated={populated} improved={improved}"
+            )
+            sys.exit(1)
+        print(
+            "Sync summary: "
+            f"assets={','.join(asset_list)} status=ok "
+            f"targets={len(targets)} populated={populated} improved={improved}"
+        )
+    finally:
+        runtime_lock.__exit__(None, None, None)
+
+
+def cmd_alpha_funnel(args: argparse.Namespace) -> None:
+    from alpha_os_recovery.legacy.funnel import load_funnel_summary
+
+    summary = load_funnel_summary(args.asset)
+    print(f"Alpha Funnel ({summary.asset.upper()})")
+    print(f"  Discovery: pool={summary.discovery_pool_entries}")
+    print(
+        "  Candidates:"
+        f" total={summary.candidate_total}"
+        f" pending={summary.candidate_pending}"
+        f" validating={summary.candidate_validating}"
+        f" adopted={summary.candidate_adopted}"
+        f" rejected={summary.candidate_rejected}"
+    )
+    print(
+        "  Enqueued:"
+        f" total={summary.enqueued_total}"
+        f" manual={summary.enqueued_manual}"
+    )
+    print(
+        "  Managed:"
+        f" candidate={summary.managed_candidate}"
+        f" active={summary.managed_active}"
+        f" dormant={summary.managed_dormant}"
+        f" rejected={summary.managed_rejected}"
+    )
+    print(f"  Deployed: total={summary.deployed_total}")
+    if summary.reject_axes:
+        axes = " ".join(f"{axis}={count}" for axis, count in summary.reject_axes)
+        print(f"  Reject Axes: {axes}")
+    if summary.reject_reasons:
+        print("  Top Rejects:")
+        for reason, count in summary.reject_reasons:
+            print(f"    - {count}x {reason}")
+    if summary.source_summaries:
+        print("  By Source:")
+        for row in summary.source_summaries:
+            print(
+                "    "
+                f"{row.source}: "
+                f"total={row.total} "
+                f"pending={row.pending} "
+                f"validating={row.validating} "
+                f"adopted={row.adopted} "
+                f"rejected={row.rejected}"
+            )
+            if row.reject_axes:
+                axes = " ".join(f"{axis}={count}" for axis, count in row.reject_axes)
+                print(f"      axes: {axes}")
+            for reason, count in row.top_reject_reasons:
+                print(f"      - {count}x {reason}")
+
+
+def cmd_evaluate_expression(args: argparse.Namespace) -> None:
+    """Evaluate expression with multi-horizon IC across eval universe."""
+    from alpha_os_recovery.config import Config
+    from alpha_os_recovery.data.store import DataStore
+    from alpha_os_recovery.data.signal_client import build_signal_client_from_config
+    from alpha_os_recovery.data.universe import init_universe, load_daily_signals, required_raw_signals
+    from alpha_os_recovery.data.eval_universe import load_cached_eval_universe
+    from alpha_os_recovery.hypotheses.identity import expression_feature_names
+    from alpha_os_recovery.research.cross_asset import (
+        DEFAULT_HORIZONS,
+        evaluate_cross_asset_multi_horizon,
+    )
+
+    cfg = Config.load(args.config)
+    client = build_signal_client_from_config(cfg.api)
+    init_universe(client)
+    all_signals = load_daily_signals(client)
+
+    # Load cached eval universe
+    eval_assets = load_cached_eval_universe()
+    if not eval_assets:
+        print("No cached eval universe. Run unified-generator first.")
+        return
+
+    # Load data: eval universe prices + features referenced by expression
+    expr_features = required_raw_signals(expression_feature_names(args.expr))
+    db_path = SIGNAL_CACHE_DB
+    store = DataStore(db_path, client)
+    needed = sorted(set(eval_assets) | expr_features | set(all_signals[:50]))
+    matrix = store.get_matrix(needed)
+    store.close()
+    eval_set = set(eval_assets)
+    for col in matrix.columns:
+        if col not in eval_set:
+            matrix[col] = matrix[col].fillna(0)
+    data = {col: matrix[col].values for col in matrix.columns}
+
+    print(f"Expression: {args.expr}")
+    print(f"Eval universe: {len(eval_assets)} assets")
+    print(f"Data: {len(matrix)} rows, {len(data)} signals")
+    print()
+
+    result = evaluate_cross_asset_multi_horizon(
+        args.expr, data, eval_assets,
+        horizons=DEFAULT_HORIZONS,
+        fitness_metric="ic",
+        benchmark_assets=cfg.backtest.benchmark_assets,
+    )
+
+    print("Horizon  Mean IC")
+    print("-" * 25)
+    for h in sorted(result.fitness_by_horizon):
+        ic = result.fitness_by_horizon[h]
+        marker = " <-- best" if h == result.best_horizon else ""
+        print(f"  {h:2d}d    {ic:+.4f}{marker}")
+    print()
+    print(f"Best: horizon={result.best_horizon}d, IC={result.best_fitness:+.4f}")
+
+    if result.per_asset:
+        print("\nPer-asset IC (top 10):")
+        sorted_assets = sorted(result.per_asset.items(), key=lambda x: x[1], reverse=True)
+        for asset, ic in sorted_assets[:10]:
+            print(f"  {asset:30s} IC={ic:+.4f}")
+
+
+def cmd_produce_classical(args: argparse.Namespace) -> None:
+    """Run classical indicator producer → prediction store."""
+    from alpha_os_recovery.config import Config
+    from alpha_os_recovery.predictions.classical_producer import produce_classical_predictions
+
+    cfg = Config.load(args.config)
+    n = produce_classical_predictions(cfg)
+    print(f"Wrote {n} classical predictions to store")
+
+
+def cmd_produce_predictions(args: argparse.Namespace) -> None:
+    """Run the active signal producer → prediction store."""
+    from alpha_os_recovery.config import Config
+    from alpha_os_recovery.hypotheses.producer import produce_active_hypothesis_predictions
+
+    asset_list = [args.asset.upper()]
+    lock_path = runtime_lock_path("produce-predictions", asset_list)
+    try:
+        runtime_lock = hold_runtime_lock(lock_path)
+        runtime_lock.__enter__()
+    except RuntimeLockBusy:
+        print(
+            "Prediction production already active for "
+            f"{','.join(asset_list)}; skipping overlapping invocation."
+        )
+        print(f"Prediction summary: asset={asset_list[0]} status=skipped_overlap")
+        if args.strict:
+            sys.exit(1)
+        return
+
+    try:
+        cfg = Config.load(args.config)
+        n = produce_active_hypothesis_predictions(cfg, assets=[args.asset])
+        print(f"Wrote {n} hypothesis predictions to store")
+        if args.strict and n <= 0:
+            print("Strict mode: no hypothesis predictions were written")
+            print(f"Prediction summary: asset={asset_list[0]} status=empty written={n}")
+            sys.exit(1)
+        status = "ok" if n > 0 else "empty"
+        print(f"Prediction summary: asset={asset_list[0]} status={status} written={n}")
+    finally:
+        runtime_lock.__exit__(None, None, None)
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command is None:
+        parser.print_help()
+        sys.exit(1)
+
+    if args.command == "paper":
+        cmd_paper(args)
+    elif args.command == "trade":
+        cmd_trade(args)
+    elif args.command == "hypothesis-seeder":
+        cmd_hypothesis_seeder(args)
+    elif args.command == "score-exploratory-hypotheses":
+        cmd_score_exploratory_hypotheses(args)
+    elif args.command == "unified-generator":
+        cmd_unified_generator(args)
+    elif args.command == "enqueue-discovery-pool":
+        cmd_enqueue_discovery_pool(args)
+    elif args.command == "lifecycle":
+        cmd_lifecycle(args)
+    elif args.command == "rebalance-allocation-trust":
+        cmd_rebalance_allocation_trust(args)
+    elif args.command == "run-sleeves-once":
+        cmd_run_sleeves_once(args)
+    elif args.command == "compare-sleeves":
+        cmd_compare_sleeves(args)
+    elif args.command == "compare-sleeve-history":
+        cmd_compare_sleeve_history(args)
+    elif args.command == "analyze-live-breadth":
+        cmd_analyze_live_breadth(args)
+    elif args.command == "analyze-batch-research":
+        cmd_analyze_batch_research(args)
+    elif args.command == "analyze-actionable-live":
+        cmd_analyze_actionable_live(args)
+    elif args.command == "analyze-trade-transition":
+        cmd_analyze_trade_transition(args)
+    elif args.command == "analyze-latest-combine":
+        cmd_analyze_latest_combine(args)
+    elif args.command == "backfill-observation-returns":
+        cmd_backfill_observation_returns(args)
+    elif args.command == "replay-experiment":
+        cmd_replay_experiment(args)
+    elif args.command == "replay-matrix":
+        cmd_replay_matrix(args)
+    elif args.command == "testnet-readiness":
+        cmd_testnet_readiness(args)
+    elif args.command == "runtime-status":
+        cmd_runtime_status(args)
+    elif args.command == "sync-signal-cache":
+        cmd_sync_signal_cache(args)
+    elif args.command == "alpha-funnel":
+        cmd_alpha_funnel(args)
+    elif args.command == "legacy":
+        if args.legacy_command == "unified-generator":
+            cmd_unified_generator(args)
+        elif args.legacy_command == "enqueue-discovery-pool":
+            cmd_enqueue_discovery_pool(args)
+        elif args.legacy_command == "admission-daemon":
+            cmd_admission_daemon(args)
+        elif args.legacy_command == "prune-stale-candidates":
+            cmd_prune_stale_candidates(args)
+        elif args.legacy_command == "lifecycle":
+            cmd_lifecycle(args)
+        elif args.legacy_command == "alpha-funnel":
+            cmd_alpha_funnel(args)
+    elif args.command == "research":
+        if args.research_command == "generate":
+            cmd_generate(args)
+        elif args.research_command == "backtest":
+            cmd_backtest(args)
+        elif args.research_command == "evolve":
+            cmd_evolve(args)
+        elif args.research_command == "validate":
+            cmd_validate(args)
+        elif args.research_command == "evaluate":
+            cmd_evaluate_expression(args)
+        elif args.research_command == "produce-classical":
+            cmd_produce_classical(args)
+        elif args.research_command == "paper-replay":
+            cmd_paper_replay(args)
+        elif args.research_command == "replay-experiment":
+            cmd_replay_experiment(args)
+        elif args.research_command == "replay-matrix":
+            cmd_replay_matrix(args)
+    elif args.command == "produce-predictions":
+        cmd_produce_predictions(args)

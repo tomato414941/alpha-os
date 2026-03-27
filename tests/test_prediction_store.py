@@ -2,7 +2,7 @@
 import tempfile
 from pathlib import Path
 
-from alpha_os.predictions.store import Prediction, PredictionStore, SignalMeta
+from alpha_os_recovery.predictions.store import Prediction, PredictionStore, SignalMeta
 
 
 class TestPredictionStore:

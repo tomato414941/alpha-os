@@ -1,4 +1,4 @@
-from alpha_os.hypotheses import (
+from alpha_os_recovery.hypotheses import (
     HypothesisContribution,
     HypothesisKind,
     HypothesisRecord,

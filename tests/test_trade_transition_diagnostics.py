@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from alpha_os.hypotheses.trade_transition_diagnostics import (
+from alpha_os_recovery.hypotheses.trade_transition_diagnostics import (
     build_trade_transition_summary,
     capture_batch_transition_snapshot,
 )

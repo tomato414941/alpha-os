@@ -12,7 +12,7 @@ import pytest
 
 def test_executor_abc_has_defaults():
     """Executor ABC provides default implementations for optional methods."""
-    from alpha_os.execution.executor import Executor
+    from alpha_os_recovery.execution.executor import Executor
 
     class MinimalExecutor(Executor):
         def submit_order(self, order):
@@ -37,7 +37,7 @@ def test_executor_abc_has_defaults():
 
 def test_binance_executor_portfolio_value():
     """BinanceExecutor.portfolio_value uses managed state, not exchange balance."""
-    from alpha_os.execution.binance import BinanceExecutor
+    from alpha_os_recovery.execution.binance import BinanceExecutor
 
     mock_ex = MagicMock()
     mock_ex.fetch_ticker.return_value = {"last": 50000.0}
@@ -57,7 +57,7 @@ def test_binance_executor_portfolio_value():
 
 def test_binance_executor_all_positions():
     """BinanceExecutor.all_positions returns managed positions only."""
-    from alpha_os.execution.binance import BinanceExecutor
+    from alpha_os_recovery.execution.binance import BinanceExecutor
 
     executor = object.__new__(BinanceExecutor)
     executor._exchange = MagicMock()
@@ -77,7 +77,7 @@ def test_binance_executor_all_positions():
 
 def test_trade_parser():
     """CLI parser accepts trade subcommand with correct defaults."""
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
 
@@ -103,7 +103,7 @@ def test_trade_parser():
 
 
 def test_hypothesis_seeder_parser_supports_asset_once_and_bootstrap_flags():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args(
@@ -125,7 +125,7 @@ def test_hypothesis_seeder_parser_supports_asset_once_and_bootstrap_flags():
 
 
 def test_cmd_hypothesis_seeder_uses_asset_default_bootstrap_policy(monkeypatch):
-    from alpha_os.cli import cmd_hypothesis_seeder
+    from alpha_os_recovery.cli import cmd_hypothesis_seeder
 
     captured = {}
 
@@ -146,9 +146,9 @@ def test_cmd_hypothesis_seeder_uses_asset_default_bootstrap_policy(monkeypatch):
         def close(self):
             return None
 
-    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: object())
-    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
-    monkeypatch.setattr("alpha_os.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
+    monkeypatch.setattr("alpha_os_recovery.cli._load_config", lambda _path: object())
+    monkeypatch.setattr("alpha_os_recovery.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
 
     cmd_hypothesis_seeder(
         SimpleNamespace(
@@ -164,7 +164,7 @@ def test_cmd_hypothesis_seeder_uses_asset_default_bootstrap_policy(monkeypatch):
 
 
 def test_cmd_hypothesis_seeder_can_force_bootstrap(monkeypatch):
-    from alpha_os.cli import cmd_hypothesis_seeder
+    from alpha_os_recovery.cli import cmd_hypothesis_seeder
 
     captured = {}
 
@@ -185,9 +185,9 @@ def test_cmd_hypothesis_seeder_can_force_bootstrap(monkeypatch):
         def close(self):
             return None
 
-    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: object())
-    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
-    monkeypatch.setattr("alpha_os.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
+    monkeypatch.setattr("alpha_os_recovery.cli._load_config", lambda _path: object())
+    monkeypatch.setattr("alpha_os_recovery.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.daemon.hypothesis_seeder.HypothesisSeederDaemon", _Daemon)
 
     cmd_hypothesis_seeder(
         SimpleNamespace(
@@ -203,12 +203,12 @@ def test_cmd_hypothesis_seeder_can_force_bootstrap(monkeypatch):
 
 
 def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
 
     seed_calls = []
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -219,7 +219,7 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -227,16 +227,16 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
             rebalance_required=True,
         ),
     )
-    monkeypatch.setattr("alpha_os.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_rebalance_allocation_trust", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_score_exploratory_hypotheses", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_rebalance_allocation_trust", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
 
     def _seed(args):
         seed_calls.append((args.asset, args.include_bootstrap, args.skip_bootstrap))
 
-    monkeypatch.setattr("alpha_os.cli.cmd_hypothesis_seeder", _seed)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_hypothesis_seeder", _seed)
 
     cmd_run_sleeves_once(
         SimpleNamespace(
@@ -261,21 +261,21 @@ def test_run_sleeves_once_passes_bootstrap_override(monkeypatch, capsys):
 
 
 def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch):
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
     from types import SimpleNamespace
 
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_hypothesis_seeder",
+        "alpha_os_recovery.cli.cmd_hypothesis_seeder",
         lambda args: calls.append(("seed", args.asset)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        "alpha_os_recovery.cli.cmd_score_exploratory_hypotheses",
         lambda args: calls.append(("score", args.asset)),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -286,7 +286,7 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -295,23 +295,23 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.store.HypothesisStore",
+        "alpha_os_recovery.hypotheses.store.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.data.store.DataStore",
+        "alpha_os_recovery.data.store.DataStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        "alpha_os_recovery.forward.tracker.HypothesisObservationTracker",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        "alpha_os_recovery.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: calls.append(("serious", kwargs["asset"]))
         or SimpleNamespace(
             asset=kwargs["asset"],
@@ -322,16 +322,16 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset)),
     )
-    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
 
     cmd_run_sleeves_once(
         SimpleNamespace(
@@ -360,7 +360,7 @@ def test_run_sleeves_once_skips_reference_sleeve_refresh_by_default(monkeypatch)
 
 
 def test_backfill_observation_returns_parser_supports_source_filter():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args(
@@ -374,7 +374,7 @@ def test_backfill_observation_returns_parser_supports_source_filter():
 
 
 def test_trade_runtime_lock_path():
-    from alpha_os.runtime_lock import runtime_lock_path
+    from alpha_os_recovery.runtime_lock import runtime_lock_path
 
     path = runtime_lock_path("trade", ["eth", "btc"])
 
@@ -383,7 +383,7 @@ def test_trade_runtime_lock_path():
 
 
 def test_build_signal_activity_getter_uses_positive_activity_for_long_only():
-    from alpha_os.cli import _build_signal_activity_getter
+    from alpha_os_recovery.cli import _build_signal_activity_getter
 
     class _Tracker:
         def get_hypothesis_signal_history(self, hypothesis_id, limit=20):
@@ -405,7 +405,7 @@ def test_build_signal_activity_getter_uses_positive_activity_for_long_only():
 
 
 def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
-    from alpha_os.cli import _build_signal_activity_getter
+    from alpha_os_recovery.cli import _build_signal_activity_getter
 
     class _Tracker:
         def get_hypothesis_signal_history(self, hypothesis_id, limit=20):
@@ -427,8 +427,8 @@ def test_build_signal_activity_getter_uses_abs_activity_for_shortable_runtime():
 
 
 def test_build_asset_sleeve_summary_tracks_serious_cohort():
-    from alpha_os.hypotheses.sleeve_status import build_asset_sleeve_summary
-    from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord
+    from alpha_os_recovery.hypotheses.sleeve_status import build_asset_sleeve_summary
+    from alpha_os_recovery.hypotheses.store import HypothesisKind, HypothesisRecord
 
     summary = build_asset_sleeve_summary([
         HypothesisRecord(
@@ -453,8 +453,8 @@ def test_build_asset_sleeve_summary_tracks_serious_cohort():
 
 
 def test_build_asset_sleeve_summary_counts_live_serious_source():
-    from alpha_os.hypotheses.sleeve_status import build_asset_sleeve_summary
-    from alpha_os.hypotheses.store import HypothesisKind, HypothesisRecord
+    from alpha_os_recovery.hypotheses.sleeve_status import build_asset_sleeve_summary
+    from alpha_os_recovery.hypotheses.store import HypothesisKind, HypothesisRecord
 
     summary = build_asset_sleeve_summary([
         HypothesisRecord(
@@ -487,7 +487,7 @@ def test_build_asset_sleeve_summary_counts_live_serious_source():
 
 
 def test_needs_trade_evolution_supports_hypothesis_registry():
-    from alpha_os.cli import _needs_trade_evolution
+    from alpha_os_recovery.cli import _needs_trade_evolution
 
     class _HypothesisRegistry:
         def __init__(self, active_count):
@@ -504,8 +504,8 @@ def test_needs_trade_evolution_supports_hypothesis_registry():
 
 
 def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
-    from alpha_os.cli import cmd_trade
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_trade
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     cfg = SimpleNamespace(
         forward=SimpleNamespace(check_interval=14400),
@@ -538,11 +538,11 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: cfg)
-    monkeypatch.setattr("alpha_os.cli._normalize_trade_config", lambda _cfg: [])
-    monkeypatch.setattr("alpha_os.cli._resolve_asset_list", lambda _args: ["BTC"])
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
-    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._load_config", lambda _path: cfg)
+    monkeypatch.setattr("alpha_os_recovery.cli._normalize_trade_config", lambda _cfg: [])
+    monkeypatch.setattr("alpha_os_recovery.cli._resolve_asset_list", lambda _args: ["BTC"])
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.logging.basicConfig", lambda **_kwargs: None)
 
     cmd_trade(args)
 
@@ -551,8 +551,8 @@ def test_trade_skips_overlapping_invocation(monkeypatch, capsys):
 
 
 def test_trade_strict_exits_on_overlapping_invocation(monkeypatch):
-    from alpha_os.cli import cmd_trade
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_trade
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     cfg = SimpleNamespace(
         forward=SimpleNamespace(check_interval=14400),
@@ -586,11 +586,11 @@ def test_trade_strict_exits_on_overlapping_invocation(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli._load_config", lambda _path: cfg)
-    monkeypatch.setattr("alpha_os.cli._normalize_trade_config", lambda _cfg: [])
-    monkeypatch.setattr("alpha_os.cli._resolve_asset_list", lambda _args: ["BTC"])
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
-    monkeypatch.setattr("alpha_os.cli.logging.basicConfig", lambda **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._load_config", lambda _path: cfg)
+    monkeypatch.setattr("alpha_os_recovery.cli._normalize_trade_config", lambda _cfg: [])
+    monkeypatch.setattr("alpha_os_recovery.cli._resolve_asset_list", lambda _args: ["BTC"])
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.logging.basicConfig", lambda **_kwargs: None)
 
     with pytest.raises(SystemExit):
         cmd_trade(args)
@@ -599,10 +599,10 @@ def test_trade_strict_exits_on_overlapping_invocation(monkeypatch):
 def test_run_hypothesis_lifecycle_update_updates_stakes(tmp_path):
     from types import SimpleNamespace
 
-    from alpha_os.cli import _run_hypothesis_lifecycle_update
-    from alpha_os.config import Config
-    from alpha_os.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker
+    from alpha_os_recovery.cli import _run_hypothesis_lifecycle_update
+    from alpha_os_recovery.config import Config
+    from alpha_os_recovery.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(
@@ -644,7 +644,7 @@ def test_run_hypothesis_lifecycle_update_updates_stakes(tmp_path):
 
 
 def test_trade_once_strict_failure_detects_empty_live_set():
-    from alpha_os.cli import _trade_once_strict_failure
+    from alpha_os_recovery.cli import _trade_once_strict_failure
 
     result = SimpleNamespace(
         n_live_hypotheses=0,
@@ -656,7 +656,7 @@ def test_trade_once_strict_failure_detects_empty_live_set():
 
 
 def test_trade_once_strict_failure_detects_order_failures():
-    from alpha_os.cli import _trade_once_strict_failure
+    from alpha_os_recovery.cli import _trade_once_strict_failure
 
     result = SimpleNamespace(
         n_live_hypotheses=5,
@@ -668,7 +668,7 @@ def test_trade_once_strict_failure_detects_order_failures():
 
 
 def test_trade_once_status_reports_traded():
-    from alpha_os.cli import _trade_once_status
+    from alpha_os_recovery.cli import _trade_once_status
 
     result = SimpleNamespace(
         n_live_hypotheses=5,
@@ -685,7 +685,7 @@ def test_trade_once_status_reports_traded():
 
 
 def test_compute_stake_weights_enforces_final_max_weight():
-    from alpha_os.hypotheses.combiner import compute_stake_weights
+    from alpha_os_recovery.hypotheses.combiner import compute_stake_weights
 
     weights = compute_stake_weights(
         {
@@ -718,7 +718,7 @@ def test_compute_stake_weights_enforces_final_max_weight():
 
 
 def test_trade_once_status_reports_no_delta():
-    from alpha_os.cli import _trade_once_status
+    from alpha_os_recovery.cli import _trade_once_status
 
     result = SimpleNamespace(
         n_live_hypotheses=5,
@@ -735,7 +735,7 @@ def test_trade_once_status_reports_no_delta():
 
 
 def test_research_paper_replay_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -748,7 +748,7 @@ def test_research_paper_replay_parser():
 
 
 def test_legacy_user_facing_commands_are_rejected():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
 
@@ -765,19 +765,19 @@ def test_legacy_user_facing_commands_are_rejected():
 
 
 def test_produce_predictions_prefers_hypotheses(monkeypatch, capsys):
-    from alpha_os.cli import cmd_produce_predictions
+    from alpha_os_recovery.cli import cmd_produce_predictions
 
     args = SimpleNamespace(config=None, asset="BTC", strict=False)
     calls = {}
 
-    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
+    monkeypatch.setattr("alpha_os_recovery.config.Config.load", lambda _path: object())
 
     def _produce(cfg, *, assets=None, **_kwargs):
         calls["assets"] = assets
         return 7
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        "alpha_os_recovery.hypotheses.producer.produce_active_hypothesis_predictions",
         _produce,
     )
 
@@ -790,19 +790,19 @@ def test_produce_predictions_prefers_hypotheses(monkeypatch, capsys):
 
 
 def test_produce_predictions_no_longer_uses_registry_fallback(monkeypatch, capsys):
-    from alpha_os.cli import cmd_produce_predictions
+    from alpha_os_recovery.cli import cmd_produce_predictions
 
     args = SimpleNamespace(config=None, asset="ETH", strict=False)
     calls = {}
 
-    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
+    monkeypatch.setattr("alpha_os_recovery.config.Config.load", lambda _path: object())
 
     def _produce(cfg, *, assets=None, **_kwargs):
         calls["assets"] = assets
         return 0
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        "alpha_os_recovery.hypotheses.producer.produce_active_hypothesis_predictions",
         _produce,
     )
 
@@ -813,13 +813,13 @@ def test_produce_predictions_no_longer_uses_registry_fallback(monkeypatch, capsy
 
 
 def test_produce_predictions_strict_exits_on_zero(monkeypatch):
-    from alpha_os.cli import cmd_produce_predictions
+    from alpha_os_recovery.cli import cmd_produce_predictions
 
     args = SimpleNamespace(config=None, asset="ETH", strict=True)
 
-    monkeypatch.setattr("alpha_os.config.Config.load", lambda _path: object())
+    monkeypatch.setattr("alpha_os_recovery.config.Config.load", lambda _path: object())
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer.produce_active_hypothesis_predictions",
+        "alpha_os_recovery.hypotheses.producer.produce_active_hypothesis_predictions",
         lambda _cfg, *, assets=None, **_kwargs: 0,
     )
 
@@ -828,8 +828,8 @@ def test_produce_predictions_strict_exits_on_zero(monkeypatch):
 
 
 def test_produce_predictions_skips_overlapping_invocation(monkeypatch, capsys):
-    from alpha_os.cli import cmd_produce_predictions
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_produce_predictions
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     args = SimpleNamespace(config=None, asset="BTC", strict=False)
 
@@ -840,7 +840,7 @@ def test_produce_predictions_skips_overlapping_invocation(monkeypatch, capsys):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
 
     cmd_produce_predictions(args)
 
@@ -848,8 +848,8 @@ def test_produce_predictions_skips_overlapping_invocation(monkeypatch, capsys):
 
 
 def test_produce_predictions_strict_exits_on_overlapping_invocation(monkeypatch):
-    from alpha_os.cli import cmd_produce_predictions
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_produce_predictions
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     args = SimpleNamespace(config=None, asset="BTC", strict=True)
 
@@ -860,14 +860,14 @@ def test_produce_predictions_strict_exits_on_overlapping_invocation(monkeypatch)
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
 
     with pytest.raises(SystemExit):
         cmd_produce_predictions(args)
 
 
 def test_runtime_status_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -880,7 +880,7 @@ def test_runtime_status_parser():
 
 
 def test_analyze_latest_combine_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -895,7 +895,7 @@ def test_analyze_latest_combine_parser():
 
 
 def test_sync_signal_cache_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -913,7 +913,7 @@ def test_sync_signal_cache_parser():
 
 
 def test_sync_signal_cache_strict_exits_when_healthcheck_fails(monkeypatch):
-    from alpha_os.cli import cmd_sync_signal_cache
+    from alpha_os_recovery.cli import cmd_sync_signal_cache
 
     args = SimpleNamespace(
         config=None,
@@ -927,19 +927,19 @@ def test_sync_signal_cache_strict_exits_when_healthcheck_fails(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "alpha_os.cli.Config.load",
+        "alpha_os_recovery.cli.Config.load",
         lambda _path: SimpleNamespace(api=SimpleNamespace(base_url="https://example.test")),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.build_signal_client_from_config",
+        "alpha_os_recovery.cli.build_signal_client_from_config",
         lambda _api: object(),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._resolve_signal_cache_targets",
+        "alpha_os_recovery.cli._resolve_signal_cache_targets",
         lambda _args: ["btc_ohlcv"],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.producer._quick_healthcheck",
+        "alpha_os_recovery.hypotheses.producer._quick_healthcheck",
         lambda _url: False,
     )
 
@@ -948,8 +948,8 @@ def test_sync_signal_cache_strict_exits_when_healthcheck_fails(monkeypatch):
 
 
 def test_sync_signal_cache_reports_summary_on_overlap(monkeypatch, capsys):
-    from alpha_os.cli import cmd_sync_signal_cache
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_sync_signal_cache
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     args = SimpleNamespace(
         config=None,
@@ -969,7 +969,7 @@ def test_sync_signal_cache_reports_summary_on_overlap(monkeypatch, capsys):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
 
     cmd_sync_signal_cache(args)
 
@@ -979,8 +979,8 @@ def test_sync_signal_cache_reports_summary_on_overlap(monkeypatch, capsys):
 
 
 def test_sync_signal_cache_skips_overlapping_invocation(monkeypatch, capsys):
-    from alpha_os.cli import cmd_sync_signal_cache
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_sync_signal_cache
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     args = SimpleNamespace(
         config=None,
@@ -1000,7 +1000,7 @@ def test_sync_signal_cache_skips_overlapping_invocation(monkeypatch, capsys):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
 
     cmd_sync_signal_cache(args)
 
@@ -1008,8 +1008,8 @@ def test_sync_signal_cache_skips_overlapping_invocation(monkeypatch, capsys):
 
 
 def test_sync_signal_cache_strict_exits_on_overlapping_invocation(monkeypatch):
-    from alpha_os.cli import cmd_sync_signal_cache
-    from alpha_os.runtime_lock import RuntimeLockBusy
+    from alpha_os_recovery.cli import cmd_sync_signal_cache
+    from alpha_os_recovery.runtime_lock import RuntimeLockBusy
 
     args = SimpleNamespace(
         config=None,
@@ -1029,14 +1029,14 @@ def test_sync_signal_cache_strict_exits_on_overlapping_invocation(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr("alpha_os.cli.hold_runtime_lock", lambda _path: BusyLock())
+    monkeypatch.setattr("alpha_os_recovery.cli.hold_runtime_lock", lambda _path: BusyLock())
 
     with pytest.raises(SystemExit):
         cmd_sync_signal_cache(args)
 
 
 def test_resolve_signal_cache_targets_defaults_to_price_signal():
-    from alpha_os.cli import _resolve_signal_cache_targets
+    from alpha_os_recovery.cli import _resolve_signal_cache_targets
 
     args = SimpleNamespace(asset="BTC", assets=None, signals=None, from_hypotheses=False)
 
@@ -1044,8 +1044,8 @@ def test_resolve_signal_cache_targets_defaults_to_price_signal():
 
 
 def test_resolve_signal_cache_targets_can_include_hypothesis_features(tmp_path, monkeypatch):
-    from alpha_os.cli import _resolve_signal_cache_targets
-    from alpha_os.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import _resolve_signal_cache_targets
+    from alpha_os_recovery.hypotheses import HypothesisKind, HypothesisRecord, HypothesisStore
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(
@@ -1058,7 +1058,7 @@ def test_resolve_signal_cache_targets_can_include_hypothesis_features(tmp_path, 
     )
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
     args = SimpleNamespace(asset="BTC", assets=None, signals=None, from_hypotheses=True)
 
     targets = _resolve_signal_cache_targets(args)
@@ -1069,7 +1069,7 @@ def test_resolve_signal_cache_targets_can_include_hypothesis_features(tmp_path, 
 
 
 def test_legacy_alpha_funnel_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1084,7 +1084,7 @@ def test_legacy_alpha_funnel_parser():
 
 
 def test_legacy_enqueue_discovery_pool_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1103,7 +1103,7 @@ def test_legacy_enqueue_discovery_pool_parser():
 
 
 def test_legacy_prune_stale_candidates_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1122,7 +1122,7 @@ def test_legacy_prune_stale_candidates_parser():
 
 
 def test_legacy_lifecycle_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1161,7 +1161,7 @@ def test_legacy_lifecycle_parser():
     ],
 )
 def test_legacy_registry_commands_are_not_parsed(command):
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
 
@@ -1174,7 +1174,7 @@ def test_legacy_registry_commands_are_not_parsed(command):
 
 
 def test_research_replay_experiment_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1203,7 +1203,7 @@ def test_research_replay_experiment_parser():
 
 
 def test_research_replay_matrix_parser():
-    from alpha_os.cli import _build_parser
+    from alpha_os_recovery.cli import _build_parser
 
     parser = _build_parser()
     args = parser.parse_args([
@@ -1222,11 +1222,11 @@ def test_research_replay_matrix_parser():
 def test_cmd_replay_experiment_prints_profile(capsys, monkeypatch):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_replay_experiment
-    from alpha_os.legacy.replay_experiment import ReplayExperimentRun
+    from alpha_os_recovery.cli import cmd_replay_experiment
+    from alpha_os_recovery.legacy.replay_experiment import ReplayExperimentRun
 
     monkeypatch.setattr(
-        "alpha_os.legacy.replay_experiment.run_replay_experiment",
+        "alpha_os_recovery.legacy.replay_experiment.run_replay_experiment",
         lambda spec: ReplayExperimentRun(
             experiment_id="exp-1",
             detail_path=Path("/tmp/detail.json"),
@@ -1271,12 +1271,12 @@ def test_cmd_replay_experiment_prints_profile(capsys, monkeypatch):
 def test_cmd_replay_matrix_prints_profiles(capsys, monkeypatch):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_replay_matrix
-    from alpha_os.experiments.matrix import ReplayMatrixSpec
-    from alpha_os.legacy.replay_experiment import ReplayExperimentRun, ReplayExperimentSpec
+    from alpha_os_recovery.cli import cmd_replay_matrix
+    from alpha_os_recovery.experiments.matrix import ReplayMatrixSpec
+    from alpha_os_recovery.legacy.replay_experiment import ReplayExperimentRun, ReplayExperimentSpec
 
     monkeypatch.setattr(
-        "alpha_os.experiments.matrix.load_replay_matrix",
+        "alpha_os_recovery.experiments.matrix.load_replay_matrix",
         lambda path: ReplayMatrixSpec(
             defaults={},
             experiments=[
@@ -1296,7 +1296,7 @@ def test_cmd_replay_matrix_prints_profiles(capsys, monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.experiments.matrix.run_replay_matrix",
+        "alpha_os_recovery.experiments.matrix.run_replay_matrix",
         lambda matrix, max_workers: [
             ReplayExperimentRun(
                 experiment_id="exp-a",
@@ -1339,8 +1339,8 @@ def test_cmd_replay_matrix_prints_profiles(capsys, monkeypatch):
 
 
 def test_normalize_trade_config_preserves_requested_profile():
-    from alpha_os.cli import _normalize_trade_config
-    from alpha_os.config import Config
+    from alpha_os_recovery.cli import _normalize_trade_config
+    from alpha_os_recovery.config import Config
 
     cfg = Config.load()
     cfg.regime.enabled = True
@@ -1352,7 +1352,7 @@ def test_normalize_trade_config_preserves_requested_profile():
 
 
 def test_load_runtime_observation_config_prefers_user_prod(tmp_path, monkeypatch):
-    from alpha_os.cli import _load_runtime_observation_config
+    from alpha_os_recovery.cli import _load_runtime_observation_config
 
     home = tmp_path / "home"
     prod = home / ".config" / "alpha-os" / "prod.toml"
@@ -1367,8 +1367,8 @@ def test_load_runtime_observation_config_prefers_user_prod(tmp_path, monkeypatch
 
 def test_print_paper_result_shows_signal_stages(capsys):
     """CLI output should show raw and stage-adjusted signals."""
-    from alpha_os.cli import _print_paper_result
-    from alpha_os.paper.trader import PaperCycleResult
+    from alpha_os_recovery.cli import _print_paper_result
+    from alpha_os_recovery.paper.trader import PaperCycleResult
 
     result = PaperCycleResult(
         date="2026-03-05T21:52:58",
@@ -1406,8 +1406,8 @@ def test_print_paper_result_shows_signal_stages(capsys):
 
 
 def test_print_paper_result_shows_skip_metrics(capsys):
-    from alpha_os.cli import _print_paper_result
-    from alpha_os.paper.trader import PaperCycleResult
+    from alpha_os_recovery.cli import _print_paper_result
+    from alpha_os_recovery.paper.trader import PaperCycleResult
 
     result = PaperCycleResult(
         date="2026-03-05T21:52:58",
@@ -1444,8 +1444,8 @@ def test_print_paper_result_shows_skip_metrics(capsys):
 
 def test_print_status_filters_positions(capsys):
     """print_status shows only the traded asset, hides others."""
-    from alpha_os.paper.trader import Trader
-    from alpha_os.paper.tracker import PaperTradingSummary
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.paper.tracker import PaperTradingSummary
 
     trader = object.__new__(Trader)
     trader.price_signal = "btc_ohlcv"
@@ -1483,8 +1483,8 @@ def test_print_status_filters_positions(capsys):
 
 def test_print_status_no_positions(capsys):
     """print_status handles empty positions."""
-    from alpha_os.paper.trader import Trader
-    from alpha_os.paper.tracker import PaperTradingSummary
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.paper.tracker import PaperTradingSummary
 
     trader = object.__new__(Trader)
     trader.price_signal = "btc_ohlcv"
@@ -1517,8 +1517,8 @@ def test_print_status_no_positions(capsys):
 
 def test_reconcile_match():
     """reconcile() reports match when internal == exchange."""
-    from alpha_os.paper.trader import Trader
-    from alpha_os.paper.tracker import PortfolioSnapshot
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.paper.tracker import PortfolioSnapshot
 
     trader = object.__new__(Trader)
     trader.price_signal = "btc_ohlcv"
@@ -1550,8 +1550,8 @@ def test_reconcile_match():
 
 def test_reconcile_mismatch():
     """reconcile() detects position mismatch."""
-    from alpha_os.paper.trader import Trader
-    from alpha_os.paper.tracker import PortfolioSnapshot
+    from alpha_os_recovery.paper.trader import Trader
+    from alpha_os_recovery.paper.tracker import PortfolioSnapshot
 
     trader = object.__new__(Trader)
     trader.price_signal = "btc_ohlcv"
@@ -1583,7 +1583,7 @@ def test_reconcile_mismatch():
 
 def test_reconcile_no_data():
     """reconcile() returns no_data when no snapshots exist."""
-    from alpha_os.paper.trader import Trader
+    from alpha_os_recovery.paper.trader import Trader
 
     trader = object.__new__(Trader)
     trader.price_signal = "btc_ohlcv"
@@ -1599,9 +1599,9 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStatus, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStatus, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1679,8 +1679,8 @@ def test_cmd_runtime_status_shows_hypotheses_and_report(monkeypatch, tmp_path, c
         "has_errors": False,
     }) + "\n")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -1719,9 +1719,9 @@ def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, t
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1765,8 +1765,8 @@ def test_cmd_runtime_status_shows_ok_observation_when_no_findings(monkeypatch, t
         "has_errors": False,
     }) + "\n")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -1778,9 +1778,9 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1818,8 +1818,8 @@ def test_cmd_runtime_status_surfaces_live_promotion_blockers(monkeypatch, tmp_pa
     }))
     report_path.write_text("")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -1832,9 +1832,9 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1879,8 +1879,8 @@ def test_cmd_runtime_status_shows_actionable_drop_breakdown(monkeypatch, tmp_pat
     }))
     report_path.write_text("")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -1893,9 +1893,9 @@ def test_cmd_runtime_status_shows_batch_family_summary(monkeypatch, tmp_path, ca
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1935,8 +1935,8 @@ def test_cmd_runtime_status_shows_batch_family_summary(monkeypatch, tmp_path, ca
     }))
     report_path.write_text("")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -1950,10 +1950,10 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     import json
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_runtime_status
-    from alpha_os.forward.tracker import HypothesisObservationTracker
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.validation.testnet import readiness_paths
+    from alpha_os_recovery.cli import cmd_runtime_status
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.validation.testnet import readiness_paths
 
     store = HypothesisStore(tmp_path / "hypotheses.db")
     store.register(HypothesisRecord(
@@ -1990,8 +1990,8 @@ def test_cmd_runtime_status_shows_actionable_window_summary(monkeypatch, tmp_pat
     }))
     report_path.write_text("")
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", tmp_path / "hypotheses.db")
 
     cmd_runtime_status(Namespace(asset="BTC", config=None))
     output = capsys.readouterr().out
@@ -2003,32 +2003,32 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
     from argparse import Namespace
     from types import SimpleNamespace
 
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
 
     calls: list[tuple[str, str, object]] = []
 
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_hypothesis_seeder",
+        "alpha_os_recovery.cli.cmd_hypothesis_seeder",
         lambda args: calls.append(("seed", args.asset, args.skip_bootstrap)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.store.HypothesisStore",
+        "alpha_os_recovery.hypotheses.store.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.data.store.DataStore",
+        "alpha_os_recovery.data.store.DataStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        "alpha_os_recovery.forward.tracker.HypothesisObservationTracker",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        "alpha_os_recovery.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: calls.append(("serious", kwargs["asset"], kwargs["lookback_days"]))
         or SimpleNamespace(
             asset=kwargs["asset"],
@@ -2039,15 +2039,15 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [object()] if asset == "ETH" else [],
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        "alpha_os_recovery.cli.cmd_score_exploratory_hypotheses",
         lambda args: calls.append(("score", args.asset, args.limit)),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -2058,7 +2058,7 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -2067,19 +2067,19 @@ def test_cmd_run_sleeves_once_orchestrates_stages(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_trade",
+        "alpha_os_recovery.cli.cmd_trade",
         lambda args: calls.append(("trade", args.assets, args.venue)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_runtime_status",
+        "alpha_os_recovery.cli.cmd_runtime_status",
         lambda args: calls.append(("status", args.asset, None)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._write_sleeve_compare_snapshot",
+        "alpha_os_recovery.cli._write_sleeve_compare_snapshot",
         lambda asset_list, config_path, budget_by_asset=None: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
     )
 
@@ -2124,28 +2124,28 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
     from argparse import Namespace
     from types import SimpleNamespace
 
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
 
     calls: list[tuple[str, str, object]] = []
 
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.store.HypothesisStore",
+        "alpha_os_recovery.hypotheses.store.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.data.store.DataStore",
+        "alpha_os_recovery.data.store.DataStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        "alpha_os_recovery.forward.tracker.HypothesisObservationTracker",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        "alpha_os_recovery.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: calls.append(("serious", kwargs["asset"], kwargs["lookback_days"]))
         or SimpleNamespace(
             asset=kwargs["asset"],
@@ -2156,11 +2156,11 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [object()] if asset == "BTC" else [],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -2171,7 +2171,7 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -2180,11 +2180,11 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset, args.dry_run)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._write_sleeve_compare_snapshot",
+        "alpha_os_recovery.cli._write_sleeve_compare_snapshot",
         lambda asset_list, config_path, budget_by_asset=None: __import__("pathlib").Path("/tmp/sleeves.jsonl"),
     )
 
@@ -2213,13 +2213,13 @@ def test_cmd_run_sleeves_once_runs_serious_even_when_seed_is_skipped(monkeypatch
 
 
 def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(monkeypatch):
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
     from types import SimpleNamespace
 
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -2230,31 +2230,31 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_hypothesis_seeder",
+        "alpha_os_recovery.cli.cmd_hypothesis_seeder",
         lambda args: calls.append(("seed", args.asset)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        "alpha_os_recovery.cli.cmd_score_exploratory_hypotheses",
         lambda args: calls.append(("score", args.asset, args.limit)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.store.HypothesisStore",
+        "alpha_os_recovery.hypotheses.store.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.data.store.DataStore",
+        "alpha_os_recovery.data.store.DataStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        "alpha_os_recovery.forward.tracker.HypothesisObservationTracker",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        "alpha_os_recovery.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: SimpleNamespace(
             asset=kwargs["asset"],
             template_total=6,
@@ -2264,11 +2264,11 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -2277,12 +2277,12 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda *_args, **_kwargs: None,
     )
-    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
 
     cmd_run_sleeves_once(
         SimpleNamespace(
@@ -2305,13 +2305,13 @@ def test_run_sleeves_once_skips_seed_and_score_when_template_gaps_are_closed(mon
 
 
 def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
     from types import SimpleNamespace
 
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -2322,31 +2322,31 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_hypothesis_seeder",
+        "alpha_os_recovery.cli.cmd_hypothesis_seeder",
         lambda *_args, **_kwargs: None,
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_score_exploratory_hypotheses",
+        "alpha_os_recovery.cli.cmd_score_exploratory_hypotheses",
         lambda args: calls.append((args.asset, args.limit)),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path("/tmp") / asset.lower(),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.store.HypothesisStore",
+        "alpha_os_recovery.hypotheses.store.HypothesisStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.data.store.DataStore",
+        "alpha_os_recovery.data.store.DataStore",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.forward.tracker.HypothesisObservationTracker",
+        "alpha_os_recovery.forward.tracker.HypothesisObservationTracker",
         lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_template_service.run_serious_template_maintenance",
+        "alpha_os_recovery.hypotheses.serious_template_service.run_serious_template_maintenance",
         lambda **kwargs: SimpleNamespace(
             asset=kwargs["asset"],
             template_total=6,
@@ -2356,11 +2356,11 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [object()],
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="high",
@@ -2369,14 +2369,14 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda *_args, **_kwargs: None,
     )
-    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
+        "alpha_os_recovery.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
         lambda *_args, **_kwargs: {},
     )
 
@@ -2401,13 +2401,13 @@ def test_run_sleeves_once_uses_gap_driven_score_limit(monkeypatch):
 
 
 def test_run_sleeves_once_skips_light_attention_rebalance_without_upstream_work(monkeypatch, capsys):
-    from alpha_os.cli import cmd_run_sleeves_once
+    from alpha_os_recovery.cli import cmd_run_sleeves_once
     from types import SimpleNamespace
 
     calls = []
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.search_budget_service.build_template_gap_search_budget",
+        "alpha_os_recovery.hypotheses.search_budget_service.build_template_gap_search_budget",
         lambda *, asset, base_limit, previous_template_gaps=None: SimpleNamespace(
             asset=asset,
             requested_limit=base_limit,
@@ -2418,7 +2418,7 @@ def test_run_sleeves_once_skips_light_attention_rebalance_without_upstream_work(
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.build_sleeve_attention_plan",
         lambda *, asset, config: SimpleNamespace(
             asset=asset,
             level="light",
@@ -2427,18 +2427,18 @@ def test_run_sleeves_once_skips_light_attention_rebalance_without_upstream_work(
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.hypotheses.serious_templates.serious_seed_specs",
+        "alpha_os_recovery.hypotheses.serious_templates.serious_seed_specs",
         lambda asset: [],
     )
     monkeypatch.setattr(
-        "alpha_os.cli.cmd_rebalance_allocation_trust",
+        "alpha_os_recovery.cli.cmd_rebalance_allocation_trust",
         lambda args: calls.append(("rebalance", args.asset)),
     )
-    monkeypatch.setattr("alpha_os.cli.cmd_trade", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("alpha_os.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_trade", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli.cmd_runtime_status", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("alpha_os_recovery.cli._write_sleeve_compare_snapshot", lambda *_args, **_kwargs: "ignored")
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
+        "alpha_os_recovery.hypotheses.sleeve_compare_service.load_latest_sleeve_compare_rows",
         lambda *_args, **_kwargs: {},
     )
 
@@ -2467,10 +2467,10 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
     from argparse import Namespace
     from types import SimpleNamespace
 
-    from alpha_os.cli import cmd_compare_sleeves
+    from alpha_os_recovery.cli import cmd_compare_sleeves
 
     monkeypatch.setattr(
-        "alpha_os.cli._load_runtime_observation_config",
+        "alpha_os_recovery.cli._load_runtime_observation_config",
         lambda _config: SimpleNamespace(
             testnet=SimpleNamespace(target_success_days=10, max_acceptable_slippage_bps=10.0),
             forward=SimpleNamespace(degradation_window=63),
@@ -2478,11 +2478,11 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         ),
     )
     monkeypatch.setattr(
-        "alpha_os.cli.asset_data_dir",
+        "alpha_os_recovery.cli.asset_data_dir",
         lambda asset: __import__("pathlib").Path(f"/tmp/{asset.lower()}"),
     )
     monkeypatch.setattr(
-        "alpha_os.validation.testnet.readiness_paths",
+        "alpha_os_recovery.validation.testnet.readiness_paths",
         lambda adir: (adir / "state.json", adir / "report.json"),
     )
 
@@ -2491,15 +2491,15 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         "ETH": {"has_errors": False, "n_fills": 0},
     }
     monkeypatch.setattr(
-        "alpha_os.cli._load_latest_report",
+        "alpha_os_recovery.cli._load_latest_report",
         lambda report_path: latest_by_asset[report_path.parent.name.upper()],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._live_hypothesis_ids",
+        "alpha_os_recovery.cli._live_hypothesis_ids",
         lambda asset=None: ["a"] * {"BTC": 20, "ETH": 16}[asset],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._runtime_hypothesis_summary",
+        "alpha_os_recovery.cli._runtime_hypothesis_summary",
         lambda asset=None: {
             "BTC": {
                 "live_proven": 12,
@@ -2524,14 +2524,14 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         }[asset],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._runtime_actionable_window_summary",
+        "alpha_os_recovery.cli._runtime_actionable_window_summary",
         lambda asset=None, lookback=None, supports_short=None: {
             "BTC": {"breadth": 1.00},
             "ETH": {"breadth": 7.46},
         }[asset],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._runtime_control_metrics_summary",
+        "alpha_os_recovery.cli._runtime_control_metrics_summary",
         lambda asset=None: {
             "BTC": {
                 "template_gap_count": 1,
@@ -2550,11 +2550,11 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         }[asset],
     )
     monkeypatch.setattr(
-        "alpha_os.cli._runtime_observation_findings",
+        "alpha_os_recovery.cli._runtime_observation_findings",
         lambda latest, current_live_count: ([] if latest.get("n_fills", 0) > 0 else ["zero_fills"]),
     )
     monkeypatch.setattr(
-        "alpha_os.cli._runtime_observation_verdict",
+        "alpha_os_recovery.cli._runtime_observation_verdict",
         lambda latest, findings: ("ok" if not findings else "watch"),
     )
 
@@ -2566,7 +2566,7 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
                 "ETH": SimpleNamespace(consecutive_success_days=1, target_days=10),
             }[asset]
 
-    monkeypatch.setattr("alpha_os.validation.testnet.ReadinessChecker", _FakeReadinessChecker)
+    monkeypatch.setattr("alpha_os_recovery.validation.testnet.ReadinessChecker", _FakeReadinessChecker)
     snapshot_path = Path("/tmp/test-sleeve-compare.jsonl")
     snapshot_path.write_text(
         json.dumps(
@@ -2602,7 +2602,7 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
         ) + "\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr("alpha_os.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
+    monkeypatch.setattr("alpha_os_recovery.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
 
     cmd_compare_sleeves(Namespace(asset="BTC", assets="BTC,ETH", config=None))
     output = capsys.readouterr().out
@@ -2615,7 +2615,7 @@ def test_cmd_compare_sleeves_reports_key_metrics(monkeypatch, capsys):
 def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys, tmp_path):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_compare_sleeve_history
+    from alpha_os_recovery.cli import cmd_compare_sleeve_history
 
     snapshot_path = tmp_path / "sleeve_compare_reports.jsonl"
     snapshot_path.write_text(
@@ -2683,7 +2683,7 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr("alpha_os.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
+    monkeypatch.setattr("alpha_os_recovery.cli._sleeve_compare_snapshot_path", lambda: snapshot_path)
 
     cmd_compare_sleeve_history(Namespace(asset="BTC", assets="BTC,ETH", limit=2))
     output = capsys.readouterr().out
@@ -2698,8 +2698,8 @@ def test_cmd_compare_sleeve_history_reports_recent_snapshots(monkeypatch, capsys
 def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_batch_research
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_batch_research
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -2775,7 +2775,7 @@ def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, ca
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_batch_research(Namespace(asset="BTC", config=None, top=3))
     output = capsys.readouterr().out
@@ -2795,8 +2795,8 @@ def test_cmd_analyze_batch_research_shows_drop_reasons(monkeypatch, tmp_path, ca
 def test_cmd_analyze_batch_research_filters_families(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_batch_research
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_batch_research
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -2826,7 +2826,7 @@ def test_cmd_analyze_batch_research_filters_families(monkeypatch, tmp_path, caps
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_batch_research(
         Namespace(asset="BTC", config=None, top=3, families="onchain,derivatives")
@@ -2842,8 +2842,8 @@ def test_cmd_analyze_batch_research_filters_families(monkeypatch, tmp_path, caps
 def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_actionable_live
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_actionable_live
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -2876,7 +2876,7 @@ def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, 
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_actionable_live(Namespace(asset="BTC", config=None, top=3, families=None))
     output = capsys.readouterr().out
@@ -2893,8 +2893,8 @@ def test_cmd_analyze_actionable_live_reports_signal_drop(monkeypatch, tmp_path, 
 def test_cmd_analyze_actionable_live_reports_redundancy_families(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_actionable_live
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_actionable_live
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -2931,7 +2931,7 @@ def test_cmd_analyze_actionable_live_reports_redundancy_families(monkeypatch, tm
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_actionable_live(Namespace(asset="BTC", config=None, top=3, families=None))
     output = capsys.readouterr().out
@@ -2942,8 +2942,8 @@ def test_cmd_analyze_actionable_live_reports_redundancy_families(monkeypatch, tm
 def test_cmd_analyze_actionable_live_filters_families(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_actionable_live
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_actionable_live
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -2975,7 +2975,7 @@ def test_cmd_analyze_actionable_live_filters_families(monkeypatch, tmp_path, cap
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_actionable_live(
         Namespace(asset="BTC", config=None, top=3, families="onchain,derivatives")
@@ -2991,9 +2991,9 @@ def test_cmd_analyze_actionable_live_filters_families(monkeypatch, tmp_path, cap
 def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_latest_combine
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+    from alpha_os_recovery.cli import cmd_analyze_latest_combine
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -3061,8 +3061,8 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
     )
     tracker.close()
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=4))
     output = capsys.readouterr().out
@@ -3084,9 +3084,9 @@ def test_cmd_analyze_latest_combine_shows_cohort_breakdown(monkeypatch, tmp_path
 def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_latest_combine
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+    from alpha_os_recovery.cli import cmd_analyze_latest_combine
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -3128,8 +3128,8 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
     )
     tracker.close()
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
     output = capsys.readouterr().out
@@ -3144,9 +3144,9 @@ def test_cmd_analyze_latest_combine_counts_dropped_current_weights(monkeypatch, 
 def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_latest_combine
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
-    from alpha_os.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
+    from alpha_os_recovery.cli import cmd_analyze_latest_combine
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.paper.tracker import PaperPortfolioTracker, PortfolioSnapshot
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -3189,8 +3189,8 @@ def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, 
     )
     tracker.close()
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_latest_combine(Namespace(asset="BTC", config=None, top=3))
     output = capsys.readouterr().out
@@ -3203,8 +3203,8 @@ def test_cmd_analyze_latest_combine_reports_redundancy_capped_drop(monkeypatch, 
 def test_cmd_analyze_actionable_live_can_filter_by_source(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_actionable_live
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_actionable_live
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -3236,7 +3236,7 @@ def test_cmd_analyze_actionable_live_can_filter_by_source(monkeypatch, tmp_path,
     ))
     store.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
 
     cmd_analyze_actionable_live(
         Namespace(
@@ -3257,9 +3257,9 @@ def test_cmd_analyze_actionable_live_can_filter_by_source(monkeypatch, tmp_path,
 def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_rebalance_allocation_trust
-    from alpha_os.forward.tracker import HypothesisObservationTracker
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_rebalance_allocation_trust
+    from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     store = HypothesisStore(hdb)
@@ -3283,9 +3283,9 @@ def test_cmd_rebalance_allocation_trust_dry_run_and_apply(monkeypatch, tmp_path,
     fwd.record("unscored", "2026-03-23", 1.0, 0.0012)
     fwd.close()
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
-    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", tmp_path / "signal_cache.db")
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.SIGNAL_CACHE_DB", tmp_path / "signal_cache.db")
 
     conn = sqlite3.connect(tmp_path / "signal_cache.db")
     conn.execute(
@@ -3332,8 +3332,8 @@ def test_cmd_rebalance_allocation_trust_caps_positive_correlation_bootstrap_pair
 ):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_rebalance_allocation_trust
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_rebalance_allocation_trust
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     sdb = tmp_path / "signal_cache.db"
@@ -3363,9 +3363,9 @@ def test_cmd_rebalance_allocation_trust_caps_positive_correlation_bootstrap_pair
     conn.commit()
     conn.close()
 
-    monkeypatch.setattr("alpha_os.cli.asset_data_dir", lambda asset: tmp_path)
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
-    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", sdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.SIGNAL_CACHE_DB", sdb)
 
     cmd_rebalance_allocation_trust(Namespace(asset="BTC", config=None, dry_run=True))
     output = capsys.readouterr().out
@@ -3380,8 +3380,8 @@ def test_cmd_analyze_live_breadth_surfaces_redundant_bootstrap_pair(
 ):
     from argparse import Namespace
 
-    from alpha_os.cli import cmd_analyze_live_breadth
-    from alpha_os.hypotheses.store import HypothesisRecord, HypothesisStore
+    from alpha_os_recovery.cli import cmd_analyze_live_breadth
+    from alpha_os_recovery.hypotheses.store import HypothesisRecord, HypothesisStore
 
     hdb = tmp_path / "hypotheses.db"
     sdb = tmp_path / "signal_cache.db"
@@ -3422,8 +3422,8 @@ def test_cmd_analyze_live_breadth_surfaces_redundant_bootstrap_pair(
     conn.commit()
     conn.close()
 
-    monkeypatch.setattr("alpha_os.cli.HYPOTHESES_DB", hdb)
-    monkeypatch.setattr("alpha_os.cli.SIGNAL_CACHE_DB", sdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.HYPOTHESES_DB", hdb)
+    monkeypatch.setattr("alpha_os_recovery.cli.SIGNAL_CACHE_DB", sdb)
 
     cmd_analyze_live_breadth(
         Namespace(asset="BTC", config=None, lookback=30, top_pairs=3)

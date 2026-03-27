@@ -15,13 +15,16 @@ Current trusted runtime:
 - `trade --once --venue paper`
 - `runtime-status`
 
+For the next greenfield-style v1 build, treat `plan.md` as the source of truth
+for the completion contract and keep work inside that scope.
+
 Legacy tactical, replay, and registry-era paths still exist in places, but are
 not the current mainline.
 
 ## Structure
 
 ```
-src/alpha_os/       Main package
+src/alpha_os_recovery/       Main package
   data/             DataStore, universe (daily + hourly + microstructure features)
   dsl/              S-expression DSL parser, evaluator, GP generator
   evolution/        Pure MAP-Elites discovery pool (4D behavioral grid)
@@ -48,7 +51,7 @@ pytest tests/
 ruff check src/
 
 # CLI
-python -m alpha_os --help
+python -m alpha_os_recovery --help
 ```
 
 ## Conventions

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from alpha_os.data.polymarket_client import (
+from alpha_os_recovery.data.polymarket_client import (
     PolymarketClient,
     PolymarketMarket,
     PolymarketOrderbook,

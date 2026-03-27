@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from alpha_os.data import signal_client
+from alpha_os_recovery.data import signal_client
 
 
 class _FakeClient:

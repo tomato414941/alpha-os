@@ -5,7 +5,7 @@ import sqlite3
 import numpy as np
 import pytest
 
-from alpha_os.forward.tracker import HypothesisObservationTracker
+from alpha_os_recovery.forward.tracker import HypothesisObservationTracker
 
 
 # ---------------------------------------------------------------------------

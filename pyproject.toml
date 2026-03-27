@@ -1,7 +1,7 @@
 [project]
-name = "alpha-os"
+name = "alpha-os-recovery"
 version = "0.1.0"
-description = "Agentic Alpha OS — autonomous alpha generation, selection, and trading"
+description = "Recovery runtime for alpha-os — autonomous alpha generation, selection, and trading"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.26",

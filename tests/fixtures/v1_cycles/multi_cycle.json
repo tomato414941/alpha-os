@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-03-27",
+    "hypothesis_id": "hyp_fixture",
+    "prediction": 0.4,
+    "observation": 0.15
+  },
+  {
+    "date": "2026-03-28",
+    "hypothesis_id": "hyp_fixture",
+    "prediction": 0.5,
+    "observation": 0.2
+  },
+  {
+    "date": "2026-03-29",
+    "hypothesis_id": "hyp_fixture",
+    "prediction": 0.35,
+    "observation": -0.1
+  }
+]

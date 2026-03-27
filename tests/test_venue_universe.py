@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from alpha_os.data.universe import (
+from alpha_os_recovery.data.universe import (
     ETFS,
     STOCKS,
     asset_for_price_signal,
@@ -18,8 +18,8 @@ from alpha_os.data.universe import (
     register_polymarket_market,
     POLYMARKET,
 )
-from alpha_os.hypotheses.combiner import cross_asset_neutralize
-from alpha_os.risk.manager import (
+from alpha_os_recovery.hypotheses.combiner import cross_asset_neutralize
+from alpha_os_recovery.risk.manager import (
     BinaryOutcomeRiskConfig,
     BinaryOutcomeRiskManager,
 )

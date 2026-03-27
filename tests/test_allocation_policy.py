@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from alpha_os.hypotheses.allocation_policy import (
+from alpha_os_recovery.hypotheses.allocation_policy import (
     abs_signal_correlation,
     apply_ranked_feature_usage_cap,
     apply_ranked_replacement_policy,

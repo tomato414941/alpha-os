@@ -4,6 +4,152 @@ This file is a short working plan for the current mainline.
 It is not the source of truth for runtime operations. For that, prefer
 `README.md`, `OPERATING_BOUNDARIES.md`, and `docs/README.md`.
 
+## V1 Completion Contract
+
+This section is the source of truth for the next greenfield-style build.
+
+- Scope: `1 asset`, `paper-only`, `1 target`, `1 end-to-end cycle`
+- Required path: `prediction -> observation -> quality update -> allocation_trust update -> snapshot`
+- Execution can stop at virtual portfolio weights; real order routing is not required for v1
+- Runtime state must have a single source of truth; do not split the canonical cycle state
+- Every artifact in one cycle must share the same `cycle_id`
+- Multi-asset, global allocator, live trading, and legacy compatibility are out of scope for v1
+- New tables or runtime states require proof that the current model cannot express them
+- New improvement ideas go to a `post-v1 backlog`; do not merge them into the v1 path mid-build
+- Weekly review question: "did v1 get closer to end-to-end completion?"
+- Until end-to-end completion exists, prefer duplication over premature abstraction
+
+### V1 Done When
+
+V1 is complete when all of the following are true:
+
+- `build-cycle-inputs -> run-backfill -> status -> show-cycles` works as one bounded end-to-end path
+- the v1 smoke test fixes that path as the completion gate
+- `cycle_snapshots` preserve enough provenance to audit input source and date range
+- v1 remains within the contract scope: `1 asset`, `paper-only`, `1 target`, `1 cycle model`
+- new ideas that do not strengthen that bounded path are kept out of the v1 runtime
+
+### Post-V1 Backlog Boundary
+
+The following belong to `post-v1 backlog`, not the v1 runtime:
+
+- multi-asset support
+- global or cross-sleeve allocation
+- live trading
+- legacy compatibility layers
+- broader research abstractions that do not improve the bounded v1 cycle
+
+## V2 Rules
+
+This section defines the next step after v1 freeze.
+
+- Scope stays small: `BTC-only`, `paper-only`, `1 target`
+- V2 focus: make the runtime explicitly `hypothesis-first`
+- Add explicit stages for:
+  - `register-hypothesis`
+  - `record-prediction`
+  - `finalize-observation`
+  - `update-state`
+- Keep the v1 bounded cycle intact; v2 may refactor the path, but must not remove auditability
+- `cycle_id` remains mandatory across all cycle artifacts
+- Do not add multi-asset, global allocation, or live routing in v2
+- Do not redesign the scoring model and lifecycle model in the same step
+- V2 is done when hypothesis registration is explicit and the same end-to-end audit path still works
+
+### V2 Done When
+
+V2 is complete when all of the following are true:
+
+- `register-hypothesis -> record-prediction -> finalize-observation -> update-state` works as the primary bounded path
+- the v2 smoke test fixes that primary path as the completion gate
+- `run-cycle` and `run-backfill` remain available as convenience wrappers over that same path
+- `cycle_id` and per-cycle provenance remain auditable through `show-cycles`
+- missing or conflicting prediction / observation records fail explicitly
+- v2 stays within scope: `BTC-only`, `paper-only`, `1 target`
+
+### Still Not V2
+
+The following are still out of scope after v2:
+
+- multi-asset runtime
+- global allocation
+- live execution
+- richer hypothesis lifecycle states beyond `registered` and `live`
+- scoring-model redesign beyond the current bounded update rules
+
+## V3 Rules
+
+This section defines the next step after v2 completion.
+
+- Scope still stays small: `BTC-only`, `paper-only`, `1 target`
+- V3 focus: make the hypothesis lifecycle an explicit state machine
+- Keep the primary bounded path:
+  - `register-hypothesis`
+  - `record-prediction`
+  - `finalize-observation`
+  - `update-state`
+- Add explicit hypothesis states:
+  - `registered`
+  - `active`
+  - `live`
+  - `paused`
+  - `retired`
+- Distinguish `live hypothesis` from `live trading`
+  - `live hypothesis` means allocation-eligible inside the runtime
+  - `live trading` remains out of scope
+- Reject invalid transitions explicitly rather than silently repairing them
+- Keep `run-cycle` and `run-backfill` as convenience wrappers over the same bounded path
+- Do not add multi-asset, global allocation, or live execution in v3
+- Do not redesign the scoring model and the lifecycle state machine in the same step
+
+### V3 State Machine
+
+The intended state flow is:
+
+- `register-hypothesis` creates `registered`
+- `update-state` may move `registered -> active`
+- allocation eligibility may move `active -> live`
+- operator action may move `live -> paused`
+- operator action may move `paused -> active`
+- operator action may move `active -> retired`
+- operator action may move `paused -> retired`
+
+### V3 Done When
+
+V3 is complete when all of the following are true:
+
+- lifecycle states are explicit in the runtime model
+- valid transitions are enforced and invalid transitions fail explicitly
+- the primary bounded path still works and remains auditable
+- `live hypothesis` semantics are explicit without introducing live trading
+- v3 stays within scope: `BTC-only`, `paper-only`, `1 target`
+
+## V4 Rules
+
+This section defines the next step after v3 completion.
+
+- Scope still stays small: `BTC-only`, `paper-only`, `1 target`
+- V4 focus: separate transition policy from scoring and state storage
+- Keep the existing bounded path and lifecycle state machine intact
+- Make transition decisions explicit policy outputs rather than implicit side effects
+- The policy layer may decide:
+  - when `active -> live`
+  - when `live -> paused`
+  - when `active -> retired`
+  - when `paused -> active`
+- Runtime storage and CLI should enforce transitions, not invent them ad hoc
+- Do not add multi-asset, global allocation, live execution, or new read-only surfaces in v4
+- Do not redesign the scoring model and transition policy in the same step
+
+### V4 Done When
+
+V4 is complete when all of the following are true:
+
+- transition policy is explicit and separate from persistence
+- state transitions are driven by named policy decisions rather than embedded conditions
+- the bounded path remains auditable and deterministic
+- v4 stays within scope: `BTC-only`, `paper-only`, `1 target`
+
 ## Current Position
 
 - hypotheses-first runtime is established
@@ -30,17 +176,19 @@ It is not the source of truth for runtime operations. For that, prefer
 
 The current project-wide priority is:
 
-- make the search and maintenance loop template-aware end to end
+- define sleeve-level control metrics and drive search / maintenance / capital
+  attention from them
 
 This is now more important than:
 
 - adding a third sleeve
-- tuning BTC-specific behavior
+- tuning BTC- or ETH-specific behavior
 - expanding docs beyond the current map
 
 The practical goal is:
 
-- use `template gap` as the main missing-idea signal
+- use a small set of sleeve-general control metrics rather than one local gap
+  signal
 - keep BTC as a bounded reference sleeve
 - use ETH as the first serious non-reference validation sleeve
 
@@ -50,14 +198,14 @@ The next bottleneck is no longer basic sleeve plumbing.
 
 The main gap is:
 
-- search is still only partially template-aware
+- control policy is still too local and too template-gap-centric
 
 Right now:
 
 - `serious` bootstrap is template-aware
-- exploration is beginning to use template gaps
-- but the broader search / scoring / maintenance loop is not yet fully driven
-  by template coverage
+- exploration and reporting can see template gaps
+- but the broader search / scoring / maintenance loop is not yet driven by a
+  stable sleeve-general control metric
 
 ## Recovery-Derived Active Work
 
@@ -72,44 +220,59 @@ working-plan slot:
 
 ## Highest-Value Next Steps
 
-1. make search maintenance template-aware end to end
-   - use template gaps as the main search priority
-   - expose template-gap progress in sleeve snapshots over time
+1. define sleeve control metrics
+   - formalize a small set of sleeve-general metrics such as:
+     - coverage retention
+     - capital conversion
+     - breadth trend
+   - make these the primary control-plane signals rather than raw
+     asset-specific symptoms
 
-2. keep BTC bounded and ETH growing
+2. drive budgets from those metrics
+   - use sleeve control metrics for:
+     - search budget
+     - serious maintenance intensity
+     - rebalance attention
+   - keep `template gap` as one input, not the whole policy
+
+3. keep BTC bounded and ETH growing
    - BTC should remain a stable reference sleeve
    - ETH should continue validating non-BTC sleeve behavior
 
-3. keep the control-plane abstraction moving
+4. keep the control-plane abstraction moving
    - continue shifting from asset-specific records toward
      `template + binding + sleeve state`
 
 ## Concrete Next Tasks
 
-### 1. Template-Gap History
+### 1. Sleeve Control Metrics
 
-- persist serious template gap snapshots in sleeve comparison reports
-- make it easy to see whether a sleeve is closing or reopening template gaps
+- define sleeve-level control metrics that represent:
+  - whether ideas are being retained
+  - whether retained ideas convert into backed sleeves
+  - whether actionable breadth is improving or degrading
+- make those metrics the canonical control inputs
 
-### 2. Template-Aware Search Loop
+### 2. Budget Policy Rework
 
-- extend guided exploration to prefer missing templates, not just missing families
-- keep the priority stable across seeding and exploratory scoring
+- update budget policy so it is not driven by `template gap` alone
+- use `template gap` as one component of a broader sleeve score
+- avoid asset-specific rescue logic
 
 ### 3. Sleeve Comparison Tightening
 
 - compare BTC and ETH by:
+  - control metrics
+  - search budget
   - serious template coverage
-  - actionable breadth
-  - backed count
-  - latest serious contribution
+  - backed count and breadth deltas
 
 ### 4. ETH Follow-Through
 
 - use ETH as the primary non-reference sleeve for validating:
-  - template-aware search
-  - serious maintenance
-  - capital-path behavior
+  - sleeve-general control policy
+  - serious maintenance under shared rules
+  - capital-path behavior without manual rescue
 
 ### 5. Legacy Residue Removal
 
@@ -155,6 +318,23 @@ Do not prioritize these right now:
 - long-short expansion
 - large refactors for naming alone
 - broad documentation expansion beyond the current map
+- asset-specific rescue logic
+- adding more local snapshot / comparison helpers without improving the control
+  policy
+- treating `template gap` as the sole objective
+
+## Remove / Simplify
+
+The following should be reduced or treated as secondary rather than primary:
+
+- `template gap` as a standalone control objective
+  - keep it as one useful signal, but not the main policy target
+- asset-by-asset tactical tuning
+  - use BTC and ETH as validation sleeves, not as special-case policy inputs
+- control logic spread across CLI output helpers
+  - continue moving intermediate policy and delta logic into services
+- observation-only feature additions that do not improve control decisions
+  - prefer changes that improve allocation, search, or maintenance decisions
 
 ## Scaling Direction
 

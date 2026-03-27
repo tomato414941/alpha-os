@@ -5,17 +5,17 @@ from pathlib import Path
 
 import numpy as np
 
-from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore
-from alpha_os.config import Config
-from alpha_os.legacy.alpha_generator import (
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore
+from alpha_os_recovery.config import Config
+from alpha_os_recovery.legacy.alpha_generator import (
     enqueue_discovery_pool_candidates,
 )
-from alpha_os.evolution.discovery_pool import DiscoveryPool
-from alpha_os.dsl.expr import Feature
+from alpha_os_recovery.evolution.discovery_pool import DiscoveryPool
+from alpha_os_recovery.dsl.expr import Feature
 
 
 def test_enqueue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 2
     pool = DiscoveryPool()
@@ -41,7 +41,7 @@ def test_enqueue_discovery_pool_candidates_selects_top_entries(tmp_path, monkeyp
 
 
 def test_enqueue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 2
     pool = DiscoveryPool()
@@ -67,7 +67,7 @@ def test_enqueue_discovery_pool_candidates_uses_path_b_saved_fitness(tmp_path, m
 
 
 def test_enqueue_discovery_pool_candidates_skips_semantic_duplicates(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     cfg = Config()
     cfg.alpha_generator.promote_per_round = 3
 
@@ -100,7 +100,7 @@ def test_enqueue_discovery_pool_candidates_skips_semantic_duplicates(tmp_path, m
     pool.save_to_db(Path(tmp_path) / "discovery_pool.db")
 
     monkeypatch.setattr(
-        "alpha_os.legacy.alpha_generator.to_string",
+        "alpha_os_recovery.legacy.alpha_generator.to_string",
         lambda expr: (
             "(corr_10 (ts_max_5 russell2000) nasdaq)"
             if repr(expr) == "f1"
@@ -124,13 +124,13 @@ def test_enqueue_discovery_pool_candidates_skips_semantic_duplicates(tmp_path, m
 
 
 def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.legacy.alpha_generator.asset_data_dir", lambda asset: tmp_path)
     monkeypatch.setattr(
-        "alpha_os.legacy.alpha_generator.build_feature_list",
+        "alpha_os_recovery.legacy.alpha_generator.build_feature_list",
         lambda asset: ["btc_ohlcv"],
     )
     monkeypatch.setattr(
-        "alpha_os.legacy.alpha_generator._load_generator_data",
+        "alpha_os_recovery.legacy.alpha_generator._load_generator_data",
         lambda asset, config, features: (
             {"btc_ohlcv": np.array([5.0, 0.3, -0.1, 0.1])},
             np.array([5.0, 0.3, -0.1, 0.1]),
@@ -139,7 +139,7 @@ def test_enqueue_discovery_pool_candidates_recomputes_zero_fitness(tmp_path, mon
     )
     scores = {"f1": 0.3, "f2": 1.2, "f3": 0.8}
     monkeypatch.setattr(
-        "alpha_os.legacy.alpha_generator._score_expression",
+        "alpha_os_recovery.legacy.alpha_generator._score_expression",
         lambda expression, data, prices, config, benchmark_returns=None: scores[expression],
     )
 

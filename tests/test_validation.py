@@ -1,14 +1,14 @@
 """Tests for statistical validation modules (DSR, FDR, PBO)."""
 import numpy as np
 
-from alpha_os.backtest.engine import BacktestEngine
-from alpha_os.validation.deflated_sharpe import (
+from alpha_os_recovery.backtest.engine import BacktestEngine
+from alpha_os_recovery.validation.deflated_sharpe import (
     DSRResult,
     deflated_sharpe_ratio,
     _expected_max_sharpe,
 )
-from alpha_os.validation.fdr import benjamini_hochberg, FDRResult
-from alpha_os.validation.pbo import probability_of_backtest_overfitting, PBOResult
+from alpha_os_recovery.validation.fdr import benjamini_hochberg, FDRResult
+from alpha_os_recovery.validation.pbo import probability_of_backtest_overfitting, PBOResult
 
 
 # ---------------------------------------------------------------------------

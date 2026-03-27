@@ -150,28 +150,69 @@ pip install signal-noise
 
 ```bash
 # Seed or refresh hypotheses
-python -m alpha_os hypothesis-seeder --config config/dev.toml
+python -m alpha_os_recovery hypothesis-seeder --config config/dev.toml
 
 # Sync only the signals required by live hypotheses
-python -m alpha_os sync-signal-cache --asset BTC --from-hypotheses --strict --config config/dev.toml
+python -m alpha_os_recovery sync-signal-cache --asset BTC --from-hypotheses --strict --config config/dev.toml
 
 # Produce bounded hypothesis predictions
-python -m alpha_os produce-predictions --asset BTC --strict --config config/dev.toml
+python -m alpha_os_recovery produce-predictions --asset BTC --strict --config config/dev.toml
 
 # Run one bounded paper cycle
-python -m alpha_os trade --once --asset BTC --venue paper --strict --config config/dev.toml
+python -m alpha_os_recovery trade --once --asset BTC --venue paper --strict --config config/dev.toml
 
 # Check readiness / runtime observation
-python -m alpha_os runtime-status --asset BTC --config config/dev.toml
+python -m alpha_os_recovery runtime-status --asset BTC --config config/dev.toml
 
 # Run the bounded multi-sleeve loop
-python -m alpha_os run-sleeves-once --assets BTC,ETH --config config/dev.toml --score-limit 12
-python -m alpha_os compare-sleeves --assets BTC,ETH --config config/dev.toml
+python -m alpha_os_recovery run-sleeves-once --assets BTC,ETH --config config/dev.toml --score-limit 12
+python -m alpha_os_recovery compare-sleeves --assets BTC,ETH --config config/dev.toml
 
 # Legacy experimental paths
-python -m alpha_os research paper-replay --start 2025-09-01 --end 2026-03-05
-python -m alpha_os research replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
-python -m alpha_os legacy admission-daemon --asset BTC --config config/dev.toml
+python -m alpha_os_recovery research paper-replay --start 2025-09-01 --end 2026-03-05
+python -m alpha_os_recovery research replay-experiment --name smoke --start 2025-09-01 --end 2026-03-05
+python -m alpha_os_recovery legacy admission-daemon --asset BTC --config config/dev.toml
+```
+
+## alpha_os
+
+The new `alpha_os` package is a separate bounded trust engine.
+It is intentionally narrower than `alpha_os_recovery`.
+
+Current scope:
+
+- `1 asset`: `BTC`
+- `paper-only`
+- `1 target`: `residual_return_1d`
+- primary bounded path:
+  `register-hypothesis -> record-prediction -> finalize-observation -> update-state`
+- convenience wrapper:
+  `run-cycle`
+
+Primary bounded path:
+
+```bash
+python -m alpha_os register-hypothesis --db data/v1/runtime.db --hypothesis-id hyp_momo
+python -m alpha_os record-prediction --db data/v1/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo --prediction 0.05
+python -m alpha_os finalize-observation --db data/v1/runtime.db --date 2026-03-27 --observation -0.02
+python -m alpha_os update-state --db data/v1/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo
+```
+
+Convenience wrapper path:
+
+```bash
+# Build one or more deterministic cycle inputs from signal-noise BTC daily closes
+python -m alpha_os build-cycle-input --date 2026-03-27 --hypothesis-id hyp_momo --out data/v1/cycle.json
+python -m alpha_os build-cycle-inputs --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
+
+# Apply one cycle or a deterministic backfill range through the wrapper path
+python -m alpha_os register-hypothesis --db data/v1/runtime.db --hypothesis-id hyp_momo
+python -m alpha_os run-cycle --db data/v1/runtime.db --input data/v1/cycle.json
+python -m alpha_os run-backfill --db data/v1/runtime.db --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/cycles.json
+
+# Inspect aggregate state and per-cycle provenance
+python -m alpha_os status --db data/v1/runtime.db
+python -m alpha_os show-cycles --db data/v1/runtime.db --limit 10
 ```
 
 ## Configuration

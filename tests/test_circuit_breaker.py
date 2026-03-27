@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from alpha_os.risk.circuit_breaker import (
+from alpha_os_recovery.risk.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
 )
@@ -225,7 +225,7 @@ def test_daily_reset_clears_halt(cb, state_path, monkeypatch):
     # Simulate next day
     from datetime import date as date_cls
     monkeypatch.setattr(
-        "alpha_os.risk.circuit_breaker.date",
+        "alpha_os_recovery.risk.circuit_breaker.date",
         type("MockDate", (), {"today": staticmethod(lambda: date_cls(2026, 2, 27))}),
     )
     cb.save = lambda path=None: None  # Skip file write in test
@@ -241,7 +241,7 @@ def test_daily_reset_clears_halt(cb, state_path, monkeypatch):
 def test_daily_reset_noop_same_day(cb, monkeypatch):
     from datetime import date as date_cls
     monkeypatch.setattr(
-        "alpha_os.risk.circuit_breaker.date",
+        "alpha_os_recovery.risk.circuit_breaker.date",
         type("MockDate", (), {"today": staticmethod(lambda: date_cls(2026, 2, 27))}),
     )
     cb._current_date = "2026-02-27"

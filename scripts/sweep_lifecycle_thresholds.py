@@ -90,14 +90,14 @@ def main() -> int:
     candidate_values = _parse_values(args.candidate_values)
     active_values = _parse_values(args.active_values)
 
-    from alpha_os.legacy.admission_replay import (
+    from alpha_os_recovery.legacy.admission_replay import (
         apply_registry_snapshot,
         load_source_records,
         materialize_admission_snapshot,
     )
-    from alpha_os.config import Config
-    from alpha_os.config import asset_data_dir
-    from alpha_os.research.replay_simulator import run_replay
+    from alpha_os_recovery.config import Config
+    from alpha_os_recovery.config import asset_data_dir
+    from alpha_os_recovery.research.replay_simulator import run_replay
 
     registry_db = asset_data_dir(args.asset) / "alpha_registry.db"
     source_records = load_source_records(registry_db, args.source)

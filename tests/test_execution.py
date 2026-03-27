@@ -1,11 +1,11 @@
 """Tests for execution layer (paper trading, executor interface)."""
 import pytest
 
-from alpha_os.execution.constraints import apply_venue_constraints
-from alpha_os.execution.costs import ExecutionCostModel
-from alpha_os.execution.executor import Order
-from alpha_os.execution.paper import PaperExecutor
-from alpha_os.execution.planning import (
+from alpha_os_recovery.execution.constraints import apply_venue_constraints
+from alpha_os_recovery.execution.costs import ExecutionCostModel
+from alpha_os_recovery.execution.executor import Order
+from alpha_os_recovery.execution.paper import PaperExecutor
+from alpha_os_recovery.execution.planning import (
     build_execution_intent,
     build_target_position,
     plan_execution_intent,

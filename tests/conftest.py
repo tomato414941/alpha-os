@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from alpha_os.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
-from alpha_os.data.store import DataStore
+from alpha_os_recovery.legacy.managed_alphas import AlphaRecord, ManagedAlphaStore, AlphaState
+from alpha_os_recovery.data.store import DataStore
 
 
 FEATURES = ["f1", "f2", "f3"]

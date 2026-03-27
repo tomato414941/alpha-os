@@ -5,13 +5,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from alpha_os.execution.alpaca import (
+from alpha_os_recovery.execution.alpaca import (
     AlpacaExecutor,
     _get_credentials,
     _load_secrets,
 )
-from alpha_os.execution.costs import ExecutionCostModel
-from alpha_os.execution.executor import Order
+from alpha_os_recovery.execution.costs import ExecutionCostModel
+from alpha_os_recovery.execution.executor import Order
 
 
 # ---------------------------------------------------------------------------
@@ -19,12 +19,12 @@ from alpha_os.execution.executor import Order
 # ---------------------------------------------------------------------------
 
 def test_load_secrets_missing_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.execution.secrets.Path.home", lambda: tmp_path)
     assert _load_secrets("alpaca") == {}
 
 
 def test_load_secrets_parses_file(tmp_path, monkeypatch):
-    monkeypatch.setattr("alpha_os.execution.secrets.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("alpha_os_recovery.execution.secrets.Path.home", lambda: tmp_path)
     secrets_dir = tmp_path / ".secrets"
     secrets_dir.mkdir()
     (secrets_dir / "alpaca").write_text(

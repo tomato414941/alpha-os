@@ -4,10 +4,10 @@ from types import SimpleNamespace
 
 
 def test_build_sleeve_attention_plan_returns_high_for_unhealthy_sleeve(monkeypatch):
-    from alpha_os.hypotheses.sleeve_attention_service import build_sleeve_attention_plan
+    from alpha_os_recovery.hypotheses.sleeve_attention_service import build_sleeve_attention_plan
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.load_sleeve_control_metrics",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.load_sleeve_control_metrics",
         lambda *, asset: SimpleNamespace(
             asset=asset,
             template_gap_count=2,
@@ -31,10 +31,10 @@ def test_build_sleeve_attention_plan_returns_high_for_unhealthy_sleeve(monkeypat
 
 
 def test_build_sleeve_attention_plan_returns_light_for_healthy_reference(monkeypatch):
-    from alpha_os.hypotheses.sleeve_attention_service import build_sleeve_attention_plan
+    from alpha_os_recovery.hypotheses.sleeve_attention_service import build_sleeve_attention_plan
 
     monkeypatch.setattr(
-        "alpha_os.hypotheses.sleeve_attention_service.load_sleeve_control_metrics",
+        "alpha_os_recovery.hypotheses.sleeve_attention_service.load_sleeve_control_metrics",
         lambda *, asset: SimpleNamespace(
             asset=asset,
             template_gap_count=0,

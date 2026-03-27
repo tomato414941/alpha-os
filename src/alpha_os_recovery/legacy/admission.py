@@ -111,7 +111,7 @@ class AdmissionDaemon:
         bm_returns = None
         bm_assets = self.config.backtest.benchmark_assets
         if bm_assets:
-            from alpha_os.backtest.benchmark import build_benchmark_returns
+            from alpha_os_recovery.backtest.benchmark import build_benchmark_returns
             bm_returns = build_benchmark_returns(data, bm_assets)
             if len(bm_returns) == 0:
                 bm_returns = None

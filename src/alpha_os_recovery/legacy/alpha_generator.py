@@ -128,7 +128,7 @@ def enqueue_discovery_pool_candidates(
         if data is not None and prices is not None:
             bm_returns = None
             if config.backtest.benchmark_assets:
-                from alpha_os.backtest.benchmark import build_benchmark_returns
+                from alpha_os_recovery.backtest.benchmark import build_benchmark_returns
                 bm_returns = build_benchmark_returns(data, config.backtest.benchmark_assets)
                 if len(bm_returns) == 0:
                     bm_returns = None

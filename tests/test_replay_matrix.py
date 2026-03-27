@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_os.experiments.matrix import load_replay_matrix, run_replay_matrix
-from alpha_os.legacy.replay_experiment import ReplayExperimentRun
+from alpha_os_recovery.experiments.matrix import load_replay_matrix, run_replay_matrix
+from alpha_os_recovery.legacy.replay_experiment import ReplayExperimentRun
 
 
 def test_load_replay_matrix_merges_defaults(tmp_path):
@@ -59,7 +59,7 @@ def test_run_replay_matrix_preserves_order(monkeypatch):
             payload={"name": spec.name, "result": {"total_return": 0.0, "sharpe": 0.0, "max_drawdown": 0.0, "total_trades": 0}},
         )
 
-    monkeypatch.setattr("alpha_os.experiments.matrix.run_replay_experiment", fake_run)
+    monkeypatch.setattr("alpha_os_recovery.experiments.matrix.run_replay_experiment", fake_run)
 
     matrix = load_replay_matrix(
         Path(__file__).with_name("replay_matrix_fixture.toml")
