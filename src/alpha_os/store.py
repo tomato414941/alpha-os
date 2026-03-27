@@ -5,9 +5,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pandas as pd
+
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
 from .policy import build_cycle_update
+from .scoring import DEFAULT_SCORE_WINDOW, score_hypothesis
 from .transition_policy import decide_operator_transition, decide_status_after_update
 
 
@@ -82,6 +85,19 @@ class SleeveState:
     total_allocation_trust: float
     latest_evaluation_id: str | None
     latest_hypothesis_id: str | None
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class HypothesisScoreState:
+    hypothesis_id: str
+    corr: float
+    mmc: float
+    score: float
+    sample_count: int
+    window_size: int
+    start_evaluation_id: str | None
+    end_evaluation_id: str | None
     updated_at: str
 
 
@@ -173,6 +189,24 @@ def _row_to_observation(row: sqlite3.Row | None) -> ObservationRecord | None:
         target=str(row["target"]),
         value=float(row["value"]),
         recorded_at=str(row["recorded_at"]),
+    )
+
+
+def _row_to_hypothesis_score(row: sqlite3.Row | None) -> HypothesisScoreState | None:
+    if row is None:
+        return None
+    return HypothesisScoreState(
+        hypothesis_id=str(row["hypothesis_id"]),
+        corr=float(row["corr"]),
+        mmc=float(row["mmc"]),
+        score=float(row["score"]),
+        sample_count=int(row["sample_count"]),
+        window_size=int(row["window_size"]),
+        start_evaluation_id=None
+        if row["start_evaluation_id"] is None
+        else str(row["start_evaluation_id"]),
+        end_evaluation_id=None if row["end_evaluation_id"] is None else str(row["end_evaluation_id"]),
+        updated_at=str(row["updated_at"]),
     )
 
 
@@ -439,6 +473,18 @@ class V1Store:
                 PRIMARY KEY (asset, target)
             );
 
+            CREATE TABLE IF NOT EXISTS hypothesis_scores (
+                hypothesis_id TEXT PRIMARY KEY,
+                corr REAL NOT NULL,
+                mmc REAL NOT NULL,
+                score REAL NOT NULL,
+                sample_count INTEGER NOT NULL,
+                window_size INTEGER NOT NULL,
+                start_evaluation_id TEXT,
+                end_evaluation_id TEXT,
+                updated_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS evaluation_snapshots (
                 evaluation_id TEXT NOT NULL,
                 asset TEXT NOT NULL,
@@ -535,6 +581,162 @@ class V1Store:
             (asset, target),
         ).fetchall()
         return [_row_to_hypothesis(row) for row in rows if row is not None]
+
+    def get_hypothesis_score(self, hypothesis_id: str) -> HypothesisScoreState | None:
+        row = self.conn.execute(
+            """
+            SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+                   start_evaluation_id, end_evaluation_id, updated_at
+            FROM hypothesis_scores
+            WHERE hypothesis_id = ?
+            """,
+            (hypothesis_id,),
+        ).fetchone()
+        return _row_to_hypothesis_score(row)
+
+    def list_hypothesis_scores(
+        self,
+        *,
+        hypothesis_ids: list[str] | None = None,
+    ) -> list[HypothesisScoreState]:
+        if not hypothesis_ids:
+            rows = self.conn.execute(
+                """
+                SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+                       start_evaluation_id, end_evaluation_id, updated_at
+                FROM hypothesis_scores
+                ORDER BY score DESC, corr DESC, mmc DESC, hypothesis_id ASC
+                """
+            ).fetchall()
+            return [_row_to_hypothesis_score(row) for row in rows if row is not None]
+
+        placeholders = ", ".join("?" for _ in hypothesis_ids)
+        rows = self.conn.execute(
+            f"""
+            SELECT hypothesis_id, corr, mmc, score, sample_count, window_size,
+                   start_evaluation_id, end_evaluation_id, updated_at
+            FROM hypothesis_scores
+            WHERE hypothesis_id IN ({placeholders})
+            ORDER BY score DESC, corr DESC, mmc DESC, hypothesis_id ASC
+            """,
+            tuple(hypothesis_ids),
+        ).fetchall()
+        return [_row_to_hypothesis_score(row) for row in rows if row is not None]
+
+    def _refresh_hypothesis_score(
+        self,
+        *,
+        hypothesis_id: str,
+        asset: str,
+        target: str,
+        recorded_at: str,
+        window_size: int = DEFAULT_SCORE_WINDOW,
+    ) -> None:
+        rows = self.conn.execute(
+            """
+            SELECT p.evaluation_id, p.value AS prediction_value, o.value AS observation_value
+            FROM predictions AS p
+            JOIN observations AS o ON o.evaluation_id = p.evaluation_id
+            JOIN hypotheses AS h ON h.hypothesis_id = p.hypothesis_id
+            WHERE p.hypothesis_id = ? AND h.asset = ? AND h.target = ?
+            ORDER BY p.evaluation_id DESC
+            LIMIT ?
+            """,
+            (hypothesis_id, asset, target, int(window_size)),
+        ).fetchall()
+        if not rows:
+            self.conn.execute(
+                """
+                INSERT INTO hypothesis_scores (
+                    hypothesis_id, corr, mmc, score, sample_count, window_size,
+                    start_evaluation_id, end_evaluation_id, updated_at
+                )
+                VALUES (?, 0.0, 0.0, 0.0, 0, ?, NULL, NULL, ?)
+                ON CONFLICT(hypothesis_id) DO UPDATE SET
+                    corr = excluded.corr,
+                    mmc = excluded.mmc,
+                    score = excluded.score,
+                    sample_count = excluded.sample_count,
+                    window_size = excluded.window_size,
+                    start_evaluation_id = excluded.start_evaluation_id,
+                    end_evaluation_id = excluded.end_evaluation_id,
+                    updated_at = excluded.updated_at
+                """,
+                (hypothesis_id, int(window_size), recorded_at),
+            )
+            return
+
+        rows = list(reversed(rows))
+        evaluation_ids = [str(row["evaluation_id"]) for row in rows]
+        predictions = pd.Series(
+            [float(row["prediction_value"]) for row in rows],
+            index=evaluation_ids,
+            dtype=float,
+        )
+        observations = pd.Series(
+            [float(row["observation_value"]) for row in rows],
+            index=evaluation_ids,
+            dtype=float,
+        )
+
+        meta_model = None
+        placeholders = ", ".join("?" for _ in evaluation_ids)
+        peer_rows = self.conn.execute(
+            f"""
+            SELECT p.evaluation_id, AVG(p.value) AS meta_prediction
+            FROM predictions AS p
+            JOIN hypotheses AS h ON h.hypothesis_id = p.hypothesis_id
+            WHERE p.evaluation_id IN ({placeholders})
+              AND h.asset = ?
+              AND h.target = ?
+              AND p.hypothesis_id <> ?
+            GROUP BY p.evaluation_id
+            ORDER BY p.evaluation_id ASC
+            """,
+            tuple(evaluation_ids) + (asset, target, hypothesis_id),
+        ).fetchall()
+        if peer_rows:
+            meta_model = pd.Series(
+                [float(row["meta_prediction"]) for row in peer_rows],
+                index=[str(row["evaluation_id"]) for row in peer_rows],
+                dtype=float,
+            )
+
+        scored = score_hypothesis(
+            predictions=predictions,
+            target=observations,
+            meta_model=meta_model,
+            window_size=window_size,
+        )
+        self.conn.execute(
+            """
+            INSERT INTO hypothesis_scores (
+                hypothesis_id, corr, mmc, score, sample_count, window_size,
+                start_evaluation_id, end_evaluation_id, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(hypothesis_id) DO UPDATE SET
+                corr = excluded.corr,
+                mmc = excluded.mmc,
+                score = excluded.score,
+                sample_count = excluded.sample_count,
+                window_size = excluded.window_size,
+                start_evaluation_id = excluded.start_evaluation_id,
+                end_evaluation_id = excluded.end_evaluation_id,
+                updated_at = excluded.updated_at
+            """,
+            (
+                hypothesis_id,
+                scored.corr,
+                scored.mmc,
+                scored.score,
+                scored.sample_count,
+                scored.window_size,
+                evaluation_ids[0],
+                evaluation_ids[-1],
+                recorded_at,
+            ),
+        )
 
     def set_hypothesis_status(
         self,
@@ -924,6 +1126,12 @@ class V1Store:
                     hypothesis_id,
                     timestamp,
                 ),
+            )
+            self._refresh_hypothesis_score(
+                hypothesis_id=hypothesis_id,
+                asset=asset,
+                target=target,
+                recorded_at=timestamp,
             )
 
         snapshot = self.get_evaluation_snapshot(evaluation_id, hypothesis_id)
