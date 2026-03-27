@@ -3,11 +3,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .build import (
-    build_cycle_input_from_signal_noise,
-    build_cycle_inputs_from_signal_noise,
-    write_cycle_input,
-    write_cycle_inputs,
+from .evaluation_generation import (
+    generate_evaluation_input_from_signal_noise,
+    generate_evaluation_inputs_from_signal_noise,
+    write_evaluation_input,
+    write_evaluation_inputs,
 )
 from .config import (
     DEFAULT_ASSET,
@@ -17,7 +17,11 @@ from .config import (
     build_config,
 )
 from .hypothesis_registry import HypothesisDefinition
-from .inputs import CycleInput, load_cycle_input, load_cycle_inputs
+from .evaluation_inputs import (
+    EvaluationInput,
+    load_evaluation_input,
+    load_evaluation_inputs,
+)
 from .store import V1Store
 
 
@@ -127,7 +131,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--input",
         type=str,
         required=True,
-        help="Path to a JSON array of cycle input objects",
+        help="Path to a JSON array of evaluation input objects",
     )
 
     backfill = sub.add_parser(
@@ -144,7 +148,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--out",
         type=str,
         default=None,
-        help="Optional path to write the generated cycle-input JSON array",
+        help="Optional path to write the generated evaluation-input JSON array",
     )
 
     backfill_many = sub.add_parser(
@@ -269,20 +273,20 @@ def _print_hypothesis_competition_summary(
         )
 
 
-def _resolve_cycle_input(args: argparse.Namespace) -> CycleInput:
+def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
     if args.input:
-        cycle_input = load_cycle_input(args.input)
+        evaluation_input = load_evaluation_input(args.input)
         if args.evaluation_id is not None:
-            cycle_input = CycleInput(
-                date=cycle_input.date,
-                hypothesis_id=cycle_input.hypothesis_id,
-                prediction=cycle_input.prediction,
-                observation=cycle_input.observation,
+            evaluation_input = EvaluationInput(
+                date=evaluation_input.date,
+                hypothesis_id=evaluation_input.hypothesis_id,
+                prediction=evaluation_input.prediction,
+                observation=evaluation_input.observation,
                 evaluation_id=args.evaluation_id,
-                asset=cycle_input.asset,
-                target=cycle_input.target,
+                asset=evaluation_input.asset,
+                target=evaluation_input.target,
             )
-        return cycle_input
+        return evaluation_input
 
     required = {
         "date": args.date,
@@ -294,7 +298,7 @@ def _resolve_cycle_input(args: argparse.Namespace) -> CycleInput:
     if missing:
         joined = ", ".join(missing)
         raise ValueError(f"apply-cycle requires --input or manual values for: {joined}")
-    return CycleInput(
+    return EvaluationInput(
         date=str(args.date),
         hypothesis_id=str(args.hypothesis_id),
         prediction=float(args.prediction),
@@ -460,34 +464,37 @@ def cmd_update_state(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_build_cycle_input(args: argparse.Namespace) -> int:
+def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
     definition = _runtime_hypothesis_definition(
         db_path=args.db,
         hypothesis_id=args.hypothesis_id,
     )
-    cycle_input = build_cycle_input_from_signal_noise(
+    evaluation_input = generate_evaluation_input_from_signal_noise(
         date=args.date,
         hypothesis_id=args.hypothesis_id,
         base_url=args.base_url,
         signal_name=args.signal_name,
         definition=definition,
     )
-    output_path = write_cycle_input(args.out, cycle_input)
+    output_path = write_evaluation_input(args.out, evaluation_input)
     print(f"Generated evaluation input: {output_path}")
-    print(f"  Asset:    {cycle_input.asset}")
-    print(f"  Target:   {cycle_input.target}")
-    print(f"  Date:     {cycle_input.date}")
-    print(f"  Hyp:      {cycle_input.hypothesis_id}")
-    print(f"  Signal:   pred={cycle_input.prediction:.6f} obs={cycle_input.observation:.6f}")
+    print(f"  Asset:    {evaluation_input.asset}")
+    print(f"  Target:   {evaluation_input.target}")
+    print(f"  Date:     {evaluation_input.date}")
+    print(f"  Hyp:      {evaluation_input.hypothesis_id}")
+    print(
+        f"  Signal:   pred={evaluation_input.prediction:.6f} "
+        f"obs={evaluation_input.observation:.6f}"
+    )
     return 0
 
 
-def cmd_build_cycle_inputs(args: argparse.Namespace) -> int:
+def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
     definition = _runtime_hypothesis_definition(
         db_path=args.db,
         hypothesis_id=args.hypothesis_id,
     )
-    cycle_inputs = build_cycle_inputs_from_signal_noise(
+    evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
         start_date=args.start_date,
         end_date=args.end_date,
         hypothesis_id=args.hypothesis_id,
@@ -495,32 +502,32 @@ def cmd_build_cycle_inputs(args: argparse.Namespace) -> int:
         signal_name=args.signal_name,
         definition=definition,
     )
-    output_path = write_cycle_inputs(args.out, cycle_inputs)
+    output_path = write_evaluation_inputs(args.out, evaluation_inputs)
     print(f"Generated evaluation inputs: {output_path}")
-    print(f"  Count:    {len(cycle_inputs)}")
+    print(f"  Count:    {len(evaluation_inputs)}")
     print(f"  Asset:    {DEFAULT_ASSET}")
     print(f"  Target:   {DEFAULT_TARGET}")
-    if cycle_inputs:
-        print(f"  Range:    {cycle_inputs[0].date} -> {cycle_inputs[-1].date}")
+    if evaluation_inputs:
+        print(f"  Range:    {evaluation_inputs[0].date} -> {evaluation_inputs[-1].date}")
     return 0
 
 
 def cmd_run_cycle(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    cycle_input = _resolve_cycle_input(args)
-    evaluation_id = cycle_input.evaluation_id or _default_evaluation_id(
+    evaluation_input = _resolve_evaluation_input(args)
+    evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
         asset=cfg.asset,
         target=cfg.target,
-        date=cycle_input.date,
+        date=evaluation_input.date,
     )
     input_source = "json_file" if args.input else "manual"
     store = V1Store(cfg.db_path)
     try:
         snapshot, created = store.run_cycle(
             evaluation_id=evaluation_id,
-            hypothesis_id=cycle_input.hypothesis_id,
-            prediction_value=cycle_input.prediction,
-            observation_value=cycle_input.observation,
+            hypothesis_id=evaluation_input.hypothesis_id,
+            prediction_value=evaluation_input.prediction,
+            observation_value=evaluation_input.observation,
             input_source=input_source,
         )
     finally:
@@ -531,17 +538,17 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
 
 def cmd_run_cycles(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    cycle_inputs = load_cycle_inputs(args.input)
-    return _run_cycle_inputs(
+    evaluation_inputs = load_evaluation_inputs(args.input)
+    return _apply_evaluation_inputs(
         cfg.db_path,
-        cycle_inputs,
+        evaluation_inputs,
         input_source="json_batch",
     )
 
 
-def _run_cycle_inputs(
+def _apply_evaluation_inputs(
     db_path: Path,
-    cycle_inputs: list[CycleInput],
+    evaluation_inputs: list[EvaluationInput],
     *,
     input_source: str,
     input_range_start: str | None = None,
@@ -554,17 +561,17 @@ def _run_cycle_inputs(
         created_count = 0
         existing_count = 0
         latest_snapshot = None
-        for cycle_input in cycle_inputs:
-            evaluation_id = cycle_input.evaluation_id or _default_evaluation_id(
+        for evaluation_input in evaluation_inputs:
+            evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=cfg.asset,
                 target=cfg.target,
-                date=cycle_input.date,
+                date=evaluation_input.date,
             )
             latest_snapshot, created = store.run_cycle(
                 evaluation_id=evaluation_id,
-                hypothesis_id=cycle_input.hypothesis_id,
-                prediction_value=cycle_input.prediction,
-                observation_value=cycle_input.observation,
+                hypothesis_id=evaluation_input.hypothesis_id,
+                prediction_value=evaluation_input.prediction,
+                observation_value=evaluation_input.observation,
                 input_source=input_source,
                 input_range_start=input_range_start,
                 input_range_end=input_range_end,
@@ -579,7 +586,7 @@ def _run_cycle_inputs(
 
     print(
         "Batch complete: "
-        f"evaluations={len(cycle_inputs)} created={created_count} existing={existing_count}"
+        f"evaluations={len(evaluation_inputs)} created={created_count} existing={existing_count}"
     )
     if latest_snapshot is not None:
         print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.hypothesis_id}")
@@ -594,7 +601,7 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
         db_path=args.db,
         hypothesis_id=args.hypothesis_id,
     )
-    cycle_inputs = build_cycle_inputs_from_signal_noise(
+    evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
         start_date=args.start_date,
         end_date=args.end_date,
         hypothesis_id=args.hypothesis_id,
@@ -603,11 +610,11 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
         definition=definition,
     )
     if args.out is not None:
-        output_path = write_cycle_inputs(args.out, cycle_inputs)
+        output_path = write_evaluation_inputs(args.out, evaluation_inputs)
         print(f"Wrote evaluation inputs: {output_path}")
-    return _run_cycle_inputs(
+    return _apply_evaluation_inputs(
         cfg.db_path,
-        cycle_inputs,
+        evaluation_inputs,
         input_source="signal_noise_backfill",
         input_range_start=args.start_date,
         input_range_end=args.end_date,
@@ -631,7 +638,7 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
                 db_path=args.db,
                 hypothesis_id=hypothesis_id,
             )
-            cycle_inputs = build_cycle_inputs_from_signal_noise(
+            evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
                 start_date=args.start_date,
                 end_date=args.end_date,
                 hypothesis_id=hypothesis_id,
@@ -639,18 +646,18 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
                 signal_name=args.signal_name,
                 definition=definition,
             )
-            total_evaluations += len(cycle_inputs)
-            for cycle_input in cycle_inputs:
-                evaluation_id = cycle_input.evaluation_id or _default_evaluation_id(
+            total_evaluations += len(evaluation_inputs)
+            for evaluation_input in evaluation_inputs:
+                evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                     asset=cfg.asset,
                     target=cfg.target,
-                    date=cycle_input.date,
+                    date=evaluation_input.date,
                 )
                 latest_snapshot, created = store.run_cycle(
                     evaluation_id=evaluation_id,
-                    hypothesis_id=cycle_input.hypothesis_id,
-                    prediction_value=cycle_input.prediction,
-                    observation_value=cycle_input.observation,
+                    hypothesis_id=evaluation_input.hypothesis_id,
+                    prediction_value=evaluation_input.prediction,
+                    observation_value=evaluation_input.observation,
                     input_source="signal_noise_backfill",
                     input_range_start=args.start_date,
                     input_range_end=args.end_date,
@@ -769,9 +776,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "update-state":
             return cmd_update_state(args)
         if args.command == "generate-cycle-input":
-            return cmd_build_cycle_input(args)
+            return cmd_generate_evaluation_input(args)
         if args.command == "generate-cycle-inputs":
-            return cmd_build_cycle_inputs(args)
+            return cmd_generate_evaluation_inputs(args)
         if args.command == "apply-cycle":
             return cmd_run_cycle(args)
         if args.command == "apply-cycles":

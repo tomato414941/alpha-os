@@ -8,7 +8,7 @@ import pandas as pd
 
 from .config import DEFAULT_ASSET, DEFAULT_PRICE_SIGNAL, DEFAULT_TARGET
 from .hypothesis_registry import HypothesisDefinition, get_hypothesis_definition
-from .inputs import CycleInput
+from .evaluation_inputs import EvaluationInput
 from .signal_client import build_signal_client
 
 
@@ -85,7 +85,7 @@ def _prediction_from_returns(
     raise ValueError(f"unsupported hypothesis kind: {definition.kind}")
 
 
-def build_cycle_input_from_frame(
+def generate_evaluation_input_from_frame(
     *,
     frame: pd.DataFrame,
     date: str,
@@ -94,7 +94,7 @@ def build_cycle_input_from_frame(
     definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
     target: str = DEFAULT_TARGET,
-) -> CycleInput:
+) -> EvaluationInput:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
@@ -122,7 +122,7 @@ def build_cycle_input_from_frame(
         definition=definition,
     )
     observation = (next_close / current_close) - 1.0
-    return CycleInput(
+    return EvaluationInput(
         date=date,
         hypothesis_id=hypothesis_id,
         prediction=prediction,
@@ -132,7 +132,7 @@ def build_cycle_input_from_frame(
     )
 
 
-def build_cycle_inputs_from_frame(
+def generate_evaluation_inputs_from_frame(
     *,
     frame: pd.DataFrame,
     start_date: str,
@@ -142,7 +142,7 @@ def build_cycle_inputs_from_frame(
     definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
     target: str = DEFAULT_TARGET,
-) -> list[CycleInput]:
+) -> list[EvaluationInput]:
     daily_close = _daily_close_series(frame)
     dates = list(daily_close.index)
     selected_dates = [date for date in dates if start_date <= date <= end_date]
@@ -150,7 +150,7 @@ def build_cycle_inputs_from_frame(
         raise ValueError(f"no dates found in range: {start_date}..{end_date}")
 
     return [
-        build_cycle_input_from_frame(
+        generate_evaluation_input_from_frame(
             frame=frame,
             date=date,
             hypothesis_id=hypothesis_id,
@@ -163,14 +163,14 @@ def build_cycle_inputs_from_frame(
     ]
 
 
-def build_cycle_input_from_signal_noise(
+def generate_evaluation_input_from_signal_noise(
     *,
     date: str,
     hypothesis_id: str,
     base_url: str,
     signal_name: str | None = DEFAULT_PRICE_SIGNAL,
     definition: HypothesisDefinition | None = None,
-) -> CycleInput:
+) -> EvaluationInput:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
@@ -180,7 +180,7 @@ def build_cycle_input_from_signal_noise(
         base_url=base_url,
         signal_name=definition.signal_name,
     )
-    return build_cycle_input_from_frame(
+    return generate_evaluation_input_from_frame(
         frame=frame,
         date=date,
         hypothesis_id=hypothesis_id,
@@ -189,7 +189,7 @@ def build_cycle_input_from_signal_noise(
     )
 
 
-def build_cycle_inputs_from_signal_noise(
+def generate_evaluation_inputs_from_signal_noise(
     *,
     start_date: str,
     end_date: str,
@@ -197,7 +197,7 @@ def build_cycle_inputs_from_signal_noise(
     base_url: str,
     signal_name: str | None = DEFAULT_PRICE_SIGNAL,
     definition: HypothesisDefinition | None = None,
-) -> list[CycleInput]:
+) -> list[EvaluationInput]:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
         signal_name=signal_name,
@@ -207,7 +207,7 @@ def build_cycle_inputs_from_signal_noise(
         base_url=base_url,
         signal_name=definition.signal_name,
     )
-    return build_cycle_inputs_from_frame(
+    return generate_evaluation_inputs_from_frame(
         frame=frame,
         start_date=start_date,
         end_date=end_date,
@@ -217,17 +217,17 @@ def build_cycle_inputs_from_signal_noise(
     )
 
 
-def write_cycle_input(path: str | Path, cycle_input: CycleInput) -> Path:
+def write_evaluation_input(path: str | Path, evaluation_input: EvaluationInput) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = asdict(cycle_input)
+    payload = asdict(evaluation_input)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path
 
 
-def write_cycle_inputs(path: str | Path, cycle_inputs: list[CycleInput]) -> Path:
+def write_evaluation_inputs(path: str | Path, evaluation_inputs: list[EvaluationInput]) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = [asdict(item) for item in cycle_inputs]
+    payload = [asdict(item) for item in evaluation_inputs]
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path

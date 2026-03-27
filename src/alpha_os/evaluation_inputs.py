@@ -8,7 +8,7 @@ from .config import DEFAULT_ASSET, DEFAULT_TARGET
 
 
 @dataclass(frozen=True)
-class CycleInput:
+class EvaluationInput:
     date: str
     hypothesis_id: str
     prediction: float
@@ -18,9 +18,9 @@ class CycleInput:
     target: str = DEFAULT_TARGET
 
 
-def _parse_cycle_input(item: object, *, source: Path) -> CycleInput:
+def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
     if not isinstance(item, dict):
-        raise ValueError(f"{source}: each cycle input must be a JSON object")
+        raise ValueError(f"{source}: each evaluation input must be a JSON object")
 
     asset = str(item.get("asset", DEFAULT_ASSET))
     target = str(item.get("target", DEFAULT_TARGET))
@@ -39,7 +39,7 @@ def _parse_cycle_input(item: object, *, source: Path) -> CycleInput:
 
     evaluation_id_obj = item.get("evaluation_id")
     evaluation_id = None if evaluation_id_obj is None else str(evaluation_id_obj)
-    return CycleInput(
+    return EvaluationInput(
         date=date,
         hypothesis_id=hypothesis_id,
         prediction=prediction,
@@ -50,15 +50,15 @@ def _parse_cycle_input(item: object, *, source: Path) -> CycleInput:
     )
 
 
-def load_cycle_input(path: str | Path) -> CycleInput:
+def load_evaluation_input(path: str | Path) -> EvaluationInput:
     source = Path(path)
     payload = json.loads(source.read_text(encoding="utf-8"))
-    return _parse_cycle_input(payload, source=source)
+    return _parse_evaluation_input(payload, source=source)
 
 
-def load_cycle_inputs(path: str | Path) -> list[CycleInput]:
+def load_evaluation_inputs(path: str | Path) -> list[EvaluationInput]:
     source = Path(path)
     payload = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(payload, list):
-        raise ValueError(f"{source}: expected a JSON array of cycle inputs")
-    return [_parse_cycle_input(item, source=source) for item in payload]
+        raise ValueError(f"{source}: expected a JSON array of evaluation inputs")
+    return [_parse_evaluation_input(item, source=source) for item in payload]
