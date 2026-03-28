@@ -118,6 +118,31 @@ def test_generate_evaluation_input_from_frame_supports_momentum_3d():
     assert evaluation_input.observation == pytest.approx(0.1)
 
 
+def test_generate_evaluation_input_from_frame_supports_momentum_5d():
+    from alpha_os.evaluation_generation import generate_evaluation_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-22T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-23T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 177.1561},
+        ]
+    )
+
+    evaluation_input = generate_evaluation_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="momentum_5d",
+    )
+
+    assert evaluation_input.prediction == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx(0.1)
+
+
 def test_generate_evaluation_input_from_frame_supports_reversal_1d():
     from alpha_os.evaluation_generation import generate_evaluation_input_from_frame
 
@@ -137,6 +162,80 @@ def test_generate_evaluation_input_from_frame_supports_reversal_1d():
 
     assert evaluation_input.prediction == pytest.approx(-0.1)
     assert evaluation_input.observation == pytest.approx(0.1)
+
+
+def test_generate_evaluation_input_from_frame_supports_reversal_3d():
+    from alpha_os.evaluation_generation import generate_evaluation_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+        ]
+    )
+
+    evaluation_input = generate_evaluation_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="reversal_3d",
+    )
+
+    assert evaluation_input.prediction == pytest.approx(-0.1)
+    assert evaluation_input.observation == pytest.approx(0.1)
+
+
+def test_generate_evaluation_input_from_frame_supports_average_gap_3d():
+    from alpha_os.evaluation_generation import generate_evaluation_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+        ]
+    )
+
+    evaluation_input = generate_evaluation_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="average_gap_3d",
+    )
+
+    expected = (133.1 / ((110.0 + 121.0 + 133.1) / 3.0)) - 1.0
+    assert evaluation_input.prediction == pytest.approx(expected)
+    assert evaluation_input.observation == pytest.approx(0.1)
+
+
+def test_generate_evaluation_input_from_frame_supports_range_position_5d():
+    from alpha_os.evaluation_generation import generate_evaluation_input_from_frame
+
+    frame = pd.DataFrame(
+        [
+            {"timestamp": "2026-03-22T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-23T00:00:00+00:00", "close": 104.0},
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 102.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 108.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 106.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 111.0},
+        ]
+    )
+
+    evaluation_input = generate_evaluation_input_from_frame(
+        frame=frame,
+        date="2026-03-27",
+        hypothesis_id="range_position_5d",
+    )
+
+    window = [104.0, 102.0, 108.0, 106.0, 110.0]
+    expected = ((110.0 - min(window)) / (max(window) - min(window))) * 2.0 - 1.0
+    assert evaluation_input.prediction == pytest.approx(expected)
+    assert evaluation_input.observation == pytest.approx((111.0 / 110.0) - 1.0)
 
 
 def test_generate_evaluation_input_from_signal_noise_uses_value_series(monkeypatch):
@@ -653,9 +752,19 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
         store.conn.execute(
             """
             UPDATE hypotheses
-            SET kind = 'momentum', signal_name = 'btc_ohlcv', lookback = 3
+            SET definition_json = ?
             WHERE hypothesis_id = 'momentum_1d'
-            """
+            """,
+            (
+                json.dumps(
+                    {
+                        "kind": "momentum",
+                        "signal_name": "btc_ohlcv",
+                        "params": {"lookback": 3},
+                    },
+                    sort_keys=True,
+                ),
+            ),
         )
         store.conn.commit()
     finally:

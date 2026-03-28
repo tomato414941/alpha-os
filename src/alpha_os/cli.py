@@ -212,16 +212,14 @@ def _active_hypothesis_definition(
         raise ValueError(
             f"hypothesis must be active before generation: {hypothesis_id}"
         )
-    if hypothesis.kind is None or hypothesis.signal_name is None or hypothesis.lookback is None:
+    if hypothesis.definition is None:
         raise ValueError(
             "active hypothesis does not define an executable generation rule: "
             f"{hypothesis_id}"
         )
-    return HypothesisDefinition(
+    return HypothesisDefinition.from_document(
         hypothesis_id=hypothesis.hypothesis_id,
-        kind=hypothesis.kind,
-        signal_name=hypothesis.signal_name,
-        lookback=hypothesis.lookback,
+        document=hypothesis.definition,
         asset=hypothesis.asset,
         target=hypothesis.target,
     )

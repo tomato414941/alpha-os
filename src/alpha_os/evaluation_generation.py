@@ -57,8 +57,9 @@ def _resolve_hypothesis_definition(
     return definition
 
 
-def _prediction_from_returns(
+def _prediction_from_history(
     *,
+    daily_close: pd.Series,
     daily_returns: pd.Series,
     dates: list[str],
     date: str,
@@ -82,6 +83,23 @@ def _prediction_from_returns(
         return base_signal
     if definition.kind == "reversal":
         return -base_signal
+    close_window = daily_close.iloc[idx - definition.lookback + 1 : idx + 1]
+    if close_window.isna().any():
+        raise ValueError(
+            f"daily close window is incomplete for {definition.hypothesis_id} on {date}"
+        )
+    current_close = float(close_window.iloc[-1])
+    if definition.kind == "average_gap":
+        average_close = float(close_window.mean())
+        if average_close == 0.0:
+            raise ValueError("average close cannot be zero")
+        return (current_close / average_close) - 1.0
+    if definition.kind == "range_position":
+        window_min = float(close_window.min())
+        window_max = float(close_window.max())
+        if window_max == window_min:
+            return 0.0
+        return ((current_close - window_min) / (window_max - window_min)) * 2.0 - 1.0
     raise ValueError(f"unsupported hypothesis kind: {definition.kind}")
 
 
@@ -115,7 +133,8 @@ def generate_evaluation_input_from_frame(
     if current_close == 0.0:
         raise ValueError("close price cannot be zero")
 
-    prediction = _prediction_from_returns(
+    prediction = _prediction_from_history(
+        daily_close=daily_close,
         daily_returns=daily_returns,
         dates=dates,
         date=date,

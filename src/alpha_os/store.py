@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
@@ -19,12 +21,43 @@ class HypothesisState:
     hypothesis_id: str
     asset: str
     target: str
-    kind: str | None
-    signal_name: str | None
-    lookback: int | None
+    definition_json: str | None
     status: str
     prediction_count: int
     observation_count: int
+
+    @property
+    def definition(self) -> dict[str, Any] | None:
+        if self.definition_json is None:
+            return None
+        return json.loads(self.definition_json)
+
+    @property
+    def kind(self) -> str | None:
+        definition = self.definition
+        if definition is None:
+            return None
+        value = definition.get("kind")
+        return value if isinstance(value, str) else None
+
+    @property
+    def signal_name(self) -> str | None:
+        definition = self.definition
+        if definition is None:
+            return None
+        value = definition.get("signal_name")
+        return value if isinstance(value, str) else None
+
+    @property
+    def lookback(self) -> int | None:
+        definition = self.definition
+        if definition is None:
+            return None
+        params = definition.get("params")
+        if not isinstance(params, dict):
+            return None
+        value = params.get("lookback")
+        return value if isinstance(value, int) else None
 
 
 @dataclass(frozen=True)
@@ -82,9 +115,9 @@ def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
         hypothesis_id=str(row["hypothesis_id"]),
         asset=str(row["asset"]),
         target=str(row["target"]),
-        kind=None if row["kind"] is None else str(row["kind"]),
-        signal_name=None if row["signal_name"] is None else str(row["signal_name"]),
-        lookback=None if row["lookback"] is None else int(row["lookback"]),
+        definition_json=None
+        if row["definition_json"] is None
+        else str(row["definition_json"]),
         status=str(row["status"]),
         prediction_count=int(row["prediction_count"]),
         observation_count=int(row["observation_count"]),
@@ -174,9 +207,7 @@ class EvaluationStore:
                 hypothesis_id TEXT PRIMARY KEY,
                 asset TEXT NOT NULL,
                 target TEXT NOT NULL,
-                kind TEXT,
-                signal_name TEXT,
-                lookback INTEGER,
+                definition_json TEXT,
                 status TEXT NOT NULL,
                 prediction_count INTEGER NOT NULL,
                 observation_count INTEGER NOT NULL,
@@ -237,7 +268,7 @@ class EvaluationStore:
         row = self.conn.execute(
             """
             SELECT hypothesis_id, asset, target,
-                   kind, signal_name, lookback, status,
+                   definition_json, status,
                    prediction_count, observation_count
             FROM hypotheses
             WHERE hypothesis_id = ?
@@ -255,7 +286,7 @@ class EvaluationStore:
         rows = self.conn.execute(
             """
             SELECT hypothesis_id, asset, target,
-                   kind, signal_name, lookback, status,
+                   definition_json, status,
                    prediction_count, observation_count
             FROM hypotheses
             WHERE asset = ? AND target = ?
@@ -352,25 +383,25 @@ class EvaluationStore:
 
         timestamp = recorded_at or _utc_now()
         definition = find_hypothesis_definition(hypothesis_id)
-        kind = None if definition is None else definition.kind
-        signal_name = None if definition is None else definition.signal_name
-        lookback = None if definition is None else definition.lookback
+        definition_json = (
+            None
+            if definition is None
+            else json.dumps(definition.to_document(), sort_keys=True)
+        )
         with self.conn:
             self.conn.execute(
                 """
                 INSERT INTO hypotheses (
-                    hypothesis_id, asset, target, kind, signal_name, lookback, status,
+                    hypothesis_id, asset, target, definition_json, status,
                     prediction_count, observation_count, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, 'active', 0, 0, ?, ?)
+                VALUES (?, ?, ?, ?, 'active', 0, 0, ?, ?)
                 """,
                 (
                     hypothesis_id,
                     asset,
                     target,
-                    kind,
-                    signal_name,
-                    lookback,
+                    definition_json,
                     timestamp,
                     timestamp,
                 ),

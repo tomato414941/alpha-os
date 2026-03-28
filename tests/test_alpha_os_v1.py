@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 
 
@@ -162,12 +163,85 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT kind, signal_name, lookback, status, prediction_count, observation_count
+            SELECT definition_json, status, prediction_count, observation_count
             FROM hypotheses
             WHERE hypothesis_id = 'momentum_1d'
             """
         ).fetchone()
-        assert row == ("momentum", "btc_ohlcv", 1, "active", 0, 0)
+        assert row is not None
+        definition = json.loads(row[0])
+        assert definition == {
+            "kind": "momentum",
+            "params": {"lookback": 1},
+            "signal_name": "btc_ohlcv",
+        }
+        assert row[1:] == ("active", 0, 0)
+    finally:
+        conn.close()
+
+
+def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    _register_hypothesis(main, db_path, "reversal_5d")
+    output = capsys.readouterr().out
+    assert "Hypothesis [created] reversal_5d" in output
+    assert "Kind:     reversal" in output
+    assert "Signal:   btc_ohlcv" in output
+    assert "Lookback: 5" in output
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT definition_json, status, prediction_count, observation_count
+            FROM hypotheses
+            WHERE hypothesis_id = 'reversal_5d'
+            """
+        ).fetchone()
+        assert row is not None
+        definition = json.loads(row[0])
+        assert definition == {
+            "kind": "reversal",
+            "params": {"lookback": 5},
+            "signal_name": "btc_ohlcv",
+        }
+        assert row[1:] == ("active", 0, 0)
+    finally:
+        conn.close()
+
+
+def test_register_hypothesis_supports_additional_kind_definition(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    _register_hypothesis(main, db_path, "average_gap_3d")
+    output = capsys.readouterr().out
+    assert "Hypothesis [created] average_gap_3d" in output
+    assert "Kind:     average_gap" in output
+    assert "Signal:   btc_ohlcv" in output
+    assert "Lookback: 3" in output
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT definition_json, status, prediction_count, observation_count
+            FROM hypotheses
+            WHERE hypothesis_id = 'average_gap_3d'
+            """
+        ).fetchone()
+        assert row is not None
+        definition = json.loads(row[0])
+        assert definition == {
+            "kind": "average_gap",
+            "params": {"lookback": 3},
+            "signal_name": "btc_ohlcv",
+        }
+        assert row[1:] == ("active", 0, 0)
     finally:
         conn.close()
 
@@ -186,12 +260,12 @@ def test_register_hypothesis_keeps_unknown_definition_nullable(tmp_path, capsys)
     try:
         row = conn.execute(
             """
-            SELECT kind, signal_name, lookback, status
+            SELECT definition_json, status
             FROM hypotheses
             WHERE hypothesis_id = 'hyp_1'
             """
         ).fetchone()
-        assert row == (None, None, None, "active")
+        assert row == (None, "active")
     finally:
         conn.close()
 
