@@ -99,3 +99,42 @@ def test_run_cycle_rejects_non_v1_asset_in_fixture(tmp_path):
         assert exc.code == 2
     else:
         raise AssertionError("expected parser exit for non-v1 fixture asset")
+
+
+def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+    fixture_path = tmp_path / "target_1d.json"
+    fixture_path.write_text(
+        (
+            "{\n"
+            '  "date": "2026-03-27",\n'
+            '  "hypothesis_id": "hyp_fixture",\n'
+            '  "prediction": 0.4,\n'
+            '  "observation": 0.15,\n'
+            '  "asset": "BTC",\n'
+            '  "target": "residual_return_1d"\n'
+            "}\n"
+        ),
+        encoding="utf-8",
+    )
+    _register_hypothesis(main, db_path, "hyp_fixture")
+    capsys.readouterr()
+
+    assert main(["apply-evaluation", "--db", str(db_path), "--input", str(fixture_path)]) == 0
+
+    output = capsys.readouterr().out
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-27" in output
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT evaluation_id, target
+            FROM evaluation_snapshots
+            """
+        ).fetchone()
+        assert row == ("BTC:residual_return_1d:2026-03-27", "residual_return_1d")
+    finally:
+        conn.close()

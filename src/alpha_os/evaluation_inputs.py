@@ -26,8 +26,6 @@ def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
     target = str(item.get("target", DEFAULT_TARGET))
     if asset != DEFAULT_ASSET:
         raise ValueError(f"{source}: alpha-os only supports asset={DEFAULT_ASSET}")
-    if target != DEFAULT_TARGET:
-        raise ValueError(f"{source}: alpha-os only supports target={DEFAULT_TARGET}")
 
     try:
         date = str(item["date"])

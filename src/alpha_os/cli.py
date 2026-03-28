@@ -297,17 +297,18 @@ def _unique_hypothesis_ids(values: list[str]) -> list[str]:
 def _print_hypothesis_competition_summary(
     store: EvaluationStore,
     *,
-    asset: str,
-    target: str,
     hypothesis_ids: list[str],
 ) -> None:
     selected = set(hypothesis_ids)
     hypotheses = {
         item.hypothesis_id: item
-        for item in store.list_hypotheses(asset=asset, target=target)
-        if item.hypothesis_id in selected
+        for item in (store.get_hypothesis(hypothesis_id) for hypothesis_id in hypothesis_ids)
+        if item is not None and item.hypothesis_id in selected
     }
-    metrics = {item.hypothesis_id: item for item in store.list_hypothesis_metrics(hypothesis_ids=hypothesis_ids)}
+    metrics = {
+        item.hypothesis_id: item
+        for item in store.list_hypothesis_metrics(hypothesis_ids=hypothesis_ids)
+    }
     print("alpha-os hypothesis competition")
     print(f"  Count:    {len(hypotheses)}")
     for hypothesis_id in hypothesis_ids:
@@ -516,20 +517,23 @@ def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
     output_path = write_evaluation_inputs(args.out, evaluation_inputs)
     print(f"Generated evaluation inputs: {output_path}")
     print(f"  Count:    {len(evaluation_inputs)}")
-    print(f"  Asset:    {DEFAULT_ASSET}")
-    print(f"  Target:   {DEFAULT_TARGET}")
     if evaluation_inputs:
+        print(f"  Asset:    {evaluation_inputs[0].asset}")
+        print(f"  Target:   {evaluation_inputs[0].target}")
         print(f"  Range:    {evaluation_inputs[0].date} -> {evaluation_inputs[-1].date}")
+    else:
+        print(f"  Asset:    {DEFAULT_ASSET}")
+        print(f"  Target:   {DEFAULT_TARGET}")
     return 0
 
 
 def cmd_run_cycle(args: argparse.Namespace) -> int:
     evaluation_input = _resolve_evaluation_input(args)
     input_source = "json_file" if args.input else "manual"
-    with _runtime_store(args.db) as (cfg, store):
+    with _runtime_store(args.db) as (_cfg, store):
         evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-            asset=cfg.asset,
-            target=cfg.target,
+            asset=evaluation_input.asset,
+            target=evaluation_input.target,
             date=evaluation_input.date,
         )
         snapshot, created = apply_evaluation(
@@ -538,6 +542,8 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
             hypothesis_id=evaluation_input.hypothesis_id,
             prediction_value=evaluation_input.prediction,
             observation_value=evaluation_input.observation,
+            asset=evaluation_input.asset,
+            target=evaluation_input.target,
             input_source=input_source,
         )
         metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
@@ -565,15 +571,15 @@ def _apply_evaluation_inputs(
     input_range_end: str | None = None,
     signal_name: str | None = None,
 ) -> int:
-    with _runtime_store(str(db_path)) as (cfg, store):
+    with _runtime_store(str(db_path)) as (_cfg, store):
         created_count = 0
         existing_count = 0
         latest_snapshot = None
         latest_metric = None
         for evaluation_input in evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-                asset=cfg.asset,
-                target=cfg.target,
+                asset=evaluation_input.asset,
+                target=evaluation_input.target,
                 date=evaluation_input.date,
             )
             latest_snapshot, created = apply_evaluation(
@@ -582,6 +588,8 @@ def _apply_evaluation_inputs(
                 hypothesis_id=evaluation_input.hypothesis_id,
                 prediction_value=evaluation_input.prediction,
                 observation_value=evaluation_input.observation,
+                asset=evaluation_input.asset,
+                target=evaluation_input.target,
                 input_source=input_source,
                 input_range_start=input_range_start,
                 input_range_end=input_range_end,
@@ -648,8 +656,8 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
         latest_snapshot = None
         for evaluation_input in all_evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-                asset=cfg.asset,
-                target=cfg.target,
+                asset=evaluation_input.asset,
+                target=evaluation_input.target,
                 date=evaluation_input.date,
             )
             latest_snapshot, created = apply_evaluation(
@@ -658,6 +666,8 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
                 hypothesis_id=evaluation_input.hypothesis_id,
                 prediction_value=evaluation_input.prediction,
                 observation_value=evaluation_input.observation,
+                asset=evaluation_input.asset,
+                target=evaluation_input.target,
                 input_source="signal_noise_backfill",
                 input_range_start=args.start_date,
                 input_range_end=args.end_date,
@@ -679,8 +689,6 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
             )
         _print_hypothesis_competition_summary(
             store,
-            asset=cfg.asset,
-            target=cfg.target,
             hypothesis_ids=hypothesis_ids,
         )
     return 0
