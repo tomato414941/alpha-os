@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
@@ -185,6 +187,16 @@ def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
     return f"{asset}:{target}:{date}"
 
 
+@contextmanager
+def _runtime_store(db_path: str | None) -> Iterator[tuple[object, EvaluationStore]]:
+    cfg = build_config(db_path=db_path)
+    store = EvaluationStore(cfg.db_path)
+    try:
+        yield cfg, store
+    finally:
+        store.close()
+
+
 def _registered_hypothesis_definition(
     store: EvaluationStore,
     *,
@@ -207,17 +219,6 @@ def _registered_hypothesis_definition(
         target=hypothesis.target,
     )
 
-
-def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -> HypothesisDefinition:
-    cfg = build_config(db_path=db_path)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        return _registered_hypothesis_definition(store, hypothesis_id=hypothesis_id)
-    finally:
-        store.close()
-
-
 def _generate_backfill_inputs_for_hypothesis(
     store: EvaluationStore,
     *,
@@ -236,6 +237,19 @@ def _generate_backfill_inputs_for_hypothesis(
         signal_name=signal_name,
         definition=definition,
     )
+
+
+def _print_hypothesis_details(hypothesis) -> None:
+    print(f"  Asset:    {hypothesis.asset}")
+    print(f"  Target:   {hypothesis.target}")
+    if hypothesis.kind is not None:
+        print(f"  Kind:     {hypothesis.kind}")
+    if hypothesis.signal_name is not None:
+        print(f"  Signal:   {hypothesis.signal_name}")
+    if hypothesis.lookback is not None:
+        print(f"  Lookback: {hypothesis.lookback}")
+    print(f"  Status:   {hypothesis.status}")
+    print(f"  Evals:    {hypothesis.observation_count}")
 
 
 def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
@@ -342,12 +356,8 @@ def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
 
 
 def cmd_init_db(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
-    finally:
-        store.close()
     print(f"Initialized runtime db: {cfg.db_path}")
     print(f"  Asset:    {cfg.asset}")
     print(f"  Target:   {cfg.target}")
@@ -355,24 +365,11 @@ def cmd_init_db(args: argparse.Namespace) -> int:
 
 
 def cmd_register_hypothesis(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (_cfg, store):
         hypothesis, created = store.register_hypothesis(args.hypothesis_id)
-    finally:
-        store.close()
     outcome = "created" if created else "existing"
     print(f"Hypothesis [{outcome}] {hypothesis.hypothesis_id}")
-    print(f"  Asset:    {hypothesis.asset}")
-    print(f"  Target:   {hypothesis.target}")
-    if hypothesis.kind is not None:
-        print(f"  Kind:     {hypothesis.kind}")
-    if hypothesis.signal_name is not None:
-        print(f"  Signal:   {hypothesis.signal_name}")
-    if hypothesis.lookback is not None:
-        print(f"  Lookback: {hypothesis.lookback}")
-    print(f"  Status:   {hypothesis.status}")
-    print(f"  Evals:    {hypothesis.observation_count}")
+    _print_hypothesis_details(hypothesis)
     return 0
 
 
@@ -382,26 +379,13 @@ def _cmd_change_hypothesis_status(
     action: str,
     verb: str,
 ) -> int:
-    cfg = build_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (_cfg, store):
         hypothesis = store.set_hypothesis_status(
             args.hypothesis_id,
             action=action,
         )
-    finally:
-        store.close()
     print(f"Hypothesis [{verb}] {hypothesis.hypothesis_id}")
-    print(f"  Asset:    {hypothesis.asset}")
-    print(f"  Target:   {hypothesis.target}")
-    if hypothesis.kind is not None:
-        print(f"  Kind:     {hypothesis.kind}")
-    if hypothesis.signal_name is not None:
-        print(f"  Signal:   {hypothesis.signal_name}")
-    if hypothesis.lookback is not None:
-        print(f"  Lookback: {hypothesis.lookback}")
-    print(f"  Status:   {hypothesis.status}")
-    print(f"  Evals:    {hypothesis.observation_count}")
+    _print_hypothesis_details(hypothesis)
     return 0
 
 
@@ -430,21 +414,17 @@ def cmd_retire_hypothesis(args: argparse.Namespace) -> int:
 
 
 def cmd_record_prediction(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    evaluation_id = args.evaluation_id or _default_evaluation_id(
-        asset=cfg.asset,
-        target=cfg.target,
-        date=args.date,
-    )
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
+        evaluation_id = args.evaluation_id or _default_evaluation_id(
+            asset=cfg.asset,
+            target=cfg.target,
+            date=args.date,
+        )
         prediction, created = store.record_prediction(
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
             prediction_value=args.prediction,
         )
-    finally:
-        store.close()
     outcome = "created" if created else "existing"
     print(f"Prediction [{outcome}] {prediction.evaluation_id}")
     print(f"  Asset:    {prediction.asset}")
@@ -455,20 +435,16 @@ def cmd_record_prediction(args: argparse.Namespace) -> int:
 
 
 def cmd_finalize_observation(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    evaluation_id = args.evaluation_id or _default_evaluation_id(
-        asset=cfg.asset,
-        target=cfg.target,
-        date=args.date,
-    )
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
+        evaluation_id = args.evaluation_id or _default_evaluation_id(
+            asset=cfg.asset,
+            target=cfg.target,
+            date=args.date,
+        )
         observation, created = store.finalize_observation(
             evaluation_id=evaluation_id,
             observation_value=args.observation,
         )
-    finally:
-        store.close()
     outcome = "created" if created else "existing"
     print(f"Observation [{outcome}] {observation.evaluation_id}")
     print(f"  Asset:    {observation.asset}")
@@ -478,31 +454,29 @@ def cmd_finalize_observation(args: argparse.Namespace) -> int:
 
 
 def cmd_update_state(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    evaluation_id = args.evaluation_id or _default_evaluation_id(
-        asset=cfg.asset,
-        target=cfg.target,
-        date=args.date,
-    )
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
+        evaluation_id = args.evaluation_id or _default_evaluation_id(
+            asset=cfg.asset,
+            target=cfg.target,
+            date=args.date,
+        )
         snapshot, created = store.update_state(
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
         )
         metric = store.get_hypothesis_metric(args.hypothesis_id)
-    finally:
-        store.close()
     _print_evaluation_snapshot(snapshot, created=created)
     _print_hypothesis_metric(metric)
     return 0
 
 
 def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
-    definition = _runtime_hypothesis_definition(
-        db_path=args.db,
-        hypothesis_id=args.hypothesis_id,
-    )
+    with _runtime_store(args.db) as (_cfg, store):
+        store.ensure_schema()
+        definition = _registered_hypothesis_definition(
+            store,
+            hypothesis_id=args.hypothesis_id,
+        )
     evaluation_input = generate_evaluation_input_from_signal_noise(
         date=args.date,
         hypothesis_id=args.hypothesis_id,
@@ -524,10 +498,12 @@ def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
 
 
 def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
-    definition = _runtime_hypothesis_definition(
-        db_path=args.db,
-        hypothesis_id=args.hypothesis_id,
-    )
+    with _runtime_store(args.db) as (_cfg, store):
+        store.ensure_schema()
+        definition = _registered_hypothesis_definition(
+            store,
+            hypothesis_id=args.hypothesis_id,
+        )
     evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
         start_date=args.start_date,
         end_date=args.end_date,
@@ -547,16 +523,14 @@ def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
 
 
 def cmd_run_cycle(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
     evaluation_input = _resolve_evaluation_input(args)
-    evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-        asset=cfg.asset,
-        target=cfg.target,
-        date=evaluation_input.date,
-    )
     input_source = "json_file" if args.input else "manual"
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
+        evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
+            asset=cfg.asset,
+            target=cfg.target,
+            date=evaluation_input.date,
+        )
         snapshot, created = store.run_cycle(
             evaluation_id=evaluation_id,
             hypothesis_id=evaluation_input.hypothesis_id,
@@ -565,8 +539,6 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
             input_source=input_source,
         )
         metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
-    finally:
-        store.close()
     _print_evaluation_snapshot(snapshot, created=created)
     _print_hypothesis_metric(metric)
     return 0
@@ -591,9 +563,7 @@ def _apply_evaluation_inputs(
     input_range_end: str | None = None,
     signal_name: str | None = None,
 ) -> int:
-    cfg = build_config(db_path=str(db_path))
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(str(db_path)) as (cfg, store):
         created_count = 0
         existing_count = 0
         latest_snapshot = None
@@ -619,8 +589,6 @@ def _apply_evaluation_inputs(
             else:
                 existing_count += 1
             latest_metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
-    finally:
-        store.close()
 
     print(
         "Batch complete: "
@@ -633,9 +601,7 @@ def _apply_evaluation_inputs(
 
 
 def cmd_run_backfill(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
         evaluation_inputs = _generate_backfill_inputs_for_hypothesis(
             store,
@@ -645,8 +611,6 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
             base_url=args.base_url,
             signal_name=args.signal_name,
         )
-    finally:
-        store.close()
     if args.out is not None:
         output_path = write_evaluation_inputs(args.out, evaluation_inputs)
         print(f"Wrote evaluation inputs: {output_path}")
@@ -661,11 +625,9 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
 
 
 def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
     hypothesis_ids = _unique_hypothesis_ids(args.hypothesis_id)
 
-    store = EvaluationStore(cfg.db_path)
-    try:
+    with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
         all_evaluation_inputs: list[EvaluationInput] = []
         for hypothesis_id in hypothesis_ids:
@@ -717,8 +679,6 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
             target=cfg.target,
             hypothesis_ids=hypothesis_ids,
         )
-    finally:
-        store.close()
     return 0
 
 
