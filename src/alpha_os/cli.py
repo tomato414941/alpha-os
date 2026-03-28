@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from pathlib import Path
+from collections import defaultdict
 from typing import Iterator
 
 from .evaluation_runtime import apply_evaluation, update_evaluation_state
@@ -327,6 +328,30 @@ def _print_hypothesis_competition_summary(
             f"corr={0.0 if metric is None else metric.corr:.6f} "
             f"mmc={0.0 if metric is None else metric.mmc:.6f} "
             f"evals={hypothesis.observation_count if metric is None else metric.sample_count}"
+        )
+
+
+def _print_target_summaries(hypotheses, metrics_by_id) -> None:
+    grouped = defaultdict(list)
+    for hypothesis in hypotheses:
+        grouped[hypothesis.target].append(hypothesis)
+
+    print("  Targets:")
+    for target, target_hypotheses in sorted(grouped.items()):
+        active = sum(1 for item in target_hypotheses if item.status == "active")
+        inactive = sum(1 for item in target_hypotheses if item.status == "inactive")
+        target_metrics = [
+            metrics_by_id[item.hypothesis_id]
+            for item in target_hypotheses
+            if item.hypothesis_id in metrics_by_id
+        ]
+        tracked = len(target_metrics)
+        mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in target_metrics) / tracked
+        mean_mmc = 0.0 if tracked == 0 else sum(item.mmc for item in target_metrics) / tracked
+        print(
+            f"    {target}: total={len(target_hypotheses)} "
+            f"active={active} inactive={inactive} "
+            f"tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc:.6f}"
         )
 
 
@@ -699,7 +724,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
-        hypotheses = store.list_hypotheses(asset=cfg.asset, target=cfg.target)
+        hypotheses = store.list_hypotheses(asset=cfg.asset, target=None)
         metrics = (
             []
             if not hypotheses
@@ -715,7 +740,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     print("alpha-os status")
     print(f"  DB:       {Path(cfg.db_path)}")
     print(f"  Asset:    {cfg.asset}")
-    print(f"  Target:   {cfg.target}")
+    print("  Targets:  all")
     if latest is None and not hypotheses:
         print("  Latest:   no evaluations recorded")
         return 0
@@ -736,6 +761,10 @@ def cmd_status(args: argparse.Namespace) -> int:
     mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
     mean_mmc = 0.0 if tracked == 0 else sum(item.mmc for item in metrics) / tracked
     print(f"  Metrics:  tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc:.6f}")
+    _print_target_summaries(
+        hypotheses,
+        {item.hypothesis_id: item for item in metrics},
+    )
     return 0
 
 

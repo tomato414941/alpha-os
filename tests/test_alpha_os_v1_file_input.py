@@ -138,3 +138,53 @@ def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
         assert row == ("BTC:residual_return_1d:2026-03-27", "residual_return_1d")
     finally:
         conn.close()
+
+
+def test_status_summarizes_multiple_targets(tmp_path, capsys):
+    from alpha_os.cli import main
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    default_fixture = Path("tests/fixtures/v1_cycles/single_cycle.json")
+    target_1d_fixture = tmp_path / "target_1d.json"
+    target_1d_fixture.write_text(
+        (
+            "{\n"
+            '  "date": "2026-03-28",\n'
+            '  "hypothesis_id": "hyp_1d",\n'
+            '  "prediction": 0.1,\n'
+            '  "observation": -0.05,\n'
+            '  "asset": "BTC",\n'
+            '  "target": "residual_return_1d"\n'
+            "}\n"
+        ),
+        encoding="utf-8",
+    )
+
+    _register_hypothesis(main, db_path, "hyp_fixture")
+    _register_hypothesis(main, db_path, "hyp_1d")
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.conn.execute(
+            """
+            UPDATE hypotheses
+            SET target = 'residual_return_1d'
+            WHERE hypothesis_id = 'hyp_1d'
+            """
+        )
+        store.conn.commit()
+    finally:
+        store.close()
+    capsys.readouterr()
+
+    assert main(["apply-evaluation", "--db", str(db_path), "--input", str(default_fixture)]) == 0
+    capsys.readouterr()
+    assert main(["apply-evaluation", "--db", str(db_path), "--input", str(target_1d_fixture)]) == 0
+    capsys.readouterr()
+
+    assert main(["status", "--db", str(db_path)]) == 0
+    output = capsys.readouterr().out
+    assert "Targets:  all" in output
+    assert "residual_return_1d: total=1" in output
+    assert "residual_return_3d: total=1" in output

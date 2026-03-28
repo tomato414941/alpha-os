@@ -292,19 +292,32 @@ class EvaluationStore:
         self,
         *,
         asset: str = DEFAULT_ASSET,
-        target: str = DEFAULT_TARGET,
+        target: str | None = DEFAULT_TARGET,
     ) -> list[HypothesisState]:
-        rows = self.conn.execute(
-            """
-            SELECT hypothesis_id, asset, target,
-                   definition_json, status,
-                   prediction_count, observation_count
-            FROM hypotheses
-            WHERE asset = ? AND target = ?
-            ORDER BY observation_count DESC, prediction_count DESC, hypothesis_id ASC
-            """,
-            (asset, target),
-        ).fetchall()
+        if target is None:
+            rows = self.conn.execute(
+                """
+                SELECT hypothesis_id, asset, target,
+                       definition_json, status,
+                       prediction_count, observation_count
+                FROM hypotheses
+                WHERE asset = ?
+                ORDER BY target ASC, observation_count DESC, prediction_count DESC, hypothesis_id ASC
+                """,
+                (asset,),
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                """
+                SELECT hypothesis_id, asset, target,
+                       definition_json, status,
+                       prediction_count, observation_count
+                FROM hypotheses
+                WHERE asset = ? AND target = ?
+                ORDER BY observation_count DESC, prediction_count DESC, hypothesis_id ASC
+                """,
+                (asset, target),
+            ).fetchall()
         return [_row_to_hypothesis(row) for row in rows if row is not None]
 
     def get_hypothesis_metric(self, hypothesis_id: str) -> HypothesisMetricState | None:
