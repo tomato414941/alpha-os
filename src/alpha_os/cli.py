@@ -185,14 +185,12 @@ def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
     return f"{asset}:{target}:{date}"
 
 
-def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -> HypothesisDefinition:
-    cfg = build_config(db_path=db_path)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        hypothesis = store.get_hypothesis(hypothesis_id)
-    finally:
-        store.close()
+def _registered_hypothesis_definition(
+    store: EvaluationStore,
+    *,
+    hypothesis_id: str,
+) -> HypothesisDefinition:
+    hypothesis = store.get_hypothesis(hypothesis_id)
     if hypothesis is None:
         raise ValueError(f"hypothesis must be registered before generation: {hypothesis_id}")
     if hypothesis.kind is None or hypothesis.signal_name is None or hypothesis.lookback is None:
@@ -207,6 +205,36 @@ def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -
         lookback=hypothesis.lookback,
         asset=hypothesis.asset,
         target=hypothesis.target,
+    )
+
+
+def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -> HypothesisDefinition:
+    cfg = build_config(db_path=db_path)
+    store = EvaluationStore(cfg.db_path)
+    try:
+        store.ensure_schema()
+        return _registered_hypothesis_definition(store, hypothesis_id=hypothesis_id)
+    finally:
+        store.close()
+
+
+def _generate_backfill_inputs_for_hypothesis(
+    store: EvaluationStore,
+    *,
+    hypothesis_id: str,
+    start_date: str,
+    end_date: str,
+    base_url: str,
+    signal_name: str,
+) -> list[EvaluationInput]:
+    definition = _registered_hypothesis_definition(store, hypothesis_id=hypothesis_id)
+    return generate_evaluation_inputs_from_signal_noise(
+        start_date=start_date,
+        end_date=end_date,
+        hypothesis_id=hypothesis_id,
+        base_url=base_url,
+        signal_name=signal_name,
+        definition=definition,
     )
 
 
@@ -569,6 +597,7 @@ def _apply_evaluation_inputs(
         created_count = 0
         existing_count = 0
         latest_snapshot = None
+        latest_metric = None
         for evaluation_input in evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=cfg.asset,
@@ -589,6 +618,7 @@ def _apply_evaluation_inputs(
                 created_count += 1
             else:
                 existing_count += 1
+            latest_metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
     finally:
         store.close()
 
@@ -598,29 +628,25 @@ def _apply_evaluation_inputs(
     )
     if latest_snapshot is not None:
         print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.hypothesis_id}")
-        store = EvaluationStore(cfg.db_path)
-        try:
-            metric = store.get_hypothesis_metric(latest_snapshot.hypothesis_id)
-        finally:
-            store.close()
-        _print_hypothesis_metric(metric)
+        _print_hypothesis_metric(latest_metric)
     return 0
 
 
 def cmd_run_backfill(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    definition = _runtime_hypothesis_definition(
-        db_path=args.db,
-        hypothesis_id=args.hypothesis_id,
-    )
-    evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
-        start_date=args.start_date,
-        end_date=args.end_date,
-        hypothesis_id=args.hypothesis_id,
-        base_url=args.base_url,
-        signal_name=args.signal_name,
-        definition=definition,
-    )
+    store = EvaluationStore(cfg.db_path)
+    try:
+        store.ensure_schema()
+        evaluation_inputs = _generate_backfill_inputs_for_hypothesis(
+            store,
+            hypothesis_id=args.hypothesis_id,
+            start_date=args.start_date,
+            end_date=args.end_date,
+            base_url=args.base_url,
+            signal_name=args.signal_name,
+        )
+    finally:
+        store.close()
     if args.out is not None:
         output_path = write_evaluation_inputs(args.out, evaluation_inputs)
         print(f"Wrote evaluation inputs: {output_path}")
@@ -637,52 +663,48 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
 def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
     hypothesis_ids = _unique_hypothesis_ids(args.hypothesis_id)
-    total_evaluations = 0
-    created_count = 0
-    existing_count = 0
-    latest_snapshot = None
 
     store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
+        all_evaluation_inputs: list[EvaluationInput] = []
         for hypothesis_id in hypothesis_ids:
-            definition = _runtime_hypothesis_definition(
-                db_path=args.db,
+            evaluation_inputs = _generate_backfill_inputs_for_hypothesis(
+                store,
                 hypothesis_id=hypothesis_id,
-            )
-            evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
                 start_date=args.start_date,
                 end_date=args.end_date,
-                hypothesis_id=hypothesis_id,
                 base_url=args.base_url,
                 signal_name=args.signal_name,
-                definition=definition,
             )
-            total_evaluations += len(evaluation_inputs)
-            for evaluation_input in evaluation_inputs:
-                evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-                    asset=cfg.asset,
-                    target=cfg.target,
-                    date=evaluation_input.date,
-                )
-                latest_snapshot, created = store.run_cycle(
-                    evaluation_id=evaluation_id,
-                    hypothesis_id=evaluation_input.hypothesis_id,
-                    prediction_value=evaluation_input.prediction,
-                    observation_value=evaluation_input.observation,
-                    input_source="signal_noise_backfill",
-                    input_range_start=args.start_date,
-                    input_range_end=args.end_date,
-                    signal_name=args.signal_name,
-                )
-                if created:
-                    created_count += 1
-                else:
-                    existing_count += 1
+            all_evaluation_inputs.extend(evaluation_inputs)
+        created_count = 0
+        existing_count = 0
+        latest_snapshot = None
+        for evaluation_input in all_evaluation_inputs:
+            evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
+                asset=cfg.asset,
+                target=cfg.target,
+                date=evaluation_input.date,
+            )
+            latest_snapshot, created = store.run_cycle(
+                evaluation_id=evaluation_id,
+                hypothesis_id=evaluation_input.hypothesis_id,
+                prediction_value=evaluation_input.prediction,
+                observation_value=evaluation_input.observation,
+                input_source="signal_noise_backfill",
+                input_range_start=args.start_date,
+                input_range_end=args.end_date,
+                signal_name=args.signal_name,
+            )
+            if created:
+                created_count += 1
+            else:
+                existing_count += 1
         print(
             "Batch complete: "
             f"hypotheses={len(hypothesis_ids)} "
-            f"evaluations={total_evaluations} "
+            f"evaluations={len(all_evaluation_inputs)} "
             f"created={created_count} existing={existing_count}"
         )
         if latest_snapshot is not None:
