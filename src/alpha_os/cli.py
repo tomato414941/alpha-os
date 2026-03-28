@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
+from .evaluation_runtime import apply_evaluation, update_evaluation_state
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -460,7 +461,8 @@ def cmd_update_state(args: argparse.Namespace) -> int:
             target=cfg.target,
             date=args.date,
         )
-        snapshot, created = store.update_state(
+        snapshot, created = update_evaluation_state(
+            store,
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
         )
@@ -531,7 +533,8 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
             target=cfg.target,
             date=evaluation_input.date,
         )
-        snapshot, created = store.run_cycle(
+        snapshot, created = apply_evaluation(
+            store,
             evaluation_id=evaluation_id,
             hypothesis_id=evaluation_input.hypothesis_id,
             prediction_value=evaluation_input.prediction,
@@ -574,7 +577,8 @@ def _apply_evaluation_inputs(
                 target=cfg.target,
                 date=evaluation_input.date,
             )
-            latest_snapshot, created = store.run_cycle(
+            latest_snapshot, created = apply_evaluation(
+                store,
                 evaluation_id=evaluation_id,
                 hypothesis_id=evaluation_input.hypothesis_id,
                 prediction_value=evaluation_input.prediction,
@@ -649,7 +653,8 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
                 target=cfg.target,
                 date=evaluation_input.date,
             )
-            latest_snapshot, created = store.run_cycle(
+            latest_snapshot, created = apply_evaluation(
+                store,
                 evaluation_id=evaluation_id,
                 hypothesis_id=evaluation_input.hypothesis_id,
                 prediction_value=evaluation_input.prediction,
