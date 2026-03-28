@@ -41,7 +41,9 @@ After that:
 - `docs/portfolio-runtime-principles.md`
   - current portfolio / allocation semantics
 - `DESIGN.md`
-  - greenfield and long-horizon architecture
+  - short design summary
+- `docs/design/README.md`
+  - detailed long-horizon design map
 - `AGENTS.override.md`
   - machine-local operations
 
@@ -259,5 +261,6 @@ ruff check src/
 ## Further Reading
 
 - [OPERATING_BOUNDARIES.md](/home/dev/projects/alpha-os/OPERATING_BOUNDARIES.md): current runtime truth, safety boundaries, and exit criteria
-- [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): architectural rationale and long-term direction
+- [DESIGN.md](/home/dev/projects/alpha-os/DESIGN.md): short architectural summary and entrypoint into design notes
+- [docs/design/README.md](/home/dev/projects/alpha-os/docs/design/README.md): long-horizon design map
 - [ROADMAP.md](/home/dev/projects/alpha-os/docs/exploratory/ROADMAP.md): future options not yet promoted into the active plan

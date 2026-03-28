@@ -22,9 +22,11 @@ For most work, read in this order:
    - current safety boundaries
 3. One design note, depending on the question:
    - [`DESIGN.md`](../DESIGN.md)
-     - greenfield architecture
-     - long-horizon module boundaries
-     - multi-asset / thousand-asset scaling model
+     - short design summary
+     - entrypoint into long-horizon design notes
+   - [`docs/design/README.md`](./design/README.md)
+     - detailed design map
+     - domain model, evaluation, architecture, scaling
    - [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
      - current portfolio semantics
      - lifecycle / allocation terminology
@@ -67,6 +69,7 @@ Prefer:
 Prefer:
 
 - [`DESIGN.md`](../DESIGN.md)
+ - [`docs/design/README.md`](./design/README.md)
 
 ### "What are we doing next right now?"
 
@@ -79,7 +82,7 @@ Prefer:
 Prefer:
 
 - [`DESIGN.md`](../DESIGN.md)
-  - especially the multi-asset and thousand-asset sections
+ - [`scaling-and-migration.md`](./design/scaling-and-migration.md)
 
 ### "What is an old idea, archive, or exploratory note?"
 
@@ -115,9 +118,17 @@ Prefer:
 ### Long-Horizon Design
 
 - [`DESIGN.md`](../DESIGN.md)
-  - greenfield baseline
-  - architecture without migration baggage
-  - scaling model for many sleeves / assets
+  - short architectural summary
+- [`docs/design/README.md`](./design/README.md)
+  - design note map
+- [`domain-model.md`](./design/domain-model.md)
+  - core terminology and hypothesis model
+- [`runtime-evaluation.md`](./design/runtime-evaluation.md)
+  - targets, horizons, and evaluation model
+- [`architecture.md`](./design/architecture.md)
+  - producer-consumer architecture
+- [`scaling-and-migration.md`](./design/scaling-and-migration.md)
+  - greenfield baseline and scaling direction
 
 ### Exploratory / Future-Facing
 
@@ -134,7 +145,7 @@ No standalone archive design note is kept anymore.
 Legacy registry-era context should be read from:
 
 - git history
-- `DESIGN.md` greenfield-vs-current sections
+- [`scaling-and-migration.md`](./design/scaling-and-migration.md)
 - `plan.md` legacy residue cleanup items
 
 ## Practical Rule
@@ -144,5 +155,5 @@ If two documents seem to disagree, prefer:
 1. `README.md` for current entrypoints
 2. `OPERATING_BOUNDARIES.md` for current runtime truth
 3. `portfolio-runtime-principles.md` for current portfolio semantics
-4. `DESIGN.md` for target architecture
+4. `DESIGN.md` and `docs/design/` for target architecture
 5. archive / roadmap files only for context
