@@ -316,7 +316,7 @@ class EvaluationStore:
         self.ensure_schema()
         hypothesis = self.get_hypothesis(hypothesis_id)
         if hypothesis is None:
-            raise ValueError(f"hypothesis is not registered: {hypothesis_id}")
+            raise ValueError(f"hypothesis does not exist: {hypothesis_id}")
         decision = decide_operator_transition(
             current_status=hypothesis.status,
             action=action,
@@ -362,7 +362,7 @@ class EvaluationStore:
                     hypothesis_id, asset, target, kind, signal_name, lookback, status,
                     prediction_count, observation_count, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, 'registered', 0, 0, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, 'active', 0, 0, ?, ?)
                 """,
                 (
                     hypothesis_id,
@@ -450,10 +450,8 @@ class EvaluationStore:
         self.ensure_schema()
         hypothesis = self.get_hypothesis(hypothesis_id)
         if hypothesis is None:
-            raise ValueError(
-                f"hypothesis must be registered before recording predictions: {hypothesis_id}"
-            )
-        if hypothesis.status in {"paused", "retired"}:
+            raise ValueError(f"hypothesis must exist before recording predictions: {hypothesis_id}")
+        if hypothesis.status != "active":
             raise ValueError(
                 f"prediction cannot be recorded while hypothesis is {hypothesis.status}: "
                 f"{hypothesis_id}"

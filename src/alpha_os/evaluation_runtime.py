@@ -32,10 +32,8 @@ def update_evaluation_state(
     timestamp = recorded_at or _utc_now()
     hypothesis = store.get_hypothesis(hypothesis_id)
     if hypothesis is None:
-        raise ValueError(
-            f"hypothesis must be registered before updating state: {hypothesis_id}"
-        )
-    if hypothesis.status in {"paused", "retired"}:
+        raise ValueError(f"hypothesis must exist before updating state: {hypothesis_id}")
+    if hypothesis.status != "active":
         raise ValueError(
             f"state cannot be updated while hypothesis is {hypothesis.status}: {hypothesis_id}"
         )

@@ -14,25 +14,21 @@ def decide_operator_transition(
     current_status: str,
     action: str,
 ) -> TransitionDecision:
-    if action == "pause":
-        if current_status != "registered":
+    if action == "deactivate":
+        if current_status != "active":
             raise ValueError(
-                f"invalid hypothesis transition: {current_status} -> paused"
+                f"invalid hypothesis transition: {current_status} -> inactive"
             )
-        return TransitionDecision(next_status="paused", reason="operator_pause")
+        return TransitionDecision(
+            next_status="inactive",
+            reason="operator_deactivate",
+        )
 
-    if action == "resume":
-        if current_status != "paused":
+    if action == "activate":
+        if current_status != "inactive":
             raise ValueError(
-                f"invalid hypothesis transition: {current_status} -> registered"
+                f"invalid hypothesis transition: {current_status} -> active"
             )
-        return TransitionDecision(next_status="registered", reason="operator_resume")
-
-    if action == "retire":
-        if current_status not in {"registered", "paused"}:
-            raise ValueError(
-                f"invalid hypothesis transition: {current_status} -> retired"
-            )
-        return TransitionDecision(next_status="retired", reason="operator_retire")
+        return TransitionDecision(next_status="active", reason="operator_activate")
 
     raise ValueError(f"unknown transition action: {action}")

@@ -45,17 +45,19 @@ def _build_parser() -> argparse.ArgumentParser:
     register.add_argument("--db", type=str, default=None)
     register.add_argument("--hypothesis-id", type=str, required=True)
 
-    pause = sub.add_parser("pause-hypothesis", help="Pause one registered hypothesis")
-    pause.add_argument("--db", type=str, default=None)
-    pause.add_argument("--hypothesis-id", type=str, required=True)
+    deactivate = sub.add_parser(
+        "deactivate-hypothesis",
+        help="Deactivate one active hypothesis",
+    )
+    deactivate.add_argument("--db", type=str, default=None)
+    deactivate.add_argument("--hypothesis-id", type=str, required=True)
 
-    resume = sub.add_parser("resume-hypothesis", help="Resume one paused hypothesis")
-    resume.add_argument("--db", type=str, default=None)
-    resume.add_argument("--hypothesis-id", type=str, required=True)
-
-    retire = sub.add_parser("retire-hypothesis", help="Retire one registered or paused hypothesis")
-    retire.add_argument("--db", type=str, default=None)
-    retire.add_argument("--hypothesis-id", type=str, required=True)
+    activate = sub.add_parser(
+        "activate-hypothesis",
+        help="Activate one inactive hypothesis",
+    )
+    activate.add_argument("--db", type=str, default=None)
+    activate.add_argument("--hypothesis-id", type=str, required=True)
 
     record = sub.add_parser(
         "record-prediction",
@@ -156,7 +158,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     backfill_many = sub.add_parser(
         "apply-hypotheses-backfill",
-        help="Generate and apply deterministic evaluation inputs for multiple registered hypotheses over one date range",
+        help="Generate and apply deterministic evaluation inputs for multiple active hypotheses over one date range",
     )
     backfill_many.add_argument("--db", type=str, default=None)
     backfill_many.add_argument("--start-date", type=str, required=True)
@@ -166,7 +168,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=str,
         action="append",
         required=True,
-        help="Repeat to include multiple registered hypotheses",
+        help="Repeat to include multiple active hypotheses",
     )
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
     backfill_many.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
@@ -198,17 +200,21 @@ def _runtime_store(db_path: str | None) -> Iterator[tuple[object, EvaluationStor
         store.close()
 
 
-def _registered_hypothesis_definition(
+def _active_hypothesis_definition(
     store: EvaluationStore,
     *,
     hypothesis_id: str,
 ) -> HypothesisDefinition:
     hypothesis = store.get_hypothesis(hypothesis_id)
     if hypothesis is None:
-        raise ValueError(f"hypothesis must be registered before generation: {hypothesis_id}")
+        raise ValueError(f"hypothesis must exist before generation: {hypothesis_id}")
+    if hypothesis.status != "active":
+        raise ValueError(
+            f"hypothesis must be active before generation: {hypothesis_id}"
+        )
     if hypothesis.kind is None or hypothesis.signal_name is None or hypothesis.lookback is None:
         raise ValueError(
-            "registered hypothesis does not define an executable generation rule: "
+            "active hypothesis does not define an executable generation rule: "
             f"{hypothesis_id}"
         )
     return HypothesisDefinition(
@@ -229,7 +235,7 @@ def _generate_backfill_inputs_for_hypothesis(
     base_url: str,
     signal_name: str,
 ) -> list[EvaluationInput]:
-    definition = _registered_hypothesis_definition(store, hypothesis_id=hypothesis_id)
+    definition = _active_hypothesis_definition(store, hypothesis_id=hypothesis_id)
     return generate_evaluation_inputs_from_signal_noise(
         start_date=start_date,
         end_date=end_date,
@@ -390,27 +396,19 @@ def _cmd_change_hypothesis_status(
     return 0
 
 
-def cmd_pause_hypothesis(args: argparse.Namespace) -> int:
+def cmd_deactivate_hypothesis(args: argparse.Namespace) -> int:
     return _cmd_change_hypothesis_status(
         args,
-        action="pause",
-        verb="paused",
+        action="deactivate",
+        verb="deactivated",
     )
 
 
-def cmd_resume_hypothesis(args: argparse.Namespace) -> int:
+def cmd_activate_hypothesis(args: argparse.Namespace) -> int:
     return _cmd_change_hypothesis_status(
         args,
-        action="resume",
-        verb="resumed",
-    )
-
-
-def cmd_retire_hypothesis(args: argparse.Namespace) -> int:
-    return _cmd_change_hypothesis_status(
-        args,
-        action="retire",
-        verb="retired",
+        action="activate",
+        verb="activated",
     )
 
 
@@ -475,7 +473,7 @@ def cmd_update_state(args: argparse.Namespace) -> int:
 def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
-        definition = _registered_hypothesis_definition(
+        definition = _active_hypothesis_definition(
             store,
             hypothesis_id=args.hypothesis_id,
         )
@@ -502,7 +500,7 @@ def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
 def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
-        definition = _registered_hypothesis_definition(
+        definition = _active_hypothesis_definition(
             store,
             hypothesis_id=args.hypothesis_id,
         )
@@ -719,12 +717,11 @@ def cmd_status(args: argparse.Namespace) -> int:
     else:
         print("  Latest:   no evaluations recorded")
     total = len(hypotheses)
-    registered = sum(1 for item in hypotheses if item.status == "registered")
-    paused = sum(1 for item in hypotheses if item.status == "paused")
-    retired = sum(1 for item in hypotheses if item.status == "retired")
+    active = sum(1 for item in hypotheses if item.status == "active")
+    inactive = sum(1 for item in hypotheses if item.status == "inactive")
     print(
         "  Hyp:      "
-        f"total={total} registered={registered} paused={paused} retired={retired}"
+        f"total={total} active={active} inactive={inactive}"
     )
     tracked = len(metrics)
     mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
@@ -772,12 +769,10 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_init_db(args)
         if args.command == "register-hypothesis":
             return cmd_register_hypothesis(args)
-        if args.command == "pause-hypothesis":
-            return cmd_pause_hypothesis(args)
-        if args.command == "resume-hypothesis":
-            return cmd_resume_hypothesis(args)
-        if args.command == "retire-hypothesis":
-            return cmd_retire_hypothesis(args)
+        if args.command == "deactivate-hypothesis":
+            return cmd_deactivate_hypothesis(args)
+        if args.command == "activate-hypothesis":
+            return cmd_activate_hypothesis(args)
         if args.command == "record-prediction":
             return cmd_record_prediction(args)
         if args.command == "finalize-observation":

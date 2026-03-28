@@ -613,7 +613,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert "range=2026-03-27->2026-03-28" in cycles_output
 
 
-def test_generate_cycle_input_requires_registered_hypothesis(tmp_path):
+def test_generate_evaluation_input_requires_existing_hypothesis(tmp_path):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -636,10 +636,10 @@ def test_generate_cycle_input_requires_registered_hypothesis(tmp_path):
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for unregistered hypothesis generation")
+        raise AssertionError("expected parser exit for unknown hypothesis generation")
 
 
-def test_generate_cycle_input_uses_registered_definition_from_db(tmp_path, monkeypatch):
+def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monkeypatch):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 

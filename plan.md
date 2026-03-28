@@ -74,7 +74,7 @@ The following are still out of scope after v2:
 - multi-asset runtime
 - global allocation
 - live execution
-- richer hypothesis lifecycle states beyond `registered` and `live`
+- richer hypothesis lifecycle states beyond `active` and `inactive`
 - scoring-model redesign beyond the current bounded update rules
 
 ## V3 Rules
@@ -89,14 +89,8 @@ This section defines the next step after v2 completion.
   - `finalize-observation`
   - `update-state`
 - Add explicit hypothesis states:
-  - `registered`
   - `active`
-  - `live`
-  - `paused`
-  - `retired`
-- Distinguish `live hypothesis` from `live trading`
-  - `live hypothesis` means allocation-eligible inside the runtime
-  - `live trading` remains out of scope
+  - `inactive`
 - Reject invalid transitions explicitly rather than silently repairing them
 - Keep `apply-evaluation` and `apply-backfill` as convenience wrappers over the same bounded path
 - Do not add multi-asset, global allocation, or live execution in v3
@@ -106,13 +100,9 @@ This section defines the next step after v2 completion.
 
 The intended state flow is:
 
-- `register-hypothesis` creates `registered`
-- `update-state` may move `registered -> active`
-- allocation eligibility may move `active -> live`
-- operator action may move `live -> paused`
-- operator action may move `paused -> active`
-- operator action may move `active -> retired`
-- operator action may move `paused -> retired`
+- `register-hypothesis` creates `active`
+- operator action may move `active -> inactive`
+- operator action may move `inactive -> active`
 
 ### V3 Done When
 
@@ -121,7 +111,6 @@ V3 is complete when all of the following are true:
 - lifecycle states are explicit in the runtime model
 - valid transitions are enforced and invalid transitions fail explicitly
 - the primary bounded path still works and remains auditable
-- `live hypothesis` semantics are explicit without introducing live trading
 - v3 stays within scope: `BTC-only`, `paper-only`, `1 target`
 
 ## V4 Rules
@@ -133,10 +122,8 @@ This section defines the next step after v3 completion.
 - Keep the existing bounded path and lifecycle state machine intact
 - Make transition decisions explicit policy outputs rather than implicit side effects
 - The policy layer may decide:
-  - when `active -> live`
-  - when `live -> paused`
-  - when `active -> retired`
-  - when `paused -> active`
+  - when `active -> inactive`
+  - when `inactive -> active`
 - Runtime storage and CLI should enforce transitions, not invent them ad hoc
 - Do not add multi-asset, global allocation, live execution, or new read-only surfaces in v4
 - Do not redesign the scoring model and transition policy in the same step
@@ -158,11 +145,8 @@ V5 focuses on state minimization rather than new state introduction.
 - Do not add new persisted state just to make the runtime easier to inspect
 - Separate `persisted state` from `derived label`
 - Re-evaluate hypothesis states one by one:
-  - `registered`
   - `active`
-  - `live`
-  - `paused`
-  - `retired`
+  - `inactive`
 - Keep a state only when one of the following is true:
   - it captures operator intent that cannot be derived later
   - it enforces a transition constraint that cannot be expressed safely from existing records

@@ -167,7 +167,7 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
             WHERE hypothesis_id = 'momentum_1d'
             """
         ).fetchone()
-        assert row == ("momentum", "btc_ohlcv", 1, "registered", 0, 0)
+        assert row == ("momentum", "btc_ohlcv", 1, "active", 0, 0)
     finally:
         conn.close()
 
@@ -191,7 +191,7 @@ def test_register_hypothesis_keeps_unknown_definition_nullable(tmp_path, capsys)
             WHERE hypothesis_id = 'hyp_1'
             """
         ).fetchone()
-        assert row == (None, None, None, "registered")
+        assert row == (None, None, None, "active")
     finally:
         conn.close()
 
@@ -240,7 +240,7 @@ def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):
         conn.close()
 
 
-def test_record_prediction_rejects_unregistered_hypothesis(tmp_path):
+def test_record_prediction_rejects_unknown_hypothesis(tmp_path):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -262,7 +262,7 @@ def test_record_prediction_rejects_unregistered_hypothesis(tmp_path):
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for unregistered hypothesis")
+        raise AssertionError("expected parser exit for unknown hypothesis")
 
 
 def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
@@ -423,7 +423,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("registered", 1, 1)
+        assert state_row == ("active", 1, 1)
     finally:
         conn.close()
 
@@ -465,7 +465,7 @@ def test_update_state_is_idempotent_for_same_evaluation(tmp_path, capsys):
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("registered", 1, 1)
+        assert state_row == ("active", 1, 1)
     finally:
         conn.close()
 
@@ -658,12 +658,12 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
             "observations": 1,
             "snapshots": 1,
         }
-        assert status_row == ("registered",)
+        assert status_row == ("active",)
     finally:
         conn.close()
 
 
-def test_pause_resume_and_retire_hypothesis_follow_state_machine(tmp_path, capsys):
+def test_activate_and_deactivate_hypothesis_follow_state_machine(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -686,55 +686,60 @@ def test_pause_resume_and_retire_hypothesis_follow_state_machine(tmp_path, capsy
     )
     capsys.readouterr()
 
-    assert main(["pause-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
-    pause_output = capsys.readouterr().out
-    assert "Hypothesis [paused] hyp_1" in pause_output
+    assert (
+        main(["deactivate-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
+        == 0
+    )
+    deactivate_output = capsys.readouterr().out
+    assert "Hypothesis [deactivated] hyp_1" in deactivate_output
 
-    assert main(["resume-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
-    resume_output = capsys.readouterr().out
-    assert "Hypothesis [resumed] hyp_1" in resume_output
-
-    assert main(["retire-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
-    retire_output = capsys.readouterr().out
-    assert "Hypothesis [retired] hyp_1" in retire_output
+    assert (
+        main(["activate-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
+        == 0
+    )
+    activate_output = capsys.readouterr().out
+    assert "Hypothesis [activated] hyp_1" in activate_output
 
     conn = sqlite3.connect(db_path)
     try:
         row = conn.execute(
             "SELECT status FROM hypotheses WHERE hypothesis_id = 'hyp_1'"
         ).fetchone()
-        assert row == ("retired",)
+        assert row == ("active",)
     finally:
         conn.close()
 
 
-def test_pause_allows_registered_hypothesis(tmp_path, capsys):
+def test_deactivate_allows_active_hypothesis(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
     _register_hypothesis(main, db_path, "hyp_1")
     capsys.readouterr()
 
-    assert main(["pause-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
+    assert (
+        main(["deactivate-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
+        == 0
+    )
     output = capsys.readouterr().out
-    assert "Hypothesis [paused] hyp_1" in output
+    assert "Hypothesis [deactivated] hyp_1" in output
 
 
-def test_resume_rejects_non_paused_hypothesis(tmp_path):
+def test_activate_rejects_non_inactive_hypothesis(tmp_path):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
     _register_hypothesis(main, db_path, "hyp_1")
 
     try:
-        main(["resume-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
+        main(["activate-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for invalid resume transition")
+        raise AssertionError("expected parser exit for invalid activate transition")
 
 
-def test_retired_hypothesis_rejects_new_prediction_and_update(tmp_path):
+def test_inactive_hypothesis_rejects_new_prediction_and_update(tmp_path):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -755,8 +760,10 @@ def test_retired_hypothesis_rejects_new_prediction_and_update(tmp_path):
         )
         == 0
     )
-    assert main(["pause-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
-    assert main(["retire-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
+    assert (
+        main(["deactivate-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
+        == 0
+    )
 
     try:
         main(
@@ -775,7 +782,7 @@ def test_retired_hypothesis_rejects_new_prediction_and_update(tmp_path):
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for retired prediction record")
+        raise AssertionError("expected parser exit for inactive prediction record")
 
     try:
         main(
@@ -792,7 +799,7 @@ def test_retired_hypothesis_rejects_new_prediction_and_update(tmp_path):
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for retired update")
+        raise AssertionError("expected parser exit for inactive update")
 
 
 def test_run_cycle_rejects_mismatched_pre_recorded_observation(tmp_path):
@@ -824,7 +831,7 @@ def test_run_cycle_rejects_mismatched_pre_recorded_observation(tmp_path):
         raise AssertionError("expected parser exit for mismatched pre-recorded observation")
 
 
-def test_run_cycle_rejects_unregistered_hypothesis(tmp_path):
+def test_apply_evaluation_rejects_unknown_hypothesis(tmp_path):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -848,7 +855,7 @@ def test_run_cycle_rejects_unregistered_hypothesis(tmp_path):
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("expected parser exit for unregistered hypothesis")
+        raise AssertionError("expected parser exit for unknown hypothesis")
 
 
 def test_init_db_creates_empty_runtime(tmp_path, capsys):
