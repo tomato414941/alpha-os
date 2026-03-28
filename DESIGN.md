@@ -482,6 +482,32 @@ horizon.
 Residualized returns are the starting point. Volatility and cross-sectional
 targets are natural extensions using the same IC evaluation framework.
 
+### Target-centric model
+
+Targets are first-class objects. A target is not just a label on an
+evaluation row; it defines:
+
+- what realized outcome is used as truth
+- what horizon is implied by that truth
+- what scoring semantics are valid for that truth
+
+Hypotheses are **not** required to predict every target. Different
+hypotheses will be good at different targets, and many will only be
+valid for a narrow subset.
+
+So the intended relation is:
+
+- `target`: what is predicted
+- `hypothesis`: how it is predicted
+- `hypothesis -> target binding`: which targets a hypothesis is allowed
+  to predict
+
+Evaluation should therefore close **within one target at a time**.
+Predictions, observations, and metrics are only comparable when they
+share the same target definition. Portfolio construction may combine
+signals from multiple targets later, but scoring should not collapse
+different targets into one metric too early.
+
 ### Residualization
 
 All return-based evaluation uses **residualized returns** — benchmark-subtracted.
