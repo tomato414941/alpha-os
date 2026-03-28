@@ -48,6 +48,16 @@ The architecture should make explicit:
 - capital eligibility by asset
 - cross-sleeve portfolio allocation
 
+Future universe design should also separate at least four layers:
+
+- research universe
+- validation universe
+- capital universe
+- execution universe
+
+The system should not assume that "interesting to study" and "safe to trade"
+are the same set.
+
 The safe sequence is:
 
 1. keep one reference sleeve stable

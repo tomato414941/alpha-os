@@ -30,6 +30,20 @@ portfolio.
 Residualized returns are the natural starting point, but they should not remain
 the only target class forever.
 
+### Broader Target Classes
+
+Beyond market-facing returns, the design should also allow targets such as:
+
+- volatility and regime state
+- correlation and market structure
+- liquidity and execution quality
+- hypothesis health and decay risk
+- allocation and portfolio construction relevance
+
+These should not all be implemented at once. The point is to keep the target
+model broad enough that future target classes do not require a new runtime
+concept each time.
+
 ### Target-Centric Model
 
 Targets are first-class objects.

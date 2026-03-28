@@ -50,8 +50,6 @@ After that:
 Exploratory or archival files are intentionally lower priority:
 
 - `docs/exploratory/ROADMAP.md`
-- `docs/exploratory/PREDICTION_TARGETS.md`
-- `docs/exploratory/TRADING_UNIVERSE_DESIGN.md`
 
 ## Current Runtime Path
 

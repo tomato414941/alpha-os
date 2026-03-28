@@ -89,8 +89,6 @@ Prefer:
 Prefer:
 
 - [`ROADMAP.md`](./exploratory/ROADMAP.md)
-- [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
-- [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
 
 ## Document Roles
 
@@ -134,10 +132,6 @@ Prefer:
 
 - [`ROADMAP.md`](./exploratory/ROADMAP.md)
   - future options not yet promoted into active work
-- [`PREDICTION_TARGETS.md`](./exploratory/PREDICTION_TARGETS.md)
-  - target taxonomy
-- [`TRADING_UNIVERSE_DESIGN.md`](./exploratory/TRADING_UNIVERSE_DESIGN.md)
-  - future universe expansion ideas
 
 ### Archive / Legacy
 
