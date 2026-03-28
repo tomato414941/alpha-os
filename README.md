@@ -152,7 +152,7 @@ pip install signal-noise
 # Seed or refresh hypotheses
 python -m alpha_os_recovery hypothesis-seeder --config config/dev.toml
 
-# Sync only the signals required by live hypotheses
+# Sync only the signals required by active hypotheses
 python -m alpha_os_recovery sync-signal-cache --asset BTC --from-hypotheses --strict --config config/dev.toml
 
 # Produce bounded hypothesis predictions
@@ -176,7 +176,7 @@ python -m alpha_os_recovery legacy admission-daemon --asset BTC --config config/
 
 ## alpha_os
 
-The new `alpha_os` package is a separate bounded evaluation engine.
+The `alpha_os` package is a separate bounded evaluation engine.
 It is intentionally narrower than `alpha_os_recovery`.
 
 Current scope:
@@ -192,27 +192,27 @@ Current scope:
 Primary bounded path:
 
 ```bash
-python -m alpha_os register-hypothesis --db data/v1/runtime.db --hypothesis-id hyp_momo
-python -m alpha_os record-prediction --db data/v1/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo --prediction 0.05
-python -m alpha_os finalize-observation --db data/v1/runtime.db --date 2026-03-27 --observation -0.02
-python -m alpha_os update-state --db data/v1/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo
+python -m alpha_os register-hypothesis --db data/runtime.db --hypothesis-id hyp_momo
+python -m alpha_os record-prediction --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo --prediction 0.05
+python -m alpha_os finalize-observation --db data/runtime.db --date 2026-03-27 --observation -0.02
+python -m alpha_os update-state --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo
 ```
 
 Convenience wrapper path:
 
 ```bash
 # Generate one or more deterministic evaluation inputs from signal-noise BTC daily closes
-python -m alpha_os generate-evaluation-input --date 2026-03-27 --hypothesis-id hyp_momo --out data/v1/evaluation.json
-python -m alpha_os generate-evaluation-inputs --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/evaluations.json
+python -m alpha_os generate-evaluation-input --date 2026-03-27 --hypothesis-id hyp_momo --out data/evaluation.json
+python -m alpha_os generate-evaluation-inputs --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/evaluations.json
 
 # Apply one evaluation or a deterministic backfill range through the wrapper path
-python -m alpha_os register-hypothesis --db data/v1/runtime.db --hypothesis-id hyp_momo
-python -m alpha_os apply-evaluation --db data/v1/runtime.db --input data/v1/evaluation.json
-python -m alpha_os apply-backfill --db data/v1/runtime.db --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/v1/evaluations.json
+python -m alpha_os register-hypothesis --db data/runtime.db --hypothesis-id hyp_momo
+python -m alpha_os apply-evaluation --db data/runtime.db --input data/evaluation.json
+python -m alpha_os apply-backfill --db data/runtime.db --start-date 2026-03-27 --end-date 2026-03-31 --hypothesis-id hyp_momo --out data/evaluations.json
 
 # Inspect aggregate state and per-evaluation provenance
-python -m alpha_os status --db data/v1/runtime.db
-python -m alpha_os show-evaluations --db data/v1/runtime.db --limit 10
+python -m alpha_os status --db data/runtime.db
+python -m alpha_os show-evaluations --db data/runtime.db --limit 10
 ```
 
 ## Configuration
@@ -229,7 +229,7 @@ in the runtime environment. `alpha-os` will automatically pass it to
 
 - prefer `hypothesis` for a predictive unit
 - reserve `alpha` for excess-return outcome or legacy code names
-- `live hypotheses` is the runtime subset
+- `active hypotheses` is the runtime subset
 - `research paper-replay` and `research replay-experiment` are legacy experimental paths
 - `trade --once --venue paper` is the current bounded runtime path
 
