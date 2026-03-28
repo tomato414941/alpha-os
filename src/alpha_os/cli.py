@@ -17,7 +17,7 @@ from .config import (
     DEFAULT_PRICE_SIGNAL,
     DEFAULT_SIGNAL_NOISE_BASE_URL,
     DEFAULT_TARGET,
-    build_config,
+    load_runtime_config,
 )
 from .hypothesis_registry import HypothesisDefinition
 from .evaluation_inputs import (
@@ -28,7 +28,7 @@ from .evaluation_inputs import (
 from .store import EvaluationStore
 
 
-def _build_parser() -> argparse.ArgumentParser:
+def build_cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alpha-os",
         description="alpha-os evaluation engine",
@@ -192,7 +192,7 @@ def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
 
 @contextmanager
 def _runtime_store(db_path: str | None) -> Iterator[tuple[object, EvaluationStore]]:
-    cfg = build_config(db_path=db_path)
+    cfg = load_runtime_config(db_path=db_path)
     store = EvaluationStore(cfg.db_path)
     try:
         yield cfg, store
@@ -527,7 +527,7 @@ def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_run_cycle(args: argparse.Namespace) -> int:
+def cmd_apply_evaluation(args: argparse.Namespace) -> int:
     evaluation_input = _resolve_evaluation_input(args)
     input_source = "json_file" if args.input else "manual"
     with _runtime_store(args.db) as (_cfg, store):
@@ -552,8 +552,8 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_run_cycles(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
+def cmd_apply_evaluations(args: argparse.Namespace) -> int:
+    cfg = load_runtime_config(db_path=args.db)
     evaluation_inputs = load_evaluation_inputs(args.input)
     return _apply_evaluation_inputs(
         cfg.db_path,
@@ -611,7 +611,7 @@ def _apply_evaluation_inputs(
     return 0
 
 
-def cmd_run_backfill(args: argparse.Namespace) -> int:
+def cmd_apply_backfill(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
         evaluation_inputs = _generate_backfill_inputs_for_hypothesis(
@@ -635,7 +635,7 @@ def cmd_run_backfill(args: argparse.Namespace) -> int:
     )
 
 
-def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
+def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
     hypothesis_ids = _unique_hypothesis_ids(args.hypothesis_id)
 
     with _runtime_store(args.db) as (cfg, store):
@@ -695,7 +695,7 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
+    cfg = load_runtime_config(db_path=args.db)
     store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
@@ -740,7 +740,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_show_evaluations(args: argparse.Namespace) -> int:
-    cfg = build_config(db_path=args.db)
+    cfg = load_runtime_config(db_path=args.db)
     store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
@@ -771,7 +771,7 @@ def cmd_show_evaluations(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = _build_parser()
+    parser = build_cli_parser()
     args = parser.parse_args(argv)
     try:
         if args.command == "init-db":
@@ -793,13 +793,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "generate-evaluation-inputs":
             return cmd_generate_evaluation_inputs(args)
         if args.command == "apply-evaluation":
-            return cmd_run_cycle(args)
+            return cmd_apply_evaluation(args)
         if args.command == "apply-evaluations":
-            return cmd_run_cycles(args)
+            return cmd_apply_evaluations(args)
         if args.command == "apply-backfill":
-            return cmd_run_backfill(args)
+            return cmd_apply_backfill(args)
         if args.command == "apply-hypotheses-backfill":
-            return cmd_run_hypotheses_backfill(args)
+            return cmd_apply_hypotheses_backfill(args)
         if args.command == "status":
             return cmd_status(args)
         if args.command == "show-evaluations":

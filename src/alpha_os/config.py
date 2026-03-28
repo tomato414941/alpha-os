@@ -18,12 +18,12 @@ DEFAULT_TARGET = target_name_for_horizon(DEFAULT_HORIZON_DAYS)
 
 
 @dataclass(frozen=True)
-class V1Config:
+class RuntimeConfig:
     db_path: Path
     asset: str = DEFAULT_ASSET
     target: str = DEFAULT_TARGET
 
 
-def build_config(*, db_path: str | None = None) -> V1Config:
+def load_runtime_config(*, db_path: str | None = None) -> RuntimeConfig:
     path = DEFAULT_DB_PATH if db_path is None else Path(db_path)
-    return V1Config(db_path=path, asset=DEFAULT_ASSET, target=DEFAULT_TARGET)
+    return RuntimeConfig(db_path=path, asset=DEFAULT_ASSET, target=DEFAULT_TARGET)
