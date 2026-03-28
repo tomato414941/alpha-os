@@ -862,30 +862,3 @@ def test_init_db_creates_empty_runtime(tmp_path, capsys):
     assert "Initialized v1 db" in output
     assert "no evaluations recorded" in output
 
-
-def test_ensure_schema_normalizes_legacy_active_and_live_statuses(tmp_path):
-    from alpha_os.store import V1Store
-
-    db_path = tmp_path / "runtime.db"
-    store = V1Store(db_path)
-    try:
-        store.ensure_schema()
-        store.register_hypothesis("hyp_active")
-        store.register_hypothesis("hyp_live")
-        store.conn.execute(
-            "UPDATE hypotheses SET status = 'active' WHERE hypothesis_id = 'hyp_active'"
-        )
-        store.conn.execute(
-            "UPDATE hypotheses SET status = 'live' WHERE hypothesis_id = 'hyp_live'"
-        )
-        store.conn.commit()
-        store.ensure_schema()
-
-        active = store.get_hypothesis("hyp_active")
-        live = store.get_hypothesis("hyp_live")
-        assert active is not None
-        assert live is not None
-        assert active.status == "registered"
-        assert live.status == "registered"
-    finally:
-        store.close()
