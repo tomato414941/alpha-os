@@ -23,7 +23,7 @@ This section is the source of truth for the next greenfield-style build.
 
 V1 is complete when all of the following are true:
 
-- `generate-cycle-inputs -> apply-backfill -> status -> show-evaluations` works as one bounded end-to-end path
+- `generate-evaluation-inputs -> apply-backfill -> status -> show-evaluations` works as one bounded end-to-end path
 - the v1 smoke test fixes that path as the completion gate
 - `evaluation_snapshots` preserve enough provenance to audit input source and date range
 - v1 remains within the contract scope: `1 asset`, `paper-only`, `1 target`, `1 cycle model`
@@ -62,7 +62,7 @@ V2 is complete when all of the following are true:
 
 - `register-hypothesis -> record-prediction -> finalize-observation -> update-state` works as the primary bounded path
 - the v2 smoke test fixes that primary path as the completion gate
-- `apply-cycle` and `apply-backfill` remain available as convenience wrappers over that same path
+- `apply-evaluation` and `apply-backfill` remain available as convenience wrappers over that same path
 - `evaluation_id` and per-evaluation provenance remain auditable through `show-evaluations`
 - missing or conflicting prediction / observation records fail explicitly
 - v2 stays within scope: `BTC-only`, `paper-only`, `1 target`
@@ -98,7 +98,7 @@ This section defines the next step after v2 completion.
   - `live hypothesis` means allocation-eligible inside the runtime
   - `live trading` remains out of scope
 - Reject invalid transitions explicitly rather than silently repairing them
-- Keep `apply-cycle` and `apply-backfill` as convenience wrappers over the same bounded path
+- Keep `apply-evaluation` and `apply-backfill` as convenience wrappers over the same bounded path
 - Do not add multi-asset, global allocation, or live execution in v3
 - Do not redesign the scoring model and the lifecycle state machine in the same step
 

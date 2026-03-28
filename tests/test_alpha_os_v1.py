@@ -62,7 +62,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     capsys.readouterr()
     rc = main(
         [
-            "apply-cycle",
+            "apply-evaluation",
             "--db",
             str(db_path),
             "--date",
@@ -81,7 +81,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     assert status_rc == 0
     output = capsys.readouterr().out
     assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
-    assert "alpha-os v1 status" in output
+    assert "alpha-os status" in output
     assert "Metrics:  tracked=1" in output
 
     conn = sqlite3.connect(db_path)
@@ -109,7 +109,7 @@ def test_run_cycle_is_idempotent_for_same_evaluation_id(tmp_path, capsys):
     _register_hypothesis(main, db_path, "hyp_1")
     capsys.readouterr()
     args = [
-        "apply-cycle",
+        "apply-evaluation",
         "--db",
         str(db_path),
         "--date",
@@ -315,7 +315,7 @@ def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -356,7 +356,7 @@ def test_run_cycle_reuses_pre_recorded_observation(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -481,7 +481,7 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
     assert (
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -503,7 +503,7 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
     assert (
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -631,13 +631,13 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
 
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
-    assert "alpha-os v1 status" in status_output
+    assert "alpha-os status" in status_output
     assert "Latest:   BTC:residual_return_1d:2026-03-26 / hyp_1" in status_output
     assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
-    assert "alpha-os v1 evaluations" in cycles_output
+    assert "alpha-os evaluations" in cycles_output
     assert "Count:    1" in cycles_output
     assert "source=-" in cycles_output
 
@@ -805,7 +805,7 @@ def test_run_cycle_rejects_mismatched_pre_recorded_observation(tmp_path):
     try:
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -832,7 +832,7 @@ def test_run_cycle_rejects_unregistered_hypothesis(tmp_path):
     try:
         main(
             [
-                "apply-cycle",
+                "apply-evaluation",
                 "--db",
                 str(db_path),
                 "--date",
@@ -859,6 +859,5 @@ def test_init_db_creates_empty_runtime(tmp_path, capsys):
     assert main(["status", "--db", str(db_path)]) == 0
 
     output = capsys.readouterr().out
-    assert "Initialized v1 db" in output
+    assert "Initialized runtime db" in output
     assert "no evaluations recorded" in output
-

@@ -192,7 +192,7 @@ def test_cmd_generate_evaluation_input_writes_json(tmp_path, monkeypatch, capsys
 
     rc = main(
         [
-            "generate-cycle-input",
+            "generate-evaluation-input",
             "--db",
             str(db_path),
             "--date",
@@ -245,7 +245,7 @@ def test_cmd_generate_evaluation_inputs_writes_json_array(tmp_path, monkeypatch,
 
     rc = main(
         [
-            "generate-cycle-inputs",
+            "generate-evaluation-inputs",
             "--db",
             str(db_path),
             "--start-date",
@@ -291,7 +291,7 @@ def test_generated_evaluation_input_can_feed_apply_cycle(tmp_path, monkeypatch):
     assert (
         main(
             [
-                "generate-cycle-input",
+                "generate-evaluation-input",
                 "--db",
                 str(db_path),
                 "--date",
@@ -304,7 +304,7 @@ def test_generated_evaluation_input_can_feed_apply_cycle(tmp_path, monkeypatch):
         )
         == 0
     )
-    assert main(["apply-cycle", "--db", str(db_path), "--input", str(input_path)]) == 0
+    assert main(["apply-evaluation", "--db", str(db_path), "--input", str(input_path)]) == 0
 
     status_output = Path(db_path)
     assert status_output.exists()
@@ -449,7 +449,7 @@ def test_apply_hypotheses_backfill_applies_multiple_hypotheses(tmp_path, monkeyp
 
     output = capsys.readouterr().out
     assert "Batch complete: hypotheses=2 evaluations=4 created=4 existing=0" in output
-    assert "alpha-os v1 hypothesis competition" in output
+    assert "alpha-os hypothesis competition" in output
     assert "momentum_1d " in output
     assert "reversal_1d " in output
     assert "corr=" in output
@@ -523,7 +523,7 @@ def test_show_evaluations_prints_provenance(tmp_path, monkeypatch, capsys):
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "2"]) == 0
     output = capsys.readouterr().out
-    assert "alpha-os v1 evaluations" in output
+    assert "alpha-os evaluations" in output
     assert "source=signal_noise_backfill" in output
     assert "signal=btc_ohlcv" in output
     assert "range=2026-03-27->2026-03-28" in output
@@ -559,7 +559,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert (
         main(
             [
-                "generate-cycle-inputs",
+                "generate-evaluation-inputs",
                 "--db",
                 str(db_path),
                 "--start-date",
@@ -601,13 +601,13 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
 
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
-    assert "alpha-os v1 status" in status_output
+    assert "alpha-os status" in status_output
     assert "Latest:   BTC:residual_return_1d:2026-03-28 / momentum_1d" in status_output
     assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
-    assert "alpha-os v1 evaluations" in cycles_output
+    assert "alpha-os evaluations" in cycles_output
     assert "Count:    2" in cycles_output
     assert "source=signal_noise_backfill" in cycles_output
     assert "range=2026-03-27->2026-03-28" in cycles_output
@@ -622,7 +622,7 @@ def test_generate_cycle_input_requires_registered_hypothesis(tmp_path):
     try:
         main(
             [
-                "generate-cycle-input",
+                "generate-evaluation-input",
                 "--db",
                 str(db_path),
                 "--date",
@@ -641,13 +641,13 @@ def test_generate_cycle_input_requires_registered_hypothesis(tmp_path):
 
 def test_generate_cycle_input_uses_registered_definition_from_db(tmp_path, monkeypatch):
     from alpha_os.cli import main
-    from alpha_os.store import V1Store
+    from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
     output_path = tmp_path / "cycle.json"
     _register_hypothesis(main, db_path, "momentum_1d")
 
-    store = V1Store(db_path)
+    store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
         store.conn.execute(
@@ -681,7 +681,7 @@ def test_generate_cycle_input_uses_registered_definition_from_db(tmp_path, monke
     assert (
         main(
             [
-                "generate-cycle-input",
+                "generate-evaluation-input",
                 "--db",
                 str(db_path),
                 "--date",

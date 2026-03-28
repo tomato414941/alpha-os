@@ -1,2 +1,1 @@
-"""alpha-os v1 trust engine."""
-
+"""alpha-os evaluation engine."""

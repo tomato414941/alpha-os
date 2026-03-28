@@ -27,7 +27,7 @@ def test_run_cycle_accepts_json_fixture(tmp_path, capsys):
     _register_hypothesis(main, db_path, "hyp_fixture")
     capsys.readouterr()
 
-    rc = main(["apply-cycle", "--db", str(db_path), "--input", str(fixture_path)])
+    rc = main(["apply-evaluation", "--db", str(db_path), "--input", str(fixture_path)])
     assert rc == 0
 
     output = capsys.readouterr().out
@@ -52,7 +52,7 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
     _register_hypothesis(main, db_path, "hyp_fixture")
     capsys.readouterr()
 
-    rc = main(["apply-cycles", "--db", str(db_path), "--input", str(fixture_path)])
+    rc = main(["apply-evaluations", "--db", str(db_path), "--input", str(fixture_path)])
     assert rc == 0
 
     output = capsys.readouterr().out
@@ -94,7 +94,7 @@ def test_run_cycle_rejects_non_v1_asset_in_fixture(tmp_path):
     )
 
     try:
-        main(["apply-cycle", "--db", str(db_path), "--input", str(bad_fixture)])
+        main(["apply-evaluation", "--db", str(db_path), "--input", str(bad_fixture)])
     except SystemExit as exc:
         assert exc.code == 2
     else:

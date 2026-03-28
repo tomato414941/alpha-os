@@ -22,7 +22,7 @@ from .evaluation_inputs import (
     load_evaluation_input,
     load_evaluation_inputs,
 )
-from .store import V1Store
+from .store import EvaluationStore
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -32,12 +32,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    init_db = sub.add_parser("init-db", help="Initialize the v1 runtime database")
+    init_db = sub.add_parser("init-db", help="Initialize the runtime database")
     init_db.add_argument("--db", type=str, default=None)
 
     register = sub.add_parser(
         "register-hypothesis",
-        help="Register one v2 hypothesis before recording predictions",
+        help="Register one hypothesis before recording predictions",
     )
     register.add_argument("--db", type=str, default=None)
     register.add_argument("--hypothesis-id", type=str, required=True)
@@ -56,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     record = sub.add_parser(
         "record-prediction",
-        help="Record one v2 prediction before observation finalization",
+        help="Record one prediction before observation finalization",
     )
     record.add_argument("--db", type=str, default=None)
     record.add_argument("--date", type=str, required=True)
@@ -66,7 +66,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     finalize = sub.add_parser(
         "finalize-observation",
-        help="Finalize one v2 observation before state update",
+        help="Finalize one observation before state update",
     )
     finalize.add_argument("--db", type=str, default=None)
     finalize.add_argument("--date", type=str, required=True)
@@ -75,7 +75,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     update = sub.add_parser(
         "update-state",
-        help="Update v2 state from recorded prediction and finalized observation",
+        help="Update state from recorded prediction and finalized observation",
     )
     update.add_argument("--db", type=str, default=None)
     update.add_argument("--date", type=str, required=True)
@@ -83,7 +83,7 @@ def _build_parser() -> argparse.ArgumentParser:
     update.add_argument("--evaluation-id", type=str, default=None)
 
     build = sub.add_parser(
-        "generate-cycle-input",
+        "generate-evaluation-input",
         help="Generate one deterministic evaluation-input JSON from signal-noise daily closes",
     )
     build.add_argument("--db", type=str, default=None)
@@ -94,7 +94,7 @@ def _build_parser() -> argparse.ArgumentParser:
     build.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
     builds = sub.add_parser(
-        "generate-cycle-inputs",
+        "generate-evaluation-inputs",
         help="Generate deterministic evaluation-input JSON for a date range from signal-noise daily closes",
     )
     builds.add_argument("--db", type=str, default=None)
@@ -106,7 +106,7 @@ def _build_parser() -> argparse.ArgumentParser:
     builds.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
     run = sub.add_parser(
-        "apply-cycle",
+        "apply-evaluation",
         help="Apply one evaluation input through record-prediction -> finalize-observation -> update-state",
     )
     run.add_argument("--db", type=str, default=None)
@@ -123,7 +123,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     batch = sub.add_parser(
-        "apply-cycles",
+        "apply-evaluations",
         help="Apply a deterministic batch of evaluation inputs through the bounded runtime",
     )
     batch.add_argument("--db", type=str, default=None)
@@ -187,7 +187,7 @@ def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
 
 def _runtime_hypothesis_definition(*, db_path: str | None, hypothesis_id: str) -> HypothesisDefinition:
     cfg = build_config(db_path=db_path)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
         hypothesis = store.get_hypothesis(hypothesis_id)
@@ -246,7 +246,7 @@ def _unique_hypothesis_ids(values: list[str]) -> list[str]:
 
 
 def _print_hypothesis_competition_summary(
-    store: V1Store,
+    store: EvaluationStore,
     *,
     asset: str,
     target: str,
@@ -259,7 +259,7 @@ def _print_hypothesis_competition_summary(
         if item.hypothesis_id in selected
     }
     metrics = {item.hypothesis_id: item for item in store.list_hypothesis_metrics(hypothesis_ids=hypothesis_ids)}
-    print("alpha-os v1 hypothesis competition")
+    print("alpha-os hypothesis competition")
     print(f"  Count:    {len(hypotheses)}")
     for hypothesis_id in hypothesis_ids:
         hypothesis = hypotheses.get(hypothesis_id)
@@ -303,7 +303,7 @@ def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
     missing = [name for name, value in required.items() if value is None]
     if missing:
         joined = ", ".join(missing)
-        raise ValueError(f"apply-cycle requires --input or manual values for: {joined}")
+        raise ValueError(f"apply-evaluation requires --input or manual values for: {joined}")
     return EvaluationInput(
         date=str(args.date),
         hypothesis_id=str(args.hypothesis_id),
@@ -315,12 +315,12 @@ def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
 
 def cmd_init_db(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
     finally:
         store.close()
-    print(f"Initialized v1 db: {cfg.db_path}")
+    print(f"Initialized runtime db: {cfg.db_path}")
     print(f"  Asset:    {cfg.asset}")
     print(f"  Target:   {cfg.target}")
     return 0
@@ -328,7 +328,7 @@ def cmd_init_db(args: argparse.Namespace) -> int:
 
 def cmd_register_hypothesis(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         hypothesis, created = store.register_hypothesis(args.hypothesis_id)
     finally:
@@ -355,7 +355,7 @@ def _cmd_change_hypothesis_status(
     verb: str,
 ) -> int:
     cfg = build_config(db_path=args.db)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         hypothesis = store.set_hypothesis_status(
             args.hypothesis_id,
@@ -408,7 +408,7 @@ def cmd_record_prediction(args: argparse.Namespace) -> int:
         target=cfg.target,
         date=args.date,
     )
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         prediction, created = store.record_prediction(
             evaluation_id=evaluation_id,
@@ -433,7 +433,7 @@ def cmd_finalize_observation(args: argparse.Namespace) -> int:
         target=cfg.target,
         date=args.date,
     )
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         observation, created = store.finalize_observation(
             evaluation_id=evaluation_id,
@@ -456,7 +456,7 @@ def cmd_update_state(args: argparse.Namespace) -> int:
         target=cfg.target,
         date=args.date,
     )
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         snapshot, created = store.update_state(
             evaluation_id=evaluation_id,
@@ -527,7 +527,7 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
         date=evaluation_input.date,
     )
     input_source = "json_file" if args.input else "manual"
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         snapshot, created = store.run_cycle(
             evaluation_id=evaluation_id,
@@ -564,7 +564,7 @@ def _apply_evaluation_inputs(
     signal_name: str | None = None,
 ) -> int:
     cfg = build_config(db_path=str(db_path))
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         created_count = 0
         existing_count = 0
@@ -598,7 +598,7 @@ def _apply_evaluation_inputs(
     )
     if latest_snapshot is not None:
         print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.hypothesis_id}")
-        store = V1Store(cfg.db_path)
+        store = EvaluationStore(cfg.db_path)
         try:
             metric = store.get_hypothesis_metric(latest_snapshot.hypothesis_id)
         finally:
@@ -642,7 +642,7 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
     existing_count = 0
     latest_snapshot = None
 
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
         for hypothesis_id in hypothesis_ids:
@@ -702,7 +702,7 @@ def cmd_run_hypotheses_backfill(args: argparse.Namespace) -> int:
 
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
         hypotheses = store.list_hypotheses(asset=cfg.asset, target=cfg.target)
@@ -718,7 +718,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     finally:
         store.close()
 
-    print("alpha-os v1 status")
+    print("alpha-os status")
     print(f"  DB:       {Path(cfg.db_path)}")
     print(f"  Asset:    {cfg.asset}")
     print(f"  Target:   {cfg.target}")
@@ -748,14 +748,14 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 def cmd_show_evaluations(args: argparse.Namespace) -> int:
     cfg = build_config(db_path=args.db)
-    store = V1Store(cfg.db_path)
+    store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
         snapshots = store.list_evaluation_snapshots(limit=args.limit)
     finally:
         store.close()
 
-    print("alpha-os v1 evaluations")
+    print("alpha-os evaluations")
     print(f"  DB:       {Path(cfg.db_path)}")
     print(f"  Count:    {len(snapshots)}")
     for snapshot in snapshots:
@@ -797,13 +797,13 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_finalize_observation(args)
         if args.command == "update-state":
             return cmd_update_state(args)
-        if args.command == "generate-cycle-input":
+        if args.command == "generate-evaluation-input":
             return cmd_generate_evaluation_input(args)
-        if args.command == "generate-cycle-inputs":
+        if args.command == "generate-evaluation-inputs":
             return cmd_generate_evaluation_inputs(args)
-        if args.command == "apply-cycle":
+        if args.command == "apply-evaluation":
             return cmd_run_cycle(args)
-        if args.command == "apply-cycles":
+        if args.command == "apply-evaluations":
             return cmd_run_cycles(args)
         if args.command == "apply-backfill":
             return cmd_run_backfill(args)

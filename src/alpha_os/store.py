@@ -160,7 +160,7 @@ def _row_to_hypothesis_metric(row: sqlite3.Row | None) -> HypothesisMetricState 
     )
 
 
-class V1Store:
+class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
