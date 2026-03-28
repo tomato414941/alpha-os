@@ -31,7 +31,7 @@ def test_run_cycle_accepts_json_fixture(tmp_path, capsys):
     assert rc == 0
 
     output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-27" in output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-27" in output
     assert "Hyp:      hyp_fixture" in output
 
     conn = sqlite3.connect(db_path)
@@ -57,7 +57,7 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
 
     output = capsys.readouterr().out
     assert "Batch complete: evaluations=3 created=3 existing=0" in output
-    assert "Latest:   BTC:residual_return_1d:2026-03-29 / hyp_fixture" in output
+    assert "Latest:   BTC:residual_return_3d:2026-03-29 / hyp_fixture" in output
 
     conn = sqlite3.connect(db_path)
     try:

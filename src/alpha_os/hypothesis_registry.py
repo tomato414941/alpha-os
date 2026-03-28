@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .config import DEFAULT_ASSET, DEFAULT_PRICE_SIGNAL, DEFAULT_TARGET
+from .config import (
+    DEFAULT_ASSET,
+    DEFAULT_HORIZON_DAYS,
+    DEFAULT_PRICE_SIGNAL,
+    DEFAULT_TARGET,
+    target_name_for_horizon,
+)
 
 
 @dataclass(frozen=True)
@@ -12,6 +18,7 @@ class HypothesisDefinition:
     kind: str
     signal_name: str
     lookback: int
+    horizon_days: int = DEFAULT_HORIZON_DAYS
     asset: str = DEFAULT_ASSET
     target: str = DEFAULT_TARGET
 
@@ -21,6 +28,7 @@ class HypothesisDefinition:
             "signal_name": self.signal_name,
             "params": {
                 "lookback": self.lookback,
+                "horizon_days": self.horizon_days,
             },
         }
 
@@ -45,13 +53,19 @@ class HypothesisDefinition:
         lookback = params.get("lookback")
         if not isinstance(lookback, int):
             raise ValueError(f"hypothesis document is missing integer lookback: {hypothesis_id}")
+        horizon_days = params.get("horizon_days")
+        if not isinstance(horizon_days, int):
+            raise ValueError(
+                f"hypothesis document is missing integer horizon_days: {hypothesis_id}"
+            )
         return cls(
             hypothesis_id=hypothesis_id,
             kind=kind,
             signal_name=signal_name,
             lookback=lookback,
+            horizon_days=horizon_days,
             asset=asset,
-            target=target,
+            target=target_name_for_horizon(horizon_days),
         )
 
 

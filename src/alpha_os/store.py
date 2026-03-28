@@ -59,6 +59,17 @@ class HypothesisState:
         value = params.get("lookback")
         return value if isinstance(value, int) else None
 
+    @property
+    def horizon_days(self) -> int | None:
+        definition = self.definition
+        if definition is None:
+            return None
+        params = definition.get("params")
+        if not isinstance(params, dict):
+            return None
+        value = params.get("horizon_days")
+        return value if isinstance(value, int) else None
+
 
 @dataclass(frozen=True)
 class EvaluationSnapshot:
@@ -388,6 +399,8 @@ class EvaluationStore:
             if definition is None
             else json.dumps(definition.to_document(), sort_keys=True)
         )
+        resolved_asset = asset if definition is None else definition.asset
+        resolved_target = target if definition is None else definition.target
         with self.conn:
             self.conn.execute(
                 """
@@ -399,8 +412,8 @@ class EvaluationStore:
                 """,
                 (
                     hypothesis_id,
-                    asset,
-                    target,
+                    resolved_asset,
+                    resolved_target,
                     definition_json,
                     timestamp,
                     timestamp,

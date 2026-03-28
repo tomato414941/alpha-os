@@ -81,7 +81,7 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     status_rc = main(["status", "--db", str(db_path)])
     assert status_rc == 0
     output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in output
     assert "alpha-os status" in output
     assert "Metrics:  tracked=1" in output
 
@@ -172,7 +172,7 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
         definition = json.loads(row[0])
         assert definition == {
             "kind": "momentum",
-            "params": {"lookback": 1},
+            "params": {"horizon_days": 3, "lookback": 1},
             "signal_name": "btc_ohlcv",
         }
         assert row[1:] == ("active", 0, 0)
@@ -191,6 +191,7 @@ def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
     assert "Kind:     reversal" in output
     assert "Signal:   btc_ohlcv" in output
     assert "Lookback: 5" in output
+    assert "Horizon:  3d" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -205,7 +206,7 @@ def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
         definition = json.loads(row[0])
         assert definition == {
             "kind": "reversal",
-            "params": {"lookback": 5},
+            "params": {"horizon_days": 3, "lookback": 5},
             "signal_name": "btc_ohlcv",
         }
         assert row[1:] == ("active", 0, 0)
@@ -224,6 +225,7 @@ def test_register_hypothesis_supports_additional_kind_definition(tmp_path, capsy
     assert "Kind:     average_gap" in output
     assert "Signal:   btc_ohlcv" in output
     assert "Lookback: 3" in output
+    assert "Horizon:  3d" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -238,7 +240,7 @@ def test_register_hypothesis_supports_additional_kind_definition(tmp_path, capsy
         definition = json.loads(row[0])
         assert definition == {
             "kind": "average_gap",
-            "params": {"lookback": 3},
+            "params": {"horizon_days": 3, "lookback": 3},
             "signal_name": "btc_ohlcv",
         }
         assert row[1:] == ("active", 0, 0)
@@ -291,11 +293,11 @@ def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):
 
     assert main(args) == 0
     first_output = capsys.readouterr().out
-    assert "Prediction [created] BTC:residual_return_1d:2026-03-26" in first_output
+    assert "Prediction [created] BTC:residual_return_3d:2026-03-26" in first_output
 
     assert main(args) == 0
     second_output = capsys.readouterr().out
-    assert "Prediction [existing] BTC:residual_return_1d:2026-03-26" in second_output
+    assert "Prediction [existing] BTC:residual_return_3d:2026-03-26" in second_output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -303,7 +305,7 @@ def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):
             """
             SELECT value
             FROM predictions
-            WHERE evaluation_id = 'BTC:residual_return_1d:2026-03-26'
+            WHERE evaluation_id = 'BTC:residual_return_3d:2026-03-26'
               AND hypothesis_id = 'hyp_1'
             """
         ).fetchone()
@@ -355,11 +357,11 @@ def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
 
     assert main(args) == 0
     first_output = capsys.readouterr().out
-    assert "Observation [created] BTC:residual_return_1d:2026-03-26" in first_output
+    assert "Observation [created] BTC:residual_return_3d:2026-03-26" in first_output
 
     assert main(args) == 0
     second_output = capsys.readouterr().out
-    assert "Observation [existing] BTC:residual_return_1d:2026-03-26" in second_output
+    assert "Observation [existing] BTC:residual_return_3d:2026-03-26" in second_output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -367,7 +369,7 @@ def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
             """
             SELECT value
             FROM observations
-            WHERE evaluation_id = 'BTC:residual_return_1d:2026-03-26'
+            WHERE evaluation_id = 'BTC:residual_return_3d:2026-03-26'
             """
         ).fetchone()
         count = conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
@@ -406,7 +408,7 @@ def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):
     )
 
     output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -447,7 +449,7 @@ def test_run_cycle_reuses_pre_recorded_observation(tmp_path, capsys):
     )
 
     output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -484,7 +486,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
     )
 
     output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in output
 
     conn = sqlite3.connect(db_path)
     try:
@@ -571,7 +573,7 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
         == 0
     )
     first_output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in first_output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in first_output
     assert "Hyp:      momentum_1d" in first_output
 
     assert (
@@ -593,7 +595,7 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
         == 0
     )
     second_output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in second_output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in second_output
     assert "Hyp:      reversal_1d" in second_output
 
     conn = sqlite3.connect(db_path)
@@ -612,8 +614,8 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
         assert observation_count == 1
         assert snapshot_count == 2
         assert rows == [
-            ("BTC:residual_return_1d:2026-03-26", "momentum_1d"),
-            ("BTC:residual_return_1d:2026-03-26", "reversal_1d"),
+            ("BTC:residual_return_3d:2026-03-26", "momentum_1d"),
+            ("BTC:residual_return_3d:2026-03-26", "reversal_1d"),
         ]
     finally:
         conn.close()
@@ -680,11 +682,11 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
 
     _record_prediction(main, db_path, "2026-03-26", "hyp_1", "0.5")
     prediction_output = capsys.readouterr().out
-    assert "Prediction [created] BTC:residual_return_1d:2026-03-26" in prediction_output
+    assert "Prediction [created] BTC:residual_return_3d:2026-03-26" in prediction_output
 
     _finalize_observation(main, db_path, "2026-03-26", "0.2")
     observation_output = capsys.readouterr().out
-    assert "Observation [created] BTC:residual_return_1d:2026-03-26" in observation_output
+    assert "Observation [created] BTC:residual_return_3d:2026-03-26" in observation_output
 
     assert (
         main(
@@ -701,12 +703,12 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
         == 0
     )
     update_output = capsys.readouterr().out
-    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in update_output
+    assert "Evaluation [created] BTC:residual_return_3d:2026-03-26" in update_output
 
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
     assert "alpha-os status" in status_output
-    assert "Latest:   BTC:residual_return_1d:2026-03-26 / hyp_1" in status_output
+    assert "Latest:   BTC:residual_return_3d:2026-03-26 / hyp_1" in status_output
     assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0

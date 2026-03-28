@@ -27,9 +27,13 @@ def test_generate_evaluation_input_from_frame_uses_prev_and_next_close():
 
     frame = pd.DataFrame(
         [
-            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 100.0},
-            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
-            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 177.1561},
         ]
     )
 
@@ -42,7 +46,7 @@ def test_generate_evaluation_input_from_frame_uses_prev_and_next_close():
     assert evaluation_input.date == "2026-03-27"
     assert evaluation_input.hypothesis_id == "momentum_1d"
     assert evaluation_input.prediction == pytest.approx(0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
 
 
 def test_generate_evaluation_input_rejects_missing_neighbor_rows():
@@ -50,8 +54,9 @@ def test_generate_evaluation_input_rejects_missing_neighbor_rows():
 
     frame = pd.DataFrame(
         [
-            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
-            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
         ]
     )
 
@@ -62,7 +67,7 @@ def test_generate_evaluation_input_rejects_missing_neighbor_rows():
             hypothesis_id="momentum_1d",
         )
     except ValueError as exc:
-        assert "prior daily returns" in str(exc)
+        assert "future close 3 days ahead" in str(exc)
     else:
         raise AssertionError("expected previous-close validation error")
 
@@ -72,11 +77,14 @@ def test_generate_evaluation_inputs_from_frame_uses_date_range():
 
     frame = pd.DataFrame(
         [
-            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 100.0},
-            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 105.0},
-            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 115.5},
-            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 121.275},
-            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 127.33875},
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 105.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 115.5},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 121.275},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 127.33875},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 133.7056875},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 140.390971875},
+            {"timestamp": "2026-03-31T00:00:00+00:00", "close": 147.41052046875},
         ]
     )
 
@@ -93,6 +101,7 @@ def test_generate_evaluation_inputs_from_frame_uses_date_range():
         "2026-03-28",
     ]
     assert all(item.hypothesis_id == "momentum_1d" for item in evaluation_inputs)
+    assert evaluation_inputs[0].observation == pytest.approx((133.7056875 / 115.5) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_momentum_3d():
@@ -105,6 +114,8 @@ def test_generate_evaluation_input_from_frame_supports_momentum_3d():
             {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
             {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
             {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 177.1561},
         ]
     )
 
@@ -115,7 +126,7 @@ def test_generate_evaluation_input_from_frame_supports_momentum_3d():
     )
 
     assert evaluation_input.prediction == pytest.approx(0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_momentum_5d():
@@ -130,6 +141,8 @@ def test_generate_evaluation_input_from_frame_supports_momentum_5d():
             {"timestamp": "2026-03-26T00:00:00+00:00", "close": 146.41},
             {"timestamp": "2026-03-27T00:00:00+00:00", "close": 161.051},
             {"timestamp": "2026-03-28T00:00:00+00:00", "close": 177.1561},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 194.87171},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 214.358881},
         ]
     )
 
@@ -140,7 +153,7 @@ def test_generate_evaluation_input_from_frame_supports_momentum_5d():
     )
 
     assert evaluation_input.prediction == pytest.approx(0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((214.358881 / 161.051) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_reversal_1d():
@@ -148,9 +161,13 @@ def test_generate_evaluation_input_from_frame_supports_reversal_1d():
 
     frame = pd.DataFrame(
         [
-            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 100.0},
-            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
-            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-24T00:00:00+00:00", "close": 100.0},
+            {"timestamp": "2026-03-25T00:00:00+00:00", "close": 110.0},
+            {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
+            {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
+            {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 177.1561},
         ]
     )
 
@@ -161,7 +178,7 @@ def test_generate_evaluation_input_from_frame_supports_reversal_1d():
     )
 
     assert evaluation_input.prediction == pytest.approx(-0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_reversal_3d():
@@ -174,6 +191,8 @@ def test_generate_evaluation_input_from_frame_supports_reversal_3d():
             {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
             {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
             {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 177.1561},
         ]
     )
 
@@ -184,7 +203,7 @@ def test_generate_evaluation_input_from_frame_supports_reversal_3d():
     )
 
     assert evaluation_input.prediction == pytest.approx(-0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_average_gap_3d():
@@ -197,6 +216,8 @@ def test_generate_evaluation_input_from_frame_supports_average_gap_3d():
             {"timestamp": "2026-03-26T00:00:00+00:00", "close": 121.0},
             {"timestamp": "2026-03-27T00:00:00+00:00", "close": 133.1},
             {"timestamp": "2026-03-28T00:00:00+00:00", "close": 146.41},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 161.051},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 177.1561},
         ]
     )
 
@@ -208,7 +229,7 @@ def test_generate_evaluation_input_from_frame_supports_average_gap_3d():
 
     expected = (133.1 / ((110.0 + 121.0 + 133.1) / 3.0)) - 1.0
     assert evaluation_input.prediction == pytest.approx(expected)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
 
 
 def test_generate_evaluation_input_from_frame_supports_range_position_5d():
@@ -223,6 +244,8 @@ def test_generate_evaluation_input_from_frame_supports_range_position_5d():
             {"timestamp": "2026-03-26T00:00:00+00:00", "close": 106.0},
             {"timestamp": "2026-03-27T00:00:00+00:00", "close": 110.0},
             {"timestamp": "2026-03-28T00:00:00+00:00", "close": 111.0},
+            {"timestamp": "2026-03-29T00:00:00+00:00", "close": 112.0},
+            {"timestamp": "2026-03-30T00:00:00+00:00", "close": 113.0},
         ]
     )
 
@@ -235,7 +258,7 @@ def test_generate_evaluation_input_from_frame_supports_range_position_5d():
     window = [104.0, 102.0, 108.0, 106.0, 110.0]
     expected = ((110.0 - min(window)) / (max(window) - min(window))) * 2.0 - 1.0
     assert evaluation_input.prediction == pytest.approx(expected)
-    assert evaluation_input.observation == pytest.approx((111.0 / 110.0) - 1.0)
+    assert evaluation_input.observation == pytest.approx((113.0 / 110.0) - 1.0)
 
 
 def test_generate_evaluation_input_from_signal_noise_uses_value_series(monkeypatch):
@@ -248,9 +271,13 @@ def test_generate_evaluation_input_from_signal_noise_uses_value_series(monkeypat
             calls.append((name, resolution or ""))
             return pd.DataFrame(
                 [
-                    {"timestamp": "2026-03-26T00:00:00+00:00", "value": 100.0},
-                    {"timestamp": "2026-03-27T00:00:00+00:00", "value": 110.0},
-                    {"timestamp": "2026-03-28T00:00:00+00:00", "value": 121.0},
+                    {"timestamp": "2026-03-24T00:00:00+00:00", "value": 100.0},
+                    {"timestamp": "2026-03-25T00:00:00+00:00", "value": 110.0},
+                    {"timestamp": "2026-03-26T00:00:00+00:00", "value": 121.0},
+                    {"timestamp": "2026-03-27T00:00:00+00:00", "value": 133.1},
+                    {"timestamp": "2026-03-28T00:00:00+00:00", "value": 146.41},
+                    {"timestamp": "2026-03-29T00:00:00+00:00", "value": 161.051},
+                    {"timestamp": "2026-03-30T00:00:00+00:00", "value": 177.1561},
                 ]
             )
 
@@ -266,7 +293,7 @@ def test_generate_evaluation_input_from_signal_noise_uses_value_series(monkeypat
     )
 
     assert evaluation_input.prediction == pytest.approx(0.1)
-    assert evaluation_input.observation == pytest.approx(0.1)
+    assert evaluation_input.observation == pytest.approx((177.1561 / 133.1) - 1.0)
     assert calls == [("btc_ohlcv", "1d")]
 
 
@@ -701,7 +728,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     assert main(["status", "--db", str(db_path)]) == 0
     status_output = capsys.readouterr().out
     assert "alpha-os status" in status_output
-    assert "Latest:   BTC:residual_return_1d:2026-03-28 / momentum_1d" in status_output
+    assert "Latest:   BTC:residual_return_3d:2026-03-28 / momentum_1d" in status_output
     assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
@@ -760,7 +787,7 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
                     {
                         "kind": "momentum",
                         "signal_name": "btc_ohlcv",
-                        "params": {"lookback": 3},
+                        "params": {"lookback": 3, "horizon_days": 3},
                     },
                     sort_keys=True,
                 ),
@@ -779,6 +806,8 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
                     {"timestamp": "2026-03-26T00:00:00+00:00", "value": 121.0},
                     {"timestamp": "2026-03-27T00:00:00+00:00", "value": 133.1},
                     {"timestamp": "2026-03-28T00:00:00+00:00", "value": 146.41},
+                    {"timestamp": "2026-03-29T00:00:00+00:00", "value": 161.051},
+                    {"timestamp": "2026-03-30T00:00:00+00:00", "value": 177.1561},
                 ]
             )
 
@@ -807,4 +836,4 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["hypothesis_id"] == "momentum_1d"
     assert payload["prediction"] == pytest.approx(0.1)
-    assert payload["observation"] == pytest.approx(0.1)
+    assert payload["observation"] == pytest.approx((177.1561 / 133.1) - 1.0)

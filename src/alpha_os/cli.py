@@ -253,6 +253,8 @@ def _print_hypothesis_details(hypothesis) -> None:
         print(f"  Signal:   {hypothesis.signal_name}")
     if hypothesis.lookback is not None:
         print(f"  Lookback: {hypothesis.lookback}")
+    if hypothesis.horizon_days is not None:
+        print(f"  Horizon:  {hypothesis.horizon_days}d")
     print(f"  Status:   {hypothesis.status}")
     print(f"  Evals:    {hypothesis.observation_count}")
 
@@ -316,9 +318,10 @@ def _print_hypothesis_competition_summary(
         kind = hypothesis.kind or "-"
         signal_name = hypothesis.signal_name or "-"
         lookback = "-" if hypothesis.lookback is None else str(hypothesis.lookback)
+        horizon = "-" if hypothesis.horizon_days is None else f"{hypothesis.horizon_days}d"
         print(
             f"  {hypothesis.hypothesis_id} "
-            f"kind={kind} signal={signal_name} lookback={lookback} "
+            f"kind={kind} signal={signal_name} lookback={lookback} horizon={horizon} "
             f"status={hypothesis.status} "
             f"corr={0.0 if metric is None else metric.corr:.6f} "
             f"mmc={0.0 if metric is None else metric.mmc:.6f} "

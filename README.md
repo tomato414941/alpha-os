@@ -183,7 +183,7 @@ Current scope:
 
 - `1 asset`: `BTC`
 - `paper-only`
-- `1 target`: `residual_return_1d`
+- `1 target`: `residual_return_3d`
 - primary bounded path:
   `register-hypothesis -> record-prediction -> finalize-observation -> update-state`
 - convenience wrapper:

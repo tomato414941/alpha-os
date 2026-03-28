@@ -125,11 +125,15 @@ def generate_evaluation_input_from_frame(
         raise ValueError(f"date not found in signal history: {date}")
 
     idx = dates.index(date)
-    if idx >= len(dates) - 1:
-        raise ValueError(f"date {date} needs a next close to build observation")
+    observation_idx = idx + definition.horizon_days
+    if observation_idx >= len(dates):
+        raise ValueError(
+            f"date {date} needs a future close {definition.horizon_days} days ahead "
+            f"to build observation"
+        )
 
     current_close = float(daily_close.iloc[idx])
-    next_close = float(daily_close.iloc[idx + 1])
+    next_close = float(daily_close.iloc[observation_idx])
     if current_close == 0.0:
         raise ValueError("close price cannot be zero")
 

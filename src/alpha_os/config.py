@@ -5,9 +5,16 @@ from pathlib import Path
 
 DEFAULT_DB_PATH = Path("data") / "v1" / "runtime.db"
 DEFAULT_ASSET = "BTC"
-DEFAULT_TARGET = "residual_return_1d"
+DEFAULT_HORIZON_DAYS = 3
 DEFAULT_SIGNAL_NOISE_BASE_URL = "http://127.0.0.1:8000"
 DEFAULT_PRICE_SIGNAL = "btc_ohlcv"
+
+
+def target_name_for_horizon(horizon_days: int) -> str:
+    return f"residual_return_{horizon_days}d"
+
+
+DEFAULT_TARGET = target_name_for_horizon(DEFAULT_HORIZON_DAYS)
 
 
 @dataclass(frozen=True)
