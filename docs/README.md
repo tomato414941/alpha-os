@@ -27,10 +27,6 @@ For most work, read in this order:
    - [`docs/design/README.md`](./design/README.md)
      - detailed design map
      - domain model, evaluation, architecture, scaling
-   - [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
-     - current portfolio semantics
-     - lifecycle / allocation terminology
-     - near-term portfolio bottlenecks and design choices
 4. [`plan.md`](../plan.md)
    - current working plan
    - active priority order
@@ -62,7 +58,9 @@ Prefer:
 
 Prefer:
 
-- [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
+- [`README.md`](../README.md)
+- [`OPERATING_BOUNDARIES.md`](../OPERATING_BOUNDARIES.md)
+- [`runtime-evaluation.md`](./design/runtime-evaluation.md)
 
 ### "What would the architecture look like without migration baggage?"
 
@@ -106,13 +104,6 @@ Prefer:
   - current working order
   - active priority sequencing
 
-### Current Design Notes
-
-- [`portfolio-runtime-principles.md`](./portfolio-runtime-principles.md)
-  - current portfolio semantics
-  - sleeve lifecycle
-  - allocation / actionable / capital design
-
 ### Long-Horizon Design
 
 - [`DESIGN.md`](../DESIGN.md)
@@ -148,6 +139,5 @@ If two documents seem to disagree, prefer:
 
 1. `README.md` for current entrypoints
 2. `OPERATING_BOUNDARIES.md` for current runtime truth
-3. `portfolio-runtime-principles.md` for current portfolio semantics
-4. `DESIGN.md` and `docs/design/` for target architecture
+3. `DESIGN.md` and `docs/design/` for target architecture
 5. archive / roadmap files only for context

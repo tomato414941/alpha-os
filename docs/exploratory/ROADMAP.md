@@ -82,20 +82,6 @@ Possible future direction:
 This should not be treated as near-term implementation until the current
 single-venue bounded runtime is trusted for longer.
 
-### 5. Broader Target-Centric Predictive OS
-
-Possible future direction:
-
-- move beyond one market target into multiple target classes
-- treat hypothesis health, allocation, execution quality, and data trust as
-  first-class prediction targets
-- move from hypothesis-centric runtime thinking toward target-centric control
-  planes
-
-The concrete greenfield direction for this already lives in `plan.md` and
-`DESIGN.md`. This bucket remains here only as a reminder of the broader future
-scope.
-
 ## Promotion Rule
 
 Move an item out of this file when one of these becomes true:

@@ -100,6 +100,54 @@ Evaluation asset count is a tradeoff between breadth and depth.
 The point is not to evaluate every candidate everywhere at the earliest stage,
 but to preserve enough breadth to avoid local search collapse.
 
+## Portfolio Conversion
+
+Good hypotheses do not automatically imply a good portfolio.
+
+The runtime should distinguish between:
+
+- many candidate hypotheses
+- many active hypotheses
+- many effective independent bets
+
+The thing that matters is effective breadth rather than raw count.
+
+So the intended design is:
+
+- broad search upstream
+- constrained active set downstream
+- capital concentrated on the most useful independent bets
+
+## Layering
+
+The runtime should keep these concerns separate:
+
+- **evaluation**
+  - whether a hypothesis predicts a target well
+- **selection**
+  - whether it stays in the active candidate set
+- **allocation**
+  - how much capital influence it deserves
+- **execution**
+  - how that influence becomes bounded trades
+
+These layers should interact, but they should not collapse into one score or
+one state variable too early.
+
+## Cost And Correlation
+
+Cost and crowding should affect portfolio decisions before execution-only
+diagnostics.
+
+In practice this means:
+
+- turnover-sensitive hypotheses should look worse before they reach execution
+- highly correlated hypotheses should compete for capital rather than all
+  surviving at equal influence
+
+The purpose is not to eliminate every similar hypothesis. The purpose is to
+avoid turning many similar signals into one oversized hidden bet.
+
 ## Pipeline Stages
 
 1. **Generate**

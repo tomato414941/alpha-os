@@ -324,8 +324,8 @@ They do not belong in:
 
 - `DESIGN.md`
   - which should stay greenfield and long-horizon
-- `docs/portfolio-runtime-principles.md`
-  - which should stay focused on portfolio semantics and near-term design rules
+- `docs/design/runtime-evaluation.md`
+  - which should stay focused on runtime and evaluation semantics
 
 ## Explicit Non-Priorities
 

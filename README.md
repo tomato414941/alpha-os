@@ -38,8 +38,6 @@ Prefer this order:
 
 After that:
 
-- `docs/portfolio-runtime-principles.md`
-  - current portfolio / allocation semantics
 - `DESIGN.md`
   - short design summary
 - `docs/design/README.md`
