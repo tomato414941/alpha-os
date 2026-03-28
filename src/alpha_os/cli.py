@@ -28,7 +28,7 @@ from .store import V1Store
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alpha-os",
-        description="alpha-os trust engine",
+        description="alpha-os evaluation engine",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -42,7 +42,7 @@ def _build_parser() -> argparse.ArgumentParser:
     register.add_argument("--db", type=str, default=None)
     register.add_argument("--hypothesis-id", type=str, required=True)
 
-    pause = sub.add_parser("pause-hypothesis", help="Pause one allocation-eligible hypothesis")
+    pause = sub.add_parser("pause-hypothesis", help="Pause one registered hypothesis")
     pause.add_argument("--db", type=str, default=None)
     pause.add_argument("--hypothesis-id", type=str, required=True)
 
@@ -168,7 +168,7 @@ def _build_parser() -> argparse.ArgumentParser:
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
     backfill_many.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
-    status = sub.add_parser("status", help="Show the latest BTC sleeve state")
+    status = sub.add_parser("status", help="Show the latest BTC evaluation state")
     status.add_argument("--db", type=str, default=None)
 
     show = sub.add_parser(
@@ -220,17 +220,19 @@ def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
         f"  Signal:   pred={snapshot.prediction_value:.6f} "
         f"obs={snapshot.observation_value:.6f} edge={snapshot.signed_edge:.6f}"
     )
+    print(f"  Error:    abs={snapshot.absolute_error:.6f}")
+
+
+def _print_hypothesis_metric(metric) -> None:
+    if metric is None:
+        print("  Metrics:  corr=0.000000 mmc=0.000000 evals=0")
+        return
     print(
-        "  Quality:  "
-        f"{snapshot.quality_before:.6f} -> {snapshot.quality_after:.6f} "
-        f"(delta={snapshot.quality_delta:+.6f})"
+        "  Metrics:  "
+        f"corr={metric.corr:.6f} "
+        f"mmc={metric.mmc:.6f} "
+        f"evals={metric.sample_count}"
     )
-    print(
-        "  Trust:    "
-        f"{snapshot.allocation_trust_before:.6f} -> {snapshot.allocation_trust_after:.6f} "
-        f"(delta={snapshot.allocation_trust_delta:+.6f})"
-    )
-    print(f"  Weight:   {snapshot.generated_weight:.6f}")
 
 
 def _unique_hypothesis_ids(values: list[str]) -> list[str]:
@@ -342,8 +344,7 @@ def cmd_register_hypothesis(args: argparse.Namespace) -> int:
     if hypothesis.lookback is not None:
         print(f"  Lookback: {hypothesis.lookback}")
     print(f"  Status:   {hypothesis.status}")
-    print(f"  Quality:  {hypothesis.quality:.6f}")
-    print(f"  Trust:    {hypothesis.allocation_trust:.6f}")
+    print(f"  Evals:    {hypothesis.observation_count}")
     return 0
 
 
@@ -372,8 +373,7 @@ def _cmd_change_hypothesis_status(
     if hypothesis.lookback is not None:
         print(f"  Lookback: {hypothesis.lookback}")
     print(f"  Status:   {hypothesis.status}")
-    print(f"  Quality:  {hypothesis.quality:.6f}")
-    print(f"  Trust:    {hypothesis.allocation_trust:.6f}")
+    print(f"  Evals:    {hypothesis.observation_count}")
     return 0
 
 
@@ -462,9 +462,11 @@ def cmd_update_state(args: argparse.Namespace) -> int:
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
         )
+        metric = store.get_hypothesis_metric(args.hypothesis_id)
     finally:
         store.close()
     _print_evaluation_snapshot(snapshot, created=created)
+    _print_hypothesis_metric(metric)
     return 0
 
 
@@ -534,9 +536,11 @@ def cmd_run_cycle(args: argparse.Namespace) -> int:
             observation_value=evaluation_input.observation,
             input_source=input_source,
         )
+        metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
     finally:
         store.close()
     _print_evaluation_snapshot(snapshot, created=created)
+    _print_hypothesis_metric(metric)
     return 0
 
 
@@ -594,8 +598,12 @@ def _apply_evaluation_inputs(
     )
     if latest_snapshot is not None:
         print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.hypothesis_id}")
-        print(f"  Quality:  {latest_snapshot.quality_after:.6f}")
-        print(f"  Trust:    {latest_snapshot.allocation_trust_after:.6f}")
+        store = V1Store(cfg.db_path)
+        try:
+            metric = store.get_hypothesis_metric(latest_snapshot.hypothesis_id)
+        finally:
+            store.close()
+        _print_hypothesis_metric(metric)
     return 0
 
 
@@ -697,17 +705,16 @@ def cmd_status(args: argparse.Namespace) -> int:
     store = V1Store(cfg.db_path)
     try:
         store.ensure_schema()
-        sleeve_state = store.get_sleeve_state(asset=cfg.asset, target=cfg.target)
-        latest = (
-            None
-            if sleeve_state is None
-            or sleeve_state.latest_evaluation_id is None
-            or sleeve_state.latest_hypothesis_id is None
-            else store.get_evaluation_snapshot(
-                sleeve_state.latest_evaluation_id,
-                sleeve_state.latest_hypothesis_id,
+        hypotheses = store.list_hypotheses(asset=cfg.asset, target=cfg.target)
+        metrics = (
+            []
+            if not hypotheses
+            else store.list_hypothesis_metrics(
+                hypothesis_ids=[item.hypothesis_id for item in hypotheses]
             )
         )
+        snapshots = store.list_evaluation_snapshots(limit=1)
+        latest = snapshots[0] if snapshots else None
     finally:
         store.close()
 
@@ -715,17 +722,27 @@ def cmd_status(args: argparse.Namespace) -> int:
     print(f"  DB:       {Path(cfg.db_path)}")
     print(f"  Asset:    {cfg.asset}")
     print(f"  Target:   {cfg.target}")
-    if sleeve_state is None:
+    if latest is None and not hypotheses:
         print("  Latest:   no evaluations recorded")
         return 0
-    print(
-        f"  Latest:   {sleeve_state.latest_evaluation_id} / {sleeve_state.latest_hypothesis_id}"
-    )
-    print(f"  Live:     {sleeve_state.live_hypothesis_count}")
-    print(f"  Quality:  mean={sleeve_state.mean_quality:.6f}")
-    print(f"  Trust:    total={sleeve_state.total_allocation_trust:.6f}")
     if latest is not None:
-        print(f"  Weight:   latest={latest.generated_weight:.6f}")
+        print(
+            f"  Latest:   {latest.evaluation_id} / {latest.hypothesis_id}"
+        )
+    else:
+        print("  Latest:   no evaluations recorded")
+    total = len(hypotheses)
+    registered = sum(1 for item in hypotheses if item.status == "registered")
+    paused = sum(1 for item in hypotheses if item.status == "paused")
+    retired = sum(1 for item in hypotheses if item.status == "retired")
+    print(
+        "  Hyp:      "
+        f"total={total} registered={registered} paused={paused} retired={retired}"
+    )
+    tracked = len(metrics)
+    mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
+    mean_mmc = 0.0 if tracked == 0 else sum(item.mmc for item in metrics) / tracked
+    print(f"  Metrics:  tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc:.6f}")
     return 0
 
 
@@ -753,8 +770,9 @@ def cmd_show_evaluations(args: argparse.Namespace) -> int:
             f"source={snapshot.input_source or '-'} "
             f"signal={snapshot.signal_name or '-'} "
             f"range={range_text} "
-            f"q={snapshot.quality_after:.6f} "
-            f"t={snapshot.allocation_trust_after:.6f}"
+            f"pred={snapshot.prediction_value:.6f} "
+            f"obs={snapshot.observation_value:.6f} "
+            f"edge={snapshot.signed_edge:.6f}"
         )
     return 0
 

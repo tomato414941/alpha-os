@@ -9,9 +9,8 @@ import pandas as pd
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
-from .policy import build_cycle_update
 from .scoring import DEFAULT_METRIC_WINDOW, compute_hypothesis_metrics
-from .transition_policy import decide_operator_transition, decide_status_after_update
+from .transition_policy import decide_operator_transition
 
 
 def _utc_now() -> str:
@@ -27,8 +26,6 @@ class HypothesisState:
     signal_name: str | None
     lookback: int | None
     status: str
-    quality: float
-    allocation_trust: float
     prediction_count: int
     observation_count: int
 
@@ -43,13 +40,6 @@ class EvaluationSnapshot:
     observation_value: float
     signed_edge: float
     absolute_error: float
-    quality_before: float
-    quality_after: float
-    quality_delta: float
-    allocation_trust_before: float
-    allocation_trust_after: float
-    allocation_trust_delta: float
-    generated_weight: float
     input_source: str | None
     input_range_start: str | None
     input_range_end: str | None
@@ -77,18 +67,6 @@ class ObservationRecord:
 
 
 @dataclass(frozen=True)
-class SleeveState:
-    asset: str
-    target: str
-    live_hypothesis_count: int
-    mean_quality: float
-    total_allocation_trust: float
-    latest_evaluation_id: str | None
-    latest_hypothesis_id: str | None
-    updated_at: str
-
-
-@dataclass(frozen=True)
 class HypothesisMetricState:
     hypothesis_id: str
     corr: float
@@ -111,8 +89,6 @@ def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
         signal_name=None if row["signal_name"] is None else str(row["signal_name"]),
         lookback=None if row["lookback"] is None else int(row["lookback"]),
         status=str(row["status"]),
-        quality=float(row["quality"]),
-        allocation_trust=float(row["allocation_trust"]),
         prediction_count=int(row["prediction_count"]),
         observation_count=int(row["observation_count"]),
     )
@@ -130,13 +106,6 @@ def _row_to_snapshot(row: sqlite3.Row | None) -> EvaluationSnapshot | None:
         observation_value=float(row["observation_value"]),
         signed_edge=float(row["signed_edge"]),
         absolute_error=float(row["absolute_error"]),
-        quality_before=float(row["quality_before"]),
-        quality_after=float(row["quality_after"]),
-        quality_delta=float(row["quality_delta"]),
-        allocation_trust_before=float(row["allocation_trust_before"]),
-        allocation_trust_after=float(row["allocation_trust_after"]),
-        allocation_trust_delta=float(row["allocation_trust_delta"]),
-        generated_weight=float(row["generated_weight"]),
         input_source=None if row["input_source"] is None else str(row["input_source"]),
         input_range_start=None
         if row["input_range_start"] is None
@@ -146,23 +115,6 @@ def _row_to_snapshot(row: sqlite3.Row | None) -> EvaluationSnapshot | None:
         else str(row["input_range_end"]),
         signal_name=None if row["signal_name"] is None else str(row["signal_name"]),
         created_at=str(row["created_at"]),
-    )
-
-
-def _row_to_sleeve_state(row: sqlite3.Row | None) -> SleeveState | None:
-    if row is None:
-        return None
-    latest_evaluation_id = row["latest_evaluation_id"]
-    latest_hypothesis_id = row["latest_hypothesis_id"]
-    return SleeveState(
-        asset=str(row["asset"]),
-        target=str(row["target"]),
-        live_hypothesis_count=int(row["live_hypothesis_count"]),
-        mean_quality=float(row["mean_quality"]),
-        total_allocation_trust=float(row["total_allocation_trust"]),
-        latest_evaluation_id=None if latest_evaluation_id is None else str(latest_evaluation_id),
-        latest_hypothesis_id=None if latest_hypothesis_id is None else str(latest_hypothesis_id),
-        updated_at=str(row["updated_at"]),
     )
 
 
@@ -218,22 +170,6 @@ class V1Store:
     def close(self) -> None:
         self.conn.close()
 
-    def _ensure_evaluation_snapshot_column(self, name: str, definition: str) -> None:
-        columns = {
-            str(row["name"])
-            for row in self.conn.execute("PRAGMA table_info(evaluation_snapshots)").fetchall()
-        }
-        if name not in columns:
-            self.conn.execute(f"ALTER TABLE evaluation_snapshots ADD COLUMN {name} {definition}")
-
-    def _ensure_hypothesis_column(self, name: str, definition: str) -> None:
-        columns = {
-            str(row["name"])
-            for row in self.conn.execute("PRAGMA table_info(hypotheses)").fetchall()
-        }
-        if name not in columns:
-            self.conn.execute(f"ALTER TABLE hypotheses ADD COLUMN {name} {definition}")
-
     def _table_exists(self, name: str) -> bool:
         row = self.conn.execute(
             """
@@ -251,6 +187,16 @@ class V1Store:
         return {
             str(row["name"]) for row in self.conn.execute(f"PRAGMA table_info({name})").fetchall()
         }
+
+    def _ensure_hypothesis_column(self, name: str, definition: str) -> None:
+        columns = self._table_columns("hypotheses")
+        if name not in columns:
+            self.conn.execute(f"ALTER TABLE hypotheses ADD COLUMN {name} {definition}")
+
+    def _ensure_evaluation_snapshot_column(self, name: str, definition: str) -> None:
+        columns = self._table_columns("evaluation_snapshots")
+        if name not in columns:
+            self.conn.execute(f"ALTER TABLE evaluation_snapshots ADD COLUMN {name} {definition}")
 
     def _migrate_snapshot_table_to_evaluation_snapshots(self) -> None:
         if not self._table_exists("cycle_snapshots") or self._table_exists("evaluation_snapshots"):
@@ -402,52 +348,99 @@ class V1Store:
             )
             self.conn.execute("DROP TABLE evaluation_snapshots_legacy")
 
-    def _migrate_sleeve_state_to_evaluation_id(self) -> None:
-        columns = self._table_columns("sleeve_state")
-        if not columns or "latest_evaluation_id" in columns:
+    def _migrate_hypotheses_remove_legacy_quality_fields(self) -> None:
+        columns = self._table_columns("hypotheses")
+        if not columns or ("quality" not in columns and "allocation_trust" not in columns):
             return
         with self.conn:
-            self.conn.execute("ALTER TABLE sleeve_state RENAME TO sleeve_state_legacy")
+            self.conn.execute("ALTER TABLE hypotheses RENAME TO hypotheses_legacy")
             self.conn.execute(
                 """
-                CREATE TABLE sleeve_state (
+                CREATE TABLE hypotheses (
+                    hypothesis_id TEXT PRIMARY KEY,
                     asset TEXT NOT NULL,
                     target TEXT NOT NULL,
-                    live_hypothesis_count INTEGER NOT NULL,
-                    mean_quality REAL NOT NULL,
-                    total_allocation_trust REAL NOT NULL,
-                    latest_evaluation_id TEXT,
-                    latest_hypothesis_id TEXT,
-                    updated_at TEXT NOT NULL,
-                    PRIMARY KEY (asset, target)
+                    kind TEXT,
+                    signal_name TEXT,
+                    lookback INTEGER,
+                    status TEXT NOT NULL,
+                    prediction_count INTEGER NOT NULL,
+                    observation_count INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
                 )
                 """
             )
             self.conn.execute(
                 """
-                INSERT INTO sleeve_state (
-                    asset, target, live_hypothesis_count, mean_quality,
-                    total_allocation_trust, latest_evaluation_id,
-                    latest_hypothesis_id, updated_at
+                INSERT INTO hypotheses (
+                    hypothesis_id, asset, target, kind, signal_name, lookback,
+                    status, prediction_count, observation_count, created_at, updated_at
                 )
-                SELECT legacy.asset,
-                       legacy.target,
-                       legacy.live_hypothesis_count,
-                       legacy.mean_quality,
-                       legacy.total_allocation_trust,
-                       legacy.latest_cycle_id,
-                       (
-                           SELECT hypothesis_id
-                           FROM evaluation_snapshots AS snapshots
-                           WHERE snapshots.evaluation_id = legacy.latest_cycle_id
-                           ORDER BY snapshots.created_at DESC, snapshots.hypothesis_id DESC
-                           LIMIT 1
-                       ),
-                       legacy.updated_at
-                FROM sleeve_state_legacy AS legacy
+                SELECT hypothesis_id,
+                       asset,
+                       target,
+                       kind,
+                       signal_name,
+                       lookback,
+                       CASE WHEN status IN ('active', 'live') THEN 'registered' ELSE status END,
+                       prediction_count,
+                       observation_count,
+                       created_at,
+                       updated_at
+                FROM hypotheses_legacy
                 """
             )
-            self.conn.execute("DROP TABLE sleeve_state_legacy")
+            self.conn.execute("DROP TABLE hypotheses_legacy")
+
+    def _migrate_evaluation_snapshots_remove_legacy_state_fields(self) -> None:
+        columns = self._table_columns("evaluation_snapshots")
+        if not columns or "quality_before" not in columns:
+            return
+        with self.conn:
+            self.conn.execute(
+                "ALTER TABLE evaluation_snapshots RENAME TO evaluation_snapshots_legacy"
+            )
+            self.conn.execute(
+                """
+                CREATE TABLE evaluation_snapshots (
+                    evaluation_id TEXT NOT NULL,
+                    asset TEXT NOT NULL,
+                    target TEXT NOT NULL,
+                    hypothesis_id TEXT NOT NULL,
+                    prediction_value REAL NOT NULL,
+                    observation_value REAL NOT NULL,
+                    signed_edge REAL NOT NULL,
+                    absolute_error REAL NOT NULL,
+                    input_source TEXT,
+                    input_range_start TEXT,
+                    input_range_end TEXT,
+                    signal_name TEXT,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY (evaluation_id, hypothesis_id)
+                )
+                """
+            )
+            self.conn.execute(
+                """
+                INSERT INTO evaluation_snapshots (
+                    evaluation_id, asset, target, hypothesis_id, prediction_value,
+                    observation_value, signed_edge, absolute_error, input_source,
+                    input_range_start, input_range_end, signal_name, created_at
+                )
+                SELECT evaluation_id, asset, target, hypothesis_id, prediction_value,
+                       observation_value, signed_edge, absolute_error, input_source,
+                       input_range_start, input_range_end, signal_name, created_at
+                FROM evaluation_snapshots_legacy
+                """
+            )
+            self.conn.execute("DROP TABLE evaluation_snapshots_legacy")
+
+    def _drop_legacy_sleeve_state(self) -> None:
+        if not self._table_exists("sleeve_state"):
+            return
+        with self.conn:
+            self.conn.execute("DROP TABLE sleeve_state")
 
     def ensure_schema(self) -> None:
         self._migrate_snapshot_table_to_evaluation_snapshots()
@@ -455,7 +448,9 @@ class V1Store:
         self._migrate_predictions_to_evaluation_id()
         self._migrate_observations_to_evaluation_id()
         self._migrate_snapshots_to_evaluation_id()
-        self._migrate_sleeve_state_to_evaluation_id()
+        self._migrate_hypotheses_remove_legacy_quality_fields()
+        self._migrate_evaluation_snapshots_remove_legacy_state_fields()
+        self._drop_legacy_sleeve_state()
         self.conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS hypotheses (
@@ -466,8 +461,6 @@ class V1Store:
                 signal_name TEXT,
                 lookback INTEGER,
                 status TEXT NOT NULL,
-                quality REAL NOT NULL,
-                allocation_trust REAL NOT NULL,
                 prediction_count INTEGER NOT NULL,
                 observation_count INTEGER NOT NULL,
                 created_at TEXT NOT NULL,
@@ -492,18 +485,6 @@ class V1Store:
                 recorded_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS sleeve_state (
-                asset TEXT NOT NULL,
-                target TEXT NOT NULL,
-                live_hypothesis_count INTEGER NOT NULL,
-                mean_quality REAL NOT NULL,
-                total_allocation_trust REAL NOT NULL,
-                latest_evaluation_id TEXT,
-                latest_hypothesis_id TEXT,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (asset, target)
-            );
-
             CREATE TABLE IF NOT EXISTS hypothesis_metrics (
                 hypothesis_id TEXT PRIMARY KEY,
                 corr REAL NOT NULL,
@@ -524,13 +505,6 @@ class V1Store:
                 observation_value REAL NOT NULL,
                 signed_edge REAL NOT NULL,
                 absolute_error REAL NOT NULL,
-                quality_before REAL NOT NULL,
-                quality_after REAL NOT NULL,
-                quality_delta REAL NOT NULL DEFAULT 0.0,
-                allocation_trust_before REAL NOT NULL,
-                allocation_trust_after REAL NOT NULL,
-                allocation_trust_delta REAL NOT NULL DEFAULT 0.0,
-                generated_weight REAL NOT NULL,
                 input_source TEXT,
                 input_range_start TEXT,
                 input_range_end TEXT,
@@ -543,11 +517,6 @@ class V1Store:
         self._ensure_hypothesis_column("kind", "TEXT")
         self._ensure_hypothesis_column("signal_name", "TEXT")
         self._ensure_hypothesis_column("lookback", "INTEGER")
-        self._ensure_evaluation_snapshot_column("quality_delta", "REAL NOT NULL DEFAULT 0.0")
-        self._ensure_evaluation_snapshot_column(
-            "allocation_trust_delta",
-            "REAL NOT NULL DEFAULT 0.0",
-        )
         self._ensure_evaluation_snapshot_column("input_source", "TEXT")
         self._ensure_evaluation_snapshot_column("input_range_start", "TEXT")
         self._ensure_evaluation_snapshot_column("input_range_end", "TEXT")
@@ -559,10 +528,10 @@ class V1Store:
             WHERE status IN ('active', 'live')
             """
         )
-        for hypothesis_id in self.conn.execute(
+        for row in self.conn.execute(
             "SELECT hypothesis_id FROM hypotheses WHERE kind IS NULL"
         ).fetchall():
-            definition = find_hypothesis_definition(str(hypothesis_id["hypothesis_id"]))
+            definition = find_hypothesis_definition(str(row["hypothesis_id"]))
             if definition is None:
                 continue
             self.conn.execute(
@@ -583,7 +552,7 @@ class V1Store:
     def get_hypothesis(self, hypothesis_id: str) -> HypothesisState | None:
         row = self.conn.execute(
             """
-            SELECT hypothesis_id, asset, target, quality, allocation_trust,
+            SELECT hypothesis_id, asset, target,
                    kind, signal_name, lookback, status,
                    prediction_count, observation_count
             FROM hypotheses
@@ -601,12 +570,12 @@ class V1Store:
     ) -> list[HypothesisState]:
         rows = self.conn.execute(
             """
-            SELECT hypothesis_id, asset, target, quality, allocation_trust,
+            SELECT hypothesis_id, asset, target,
                    kind, signal_name, lookback, status,
                    prediction_count, observation_count
             FROM hypotheses
             WHERE asset = ? AND target = ?
-            ORDER BY allocation_trust DESC, quality DESC, prediction_count DESC, hypothesis_id ASC
+            ORDER BY observation_count DESC, prediction_count DESC, hypothesis_id ASC
             """,
             (asset, target),
         ).fetchall()
@@ -778,7 +747,6 @@ class V1Store:
             raise ValueError(f"hypothesis is not registered: {hypothesis_id}")
         decision = decide_operator_transition(
             current_status=hypothesis.status,
-            allocation_trust=hypothesis.allocation_trust,
             action=action,
         )
 
@@ -819,11 +787,10 @@ class V1Store:
             self.conn.execute(
                 """
                 INSERT INTO hypotheses (
-                    hypothesis_id, asset, target, kind, signal_name, lookback, status, quality,
-                    allocation_trust, prediction_count, observation_count,
-                    created_at, updated_at
+                    hypothesis_id, asset, target, kind, signal_name, lookback, status,
+                    prediction_count, observation_count, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, 'registered', 0.0, 0.0, 0, 0, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, 'registered', 0, 0, ?, ?)
                 """,
                 (
                     hypothesis_id,
@@ -849,11 +816,8 @@ class V1Store:
         row = self.conn.execute(
             """
             SELECT evaluation_id, asset, target, hypothesis_id, prediction_value,
-                   observation_value, signed_edge, absolute_error, quality_before,
-                   quality_after, quality_delta, allocation_trust_before,
-                   allocation_trust_after, allocation_trust_delta, generated_weight,
-                   input_source, input_range_start, input_range_end, signal_name,
-                   created_at
+                   observation_value, signed_edge, absolute_error, input_source,
+                   input_range_start, input_range_end, signal_name, created_at
             FROM evaluation_snapshots
             WHERE evaluation_id = ? AND hypothesis_id = ?
             """,
@@ -891,11 +855,8 @@ class V1Store:
         rows = self.conn.execute(
             """
             SELECT evaluation_id, asset, target, hypothesis_id, prediction_value,
-                   observation_value, signed_edge, absolute_error, quality_before,
-                   quality_after, quality_delta, allocation_trust_before,
-                   allocation_trust_after, allocation_trust_delta, generated_weight,
-                   input_source, input_range_start, input_range_end, signal_name,
-                   created_at
+                   observation_value, signed_edge, absolute_error, input_source,
+                   input_range_start, input_range_end, signal_name, created_at
             FROM evaluation_snapshots
             ORDER BY created_at DESC, evaluation_id DESC, hypothesis_id DESC
             LIMIT ?
@@ -903,23 +864,6 @@ class V1Store:
             (max(int(limit), 1),),
         ).fetchall()
         return [_row_to_snapshot(row) for row in rows]
-
-    def get_sleeve_state(
-        self,
-        *,
-        asset: str = DEFAULT_ASSET,
-        target: str = DEFAULT_TARGET,
-    ) -> SleeveState | None:
-        row = self.conn.execute(
-            """
-            SELECT asset, target, live_hypothesis_count, mean_quality,
-                   total_allocation_trust, latest_evaluation_id, latest_hypothesis_id, updated_at
-            FROM sleeve_state
-            WHERE asset = ? AND target = ?
-            """,
-            (asset, target),
-        ).fetchone()
-        return _row_to_sleeve_state(row)
 
     def record_prediction(
         self,
@@ -1019,11 +963,16 @@ class V1Store:
             return existing, False
 
         timestamp = recorded_at or _utc_now()
-        before_state = self.get_hypothesis(hypothesis_id)
-        if before_state is None:
+        hypothesis = self.get_hypothesis(hypothesis_id)
+        if hypothesis is None:
             raise ValueError(
                 f"hypothesis must be registered before updating state: {hypothesis_id}"
             )
+        if hypothesis.status in {"paused", "retired"}:
+            raise ValueError(
+                f"state cannot be updated while hypothesis is {hypothesis.status}: {hypothesis_id}"
+            )
+
         prediction = self.get_prediction(evaluation_id, hypothesis_id)
         if prediction is None:
             raise ValueError(
@@ -1035,75 +984,28 @@ class V1Store:
                 f"observation must be finalized before updating state: {evaluation_id}"
             )
 
-        quality_before = before_state.quality
-        trust_before = before_state.allocation_trust
-        update = build_cycle_update(
-            quality_before=quality_before,
-            allocation_trust_before=trust_before,
-            prediction_value=prediction.value,
-            observation_value=observation.value,
-        )
-        decision = decide_status_after_update(
-            current_status=before_state.status,
-            allocation_trust_after=update.allocation_trust_after,
-        )
+        signed_edge = float(prediction.value) * float(observation.value)
+        absolute_error = abs(float(prediction.value) - float(observation.value))
 
         with self.conn:
             self.conn.execute(
                 """
                 UPDATE hypotheses
-                SET status = ?,
-                    quality = ?,
-                    allocation_trust = ?,
-                    prediction_count = prediction_count + 1,
+                SET prediction_count = prediction_count + 1,
                     observation_count = observation_count + 1,
                     updated_at = ?
                 WHERE hypothesis_id = ?
                 """,
-                (
-                    decision.next_status,
-                    update.quality_after,
-                    update.allocation_trust_after,
-                    timestamp,
-                    hypothesis_id,
-                ),
+                (timestamp, hypothesis_id),
             )
-
-            totals_row = self.conn.execute(
-                """
-                SELECT
-                    COALESCE(SUM(allocation_trust), 0.0) AS total_trust,
-                    COALESCE(AVG(quality), 0.0) AS mean_quality,
-                    SUM(
-                        CASE
-                            WHEN status = 'registered' AND allocation_trust > 0.0 THEN 1
-                            ELSE 0
-                        END
-                    ) AS live_count
-                FROM hypotheses
-                WHERE asset = ? AND target = ?
-                """,
-                (asset, target),
-            ).fetchone()
-            assert totals_row is not None
-            total_trust = float(totals_row["total_trust"])
-            mean_quality = float(totals_row["mean_quality"])
-            live_count = int(totals_row["live_count"] or 0)
-            generated_weight = (
-                0.0 if total_trust <= 0.0 else update.allocation_trust_after / total_trust
-            )
-
             self.conn.execute(
                 """
                 INSERT INTO evaluation_snapshots (
                     evaluation_id, asset, target, hypothesis_id, prediction_value,
-                    observation_value, signed_edge, absolute_error, quality_before,
-                    quality_after, quality_delta, allocation_trust_before,
-                    allocation_trust_after, allocation_trust_delta, generated_weight,
-                    input_source, input_range_start, input_range_end, signal_name,
-                    created_at
+                    observation_value, signed_edge, absolute_error, input_source,
+                    input_range_start, input_range_end, signal_name, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     evaluation_id,
@@ -1112,45 +1014,12 @@ class V1Store:
                     hypothesis_id,
                     prediction.value,
                     observation.value,
-                    update.signed_edge,
-                    update.absolute_error,
-                    update.quality_before,
-                    update.quality_after,
-                    update.quality_delta,
-                    update.allocation_trust_before,
-                    update.allocation_trust_after,
-                    update.allocation_trust_delta,
-                    generated_weight,
+                    signed_edge,
+                    absolute_error,
                     input_source,
                     input_range_start,
                     input_range_end,
                     signal_name,
-                    timestamp,
-                ),
-            )
-            self.conn.execute(
-                """
-                INSERT INTO sleeve_state (
-                    asset, target, live_hypothesis_count, mean_quality,
-                    total_allocation_trust, latest_evaluation_id, latest_hypothesis_id, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(asset, target) DO UPDATE SET
-                    live_hypothesis_count = excluded.live_hypothesis_count,
-                    mean_quality = excluded.mean_quality,
-                    total_allocation_trust = excluded.total_allocation_trust,
-                    latest_evaluation_id = excluded.latest_evaluation_id,
-                    latest_hypothesis_id = excluded.latest_hypothesis_id,
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    asset,
-                    target,
-                    live_count,
-                    mean_quality,
-                    total_trust,
-                    evaluation_id,
-                    hypothesis_id,
                     timestamp,
                 ),
             )

@@ -603,8 +603,7 @@ def test_v1_smoke_flow_builds_applies_and_audits(tmp_path, monkeypatch, capsys):
     status_output = capsys.readouterr().out
     assert "alpha-os v1 status" in status_output
     assert "Latest:   BTC:residual_return_1d:2026-03-28 / momentum_1d" in status_output
-    assert "Live:     " in status_output
-    assert "Trust:    total=" in status_output
+    assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out

@@ -9,7 +9,7 @@ It is not the source of truth for runtime operations. For that, prefer
 This section is the source of truth for the next greenfield-style build.
 
 - Scope: `1 asset`, `paper-only`, `1 target`, `1 end-to-end cycle`
-- Required path: `prediction -> observation -> quality update -> allocation_trust update -> snapshot`
+- Required path: `prediction -> observation -> metrics update -> snapshot`
 - Execution can stop at virtual portfolio weights; real order routing is not required for v1
 - Runtime state must have a single source of truth; do not split the canonical cycle state
 - Every artifact in one cycle must share the same `evaluation_id`

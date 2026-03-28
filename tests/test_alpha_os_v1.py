@@ -82,25 +82,22 @@ def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
     output = capsys.readouterr().out
     assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in output
     assert "alpha-os v1 status" in output
-    assert "Live:     1" in output
+    assert "Metrics:  tracked=1" in output
 
     conn = sqlite3.connect(db_path)
     try:
         row = conn.execute(
             """
-            SELECT quality_after, quality_delta,
-                   allocation_trust_after, allocation_trust_delta, generated_weight,
-                   input_source
+            SELECT prediction_value, observation_value, signed_edge, absolute_error, input_source
             FROM evaluation_snapshots
             """
         ).fetchone()
         assert row is not None
-        assert row[0] > 0.0
-        assert row[1] > 0.0
-        assert row[2] > 0.0
-        assert row[3] > 0.0
-        assert row[4] == 1.0
-        assert row[5] == "manual"
+        assert row[0] == 0.5
+        assert row[1] == 0.2
+        assert row[2] == 0.1
+        assert row[3] == 0.3
+        assert row[4] == "manual"
     finally:
         conn.close()
 
@@ -165,13 +162,12 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT kind, signal_name, lookback, status, quality, allocation_trust,
-                   prediction_count, observation_count
+            SELECT kind, signal_name, lookback, status, prediction_count, observation_count
             FROM hypotheses
             WHERE hypothesis_id = 'momentum_1d'
             """
         ).fetchone()
-        assert row == ("momentum", "btc_ohlcv", 1, "registered", 0.0, 0.0, 0, 0)
+        assert row == ("momentum", "btc_ohlcv", 1, "registered", 0, 0)
     finally:
         conn.close()
 
@@ -538,13 +534,6 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
             ORDER BY hypothesis_id
             """
         ).fetchall()
-        latest = conn.execute(
-            """
-            SELECT latest_evaluation_id, latest_hypothesis_id
-            FROM sleeve_state
-            WHERE asset = 'BTC' AND target = 'residual_return_1d'
-            """
-        ).fetchone()
         assert prediction_count == 2
         assert observation_count == 1
         assert snapshot_count == 2
@@ -552,7 +541,6 @@ def test_same_evaluation_can_record_multiple_hypothesis_results(tmp_path, capsys
             ("BTC:residual_return_1d:2026-03-26", "momentum_1d"),
             ("BTC:residual_return_1d:2026-03-26", "reversal_1d"),
         ]
-        assert latest == ("BTC:residual_return_1d:2026-03-26", "reversal_1d")
     finally:
         conn.close()
 
@@ -645,7 +633,7 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
     status_output = capsys.readouterr().out
     assert "alpha-os v1 status" in status_output
     assert "Latest:   BTC:residual_return_1d:2026-03-26 / hyp_1" in status_output
-    assert "Trust:    total=" in status_output
+    assert "Metrics:  tracked=1" in status_output
 
     assert main(["show-evaluations", "--db", str(db_path), "--limit", "5"]) == 0
     cycles_output = capsys.readouterr().out
@@ -720,18 +708,16 @@ def test_pause_resume_and_retire_hypothesis_follow_state_machine(tmp_path, capsy
         conn.close()
 
 
-def test_pause_rejects_non_live_hypothesis(tmp_path):
+def test_pause_allows_registered_hypothesis(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
     _register_hypothesis(main, db_path, "hyp_1")
+    capsys.readouterr()
 
-    try:
-        main(["pause-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"])
-    except SystemExit as exc:
-        assert exc.code == 2
-    else:
-        raise AssertionError("expected parser exit for invalid pause transition")
+    assert main(["pause-hypothesis", "--db", str(db_path), "--hypothesis-id", "hyp_1"]) == 0
+    output = capsys.readouterr().out
+    assert "Hypothesis [paused] hyp_1" in output
 
 
 def test_resume_rejects_non_paused_hypothesis(tmp_path):

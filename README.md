@@ -176,7 +176,7 @@ python -m alpha_os_recovery legacy admission-daemon --asset BTC --config config/
 
 ## alpha_os
 
-The new `alpha_os` package is a separate bounded trust engine.
+The new `alpha_os` package is a separate bounded evaluation engine.
 It is intentionally narrower than `alpha_os_recovery`.
 
 Current scope:

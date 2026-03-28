@@ -64,25 +64,13 @@ def test_run_cycles_applies_multiple_fixture_days(tmp_path, capsys):
         snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
-            SELECT quality, allocation_trust, prediction_count, observation_count
+            SELECT prediction_count, observation_count
             FROM hypotheses
             WHERE hypothesis_id = 'hyp_fixture'
             """
         ).fetchone()
-        latest_row = conn.execute(
-            """
-            SELECT latest_evaluation_id, latest_hypothesis_id
-            FROM sleeve_state
-            WHERE asset = 'BTC' AND target = 'residual_return_1d'
-            """
-        ).fetchone()
         assert snapshot_count == 3
-        assert state_row is not None
-        assert state_row[0] != 0.0
-        assert state_row[1] >= 0.0
-        assert state_row[2] == 3
-        assert state_row[3] == 3
-        assert latest_row == ("BTC:residual_return_1d:2026-03-29", "hyp_fixture")
+        assert state_row == (3, 3)
     finally:
         conn.close()
 
