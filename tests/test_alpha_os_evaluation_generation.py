@@ -782,15 +782,24 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
             SET definition_json = ?
             WHERE hypothesis_id = 'momentum_1d'
             """,
-            (
-                json.dumps(
-                    {
-                        "kind": "momentum",
-                        "signal_name": "btc_ohlcv",
-                        "params": {"lookback": 3, "horizon_days": 3},
-                    },
-                    sort_keys=True,
-                ),
+                (
+                    json.dumps(
+                        {
+                            "kind": "momentum",
+                            "signal_name": "btc_ohlcv",
+                            "target": {
+                                "target_id": "residual_return_3d",
+                                "family": "residual_return",
+                                "observation_kind": "fixed_horizon",
+                                "subject_kind": "asset",
+                                "output_kind": "real_value",
+                                "scoring_kind": "corr_mmc",
+                                "params": {"horizon_days": 3},
+                            },
+                            "params": {"lookback": 3},
+                        },
+                        sort_keys=True,
+                    ),
             ),
         )
         store.conn.commit()

@@ -151,7 +151,7 @@ def generate_evaluation_input_from_frame(
         prediction=prediction,
         observation=observation,
         asset=definition.asset if asset == DEFAULT_ASSET else asset,
-        target=definition.target if target == DEFAULT_TARGET else target,
+        target=definition.target_id if target == DEFAULT_TARGET else target,
     )
 
 

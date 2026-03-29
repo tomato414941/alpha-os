@@ -9,6 +9,7 @@ from typing import Any
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
+from .targets import TargetDefinition
 from .transition_policy import decide_operator_transition
 
 
@@ -31,6 +32,16 @@ class HypothesisState:
         if self.definition_json is None:
             return None
         return json.loads(self.definition_json)
+
+    @property
+    def target_definition(self) -> TargetDefinition | None:
+        definition = self.definition
+        if definition is None:
+            return None
+        target_document = definition.get("target")
+        if not isinstance(target_document, dict):
+            return None
+        return TargetDefinition.from_document(target_document)
 
     @property
     def kind(self) -> str | None:
@@ -61,14 +72,10 @@ class HypothesisState:
 
     @property
     def horizon_days(self) -> int | None:
-        definition = self.definition
-        if definition is None:
+        target_definition = self.target_definition
+        if target_definition is None:
             return None
-        params = definition.get("params")
-        if not isinstance(params, dict):
-            return None
-        value = params.get("horizon_days")
-        return value if isinstance(value, int) else None
+        return target_definition.horizon_days
 
 
 @dataclass(frozen=True)
@@ -413,7 +420,7 @@ class EvaluationStore:
             else json.dumps(definition.to_document(), sort_keys=True)
         )
         resolved_asset = asset if definition is None else definition.asset
-        resolved_target = target if definition is None else definition.target
+        resolved_target = target if definition is None else definition.target_id
         with self.conn:
             self.conn.execute(
                 """

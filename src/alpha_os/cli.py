@@ -222,7 +222,6 @@ def _active_hypothesis_definition(
         hypothesis_id=hypothesis.hypothesis_id,
         document=hypothesis.definition,
         asset=hypothesis.asset,
-        target=hypothesis.target,
     )
 
 def _generate_backfill_inputs_for_hypothesis(

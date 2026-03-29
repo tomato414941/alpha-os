@@ -3,18 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .targets import residual_return_target_definition
+
 DEFAULT_DB_PATH = Path("data") / "v1" / "runtime.db"
 DEFAULT_ASSET = "BTC"
 DEFAULT_HORIZON_DAYS = 3
 DEFAULT_SIGNAL_NOISE_BASE_URL = "http://127.0.0.1:8000"
 DEFAULT_PRICE_SIGNAL = "btc_ohlcv"
-
-
-def target_name_for_horizon(horizon_days: int) -> str:
-    return f"residual_return_{horizon_days}d"
-
-
-DEFAULT_TARGET = target_name_for_horizon(DEFAULT_HORIZON_DAYS)
+DEFAULT_TARGET_DEFINITION = residual_return_target_definition(DEFAULT_HORIZON_DAYS)
+DEFAULT_TARGET = DEFAULT_TARGET_DEFINITION.target_id
 
 
 @dataclass(frozen=True)

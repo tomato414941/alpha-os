@@ -172,8 +172,17 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
         definition = json.loads(row[0])
         assert definition == {
             "kind": "momentum",
-            "params": {"horizon_days": 3, "lookback": 1},
             "signal_name": "btc_ohlcv",
+            "target": {
+                "family": "residual_return",
+                "observation_kind": "fixed_horizon",
+                "output_kind": "real_value",
+                "params": {"horizon_days": 3},
+                "scoring_kind": "corr_mmc",
+                "subject_kind": "asset",
+                "target_id": "residual_return_3d",
+            },
+            "params": {"lookback": 1},
         }
         assert row[1:] == ("active", 0, 0)
     finally:
@@ -206,8 +215,17 @@ def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
         definition = json.loads(row[0])
         assert definition == {
             "kind": "reversal",
-            "params": {"horizon_days": 3, "lookback": 5},
             "signal_name": "btc_ohlcv",
+            "target": {
+                "family": "residual_return",
+                "observation_kind": "fixed_horizon",
+                "output_kind": "real_value",
+                "params": {"horizon_days": 3},
+                "scoring_kind": "corr_mmc",
+                "subject_kind": "asset",
+                "target_id": "residual_return_3d",
+            },
+            "params": {"lookback": 5},
         }
         assert row[1:] == ("active", 0, 0)
     finally:
@@ -240,8 +258,17 @@ def test_register_hypothesis_supports_additional_kind_definition(tmp_path, capsy
         definition = json.loads(row[0])
         assert definition == {
             "kind": "average_gap",
-            "params": {"horizon_days": 3, "lookback": 3},
             "signal_name": "btc_ohlcv",
+            "target": {
+                "family": "residual_return",
+                "observation_kind": "fixed_horizon",
+                "output_kind": "real_value",
+                "params": {"horizon_days": 3},
+                "scoring_kind": "corr_mmc",
+                "subject_kind": "asset",
+                "target_id": "residual_return_3d",
+            },
+            "params": {"lookback": 3},
         }
         assert row[1:] == ("active", 0, 0)
     finally:
