@@ -39,28 +39,29 @@ def refresh_hypothesis_metrics(
 
     effective_recorded_at = recorded_at or _utc_now()
     if not rows:
-        store.conn.execute(
-            """
-            INSERT INTO hypothesis_metrics (
-                hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
-                sample_count, mmc_sample_count, window_size,
-                start_evaluation_id, end_evaluation_id, updated_at
+        with store.conn:
+            store.conn.execute(
+                """
+                INSERT INTO hypothesis_metrics (
+                    hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+                    sample_count, mmc_sample_count, window_size,
+                    start_evaluation_id, end_evaluation_id, updated_at
+                )
+                VALUES (?, 0.0, NULL, NULL, 0, 0, 0, ?, NULL, NULL, ?)
+                ON CONFLICT(hypothesis_id) DO UPDATE SET
+                    corr = excluded.corr,
+                    mmc = excluded.mmc,
+                    mmc_baseline_type = excluded.mmc_baseline_type,
+                    mmc_peer_count = excluded.mmc_peer_count,
+                    sample_count = excluded.sample_count,
+                    mmc_sample_count = excluded.mmc_sample_count,
+                    window_size = excluded.window_size,
+                    start_evaluation_id = excluded.start_evaluation_id,
+                    end_evaluation_id = excluded.end_evaluation_id,
+                    updated_at = excluded.updated_at
+                """,
+                (hypothesis_id, int(window_size), effective_recorded_at),
             )
-            VALUES (?, 0.0, NULL, NULL, 0, 0, 0, ?, NULL, NULL, ?)
-            ON CONFLICT(hypothesis_id) DO UPDATE SET
-                corr = excluded.corr,
-                mmc = excluded.mmc,
-                mmc_baseline_type = excluded.mmc_baseline_type,
-                mmc_peer_count = excluded.mmc_peer_count,
-                sample_count = excluded.sample_count,
-                mmc_sample_count = excluded.mmc_sample_count,
-                window_size = excluded.window_size,
-                start_evaluation_id = excluded.start_evaluation_id,
-                end_evaluation_id = excluded.end_evaluation_id,
-                updated_at = excluded.updated_at
-            """,
-            (hypothesis_id, int(window_size), effective_recorded_at),
-        )
         return
 
     rows = list(reversed(rows))
@@ -119,37 +120,60 @@ def refresh_hypothesis_metrics(
         meta_model=meta_model,
         window_size=window_size,
     )
-    store.conn.execute(
-        """
-        INSERT INTO hypothesis_metrics (
-            hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
-            sample_count, mmc_sample_count, window_size,
-            start_evaluation_id, end_evaluation_id, updated_at
+    with store.conn:
+        store.conn.execute(
+            """
+            INSERT INTO hypothesis_metrics (
+                hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+                sample_count, mmc_sample_count, window_size,
+                start_evaluation_id, end_evaluation_id, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(hypothesis_id) DO UPDATE SET
+                corr = excluded.corr,
+                mmc = excluded.mmc,
+                mmc_baseline_type = excluded.mmc_baseline_type,
+                mmc_peer_count = excluded.mmc_peer_count,
+                sample_count = excluded.sample_count,
+                mmc_sample_count = excluded.mmc_sample_count,
+                window_size = excluded.window_size,
+                start_evaluation_id = excluded.start_evaluation_id,
+                end_evaluation_id = excluded.end_evaluation_id,
+                updated_at = excluded.updated_at
+            """,
+            (
+                hypothesis_id,
+                metrics.corr,
+                metrics.mmc,
+                MMC_BASELINE_ACTIVE_PEER_MEAN,
+                int(peer_count),
+                metrics.sample_count,
+                metrics.mmc_sample_count,
+                metrics.window_size,
+                evaluation_ids[0],
+                evaluation_ids[-1],
+                effective_recorded_at,
+            ),
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(hypothesis_id) DO UPDATE SET
-            corr = excluded.corr,
-            mmc = excluded.mmc,
-            mmc_baseline_type = excluded.mmc_baseline_type,
-            mmc_peer_count = excluded.mmc_peer_count,
-            sample_count = excluded.sample_count,
-            mmc_sample_count = excluded.mmc_sample_count,
-            window_size = excluded.window_size,
-            start_evaluation_id = excluded.start_evaluation_id,
-            end_evaluation_id = excluded.end_evaluation_id,
-            updated_at = excluded.updated_at
-        """,
-        (
-            hypothesis_id,
-            metrics.corr,
-            metrics.mmc,
-            MMC_BASELINE_ACTIVE_PEER_MEAN,
-            int(peer_count),
-            metrics.sample_count,
-            metrics.mmc_sample_count,
-            metrics.window_size,
-            evaluation_ids[0],
-            evaluation_ids[-1],
-            effective_recorded_at,
-        ),
-    )
+
+
+def refresh_target_metrics(
+    store: EvaluationStore,
+    *,
+    asset: str = DEFAULT_ASSET,
+    target_id: str = DEFAULT_TARGET,
+    recorded_at: str | None = None,
+    window_size: int = DEFAULT_METRIC_WINDOW,
+) -> None:
+    hypotheses = store.list_hypotheses(asset=asset, target_id=target_id)
+    for hypothesis in hypotheses:
+        if hypothesis.prediction_count <= 0 and hypothesis.observation_count <= 0:
+            continue
+        refresh_hypothesis_metrics(
+            store,
+            hypothesis_id=hypothesis.hypothesis_id,
+            asset=asset,
+            target_id=target_id,
+            recorded_at=recorded_at,
+            window_size=window_size,
+        )

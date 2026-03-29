@@ -171,3 +171,50 @@ def test_refresh_hypothesis_metrics_sets_nullable_mmc_when_no_active_peers(tmp_p
         assert metric.mmc_sample_count == 0
     finally:
         store.close()
+
+
+def test_apply_evaluation_refreshes_target_metrics_across_grouped_hypothesis_runs(tmp_path):
+    from alpha_os.evaluation_runtime import apply_evaluation
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("hyp_a")
+        store.register_hypothesis("hyp_b")
+        store.register_hypothesis("hyp_c")
+
+        observations = [0.0, 0.1, 0.2, 0.3]
+        predictions_by_hypothesis = {
+            "hyp_a": [0.1, 0.2, 0.3, 0.4],
+            "hyp_b": [0.4, 0.3, 0.2, 0.1],
+            "hyp_c": [0.2, 0.1, 0.4, 0.3],
+        }
+
+        for hypothesis_id, predictions in predictions_by_hypothesis.items():
+            for idx, (prediction, observation) in enumerate(
+                zip(predictions, observations),
+                start=1,
+            ):
+                apply_evaluation(
+                    store,
+                    evaluation_id=f"BTC:residual_return_3d:e{idx}",
+                    hypothesis_id=hypothesis_id,
+                    prediction_value=prediction,
+                    observation_value=observation,
+                )
+
+        metrics = {
+            hypothesis_id: store.get_hypothesis_metric(hypothesis_id)
+            for hypothesis_id in predictions_by_hypothesis
+        }
+
+        for hypothesis_id, metric in metrics.items():
+            assert metric is not None, hypothesis_id
+            assert metric.mmc_baseline_type == "active_peer_mean"
+            assert metric.mmc_peer_count == 2
+            assert metric.sample_count == 4
+            assert metric.mmc_sample_count == 4
+    finally:
+        store.close()

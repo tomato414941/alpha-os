@@ -7,6 +7,7 @@ from collections import defaultdict
 from typing import Iterator
 
 from .evaluation_runtime import apply_evaluation, update_evaluation_state
+from .metrics_service import refresh_target_metrics
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -436,6 +437,11 @@ def _cmd_change_hypothesis_status(
             args.hypothesis_id,
             action=action,
         )
+        refresh_target_metrics(
+            store,
+            asset=hypothesis.asset,
+            target_id=hypothesis.target_id,
+        )
     print(f"Hypothesis [{verb}] {hypothesis.hypothesis_id}")
     _print_hypothesis_details(hypothesis)
     return 0
@@ -622,6 +628,7 @@ def _apply_evaluation_inputs(
         existing_count = 0
         latest_snapshot = None
         latest_metric = None
+        touched_targets: set[tuple[str, str]] = set()
         for evaluation_input in evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=evaluation_input.asset,
@@ -640,12 +647,21 @@ def _apply_evaluation_inputs(
                 input_range_start=input_range_start,
                 input_range_end=input_range_end,
                 signal_name=signal_name,
+                refresh_metrics=False,
             )
             if created:
                 created_count += 1
             else:
                 existing_count += 1
-            latest_metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
+            touched_targets.add((evaluation_input.asset, evaluation_input.target_id))
+        for asset, target_id in sorted(touched_targets):
+            refresh_target_metrics(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
+        if evaluation_inputs:
+            latest_metric = store.get_hypothesis_metric(evaluation_inputs[-1].hypothesis_id)
 
     print(
         "Batch complete: "
@@ -700,6 +716,7 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
         created_count = 0
         existing_count = 0
         latest_snapshot = None
+        touched_targets: set[tuple[str, str]] = set()
         for evaluation_input in all_evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=evaluation_input.asset,
@@ -718,11 +735,19 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
                 input_range_start=args.start_date,
                 input_range_end=args.end_date,
                 signal_name=args.signal_name,
+                refresh_metrics=False,
             )
             if created:
                 created_count += 1
             else:
                 existing_count += 1
+            touched_targets.add((evaluation_input.asset, evaluation_input.target_id))
+        for asset, target_id in sorted(touched_targets):
+            refresh_target_metrics(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
         print(
             "Batch complete: "
             f"hypotheses={len(hypothesis_ids)} "

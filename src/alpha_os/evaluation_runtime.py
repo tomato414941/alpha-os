@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
-from .metrics_service import refresh_hypothesis_metrics
+from .metrics_service import refresh_target_metrics
 from .store import EvaluationSnapshot, EvaluationStore
 
 
@@ -23,6 +23,7 @@ def update_evaluation_state(
     input_range_start: str | None = None,
     input_range_end: str | None = None,
     signal_name: str | None = None,
+    refresh_metrics: bool = True,
 ) -> tuple[EvaluationSnapshot, bool]:
     store.ensure_schema()
     existing = store.get_evaluation_snapshot(evaluation_id, hypothesis_id)
@@ -105,13 +106,13 @@ def update_evaluation_state(
                 timestamp,
             ),
         )
-        refresh_hypothesis_metrics(
-            store,
-            hypothesis_id=hypothesis_id,
-            asset=asset,
-            target_id=target_id,
-            recorded_at=timestamp,
-        )
+        if refresh_metrics:
+            refresh_target_metrics(
+                store,
+                asset=asset,
+                target_id=target_id,
+                recorded_at=timestamp,
+            )
 
     snapshot = store.get_evaluation_snapshot(evaluation_id, hypothesis_id)
     assert snapshot is not None
@@ -132,6 +133,7 @@ def apply_evaluation(
     input_range_start: str | None = None,
     input_range_end: str | None = None,
     signal_name: str | None = None,
+    refresh_metrics: bool = True,
 ) -> tuple[EvaluationSnapshot, bool]:
     store.ensure_schema()
     store.record_prediction(
@@ -160,4 +162,5 @@ def apply_evaluation(
         input_range_start=input_range_start,
         input_range_end=input_range_end,
         signal_name=signal_name,
+        refresh_metrics=refresh_metrics,
     )
