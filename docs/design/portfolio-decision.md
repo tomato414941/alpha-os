@@ -58,6 +58,26 @@ Portfolio decision answers this question:
 The portfolio decision layer should be able to consume a structured set of
 portfolio-relevant inputs.
 
+The long-run allocation unit should be `subject_id`, not `asset`.
+
+`asset` is an acceptable convenience field for the current bounded single-asset
+runtime, but it should not be treated as the long-run source-of-truth concept.
+The durable concept is the subject that can carry portfolio weight.
+
+Examples of valid subjects include:
+
+- a spot asset such as `BTC`
+- another asset such as `GLD` or a REIT ETF
+- an instrument such as `BTC_perp`
+- a basket or sleeve such as `REIT_basket`
+- a pair or spread such as `ETH_BTC_pair`
+
+So in a broader runtime:
+
+- `portfolio_id` identifies which capital pool is being managed
+- `subject_id` identifies what can receive weight
+- `asset` becomes, at most, a convenience field for bounded cases
+
 The minimal input model should allow:
 
 - expected return style signals
