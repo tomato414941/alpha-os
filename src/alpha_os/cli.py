@@ -8,10 +8,8 @@ from typing import Iterator
 
 from .evaluation_runtime import apply_evaluation, update_evaluation_state
 from .metrics_service import refresh_target_metrics
-from .meta_model_service import (
-    refresh_target_meta_prediction_metrics,
-    refresh_target_meta_predictions,
-)
+from .meta_aggregation_service import refresh_target_meta_predictions
+from .meta_metrics_service import refresh_target_meta_prediction_metrics
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -94,28 +92,28 @@ def build_cli_parser() -> argparse.ArgumentParser:
     update.add_argument("--hypothesis-id", type=str, required=True)
     update.add_argument("--evaluation-id", type=str, default=None)
 
-    build = sub.add_parser(
+    generate_input = sub.add_parser(
         "generate-evaluation-input",
         help="Generate one deterministic evaluation-input JSON from signal-noise daily closes",
     )
-    build.add_argument("--db", type=str, default=None)
-    build.add_argument("--date", type=str, required=True)
-    build.add_argument("--hypothesis-id", type=str, required=True)
-    build.add_argument("--out", type=str, required=True)
-    build.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-    build.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
+    generate_input.add_argument("--db", type=str, default=None)
+    generate_input.add_argument("--date", type=str, required=True)
+    generate_input.add_argument("--hypothesis-id", type=str, required=True)
+    generate_input.add_argument("--out", type=str, required=True)
+    generate_input.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
+    generate_input.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
-    builds = sub.add_parser(
+    generate_inputs = sub.add_parser(
         "generate-evaluation-inputs",
         help="Generate deterministic evaluation-input JSON for a date range from signal-noise daily closes",
     )
-    builds.add_argument("--db", type=str, default=None)
-    builds.add_argument("--start-date", type=str, required=True)
-    builds.add_argument("--end-date", type=str, required=True)
-    builds.add_argument("--hypothesis-id", type=str, required=True)
-    builds.add_argument("--out", type=str, required=True)
-    builds.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-    builds.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
+    generate_inputs.add_argument("--db", type=str, default=None)
+    generate_inputs.add_argument("--start-date", type=str, required=True)
+    generate_inputs.add_argument("--end-date", type=str, required=True)
+    generate_inputs.add_argument("--hypothesis-id", type=str, required=True)
+    generate_inputs.add_argument("--out", type=str, required=True)
+    generate_inputs.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
+    generate_inputs.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
     run = sub.add_parser(
         "apply-evaluation",
@@ -180,7 +178,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
     backfill_many.add_argument("--signal-name", type=str, default=DEFAULT_PRICE_SIGNAL)
 
-    status = sub.add_parser("status", help="Show the latest BTC evaluation state")
+    status = sub.add_parser("status", help="Show runtime status across targets")
     status.add_argument("--db", type=str, default=None)
 
     show = sub.add_parser(

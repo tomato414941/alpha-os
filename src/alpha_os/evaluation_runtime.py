@@ -4,10 +4,8 @@ from datetime import UTC, datetime
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .metrics_service import refresh_target_metrics
-from .meta_model_service import (
-    refresh_target_meta_prediction_metrics,
-    refresh_target_meta_predictions,
-)
+from .meta_aggregation_service import refresh_target_meta_predictions
+from .meta_metrics_service import refresh_target_meta_prediction_metrics
 from .store import EvaluationSnapshot, EvaluationStore
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 def test_refresh_target_meta_predictions_persists_equal_and_corr_weighted_means(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
-    from alpha_os.meta_model_service import refresh_target_meta_predictions
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
@@ -44,7 +44,7 @@ def test_refresh_target_meta_predictions_persists_equal_and_corr_weighted_means(
 def test_refresh_target_meta_predictions_falls_back_to_equal_mean_when_corr_weights_are_non_positive(
     tmp_path,
 ):
-    from alpha_os.meta_model_service import refresh_target_meta_predictions
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
@@ -76,10 +76,8 @@ def test_refresh_target_meta_predictions_falls_back_to_equal_mean_when_corr_weig
 
 def test_refresh_target_meta_prediction_metrics_persists_corr(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
-    from alpha_os.meta_model_service import (
-        refresh_target_meta_prediction_metrics,
-        refresh_target_meta_predictions,
-    )
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
+    from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
@@ -125,7 +123,7 @@ def test_refresh_target_meta_prediction_metrics_persists_corr(tmp_path):
 
 def test_refresh_target_meta_predictions_uses_only_lagged_corr_for_weighting(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
-    from alpha_os.meta_model_service import refresh_target_meta_predictions
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
