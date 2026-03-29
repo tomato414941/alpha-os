@@ -19,10 +19,12 @@ class RuleBasedPortfolioPolicy:
     signal_scale: float = 1.0
     max_abs_weight: float = 1.0
     risk_aversion: float = 1.0
+    drawdown_aversion: float = 1.0
     uncertainty_aversion: float = 1.0
     dependence_aversion: float = 1.0
     slippage_aversion: float = 1.0
     turnover_aversion: float = 1.0
+    state_turnover_aversion: float = 1.0
 
 
 def apply_rule_based_policy(
@@ -40,6 +42,8 @@ def apply_rule_based_policy(
         decision_input.cost_inputs,
         "turnover_penalty",
     )
+    state_turnover = max(decision_input.portfolio_state.recent_turnover, 0.0)
+    current_drawdown = max(decision_input.portfolio_state.current_drawdown, 0.0)
 
     provisional_targets: list[PortfolioTarget] = []
     for subject_id in subject_ids:
@@ -63,7 +67,16 @@ def apply_rule_based_policy(
             _mean_dependence_value(decision_input.dependence_inputs, subject_id),
             policy.dependence_aversion,
         )
-        risk_scale = risk_shrink * uncertainty_shrink * dependence_shrink
+        drawdown_shrink = _shrink_from_level(
+            current_drawdown,
+            policy.drawdown_aversion,
+        )
+        risk_scale = (
+            risk_shrink
+            * drawdown_shrink
+            * uncertainty_shrink
+            * dependence_shrink
+        )
         target_weight = raw_weight * risk_scale
 
         no_trade_band = _subject_cost_value(
@@ -81,6 +94,10 @@ def apply_rule_based_policy(
             target_weight = current_weight
             delta = 0.0
         else:
+            delta *= _shrink_from_level(
+                state_turnover,
+                policy.state_turnover_aversion,
+            )
             delta *= _shrink_from_level(
                 _cost_level(slippage_penalty) + max(turnover_penalty, 0.0),
                 policy.slippage_aversion + policy.turnover_aversion,

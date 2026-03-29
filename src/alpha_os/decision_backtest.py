@@ -98,8 +98,11 @@ def run_decision_backtest(
 ) -> DecisionBacktestResult:
     aligned = _aligned_frame(backtest_input)
     current_weight = float(backtest_input.initial_weight)
+    recent_turnover = 0.0
+    current_drawdown = 0.0
     gross_equity = 1.0
     net_equity = 1.0
+    net_peak_equity = 1.0
     steps: list[DecisionBacktestStep] = []
 
     for date, row in aligned.iterrows():
@@ -115,6 +118,8 @@ def run_decision_backtest(
                         weight=current_weight,
                     ),
                 ),
+                recent_turnover=recent_turnover,
+                current_drawdown=current_drawdown,
             ),
             predictive_signals=(
                 PredictiveSignalInput(
@@ -170,6 +175,12 @@ def run_decision_backtest(
             )
         )
         current_weight = float(target.target_weight)
+        recent_turnover = float(turnover)
+        net_peak_equity = max(net_peak_equity, net_equity)
+        if net_peak_equity > 0.0:
+            current_drawdown = float(1.0 - (net_equity / net_peak_equity))
+        else:
+            current_drawdown = 0.0
 
     return DecisionBacktestResult(
         portfolio_id=backtest_input.portfolio_id,

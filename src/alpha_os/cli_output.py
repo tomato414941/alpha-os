@@ -276,8 +276,13 @@ def print_validation_summary(run, hypothesis_results, meta_results, decision_res
     for aggregation_kind, items in sorted(grouped_decisions.items()):
         mean_net = sum(item.net_return_total for item in items) / len(items)
         mean_drawdown = sum(item.max_drawdown for item in items) / len(items)
+        worst_net = min(item.net_return_total for item in items)
+        negative_conditions = sum(1 for item in items if item.net_return_total <= 0.0)
         print(
             f"    {aggregation_kind} conditions={len(items)} "
             f"wins={decision_wins[aggregation_kind]} "
-            f"mean_net={mean_net:.6f} mean_drawdown={mean_drawdown:.6f}"
+            f"negative_conditions={negative_conditions} "
+            f"mean_net={mean_net:.6f} "
+            f"worst_net={worst_net:.6f} "
+            f"mean_drawdown={mean_drawdown:.6f}"
         )

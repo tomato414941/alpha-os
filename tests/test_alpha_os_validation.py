@@ -194,3 +194,5 @@ def test_validation_cli_roundtrip(tmp_path, capsys):
     assert "alpha-os validation summary" in summary_output
     assert "Meta Aggregations:" in summary_output
     assert "Decision Aggregations:" in summary_output
+    assert "negative_conditions=" in summary_output
+    assert "worst_net=" in summary_output

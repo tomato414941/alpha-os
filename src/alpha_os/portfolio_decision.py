@@ -15,6 +15,8 @@ class PortfolioState:
     portfolio_id: str | None = None
     as_of: str | None = None
     positions: tuple[PortfolioPositionState, ...] = ()
+    recent_turnover: float = 0.0
+    current_drawdown: float = 0.0
 
     @property
     def gross_exposure(self) -> float:

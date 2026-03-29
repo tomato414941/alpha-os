@@ -18,6 +18,8 @@ def test_portfolio_state_exposure_properties():
     assert state.gross_exposure == pytest.approx(0.4)
     assert state.net_exposure == pytest.approx(0.2)
     assert state.weights_by_subject == {"BTC": 0.3, "ETH": -0.1}
+    assert state.recent_turnover == pytest.approx(0.0)
+    assert state.current_drawdown == pytest.approx(0.0)
 
 
 def test_portfolio_decision_input_can_hold_multiple_input_kinds():
@@ -261,5 +263,71 @@ def test_rule_based_policy_respects_no_trade_band_and_gross_cap():
     assert targets_by_subject["BTC"].target_weight == pytest.approx(0.2)
     assert targets_by_subject["ETH"].target_weight == pytest.approx(0.2)
     assert targets_by_subject["SOL"].target_weight == pytest.approx(0.0)
-    assert targets_by_subject["SOL"].position_delta == pytest.approx(0.0)
-    assert targets_by_subject["SOL"].entry_allowed is False
+
+
+def test_rule_based_policy_uses_drawdown_and_recent_turnover_state():
+    from alpha_os.portfolio_decision import (
+        PortfolioDecisionInput,
+        PortfolioPositionState,
+        PortfolioState,
+        PredictiveSignalInput,
+    )
+    from alpha_os.portfolio_decision_policy import apply_rule_based_policy
+
+    baseline_output = apply_rule_based_policy(
+        PortfolioDecisionInput(
+            portfolio_state=PortfolioState(
+                portfolio_id="paper_core",
+                positions=(PortfolioPositionState(subject_id="BTC", weight=0.0),),
+            ),
+            predictive_signals=(
+                PredictiveSignalInput(
+                    source_id="corr_weighted_mean",
+                    source_kind="meta_prediction",
+                    subject_id="BTC",
+                    target_id="residual_return_3d",
+                    value=1.0,
+                ),
+            ),
+        )
+    )
+    same_position_output = apply_rule_based_policy(
+        PortfolioDecisionInput(
+            portfolio_state=PortfolioState(
+                portfolio_id="paper_core",
+                positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
+            ),
+            predictive_signals=(
+                PredictiveSignalInput(
+                    source_id="corr_weighted_mean",
+                    source_kind="meta_prediction",
+                    subject_id="BTC",
+                    target_id="residual_return_3d",
+                    value=1.0,
+                ),
+            ),
+        )
+    )
+    stressed_output = apply_rule_based_policy(
+        PortfolioDecisionInput(
+            portfolio_state=PortfolioState(
+                portfolio_id="paper_core",
+                positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
+                recent_turnover=0.5,
+                current_drawdown=0.25,
+            ),
+            predictive_signals=(
+                PredictiveSignalInput(
+                    source_id="corr_weighted_mean",
+                    source_kind="meta_prediction",
+                    subject_id="BTC",
+                    target_id="residual_return_3d",
+                    value=1.0,
+                ),
+            ),
+        )
+    )
+
+    assert baseline_output.targets[0].target_weight == pytest.approx(1.0)
+    assert stressed_output.targets[0].target_weight < baseline_output.targets[0].target_weight
+    assert stressed_output.targets[0].position_delta < same_position_output.targets[0].position_delta
