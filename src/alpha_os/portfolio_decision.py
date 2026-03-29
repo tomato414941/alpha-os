@@ -12,11 +12,7 @@ class PortfolioPositionState:
 
 @dataclass(frozen=True)
 class PortfolioState:
-    # `portfolio_id` is the durable portfolio context.
-    # `asset` is a bounded-runtime convenience field.
-    # The durable allocation unit is `subject_id` inside positions.
     portfolio_id: str | None = None
-    asset: str | None = None
     as_of: str | None = None
     positions: tuple[PortfolioPositionState, ...] = ()
 
@@ -91,11 +87,7 @@ class DependenceInput:
 
 @dataclass(frozen=True)
 class PortfolioDecisionInput:
-    # `portfolio_id` is the durable portfolio context.
-    # `asset` remains a bounded-runtime convenience field.
-    # Long-run decision inputs should be keyed by `subject_id`.
     portfolio_id: str | None = None
-    asset: str | None = None
     as_of: str | None = None
     portfolio_state: PortfolioState = field(default_factory=PortfolioState)
     predictive_signals: tuple[PredictiveSignalInput, ...] = ()
@@ -118,11 +110,7 @@ class PortfolioTarget:
 
 @dataclass(frozen=True)
 class PortfolioDecisionOutput:
-    # `portfolio_id` is the durable portfolio context.
-    # `asset` remains a bounded-runtime convenience field.
-    # The durable output unit is `subject_id` inside targets.
     portfolio_id: str | None = None
-    asset: str | None = None
     as_of: str | None = None
     targets: tuple[PortfolioTarget, ...] = ()
 

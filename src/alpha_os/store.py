@@ -231,7 +231,6 @@ class ValidationDecisionResultState:
 class PortfolioDecisionState:
     portfolio_id: str
     subject_id: str
-    asset: str | None
     target_id: str
     aggregation_kind: str
     as_of: str
@@ -390,7 +389,6 @@ def _row_to_portfolio_decision(row: sqlite3.Row | None) -> PortfolioDecisionStat
     return PortfolioDecisionState(
         portfolio_id=str(row["portfolio_id"]),
         subject_id=str(row["subject_id"]),
-        asset=None if row["asset"] is None else str(row["asset"]),
         target_id=str(row["target_id"]),
         aggregation_kind=str(row["aggregation_kind"]),
         as_of=str(row["as_of"]),
@@ -651,7 +649,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS portfolio_decisions (
                 portfolio_id TEXT NOT NULL,
                 subject_id TEXT NOT NULL,
-                asset TEXT,
                 target_id TEXT NOT NULL,
                 aggregation_kind TEXT NOT NULL,
                 as_of TEXT NOT NULL,
@@ -966,7 +963,6 @@ class EvaluationStore:
         *,
         portfolio_id: str,
         subject_id: str,
-        asset: str | None,
         target_id: str,
         aggregation_kind: str,
         as_of: str,
@@ -985,15 +981,14 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO portfolio_decisions (
-                    portfolio_id, subject_id, asset, target_id, aggregation_kind,
+                    portfolio_id, subject_id, target_id, aggregation_kind,
                     as_of, target_weight, position_delta, target_notional,
                     target_quantity, entry_allowed, risk_scale, details_json,
                     created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(portfolio_id, subject_id, target_id, aggregation_kind, as_of)
                 DO UPDATE SET
-                    asset = excluded.asset,
                     target_weight = excluded.target_weight,
                     position_delta = excluded.position_delta,
                     target_notional = excluded.target_notional,
@@ -1006,7 +1001,6 @@ class EvaluationStore:
                 (
                     portfolio_id,
                     subject_id,
-                    asset,
                     target_id,
                     aggregation_kind,
                     as_of,
@@ -1047,7 +1041,7 @@ class EvaluationStore:
         params.append(max(int(limit), 1))
         rows = self.conn.execute(
             f"""
-            SELECT portfolio_id, subject_id, asset, target_id, aggregation_kind,
+            SELECT portfolio_id, subject_id, target_id, aggregation_kind,
                    as_of, target_weight, position_delta, target_notional,
                    target_quantity, entry_allowed, risk_scale, details_json,
                    created_at, updated_at

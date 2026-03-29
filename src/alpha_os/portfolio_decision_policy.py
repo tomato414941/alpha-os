@@ -108,7 +108,7 @@ def apply_rule_based_policy(
         )
 
     return PortfolioDecisionOutput(
-        asset=decision_input.asset,
+        portfolio_id=decision_input.portfolio_id,
         as_of=decision_input.as_of,
         targets=tuple(provisional_targets),
     )

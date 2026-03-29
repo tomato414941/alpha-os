@@ -310,7 +310,6 @@ def compute_validation_decision_metrics(
                 signal_series=signal_series,
                 realized_return_series=observations,
                 risk_series=risk_series.reindex(signal_series.index).fillna(0.0),
-                asset=None,
             )
         )
         results.append(_decision_metric_from_result(

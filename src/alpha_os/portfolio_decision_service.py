@@ -41,7 +41,7 @@ class PortfolioDecisionAssumptions:
 def build_portfolio_decision_input(
     store: EvaluationStore,
     *,
-    asset: str = DEFAULT_ASSET,
+    runtime_asset: str = DEFAULT_ASSET,
     target_id: str = DEFAULT_TARGET,
     portfolio_id: str | None = None,
     subject_id: str | None = None,
@@ -51,10 +51,10 @@ def build_portfolio_decision_input(
 ) -> PortfolioDecisionInput | None:
     config = config or RuntimeDecisionBuildConfig()
     assumptions = assumptions or PortfolioDecisionAssumptions()
-    resolved_subject_id = subject_id or asset
+    resolved_subject_id = subject_id or runtime_asset
     meta_prediction = _latest_meta_prediction(
         store,
-        asset=asset,
+        asset=runtime_asset,
         target_id=target_id,
         aggregation_kind=config.aggregation_kind,
     )
@@ -63,7 +63,7 @@ def build_portfolio_decision_input(
 
     metric = _meta_metric(
         store,
-        asset=asset,
+        asset=runtime_asset,
         target_id=target_id,
         aggregation_kind=config.aggregation_kind,
     )
@@ -71,7 +71,7 @@ def build_portfolio_decision_input(
     uncertainty_value = _uncertainty_level(metric)
     realized_vol = _realized_observation_volatility(
         store,
-        asset=asset,
+        asset=runtime_asset,
         target_id=target_id,
         window_size=config.risk_window,
     )
@@ -97,10 +97,9 @@ def build_portfolio_decision_input(
 
     return PortfolioDecisionInput(
         portfolio_id=portfolio_id,
-        asset=asset,
         as_of=meta_prediction.updated_at,
         portfolio_state=portfolio_state
-        or PortfolioState(portfolio_id=portfolio_id, asset=asset),
+        or PortfolioState(portfolio_id=portfolio_id),
         predictive_signals=(
             PredictiveSignalInput(
                 source_id=config.aggregation_kind,
@@ -121,7 +120,7 @@ def build_portfolio_decision_input(
 def build_portfolio_decision_output(
     store: EvaluationStore,
     *,
-    asset: str = DEFAULT_ASSET,
+    runtime_asset: str = DEFAULT_ASSET,
     target_id: str = DEFAULT_TARGET,
     portfolio_id: str | None = None,
     subject_id: str | None = None,
@@ -132,7 +131,7 @@ def build_portfolio_decision_output(
 ) -> PortfolioDecisionOutput | None:
     decision_input = build_portfolio_decision_input(
         store,
-        asset=asset,
+        runtime_asset=runtime_asset,
         target_id=target_id,
         portfolio_id=portfolio_id,
         subject_id=subject_id,
@@ -145,7 +144,6 @@ def build_portfolio_decision_output(
     decision_output = apply_rule_based_policy(decision_input, policy=policy)
     return PortfolioDecisionOutput(
         portfolio_id=portfolio_id,
-        asset=asset,
         as_of=decision_output.as_of,
         targets=decision_output.targets,
     )
@@ -164,7 +162,6 @@ def persist_portfolio_decision_output(
     config = config or RuntimeDecisionBuildConfig()
     assumptions = assumptions or PortfolioDecisionAssumptions()
     portfolio_id = decision_output.portfolio_id or "default"
-    asset = decision_output.asset
     as_of = decision_output.as_of or ""
     details_json = json.dumps(
         {
@@ -186,7 +183,6 @@ def persist_portfolio_decision_output(
         store.upsert_portfolio_decision(
             portfolio_id=portfolio_id,
             subject_id=target.subject_id,
-            asset=asset,
             target_id=target_id,
             aggregation_kind=aggregation_kind,
             as_of=as_of,

@@ -26,7 +26,7 @@ def _finalize_observation(
     target_id: str | None = None,
 ) -> None:
     argv = [
-        "finalize-observation",
+        "debug-finalize-observation",
         "--db",
         str(db_path),
         "--date",
@@ -49,7 +49,7 @@ def _record_prediction(
     target_id: str | None = None,
 ) -> None:
     argv = [
-        "record-prediction",
+        "debug-record-prediction",
         "--db",
         str(db_path),
         "--date",
@@ -372,7 +372,7 @@ def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):
     capsys.readouterr()
 
     args = [
-        "record-prediction",
+        "debug-record-prediction",
         "--db",
         str(db_path),
         "--date",
@@ -416,7 +416,7 @@ def test_record_prediction_rejects_unknown_hypothesis(tmp_path):
     try:
         main(
             [
-                "record-prediction",
+                "debug-record-prediction",
                 "--db",
                 str(db_path),
                 "--date",
@@ -438,7 +438,7 @@ def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
 
     db_path = tmp_path / "runtime.db"
     args = [
-        "finalize-observation",
+        "debug-finalize-observation",
         "--db",
         str(db_path),
         "--date",
@@ -502,7 +502,7 @@ def test_low_level_commands_accept_explicit_target_id(tmp_path, capsys):
     assert (
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -613,7 +613,7 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
     assert (
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -654,7 +654,7 @@ def test_update_state_is_idempotent_for_same_evaluation(tmp_path, capsys):
     capsys.readouterr()
 
     args = [
-        "update-state",
+        "debug-update-state",
         "--db",
         str(db_path),
         "--date",
@@ -771,7 +771,7 @@ def test_update_state_rejects_missing_prediction(tmp_path):
     try:
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -796,7 +796,7 @@ def test_update_state_rejects_missing_observation(tmp_path):
     try:
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -831,7 +831,7 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
     assert (
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -889,7 +889,7 @@ def test_activate_and_deactivate_hypothesis_follow_state_machine(tmp_path, capsy
     assert (
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -965,7 +965,7 @@ def test_inactive_hypothesis_rejects_new_prediction_and_update(tmp_path):
     assert (
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",
@@ -984,7 +984,7 @@ def test_inactive_hypothesis_rejects_new_prediction_and_update(tmp_path):
     try:
         main(
             [
-                "record-prediction",
+                "debug-record-prediction",
                 "--db",
                 str(db_path),
                 "--date",
@@ -1003,7 +1003,7 @@ def test_inactive_hypothesis_rejects_new_prediction_and_update(tmp_path):
     try:
         main(
             [
-                "update-state",
+                "debug-update-state",
                 "--db",
                 str(db_path),
                 "--date",

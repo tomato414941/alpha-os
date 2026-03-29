@@ -92,8 +92,8 @@ def build_cli_parser() -> argparse.ArgumentParser:
     activate.add_argument("--hypothesis-id", type=str, required=True)
 
     record = sub.add_parser(
-        "record-prediction",
-        help="Low-level: record one prediction before apply/update",
+        "debug-record-prediction",
+        help="Debug: record one prediction directly",
     )
     record.add_argument("--db", type=str, default=None)
     record.add_argument("--date", type=str, required=True)
@@ -103,8 +103,8 @@ def build_cli_parser() -> argparse.ArgumentParser:
     record.add_argument("--target-id", type=str, default=None)
 
     finalize = sub.add_parser(
-        "finalize-observation",
-        help="Low-level: finalize one observation before apply/update",
+        "debug-finalize-observation",
+        help="Debug: finalize one observation directly",
     )
     finalize.add_argument("--db", type=str, default=None)
     finalize.add_argument("--date", type=str, required=True)
@@ -113,8 +113,8 @@ def build_cli_parser() -> argparse.ArgumentParser:
     finalize.add_argument("--target-id", type=str, default=None)
 
     update = sub.add_parser(
-        "update-state",
-        help="Low-level: write one evaluation snapshot from recorded prediction and observation",
+        "debug-update-state",
+        help="Debug: write one evaluation snapshot directly",
     )
     update.add_argument("--db", type=str, default=None)
     update.add_argument("--date", type=str, required=True)
@@ -147,7 +147,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
 
     run = sub.add_parser(
         "apply-evaluation",
-        help="Apply one evaluation input through record-prediction -> finalize-observation -> update-state",
+        help="Apply one evaluation input through the bounded runtime",
     )
     run.add_argument("--db", type=str, default=None)
     run.add_argument("--date", type=str, default=None)
@@ -993,7 +993,6 @@ def cmd_build_portfolio_decision(args: argparse.Namespace) -> int:
         )
         portfolio_state = PortfolioState(
             portfolio_id=str(args.portfolio_id),
-            asset=cfg.asset,
             positions=(
                 PortfolioPositionState(
                     subject_id=subject_id,
@@ -1007,7 +1006,7 @@ def cmd_build_portfolio_decision(args: argparse.Namespace) -> int:
         )
         decision_output = build_portfolio_decision_output(
             store,
-            asset=cfg.asset,
+            runtime_asset=cfg.asset,
             target_id=target_id,
             portfolio_id=str(args.portfolio_id),
             subject_id=subject_id,
@@ -1128,11 +1127,11 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_deactivate_hypothesis(args)
         if args.command == "activate-hypothesis":
             return cmd_activate_hypothesis(args)
-        if args.command == "record-prediction":
+        if args.command == "debug-record-prediction":
             return cmd_record_prediction(args)
-        if args.command == "finalize-observation":
+        if args.command == "debug-finalize-observation":
             return cmd_finalize_observation(args)
-        if args.command == "update-state":
+        if args.command == "debug-update-state":
             return cmd_update_state(args)
         if args.command == "generate-evaluation-input":
             return cmd_generate_evaluation_input(args)

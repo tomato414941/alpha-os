@@ -183,7 +183,7 @@ Current scope:
 - `paper-only`
 - `1 target`: `residual_return_3d`
 - primary bounded path:
-  `register-hypothesis -> record-prediction -> finalize-observation -> update-state`
+  `register-hypothesis -> debug-record-prediction -> debug-finalize-observation -> debug-update-state`
 - convenience wrapper:
   `apply-evaluation`
 
@@ -191,9 +191,9 @@ Primary bounded path:
 
 ```bash
 python -m alpha_os register-hypothesis --db data/runtime.db --hypothesis-id hyp_momo
-python -m alpha_os record-prediction --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo --prediction 0.05
-python -m alpha_os finalize-observation --db data/runtime.db --date 2026-03-27 --observation -0.02
-python -m alpha_os update-state --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo
+python -m alpha_os debug-record-prediction --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo --prediction 0.05
+python -m alpha_os debug-finalize-observation --db data/runtime.db --date 2026-03-27 --observation -0.02
+python -m alpha_os debug-update-state --db data/runtime.db --date 2026-03-27 --hypothesis-id hyp_momo
 ```
 
 Convenience wrapper path:

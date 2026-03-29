@@ -43,7 +43,7 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
         decision_input = build_portfolio_decision_input(store)
 
         assert decision_input is not None
-        assert decision_input.asset == "BTC"
+        assert decision_input.portfolio_state.portfolio_id is None
         assert decision_input.predictive_signals[0].source_kind == "meta_prediction"
         assert decision_input.predictive_signals[0].subject_id == "BTC"
         assert decision_input.predictive_signals[0].target_id == "residual_return_3d"
@@ -188,7 +188,6 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
             subject_id="BTC_spot",
             portfolio_state=PortfolioState(
                 portfolio_id="paper_core",
-                asset="BTC",
                 positions=(PortfolioPositionState(subject_id="BTC_spot", weight=0.05),)
             ),
             assumptions=PortfolioDecisionAssumptions(
@@ -292,7 +291,6 @@ def test_persist_portfolio_decision_output_writes_runtime_artifact(tmp_path):
             portfolio_id="paper_core",
             portfolio_state=PortfolioState(
                 portfolio_id="paper_core",
-                asset="BTC",
                 positions=(PortfolioPositionState(subject_id="BTC", weight=0.05),),
             ),
             assumptions=assumptions,

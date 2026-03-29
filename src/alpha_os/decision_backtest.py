@@ -27,7 +27,6 @@ class DecisionBacktestInput:
     target_id: str
     signal_series: pd.Series
     realized_return_series: pd.Series
-    asset: str | None = None
     initial_weight: float = 0.0
     confidence_series: pd.Series | None = None
     risk_series: pd.Series | None = None
@@ -106,11 +105,9 @@ def run_decision_backtest(
     for date, row in aligned.iterrows():
         decision_input = PortfolioDecisionInput(
             portfolio_id=backtest_input.portfolio_id,
-            asset=backtest_input.asset,
             as_of=str(date),
             portfolio_state=PortfolioState(
                 portfolio_id=backtest_input.portfolio_id,
-                asset=backtest_input.asset,
                 as_of=str(date),
                 positions=(
                     PortfolioPositionState(
