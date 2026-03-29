@@ -4,19 +4,17 @@ import json
 import sqlite3
 
 
-def _register_hypothesis(main, db_path, hypothesis_id: str) -> None:
-    assert (
-        main(
-            [
-                "register-hypothesis",
-                "--db",
-                str(db_path),
-                "--hypothesis-id",
-                hypothesis_id,
-            ]
-        )
-        == 0
-    )
+def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | None = None) -> None:
+    argv = [
+        "register-hypothesis",
+        "--db",
+        str(db_path),
+        "--hypothesis-id",
+        hypothesis_id,
+    ]
+    if target is not None:
+        argv.extend(["--target", target])
+    assert main(argv) == 0
 
 
 def _finalize_observation(main, db_path, date: str, observation: str) -> None:
@@ -189,6 +187,39 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
         conn.close()
 
 
+def test_register_hypothesis_registers_target_definition(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    _register_hypothesis(main, db_path, "momentum_1d")
+    capsys.readouterr()
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT target_id, definition_json
+            FROM targets
+            WHERE target_id = 'residual_return_3d'
+            """
+        ).fetchone()
+        assert row is not None
+        definition = json.loads(row[1])
+        assert row[0] == "residual_return_3d"
+        assert definition == {
+            "target_id": "residual_return_3d",
+            "family": "residual_return",
+            "observation_kind": "fixed_horizon",
+            "subject_kind": "asset",
+            "output_kind": "real_value",
+            "scoring_kind": "corr_mmc",
+            "params": {"horizon_days": 3},
+        }
+    finally:
+        conn.close()
+
+
 def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
     from alpha_os.cli import main
 
@@ -297,6 +328,29 @@ def test_register_hypothesis_keeps_unknown_definition_nullable(tmp_path, capsys)
         assert row == (None, "active")
     finally:
         conn.close()
+
+
+def test_register_hypothesis_rejects_mismatched_builtin_target(tmp_path):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    try:
+        main(
+            [
+                "register-hypothesis",
+                "--db",
+                str(db_path),
+                "--hypothesis-id",
+                "momentum_1d",
+                "--target",
+                "residual_return_1d",
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("expected parser exit for mismatched built-in target")
 
 
 def test_record_prediction_creates_row_and_is_idempotent(tmp_path, capsys):

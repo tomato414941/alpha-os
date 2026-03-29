@@ -4,19 +4,17 @@ import sqlite3
 from pathlib import Path
 
 
-def _register_hypothesis(main, db_path, hypothesis_id: str) -> None:
-    assert (
-        main(
-            [
-                "register-hypothesis",
-                "--db",
-                str(db_path),
-                "--hypothesis-id",
-                hypothesis_id,
-            ]
-        )
-        == 0
-    )
+def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | None = None) -> None:
+    argv = [
+        "register-hypothesis",
+        "--db",
+        str(db_path),
+        "--hypothesis-id",
+        hypothesis_id,
+    ]
+    if target is not None:
+        argv.extend(["--target", target])
+    assert main(argv) == 0
 
 
 def test_run_cycle_accepts_json_fixture(tmp_path, capsys):
@@ -119,7 +117,7 @@ def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
         ),
         encoding="utf-8",
     )
-    _register_hypothesis(main, db_path, "hyp_fixture")
+    _register_hypothesis(main, db_path, "hyp_fixture", target="residual_return_1d")
     capsys.readouterr()
 
     assert main(["apply-evaluation", "--db", str(db_path), "--input", str(fixture_path)]) == 0
@@ -142,7 +140,6 @@ def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
 
 def test_status_summarizes_multiple_targets(tmp_path, capsys):
     from alpha_os.cli import main
-    from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
     default_fixture = Path("tests/fixtures/v1_cycles/single_cycle.json")
@@ -162,20 +159,7 @@ def test_status_summarizes_multiple_targets(tmp_path, capsys):
     )
 
     _register_hypothesis(main, db_path, "hyp_fixture")
-    _register_hypothesis(main, db_path, "hyp_1d")
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        store.conn.execute(
-            """
-            UPDATE hypotheses
-            SET target = 'residual_return_1d'
-            WHERE hypothesis_id = 'hyp_1d'
-            """
-        )
-        store.conn.commit()
-    finally:
-        store.close()
+    _register_hypothesis(main, db_path, "hyp_1d", target="residual_return_1d")
     capsys.readouterr()
 
     assert main(["apply-evaluation", "--db", str(db_path), "--input", str(default_fixture)]) == 0

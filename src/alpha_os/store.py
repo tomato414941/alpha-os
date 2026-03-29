@@ -9,7 +9,7 @@ from typing import Any
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .hypothesis_registry import find_hypothesis_definition
-from .targets import TargetDefinition
+from .targets import TargetDefinition, find_target_definition, list_target_definitions
 from .transition_policy import decide_operator_transition
 
 
@@ -115,6 +115,16 @@ class ObservationRecord:
 
 
 @dataclass(frozen=True)
+class TargetState:
+    target_id: str
+    definition_json: str
+
+    @property
+    def definition(self) -> TargetDefinition:
+        return TargetDefinition.from_document(json.loads(self.definition_json))
+
+
+@dataclass(frozen=True)
 class HypothesisMetricState:
     hypothesis_id: str
     corr: float
@@ -208,6 +218,15 @@ def _row_to_hypothesis_metric(row: sqlite3.Row | None) -> HypothesisMetricState 
     )
 
 
+def _row_to_target(row: sqlite3.Row | None) -> TargetState | None:
+    if row is None:
+        return None
+    return TargetState(
+        target_id=str(row["target_id"]),
+        definition_json=str(row["definition_json"]),
+    )
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
@@ -221,6 +240,13 @@ class EvaluationStore:
     def ensure_schema(self) -> None:
         self.conn.executescript(
             """
+            CREATE TABLE IF NOT EXISTS targets (
+                target_id TEXT PRIMARY KEY,
+                definition_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS hypotheses (
                 hypothesis_id TEXT PRIMARY KEY,
                 asset TEXT NOT NULL,
@@ -280,7 +306,69 @@ class EvaluationStore:
             );
             """
         )
+        self._seed_builtin_targets()
         self.conn.commit()
+
+    def _seed_builtin_targets(self) -> None:
+        timestamp = _utc_now()
+        for definition in list_target_definitions():
+            self.conn.execute(
+                """
+                INSERT INTO targets (target_id, definition_json, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(target_id) DO NOTHING
+                """,
+                (
+                    definition.target_id,
+                    json.dumps(definition.to_document(), sort_keys=True),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+
+    def get_target(self, target_id: str) -> TargetState | None:
+        row = self.conn.execute(
+            """
+            SELECT target_id, definition_json
+            FROM targets
+            WHERE target_id = ?
+            """,
+            (target_id,),
+        ).fetchone()
+        return _row_to_target(row)
+
+    def register_target(
+        self,
+        target_id: str,
+        *,
+        definition: TargetDefinition | None = None,
+        recorded_at: str | None = None,
+    ) -> TargetState:
+        self.ensure_schema()
+        existing = self.get_target(target_id)
+        if existing is not None:
+            return existing
+
+        resolved_definition = definition or find_target_definition(target_id)
+        if resolved_definition is None:
+            raise ValueError(f"target definition must exist before use: {target_id}")
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO targets (target_id, definition_json, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    resolved_definition.target_id,
+                    json.dumps(resolved_definition.to_document(), sort_keys=True),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+        target = self.get_target(target_id)
+        assert target is not None
+        return target
 
     def get_hypothesis(self, hypothesis_id: str) -> HypothesisState | None:
         row = self.conn.execute(
@@ -414,6 +502,11 @@ class EvaluationStore:
 
         timestamp = recorded_at or _utc_now()
         definition = find_hypothesis_definition(hypothesis_id)
+        if definition is not None and target != DEFAULT_TARGET and target != definition.target_id:
+            raise ValueError(
+                "built-in hypothesis target does not match provided target: "
+                f"{target} != {definition.target_id}"
+            )
         definition_json = (
             None
             if definition is None
@@ -421,6 +514,11 @@ class EvaluationStore:
         )
         resolved_asset = asset if definition is None else definition.asset
         resolved_target = target if definition is None else definition.target_id
+        self.register_target(
+            resolved_target,
+            definition=None if definition is None else definition.target,
+            recorded_at=timestamp,
+        )
         with self.conn:
             self.conn.execute(
                 """
@@ -520,6 +618,15 @@ class EvaluationStore:
                 f"prediction cannot be recorded while hypothesis is {hypothesis.status}: "
                 f"{hypothesis_id}"
             )
+        if hypothesis.asset != asset:
+            raise ValueError(
+                f"prediction asset does not match hypothesis asset: {asset} != {hypothesis.asset}"
+            )
+        if hypothesis.target != target:
+            raise ValueError(
+                f"prediction target does not match hypothesis target: {target} != {hypothesis.target}"
+            )
+        self.register_target(target, recorded_at=recorded_at)
 
         existing = self.get_prediction(evaluation_id, hypothesis_id)
         if existing is not None:
@@ -527,6 +634,10 @@ class EvaluationStore:
                 raise ValueError(
                     "prediction already exists for this evaluation_id and hypothesis_id with a "
                     "different value"
+                )
+            if existing.asset != asset or existing.target != target:
+                raise ValueError(
+                    "prediction already exists for this evaluation with different asset/target"
                 )
             return existing, False
 
@@ -556,11 +667,16 @@ class EvaluationStore:
         target: str = DEFAULT_TARGET,
     ) -> tuple[ObservationRecord, bool]:
         self.ensure_schema()
+        self.register_target(target, recorded_at=recorded_at)
         existing = self.get_observation(evaluation_id)
         if existing is not None:
             if existing.value != float(observation_value):
                 raise ValueError(
                     "observation already exists for this evaluation_id with a different value"
+                )
+            if existing.asset != asset or existing.target != target:
+                raise ValueError(
+                    "observation already exists for this evaluation with different asset/target"
                 )
             return existing, False
 

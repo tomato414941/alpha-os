@@ -74,3 +74,31 @@ def residual_return_target_definition(horizon_days: int) -> TargetDefinition:
         scoring_kind="corr_mmc",
         params={"horizon_days": horizon_days},
     )
+
+
+_TARGET_DEFINITIONS = {
+    definition.target_id: definition
+    for definition in (
+        residual_return_target_definition(1),
+        residual_return_target_definition(3),
+        residual_return_target_definition(5),
+    )
+}
+
+
+def get_target_definition(target_id: str) -> TargetDefinition:
+    try:
+        return _TARGET_DEFINITIONS[target_id]
+    except KeyError as exc:
+        available = ", ".join(sorted(_TARGET_DEFINITIONS))
+        raise ValueError(
+            f"unknown target definition: {target_id} (available: {available})"
+        ) from exc
+
+
+def find_target_definition(target_id: str) -> TargetDefinition | None:
+    return _TARGET_DEFINITIONS.get(target_id)
+
+
+def list_target_definitions() -> list[TargetDefinition]:
+    return [definition for _, definition in sorted(_TARGET_DEFINITIONS.items())]

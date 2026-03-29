@@ -37,16 +37,32 @@ def update_evaluation_state(
         raise ValueError(
             f"state cannot be updated while hypothesis is {hypothesis.status}: {hypothesis_id}"
         )
+    if hypothesis.asset != asset:
+        raise ValueError(
+            f"evaluation asset does not match hypothesis asset: {asset} != {hypothesis.asset}"
+        )
+    if hypothesis.target != target:
+        raise ValueError(
+            f"evaluation target does not match hypothesis target: {target} != {hypothesis.target}"
+        )
 
     prediction = store.get_prediction(evaluation_id, hypothesis_id)
     if prediction is None:
         raise ValueError(
             f"prediction must be recorded before updating state: {evaluation_id} / {hypothesis_id}"
         )
+    if prediction.asset != asset or prediction.target != target:
+        raise ValueError(
+            "recorded prediction asset/target does not match evaluation update request"
+        )
     observation = store.get_observation(evaluation_id)
     if observation is None:
         raise ValueError(
             f"observation must be finalized before updating state: {evaluation_id}"
+        )
+    if observation.asset != asset or observation.target != target:
+        raise ValueError(
+            "recorded observation asset/target does not match evaluation update request"
         )
 
     signed_edge = float(prediction.value) * float(observation.value)
