@@ -8,7 +8,10 @@ from typing import Iterator
 
 from .evaluation_runtime import apply_evaluation, update_evaluation_state
 from .metrics_service import refresh_target_metrics
-from .meta_model_service import refresh_target_meta_predictions
+from .meta_model_service import (
+    refresh_target_meta_prediction_metrics,
+    refresh_target_meta_predictions,
+)
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -391,6 +394,18 @@ def _print_meta_predictions(meta_predictions) -> None:
         )
 
 
+def _print_meta_prediction_metrics(metrics) -> None:
+    print("alpha-os meta metrics")
+    print(f"  Count:    {len(metrics)}")
+    for item in metrics:
+        print(
+            f"  {item.target_id} "
+            f"kind={item.aggregation_kind} "
+            f"corr={item.corr:.6f} "
+            f"evals={item.sample_count}"
+        )
+
+
 def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
     if args.input:
         evaluation_input = load_evaluation_input(args.input)
@@ -463,6 +478,11 @@ def _cmd_change_hypothesis_status(
             target_id=hypothesis.target_id,
         )
         refresh_target_meta_predictions(
+            store,
+            asset=hypothesis.asset,
+            target_id=hypothesis.target_id,
+        )
+        refresh_target_meta_prediction_metrics(
             store,
             asset=hypothesis.asset,
             target_id=hypothesis.target_id,
@@ -690,6 +710,11 @@ def _apply_evaluation_inputs(
                 asset=asset,
                 target_id=target_id,
             )
+            refresh_target_meta_prediction_metrics(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
         if evaluation_inputs:
             latest_metric = store.get_hypothesis_metric(evaluation_inputs[-1].hypothesis_id)
 
@@ -779,6 +804,11 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
                 target_id=target_id,
             )
             refresh_target_meta_predictions(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
+            refresh_target_meta_prediction_metrics(
                 store,
                 asset=asset,
                 target_id=target_id,
@@ -887,12 +917,14 @@ def cmd_show_meta_predictions(args: argparse.Namespace) -> int:
     try:
         store.ensure_schema()
         meta_predictions = store.list_meta_predictions(asset=cfg.asset, limit=args.limit)
+        meta_metrics = store.list_meta_prediction_metrics(asset=cfg.asset)
     finally:
         store.close()
 
     print(f"  DB:       {Path(cfg.db_path)}")
     print(f"  Asset:    {cfg.asset}")
     _print_meta_predictions(meta_predictions)
+    _print_meta_prediction_metrics(meta_metrics)
     return 0
 
 

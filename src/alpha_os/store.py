@@ -158,6 +158,19 @@ class MetaPredictionState:
         return json.loads(self.details_json)
 
 
+@dataclass(frozen=True)
+class MetaPredictionMetricState:
+    aggregation_kind: str
+    asset: str
+    target_id: str
+    corr: float
+    sample_count: int
+    window_size: int
+    start_evaluation_id: str | None
+    end_evaluation_id: str | None
+    updated_at: str
+
+
 def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
     if row is None:
         return None
@@ -270,6 +283,26 @@ def _row_to_meta_prediction(row: sqlite3.Row | None) -> MetaPredictionState | No
     )
 
 
+def _row_to_meta_prediction_metric(row: sqlite3.Row | None) -> MetaPredictionMetricState | None:
+    if row is None:
+        return None
+    return MetaPredictionMetricState(
+        aggregation_kind=str(row["aggregation_kind"]),
+        asset=str(row["asset"]),
+        target_id=str(row["target_id"]),
+        corr=float(row["corr"]),
+        sample_count=int(row["sample_count"]),
+        window_size=int(row["window_size"]),
+        start_evaluation_id=None
+        if row["start_evaluation_id"] is None
+        else str(row["start_evaluation_id"]),
+        end_evaluation_id=None
+        if row["end_evaluation_id"] is None
+        else str(row["end_evaluation_id"]),
+        updated_at=str(row["updated_at"]),
+    )
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
@@ -362,6 +395,19 @@ class EvaluationStore:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (evaluation_id, aggregation_kind)
+            );
+
+            CREATE TABLE IF NOT EXISTS meta_prediction_metrics (
+                aggregation_kind TEXT NOT NULL,
+                asset TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                corr REAL NOT NULL,
+                sample_count INTEGER NOT NULL,
+                window_size INTEGER NOT NULL,
+                start_evaluation_id TEXT,
+                end_evaluation_id TEXT,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (aggregation_kind, asset, target_id)
             );
             """
         )
@@ -590,6 +636,73 @@ class EvaluationStore:
             tuple(params),
         ).fetchall()
         return [_row_to_meta_prediction(row) for row in rows if row is not None]
+
+    def upsert_meta_prediction_metric(
+        self,
+        *,
+        aggregation_kind: str,
+        asset: str,
+        target_id: str,
+        corr: float,
+        sample_count: int,
+        window_size: int,
+        start_evaluation_id: str | None,
+        end_evaluation_id: str | None,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO meta_prediction_metrics (
+                    aggregation_kind, asset, target_id, corr, sample_count,
+                    window_size, start_evaluation_id, end_evaluation_id, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(aggregation_kind, asset, target_id) DO UPDATE SET
+                    corr = excluded.corr,
+                    sample_count = excluded.sample_count,
+                    window_size = excluded.window_size,
+                    start_evaluation_id = excluded.start_evaluation_id,
+                    end_evaluation_id = excluded.end_evaluation_id,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    aggregation_kind,
+                    asset,
+                    target_id,
+                    float(corr),
+                    int(sample_count),
+                    int(window_size),
+                    start_evaluation_id,
+                    end_evaluation_id,
+                    timestamp,
+                ),
+            )
+
+    def list_meta_prediction_metrics(
+        self,
+        *,
+        asset: str = DEFAULT_ASSET,
+        target_id: str | None = None,
+    ) -> list[MetaPredictionMetricState]:
+        filters = ["asset = ?"]
+        params: list[Any] = [asset]
+        if target_id is not None:
+            filters.append("target_id = ?")
+            params.append(target_id)
+        rows = self.conn.execute(
+            f"""
+            SELECT aggregation_kind, asset, target_id, corr, sample_count,
+                   window_size, start_evaluation_id, end_evaluation_id, updated_at
+            FROM meta_prediction_metrics
+            WHERE {' AND '.join(filters)}
+            ORDER BY target_id ASC, corr DESC, aggregation_kind ASC
+            """,
+            tuple(params),
+        ).fetchall()
+        return [_row_to_meta_prediction_metric(row) for row in rows if row is not None]
 
     def set_hypothesis_status(
         self,

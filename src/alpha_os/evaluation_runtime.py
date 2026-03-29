@@ -4,7 +4,10 @@ from datetime import UTC, datetime
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .metrics_service import refresh_target_metrics
-from .meta_model_service import refresh_target_meta_predictions
+from .meta_model_service import (
+    refresh_target_meta_prediction_metrics,
+    refresh_target_meta_predictions,
+)
 from .store import EvaluationSnapshot, EvaluationStore
 
 
@@ -115,6 +118,12 @@ def update_evaluation_state(
                 recorded_at=timestamp,
             )
             refresh_target_meta_predictions(
+                store,
+                asset=asset,
+                target_id=target_id,
+                recorded_at=timestamp,
+            )
+            refresh_target_meta_prediction_metrics(
                 store,
                 asset=asset,
                 target_id=target_id,

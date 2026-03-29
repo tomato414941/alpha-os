@@ -72,3 +72,52 @@ def test_refresh_target_meta_predictions_falls_back_to_equal_mean_when_corr_weig
         assert items["corr_weighted_mean"].value == 0.1
     finally:
         store.close()
+
+
+def test_refresh_target_meta_prediction_metrics_persists_corr(tmp_path):
+    from alpha_os.evaluation_runtime import apply_evaluation
+    from alpha_os.meta_model_service import (
+        refresh_target_meta_prediction_metrics,
+        refresh_target_meta_predictions,
+    )
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("hyp_a")
+        store.register_hypothesis("hyp_b")
+
+        values = [
+            ("2026-03-27", 0.2, 0.0, 0.1),
+            ("2026-03-28", 0.4, 0.1, 0.2),
+            ("2026-03-29", 0.1, 0.0, 0.05),
+        ]
+        for date, pred_a, pred_b, obs in values:
+            evaluation_id = f"BTC:residual_return_3d:{date}"
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="hyp_a",
+                prediction_value=pred_a,
+                observation_value=obs,
+            )
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="hyp_b",
+                prediction_value=pred_b,
+                observation_value=obs,
+            )
+
+        refresh_target_meta_predictions(store)
+        refresh_target_meta_prediction_metrics(store)
+        metrics = store.list_meta_prediction_metrics()
+        by_kind = {item.aggregation_kind: item for item in metrics}
+
+        assert set(by_kind) == {"active_equal_mean", "corr_weighted_mean"}
+        assert by_kind["active_equal_mean"].sample_count == 3
+        assert by_kind["corr_weighted_mean"].sample_count == 3
+    finally:
+        store.close()
