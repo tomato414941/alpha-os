@@ -184,3 +184,71 @@ def test_refresh_target_meta_predictions_uses_only_lagged_corr_for_weighting(tmp
         assert weights["hyp_b"] == 0.0
     finally:
         store.close()
+
+
+def test_compare_meta_aggregations_cli_orders_by_corr(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    for hypothesis_id in ("momentum_1d", "reversal_1d", "average_gap_3d"):
+        assert (
+            main(
+                [
+                    "register-hypothesis",
+                    "--db",
+                    str(db_path),
+                    "--hypothesis-id",
+                    hypothesis_id,
+                ]
+            )
+            == 0
+        )
+        capsys.readouterr()
+
+    values = [
+        ("2026-03-24", "momentum_1d", "0.5", "0.2"),
+        ("2026-03-24", "reversal_1d", "-0.5", "0.2"),
+        ("2026-03-24", "average_gap_3d", "0.1", "0.2"),
+        ("2026-03-25", "momentum_1d", "0.4", "0.1"),
+        ("2026-03-25", "reversal_1d", "-0.4", "0.1"),
+        ("2026-03-25", "average_gap_3d", "0.0", "0.1"),
+        ("2026-03-26", "momentum_1d", "0.3", "0.05"),
+        ("2026-03-26", "reversal_1d", "-0.3", "0.05"),
+        ("2026-03-26", "average_gap_3d", "0.05", "0.05"),
+    ]
+    for date, hypothesis_id, prediction, observation in values:
+        assert (
+            main(
+                [
+                    "apply-evaluation",
+                    "--db",
+                    str(db_path),
+                    "--date",
+                    date,
+                    "--hypothesis-id",
+                    hypothesis_id,
+                    "--prediction",
+                    prediction,
+                    "--observation",
+                    observation,
+                ]
+            )
+            == 0
+        )
+        capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "compare-meta-aggregations",
+                "--db",
+                str(db_path),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "alpha-os meta aggregation comparison" in output
+    assert "residual_return_3d" in output
+    assert "1. kind=" in output

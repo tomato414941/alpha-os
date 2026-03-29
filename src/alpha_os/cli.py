@@ -197,6 +197,13 @@ def build_cli_parser() -> argparse.ArgumentParser:
     meta.add_argument("--db", type=str, default=None)
     meta.add_argument("--limit", type=int, default=10)
 
+    compare_meta = sub.add_parser(
+        "compare-meta-aggregations",
+        help="Compare meta aggregation kinds by target-level corr",
+    )
+    compare_meta.add_argument("--db", type=str, default=None)
+    compare_meta.add_argument("--target-id", type=str, default=None)
+
     return parser
 
 
@@ -404,6 +411,26 @@ def _print_meta_prediction_metrics(metrics) -> None:
             f"corr={item.corr:.6f} "
             f"evals={item.sample_count}"
         )
+
+
+def _print_meta_aggregation_comparison(metrics) -> None:
+    grouped = defaultdict(list)
+    for item in metrics:
+        grouped[item.target_id].append(item)
+
+    print("alpha-os meta aggregation comparison")
+    print(f"  Targets:  {len(grouped)}")
+    for target_id, items in sorted(grouped.items()):
+        ordered = sorted(
+            items,
+            key=lambda item: (-item.corr, -item.sample_count, item.aggregation_kind),
+        )
+        print(f"  {target_id}")
+        for rank, item in enumerate(ordered, start=1):
+            print(
+                f"    {rank}. kind={item.aggregation_kind} "
+                f"corr={item.corr:.6f} evals={item.sample_count}"
+            )
 
 
 def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
@@ -928,6 +955,24 @@ def cmd_show_meta_predictions(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_compare_meta_aggregations(args: argparse.Namespace) -> int:
+    cfg = load_runtime_config(db_path=args.db)
+    store = EvaluationStore(cfg.db_path)
+    try:
+        store.ensure_schema()
+        metrics = store.list_meta_prediction_metrics(
+            asset=cfg.asset,
+            target_id=None if args.target_id is None else str(args.target_id),
+        )
+    finally:
+        store.close()
+
+    print(f"  DB:       {Path(cfg.db_path)}")
+    print(f"  Asset:    {cfg.asset}")
+    _print_meta_aggregation_comparison(metrics)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
@@ -964,6 +1009,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_show_evaluations(args)
         if args.command == "show-meta-predictions":
             return cmd_show_meta_predictions(args)
+        if args.command == "compare-meta-aggregations":
+            return cmd_compare_meta_aggregations(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")
