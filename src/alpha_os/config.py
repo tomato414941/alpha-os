@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .targets import residual_return_target_definition
 
-DEFAULT_DB_PATH = Path("data") / "v1" / "runtime.db"
+DEFAULT_DB_PATH = Path("data") / "runtime.db"
 DEFAULT_ASSET = "BTC"
 DEFAULT_HORIZON_DAYS = 3
 DEFAULT_SIGNAL_NOISE_BASE_URL = "http://127.0.0.1:8000"
