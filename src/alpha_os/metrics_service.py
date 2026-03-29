@@ -18,7 +18,7 @@ def refresh_hypothesis_metrics(
     *,
     hypothesis_id: str,
     asset: str = DEFAULT_ASSET,
-    target: str = DEFAULT_TARGET,
+    target_id: str = DEFAULT_TARGET,
     recorded_at: str | None = None,
     window_size: int = DEFAULT_METRIC_WINDOW,
 ) -> None:
@@ -32,7 +32,7 @@ def refresh_hypothesis_metrics(
         ORDER BY p.evaluation_id DESC
         LIMIT ?
         """,
-        (hypothesis_id, asset, target, int(window_size)),
+        (hypothesis_id, asset, target_id, int(window_size)),
     ).fetchall()
 
     effective_recorded_at = recorded_at or _utc_now()
@@ -85,7 +85,7 @@ def refresh_hypothesis_metrics(
         GROUP BY p.evaluation_id
         ORDER BY p.evaluation_id ASC
         """,
-        tuple(evaluation_ids) + (asset, target, hypothesis_id),
+        tuple(evaluation_ids) + (asset, target_id, hypothesis_id),
     ).fetchall()
     if peer_rows:
         meta_model = pd.Series(

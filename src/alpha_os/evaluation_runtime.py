@@ -18,7 +18,7 @@ def update_evaluation_state(
     hypothesis_id: str,
     recorded_at: str | None = None,
     asset: str = DEFAULT_ASSET,
-    target: str = DEFAULT_TARGET,
+    target_id: str = DEFAULT_TARGET,
     input_source: str | None = None,
     input_range_start: str | None = None,
     input_range_end: str | None = None,
@@ -41,9 +41,10 @@ def update_evaluation_state(
         raise ValueError(
             f"evaluation asset does not match hypothesis asset: {asset} != {hypothesis.asset}"
         )
-    if hypothesis.target != target:
+    if hypothesis.target_id != target_id:
         raise ValueError(
-            f"evaluation target does not match hypothesis target: {target} != {hypothesis.target}"
+            "evaluation target does not match hypothesis target: "
+            f"{target_id} != {hypothesis.target_id}"
         )
 
     prediction = store.get_prediction(evaluation_id, hypothesis_id)
@@ -51,7 +52,7 @@ def update_evaluation_state(
         raise ValueError(
             f"prediction must be recorded before updating state: {evaluation_id} / {hypothesis_id}"
         )
-    if prediction.asset != asset or prediction.target != target:
+    if prediction.asset != asset or prediction.target_id != target_id:
         raise ValueError(
             "recorded prediction asset/target does not match evaluation update request"
         )
@@ -60,7 +61,7 @@ def update_evaluation_state(
         raise ValueError(
             f"observation must be finalized before updating state: {evaluation_id}"
         )
-    if observation.asset != asset or observation.target != target:
+    if observation.asset != asset or observation.target_id != target_id:
         raise ValueError(
             "recorded observation asset/target does not match evaluation update request"
         )
@@ -91,7 +92,7 @@ def update_evaluation_state(
             (
                 evaluation_id,
                 asset,
-                target,
+                target_id,
                 hypothesis_id,
                 prediction.value,
                 observation.value,
@@ -108,7 +109,7 @@ def update_evaluation_state(
             store,
             hypothesis_id=hypothesis_id,
             asset=asset,
-            target=target,
+            target_id=target_id,
             recorded_at=timestamp,
         )
 
@@ -126,7 +127,7 @@ def apply_evaluation(
     observation_value: float,
     recorded_at: str | None = None,
     asset: str = DEFAULT_ASSET,
-    target: str = DEFAULT_TARGET,
+    target_id: str = DEFAULT_TARGET,
     input_source: str | None = None,
     input_range_start: str | None = None,
     input_range_end: str | None = None,
@@ -139,14 +140,14 @@ def apply_evaluation(
         prediction_value=prediction_value,
         recorded_at=recorded_at,
         asset=asset,
-        target=target,
+        target_id=target_id,
     )
     store.finalize_observation(
         evaluation_id=evaluation_id,
         observation_value=observation_value,
         recorded_at=recorded_at,
         asset=asset,
-        target=target,
+        target_id=target_id,
     )
     return update_evaluation_state(
         store,
@@ -154,7 +155,7 @@ def apply_evaluation(
         hypothesis_id=hypothesis_id,
         recorded_at=recorded_at,
         asset=asset,
-        target=target,
+        target_id=target_id,
         input_source=input_source,
         input_range_start=input_range_start,
         input_range_end=input_range_end,

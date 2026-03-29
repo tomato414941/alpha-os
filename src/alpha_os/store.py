@@ -21,7 +21,7 @@ def _utc_now() -> str:
 class HypothesisState:
     hypothesis_id: str
     asset: str
-    target: str
+    target_id: str
     definition_json: str | None
     status: str
     prediction_count: int
@@ -82,7 +82,7 @@ class HypothesisState:
 class EvaluationSnapshot:
     evaluation_id: str
     asset: str
-    target: str
+    target_id: str
     hypothesis_id: str
     prediction_value: float
     observation_value: float
@@ -100,7 +100,7 @@ class PredictionRecord:
     evaluation_id: str
     hypothesis_id: str
     asset: str
-    target: str
+    target_id: str
     value: float
     recorded_at: str
 
@@ -109,7 +109,7 @@ class PredictionRecord:
 class ObservationRecord:
     evaluation_id: str
     asset: str
-    target: str
+    target_id: str
     value: float
     recorded_at: str
 
@@ -142,7 +142,7 @@ def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
     return HypothesisState(
         hypothesis_id=str(row["hypothesis_id"]),
         asset=str(row["asset"]),
-        target=str(row["target"]),
+        target_id=str(row["target"]),
         definition_json=None
         if row["definition_json"] is None
         else str(row["definition_json"]),
@@ -158,7 +158,7 @@ def _row_to_snapshot(row: sqlite3.Row | None) -> EvaluationSnapshot | None:
     return EvaluationSnapshot(
         evaluation_id=str(row["evaluation_id"]),
         asset=str(row["asset"]),
-        target=str(row["target"]),
+        target_id=str(row["target"]),
         hypothesis_id=str(row["hypothesis_id"]),
         prediction_value=float(row["prediction_value"]),
         observation_value=float(row["observation_value"]),
@@ -183,7 +183,7 @@ def _row_to_prediction(row: sqlite3.Row | None) -> PredictionRecord | None:
         evaluation_id=str(row["evaluation_id"]),
         hypothesis_id=str(row["hypothesis_id"]),
         asset=str(row["asset"]),
-        target=str(row["target"]),
+        target_id=str(row["target"]),
         value=float(row["value"]),
         recorded_at=str(row["recorded_at"]),
     )
@@ -195,7 +195,7 @@ def _row_to_observation(row: sqlite3.Row | None) -> ObservationRecord | None:
     return ObservationRecord(
         evaluation_id=str(row["evaluation_id"]),
         asset=str(row["asset"]),
-        target=str(row["target"]),
+        target_id=str(row["target"]),
         value=float(row["value"]),
         recorded_at=str(row["recorded_at"]),
     )
@@ -387,9 +387,9 @@ class EvaluationStore:
         self,
         *,
         asset: str = DEFAULT_ASSET,
-        target: str | None = DEFAULT_TARGET,
+        target_id: str | None = DEFAULT_TARGET,
     ) -> list[HypothesisState]:
-        if target is None:
+        if target_id is None:
             rows = self.conn.execute(
                 """
                 SELECT hypothesis_id, asset, target,
@@ -411,7 +411,7 @@ class EvaluationStore:
                 WHERE asset = ? AND target = ?
                 ORDER BY observation_count DESC, prediction_count DESC, hypothesis_id ASC
                 """,
-                (asset, target),
+                (asset, target_id),
             ).fetchall()
         return [_row_to_hypothesis(row) for row in rows if row is not None]
 
@@ -493,7 +493,7 @@ class EvaluationStore:
         *,
         recorded_at: str | None = None,
         asset: str = DEFAULT_ASSET,
-        target: str = DEFAULT_TARGET,
+        target_id: str = DEFAULT_TARGET,
     ) -> tuple[HypothesisState, bool]:
         self.ensure_schema()
         existing = self.get_hypothesis(hypothesis_id)
@@ -502,10 +502,14 @@ class EvaluationStore:
 
         timestamp = recorded_at or _utc_now()
         definition = find_hypothesis_definition(hypothesis_id)
-        if definition is not None and target != DEFAULT_TARGET and target != definition.target_id:
+        if (
+            definition is not None
+            and target_id != DEFAULT_TARGET
+            and target_id != definition.target_id
+        ):
             raise ValueError(
                 "built-in hypothesis target does not match provided target: "
-                f"{target} != {definition.target_id}"
+                f"{target_id} != {definition.target_id}"
             )
         definition_json = (
             None
@@ -513,9 +517,9 @@ class EvaluationStore:
             else json.dumps(definition.to_document(), sort_keys=True)
         )
         resolved_asset = asset if definition is None else definition.asset
-        resolved_target = target if definition is None else definition.target_id
+        resolved_target_id = target_id if definition is None else definition.target_id
         self.register_target(
-            resolved_target,
+            resolved_target_id,
             definition=None if definition is None else definition.target,
             recorded_at=timestamp,
         )
@@ -531,7 +535,7 @@ class EvaluationStore:
                 (
                     hypothesis_id,
                     resolved_asset,
-                    resolved_target,
+                    resolved_target_id,
                     definition_json,
                     timestamp,
                     timestamp,
@@ -607,7 +611,7 @@ class EvaluationStore:
         prediction_value: float,
         recorded_at: str | None = None,
         asset: str = DEFAULT_ASSET,
-        target: str = DEFAULT_TARGET,
+        target_id: str = DEFAULT_TARGET,
     ) -> tuple[PredictionRecord, bool]:
         self.ensure_schema()
         hypothesis = self.get_hypothesis(hypothesis_id)
@@ -622,11 +626,12 @@ class EvaluationStore:
             raise ValueError(
                 f"prediction asset does not match hypothesis asset: {asset} != {hypothesis.asset}"
             )
-        if hypothesis.target != target:
+        if hypothesis.target_id != target_id:
             raise ValueError(
-                f"prediction target does not match hypothesis target: {target} != {hypothesis.target}"
+                "prediction target does not match hypothesis target: "
+                f"{target_id} != {hypothesis.target_id}"
             )
-        self.register_target(target, recorded_at=recorded_at)
+        self.register_target(target_id, recorded_at=recorded_at)
 
         existing = self.get_prediction(evaluation_id, hypothesis_id)
         if existing is not None:
@@ -635,7 +640,7 @@ class EvaluationStore:
                     "prediction already exists for this evaluation_id and hypothesis_id with a "
                     "different value"
                 )
-            if existing.asset != asset or existing.target != target:
+            if existing.asset != asset or existing.target_id != target_id:
                 raise ValueError(
                     "prediction already exists for this evaluation with different asset/target"
                 )
@@ -650,7 +655,14 @@ class EvaluationStore:
                 )
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (evaluation_id, hypothesis_id, asset, target, float(prediction_value), timestamp),
+                (
+                    evaluation_id,
+                    hypothesis_id,
+                    asset,
+                    target_id,
+                    float(prediction_value),
+                    timestamp,
+                ),
             )
 
         prediction = self.get_prediction(evaluation_id, hypothesis_id)
@@ -664,17 +676,17 @@ class EvaluationStore:
         observation_value: float,
         recorded_at: str | None = None,
         asset: str = DEFAULT_ASSET,
-        target: str = DEFAULT_TARGET,
+        target_id: str = DEFAULT_TARGET,
     ) -> tuple[ObservationRecord, bool]:
         self.ensure_schema()
-        self.register_target(target, recorded_at=recorded_at)
+        self.register_target(target_id, recorded_at=recorded_at)
         existing = self.get_observation(evaluation_id)
         if existing is not None:
             if existing.value != float(observation_value):
                 raise ValueError(
                     "observation already exists for this evaluation_id with a different value"
                 )
-            if existing.asset != asset or existing.target != target:
+            if existing.asset != asset or existing.target_id != target_id:
                 raise ValueError(
                     "observation already exists for this evaluation with different asset/target"
                 )
@@ -687,7 +699,7 @@ class EvaluationStore:
                 INSERT INTO observations (evaluation_id, asset, target, value, recorded_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (evaluation_id, asset, target, float(observation_value), timestamp),
+                (evaluation_id, asset, target_id, float(observation_value), timestamp),
             )
 
         observation = self.get_observation(evaluation_id)

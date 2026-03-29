@@ -111,7 +111,7 @@ def generate_evaluation_input_from_frame(
     signal_name: str | None = None,
     definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
-    target: str = DEFAULT_TARGET,
+    target_id: str = DEFAULT_TARGET,
 ) -> EvaluationInput:
     definition = _resolve_hypothesis_definition(
         hypothesis_id=hypothesis_id,
@@ -151,7 +151,7 @@ def generate_evaluation_input_from_frame(
         prediction=prediction,
         observation=observation,
         asset=definition.asset if asset == DEFAULT_ASSET else asset,
-        target=definition.target_id if target == DEFAULT_TARGET else target,
+        target_id=definition.target_id if target_id == DEFAULT_TARGET else target_id,
     )
 
 
@@ -164,7 +164,7 @@ def generate_evaluation_inputs_from_frame(
     signal_name: str | None = None,
     definition: HypothesisDefinition | None = None,
     asset: str = DEFAULT_ASSET,
-    target: str = DEFAULT_TARGET,
+    target_id: str = DEFAULT_TARGET,
 ) -> list[EvaluationInput]:
     daily_close = _daily_close_series(frame)
     dates = list(daily_close.index)
@@ -180,7 +180,7 @@ def generate_evaluation_inputs_from_frame(
             signal_name=signal_name,
             definition=definition,
             asset=asset,
-            target=target,
+            target_id=target_id,
         )
         for date in selected_dates
     ]
@@ -244,6 +244,7 @@ def write_evaluation_input(path: str | Path, evaluation_input: EvaluationInput) 
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     payload = asdict(evaluation_input)
+    payload["target"] = payload.pop("target_id")
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path
 
@@ -251,6 +252,10 @@ def write_evaluation_input(path: str | Path, evaluation_input: EvaluationInput) 
 def write_evaluation_inputs(path: str | Path, evaluation_inputs: list[EvaluationInput]) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = [asdict(item) for item in evaluation_inputs]
+    payload = []
+    for item in evaluation_inputs:
+        document = asdict(item)
+        document["target"] = document.pop("target_id")
+        payload.append(document)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path

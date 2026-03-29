@@ -18,9 +18,9 @@ DEFAULT_TARGET = DEFAULT_TARGET_DEFINITION.target_id
 class RuntimeConfig:
     db_path: Path
     asset: str = DEFAULT_ASSET
-    target: str = DEFAULT_TARGET
+    target_id: str = DEFAULT_TARGET
 
 
 def load_runtime_config(*, db_path: str | None = None) -> RuntimeConfig:
     path = DEFAULT_DB_PATH if db_path is None else Path(db_path)
-    return RuntimeConfig(db_path=path, asset=DEFAULT_ASSET, target=DEFAULT_TARGET)
+    return RuntimeConfig(db_path=path, asset=DEFAULT_ASSET, target_id=DEFAULT_TARGET)

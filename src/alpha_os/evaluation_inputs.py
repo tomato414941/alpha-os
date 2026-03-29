@@ -15,7 +15,7 @@ class EvaluationInput:
     observation: float
     evaluation_id: str | None = None
     asset: str = DEFAULT_ASSET
-    target: str = DEFAULT_TARGET
+    target_id: str = DEFAULT_TARGET
 
 
 def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
@@ -23,7 +23,7 @@ def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
         raise ValueError(f"{source}: each evaluation input must be a JSON object")
 
     asset = str(item.get("asset", DEFAULT_ASSET))
-    target = str(item.get("target", DEFAULT_TARGET))
+    target_id = str(item.get("target", item.get("target_id", DEFAULT_TARGET)))
     if asset != DEFAULT_ASSET:
         raise ValueError(f"{source}: alpha-os only supports asset={DEFAULT_ASSET}")
 
@@ -44,7 +44,7 @@ def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
         observation=observation,
         evaluation_id=evaluation_id,
         asset=asset,
-        target=target,
+        target_id=target_id,
     )
 
 

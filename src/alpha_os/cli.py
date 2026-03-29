@@ -188,8 +188,8 @@ def build_cli_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _default_evaluation_id(*, asset: str, target: str, date: str) -> str:
-    return f"{asset}:{target}:{date}"
+def _default_evaluation_id(*, asset: str, target_id: str, date: str) -> str:
+    return f"{asset}:{target_id}:{date}"
 
 
 @contextmanager
@@ -247,7 +247,7 @@ def _generate_backfill_inputs_for_hypothesis(
 
 def _print_hypothesis_details(hypothesis) -> None:
     print(f"  Asset:    {hypothesis.asset}")
-    print(f"  Target:   {hypothesis.target}")
+    print(f"  Target:   {hypothesis.target_id}")
     if hypothesis.kind is not None:
         print(f"  Kind:     {hypothesis.kind}")
     if hypothesis.signal_name is not None:
@@ -264,7 +264,7 @@ def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
     outcome = "created" if created else "existing"
     print(f"Evaluation [{outcome}] {snapshot.evaluation_id}")
     print(f"  Asset:    {snapshot.asset}")
-    print(f"  Target:   {snapshot.target}")
+    print(f"  Target:   {snapshot.target_id}")
     print(f"  Hyp:      {snapshot.hypothesis_id}")
     print(
         f"  Signal:   pred={snapshot.prediction_value:.6f} "
@@ -336,7 +336,7 @@ def _print_hypothesis_competition_summary(
 def _print_target_summaries(hypotheses, metrics_by_id) -> None:
     grouped = defaultdict(list)
     for hypothesis in hypotheses:
-        grouped[hypothesis.target].append(hypothesis)
+        grouped[hypothesis.target_id].append(hypothesis)
 
     print("  Targets:")
     for target, target_hypotheses in sorted(grouped.items()):
@@ -373,7 +373,7 @@ def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
                 observation=evaluation_input.observation,
                 evaluation_id=args.evaluation_id,
                 asset=evaluation_input.asset,
-                target=evaluation_input.target,
+                target_id=evaluation_input.target_id,
             )
         return evaluation_input
 
@@ -401,7 +401,7 @@ def cmd_init_db(args: argparse.Namespace) -> int:
         store.ensure_schema()
     print(f"Initialized runtime db: {cfg.db_path}")
     print(f"  Asset:    {cfg.asset}")
-    print(f"  Target:   {cfg.target}")
+    print(f"  Target:   {cfg.target_id}")
     return 0
 
 
@@ -409,7 +409,7 @@ def cmd_register_hypothesis(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         hypothesis, created = store.register_hypothesis(
             args.hypothesis_id,
-            target=cfg.target if args.target is None else str(args.target),
+            target_id=cfg.target_id if args.target is None else str(args.target),
         )
     outcome = "created" if created else "existing"
     print(f"Hypothesis [{outcome}] {hypothesis.hypothesis_id}")
@@ -453,18 +453,19 @@ def cmd_record_prediction(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target=cfg.target,
+            target_id=cfg.target_id,
             date=args.date,
         )
         prediction, created = store.record_prediction(
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
             prediction_value=args.prediction,
+            target_id=cfg.target_id,
         )
     outcome = "created" if created else "existing"
     print(f"Prediction [{outcome}] {prediction.evaluation_id}")
     print(f"  Asset:    {prediction.asset}")
-    print(f"  Target:   {prediction.target}")
+    print(f"  Target:   {prediction.target_id}")
     print(f"  Hyp:      {prediction.hypothesis_id}")
     print(f"  Value:    {prediction.value:.6f}")
     return 0
@@ -474,17 +475,18 @@ def cmd_finalize_observation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target=cfg.target,
+            target_id=cfg.target_id,
             date=args.date,
         )
         observation, created = store.finalize_observation(
             evaluation_id=evaluation_id,
             observation_value=args.observation,
+            target_id=cfg.target_id,
         )
     outcome = "created" if created else "existing"
     print(f"Observation [{outcome}] {observation.evaluation_id}")
     print(f"  Asset:    {observation.asset}")
-    print(f"  Target:   {observation.target}")
+    print(f"  Target:   {observation.target_id}")
     print(f"  Value:    {observation.value:.6f}")
     return 0
 
@@ -493,13 +495,14 @@ def cmd_update_state(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target=cfg.target,
+            target_id=cfg.target_id,
             date=args.date,
         )
         snapshot, created = update_evaluation_state(
             store,
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
+            target_id=cfg.target_id,
         )
         metric = store.get_hypothesis_metric(args.hypothesis_id)
     _print_evaluation_snapshot(snapshot, created=created)
@@ -524,7 +527,7 @@ def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
     output_path = write_evaluation_input(args.out, evaluation_input)
     print(f"Generated evaluation input: {output_path}")
     print(f"  Asset:    {evaluation_input.asset}")
-    print(f"  Target:   {evaluation_input.target}")
+    print(f"  Target:   {evaluation_input.target_id}")
     print(f"  Date:     {evaluation_input.date}")
     print(f"  Hyp:      {evaluation_input.hypothesis_id}")
     print(
@@ -554,7 +557,7 @@ def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
     print(f"  Count:    {len(evaluation_inputs)}")
     if evaluation_inputs:
         print(f"  Asset:    {evaluation_inputs[0].asset}")
-        print(f"  Target:   {evaluation_inputs[0].target}")
+        print(f"  Target:   {evaluation_inputs[0].target_id}")
         print(f"  Range:    {evaluation_inputs[0].date} -> {evaluation_inputs[-1].date}")
     else:
         print(f"  Asset:    {DEFAULT_ASSET}")
@@ -568,7 +571,7 @@ def cmd_apply_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
             asset=evaluation_input.asset,
-            target=evaluation_input.target,
+            target_id=evaluation_input.target_id,
             date=evaluation_input.date,
         )
         snapshot, created = apply_evaluation(
@@ -578,7 +581,7 @@ def cmd_apply_evaluation(args: argparse.Namespace) -> int:
             prediction_value=evaluation_input.prediction,
             observation_value=evaluation_input.observation,
             asset=evaluation_input.asset,
-            target=evaluation_input.target,
+            target_id=evaluation_input.target_id,
             input_source=input_source,
         )
         metric = store.get_hypothesis_metric(evaluation_input.hypothesis_id)
@@ -614,7 +617,7 @@ def _apply_evaluation_inputs(
         for evaluation_input in evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=evaluation_input.asset,
-                target=evaluation_input.target,
+                target_id=evaluation_input.target_id,
                 date=evaluation_input.date,
             )
             latest_snapshot, created = apply_evaluation(
@@ -624,7 +627,7 @@ def _apply_evaluation_inputs(
                 prediction_value=evaluation_input.prediction,
                 observation_value=evaluation_input.observation,
                 asset=evaluation_input.asset,
-                target=evaluation_input.target,
+                target_id=evaluation_input.target_id,
                 input_source=input_source,
                 input_range_start=input_range_start,
                 input_range_end=input_range_end,
@@ -692,7 +695,7 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
         for evaluation_input in all_evaluation_inputs:
             evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
                 asset=evaluation_input.asset,
-                target=evaluation_input.target,
+                target_id=evaluation_input.target_id,
                 date=evaluation_input.date,
             )
             latest_snapshot, created = apply_evaluation(
@@ -702,7 +705,7 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
                 prediction_value=evaluation_input.prediction,
                 observation_value=evaluation_input.observation,
                 asset=evaluation_input.asset,
-                target=evaluation_input.target,
+                target_id=evaluation_input.target_id,
                 input_source="signal_noise_backfill",
                 input_range_start=args.start_date,
                 input_range_end=args.end_date,
@@ -734,7 +737,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     store = EvaluationStore(cfg.db_path)
     try:
         store.ensure_schema()
-        hypotheses = store.list_hypotheses(asset=cfg.asset, target=None)
+        hypotheses = store.list_hypotheses(asset=cfg.asset, target_id=None)
         metrics = (
             []
             if not hypotheses
