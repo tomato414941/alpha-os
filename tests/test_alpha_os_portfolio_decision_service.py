@@ -226,3 +226,95 @@ def test_build_portfolio_decision_input_returns_none_without_meta_prediction(tmp
         assert build_portfolio_decision_input(store) is None
     finally:
         store.close()
+
+
+def test_persist_portfolio_decision_output_writes_runtime_artifact(tmp_path):
+    from alpha_os.evaluation_runtime import apply_evaluation
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
+    from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
+    from alpha_os.portfolio_decision import (
+        CostInput,
+        PortfolioPositionState,
+        PortfolioState,
+    )
+    from alpha_os.portfolio_decision_service import (
+        PortfolioDecisionAssumptions,
+        build_portfolio_decision_output,
+        persist_portfolio_decision_output,
+    )
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("reversal_1d")
+        store.register_hypothesis("average_gap_3d")
+
+        values = [
+            ("2026-03-24", 0.4, 0.0, 0.2),
+            ("2026-03-25", 0.3, 0.1, 0.1),
+            ("2026-03-26", 0.2, 0.0, 0.05),
+        ]
+        for date, pred_a, pred_b, obs in values:
+            evaluation_id = f"BTC:residual_return_3d:{date}"
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="reversal_1d",
+                prediction_value=pred_a,
+                observation_value=obs,
+            )
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="average_gap_3d",
+                prediction_value=pred_b,
+                observation_value=obs,
+            )
+
+        refresh_target_meta_predictions(store)
+        refresh_target_meta_prediction_metrics(store)
+
+        assumptions = PortfolioDecisionAssumptions(
+            cost_inputs=(
+                CostInput(
+                    name="expected_slippage",
+                    subject_id="BTC",
+                    value=1000.0,
+                    basis="per_notional",
+                    unit="bps",
+                ),
+            ),
+        )
+        decision_output = build_portfolio_decision_output(
+            store,
+            portfolio_id="paper_core",
+            portfolio_state=PortfolioState(
+                portfolio_id="paper_core",
+                asset="BTC",
+                positions=(PortfolioPositionState(subject_id="BTC", weight=0.05),),
+            ),
+            assumptions=assumptions,
+        )
+        assert decision_output is not None
+        assert len(decision_output.targets) == 1
+
+        persist_portfolio_decision_output(
+            store,
+            decision_output=decision_output,
+            target_id="residual_return_3d",
+            aggregation_kind="corr_weighted_mean",
+            assumptions=assumptions,
+        )
+
+        items = store.list_portfolio_decisions(portfolio_id="paper_core", limit=10)
+        assert len(items) == 1
+        assert items[0].portfolio_id == "paper_core"
+        assert items[0].subject_id == "BTC"
+        assert items[0].target_id == "residual_return_3d"
+        assert items[0].aggregation_kind == "corr_weighted_mean"
+        assert items[0].details is not None
+        assert items[0].details["assumptions"]["cost_inputs"][0]["name"] == "expected_slippage"
+    finally:
+        store.close()

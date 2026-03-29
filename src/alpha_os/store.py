@@ -210,6 +210,31 @@ class ValidationMetaResultState:
     updated_at: str
 
 
+@dataclass(frozen=True)
+class PortfolioDecisionState:
+    portfolio_id: str
+    subject_id: str
+    asset: str | None
+    target_id: str
+    aggregation_kind: str
+    as_of: str
+    target_weight: float
+    position_delta: float
+    target_notional: float | None
+    target_quantity: float | None
+    entry_allowed: bool
+    risk_scale: float
+    details_json: str | None
+    created_at: str
+    updated_at: str
+
+    @property
+    def details(self) -> dict[str, Any] | None:
+        if self.details_json is None:
+            return None
+        return json.loads(self.details_json)
+
+
 def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
     if row is None:
         return None
@@ -338,6 +363,32 @@ def _row_to_meta_prediction_metric(row: sqlite3.Row | None) -> MetaPredictionMet
         end_evaluation_id=None
         if row["end_evaluation_id"] is None
         else str(row["end_evaluation_id"]),
+        updated_at=str(row["updated_at"]),
+    )
+
+
+def _row_to_portfolio_decision(row: sqlite3.Row | None) -> PortfolioDecisionState | None:
+    if row is None:
+        return None
+    return PortfolioDecisionState(
+        portfolio_id=str(row["portfolio_id"]),
+        subject_id=str(row["subject_id"]),
+        asset=None if row["asset"] is None else str(row["asset"]),
+        target_id=str(row["target_id"]),
+        aggregation_kind=str(row["aggregation_kind"]),
+        as_of=str(row["as_of"]),
+        target_weight=float(row["target_weight"]),
+        position_delta=float(row["position_delta"]),
+        target_notional=None
+        if row["target_notional"] is None
+        else float(row["target_notional"]),
+        target_quantity=None
+        if row["target_quantity"] is None
+        else float(row["target_quantity"]),
+        entry_allowed=bool(int(row["entry_allowed"])),
+        risk_scale=float(row["risk_scale"]),
+        details_json=None if row["details_json"] is None else str(row["details_json"]),
+        created_at=str(row["created_at"]),
         updated_at=str(row["updated_at"]),
     )
 
@@ -539,6 +590,25 @@ class EvaluationStore:
                 sample_count INTEGER NOT NULL,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (run_id, date_range_label, target_id, aggregation_kind, window_size)
+            );
+
+            CREATE TABLE IF NOT EXISTS portfolio_decisions (
+                portfolio_id TEXT NOT NULL,
+                subject_id TEXT NOT NULL,
+                asset TEXT,
+                target_id TEXT NOT NULL,
+                aggregation_kind TEXT NOT NULL,
+                as_of TEXT NOT NULL,
+                target_weight REAL NOT NULL,
+                position_delta REAL NOT NULL,
+                target_notional REAL,
+                target_quantity REAL,
+                entry_allowed INTEGER NOT NULL,
+                risk_scale REAL NOT NULL,
+                details_json TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (portfolio_id, subject_id, target_id, aggregation_kind, as_of)
             );
             """
         )
@@ -834,6 +904,105 @@ class EvaluationStore:
             tuple(params),
         ).fetchall()
         return [_row_to_meta_prediction_metric(row) for row in rows if row is not None]
+
+    def upsert_portfolio_decision(
+        self,
+        *,
+        portfolio_id: str,
+        subject_id: str,
+        asset: str | None,
+        target_id: str,
+        aggregation_kind: str,
+        as_of: str,
+        target_weight: float,
+        position_delta: float,
+        target_notional: float | None,
+        target_quantity: float | None,
+        entry_allowed: bool,
+        risk_scale: float,
+        details_json: str | None,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO portfolio_decisions (
+                    portfolio_id, subject_id, asset, target_id, aggregation_kind,
+                    as_of, target_weight, position_delta, target_notional,
+                    target_quantity, entry_allowed, risk_scale, details_json,
+                    created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(portfolio_id, subject_id, target_id, aggregation_kind, as_of)
+                DO UPDATE SET
+                    asset = excluded.asset,
+                    target_weight = excluded.target_weight,
+                    position_delta = excluded.position_delta,
+                    target_notional = excluded.target_notional,
+                    target_quantity = excluded.target_quantity,
+                    entry_allowed = excluded.entry_allowed,
+                    risk_scale = excluded.risk_scale,
+                    details_json = excluded.details_json,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    portfolio_id,
+                    subject_id,
+                    asset,
+                    target_id,
+                    aggregation_kind,
+                    as_of,
+                    float(target_weight),
+                    float(position_delta),
+                    None if target_notional is None else float(target_notional),
+                    None if target_quantity is None else float(target_quantity),
+                    int(bool(entry_allowed)),
+                    float(risk_scale),
+                    details_json,
+                    timestamp,
+                    timestamp,
+                ),
+            )
+
+    def list_portfolio_decisions(
+        self,
+        *,
+        portfolio_id: str | None = None,
+        target_id: str | None = None,
+        aggregation_kind: str | None = None,
+        limit: int = 20,
+    ) -> list[PortfolioDecisionState]:
+        filters: list[str] = []
+        params: list[Any] = []
+        if portfolio_id is not None:
+            filters.append("portfolio_id = ?")
+            params.append(portfolio_id)
+        if target_id is not None:
+            filters.append("target_id = ?")
+            params.append(target_id)
+        if aggregation_kind is not None:
+            filters.append("aggregation_kind = ?")
+            params.append(aggregation_kind)
+        where_clause = ""
+        if filters:
+            where_clause = f"WHERE {' AND '.join(filters)}"
+        params.append(max(int(limit), 1))
+        rows = self.conn.execute(
+            f"""
+            SELECT portfolio_id, subject_id, asset, target_id, aggregation_kind,
+                   as_of, target_weight, position_delta, target_notional,
+                   target_quantity, entry_allowed, risk_scale, details_json,
+                   created_at, updated_at
+            FROM portfolio_decisions
+            {where_clause}
+            ORDER BY updated_at DESC, as_of DESC, subject_id ASC
+            LIMIT ?
+            """,
+            tuple(params),
+        ).fetchall()
+        return [_row_to_portfolio_decision(row) for row in rows if row is not None]
 
     def create_validation_run(
         self,

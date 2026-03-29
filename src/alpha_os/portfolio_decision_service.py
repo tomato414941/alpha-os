@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from dataclasses import asdict
 from statistics import pstdev
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
@@ -147,6 +149,56 @@ def build_portfolio_decision_output(
         as_of=decision_output.as_of,
         targets=decision_output.targets,
     )
+
+
+def persist_portfolio_decision_output(
+    store: EvaluationStore,
+    *,
+    decision_output: PortfolioDecisionOutput,
+    target_id: str,
+    aggregation_kind: str,
+    config: RuntimeDecisionBuildConfig | None = None,
+    assumptions: PortfolioDecisionAssumptions | None = None,
+    recorded_at: str | None = None,
+) -> None:
+    config = config or RuntimeDecisionBuildConfig()
+    assumptions = assumptions or PortfolioDecisionAssumptions()
+    portfolio_id = decision_output.portfolio_id or "default"
+    asset = decision_output.asset
+    as_of = decision_output.as_of or ""
+    details_json = json.dumps(
+        {
+            "config": asdict(config),
+            "assumptions": {
+                "risk_inputs": [asdict(item) for item in assumptions.risk_inputs],
+                "cost_inputs": [asdict(item) for item in assumptions.cost_inputs],
+                "uncertainty_inputs": [
+                    asdict(item) for item in assumptions.uncertainty_inputs
+                ],
+                "dependence_inputs": [
+                    asdict(item) for item in assumptions.dependence_inputs
+                ],
+            },
+        },
+        sort_keys=True,
+    )
+    for target in decision_output.targets:
+        store.upsert_portfolio_decision(
+            portfolio_id=portfolio_id,
+            subject_id=target.subject_id,
+            asset=asset,
+            target_id=target_id,
+            aggregation_kind=aggregation_kind,
+            as_of=as_of,
+            target_weight=target.target_weight,
+            position_delta=target.position_delta,
+            target_notional=target.target_notional,
+            target_quantity=target.target_quantity,
+            entry_allowed=target.entry_allowed,
+            risk_scale=target.risk_scale,
+            details_json=details_json,
+            recorded_at=recorded_at,
+        )
 
 
 def _latest_meta_prediction(
