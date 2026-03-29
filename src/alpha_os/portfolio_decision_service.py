@@ -6,7 +6,7 @@ from dataclasses import asdict
 from statistics import pstdev
 
 from .config import DEFAULT_ASSET, DEFAULT_TARGET
-from .meta_aggregation_service import AGGREGATION_CORR_WEIGHTED_MEAN
+from .meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
 from .portfolio_decision import (
     CostInput,
     DependenceInput,
@@ -26,7 +26,7 @@ from .store import EvaluationStore, MetaPredictionMetricState, MetaPredictionSta
 
 @dataclass(frozen=True)
 class RuntimeDecisionBuildConfig:
-    aggregation_kind: str = AGGREGATION_CORR_WEIGHTED_MEAN
+    aggregation_kind: str = DEFAULT_PRIMARY_AGGREGATION_KIND
     risk_window: int = 20
 
 
