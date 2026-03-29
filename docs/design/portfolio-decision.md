@@ -78,6 +78,9 @@ So in a broader runtime:
 - `subject_id` identifies what can receive weight
 - `asset` becomes, at most, a convenience field for bounded cases
 
+So the portfolio contract itself should carry `portfolio_id` as the durable
+decision context, while treating `asset` as optional bounded-runtime context.
+
 The minimal input model should allow:
 
 - expected return style signals

@@ -7,6 +7,8 @@ def test_portfolio_state_exposure_properties():
     from alpha_os.portfolio_decision import PortfolioPositionState, PortfolioState
 
     state = PortfolioState(
+        portfolio_id="paper_core",
+        asset="BTC",
         as_of="2026-03-29T00:00:00+00:00",
         positions=(
             PortfolioPositionState(subject_id="BTC", weight=0.3),
@@ -31,6 +33,8 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     )
 
     decision_input = PortfolioDecisionInput(
+        portfolio_id="paper_core",
+        asset="BTC",
         as_of="2026-03-29T00:00:00+00:00",
         portfolio_state=PortfolioState(),
         predictive_signals=(
@@ -82,6 +86,7 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     )
 
     assert len(decision_input.predictive_signals) == 1
+    assert decision_input.portfolio_id == "paper_core"
     assert decision_input.predictive_signals[0].source_kind == "meta_prediction"
     assert len(decision_input.risk_inputs) == 1
     assert len(decision_input.cost_inputs) == 1
@@ -97,6 +102,8 @@ def test_portfolio_decision_output_exposure_properties():
     from alpha_os.portfolio_decision import PortfolioDecisionOutput, PortfolioTarget
 
     decision_output = PortfolioDecisionOutput(
+        portfolio_id="paper_core",
+        asset="BTC",
         as_of="2026-03-29T00:00:00+00:00",
         targets=(
             PortfolioTarget(
@@ -118,6 +125,7 @@ def test_portfolio_decision_output_exposure_properties():
 
     assert decision_output.gross_target_exposure == pytest.approx(0.3)
     assert decision_output.net_target_exposure == pytest.approx(0.2)
+    assert decision_output.portfolio_id == "paper_core"
 
 
 def test_rule_based_policy_applies_signal_risk_uncertainty_and_cost():

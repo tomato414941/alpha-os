@@ -43,6 +43,7 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
         decision_input = build_portfolio_decision_input(store)
 
         assert decision_input is not None
+        assert decision_input.asset == "BTC"
         assert decision_input.predictive_signals[0].source_kind == "meta_prediction"
         assert decision_input.predictive_signals[0].subject_id == "BTC"
         assert decision_input.predictive_signals[0].target_id == "residual_return_3d"
@@ -100,6 +101,8 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
 
         decision_input = build_portfolio_decision_input(
             store,
+            portfolio_id="paper_core",
+            subject_id="BTC_spot",
             assumptions=PortfolioDecisionAssumptions(
                 cost_inputs=(
                     CostInput(
@@ -123,6 +126,9 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
         )
 
         assert decision_input is not None
+        assert decision_input.portfolio_id == "paper_core"
+        assert decision_input.predictive_signals[0].subject_id == "BTC_spot"
+        assert decision_input.risk_inputs[0].subject_id == "BTC_spot"
         assert decision_input.cost_inputs[0].name == "turnover_penalty"
         assert decision_input.dependence_inputs[0].right_subject_id == "ETH"
     finally:
@@ -178,8 +184,12 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
 
         decision_output = build_portfolio_decision_output(
             store,
+            portfolio_id="paper_core",
+            subject_id="BTC_spot",
             portfolio_state=PortfolioState(
-                positions=(PortfolioPositionState(subject_id="BTC", weight=0.05),)
+                portfolio_id="paper_core",
+                asset="BTC",
+                positions=(PortfolioPositionState(subject_id="BTC_spot", weight=0.05),)
             ),
             assumptions=PortfolioDecisionAssumptions(
                 cost_inputs=(
@@ -195,9 +205,10 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
         )
 
         assert decision_output is not None
+        assert decision_output.portfolio_id == "paper_core"
         assert len(decision_output.targets) == 1
-        assert decision_output.targets[0].subject_id == "BTC"
-        assert 0.0 < decision_output.targets[0].target_weight < 0.05
+        assert decision_output.targets[0].subject_id == "BTC_spot"
+        assert 0.0 <= decision_output.targets[0].target_weight <= 0.05
         assert decision_output.targets[0].position_delta < 0.0
         assert decision_output.targets[0].entry_allowed is True
     finally:

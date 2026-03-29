@@ -41,12 +41,15 @@ def build_portfolio_decision_input(
     *,
     asset: str = DEFAULT_ASSET,
     target_id: str = DEFAULT_TARGET,
+    portfolio_id: str | None = None,
+    subject_id: str | None = None,
     portfolio_state: PortfolioState | None = None,
     config: RuntimeDecisionBuildConfig | None = None,
     assumptions: PortfolioDecisionAssumptions | None = None,
 ) -> PortfolioDecisionInput | None:
     config = config or RuntimeDecisionBuildConfig()
     assumptions = assumptions or PortfolioDecisionAssumptions()
+    resolved_subject_id = subject_id or asset
     meta_prediction = _latest_meta_prediction(
         store,
         asset=asset,
@@ -74,7 +77,7 @@ def build_portfolio_decision_input(
     runtime_risk_inputs = (
         RiskInput(
             name=f"realized_vol_{config.risk_window}",
-            subject_id=asset,
+            subject_id=resolved_subject_id,
             value=realized_vol,
             horizon_days=config.risk_window,
             unit="vol",
@@ -83,7 +86,7 @@ def build_portfolio_decision_input(
     runtime_uncertainty_inputs = (
         UncertaintyInput(
             name="small_sample_penalty",
-            subject_id=asset,
+            subject_id=resolved_subject_id,
             value=uncertainty_value,
             source_id=config.aggregation_kind,
             basis="per_signal",
@@ -91,14 +94,16 @@ def build_portfolio_decision_input(
     )
 
     return PortfolioDecisionInput(
+        portfolio_id=portfolio_id,
         asset=asset,
         as_of=meta_prediction.updated_at,
-        portfolio_state=portfolio_state or PortfolioState(asset=asset),
+        portfolio_state=portfolio_state
+        or PortfolioState(portfolio_id=portfolio_id, asset=asset),
         predictive_signals=(
             PredictiveSignalInput(
                 source_id=config.aggregation_kind,
                 source_kind="meta_prediction",
-                subject_id=asset,
+                subject_id=resolved_subject_id,
                 target_id=target_id,
                 value=meta_prediction.value,
                 confidence=confidence,
@@ -116,6 +121,8 @@ def build_portfolio_decision_output(
     *,
     asset: str = DEFAULT_ASSET,
     target_id: str = DEFAULT_TARGET,
+    portfolio_id: str | None = None,
+    subject_id: str | None = None,
     portfolio_state: PortfolioState | None = None,
     config: RuntimeDecisionBuildConfig | None = None,
     assumptions: PortfolioDecisionAssumptions | None = None,
@@ -125,13 +132,21 @@ def build_portfolio_decision_output(
         store,
         asset=asset,
         target_id=target_id,
+        portfolio_id=portfolio_id,
+        subject_id=subject_id,
         portfolio_state=portfolio_state,
         config=config,
         assumptions=assumptions,
     )
     if decision_input is None:
         return None
-    return apply_rule_based_policy(decision_input, policy=policy)
+    decision_output = apply_rule_based_policy(decision_input, policy=policy)
+    return PortfolioDecisionOutput(
+        portfolio_id=portfolio_id,
+        asset=asset,
+        as_of=decision_output.as_of,
+        targets=decision_output.targets,
+    )
 
 
 def _latest_meta_prediction(
