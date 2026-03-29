@@ -171,6 +171,45 @@ class MetaPredictionMetricState:
     updated_at: str
 
 
+@dataclass(frozen=True)
+class ValidationRunState:
+    run_id: str
+    spec_json: str
+    created_at: str
+
+
+@dataclass(frozen=True)
+class ValidationHypothesisResultState:
+    run_id: str
+    date_range_label: str
+    start_date: str
+    end_date: str
+    target_id: str
+    hypothesis_id: str
+    window_size: int
+    corr: float
+    mmc: float | None
+    sample_count: int
+    mmc_sample_count: int
+    mmc_peer_count: int
+    mmc_baseline_type: str | None
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class ValidationMetaResultState:
+    run_id: str
+    date_range_label: str
+    start_date: str
+    end_date: str
+    target_id: str
+    aggregation_kind: str
+    window_size: int
+    corr: float
+    sample_count: int
+    updated_at: str
+
+
 def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
     if row is None:
         return None
@@ -303,6 +342,60 @@ def _row_to_meta_prediction_metric(row: sqlite3.Row | None) -> MetaPredictionMet
     )
 
 
+def _row_to_validation_run(row: sqlite3.Row | None) -> ValidationRunState | None:
+    if row is None:
+        return None
+    return ValidationRunState(
+        run_id=str(row["run_id"]),
+        spec_json=str(row["spec_json"]),
+        created_at=str(row["created_at"]),
+    )
+
+
+def _row_to_validation_hypothesis_result(
+    row: sqlite3.Row | None,
+) -> ValidationHypothesisResultState | None:
+    if row is None:
+        return None
+    return ValidationHypothesisResultState(
+        run_id=str(row["run_id"]),
+        date_range_label=str(row["date_range_label"]),
+        start_date=str(row["start_date"]),
+        end_date=str(row["end_date"]),
+        target_id=str(row["target_id"]),
+        hypothesis_id=str(row["hypothesis_id"]),
+        window_size=int(row["window_size"]),
+        corr=float(row["corr"]),
+        mmc=None if row["mmc"] is None else float(row["mmc"]),
+        sample_count=int(row["sample_count"]),
+        mmc_sample_count=int(row["mmc_sample_count"]),
+        mmc_peer_count=int(row["mmc_peer_count"]),
+        mmc_baseline_type=None
+        if row["mmc_baseline_type"] is None
+        else str(row["mmc_baseline_type"]),
+        updated_at=str(row["updated_at"]),
+    )
+
+
+def _row_to_validation_meta_result(
+    row: sqlite3.Row | None,
+) -> ValidationMetaResultState | None:
+    if row is None:
+        return None
+    return ValidationMetaResultState(
+        run_id=str(row["run_id"]),
+        date_range_label=str(row["date_range_label"]),
+        start_date=str(row["start_date"]),
+        end_date=str(row["end_date"]),
+        target_id=str(row["target_id"]),
+        aggregation_kind=str(row["aggregation_kind"]),
+        window_size=int(row["window_size"]),
+        corr=float(row["corr"]),
+        sample_count=int(row["sample_count"]),
+        updated_at=str(row["updated_at"]),
+    )
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
@@ -408,6 +501,44 @@ class EvaluationStore:
                 end_evaluation_id TEXT,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (aggregation_kind, asset, target_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS validation_runs (
+                run_id TEXT PRIMARY KEY,
+                spec_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS validation_hypothesis_results (
+                run_id TEXT NOT NULL,
+                date_range_label TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                hypothesis_id TEXT NOT NULL,
+                window_size INTEGER NOT NULL,
+                corr REAL NOT NULL,
+                mmc REAL,
+                sample_count INTEGER NOT NULL,
+                mmc_sample_count INTEGER NOT NULL,
+                mmc_peer_count INTEGER NOT NULL,
+                mmc_baseline_type TEXT,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (run_id, date_range_label, target_id, hypothesis_id, window_size)
+            );
+
+            CREATE TABLE IF NOT EXISTS validation_meta_results (
+                run_id TEXT NOT NULL,
+                date_range_label TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                aggregation_kind TEXT NOT NULL,
+                window_size INTEGER NOT NULL,
+                corr REAL NOT NULL,
+                sample_count INTEGER NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (run_id, date_range_label, target_id, aggregation_kind, window_size)
             );
             """
         )
@@ -703,6 +834,190 @@ class EvaluationStore:
             tuple(params),
         ).fetchall()
         return [_row_to_meta_prediction_metric(row) for row in rows if row is not None]
+
+    def create_validation_run(
+        self,
+        *,
+        run_id: str,
+        spec_json: str,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO validation_runs (run_id, spec_json, created_at)
+                VALUES (?, ?, ?)
+                """,
+                (run_id, spec_json, timestamp),
+            )
+
+    def get_validation_run(self, run_id: str) -> ValidationRunState | None:
+        row = self.conn.execute(
+            """
+            SELECT run_id, spec_json, created_at
+            FROM validation_runs
+            WHERE run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()
+        return _row_to_validation_run(row)
+
+    def get_latest_validation_run(self) -> ValidationRunState | None:
+        row = self.conn.execute(
+            """
+            SELECT run_id, spec_json, created_at
+            FROM validation_runs
+            ORDER BY created_at DESC, run_id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+        return _row_to_validation_run(row)
+
+    def upsert_validation_hypothesis_result(
+        self,
+        *,
+        run_id: str,
+        date_range_label: str,
+        start_date: str,
+        end_date: str,
+        target_id: str,
+        hypothesis_id: str,
+        window_size: int,
+        corr: float,
+        mmc: float | None,
+        sample_count: int,
+        mmc_sample_count: int,
+        mmc_peer_count: int,
+        mmc_baseline_type: str | None,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO validation_hypothesis_results (
+                    run_id, date_range_label, start_date, end_date, target_id,
+                    hypothesis_id, window_size, corr, mmc, sample_count,
+                    mmc_sample_count, mmc_peer_count, mmc_baseline_type, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(run_id, date_range_label, target_id, hypothesis_id, window_size)
+                DO UPDATE SET
+                    corr = excluded.corr,
+                    mmc = excluded.mmc,
+                    sample_count = excluded.sample_count,
+                    mmc_sample_count = excluded.mmc_sample_count,
+                    mmc_peer_count = excluded.mmc_peer_count,
+                    mmc_baseline_type = excluded.mmc_baseline_type,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    run_id,
+                    date_range_label,
+                    start_date,
+                    end_date,
+                    target_id,
+                    hypothesis_id,
+                    int(window_size),
+                    float(corr),
+                    None if mmc is None else float(mmc),
+                    int(sample_count),
+                    int(mmc_sample_count),
+                    int(mmc_peer_count),
+                    mmc_baseline_type,
+                    timestamp,
+                ),
+            )
+
+    def list_validation_hypothesis_results(
+        self,
+        *,
+        run_id: str,
+    ) -> list[ValidationHypothesisResultState]:
+        rows = self.conn.execute(
+            """
+            SELECT run_id, date_range_label, start_date, end_date, target_id,
+                   hypothesis_id, window_size, corr, mmc, sample_count,
+                   mmc_sample_count, mmc_peer_count, mmc_baseline_type, updated_at
+            FROM validation_hypothesis_results
+            WHERE run_id = ?
+            ORDER BY date_range_label ASC, target_id ASC, window_size ASC, corr DESC, hypothesis_id ASC
+            """,
+            (run_id,),
+        ).fetchall()
+        return [
+            _row_to_validation_hypothesis_result(row)
+            for row in rows
+            if row is not None
+        ]
+
+    def upsert_validation_meta_result(
+        self,
+        *,
+        run_id: str,
+        date_range_label: str,
+        start_date: str,
+        end_date: str,
+        target_id: str,
+        aggregation_kind: str,
+        window_size: int,
+        corr: float,
+        sample_count: int,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO validation_meta_results (
+                    run_id, date_range_label, start_date, end_date, target_id,
+                    aggregation_kind, window_size, corr, sample_count, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(run_id, date_range_label, target_id, aggregation_kind, window_size)
+                DO UPDATE SET
+                    corr = excluded.corr,
+                    sample_count = excluded.sample_count,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    run_id,
+                    date_range_label,
+                    start_date,
+                    end_date,
+                    target_id,
+                    aggregation_kind,
+                    int(window_size),
+                    float(corr),
+                    int(sample_count),
+                    timestamp,
+                ),
+            )
+
+    def list_validation_meta_results(
+        self,
+        *,
+        run_id: str,
+    ) -> list[ValidationMetaResultState]:
+        rows = self.conn.execute(
+            """
+            SELECT run_id, date_range_label, start_date, end_date, target_id,
+                   aggregation_kind, window_size, corr, sample_count, updated_at
+            FROM validation_meta_results
+            WHERE run_id = ?
+            ORDER BY date_range_label ASC, target_id ASC, window_size ASC, corr DESC, aggregation_kind ASC
+            """,
+            (run_id,),
+        ).fetchall()
+        return [
+            _row_to_validation_meta_result(row)
+            for row in rows
+            if row is not None
+        ]
 
     def set_hypothesis_status(
         self,

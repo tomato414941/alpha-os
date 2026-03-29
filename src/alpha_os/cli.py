@@ -30,6 +30,8 @@ from .evaluation_inputs import (
     load_evaluation_inputs,
 )
 from .store import EvaluationStore
+from .validation_service import run_validation
+from .validation_spec import default_validation_spec, load_validation_spec, write_validation_spec
 
 
 def build_cli_parser() -> argparse.ArgumentParser:
@@ -205,6 +207,35 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     compare_meta.add_argument("--db", type=str, default=None)
     compare_meta.add_argument("--target-id", type=str, default=None)
+
+    write_validation = sub.add_parser(
+        "write-validation-spec",
+        help="Write a default validation spec JSON",
+    )
+    write_validation.add_argument("--out", type=str, required=True)
+    write_validation.add_argument("--base-url", type=str, default=None)
+
+    run_validation_cmd = sub.add_parser(
+        "run-validation",
+        help="Run a validation spec across targets, ranges, and metric windows",
+    )
+    run_validation_cmd.add_argument("--db", type=str, default=None)
+    run_validation_cmd.add_argument("--spec", type=str, required=True)
+    run_validation_cmd.add_argument("--base-url", type=str, default=None)
+
+    show_validation = sub.add_parser(
+        "show-validation",
+        help="Show raw validation results for one validation run",
+    )
+    show_validation.add_argument("--db", type=str, default=None)
+    show_validation.add_argument("--run-id", type=str, default=None)
+
+    summarize_validation = sub.add_parser(
+        "summarize-validation",
+        help="Summarize validation stability across conditions",
+    )
+    summarize_validation.add_argument("--db", type=str, default=None)
+    summarize_validation.add_argument("--run-id", type=str, default=None)
 
     return parser
 
@@ -433,6 +464,81 @@ def _print_meta_aggregation_comparison(metrics) -> None:
                 f"    {rank}. kind={item.aggregation_kind} "
                 f"corr={item.corr:.6f} evals={item.sample_count}"
             )
+
+
+def _resolve_validation_run(store: EvaluationStore, run_id: str | None):
+    run = (
+        store.get_latest_validation_run()
+        if run_id is None
+        else store.get_validation_run(str(run_id))
+    )
+    if run is None:
+        raise ValueError("validation run does not exist")
+    return run
+
+
+def _print_validation_results(run, hypothesis_results, meta_results) -> None:
+    print("alpha-os validation")
+    print(f"  Run:      {run.run_id}")
+    print(f"  Hyp:      {len(hypothesis_results)}")
+    print(f"  Meta:     {len(meta_results)}")
+    print("  Hypothesis Results:")
+    for item in hypothesis_results:
+        mmc_text = "n/a" if item.mmc is None else f"{item.mmc:.6f}"
+        baseline_text = "-" if item.mmc_baseline_type is None else item.mmc_baseline_type
+        print(
+            f"    {item.date_range_label} target={item.target_id} "
+            f"window={item.window_size} hyp={item.hypothesis_id} "
+            f"corr={item.corr:.6f} mmc={mmc_text} "
+            f"evals={item.sample_count} mmc_evals={item.mmc_sample_count} "
+            f"peers={item.mmc_peer_count} baseline={baseline_text}"
+        )
+    print("  Meta Results:")
+    for item in meta_results:
+        print(
+            f"    {item.date_range_label} target={item.target_id} "
+            f"window={item.window_size} kind={item.aggregation_kind} "
+            f"corr={item.corr:.6f} evals={item.sample_count}"
+        )
+
+
+def _print_validation_summary(run, hypothesis_results, meta_results) -> None:
+    print("alpha-os validation summary")
+    print(f"  Run:      {run.run_id}")
+    grouped_hypotheses = defaultdict(list)
+    for item in hypothesis_results:
+        grouped_hypotheses[item.hypothesis_id].append(item)
+    print("  Hypotheses:")
+    for hypothesis_id, items in sorted(grouped_hypotheses.items()):
+        mean_corr = sum(item.corr for item in items) / len(items)
+        positive = sum(1 for item in items if item.corr > 0.0)
+        mean_mmcs = [item.mmc for item in items if item.mmc is not None]
+        mean_mmc_text = (
+            "n/a"
+            if not mean_mmcs
+            else f"{sum(mean_mmcs) / len(mean_mmcs):.6f}"
+        )
+        print(
+            f"    {hypothesis_id} conditions={len(items)} "
+            f"positive_corr={positive} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}"
+        )
+    grouped_meta = defaultdict(list)
+    by_condition = defaultdict(list)
+    for item in meta_results:
+        grouped_meta[item.aggregation_kind].append(item)
+        by_condition[(item.date_range_label, item.target_id, item.window_size)].append(item)
+    wins = defaultdict(int)
+    for condition, items in by_condition.items():
+        ordered = sorted(items, key=lambda item: (-item.corr, item.aggregation_kind))
+        if ordered:
+            wins[ordered[0].aggregation_kind] += 1
+    print("  Meta Aggregations:")
+    for aggregation_kind, items in sorted(grouped_meta.items()):
+        mean_corr = sum(item.corr for item in items) / len(items)
+        print(
+            f"    {aggregation_kind} conditions={len(items)} "
+            f"wins={wins[aggregation_kind]} mean_corr={mean_corr:.6f}"
+        )
 
 
 def _resolve_evaluation_input(
@@ -994,6 +1100,62 @@ def cmd_compare_meta_aggregations(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_write_validation_spec(args: argparse.Namespace) -> int:
+    spec = default_validation_spec()
+    if args.base_url is not None:
+        spec = spec.__class__(
+            hypothesis_ids=spec.hypothesis_ids,
+            target_ids=spec.target_ids,
+            date_ranges=spec.date_ranges,
+            metric_windows=spec.metric_windows,
+            aggregation_kinds=spec.aggregation_kinds,
+            asset=spec.asset,
+            base_url=str(args.base_url),
+        )
+    path = write_validation_spec(args.out, spec)
+    print(f"Wrote validation spec: {path}")
+    return 0
+
+
+def cmd_run_validation(args: argparse.Namespace) -> int:
+    spec = load_validation_spec(args.spec)
+    if args.base_url is not None:
+        spec = spec.__class__(
+            hypothesis_ids=spec.hypothesis_ids,
+            target_ids=spec.target_ids,
+            date_ranges=spec.date_ranges,
+            metric_windows=spec.metric_windows,
+            aggregation_kinds=spec.aggregation_kinds,
+            asset=spec.asset,
+            base_url=str(args.base_url),
+        )
+    with _runtime_store(args.db) as (_cfg, store):
+        result = run_validation(store, spec=spec)
+    print("Validation complete")
+    print(f"  Run:      {result.run_id}")
+    print(f"  Hyp:      {result.hypothesis_result_count}")
+    print(f"  Meta:     {result.meta_result_count}")
+    return 0
+
+
+def cmd_show_validation(args: argparse.Namespace) -> int:
+    with _runtime_store(args.db) as (_cfg, store):
+        run = _resolve_validation_run(store, args.run_id)
+        hypothesis_results = store.list_validation_hypothesis_results(run_id=run.run_id)
+        meta_results = store.list_validation_meta_results(run_id=run.run_id)
+    _print_validation_results(run, hypothesis_results, meta_results)
+    return 0
+
+
+def cmd_summarize_validation(args: argparse.Namespace) -> int:
+    with _runtime_store(args.db) as (_cfg, store):
+        run = _resolve_validation_run(store, args.run_id)
+        hypothesis_results = store.list_validation_hypothesis_results(run_id=run.run_id)
+        meta_results = store.list_validation_meta_results(run_id=run.run_id)
+    _print_validation_summary(run, hypothesis_results, meta_results)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
@@ -1032,6 +1194,14 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_show_meta_predictions(args)
         if args.command == "compare-meta-aggregations":
             return cmd_compare_meta_aggregations(args)
+        if args.command == "write-validation-spec":
+            return cmd_write_validation_spec(args)
+        if args.command == "run-validation":
+            return cmd_run_validation(args)
+        if args.command == "show-validation":
+            return cmd_show_validation(args)
+        if args.command == "summarize-validation":
+            return cmd_summarize_validation(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")
