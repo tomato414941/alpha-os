@@ -8,6 +8,7 @@ from typing import Iterator
 
 from .evaluation_runtime import apply_evaluation, update_evaluation_state
 from .metrics_service import refresh_target_metrics
+from .meta_model_service import refresh_target_meta_predictions
 from .evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -185,6 +186,13 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     show.add_argument("--db", type=str, default=None)
     show.add_argument("--limit", type=int, default=10)
+
+    meta = sub.add_parser(
+        "show-meta-predictions",
+        help="Show recent meta predictions by aggregation kind",
+    )
+    meta.add_argument("--db", type=str, default=None)
+    meta.add_argument("--limit", type=int, default=10)
 
     return parser
 
@@ -371,6 +379,18 @@ def _print_target_summaries(hypotheses, metrics_by_id) -> None:
         )
 
 
+def _print_meta_predictions(meta_predictions) -> None:
+    print("alpha-os meta predictions")
+    print(f"  Count:    {len(meta_predictions)}")
+    for item in meta_predictions:
+        print(
+            f"  {item.evaluation_id} "
+            f"kind={item.aggregation_kind} "
+            f"value={item.value:.6f} "
+            f"contributors={item.contributor_count}"
+        )
+
+
 def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
     if args.input:
         evaluation_input = load_evaluation_input(args.input)
@@ -438,6 +458,11 @@ def _cmd_change_hypothesis_status(
             action=action,
         )
         refresh_target_metrics(
+            store,
+            asset=hypothesis.asset,
+            target_id=hypothesis.target_id,
+        )
+        refresh_target_meta_predictions(
             store,
             asset=hypothesis.asset,
             target_id=hypothesis.target_id,
@@ -660,6 +685,11 @@ def _apply_evaluation_inputs(
                 asset=asset,
                 target_id=target_id,
             )
+            refresh_target_meta_predictions(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
         if evaluation_inputs:
             latest_metric = store.get_hypothesis_metric(evaluation_inputs[-1].hypothesis_id)
 
@@ -744,6 +774,11 @@ def cmd_apply_hypotheses_backfill(args: argparse.Namespace) -> int:
             touched_targets.add((evaluation_input.asset, evaluation_input.target_id))
         for asset, target_id in sorted(touched_targets):
             refresh_target_metrics(
+                store,
+                asset=asset,
+                target_id=target_id,
+            )
+            refresh_target_meta_predictions(
                 store,
                 asset=asset,
                 target_id=target_id,
@@ -846,6 +881,21 @@ def cmd_show_evaluations(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_show_meta_predictions(args: argparse.Namespace) -> int:
+    cfg = load_runtime_config(db_path=args.db)
+    store = EvaluationStore(cfg.db_path)
+    try:
+        store.ensure_schema()
+        meta_predictions = store.list_meta_predictions(asset=cfg.asset, limit=args.limit)
+    finally:
+        store.close()
+
+    print(f"  DB:       {Path(cfg.db_path)}")
+    print(f"  Asset:    {cfg.asset}")
+    _print_meta_predictions(meta_predictions)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
@@ -880,6 +930,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_status(args)
         if args.command == "show-evaluations":
             return cmd_show_evaluations(args)
+        if args.command == "show-meta-predictions":
+            return cmd_show_meta_predictions(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")
