@@ -148,6 +148,88 @@ Evaluation asset count is a tradeoff between breadth and depth.
 The point is not to evaluate every candidate everywhere at the earliest stage,
 but to preserve enough breadth to avoid local search collapse.
 
+## Portfolio Decision
+
+Portfolio decision should be treated as a first-class layer.
+
+It is not the same thing as a hypothesis, a target, a scoring rule, or a meta
+prediction. Those layers answer:
+
+- what is being predicted
+- how it is predicted
+- how it is scored
+- how multiple predictions are aggregated
+
+Portfolio decision answers a different question:
+
+- given those predictive objects, what portfolio state should exist now
+
+So the intended separation is:
+
+- **meta prediction**
+  - what is likely to happen
+- **portfolio decision**
+  - what portfolio state should be chosen
+- **execution**
+  - how that desired state becomes bounded orders
+
+The portfolio layer should therefore output portfolio intents such as:
+
+- target weights
+- target position deltas
+- entry or no-trade gates
+- risk scaling decisions
+
+It should not output raw orders as its primary object. Orders belong to
+execution.
+
+### Theory-Driven Requirements
+
+Portfolio decision should be derived from portfolio requirements first, not
+from whatever the current runtime happens to expose.
+
+At minimum, the design should make these questions explicit:
+
+- **objective**
+  - expected return, risk-adjusted return, utility, or another portfolio goal
+- **risk model**
+  - variance, downside risk, drawdown, tail risk, or another notion of risk
+- **dependence**
+  - correlation or covariance across assets, targets, and predictive sleeves
+- **cost model**
+  - turnover, slippage, market impact, and no-trade regions
+- **uncertainty**
+  - confidence, estimation error, and robustness to unstable signals
+- **constraints**
+  - leverage, concentration, liquidity, turnover, and capital limits
+- **time**
+  - whether the decision is one-shot, rolling, or stateful across periods
+
+These questions define what the portfolio layer must do. Runtime details should
+follow from them, not the other way around.
+
+### Inputs To The Decision Layer
+
+The eventual decision layer should be able to consume more than one kind of
+signal. Typical inputs include:
+
+- expected return style signals
+- risk or volatility signals
+- confidence or uncertainty signals
+- diversification or dependence signals
+- execution quality or cost signals
+- current portfolio state
+
+Different targets may feed different parts of the decision. For example:
+
+- return targets may influence direction and expected reward
+- volatility targets may influence sizing and risk scaling
+- directional targets may act as entry filters
+- execution targets may gate or defer trades
+
+This is why target expansion only makes sense once the portfolio decision layer
+has a clear role for those targets.
+
 ## Portfolio Conversion
 
 Good hypotheses do not automatically imply a good portfolio.
