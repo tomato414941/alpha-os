@@ -23,11 +23,15 @@ Prefer these files in this order:
    - targets
    - horizons
    - pipeline stages
-4. [`architecture.md`](./architecture.md)
+4. [`portfolio-decision.md`](./portfolio-decision.md)
+   - decision layer purpose
+   - portfolio inputs and outputs
+   - theory-driven requirements
+5. [`architecture.md`](./architecture.md)
    - producer-consumer separation
    - prediction store
    - diversity and validation
-5. [`scaling-and-migration.md`](./scaling-and-migration.md)
+6. [`scaling-and-migration.md`](./scaling-and-migration.md)
    - greenfield vs current repo
    - multi-asset and large-scale scaling direction
 
