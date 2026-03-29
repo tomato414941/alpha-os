@@ -211,6 +211,23 @@ class ValidationMetaResultState:
 
 
 @dataclass(frozen=True)
+class ValidationDecisionResultState:
+    run_id: str
+    date_range_label: str
+    start_date: str
+    end_date: str
+    target_id: str
+    aggregation_kind: str
+    window_size: int
+    gross_return_total: float
+    net_return_total: float
+    max_drawdown: float
+    mean_turnover: float
+    step_count: int
+    updated_at: str
+
+
+@dataclass(frozen=True)
 class PortfolioDecisionState:
     portfolio_id: str
     subject_id: str
@@ -447,6 +464,28 @@ def _row_to_validation_meta_result(
     )
 
 
+def _row_to_validation_decision_result(
+    row: sqlite3.Row | None,
+) -> ValidationDecisionResultState | None:
+    if row is None:
+        return None
+    return ValidationDecisionResultState(
+        run_id=str(row["run_id"]),
+        date_range_label=str(row["date_range_label"]),
+        start_date=str(row["start_date"]),
+        end_date=str(row["end_date"]),
+        target_id=str(row["target_id"]),
+        aggregation_kind=str(row["aggregation_kind"]),
+        window_size=int(row["window_size"]),
+        gross_return_total=float(row["gross_return_total"]),
+        net_return_total=float(row["net_return_total"]),
+        max_drawdown=float(row["max_drawdown"]),
+        mean_turnover=float(row["mean_turnover"]),
+        step_count=int(row["step_count"]),
+        updated_at=str(row["updated_at"]),
+    )
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
@@ -588,6 +627,23 @@ class EvaluationStore:
                 window_size INTEGER NOT NULL,
                 corr REAL NOT NULL,
                 sample_count INTEGER NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (run_id, date_range_label, target_id, aggregation_kind, window_size)
+            );
+
+            CREATE TABLE IF NOT EXISTS validation_decision_results (
+                run_id TEXT NOT NULL,
+                date_range_label TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                aggregation_kind TEXT NOT NULL,
+                window_size INTEGER NOT NULL,
+                gross_return_total REAL NOT NULL,
+                net_return_total REAL NOT NULL,
+                max_drawdown REAL NOT NULL,
+                mean_turnover REAL NOT NULL,
+                step_count INTEGER NOT NULL,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (run_id, date_range_label, target_id, aggregation_kind, window_size)
             );
@@ -1184,6 +1240,84 @@ class EvaluationStore:
         ).fetchall()
         return [
             _row_to_validation_meta_result(row)
+            for row in rows
+            if row is not None
+        ]
+
+    def upsert_validation_decision_result(
+        self,
+        *,
+        run_id: str,
+        date_range_label: str,
+        start_date: str,
+        end_date: str,
+        target_id: str,
+        aggregation_kind: str,
+        window_size: int,
+        gross_return_total: float,
+        net_return_total: float,
+        max_drawdown: float,
+        mean_turnover: float,
+        step_count: int,
+        recorded_at: str | None = None,
+    ) -> None:
+        self.ensure_schema()
+        timestamp = recorded_at or _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO validation_decision_results (
+                    run_id, date_range_label, start_date, end_date, target_id,
+                    aggregation_kind, window_size, gross_return_total,
+                    net_return_total, max_drawdown, mean_turnover, step_count,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(run_id, date_range_label, target_id, aggregation_kind, window_size)
+                DO UPDATE SET
+                    gross_return_total = excluded.gross_return_total,
+                    net_return_total = excluded.net_return_total,
+                    max_drawdown = excluded.max_drawdown,
+                    mean_turnover = excluded.mean_turnover,
+                    step_count = excluded.step_count,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    run_id,
+                    date_range_label,
+                    start_date,
+                    end_date,
+                    target_id,
+                    aggregation_kind,
+                    int(window_size),
+                    float(gross_return_total),
+                    float(net_return_total),
+                    float(max_drawdown),
+                    float(mean_turnover),
+                    int(step_count),
+                    timestamp,
+                ),
+            )
+
+    def list_validation_decision_results(
+        self,
+        *,
+        run_id: str,
+    ) -> list[ValidationDecisionResultState]:
+        rows = self.conn.execute(
+            """
+            SELECT run_id, date_range_label, start_date, end_date, target_id,
+                   aggregation_kind, window_size, gross_return_total,
+                   net_return_total, max_drawdown, mean_turnover, step_count,
+                   updated_at
+            FROM validation_decision_results
+            WHERE run_id = ?
+            ORDER BY date_range_label ASC, target_id ASC, window_size ASC, net_return_total DESC, aggregation_kind ASC
+            """,
+            (run_id,),
+        ).fetchall()
+        return [
+            _row_to_validation_decision_result(row)
             for row in rows
             if row is not None
         ]

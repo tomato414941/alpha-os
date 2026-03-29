@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from .decision_backtest import DecisionBacktestInput, DecisionBacktestResult, run_decision_backtest
 from .meta_aggregation_service import (
     AGGREGATION_ACTIVE_EQUAL_MEAN,
     AGGREGATION_CORR_WEIGHTED_MEAN,
@@ -36,6 +37,17 @@ class ValidationMetaMetric:
     aggregation_kind: str
     corr: float
     sample_count: int
+    window_size: int
+
+
+@dataclass(frozen=True)
+class ValidationDecisionMetric:
+    aggregation_kind: str
+    gross_return_total: float
+    net_return_total: float
+    max_drawdown: float
+    mean_turnover: float
+    step_count: int
     window_size: int
 
 
@@ -220,6 +232,19 @@ def _compute_meta_prediction_series(
     return pd.Series(values, dtype=float).sort_index()
 
 
+def compute_validation_meta_prediction_series(
+    bundle: ValidationTargetBundle,
+    *,
+    aggregation_kind: str,
+    window_size: int,
+) -> pd.Series:
+    return _compute_meta_prediction_series(
+        bundle,
+        aggregation_kind=aggregation_kind,
+        window_size=window_size,
+    )
+
+
 def compute_validation_meta_metrics(
     bundle: ValidationTargetBundle,
     *,
@@ -250,3 +275,64 @@ def compute_validation_meta_metrics(
             )
         )
     return results
+
+
+def compute_validation_decision_metrics(
+    bundle: ValidationTargetBundle,
+    *,
+    aggregation_kinds: tuple[str, ...],
+    window_size: int = DEFAULT_METRIC_WINDOW,
+) -> list[ValidationDecisionMetric]:
+    observations = _sorted_series(bundle.observations)
+    if observations.empty:
+        return []
+    risk_series = (
+        observations.astype(float)
+        .rolling(window=max(int(window_size), 1), min_periods=1)
+        .std(ddof=0)
+        .fillna(0.0)
+        .astype(float)
+    )
+    results: list[ValidationDecisionMetric] = []
+    for aggregation_kind in aggregation_kinds:
+        signal_series = compute_validation_meta_prediction_series(
+            bundle,
+            aggregation_kind=aggregation_kind,
+            window_size=window_size,
+        )
+        if signal_series.empty:
+            continue
+        backtest_result = run_decision_backtest(
+            DecisionBacktestInput(
+                portfolio_id="validation",
+                subject_id=bundle.target_id,
+                target_id=bundle.target_id,
+                signal_series=signal_series,
+                realized_return_series=observations,
+                risk_series=risk_series.reindex(signal_series.index).fillna(0.0),
+                asset=None,
+            )
+        )
+        results.append(_decision_metric_from_result(
+            backtest_result,
+            aggregation_kind=aggregation_kind,
+            window_size=window_size,
+        ))
+    return results
+
+
+def _decision_metric_from_result(
+    result: DecisionBacktestResult,
+    *,
+    aggregation_kind: str,
+    window_size: int,
+) -> ValidationDecisionMetric:
+    return ValidationDecisionMetric(
+        aggregation_kind=aggregation_kind,
+        gross_return_total=result.gross_return_total,
+        net_return_total=result.net_return_total,
+        max_drawdown=result.max_drawdown,
+        mean_turnover=result.mean_turnover,
+        step_count=len(result.steps),
+        window_size=int(window_size),
+    )

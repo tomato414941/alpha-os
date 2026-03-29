@@ -589,11 +589,12 @@ def _resolve_validation_run(store: EvaluationStore, run_id: str | None):
     return run
 
 
-def _print_validation_results(run, hypothesis_results, meta_results) -> None:
+def _print_validation_results(run, hypothesis_results, meta_results, decision_results) -> None:
     print("alpha-os validation")
     print(f"  Run:      {run.run_id}")
     print(f"  Hyp:      {len(hypothesis_results)}")
     print(f"  Meta:     {len(meta_results)}")
+    print(f"  Decision: {len(decision_results)}")
     print("  Hypothesis Results:")
     for item in hypothesis_results:
         mmc_text = "n/a" if item.mmc is None else f"{item.mmc:.6f}"
@@ -612,9 +613,20 @@ def _print_validation_results(run, hypothesis_results, meta_results) -> None:
             f"window={item.window_size} kind={item.aggregation_kind} "
             f"corr={item.corr:.6f} evals={item.sample_count}"
         )
+    print("  Decision Results:")
+    for item in decision_results:
+        print(
+            f"    {item.date_range_label} target={item.target_id} "
+            f"window={item.window_size} kind={item.aggregation_kind} "
+            f"gross={item.gross_return_total:.6f} "
+            f"net={item.net_return_total:.6f} "
+            f"drawdown={item.max_drawdown:.6f} "
+            f"turnover={item.mean_turnover:.6f} "
+            f"steps={item.step_count}"
+        )
 
 
-def _print_validation_summary(run, hypothesis_results, meta_results) -> None:
+def _print_validation_summary(run, hypothesis_results, meta_results, decision_results) -> None:
     print("alpha-os validation summary")
     print(f"  Run:      {run.run_id}")
     grouped_hypotheses = defaultdict(list)
@@ -650,6 +662,30 @@ def _print_validation_summary(run, hypothesis_results, meta_results) -> None:
         print(
             f"    {aggregation_kind} conditions={len(items)} "
             f"wins={wins[aggregation_kind]} mean_corr={mean_corr:.6f}"
+        )
+    grouped_decisions = defaultdict(list)
+    decision_wins = defaultdict(int)
+    decision_by_condition = defaultdict(list)
+    for item in decision_results:
+        grouped_decisions[item.aggregation_kind].append(item)
+        decision_by_condition[
+            (item.date_range_label, item.target_id, item.window_size)
+        ].append(item)
+    for condition, items in decision_by_condition.items():
+        ordered = sorted(
+            items,
+            key=lambda item: (-item.net_return_total, item.max_drawdown, item.aggregation_kind),
+        )
+        if ordered:
+            decision_wins[ordered[0].aggregation_kind] += 1
+    print("  Decision Aggregations:")
+    for aggregation_kind, items in sorted(grouped_decisions.items()):
+        mean_net = sum(item.net_return_total for item in items) / len(items)
+        mean_drawdown = sum(item.max_drawdown for item in items) / len(items)
+        print(
+            f"    {aggregation_kind} conditions={len(items)} "
+            f"wins={decision_wins[aggregation_kind]} "
+            f"mean_net={mean_net:.6f} mean_drawdown={mean_drawdown:.6f}"
         )
 
 
@@ -1322,6 +1358,7 @@ def cmd_run_validation(args: argparse.Namespace) -> int:
     print(f"  Run:      {result.run_id}")
     print(f"  Hyp:      {result.hypothesis_result_count}")
     print(f"  Meta:     {result.meta_result_count}")
+    print(f"  Decision: {result.decision_result_count}")
     return 0
 
 
@@ -1330,7 +1367,8 @@ def cmd_show_validation(args: argparse.Namespace) -> int:
         run = _resolve_validation_run(store, args.run_id)
         hypothesis_results = store.list_validation_hypothesis_results(run_id=run.run_id)
         meta_results = store.list_validation_meta_results(run_id=run.run_id)
-    _print_validation_results(run, hypothesis_results, meta_results)
+        decision_results = store.list_validation_decision_results(run_id=run.run_id)
+    _print_validation_results(run, hypothesis_results, meta_results, decision_results)
     return 0
 
 
@@ -1339,7 +1377,8 @@ def cmd_summarize_validation(args: argparse.Namespace) -> int:
         run = _resolve_validation_run(store, args.run_id)
         hypothesis_results = store.list_validation_hypothesis_results(run_id=run.run_id)
         meta_results = store.list_validation_meta_results(run_id=run.run_id)
-    _print_validation_summary(run, hypothesis_results, meta_results)
+        decision_results = store.list_validation_decision_results(run_id=run.run_id)
+    _print_validation_summary(run, hypothesis_results, meta_results, decision_results)
     return 0
 
 

@@ -16,6 +16,7 @@ from .store import EvaluationStore
 from .targets import get_target_definition
 from .validation_engine import (
     ValidationTargetBundle,
+    compute_validation_decision_metrics,
     compute_validation_hypothesis_metrics,
     compute_validation_meta_metrics,
     slice_validation_bundle,
@@ -29,6 +30,7 @@ class ValidationRunResult:
     spec_json: str
     hypothesis_result_count: int
     meta_result_count: int
+    decision_result_count: int
 
 
 def _utc_now() -> str:
@@ -169,6 +171,7 @@ def run_validation(
     signal_frames: dict[str, object] = {}
     hypothesis_results: list[dict[str, object]] = []
     meta_results: list[dict[str, object]] = []
+    decision_results: list[dict[str, object]] = []
     bundles_by_target: dict[str, ValidationTargetBundle] = {}
 
     for target_id in spec.target_ids:
@@ -231,6 +234,28 @@ def run_validation(
                             "recorded_at": timestamp,
                         }
                     )
+                for decision_metric in compute_validation_decision_metrics(
+                    sliced_bundle,
+                    aggregation_kinds=spec.aggregation_kinds,
+                    window_size=window_size,
+                ):
+                    decision_results.append(
+                        {
+                            "run_id": run_id,
+                            "date_range_label": date_range.label,
+                            "start_date": date_range.start_date,
+                            "end_date": date_range.end_date,
+                            "target_id": target_id,
+                            "aggregation_kind": decision_metric.aggregation_kind,
+                            "window_size": window_size,
+                            "gross_return_total": decision_metric.gross_return_total,
+                            "net_return_total": decision_metric.net_return_total,
+                            "max_drawdown": decision_metric.max_drawdown,
+                            "mean_turnover": decision_metric.mean_turnover,
+                            "step_count": decision_metric.step_count,
+                            "recorded_at": timestamp,
+                        }
+                    )
 
     store.create_validation_run(
         run_id=run_id,
@@ -241,10 +266,13 @@ def run_validation(
         store.upsert_validation_hypothesis_result(**item)
     for item in meta_results:
         store.upsert_validation_meta_result(**item)
+    for item in decision_results:
+        store.upsert_validation_decision_result(**item)
 
     return ValidationRunResult(
         run_id=run_id,
         spec_json=spec_json,
         hypothesis_result_count=len(hypothesis_results),
         meta_result_count=len(meta_results),
+        decision_result_count=len(decision_results),
     )

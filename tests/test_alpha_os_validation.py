@@ -77,13 +77,19 @@ def test_run_validation_persists_results(tmp_path):
         ]
         hypothesis_results = store.list_validation_hypothesis_results(run_id=result.run_id)
         meta_results = store.list_validation_meta_results(run_id=result.run_id)
+        decision_results = store.list_validation_decision_results(run_id=result.run_id)
         assert len(hypothesis_results) == 4
         assert len(meta_results) == 4
+        assert len(decision_results) == 4
         assert {item.target_id for item in hypothesis_results} == {
             "residual_return_1d",
             "residual_return_3d",
         }
         assert {item.aggregation_kind for item in meta_results} == {
+            "active_equal_mean",
+            "corr_weighted_mean",
+        }
+        assert {item.aggregation_kind for item in decision_results} == {
             "active_equal_mean",
             "corr_weighted_mean",
         }
@@ -174,14 +180,17 @@ def test_validation_cli_roundtrip(tmp_path, capsys):
     assert main(["run-validation", "--db", str(db_path), "--spec", str(spec_path)]) == 0
     run_output = capsys.readouterr().out
     assert "Validation complete" in run_output
+    assert "Decision:" in run_output
 
     assert main(["show-validation", "--db", str(db_path)]) == 0
     show_output = capsys.readouterr().out
     assert "alpha-os validation" in show_output
     assert "Hypothesis Results:" in show_output
     assert "Meta Results:" in show_output
+    assert "Decision Results:" in show_output
 
     assert main(["summarize-validation", "--db", str(db_path)]) == 0
     summary_output = capsys.readouterr().out
     assert "alpha-os validation summary" in summary_output
     assert "Meta Aggregations:" in summary_output
+    assert "Decision Aggregations:" in summary_output
