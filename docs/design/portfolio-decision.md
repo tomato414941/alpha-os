@@ -265,3 +265,61 @@ That means:
 
 This is enough to capture rebalancing logic without prematurely committing to a
 fully dynamic optimal control formulation.
+
+## Current Runtime Coverage
+
+The current runtime already provides some inputs that the portfolio layer will
+eventually need.
+
+### Already Present
+
+- target definitions
+- hypothesis predictions
+- target-level meta predictions
+- target-level scoring for hypotheses
+- target-level scoring for meta aggregations
+- rolling history of realized outcomes
+
+This means the project already has a usable predictive substrate.
+
+### Missing Or Weak
+
+The portfolio layer still lacks several inputs that are required by the initial
+problem statement.
+
+- **current portfolio state**
+  - there is no first-class portfolio state object yet
+- **risk model inputs**
+  - there is no covariance, volatility, or concentration input for decision use
+- **cost model inputs**
+  - there is no explicit turnover or slippage model in the decision layer
+- **uncertainty inputs**
+  - scoring exists, but confidence-aware shrinkage is not defined
+- **dependence inputs**
+  - hidden-bet overlap is not represented as a portfolio input
+- **decision output**
+  - there is no first-class desired portfolio state such as target weights or
+    position deltas
+
+So the current runtime is strong on prediction and evaluation, but weak on
+portfolio-state inputs and decision outputs.
+
+## Next Design Step
+
+The next design step should not be to force decisions directly from the current
+runtime.
+
+Instead, it should define the missing contract between:
+
+- predictive layer outputs
+- current portfolio state
+- risk and cost inputs
+- desired portfolio state outputs
+
+The smallest useful next artifact is therefore:
+
+- a portfolio state object
+- a portfolio decision input object
+- a portfolio decision output object
+
+Only after that contract exists should the first decision rule be implemented.
