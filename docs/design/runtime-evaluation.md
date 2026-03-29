@@ -51,8 +51,10 @@ Targets are first-class objects.
 A target defines:
 
 - what realized outcome counts as truth
-- what horizon that truth implies
+- what subject that truth belongs to
+- what output form a prediction should take
 - what scoring semantics are valid
+- any required parameters such as horizon, window, event boundary, or benchmark
 
 Hypotheses are not required to predict every target. Many hypotheses will only
 be meaningful for a narrow subset.
@@ -66,6 +68,51 @@ So the intended relation is:
 Evaluation should close within one target at a time. Predictions,
 observations, and metrics are only comparable when they share the same target.
 
+### Target Schema
+
+Targets should not be modeled as horizon labels alone. The minimal design
+should treat each target as a small definition object with these axes:
+
+| Field | Meaning | Example |
+|-------|---------|---------|
+| `family` | what is being predicted | `residual_return`, `realized_vol`, `regime_state` |
+| `observation_kind` | how truth is constructed | `fixed_horizon`, `event_window`, `state_label` |
+| `subject_kind` | what unit is being predicted | `asset`, `pair`, `sleeve`, `portfolio` |
+| `output_kind` | what form the prediction takes | `real_value`, `probability`, `rank`, `class_label` |
+| `scoring_kind` | what scoring semantics apply | `corr_mmc`, `rank_ic`, `log_loss` |
+| `params` | target-specific parameters | `horizon_days`, `window_days`, `benchmark_ref` |
+
+In this model, horizon is common but not universal. Many return targets will
+need `horizon_days`, but state, event, and threshold targets may not map cleanly
+to one fixed horizon.
+
+```json
+{
+  "family": "residual_return",
+  "observation_kind": "fixed_horizon",
+  "subject_kind": "asset",
+  "output_kind": "real_value",
+  "scoring_kind": "corr_mmc",
+  "params": {
+    "horizon_days": 3,
+    "benchmark_ref": "btc_spot_beta"
+  }
+}
+```
+
+```json
+{
+  "family": "regime_state",
+  "observation_kind": "state_label",
+  "subject_kind": "asset",
+  "output_kind": "class_label",
+  "scoring_kind": "log_loss",
+  "params": {
+    "window_days": 10
+  }
+}
+```
+
 ### Residualization
 
 Return-based evaluation should use residualized returns rather than raw market
@@ -77,18 +124,19 @@ residual_return[t] = asset_return[t] - benchmark_return[t]
 
 ### Horizons
 
-Horizon should be a first-class part of target definition.
+Horizon should be a first-class parameter when the target family requires it.
 
 The system should support multiple horizons with the same contract rather than
-treating one horizon as permanent truth and the others as exceptions.
+treating one horizon as permanent truth and the others as exceptions. But the
+runtime should not assume every target is fixed-horizon by construction.
 
 ### Signal Metadata
 
 Each evaluated signal should carry at least:
 
-- target
-- horizon
-- per-asset or per-sleeve quality where relevant
+- `target`
+- any target parameters needed for evaluation
+- per-asset or per-sleeve metrics where relevant
 
 ## Evaluation Universe
 
