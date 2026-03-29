@@ -44,6 +44,7 @@ class PredictiveSignalInput:
     target_id: str
     value: float
     confidence: float | None = None
+    source_kind: str | None = None
 
 
 @dataclass(frozen=True)

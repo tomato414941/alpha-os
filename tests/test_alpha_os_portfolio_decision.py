@@ -37,6 +37,7 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
                 target_id="residual_return_3d",
                 value=0.12,
                 confidence=0.7,
+                source_kind="meta_prediction",
             ),
         ),
         risk_inputs=(
@@ -70,6 +71,7 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     )
 
     assert len(decision_input.predictive_signals) == 1
+    assert decision_input.predictive_signals[0].source_kind == "meta_prediction"
     assert len(decision_input.risk_inputs) == 1
     assert len(decision_input.cost_inputs) == 1
     assert len(decision_input.uncertainty_inputs) == 1

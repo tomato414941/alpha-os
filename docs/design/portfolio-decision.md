@@ -97,6 +97,37 @@ Examples:
 - directional targets may act as entry filters
 - execution targets may defer or suppress trades
 
+### Predictive Signals
+
+`predictive_signal` should be treated as the portfolio-facing unit of predictive
+input.
+
+It is not the same thing as a hypothesis. A hypothesis is one producer. A
+predictive signal is an input presented to the portfolio layer after whatever
+upstream aggregation or filtering is appropriate.
+
+So a predictive signal should carry at least:
+
+- `source_id`
+  - where the signal came from
+- `subject_id`
+  - what portfolio subject it applies to
+- `target_id`
+  - what target semantics it represents
+- `value`
+  - the predictive value itself
+- `confidence`
+  - optional belief strength or shrinkage hint
+
+Typical examples include:
+
+- a single hypothesis prediction
+- a target-level meta prediction
+- a later portfolio-facing ensemble signal
+
+The portfolio layer should therefore consume predictive signals without
+assuming they came from only one upstream construction path.
+
 ## Outputs
 
 The portfolio decision layer should output a desired portfolio state rather than
