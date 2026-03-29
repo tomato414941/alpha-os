@@ -22,11 +22,12 @@ def test_portfolio_state_exposure_properties():
 def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     from alpha_os.portfolio_decision import (
         CostInput,
+        DependenceInput,
         PortfolioDecisionInput,
-        PortfolioScalarInput,
         PortfolioState,
         PredictiveSignalInput,
         RiskInput,
+        UncertaintyInput,
     )
 
     decision_input = PortfolioDecisionInput(
@@ -61,17 +62,21 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
             ),
         ),
         uncertainty_inputs=(
-            PortfolioScalarInput(
+            UncertaintyInput(
                 name="score_instability",
                 subject_id="BTC",
                 value=0.2,
+                source_id="corr_weighted_mean",
+                basis="per_signal",
             ),
         ),
         dependence_inputs=(
-            PortfolioScalarInput(
+            DependenceInput(
                 name="hidden_bet_overlap",
-                subject_id="BTC",
+                left_subject_id="BTC",
+                right_subject_id="ETH",
                 value=0.4,
+                basis="overlap",
             ),
         ),
     )
@@ -84,6 +89,8 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     assert decision_input.cost_inputs[0].basis == "per_notional"
     assert len(decision_input.uncertainty_inputs) == 1
     assert len(decision_input.dependence_inputs) == 1
+    assert decision_input.uncertainty_inputs[0].source_id == "corr_weighted_mean"
+    assert decision_input.dependence_inputs[0].right_subject_id == "ETH"
 
 
 def test_portfolio_decision_output_exposure_properties():

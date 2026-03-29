@@ -154,6 +154,63 @@ Typical early examples include:
 This lets the portfolio layer represent executable friction explicitly rather
 than hiding it inside arbitrary constants.
 
+### Uncertainty Inputs
+
+`uncertainty_input` should be first-class because portfolio decision should not
+assume every predictive signal deserves equal trust.
+
+The minimum uncertainty contract should carry:
+
+- `name`
+  - what uncertainty quantity this is
+- `subject_id`
+  - which portfolio subject it applies to, or `None` for portfolio-level
+    uncertainty
+- `value`
+  - the numerical uncertainty value
+- `source_id`
+  - optional upstream predictive source that this uncertainty qualifies
+- `basis`
+  - optional interpretation such as `per_signal` or `per_subject`
+
+Typical early examples include:
+
+- `score_instability`
+- `small_sample_penalty`
+- `regime_uncertainty`
+- `prediction_dispersion`
+
+This lets the portfolio layer shrink or defer exposures without confusing weak
+belief with negative belief.
+
+### Dependence Inputs
+
+`dependence_input` should be first-class because portfolio construction depends
+on how subjects or bets overlap with one another.
+
+The minimum dependence contract should carry:
+
+- `name`
+  - what dependence quantity this is
+- `left_subject_id`
+  - one side of the dependence relation
+- `right_subject_id`
+  - the other side of the dependence relation
+- `value`
+  - the numerical dependence value
+- `basis`
+  - optional interpretation such as `correlation`, `overlap`, or `beta_link`
+
+Typical early examples include:
+
+- `return_correlation`
+- `hidden_bet_overlap`
+- `factor_overlap`
+- `liquidity_coupling`
+
+This keeps pairwise overlap explicit instead of burying it inside informal
+portfolio intuition.
+
 ### Predictive Signals
 
 `predictive_signal` should be treated as the portfolio-facing unit of predictive
