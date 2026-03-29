@@ -128,7 +128,7 @@ class TargetState:
 class HypothesisMetricState:
     hypothesis_id: str
     corr: float
-    mmc: float
+    mmc: float | None
     sample_count: int
     window_size: int
     start_evaluation_id: str | None
@@ -207,7 +207,7 @@ def _row_to_hypothesis_metric(row: sqlite3.Row | None) -> HypothesisMetricState 
     return HypothesisMetricState(
         hypothesis_id=str(row["hypothesis_id"]),
         corr=float(row["corr"]),
-        mmc=float(row["mmc"]),
+        mmc=None if row["mmc"] is None else float(row["mmc"]),
         sample_count=int(row["sample_count"]),
         window_size=int(row["window_size"]),
         start_evaluation_id=None
@@ -280,7 +280,7 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS hypothesis_metrics (
                 hypothesis_id TEXT PRIMARY KEY,
                 corr REAL NOT NULL,
-                mmc REAL NOT NULL,
+                mmc REAL,
                 sample_count INTEGER NOT NULL,
                 window_size INTEGER NOT NULL,
                 start_evaluation_id TEXT,

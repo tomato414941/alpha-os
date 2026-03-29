@@ -275,12 +275,13 @@ def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
 
 def _print_hypothesis_metric(metric) -> None:
     if metric is None:
-        print("  Metrics:  corr=0.000000 mmc=0.000000 evals=0")
+        print("  Metrics:  corr=0.000000 mmc=n/a evals=0")
         return
+    mmc_text = "n/a" if metric.mmc is None else f"{metric.mmc:.6f}"
     print(
         "  Metrics:  "
         f"corr={metric.corr:.6f} "
-        f"mmc={metric.mmc:.6f} "
+        f"mmc={mmc_text} "
         f"evals={metric.sample_count}"
     )
 
@@ -321,12 +322,13 @@ def _print_hypothesis_competition_summary(
         signal_name = hypothesis.signal_name or "-"
         lookback = "-" if hypothesis.lookback is None else str(hypothesis.lookback)
         horizon = "-" if hypothesis.horizon_days is None else f"{hypothesis.horizon_days}d"
+        mmc_text = "n/a" if metric is None or metric.mmc is None else f"{metric.mmc:.6f}"
         print(
             f"  {hypothesis.hypothesis_id} "
             f"kind={kind} signal={signal_name} lookback={lookback} horizon={horizon} "
             f"status={hypothesis.status} "
             f"corr={0.0 if metric is None else metric.corr:.6f} "
-            f"mmc={0.0 if metric is None else metric.mmc:.6f} "
+            f"mmc={mmc_text} "
             f"evals={hypothesis.observation_count if metric is None else metric.sample_count}"
         )
 
@@ -347,11 +349,16 @@ def _print_target_summaries(hypotheses, metrics_by_id) -> None:
         ]
         tracked = len(target_metrics)
         mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in target_metrics) / tracked
-        mean_mmc = 0.0 if tracked == 0 else sum(item.mmc for item in target_metrics) / tracked
+        target_mmcs = [item.mmc for item in target_metrics if item.mmc is not None]
+        mean_mmc_text = (
+            "n/a"
+            if not target_mmcs
+            else f"{sum(target_mmcs) / len(target_mmcs):.6f}"
+        )
         print(
             f"    {target}: total={len(target_hypotheses)} "
             f"active={active} inactive={inactive} "
-            f"tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc:.6f}"
+            f"tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}"
         )
 
 
@@ -762,8 +769,9 @@ def cmd_status(args: argparse.Namespace) -> int:
     )
     tracked = len(metrics)
     mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
-    mean_mmc = 0.0 if tracked == 0 else sum(item.mmc for item in metrics) / tracked
-    print(f"  Metrics:  tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc:.6f}")
+    mmcs = [item.mmc for item in metrics if item.mmc is not None]
+    mean_mmc_text = "n/a" if not mmcs else f"{sum(mmcs) / len(mmcs):.6f}"
+    print(f"  Metrics:  tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}")
     _print_target_summaries(
         hypotheses,
         {item.hypothesis_id: item for item in metrics},

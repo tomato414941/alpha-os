@@ -80,6 +80,7 @@ def refresh_hypothesis_metrics(
         WHERE p.evaluation_id IN ({placeholders})
           AND h.asset = ?
           AND h.target = ?
+          AND h.status = 'active'
           AND p.hypothesis_id <> ?
         GROUP BY p.evaluation_id
         ORDER BY p.evaluation_id ASC

@@ -14,7 +14,7 @@ _NORMAL = NormalDist()
 @dataclass(frozen=True)
 class HypothesisMetrics:
     corr: float
-    mmc: float
+    mmc: float | None
     sample_count: int
     window_size: int
 
@@ -52,14 +52,14 @@ def meta_model_contribution(
     predictions: pd.Series,
     meta_model: pd.Series,
     target: pd.Series,
-) -> float:
+) -> float | None:
     aligned_predictions, aligned_meta_model, aligned_target = _aligned_series(
         predictions,
         meta_model,
         target,
     )
     if len(aligned_predictions) < 2:
-        return 0.0
+        return None
 
     p = _gaussianize(aligned_predictions).to_numpy(dtype=float)
     m = _gaussianize(aligned_meta_model).to_numpy(dtype=float)
@@ -67,12 +67,11 @@ def meta_model_contribution(
 
     denominator = float(np.dot(m, m))
     if denominator <= 0.0:
-        neutral_predictions = p
-    else:
-        neutral_predictions = p - ((np.dot(p, m) / denominator) * m)
+        return None
+    neutral_predictions = p - ((np.dot(p, m) / denominator) * m)
     mmc = float(np.dot(centered_target, neutral_predictions) / len(centered_target))
     if np.isnan(mmc):
-        return 0.0
+        return None
     return mmc
 
 
@@ -86,7 +85,7 @@ def compute_hypothesis_metrics(
     aligned_predictions, aligned_target = _aligned_series(predictions, target)
     sample_count = len(aligned_predictions)
     corr = numerai_corr(aligned_predictions, aligned_target)
-    mmc = 0.0 if meta_model is None else meta_model_contribution(
+    mmc = None if meta_model is None else meta_model_contribution(
         aligned_predictions,
         meta_model,
         aligned_target,
