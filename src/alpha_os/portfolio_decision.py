@@ -9,6 +9,8 @@ from .config import DEFAULT_ASSET
 class PortfolioPositionState:
     subject_id: str
     weight: float
+    notional: float | None = None
+    quantity: float | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,8 @@ class PortfolioTarget:
     subject_id: str
     target_weight: float
     position_delta: float
+    target_notional: float | None = None
+    target_quantity: float | None = None
     entry_allowed: bool = True
     risk_scale: float = 1.0
 

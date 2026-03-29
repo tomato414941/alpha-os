@@ -102,6 +102,21 @@ Examples:
 The portfolio decision layer should output a desired portfolio state rather than
 raw market actions.
 
+The primary decision-space representation should be portfolio weight, not raw
+quantity.
+
+The intended layering is:
+
+- `weight`
+  - decision-space representation
+- `notional`
+  - bridge representation for capital, risk, and cost
+- `quantity`
+  - execution-space representation
+
+These are not competing concepts. They are different views of the same
+position.
+
 The minimal output contract should support:
 
 - `target_weight`
@@ -115,6 +130,24 @@ The minimal output contract should support:
 
 The exact runtime may expose one or more of these, but this is the intended
 design surface.
+
+### Position Representation
+
+The long-run position model should be interpreted like this:
+
+- portfolio state is represented primarily in weights
+- notional can be derived when capital size and prices are known
+- quantity can be derived when venue and instrument conventions are known
+
+This is the most practical separation because:
+
+- portfolio theory is naturally expressed in weights
+- cost and liquidity are often easier to express in notional terms
+- execution constraints such as lot size or contract multiplier belong to
+  quantity space
+
+So the portfolio decision layer should optimize over desired weights, while
+leaving notional and quantity conversion to downstream layers.
 
 ## Theory-Driven Requirements
 
