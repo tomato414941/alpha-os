@@ -44,13 +44,13 @@ from .evaluation_inputs import (
 from .meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
 from .portfolio_decision import (
     CostInput,
-    PortfolioPositionState,
     PortfolioState,
     RiskInput,
 )
 from .portfolio_decision_service import (
     PortfolioDecisionAssumptions,
     RuntimeDecisionBuildConfig,
+    build_runtime_portfolio_state,
     build_portfolio_decision_output,
     persist_portfolio_decision_output,
 )
@@ -247,7 +247,6 @@ def build_cli_parser() -> argparse.ArgumentParser:
         default=DEFAULT_PRIMARY_AGGREGATION_KIND,
     )
     build_decision.add_argument("--risk-window", type=int, default=20)
-    build_decision.add_argument("--current-weight", type=float, default=0.0)
     build_decision.add_argument("--gross-exposure-cap", type=float, default=None)
     build_decision.add_argument("--turnover-penalty", type=float, default=None)
     build_decision.add_argument("--expected-slippage-bps", type=float, default=None)
@@ -991,18 +990,14 @@ def cmd_build_portfolio_decision(args: argparse.Namespace) -> int:
             args,
             subject_id=subject_id,
         )
-        portfolio_state = PortfolioState(
-            portfolio_id=str(args.portfolio_id),
-            positions=(
-                PortfolioPositionState(
-                    subject_id=subject_id,
-                    weight=float(args.current_weight),
-                ),
-            ),
-        )
         config = RuntimeDecisionBuildConfig(
             aggregation_kind=str(args.aggregation_kind),
             risk_window=int(args.risk_window),
+        )
+        portfolio_state = build_runtime_portfolio_state(
+            store,
+            portfolio_id=str(args.portfolio_id),
+            aggregation_kind=config.aggregation_kind,
         )
         decision_output = build_portfolio_decision_output(
             store,

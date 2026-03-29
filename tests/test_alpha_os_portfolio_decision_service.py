@@ -5,6 +5,7 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
     from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
+    from alpha_os.portfolio_decision import PortfolioState
     from alpha_os.portfolio_decision_service import build_portfolio_decision_input
     from alpha_os.store import EvaluationStore
 
@@ -40,7 +41,10 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
         refresh_target_meta_predictions(store)
         refresh_target_meta_prediction_metrics(store)
 
-        decision_input = build_portfolio_decision_input(store)
+        decision_input = build_portfolio_decision_input(
+            store,
+            portfolio_state=PortfolioState(),
+        )
 
         assert decision_input is not None
         assert decision_input.portfolio_state.portfolio_id is None
@@ -60,7 +64,7 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
     from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
-    from alpha_os.portfolio_decision import CostInput, DependenceInput
+    from alpha_os.portfolio_decision import CostInput, DependenceInput, PortfolioState
     from alpha_os.portfolio_decision_service import (
         PortfolioDecisionAssumptions,
         build_portfolio_decision_input,
@@ -103,6 +107,7 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
             store,
             portfolio_id="paper_core",
             subject_id="BTC_spot",
+            portfolio_state=PortfolioState(portfolio_id="paper_core"),
             assumptions=PortfolioDecisionAssumptions(
                 cost_inputs=(
                     CostInput(
@@ -215,6 +220,7 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
 
 
 def test_build_portfolio_decision_input_returns_none_without_meta_prediction(tmp_path):
+    from alpha_os.portfolio_decision import PortfolioState
     from alpha_os.portfolio_decision_service import build_portfolio_decision_input
     from alpha_os.store import EvaluationStore
 
@@ -222,7 +228,89 @@ def test_build_portfolio_decision_input_returns_none_without_meta_prediction(tmp
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        assert build_portfolio_decision_input(store) is None
+        assert build_portfolio_decision_input(
+            store,
+            portfolio_state=PortfolioState(),
+        ) is None
+    finally:
+        store.close()
+
+
+def test_build_runtime_portfolio_state_uses_latest_persisted_decisions(tmp_path):
+    from alpha_os.evaluation_runtime import apply_evaluation
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
+    from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
+    from alpha_os.portfolio_decision import PortfolioPositionState, PortfolioState
+    from alpha_os.portfolio_decision_service import (
+        build_portfolio_decision_output,
+        build_runtime_portfolio_state,
+        persist_portfolio_decision_output,
+    )
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("reversal_1d")
+        store.register_hypothesis("average_gap_3d")
+
+        values = [
+            ("2026-03-24", 0.4, 0.0, 0.2),
+            ("2026-03-25", 0.3, 0.1, 0.1),
+            ("2026-03-26", 0.2, 0.0, 0.05),
+        ]
+        for date, pred_a, pred_b, obs in values:
+            evaluation_id = f"BTC:residual_return_3d:{date}"
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="reversal_1d",
+                prediction_value=pred_a,
+                observation_value=obs,
+            )
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="average_gap_3d",
+                prediction_value=pred_b,
+                observation_value=obs,
+            )
+
+        refresh_target_meta_predictions(store)
+        refresh_target_meta_prediction_metrics(store)
+
+        initial_state = build_runtime_portfolio_state(
+            store,
+            portfolio_id="paper_core",
+            aggregation_kind="corr_weighted_mean",
+        )
+        assert initial_state.positions == ()
+
+        decision_output = build_portfolio_decision_output(
+            store,
+            portfolio_id="paper_core",
+            portfolio_state=PortfolioState(
+                portfolio_id="paper_core",
+                positions=(PortfolioPositionState(subject_id="BTC", weight=0.05),),
+            ),
+        )
+        assert decision_output is not None
+        persist_portfolio_decision_output(
+            store,
+            decision_output=decision_output,
+            target_id="residual_return_3d",
+            aggregation_kind="corr_weighted_mean",
+        )
+
+        restored_state = build_runtime_portfolio_state(
+            store,
+            portfolio_id="paper_core",
+            aggregation_kind="corr_weighted_mean",
+        )
+        assert len(restored_state.positions) == 1
+        assert restored_state.positions[0].subject_id == "BTC"
+        assert restored_state.positions[0].weight == decision_output.targets[0].target_weight
     finally:
         store.close()
 

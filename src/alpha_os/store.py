@@ -1054,6 +1054,37 @@ class EvaluationStore:
         ).fetchall()
         return [_row_to_portfolio_decision(row) for row in rows if row is not None]
 
+    def get_latest_portfolio_decisions(
+        self,
+        *,
+        portfolio_id: str,
+        aggregation_kind: str,
+    ) -> list[PortfolioDecisionState]:
+        row = self.conn.execute(
+            """
+            SELECT MAX(as_of) AS latest_as_of
+            FROM portfolio_decisions
+            WHERE portfolio_id = ? AND aggregation_kind = ?
+            """,
+            (portfolio_id, aggregation_kind),
+        ).fetchone()
+        if row is None or row["latest_as_of"] is None:
+            return []
+        latest_as_of = str(row["latest_as_of"])
+        rows = self.conn.execute(
+            """
+            SELECT portfolio_id, subject_id, target_id, aggregation_kind,
+                   as_of, target_weight, position_delta, target_notional,
+                   target_quantity, entry_allowed, risk_scale, details_json,
+                   created_at, updated_at
+            FROM portfolio_decisions
+            WHERE portfolio_id = ? AND aggregation_kind = ? AND as_of = ?
+            ORDER BY subject_id ASC
+            """,
+            (portfolio_id, aggregation_kind, latest_as_of),
+        ).fetchall()
+        return [_row_to_portfolio_decision(row) for row in rows if row is not None]
+
     def create_validation_run(
         self,
         *,

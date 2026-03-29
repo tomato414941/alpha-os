@@ -12,6 +12,7 @@ from .portfolio_decision import (
     DependenceInput,
     PortfolioDecisionInput,
     PortfolioDecisionOutput,
+    PortfolioPositionState,
     PortfolioState,
     PredictiveSignalInput,
     RiskInput,
@@ -45,7 +46,7 @@ def build_portfolio_decision_input(
     target_id: str = DEFAULT_TARGET,
     portfolio_id: str | None = None,
     subject_id: str | None = None,
-    portfolio_state: PortfolioState | None = None,
+    portfolio_state: PortfolioState,
     config: RuntimeDecisionBuildConfig | None = None,
     assumptions: PortfolioDecisionAssumptions | None = None,
 ) -> PortfolioDecisionInput | None:
@@ -98,8 +99,7 @@ def build_portfolio_decision_input(
     return PortfolioDecisionInput(
         portfolio_id=portfolio_id,
         as_of=meta_prediction.updated_at,
-        portfolio_state=portfolio_state
-        or PortfolioState(portfolio_id=portfolio_id),
+        portfolio_state=portfolio_state,
         predictive_signals=(
             PredictiveSignalInput(
                 source_id=config.aggregation_kind,
@@ -124,7 +124,7 @@ def build_portfolio_decision_output(
     target_id: str = DEFAULT_TARGET,
     portfolio_id: str | None = None,
     subject_id: str | None = None,
-    portfolio_state: PortfolioState | None = None,
+    portfolio_state: PortfolioState,
     config: RuntimeDecisionBuildConfig | None = None,
     assumptions: PortfolioDecisionAssumptions | None = None,
     policy: RuleBasedPortfolioPolicy | None = None,
@@ -146,6 +146,33 @@ def build_portfolio_decision_output(
         portfolio_id=portfolio_id,
         as_of=decision_output.as_of,
         targets=decision_output.targets,
+    )
+
+
+def build_runtime_portfolio_state(
+    store: EvaluationStore,
+    *,
+    portfolio_id: str,
+    aggregation_kind: str,
+) -> PortfolioState:
+    decisions = store.get_latest_portfolio_decisions(
+        portfolio_id=portfolio_id,
+        aggregation_kind=aggregation_kind,
+    )
+    if not decisions:
+        return PortfolioState(portfolio_id=portfolio_id, positions=())
+    return PortfolioState(
+        portfolio_id=portfolio_id,
+        as_of=decisions[0].as_of,
+        positions=tuple(
+            PortfolioPositionState(
+                subject_id=item.subject_id,
+                weight=item.target_weight,
+                notional=item.target_notional,
+                quantity=item.target_quantity,
+            )
+            for item in decisions
+        ),
     )
 
 

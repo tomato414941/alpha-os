@@ -134,9 +134,11 @@ def apply_rule_based_policy(
 def _aggregate_subject_signals(
     predictive_signals: tuple[PredictiveSignalInput, ...],
 ) -> dict[str, float]:
+    observed_subject_ids: set[str] = set()
     weighted_values: dict[str, float] = {}
     weights: dict[str, float] = {}
     for signal in predictive_signals:
+        observed_subject_ids.add(signal.subject_id)
         confidence = signal.confidence if signal.confidence is not None else 1.0
         confidence = max(confidence, 0.0)
         weighted_values[signal.subject_id] = (
@@ -145,9 +147,12 @@ def _aggregate_subject_signals(
         )
         weights[signal.subject_id] = weights.get(signal.subject_id, 0.0) + confidence
     return {
-        subject_id: float(weighted_values[subject_id] / weights[subject_id])
-        for subject_id in weighted_values
-        if weights[subject_id] > 0.0
+        subject_id: (
+            float(weighted_values[subject_id] / weights[subject_id])
+            if weights.get(subject_id, 0.0) > 0.0
+            else 0.0
+        )
+        for subject_id in observed_subject_ids
     }
 
 
