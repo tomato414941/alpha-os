@@ -49,8 +49,82 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
         assert decision_input.predictive_signals[0].confidence is not None
         assert 0.0 <= decision_input.predictive_signals[0].confidence <= 1.0
         assert decision_input.risk_inputs[0].name == "realized_vol_20"
-        assert decision_input.cost_inputs[0].name == "turnover_penalty"
+        assert decision_input.cost_inputs == ()
         assert decision_input.uncertainty_inputs[0].name == "small_sample_penalty"
+    finally:
+        store.close()
+
+
+def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
+    from alpha_os.evaluation_runtime import apply_evaluation
+    from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
+    from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
+    from alpha_os.portfolio_decision import CostInput, DependenceInput
+    from alpha_os.portfolio_decision_service import (
+        PortfolioDecisionAssumptions,
+        build_portfolio_decision_input,
+    )
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        store.register_hypothesis("reversal_1d")
+        store.register_hypothesis("average_gap_3d")
+
+        values = [
+            ("2026-03-24", 0.2, 0.0, 0.1),
+            ("2026-03-25", 0.3, 0.1, 0.2),
+            ("2026-03-26", 0.1, 0.05, 0.05),
+        ]
+        for date, pred_a, pred_b, obs in values:
+            evaluation_id = f"BTC:residual_return_3d:{date}"
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="reversal_1d",
+                prediction_value=pred_a,
+                observation_value=obs,
+            )
+            apply_evaluation(
+                store,
+                evaluation_id=evaluation_id,
+                hypothesis_id="average_gap_3d",
+                prediction_value=pred_b,
+                observation_value=obs,
+            )
+
+        refresh_target_meta_predictions(store)
+        refresh_target_meta_prediction_metrics(store)
+
+        decision_input = build_portfolio_decision_input(
+            store,
+            assumptions=PortfolioDecisionAssumptions(
+                cost_inputs=(
+                    CostInput(
+                        name="turnover_penalty",
+                        subject_id=None,
+                        value=0.01,
+                        basis="per_turnover",
+                        unit="weight",
+                    ),
+                ),
+                dependence_inputs=(
+                    DependenceInput(
+                        name="hidden_bet_overlap",
+                        left_subject_id="BTC",
+                        right_subject_id="ETH",
+                        value=0.4,
+                        basis="overlap",
+                    ),
+                ),
+            ),
+        )
+
+        assert decision_input is not None
+        assert decision_input.cost_inputs[0].name == "turnover_penalty"
+        assert decision_input.dependence_inputs[0].right_subject_id == "ETH"
     finally:
         store.close()
 
@@ -59,8 +133,15 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
     from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
     from alpha_os.meta_metrics_service import refresh_target_meta_prediction_metrics
-    from alpha_os.portfolio_decision import PortfolioPositionState, PortfolioState
-    from alpha_os.portfolio_decision_service import build_portfolio_decision_output
+    from alpha_os.portfolio_decision import (
+        CostInput,
+        PortfolioPositionState,
+        PortfolioState,
+    )
+    from alpha_os.portfolio_decision_service import (
+        PortfolioDecisionAssumptions,
+        build_portfolio_decision_output,
+    )
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
@@ -99,6 +180,17 @@ def test_build_portfolio_decision_output_returns_policy_result(tmp_path):
             store,
             portfolio_state=PortfolioState(
                 positions=(PortfolioPositionState(subject_id="BTC", weight=0.05),)
+            ),
+            assumptions=PortfolioDecisionAssumptions(
+                cost_inputs=(
+                    CostInput(
+                        name="expected_slippage",
+                        subject_id="BTC",
+                        value=1000.0,
+                        basis="per_notional",
+                        unit="bps",
+                    ),
+                ),
             ),
         )
 
