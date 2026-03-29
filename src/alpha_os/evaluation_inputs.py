@@ -23,7 +23,7 @@ def _parse_evaluation_input(item: object, *, source: Path) -> EvaluationInput:
         raise ValueError(f"{source}: each evaluation input must be a JSON object")
 
     asset = str(item.get("asset", DEFAULT_ASSET))
-    target_id = str(item.get("target", item.get("target_id", DEFAULT_TARGET)))
+    target_id = str(item.get("target_id", DEFAULT_TARGET))
     if asset != DEFAULT_ASSET:
         raise ValueError(f"{source}: alpha-os only supports asset={DEFAULT_ASSET}")
 

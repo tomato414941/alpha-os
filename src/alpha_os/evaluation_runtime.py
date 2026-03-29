@@ -83,7 +83,7 @@ def update_evaluation_state(
         store.conn.execute(
             """
             INSERT INTO evaluation_snapshots (
-                evaluation_id, asset, target, hypothesis_id, prediction_value,
+                evaluation_id, asset, target_id, hypothesis_id, prediction_value,
                 observation_value, signed_edge, absolute_error, input_source,
                 input_range_start, input_range_end, signal_name, created_at
             )

@@ -4,7 +4,7 @@ import json
 import sqlite3
 
 
-def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | None = None) -> None:
+def _register_hypothesis(main, db_path, hypothesis_id: str, *, target_id: str | None = None) -> None:
     argv = [
         "register-hypothesis",
         "--db",
@@ -12,8 +12,8 @@ def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | Non
         "--hypothesis-id",
         hypothesis_id,
     ]
-    if target is not None:
-        argv.extend(["--target", target])
+    if target_id is not None:
+        argv.extend(["--target-id", target_id])
     assert main(argv) == 0
 
 
@@ -171,7 +171,7 @@ def test_register_hypothesis_creates_state_and_is_idempotent(tmp_path, capsys):
         assert definition == {
             "kind": "momentum",
             "signal_name": "btc_ohlcv",
-            "target": {
+            "target_definition": {
                 "family": "residual_return",
                 "observation_kind": "fixed_horizon",
                 "output_kind": "real_value",
@@ -247,7 +247,7 @@ def test_register_hypothesis_supports_new_builtin_definition(tmp_path, capsys):
         assert definition == {
             "kind": "reversal",
             "signal_name": "btc_ohlcv",
-            "target": {
+            "target_definition": {
                 "family": "residual_return",
                 "observation_kind": "fixed_horizon",
                 "output_kind": "real_value",
@@ -290,7 +290,7 @@ def test_register_hypothesis_supports_additional_kind_definition(tmp_path, capsy
         assert definition == {
             "kind": "average_gap",
             "signal_name": "btc_ohlcv",
-            "target": {
+            "target_definition": {
                 "family": "residual_return",
                 "observation_kind": "fixed_horizon",
                 "output_kind": "real_value",
@@ -343,7 +343,7 @@ def test_register_hypothesis_rejects_mismatched_builtin_target(tmp_path):
                 str(db_path),
                 "--hypothesis-id",
                 "momentum_1d",
-                "--target",
+                "--target-id",
                 "residual_return_1d",
             ]
         )

@@ -244,7 +244,6 @@ def write_evaluation_input(path: str | Path, evaluation_input: EvaluationInput) 
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     payload = asdict(evaluation_input)
-    payload["target"] = payload.pop("target_id")
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path
 
@@ -252,10 +251,6 @@ def write_evaluation_input(path: str | Path, evaluation_input: EvaluationInput) 
 def write_evaluation_inputs(path: str | Path, evaluation_inputs: list[EvaluationInput]) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = []
-    for item in evaluation_inputs:
-        document = asdict(item)
-        document["target"] = document.pop("target_id")
-        payload.append(document)
+    payload = [asdict(item) for item in evaluation_inputs]
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     return output_path

@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 
-def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | None = None) -> None:
+def _register_hypothesis(main, db_path, hypothesis_id: str, *, target_id: str | None = None) -> None:
     argv = [
         "register-hypothesis",
         "--db",
@@ -12,8 +12,8 @@ def _register_hypothesis(main, db_path, hypothesis_id: str, *, target: str | Non
         "--hypothesis-id",
         hypothesis_id,
     ]
-    if target is not None:
-        argv.extend(["--target", target])
+    if target_id is not None:
+        argv.extend(["--target-id", target_id])
     assert main(argv) == 0
 
 
@@ -112,12 +112,12 @@ def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
             '  "prediction": 0.4,\n'
             '  "observation": 0.15,\n'
             '  "asset": "BTC",\n'
-            '  "target": "residual_return_1d"\n'
+            '  "target_id": "residual_return_1d"\n'
             "}\n"
         ),
         encoding="utf-8",
     )
-    _register_hypothesis(main, db_path, "hyp_fixture", target="residual_return_1d")
+    _register_hypothesis(main, db_path, "hyp_fixture", target_id="residual_return_1d")
     capsys.readouterr()
 
     assert main(["apply-evaluation", "--db", str(db_path), "--input", str(fixture_path)]) == 0
@@ -129,7 +129,7 @@ def test_run_cycle_accepts_non_default_target_in_fixture(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT evaluation_id, target
+            SELECT evaluation_id, target_id
             FROM evaluation_snapshots
             """
         ).fetchone()
@@ -152,14 +152,14 @@ def test_status_summarizes_multiple_targets(tmp_path, capsys):
             '  "prediction": 0.1,\n'
             '  "observation": -0.05,\n'
             '  "asset": "BTC",\n'
-            '  "target": "residual_return_1d"\n'
+            '  "target_id": "residual_return_1d"\n'
             "}\n"
         ),
         encoding="utf-8",
     )
 
     _register_hypothesis(main, db_path, "hyp_fixture")
-    _register_hypothesis(main, db_path, "hyp_1d", target="residual_return_1d")
+    _register_hypothesis(main, db_path, "hyp_1d", target_id="residual_return_1d")
     capsys.readouterr()
 
     assert main(["apply-evaluation", "--db", str(db_path), "--input", str(default_fixture)]) == 0

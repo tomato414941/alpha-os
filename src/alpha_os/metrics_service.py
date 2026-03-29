@@ -28,7 +28,7 @@ def refresh_hypothesis_metrics(
         FROM predictions AS p
         JOIN observations AS o ON o.evaluation_id = p.evaluation_id
         JOIN hypotheses AS h ON h.hypothesis_id = p.hypothesis_id
-        WHERE p.hypothesis_id = ? AND h.asset = ? AND h.target = ?
+        WHERE p.hypothesis_id = ? AND h.asset = ? AND h.target_id = ?
         ORDER BY p.evaluation_id DESC
         LIMIT ?
         """,
@@ -79,7 +79,7 @@ def refresh_hypothesis_metrics(
         JOIN hypotheses AS h ON h.hypothesis_id = p.hypothesis_id
         WHERE p.evaluation_id IN ({placeholders})
           AND h.asset = ?
-          AND h.target = ?
+          AND h.target_id = ?
           AND h.status = 'active'
           AND p.hypothesis_id <> ?
         GROUP BY p.evaluation_id

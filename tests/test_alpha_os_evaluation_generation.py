@@ -787,7 +787,7 @@ def test_generate_evaluation_input_uses_active_definition_from_db(tmp_path, monk
                         {
                             "kind": "momentum",
                             "signal_name": "btc_ohlcv",
-                            "target": {
+                            "target_definition": {
                                 "target_id": "residual_return_3d",
                                 "family": "residual_return",
                                 "observation_kind": "fixed_horizon",

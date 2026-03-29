@@ -45,7 +45,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     register.add_argument("--db", type=str, default=None)
     register.add_argument("--hypothesis-id", type=str, required=True)
-    register.add_argument("--target", type=str, default=None)
+    register.add_argument("--target-id", type=str, default=None)
 
     deactivate = sub.add_parser(
         "deactivate-hypothesis",
@@ -409,7 +409,7 @@ def cmd_register_hypothesis(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         hypothesis, created = store.register_hypothesis(
             args.hypothesis_id,
-            target_id=cfg.target_id if args.target is None else str(args.target),
+            target_id=cfg.target_id if args.target_id is None else str(args.target_id),
         )
     outcome = "created" if created else "existing"
     print(f"Hypothesis [{outcome}] {hypothesis.hypothesis_id}")

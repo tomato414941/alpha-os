@@ -38,7 +38,7 @@ class HypothesisState:
         definition = self.definition
         if definition is None:
             return None
-        target_document = definition.get("target")
+        target_document = definition.get("target_definition")
         if not isinstance(target_document, dict):
             return None
         return TargetDefinition.from_document(target_document)
@@ -142,7 +142,7 @@ def _row_to_hypothesis(row: sqlite3.Row | None) -> HypothesisState | None:
     return HypothesisState(
         hypothesis_id=str(row["hypothesis_id"]),
         asset=str(row["asset"]),
-        target_id=str(row["target"]),
+        target_id=str(row["target_id"]),
         definition_json=None
         if row["definition_json"] is None
         else str(row["definition_json"]),
@@ -158,7 +158,7 @@ def _row_to_snapshot(row: sqlite3.Row | None) -> EvaluationSnapshot | None:
     return EvaluationSnapshot(
         evaluation_id=str(row["evaluation_id"]),
         asset=str(row["asset"]),
-        target_id=str(row["target"]),
+        target_id=str(row["target_id"]),
         hypothesis_id=str(row["hypothesis_id"]),
         prediction_value=float(row["prediction_value"]),
         observation_value=float(row["observation_value"]),
@@ -183,7 +183,7 @@ def _row_to_prediction(row: sqlite3.Row | None) -> PredictionRecord | None:
         evaluation_id=str(row["evaluation_id"]),
         hypothesis_id=str(row["hypothesis_id"]),
         asset=str(row["asset"]),
-        target_id=str(row["target"]),
+        target_id=str(row["target_id"]),
         value=float(row["value"]),
         recorded_at=str(row["recorded_at"]),
     )
@@ -195,7 +195,7 @@ def _row_to_observation(row: sqlite3.Row | None) -> ObservationRecord | None:
     return ObservationRecord(
         evaluation_id=str(row["evaluation_id"]),
         asset=str(row["asset"]),
-        target_id=str(row["target"]),
+        target_id=str(row["target_id"]),
         value=float(row["value"]),
         recorded_at=str(row["recorded_at"]),
     )
@@ -250,7 +250,7 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS hypotheses (
                 hypothesis_id TEXT PRIMARY KEY,
                 asset TEXT NOT NULL,
-                target TEXT NOT NULL,
+                target_id TEXT NOT NULL,
                 definition_json TEXT,
                 status TEXT NOT NULL,
                 prediction_count INTEGER NOT NULL,
@@ -263,7 +263,7 @@ class EvaluationStore:
                 evaluation_id TEXT NOT NULL,
                 hypothesis_id TEXT NOT NULL,
                 asset TEXT NOT NULL,
-                target TEXT NOT NULL,
+                target_id TEXT NOT NULL,
                 value REAL NOT NULL,
                 recorded_at TEXT NOT NULL,
                 PRIMARY KEY (evaluation_id, hypothesis_id)
@@ -272,7 +272,7 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS observations (
                 evaluation_id TEXT PRIMARY KEY,
                 asset TEXT NOT NULL,
-                target TEXT NOT NULL,
+                target_id TEXT NOT NULL,
                 value REAL NOT NULL,
                 recorded_at TEXT NOT NULL
             );
@@ -291,7 +291,7 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS evaluation_snapshots (
                 evaluation_id TEXT NOT NULL,
                 asset TEXT NOT NULL,
-                target TEXT NOT NULL,
+                target_id TEXT NOT NULL,
                 hypothesis_id TEXT NOT NULL,
                 prediction_value REAL NOT NULL,
                 observation_value REAL NOT NULL,
@@ -366,14 +366,14 @@ class EvaluationStore:
                     timestamp,
                 ),
             )
-        target = self.get_target(target_id)
-        assert target is not None
-        return target
+        target_state = self.get_target(target_id)
+        assert target_state is not None
+        return target_state
 
     def get_hypothesis(self, hypothesis_id: str) -> HypothesisState | None:
         row = self.conn.execute(
             """
-            SELECT hypothesis_id, asset, target,
+            SELECT hypothesis_id, asset, target_id,
                    definition_json, status,
                    prediction_count, observation_count
             FROM hypotheses
@@ -392,23 +392,23 @@ class EvaluationStore:
         if target_id is None:
             rows = self.conn.execute(
                 """
-                SELECT hypothesis_id, asset, target,
+                SELECT hypothesis_id, asset, target_id,
                        definition_json, status,
                        prediction_count, observation_count
                 FROM hypotheses
                 WHERE asset = ?
-                ORDER BY target ASC, observation_count DESC, prediction_count DESC, hypothesis_id ASC
+                ORDER BY target_id ASC, observation_count DESC, prediction_count DESC, hypothesis_id ASC
                 """,
                 (asset,),
             ).fetchall()
         else:
             rows = self.conn.execute(
                 """
-                SELECT hypothesis_id, asset, target,
+                SELECT hypothesis_id, asset, target_id,
                        definition_json, status,
                        prediction_count, observation_count
                 FROM hypotheses
-                WHERE asset = ? AND target = ?
+                WHERE asset = ? AND target_id = ?
                 ORDER BY observation_count DESC, prediction_count DESC, hypothesis_id ASC
                 """,
                 (asset, target_id),
@@ -527,7 +527,7 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO hypotheses (
-                    hypothesis_id, asset, target, definition_json, status,
+                    hypothesis_id, asset, target_id, definition_json, status,
                     prediction_count, observation_count, created_at, updated_at
                 )
                 VALUES (?, ?, ?, ?, 'active', 0, 0, ?, ?)
@@ -553,7 +553,7 @@ class EvaluationStore:
     ) -> EvaluationSnapshot | None:
         row = self.conn.execute(
             """
-            SELECT evaluation_id, asset, target, hypothesis_id, prediction_value,
+            SELECT evaluation_id, asset, target_id, hypothesis_id, prediction_value,
                    observation_value, signed_edge, absolute_error, input_source,
                    input_range_start, input_range_end, signal_name, created_at
             FROM evaluation_snapshots
@@ -570,7 +570,7 @@ class EvaluationStore:
     ) -> PredictionRecord | None:
         row = self.conn.execute(
             """
-            SELECT evaluation_id, hypothesis_id, asset, target, value, recorded_at
+            SELECT evaluation_id, hypothesis_id, asset, target_id, value, recorded_at
             FROM predictions
             WHERE evaluation_id = ? AND hypothesis_id = ?
             """,
@@ -581,7 +581,7 @@ class EvaluationStore:
     def get_observation(self, evaluation_id: str) -> ObservationRecord | None:
         row = self.conn.execute(
             """
-            SELECT evaluation_id, asset, target, value, recorded_at
+            SELECT evaluation_id, asset, target_id, value, recorded_at
             FROM observations
             WHERE evaluation_id = ?
             """,
@@ -592,7 +592,7 @@ class EvaluationStore:
     def list_evaluation_snapshots(self, *, limit: int = 20) -> list[EvaluationSnapshot]:
         rows = self.conn.execute(
             """
-            SELECT evaluation_id, asset, target, hypothesis_id, prediction_value,
+            SELECT evaluation_id, asset, target_id, hypothesis_id, prediction_value,
                    observation_value, signed_edge, absolute_error, input_source,
                    input_range_start, input_range_end, signal_name, created_at
             FROM evaluation_snapshots
@@ -651,7 +651,7 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO predictions (
-                    evaluation_id, hypothesis_id, asset, target, value, recorded_at
+                    evaluation_id, hypothesis_id, asset, target_id, value, recorded_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
@@ -696,7 +696,7 @@ class EvaluationStore:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO observations (evaluation_id, asset, target, value, recorded_at)
+                INSERT INTO observations (evaluation_id, asset, target_id, value, recorded_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (evaluation_id, asset, target_id, float(observation_value), timestamp),

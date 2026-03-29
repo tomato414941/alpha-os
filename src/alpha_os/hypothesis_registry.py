@@ -33,7 +33,7 @@ class HypothesisDefinition:
         return {
             "kind": self.kind,
             "signal_name": self.signal_name,
-            "target": self.target.to_document(),
+            "target_definition": self.target.to_document(),
             "params": {
                 "lookback": self.lookback,
             },
@@ -49,14 +49,14 @@ class HypothesisDefinition:
     ) -> "HypothesisDefinition":
         kind = document.get("kind")
         signal_name = document.get("signal_name")
-        target_document = document.get("target")
+        target_document = document.get("target_definition")
         params = document.get("params")
         if not isinstance(kind, str) or not kind:
             raise ValueError(f"hypothesis document is missing kind: {hypothesis_id}")
         if not isinstance(signal_name, str) or not signal_name:
             raise ValueError(f"hypothesis document is missing signal_name: {hypothesis_id}")
         if not isinstance(target_document, dict):
-            raise ValueError(f"hypothesis document is missing target: {hypothesis_id}")
+            raise ValueError(f"hypothesis document is missing target_definition: {hypothesis_id}")
         if not isinstance(params, dict):
             raise ValueError(f"hypothesis document is missing params: {hypothesis_id}")
         lookback = params.get("lookback")
