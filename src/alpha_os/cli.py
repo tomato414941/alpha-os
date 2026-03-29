@@ -29,6 +29,19 @@ from .evaluation_inputs import (
     load_evaluation_input,
     load_evaluation_inputs,
 )
+from .meta_aggregation_service import AGGREGATION_CORR_WEIGHTED_MEAN
+from .portfolio_decision import (
+    CostInput,
+    PortfolioPositionState,
+    PortfolioState,
+    RiskInput,
+)
+from .portfolio_decision_service import (
+    PortfolioDecisionAssumptions,
+    RuntimeDecisionBuildConfig,
+    build_portfolio_decision_output,
+    persist_portfolio_decision_output,
+)
 from .store import EvaluationStore
 from .validation_service import run_validation
 from .validation_spec import default_validation_spec, load_validation_spec, write_validation_spec
@@ -207,6 +220,36 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     compare_meta.add_argument("--db", type=str, default=None)
     compare_meta.add_argument("--target-id", type=str, default=None)
+
+    build_decision = sub.add_parser(
+        "build-portfolio-decision",
+        help="Build and persist one portfolio decision from latest meta predictions",
+    )
+    build_decision.add_argument("--db", type=str, default=None)
+    build_decision.add_argument("--portfolio-id", type=str, default="default")
+    build_decision.add_argument("--target-id", type=str, default=None)
+    build_decision.add_argument("--subject-id", type=str, default=None)
+    build_decision.add_argument(
+        "--aggregation-kind",
+        type=str,
+        default=AGGREGATION_CORR_WEIGHTED_MEAN,
+    )
+    build_decision.add_argument("--risk-window", type=int, default=20)
+    build_decision.add_argument("--current-weight", type=float, default=0.0)
+    build_decision.add_argument("--gross-exposure-cap", type=float, default=None)
+    build_decision.add_argument("--turnover-penalty", type=float, default=None)
+    build_decision.add_argument("--expected-slippage-bps", type=float, default=None)
+    build_decision.add_argument("--no-trade-band", type=float, default=None)
+
+    show_decisions = sub.add_parser(
+        "show-portfolio-decisions",
+        help="Show recent persisted portfolio decisions",
+    )
+    show_decisions.add_argument("--db", type=str, default=None)
+    show_decisions.add_argument("--portfolio-id", type=str, default=None)
+    show_decisions.add_argument("--target-id", type=str, default=None)
+    show_decisions.add_argument("--aggregation-kind", type=str, default=None)
+    show_decisions.add_argument("--limit", type=int, default=10)
 
     write_validation = sub.add_parser(
         "write-validation-spec",
@@ -464,6 +507,75 @@ def _print_meta_aggregation_comparison(metrics) -> None:
                 f"    {rank}. kind={item.aggregation_kind} "
                 f"corr={item.corr:.6f} evals={item.sample_count}"
             )
+
+
+def _portfolio_decision_assumptions_from_args(
+    args: argparse.Namespace,
+    *,
+    subject_id: str,
+) -> PortfolioDecisionAssumptions:
+    risk_inputs: list[RiskInput] = []
+    if args.gross_exposure_cap is not None:
+        risk_inputs.append(
+            RiskInput(
+                name="gross_exposure_cap",
+                subject_id=None,
+                value=float(args.gross_exposure_cap),
+                unit="weight",
+            )
+        )
+    cost_inputs: list[CostInput] = []
+    if args.turnover_penalty is not None:
+        cost_inputs.append(
+            CostInput(
+                name="turnover_penalty",
+                subject_id=None,
+                value=float(args.turnover_penalty),
+                basis="per_turnover",
+                unit="weight",
+            )
+        )
+    if args.expected_slippage_bps is not None:
+        cost_inputs.append(
+            CostInput(
+                name="expected_slippage",
+                subject_id=subject_id,
+                value=float(args.expected_slippage_bps),
+                basis="per_notional",
+                unit="bps",
+            )
+        )
+    if args.no_trade_band is not None:
+        cost_inputs.append(
+            CostInput(
+                name="no_trade_band",
+                subject_id=subject_id,
+                value=float(args.no_trade_band),
+                basis="per_delta_weight",
+                unit="weight",
+            )
+        )
+    return PortfolioDecisionAssumptions(
+        risk_inputs=tuple(risk_inputs),
+        cost_inputs=tuple(cost_inputs),
+    )
+
+
+def _print_portfolio_decisions(decisions) -> None:
+    print("alpha-os portfolio decisions")
+    print(f"  Count:    {len(decisions)}")
+    for item in decisions:
+        print(
+            f"  {item.as_of} "
+            f"portfolio={item.portfolio_id} "
+            f"subject={item.subject_id} "
+            f"target={item.target_id} "
+            f"kind={item.aggregation_kind} "
+            f"weight={item.target_weight:.6f} "
+            f"delta={item.position_delta:.6f} "
+            f"entry={str(item.entry_allowed).lower()} "
+            f"risk_scale={item.risk_scale:.6f}"
+        )
 
 
 def _resolve_validation_run(store: EvaluationStore, run_id: str | None):
@@ -1100,6 +1212,81 @@ def cmd_compare_meta_aggregations(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_build_portfolio_decision(args: argparse.Namespace) -> int:
+    with _runtime_store(args.db) as (cfg, store):
+        store.ensure_schema()
+        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
+        subject_id = cfg.asset if args.subject_id is None else str(args.subject_id)
+        assumptions = _portfolio_decision_assumptions_from_args(
+            args,
+            subject_id=subject_id,
+        )
+        portfolio_state = PortfolioState(
+            portfolio_id=str(args.portfolio_id),
+            asset=cfg.asset,
+            positions=(
+                PortfolioPositionState(
+                    subject_id=subject_id,
+                    weight=float(args.current_weight),
+                ),
+            ),
+        )
+        config = RuntimeDecisionBuildConfig(
+            aggregation_kind=str(args.aggregation_kind),
+            risk_window=int(args.risk_window),
+        )
+        decision_output = build_portfolio_decision_output(
+            store,
+            asset=cfg.asset,
+            target_id=target_id,
+            portfolio_id=str(args.portfolio_id),
+            subject_id=subject_id,
+            portfolio_state=portfolio_state,
+            config=config,
+            assumptions=assumptions,
+        )
+        if decision_output is None:
+            raise ValueError("portfolio decision could not be built from current runtime state")
+        persist_portfolio_decision_output(
+            store,
+            decision_output=decision_output,
+            target_id=target_id,
+            aggregation_kind=config.aggregation_kind,
+            config=config,
+            assumptions=assumptions,
+        )
+        decisions = store.list_portfolio_decisions(
+            portfolio_id=str(args.portfolio_id),
+            target_id=target_id,
+            aggregation_kind=config.aggregation_kind,
+            limit=10,
+        )
+    print(f"  DB:       {cfg.db_path}")
+    print(f"  Asset:    {cfg.asset}")
+    _print_portfolio_decisions(decisions[: len(decision_output.targets)])
+    return 0
+
+
+def cmd_show_portfolio_decisions(args: argparse.Namespace) -> int:
+    cfg = load_runtime_config(db_path=args.db)
+    store = EvaluationStore(cfg.db_path)
+    try:
+        store.ensure_schema()
+        decisions = store.list_portfolio_decisions(
+            portfolio_id=None if args.portfolio_id is None else str(args.portfolio_id),
+            target_id=None if args.target_id is None else str(args.target_id),
+            aggregation_kind=(
+                None if args.aggregation_kind is None else str(args.aggregation_kind)
+            ),
+            limit=int(args.limit),
+        )
+    finally:
+        store.close()
+    print(f"  DB:       {Path(cfg.db_path)}")
+    _print_portfolio_decisions(decisions)
+    return 0
+
+
 def cmd_write_validation_spec(args: argparse.Namespace) -> int:
     spec = default_validation_spec()
     if args.base_url is not None:
@@ -1194,6 +1381,10 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_show_meta_predictions(args)
         if args.command == "compare-meta-aggregations":
             return cmd_compare_meta_aggregations(args)
+        if args.command == "build-portfolio-decision":
+            return cmd_build_portfolio_decision(args)
+        if args.command == "show-portfolio-decisions":
+            return cmd_show_portfolio_decisions(args)
         if args.command == "write-validation-spec":
             return cmd_write_validation_spec(args)
         if args.command == "run-validation":

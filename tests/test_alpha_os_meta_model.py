@@ -250,3 +250,95 @@ def test_compare_meta_aggregations_cli_orders_by_corr(tmp_path, capsys):
     assert "alpha-os meta aggregation comparison" in output
     assert "residual_return_3d" in output
     assert "1. kind=" in output
+
+
+def test_build_and_show_portfolio_decisions_cli(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+
+    for hypothesis_id in ("reversal_1d", "average_gap_3d"):
+        assert (
+            main(
+                [
+                    "register-hypothesis",
+                    "--db",
+                    str(db_path),
+                    "--hypothesis-id",
+                    hypothesis_id,
+                ]
+            )
+            == 0
+        )
+        capsys.readouterr()
+
+    values = [
+        ("2026-03-24", "reversal_1d", "0.4", "0.2"),
+        ("2026-03-24", "average_gap_3d", "0.0", "0.2"),
+        ("2026-03-25", "reversal_1d", "0.3", "0.1"),
+        ("2026-03-25", "average_gap_3d", "0.1", "0.1"),
+        ("2026-03-26", "reversal_1d", "0.2", "0.05"),
+        ("2026-03-26", "average_gap_3d", "0.0", "0.05"),
+    ]
+    for date, hypothesis_id, prediction, observation in values:
+        assert (
+            main(
+                [
+                    "apply-evaluation",
+                    "--db",
+                    str(db_path),
+                    "--date",
+                    date,
+                    "--hypothesis-id",
+                    hypothesis_id,
+                    "--prediction",
+                    prediction,
+                    "--observation",
+                    observation,
+                ]
+            )
+            == 0
+        )
+        capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "build-portfolio-decision",
+                "--db",
+                str(db_path),
+                "--portfolio-id",
+                "paper_core",
+                "--subject-id",
+                "BTC_spot",
+                "--gross-exposure-cap",
+                "0.5",
+                "--expected-slippage-bps",
+                "25",
+                "--no-trade-band",
+                "0.01",
+            ]
+        )
+        == 0
+    )
+    build_output = capsys.readouterr().out
+    assert "alpha-os portfolio decisions" in build_output
+    assert "portfolio=paper_core" in build_output
+    assert "subject=BTC_spot" in build_output
+
+    assert (
+        main(
+            [
+                "show-portfolio-decisions",
+                "--db",
+                str(db_path),
+                "--portfolio-id",
+                "paper_core",
+            ]
+        )
+        == 0
+    )
+    show_output = capsys.readouterr().out
+    assert "alpha-os portfolio decisions" in show_output
+    assert "kind=corr_weighted_mean" in show_output
+    assert "target=residual_return_3d" in show_output
