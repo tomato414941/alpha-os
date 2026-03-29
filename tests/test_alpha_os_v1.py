@@ -17,40 +17,51 @@ def _register_hypothesis(main, db_path, hypothesis_id: str, *, target_id: str | 
     assert main(argv) == 0
 
 
-def _finalize_observation(main, db_path, date: str, observation: str) -> None:
-    assert (
-        main(
-            [
-                "finalize-observation",
-                "--db",
-                str(db_path),
-                "--date",
-                date,
-                "--observation",
-                observation,
-            ]
-        )
-        == 0
-    )
+def _finalize_observation(
+    main,
+    db_path,
+    date: str,
+    observation: str,
+    *,
+    target_id: str | None = None,
+) -> None:
+    argv = [
+        "finalize-observation",
+        "--db",
+        str(db_path),
+        "--date",
+        date,
+        "--observation",
+        observation,
+    ]
+    if target_id is not None:
+        argv.extend(["--target-id", target_id])
+    assert main(argv) == 0
 
 
-def _record_prediction(main, db_path, date: str, hypothesis_id: str, prediction: str) -> None:
-    assert (
-        main(
-            [
-                "record-prediction",
-                "--db",
-                str(db_path),
-                "--date",
-                date,
-                "--hypothesis-id",
-                hypothesis_id,
-                "--prediction",
-                prediction,
-            ]
-        )
-        == 0
-    )
+def _record_prediction(
+    main,
+    db_path,
+    date: str,
+    hypothesis_id: str,
+    prediction: str,
+    *,
+    target_id: str | None = None,
+) -> None:
+    argv = [
+        "record-prediction",
+        "--db",
+        str(db_path),
+        "--date",
+        date,
+        "--hypothesis-id",
+        hypothesis_id,
+        "--prediction",
+        prediction,
+    ]
+    if target_id is not None:
+        argv.extend(["--target-id", target_id])
+    assert main(argv) == 0
 
 
 def test_run_cycle_writes_snapshot_and_status(tmp_path, capsys):
@@ -458,6 +469,54 @@ def test_finalize_observation_creates_row_and_is_idempotent(tmp_path, capsys):
         assert count == 1
     finally:
         conn.close()
+
+
+def test_low_level_commands_accept_explicit_target_id(tmp_path, capsys):
+    from alpha_os.cli import main
+
+    db_path = tmp_path / "runtime.db"
+    _register_hypothesis(main, db_path, "hyp_1d", target_id="residual_return_1d")
+    capsys.readouterr()
+
+    _record_prediction(
+        main,
+        db_path,
+        "2026-03-26",
+        "hyp_1d",
+        "0.5",
+        target_id="residual_return_1d",
+    )
+    prediction_output = capsys.readouterr().out
+    assert "Prediction [created] BTC:residual_return_1d:2026-03-26" in prediction_output
+
+    _finalize_observation(
+        main,
+        db_path,
+        "2026-03-26",
+        "0.2",
+        target_id="residual_return_1d",
+    )
+    observation_output = capsys.readouterr().out
+    assert "Observation [created] BTC:residual_return_1d:2026-03-26" in observation_output
+
+    assert (
+        main(
+            [
+                "update-state",
+                "--db",
+                str(db_path),
+                "--date",
+                "2026-03-26",
+                "--hypothesis-id",
+                "hyp_1d",
+                "--target-id",
+                "residual_return_1d",
+            ]
+        )
+        == 0
+    )
+    update_output = capsys.readouterr().out
+    assert "Evaluation [created] BTC:residual_return_1d:2026-03-26" in update_output
 
 
 def test_run_cycle_reuses_pre_recorded_prediction(tmp_path, capsys):

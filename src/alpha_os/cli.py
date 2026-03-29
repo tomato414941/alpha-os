@@ -66,31 +66,34 @@ def build_cli_parser() -> argparse.ArgumentParser:
 
     record = sub.add_parser(
         "record-prediction",
-        help="Record one prediction before observation finalization",
+        help="Low-level: record one prediction before apply/update",
     )
     record.add_argument("--db", type=str, default=None)
     record.add_argument("--date", type=str, required=True)
     record.add_argument("--hypothesis-id", type=str, required=True)
     record.add_argument("--prediction", type=float, required=True)
     record.add_argument("--evaluation-id", type=str, default=None)
+    record.add_argument("--target-id", type=str, default=None)
 
     finalize = sub.add_parser(
         "finalize-observation",
-        help="Finalize one observation before state update",
+        help="Low-level: finalize one observation before apply/update",
     )
     finalize.add_argument("--db", type=str, default=None)
     finalize.add_argument("--date", type=str, required=True)
     finalize.add_argument("--observation", type=float, required=True)
     finalize.add_argument("--evaluation-id", type=str, default=None)
+    finalize.add_argument("--target-id", type=str, default=None)
 
     update = sub.add_parser(
         "update-state",
-        help="Update state from recorded prediction and finalized observation",
+        help="Low-level: write one evaluation snapshot from recorded prediction and observation",
     )
     update.add_argument("--db", type=str, default=None)
     update.add_argument("--date", type=str, required=True)
     update.add_argument("--hypothesis-id", type=str, required=True)
     update.add_argument("--evaluation-id", type=str, default=None)
+    update.add_argument("--target-id", type=str, default=None)
 
     generate_input = sub.add_parser(
         "generate-evaluation-input",
@@ -125,11 +128,12 @@ def build_cli_parser() -> argparse.ArgumentParser:
     run.add_argument("--prediction", type=float, default=None)
     run.add_argument("--observation", type=float, default=None)
     run.add_argument("--evaluation-id", type=str, default=None)
+    run.add_argument("--target-id", type=str, default=None)
     run.add_argument(
         "--input",
         type=str,
         default=None,
-        help="Path to a JSON object with date, hypothesis_id, prediction, observation",
+        help="Path to a JSON object with date, hypothesis_id, prediction, observation, target_id",
     )
 
     batch = sub.add_parser(
@@ -431,18 +435,30 @@ def _print_meta_aggregation_comparison(metrics) -> None:
             )
 
 
-def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
+def _resolve_evaluation_input(
+    args: argparse.Namespace,
+    *,
+    default_target_id: str,
+) -> EvaluationInput:
     if args.input:
         evaluation_input = load_evaluation_input(args.input)
-        if args.evaluation_id is not None:
+        if args.evaluation_id is not None or args.target_id is not None:
             evaluation_input = EvaluationInput(
                 date=evaluation_input.date,
                 hypothesis_id=evaluation_input.hypothesis_id,
                 prediction=evaluation_input.prediction,
                 observation=evaluation_input.observation,
-                evaluation_id=args.evaluation_id,
+                evaluation_id=(
+                    evaluation_input.evaluation_id
+                    if args.evaluation_id is None
+                    else str(args.evaluation_id)
+                ),
                 asset=evaluation_input.asset,
-                target_id=evaluation_input.target_id,
+                target_id=(
+                    evaluation_input.target_id
+                    if args.target_id is None
+                    else str(args.target_id)
+                ),
             )
         return evaluation_input
 
@@ -462,6 +478,7 @@ def _resolve_evaluation_input(args: argparse.Namespace) -> EvaluationInput:
         prediction=float(args.prediction),
         observation=float(args.observation),
         evaluation_id=None if args.evaluation_id is None else str(args.evaluation_id),
+        target_id=default_target_id if args.target_id is None else str(args.target_id),
     )
 
 
@@ -535,16 +552,17 @@ def cmd_activate_hypothesis(args: argparse.Namespace) -> int:
 
 def cmd_record_prediction(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
+        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target_id=cfg.target_id,
+            target_id=target_id,
             date=args.date,
         )
         prediction, created = store.record_prediction(
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
             prediction_value=args.prediction,
-            target_id=cfg.target_id,
+            target_id=target_id,
         )
     outcome = "created" if created else "existing"
     print(f"Prediction [{outcome}] {prediction.evaluation_id}")
@@ -557,15 +575,16 @@ def cmd_record_prediction(args: argparse.Namespace) -> int:
 
 def cmd_finalize_observation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
+        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target_id=cfg.target_id,
+            target_id=target_id,
             date=args.date,
         )
         observation, created = store.finalize_observation(
             evaluation_id=evaluation_id,
             observation_value=args.observation,
-            target_id=cfg.target_id,
+            target_id=target_id,
         )
     outcome = "created" if created else "existing"
     print(f"Observation [{outcome}] {observation.evaluation_id}")
@@ -577,16 +596,17 @@ def cmd_finalize_observation(args: argparse.Namespace) -> int:
 
 def cmd_update_state(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
+        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
         evaluation_id = args.evaluation_id or _default_evaluation_id(
             asset=cfg.asset,
-            target_id=cfg.target_id,
+            target_id=target_id,
             date=args.date,
         )
         snapshot, created = update_evaluation_state(
             store,
             evaluation_id=evaluation_id,
             hypothesis_id=args.hypothesis_id,
-            target_id=cfg.target_id,
+            target_id=target_id,
         )
         metric = store.get_hypothesis_metric(args.hypothesis_id)
     _print_evaluation_snapshot(snapshot, created=created)
@@ -650,9 +670,12 @@ def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
 
 
 def cmd_apply_evaluation(args: argparse.Namespace) -> int:
-    evaluation_input = _resolve_evaluation_input(args)
-    input_source = "json_file" if args.input else "manual"
-    with _runtime_store(args.db) as (_cfg, store):
+    with _runtime_store(args.db) as (cfg, store):
+        evaluation_input = _resolve_evaluation_input(
+            args,
+            default_target_id=cfg.target_id,
+        )
+        input_source = "json_file" if args.input else "manual"
         evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
             asset=evaluation_input.asset,
             target_id=evaluation_input.target_id,
