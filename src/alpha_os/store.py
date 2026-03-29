@@ -129,7 +129,10 @@ class HypothesisMetricState:
     hypothesis_id: str
     corr: float
     mmc: float | None
+    mmc_baseline_type: str | None
+    mmc_peer_count: int
     sample_count: int
+    mmc_sample_count: int
     window_size: int
     start_evaluation_id: str | None
     end_evaluation_id: str | None
@@ -208,7 +211,12 @@ def _row_to_hypothesis_metric(row: sqlite3.Row | None) -> HypothesisMetricState 
         hypothesis_id=str(row["hypothesis_id"]),
         corr=float(row["corr"]),
         mmc=None if row["mmc"] is None else float(row["mmc"]),
+        mmc_baseline_type=None
+        if row["mmc_baseline_type"] is None
+        else str(row["mmc_baseline_type"]),
+        mmc_peer_count=int(row["mmc_peer_count"]),
         sample_count=int(row["sample_count"]),
+        mmc_sample_count=int(row["mmc_sample_count"]),
         window_size=int(row["window_size"]),
         start_evaluation_id=None
         if row["start_evaluation_id"] is None
@@ -281,7 +289,10 @@ class EvaluationStore:
                 hypothesis_id TEXT PRIMARY KEY,
                 corr REAL NOT NULL,
                 mmc REAL,
+                mmc_baseline_type TEXT,
+                mmc_peer_count INTEGER NOT NULL,
                 sample_count INTEGER NOT NULL,
+                mmc_sample_count INTEGER NOT NULL,
                 window_size INTEGER NOT NULL,
                 start_evaluation_id TEXT,
                 end_evaluation_id TEXT,
@@ -419,6 +430,7 @@ class EvaluationStore:
         row = self.conn.execute(
             """
             SELECT hypothesis_id, corr, mmc, sample_count, window_size,
+                   mmc_baseline_type, mmc_peer_count, mmc_sample_count,
                    start_evaluation_id, end_evaluation_id, updated_at
             FROM hypothesis_metrics
             WHERE hypothesis_id = ?
@@ -435,7 +447,8 @@ class EvaluationStore:
         if not hypothesis_ids:
             rows = self.conn.execute(
                 """
-                SELECT hypothesis_id, corr, mmc, sample_count, window_size,
+                SELECT hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+                       sample_count, mmc_sample_count, window_size,
                        start_evaluation_id, end_evaluation_id, updated_at
                 FROM hypothesis_metrics
                 ORDER BY corr DESC, mmc DESC, hypothesis_id ASC
@@ -446,7 +459,8 @@ class EvaluationStore:
         placeholders = ", ".join("?" for _ in hypothesis_ids)
         rows = self.conn.execute(
             f"""
-            SELECT hypothesis_id, corr, mmc, sample_count, window_size,
+            SELECT hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+                   sample_count, mmc_sample_count, window_size,
                    start_evaluation_id, end_evaluation_id, updated_at
             FROM hypothesis_metrics
             WHERE hypothesis_id IN ({placeholders})

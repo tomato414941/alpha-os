@@ -8,6 +8,8 @@ from .config import DEFAULT_ASSET, DEFAULT_TARGET
 from .scoring import DEFAULT_METRIC_WINDOW, compute_hypothesis_metrics
 from .store import EvaluationStore
 
+MMC_BASELINE_ACTIVE_PEER_MEAN = "active_peer_mean"
+
 
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
@@ -40,14 +42,18 @@ def refresh_hypothesis_metrics(
         store.conn.execute(
             """
             INSERT INTO hypothesis_metrics (
-                hypothesis_id, corr, mmc, sample_count, window_size,
+                hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+                sample_count, mmc_sample_count, window_size,
                 start_evaluation_id, end_evaluation_id, updated_at
             )
-            VALUES (?, 0.0, 0.0, 0, ?, NULL, NULL, ?)
+            VALUES (?, 0.0, NULL, NULL, 0, 0, 0, ?, NULL, NULL, ?)
             ON CONFLICT(hypothesis_id) DO UPDATE SET
                 corr = excluded.corr,
                 mmc = excluded.mmc,
+                mmc_baseline_type = excluded.mmc_baseline_type,
+                mmc_peer_count = excluded.mmc_peer_count,
                 sample_count = excluded.sample_count,
+                mmc_sample_count = excluded.mmc_sample_count,
                 window_size = excluded.window_size,
                 start_evaluation_id = excluded.start_evaluation_id,
                 end_evaluation_id = excluded.end_evaluation_id,
@@ -72,6 +78,19 @@ def refresh_hypothesis_metrics(
 
     meta_model = None
     placeholders = ", ".join("?" for _ in evaluation_ids)
+    peer_count = store.conn.execute(
+        f"""
+        SELECT COUNT(DISTINCT p.hypothesis_id)
+        FROM predictions AS p
+        JOIN hypotheses AS h ON h.hypothesis_id = p.hypothesis_id
+        WHERE p.evaluation_id IN ({placeholders})
+          AND h.asset = ?
+          AND h.target_id = ?
+          AND h.status = 'active'
+          AND p.hypothesis_id <> ?
+        """,
+        tuple(evaluation_ids) + (asset, target_id, hypothesis_id),
+    ).fetchone()[0]
     peer_rows = store.conn.execute(
         f"""
         SELECT p.evaluation_id, AVG(p.value) AS meta_prediction
@@ -103,14 +122,18 @@ def refresh_hypothesis_metrics(
     store.conn.execute(
         """
         INSERT INTO hypothesis_metrics (
-            hypothesis_id, corr, mmc, sample_count, window_size,
+            hypothesis_id, corr, mmc, mmc_baseline_type, mmc_peer_count,
+            sample_count, mmc_sample_count, window_size,
             start_evaluation_id, end_evaluation_id, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(hypothesis_id) DO UPDATE SET
             corr = excluded.corr,
             mmc = excluded.mmc,
+            mmc_baseline_type = excluded.mmc_baseline_type,
+            mmc_peer_count = excluded.mmc_peer_count,
             sample_count = excluded.sample_count,
+            mmc_sample_count = excluded.mmc_sample_count,
             window_size = excluded.window_size,
             start_evaluation_id = excluded.start_evaluation_id,
             end_evaluation_id = excluded.end_evaluation_id,
@@ -120,7 +143,10 @@ def refresh_hypothesis_metrics(
             hypothesis_id,
             metrics.corr,
             metrics.mmc,
+            MMC_BASELINE_ACTIVE_PEER_MEAN,
+            int(peer_count),
             metrics.sample_count,
+            metrics.mmc_sample_count,
             metrics.window_size,
             evaluation_ids[0],
             evaluation_ids[-1],

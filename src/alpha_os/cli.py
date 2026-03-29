@@ -275,14 +275,18 @@ def _print_evaluation_snapshot(snapshot, *, created: bool) -> None:
 
 def _print_hypothesis_metric(metric) -> None:
     if metric is None:
-        print("  Metrics:  corr=0.000000 mmc=n/a evals=0")
+        print("  Metrics:  corr=0.000000 mmc=n/a evals=0 mmc_evals=0 peers=0 baseline=-")
         return
     mmc_text = "n/a" if metric.mmc is None else f"{metric.mmc:.6f}"
+    baseline_text = "-" if metric.mmc_baseline_type is None else metric.mmc_baseline_type
     print(
         "  Metrics:  "
         f"corr={metric.corr:.6f} "
         f"mmc={mmc_text} "
-        f"evals={metric.sample_count}"
+        f"evals={metric.sample_count} "
+        f"mmc_evals={metric.mmc_sample_count} "
+        f"peers={metric.mmc_peer_count} "
+        f"baseline={baseline_text}"
     )
 
 
@@ -323,13 +327,17 @@ def _print_hypothesis_competition_summary(
         lookback = "-" if hypothesis.lookback is None else str(hypothesis.lookback)
         horizon = "-" if hypothesis.horizon_days is None else f"{hypothesis.horizon_days}d"
         mmc_text = "n/a" if metric is None or metric.mmc is None else f"{metric.mmc:.6f}"
+        baseline_text = "-" if metric is None or metric.mmc_baseline_type is None else metric.mmc_baseline_type
         print(
             f"  {hypothesis.hypothesis_id} "
             f"kind={kind} signal={signal_name} lookback={lookback} horizon={horizon} "
             f"status={hypothesis.status} "
             f"corr={0.0 if metric is None else metric.corr:.6f} "
             f"mmc={mmc_text} "
-            f"evals={hypothesis.observation_count if metric is None else metric.sample_count}"
+            f"evals={hypothesis.observation_count if metric is None else metric.sample_count} "
+            f"mmc_evals={0 if metric is None else metric.mmc_sample_count} "
+            f"peers={0 if metric is None else metric.mmc_peer_count} "
+            f"baseline={baseline_text}"
         )
 
 

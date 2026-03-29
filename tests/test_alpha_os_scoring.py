@@ -48,6 +48,7 @@ def test_compute_hypothesis_metrics_returns_corr_and_mmc():
     )
 
     assert metrics.sample_count == 4
+    assert metrics.mmc_sample_count == 4
     assert metrics.corr != 0.0
     assert metrics.mmc is not None
 
@@ -68,6 +69,7 @@ def test_compute_hypothesis_metrics_uses_nullable_mmc_when_meta_model_is_missing
     )
 
     assert metrics.sample_count == 4
+    assert metrics.mmc_sample_count == 0
     assert metrics.mmc is None
 
 
@@ -129,6 +131,9 @@ def test_refresh_hypothesis_metrics_uses_only_active_peers(tmp_path):
 
         assert metric.corr == pytest.approx(expected.corr)
         assert metric.mmc == pytest.approx(expected.mmc)
+        assert metric.mmc_baseline_type == "active_peer_mean"
+        assert metric.mmc_peer_count == 1
+        assert metric.mmc_sample_count == 4
     finally:
         store.close()
 
@@ -161,5 +166,8 @@ def test_refresh_hypothesis_metrics_sets_nullable_mmc_when_no_active_peers(tmp_p
         metric = store.get_hypothesis_metric("hyp_a")
         assert metric is not None
         assert metric.mmc is None
+        assert metric.mmc_baseline_type == "active_peer_mean"
+        assert metric.mmc_peer_count == 0
+        assert metric.mmc_sample_count == 0
     finally:
         store.close()

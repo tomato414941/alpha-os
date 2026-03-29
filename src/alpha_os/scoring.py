@@ -16,6 +16,7 @@ class HypothesisMetrics:
     corr: float
     mmc: float | None
     sample_count: int
+    mmc_sample_count: int
     window_size: int
 
 
@@ -85,14 +86,24 @@ def compute_hypothesis_metrics(
     aligned_predictions, aligned_target = _aligned_series(predictions, target)
     sample_count = len(aligned_predictions)
     corr = numerai_corr(aligned_predictions, aligned_target)
-    mmc = None if meta_model is None else meta_model_contribution(
-        aligned_predictions,
-        meta_model,
-        aligned_target,
-    )
+    mmc_sample_count = 0
+    mmc = None
+    if meta_model is not None:
+        mmc_aligned_predictions, mmc_aligned_meta_model, mmc_aligned_target = _aligned_series(
+            aligned_predictions,
+            meta_model,
+            aligned_target,
+        )
+        mmc_sample_count = len(mmc_aligned_predictions)
+        mmc = meta_model_contribution(
+            mmc_aligned_predictions,
+            mmc_aligned_meta_model,
+            mmc_aligned_target,
+        )
     return HypothesisMetrics(
         corr=corr,
         mmc=mmc,
         sample_count=sample_count,
+        mmc_sample_count=mmc_sample_count,
         window_size=int(window_size),
     )
