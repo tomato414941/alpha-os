@@ -21,10 +21,12 @@ def test_portfolio_state_exposure_properties():
 
 def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     from alpha_os.portfolio_decision import (
+        CostInput,
         PortfolioDecisionInput,
         PortfolioScalarInput,
         PortfolioState,
         PredictiveSignalInput,
+        RiskInput,
     )
 
     decision_input = PortfolioDecisionInput(
@@ -41,17 +43,21 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
             ),
         ),
         risk_inputs=(
-            PortfolioScalarInput(
+            RiskInput(
                 name="realized_vol_3d",
                 subject_id="BTC",
                 value=0.18,
+                horizon_days=3,
+                unit="vol",
             ),
         ),
         cost_inputs=(
-            PortfolioScalarInput(
-                name="turnover_penalty",
-                subject_id=None,
-                value=0.01,
+            CostInput(
+                name="expected_slippage",
+                subject_id="BTC",
+                value=12.0,
+                basis="per_notional",
+                unit="bps",
             ),
         ),
         uncertainty_inputs=(
@@ -74,6 +80,8 @@ def test_portfolio_decision_input_can_hold_multiple_input_kinds():
     assert decision_input.predictive_signals[0].source_kind == "meta_prediction"
     assert len(decision_input.risk_inputs) == 1
     assert len(decision_input.cost_inputs) == 1
+    assert decision_input.risk_inputs[0].horizon_days == 3
+    assert decision_input.cost_inputs[0].basis == "per_notional"
     assert len(decision_input.uncertainty_inputs) == 1
     assert len(decision_input.dependence_inputs) == 1
 

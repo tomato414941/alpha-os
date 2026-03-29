@@ -55,6 +55,24 @@ class PortfolioScalarInput:
 
 
 @dataclass(frozen=True)
+class RiskInput:
+    name: str
+    subject_id: str | None
+    value: float
+    horizon_days: int | None = None
+    unit: str | None = None
+
+
+@dataclass(frozen=True)
+class CostInput:
+    name: str
+    subject_id: str | None
+    value: float
+    basis: str | None = None
+    unit: str | None = None
+
+
+@dataclass(frozen=True)
 class PortfolioDecisionInput:
     # `asset` remains a bounded-runtime convenience field.
     # Long-run decision inputs should be keyed by `subject_id`.
@@ -62,8 +80,8 @@ class PortfolioDecisionInput:
     as_of: str | None = None
     portfolio_state: PortfolioState = field(default_factory=PortfolioState)
     predictive_signals: tuple[PredictiveSignalInput, ...] = ()
-    risk_inputs: tuple[PortfolioScalarInput, ...] = ()
-    cost_inputs: tuple[PortfolioScalarInput, ...] = ()
+    risk_inputs: tuple[RiskInput, ...] = ()
+    cost_inputs: tuple[CostInput, ...] = ()
     uncertainty_inputs: tuple[PortfolioScalarInput, ...] = ()
     dependence_inputs: tuple[PortfolioScalarInput, ...] = ()
 

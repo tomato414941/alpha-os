@@ -97,6 +97,63 @@ Examples:
 - directional targets may act as entry filters
 - execution targets may defer or suppress trades
 
+### Risk Inputs
+
+`risk_input` should be treated as a first-class portfolio input rather than a
+generic scalar blob.
+
+The minimum risk contract should carry:
+
+- `name`
+  - what risk quantity this is
+- `subject_id`
+  - which portfolio subject it applies to, or `None` for portfolio-level risk
+- `value`
+  - the numerical risk value
+- `horizon_days`
+  - optional lookahead or estimation horizon
+- `unit`
+  - optional unit such as `vol`, `variance`, or `beta`
+
+Typical early examples include:
+
+- `realized_vol_3d`
+- `expected_vol_5d`
+- `drawdown_risk`
+- `gross_exposure_cap`
+
+This keeps risk explicit without forcing the system to commit yet to a full
+covariance or optimizer surface.
+
+### Cost Inputs
+
+`cost_input` should also be first-class because cost is not the same thing as a
+generic penalty scalar.
+
+The minimum cost contract should carry:
+
+- `name`
+  - what cost quantity this is
+- `subject_id`
+  - which portfolio subject it applies to, or `None` for portfolio-level cost
+- `value`
+  - the numerical cost value
+- `basis`
+  - how the cost should be interpreted, for example `per_notional` or
+    `per_turnover`
+- `unit`
+  - optional unit such as `bps` or `usd`
+
+Typical early examples include:
+
+- `expected_slippage`
+- `turnover_penalty`
+- `impact_proxy`
+- `no_trade_band`
+
+This lets the portfolio layer represent executable friction explicitly rather
+than hiding it inside arbitrary constants.
+
 ### Predictive Signals
 
 `predictive_signal` should be treated as the portfolio-facing unit of predictive
