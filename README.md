@@ -11,7 +11,7 @@ strategy definition, and out-of-sample evaluation.
   - signal discovery research
   - strategy specs and initial strategy state
   - OOS evaluation
-  - portfolio decision and backtest flows
+  - portfolio decision and evaluation flows
 
 ## Repository Layout
 
