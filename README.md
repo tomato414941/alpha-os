@@ -20,8 +20,10 @@ python -m alpha_os --help
 
 python -m alpha_os list-runtime-manifests
 
-python -m alpha_os apply-runtime-manifest \
-  --manifest config/runtime_manifests/global_macro_futures_daily_trend_carry.json
+python -m alpha_os run-diagnostic-evaluation \
+  --manifest fixture_daily_diagnostic \
+  --evaluation-spec-id fixture_daily_diagnostic_eval \
+  --details
 
 python -m alpha_os run-walk-forward-evaluation \
   --evaluation-spec-id global_macro_futures_daily_trend_carry_eval
@@ -31,6 +33,10 @@ python -m alpha_os show-evaluation-report
 
 Additional development and diagnostic commands exist for test and research
 workflows, but they are intentionally hidden from the public CLI help.
+
+The `fixture_daily_diagnostic` manifest uses only checked-in CSV fixtures under
+`tests/fixtures/diagnostic_prices/`; it does not require `signal-noise` or any
+external market-data API.
 
 ## Repository Layout
 

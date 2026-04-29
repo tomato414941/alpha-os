@@ -3729,6 +3729,7 @@ def test_list_runtime_manifests_shows_reference_and_examples(capsys):
 
     assert "alpha-os runtime manifests" in output
     assert "global_macro_futures_daily_trend_carry.json category=reference instrument_types=future,perp subject_kinds=future,perp" in output
+    assert "fixture_daily_diagnostic.json category=diagnostic instrument_types=- subject_kinds=equity" in output
     assert "global_macro_tradeable_daily_diagnostic.json category=diagnostic" in output
     assert "global_macro_tradeable_daily_10y.json category=cross_asset_example instrument_types=future,perp subject_kinds=future,perp" in output
     assert "us_equity_narrow_directional_context.json category=equity_example instrument_types=- subject_kinds=equity" in output

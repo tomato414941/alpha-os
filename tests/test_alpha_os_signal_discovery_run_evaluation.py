@@ -2195,6 +2195,54 @@ def test_run_diagnostic_evaluation_dry_run_does_not_create_db(tmp_path, capsys):
     assert not db_path.exists()
 
 
+def test_run_fixture_diagnostic_evaluation_uses_local_csv_data(tmp_path, capsys):
+    from alpha_os.cli import main
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+
+    assert (
+        main(
+            [
+                "run-diagnostic-evaluation",
+                "--db",
+                str(db_path),
+                "--manifest",
+                "fixture_daily_diagnostic",
+                "--evaluation-spec-id",
+                "fixture_daily_diagnostic_eval",
+                "--details",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "fixture_daily_diagnostic.json" in output
+    assert "fixture_daily_equal_weight_hold_case" in output
+    assert "alpha-os diagnostic focus" in output
+    assert "decision_quality:" in output
+
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        report_state = store.get_latest_evaluation_report()
+        assert report_state is not None
+        assert report_state.report.evaluation_spec_id == "fixture_daily_diagnostic_eval"
+        task_result = report_state.report.task_results[0]
+        metric_names = {
+            item.metric_group_name for item in task_result.metric_group_results
+        }
+        assert metric_names >= {
+            "portfolio_target_return_alignment",
+            "decision_quality",
+            "portfolio_concentration",
+            "robustness",
+        }
+    finally:
+        store.close()
+
+
 def test_run_diagnostic_evaluation_dry_run_does_not_apply_manifest(
     tmp_path,
     monkeypatch,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pandas as pd
 
@@ -49,6 +50,16 @@ def load_observation_frame(
     base_url: str,
     client: "SignalClient | None" = None,
 ) -> pd.DataFrame:
+    if observation_spec.adapter_kind == "fixture_csv":
+        source_path = observation_spec.source_id.format(
+            asset=str(asset).strip().upper()
+        )
+        path = Path(source_path)
+        if not path.is_absolute():
+            path = Path(__file__).resolve().parents[2] / path
+        if not path.exists():
+            raise ValueError(f"fixture observation CSV does not exist: {path}")
+        return pd.read_csv(path)
     signal_client = client or build_signal_client(base_url=base_url)
     return signal_client.get_observation_data(
         asset=asset,
