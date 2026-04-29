@@ -5,7 +5,12 @@ from alpha_os.evaluation_report import (
     EvaluationReport,
     EvaluationTaskResult,
 )
-from alpha_os.promotion_decision import PromotionRule, decide_promotion
+from alpha_os.promotion_decision import (
+    PromotionDecision,
+    PromotionRule,
+    build_promotion_decision_id,
+    decide_promotion,
+)
 
 
 def _task_result(
@@ -78,6 +83,7 @@ def test_decide_promotion_promotes_candidate_that_beats_baseline():
             ),
         ),
         rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
     )
 
     assert decision.status == "promote"
@@ -104,6 +110,7 @@ def test_decide_promotion_rejects_candidate_with_lower_mean_net_return():
             ),
         ),
         rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
     )
 
     assert decision.status == "reject"
@@ -130,6 +137,7 @@ def test_decide_promotion_is_inconclusive_when_required_metric_is_missing():
             ),
         ),
         rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
     )
 
     assert decision.status == "inconclusive"
@@ -138,3 +146,67 @@ def test_decide_promotion_is_inconclusive_when_required_metric_is_missing():
         "robustness.worst_decision_net_return",
     )
     assert decision.metrics["candidate_worst_decision_net_return"] is None
+
+
+def test_promotion_rule_roundtrips_document():
+    rule = PromotionRule(
+        candidate_task_id="candidate",
+        baseline_task_id="baseline",
+        min_mean_net_return_edge=0.02,
+        max_worst_net_return_degradation=0.01,
+        max_drawdown_degradation=0.03,
+        max_turnover_ratio=1.5,
+    )
+
+    assert PromotionRule.from_document(rule.to_document()) == rule
+
+
+def test_promotion_decision_roundtrips_document():
+    decision = PromotionDecision(
+        promotion_decision_id="report:test:promotion:candidate:vs:baseline",
+        evaluation_report_id="report:test",
+        candidate_task_id="candidate",
+        baseline_task_id="baseline",
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        status="reject",
+        reasons=("candidate mean decision net return edge is too low",),
+        metrics={
+            "candidate_task_id": "candidate",
+            "baseline_task_id": "baseline",
+            "mean_decision_net_return_edge": -0.01,
+            "candidate_worst_decision_net_return": None,
+        },
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert PromotionDecision.from_document(decision.to_document()) == decision
+
+
+def test_decide_promotion_sets_stable_decision_id_and_created_at():
+    decision = decide_promotion(
+        evaluation_report=_report(
+            candidate=_task_result(
+                "candidate",
+                mean_net_return=0.12,
+                worst_net_return=0.02,
+                drawdown=0.04,
+                turnover=0.12,
+            ),
+            baseline=_task_result(
+                "baseline",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+        ),
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.promotion_decision_id == build_promotion_decision_id(
+        evaluation_report_id="report:test",
+        candidate_task_id="candidate",
+        baseline_task_id="baseline",
+    )
+    assert decision.created_at == "2026-04-29T00:00:00Z"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 
 PromotionStatus = Literal["promote", "reject", "inconclusive"]
@@ -16,18 +16,131 @@ class PromotionRule:
     max_drawdown_degradation: float = 0.0
     max_turnover_ratio: float = 2.0
 
+    def to_document(self) -> dict[str, str | float]:
+        return {
+            "candidate_task_id": self.candidate_task_id,
+            "baseline_task_id": self.baseline_task_id,
+            "min_mean_net_return_edge": self.min_mean_net_return_edge,
+            "max_worst_net_return_degradation": self.max_worst_net_return_degradation,
+            "max_drawdown_degradation": self.max_drawdown_degradation,
+            "max_turnover_ratio": self.max_turnover_ratio,
+        }
+
+    @classmethod
+    def from_document(cls, document: dict[str, Any]) -> "PromotionRule":
+        candidate_task_id = document.get("candidate_task_id")
+        baseline_task_id = document.get("baseline_task_id")
+        if not isinstance(candidate_task_id, str) or not candidate_task_id:
+            raise ValueError("promotion rule is missing candidate_task_id")
+        if not isinstance(baseline_task_id, str) or not baseline_task_id:
+            raise ValueError("promotion rule is missing baseline_task_id")
+        return cls(
+            candidate_task_id=candidate_task_id,
+            baseline_task_id=baseline_task_id,
+            min_mean_net_return_edge=float(
+                document.get("min_mean_net_return_edge", 0.0)
+            ),
+            max_worst_net_return_degradation=float(
+                document.get("max_worst_net_return_degradation", 0.0)
+            ),
+            max_drawdown_degradation=float(
+                document.get("max_drawdown_degradation", 0.0)
+            ),
+            max_turnover_ratio=float(document.get("max_turnover_ratio", 2.0)),
+        )
+
 
 @dataclass(frozen=True)
 class PromotionDecision:
+    promotion_decision_id: str
     evaluation_report_id: str
     candidate_task_id: str
     baseline_task_id: str
+    rule: PromotionRule
     status: PromotionStatus
     reasons: tuple[str, ...]
     metrics: dict[str, float | str | None]
+    created_at: str
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "promotion_decision_id": self.promotion_decision_id,
+            "evaluation_report_id": self.evaluation_report_id,
+            "candidate_task_id": self.candidate_task_id,
+            "baseline_task_id": self.baseline_task_id,
+            "rule": self.rule.to_document(),
+            "status": self.status,
+            "reasons": list(self.reasons),
+            "metrics": dict(self.metrics),
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_document(cls, document: dict[str, Any]) -> "PromotionDecision":
+        promotion_decision_id = document.get("promotion_decision_id")
+        evaluation_report_id = document.get("evaluation_report_id")
+        candidate_task_id = document.get("candidate_task_id")
+        baseline_task_id = document.get("baseline_task_id")
+        rule = document.get("rule")
+        status = document.get("status")
+        reasons = document.get("reasons", [])
+        metrics = document.get("metrics", {})
+        created_at = document.get("created_at")
+        if not isinstance(promotion_decision_id, str) or not promotion_decision_id:
+            raise ValueError("promotion decision is missing promotion_decision_id")
+        if not isinstance(evaluation_report_id, str) or not evaluation_report_id:
+            raise ValueError("promotion decision is missing evaluation_report_id")
+        if not isinstance(candidate_task_id, str) or not candidate_task_id:
+            raise ValueError("promotion decision is missing candidate_task_id")
+        if not isinstance(baseline_task_id, str) or not baseline_task_id:
+            raise ValueError("promotion decision is missing baseline_task_id")
+        if not isinstance(rule, dict):
+            raise ValueError("promotion decision is missing rule")
+        if status not in ("promote", "reject", "inconclusive"):
+            raise ValueError("promotion decision status is invalid")
+        if not isinstance(reasons, list) or any(
+            not isinstance(item, str) for item in reasons
+        ):
+            raise ValueError("promotion decision reasons are invalid")
+        if not isinstance(metrics, dict):
+            raise ValueError("promotion decision metrics are invalid")
+        if not isinstance(created_at, str) or not created_at:
+            raise ValueError("promotion decision is missing created_at")
+        return cls(
+            promotion_decision_id=promotion_decision_id,
+            evaluation_report_id=evaluation_report_id,
+            candidate_task_id=candidate_task_id,
+            baseline_task_id=baseline_task_id,
+            rule=PromotionRule.from_document(rule),
+            status=status,
+            reasons=tuple(reasons),
+            metrics={
+                str(key): value
+                for key, value in metrics.items()
+                if value is None or isinstance(value, (int, float, str))
+            },
+            created_at=created_at,
+        )
 
 
-def decide_promotion(*, evaluation_report, rule: PromotionRule) -> PromotionDecision:
+def build_promotion_decision_id(
+    *,
+    evaluation_report_id: str,
+    candidate_task_id: str,
+    baseline_task_id: str,
+) -> str:
+    return (
+        f"{evaluation_report_id}:promotion:"
+        f"{candidate_task_id}:vs:{baseline_task_id}"
+    )
+
+
+def decide_promotion(
+    *,
+    evaluation_report,
+    rule: PromotionRule,
+    created_at: str,
+) -> PromotionDecision:
     metrics: dict[str, float | str | None] = {
         "candidate_task_id": rule.candidate_task_id,
         "baseline_task_id": rule.baseline_task_id,
@@ -54,12 +167,19 @@ def decide_promotion(*, evaluation_report, rule: PromotionRule) -> PromotionDeci
 
     if missing_reasons:
         return PromotionDecision(
+            promotion_decision_id=build_promotion_decision_id(
+                evaluation_report_id=evaluation_report.evaluation_report_id,
+                candidate_task_id=rule.candidate_task_id,
+                baseline_task_id=rule.baseline_task_id,
+            ),
             evaluation_report_id=evaluation_report.evaluation_report_id,
             candidate_task_id=rule.candidate_task_id,
             baseline_task_id=rule.baseline_task_id,
+            rule=rule,
             status="inconclusive",
             reasons=tuple(missing_reasons),
             metrics=metrics,
+            created_at=created_at,
         )
 
     mean_net_return_edge = (
@@ -99,21 +219,35 @@ def decide_promotion(*, evaluation_report, rule: PromotionRule) -> PromotionDeci
 
     if reject_reasons:
         return PromotionDecision(
+            promotion_decision_id=build_promotion_decision_id(
+                evaluation_report_id=evaluation_report.evaluation_report_id,
+                candidate_task_id=rule.candidate_task_id,
+                baseline_task_id=rule.baseline_task_id,
+            ),
             evaluation_report_id=evaluation_report.evaluation_report_id,
             candidate_task_id=rule.candidate_task_id,
             baseline_task_id=rule.baseline_task_id,
+            rule=rule,
             status="reject",
             reasons=tuple(reject_reasons),
             metrics=metrics,
+            created_at=created_at,
         )
 
     return PromotionDecision(
+        promotion_decision_id=build_promotion_decision_id(
+            evaluation_report_id=evaluation_report.evaluation_report_id,
+            candidate_task_id=rule.candidate_task_id,
+            baseline_task_id=rule.baseline_task_id,
+        ),
         evaluation_report_id=evaluation_report.evaluation_report_id,
         candidate_task_id=rule.candidate_task_id,
         baseline_task_id=rule.baseline_task_id,
+        rule=rule,
         status="promote",
         reasons=("candidate satisfies promotion rule",),
         metrics=metrics,
+        created_at=created_at,
     )
 
 
