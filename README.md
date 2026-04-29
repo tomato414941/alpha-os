@@ -1,16 +1,16 @@
 # alpha-os
 
-`alpha_os` is the current mainline package for signal discovery, strategy
-definition, and strict out-of-sample evaluation.
+`alpha_os` is the current mainline package for signal discovery research,
+strategy definition, and out-of-sample evaluation.
 
 ## Current Mainline
 
 - package: `src/alpha_os/`
 - entrypoint: `python -m alpha_os --help`
 - focus:
-  - signal discovery
+  - signal discovery research
   - strategy specs and initial strategy state
-  - strict OOS evaluation
+  - OOS evaluation
   - portfolio decision and backtest flows
 
 ## Mainline CLI
@@ -37,6 +37,11 @@ workflows, but they are intentionally hidden from the public CLI help.
 The `fixture_daily_diagnostic` manifest uses only checked-in CSV fixtures under
 `tests/fixtures/diagnostic_prices/`; it does not require `signal-noise` or any
 external market-data API.
+
+Signal discovery is treated as an early research workflow in this repository.
+The current code can define and screen candidate signal specifications, but the
+checked-in fixture demo does not prove that any generated signal is profitable
+or robust.
 
 ## Repository Layout
 
