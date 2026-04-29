@@ -83,6 +83,34 @@ class EvaluationFold:
         )
 
 
+def _validate_date_range(range_: EvaluationDateRange) -> None:
+    if range_.start_date > range_.end_date:
+        raise ValueError(
+            f"evaluation date range has start_date after end_date: {range_.label}"
+        )
+
+
+def _validate_unique_labels(label_kind: str, labels: tuple[str, ...]) -> None:
+    duplicates = sorted({label for label in labels if labels.count(label) > 1})
+    if duplicates:
+        raise ValueError(
+            f"evaluation spec contains duplicate {label_kind} labels: "
+            + ", ".join(duplicates)
+        )
+
+
+def _validate_backtest_oos_like_folds(folds: tuple[EvaluationFold, ...]) -> None:
+    _validate_unique_labels("fold", tuple(fold.label for fold in folds))
+    for fold in folds:
+        _validate_date_range(fold.execution_range)
+        _validate_unique_labels(
+            f"evaluation range for fold {fold.label}",
+            tuple(item.label for item in fold.evaluation_date_ranges),
+        )
+        for item in fold.evaluation_date_ranges:
+            _validate_date_range(item)
+
+
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
@@ -100,6 +128,14 @@ class EvaluationSpec:
                 "evaluation spec cannot define both evaluation_folds and "
                 "top-level evaluation_date_ranges"
             )
+        _validate_date_range(self.execution_range)
+        _validate_unique_labels(
+            "top-level evaluation range",
+            tuple(item.label for item in self.evaluation_date_ranges),
+        )
+        for item in self.evaluation_date_ranges:
+            _validate_date_range(item)
+        _validate_backtest_oos_like_folds(self.evaluation_folds)
 
     @property
     def metric_config(self) -> EvaluationMetricConfig:
