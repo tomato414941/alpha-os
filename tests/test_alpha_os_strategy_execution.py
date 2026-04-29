@@ -1,0 +1,277 @@
+from __future__ import annotations
+
+
+def _build_trading_strategy(
+    *,
+    strategy_id: str,
+    label: str,
+    subject_set_id: str | None = None,
+    target_id: str | None = None,
+    signal_discovery_id: str | None = None,
+    signal_kind: str = "constant_hold",
+    family_mix: str | None = None,
+    execution_kind: str = "trainless",
+    selection_kind: str = "all_assets",
+    sizing_method: str | None = None,
+    rebalance: str | None = None,
+    long_only: bool | None = None,
+    top_k: int | None = None,
+    gross_exposure_cap: float | None = None,
+    asset_class_weight_caps: dict[str, float] | None = None,
+    cluster_weight_caps: dict[str, float] | None = None,
+    market_impact_bps: float | None = None,
+    fee_bps: float | None = None,
+    bid_ask_spread_bps: float | None = None,
+    funding_bps_per_step: float | None = None,
+    borrow_fee_bps_per_step: float | None = None,
+    turnover_friction: float | None = None,
+    no_trade_band: float | None = None,
+    adaptation_enabled: bool = False,
+    adaptation_blend: float = 0.2,
+    created_at: str = "2026-04-08T00:00:00Z",
+):
+    from alpha_os.trading_strategy import (
+        AdaptationPolicySpec,
+        SizingPolicySpec,
+        ExecutionPolicySpec,
+        PortfolioPolicySpec,
+        RebalancePolicySpec,
+        RiskPolicySpec,
+        SelectionPolicySpec,
+        SignalDefinitionPolicySpec,
+        SignalPolicySpec,
+        SignalUpdatePolicySpec,
+        StrategyPortfolioSpec,
+        TradingStrategyScopeSpec,
+        TradingStrategySpec,
+        HoldingCostPolicySpec,
+        RebalanceFrictionPolicySpec,
+    )
+
+    portfolio_policy = PortfolioPolicySpec(
+        selection_policy=SelectionPolicySpec(
+            selection_kind=selection_kind,
+            top_k=top_k,
+        ),
+        sizing_policy=SizingPolicySpec(
+            sizing_method=sizing_method,
+        ),
+        rebalance_policy=RebalancePolicySpec(rebalance=rebalance),
+        risk_policy=RiskPolicySpec(
+            long_only=long_only,
+            gross_exposure_cap=gross_exposure_cap,
+            asset_class_weight_caps=(
+                {} if asset_class_weight_caps is None else dict(asset_class_weight_caps)
+            ),
+            cluster_weight_caps=(
+                {} if cluster_weight_caps is None else dict(cluster_weight_caps)
+            ),
+        ),
+    )
+    return TradingStrategySpec(
+        strategy_id=strategy_id,
+        label=label,
+        scope=TradingStrategyScopeSpec(
+            subject_set_id=subject_set_id,
+            target_id=target_id,
+        ),
+        signal_policy=SignalPolicySpec(
+            definition_policy=SignalDefinitionPolicySpec(
+                signal_discovery_id=signal_discovery_id,
+                signal_kind=signal_kind,
+                family_mix=family_mix,
+            ),
+            update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
+        ),
+        portfolio=StrategyPortfolioSpec.from_legacy(
+            portfolio_policy=portfolio_policy,
+            rebalance_friction_policy=RebalanceFrictionPolicySpec(
+                turnover_friction=turnover_friction,
+                no_trade_band=no_trade_band,
+            ),
+            execution_policy=ExecutionPolicySpec(
+                market_impact_bps=market_impact_bps,
+                fee_bps=fee_bps,
+                bid_ask_spread_bps=bid_ask_spread_bps,
+            ),
+            holding_cost_policy=HoldingCostPolicySpec(
+                funding_bps_per_step=funding_bps_per_step,
+                borrow_fee_bps_per_step=borrow_fee_bps_per_step,
+            ),
+            portfolio_construction=None,
+            sleeve_composition=None,
+        ),
+        created_at=created_at,
+        adaptation_policy=AdaptationPolicySpec(
+            enabled=adaptation_enabled,
+            adaptation_blend=adaptation_blend,
+        ),
+    )
+
+
+def test_resolve_strategy_execution_spec_defaults_to_trainless():
+    from alpha_os.strategy_execution import resolve_strategy_execution_spec
+
+    execution = resolve_strategy_execution_spec(
+        {
+            "signal": "constant_hold",
+            "selection": "all_assets",
+        }
+    )
+
+    assert execution.kind == "trainless"
+    assert execution.signal_discovery_id is None
+    assert execution.requires_signal_train is False
+    assert execution.retrains_per_fold is False
+    assert execution.reuses_frozen_state is False
+
+
+def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
+    from alpha_os.strategy_execution import resolve_strategy_execution_spec
+
+    by_discovery = resolve_strategy_execution_spec(
+        {
+            "signal_discovery": "discovery:core",
+            "signal": "relative_strength",
+        }
+    )
+    by_signal_kind = resolve_strategy_execution_spec(
+        {
+            "signal": "neural_model",
+        }
+    )
+
+    assert by_discovery.kind == "trained"
+    assert by_discovery.signal_discovery_id == "discovery:core"
+    assert by_discovery.requires_signal_train is True
+    assert by_discovery.retrains_per_fold is True
+    assert by_discovery.reuses_frozen_state is False
+
+    assert by_signal_kind.kind == "trained"
+    assert by_signal_kind.signal_discovery_id is None
+    assert by_signal_kind.requires_signal_train is True
+
+
+def test_trading_strategy_exposes_frozen_execution_contract():
+    strategy = _build_trading_strategy(
+        strategy_id="strategy:test",
+        label="Frozen Test",
+        signal_kind="relative_strength",
+        execution_kind="frozen",
+        created_at="2026-04-07T00:00:00Z",
+    )
+
+    assert strategy.execution.kind == "frozen"
+    assert strategy.execution_kind == "frozen"
+    assert strategy.requires_signal_train is False
+    assert strategy.execution.reuses_frozen_state is True
+
+
+def test_trading_strategy_exposes_policy_hierarchy():
+    trading_strategy = _build_trading_strategy(
+        strategy_id="strategy:test",
+        label="Strategy Test",
+        subject_set_id="core_crypto",
+        target_id="residual_return_3d",
+        signal_discovery_id="discovery:core",
+        family_mix="relative_strength",
+        execution_kind="trained",
+        sizing_method="equal_weight",
+        rebalance="every_5_steps",
+        long_only=True,
+        top_k=5,
+        gross_exposure_cap=1.5,
+        asset_class_weight_caps={"equity_index": 0.6},
+        cluster_weight_caps={"eq_us": 0.25},
+        market_impact_bps=5.0,
+        fee_bps=2.0,
+        bid_ask_spread_bps=3.0,
+        funding_bps_per_step=1.5,
+        borrow_fee_bps_per_step=2.5,
+        turnover_friction=0.1,
+        no_trade_band=0.02,
+        adaptation_enabled=True,
+        adaptation_blend=0.35,
+    )
+
+    assert trading_strategy.strategy_id == "strategy:test"
+    assert trading_strategy.scope.subject_set_id == "core_crypto"
+    assert trading_strategy.scope.target_id == "residual_return_3d"
+    assert (
+        trading_strategy.signal_policy.definition_policy.signal_discovery_id
+        == "discovery:core"
+    )
+    assert (
+        trading_strategy.signal_policy.definition_policy.family_mix
+        == "relative_strength"
+    )
+    assert (
+        trading_strategy.signal_policy.update_policy.execution_kind == "trained"
+    )
+    assert trading_strategy.portfolio_policy.selection_policy.selection_kind == "all_assets"
+    assert trading_strategy.portfolio_policy.selection_policy.top_k == 5
+    assert (
+        trading_strategy.portfolio_policy.sizing_policy.sizing_method
+        == "equal_weight"
+    )
+    assert (
+        trading_strategy.portfolio_policy.rebalance_policy.rebalance
+        == "every_5_steps"
+    )
+    assert trading_strategy.portfolio_policy.risk_policy.long_only is True
+    assert trading_strategy.portfolio_policy.risk_policy.gross_exposure_cap == 1.5
+    assert trading_strategy.portfolio_policy.risk_policy.asset_class_weight_caps == {
+        "equity_index": 0.6
+    }
+    assert trading_strategy.portfolio_policy.risk_policy.cluster_weight_caps == {
+        "eq_us": 0.25
+    }
+    assert trading_strategy.rebalance_friction_policy.turnover_friction == 0.1
+    assert trading_strategy.rebalance_friction_policy.no_trade_band == 0.02
+    assert trading_strategy.execution_policy.market_impact_bps == 5.0
+    assert trading_strategy.execution_policy.fee_bps == 2.0
+    assert trading_strategy.execution_policy.bid_ask_spread_bps == 3.0
+    assert trading_strategy.holding_cost_policy.funding_bps_per_step == 1.5
+    assert trading_strategy.holding_cost_policy.borrow_fee_bps_per_step == 2.5
+    assert trading_strategy.adaptation_policy.enabled is True
+    assert trading_strategy.adaptation_policy.adaptation_blend == 0.35
+
+
+def test_trading_strategy_spec_round_trips_through_document():
+    from alpha_os.trading_strategy import TradingStrategySpec
+
+    strategy = _build_trading_strategy(
+        strategy_id="strategy:test",
+        label="Strategy Test",
+        subject_set_id="core_crypto",
+        target_id="residual_return_3d",
+        signal_discovery_id="discovery:core",
+        family_mix="relative_strength",
+        sizing_method="equal_weight",
+        rebalance="every_5_steps",
+        long_only=True,
+        top_k=5,
+        gross_exposure_cap=1.5,
+        asset_class_weight_caps={"equity_index": 0.6},
+        cluster_weight_caps={"eq_us": 0.25},
+        market_impact_bps=5.0,
+        fee_bps=2.0,
+        bid_ask_spread_bps=3.0,
+        funding_bps_per_step=1.5,
+        borrow_fee_bps_per_step=2.5,
+        turnover_friction=0.1,
+        no_trade_band=0.02,
+    )
+
+    round_tripped = TradingStrategySpec.from_document(strategy.to_document())
+
+    assert round_tripped.strategy_id == strategy.strategy_id
+    assert round_tripped.label == strategy.label
+    assert round_tripped.created_at == strategy.created_at
+    assert "portfolio" in strategy.to_document()
+    assert "portfolio_policy" not in strategy.to_document()
+    assert round_tripped.portfolio == strategy.portfolio
+    assert (
+        round_tripped.portfolio_construction
+        == strategy.portfolio.portfolio_construction
+    )

@@ -1,0 +1,348 @@
+# Strategy Execution Model
+
+This file is the source of truth for how a `strategy spec` is executed across
+different engines.
+
+It separates:
+
+- trading-strategy semantics
+- engine mechanics
+- current mainline workflow
+- target long-horizon workflow
+
+## Core Rule
+
+A trading strategy should be portable across engines.
+
+That means:
+
+- the same `trading strategy` should mean the same thing everywhere
+- different engines may optimize how it is run
+- engines should not silently change what the strategy does
+
+So:
+
+- **semantics must stay consistent**
+- **mechanics may differ by engine**
+
+## Trading Strategy vs Engine
+
+- **trading strategy**
+  - the portable trading definition
+  - composed of strategy scope, signal policy, portfolio policy, rebalance friction policy, and execution policy
+- **engine**
+  - the mechanism that runs the strategy in a specific context
+
+Examples of engines:
+
+- strict OOS evaluation engine
+- fixed-state replay engine
+- paper engine
+- live engine
+
+`evaluation` is slightly too broad as a bare noun, but the current mainline
+names are acceptable when they stay scoped:
+
+- `evaluation spec`
+- `evaluation task`
+- `evaluation report`
+
+These should be read as **trading-strategy evaluation** concepts, not as generic
+execution concepts.
+
+## Trading Strategy Hierarchy
+
+The long-horizon target hierarchy is:
+
+```text
+TradingStrategy
+├─ StrategyScope
+├─ SignalPolicy
+│  ├─ SignalDefinitionPolicy
+│  └─ SignalUpdatePolicy
+├─ PortfolioPolicy
+│  ├─ SelectionPolicy
+│  ├─ SizingPolicy
+│  ├─ RebalancePolicy
+│  └─ RiskPolicy
+├─ RebalanceFrictionPolicy
+└─ ExecutionPolicy
+```
+
+This is distinct from run context:
+
+```text
+StrategyRunSpec
+├─ TradingStrategy
+└─ RunPolicy
+```
+
+So:
+
+- `TradingStrategy` defines what should be traded and how it should be realized
+- `RunPolicy` defines the engine-side context in which it should run
+
+`prediction` is not a peer of `TradingStrategy`. It is one output produced
+inside `SignalPolicy`.
+
+So the clean relation is:
+
+- `prediction` = one signal-layer output
+- `signal evaluation` = whether those outputs contain usable information
+- `strategy evaluation` = whether the full trading strategy produces good
+  portfolio outcomes
+
+Good predictions do not guarantee a good strategy. Good strategy outcomes also
+do not prove that prediction quality was the dominant source of edge.
+
+## Strategy Execution Kind
+
+The current mainline trading-strategy contract has three execution kinds.
+
+### `trainless`
+
+Use when the strategy can produce decisions directly from current inputs without
+train-period state.
+
+Properties:
+
+- no signal-train stage is required
+- no initial strategy state is required
+- evaluation can run fold-by-fold without upstream retraining
+
+### `trained`
+
+Use when the strategy requires train-period state before test-period execution.
+
+Properties:
+
+- a signal train is required
+- initial strategy state may be created per fold
+- strict OOS evaluation may retrain per fold
+
+### `fixed-state replay`
+
+Use when evaluation should reuse a precomputed fixed initial strategy state rather
+than retraining during evaluation.
+
+Properties:
+
+- a fixed initial strategy state is required
+- replay can compare downstream behavior without re-running discovery
+- this is the preferred benchmark shape when the upstream state should stay fixed
+
+## Strategy Run Mode
+
+The current mainline engine contract has distinct run modes.
+
+- `backtest_oos`
+  - run the strategy under a strict train/test-separated evaluation spec
+- `fixed_state_replay`
+  - run the strategy with a fixed initial strategy state instead of retraining
+- `paper`
+  - reserved for future paper-trading execution
+- `live`
+  - reserved for future live execution
+
+So:
+
+- `execution kind` belongs to strategy semantics
+- `run mode` belongs to engine context
+
+## Current Mainline Mapping
+
+The current codebase is still transitional. The practical mapping is:
+
+| Current object | Closest long-horizon concept | Notes |
+|---------------|------------------------------|-------|
+| `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
+| `strategy execution kind` | mostly `SignalPolicy` | It describes how signal-related state is produced or reused. |
+| `run mode` | `RunPolicy` | `backtest_oos` and `fixed_state_replay` are engine-side choices. |
+| `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
+| `EvaluationSpec` | evaluation branch of `RunPolicy` | It is not the full run-policy universe, only the evaluation branch. |
+
+### Current Evaluation-Side Run Modes
+
+| Run mode | Purpose | Required inputs | Retraining during evaluation |
+|----------|---------|-----------------|------------------------------|
+| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by its execution kind. | Allowed when the strategy execution kind is `trained`. |
+| `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `fixed_initial_strategy_state_id`. | Never. |
+
+This means:
+
+- `backtest_oos` is the primary evaluation mode
+- `fixed_state_replay` is a comparison mode, not the default evaluation mode
+- the difference is owned by the engine contract, not by strategy semantics
+
+The evaluation object remains the trading strategy under a specific engine
+context. Prediction-level metrics are only one part of the resulting report.
+
+### Current Run-Input Contracts
+
+The current mainline should treat run-mode inputs as separate contract objects.
+
+| Run mode | Contract object | Required fields |
+|----------|-----------------|-----------------|
+| `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
+| `fixed_state_replay` | `FixedStateReplayRunInputs` | `evaluation_spec_id`, `fixed_initial_strategy_state_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
+| `paper` | `PaperRunInputs` | `as_of_timestamp`, optional `current_portfolio_state_id` |
+| `live` | `LiveRunInputs` | `as_of_timestamp`, `venue_id`, optional `current_portfolio_state_id` |
+
+Only the first two are active in the current mainline. The `paper` and `live`
+contracts are placeholders for future engines.
+
+## Current Mainline Workflow
+
+The current mainline has three distinct workflows.
+
+### 1. Signal Discovery Run
+
+Purpose:
+
+- generate and screen signals
+- produce train-period outputs
+- create `initial strategy state` when needed
+
+Inputs:
+
+- `signal discovery`
+- subject set
+- target
+- train-period data
+
+Outputs:
+
+- signal discovery run record
+- screening result
+- compressed belief
+- initial strategy state
+
+Use this when:
+
+- the strategy needs upstream discovery or fitting
+- a new trained or frozen state must be produced
+
+### 2. Evaluation Run
+
+Purpose:
+
+- compare a strategy under an evaluation spec
+- run strict OOS folds
+
+Inputs:
+
+- `evaluation task`
+- evaluation spec
+- current strategy run mode
+
+Outputs:
+
+- evaluation report
+- evaluation metric group results
+- fold-level runtime artifacts
+
+Use this when:
+
+- the question is whether a strategy performs well under strict OOS
+- retraining during evaluation is part of the allowed evaluation procedure
+
+### 3. Fixed-State Replay
+
+Purpose:
+
+- compare downstream strategy behavior while holding upstream state fixed
+
+Inputs:
+
+- `evaluation task`
+- fixed initial strategy state
+- evaluation spec
+
+Outputs:
+
+- evaluation report
+- replay-only comparison metrics
+
+Use this when:
+
+- the upstream signal state is already known
+- the comparison question is about downstream strategy behavior
+- re-running discovery would add cost without adding insight
+- retraining during evaluation would blur the comparison question
+
+## Current Mainline Boundary
+
+The current mainline should be understood like this:
+
+- discovery finds or fits signal-related state
+- evaluation compares strategies
+- fixed-state replay compares strategies without re-running discovery
+
+So:
+
+- discovery does **not** directly decide portfolio outcomes
+- evaluation does **not** invent new signals during replay
+- fixed-state replay does **not** retrain
+
+## Target Workflow
+
+The target long-horizon workflow is slightly broader than the current mainline.
+
+### 1. Signal Discovery
+
+- find useful signals
+- evaluate and screen them
+
+### 2. Strategy Construction
+
+- build executable strategies from signals, selection, allocation, rebalance,
+  and risk rules
+
+### 3. Backtest OOS Evaluation
+
+- compare strategies under shared evaluation specs
+
+### 4. Promotion
+
+- promote strong strategies into standard or production-ready candidates
+
+## Why Current And Target Are Different
+
+The current mainline is an implementation-oriented operating model.
+
+The target workflow is the cleaner conceptual model.
+
+They overlap, but they are not identical:
+
+- the current mainline explains how the codebase runs today
+- the target workflow explains what the architecture should converge toward
+
+## Design Rule
+
+When changing execution behavior, ask:
+
+1. does this preserve strategy semantics across engines
+2. does this change only mechanics, not meaning
+3. does this make discovery, evaluation, and replay easier to reason about as
+   separate workflows
+
+If the answer is no, the change is probably mixing engine mechanics back into
+strategy semantics.
+
+## Current Code Boundary
+
+The current codebase should converge on this split:
+
+- `TradingStrategySpec`
+  - strategy semantics
+- `StrategyExecutionRequest`
+  - one engine-specific execution request
+- `EvaluationTask`
+  - a strategy-evaluation request shape
+- `EvaluationReport`
+  - the recorded result of strategy evaluation
+
+In other words:
+
+- not every strategy execution is an evaluation
+- but every current mainline evaluation is a form of strategy execution

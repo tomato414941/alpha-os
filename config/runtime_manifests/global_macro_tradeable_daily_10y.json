@@ -1,0 +1,796 @@
+{
+  "subject_sets": [
+    {
+      "subject_set_id": "global_macro_tradeable_daily_10y",
+      "observation_specs": [
+        {
+          "observation_spec_id": "macro_daily_close",
+          "observable_id": "daily_close"
+        }
+      ],
+      "instruments": [
+        {
+          "instrument_id": "ES_future",
+          "instrument_type": "future",
+          "asset": "ES",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "equity_index",
+          "roll_rule": "front_month",
+          "multiplier": 50.0,
+          "asset_class": "equity_index",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "eq_us"
+        },
+        {
+          "instrument_id": "NQ_future",
+          "instrument_type": "future",
+          "asset": "NQ",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "equity_index",
+          "roll_rule": "front_month",
+          "multiplier": 20.0,
+          "asset_class": "equity_index",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "eq_us_growth"
+        },
+        {
+          "instrument_id": "YM_future",
+          "instrument_type": "future",
+          "asset": "YM",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "equity_index",
+          "roll_rule": "front_month",
+          "multiplier": 5.0,
+          "asset_class": "equity_index",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "eq_us_value"
+        },
+        {
+          "instrument_id": "NKD_future",
+          "instrument_type": "future",
+          "asset": "NKD",
+          "venue": "CME",
+          "quote_ccy": "JPY",
+          "contract_family": "equity_index",
+          "roll_rule": "front_month",
+          "multiplier": 5.0,
+          "asset_class": "equity_index",
+          "region": "japan",
+          "liquidity_tier": "tier1",
+          "cluster": "eq_asia"
+        },
+        {
+          "instrument_id": "ZN_future",
+          "instrument_type": "future",
+          "asset": "ZN",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "rates",
+          "roll_rule": "front_month",
+          "multiplier": 1000.0,
+          "asset_class": "rates",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "rates_us"
+        },
+        {
+          "instrument_id": "ZB_future",
+          "instrument_type": "future",
+          "asset": "ZB",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "rates",
+          "roll_rule": "front_month",
+          "multiplier": 1000.0,
+          "asset_class": "rates",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "rates_us"
+        },
+        {
+          "instrument_id": "ZF_future",
+          "instrument_type": "future",
+          "asset": "ZF",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "rates",
+          "roll_rule": "front_month",
+          "multiplier": 1000.0,
+          "asset_class": "rates",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "rates_us"
+        },
+        {
+          "instrument_id": "ZT_future",
+          "instrument_type": "future",
+          "asset": "ZT",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "rates",
+          "roll_rule": "front_month",
+          "multiplier": 2000.0,
+          "asset_class": "rates",
+          "region": "us",
+          "liquidity_tier": "tier1",
+          "cluster": "rates_us"
+        },
+        {
+          "instrument_id": "DX_future",
+          "instrument_type": "future",
+          "asset": "DX",
+          "venue": "ICEUS",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 1000.0,
+          "asset_class": "fx",
+          "region": "global",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_usd"
+        },
+        {
+          "instrument_id": "6E_future",
+          "instrument_type": "future",
+          "asset": "6E",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 125000.0,
+          "asset_class": "fx",
+          "region": "europe",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "6J_future",
+          "instrument_type": "future",
+          "asset": "6J",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 12500000.0,
+          "asset_class": "fx",
+          "region": "japan",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "6B_future",
+          "instrument_type": "future",
+          "asset": "6B",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 62500.0,
+          "asset_class": "fx",
+          "region": "uk",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "6A_future",
+          "instrument_type": "future",
+          "asset": "6A",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 100000.0,
+          "asset_class": "fx",
+          "region": "australia",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "6C_future",
+          "instrument_type": "future",
+          "asset": "6C",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 100000.0,
+          "asset_class": "fx",
+          "region": "canada",
+          "liquidity_tier": "tier1",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "6S_future",
+          "instrument_type": "future",
+          "asset": "6S",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "fx",
+          "roll_rule": "front_month",
+          "multiplier": 125000.0,
+          "asset_class": "fx",
+          "region": "switzerland",
+          "liquidity_tier": "tier2",
+          "cluster": "fx_g10"
+        },
+        {
+          "instrument_id": "GC_future",
+          "instrument_type": "future",
+          "asset": "GC",
+          "venue": "COMEX",
+          "quote_ccy": "USD",
+          "contract_family": "commodity",
+          "roll_rule": "front_month",
+          "multiplier": 100.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier1",
+          "cluster": "commodity_metal"
+        },
+        {
+          "instrument_id": "CL_future",
+          "instrument_type": "future",
+          "asset": "CL",
+          "venue": "NYMEX",
+          "quote_ccy": "USD",
+          "contract_family": "commodity",
+          "roll_rule": "front_month",
+          "multiplier": 1000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier1",
+          "cluster": "commodity_energy"
+        },
+        {
+          "instrument_id": "RB_future",
+          "instrument_type": "future",
+          "asset": "RB",
+          "venue": "NYMEX",
+          "quote_ccy": "USD",
+          "contract_family": "commodity",
+          "roll_rule": "front_month",
+          "multiplier": 42000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier2",
+          "cluster": "commodity_energy"
+        },
+        {
+          "instrument_id": "HO_future",
+          "instrument_type": "future",
+          "asset": "HO",
+          "venue": "NYMEX",
+          "quote_ccy": "USD",
+          "contract_family": "energy",
+          "roll_rule": "front_month",
+          "multiplier": 42000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier1",
+          "cluster": "commodity_energy"
+        },
+        {
+          "instrument_id": "SB_future",
+          "instrument_type": "future",
+          "asset": "SB",
+          "venue": "ICEUS",
+          "quote_ccy": "USD",
+          "contract_family": "agriculture",
+          "roll_rule": "front_month",
+          "multiplier": 112000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier2",
+          "cluster": "commodity_agriculture"
+        },
+        {
+          "instrument_id": "ZO_future",
+          "instrument_type": "future",
+          "asset": "ZO",
+          "venue": "CBOT",
+          "quote_ccy": "USD",
+          "contract_family": "agriculture",
+          "roll_rule": "front_month",
+          "multiplier": 5000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier2",
+          "cluster": "commodity_agriculture"
+        },
+        {
+          "instrument_id": "GF_future",
+          "instrument_type": "future",
+          "asset": "GF",
+          "venue": "CME",
+          "quote_ccy": "USD",
+          "contract_family": "livestock",
+          "roll_rule": "front_month",
+          "multiplier": 50000.0,
+          "asset_class": "commodity",
+          "region": "global",
+          "liquidity_tier": "tier2",
+          "cluster": "commodity_livestock"
+        },
+        {
+          "instrument_id": "BTCUSDT_perp",
+          "instrument_type": "perp",
+          "asset": "BTCUSDT",
+          "venue": "BINANCE",
+          "quote_ccy": "USDT",
+          "contract_family": "crypto",
+          "roll_rule": "perpetual",
+          "multiplier": 1.0,
+          "asset_class": "crypto",
+          "region": "global",
+          "liquidity_tier": "tier1",
+          "cluster": "crypto_major"
+        }
+      ],
+      "bindings": [
+        {
+          "subject_id": "ES_future",
+          "subject_kind": "future",
+          "asset": "ES",
+          "instrument_id": "ES_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "NQ_future",
+          "subject_kind": "future",
+          "asset": "NQ",
+          "instrument_id": "NQ_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "YM_future",
+          "subject_kind": "future",
+          "asset": "YM",
+          "instrument_id": "YM_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "NKD_future",
+          "subject_kind": "future",
+          "asset": "NKD",
+          "instrument_id": "NKD_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "ZN_future",
+          "subject_kind": "future",
+          "asset": "ZN",
+          "instrument_id": "ZN_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "ZB_future",
+          "subject_kind": "future",
+          "asset": "ZB",
+          "instrument_id": "ZB_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "ZF_future",
+          "subject_kind": "future",
+          "asset": "ZF",
+          "instrument_id": "ZF_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "ZT_future",
+          "subject_kind": "future",
+          "asset": "ZT",
+          "instrument_id": "ZT_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "DX_future",
+          "subject_kind": "future",
+          "asset": "DX",
+          "instrument_id": "DX_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6E_future",
+          "subject_kind": "future",
+          "asset": "6E",
+          "instrument_id": "6E_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6J_future",
+          "subject_kind": "future",
+          "asset": "6J",
+          "instrument_id": "6J_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6B_future",
+          "subject_kind": "future",
+          "asset": "6B",
+          "instrument_id": "6B_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6A_future",
+          "subject_kind": "future",
+          "asset": "6A",
+          "instrument_id": "6A_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6C_future",
+          "subject_kind": "future",
+          "asset": "6C",
+          "instrument_id": "6C_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "6S_future",
+          "subject_kind": "future",
+          "asset": "6S",
+          "instrument_id": "6S_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "GC_future",
+          "subject_kind": "future",
+          "asset": "GC",
+          "instrument_id": "GC_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "CL_future",
+          "subject_kind": "future",
+          "asset": "CL",
+          "instrument_id": "CL_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "RB_future",
+          "subject_kind": "future",
+          "asset": "RB",
+          "instrument_id": "RB_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "HO_future",
+          "subject_kind": "future",
+          "asset": "HO",
+          "instrument_id": "HO_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "SB_future",
+          "subject_kind": "future",
+          "asset": "SB",
+          "instrument_id": "SB_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "ZO_future",
+          "subject_kind": "future",
+          "asset": "ZO",
+          "instrument_id": "ZO_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "GF_future",
+          "subject_kind": "future",
+          "asset": "GF",
+          "instrument_id": "GF_future",
+          "observation_spec_id": "macro_daily_close"
+        },
+        {
+          "subject_id": "BTCUSDT_perp",
+          "subject_kind": "perp",
+          "asset": "BTCUSDT",
+          "instrument_id": "BTCUSDT_perp",
+          "observation_spec_id": "macro_daily_close"
+        }
+      ],
+      "universe_policy": {
+        "base_currency": "USD",
+        "trading_calendar": "multi_venue",
+        "benchmark_id": "global_macro_tradeable_daily_10y"
+      }
+    }
+  ],
+  "generated_signal_discoveries": [
+    {
+      "signal_discovery_id": "global_macro_tradeable_daily_10y_search",
+      "subject_set_id": "global_macro_tradeable_daily_10y",
+      "target_id": "residual_return_5d",
+      "operator_ids": [
+        "time_series_trend"
+      ],
+      "primary_observable_ids": [
+        "daily_close"
+      ],
+      "parameter_space": {
+        "lookback": [
+          20,
+          60,
+          120
+        ]
+      },
+      "selection_policy": {
+        "min_sample_count": 20,
+        "min_abs_corr": 0.03,
+        "min_stability_score": 0.08,
+        "pre_screen_top_k_per_kind": 2,
+        "pre_screen_min_abs_corr": 0.02,
+        "probe_max_dates": 30,
+        "probe_min_sample_count": 15,
+        "probe_min_abs_corr": 0.02,
+        "probe_max_family_survivors_per_subject": 1,
+        "survivor_min_sample_count": 20,
+        "survivor_min_abs_corr": 0.03,
+        "survivor_max_family_survivors_per_subject": 1,
+        "snapshot_retention": "latest_per_survivor",
+        "adaptive_family_budget": true,
+        "adaptive_budget_stability_scale": 2.0,
+        "max_family_survivors_per_subject": 1
+      }
+    }
+  ],
+  "evaluation_specs": [
+    {
+      "evaluation_spec_id": "global_macro_tradeable_daily_10y_eval",
+      "execution_range": {
+        "label": "train_seed_2014",
+        "start_date": "2014-01-02",
+        "end_date": "2014-12-31"
+      },
+      "evaluation_folds": [
+        {
+          "label": "fold_2014_to_2015",
+          "execution_range": {
+            "label": "train_to_2014",
+            "start_date": "2014-01-02",
+            "end_date": "2014-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2015",
+              "start_date": "2015-01-01",
+              "end_date": "2015-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2016",
+          "execution_range": {
+            "label": "train_to_2015",
+            "start_date": "2014-01-02",
+            "end_date": "2015-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2016",
+              "start_date": "2016-01-01",
+              "end_date": "2016-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2017",
+          "execution_range": {
+            "label": "train_to_2016",
+            "start_date": "2014-01-02",
+            "end_date": "2016-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2017",
+              "start_date": "2017-01-01",
+              "end_date": "2017-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2018",
+          "execution_range": {
+            "label": "train_to_2017",
+            "start_date": "2014-01-02",
+            "end_date": "2017-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2018",
+              "start_date": "2018-01-01",
+              "end_date": "2018-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2019",
+          "execution_range": {
+            "label": "train_to_2018",
+            "start_date": "2014-01-02",
+            "end_date": "2018-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2019",
+              "start_date": "2019-01-01",
+              "end_date": "2019-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2020",
+          "execution_range": {
+            "label": "train_to_2019",
+            "start_date": "2014-01-02",
+            "end_date": "2019-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2020",
+              "start_date": "2020-01-01",
+              "end_date": "2020-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2021",
+          "execution_range": {
+            "label": "train_to_2020",
+            "start_date": "2014-01-02",
+            "end_date": "2020-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2021",
+              "start_date": "2021-01-01",
+              "end_date": "2021-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2022",
+          "execution_range": {
+            "label": "train_to_2021",
+            "start_date": "2014-01-02",
+            "end_date": "2021-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2022",
+              "start_date": "2022-01-01",
+              "end_date": "2022-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2023",
+          "execution_range": {
+            "label": "train_to_2022",
+            "start_date": "2014-01-02",
+            "end_date": "2022-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2023",
+              "start_date": "2023-01-01",
+              "end_date": "2023-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2014_to_2024",
+          "execution_range": {
+            "label": "train_to_2023",
+            "start_date": "2014-01-02",
+            "end_date": "2023-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2024",
+              "start_date": "2024-01-01",
+              "end_date": "2024-12-31"
+            }
+          ]
+        }
+      ],
+      "metric_group_names": [
+        "system_efficiency",
+        "signal_discovery_quality",
+        "signed_belief_quality",
+        "prediction_diagnostics",
+        "portfolio_target_return_alignment",
+        "sizing_policy_quality",
+        "rebalance_policy_quality",
+        "decision_quality",
+        "portfolio_risk_budget",
+        "portfolio_construction_trace",
+        "portfolio_concentration",
+        "robustness"
+      ],
+      "metric_windows": [
+        20
+      ]
+    }
+  ],
+  "evaluation_tasks": [
+    {
+      "evaluation_spec_id": "global_macro_tradeable_daily_10y_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_10y_search",
+      "base_url": "http://127.0.0.1:8000",
+      "portfolio_construction": {
+        "sizing_policy": {
+          "sizing_method": "diversified_risk_budget",
+          "sizing_engine": "history_based"
+        },
+        "active_overlay": {
+          "kind": "rank_tilt",
+          "active_weight_budget": 0.0
+        },
+        "rebalance_interval_steps": 1,
+        "long_only": false,
+        "top_k": null,
+        "target_vol": 0.18,
+        "gross_exposure_cap": 1.5,
+        "gross_leverage_cap": 1.5,
+        "net_exposure_target": 0.0,
+        "risk_budget": {
+          "risk_normalization_mode": "gross",
+          "target_gross_exposure": 0.5,
+          "allow_releverage": true
+        },
+        "asset_class_weight_caps": {
+          "equity_index": 0.55,
+          "rates": 0.55,
+          "fx": 0.35,
+          "commodity": 0.35,
+          "crypto": 0.2
+        },
+        "cluster_weight_caps": {
+          "eq_us": 0.2,
+          "rates_us": 0.3,
+          "fx_usd": 0.2,
+          "commodity_energy": 0.18,
+          "crypto_perp": 0.2
+        },
+        "portfolio_intent": {
+          "effective_n_floor": 8.0,
+          "top_gross_share_cap_n": 3,
+          "top_gross_share_cap": 0.55
+        },
+        "sleeve_composition": {
+          "combination_method": "risk_budgeted_signal_blend",
+          "normalize_risk_budgets": true,
+          "sleeves": [
+            {
+              "sleeve_id": "trend_core",
+              "sleeve_kind": "trend",
+              "risk_budget": 1.0,
+              "enabled": true
+            }
+          ]
+        }
+      },
+      "rebalance_friction_policy": {
+        "turnover_friction": 0.001,
+        "no_trade_band": 0.0,
+        "execution_cost_aversion": 1.5
+      },
+      "execution_cost_assumptions": {
+        "market_impact_bps": 4.0,
+        "fee_bps": 0.5,
+        "bid_ask_spread_bps": 1.5
+      },
+      "holding_cost_assumptions": {
+        "funding_bps_per_step": 0.5,
+        "borrow_fee_bps_per_step": 0.25
+      }
+    }
+  ]
+}

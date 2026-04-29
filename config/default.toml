@@ -1,0 +1,180 @@
+[portfolio]
+objective = "sharpe"   # "sharpe" | "log_growth" — flows through admission, deployment, lifecycle, trading
+
+[api]
+base_url = "http://localhost:8000"
+timeout = 30
+retry_count = 2
+retry_backoff = 1.0
+
+[generation]
+candidates_per_cycle = 10000
+max_depth = 3
+windows = [5, 10, 20, 30, 60]
+bloat_penalty = 0.01
+depth_penalty = 0.0
+similarity_penalty = 0.0
+
+[backtest]
+commission_pct = 0.10
+slippage_pct = 0.05
+min_days = 200
+eval_window_days = 0  # 0 = all data; >0 = trailing N days
+benchmark_assets = [
+    "btc_ohlcv", "eth_btc", "sol_usdt", "bnb_usdt",
+    "nvda", "aapl", "msft", "googl", "amzn", "meta", "tsla",
+    "sp500", "nasdaq", "gold", "tlt", "oil_wti",
+]  # broad equal-weight benchmark for residual fitness
+
+[validation]
+oos_sharpe_min = 0.05
+pbo_max = 1.0          # warn only — lifecycle manages quality
+dsr_pvalue_max = 1.0   # disabled — lifecycle manages quality
+fdr_threshold = 0.05
+n_cv_folds = 5
+embargo_days = 5
+
+[risk]
+target_vol_pct = 15.0
+dd_stage1_pct = 5.0
+dd_stage2_pct = 10.0
+dd_stage3_pct = 15.0
+max_vol_scale = 1.5
+
+[trading]
+initial_capital = 10000.0
+mode = "spot_long_only"   # "spot_long_only" | "futures_long_short"
+
+[paper]
+max_position_pct = 0.25
+min_trade_usd = 10.0
+rebalance_deadband_usd = 0.0
+max_trading_alphas = 30
+
+[forward]
+check_interval = 14400
+min_forward_days = 30
+degradation_window = 63
+
+[live_quality]
+min_observations = 20
+full_weight_observations = 63
+early_stage_full_weight_observations = 20
+sharpe_clip_abs = 3.0
+log_growth_clip_abs = 0.20
+shortlist_preselect_factor = 20
+dormant_revival_min_observations = 20
+
+[deployment]
+max_deployed_alphas = 150
+max_replacements = 10
+promotion_margin = 0.05
+signal_similarity_max = 0.995
+signal_similarity_lookback = 252
+max_feature_occurrences = 0
+
+[testnet]
+target_success_days = 10
+max_acceptable_slippage_bps = 50.0
+
+[lifecycle]
+candidate_quality_min = 0.05  # gate for CANDIDATE -> ACTIVE adoption
+active_quality_min = 0.0      # ACTIVE -> DORMANT threshold
+dormant_revival_quality = 0.0 # DORMANT -> ACTIVE revival
+correlation_max = 0.5
+capital_redundancy_corr_max = 0.7
+bootstrap_weight = 0.25
+batch_research_weight = 0.10
+batch_research_normalized_quality_min = 0.10
+batch_research_capital_candidates_max = 12
+reference_capital_backed_max = 64
+reference_rebalance_candidates_max = 512
+live_proven_quality_min = 0.05
+live_proven_marginal_contribution_min = 0.0
+live_proven_signal_nonzero_ratio_min = 0.20
+live_proven_signal_mean_abs_min = 0.05
+bootstrap_retention_quality_min = 0.0
+bootstrap_retention_marginal_contribution_min = 0.0
+quality_weight = 1.0
+marginal_contribution_weight = 0.25
+stake_update_rate = 0.10
+target_stake_floor = 0.0
+
+[execution]
+imbalance_threshold = 0.3
+vpin_threshold = 0.85
+spread_threshold_bps = 5.0
+max_slices = 5
+signal_lookback_minutes = 15
+max_signal_age_seconds = 300
+commission_pct = 0.10
+modeled_slippage_pct = 0.05
+
+[event_driven]
+min_interval = 900       # 15 min debounce between evaluations
+max_interval = 14400     # 4h timer fallback
+subscribe_pattern = "funding_rate_*,liq_*"
+anomaly_trigger = true
+
+[gate]
+oos_log_growth_min = 0.0
+oos_cvar_abs_max = 0.05
+oos_tail_hit_rate_max = 0.10
+
+[regime]
+enabled = true
+short_window = 21
+long_window = 63
+drift_threshold = 0.3
+drift_position_scale_min = 0.5
+
+# Pipeline v2: separated process daemons
+[alpha_generator]
+enabled = false            # true activates the separated alpha generator
+pop_size = 80              # candidates per round (random + archive mutation)
+round_interval = 60        # seconds between rounds
+memory_limit_mb = 700      # soft RSS limit, halve budget if exceeded
+feature_subset_k = 27      # features per stratified subset
+min_feature_catalog_size = 100 # skip/retry if cached catalog is too narrow
+mutate_ratio = 0.5         # fraction of budget from archive mutation (rest is random)
+promote_per_round = 25     # max discovery-pool entries queued into candidates each round
+promotion_min_fitness = 0.0
+
+[admission]
+enabled = false
+poll_interval = 300        # seconds between queue checks
+batch_size = 100           # candidates per validation batch
+min_queue_size = 10        # minimum queue depth to trigger
+max_active_alphas = 0      # 0 disables the cap; >0 enforces replace-one-in/one-out
+reject_semantic_duplicates = true
+max_feature_occurrences = 0 # 0 disables the cap; >0 rejects candidates that would exceed active feature usage
+
+[lifecycle_daemon]
+enabled = false
+# When enabled, Trader.run_cycle() skips inline lifecycle evaluation.
+
+# Cross-sectional trading — Numerai-style cross-asset allocation
+[cross_sectional]
+allocation_mode = "signal_proportional"   # "equal_weight" | "signal_proportional"
+max_per_asset_pct = 0.5                   # max capital fraction per asset
+neutralize = true                         # subtract cross-asset mean
+registry_asset = "BTC"                    # shared alpha registry source
+
+# Alpaca — US stocks and ETFs
+[alpaca]
+enabled = false
+paper = true
+commission_pct = 0.0          # Alpaca: zero commission
+modeled_slippage_pct = 0.05
+initial_capital = 10000.0
+max_slippage_bps = 20.0
+
+# Polymarket prediction market venue
+[polymarket]
+enabled = false
+max_markets = 10
+min_liquidity_usd = 10000
+min_days_to_expiry = 7
+max_position_per_market_usd = 100
+maker_fee_pct = 0.0
+taker_fee_pct = 1.0

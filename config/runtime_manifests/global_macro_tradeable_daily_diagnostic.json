@@ -1,0 +1,1288 @@
+{
+  "extends_manifest": "global_macro_tradeable_daily_10y.json",
+  "generated_signal_discoveries": [
+    {
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "subject_set_id": "global_macro_tradeable_daily_10y",
+      "target_id": "residual_return_5d",
+      "operator_ids": [
+        "time_series_trend"
+      ],
+      "primary_observable_ids": [
+        "daily_close"
+      ],
+      "parameter_space": {
+        "lookback": [
+          20,
+          60
+        ]
+      },
+      "selection_policy": {
+        "min_sample_count": 20,
+        "min_abs_corr": 0.03,
+        "min_stability_score": 0.08,
+        "pre_screen_top_k_per_kind": 2,
+        "pre_screen_min_abs_corr": 0.02,
+        "probe_max_dates": 20,
+        "probe_min_sample_count": 15,
+        "probe_min_abs_corr": 0.02,
+        "probe_max_family_survivors_per_subject": 1,
+        "survivor_min_sample_count": 20,
+        "survivor_min_abs_corr": 0.03,
+        "survivor_max_family_survivors_per_subject": 1,
+        "snapshot_retention": "latest_per_survivor",
+        "adaptive_family_budget": true,
+        "adaptive_budget_stability_scale": 2.0,
+        "max_family_survivors_per_subject": 1
+      }
+    },
+    {
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
+      "subject_set_id": "global_macro_tradeable_daily_10y",
+      "target_id": "residual_return_5d",
+      "operator_ids": [
+        "mean_reversion"
+      ],
+      "primary_observable_ids": [
+        "daily_close"
+      ],
+      "applicable_subject_kinds": [
+        "future",
+        "perp"
+      ],
+      "parameter_space": {
+        "lookback": [
+          20,
+          60
+        ]
+      },
+      "selection_policy": {
+        "min_sample_count": 20,
+        "min_abs_corr": 0.03,
+        "min_stability_score": 0.08,
+        "pre_screen_top_k_per_kind": 2,
+        "pre_screen_min_abs_corr": 0.02,
+        "probe_max_dates": 20,
+        "probe_min_sample_count": 15,
+        "probe_min_abs_corr": 0.02,
+        "probe_max_family_survivors_per_subject": 1,
+        "survivor_min_sample_count": 20,
+        "survivor_min_abs_corr": 0.03,
+        "survivor_max_family_survivors_per_subject": 1,
+        "snapshot_retention": "latest_per_survivor",
+        "adaptive_family_budget": true,
+        "adaptive_budget_stability_scale": 2.0,
+        "max_family_survivors_per_subject": 1
+      }
+    }
+  ],
+  "strategy_specs": [
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold",
+        "label": "global_macro_tradeable_daily_diagnostic_equal_weight_hold",
+        "scope": {
+          "subject_set_id": "global_macro_tradeable_daily_10y",
+          "target_id": "residual_return_5d"
+        },
+        "signal_policy": {
+          "definition_policy": {
+            "signal_discovery_id": null,
+            "signal_kind": "constant_hold",
+            "family_mix": null
+          },
+          "update_policy": {
+            "execution_kind": "trainless"
+          }
+        },
+        "portfolio_policy": {
+          "selection_policy": {
+            "selection_kind": "all_assets",
+            "top_k": null
+          },
+          "sizing_policy": {
+            "sizing_method": "equal_weight"
+          },
+          "rebalance_policy": {
+            "rebalance": "every_252_steps",
+            "rebalance_interval_steps": 252
+          },
+          "risk_policy": {
+            "long_only": true,
+            "gross_exposure_cap": 1.0,
+            "target_vol": null,
+            "gross_leverage_cap": 1.0,
+            "net_exposure_target": 1.0
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5,
+          "execution_mode": "utility_priority",
+          "turnover_budget": null,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_policy": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_policy": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        },
+        "created_at": "2026-04-23T00:00:00+00:00"
+      }
+    }
+  ],
+  "evaluation_specs": [
+    {
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "execution_range": {
+        "label": "train_2022_2023",
+        "start_date": "2022-01-01",
+        "end_date": "2023-12-31"
+      },
+      "evaluation_folds": [
+        {
+          "label": "fold_2022_2023_to_2024",
+          "execution_range": {
+            "label": "train_2022_2023",
+            "start_date": "2022-01-01",
+            "end_date": "2023-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2024",
+              "start_date": "2024-01-01",
+              "end_date": "2024-12-31"
+            }
+          ]
+        }
+      ],
+      "metric_group_names": [
+        "signal_discovery_quality",
+        "prediction_diagnostics",
+        "portfolio_target_return_alignment",
+        "sizing_policy_quality",
+        "rebalance_policy_quality",
+        "decision_quality",
+        "portfolio_risk_budget",
+        "portfolio_construction_trace",
+        "execution_trace",
+        "cost_drag",
+        "signal_churn",
+        "portfolio_concentration",
+        "robustness"
+      ],
+      "metric_windows": [
+        20
+      ]
+    }
+  ],
+  "evaluation_tasks": [
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "strategy_id": "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold",
+      "strategy_override": {
+        "portfolio_construction": {
+          "construction_kind": "hold_baseline",
+          "sizing_policy": {
+            "sizing_method": "equal_weight",
+            "sizing_engine": "history_based"
+          },
+          "rebalance_interval_steps": 252,
+          "long_only": true,
+          "top_k": null,
+          "target_vol": null,
+          "gross_exposure_cap": 1.0,
+          "gross_leverage_cap": 1.0,
+          "net_exposure_target": 1.0,
+          "risk_budget": {
+            "risk_normalization_mode": "none",
+            "allow_releverage": false
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5,
+          "turnover_budget": null,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "strategy_id": "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold",
+      "strategy_override": {
+        "portfolio_construction": {
+          "construction_kind": "hold_baseline",
+          "sizing_policy": {
+            "sizing_method": "equal_weight",
+            "sizing_engine": "history_based"
+          },
+          "rebalance_interval_steps": 21,
+          "long_only": true,
+          "top_k": null,
+          "target_vol": null,
+          "gross_exposure_cap": 1.0,
+          "gross_leverage_cap": 1.0,
+          "net_exposure_target": 1.0,
+          "risk_budget": {
+            "risk_normalization_mode": "none",
+            "allow_releverage": false
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5,
+          "turnover_budget": null,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_cost_aware_execution_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.04,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_looser_benefit_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.04,
+          "benefit_scale": 2.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_tighter_benefit_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.04,
+          "benefit_scale": 0.5,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_looser_budget_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.08,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_no_budget_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": null,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_legacy_proportional_execution_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "threshold",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.005,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.04,
+          "benefit_scale": 1.0,
+          "min_trade_utility": 0.0,
+          "uncertainty_aversion": 1.0,
+          "risk_aversion": 0.0,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_no_cost_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.0,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 0.0
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 0.0,
+          "fee_bps": 0.0,
+          "bid_ask_spread_bps": 0.0
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.0,
+          "borrow_fee_bps_per_step": 0.0
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_weekly_rebalance_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "signal_weighted",
+            "sizing_engine": "rule_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "mean_reversion_core",
+                "sleeve_kind": "mean_reversion",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "signal_weighted",
+            "sizing_engine": "rule_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 10,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.35,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 10.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.4
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "mean_reversion_core",
+                "sleeve_kind": "mean_reversion",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "execution_mode": "utility_priority",
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.01,
+          "execution_cost_aversion": 3.0,
+          "turnover_budget": 0.025,
+          "partial_fill_enabled": true
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "signed_mean_variance",
+            "sizing_engine": "optimizer"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 21,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "gross",
+            "target_gross_exposure": 0.5,
+            "allow_releverage": true
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "mean_reversion_core",
+                "sleeve_kind": "mean_reversion",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    },
+    {
+      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
+      "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
+      "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
+      "strategy_override": {
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "diversified_risk_budget",
+            "sizing_engine": "history_based"
+          },
+          "active_overlay": {
+            "kind": "rank_tilt",
+            "active_weight_budget": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "long_only": false,
+          "top_k": null,
+          "target_vol": 0.18,
+          "gross_exposure_cap": 1.5,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "risk_budget": {
+            "risk_normalization_mode": "none",
+            "allow_releverage": false
+          },
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "portfolio_intent": {
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
+          },
+          "sleeve_composition": {
+            "combination_method": "risk_budgeted_signal_blend",
+            "normalize_risk_budgets": true,
+            "sleeves": [
+              {
+                "sleeve_id": "trend_core",
+                "sleeve_kind": "trend",
+                "risk_budget": 1.0,
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "rebalance_friction_policy": {
+          "turnover_friction": 0.001,
+          "no_trade_band": 0.0,
+          "execution_cost_aversion": 1.5
+        },
+        "execution_cost_assumptions": {
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5
+        },
+        "holding_cost_assumptions": {
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        }
+      }
+    }
+  ]
+}

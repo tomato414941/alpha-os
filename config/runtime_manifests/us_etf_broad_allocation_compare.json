@@ -1,0 +1,278 @@
+{
+  "subject_sets": [
+    {
+      "subject_set_id": "us_etf_broad_multi_asset",
+      "observation_specs": [
+        {
+          "observation_spec_id": "us_etf_close",
+          "observable_id": "daily_close"
+        }
+      ],
+      "bindings": [
+        {
+          "subject_id": "EFA_etf",
+          "subject_kind": "etf",
+          "asset": "EFA",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "EEM_etf",
+          "subject_kind": "etf",
+          "asset": "EEM",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "EWJ_etf",
+          "subject_kind": "etf",
+          "asset": "EWJ",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "EWZ_etf",
+          "subject_kind": "etf",
+          "asset": "EWZ",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "VNQ_etf",
+          "subject_kind": "etf",
+          "asset": "VNQ",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "TLT_etf",
+          "subject_kind": "etf",
+          "asset": "TLT",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "IEF_etf",
+          "subject_kind": "etf",
+          "asset": "IEF",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "LQD_etf",
+          "subject_kind": "etf",
+          "asset": "LQD",
+          "observation_spec_id": "us_etf_close"
+        },
+        {
+          "subject_id": "HYG_etf",
+          "subject_kind": "etf",
+          "asset": "HYG",
+          "observation_spec_id": "us_etf_close"
+        }
+      ]
+    }
+  ],
+  "generated_signal_discoveries": [
+    {
+      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+      "subject_set_id": "us_etf_broad_multi_asset",
+      "target_id": "residual_return_5d",
+      "operator_ids": [
+        "trend",
+        "low_vol_trend",
+        "relative_strength"
+      ],
+      "primary_observable_ids": [
+        "daily_close",
+        "daily_return",
+        "cross_sectional_return_rank_20d"
+      ],
+      "conditioning_observable_ids": [
+        "realized_vol_20d"
+      ],
+      "parameter_space": {
+        "lookback": [
+          20,
+          40,
+          80
+        ]
+      },
+      "selection_policy": {
+        "min_sample_count": 20,
+        "min_abs_corr": 0.04,
+        "min_stability_score": 0.1,
+        "pre_screen_top_k_per_kind": 2,
+        "pre_screen_min_abs_corr": 0.02,
+        "probe_max_dates": 30,
+        "probe_min_sample_count": 15,
+        "probe_min_abs_corr": 0.025,
+        "probe_max_family_survivors_per_subject": 1,
+        "survivor_min_sample_count": 20,
+        "survivor_min_abs_corr": 0.04,
+        "survivor_max_family_survivors_per_subject": 1,
+        "snapshot_retention": "latest_per_survivor",
+        "adaptive_family_budget": true,
+        "adaptive_budget_stability_scale": 2.0,
+        "max_family_survivors_per_subject": 1
+      },
+      "constraint": {
+        "max_families_total": 3,
+        "max_families_per_operator": 1,
+        "max_families_per_primary_observable": 2,
+        "allowed_family_groups": [
+          "price",
+          "regime_conditioned",
+          "cross_sectional"
+        ],
+        "novelty_key": "operator_primary"
+      }
+    }
+  ],
+  "evaluation_specs": [
+    {
+      "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
+      "execution_range": {
+        "label": "broad_train_2024",
+        "start_date": "2024-03-04",
+        "end_date": "2024-12-31"
+      },
+      "evaluation_folds": [
+        {
+          "label": "fold_2024_to_2025",
+          "execution_range": {
+            "label": "train_2024",
+            "start_date": "2024-03-04",
+            "end_date": "2024-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2025",
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31"
+            }
+          ]
+        },
+        {
+          "label": "fold_2024_2025_to_2026q1",
+          "execution_range": {
+            "label": "train_2024_2025",
+            "start_date": "2024-03-04",
+            "end_date": "2025-12-31"
+          },
+          "evaluation_date_ranges": [
+            {
+              "label": "2026q1",
+              "start_date": "2026-01-01",
+              "end_date": "2026-03-20"
+            }
+          ]
+        }
+      ],
+      "metric_group_names": [
+        "system_efficiency",
+        "signal_discovery_quality",
+        "signed_belief_quality",
+        "portfolio_target_return_alignment",
+        "sizing_policy_quality",
+        "rebalance_policy_quality",
+        "decision_quality",
+        "robustness"
+      ],
+      "metric_windows": [
+        20
+      ]
+    }
+  ],
+  "evaluation_tasks": [
+    {
+      "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
+      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+      "base_url": "http://127.0.0.1:8000",
+      "portfolio_construction": {
+        "sizing_policy": {
+          "sizing_method": "equal_weight",
+          "sizing_engine": "history_based"
+        },
+        "rebalance_interval_steps": 5,
+        "long_only": true,
+        "gross_exposure_cap": 0.85
+      },
+      "rebalance_friction_policy": {
+        "turnover_friction": 0.0,
+        "no_trade_band": 0.02,
+        "execution_cost_aversion": 1.0
+      },
+      "execution_cost_assumptions": {
+        "market_impact_bps": 5.0,
+        "fee_bps": 0.0,
+        "bid_ask_spread_bps": 0.0
+      }
+    },
+    {
+      "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
+      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+      "base_url": "http://127.0.0.1:8000",
+      "portfolio_construction": {
+        "sizing_policy": {
+          "sizing_method": "minimum_variance",
+          "sizing_engine": "history_based"
+        },
+        "rebalance_interval_steps": 5,
+        "long_only": true,
+        "gross_exposure_cap": 0.85
+      },
+      "rebalance_friction_policy": {
+        "turnover_friction": 0.0,
+        "no_trade_band": 0.02,
+        "execution_cost_aversion": 1.0
+      },
+      "execution_cost_assumptions": {
+        "market_impact_bps": 5.0,
+        "fee_bps": 0.0,
+        "bid_ask_spread_bps": 0.0
+      }
+    },
+    {
+      "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
+      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+      "base_url": "http://127.0.0.1:8000",
+      "portfolio_construction": {
+        "sizing_policy": {
+          "sizing_method": "risk_budgeting",
+          "sizing_engine": "history_based"
+        },
+        "rebalance_interval_steps": 5,
+        "long_only": true,
+        "gross_exposure_cap": 0.85
+      },
+      "rebalance_friction_policy": {
+        "turnover_friction": 0.0,
+        "no_trade_band": 0.02,
+        "execution_cost_aversion": 1.0
+      },
+      "execution_cost_assumptions": {
+        "market_impact_bps": 5.0,
+        "fee_bps": 0.0,
+        "bid_ask_spread_bps": 0.0
+      }
+    },
+    {
+      "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
+      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+      "base_url": "http://127.0.0.1:8000",
+      "portfolio_construction": {
+        "sizing_policy": {
+          "sizing_method": "hierarchical_risk_parity",
+          "sizing_engine": "history_based"
+        },
+        "rebalance_interval_steps": 5,
+        "long_only": true,
+        "gross_exposure_cap": 0.85
+      },
+      "rebalance_friction_policy": {
+        "turnover_friction": 0.0,
+        "no_trade_band": 0.02,
+        "execution_cost_aversion": 1.0
+      },
+      "execution_cost_assumptions": {
+        "market_impact_bps": 5.0,
+        "fee_bps": 0.0,
+        "bid_ask_spread_bps": 0.0
+      }
+    }
+  ]
+}
