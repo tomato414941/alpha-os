@@ -305,19 +305,32 @@ def cmd_list_runtime_manifests(_args: argparse.Namespace) -> int:
 
 
 def build_cli_parser() -> argparse.ArgumentParser:
+    public_commands = (
+        "apply-runtime-manifest",
+        "run-diagnostic-evaluation",
+        "list-runtime-manifests",
+        "run-walk-forward-evaluation",
+        "show-evaluation-report",
+        "show-evaluation-diagnostics",
+    )
     parser = argparse.ArgumentParser(
         prog="alpha-os",
         description="alpha-os evaluation engine",
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(
+        dest="command",
+        required=True,
+        metavar="{" + ",".join(public_commands) + "}",
+    )
 
-    init_db = sub.add_parser("init-db", help="Initialize the runtime database")
+    def internal_parser(name: str, **kwargs) -> argparse.ArgumentParser:
+        kwargs["help"] = argparse.SUPPRESS
+        return sub.add_parser(name, **kwargs)
+
+    init_db = internal_parser("init-db")
     init_db.add_argument("--db", type=str, default=None)
 
-    register = sub.add_parser(
-        "register-signal-candidate",
-        help="Register one signal before recording predictions",
-    )
+    register = internal_parser("register-signal-candidate")
     register.add_argument("--db", type=str, default=None)
     register.add_argument(
         "--signal-id",
@@ -374,10 +387,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="List checked-in runtime manifests with categories",
     )
 
-    inspect_resources = sub.add_parser(
-        "inspect-runtime-resources",
-        help="Inspect observables, signal specs, and subject sets together",
-    )
+    inspect_resources = internal_parser("inspect-runtime-resources")
     inspect_resources.add_argument("--db", type=str, default=None)
     inspect_resources.add_argument("--observable-limit", type=int, default=50)
     inspect_resources.add_argument(
@@ -396,10 +406,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     inspect_resources.add_argument("--evaluation-spec-limit", type=int, default=50)
 
-    register_specification = sub.add_parser(
-        "debug-register-signal-candidate-spec",
-        help="Debug: register one reusable signal spec",
-    )
+    register_specification = internal_parser("debug-register-signal-candidate-spec")
     register_specification.add_argument("--db", type=str, default=None)
     register_specification.add_argument(
         "--signal-id",
@@ -418,34 +425,22 @@ def build_cli_parser() -> argparse.ArgumentParser:
     register_specification.add_argument("--target-id", type=str, default=None)
     register_specification.add_argument("--observable-id", type=str, default=None)
 
-    show_specifications = sub.add_parser(
-        "debug-show-signal-candidate-specs",
-        help="Debug: show registered signal specs",
-    )
+    show_specifications = internal_parser("debug-show-signal-candidate-specs")
     show_specifications.add_argument("--db", type=str, default=None)
     show_specifications.add_argument("--limit", type=int, default=20)
 
-    register_observable = sub.add_parser(
-        "debug-register-observable",
-        help="Debug: register one reusable observable definition",
-    )
+    register_observable = internal_parser("debug-register-observable")
     register_observable.add_argument("--db", type=str, default=None)
     register_observable.add_argument("--observable-id", type=str, required=True)
     register_observable.add_argument("--family", type=str, default=None)
     register_observable.add_argument("--value-kind", type=str, default=None)
     register_observable.add_argument("--resolution", type=str, default="1d")
 
-    show_observables = sub.add_parser(
-        "debug-show-observables",
-        help="Debug: show registered observable definitions",
-    )
+    show_observables = internal_parser("debug-show-observables")
     show_observables.add_argument("--db", type=str, default=None)
     show_observables.add_argument("--limit", type=int, default=50)
 
-    deactivate = sub.add_parser(
-        "deactivate-signal-candidate",
-        help="Deactivate one active signal",
-    )
+    deactivate = internal_parser("deactivate-signal-candidate")
     deactivate.add_argument("--db", type=str, default=None)
     deactivate.add_argument(
         "--signal-id",
@@ -455,10 +450,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         required=True,
     )
 
-    activate = sub.add_parser(
-        "activate-signal-candidate",
-        help="Activate one inactive signal",
-    )
+    activate = internal_parser("activate-signal-candidate")
     activate.add_argument("--db", type=str, default=None)
     activate.add_argument(
         "--signal-id",
@@ -468,10 +460,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         required=True,
     )
 
-    record = sub.add_parser(
-        "debug-record-prediction",
-        help="Debug: record one prediction directly",
-    )
+    record = internal_parser("debug-record-prediction")
     record.add_argument("--db", type=str, default=None)
     record.add_argument("--date", type=str, required=True)
     record.add_argument(
@@ -486,10 +475,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     record.add_argument("--target-id", type=str, default=None)
     record.add_argument("--subject-id", type=str, default=None)
 
-    finalize = sub.add_parser(
-        "debug-finalize-observation",
-        help="Debug: finalize one observation directly",
-    )
+    finalize = internal_parser("debug-finalize-observation")
     finalize.add_argument("--db", type=str, default=None)
     finalize.add_argument("--date", type=str, required=True)
     finalize.add_argument("--observation", type=float, required=True)
@@ -497,10 +483,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     finalize.add_argument("--target-id", type=str, default=None)
     finalize.add_argument("--subject-id", type=str, default=None)
 
-    update = sub.add_parser(
-        "debug-update-state",
-        help="Debug: write one evaluation snapshot directly",
-    )
+    update = internal_parser("debug-update-state")
     update.add_argument("--db", type=str, default=None)
     update.add_argument("--date", type=str, required=True)
     update.add_argument(
@@ -514,10 +497,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     update.add_argument("--target-id", type=str, default=None)
     update.add_argument("--subject-id", type=str, default=None)
 
-    generate_input = sub.add_parser(
-        "debug-generate-evaluation-input",
-        help="Debug: generate one deterministic evaluation-input JSON from signal-noise daily closes",
-    )
+    generate_input = internal_parser("debug-generate-evaluation-input")
     generate_input.add_argument("--db", type=str, default=None)
     generate_input.add_argument("--date", type=str, required=True)
     generate_input.add_argument(
@@ -530,10 +510,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     generate_input.add_argument("--out", type=str, required=True)
     generate_input.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
 
-    generate_inputs = sub.add_parser(
-        "debug-generate-evaluation-inputs",
-        help="Debug: generate deterministic evaluation-input JSON for a date range from signal-noise daily closes",
-    )
+    generate_inputs = internal_parser("debug-generate-evaluation-inputs")
     generate_inputs.add_argument("--db", type=str, default=None)
     generate_inputs.add_argument("--start-date", type=str, required=True)
     generate_inputs.add_argument("--end-date", type=str, required=True)
@@ -547,10 +524,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     generate_inputs.add_argument("--out", type=str, required=True)
     generate_inputs.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
 
-    run = sub.add_parser(
-        "debug-apply-evaluation",
-        help="Debug: apply one evaluation input through the bounded runtime",
-    )
+    run = internal_parser("debug-apply-evaluation")
     run.add_argument("--db", type=str, default=None)
     run.add_argument("--date", type=str, default=None)
     run.add_argument(
@@ -572,10 +546,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Path to a JSON object with date, signal_id, prediction, observation, target_id",
     )
 
-    batch = sub.add_parser(
-        "debug-apply-evaluations",
-        help="Debug: apply a deterministic batch of evaluation inputs through the bounded runtime",
-    )
+    batch = internal_parser("debug-apply-evaluations")
     batch.add_argument("--db", type=str, default=None)
     batch.add_argument(
         "--input",
@@ -584,10 +555,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Path to a JSON array of evaluation input objects",
     )
 
-    backfill = sub.add_parser(
-        "debug-apply-backfill",
-        help="Debug: generate deterministic evaluation inputs for a date range and apply them through the bounded runtime",
-    )
+    backfill = internal_parser("debug-apply-backfill")
     backfill.add_argument("--db", type=str, default=None)
     backfill.add_argument("--start-date", type=str, required=True)
     backfill.add_argument("--end-date", type=str, required=True)
@@ -606,10 +574,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Optional path to write the generated evaluation-input JSON array",
     )
 
-    backfill_many = sub.add_parser(
-        "debug-apply-signal-candidates-backfill",
-        help="Debug: generate and apply deterministic evaluation inputs for multiple active signals over one date range",
-    )
+    backfill_many = internal_parser("debug-apply-signal-candidates-backfill")
     backfill_many.add_argument("--db", type=str, default=None)
     backfill_many.add_argument("--start-date", type=str, required=True)
     backfill_many.add_argument("--end-date", type=str, required=True)
@@ -624,10 +589,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
 
-    backfill_subject_set = sub.add_parser(
-        "debug-backfill-subject-set",
-        help="Debug: backfill one subject set directly from signal specs",
-    )
+    backfill_subject_set = internal_parser("debug-backfill-subject-set")
     backfill_subject_set.add_argument("--db", type=str, default=None)
     backfill_subject_set.add_argument("--start-date", type=str, required=True)
     backfill_subject_set.add_argument("--end-date", type=str, required=True)
@@ -665,10 +627,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Optional cheap pre-screen minimum absolute corr",
     )
 
-    backfill_signal_discovery = sub.add_parser(
-        "debug-backfill-signal-discovery",
-        help="Debug: backfill one signal discovery spec using its subject set and selection policy",
-    )
+    backfill_signal_discovery = internal_parser("debug-backfill-signal-discovery")
     backfill_signal_discovery.add_argument("--db", type=str, default=None)
     backfill_signal_discovery.add_argument("--start-date", type=str, required=True)
     backfill_signal_discovery.add_argument("--end-date", type=str, required=True)
@@ -684,10 +643,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         default=DEFAULT_SIGNAL_NOISE_BASE_URL,
     )
 
-    run_signal_discovery = sub.add_parser(
-        "debug-run-signal-discovery",
-        help="Debug: run one signal discovery spec through backfill, screening, and compression",
-    )
+    run_signal_discovery = internal_parser("debug-run-signal-discovery")
     run_signal_discovery.add_argument("--db", type=str, default=None)
     run_signal_discovery.add_argument("--start-date", type=str, required=True)
     run_signal_discovery.add_argument("--end-date", type=str, required=True)
@@ -711,10 +667,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         default=None,
     )
 
-    run_signal_discovery_decision = sub.add_parser(
-        "run-signal-discovery-decision",
-        help="Run one signal discovery spec through backfill, screening, compression, and portfolio decision",
-    )
+    run_signal_discovery_decision = internal_parser("run-signal-discovery-decision")
     run_signal_discovery_decision.add_argument("--db", type=str, default=None)
     run_signal_discovery_decision.add_argument("--start-date", type=str, required=True)
     run_signal_discovery_decision.add_argument("--end-date", type=str, required=True)
@@ -783,10 +736,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     run_signal_discovery_decision.add_argument("--no-trade-band", type=float, default=None)
 
-    run_evaluation = sub.add_parser(
-        "run-evaluation",
-        help="Run one evaluation spec and persist an evaluation report",
-    )
+    run_evaluation = internal_parser("run-evaluation")
     run_evaluation.add_argument("--db", type=str, default=None)
     run_evaluation.add_argument("--evaluation-spec-id", type=str, required=True)
     run_evaluation.add_argument(
@@ -881,10 +831,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
 
-    create_fixed_state_evaluation_task = sub.add_parser(
-        "create-fixed-state-evaluation-task",
-        help="Create one fixed-state replay evaluation task from an existing initial strategy state",
-    )
+    create_fixed_state_evaluation_task = internal_parser("create-fixed-state-evaluation-task")
     create_fixed_state_evaluation_task.add_argument("--db", type=str, default=None)
     create_fixed_state_evaluation_task.add_argument(
         "--source-evaluation-task-id",
@@ -931,17 +878,11 @@ def build_cli_parser() -> argparse.ArgumentParser:
     show_evaluation_diagnostics.add_argument("--top-n", type=int, default=8)
     show_evaluation_diagnostics.add_argument("--output", type=str, default=None)
 
-    show_strategy_specs = sub.add_parser(
-        "show-strategy-specs",
-        help="Show persisted strategy specs",
-    )
+    show_strategy_specs = internal_parser("show-strategy-specs")
     show_strategy_specs.add_argument("--db", type=str, default=None)
     show_strategy_specs.add_argument("--limit", type=int, default=20)
 
-    rebuild_strategy_adaptation_state = sub.add_parser(
-        "rebuild-strategy-adaptation-state",
-        help="Rebuild one strategy adaptation state from one evaluation report",
-    )
+    rebuild_strategy_adaptation_state = internal_parser("rebuild-strategy-adaptation-state")
     rebuild_strategy_adaptation_state.add_argument("--db", type=str, default=None)
     rebuild_strategy_adaptation_state.add_argument("--report-id", type=str, default=None)
     rebuild_strategy_adaptation_state.add_argument("--strategy-id", type=str, default=None)
@@ -953,10 +894,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     rebuild_strategy_adaptation_state.add_argument("--smoothing", type=float, default=0.5)
 
-    show_strategy_adaptation_states = sub.add_parser(
-        "show-strategy-adaptation-states",
-        help="Show persisted strategy adaptation states",
-    )
+    show_strategy_adaptation_states = internal_parser("show-strategy-adaptation-states")
     show_strategy_adaptation_states.add_argument("--db", type=str, default=None)
     show_strategy_adaptation_states.add_argument("--strategy-id", type=str, default=None)
     show_strategy_adaptation_states.add_argument(
@@ -967,10 +905,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     show_strategy_adaptation_states.add_argument("--limit", type=int, default=20)
 
-    inspect_subject_set = sub.add_parser(
-        "inspect-subject-set",
-        help="Inspect one subject set across runtime, meta, and decisions",
-    )
+    inspect_subject_set = internal_parser("inspect-subject-set")
     inspect_subject_set.add_argument("--db", type=str, default=None)
     inspect_subject_set.add_argument("--subject-set-id", type=str, default=None)
     inspect_subject_set.add_argument("--portfolio-id", type=str, default=None)
@@ -980,38 +915,26 @@ def build_cli_parser() -> argparse.ArgumentParser:
     inspect_subject_set.add_argument("--decision-limit", type=int, default=10)
     inspect_subject_set.add_argument("--details", action="store_true")
 
-    status = sub.add_parser("debug-status", help="Debug: show runtime status")
+    status = internal_parser("debug-status")
     status.add_argument("--db", type=str, default=None)
     status.add_argument("--subject-set-id", type=str, default=None)
 
-    show = sub.add_parser(
-        "debug-show-evaluations",
-        help="Debug: show recent evaluation snapshots with provenance",
-    )
+    show = internal_parser("debug-show-evaluations")
     show.add_argument("--db", type=str, default=None)
     show.add_argument("--limit", type=int, default=10)
     show.add_argument("--subject-set-id", type=str, default=None)
 
-    meta = sub.add_parser(
-        "debug-show-meta-predictions",
-        help="Debug: show recent meta predictions by aggregation kind",
-    )
+    meta = internal_parser("debug-show-meta-predictions")
     meta.add_argument("--db", type=str, default=None)
     meta.add_argument("--limit", type=int, default=10)
     meta.add_argument("--subject-set-id", type=str, default=None)
 
-    compare_meta = sub.add_parser(
-        "debug-compare-meta-aggregations",
-        help="Debug: compare meta aggregation kinds by target-level corr",
-    )
+    compare_meta = internal_parser("debug-compare-meta-aggregations")
     compare_meta.add_argument("--db", type=str, default=None)
     compare_meta.add_argument("--target-id", type=str, default=None)
     compare_meta.add_argument("--subject-set-id", type=str, default=None)
 
-    register_subject_set = sub.add_parser(
-        "debug-register-subject-set",
-        help="Debug: register one named subject set for reusable portfolio decisions",
-    )
+    register_subject_set = internal_parser("debug-register-subject-set")
     register_subject_set.add_argument("--db", type=str, default=None)
     register_subject_set.add_argument("--subject-set-id", type=str, required=True)
     register_subject_set.add_argument(
@@ -1032,25 +955,16 @@ def build_cli_parser() -> argparse.ArgumentParser:
     register_subject_set.add_argument("--trading-calendar", type=str, default="multi_venue")
     register_subject_set.add_argument("--benchmark-id", type=str, default=None)
 
-    show_subject_sets = sub.add_parser(
-        "debug-show-subject-sets",
-        help="Debug: show registered subject sets",
-    )
+    show_subject_sets = internal_parser("debug-show-subject-sets")
     show_subject_sets.add_argument("--db", type=str, default=None)
     show_subject_sets.add_argument("--limit", type=int, default=20)
 
-    check_subject_set_backend = sub.add_parser(
-        "check-subject-set-backend",
-        help="Check one subject set against the signal-noise backend",
-    )
+    check_subject_set_backend = internal_parser("check-subject-set-backend")
     check_subject_set_backend.add_argument("--db", type=str, default=None)
     check_subject_set_backend.add_argument("--subject-set-id", type=str, required=True)
     check_subject_set_backend.add_argument("--base-url", type=str, default=None)
 
-    screen_signal_discovery = sub.add_parser(
-        "debug-screen-signal-discovery",
-        help="Debug: run cheap screening for one signal discovery spec",
-    )
+    screen_signal_discovery = internal_parser("debug-screen-signal-discovery")
     screen_signal_discovery.add_argument("--db", type=str, default=None)
     screen_signal_discovery.add_argument(
         "--signal-discovery-id",
@@ -1067,10 +981,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         default=None,
     )
 
-    compress_screening_result_parser = sub.add_parser(
-        "debug-compress-screening-result",
-        help="Debug: compress survivors from one screening result into subject beliefs",
-    )
+    compress_screening_result_parser = internal_parser("debug-compress-screening-result")
     compress_screening_result_parser.add_argument("--db", type=str, default=None)
     compress_screening_result_parser.add_argument(
         "--screening-result-id",
@@ -1079,28 +990,19 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     compress_screening_result_parser.add_argument("--strategy-id", type=str, default=None)
 
-    build_decision = sub.add_parser(
-        "decide-portfolio",
-        help="Build and persist one portfolio decision from one compressed belief",
-    )
+    build_decision = internal_parser("decide-portfolio")
     _add_decide_portfolio_arguments(
         build_decision,
         require_compressed_belief=True,
     )
 
-    debug_build_decision = sub.add_parser(
-        "debug-decide-portfolio-runtime",
-        help="Debug: build and persist one portfolio decision from runtime/meta inputs",
-    )
+    debug_build_decision = internal_parser("debug-decide-portfolio-runtime")
     _add_decide_portfolio_arguments(
         debug_build_decision,
         require_compressed_belief=False,
     )
 
-    show_decisions = sub.add_parser(
-        "debug-show-portfolio-decisions",
-        help="Debug: show recent persisted portfolio decisions",
-    )
+    show_decisions = internal_parser("debug-show-portfolio-decisions")
     show_decisions.add_argument("--db", type=str, default=None)
     show_decisions.add_argument("--portfolio-id", type=str, default=None)
     show_decisions.add_argument("--subject-set-id", type=str, default=None)
@@ -1109,10 +1011,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     show_decisions.add_argument("--limit", type=int, default=10)
     show_decisions.add_argument("--details", action="store_true")
 
-    validate_subject_set = sub.add_parser(
-        "debug-validate-subject-set",
-        help="Debug: run validation for one or more subject sets and print a summary",
-    )
+    validate_subject_set = internal_parser("debug-validate-subject-set")
     validate_subject_set.add_argument("--db", type=str, default=None)
     validate_subject_set.add_argument(
         "--subject-set-id",
@@ -1140,10 +1039,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Print raw validation results before the summary",
     )
 
-    validate_strategy = sub.add_parser(
-        "validate-strategy",
-        help="Run validation for one or more strategies and print a summary",
-    )
+    validate_strategy = internal_parser("validate-strategy")
     validate_strategy.add_argument("--db", type=str, default=None)
     validate_strategy.add_argument(
         "--strategy-id",
@@ -1172,10 +1068,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Print raw validation results before the summary",
     )
 
-    write_validation = sub.add_parser(
-        "debug-write-validation-spec",
-        help="Debug: write a default validation spec JSON",
-    )
+    write_validation = internal_parser("debug-write-validation-spec")
     write_validation.add_argument("--out", type=str, required=True)
     write_validation.add_argument(
         "--subject-set-id",
@@ -1186,28 +1079,22 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     write_validation.add_argument("--base-url", type=str, default=None)
 
-    run_validation_cmd = sub.add_parser(
-        "debug-run-validation",
-        help="Debug: run a validation spec across targets, ranges, and metric windows",
-    )
+    run_validation_cmd = internal_parser("debug-run-validation")
     run_validation_cmd.add_argument("--db", type=str, default=None)
     run_validation_cmd.add_argument("--spec", type=str, required=True)
     run_validation_cmd.add_argument("--base-url", type=str, default=None)
 
-    show_validation = sub.add_parser(
-        "debug-show-validation",
-        help="Debug: show raw validation results for one validation run",
-    )
+    show_validation = internal_parser("debug-show-validation")
     show_validation.add_argument("--db", type=str, default=None)
     show_validation.add_argument("--run-id", type=str, default=None)
 
-    summarize_validation = sub.add_parser(
-        "debug-summarize-validation",
-        help="Debug: summarize validation stability across conditions",
-    )
+    summarize_validation = internal_parser("debug-summarize-validation")
     summarize_validation.add_argument("--db", type=str, default=None)
     summarize_validation.add_argument("--run-id", type=str, default=None)
 
+    sub._choices_actions = [
+        action for action in sub._choices_actions if action.dest in public_commands
+    ]
     return parser
 
 

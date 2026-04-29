@@ -18,16 +18,19 @@ definition, and strict out-of-sample evaluation.
 ```bash
 python -m alpha_os --help
 
-python -m alpha_os inspect-runtime-resources
 python -m alpha_os list-runtime-manifests
-python -m alpha_os show-strategy-specs
 
 python -m alpha_os apply-runtime-manifest \
   --manifest config/runtime_manifests/global_macro_futures_daily_trend_carry.json
 
 python -m alpha_os run-walk-forward-evaluation \
-  --protocol-id global_macro_futures_daily_trend_carry_eval
+  --evaluation-spec-id global_macro_futures_daily_trend_carry_eval
+
+python -m alpha_os show-evaluation-report
 ```
+
+Additional development and diagnostic commands exist for test and research
+workflows, but they are intentionally hidden from the public CLI help.
 
 ## Repository Layout
 
