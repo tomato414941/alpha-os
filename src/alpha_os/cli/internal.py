@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from typing import Iterator
 from pathlib import Path
 
-from .cli_output import (
+from ..cli_output import (
     format_evaluation_diagnostics,
     print_compressed_belief,
     print_evaluation_tasks,
@@ -36,89 +36,89 @@ from .cli_output import (
     print_validation_results,
     print_validation_result_set,
 )
-from .data_repositories import (
+from ..data_repositories import (
     EvaluationInputRepository,
     FeaturePlaneRepository,
     ObservationFrameRepository,
 )
-from .evaluation_task import (
+from ..evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
 )
-from .strategy_training import build_signal_train_id
-from .evaluation_job_spec import EvaluationJobSpec
-from .evaluation_application import (
+from ..strategy_training import build_signal_train_id
+from ..evaluation_job_spec import EvaluationJobSpec
+from ..evaluation_application import (
     RunEvaluationUseCaseRequest,
     RunWalkForwardEvaluationUseCaseRequest,
     run_evaluation_use_case,
     run_walk_forward_evaluation_use_case,
 )
-from .evaluation_cost_config import (
+from ..evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
-from .evaluation_spec import EvaluationSpec
-from .portfolio_construction_config import (
+from ..evaluation_spec import EvaluationSpec
+from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
-from .evaluation_report import (
+from ..evaluation_report import (
     EvaluationMetricGroupResult,
 )
-from .evaluation_report_service import (
+from ..evaluation_report_service import (
     build_report_evaluation_task_contract_fields,
     resolve_report_strategy_context,
 )
-from .evaluation_decision_trace_diagnostics import (
+from ..evaluation_decision_trace_diagnostics import (
     build_evaluation_decision_trace_diagnostics,
 )
-from .evaluation_task_resolution import (
+from ..evaluation_task_resolution import (
     EvaluationTaskResolutionPlan as _EvaluationTaskResolutionPlan,
     EvaluationTaskResolutionRequest as _EvaluationTaskResolutionRequest,
     build_evaluation_task_resolution_plan as _build_evaluation_task_resolution_plan,
 )
-from .strategy_variant import (
+from ..strategy_variant import (
     StrategyVariantConfig as _StrategyVariantConfig,
     derive_trading_strategy_from_signal_discovery as _derive_trading_strategy_from_signal_discovery,
     strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
-from .subject_set_facts import format_subject_set_facts
-from .strategy_adaptation import build_strategy_adaptation_state
-from .observables import ObservableDefinition
-from .evaluation_runtime import (
+from ..subject_set_facts import format_subject_set_facts
+from ..strategy_adaptation import build_strategy_adaptation_state
+from ..observables import ObservableDefinition
+from ..evaluation_runtime import (
     apply_evaluation,
     apply_evaluations_batch,
     update_evaluation_state,
 )
-from .metrics_service import refresh_target_metrics
-from .meta_aggregation_service import refresh_target_meta_predictions
-from .meta_metrics_service import refresh_target_meta_prediction_metrics
-from .evaluation_generation import (
+from ..metrics_service import refresh_target_metrics
+from ..meta_aggregation_service import refresh_target_meta_predictions
+from ..meta_metrics_service import refresh_target_meta_prediction_metrics
+from ..evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
     write_evaluation_input,
     write_evaluation_inputs,
 )
-from .config import (
+from ..config import (
     DEFAULT_SIGNAL_NOISE_BASE_URL,
     DEFAULT_SUBJECT_ID,
     DEFAULT_TARGET,
     default_runtime_asset,
     load_runtime_config,
 )
-from .signal_registry import (
+from ..signal_registry import (
     SignalDefinition,
     SignalSpec,
     build_signal_spec,
     executable_signal_from_document,
 )
-from .signal_generator import (
+from ..signal_generator import (
     SignalDiscoveryGenerationSpec,
     generate_signal_discovery,
     materialize_signal_specs,
 )
-from .signal_discovery_application import (
+from ..signal_discovery_application import (
     build_initial_strategy_state_id as _app_build_initial_strategy_state_id,
     build_signal_discovery_run_id as _app_build_signal_discovery_run_id,
     compress_screening_result_state as _app_compress_screening_result_state,
@@ -126,14 +126,14 @@ from .signal_discovery_application import (
     run_signal_discovery_workflow as _app_run_signal_discovery_workflow,
     screen_signal_discovery as _app_screen_signal_discovery,
 )
-from .signal_discovery import SignalDiscoverySpec
-from .evaluation_inputs import (
+from ..signal_discovery import SignalDiscoverySpec
+from ..evaluation_inputs import (
     EvaluationInput,
     load_evaluation_input,
     load_evaluation_inputs,
 )
-from .meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
-from .portfolio_decision import (
+from ..meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
+from ..portfolio_decision import (
     InstrumentSpec,
     ObservationSpec,
     CostInput,
@@ -144,8 +144,8 @@ from .portfolio_decision import (
     SubjectSet,
     UniversePolicySpec,
 )
-from .portfolio_direction import PORTFOLIO_DIRECTION_MODES
-from .portfolio_decision_service import (
+from ..portfolio_direction import PORTFOLIO_DIRECTION_MODES
+from ..portfolio_decision_service import (
     apply_decision_output_constraints,
     RuntimeDecisionBuildConfig,
     build_portfolio_decision_input,
@@ -153,34 +153,34 @@ from .portfolio_decision_service import (
     build_runtime_portfolio_state,
     persist_portfolio_decision_output,
 )
-from .portfolio_sizing_policy import (
+from ..portfolio_sizing_policy import (
     ConstrainedOptimizerSizingPolicy,
     HistoricalModelSizingPolicy,
     SignalWeightedSizingPolicy,
     SignedMeanVarianceSizingPolicy,
     apply_portfolio_sizing_policy,
 )
-from .observation_adapters import resolve_observation_metadata
-from .signal_discovery_execution import build_signal_discovery_execution_plan
-from .strategy_run_mode import normalize_strategy_run_mode
-from .store import EvaluationStore, _utc_now
-from .subject_set_backfill_service import (
+from ..observation_adapters import resolve_observation_metadata
+from ..signal_discovery_execution import build_signal_discovery_execution_plan
+from ..strategy_run_mode import normalize_strategy_run_mode
+from ..store import EvaluationStore, _utc_now
+from ..subject_set_backfill_service import (
     SubjectSetBackfillResult,
     resolve_subject_set_for_build,
     run_subject_set_backfill,
 )
-from .initial_strategy_state import InitialStrategyState
-from .trading_strategy import (
+from ..initial_strategy_state import InitialStrategyState
+from ..trading_strategy import (
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
     RebalanceFrictionPolicySpec,
     StrategyPortfolioSpec,
     TradingStrategySpec,
 )
-from .universe_contract import validate_subject_set_universe_contract
-from .signal_client import build_signal_client
-from .validation_service import run_validation, run_validation_for_strategies
-from .validation_spec import (
+from ..universe_contract import validate_subject_set_universe_contract
+from ..signal_client import build_signal_client
+from ..validation_service import run_validation, run_validation_for_strategies
+from ..validation_spec import (
     ValidationSpec,
     default_validation_spec,
     load_validation_spec,
@@ -200,7 +200,7 @@ class _RuntimeManifestCatalogEntry:
 
 
 def _runtime_manifest_dir() -> Path:
-    return Path(__file__).resolve().parents[2] / "config" / "runtime_manifests"
+    return Path(__file__).resolve().parents[3] / "config" / "runtime_manifests"
 
 
 def _runtime_manifest_category(
