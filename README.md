@@ -13,36 +13,6 @@ strategy definition, and out-of-sample evaluation.
   - OOS evaluation
   - portfolio decision and backtest flows
 
-## Mainline CLI
-
-```bash
-python -m alpha_os --help
-
-python -m alpha_os list-runtime-manifests
-
-python -m alpha_os run-diagnostic-evaluation \
-  --manifest fixture_daily_diagnostic \
-  --evaluation-spec-id fixture_daily_diagnostic_eval \
-  --details
-
-python -m alpha_os run-walk-forward-evaluation \
-  --evaluation-spec-id global_macro_futures_daily_trend_carry_eval
-
-python -m alpha_os show-evaluation-report
-```
-
-Additional development and diagnostic commands exist for test and research
-workflows, but they are intentionally hidden from the public CLI help.
-
-The `fixture_daily_diagnostic` manifest uses only checked-in CSV fixtures under
-`tests/fixtures/diagnostic_prices/`; it does not require `signal-noise` or any
-external market-data API.
-
-Signal discovery is treated as an early research workflow in this repository.
-The current code can define and screen candidate signal specifications, but the
-checked-in fixture demo does not prove that any generated signal is profitable
-or robust.
-
 ## Repository Layout
 
 - `src/alpha_os/`
