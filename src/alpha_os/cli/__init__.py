@@ -14,14 +14,18 @@ from .runtime import register_runtime_parsers
 CommandHandler = _legacy.CommandHandler if hasattr(_legacy, "CommandHandler") else object
 
 
+def _get_subparsers(
+    parser: argparse.ArgumentParser,
+) -> argparse._SubParsersAction:
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return action
+    raise RuntimeError("CLI parser has no subparsers action")
+
+
 def build_cli_parser() -> argparse.ArgumentParser:
     parser = _legacy.build_cli_parser(include_runtime_parsers=False)
-    subparsers = next(
-        action
-        for action in parser._actions
-        if isinstance(action, argparse._SubParsersAction)
-    )
-    register_runtime_parsers(subparsers)
+    register_runtime_parsers(_get_subparsers(parser))
     return parser
 
 
