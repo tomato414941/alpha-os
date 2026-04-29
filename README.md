@@ -18,24 +18,7 @@ strategy definition, and out-of-sample evaluation.
 - `src/alpha_os/`
   - mainline discovery / strategy / evaluation runtime
 - `config/runtime_manifests/`
-  - executable evaluation setups, not the sole runtime truth
-  - include observables, signal specs, subject sets, strategy specs, evaluation protocols, and evaluation cases
-  - `global_macro_futures_daily_trend_carry.json` is the current cross-asset reference shape
-  - ETF manifests remain as narrow examples, not the architectural center
-
-## Legacy Boundary
-
-The old `alpha_os_recovery` runtime has been removed from this repo.
-
-This repo no longer carries:
-
-- legacy paper/runtime CLI entrypoints
-- legacy replay/admission runtime flows
-- legacy deploy units
-- legacy legacy-test suite
-- legacy DSL-backed signal runtime
-
-New runtime design belongs in `src/alpha_os/`.
+  - evaluation manifest examples
 
 ## Development
 
@@ -61,6 +44,5 @@ PYTHONPATH=src pytest -q
 
 ## Further Reading
 
-- [AGENTS.md](AGENTS.md)
 - [DESIGN.md](DESIGN.md)
 - [docs/design/README.md](docs/design/README.md)
