@@ -304,7 +304,7 @@ def cmd_list_runtime_manifests(_args: argparse.Namespace) -> int:
     return 0
 
 
-def build_cli_parser() -> argparse.ArgumentParser:
+def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.ArgumentParser:
     public_commands = (
         "apply-runtime-manifest",
         "run-diagnostic-evaluation",
@@ -341,51 +341,52 @@ def build_cli_parser() -> argparse.ArgumentParser:
     )
     register.add_argument("--target-id", type=str, default=None)
 
-    apply_manifest = sub.add_parser(
-        "apply-runtime-manifest",
-        help=(
-            "Apply runtime manifest resources including observables, signal specs, "
-            "subject sets, strategy specs, evaluation specs, and evaluation tasks"
-        ),
-    )
-    apply_manifest.add_argument("--db", type=str, default=None)
-    apply_manifest.add_argument("--manifest", type=str, required=True)
+    if include_runtime_parsers:
+        apply_manifest = sub.add_parser(
+            "apply-runtime-manifest",
+            help=(
+                "Apply runtime manifest resources including observables, signal specs, "
+                "subject sets, strategy specs, evaluation specs, and evaluation tasks"
+            ),
+        )
+        apply_manifest.add_argument("--db", type=str, default=None)
+        apply_manifest.add_argument("--manifest", type=str, required=True)
 
-    run_diagnostic_evaluation = sub.add_parser(
-        "run-diagnostic-evaluation",
-        help="Apply a diagnostic manifest and run its lightweight evaluation spec",
-    )
-    run_diagnostic_evaluation.add_argument("--db", type=str, default=None)
-    run_diagnostic_evaluation.add_argument(
-        "--manifest",
-        type=str,
-        default="global_macro_tradeable_daily_diagnostic",
-    )
-    run_diagnostic_evaluation.add_argument(
-        "--evaluation-spec-id",
-        type=str,
-        default="global_macro_tradeable_daily_diagnostic_eval",
-    )
-    run_diagnostic_evaluation.add_argument("--base-url", type=str, default=None)
-    run_diagnostic_evaluation.add_argument("--details", action="store_true")
-    run_diagnostic_evaluation.add_argument(
-        "--dry-run",
-        action="store_true",
-        help=(
-            "Apply manifests and validate the diagnostic case plan without "
-            "running signal discovery, backtests, or report generation"
-        ),
-    )
-    run_diagnostic_evaluation.add_argument(
-        "--check",
-        action="store_true",
-        help="Fail when the dry-run diagnostic plan violates lightweight contracts",
-    )
+        run_diagnostic_evaluation = sub.add_parser(
+            "run-diagnostic-evaluation",
+            help="Apply a diagnostic manifest and run its lightweight evaluation spec",
+        )
+        run_diagnostic_evaluation.add_argument("--db", type=str, default=None)
+        run_diagnostic_evaluation.add_argument(
+            "--manifest",
+            type=str,
+            default="global_macro_tradeable_daily_diagnostic",
+        )
+        run_diagnostic_evaluation.add_argument(
+            "--evaluation-spec-id",
+            type=str,
+            default="global_macro_tradeable_daily_diagnostic_eval",
+        )
+        run_diagnostic_evaluation.add_argument("--base-url", type=str, default=None)
+        run_diagnostic_evaluation.add_argument("--details", action="store_true")
+        run_diagnostic_evaluation.add_argument(
+            "--dry-run",
+            action="store_true",
+            help=(
+                "Apply manifests and validate the diagnostic case plan without "
+                "running signal discovery, backtests, or report generation"
+            ),
+        )
+        run_diagnostic_evaluation.add_argument(
+            "--check",
+            action="store_true",
+            help="Fail when the dry-run diagnostic plan violates lightweight contracts",
+        )
 
-    sub.add_parser(
-        "list-runtime-manifests",
-        help="List checked-in runtime manifests with categories",
-    )
+        sub.add_parser(
+            "list-runtime-manifests",
+            help="List checked-in runtime manifests with categories",
+        )
 
     inspect_resources = internal_parser("inspect-runtime-resources")
     inspect_resources.add_argument("--db", type=str, default=None)

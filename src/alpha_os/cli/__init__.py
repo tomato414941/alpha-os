@@ -9,12 +9,20 @@ from .evaluation import COMMAND_HANDLERS as EVALUATION_COMMAND_HANDLERS
 from .internal_commands import COMMAND_HANDLERS as INTERNAL_COMMAND_HANDLERS
 from .research import COMMAND_HANDLERS as RESEARCH_COMMAND_HANDLERS
 from .runtime import COMMAND_HANDLERS as RUNTIME_COMMAND_HANDLERS
+from .runtime import register_runtime_parsers
 
 CommandHandler = _legacy.CommandHandler if hasattr(_legacy, "CommandHandler") else object
 
 
 def build_cli_parser() -> argparse.ArgumentParser:
-    return _legacy.build_cli_parser()
+    parser = _legacy.build_cli_parser(include_runtime_parsers=False)
+    subparsers = next(
+        action
+        for action in parser._actions
+        if isinstance(action, argparse._SubParsersAction)
+    )
+    register_runtime_parsers(subparsers)
+    return parser
 
 
 def build_command_handlers():

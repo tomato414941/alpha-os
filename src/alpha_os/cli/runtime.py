@@ -2,16 +2,111 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from . import internal as _legacy
 
 CommandHandler = Callable[[argparse.Namespace], int]
 
+
+@dataclass(frozen=True)
+class CliCommand:
+    name: str
+    handler: CommandHandler
+    visibility: str
+    register_parser: Callable[[argparse._SubParsersAction], None]
+
+
+def _register_apply_runtime_manifest(
+    sub: argparse._SubParsersAction,
+) -> None:
+    parser = sub.add_parser(
+        "apply-runtime-manifest",
+        help=(
+            "Apply runtime manifest resources including observables, signal specs, "
+            "subject sets, strategy specs, evaluation specs, and evaluation tasks"
+        ),
+    )
+    parser.add_argument("--db", type=str, default=None)
+    parser.add_argument("--manifest", type=str, required=True)
+
+
+def _register_run_diagnostic_evaluation(
+    sub: argparse._SubParsersAction,
+) -> None:
+    parser = sub.add_parser(
+        "run-diagnostic-evaluation",
+        help="Apply a diagnostic manifest and run its lightweight evaluation spec",
+    )
+    parser.add_argument("--db", type=str, default=None)
+    parser.add_argument(
+        "--manifest",
+        type=str,
+        default="global_macro_tradeable_daily_diagnostic",
+    )
+    parser.add_argument(
+        "--evaluation-spec-id",
+        type=str,
+        default="global_macro_tradeable_daily_diagnostic_eval",
+    )
+    parser.add_argument("--base-url", type=str, default=None)
+    parser.add_argument("--details", action="store_true")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Apply manifests and validate the diagnostic case plan without "
+            "running signal discovery, backtests, or report generation"
+        ),
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail when the dry-run diagnostic plan violates lightweight contracts",
+    )
+
+
+def _register_list_runtime_manifests(
+    sub: argparse._SubParsersAction,
+) -> None:
+    sub.add_parser(
+        "list-runtime-manifests",
+        help="List checked-in runtime manifests with categories",
+    )
+
+
+COMMANDS: tuple[CliCommand, ...] = (
+    CliCommand(
+        name="apply-runtime-manifest",
+        handler=_legacy.cmd_apply_runtime_manifest,
+        visibility="public",
+        register_parser=_register_apply_runtime_manifest,
+    ),
+    CliCommand(
+        name="run-diagnostic-evaluation",
+        handler=_legacy.cmd_run_diagnostic_evaluation,
+        visibility="public",
+        register_parser=_register_run_diagnostic_evaluation,
+    ),
+    CliCommand(
+        name="list-runtime-manifests",
+        handler=_legacy.cmd_list_runtime_manifests,
+        visibility="public",
+        register_parser=_register_list_runtime_manifests,
+    ),
+)
+
 COMMAND_HANDLERS: dict[str, CommandHandler] = {
-    "apply-runtime-manifest": _legacy.cmd_apply_runtime_manifest,
-    "run-diagnostic-evaluation": _legacy.cmd_run_diagnostic_evaluation,
-    "list-runtime-manifests": _legacy.cmd_list_runtime_manifests,
+    command.name: command.handler for command in COMMANDS
+}
+COMMAND_HANDLERS.update(
+    {
     "inspect-runtime-resources": _legacy.cmd_inspect_runtime_resources,
     "debug-status": _legacy.cmd_status,
-}
+    }
+)
 
+
+def register_runtime_parsers(sub: argparse._SubParsersAction) -> None:
+    for command in COMMANDS:
+        command.register_parser(sub)

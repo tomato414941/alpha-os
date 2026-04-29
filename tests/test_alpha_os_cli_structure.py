@@ -9,6 +9,7 @@ from alpha_os.cli import build_cli_parser, build_command_handlers
 from alpha_os.cli.evaluation import COMMAND_HANDLERS as EVALUATION_COMMAND_HANDLERS
 from alpha_os.cli.internal_commands import COMMAND_HANDLERS as INTERNAL_COMMAND_HANDLERS
 from alpha_os.cli.research import COMMAND_HANDLERS as RESEARCH_COMMAND_HANDLERS
+from alpha_os.cli.runtime import COMMANDS as RUNTIME_COMMANDS
 from alpha_os.cli.runtime import COMMAND_HANDLERS as RUNTIME_COMMAND_HANDLERS
 
 
@@ -30,6 +31,37 @@ def test_cli_dispatch_is_grouped_by_use_case_module():
 
     assert set(build_command_handlers()) == set(grouped_handlers)
     assert _parser_command_names() == set(grouped_handlers)
+
+
+def test_runtime_commands_own_public_parser_registration():
+    assert {
+        command.name
+        for command in RUNTIME_COMMANDS
+        if command.visibility == "public"
+    } == {
+        "apply-runtime-manifest",
+        "run-diagnostic-evaluation",
+        "list-runtime-manifests",
+    }
+
+    parser = build_cli_parser()
+    args = parser.parse_args(
+        [
+            "run-diagnostic-evaluation",
+            "--manifest",
+            "fixture_daily_diagnostic",
+            "--evaluation-spec-id",
+            "fixture_daily_diagnostic_eval",
+            "--dry-run",
+            "--check",
+        ]
+    )
+
+    assert args.command == "run-diagnostic-evaluation"
+    assert args.manifest == "fixture_daily_diagnostic"
+    assert args.evaluation_spec_id == "fixture_daily_diagnostic_eval"
+    assert args.dry_run is True
+    assert args.check is True
 
 
 def test_cli_entrypoint_keeps_public_help_surface(capsys):
