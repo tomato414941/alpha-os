@@ -212,7 +212,7 @@ def _runtime_manifest_category(
     types = set(instrument_types)
     if "diagnostic" in name:
         return "diagnostic"
-    if name == "global_macro_futures_daily_trend_carry":
+    if name == "global_macro_futures_daily_trend":
         return "reference"
     if types & {"future", "perp", "fx_forward"}:
         return "cross_asset_example"

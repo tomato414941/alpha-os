@@ -1732,7 +1732,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         Path(__file__).resolve().parents[1]
         / "config"
         / "runtime_manifests"
-        / "global_macro_futures_daily_trend_carry.json"
+        / "global_macro_futures_daily_trend.json"
     )
     manifest = json.loads(source_manifest_path.read_text(encoding="utf-8"))
     keep_assets = {"ES", "ZN", "CL", "GC", "BTCUSDT", "ETHUSDT"}
@@ -1837,7 +1837,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
-                    "global_macro_futures_daily_trend_carry_eval",
+                    "global_macro_futures_daily_trend_eval",
                     "--base-url",
                     "http://example.com",
                 ]
@@ -1855,11 +1855,11 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
     try:
         store.ensure_schema()
         signal_discovery_runs = store.list_signal_discovery_runs(
-            signal_discovery_id="global_macro_futures_daily_trend_carry_search",
+            signal_discovery_id="global_macro_futures_daily_trend_search",
             limit=10,
         )
         initial_strategy_states = store.list_initial_strategy_states(
-            signal_discovery_id="global_macro_futures_daily_trend_carry_search",
+            signal_discovery_id="global_macro_futures_daily_trend_search",
             limit=10,
         )
         assert len(signal_discovery_runs) >= 1
@@ -1871,7 +1871,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         assert report_state is not None
         assert len(report_state.report.task_results) == 1
         task_result = report_state.report.task_results[0]
-        assert task_result.signal_discovery_id == "global_macro_futures_daily_trend_carry_search"
+        assert task_result.signal_discovery_id == "global_macro_futures_daily_trend_search"
         assert task_result.artifact_refs.get("initial_strategy_state_ids")
         assert task_result.artifact_refs.get("signal_train_ids")
         decision_metric_group_result = next(

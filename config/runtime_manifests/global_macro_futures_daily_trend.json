@@ -574,7 +574,7 @@
   ],
   "generated_signal_discoveries": [
     {
-      "signal_discovery_id": "global_macro_futures_daily_trend_carry_search",
+      "signal_discovery_id": "global_macro_futures_daily_trend_search",
       "subject_set_id": "global_macro_futures_26",
       "target_id": "residual_return_5d",
       "operator_ids": [
@@ -613,8 +613,7 @@
         "max_families_per_operator": 1,
         "max_families_per_primary_observable": 1,
         "allowed_family_groups": [
-          "trend",
-          "carry"
+          "trend"
         ],
         "novelty_key": "operator_primary"
       }
@@ -622,7 +621,7 @@
   ],
   "evaluation_specs": [
     {
-      "evaluation_spec_id": "global_macro_futures_daily_trend_carry_eval",
+      "evaluation_spec_id": "global_macro_futures_daily_trend_eval",
       "execution_range": {
         "label": "train_2024",
         "start_date": "2024-01-01",
@@ -692,8 +691,8 @@
   ],
   "evaluation_tasks": [
     {
-      "evaluation_spec_id": "global_macro_futures_daily_trend_carry_eval",
-      "signal_discovery_id": "global_macro_futures_daily_trend_carry_search",
+      "evaluation_spec_id": "global_macro_futures_daily_trend_eval",
+      "signal_discovery_id": "global_macro_futures_daily_trend_search",
       "base_url": "http://127.0.0.1:8000",
       "portfolio_construction": {
         "sizing_policy": {
@@ -730,20 +729,6 @@
               "sleeve_kind": "trend",
               "risk_budget": 1.0,
               "enabled": true
-            },
-            {
-              "sleeve_id": "carry_satellite",
-              "sleeve_kind": "carry",
-              "risk_budget": 0.3,
-              "enabled": false,
-              "subject_filter": {
-                "asset_classes": [
-                  "rates",
-                  "fx",
-                  "commodity",
-                  "crypto"
-                ]
-              }
             }
           ]
         }

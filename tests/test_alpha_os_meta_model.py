@@ -853,7 +853,7 @@ def test_checked_in_global_macro_manifest_applies_cleanly(tmp_path, capsys):
         Path(__file__).resolve().parents[1]
         / "config"
         / "runtime_manifests"
-        / "global_macro_futures_daily_trend_carry.json"
+        / "global_macro_futures_daily_trend.json"
     )
 
     assert (
@@ -871,8 +871,8 @@ def test_checked_in_global_macro_manifest_applies_cleanly(tmp_path, capsys):
     output = capsys.readouterr().out
     assert "InstrumentTypes: future, perp" in output
     assert "global_macro_futures_26" in output
-    assert "global_macro_futures_daily_trend_carry_search" in output
-    assert "global_macro_futures_daily_trend_carry_eval" in output
+    assert "global_macro_futures_daily_trend_search" in output
+    assert "global_macro_futures_daily_trend_eval" in output
 
     assert main(["inspect-runtime-resources", "--db", str(db_path)]) == 0
     inspect_output = capsys.readouterr().out
@@ -881,12 +881,12 @@ def test_checked_in_global_macro_manifest_applies_cleanly(tmp_path, capsys):
     assert "ES_future" in inspect_output
     assert "BTCUSDT_perp" in inspect_output
     assert "time_series_trend" in inspect_output
-    assert "global_macro_futures_daily_trend_carry_search" in inspect_output
+    assert "global_macro_futures_daily_trend_search" in inspect_output
 
     store = EvaluationStore(db_path)
     try:
         case_states = store.list_evaluation_tasks(
-            evaluation_spec_id="global_macro_futures_daily_trend_carry_eval",
+            evaluation_spec_id="global_macro_futures_daily_trend_eval",
             limit=5,
         )
         assert len(case_states) == 1
@@ -3728,7 +3728,7 @@ def test_list_runtime_manifests_shows_reference_and_examples(capsys):
     output = capsys.readouterr().out
 
     assert "alpha-os runtime manifests" in output
-    assert "global_macro_futures_daily_trend_carry.json category=reference instrument_types=future,perp subject_kinds=future,perp" in output
+    assert "global_macro_futures_daily_trend.json category=reference instrument_types=future,perp subject_kinds=future,perp" in output
     assert "fixture_daily_diagnostic.json category=diagnostic instrument_types=- subject_kinds=equity" in output
     assert "global_macro_tradeable_daily_diagnostic.json category=diagnostic" in output
     assert "global_macro_tradeable_daily_10y.json category=cross_asset_example instrument_types=future,perp subject_kinds=future,perp" in output
