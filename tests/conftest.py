@@ -25,3 +25,22 @@ def synthetic_data():
         data[feat] = 100.0 * np.cumprod(1.0 + returns)
     return FEATURES, data, data["f1"], n_days
 
+
+@pytest.fixture(autouse=True)
+def optional_signal_noise_client(monkeypatch):
+    import alpha_os.signal_client as signal_client
+
+    if signal_client.SignalClient is not None:
+        return
+
+    class FakeSignalClient:
+        def __init__(self, **kwargs):
+            self.base_url = str(kwargs.get("base_url", ""))
+
+        def health(self):
+            return False
+
+        def metadata(self, **_kwargs):
+            return None
+
+    monkeypatch.setattr(signal_client, "SignalClient", FakeSignalClient)
