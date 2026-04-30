@@ -17,6 +17,17 @@ class CliCommand:
     register_parser: Callable[[argparse._SubParsersAction], None]
 
 
+def _hide_subparser_help(
+    sub: argparse._SubParsersAction,
+    name: str,
+) -> None:
+    sub._choices_actions = [
+        action
+        for action in sub._choices_actions
+        if getattr(action, "dest", None) != name
+    ]
+
+
 def _register_apply_runtime_manifest(
     sub: argparse._SubParsersAction,
 ) -> None:
@@ -36,7 +47,7 @@ def _register_run_diagnostic_evaluation(
 ) -> None:
     parser = sub.add_parser(
         "run-diagnostic-evaluation",
-        help="Apply a diagnostic manifest and run its lightweight evaluation spec",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument("--db", type=str, default=None)
     parser.add_argument(
@@ -64,6 +75,7 @@ def _register_run_diagnostic_evaluation(
         action="store_true",
         help="Fail when the dry-run diagnostic plan violates lightweight contracts",
     )
+    _hide_subparser_help(sub, "run-diagnostic-evaluation")
 
 
 def _register_list_runtime_manifests(
@@ -85,7 +97,7 @@ COMMANDS: tuple[CliCommand, ...] = (
     CliCommand(
         name="run-diagnostic-evaluation",
         handler=_legacy.cmd_run_diagnostic_evaluation,
-        visibility="public",
+        visibility="internal",
         register_parser=_register_run_diagnostic_evaluation,
     ),
     CliCommand(
@@ -101,8 +113,8 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
 }
 COMMAND_HANDLERS.update(
     {
-    "inspect-runtime-resources": _legacy.cmd_inspect_runtime_resources,
-    "debug-status": _legacy.cmd_status,
+        "inspect-runtime-resources": _legacy.cmd_inspect_runtime_resources,
+        "debug-status": _legacy.cmd_status,
     }
 )
 

@@ -40,7 +40,6 @@ def test_runtime_commands_own_public_parser_registration():
         if command.visibility == "public"
     } == {
         "apply-runtime-manifest",
-        "run-diagnostic-evaluation",
         "list-runtime-manifests",
     }
 
@@ -64,6 +63,34 @@ def test_runtime_commands_own_public_parser_registration():
     assert args.check is True
 
 
+def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
+    parser = build_cli_parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--help"])
+
+    captured = capsys.readouterr().out
+    public_commands = {
+        "apply-runtime-manifest",
+        "list-runtime-manifests",
+        "run-walk-forward-evaluation",
+        "show-evaluation-report",
+        "show-evaluation-diagnostics",
+    }
+    hidden_commands = {
+        "run-diagnostic-evaluation",
+        "inspect-runtime-resources",
+        "debug-status",
+        "debug-apply-evaluation",
+        "run-signal-discovery",
+    }
+
+    for command in public_commands:
+        assert command in captured
+    for command in hidden_commands:
+        assert command not in captured
+
+
 def test_cli_entrypoint_keeps_public_help_surface(capsys):
     parser = build_cli_parser()
 
@@ -73,6 +100,7 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
     captured = capsys.readouterr().out
     assert "apply-runtime-manifest" in captured
     assert "run-walk-forward-evaluation" in captured
+    assert "run-diagnostic-evaluation" not in captured
     assert "debug-apply-evaluation" not in captured
 
 
@@ -100,4 +128,5 @@ def test_cli_package_module_entrypoint_preserves_help():
 
     assert result.returncode == 0
     assert "apply-runtime-manifest" in result.stdout
+    assert "run-diagnostic-evaluation" not in result.stdout
     assert "debug-apply-evaluation" not in result.stdout

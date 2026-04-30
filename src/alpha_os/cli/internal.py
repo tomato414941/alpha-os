@@ -307,7 +307,6 @@ def cmd_list_runtime_manifests(_args: argparse.Namespace) -> int:
 def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.ArgumentParser:
     public_commands = (
         "apply-runtime-manifest",
-        "run-diagnostic-evaluation",
         "list-runtime-manifests",
         "run-walk-forward-evaluation",
         "show-evaluation-report",
