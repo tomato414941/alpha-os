@@ -527,6 +527,7 @@ class TrainlessEvaluationExecutionStrategy:
                     holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
+                    target_id=execution_request.context.target_id,
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -664,6 +665,7 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                     holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
+                    target_id=execution_request.context.target_id,
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)

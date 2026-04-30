@@ -237,11 +237,13 @@ def build_report_evaluation_task_contract_fields(
     holding_cost_assumptions,
     subject_set=None,
     subject_set_id: str | None = None,
+    target_id: str | None = None,
 ) -> dict[str, str | int | float | bool]:
     rebalance_interval_steps = portfolio_construction.rebalance_interval_steps
     is_hold_baseline = portfolio_construction.construction_kind == "hold_baseline"
     fields: dict[str, str | int | float | bool] = {
         "construction_kind": portfolio_construction.construction_kind,
+        "target_id": "-" if target_id is None else target_id,
         "selection": "all_assets" if portfolio_construction.top_k is None else "top_k",
         "top_k": (
             "-"
