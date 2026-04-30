@@ -58,9 +58,9 @@ Confirmed:
 
 Still unresolved:
 
-- The current dataset has close, volume, funding rate, and partial open
-  interest.
-- The open interest frequency decision is not fixed.
+- The current dataset has close, volume, funding rate, and open interest.
+- The funding and open interest daily aggregation definitions are suitable for
+  feature experimentation, not final execution accounting.
 - The volume-confirmed trend operator is currently scoped to asset, equity, and
   ETF subject kinds, not crypto perpetuals.
 - The exact candidate construction for combining momentum and regime inputs is
@@ -68,8 +68,7 @@ Still unresolved:
 
 Next smallest step:
 
-- Decide whether to use sparse open interest, transform it, or narrow the
-  hypothesis to exclude it before creating a runtime manifest.
+- Fix the first candidate construction before creating a runtime manifest.
 
 Evidence data:
 
