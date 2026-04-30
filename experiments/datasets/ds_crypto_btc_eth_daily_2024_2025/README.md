@@ -1,6 +1,7 @@
-# Crypto Regime Momentum Snapshot
+# Crypto BTC/ETH Daily Dataset
 
-Purpose: evidence data candidate for `hyp_5880aba5` / Crypto Regime Momentum.
+Purpose: evidence data candidate for crypto BTC/ETH daily experiments,
+including `hyp_5880aba5` / Crypto Regime Momentum.
 
 Status: incomplete.
 
@@ -33,8 +34,8 @@ The source did not provide `funding_rate` for `BTCUSDT` or `ETHUSDT` through the
 public observation contract checked here. The `funding_rate` column is present
 but empty.
 
-This snapshot is not sufficient to fully judge the hypothesis until funding
-rate data is supplied and the open interest frequency decision is made, or the
+This dataset is not sufficient to fully judge the hypothesis until funding rate
+data is supplied and the open interest frequency decision is made, or the
 hypothesis is narrowed to exclude those inputs.
 
 ## Validation

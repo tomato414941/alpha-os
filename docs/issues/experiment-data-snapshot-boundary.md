@@ -1,4 +1,4 @@
-# Experiment Data Snapshot Boundary
+# Experiment Data Boundary
 
 ## Problem
 
@@ -13,23 +13,24 @@ may not be reproducible later.
 
 ## Guard
 
-Before judging a hypothesis, identify the data snapshot or data retrieval
-procedure used for that hypothesis.
+Before judging a hypothesis, identify the dataset or data retrieval procedure
+used for that hypothesis.
 
 Do not treat `data/` as the source of truth for experiment evidence.
 
 ## Next Decision
 
-For `crypto_regime_momentum`, decide whether the evidence data will be a
-checked-in snapshot under `experiments/snapshots/` or a documented retrieval
-procedure.
+For `crypto_regime_momentum`, decide whether
+`experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/` is sufficient after
+the hypothesis is narrowed, or whether a reproducible retrieval procedure is
+needed.
 
 ## Close Condition
 
 Close this when `crypto_regime_momentum` points to exactly one evidence data
-source: either a committed snapshot or a reproducible retrieval procedure.
+source: either a committed dataset or a reproducible retrieval procedure.
 
 ## Later
 
-For the first crypto hypothesis, decide whether to create a small snapshot under
-`experiments/snapshots/` or keep only a retrieval procedure.
+For the first crypto hypothesis, decide whether to keep a committed dataset
+under `experiments/datasets/` or use only a retrieval procedure.

@@ -72,4 +72,4 @@ Next smallest step:
 
 Evidence data:
 
-- `experiments/snapshots/crypto_regime_momentum/`
+- `experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/`
