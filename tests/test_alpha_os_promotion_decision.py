@@ -55,12 +55,25 @@ def _report(
     *,
     candidate: EvaluationTaskResult,
     baseline: EvaluationTaskResult,
+    oos_contract_summary: dict[str, str] | None = None,
 ) -> EvaluationReport:
     return EvaluationReport(
         evaluation_report_id="report:test",
         evaluation_spec_id="eval:test",
         task_results=(candidate, baseline),
         created_at="2026-04-29T00:00:00Z",
+        oos_contract_summary=(
+            {
+                "rigor_level": "backtest_oos",
+                "enforcement": "strict",
+                "date_parse": "pass",
+                "range_non_overlap": "pass",
+                "evaluation_after_execution": "pass",
+                "frozen_state_required": "n/a",
+            }
+            if oos_contract_summary is None
+            else oos_contract_summary
+        ),
     )
 
 
@@ -175,6 +188,165 @@ def test_decide_promotion_is_inconclusive_when_required_metric_is_missing():
     assert decision.metrics["candidate_worst_decision_net_return"] is None
 
 
+def test_decide_promotion_is_inconclusive_without_strict_oos_evidence():
+    decision = decide_promotion(
+        evaluation_report=_report(
+            candidate=_task_result(
+                "candidate",
+                mean_net_return=0.12,
+                worst_net_return=0.02,
+                drawdown=0.04,
+                turnover=0.10,
+            ),
+            baseline=_task_result(
+                "baseline",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+            oos_contract_summary={},
+        ),
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "inconclusive"
+    assert decision.reasons == ("promotion requires strict OOS contract evidence",)
+
+
+def test_decide_promotion_is_inconclusive_when_oos_contract_is_warn_only():
+    decision = decide_promotion(
+        evaluation_report=_report(
+            candidate=_task_result(
+                "candidate",
+                mean_net_return=0.12,
+                worst_net_return=0.02,
+                drawdown=0.04,
+                turnover=0.10,
+            ),
+            baseline=_task_result(
+                "baseline",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+            oos_contract_summary={
+                "rigor_level": "diagnostic",
+                "enforcement": "warn",
+                "date_parse": "pass",
+                "range_non_overlap": "pass",
+                "evaluation_after_execution": "pass",
+                "frozen_state_required": "n/a",
+            },
+        ),
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "inconclusive"
+    assert decision.reasons == (
+        "promotion requires OOS contract enforcement=strict",
+        "promotion requires OOS rigor level",
+    )
+
+
+def test_decide_promotion_can_skip_strict_oos_requirement_for_diagnostics():
+    decision = decide_promotion(
+        evaluation_report=_report(
+            candidate=_task_result(
+                "candidate",
+                mean_net_return=0.12,
+                worst_net_return=0.02,
+                drawdown=0.04,
+                turnover=0.10,
+            ),
+            baseline=_task_result(
+                "baseline",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+            oos_contract_summary={},
+        ),
+        rule=PromotionRule(
+            candidate_task_id="candidate",
+            baseline_task_id="baseline",
+            require_strict_oos=False,
+        ),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "promote"
+
+
+def test_decide_promotion_is_inconclusive_when_baseline_task_is_missing():
+    report = EvaluationReport(
+        evaluation_report_id="report:test",
+        evaluation_spec_id="eval:test",
+        task_results=(
+            _task_result(
+                "candidate",
+                mean_net_return=0.12,
+                worst_net_return=0.02,
+                drawdown=0.04,
+                turnover=0.10,
+            ),
+        ),
+        created_at="2026-04-29T00:00:00Z",
+        oos_contract_summary={
+            "rigor_level": "backtest_oos",
+            "enforcement": "strict",
+            "date_parse": "pass",
+            "range_non_overlap": "pass",
+            "evaluation_after_execution": "pass",
+            "frozen_state_required": "n/a",
+        },
+    )
+
+    decision = decide_promotion(
+        evaluation_report=report,
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "inconclusive"
+    assert decision.reasons == ("evaluation report is missing task result: baseline",)
+
+
+def test_same_strategy_candidate_and_baseline_do_not_promote():
+    candidate = _task_result(
+        "candidate",
+        mean_net_return=0.12,
+        worst_net_return=0.02,
+        drawdown=0.04,
+        turnover=0.10,
+    )
+    baseline = _task_result(
+        "baseline",
+        mean_net_return=0.08,
+        worst_net_return=0.01,
+        drawdown=0.05,
+        turnover=0.10,
+    )
+    baseline = EvaluationTaskResult(
+        evaluation_task_id=baseline.evaluation_task_id,
+        strategy_id=candidate.strategy_id,
+        metric_group_results=baseline.metric_group_results,
+    )
+
+    decision = decide_promotion(
+        evaluation_report=_report(candidate=candidate, baseline=baseline),
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "reject"
+    assert decision.reasons == ("candidate and baseline use the same strategy",)
+
+
 def test_promotion_rule_roundtrips_document():
     rule = PromotionRule(
         candidate_task_id="candidate",
@@ -183,6 +355,7 @@ def test_promotion_rule_roundtrips_document():
         max_worst_net_return_degradation=0.01,
         max_drawdown_degradation=0.03,
         max_turnover_ratio=1.5,
+        require_strict_oos=True,
     )
 
     assert PromotionRule.from_document(rule.to_document()) == rule

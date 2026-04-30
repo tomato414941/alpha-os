@@ -127,14 +127,16 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
             ),
             created_at="2026-04-30T00:00:00Z",
         )
-        assert promotion_decision.status == "reject"
+        assert promotion_decision.status == "inconclusive"
         assert promotion_decision.metrics["baseline_task_id"] == (
             "minimal_oos_baseline_equal_weight_hold_case"
         )
-        assert promotion_decision.metrics["mean_decision_net_return_edge"] == 0.0
         assert (
             promotion_decision.reasons
-            == ("candidate mean decision net return edge is too low",)
+            == (
+                "promotion requires OOS contract enforcement=strict",
+                "promotion requires OOS rigor level",
+            )
         )
     finally:
         store.close()

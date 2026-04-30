@@ -58,6 +58,14 @@ def test_promoted_evaluation_report_can_create_baseline_state():
             ),
         ),
         created_at="2026-04-29T00:00:00Z",
+        oos_contract_summary={
+            "rigor_level": "backtest_oos",
+            "enforcement": "strict",
+            "date_parse": "pass",
+            "range_non_overlap": "pass",
+            "evaluation_after_execution": "pass",
+            "frozen_state_required": "n/a",
+        },
     )
 
     decision = decide_promotion(

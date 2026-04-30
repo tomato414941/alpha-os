@@ -9,7 +9,7 @@ PromotionStatus = Literal["promote", "reject", "inconclusive"]
 
 @dataclass(frozen=True)
 class PromotionRule:
-    """Promotion requires strictly positive mean net return edge by default."""
+    """Promotion requires strict OOS evidence and positive edge by default."""
 
     candidate_task_id: str
     baseline_task_id: str
@@ -17,8 +17,9 @@ class PromotionRule:
     max_worst_net_return_degradation: float = 0.0
     max_drawdown_degradation: float = 0.0
     max_turnover_ratio: float = 2.0
+    require_strict_oos: bool = True
 
-    def to_document(self) -> dict[str, str | float]:
+    def to_document(self) -> dict[str, str | float | bool]:
         return {
             "candidate_task_id": self.candidate_task_id,
             "baseline_task_id": self.baseline_task_id,
@@ -26,6 +27,7 @@ class PromotionRule:
             "max_worst_net_return_degradation": self.max_worst_net_return_degradation,
             "max_drawdown_degradation": self.max_drawdown_degradation,
             "max_turnover_ratio": self.max_turnover_ratio,
+            "require_strict_oos": self.require_strict_oos,
         }
 
     @classmethod
@@ -49,6 +51,7 @@ class PromotionRule:
                 document.get("max_drawdown_degradation", 0.0)
             ),
             max_turnover_ratio=float(document.get("max_turnover_ratio", 2.0)),
+            require_strict_oos=bool(document.get("require_strict_oos", True)),
         )
 
 
@@ -148,14 +151,36 @@ def decide_promotion(
         "baseline_task_id": rule.baseline_task_id,
     }
     missing_reasons: list[str] = []
+    strict_oos_reasons = _strict_oos_reasons(
+        evaluation_report=evaluation_report,
+        require_strict_oos=rule.require_strict_oos,
+    )
+    if strict_oos_reasons:
+        return _decision(
+            evaluation_report=evaluation_report,
+            rule=rule,
+            status="inconclusive",
+            reasons=tuple(strict_oos_reasons),
+            metrics=metrics,
+            created_at=created_at,
+        )
+
+    candidate_task_result = _task_result(
+        evaluation_report=evaluation_report,
+        task_id=rule.candidate_task_id,
+    )
+    baseline_task_result = _task_result(
+        evaluation_report=evaluation_report,
+        task_id=rule.baseline_task_id,
+    )
 
     candidate_metrics = _task_metrics(
-        evaluation_report=evaluation_report,
+        task_result=candidate_task_result,
         task_id=rule.candidate_task_id,
         missing_reasons=missing_reasons,
     )
     baseline_metrics = _task_metrics(
-        evaluation_report=evaluation_report,
+        task_result=baseline_task_result,
         task_id=rule.baseline_task_id,
         missing_reasons=missing_reasons,
     )
@@ -168,18 +193,20 @@ def decide_promotion(
             metrics[f"{side}_{key}"] = value
 
     if missing_reasons:
-        return PromotionDecision(
-            promotion_decision_id=build_promotion_decision_id(
-                evaluation_report_id=evaluation_report.evaluation_report_id,
-                candidate_task_id=rule.candidate_task_id,
-                baseline_task_id=rule.baseline_task_id,
-            ),
-            evaluation_report_id=evaluation_report.evaluation_report_id,
-            candidate_task_id=rule.candidate_task_id,
-            baseline_task_id=rule.baseline_task_id,
+        return _decision(
+            evaluation_report=evaluation_report,
             rule=rule,
             status="inconclusive",
             reasons=tuple(missing_reasons),
+            metrics=metrics,
+            created_at=created_at,
+        )
+    if candidate_task_result.strategy_id == baseline_task_result.strategy_id:
+        return _decision(
+            evaluation_report=evaluation_report,
+            rule=rule,
+            status="reject",
+            reasons=("candidate and baseline use the same strategy",),
             metrics=metrics,
             created_at=created_at,
         )
@@ -220,15 +247,8 @@ def decide_promotion(
         reject_reasons.append("candidate mean decision turnover ratio is too high")
 
     if reject_reasons:
-        return PromotionDecision(
-            promotion_decision_id=build_promotion_decision_id(
-                evaluation_report_id=evaluation_report.evaluation_report_id,
-                candidate_task_id=rule.candidate_task_id,
-                baseline_task_id=rule.baseline_task_id,
-            ),
-            evaluation_report_id=evaluation_report.evaluation_report_id,
-            candidate_task_id=rule.candidate_task_id,
-            baseline_task_id=rule.baseline_task_id,
+        return _decision(
+            evaluation_report=evaluation_report,
             rule=rule,
             status="reject",
             reasons=tuple(reject_reasons),
@@ -236,6 +256,25 @@ def decide_promotion(
             created_at=created_at,
         )
 
+    return _decision(
+        evaluation_report=evaluation_report,
+        rule=rule,
+        status="promote",
+        reasons=("candidate satisfies promotion rule",),
+        metrics=metrics,
+        created_at=created_at,
+    )
+
+
+def _decision(
+    *,
+    evaluation_report,
+    rule: PromotionRule,
+    status: PromotionStatus,
+    reasons: tuple[str, ...],
+    metrics: dict[str, float | str | None],
+    created_at: str,
+) -> PromotionDecision:
     return PromotionDecision(
         promotion_decision_id=build_promotion_decision_id(
             evaluation_report_id=evaluation_report.evaluation_report_id,
@@ -246,20 +285,44 @@ def decide_promotion(
         candidate_task_id=rule.candidate_task_id,
         baseline_task_id=rule.baseline_task_id,
         rule=rule,
-        status="promote",
-        reasons=("candidate satisfies promotion rule",),
+        status=status,
+        reasons=reasons,
         metrics=metrics,
         created_at=created_at,
     )
 
 
-def _task_metrics(
+def _strict_oos_reasons(
+    *,
+    evaluation_report,
+    require_strict_oos: bool,
+) -> tuple[str, ...]:
+    if not require_strict_oos:
+        return ()
+    summary = getattr(evaluation_report, "oos_contract_summary", {})
+    if not isinstance(summary, dict) or not summary:
+        return ("promotion requires strict OOS contract evidence",)
+    reasons = []
+    if summary.get("enforcement") != "strict":
+        reasons.append("promotion requires OOS contract enforcement=strict")
+    if summary.get("rigor_level") not in (
+        "backtest_oos",
+        "fixed_state_oos",
+        "operational",
+    ):
+        reasons.append("promotion requires OOS rigor level")
+    for key in ("date_parse", "range_non_overlap", "evaluation_after_execution"):
+        if summary.get(key) != "pass":
+            reasons.append(f"promotion requires OOS contract {key}=pass")
+    return tuple(reasons)
+
+
+def _task_result(
     *,
     evaluation_report,
     task_id: str,
-    missing_reasons: list[str],
-) -> dict[str, float | None]:
-    task_result = next(
+):
+    return next(
         (
             item
             for item in evaluation_report.task_results
@@ -267,6 +330,14 @@ def _task_metrics(
         ),
         None,
     )
+
+
+def _task_metrics(
+    *,
+    task_result,
+    task_id: str,
+    missing_reasons: list[str],
+) -> dict[str, float | None]:
     if task_result is None:
         missing_reasons.append(f"evaluation report is missing task result: {task_id}")
         return {}
