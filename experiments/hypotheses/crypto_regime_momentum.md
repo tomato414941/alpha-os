@@ -1,5 +1,7 @@
 # Crypto Regime Momentum
 
+Hypothesis UID: `hyp_5880aba5`
+
 ## Claim
 
 Adding market regime information to simple BTC/ETH momentum improves out-of-
