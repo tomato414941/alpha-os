@@ -1,0 +1,36 @@
+# Package Manager Boundary
+
+## Problem
+
+alpha-os currently documents setup with `pip install -e ".[dev]"`.
+
+The project may want to use `uv` for faster, more reproducible local setup and
+CI, but that decision is not captured yet.
+
+## Current Decision
+
+Do not migrate package management yet.
+
+Keep the current `pip`-based setup until a small migration plan is chosen.
+
+## Risk
+
+If package manager choices remain implicit, setup instructions, CI, and local
+agent workflows can drift.
+
+If `uv` is introduced ad hoc, the repository may end up supporting two setup
+paths without a clear source of truth.
+
+## Guard
+
+Do not mix `uv` and `pip` instructions in primary docs unless the intended
+source of truth is explicit.
+
+## Later
+
+Evaluate a small `uv` migration:
+
+- choose whether `uv.lock` should be committed
+- update README setup commands
+- update CI install commands
+- confirm `ruff`, `pytest`, and the golden path still pass
