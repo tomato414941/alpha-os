@@ -4879,6 +4879,42 @@ class EvaluationStore:
         ).fetchone()
         return _row_to_observation(row)
 
+    def list_observations_for_subject_or_asset(
+        self,
+        *,
+        subject_id: str,
+        asset: str,
+        target_id: str,
+        limit: int,
+    ) -> list[ObservationRecord]:
+        """List recent observations, preferring subject rows before asset fallback."""
+        rows = self.conn.execute(
+            """
+            SELECT evaluation_id, subject_id, asset, target_id, value, recorded_at
+            FROM observations
+            WHERE subject_id = ? AND target_id = ?
+            ORDER BY evaluation_id DESC
+            LIMIT ?
+            """,
+            (subject_id, target_id, int(limit)),
+        ).fetchall()
+        if not rows:
+            rows = self.conn.execute(
+                """
+                SELECT evaluation_id, subject_id, asset, target_id, value, recorded_at
+                FROM observations
+                WHERE asset = ? AND target_id = ?
+                ORDER BY evaluation_id DESC
+                LIMIT ?
+                """,
+                (asset, target_id, int(limit)),
+            ).fetchall()
+        return [
+            observation
+            for observation in (_row_to_observation(row) for row in rows)
+            if observation is not None
+        ]
+
     def list_evaluation_snapshots(self, *, limit: int = 20) -> list[EvaluationSnapshot]:
         rows = self.conn.execute(
             """

@@ -888,28 +888,13 @@ def _realized_observation_volatility(
     target_id: str,
     window_size: int,
 ) -> float:
-    rows = store.conn.execute(
-        """
-        SELECT value
-        FROM observations
-        WHERE subject_id = ? AND target_id = ?
-        ORDER BY evaluation_id DESC
-        LIMIT ?
-        """,
-        (subject_id, target_id, int(window_size)),
-    ).fetchall()
-    if not rows:
-        rows = store.conn.execute(
-            """
-            SELECT value
-            FROM observations
-            WHERE asset = ? AND target_id = ?
-            ORDER BY evaluation_id DESC
-            LIMIT ?
-            """,
-            (asset, target_id, int(window_size)),
-        ).fetchall()
-    values = [float(row["value"]) for row in rows]
+    observations = store.list_observations_for_subject_or_asset(
+        subject_id=subject_id,
+        asset=asset,
+        target_id=target_id,
+        limit=window_size,
+    )
+    values = [item.value for item in observations]
     return realized_observation_volatility(values)
 
 
@@ -1029,32 +1014,17 @@ def _observation_series_by_date(
     target_id: str,
     window_size: int,
 ) -> dict[str, float]:
-    rows = store.conn.execute(
-        """
-        SELECT evaluation_id, value
-        FROM observations
-        WHERE subject_id = ? AND target_id = ?
-        ORDER BY evaluation_id DESC
-        LIMIT ?
-        """,
-        (subject_id, target_id, int(window_size)),
-    ).fetchall()
-    if not rows:
-        rows = store.conn.execute(
-            """
-            SELECT evaluation_id, value
-            FROM observations
-            WHERE asset = ? AND target_id = ?
-            ORDER BY evaluation_id DESC
-            LIMIT ?
-            """,
-            (asset, target_id, int(window_size)),
-        ).fetchall()
+    observations = store.list_observations_for_subject_or_asset(
+        subject_id=subject_id,
+        asset=asset,
+        target_id=target_id,
+        limit=window_size,
+    )
     series: dict[str, float] = {}
-    for row in rows:
-        evaluation_id = str(row["evaluation_id"])
+    for item in observations:
+        evaluation_id = item.evaluation_id
         date = evaluation_id.rsplit(":", 1)[-1]
-        series[date] = float(row["value"])
+        series[date] = item.value
     return series
 
 
