@@ -58,8 +58,8 @@ Confirmed:
 
 Missing:
 
-- A reproducible BTCUSDT/ETHUSDT data path with close, volume, funding rate,
-  and open interest is not confirmed.
+- The current snapshot has close, volume, and partial open interest, but no
+  funding rate.
 - The volume-confirmed trend operator is currently scoped to asset, equity, and
   ETF subject kinds, not crypto perpetuals.
 - The exact candidate construction for combining momentum and regime inputs is
@@ -67,5 +67,9 @@ Missing:
 
 Next smallest step:
 
-- Confirm or create a reproducible BTCUSDT/ETHUSDT fixture with the required
-  columns before creating a runtime manifest for this hypothesis.
+- Supply funding rate data or narrow the hypothesis to exclude funding before
+  creating a runtime manifest.
+
+Evidence data:
+
+- `experiments/snapshots/crypto_regime_momentum/`
