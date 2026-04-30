@@ -73,6 +73,42 @@ The checked-in test `tests/test_alpha_os_minimal_oos_workflow.py` verifies that
 this path preserves fixed train/evaluation ranges, report contract fields,
 decision traces, and candidate-vs-baseline promotion inputs.
 
+## Minimal Fixed-State OOS Golden Path
+
+This workflow also uses only checked-in fixture CSV data. It first materializes
+a source initial strategy state, then creates a fixed-state replay evaluation
+task and runs a strict OOS report.
+
+```bash
+DB=/tmp/alpha-os-minimal-fixed-state-oos.db
+rm -f "$DB"
+
+PYTHONPATH=src python -m alpha_os apply-runtime-manifest \
+  --manifest examples/minimal_fixed_state_oos.json \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+  --evaluation-spec-id minimal_fixed_state_train_eval \
+  --db "$DB"
+
+# Select the generated initial_strategy_state_id, then create the replay task:
+PYTHONPATH=src python -m alpha_os create-fixed-state-evaluation-task \
+  --source-evaluation-task-id minimal_fixed_state_training_case \
+  --source-initial-strategy-state-id <initial_strategy_state_id> \
+  --evaluation-spec-id minimal_fixed_state_oos_eval \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+  --evaluation-spec-id minimal_fixed_state_oos_eval \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os show-evaluation-report \
+  --db "$DB"
+```
+
+The checked-in test `tests/test_alpha_os_minimal_fixed_state_oos_workflow.py`
+verifies strict OOS contract output and fixed-state provenance artifacts.
+
 ## Further Reading
 
 - [DESIGN.md](DESIGN.md)
