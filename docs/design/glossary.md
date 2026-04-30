@@ -42,7 +42,7 @@ If another design note uses a term differently, prefer this file.
 | **strategy spec** | A concrete structured definition of a strategy. | Defines trading behavior. Current mainline `TradingStrategySpec` is the first-class strategy model. |
 | **strategy execution** | Running a strategy through a specific engine. | Examples: strict OOS evaluation, fixed-state replay, paper, live. |
 | **strategy execution request** | One concrete request sent to a strategy engine. | It binds strategy semantics to an engine context and runtime artifacts. |
-| **strategy execution kind** | The strategy-level rule for how signal state is produced or reused. | Current kinds: `trainless`, `trained`, `frozen`. |
+| **strategy execution kind** | The strategy-level rule for how signal state is produced or reused. | Current kinds: `trainless`, `trained`, `frozen`. This is distinct from the engine run mode `fixed_state_replay`. |
 | **run policy** | The engine-side policy that chooses the run context for a strategy. | Current run modes are `backtest_oos` and `fixed_state_replay`; `paper` and `live` are planned. |
 | **strategy run mode** | The engine-side context for how a strategy is run. | Current modes: `backtest_oos`, `fixed_state_replay`; `paper` and `live` are reserved. |
 | **strategy run spec** | The pair of one trading strategy and one run policy. | This is the clean conceptual object for “run this strategy in this context”. |

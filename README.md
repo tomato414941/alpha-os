@@ -9,6 +9,7 @@ strategy definition, and out-of-sample evaluation.
 - entrypoint: `python -m alpha_os --help`
 - focus:
   - signal discovery research
+  - screening and compressed-belief artifacts
   - strategy specs and initial strategy state
   - OOS evaluation
   - portfolio decision and evaluation flows

@@ -129,15 +129,20 @@ But it should not be expanded.
 
 #### Aligned
 
-- no current module fully owns this plane yet
+- [`screening.py`](../../src/alpha_os/screening.py)
+  - aligned as the current first-class `ScreeningResult` and
+    `ScreeningPolicy` artifact layer
+- [`signal_discovery_screening_service.py`](../../src/alpha_os/signal_discovery_screening_service.py)
+  - aligned where it turns discovery outputs into persisted screening
+    artifacts
 
 #### Transitional
 
-- cheap pre-screen inside
-  [`evaluation_generation.py`](../../src/alpha_os/evaluation_generation.py)
-  - transitional because it is useful and correctly front-loads cheap rejection,
-    but it is still shaped by current batch backfill mechanics rather than by a
-    first-class greenfield pre-screen contract
+- [`pre_screening.py`](../../src/alpha_os/pre_screening.py),
+  [`probe_screening.py`](../../src/alpha_os/probe_screening.py), and
+  [`survivor_screening.py`](../../src/alpha_os/survivor_screening.py)
+  - transitional because staged screening exists, but the policy/reporting
+    surface is still being tightened
 - [`metrics_service.py`](../../src/alpha_os/metrics_service.py)
   - transitional because it provides useful scoring, but not yet a proper
     staged screening layer
@@ -163,14 +168,19 @@ But it should not be expanded.
 
 #### Aligned
 
-- no current module fully owns this plane yet
+- [`compression.py`](../../src/alpha_os/compression.py)
+  - aligned as the current first-class `CompressedBelief` artifact layer
+- [`signal_discovery_compression_service.py`](../../src/alpha_os/signal_discovery_compression_service.py)
+  - aligned where it persists compression outputs from screening survivors
 
 #### Transitional
 
+- [`belief_synthesis.py`](../../src/alpha_os/belief_synthesis.py)
+  - transitional because it supports current compression, but remains heuristic
+    rather than a final factor model
 - [`meta_aggregation_service.py`](../../src/alpha_os/meta_aggregation_service.py)
-  - transitional because it is the closest current approximation to belief
-    compression, but it still operates as simple aggregation rather than
-    explicit redundancy reduction or factor compression
+  - transitional as an older aggregation path, not the main compressed-belief
+    artifact owner
 - [`portfolio_decision_inputs.py`](../../src/alpha_os/portfolio_decision_inputs.py)
   - transitional because uncertainty and dependence inputs already hint at
     compression-aware thinking, but they still consume broad upstream results
@@ -188,9 +198,8 @@ But it should not be expanded.
   - aligned because it defines the decision contract in portfolio-facing terms
 - [`portfolio_decision_inputs.py`](../../src/alpha_os/portfolio_decision_inputs.py)
   - aligned where it separates observed inputs from assumptions
-- [`portfolio_decision_policy.py`](../../src/alpha_os/portfolio_decision_policy.py)
-  - aligned where it treats decision as a function of belief, state, cost,
-    dependence, and uncertainty
+- [`portfolio_execution_policy.py`](../../src/alpha_os/portfolio_execution_policy.py)
+  - aligned where it keeps execution policy separate from belief and sizing
 - [`portfolio_decision_service.py`](../../src/alpha_os/portfolio_decision_service.py)
   - aligned where it acts as a composition layer rather than a place that
     invents portfolio meaning
@@ -199,8 +208,8 @@ But it should not be expanded.
 
 #### Transitional
 
-- `rule` policy support inside
-  [`portfolio_decision_policy.py`](../../src/alpha_os/portfolio_decision_policy.py)
+- rule-based policy support inside
+  [`portfolio_sizing_policy.py`](../../src/alpha_os/portfolio_sizing_policy.py)
   - transitional because the long-run system should center on compressed belief
     plus constrained decision, not on static rule transforms
 - current uncertainty inputs
@@ -241,16 +250,16 @@ But it should not be expanded.
 
 #### Aligned
 
-- workflow-first CLI in [`cli.py`](../../src/alpha_os/cli.py)
+- workflow-first CLI in [`cli/`](../../src/alpha_os/cli/)
   - aligned because public commands now prefer workflow units over small legacy
     primitives
 
 #### Transitional
 
-- [`cli.py`](../../src/alpha_os/cli.py)
-  - still transitional because workflows are still shaped by backfill and
-    broad-evaluation concepts rather than by discovery, screening, and
-    compression concepts
+- [`cli/`](../../src/alpha_os/cli/)
+  - transitional because the package has runtime/evaluation/research/internal
+    handler groups, but some parser and command implementation still lives in
+    the legacy internal module
 - [`cli_output.py`](../../src/alpha_os/cli_output.py)
   - transitional because it still exposes runtime artifacts more than higher
     level discovery and compression summaries
@@ -266,13 +275,15 @@ But it should not be expanded.
 
 ## Near-Term Direction
 
-To move closer to the greenfield target, the next architectural additions
-should be:
+To move closer to the greenfield target, the next architectural work should
+synchronize the existing first-class artifacts with the public runtime surface:
 
-1. a first-class `SignalDiscovery`
-2. a first-class `ScreeningResult`
-3. a first-class compression layer that turns many surviving signals into a
-   smaller belief surface
+1. make `SignalDiscoverySpec` and `SignalDiscoveryRun` provenance visible in
+   the mainline reports
+2. expose `ScreeningResult` policy and rejection reasons as evaluation
+   evidence, not only research diagnostics
+3. keep `CompressedBelief` connected to decision/report contracts as the
+   durable compressed-belief artifact
 
 The next architectural reductions should be:
 
