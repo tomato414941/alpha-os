@@ -113,6 +113,37 @@ def test_materialize_signal_specs_from_generated_discovery():
     )
 
 
+def test_materialize_signal_specs_uses_discovery_target_fallback():
+    from alpha_os.signal_discovery import (
+        SignalDiscoverySpec,
+        SignalFamily,
+        SignalParameterSpace,
+    )
+    from alpha_os.signal_generator import materialize_signal_specs
+
+    specifications = materialize_signal_specs(
+        SignalDiscoverySpec(
+            signal_discovery_id="generated_search",
+            subject_set_id="us_equity_core",
+            families=(
+                SignalFamily(
+                    family_id="trend_family",
+                    kind="trend",
+                    parameter_space=SignalParameterSpace.from_document(
+                        {"lookback": [20]}
+                    ),
+                    required_observable_id="daily_close",
+                    target_id=None,
+                ),
+            ),
+            target_id="residual_return_1d",
+        )
+    )
+
+    assert specifications[0].target_id == "residual_return_1d"
+    assert specifications[0].horizon_days == 1
+
+
 def test_generate_signal_discovery_can_limit_primary_observable_reuse():
     from alpha_os.signal_generator import (
         SignalDiscoveryGenerationConstraint,

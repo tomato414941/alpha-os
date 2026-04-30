@@ -428,7 +428,7 @@ def materialize_signal_specs(
                 "generated family parameter_space must include lookback to materialize specifications: "
                 f"{family.family_id or family.kind}"
             )
-        target_id = family.target_id or "residual_return_3d"
+        target_id = family.target_id or signal_discovery.target_id or "residual_return_3d"
         target_definition = get_target_definition(target_id)
         for lookback in lookbacks:
             if not isinstance(lookback, int):

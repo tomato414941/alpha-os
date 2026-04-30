@@ -335,6 +335,11 @@ def build_oos_contract_summary(spec: "EvaluationSpec") -> dict[str, str]:
     }
 
 
+def _validate_target_ids(target_ids: tuple[str, ...]) -> None:
+    if any(not isinstance(item, str) or not item for item in target_ids):
+        raise ValueError("evaluation spec target_ids must be non-empty strings")
+
+
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
@@ -364,6 +369,7 @@ class EvaluationSpec:
         for item in self.evaluation_date_ranges:
             _validate_date_range(item)
         _validate_backtest_oos_like_folds(self.evaluation_folds)
+        _validate_target_ids(self.target_ids)
         _validate_oos_contract(
             rigor_level=self.rigor_level,
             contract=self.oos_contract,
