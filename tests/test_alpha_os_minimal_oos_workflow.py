@@ -50,6 +50,9 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
     assert "subject_set=minimal_oos_pair" in report_output
     assert "target_id=residual_return_1d" in report_output
     assert "fee_bps=0.0" in report_output
+    assert "OOS contract: rigor_level=diagnostic enforcement=warn" in report_output
+    assert "range_non_overlap=pass" in report_output
+    assert "evaluation_after_execution=pass" in report_output
 
     assert main(["show-evaluation-diagnostics", "--db", str(db_path)]) == 0
     diagnostics_output = capsys.readouterr().out
@@ -86,6 +89,10 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert report_state is not None
         report = report_state.report
         assert report.evaluation_spec_id == "minimal_oos_eval"
+        assert report.oos_contract_summary["rigor_level"] == "diagnostic"
+        assert report.oos_contract_summary["enforcement"] == "warn"
+        assert report.oos_contract_summary["range_non_overlap"] == "pass"
+        assert report.oos_contract_summary["evaluation_after_execution"] == "pass"
         assert len(report.task_results) == 2
         task_results = {item.evaluation_task_id: item for item in report.task_results}
         assert set(task_results) == {

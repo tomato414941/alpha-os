@@ -373,6 +373,7 @@ class EvaluationReport:
     task_results: tuple[EvaluationTaskResult, ...]
     created_at: str
     evaluation_lane: str = "backtest_oos"
+    oos_contract_summary: dict[str, str] = field(default_factory=dict)
     cross_instrument_contract: CrossInstrumentReportContract = field(
         default_factory=default_evaluation_report_cross_instrument_contract
     )
@@ -388,6 +389,7 @@ class EvaluationReport:
         return {
             "evaluation_spec_id": self.evaluation_spec_id,
             "evaluation_lane": self.evaluation_lane,
+            "oos_contract_summary": dict(self.oos_contract_summary),
             "task_results": [item.to_document() for item in self.task_results],
             "created_at": self.created_at,
             "cross_instrument_contract": self.cross_instrument_contract.to_document(),
@@ -404,6 +406,7 @@ class EvaluationReport:
         task_results = document.get("task_results", [])
         created_at = document.get("created_at")
         evaluation_lane = document.get("evaluation_lane")
+        oos_contract_summary = document.get("oos_contract_summary", {})
         contract_document = document.get("cross_instrument_contract")
         if "summaries" in document:
             raise ValueError(
@@ -421,6 +424,8 @@ class EvaluationReport:
             raise ValueError("evaluation report task_results are invalid")
         if not isinstance(created_at, str) or not created_at:
             raise ValueError("evaluation report is missing created_at")
+        if not isinstance(oos_contract_summary, dict):
+            raise ValueError("evaluation report oos_contract_summary is invalid")
         if contract_document is not None and not isinstance(contract_document, dict):
             raise ValueError("evaluation report cross_instrument_contract is invalid")
         return cls(
@@ -433,6 +438,9 @@ class EvaluationReport:
             ),
             created_at=created_at,
             evaluation_lane=None if evaluation_lane is None else str(evaluation_lane),
+            oos_contract_summary={
+                str(key): str(value) for key, value in oos_contract_summary.items()
+            },
             cross_instrument_contract=(
                 default_evaluation_report_cross_instrument_contract()
                 if contract_document is None

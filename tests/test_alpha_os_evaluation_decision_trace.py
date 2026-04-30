@@ -259,6 +259,14 @@ def test_evaluation_report_lane_round_trips_and_defaults():
         evaluation_report_id="report:test",
         evaluation_spec_id="evaluation_spec:test",
         evaluation_lane="diagnostic",
+        oos_contract_summary={
+            "rigor_level": "diagnostic",
+            "enforcement": "warn",
+            "date_parse": "pass",
+            "range_non_overlap": "pass",
+            "evaluation_after_execution": "pass",
+            "frozen_state_required": "n/a",
+        },
         task_results=(
             EvaluationTaskResult(
                 evaluation_lane="diagnostic",
@@ -274,6 +282,8 @@ def test_evaluation_report_lane_round_trips_and_defaults():
     )
 
     assert restored.evaluation_lane == "diagnostic"
+    assert restored.oos_contract_summary["rigor_level"] == "diagnostic"
+    assert restored.oos_contract_summary["enforcement"] == "warn"
     assert restored.task_results[0].evaluation_lane == "diagnostic"
 
 

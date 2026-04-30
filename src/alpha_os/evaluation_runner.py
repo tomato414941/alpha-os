@@ -24,6 +24,7 @@ from .evaluation_report_repository import (
     EvaluationReportRepository,
     PendingEvaluationDecisionTrace,
 )
+from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
 
 
@@ -147,6 +148,7 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         task_results=tuple(task_results),
         created_at=timestamp,
+        oos_contract_summary=build_oos_contract_summary(evaluation_spec),
     )
     return persist_evaluation_report_with_traces(
         report_writer,

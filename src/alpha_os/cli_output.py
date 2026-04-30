@@ -779,6 +779,18 @@ def print_evaluation_report(
     print(f"  Evaluation spec:  {report.evaluation_spec_id}")
     print(f"  Lane:      {report.evaluation_lane}")
     print(f"  Created:   {report.created_at}")
+    if getattr(report, "oos_contract_summary", None):
+        summary = report.oos_contract_summary
+        print(
+            "  OOS contract: "
+            f"rigor_level={summary.get('rigor_level', '-')} "
+            f"enforcement={summary.get('enforcement', '-')} "
+            f"date_parse={summary.get('date_parse', '-')} "
+            f"range_non_overlap={summary.get('range_non_overlap', '-')} "
+            "evaluation_after_execution="
+            f"{summary.get('evaluation_after_execution', '-')} "
+            f"frozen_state_required={summary.get('frozen_state_required', '-')}"
+        )
     print("  CrossInstrumentReportContract: " + contract.format_summary())
     if getattr(contract, "report_units", ()):
         print("  ReportUnits: " + contract.format_report_units())

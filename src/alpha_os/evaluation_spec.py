@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
 from dataclasses import dataclass
+from datetime import date
 from typing import Any, Literal
 import warnings
 
@@ -265,6 +265,74 @@ def _validate_oos_contract(
                 execution_range=fold.execution_range,
                 evaluation_date_ranges=fold.evaluation_date_ranges,
             )
+
+
+def _has_oos_contract_overlap(
+    *,
+    execution_range: EvaluationDateRange,
+    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
+) -> bool:
+    return any(
+        _date_ranges_overlap(execution_range, evaluation_range)
+        for evaluation_range in evaluation_date_ranges
+    )
+
+
+def _has_oos_contract_evaluation_before_or_inside_execution(
+    *,
+    execution_range: EvaluationDateRange,
+    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
+) -> bool:
+    return any(
+        evaluation_range.start_date <= execution_range.end_date
+        for evaluation_range in evaluation_date_ranges
+    )
+
+
+def _contract_result_status(
+    *,
+    enabled: bool,
+    violated: bool,
+) -> str:
+    if not enabled:
+        return "n/a"
+    return "warn" if violated else "pass"
+
+
+def build_oos_contract_summary(spec: "EvaluationSpec") -> dict[str, str]:
+    ranges = tuple(spec.resolved_evaluation_folds)
+    has_overlap = any(
+        _has_oos_contract_overlap(
+            execution_range=fold.execution_range,
+            evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
+        )
+        for fold in ranges
+    )
+    has_evaluation_before_or_inside_execution = any(
+        _has_oos_contract_evaluation_before_or_inside_execution(
+            execution_range=fold.execution_range,
+            evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
+        )
+        for fold in ranges
+    )
+    return {
+        "rigor_level": spec.rigor_level,
+        "enforcement": spec.oos_contract.enforcement,
+        "date_parse": "pass",
+        "range_non_overlap": _contract_result_status(
+            enabled=spec.oos_contract.require_non_overlapping_ranges,
+            violated=has_overlap,
+        ),
+        "evaluation_after_execution": _contract_result_status(
+            enabled=spec.oos_contract.require_evaluation_after_execution,
+            violated=has_evaluation_before_or_inside_execution,
+        ),
+        "frozen_state_required": (
+            "required"
+            if spec.oos_contract.require_frozen_state_for_trained_strategy
+            else "n/a"
+        ),
+    }
 
 
 @dataclass(frozen=True)
