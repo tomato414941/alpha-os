@@ -842,7 +842,8 @@ def test_diagnostics_cli_replaces_legacy_diagnostic_commands():
 
     help_text = build_cli_parser().format_help()
 
-    assert "show-evaluation-diagnostics" in help_text
+    assert "show-diagnostics" in help_text
+    assert "show-evaluation-diagnostics" not in help_text
     assert "show-evaluation-baseline-diagnostics" not in help_text
     assert "show-evaluation-tail-risk-attribution" not in help_text
     assert "show-evaluation-direction-ablation" not in help_text
