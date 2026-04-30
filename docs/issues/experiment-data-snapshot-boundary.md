@@ -18,6 +18,17 @@ procedure used for that hypothesis.
 
 Do not treat `data/` as the source of truth for experiment evidence.
 
+## Next Decision
+
+For `crypto_regime_momentum`, decide whether the evidence data will be a
+checked-in snapshot under `experiments/snapshots/` or a documented retrieval
+procedure.
+
+## Close Condition
+
+Close this when `crypto_regime_momentum` points to exactly one evidence data
+source: either a committed snapshot or a reproducible retrieval procedure.
+
 ## Later
 
 For the first crypto hypothesis, decide whether to create a small snapshot under

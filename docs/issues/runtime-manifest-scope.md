@@ -42,6 +42,16 @@ required to execute or reproduce a run.
 The manifest may be the executable source of truth. It should not be treated as
 the full research hypothesis.
 
+## Next Decision
+
+Before adding a new top-level runtime manifest field, decide whether it belongs
+to executable configuration or to the human-readable hypothesis record.
+
+## Close Condition
+
+Close this when runtime manifests and hypothesis records have a stable boundary
+that is exercised by at least one real hypothesis evaluation.
+
 ## Later
 
 Split runtime manifest responsibilities only when duplication or confusion

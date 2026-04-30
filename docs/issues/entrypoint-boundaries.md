@@ -44,6 +44,16 @@ the existing entrypoints.
 Do not promote scripts or CLI commands to the primary path unless they improve a
 concrete evaluation workflow.
 
+## Next Decision
+
+When adding a new way to run or inspect alpha-os, decide whether it is a runtime
+manifest path, a CLI adapter, a Python API, or a script.
+
+## Close Condition
+
+Close this when the supported entrypoint roles are documented in one place and
+new entrypoints can be classified without referring to this issue.
+
 ## Later
 
 Revisit this issue when a concrete evaluation is blocked by entrypoint ambiguity.

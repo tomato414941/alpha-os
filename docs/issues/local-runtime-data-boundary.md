@@ -43,6 +43,17 @@ operational context.
 Prefer describing the rule instead: runtime data under `data/` is local-only and
 must not be committed.
 
+## Next Decision
+
+Before deleting, archiving, or using any local `data/` artifact as research
+evidence, classify that artifact as fixture, generated artifact, runtime cache,
+operational state, log, or temporary output.
+
+## Close Condition
+
+Close this when local `data/` artifacts are either classified by type or removed
+from the project workflow.
+
 ## Later
 
 Classify local data into at least these groups before cleanup:

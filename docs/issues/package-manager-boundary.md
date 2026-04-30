@@ -26,6 +26,17 @@ paths without a clear source of truth.
 Do not mix `uv` and `pip` instructions in primary docs unless the intended
 source of truth is explicit.
 
+## Next Decision
+
+When README, CI, or agent setup instructions are next changed, decide whether
+`pip install -e ".[dev]"` remains the source of truth or `uv` becomes the source
+of truth.
+
+## Close Condition
+
+Close this when README, CI, and agent setup instructions all point to the same
+package manager path.
+
 ## Later
 
 Evaluate a small `uv` migration:
