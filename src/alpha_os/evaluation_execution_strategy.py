@@ -254,6 +254,7 @@ def frozen_snapshot_start_date(
     executable_definitions: list[SignalDefinition],
     metric_window: int,
     portfolio_construction: PortfolioConstructionSpec,
+    trading_calendar: str | None = None,
 ) -> str:
     evaluation_start = min(item.start_date for item in evaluation_date_ranges)
     max_lookback = max((item.lookback for item in executable_definitions), default=1)
@@ -267,7 +268,22 @@ def frozen_snapshot_start_date(
         "conviction_adjusted_hierarchical_risk_parity",
     }:
         warmup_steps = max(warmup_steps, 20)
-    return str((pd.Timestamp(evaluation_start) - pd.offsets.BDay(warmup_steps)).date())
+    offset = (
+        pd.Timedelta(days=warmup_steps)
+        if trading_calendar in {"fixture_daily", "crypto_daily", "daily", "24x7"}
+        else pd.offsets.BDay(warmup_steps)
+    )
+    return str((pd.Timestamp(evaluation_start) - offset).date())
+
+
+def _trading_calendar_for_subject_set(
+    store: EvaluationExecutionReadPort,
+    subject_set_id: str,
+) -> str | None:
+    subject_set_state = store.get_subject_set(subject_set_id)
+    if subject_set_state is None:
+        return None
+    return subject_set_state.definition.universe_policy.trading_calendar
 
 
 def generate_frozen_survivor_test_snapshots(
@@ -734,6 +750,10 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                     executable_definitions=frozen_definitions,
                     metric_window=max(protocol.metric_windows),
                     portfolio_construction=execution_request.context.portfolio_construction,
+                    trading_calendar=_trading_calendar_for_subject_set(
+                        store,
+                        execution_request.context.subject_set_id,
+                    ),
                 ),
                 end_date=max(item.end_date for item in execution_request.evaluation_date_ranges),
                 base_url=execution_request.context.base_url,

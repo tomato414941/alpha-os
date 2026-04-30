@@ -798,6 +798,68 @@ def test_frozen_survivor_snapshots_reject_incomplete_universe_policy(tmp_path):
         store.close()
 
 
+def test_frozen_snapshot_start_date_uses_fixture_daily_calendar_days():
+    from alpha_os.evaluation_runner import frozen_snapshot_start_date
+    from alpha_os.evaluation_spec import EvaluationDateRange
+    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+    from alpha_os.signal_registry import SignalDefinition
+    from alpha_os.targets import residual_return_target_definition
+
+    start_date = frozen_snapshot_start_date(
+        evaluation_date_ranges=(
+            EvaluationDateRange(
+                label="test",
+                start_date="2026-01-12",
+                end_date="2026-01-16",
+            ),
+        ),
+        executable_definitions=[
+            SignalDefinition(
+                signal_id="signal:test",
+                kind="trend",
+                lookback=3,
+                target=residual_return_target_definition(3),
+            )
+        ],
+        metric_window=3,
+        portfolio_construction=PortfolioConstructionSpec(),
+        trading_calendar="fixture_daily",
+    )
+
+    assert start_date == "2026-01-09"
+
+
+def test_frozen_snapshot_start_date_uses_business_days_by_default():
+    from alpha_os.evaluation_runner import frozen_snapshot_start_date
+    from alpha_os.evaluation_spec import EvaluationDateRange
+    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+    from alpha_os.signal_registry import SignalDefinition
+    from alpha_os.targets import residual_return_target_definition
+
+    start_date = frozen_snapshot_start_date(
+        evaluation_date_ranges=(
+            EvaluationDateRange(
+                label="test",
+                start_date="2026-01-12",
+                end_date="2026-01-16",
+            ),
+        ),
+        executable_definitions=[
+            SignalDefinition(
+                signal_id="signal:test",
+                kind="trend",
+                lookback=3,
+                target=residual_return_target_definition(3),
+            )
+        ],
+        metric_window=3,
+        portfolio_construction=PortfolioConstructionSpec(),
+        trading_calendar="business_day",
+    )
+
+    assert start_date == "2026-01-07"
+
+
 def test_resolved_subject_set_for_build_rejects_incomplete_universe_policy(tmp_path):
     from alpha_os.subject_set_backfill_service import resolve_subject_set_for_build
     from alpha_os.store import EvaluationStore
