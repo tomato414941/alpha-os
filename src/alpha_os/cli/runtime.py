@@ -28,11 +28,12 @@ def _hide_subparser_help(
     ]
 
 
-def _register_apply_runtime_manifest(
+def _register_apply_manifest(
     sub: argparse._SubParsersAction,
+    name: str,
 ) -> None:
     parser = sub.add_parser(
-        "apply-runtime-manifest",
+        name,
         help=(
             "Apply runtime manifest resources including observables, signal specs, "
             "subject sets, strategy specs, evaluation specs, and evaluation tasks"
@@ -78,11 +79,12 @@ def _register_run_diagnostic_evaluation(
     _hide_subparser_help(sub, "run-diagnostic-evaluation")
 
 
-def _register_list_runtime_manifests(
+def _register_list_manifests(
     sub: argparse._SubParsersAction,
+    name: str,
 ) -> None:
     sub.add_parser(
-        "list-runtime-manifests",
+        name,
         help="List checked-in runtime manifests with categories",
     )
 
@@ -91,8 +93,20 @@ COMMANDS: tuple[CliCommand, ...] = (
     CliCommand(
         name="apply-runtime-manifest",
         handler=_legacy.cmd_apply_runtime_manifest,
+        visibility="internal",
+        register_parser=lambda sub: _register_apply_manifest(
+            sub,
+            "apply-runtime-manifest",
+        ),
+    ),
+    CliCommand(
+        name="apply-manifest",
+        handler=_legacy.cmd_apply_runtime_manifest,
         visibility="public",
-        register_parser=_register_apply_runtime_manifest,
+        register_parser=lambda sub: _register_apply_manifest(
+            sub,
+            "apply-manifest",
+        ),
     ),
     CliCommand(
         name="run-diagnostic-evaluation",
@@ -103,8 +117,20 @@ COMMANDS: tuple[CliCommand, ...] = (
     CliCommand(
         name="list-runtime-manifests",
         handler=_legacy.cmd_list_runtime_manifests,
+        visibility="internal",
+        register_parser=lambda sub: _register_list_manifests(
+            sub,
+            "list-runtime-manifests",
+        ),
+    ),
+    CliCommand(
+        name="list-manifests",
+        handler=_legacy.cmd_list_runtime_manifests,
         visibility="public",
-        register_parser=_register_list_runtime_manifests,
+        register_parser=lambda sub: _register_list_manifests(
+            sub,
+            "list-manifests",
+        ),
     ),
 )
 
@@ -122,3 +148,5 @@ COMMAND_HANDLERS.update(
 def register_runtime_parsers(sub: argparse._SubParsersAction) -> None:
     for command in COMMANDS:
         command.register_parser(sub)
+        if command.visibility != "public":
+            _hide_subparser_help(sub, command.name)

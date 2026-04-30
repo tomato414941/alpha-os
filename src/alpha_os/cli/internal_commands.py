@@ -9,6 +9,7 @@ CommandHandler = Callable[[argparse.Namespace], int]
 
 COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "init-db": _legacy.cmd_init_db,
+    "init": _legacy.cmd_init_db,
     "register-signal-candidate": _legacy.cmd_register_signal,
     "deactivate-signal-candidate": _legacy.cmd_deactivate_signal,
     "activate-signal-candidate": _legacy.cmd_activate_signal,
@@ -22,4 +23,3 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-show-validation": _legacy.cmd_debug_show_validation,
     "debug-summarize-validation": _legacy.cmd_debug_summarize_validation,
 }
-

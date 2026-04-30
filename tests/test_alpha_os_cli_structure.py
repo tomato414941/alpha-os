@@ -39,8 +39,8 @@ def test_runtime_commands_own_public_parser_registration():
         for command in RUNTIME_COMMANDS
         if command.visibility == "public"
     } == {
-        "apply-runtime-manifest",
-        "list-runtime-manifests",
+        "apply-manifest",
+        "list-manifests",
     }
 
     parser = build_cli_parser()
@@ -71,13 +71,20 @@ def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
 
     captured = capsys.readouterr().out
     public_commands = {
+        "init",
+        "apply-manifest",
+        "list-manifests",
+        "run-evaluation",
+        "run-walk-forward",
+        "show-report",
+        "show-diagnostics",
+    }
+    hidden_commands = {
         "apply-runtime-manifest",
         "list-runtime-manifests",
         "run-walk-forward-evaluation",
         "show-evaluation-report",
         "show-evaluation-diagnostics",
-    }
-    hidden_commands = {
         "run-diagnostic-evaluation",
         "inspect-runtime-resources",
         "debug-status",
@@ -98,10 +105,95 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
         parser.parse_args(["--help"])
 
     captured = capsys.readouterr().out
-    assert "apply-runtime-manifest" in captured
-    assert "run-walk-forward-evaluation" in captured
+    assert "apply-manifest" in captured
+    assert "run-walk-forward" in captured
+    assert "show-report" in captured
+    assert "show-diagnostics" in captured
+    assert "apply-runtime-manifest" not in captured
+    assert "run-walk-forward-evaluation" not in captured
     assert "run-diagnostic-evaluation" not in captured
     assert "debug-apply-evaluation" not in captured
+
+
+def test_cli_public_aliases_parse_to_existing_arguments():
+    parser = build_cli_parser()
+
+    init_args = parser.parse_args(["init", "--db", "runtime.db"])
+    assert init_args.command == "init"
+    assert init_args.db == "runtime.db"
+
+    apply_args = parser.parse_args(
+        [
+            "apply-manifest",
+            "--manifest",
+            "examples/minimal_oos.json",
+            "--db",
+            "runtime.db",
+        ]
+    )
+    assert apply_args.command == "apply-manifest"
+    assert apply_args.manifest == "examples/minimal_oos.json"
+    assert apply_args.db == "runtime.db"
+
+    run_args = parser.parse_args(
+        [
+            "run-walk-forward",
+            "--evaluation-spec-id",
+            "minimal_oos_eval",
+            "--db",
+            "runtime.db",
+        ]
+    )
+    assert run_args.command == "run-walk-forward"
+    assert run_args.evaluation_spec_id == "minimal_oos_eval"
+    assert run_args.db == "runtime.db"
+
+    report_args = parser.parse_args(["show-report", "--db", "runtime.db"])
+    assert report_args.command == "show-report"
+    assert report_args.db == "runtime.db"
+
+    diagnostics_args = parser.parse_args(["show-diagnostics", "--db", "runtime.db"])
+    assert diagnostics_args.command == "show-diagnostics"
+    assert diagnostics_args.db == "runtime.db"
+
+
+def test_cli_legacy_public_commands_remain_parseable():
+    parser = build_cli_parser()
+
+    apply_args = parser.parse_args(
+        [
+            "apply-runtime-manifest",
+            "--manifest",
+            "examples/minimal_oos.json",
+            "--db",
+            "runtime.db",
+        ]
+    )
+    assert apply_args.command == "apply-runtime-manifest"
+    assert apply_args.manifest == "examples/minimal_oos.json"
+
+    list_args = parser.parse_args(["list-runtime-manifests"])
+    assert list_args.command == "list-runtime-manifests"
+
+    run_args = parser.parse_args(
+        [
+            "run-walk-forward-evaluation",
+            "--evaluation-spec-id",
+            "minimal_oos_eval",
+            "--db",
+            "runtime.db",
+        ]
+    )
+    assert run_args.command == "run-walk-forward-evaluation"
+    assert run_args.evaluation_spec_id == "minimal_oos_eval"
+
+    report_args = parser.parse_args(["show-evaluation-report", "--db", "runtime.db"])
+    assert report_args.command == "show-evaluation-report"
+
+    diagnostics_args = parser.parse_args(
+        ["show-evaluation-diagnostics", "--db", "runtime.db"]
+    )
+    assert diagnostics_args.command == "show-evaluation-diagnostics"
 
 
 def test_cli_entrypoint_preserves_value_error_exit_contract(monkeypatch):
@@ -127,6 +219,9 @@ def test_cli_package_module_entrypoint_preserves_help():
     )
 
     assert result.returncode == 0
-    assert "apply-runtime-manifest" in result.stdout
+    assert "apply-manifest" in result.stdout
+    assert "run-walk-forward" in result.stdout
+    assert "apply-runtime-manifest" not in result.stdout
+    assert "run-walk-forward-evaluation" not in result.stdout
     assert "run-diagnostic-evaluation" not in result.stdout
     assert "debug-apply-evaluation" not in result.stdout

@@ -306,11 +306,13 @@ def cmd_list_runtime_manifests(_args: argparse.Namespace) -> int:
 
 def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.ArgumentParser:
     public_commands = (
-        "apply-runtime-manifest",
-        "list-runtime-manifests",
-        "run-walk-forward-evaluation",
-        "show-evaluation-report",
-        "show-evaluation-diagnostics",
+        "init",
+        "apply-manifest",
+        "run-evaluation",
+        "run-walk-forward",
+        "show-report",
+        "show-diagnostics",
+        "list-manifests",
     )
     parser = argparse.ArgumentParser(
         prog="alpha-os",
@@ -328,6 +330,8 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
 
     init_db = internal_parser("init-db")
     init_db.add_argument("--db", type=str, default=None)
+    init = sub.add_parser("init", help="Initialize an alpha-os runtime database")
+    init.add_argument("--db", type=str, default=None)
 
     register = internal_parser("register-signal-candidate")
     register.add_argument("--db", type=str, default=None)
@@ -736,7 +740,10 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     run_signal_discovery_decision.add_argument("--no-trade-band", type=float, default=None)
 
-    run_evaluation = internal_parser("run-evaluation")
+    run_evaluation = sub.add_parser(
+        "run-evaluation",
+        help="Execute one evaluation spec",
+    )
     run_evaluation.add_argument("--db", type=str, default=None)
     run_evaluation.add_argument("--evaluation-spec-id", type=str, required=True)
     run_evaluation.add_argument(
@@ -780,6 +787,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
 
     run_walk_forward_evaluation = sub.add_parser(
         "run-walk-forward-evaluation",
+        aliases=["run-walk-forward"],
         help="Execute train folds for one evaluation spec and then evaluate frozen fold artifacts",
     )
     run_walk_forward_evaluation.add_argument("--db", type=str, default=None)
@@ -854,6 +862,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
 
     show_evaluation_report = sub.add_parser(
         "show-evaluation-report",
+        aliases=["show-report"],
         help="Show one persisted evaluation report",
     )
     show_evaluation_report.add_argument("--db", type=str, default=None)
@@ -861,6 +870,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
 
     show_evaluation_diagnostics = sub.add_parser(
         "show-evaluation-diagnostics",
+        aliases=["show-diagnostics"],
         help="Show diagnostics from persisted evaluation decision traces",
     )
     show_evaluation_diagnostics.add_argument("--db", type=str, default=None)
@@ -5698,27 +5708,27 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
     try:
-        if args.command == "init-db":
+        if args.command in {"init-db", "init"}:
             return cmd_init_db(args)
         if args.command == "register-signal-candidate":
             return cmd_register_signal(args)
-        if args.command == "apply-runtime-manifest":
+        if args.command in {"apply-runtime-manifest", "apply-manifest"}:
             return cmd_apply_runtime_manifest(args)
         if args.command == "run-diagnostic-evaluation":
             return cmd_run_diagnostic_evaluation(args)
-        if args.command == "list-runtime-manifests":
+        if args.command in {"list-runtime-manifests", "list-manifests"}:
             return cmd_list_runtime_manifests(args)
         if args.command == "inspect-runtime-resources":
             return cmd_inspect_runtime_resources(args)
         if args.command == "run-evaluation":
             return cmd_run_evaluation(args)
-        if args.command == "run-walk-forward-evaluation":
+        if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
         if args.command == "create-fixed-state-evaluation-task":
             return cmd_create_fixed_state_evaluation_task(args)
-        if args.command == "show-evaluation-report":
+        if args.command in {"show-evaluation-report", "show-report"}:
             return cmd_show_evaluation_report(args)
-        if args.command == "show-evaluation-diagnostics":
+        if args.command in {"show-evaluation-diagnostics", "show-diagnostics"}:
             return cmd_show_evaluation_diagnostics(args)
         if args.command == "show-strategy-specs":
             return cmd_show_strategy_specs(args)

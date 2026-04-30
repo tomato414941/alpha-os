@@ -54,18 +54,18 @@ external data service.
 DB=/tmp/alpha-os-minimal-oos.db
 rm -f "$DB"
 
-PYTHONPATH=src python -m alpha_os apply-runtime-manifest \
+PYTHONPATH=src python -m alpha_os apply-manifest \
   --manifest examples/minimal_oos.json \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+PYTHONPATH=src python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-evaluation-report \
+PYTHONPATH=src python -m alpha_os show-report \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-evaluation-diagnostics \
+PYTHONPATH=src python -m alpha_os show-diagnostics \
   --db "$DB"
 ```
 
@@ -83,11 +83,11 @@ task and runs a strict OOS report.
 DB=/tmp/alpha-os-minimal-fixed-state-oos.db
 rm -f "$DB"
 
-PYTHONPATH=src python -m alpha_os apply-runtime-manifest \
+PYTHONPATH=src python -m alpha_os apply-manifest \
   --manifest examples/minimal_fixed_state_oos.json \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+PYTHONPATH=src python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_train_eval \
   --db "$DB"
 
@@ -98,11 +98,11 @@ PYTHONPATH=src python -m alpha_os create-fixed-state-evaluation-task \
   --evaluation-spec-id minimal_fixed_state_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+PYTHONPATH=src python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-evaluation-report \
+PYTHONPATH=src python -m alpha_os show-report \
   --db "$DB"
 ```
 
