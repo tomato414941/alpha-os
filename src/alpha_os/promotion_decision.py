@@ -208,7 +208,7 @@ def decide_promotion(
     )
 
     reject_reasons = []
-    if mean_net_return_edge < rule.min_mean_net_return_edge:
+    if mean_net_return_edge <= rule.min_mean_net_return_edge:
         reject_reasons.append("candidate mean decision net return edge is too low")
     if worst_net_return_edge < -rule.max_worst_net_return_degradation:
         reject_reasons.append("candidate worst decision net return degradation is too high")

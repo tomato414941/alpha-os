@@ -4883,6 +4883,7 @@ def _with_current_evaluation_task_metadata(
             holding_cost_assumptions=trading_config.holding_cost_assumptions,
         )
         for key in (
+            "target_id",
             "subject_set",
             "base_currency",
             "trading_calendar",

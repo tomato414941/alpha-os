@@ -119,6 +119,7 @@ def build_report_strategy_contract_fields(
     execution_policy = portfolio.execution_policy
     holding_cost_policy = portfolio.holding_cost_policy
     fields: dict[str, str | int | float | bool] = {
+        "target_id": trading_strategy.target_id or "-",
         "selection": selection_policy.selection_kind,
         "top_k": "-" if selection_policy.top_k is None else selection_policy.top_k,
         "sizing": sizing_policy.sizing_method or "-",
@@ -430,6 +431,7 @@ def format_report_strategy_contract_fields(
 ) -> str:
     ordered_keys = (
         "construction_kind",
+        "target_id",
         "holding_style",
         "selection",
         "top_k",

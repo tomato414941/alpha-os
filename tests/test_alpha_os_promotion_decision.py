@@ -118,6 +118,33 @@ def test_decide_promotion_rejects_candidate_with_lower_mean_net_return():
     assert decision.metrics["mean_decision_net_return_edge"] == pytest.approx(-0.01)
 
 
+def test_identical_candidate_and_baseline_does_not_promote():
+    decision = decide_promotion(
+        evaluation_report=_report(
+            candidate=_task_result(
+                "candidate",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+            baseline=_task_result(
+                "baseline",
+                mean_net_return=0.08,
+                worst_net_return=0.01,
+                drawdown=0.05,
+                turnover=0.10,
+            ),
+        ),
+        rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
+        created_at="2026-04-29T00:00:00Z",
+    )
+
+    assert decision.status == "reject"
+    assert decision.reasons == ("candidate mean decision net return edge is too low",)
+    assert decision.metrics["mean_decision_net_return_edge"] == pytest.approx(0.0)
+
+
 def test_decide_promotion_is_inconclusive_when_required_metric_is_missing():
     decision = decide_promotion(
         evaluation_report=_report(

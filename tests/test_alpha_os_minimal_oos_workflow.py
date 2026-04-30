@@ -2,7 +2,6 @@ from pathlib import Path
 
 
 def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys):
-    from alpha_os.baseline_state import baseline_from_promotion_decision
     from alpha_os.cli import main
     from alpha_os.promotion_decision import PromotionRule, decide_promotion
     from alpha_os.store import EvaluationStore
@@ -49,6 +48,7 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
     assert "strategy:minimal_oos_candidate_equal_weight_hold" in report_output
     assert "strategy:minimal_oos_baseline_equal_weight_hold" in report_output
     assert "subject_set=minimal_oos_pair" in report_output
+    assert "target_id=residual_return_1d" in report_output
     assert "fee_bps=0.0" in report_output
 
     assert main(["show-evaluation-diagnostics", "--db", str(db_path)]) == 0
@@ -118,20 +118,14 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
             ),
             created_at="2026-04-30T00:00:00Z",
         )
-        assert promotion_decision.status == "promote"
+        assert promotion_decision.status == "reject"
         assert promotion_decision.metrics["baseline_task_id"] == (
             "minimal_oos_baseline_equal_weight_hold_case"
         )
-
-        baseline = baseline_from_promotion_decision(
-            baseline_id="baseline:minimal_oos:v1",
-            strategy_id="strategy:minimal_oos_candidate_equal_weight_hold",
-            promotion_decision=promotion_decision,
-            active_from="2026-04-30T00:00:00Z",
-        )
+        assert promotion_decision.metrics["mean_decision_net_return_edge"] == 0.0
         assert (
-            baseline.source_promotion_decision_id
-            == promotion_decision.promotion_decision_id
+            promotion_decision.reasons
+            == ("candidate mean decision net return edge is too low",)
         )
     finally:
         store.close()
