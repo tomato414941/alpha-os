@@ -2,6 +2,7 @@
 name = "alpha-os"
 version = "0.1.0"
 description = "Strategy discovery and strict OOS evaluation engine for alpha-os"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.26",
@@ -10,14 +11,29 @@ dependencies = [
     "scipy>=1.12",
     "cvxpy>=1.6",
     "skfolio==0.16.1",
-    "deap>=1.4",
-    "ribs[all]>=0.7",
-    "ccxt>=4.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/tomato414941/alpha-os"
+Issues = "https://github.com/tomato414941/alpha-os/issues"
+
+[project.scripts]
+alpha-os = "alpha_os.cli:main"
 
 [project.optional-dependencies]
 data = [
     "signal-noise",
+]
+exchange = [
+    "ccxt>=4.0",
+]
+research = [
+    "deap>=1.4",
+    "ribs[all]>=0.7",
+]
+optimizer = [
+    "cvxpy>=1.6",
+    "skfolio==0.16.1",
 ]
 dev = [
     "pytest>=8.0",
