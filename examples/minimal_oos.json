@@ -198,7 +198,14 @@
       ],
       "metric_windows": [
         5
-      ]
+      ],
+      "rigor_level": "diagnostic",
+      "oos_contract": {
+        "enforcement": "warn",
+        "require_non_overlapping_ranges": true,
+        "require_evaluation_after_execution": true,
+        "require_frozen_state_for_trained_strategy": false
+      }
     }
   ],
   "evaluation_tasks": [

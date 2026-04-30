@@ -61,6 +61,8 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         evaluation_spec_state = store.get_evaluation_spec("minimal_oos_eval")
         assert evaluation_spec_state is not None
         evaluation_spec = evaluation_spec_state.definition
+        assert evaluation_spec.rigor_level == "diagnostic"
+        assert evaluation_spec.oos_contract.enforcement == "warn"
         assert evaluation_spec.execution_range.start_date == "2026-01-01"
         assert evaluation_spec.execution_range.end_date == "2026-01-15"
         assert evaluation_spec.evaluation_folds[0].label == "minimal_train_to_test"
