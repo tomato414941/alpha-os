@@ -9,6 +9,8 @@ PromotionStatus = Literal["promote", "reject", "inconclusive"]
 
 @dataclass(frozen=True)
 class PromotionRule:
+    """Promotion requires strictly positive mean net return edge by default."""
+
     candidate_task_id: str
     baseline_task_id: str
     min_mean_net_return_edge: float = 0.0

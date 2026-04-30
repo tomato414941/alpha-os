@@ -43,4 +43,14 @@ def optional_signal_noise_client(monkeypatch):
         def metadata(self, **_kwargs):
             return None
 
+        def resolve_observation(self, **kwargs):
+            raise AssertionError(
+                f"unexpected resolve_observation call in unit test: {kwargs}"
+            )
+
+        def get_observation_data(self, **kwargs):
+            raise AssertionError(
+                f"unexpected get_observation_data call in unit test: {kwargs}"
+            )
+
     monkeypatch.setattr(signal_client, "SignalClient", FakeSignalClient)
