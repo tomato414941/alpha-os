@@ -19,6 +19,8 @@ strategy definition, and out-of-sample evaluation.
   - mainline discovery / strategy / evaluation runtime
 - `config/runtime_manifests/`
   - evaluation manifest examples
+- `examples/minimal_oos.json`
+  - fixture-backed golden path for strict OOS evaluation
 
 ## Development
 
@@ -40,7 +42,36 @@ pip install -e ".[data]"
 ```bash
 ruff check src tests
 PYTHONPATH=src pytest -q
+PYTHONPATH=src python -m alpha_os --help
 ```
+
+## Minimal OOS Golden Path
+
+This workflow uses only checked-in fixture CSV data. It does not require an
+external data service.
+
+```bash
+DB=/tmp/alpha-os-minimal-oos.db
+rm -f "$DB"
+
+PYTHONPATH=src python -m alpha_os apply-runtime-manifest \
+  --manifest examples/minimal_oos.json \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os run-walk-forward-evaluation \
+  --evaluation-spec-id minimal_oos_eval \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os show-evaluation-report \
+  --db "$DB"
+
+PYTHONPATH=src python -m alpha_os show-evaluation-diagnostics \
+  --db "$DB"
+```
+
+The checked-in test `tests/test_alpha_os_minimal_oos_workflow.py` verifies that
+this path preserves fixed train/evaluation ranges, report contract fields,
+decision traces, and candidate-vs-baseline promotion inputs.
 
 ## Further Reading
 
