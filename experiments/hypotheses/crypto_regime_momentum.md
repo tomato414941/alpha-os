@@ -56,10 +56,11 @@ Confirmed:
 - Existing signal operators include time-series trend, funding carry, realized
   volatility regime variants, and volume-confirmed trend.
 
-Missing:
+Still unresolved:
 
-- The current snapshot has close, volume, and partial open interest, but no
-  funding rate.
+- The current dataset has close, volume, funding rate, and partial open
+  interest.
+- The open interest frequency decision is not fixed.
 - The volume-confirmed trend operator is currently scoped to asset, equity, and
   ETF subject kinds, not crypto perpetuals.
 - The exact candidate construction for combining momentum and regime inputs is
@@ -67,8 +68,8 @@ Missing:
 
 Next smallest step:
 
-- Supply funding rate data or narrow the hypothesis to exclude funding before
-  creating a runtime manifest.
+- Decide whether to use sparse open interest, transform it, or narrow the
+  hypothesis to exclude it before creating a runtime manifest.
 
 Evidence data:
 

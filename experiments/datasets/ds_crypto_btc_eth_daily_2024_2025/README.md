@@ -27,20 +27,19 @@ Status: incomplete.
 
 ## Current Gap
 
-The source provided daily `close` rows with `volume`, and sparse
-`open_interest`.
+The source provides daily `close`, `volume`, and `funding_rate` rows.
 
-The source did not provide `funding_rate` for `BTCUSDT` or `ETHUSDT` through the
-public observation contract checked here. The `funding_rate` column is present
-but empty.
+`funding_rate` uses the current `signal-noise` daily scalar observation output.
+That is enough for feature experimentation, but not yet a final accounting
+definition for funding cost or carry PnL.
 
-This dataset is not sufficient to fully judge the hypothesis until funding rate
-data is supplied and the open interest frequency decision is made, or the
-hypothesis is narrowed to exclude those inputs.
+`open_interest` remains sparse. This dataset is not sufficient to fully judge
+the hypothesis until the open interest frequency decision is made, or the
+hypothesis is narrowed to exclude that input.
 
 ## Validation
 
-- `BTCUSDT.csv`: 731 rows, 0 missing `close`, 0 missing `volume`, 731 missing
+- `BTCUSDT.csv`: 731 rows, 0 missing `close`, 0 missing `volume`, 0 missing
   `funding_rate`, 626 missing `open_interest`
-- `ETHUSDT.csv`: 731 rows, 0 missing `close`, 0 missing `volume`, 731 missing
+- `ETHUSDT.csv`: 731 rows, 0 missing `close`, 0 missing `volume`, 0 missing
   `funding_rate`, 626 missing `open_interest`
