@@ -17,6 +17,18 @@ Status: usable for first hypothesis check.
 - `BTCUSDT.csv`
 - `ETHUSDT.csv`
 
+## Regeneration
+
+Regenerate the snapshot from signal-noise with:
+
+```bash
+python experiments/hypotheses/crypto_regime_momentum/fetch_data.py \
+  --base-url http://127.0.0.1:8000
+```
+
+The script intentionally calls the signal-noise observation API directly. It
+does not import or run the alpha-os manifest, store, CLI, or evaluation runtime.
+
 ## Columns
 
 - `timestamp`
