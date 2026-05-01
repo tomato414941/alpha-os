@@ -1,11 +1,11 @@
 # Strategy Comparison Contract
 
-This file is the source of truth for the minimum facts required to compare two
+This file is the source of truth for the minimum facts required to compare
 strategy evaluation results.
 
 ## Required Contract
 
-Two strategy results are comparable only when they share:
+Strategy results are comparable only when they share:
 
 - period
 - costs
