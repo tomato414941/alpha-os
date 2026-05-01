@@ -1,0 +1,141 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
+
+
+ROOT = Path(__file__).resolve().parents[2]
+DATASET = ROOT / "experiments" / "datasets" / "ds_crypto_btc_eth_daily_2024_2025"
+ASSETS = ("BTCUSDT", "ETHUSDT")
+EVALUATION_START = "2024-04-01"
+EVALUATION_END = "2025-12-31"
+COST_BPS = 5.0
+
+
+def _load_asset(asset: str) -> pd.DataFrame:
+    frame = pd.read_csv(DATASET / f"{asset}.csv", parse_dates=["timestamp"])
+    frame = frame.sort_values("timestamp").set_index("timestamp")
+    frame.index = frame.index.tz_convert(None)
+    frame["asset"] = asset
+    return frame
+
+
+def _asset_features(asset: str) -> pd.DataFrame:
+    frame = _load_asset(asset)
+    close = frame["close"]
+
+    frame["next_return"] = close.shift(-1) / close - 1.0
+    frame["return_7d"] = close / close.shift(7) - 1.0
+    frame["return_30d"] = close / close.shift(30) - 1.0
+    frame["realized_vol_20d"] = close.pct_change().rolling(20).std()
+    frame["realized_vol_60d_median"] = frame["realized_vol_20d"].rolling(60).median()
+    frame["funding_60d_median"] = frame["funding_rate"].rolling(60).median()
+    frame["open_interest_growth_7d"] = frame["open_interest"] / frame["open_interest"].shift(7) - 1.0
+
+    frame["baseline_position"] = (frame["return_7d"] > 0).astype(float)
+
+    candidate = frame["baseline_position"].copy()
+    candidate = candidate.where(frame["return_30d"] > 0, 0.0)
+    candidate = candidate.where(
+        ~((frame["funding_rate"] > 0) & (frame["funding_rate"] > frame["funding_60d_median"])),
+        0.0,
+    )
+    candidate = candidate.where(
+        ~(frame["realized_vol_20d"] > frame["realized_vol_60d_median"]),
+        candidate * 0.5,
+    )
+    candidate = candidate.where(
+        ~((frame["open_interest_growth_7d"] > 0) & (frame["return_7d"] < 0)),
+        candidate * 0.5,
+    )
+    frame["candidate_position"] = candidate
+    return frame
+
+
+def _portfolio_returns(frames: dict[str, pd.DataFrame], position_column: str) -> pd.DataFrame:
+    parts = []
+    for asset, frame in frames.items():
+        part = frame[["next_return", position_column]].copy()
+        part.columns = [f"{asset}_next_return", f"{asset}_position"]
+        parts.append(part)
+    joined = pd.concat(parts, axis=1).dropna()
+
+    position_columns = [f"{asset}_position" for asset in ASSETS]
+    active_count = (joined[position_columns] > 0).sum(axis=1).replace(0, pd.NA)
+
+    gross_return = pd.Series(0.0, index=joined.index)
+    turnover = pd.Series(0.0, index=joined.index)
+    previous_weights = pd.Series(0.0, index=ASSETS)
+    for date, row in joined.iterrows():
+        weights = pd.Series(
+            {
+                asset: (
+                    row[f"{asset}_position"] / active_count.loc[date]
+                    if pd.notna(active_count.loc[date])
+                    else 0.0
+                )
+                for asset in ASSETS
+            }
+        )
+        gross_return.loc[date] = sum(
+            weights[asset] * row[f"{asset}_next_return"] for asset in ASSETS
+        )
+        turnover.loc[date] = (weights - previous_weights).abs().sum()
+        previous_weights = weights
+
+    cost = turnover * COST_BPS / 10_000
+    result = pd.DataFrame(
+        {
+            "gross_return": gross_return,
+            "turnover": turnover,
+            "net_return": gross_return - cost,
+        }
+    )
+    return result.loc[EVALUATION_START:EVALUATION_END]
+
+
+def _max_drawdown(returns: pd.Series) -> float:
+    equity = (1.0 + returns).cumprod()
+    return float((equity / equity.cummax() - 1.0).min())
+
+
+def _summarize(name: str, returns: pd.DataFrame) -> dict[str, float | str]:
+    net = returns["net_return"]
+    return {
+        "strategy": name,
+        "days": float(len(returns)),
+        "total_net_return": float((1.0 + net).prod() - 1.0),
+        "mean_daily_net_return": float(net.mean()),
+        "max_drawdown": _max_drawdown(net),
+        "mean_daily_turnover": float(returns["turnover"].mean()),
+    }
+
+
+def main() -> int:
+    frames = {asset: _asset_features(asset) for asset in ASSETS}
+    baseline = _portfolio_returns(frames, "baseline_position")
+    candidate = _portfolio_returns(frames, "candidate_position")
+
+    summary = pd.DataFrame(
+        [
+            _summarize("baseline", baseline),
+            _summarize("candidate", candidate),
+        ]
+    )
+    edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
+    edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
+
+    print("Crypto regime momentum first-pass comparison")
+    print(f"dataset={DATASET.relative_to(ROOT)}")
+    print(f"evaluation={EVALUATION_START}..{EVALUATION_END}")
+    print(f"cost_bps_per_unit_turnover={COST_BPS:g}")
+    print()
+    print(summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
