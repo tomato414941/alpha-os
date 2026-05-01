@@ -215,7 +215,7 @@ def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
 
 
 def test_crypto_regime_momentum_eligibility_requires_trend_confirmation_and_funding_filter():
-    from alpha_os.candidate_backtest import (
+    from alpha_os.candidate_rules import (
         crypto_regime_momentum_eligibility_series_by_subject,
     )
 
@@ -240,7 +240,7 @@ def test_crypto_regime_momentum_eligibility_requires_trend_confirmation_and_fund
 
 
 def test_crypto_regime_momentum_eligibility_matches_experiment_reference():
-    from alpha_os.candidate_backtest import (
+    from alpha_os.candidate_rules import (
         crypto_regime_momentum_eligibility_series_by_subject,
     )
 
@@ -289,7 +289,7 @@ def test_crypto_regime_momentum_eligibility_matches_experiment_reference():
 
 
 def test_crypto_regime_momentum_eligibility_requires_funding_rate():
-    from alpha_os.candidate_backtest import (
+    from alpha_os.candidate_rules import (
         crypto_regime_momentum_eligibility_series_by_subject,
     )
 
