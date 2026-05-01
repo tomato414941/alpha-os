@@ -12,6 +12,13 @@ EVALUATION_START = "2024-04-01"
 EVALUATION_END = "2025-12-31"
 COST_BPS = 5.0
 COST_SENSITIVITY_BPS = (0.0, 5.0, 10.0, 25.0, 50.0)
+CANDIDATE_VARIANTS = {
+    "candidate": {},
+    "no_30d_trend_filter": {"use_30d_trend": False},
+    "no_funding_filter": {"use_funding_filter": False},
+    "no_volatility_scaling": {"use_volatility_scaling": False},
+    "no_open_interest_scaling": {"use_open_interest_scaling": False},
+}
 
 
 def _load_asset(asset: str) -> pd.DataFrame:
@@ -20,6 +27,38 @@ def _load_asset(asset: str) -> pd.DataFrame:
     frame.index = frame.index.tz_convert(None)
     frame["asset"] = asset
     return frame
+
+
+def _candidate_position(
+    frame: pd.DataFrame,
+    *,
+    use_30d_trend: bool = True,
+    use_funding_filter: bool = True,
+    use_volatility_scaling: bool = True,
+    use_open_interest_scaling: bool = True,
+) -> pd.Series:
+    candidate = frame["baseline_position"].copy()
+    if use_30d_trend:
+        candidate = candidate.where(frame["return_30d"] > 0, 0.0)
+    if use_funding_filter:
+        candidate = candidate.where(
+            ~(
+                (frame["funding_rate"] > 0)
+                & (frame["funding_rate"] > frame["funding_60d_median"])
+            ),
+            0.0,
+        )
+    if use_volatility_scaling:
+        candidate = candidate.where(
+            ~(frame["realized_vol_20d"] > frame["realized_vol_60d_median"]),
+            candidate * 0.5,
+        )
+    if use_open_interest_scaling:
+        candidate = candidate.where(
+            ~((frame["open_interest_growth_7d"] > 0) & (frame["return_7d"] < 0)),
+            candidate * 0.5,
+        )
+    return candidate
 
 
 def _asset_features(asset: str) -> pd.DataFrame:
@@ -35,22 +74,8 @@ def _asset_features(asset: str) -> pd.DataFrame:
     frame["open_interest_growth_7d"] = frame["open_interest"] / frame["open_interest"].shift(7) - 1.0
 
     frame["baseline_position"] = (frame["return_7d"] > 0).astype(float)
-
-    candidate = frame["baseline_position"].copy()
-    candidate = candidate.where(frame["return_30d"] > 0, 0.0)
-    candidate = candidate.where(
-        ~((frame["funding_rate"] > 0) & (frame["funding_rate"] > frame["funding_60d_median"])),
-        0.0,
-    )
-    candidate = candidate.where(
-        ~(frame["realized_vol_20d"] > frame["realized_vol_60d_median"]),
-        candidate * 0.5,
-    )
-    candidate = candidate.where(
-        ~((frame["open_interest_growth_7d"] > 0) & (frame["return_7d"] < 0)),
-        candidate * 0.5,
-    )
-    frame["candidate_position"] = candidate
+    for variant, options in CANDIDATE_VARIANTS.items():
+        frame[f"{variant}_position"] = _candidate_position(frame, **options)
     return frame
 
 
@@ -174,6 +199,18 @@ def _asset_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _ablation_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    baseline = _portfolio_returns(frames, "baseline_position")
+    baseline_mean = baseline["net_return"].mean()
+    rows = []
+    for variant in CANDIDATE_VARIANTS:
+        returns = _portfolio_returns(frames, f"{variant}_position")
+        row = _summarize(variant, returns)
+        row["mean_daily_edge_vs_baseline"] = float(returns["net_return"].mean() - baseline_mean)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def main() -> int:
     frames = {asset: _asset_features(asset) for asset in ASSETS}
     baseline = _portfolio_returns(frames, "baseline_position")
@@ -193,6 +230,7 @@ def main() -> int:
     )
     cost_sensitivity = _cost_sensitivity(frames)
     asset_summary = _asset_summary(frames)
+    ablation_summary = _ablation_summary(frames)
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
 
@@ -211,6 +249,9 @@ def main() -> int:
     print()
     print("Candidate by asset")
     print(asset_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Ablation summary")
+    print(ablation_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
     print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
     return 0
