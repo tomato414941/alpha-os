@@ -10,6 +10,7 @@ DATASET = ROOT / "experiments" / "datasets" / "ds_crypto_btc_eth_daily_2024_2025
 ASSETS = ("BTCUSDT", "ETHUSDT")
 EVALUATION_START = "2024-04-01"
 EVALUATION_END = "2025-12-31"
+START_DATE_SENSITIVITY = ("2024-03-01", "2024-04-01", "2024-05-01", "2024-06-01")
 COST_BPS = 5.0
 COST_SENSITIVITY_BPS = (0.0, 5.0, 10.0, 25.0, 50.0)
 CANDIDATE_VARIANTS = {
@@ -84,6 +85,8 @@ def _portfolio_returns(
     position_column: str,
     *,
     cost_bps: float = COST_BPS,
+    start: str = EVALUATION_START,
+    end: str = EVALUATION_END,
 ) -> pd.DataFrame:
     parts = []
     for asset, frame in frames.items():
@@ -123,7 +126,7 @@ def _portfolio_returns(
             "net_return": gross_return - cost,
         }
     )
-    return result.loc[EVALUATION_START:EVALUATION_END]
+    return result.loc[start:end]
 
 
 def _single_asset_returns(
@@ -185,6 +188,27 @@ def _cost_sensitivity(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _start_date_sensitivity(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    rows = []
+    for start in START_DATE_SENSITIVITY:
+        baseline = _portfolio_returns(frames, "baseline_position", start=start)
+        candidate = _portfolio_returns(frames, "candidate_position", start=start)
+        baseline_mean = baseline["net_return"].mean()
+        candidate_mean = candidate["net_return"].mean()
+        rows.append(
+            {
+                "start": start,
+                "end": EVALUATION_END,
+                "baseline_total_net_return": float((1.0 + baseline["net_return"]).prod() - 1.0),
+                "candidate_total_net_return": float(
+                    (1.0 + candidate["net_return"]).prod() - 1.0
+                ),
+                "candidate_mean_daily_edge": float(candidate_mean - baseline_mean),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def _asset_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     rows = []
     for asset, frame in frames.items():
@@ -229,6 +253,7 @@ def main() -> int:
         ]
     )
     cost_sensitivity = _cost_sensitivity(frames)
+    start_date_sensitivity = _start_date_sensitivity(frames)
     asset_summary = _asset_summary(frames)
     ablation_summary = _ablation_summary(frames)
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
@@ -246,6 +271,9 @@ def main() -> int:
     print()
     print("Cost sensitivity")
     print(cost_sensitivity.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Start date sensitivity")
+    print(start_date_sensitivity.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
     print("Candidate by asset")
     print(asset_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
