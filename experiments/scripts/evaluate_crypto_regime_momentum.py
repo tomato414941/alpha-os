@@ -112,6 +112,15 @@ def _summarize(name: str, returns: pd.DataFrame) -> dict[str, float | str]:
     }
 
 
+def _summarize_by_year(name: str, returns: pd.DataFrame) -> list[dict[str, float | str]]:
+    rows = []
+    for year, year_returns in returns.groupby(returns.index.year):
+        row = _summarize(name, year_returns)
+        row["period"] = str(year)
+        rows.append(row)
+    return rows
+
+
 def main() -> int:
     frames = {asset: _asset_features(asset) for asset in ASSETS}
     baseline = _portfolio_returns(frames, "baseline_position")
@@ -123,6 +132,12 @@ def main() -> int:
             _summarize("candidate", candidate),
         ]
     )
+    yearly_summary = pd.DataFrame(
+        [
+            *_summarize_by_year("baseline", baseline),
+            *_summarize_by_year("candidate", candidate),
+        ]
+    )
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
 
@@ -132,6 +147,9 @@ def main() -> int:
     print(f"cost_bps_per_unit_turnover={COST_BPS:g}")
     print()
     print(summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Yearly summary")
+    print(yearly_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
     print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
     return 0
