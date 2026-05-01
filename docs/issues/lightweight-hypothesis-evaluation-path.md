@@ -24,6 +24,15 @@ Before adding a first-pass strategy idea to `src/alpha_os/` or a runtime
 manifest, check whether it can be evaluated as a small experiment under
 `experiments/`.
 
+## Boundary
+
+This issue is about the lightweight experiment path before alpha-os runtime
+evaluation.
+
+It is not about the criteria for moving a promising experiment into
+`src/alpha_os/`. Track that separately in
+`experiment-to-alpha-os-boundary.md`.
+
 ## Next Decision
 
 For `crypto_regime_momentum`, keep the smallest experiment-level evaluator next
