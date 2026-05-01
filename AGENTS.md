@@ -2,14 +2,19 @@
 
 ## Project
 
-`alpha_os` is the maintained package for signal discovery, strategy definition,
-portfolio decisions, and out-of-sample evaluation.
+`alpha_os` supports:
+
+- lightweight investment hypothesis research
+- strategy candidate backtesting and OOS evaluation
+- signal discovery and screening
+- promotion, rejection, and baseline decision records
 
 ## Structure
 
 ```
 src/alpha_os/                Mainline package
 config/runtime_manifests/    Example runtime manifests
+experiments/                 Lightweight hypothesis research
 tests/                       Pytest suite
 data/                        Local runtime data (gitignored)
 ```
@@ -44,8 +49,8 @@ pip install -e ".[data]"
 ## Conventions
 
 - Prefer maintained work in `src/alpha_os/`.
-- Keep changes aligned with signal discovery, strategy specs, evaluation
-  protocols, evaluation cases, and evaluation reports.
+- Keep changes aligned with investment hypotheses, strategy candidates,
+  backtests, OOS evaluation, signal screening, and decision records.
 - Do not commit local runtime data, credentials, logs, or machine-specific
   deployment notes.
 - Keep machine-specific operations in `AGENTS.override.md`, which is ignored.
