@@ -16,8 +16,8 @@ CANDIDATE_VARIANTS = {
     "candidate": {},
     "no_30d_trend_filter": {"use_30d_trend": False},
     "no_funding_filter": {"use_funding_filter": False},
-    "no_volatility_scaling": {"use_volatility_scaling": False},
-    "no_open_interest_scaling": {"use_open_interest_scaling": False},
+    "with_volatility_scaling": {"use_volatility_scaling": True},
+    "with_open_interest_scaling": {"use_open_interest_scaling": True},
 }
 
 
@@ -34,8 +34,8 @@ def _candidate_position(
     *,
     use_30d_trend: bool = True,
     use_funding_filter: bool = True,
-    use_volatility_scaling: bool = True,
-    use_open_interest_scaling: bool = True,
+    use_volatility_scaling: bool = False,
+    use_open_interest_scaling: bool = False,
 ) -> pd.Series:
     candidate = frame["baseline_position"].copy()
     if use_30d_trend:

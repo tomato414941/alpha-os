@@ -54,19 +54,16 @@ For each asset:
 - Require 30 day return to be positive.
 - Do not enter when funding rate is positive and above its trailing 60 day
   median.
-- Cut position size in half when 20 day realized volatility is above its
-  trailing 60 day median.
-- Cut position size in half when 7 day open interest growth is positive while
-  7 day return is negative.
 
 Portfolio construction:
 
-- Equal weight across candidate asset signals after position scaling.
+- Equal weight across active candidate asset signals.
 - If both assets are flat, hold cash.
 - Rebalance daily.
 
 The candidate is deliberately not optimized. It tests one claim: whether simple
-momentum improves when crowded or stressed regimes are avoided.
+momentum improves when longer trend confirmation is present and crowded funding
+is avoided.
 
 ## First Evaluation
 
@@ -118,13 +115,13 @@ Still unresolved:
   feature experimentation, not final execution accounting.
 - The volume-confirmed trend operator is currently scoped to asset, equity, and
   ETF subject kinds, not crypto perpetuals.
-- The first candidate has not yet been implemented and compared against the
-  baseline.
+- Realized volatility and open interest are available as diagnostics, but they
+  are not part of the first candidate rule.
 
 Next smallest step:
 
-- Implement the first baseline and candidate comparison directly against the
-  checked-in dataset before creating a runtime manifest.
+- Decide whether the simplified first candidate is strong enough to promote
+  into the formal alpha-os evaluation path.
 
 Evidence data:
 
