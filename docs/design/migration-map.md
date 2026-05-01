@@ -12,35 +12,6 @@ It asks:
 - which parts should eventually be removed, demoted, or absorbed into a
   different layer
 
-## Classification Rules
-
-### Aligned
-
-An aligned component is still useful enough that it should be strengthened
-rather than replaced.
-
-### Transitional
-
-A transitional component is useful now, but it should not become more central.
-
-These components should usually be:
-
-- constrained
-- isolated
-- prevented from becoming more central
-
-### Remove Or Demote
-
-A remove-or-demote component should not remain part of long-run runtime truth.
-
-It may survive as:
-
-- a debug path
-- a compatibility layer
-- a one-time migration bridge
-
-But it should not be expanded.
-
 ## Current Map
 
 ### Observation Plane
