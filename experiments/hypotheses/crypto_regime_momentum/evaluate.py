@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 DATASET = ROOT / "experiments" / "datasets" / "ds_crypto_btc_eth_daily_2024_2025"
 ASSETS = ("BTCUSDT", "ETHUSDT")
 EVALUATION_START = "2024-04-01"

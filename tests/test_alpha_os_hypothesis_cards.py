@@ -9,7 +9,12 @@ HYPOTHESIS_UID_RE = re.compile(r"^Hypothesis UID: `(?P<uid>hyp_[0-9a-f]{8})`$")
 
 def _hypothesis_cards() -> tuple[Path, ...]:
     root = Path(__file__).resolve().parents[1]
-    return tuple(sorted((root / "experiments" / "hypotheses").glob("*.md")))
+    hypotheses = root / "experiments" / "hypotheses"
+    cards = [
+        *hypotheses.glob("*.md"),
+        *hypotheses.glob("*/README.md"),
+    ]
+    return tuple(sorted(cards))
 
 
 def _hypothesis_uids(path: Path) -> tuple[str, ...]:

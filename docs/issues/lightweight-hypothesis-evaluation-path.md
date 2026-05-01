@@ -22,15 +22,15 @@ manifest, check whether it can be evaluated as a small experiment under
 
 ## Next Decision
 
-For `crypto_regime_momentum`, add the smallest experiment-level evaluator that
-reads the checked-in BTC/ETH dataset, computes the documented baseline and
-candidate, and prints a compact comparison table.
+For `crypto_regime_momentum`, keep the smallest experiment-level evaluator next
+to the hypothesis record. It should read the checked-in BTC/ETH dataset, compute
+the documented baseline and candidate, and print a compact comparison table.
 
 ## Close Condition
 
-Close this when `crypto_regime_momentum` has a lightweight experiment command
-that can produce a baseline versus candidate comparison without using the
-runtime manifest, store, or CLI evaluation path.
+Close this when the first lightweight evaluator has produced enough evidence to
+decide whether to promote the hypothesis into the formal alpha-os evaluation
+path.
 
 ## Later
 
