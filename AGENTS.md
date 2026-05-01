@@ -12,14 +12,6 @@
 
 ## Structure
 
-```
-src/alpha_os/                Mainline package
-config/runtime_manifests/    Example runtime manifests
-experiments/                 Lightweight hypothesis research
-tests/                       Pytest suite
-data/                        Local runtime data (gitignored)
-```
-
 Prefer a modular monolith with vertical slices and AI-readable boundaries.
 Place new code near the workflow it serves instead of creating broad abstract
 layers by default.
@@ -49,7 +41,8 @@ pip install -e ".[data]"
 
 ## Conventions
 
-- Prefer maintained work in `src/alpha_os/`.
+- Prefer maintained work in the main package unless the task is explicitly a
+  lightweight experiment, documentation change, or local operations note.
 - Keep changes aligned with investment hypotheses, signal and strategy-candidate
   generation, portfolio-construction optimization, backtests, OOS evaluation,
   screening, and decision records.
