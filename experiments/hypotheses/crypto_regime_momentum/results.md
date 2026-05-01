@@ -18,6 +18,12 @@ Status: promising but sparse.
   - 2024-04-01 start: +68.9%
   - 2024-05-01 start: +66.9%
   - 2024-06-01 start: +45.7%
+- Candidate remains ahead of the baseline across tested cost levels:
+  - 0 bps: baseline -11.7%, candidate +79.5%
+  - 5 bps: baseline -20.2%, candidate +68.9%
+  - 10 bps: baseline -27.8%, candidate +59.0%
+  - 25 bps: baseline -46.7%, candidate +32.6%
+  - 50 bps: baseline -67.8%, candidate -2.1%
 - The 30 day trend filter matters. Removing it reduces total net return to
   -10.2%.
 - The funding filter matters. Removing it reduces total net return to +39.6%.
@@ -29,6 +35,7 @@ Status: promising but sparse.
   - flat days: 514 / 639
 - Candidate turns slightly negative at 50 bps cost:
   - candidate total net return: -2.1%
+  - baseline total net return: -67.8%
 - Open interest did not contribute to the first candidate.
 - Volatility scaling reduced performance in the first candidate.
 
