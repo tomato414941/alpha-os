@@ -4,6 +4,19 @@ import json
 from pathlib import Path
 
 
+def _metric_group_metrics(task_result, metric_group_name: str) -> dict[str, object]:
+    for group in task_result.metric_group_results:
+        if group.metric_group_name == metric_group_name:
+            return group.metrics
+    raise AssertionError(f"missing metric group: {metric_group_name}")
+
+
+def _assert_numeric_metrics(metrics: dict[str, object], names: tuple[str, ...]) -> None:
+    for name in names:
+        assert name in metrics
+        assert isinstance(metrics[name], (int, float))
+
+
 def _strategy_document(*, strategy_id: str, signal_kind: str) -> dict[str, object]:
     return {
         "trading_strategy": {
@@ -236,11 +249,73 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
         assert len(report.task_results) == 2
         task_results = {item.evaluation_task_id: item for item in report.task_results}
         candidate = task_results["crypto_regime_momentum_candidate_case"]
+        baseline = task_results["crypto_regime_momentum_baseline_case"]
         assert candidate.strategy_id == "strategy:crypto_regime_momentum_candidate"
+        assert baseline.strategy_id == "strategy:crypto_regime_momentum_baseline"
         assert candidate.strategy_contract_fields["target_id"] == "residual_return_1d"
-        trace_steps = store.list_evaluation_decision_trace_steps(
-            evaluation_report_id=report.evaluation_report_id
+        assert baseline.strategy_contract_fields["target_id"] == "residual_return_1d"
+
+        candidate_strategy = store.get_trading_strategy(candidate.strategy_id)
+        baseline_strategy = store.get_trading_strategy(baseline.strategy_id)
+        assert candidate_strategy is not None
+        assert baseline_strategy is not None
+        assert (
+            candidate_strategy.trading_strategy.signal_kind
+            == "crypto_regime_momentum_hold"
         )
-        assert trace_steps
+        assert baseline_strategy.trading_strategy.signal_kind == "constant_hold"
+        assert candidate_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
+        assert baseline_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
+
+        shared_contract_keys = (
+            "target_id",
+            "selection",
+            "sizing",
+            "rebalance",
+            "long_only",
+            "fee_bps",
+            "funding_bps_per_step",
+            "borrow_fee_bps_per_step",
+        )
+        for key in shared_contract_keys:
+            assert candidate.strategy_contract_fields[key] == (
+                baseline.strategy_contract_fields[key]
+            )
+
+        assert candidate.subject_set_facts == baseline.subject_set_facts
+        assert candidate.universe_policy_fields == baseline.universe_policy_fields
+
+        for task_result in (candidate, baseline):
+            decision_quality = _metric_group_metrics(
+                task_result,
+                "decision_quality",
+            )
+            robustness = _metric_group_metrics(task_result, "robustness")
+            _assert_numeric_metrics(
+                decision_quality,
+                (
+                    "mean_decision_net_return",
+                    "mean_decision_drawdown",
+                    "mean_decision_turnover",
+                ),
+            )
+            _assert_numeric_metrics(
+                robustness,
+                ("worst_decision_net_return",),
+            )
+            trace_steps = store.list_evaluation_decision_trace_steps(
+                evaluation_report_id=report.evaluation_report_id,
+                evaluation_task_id=task_result.evaluation_task_id,
+                evaluation_fold_label="crypto_regime_train_to_test",
+                evaluation_range_label="crypto_regime_test",
+                limit=1000,
+            )
+            assert trace_steps
+            assert {item.target_id for item in trace_steps} == {"residual_return_1d"}
+            assert {item.subject_set_id for item in trace_steps} == {
+                "crypto_regime_pair"
+            }
+            assert min(item.step_as_of for item in trace_steps) >= "2026-02-01"
+            assert max(item.step_as_of for item in trace_steps) <= "2026-03-02"
     finally:
         store.close()
