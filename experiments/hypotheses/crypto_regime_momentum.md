@@ -31,12 +31,65 @@ Next 1 day return.
 
 ## Baseline
 
-BTC/ETH simple momentum.
+For each asset:
+
+- Compute 7 day close-to-close return.
+- Hold long if the 7 day return is positive.
+- Hold flat otherwise.
+
+Portfolio construction:
+
+- Equal weight across active assets.
+- If both assets are flat, hold cash.
+- Rebalance daily.
+
+This baseline is intentionally simple. It asks whether plain BTC/ETH momentum
+already captures the available edge before adding regime inputs.
+
+## First Candidate
+
+For each asset:
+
+- Start from the same 7 day momentum rule as the baseline.
+- Require 30 day return to be positive.
+- Do not enter when funding rate is positive and above its trailing 60 day
+  median.
+- Cut position size in half when 20 day realized volatility is above its
+  trailing 60 day median.
+- Cut position size in half when 7 day open interest growth is positive while
+  7 day return is negative.
+
+Portfolio construction:
+
+- Equal weight across candidate asset signals after position scaling.
+- If both assets are flat, hold cash.
+- Rebalance daily.
+
+The candidate is deliberately not optimized. It tests one claim: whether simple
+momentum improves when crowded or stressed regimes are avoided.
+
+## First Evaluation
 
 ## Decision Rule
 
 Promote only if the candidate beats the baseline after costs without
 unacceptable drawdown or turnover degradation.
+
+Primary comparison:
+
+- Candidate mean daily net return must be higher than baseline.
+- Candidate max drawdown must not be worse than baseline by more than 10%.
+- Candidate turnover must not exceed 2x baseline turnover.
+- Candidate must not win only in one asset while losing badly in the other.
+
+Initial period:
+
+- Train/lookback warmup: 2024-01-01 through 2024-03-31.
+- Evaluation: 2024-04-01 through 2025-12-31.
+
+Data source:
+
+- `experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/`
 
 ## Rejection Rule
 
@@ -55,20 +108,23 @@ Confirmed:
   installed.
 - Existing signal operators include time-series trend, funding carry, realized
   volatility regime variants, and volume-confirmed trend.
+- The current dataset has close, volume, funding rate, and open interest.
+- The first baseline, candidate, evaluation period, and comparison rule are
+  fixed.
 
 Still unresolved:
 
-- The current dataset has close, volume, funding rate, and open interest.
 - The funding and open interest daily aggregation definitions are suitable for
   feature experimentation, not final execution accounting.
 - The volume-confirmed trend operator is currently scoped to asset, equity, and
   ETF subject kinds, not crypto perpetuals.
-- The exact candidate construction for combining momentum and regime inputs is
-  not fixed.
+- The first candidate has not yet been implemented and compared against the
+  baseline.
 
 Next smallest step:
 
-- Fix the first candidate construction before creating a runtime manifest.
+- Implement the first baseline and candidate comparison directly against the
+  checked-in dataset before creating a runtime manifest.
 
 Evidence data:
 
