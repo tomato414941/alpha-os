@@ -7,7 +7,6 @@ from alpha_os.cli_output import (
     print_evaluation_report,
     print_evaluation_snapshot,
     print_subject_sets,
-    print_strategy_specs,
     print_validation_result_set,
 )
 from alpha_os.evaluation_task import EvaluationTask
@@ -65,80 +64,6 @@ def _strategy_portfolio(
         portfolio_construction=None,
         sleeve_composition=None,
     )
-
-
-def test_print_strategy_specs_includes_execution_and_holding_costs(capsys):
-    strategy = TradingStrategySpec(
-        strategy_id="strategy:test",
-        label="Test Strategy",
-        scope=TradingStrategyScopeSpec(
-            subject_set_id="core_crypto",
-            target_id="residual_return_3d",
-        ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id="signal-discovery:test",
-                signal_kind="constant_hold",
-                family_mix=None,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind="trained"),
-        ),
-        portfolio=_strategy_portfolio(
-            portfolio_policy=PortfolioPolicySpec(
-                selection_policy=SelectionPolicySpec(selection_kind="all_assets", top_k=None),
-                sizing_policy=SizingPolicySpec(sizing_method="signal_weighted"),
-                rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
-                risk_policy=RiskPolicySpec(
-                    long_only=True,
-                    gross_exposure_cap=1.0,
-                    target_vol=0.12,
-                    gross_leverage_cap=1.5,
-                    net_exposure_target=0.3,
-                ),
-            ),
-            rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                turnover_friction=0.1,
-                no_trade_band=0.02,
-                execution_cost_aversion=1.0,
-            ),
-            execution_policy=ExecutionPolicySpec(
-                market_impact_bps=5.0,
-                fee_bps=2.0,
-                bid_ask_spread_bps=3.0,
-            ),
-            holding_cost_policy=HoldingCostPolicySpec(
-                funding_bps_per_step=1.5,
-                borrow_fee_bps_per_step=2.5,
-            ),
-        ),
-        created_at="2026-04-12T00:00:00Z",
-        adaptation_policy=AdaptationPolicySpec(enabled=True, adaptation_blend=0.2),
-    )
-
-    print_strategy_specs([strategy])
-    captured = capsys.readouterr().out
-
-    assert "selection=all_assets" in captured
-    assert "top_k=-" in captured
-    assert "rebalance=every_1_steps" in captured
-    assert "long_only=true" in captured
-    assert "gross_exposure_cap=1.0" in captured
-    assert "target_vol=0.12" in captured
-    assert "gross_leverage_cap=1.5" in captured
-    assert "net_exposure_target=0.3" in captured
-    assert "turnover_friction=0.1" in captured
-    assert "no_trade_band=0.02" in captured
-    assert "market_impact_bps=5.0" in captured
-    assert "fee_bps=2.0" in captured
-    assert "funding_bps_per_step=1.5" in captured
-    assert "borrow_fee_bps_per_step=2.5" in captured
-    assert "turnover_friction=0.1" in captured
-    assert "no_trade_band=0.02" in captured
-    assert "market_impact_bps=5.0" in captured
-    assert "fee_bps=2.0" in captured
-    assert "bid_ask_spread_bps=3.0" in captured
-    assert "funding_bps_per_step=1.5" in captured
-    assert "borrow_fee_bps_per_step=2.5" in captured
 
 
 def test_print_evaluation_tasks_includes_execution_and_holding_costs(capsys):

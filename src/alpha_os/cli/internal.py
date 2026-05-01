@@ -29,7 +29,6 @@ from ..cli_output import (
     print_portfolio_decisions,
     print_screening_result,
     print_signal_specs,
-    print_strategy_specs,
     print_subject_set_backend_checks,
     print_subject_sets,
     print_target_summaries,
@@ -2958,8 +2957,6 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         print_subject_sets(registered_subject_sets)
     if registered_signal_discoveries:
         print_signal_discovery_specs(registered_signal_discoveries)
-    if registered_strategy_specs:
-        print_strategy_specs(registered_strategy_specs)
     if registered_evaluation_specs:
         print_evaluation_specs(registered_evaluation_specs)
     if registered_evaluation_tasks:

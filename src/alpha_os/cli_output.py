@@ -7,7 +7,6 @@ from .cross_instrument_contract import (
     default_validation_result_set_cross_instrument_contract,
 )
 from .evaluation_report_service import format_report_strategy_contract_fields
-from .portfolio_construction_config import inferred_sizing_family
 from .subject_set_facts import format_subject_set_facts
 from .validation_result_set import build_validation_result_set
 
@@ -627,75 +626,6 @@ def print_strategy_adaptation_states(states) -> None:
                 f"members={family.member_count} "
                 f"updates={family.update_count}"
             )
-
-
-def print_strategy_specs(strategy_specs) -> None:
-    print("alpha-os strategy specs")
-    print(f"  Count:    {len(strategy_specs)}")
-    for item in strategy_specs:
-        trading_strategy = item.trading_strategy if hasattr(item, "trading_strategy") else item
-        scope = trading_strategy.scope
-        signal_definition = trading_strategy.signal_policy.definition_policy
-        portfolio_policy = trading_strategy.portfolio.to_portfolio_policy()
-        selection = portfolio_policy.selection_policy
-        sizing = portfolio_policy.sizing_policy
-        rebalance = portfolio_policy.rebalance_policy
-        risk = portfolio_policy.risk_policy
-        friction = trading_strategy.portfolio.rebalance_friction_policy
-        adaptation = trading_strategy.adaptation_policy
-        execution = trading_strategy.portfolio.execution_policy
-        holding = trading_strategy.portfolio.holding_cost_policy
-        is_hold_baseline_strategy = (
-            signal_definition.signal_kind == "constant_hold"
-            and selection.selection_kind == "all_assets"
-            and sizing.sizing_method == "equal_weight"
-            and risk.long_only is True
-        )
-        print(
-            f"  {trading_strategy.strategy_id} "
-            f"label={trading_strategy.label} "
-            f"subject_set={scope.subject_set_id or '-'} "
-            f"target={scope.target_id or '-'} "
-            f"signal_discovery={signal_definition.signal_discovery_id or '-'} "
-            f"selection={selection.selection_kind} "
-            f"top_k={'-' if selection.top_k is None else selection.top_k} "
-            f"sizing={sizing.sizing_method or '-'} "
-            f"{'' if is_hold_baseline_strategy else 'family=' + ('-' if sizing.sizing_method is None else inferred_sizing_family(sizing.sizing_method)) + ' '}"
-            f"{'holding_style=equal_weight_hold ' if is_hold_baseline_strategy else ''}"
-            f"rebalance={rebalance.rebalance or '-'} "
-            f"long_only={'-' if risk.long_only is None else str(risk.long_only).lower()} "
-            f"direction_mode={risk.direction_mode or '-'} "
-            "gross_exposure_cap="
-            f"{'-' if risk.gross_exposure_cap is None else risk.gross_exposure_cap} "
-            f"target_vol={'-' if risk.target_vol is None else risk.target_vol} "
-            "gross_leverage_cap="
-            f"{'-' if risk.gross_leverage_cap is None else risk.gross_leverage_cap} "
-            "net_exposure_target="
-            f"{'-' if risk.net_exposure_target is None else risk.net_exposure_target} "
-            "turnover_friction="
-            f"{friction.turnover_friction if friction.turnover_friction is not None else '-'} "
-            f"no_trade_band={friction.no_trade_band if friction.no_trade_band is not None else '-'} "
-            "execution_mode="
-            f"{getattr(friction, 'execution_mode', None) or 'utility_priority'} "
-            "turnover_budget="
-            f"{getattr(friction, 'turnover_budget', None) if getattr(friction, 'turnover_budget', None) is not None else '-'} "
-            f"benefit_scale={getattr(friction, 'benefit_scale', 1.0)} "
-            f"min_trade_utility={getattr(friction, 'min_trade_utility', 0.0)} "
-            f"uncertainty_aversion={getattr(friction, 'uncertainty_aversion', 1.0)} "
-            f"risk_aversion={getattr(friction, 'risk_aversion', 0.0)} "
-            "partial_fill_enabled="
-            f"{str(getattr(friction, 'partial_fill_enabled', True)).lower()} "
-            f"market_impact_bps={execution.market_impact_bps if execution.market_impact_bps is not None else '-'} "
-            f"fee_bps={execution.fee_bps if execution.fee_bps is not None else '-'} "
-            "bid_ask_spread_bps="
-            f"{execution.bid_ask_spread_bps if execution.bid_ask_spread_bps is not None else '-'} "
-            "funding_bps_per_step="
-            f"{holding.funding_bps_per_step if holding.funding_bps_per_step is not None else '-'} "
-            "borrow_fee_bps_per_step="
-            f"{holding.borrow_fee_bps_per_step if holding.borrow_fee_bps_per_step is not None else '-'} "
-            f"adaptation={'on' if adaptation.enabled else 'off'} "
-            f"adaptation_blend={adaptation.adaptation_blend:.2f}"
-        )
 
 
 def print_signal_specs(specifications) -> None:
