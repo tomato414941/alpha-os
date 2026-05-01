@@ -263,16 +263,7 @@ def main() -> int:
             _summarize("candidate", candidate),
         ]
     )
-    yearly_summary = pd.DataFrame(
-        [
-            *_summarize_by_year("baseline", baseline),
-            *_summarize_by_year("candidate", candidate),
-        ]
-    )
     cost_sensitivity = _cost_sensitivity(frames)
-    start_date_sensitivity = _start_date_sensitivity(frames)
-    asset_summary = _asset_summary(frames)
-    ablation_summary = _ablation_summary(frames)
     exposure_summary = pd.DataFrame(
         [
             _exposure_summary("baseline", baseline),
@@ -283,31 +274,6 @@ def main() -> int:
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
     cost_50 = cost_sensitivity.loc[cost_sensitivity["cost_bps"] == 50.0].iloc[0]
 
-    print("Crypto regime momentum first-pass comparison")
-    print(f"dataset={DATASET.relative_to(ROOT)}")
-    print(f"evaluation={EVALUATION_START}..{EVALUATION_END}")
-    print(f"cost_bps_per_unit_turnover={COST_BPS:g}")
-    print()
-    print(summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Yearly summary")
-    print(yearly_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Cost sensitivity")
-    print(cost_sensitivity.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Start date sensitivity")
-    print(start_date_sensitivity.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Candidate by asset")
-    print(asset_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Ablation summary")
-    print(ablation_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
-    print("Exposure summary")
-    print(exposure_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
-    print()
     facts = {
         "evaluation_start": EVALUATION_START,
         "evaluation_end": EVALUATION_END,
@@ -352,7 +318,6 @@ def main() -> int:
             column="two_asset_days",
         ),
     }
-    print("FACTS")
     for key, value in facts.items():
         if isinstance(value, float):
             print(f"{key}={value:.6f}")

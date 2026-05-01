@@ -14,9 +14,9 @@ That makes infrastructure work happen before the market hypothesis is judged,
 and it increases the chance that alpha-os optimizes the evaluation framework
 instead of testing whether a strategy idea has value.
 
-Experiment output can also drift into its own infrastructure problem. Human
-tables and machine-readable facts can duplicate the same result, diverge over
-time, or make formatting work feel like research progress.
+Experiment output can also drift into its own infrastructure problem. Keep the
+lightweight evaluator output machine-readable only, so formatting work does not
+feel like research progress.
 
 ## Guard
 
@@ -37,11 +37,7 @@ It is not about the criteria for moving a promising experiment into
 
 For `crypto_regime_momentum`, keep the smallest experiment-level evaluator next
 to the hypothesis record. It should read the checked-in BTC/ETH dataset, compute
-the documented baseline and candidate, and print a compact comparison table.
-
-Decide whether the experiment output should keep both human-readable tables and
-machine-readable facts, or whether one format should become the sole canonical
-output.
+the documented baseline and candidate, and print machine-readable facts only.
 
 ## Close Condition
 
