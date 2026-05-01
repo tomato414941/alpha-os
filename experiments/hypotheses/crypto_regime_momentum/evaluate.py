@@ -124,6 +124,7 @@ def _portfolio_returns(
             "gross_return": gross_return,
             "turnover": turnover,
             "net_return": gross_return - cost,
+            "active_assets": (joined[position_columns] > 0).sum(axis=1),
         }
     )
     return result.loc[start:end]
@@ -235,6 +236,18 @@ def _ablation_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _exposure_summary(name: str, returns: pd.DataFrame) -> dict[str, float | str]:
+    active_assets = returns["active_assets"]
+    return {
+        "strategy": name,
+        "days": float(len(returns)),
+        "mean_active_assets": float(active_assets.mean()),
+        "flat_days": float((active_assets == 0).sum()),
+        "one_asset_days": float((active_assets == 1).sum()),
+        "two_asset_days": float((active_assets == 2).sum()),
+    }
+
+
 def main() -> int:
     frames = {asset: _asset_features(asset) for asset in ASSETS}
     baseline = _portfolio_returns(frames, "baseline_position")
@@ -256,6 +269,12 @@ def main() -> int:
     start_date_sensitivity = _start_date_sensitivity(frames)
     asset_summary = _asset_summary(frames)
     ablation_summary = _ablation_summary(frames)
+    exposure_summary = pd.DataFrame(
+        [
+            _exposure_summary("baseline", baseline),
+            _exposure_summary("candidate", candidate),
+        ]
+    )
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
 
@@ -280,6 +299,9 @@ def main() -> int:
     print()
     print("Ablation summary")
     print(ablation_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Exposure summary")
+    print(exposure_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
     print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
     return 0
