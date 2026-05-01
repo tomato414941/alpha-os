@@ -1,5 +1,8 @@
 # Common Strategy Evaluation Boundary
 
+Resolved into the active source of truth:
+[`docs/design/strategy-comparison-contract.md`](../../design/strategy-comparison-contract.md).
+
 ## Problem
 
 alpha-os needs candidate strategies to be comparable under the same evaluation

@@ -58,6 +58,12 @@ Prefer:
 - [`DESIGN.md`](../DESIGN.md)
 - [`scaling-and-migration.md`](./design/scaling-and-migration.md)
 
+### "When are two strategy results comparable?"
+
+Prefer:
+
+- [`strategy-comparison-contract.md`](./design/strategy-comparison-contract.md)
+
 ## Document Roles
 
 ### Current Truth
@@ -87,6 +93,8 @@ Prefer:
   - current and target workflows
 - [`runtime-evaluation.md`](./design/runtime-evaluation.md)
   - targets, horizons, and evaluation model
+- [`strategy-comparison-contract.md`](./design/strategy-comparison-contract.md)
+  - minimum comparable-result contract
 - [`architecture.md`](./design/architecture.md)
   - producer-consumer architecture
 - [`scaling-and-migration.md`](./design/scaling-and-migration.md)
