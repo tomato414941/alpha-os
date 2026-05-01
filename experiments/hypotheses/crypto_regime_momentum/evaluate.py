@@ -248,6 +248,10 @@ def _exposure_summary(name: str, returns: pd.DataFrame) -> dict[str, float | str
     }
 
 
+def _scalar(frame: pd.DataFrame, *, strategy: str, column: str) -> float:
+    return float(frame.loc[frame["strategy"] == strategy, column].iloc[0])
+
+
 def main() -> int:
     frames = {asset: _asset_features(asset) for asset in ASSETS}
     baseline = _portfolio_returns(frames, "baseline_position")
@@ -277,6 +281,7 @@ def main() -> int:
     )
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
+    cost_50 = cost_sensitivity.loc[cost_sensitivity["cost_bps"] == 50.0].iloc[0]
 
     print("Crypto regime momentum first-pass comparison")
     print(f"dataset={DATASET.relative_to(ROOT)}")
@@ -303,7 +308,56 @@ def main() -> int:
     print("Exposure summary")
     print(exposure_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
-    print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
+    facts = {
+        "evaluation_start": EVALUATION_START,
+        "evaluation_end": EVALUATION_END,
+        "cost_bps_per_unit_turnover": COST_BPS,
+        "baseline_total_net_return": _scalar(
+            summary,
+            strategy="baseline",
+            column="total_net_return",
+        ),
+        "candidate_total_net_return": _scalar(
+            summary,
+            strategy="candidate",
+            column="total_net_return",
+        ),
+        "candidate_mean_daily_net_return_edge": float(edge),
+        "candidate_max_drawdown": _scalar(
+            summary,
+            strategy="candidate",
+            column="max_drawdown",
+        ),
+        "candidate_mean_daily_turnover": _scalar(
+            summary,
+            strategy="candidate",
+            column="mean_daily_turnover",
+        ),
+        "candidate_total_net_return_cost_50bps": float(
+            cost_50["candidate_total_net_return"]
+        ),
+        "candidate_flat_days": _scalar(
+            exposure_summary,
+            strategy="candidate",
+            column="flat_days",
+        ),
+        "candidate_one_asset_days": _scalar(
+            exposure_summary,
+            strategy="candidate",
+            column="one_asset_days",
+        ),
+        "candidate_two_asset_days": _scalar(
+            exposure_summary,
+            strategy="candidate",
+            column="two_asset_days",
+        ),
+    }
+    print("FACTS")
+    for key, value in facts.items():
+        if isinstance(value, float):
+            print(f"{key}={value:.6f}")
+        else:
+            print(f"{key}={value}")
     return 0
 
 
