@@ -210,7 +210,7 @@ def dual_momentum_signal_series_by_subject(
     return signal_series_by_subject
 
 
-def crypto_regime_momentum_signal_series_by_subject(
+def crypto_regime_momentum_eligibility_series_by_subject(
     *,
     subject_return_series_by_subject: dict[str, pd.Series],
     funding_rate_series_by_subject: dict[str, pd.Series],

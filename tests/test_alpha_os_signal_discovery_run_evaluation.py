@@ -212,9 +212,9 @@ def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
     assert signal.loc["2026-01-04"] == pytest.approx(0.0)
 
 
-def test_crypto_regime_momentum_signal_requires_trend_confirmation_and_funding_filter():
+def test_crypto_regime_momentum_eligibility_requires_trend_confirmation_and_funding_filter():
     from alpha_os.candidate_backtest import (
-        crypto_regime_momentum_signal_series_by_subject,
+        crypto_regime_momentum_eligibility_series_by_subject,
     )
 
     index = pd.date_range("2026-01-01", periods=66, freq="D").strftime("%Y-%m-%d")
@@ -223,7 +223,7 @@ def test_crypto_regime_momentum_signal_requires_trend_confirmation_and_funding_f
     funding_rate = pd.Series(0.001, index=index, dtype=float)
     funding_rate.loc["2026-03-06"] = 0.01
 
-    signals = crypto_regime_momentum_signal_series_by_subject(
+    signals = crypto_regime_momentum_eligibility_series_by_subject(
         subject_return_series_by_subject={"BTC": returns},
         funding_rate_series_by_subject={"BTC": funding_rate},
     )
@@ -237,16 +237,16 @@ def test_crypto_regime_momentum_signal_requires_trend_confirmation_and_funding_f
     assert signal.loc["2026-03-06"] == pytest.approx(0.0)
 
 
-def test_crypto_regime_momentum_signal_requires_funding_rate():
+def test_crypto_regime_momentum_eligibility_requires_funding_rate():
     from alpha_os.candidate_backtest import (
-        crypto_regime_momentum_signal_series_by_subject,
+        crypto_regime_momentum_eligibility_series_by_subject,
     )
 
     with pytest.raises(
         ValueError,
         match="crypto regime momentum requires funding_rate series: BTC",
     ):
-        crypto_regime_momentum_signal_series_by_subject(
+        crypto_regime_momentum_eligibility_series_by_subject(
             subject_return_series_by_subject={
                 "BTC": pd.Series(
                     {"2026-01-01": 0.01},
