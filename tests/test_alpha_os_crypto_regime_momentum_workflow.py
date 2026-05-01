@@ -2,6 +2,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
+
+
+_REQUIRED_COMPARISON_METRICS = (
+    ("decision_quality", "mean_decision_net_return"),
+    ("decision_quality", "mean_decision_drawdown"),
+    ("decision_quality", "annualized_step_sharpe"),
+    ("decision_quality", "mean_decision_turnover"),
+)
+
+_COMPARISON_COST_FIELDS = (
+    "fee_bps",
+    "funding_bps_per_step",
+    "borrow_fee_bps_per_step",
+)
 
 
 def _metric_group_metrics(task_result, metric_group_name: str) -> dict[str, object]:
@@ -22,6 +37,39 @@ def _assert_numeric_metrics(metrics: dict[str, object], names: tuple[str, ...]) 
     for name in names:
         assert name in metrics
         assert isinstance(metrics[name], (int, float))
+
+
+def _trace_period(trace_steps) -> tuple[str, str]:
+    assert trace_steps
+    dates = tuple(item.step_as_of for item in trace_steps)
+    return min(dates), max(dates)
+
+
+def _assert_common_strategy_comparison_contract(
+    candidate,
+    comparison_target,
+    *,
+    candidate_trace_steps,
+    comparison_target_trace_steps,
+    require_same_subject_set: bool = False,
+) -> None:
+    assert _trace_period(candidate_trace_steps) == _trace_period(
+        comparison_target_trace_steps
+    )
+    for field_name in _COMPARISON_COST_FIELDS:
+        assert candidate.strategy_contract_fields[field_name] == (
+            comparison_target.strategy_contract_fields[field_name]
+        )
+
+    for task_result in (candidate, comparison_target):
+        for metric_group_name, metric_name in _REQUIRED_COMPARISON_METRICS:
+            _metric(task_result, metric_group_name, metric_name)
+
+    if require_same_subject_set:
+        assert candidate.subject_set_facts == comparison_target.subject_set_facts
+        assert candidate.universe_policy_fields == (
+            comparison_target.universe_policy_fields
+        )
 
 
 def _strategy_document(
@@ -297,8 +345,7 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
                 baseline.strategy_contract_fields[key]
             )
 
-        assert candidate.subject_set_facts == baseline.subject_set_facts
-        assert candidate.universe_policy_fields == baseline.universe_policy_fields
+        trace_steps_by_task_id = {}
 
         for task_result in (candidate, baseline):
             decision_quality = _metric_group_metrics(
@@ -311,6 +358,7 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
                 (
                     "mean_decision_net_return",
                     "mean_decision_drawdown",
+                    "annualized_step_sharpe",
                     "mean_decision_turnover",
                 ),
             )
@@ -332,6 +380,17 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
             }
             assert min(item.step_as_of for item in trace_steps) >= "2026-02-01"
             assert max(item.step_as_of for item in trace_steps) <= "2026-03-02"
+            trace_steps_by_task_id[task_result.evaluation_task_id] = trace_steps
+
+        _assert_common_strategy_comparison_contract(
+            candidate,
+            baseline,
+            candidate_trace_steps=trace_steps_by_task_id[candidate.evaluation_task_id],
+            comparison_target_trace_steps=trace_steps_by_task_id[
+                baseline.evaluation_task_id
+            ],
+            require_same_subject_set=True,
+        )
     finally:
         store.close()
 
@@ -427,3 +486,74 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
         assert candidate_worst_net >= baseline_worst_net
     finally:
         store.close()
+
+
+def test_common_strategy_comparison_contract_rejects_missing_required_metric():
+    from alpha_os.evaluation_report import (
+        EvaluationMetricGroupResult,
+        EvaluationTaskResult,
+    )
+
+    candidate = EvaluationTaskResult(
+        evaluation_task_id="candidate",
+        strategy_id="strategy:candidate",
+        strategy_contract_fields={
+            "fee_bps": 5.0,
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0,
+        },
+        metric_group_results=(
+            EvaluationMetricGroupResult(
+                metric_group_name="decision_quality",
+                source="test",
+                metrics={
+                    "mean_decision_net_return": 0.1,
+                    "mean_decision_drawdown": 0.02,
+                    "mean_decision_turnover": 0.3,
+                },
+            ),
+            EvaluationMetricGroupResult(
+                metric_group_name="robustness",
+                source="test",
+                metrics={"worst_decision_net_return": 0.1},
+            ),
+        ),
+    )
+    comparison_target = EvaluationTaskResult(
+        evaluation_task_id="comparison",
+        strategy_id="strategy:comparison",
+        strategy_contract_fields={
+            "fee_bps": 5.0,
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0,
+        },
+        metric_group_results=(
+            EvaluationMetricGroupResult(
+                metric_group_name="decision_quality",
+                source="test",
+                metrics={
+                    "mean_decision_net_return": 0.1,
+                    "mean_decision_drawdown": 0.02,
+                    "annualized_step_sharpe": 1.0,
+                    "mean_decision_turnover": 0.3,
+                },
+            ),
+            EvaluationMetricGroupResult(
+                metric_group_name="robustness",
+                source="test",
+                metrics={"worst_decision_net_return": 0.1},
+            ),
+        ),
+    )
+    trace_steps = (SimpleNamespace(step_as_of="2026-01-01"),)
+
+    try:
+        _assert_common_strategy_comparison_contract(
+            candidate,
+            comparison_target,
+            candidate_trace_steps=trace_steps,
+            comparison_target_trace_steps=trace_steps,
+        )
+    except AssertionError:
+        return
+    raise AssertionError("comparison contract accepted a missing required metric")

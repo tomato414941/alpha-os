@@ -6,17 +6,19 @@ alpha-os needs candidate strategies to be comparable under the same evaluation
 contract.
 
 The important question is not where a candidate came from. The important
-question is whether it was evaluated with the same comparison conditions:
+question is whether it was evaluated with the same minimum comparison contract:
 
-- data
 - period
-- subject set
-- target
 - costs
-- portfolio construction
-- baseline
-- metrics
-- report semantics
+- required metrics
+  - net return
+  - max drawdown
+  - Sharpe ratio
+  - turnover
+
+Subject set equality is optional. In many comparisons the tradable universe
+should be fixed, but in some strategy comparisons the subject set itself is part
+of the strategy being evaluated.
 
 ## Risk
 
@@ -40,13 +42,19 @@ It is separate from:
 ## Current Finding
 
 The `crypto_regime_momentum` workflow already checks many comparison-contract
-facts through DB artifacts, including subject set, target, cost assumptions,
-portfolio construction, metric presence, and decision traces.
+facts through DB artifacts, including cost assumptions, metric presence,
+decision traces, and subject set equality for that fixed-universe comparison.
 
 The remaining gap is that this is not yet a shared contract across all candidate
 types.
 
 ## Close Condition
 
-Close this when alpha-os has a small shared comparison contract that can be
-checked for candidates regardless of how they were produced.
+Close this when alpha-os has a small shared check that verifies:
+
+- same evaluation period
+- same cost assumptions
+- required comparison metrics exist on both compared results
+
+The check may also verify the same subject set when the comparison intends to
+hold the tradable universe fixed.
