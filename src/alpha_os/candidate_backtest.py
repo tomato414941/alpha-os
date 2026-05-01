@@ -121,6 +121,8 @@ def evaluate_direct_strategy_case(
         raise ValueError(f"strategy does not exist: {strategy_id}")
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
+    # signal_kind is the persisted compatibility field. Trainless candidate
+    # backtests treat it as a position rule selector.
     position_rule_kind = trading_strategy.signal_kind
     if position_rule_kind not in {
         "constant_hold",
@@ -129,8 +131,8 @@ def evaluate_direct_strategy_case(
     }:
         raise ValueError(
             "current trainless executor only supports "
-            "signal=constant_hold, signal=dual_momentum_hold, or "
-            "signal=crypto_regime_momentum_hold"
+            "position_rule=constant_hold, position_rule=dual_momentum_hold, or "
+            "position_rule=crypto_regime_momentum_hold"
         )
     if selection_kind not in {"all_assets", "top_k"}:
         raise ValueError(
@@ -163,14 +165,14 @@ def evaluate_direct_strategy_case(
         subject_planes=subject_planes,
     )
     if position_rule_kind == "constant_hold":
-        signal_series_by_subject = None
+        position_signal_series_by_subject = None
     elif position_rule_kind == "dual_momentum_hold":
-        signal_series_by_subject = dual_momentum_signal_series_by_subject(
+        position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
             family_mix=trading_strategy.signal_policy.definition_policy.family_mix,
         )
     else:
-        signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
+        position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
             funding_rate_series_by_subject=funding_rate_series_by_subject,
         )
@@ -180,7 +182,7 @@ def evaluate_direct_strategy_case(
         target_id=target_id,
         subject_set_id=subject_set_id,
         subject_set=subject_set,
-        signal_series_by_subject=signal_series_by_subject,
+        signal_series_by_subject=position_signal_series_by_subject,
         funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
         borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
