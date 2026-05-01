@@ -888,10 +888,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_evaluation_diagnostics.add_argument("--top-n", type=int, default=8)
     show_evaluation_diagnostics.add_argument("--output", type=str, default=None)
 
-    show_strategy_specs = internal_parser("show-strategy-specs")
-    show_strategy_specs.add_argument("--db", type=str, default=None)
-    show_strategy_specs.add_argument("--limit", type=int, default=20)
-
     rebuild_strategy_adaptation_state = internal_parser("rebuild-strategy-adaptation-state")
     rebuild_strategy_adaptation_state.add_argument("--db", type=str, default=None)
     rebuild_strategy_adaptation_state.add_argument("--report-id", type=str, default=None)
@@ -4960,14 +4956,6 @@ def cmd_show_evaluation_diagnostics(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_show_strategy_specs(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        strategy_specs = store.list_trading_strategies(limit=int(args.limit))
-    print_strategy_specs(strategy_specs)
-    return 0
-
-
 def _resolve_strategy_adaptation_task_result(
     *,
     report_state,
@@ -5727,8 +5715,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_show_evaluation_report(args)
         if args.command in {"show-evaluation-diagnostics", "show-diagnostics"}:
             return cmd_show_evaluation_diagnostics(args)
-        if args.command == "show-strategy-specs":
-            return cmd_show_strategy_specs(args)
         if args.command == "rebuild-strategy-adaptation-state":
             return cmd_rebuild_strategy_adaptation_state(args)
         if args.command == "show-strategy-adaptation-states":

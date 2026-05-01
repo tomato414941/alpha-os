@@ -26,7 +26,6 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "show-evaluation-diagnostics": _legacy.cmd_show_evaluation_diagnostics,
     "show-diagnostics": _legacy.cmd_show_evaluation_diagnostics,
     "debug-show-evaluations": _legacy.cmd_show_evaluations,
-    "show-strategy-specs": _legacy.cmd_show_strategy_specs,
     "rebuild-strategy-adaptation-state": _legacy.cmd_rebuild_strategy_adaptation_state,
     "show-strategy-adaptation-states": _legacy.cmd_show_strategy_adaptation_states,
 }
