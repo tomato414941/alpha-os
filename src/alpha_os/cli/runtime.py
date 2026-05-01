@@ -91,15 +91,6 @@ def _register_list_manifests(
 
 COMMANDS: tuple[CliCommand, ...] = (
     CliCommand(
-        name="apply-runtime-manifest",
-        handler=_legacy.cmd_apply_runtime_manifest,
-        visibility="internal",
-        register_parser=lambda sub: _register_apply_manifest(
-            sub,
-            "apply-runtime-manifest",
-        ),
-    ),
-    CliCommand(
         name="apply-manifest",
         handler=_legacy.cmd_apply_runtime_manifest,
         visibility="public",

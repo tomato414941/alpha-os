@@ -11,7 +11,7 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--manifest",
                 "examples/minimal_fixed_state_oos.json",
                 "--db",

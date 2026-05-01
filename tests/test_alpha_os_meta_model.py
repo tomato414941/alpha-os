@@ -683,7 +683,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -779,7 +779,7 @@ def test_apply_runtime_manifest_supports_generated_discoveries(tmp_path, capsys)
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -821,7 +821,7 @@ def test_checked_in_narrow_manifest_applies_cleanly(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -859,7 +859,7 @@ def test_checked_in_global_macro_manifest_applies_cleanly(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -917,7 +917,7 @@ def test_checked_in_global_macro_tradeable_daily_10y_manifest_applies_cleanly(
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -991,7 +991,7 @@ def test_checked_in_us_etf_dual_momentum_10y_manifest_applies_cleanly(
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1083,7 +1083,7 @@ def test_apply_runtime_manifest_rejects_incomplete_multi_subject_universe_policy
     with pytest.raises(SystemExit) as exc_info:
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -2539,7 +2539,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -3197,7 +3197,7 @@ def test_apply_runtime_manifest_accepts_subject_set_instruments(tmp_path, capsys
         )
     )
 
-    assert main(["apply-runtime-manifest", "--db", str(db_path), "--manifest", str(manifest_path)]) == 0
+    assert main(["apply-manifest", "--db", str(db_path), "--manifest", str(manifest_path)]) == 0
     output = capsys.readouterr().out
     assert "SubjectSets:    total=1 upserted=1" in output
 

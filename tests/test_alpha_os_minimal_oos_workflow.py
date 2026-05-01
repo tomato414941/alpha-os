@@ -12,7 +12,7 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--manifest",
                 str(manifest_path),
                 "--db",

@@ -346,7 +346,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
 
     if include_runtime_parsers:
         apply_manifest = sub.add_parser(
-            "apply-runtime-manifest",
+            "apply-manifest",
             help=(
                 "Apply runtime manifest resources including observables, signal specs, "
                 "subject sets, strategy specs, evaluation specs, and evaluation tasks"
@@ -5712,7 +5712,7 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_init_db(args)
         if args.command == "register-signal-candidate":
             return cmd_register_signal(args)
-        if args.command in {"apply-runtime-manifest", "apply-manifest"}:
+        if args.command == "apply-manifest":
             return cmd_apply_runtime_manifest(args)
         if args.command == "run-diagnostic-evaluation":
             return cmd_run_diagnostic_evaluation(args)

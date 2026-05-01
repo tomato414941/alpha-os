@@ -157,20 +157,19 @@ def test_cli_public_aliases_parse_to_existing_arguments():
     assert diagnostics_args.db == "runtime.db"
 
 
-def test_cli_legacy_public_commands_remain_parseable():
+def test_cli_legacy_public_commands_remain_parseable_except_removed_apply_runtime_manifest():
     parser = build_cli_parser()
 
-    apply_args = parser.parse_args(
-        [
-            "apply-runtime-manifest",
-            "--manifest",
-            "examples/minimal_oos.json",
-            "--db",
-            "runtime.db",
-        ]
-    )
-    assert apply_args.command == "apply-runtime-manifest"
-    assert apply_args.manifest == "examples/minimal_oos.json"
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "apply-runtime-manifest",
+                "--manifest",
+                "examples/minimal_oos.json",
+                "--db",
+                "runtime.db",
+            ]
+        )
 
     list_args = parser.parse_args(["list-runtime-manifests"])
     assert list_args.command == "list-runtime-manifests"

@@ -586,7 +586,7 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -860,7 +860,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1048,7 +1048,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1174,7 +1174,7 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1335,7 +1335,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1575,7 +1575,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1824,7 +1824,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -1983,7 +1983,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",
@@ -2517,7 +2517,7 @@ def test_run_diagnostic_evaluation_dry_run_check_ignores_stale_tasks(
         assert (
             main(
                 [
-                    "apply-runtime-manifest",
+                    "apply-manifest",
                     "--db",
                     str(db_path),
                     "--manifest",
@@ -3319,7 +3319,7 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--db",
                 str(db_path),
                 "--manifest",

@@ -275,7 +275,7 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--manifest",
                 str(manifest_path),
                 "--db",
@@ -427,7 +427,7 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
     assert (
         main(
             [
-                "apply-runtime-manifest",
+                "apply-manifest",
                 "--manifest",
                 str(manifest_path),
                 "--db",
