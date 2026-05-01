@@ -11,6 +11,7 @@ ASSETS = ("BTCUSDT", "ETHUSDT")
 EVALUATION_START = "2024-04-01"
 EVALUATION_END = "2025-12-31"
 COST_BPS = 5.0
+COST_SENSITIVITY_BPS = (0.0, 5.0, 10.0, 25.0, 50.0)
 
 
 def _load_asset(asset: str) -> pd.DataFrame:
@@ -53,7 +54,12 @@ def _asset_features(asset: str) -> pd.DataFrame:
     return frame
 
 
-def _portfolio_returns(frames: dict[str, pd.DataFrame], position_column: str) -> pd.DataFrame:
+def _portfolio_returns(
+    frames: dict[str, pd.DataFrame],
+    position_column: str,
+    *,
+    cost_bps: float = COST_BPS,
+) -> pd.DataFrame:
     parts = []
     for asset, frame in frames.items():
         part = frame[["next_return", position_column]].copy()
@@ -84,7 +90,7 @@ def _portfolio_returns(frames: dict[str, pd.DataFrame], position_column: str) ->
         turnover.loc[date] = (weights - previous_weights).abs().sum()
         previous_weights = weights
 
-    cost = turnover * COST_BPS / 10_000
+    cost = turnover * cost_bps / 10_000
     result = pd.DataFrame(
         {
             "gross_return": gross_return,
@@ -93,6 +99,19 @@ def _portfolio_returns(frames: dict[str, pd.DataFrame], position_column: str) ->
         }
     )
     return result.loc[EVALUATION_START:EVALUATION_END]
+
+
+def _single_asset_returns(
+    frame: pd.DataFrame,
+    position_column: str,
+    *,
+    cost_bps: float = COST_BPS,
+) -> pd.DataFrame:
+    returns = frame[["next_return", position_column]].dropna().copy()
+    returns["turnover"] = returns[position_column].diff().abs().fillna(returns[position_column])
+    returns["gross_return"] = returns[position_column] * returns["next_return"]
+    returns["net_return"] = returns["gross_return"] - returns["turnover"] * cost_bps / 10_000
+    return returns.loc[EVALUATION_START:EVALUATION_END]
 
 
 def _max_drawdown(returns: pd.Series) -> float:
@@ -121,6 +140,40 @@ def _summarize_by_year(name: str, returns: pd.DataFrame) -> list[dict[str, float
     return rows
 
 
+def _cost_sensitivity(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    rows = []
+    for cost_bps in COST_SENSITIVITY_BPS:
+        baseline = _portfolio_returns(frames, "baseline_position", cost_bps=cost_bps)
+        candidate = _portfolio_returns(frames, "candidate_position", cost_bps=cost_bps)
+        baseline_mean = baseline["net_return"].mean()
+        candidate_mean = candidate["net_return"].mean()
+        rows.append(
+            {
+                "cost_bps": cost_bps,
+                "baseline_total_net_return": float((1.0 + baseline["net_return"]).prod() - 1.0),
+                "candidate_total_net_return": float(
+                    (1.0 + candidate["net_return"]).prod() - 1.0
+                ),
+                "candidate_mean_daily_edge": float(candidate_mean - baseline_mean),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _asset_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    rows = []
+    for asset, frame in frames.items():
+        baseline = _single_asset_returns(frame, "baseline_position")
+        candidate = _single_asset_returns(frame, "candidate_position")
+        baseline_mean = baseline["net_return"].mean()
+        candidate_mean = candidate["net_return"].mean()
+        row = _summarize(asset, candidate)
+        row["baseline_total_net_return"] = float((1.0 + baseline["net_return"]).prod() - 1.0)
+        row["candidate_mean_daily_edge"] = float(candidate_mean - baseline_mean)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def main() -> int:
     frames = {asset: _asset_features(asset) for asset in ASSETS}
     baseline = _portfolio_returns(frames, "baseline_position")
@@ -138,6 +191,8 @@ def main() -> int:
             *_summarize_by_year("candidate", candidate),
         ]
     )
+    cost_sensitivity = _cost_sensitivity(frames)
+    asset_summary = _asset_summary(frames)
     edge = summary.loc[summary["strategy"] == "candidate", "mean_daily_net_return"].iloc[0]
     edge -= summary.loc[summary["strategy"] == "baseline", "mean_daily_net_return"].iloc[0]
 
@@ -150,6 +205,12 @@ def main() -> int:
     print()
     print("Yearly summary")
     print(yearly_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Cost sensitivity")
+    print(cost_sensitivity.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
+    print()
+    print("Candidate by asset")
+    print(asset_summary.to_string(index=False, float_format=lambda value: f"{value:.6f}"))
     print()
     print(f"candidate_mean_daily_net_return_edge={edge:.6f}")
     return 0
