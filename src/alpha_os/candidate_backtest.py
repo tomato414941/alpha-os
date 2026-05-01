@@ -240,9 +240,16 @@ def crypto_regime_momentum_eligibility_series_by_subject(
                 f"{subject_id}"
             )
         returns = full_returns.astype(float)
-        price_index = (1.0 + returns).cumprod()
-        return_7d = price_index / price_index.shift(7) - 1.0
-        return_30d = price_index / price_index.shift(30) - 1.0
+        return_7d = (
+            (1.0 + returns)
+            .rolling(7, min_periods=7)
+            .apply(lambda values: float(values.prod() - 1.0), raw=True)
+        )
+        return_30d = (
+            (1.0 + returns)
+            .rolling(30, min_periods=30)
+            .apply(lambda values: float(values.prod() - 1.0), raw=True)
+        )
         aligned_funding = funding_rate.astype(float).reindex(returns.index)
         funding_median_60d = aligned_funding.rolling(
             60,
