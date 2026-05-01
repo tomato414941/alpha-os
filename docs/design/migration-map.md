@@ -16,8 +16,6 @@ It asks:
 
 ### Observation Plane
 
-#### Aligned
-
 - [`observation_adapters.py`](../../src/alpha_os/observation_adapters.py)
   - aligned because it treats `signal-noise` as an observation provider behind a
     contract rather than exposing backend signal names directly
@@ -27,8 +25,6 @@ It asks:
 - [`signal_client.py`](../../src/alpha_os/signal_client.py)
   - aligned as a thin boundary module to the observation provider
 
-#### Transitional
-
 - [`portfolio_decision.py`](../../src/alpha_os/portfolio_decision.py)
   - transitional in the observation sense because `ObservationSpec` still lives
     inside the portfolio package rather than a dedicated observation namespace
@@ -36,14 +32,10 @@ It asks:
   - transitional because observation provenance is still persisted in the same
     general runtime store as evaluation and decision state
 
-#### Remove Or Demote
-
 - any future reintroduction of raw backend `signal_name` into public contracts
   - this should be treated as a regression, not as a supported layer
 
 ### Representation Plane
-
-#### Aligned
 
 - [`feature_plane.py`](../../src/alpha_os/feature_plane.py)
   - aligned because it makes subject-level shared representation the primary
@@ -52,8 +44,6 @@ It asks:
   - aligned where it uses feature planes and batch family execution rather than
     one-fetch-per-signal logic
 
-#### Transitional
-
 - [`evaluation_inputs.py`](../../src/alpha_os/evaluation_inputs.py)
   - transitional because it still materializes many row-like evaluation objects
     as a primary runtime interface
@@ -61,15 +51,11 @@ It asks:
   - transitional because it persists per-evaluation records as first-class
     runtime truth rather than treating them as one possible byproduct of discovery
 
-#### Remove Or Demote
-
 - one-row-at-a-time evaluation persistence as the dominant execution shape
   - batch persistence may remain as a bridge, but row-first evaluation should
     not define the long-run architecture
 
 ### Signal Discovery Plane
-
-#### Aligned
 
 - [`signal_compiler.py`](../../src/alpha_os/signal_compiler.py)
   - aligned because it groups execution by family structure rather than by
@@ -78,8 +64,6 @@ It asks:
   - partially aligned where it distinguishes specification from executable
     binding and tracks required observables
 
-#### Transitional
-
 - [`signal_registry.py`](../../src/alpha_os/signal_registry.py)
   - still transitional overall because executable signals remain durable
     runtime entities
@@ -87,15 +71,11 @@ It asks:
   - transitional because targets are still closer to bounded evaluation
     contracts than to a broader discovery language
 
-#### Remove Or Demote
-
 - executable signal IDs as a long-run source-of-truth abstraction
   - they may remain as runtime cache keys or audit keys
   - they should not remain the main conceptual unit of large-scale discovery
 
 ### Selection Plane
-
-#### Aligned
 
 - [`screening.py`](../../src/alpha_os/screening.py)
   - aligned as the current first-class `ScreeningResult` and
@@ -103,8 +83,6 @@ It asks:
 - [`signal_discovery_screening_service.py`](../../src/alpha_os/signal_discovery_screening_service.py)
   - aligned where it turns discovery outputs into persisted screening
     artifacts
-
-#### Transitional
 
 - [`pre_screening.py`](../../src/alpha_os/pre_screening.py),
   [`probe_screening.py`](../../src/alpha_os/probe_screening.py), and
@@ -123,8 +101,6 @@ It asks:
   - transitional because scoring exists, but not yet as part of a dedicated
     cheap-screen versus deep-evaluation split
 
-#### Remove Or Demote
-
 - broad full-run validation as the first filter
   - this should become a survivor-stage activity, not the default selection
     mechanism
@@ -134,14 +110,10 @@ It asks:
 
 ### Compression Plane
 
-#### Aligned
-
 - [`compression.py`](../../src/alpha_os/compression.py)
   - aligned as the current first-class `CompressedBelief` artifact layer
 - [`signal_discovery_compression_service.py`](../../src/alpha_os/signal_discovery_compression_service.py)
   - aligned where it persists compression outputs from screening survivors
-
-#### Transitional
 
 - [`belief_synthesis.py`](../../src/alpha_os/belief_synthesis.py)
   - transitional because it supports current compression, but remains heuristic
@@ -153,14 +125,10 @@ It asks:
   - transitional because uncertainty and dependence inputs already hint at
     compression-aware thinking, but they still consume broad upstream results
 
-#### Remove Or Demote
-
 - direct use of large raw signal populations in portfolio decision
   - the target is compressed belief, not broad raw signal sets
 
 ### Decision Plane
-
-#### Aligned
 
 - [`portfolio_decision.py`](../../src/alpha_os/portfolio_decision.py)
   - aligned because it defines the decision contract in portfolio-facing terms
@@ -174,8 +142,6 @@ It asks:
 - [`decision_backtest.py`](../../src/alpha_os/decision_backtest.py)
   - aligned where it treats replay as portfolio-state evolution
 
-#### Transitional
-
 - rule-based policy support inside
   [`portfolio_sizing_policy.py`](../../src/alpha_os/portfolio_sizing_policy.py)
   - transitional because the long-run system should center on compressed belief
@@ -184,14 +150,10 @@ It asks:
   - transitional because `estimation`, `model`, and `structural` uncertainty
     are not yet deeply integrated into a compressed-belief pipeline
 
-#### Remove Or Demote
-
 - any future tendency to use the decision layer as a substitute for missing
   upstream screening or compression
 
 ### Evaluation Plane
-
-#### Aligned
 
 - [`validation_engine.py`](../../src/alpha_os/validation_engine.py)
   - aligned where it distinguishes replay and outcome measurement from raw
@@ -200,8 +162,6 @@ It asks:
   - aligned where it scopes validation around subject sets and portfolio
     outcomes
 
-#### Transitional
-
 - [`validation_spec.py`](../../src/alpha_os/validation_spec.py)
   - transitional because it still reflects broad replay-oriented validation
     rather than a multi-stage survivor evaluation pipeline
@@ -209,20 +169,14 @@ It asks:
   - transitional because validation still runs too close to a full broad pass
     rather than a staged selection process
 
-#### Remove Or Demote
-
 - winner-picking interpretations of validation output
   - validation should describe failure surfaces and robustness, not only ranking
 
 ### Control Surface
 
-#### Aligned
-
 - workflow-first CLI in [`cli/`](../../src/alpha_os/cli/)
   - aligned because public commands now prefer workflow units over small legacy
     primitives
-
-#### Transitional
 
 - [`cli/`](../../src/alpha_os/cli/)
   - transitional because the package has runtime/evaluation/research/internal
@@ -235,7 +189,5 @@ It asks:
   - transitional because bounded defaults still exist across runtime paths
 - [`store.py`](../../src/alpha_os/store.py)
   - transitional because one store still carries multiple conceptual planes
-
-#### Remove Or Demote
 
 - debug commands that could drift back into public runtime truth
