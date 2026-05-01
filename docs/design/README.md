@@ -41,15 +41,11 @@ Prefer these files in this order:
    - decision layer purpose
    - portfolio inputs and outputs
    - theory-driven requirements
-9. [`migration-map.md`](./migration-map.md)
-   - aligned vs transitional vs remove
-   - module-by-module mapping
-   - near-term reductions and additions
-10. [`architecture.md`](./architecture.md)
+9. [`architecture.md`](./architecture.md)
    - producer-consumer separation
    - prediction store
    - diversity and validation
-11. [`scaling-and-migration.md`](./scaling-and-migration.md)
+10. [`scaling-and-migration.md`](./scaling-and-migration.md)
    - greenfield vs current repo
    - multi-asset and large-scale scaling direction
 

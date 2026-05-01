@@ -39,15 +39,11 @@ Read them in this order:
    - targets
    - horizons
    - pipeline stages
-7. [`docs/design/migration-map.md`](./docs/design/migration-map.md)
-   - aligned vs transitional vs remove
-   - module-level gap map
-   - near-term direction
-8. [`docs/design/architecture.md`](./docs/design/architecture.md)
+7. [`docs/design/architecture.md`](./docs/design/architecture.md)
    - producer-consumer separation
    - prediction store contract
    - diversity and validation
-9. [`docs/design/scaling-and-migration.md`](./docs/design/scaling-and-migration.md)
+8. [`docs/design/scaling-and-migration.md`](./docs/design/scaling-and-migration.md)
    - greenfield baseline
    - current repo vs target shape
    - multi-asset and large-scale scaling direction
