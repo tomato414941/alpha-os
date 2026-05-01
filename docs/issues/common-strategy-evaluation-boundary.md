@@ -2,61 +2,51 @@
 
 ## Problem
 
-alpha-os currently exposes different evaluation paths based on how a candidate
-strategy was produced.
+alpha-os needs candidate strategies to be comparable under the same evaluation
+contract.
 
-Examples:
+The important question is not where a candidate came from. The important
+question is whether it was evaluated with the same comparison conditions:
 
-- hand-written trainless rules use direct strategy evaluation
-- discovered signals use the signal discovery evaluation path
-- frozen discovery artifacts use fixed-state replay
-
-For an end user, those are provenance differences. They should not change the
-meaning of the evaluation result.
+- data
+- period
+- subject set
+- target
+- costs
+- portfolio construction
+- baseline
+- metrics
+- report semantics
 
 ## Risk
 
-The evaluation path can become tied to the candidate origin.
+If those comparison conditions are not stable, alpha-os can compare numbers that
+look similar but mean different things.
 
-That makes it hard to compare:
+That makes it hard to decide whether one candidate is actually better than
+another.
 
-- a hand-written rule
-- a trained model
-- an online learner
-- an automatically discovered signal set
+## Boundary
 
-The user expectation is simpler: once a candidate exists, evaluate it under the
-same data, period, cost, baseline, metrics, and report semantics.
+This issue is about the comparison contract for candidate evaluation.
 
-## Desired Boundary
+It is separate from:
 
-Candidate origin should be provenance.
-
-Common evaluation should score a fixed candidate under shared assumptions.
-
-The candidate may come from a manual rule, trained model, online learner, or
-signal discovery output, but the final comparison path should have the same
-meaning.
+- `strategy-evaluation-path-boundary.md`, which is about which engine path runs
+  a candidate
+- `strategy-evaluation-result-explainability.md`, which is about how clearly a
+  report explains what was evaluated
 
 ## Current Finding
 
-Hand-written trainless candidates and signal-discovery-derived candidates both
-feed the decision backtest and report metric machinery.
+The `crypto_regime_momentum` workflow already checks many comparison-contract
+facts through DB artifacts, including subject set, target, cost assumptions,
+portfolio construction, metric presence, and decision traces.
 
-The remaining gap is not that every metric is totally separate. The gap is that
-candidate origin is still partly encoded by execution path names and artifacts:
-
-- hand-written rules route through `candidate_backtest`
-- discovered or frozen candidates route through signal discovery execution
-- reports expose some artifact refs, but candidate origin is not yet a clear
-  report-level fact
+The remaining gap is that this is not yet a shared contract across all candidate
+types.
 
 ## Close Condition
 
-Close this when alpha-os has a clear boundary between:
-
-- candidate production
-- common candidate evaluation
-
-and reports make candidate origin visible without changing the meaning of the
-evaluation metrics.
+Close this when alpha-os has a small shared comparison contract that can be
+checked for candidates regardless of how they were produced.
