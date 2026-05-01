@@ -11,19 +11,31 @@ def _metric_group_metrics(task_result, metric_group_name: str) -> dict[str, obje
     raise AssertionError(f"missing metric group: {metric_group_name}")
 
 
+def _metric(task_result, metric_group_name: str, metric_name: str) -> float:
+    metrics = _metric_group_metrics(task_result, metric_group_name)
+    assert metric_name in metrics
+    assert isinstance(metrics[metric_name], (int, float))
+    return float(metrics[metric_name])
+
+
 def _assert_numeric_metrics(metrics: dict[str, object], names: tuple[str, ...]) -> None:
     for name in names:
         assert name in metrics
         assert isinstance(metrics[name], (int, float))
 
 
-def _strategy_document(*, strategy_id: str, signal_kind: str) -> dict[str, object]:
+def _strategy_document(
+    *,
+    strategy_id: str,
+    signal_kind: str,
+    subject_set_id: str = "crypto_regime_pair",
+) -> dict[str, object]:
     return {
         "trading_strategy": {
             "strategy_id": strategy_id,
             "label": strategy_id.removeprefix("strategy:"),
             "scope": {
-                "subject_set_id": "crypto_regime_pair",
+                "subject_set_id": subject_set_id,
                 "target_id": "residual_return_1d",
             },
             "signal_policy": {
@@ -81,7 +93,21 @@ def _strategy_document(*, strategy_id: str, signal_kind: str) -> dict[str, objec
     }
 
 
-def _manifest_document() -> dict[str, object]:
+def _manifest_document(
+    *,
+    subject_set_id: str = "crypto_regime_pair",
+    observation_spec_id: str = "crypto_regime_daily",
+    source_id: str = "tests/fixtures/crypto_regime_momentum/{asset}.csv",
+    subjects: tuple[tuple[str, str], ...] = (
+        ("BTC_fixture", "BTC"),
+        ("ETH_fixture", "ETH"),
+    ),
+    evaluation_spec_id: str = "crypto_regime_momentum_eval",
+    execution_start: str = "2026-01-01",
+    execution_end: str = "2026-01-31",
+    evaluation_start: str = "2026-02-01",
+    evaluation_end: str = "2026-03-02",
+) -> dict[str, object]:
     return {
         "observables": [
             {
@@ -94,36 +120,29 @@ def _manifest_document() -> dict[str, object]:
         ],
         "subject_sets": [
             {
-                "subject_set_id": "crypto_regime_pair",
+                "subject_set_id": subject_set_id,
                 "universe_policy": {
                     "base_currency": "USD",
                     "trading_calendar": "fixture_daily",
-                    "benchmark_id": "crypto_regime_pair",
+                    "benchmark_id": subject_set_id,
                 },
                 "observation_specs": [
                     {
-                        "observation_spec_id": "crypto_regime_daily",
+                        "observation_spec_id": observation_spec_id,
                         "observable_id": "daily_close",
                         "adapter_kind": "fixture_csv",
-                        "source_id": (
-                            "tests/fixtures/crypto_regime_momentum/{asset}.csv"
-                        ),
+                        "source_id": source_id,
                         "resolution": "1d",
                     }
                 ],
                 "bindings": [
                     {
-                        "subject_id": "BTC_fixture",
+                        "subject_id": subject_id,
                         "subject_kind": "crypto_perp",
-                        "asset": "BTC",
-                        "observation_spec_id": "crypto_regime_daily",
-                    },
-                    {
-                        "subject_id": "ETH_fixture",
-                        "subject_kind": "crypto_perp",
-                        "asset": "ETH",
-                        "observation_spec_id": "crypto_regime_daily",
-                    },
+                        "asset": asset,
+                        "observation_spec_id": observation_spec_id,
+                    }
+                    for subject_id, asset in subjects
                 ],
             }
         ],
@@ -131,33 +150,35 @@ def _manifest_document() -> dict[str, object]:
             _strategy_document(
                 strategy_id="strategy:crypto_regime_momentum_candidate",
                 signal_kind="crypto_regime_momentum_hold",
+                subject_set_id=subject_set_id,
             ),
             _strategy_document(
                 strategy_id="strategy:crypto_regime_momentum_baseline",
                 signal_kind="constant_hold",
+                subject_set_id=subject_set_id,
             ),
         ],
         "evaluation_specs": [
             {
-                "evaluation_spec_id": "crypto_regime_momentum_eval",
+                "evaluation_spec_id": evaluation_spec_id,
                 "execution_range": {
                     "label": "crypto_regime_train",
-                    "start_date": "2026-01-01",
-                    "end_date": "2026-01-31",
+                    "start_date": execution_start,
+                    "end_date": execution_end,
                 },
                 "evaluation_folds": [
                     {
                         "label": "crypto_regime_train_to_test",
                         "execution_range": {
                             "label": "crypto_regime_train",
-                            "start_date": "2026-01-01",
-                            "end_date": "2026-01-31",
+                            "start_date": execution_start,
+                            "end_date": execution_end,
                         },
                         "evaluation_date_ranges": [
                             {
                                 "label": "crypto_regime_test",
-                                "start_date": "2026-02-01",
-                                "end_date": "2026-03-02",
+                                "start_date": evaluation_start,
+                                "end_date": evaluation_end,
                             }
                         ],
                     }
@@ -181,13 +202,13 @@ def _manifest_document() -> dict[str, object]:
         "evaluation_tasks": [
             {
                 "evaluation_task_id": "crypto_regime_momentum_candidate_case",
-                "evaluation_spec_id": "crypto_regime_momentum_eval",
+                "evaluation_spec_id": evaluation_spec_id,
                 "strategy_id": "strategy:crypto_regime_momentum_candidate",
                 "base_url": "fixture://local",
             },
             {
                 "evaluation_task_id": "crypto_regime_momentum_baseline_case",
-                "evaluation_spec_id": "crypto_regime_momentum_eval",
+                "evaluation_spec_id": evaluation_spec_id,
                 "strategy_id": "strategy:crypto_regime_momentum_baseline",
                 "base_url": "fixture://local",
             },
@@ -317,5 +338,98 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
             }
             assert min(item.step_as_of for item in trace_steps) >= "2026-02-01"
             assert max(item.step_as_of for item in trace_steps) <= "2026-03-02"
+    finally:
+        store.close()
+
+
+def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
+    tmp_path,
+    capsys,
+):
+    from alpha_os.cli import main
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "alpha-os-real-data.db"
+    manifest_path = tmp_path / "crypto-regime-real-data-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            _manifest_document(
+                source_id=(
+                    "experiments/datasets/"
+                    "ds_crypto_btc_eth_daily_2024_2025/{asset}.csv"
+                ),
+                subjects=(
+                    ("BTCUSDT_fixture", "BTCUSDT"),
+                    ("ETHUSDT_fixture", "ETHUSDT"),
+                ),
+                evaluation_spec_id="crypto_regime_momentum_real_data_eval",
+                execution_start="2024-01-01",
+                execution_end="2024-03-31",
+                evaluation_start="2024-04-01",
+                evaluation_end="2025-12-31",
+            )
+        )
+    )
+
+    assert (
+        main(
+            [
+                "apply-runtime-manifest",
+                "--manifest",
+                str(manifest_path),
+                "--db",
+                str(db_path),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "run-walk-forward-evaluation",
+                "--evaluation-spec-id",
+                "crypto_regime_momentum_real_data_eval",
+                "--db",
+                str(db_path),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    store = EvaluationStore(Path(db_path))
+    try:
+        report_state = store.get_latest_evaluation_report()
+        assert report_state is not None
+        report = report_state.report
+        task_results = {item.evaluation_task_id: item for item in report.task_results}
+        candidate = task_results["crypto_regime_momentum_candidate_case"]
+        baseline = task_results["crypto_regime_momentum_baseline_case"]
+
+        candidate_mean_net = _metric(
+            candidate,
+            "decision_quality",
+            "mean_decision_net_return",
+        )
+        baseline_mean_net = _metric(
+            baseline,
+            "decision_quality",
+            "mean_decision_net_return",
+        )
+        candidate_worst_net = _metric(
+            candidate,
+            "robustness",
+            "worst_decision_net_return",
+        )
+        baseline_worst_net = _metric(
+            baseline,
+            "robustness",
+            "worst_decision_net_return",
+        )
+
+        assert candidate_mean_net > baseline_mean_net
+        assert candidate_worst_net >= baseline_worst_net
     finally:
         store.close()
