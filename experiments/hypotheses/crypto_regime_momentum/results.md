@@ -41,11 +41,11 @@ Status: promising but sparse.
 
 ## Current Decision
 
-The first candidate is strong enough to consider promotion into the formal
-alpha-os evaluation path, but it should be treated as a sparse entry filter
-rather than a full-time portfolio strategy.
+Continue. The first candidate beats the baseline across the tested period,
+assets, shifted start dates, and cost levels, but it is sparse and does not
+remain profitable at 50 bps.
 
 ## Next
 
-Decide whether to express the simplified candidate in the formal alpha-os
-evaluation path.
+Check whether the same rule remains useful on a broader crypto universe or a
+later unseen period before moving it into alpha-os runtime evaluation.
