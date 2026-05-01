@@ -16,8 +16,8 @@ This issue is about report facts.
 
 It is separate from:
 
-- `common-strategy-evaluation-boundary.md`, which is about shared comparison
-  conditions
+- the archived common strategy comparison contract issue, which is about shared
+  comparison conditions
 - `strategy-evaluation-path-boundary.md`, which is about engine routing
 
 ## Current Finding

@@ -23,8 +23,8 @@ conditions.
 
 This issue is about engine routing.
 
-It is separate from `common-strategy-evaluation-boundary.md`, which is about the
-comparison contract that makes candidate results comparable.
+It is separate from the archived common strategy comparison contract issue,
+which is about the comparison contract that makes candidate results comparable.
 
 ## Current Finding
 
