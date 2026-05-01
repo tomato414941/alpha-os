@@ -2,14 +2,12 @@
 
 ## Purpose
 
-This file maps the current repository onto the greenfield target described in
-[`signal-discovery-system.md`](./signal-discovery-system.md).
-
-It does not ask whether every current module is useful today.
+This file maps repository components that may need to be constrained, demoted,
+or removed.
 
 It asks:
 
-- which parts already fit the target
+- which parts are still useful
 - which parts are transitional scaffolding
 - which parts should eventually be removed, demoted, or absorbed into a
   different layer
@@ -18,13 +16,12 @@ It asks:
 
 ### Aligned
 
-An aligned component already matches the intended greenfield shape closely
-enough that it should be strengthened rather than replaced.
+An aligned component is still useful enough that it should be strengthened
+rather than replaced.
 
 ### Transitional
 
-A transitional component is useful now, but it reflects the migration path more
-than the target architecture.
+A transitional component is useful now, but it should not become more central.
 
 These components should usually be:
 
@@ -117,7 +114,7 @@ But it should not be expanded.
     runtime entities
 - [`targets.py`](../../src/alpha_os/targets.py)
   - transitional because targets are still closer to bounded evaluation
-    contracts than to a full greenfield discovery language
+    contracts than to a broader discovery language
 
 #### Remove Or Demote
 
@@ -264,42 +261,10 @@ But it should not be expanded.
   - transitional because it still exposes runtime artifacts more than higher
     level discovery and compression summaries
 - [`config.py`](../../src/alpha_os/config.py)
-  - transitional because bounded defaults still exist even though the design
-    target is larger and more explicit
+  - transitional because bounded defaults still exist across runtime paths
 - [`store.py`](../../src/alpha_os/store.py)
   - transitional because one store still carries multiple conceptual planes
 
 #### Remove Or Demote
 
 - debug commands that could drift back into public runtime truth
-
-## Near-Term Direction
-
-To move closer to the greenfield target, the next architectural work should
-synchronize the existing first-class artifacts with the public runtime surface:
-
-1. make `SignalDiscoverySpec` and `SignalDiscoveryRun` provenance visible in
-   the mainline reports
-2. expose `ScreeningResult` policy and rejection reasons as evaluation
-   evidence, not only research diagnostics
-3. keep `CompressedBelief` connected to decision/report contracts as the
-   durable compressed-belief artifact
-
-The next architectural reductions should be:
-
-1. treating executable signals as durable conceptual units
-2. treating broad backfill as the main shape of large-scale discovery
-3. treating full validation as the default first pass
-
-## Practical Rule
-
-When deciding whether to add or change a module, ask:
-
-- does this strengthen observation, representation, discovery, selection,
-  compression, or decision as separate planes
-
-and:
-
-- does this reduce the centrality of executable-signal runtime truth
-
-If the answer is no, the change is probably transitional at best.
