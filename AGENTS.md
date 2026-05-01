@@ -5,6 +5,7 @@
 `alpha_os` supports:
 
 - lightweight investment hypothesis research
+- candidate exploration and constrained optimization
 - strategy candidate backtesting and OOS evaluation
 - signal discovery and screening
 - promotion, rejection, and baseline decision records
@@ -49,8 +50,9 @@ pip install -e ".[data]"
 ## Conventions
 
 - Prefer maintained work in `src/alpha_os/`.
-- Keep changes aligned with investment hypotheses, strategy candidates,
-  backtests, OOS evaluation, signal screening, and decision records.
+- Keep changes aligned with investment hypotheses, candidate exploration,
+  constrained optimization, strategy candidates, backtests, OOS evaluation,
+  signal screening, and decision records.
 - Do not commit local runtime data, credentials, logs, or machine-specific
   deployment notes.
 - Keep machine-specific operations in `AGENTS.override.md`, which is ignored.
