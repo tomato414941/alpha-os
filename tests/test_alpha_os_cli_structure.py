@@ -80,7 +80,6 @@ def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
         "show-diagnostics",
     }
     hidden_commands = {
-        "apply-runtime-manifest",
         "list-runtime-manifests",
         "run-walk-forward-evaluation",
         "show-evaluation-report",
@@ -109,7 +108,6 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
     assert "run-walk-forward" in captured
     assert "show-report" in captured
     assert "show-diagnostics" in captured
-    assert "apply-runtime-manifest" not in captured
     assert "run-walk-forward-evaluation" not in captured
     assert "run-diagnostic-evaluation" not in captured
     assert "debug-apply-evaluation" not in captured
@@ -157,19 +155,8 @@ def test_cli_public_aliases_parse_to_existing_arguments():
     assert diagnostics_args.db == "runtime.db"
 
 
-def test_cli_legacy_public_commands_remain_parseable_except_removed_apply_runtime_manifest():
+def test_cli_legacy_public_commands_remain_parseable():
     parser = build_cli_parser()
-
-    with pytest.raises(SystemExit):
-        parser.parse_args(
-            [
-                "apply-runtime-manifest",
-                "--manifest",
-                "examples/minimal_oos.json",
-                "--db",
-                "runtime.db",
-            ]
-        )
 
     list_args = parser.parse_args(["list-runtime-manifests"])
     assert list_args.command == "list-runtime-manifests"
@@ -220,7 +207,6 @@ def test_cli_package_module_entrypoint_preserves_help():
     assert result.returncode == 0
     assert "apply-manifest" in result.stdout
     assert "run-walk-forward" in result.stdout
-    assert "apply-runtime-manifest" not in result.stdout
     assert "run-walk-forward-evaluation" not in result.stdout
     assert "run-diagnostic-evaluation" not in result.stdout
     assert "debug-apply-evaluation" not in result.stdout
