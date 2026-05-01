@@ -1,0 +1,44 @@
+# Crypto Regime Momentum Results
+
+Status: promising but sparse.
+
+## Evidence
+
+- Candidate beats the baseline overall:
+  - baseline total net return: -20.2%
+  - candidate total net return: +68.9%
+- Candidate wins in both calendar periods:
+  - 2024 candidate total net return: +51.0%
+  - 2025 candidate total net return: +11.9%
+- Candidate wins for both assets:
+  - BTCUSDT candidate total net return: +27.3%
+  - ETHUSDT candidate total net return: +54.9%
+- Candidate wins under shifted evaluation start dates:
+  - 2024-03-01 start: +68.9%
+  - 2024-04-01 start: +68.9%
+  - 2024-05-01 start: +66.9%
+  - 2024-06-01 start: +45.7%
+- The 30 day trend filter matters. Removing it reduces total net return to
+  -10.2%.
+- The funding filter matters. Removing it reduces total net return to +39.6%.
+
+## Cautions
+
+- Candidate is sparse:
+  - invested days: 125 / 639
+  - flat days: 514 / 639
+- Candidate turns slightly negative at 50 bps cost:
+  - candidate total net return: -2.1%
+- Open interest did not contribute to the first candidate.
+- Volatility scaling reduced performance in the first candidate.
+
+## Current Decision
+
+The first candidate is strong enough to consider promotion into the formal
+alpha-os evaluation path, but it should be treated as a sparse entry filter
+rather than a full-time portfolio strategy.
+
+## Next
+
+Decide whether to express the simplified candidate in the formal alpha-os
+evaluation path.
