@@ -20,25 +20,6 @@ Do not introduce manifest DSLs or large layered architecture unless there is a
 clear concrete need. Split shared directories only after multiple concrete
 implementations need a shared home.
 
-## Development
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-
-pytest tests/
-ruff check src tests
-python -m alpha_os --help
-```
-
-Install the optional data-service integration only when a compatible
-`signal-noise` package is available:
-
-```bash
-pip install -e ".[data]"
-```
-
 ## Conventions
 
 - Prefer maintained work in the main package unless the task is explicitly a
@@ -53,5 +34,4 @@ pip install -e ".[data]"
 ## Testing
 
 - Run focused tests for narrow changes.
-- Run `pytest tests/` and `ruff check src tests` before release-oriented
-  changes.
+- Use the README for current setup and full verification commands.
