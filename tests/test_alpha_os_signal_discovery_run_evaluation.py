@@ -187,7 +187,7 @@ def test_evaluation_task_manifest_legacy_trading_config_still_loads():
 
 
 def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
-    from alpha_os.direct_strategy_evaluation import dual_momentum_signal_series_by_subject
+    from alpha_os.candidate_backtest import dual_momentum_signal_series_by_subject
 
     signals = dual_momentum_signal_series_by_subject(
         subject_return_series_by_subject={

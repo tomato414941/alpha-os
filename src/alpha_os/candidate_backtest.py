@@ -21,6 +21,12 @@ from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_featur
 from .universe_contract import validate_subject_set_universe_contract
 
 
+# This module is intended to become the common backtest entrypoint for strategy
+# candidates. Today it only supports trainless strategy candidates, so keep new
+# behavior narrow until trained/frozen candidates are routed through the same
+# boundary.
+
+
 class DirectStrategyEvaluationReadPort(Protocol):
     def get_trading_strategy(self, strategy_id: str):
         ...

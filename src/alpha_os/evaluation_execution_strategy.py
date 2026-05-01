@@ -7,7 +7,7 @@ import pandas as pd
 
 from .contract_boundaries import active_constraint_stages, subject_set_contract_groups
 from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
-from .direct_strategy_evaluation import (
+from .candidate_backtest import (
     evaluate_direct_strategy_case,
     subject_backtest_inputs_from_subject_set_planes,
 )
