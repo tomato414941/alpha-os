@@ -3970,8 +3970,7 @@ def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
             raise ValueError("source initial strategy state does not exist")
         source_initial_strategy_state = source_initial_strategy_state_record.state
         strategy_id = source_task.strategy_id if args.strategy_id is None else str(args.strategy_id)
-        strategy_state = store.get_trading_strategy(strategy_id)
-        if strategy_state is None:
+        if store.get_trading_strategy(strategy_id) is None:
             raise ValueError("strategy does not exist")
         fixed_state_case = EvaluationTask(
             evaluation_task_id=build_evaluation_task_id(
@@ -3981,7 +3980,7 @@ def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
             strategy_id=strategy_id,
             evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         )
-        persisted_case = store.upsert_evaluation_task(task=fixed_state_case)
+        store.upsert_evaluation_task(task=fixed_state_case)
         store.upsert_evaluation_job_spec(
             job_spec=EvaluationJobSpec(
                 evaluation_task_id=fixed_state_case.evaluation_task_id,
@@ -3991,8 +3990,6 @@ def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
                 ),
             )
         )
-    print_strategy_specs([strategy_state])
-    print_evaluation_tasks([persisted_case])
     return 0
 
 
