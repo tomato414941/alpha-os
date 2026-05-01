@@ -656,7 +656,6 @@ def print_strategy_specs(strategy_specs) -> None:
             f"label={trading_strategy.label} "
             f"subject_set={scope.subject_set_id or '-'} "
             f"target={scope.target_id or '-'} "
-            f"signal={signal_definition.signal_kind} "
             f"signal_discovery={signal_definition.signal_discovery_id or '-'} "
             f"selection={selection.selection_kind} "
             f"top_k={'-' if selection.top_k is None else selection.top_k} "
