@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 from dataclasses import replace
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -255,6 +256,108 @@ def test_crypto_regime_momentum_eligibility_requires_funding_rate():
             },
             funding_rate_series_by_subject={},
         )
+
+
+def test_direct_candidate_backtest_routes_crypto_regime_momentum_eligibility(
+    monkeypatch,
+):
+    import alpha_os.candidate_backtest as candidate_backtest
+    from alpha_os.evaluation_cost_config import (
+        EvaluationRebalanceFrictionPolicySpec,
+        ExecutionCostAssumptionsSpec,
+        HoldingCostAssumptionsSpec,
+    )
+    from alpha_os.evaluation_spec import EvaluationDateRange
+    from alpha_os.portfolio_decision import (
+        ObservationSpec,
+        SubjectObservationBinding,
+        SubjectSet,
+    )
+    from alpha_os.subject_set_feature_plane import SubjectPlaneKey
+
+    strategy = _build_trading_strategy(
+        strategy_id="strategy:crypto_regime_momentum",
+        label="Crypto regime momentum",
+        subject_set_id="crypto",
+        target_id="residual_return_1d",
+        signal_kind="crypto_regime_momentum_hold",
+        long_only=True,
+    )
+    subject_set = SubjectSet(
+        subject_set_id="crypto",
+        observation_specs=(
+            ObservationSpec(
+                observation_spec_id="btc_daily",
+                observable_id="daily_close",
+            ),
+        ),
+        bindings=(
+            SubjectObservationBinding(
+                subject_id="BTC",
+                asset="BTC",
+                observation_spec_id="btc_daily",
+            ),
+        ),
+    )
+    index = pd.date_range("2026-01-01", periods=61, freq="D").strftime("%Y-%m-%d")
+    returns = pd.Series(0.01, index=index, dtype=float)
+    funding_rate = pd.Series(0.001, index=index, dtype=float)
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        candidate_backtest,
+        "build_subject_set_feature_planes",
+        lambda **_: {
+            SubjectPlaneKey(asset="BTC", observation_spec_id="btc_daily"): SimpleNamespace(
+                daily_returns=returns,
+                extra_observables={"funding_rate": funding_rate},
+            )
+        },
+    )
+
+    def capture_metric_group_results(**kwargs):
+        captured.update(kwargs)
+        return ((), ())
+
+    monkeypatch.setattr(
+        candidate_backtest,
+        "build_direct_strategy_evaluation_metric_group_results",
+        capture_metric_group_results,
+    )
+
+    candidate_backtest.evaluate_direct_strategy_case(
+        store=SimpleNamespace(
+            get_trading_strategy=lambda strategy_id: SimpleNamespace(
+                trading_strategy=strategy
+            ),
+            get_subject_set=lambda subject_set_id: SimpleNamespace(
+                definition=subject_set
+            ),
+        ),
+        strategy_id="strategy:crypto_regime_momentum",
+        subject_set_id="crypto",
+        target_id="residual_return_1d",
+        evaluation_date_ranges=(
+            EvaluationDateRange(
+                label="eval",
+                start_date="2026-01-01",
+                end_date="2026-03-02",
+            ),
+        ),
+        base_url="fixture://",
+        portfolio_construction=strategy.portfolio_construction,
+        rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
+        execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
+        holding_cost_assumptions=HoldingCostAssumptionsSpec(),
+        feature_plane_repository=None,
+    )
+
+    signal_series_by_subject = captured["signal_series_by_subject"]
+    assert signal_series_by_subject["BTC"].loc["2026-01-30"] == pytest.approx(0.0)
+    assert signal_series_by_subject["BTC"].loc["2026-01-31"] == pytest.approx(1.0)
+    assert captured["funding_cost_bps_series_by_subject"]["BTC"].iloc[0] == (
+        pytest.approx(10.0)
+    )
 
 
 def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, capsys):

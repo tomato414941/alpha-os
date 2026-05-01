@@ -44,9 +44,11 @@ def subject_backtest_inputs_from_subject_set_planes(
     dict[str, pd.Series],
     dict[str, pd.Series],
     dict[str, pd.Series],
+    dict[str, pd.Series],
     dict[str, float],
 ]:
     subject_return_series_by_subject: dict[str, pd.Series] = {}
+    funding_rate_series_by_subject: dict[str, pd.Series] = {}
     funding_cost_bps_series_by_subject: dict[str, pd.Series] = {}
     borrow_fee_bps_series_by_subject: dict[str, pd.Series] = {}
     roll_cost_bps_series_by_subject: dict[str, pd.Series] = {}
@@ -68,6 +70,9 @@ def subject_backtest_inputs_from_subject_set_planes(
         )
         funding_rate = plane.extra_observables.get("funding_rate")
         if funding_rate is not None:
+            funding_rate_series_by_subject[binding.subject_id] = funding_rate.astype(
+                float
+            )
             funding_cost_bps_series_by_subject[binding.subject_id] = (
                 funding_rate.astype(float) * 10000.0
             )
@@ -88,6 +93,7 @@ def subject_backtest_inputs_from_subject_set_planes(
             )
     return (
         subject_return_series_by_subject,
+        funding_rate_series_by_subject,
         funding_cost_bps_series_by_subject,
         borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject,
@@ -114,11 +120,16 @@ def evaluate_direct_strategy_case(
         raise ValueError(f"strategy does not exist: {strategy_id}")
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
-    signal_kind = trading_strategy.signal_kind
-    if signal_kind not in {"constant_hold", "dual_momentum_hold"}:
+    position_rule_kind = trading_strategy.signal_kind
+    if position_rule_kind not in {
+        "constant_hold",
+        "dual_momentum_hold",
+        "crypto_regime_momentum_hold",
+    }:
         raise ValueError(
             "current trainless executor only supports "
-            "signal=constant_hold or signal=dual_momentum_hold"
+            "signal=constant_hold, signal=dual_momentum_hold, or "
+            "signal=crypto_regime_momentum_hold"
         )
     if selection_kind not in {"all_assets", "top_k"}:
         raise ValueError(
@@ -141,6 +152,7 @@ def evaluate_direct_strategy_case(
     )
     (
         subject_return_series_by_subject,
+        funding_rate_series_by_subject,
         funding_cost_bps_series_by_subject,
         borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject,
@@ -149,14 +161,18 @@ def evaluate_direct_strategy_case(
         subject_set=subject_set,
         subject_planes=subject_planes,
     )
-    signal_series_by_subject = (
-        None
-        if signal_kind == "constant_hold"
-        else dual_momentum_signal_series_by_subject(
+    if position_rule_kind == "constant_hold":
+        signal_series_by_subject = None
+    elif position_rule_kind == "dual_momentum_hold":
+        signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
             family_mix=trading_strategy.signal_policy.definition_policy.family_mix,
         )
-    )
+    else:
+        signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
+            subject_return_series_by_subject=subject_return_series_by_subject,
+            funding_rate_series_by_subject=funding_rate_series_by_subject,
+        )
     return build_direct_strategy_evaluation_metric_group_results(
         subject_return_series_by_subject=subject_return_series_by_subject,
         evaluation_date_ranges=evaluation_date_ranges,

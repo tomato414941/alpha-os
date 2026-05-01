@@ -795,6 +795,7 @@ class SignalDiscoveryEvaluationExecutionStrategy:
             )
             (
                 _,
+                _,
                 funding_cost_bps_series_by_subject,
                 borrow_fee_bps_series_by_subject,
                 roll_cost_bps_series_by_subject,
