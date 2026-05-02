@@ -105,6 +105,33 @@ standalone rule, but richer constraints such as target volatility, leverage
 caps, net exposure targets, group caps, and risk budgets should remain outside
 the allocator itself.
 
+## Field Inventory
+
+Current classification:
+
+| Field | Current location | Classification | Reason |
+|---|---|---|---|
+| `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, rebalance cadence, and compatibility. |
+| `selection_kind` | `StrategyPortfolioSpec` | portfolio allocation | Chooses which candidates may receive weights. Belongs with `top_k`. |
+| `top_k` | `PortfolioConstructionSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; currently split from its mode. |
+| `sizing_policy` | `PortfolioConstructionSpec` | portfolio allocation / legacy unclear | Related to weight creation, but also carries optimizer labels and history requirements. |
+| `rebalance_interval_steps` | `PortfolioConstructionSpec` | strategy decision / evaluation assumption | Strategy-owned if part of the hypothesis; evaluation-owned if only an execution cadence override. |
+| `long_only` | `PortfolioConstructionSpec` | legacy / derived | Derivable from `direction_mode`; should not be a second source of truth. |
+| `direction_mode` | `PortfolioConstructionSpec` | portfolio allocation | Determines how long/short/flat candidates are treated before weights are finalized. |
+| `active_overlay` | `PortfolioConstructionSpec` | portfolio allocation / unclear | Appears to alter target weights, but the boundary is still broad. |
+| `gross_exposure_cap` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains total target weight after allocation. |
+| `target_vol` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Scales weights toward a volatility target. |
+| `gross_leverage_cap` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains leverage after weights are produced. |
+| `net_exposure_target` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains net exposure after weights are produced. |
+| `asset_class_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
+| `cluster_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
+| `portfolio_intent` | `PortfolioConstructionSpec` | legacy / unclear | Captures effective-N and concentration constraints, but the name is vague. |
+| `risk_budget` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Risk normalization and target exposure controls. |
+| `sleeve_composition` | `PortfolioConstructionSpec` | strategy decision / portfolio allocation | Could be core hypothesis structure or allocation blending. |
+| `rebalance_friction_policy` | `StrategyPortfolioSpec` | strategy decision / evaluation assumption | Strategy-owned if it controls trade decisions; evaluation-owned if it only models friction. |
+| `execution_policy` | `StrategyPortfolioSpec` | evaluation assumption | `fee_bps`, `market_impact_bps`, and spread assumptions are used to calculate net results. |
+| `holding_cost_policy` | `StrategyPortfolioSpec` | evaluation assumption / strategy input | Evaluation-owned when deducted from returns; strategy-owned only when used for decisions. |
+
 ## Acceptance Criteria
 
 - A field mapping exists between `StrategyPortfolioSpec` and
