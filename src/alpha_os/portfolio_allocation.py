@@ -1,7 +1,4 @@
-"""Small allocation rules kept separate from rich portfolio construction.
-
-This module exists to keep simple strategy-side portfolio choices explicit:
-given current position directions, produce target weights.
+"""Allocation rules kept separate from rich portfolio construction.
 
 For this module, constraints mean rules that restrict or reshape weights after
 they are created, such as target volatility, risk budgets, leverage caps, or
@@ -9,8 +6,8 @@ group caps. Some trading systems reasonably include those constraints inside
 portfolio construction or a risk-aware allocator. This module intentionally does
 not make that general claim.
 
-`EqualWeightLongOnlyAllocator` is a simple allocator. It does not own rebalance
-cadence, execution costs, risk-aware constraints, or legacy
+`EqualWeightLongOnlyAllocator` does not own rebalance cadence, execution costs,
+risk-aware constraints, or legacy
 `PortfolioConstructionSpec` compatibility.
 """
 
