@@ -1,11 +1,5 @@
 from __future__ import annotations
 
-# Legacy rich strategy-evaluation adapter.
-#
-# This module converts signal-discovery style datasets into the rich decision
-# backtest path. It is not the default place for simple hand-written long-only
-# candidates.
-
 from dataclasses import dataclass, replace
 import warnings
 from statistics import pstdev

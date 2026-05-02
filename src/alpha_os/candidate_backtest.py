@@ -22,12 +22,10 @@ from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_featur
 from .universe_contract import validate_subject_set_universe_contract
 
 
-# Legacy rich candidate evaluation path.
-#
-# This route feeds trainless candidates into the signal-discovery evaluation and
-# decision-backtest machinery. Do not use it as the default path for simple
-# long-only equal-weight candidates; prefer simple_candidate_backtest for that
-# narrower case.
+# This module is intended to become the common backtest entrypoint for strategy
+# candidates. Today it only supports trainless strategy candidates, so keep new
+# behavior narrow until trained/frozen candidates are routed through the same
+# boundary.
 
 
 class DirectStrategyEvaluationReadPort(Protocol):
