@@ -1,14 +1,10 @@
-"""Allocation rules kept separate from rich portfolio construction.
+"""Allocation rules kept separate from portfolio construction.
 
 For this module, constraints mean rules that restrict or reshape weights after
 they are created, such as target volatility, risk budgets, leverage caps, or
 group caps. Some trading systems reasonably include those constraints inside
 portfolio construction or a risk-aware allocator. This module intentionally does
 not make that general claim.
-
-`EqualWeightLongOnlyAllocator` does not own rebalance cadence, execution costs,
-risk-aware constraints, or legacy
-`PortfolioConstructionSpec` compatibility.
 """
 
 from __future__ import annotations
