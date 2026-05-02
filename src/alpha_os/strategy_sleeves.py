@@ -70,7 +70,6 @@ class StrategySleeveSpec:
     risk_budget: float
     signal_source_kind: str | None = None
     signal_discovery_id: str | None = None
-    signal_kind: str | None = None
     family_mix: str | None = None
     subject_filter: StrategySleeveSubjectFilterSpec = field(
         default_factory=StrategySleeveSubjectFilterSpec
@@ -99,7 +98,6 @@ class StrategySleeveSpec:
             "signal_discovery_id",
             _normalize_optional(self.signal_discovery_id),
         )
-        object.__setattr__(self, "signal_kind", _normalize_optional(self.signal_kind))
         object.__setattr__(self, "family_mix", _normalize_optional(self.family_mix))
 
     def to_document(self) -> dict[str, Any]:
@@ -113,8 +111,6 @@ class StrategySleeveSpec:
             document["signal_source_kind"] = self.signal_source_kind
         if self.signal_discovery_id is not None:
             document["signal_discovery_id"] = self.signal_discovery_id
-        if self.signal_kind is not None:
-            document["signal_kind"] = self.signal_kind
         if self.family_mix is not None:
             document["family_mix"] = self.family_mix
         subject_filter = self.subject_filter.to_document()
@@ -139,9 +135,6 @@ class StrategySleeveSpec:
                 None
                 if document.get("signal_discovery_id") is None
                 else str(document["signal_discovery_id"])
-            ),
-            signal_kind=(
-                None if document.get("signal_kind") is None else str(document["signal_kind"])
             ),
             family_mix=(
                 None if document.get("family_mix") is None else str(document["family_mix"])

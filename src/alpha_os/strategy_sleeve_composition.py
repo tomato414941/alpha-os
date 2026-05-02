@@ -141,8 +141,6 @@ def _signal_matches_sleeve(
         return False
     if sleeve.signal_discovery_id is not None and signal.source_id != sleeve.signal_discovery_id:
         return False
-    if sleeve.signal_kind is not None and signal.source_kind != sleeve.signal_kind:
-        return False
     return True
 
 

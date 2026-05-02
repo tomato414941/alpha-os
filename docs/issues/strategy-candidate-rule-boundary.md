@@ -41,11 +41,11 @@ Candidate rules should be Python code with tests, not manifest DSL logic.
 
 ## Current Follow-up
 
-`TradingStrategySpec` now stores trainless candidate rule choice as
-`candidate_rule_kind` instead of `signal_kind`.
+`TradingStrategySpec` stores trainless candidate rule choice as
+`candidate_rule_kind`.
 
-The remaining `signal_kind` usage is sleeve signal filtering, which is a
-separate concern from trainless candidate rule selection.
+The duplicate sleeve-level `signal_kind` filter was removed. Sleeve signal
+filtering now uses `signal_source_kind`.
 
 ## Close Condition
 
