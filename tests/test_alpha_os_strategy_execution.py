@@ -38,9 +38,6 @@ def _build_trading_strategy(
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
@@ -75,14 +72,10 @@ def _build_trading_strategy(
             subject_set_id=subject_set_id,
             target_id=target_id,
         ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id=signal_discovery_id,
-                position_rule_id=position_rule_id,
-                family_mix=family_mix,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
-        ),
+        signal_discovery_id=signal_discovery_id,
+        position_rule_id=position_rule_id,
+        family_mix=family_mix,
+        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec.from_legacy(
             portfolio_policy=portfolio_policy,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
@@ -198,15 +191,15 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.scope.subject_set_id == "core_crypto"
     assert trading_strategy.scope.target_id == "residual_return_3d"
     assert (
-        trading_strategy.signal_policy.definition_policy.signal_discovery_id
+        trading_strategy.signal_discovery_id
         == "discovery:core"
     )
     assert (
-        trading_strategy.signal_policy.definition_policy.family_mix
+        trading_strategy.family_mix
         == "relative_strength"
     )
     assert (
-        trading_strategy.signal_policy.update_policy.execution_kind == "trained"
+        trading_strategy.execution_kind == "trained"
     )
     assert trading_strategy.portfolio_policy.selection_policy.selection_kind == "all_assets"
     assert trading_strategy.portfolio_policy.selection_policy.top_k == 5

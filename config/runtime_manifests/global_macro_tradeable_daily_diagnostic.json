@@ -85,16 +85,6 @@
           "subject_set_id": "global_macro_tradeable_daily_10y",
           "target_id": "residual_return_5d"
         },
-        "signal_policy": {
-          "definition_policy": {
-            "signal_discovery_id": null,
-            "position_rule_id": "constant_hold",
-            "family_mix": null
-          },
-          "update_policy": {
-            "execution_kind": "trainless"
-          }
-        },
         "portfolio_policy": {
           "selection_policy": {
             "selection_kind": "all_assets",
@@ -136,7 +126,11 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "created_at": "2026-04-23T00:00:00+00:00"
+        "created_at": "2026-04-23T00:00:00+00:00",
+        "signal_discovery_id": null,
+        "position_rule_id": "constant_hold",
+        "family_mix": null,
+        "execution_kind": "trainless"
       }
     }
   ],

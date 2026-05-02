@@ -40,9 +40,6 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         SizingPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
@@ -70,14 +67,10 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
             subject_set_id="macro",
             target_id="residual_return_1d",
         ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id=None,
-                position_rule_id="constant_hold",
-                family_mix=None,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
-        ),
+        signal_discovery_id=None,
+        position_rule_id="constant_hold",
+        family_mix=None,
+        execution_kind="trainless",
         portfolio=StrategyPortfolioSpec.from_legacy(
             portfolio_policy=portfolio_policy,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(

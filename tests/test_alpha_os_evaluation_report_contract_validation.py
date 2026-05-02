@@ -115,9 +115,6 @@ def _register_direct_strategy(
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         StrategyPortfolioSpec,
         SizingPolicySpec,
         TradingStrategyScopeSpec,
@@ -147,14 +144,10 @@ def _register_direct_strategy(
                 subject_set_id=subject_set_id,
                 target_id="residual_return_3d",
             ),
-            signal_policy=SignalPolicySpec(
-                definition_policy=SignalDefinitionPolicySpec(
-                    signal_discovery_id=None,
-                    position_rule_id="constant_hold",
-                    family_mix=None,
-                ),
-                update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
-            ),
+            signal_discovery_id=None,
+            position_rule_id="constant_hold",
+            family_mix=None,
+            execution_kind="trainless",
             portfolio=StrategyPortfolioSpec.from_legacy(
                 portfolio_policy=portfolio_policy,
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(

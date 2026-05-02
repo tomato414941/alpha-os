@@ -429,16 +429,6 @@
           "subject_set_id": "us_etf_broad_multi_asset",
           "target_id": "residual_return_5d"
         },
-        "signal_policy": {
-          "definition_policy": {
-            "signal_discovery_id": "us_etf_standard_rs_lowvol_search",
-            "position_rule_id": "constant_hold",
-            "family_mix": "low_vol_trend,relative_strength"
-          },
-          "update_policy": {
-            "execution_kind": "trained"
-          }
-        },
         "portfolio_policy": {
           "selection_policy": {
             "selection_kind": "all_assets",
@@ -468,7 +458,11 @@
           "fee_bps": 0.5,
           "bid_ask_spread_bps": 2.0
         },
-        "created_at": "2026-04-17T00:00:00+00:00"
+        "created_at": "2026-04-17T00:00:00+00:00",
+        "signal_discovery_id": "us_etf_standard_rs_lowvol_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "low_vol_trend,relative_strength",
+        "execution_kind": "trained"
       }
     }
   ],

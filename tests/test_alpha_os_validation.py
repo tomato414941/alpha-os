@@ -24,9 +24,6 @@ def _build_trading_strategy(
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
@@ -52,14 +49,10 @@ def _build_trading_strategy(
             subject_set_id=subject_set_id,
             target_id=target_id,
         ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id=signal_discovery_id,
-                position_rule_id=position_rule_id,
-                family_mix=family_mix,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
-        ),
+        signal_discovery_id=signal_discovery_id,
+        position_rule_id=position_rule_id,
+        family_mix=family_mix,
+        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec.from_legacy(
             portfolio_policy=portfolio_policy,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(

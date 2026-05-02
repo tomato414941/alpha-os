@@ -25,11 +25,10 @@ If another design note uses a term differently, prefer this file.
 | **signal contribution** | A signal-level input to belief synthesis after screening and prediction orientation. | It records prediction, confidence, and marginal signal contribution. |
 | **belief** | A compressed or aggregated predictive view formed from multiple signals or predictions. | Belief is downstream of signals and upstream of decisions. |
 | **sizing method** | The portfolio weighting method used after ranking or belief formation. | Examples: `signal_weighted`, `equal_weight`, `risk_budgeting`, `minimum_variance`. |
-| **trading strategy** | The top-level trading object that defines what should be traded and how it should be realized. | It contains signal, portfolio, rebalance friction, and execution policy. |
+| **trading strategy** | The top-level trading object that defines what should be traded and how it should be realized. | It contains scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy. |
 | **strategy scope** | The domain over which a trading strategy is defined before policy logic is applied. | Current examples are `subject_set` and `target`. |
-| **signal policy** | The strategy sub-policy that defines how predictive inputs are produced or updated. | Includes signal set and signal update behavior. |
-| **signal definition policy** | The signal sub-policy that defines what predictive logic is used. | Current examples are `discovery`, direct `signal`, and `family_mix`. |
-| **signal update policy** | The signal sub-policy that defines how signal state is produced or reused. | Current example is `execution_kind`. |
+| **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | Current examples are `constant_hold`, `dual_momentum_hold`, and `crypto_regime_momentum_hold`. |
+| **execution kind** | The strategy execution state mode used by an evaluation engine. | Current examples are `trainless`, `trained`, and `frozen`. |
 | **portfolio policy** | The strategy sub-policy that converts predictive inputs into desired portfolio state. | Includes selection, sizing, rebalance, and risk. |
 | **selection policy** | The portfolio sub-policy that decides which subjects are admitted into the desired portfolio. | Current examples are `selection` and `top_k`. |
 | **sizing policy** | The portfolio sub-policy that decides how admitted subjects are weighted. | Current examples are `sizing_method` and, in evaluation/runtime construction, `sizing_engine`. |
@@ -115,20 +114,17 @@ The clean conceptual object is:
 
 - `strategy run spec` = `trading strategy + run policy`
 
-### Strategy Scope vs Signal Policy
+### Strategy Scope vs Position Rule
 
 - **strategy scope** = where the strategy is defined
-- **signal policy** = how predictive inputs are produced inside that scope
+- **position rule** = how strategy inputs become subject-level position intent
 
 So:
 
 - `subject_set` and `target` belong to strategy scope
-- discovery, signal kind, and update behavior belong to signal policy
-
-Inside signal policy:
-
-- signal definition policy decides what predictive logic is used
-- signal update policy decides how that predictive logic is produced or reused
+- `position_rule_id`, `signal_discovery_id`, and `family_mix` describe the
+  position rule or the artifacts it depends on
+- `execution_kind` describes whether the rule is trainless, trained, or frozen
 
 ### Portfolio Policy vs Rebalance Friction Policy vs Execution Policy
 

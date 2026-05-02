@@ -86,16 +86,10 @@ def _strategy_document(
                 "subject_set_id": subject_set_id,
                 "target_id": "residual_return_1d",
             },
-            "signal_policy": {
-                "definition_policy": {
-                    "signal_discovery_id": None,
-                    "position_rule_id": position_rule_id,
-                    "family_mix": None,
-                },
-                "update_policy": {
-                    "execution_kind": "trainless",
-                },
-            },
+            "signal_discovery_id": None,
+            "position_rule_id": position_rule_id,
+            "family_mix": None,
+            "execution_kind": "trainless",
             "portfolio_policy": {
                 "selection_policy": {
                     "selection_kind": "all_assets",

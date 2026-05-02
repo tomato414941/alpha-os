@@ -16,9 +16,6 @@ from .trading_strategy import (
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
     RebalanceFrictionPolicySpec,
-    SignalDefinitionPolicySpec,
-    SignalPolicySpec,
-    SignalUpdatePolicySpec,
     StrategyPortfolioSpec,
     TradingStrategyScopeSpec,
     TradingStrategySpec,
@@ -224,14 +221,10 @@ def derive_trading_strategy_from_signal_discovery(
             subject_set_id=definition.subject_set_id,
             target_id=definition.target_id,
         ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id=signal_discovery.signal_discovery_id,
-                position_rule_id="constant_hold",
-                family_mix=family_mix_value,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind="trained"),
-        ),
+        signal_discovery_id=signal_discovery.signal_discovery_id,
+        position_rule_id="constant_hold",
+        family_mix=family_mix_value,
+        execution_kind="trained",
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(

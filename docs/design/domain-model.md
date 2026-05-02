@@ -28,10 +28,9 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **signal discovery** | Offline or research-time signal candidate search. It defines which signal candidates may be generated and evaluated, but it is not automatically the same thing as a strategy. | momentum/reversal families with admissible lookbacks and observables |
 | **strategy discovery** | A research object that defines which strategy candidates may be compared. It ranges over executable strategy specs rather than over signals alone. | compare `crypto + equal_weight + weekly` against `multi_asset + HRP + annual` |
 | **adaptive discovery policy** | A strategy-internal mechanism that re-generates or re-selects signals or sleeves over time. This is part of an adaptive strategy, not the same thing as signal discovery. | monthly family re-selection, rolling sleeve activation |
-| **trading strategy** | The top-level trading object. It combines signal, portfolio, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
-| **signal policy** | The strategy sub-policy that defines how predictive inputs are constructed or updated. | signal set, signal update kind, trainless vs trained signal handling |
-| **signal definition policy** | The signal sub-policy that defines what predictive logic is used. | discovery seed, direct signal kind, family mix |
-| **signal update policy** | The signal sub-policy that defines how signal state is produced or reused. | trainless, trained, frozen-style reuse semantics |
+| **trading strategy** | The top-level trading object. It combines scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
+| **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | `constant_hold`, `dual_momentum_hold`, `crypto_regime_momentum_hold` |
+| **execution kind** | The strategy execution state mode used by an evaluation engine. | trainless, trained, frozen-style reuse semantics |
 | **signal contribution** | A signal-level input to belief synthesis after screening and prediction orientation. It records prediction, confidence, and marginal signal contribution. | `SignalContribution(signal_id="trend@AAPL", ...)` |
 | **belief synthesis** | The process that combines signal contributions into target-level belief components. | cluster related signal families, compute belief confidence |
 | **compressed belief** | A compact belief artifact produced from belief synthesis for downstream portfolio decisions. | `CompressedBeliefComponent(signal_contribution_count=3, ...)` |
@@ -105,8 +104,8 @@ Use deliberately explicit names around signal selection:
 
 - `signal` = a prediction-producing component.
 - `signal discovery` = offline or research-time signal candidate search.
-- `signal policy` = the strategy-internal policy for constructing or updating
-  predictive inputs.
+- `position rule` = the strategy-internal rule that turns inputs into
+  eligibility, direction, or timing decisions.
 - `portfolio_target_return_alignment` = an evaluation metric group that measures
   whether portfolio target weights align with subsequent realized returns.
 
@@ -140,7 +139,9 @@ report schema, evaluation task roles, or strategy kinds.
 
 Trading strategy is the first-class trading concept. It should usually include:
 
-- signal policy
+- strategy scope
+- inputs
+- position rule
 - portfolio policy
 - rebalance friction policy
 - execution policy
@@ -149,7 +150,9 @@ In clean long-horizon design, that hierarchy is:
 
 ```text
 TradingStrategy
-├─ SignalPolicy
+├─ Scope
+├─ Inputs
+├─ PositionRule
 ├─ PortfolioPolicy
 ├─ RebalanceFrictionPolicy
 └─ ExecutionPolicy

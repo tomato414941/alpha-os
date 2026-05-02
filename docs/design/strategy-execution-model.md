@@ -29,7 +29,7 @@ So:
 
 - **trading strategy**
   - the portable trading definition
-  - composed of strategy scope, signal policy, portfolio policy, rebalance friction policy, and execution policy
+  - composed of strategy scope, inputs, position rule, portfolio policy, rebalance friction policy, and execution policy
 - **engine**
   - the mechanism that runs the strategy in a specific context
 

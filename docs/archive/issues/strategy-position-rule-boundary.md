@@ -1,5 +1,7 @@
 # Strategy Position Rule Boundary
 
+Resolved by making position rules explicit on `TradingStrategySpec`.
+
 ## Problem
 
 `strategy` is too broad as a modeling term, and current code sometimes uses
@@ -39,15 +41,21 @@ Use this vocabulary in new work:
 
 Position rules should be Python code with tests, not manifest DSL logic.
 
-## Current Follow-up
+## Resolution
 
-`TradingStrategySpec` stores trainless position rule choice as
-`position_rule_id`.
+`TradingStrategySpec` now stores position rule fields directly:
+
+- `signal_discovery_id`
+- `position_rule_id`
+- `family_mix`
+- `execution_kind`
+
+The old `signal_policy.definition_policy` and `signal_policy.update_policy`
+nesting was removed.
 
 The duplicate sleeve-level `signal_kind` filter was removed. Sleeve signal
 filtering now uses `signal_source_kind`.
 
-## Close Condition
+Position rule implementations live in `position_rules.py`.
 
-Close this when alpha-os has a clear naming and storage boundary for position
-rules, without requiring strategy logic to be encoded in manifests.
+Position rules remain Python code with tests, not manifest DSL logic.

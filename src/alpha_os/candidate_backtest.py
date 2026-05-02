@@ -168,7 +168,7 @@ def evaluate_trainless_candidate_backtest(
     elif position_rule_id == "dual_momentum_hold":
         position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
-            family_mix=trading_strategy.signal_policy.definition_policy.family_mix,
+            family_mix=trading_strategy.family_mix,
         )
     else:
         position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(

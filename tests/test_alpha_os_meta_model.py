@@ -625,16 +625,10 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                 "subject_set_id": "core_manifest",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": "core_manifest_search",
-                                    "position_rule_id": "signal_discovery",
-                                    "family_mix": None,
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trained",
-                                },
-                            },
+                            "signal_discovery_id": "core_manifest_search",
+                            "position_rule_id": "signal_discovery",
+                            "family_mix": None,
+                            "execution_kind": "trained",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -1841,9 +1835,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         SizingPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
@@ -1962,14 +1953,10 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                     subject_set_id="core_crypto",
                     target_id="residual_return_3d",
                 ),
-                signal_policy=SignalPolicySpec(
-                    definition_policy=SignalDefinitionPolicySpec(
-                        signal_discovery_id=None,
-                        position_rule_id="constant_hold",
-                        family_mix=None,
-                    ),
-                    update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
-                ),
+                signal_discovery_id=None,
+                position_rule_id="constant_hold",
+                family_mix=None,
+                execution_kind="trainless",
                 portfolio=StrategyPortfolioSpec.from_legacy(
                     portfolio_policy=portfolio_policy,
                     rebalance_friction_policy=RebalanceFrictionPolicySpec(
@@ -2481,16 +2468,10 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                 "subject_set_id": "core_crypto",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": "core_crypto_search",
-                                    "position_rule_id": "signal_discovery",
-                                    "family_mix": None,
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trained",
-                                },
-                            },
+                            "signal_discovery_id": "core_crypto_search",
+                            "position_rule_id": "signal_discovery",
+                            "family_mix": None,
+                            "execution_kind": "trained",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -3476,9 +3457,6 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
@@ -3535,14 +3513,10 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
                 subject_set_id="core_crypto",
                 target_id=None,
             ),
-            signal_policy=SignalPolicySpec(
-                definition_policy=SignalDefinitionPolicySpec(
-                    signal_discovery_id="core_crypto_search",
-                    position_rule_id="signal_discovery",
-                    family_mix=None,
-                ),
-                update_policy=SignalUpdatePolicySpec(execution_kind="trained"),
-            ),
+            signal_discovery_id="core_crypto_search",
+            position_rule_id="signal_discovery",
+            family_mix=None,
+            execution_kind="trained",
             portfolio=StrategyPortfolioSpec.from_legacy(
                 portfolio_policy=portfolio_policy,
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(

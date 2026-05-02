@@ -54,9 +54,6 @@ def _build_trading_strategy(
         RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
-        SignalDefinitionPolicySpec,
-        SignalPolicySpec,
-        SignalUpdatePolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
@@ -85,14 +82,10 @@ def _build_trading_strategy(
             subject_set_id=subject_set_id,
             target_id=target_id,
         ),
-        signal_policy=SignalPolicySpec(
-            definition_policy=SignalDefinitionPolicySpec(
-                signal_discovery_id=signal_discovery_id,
-                position_rule_id=position_rule_id,
-                family_mix=family_mix,
-            ),
-            update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
-        ),
+        signal_discovery_id=signal_discovery_id,
+        position_rule_id=position_rule_id,
+        family_mix=family_mix,
+        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec.from_legacy(
             portfolio_policy=portfolio_policy,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
@@ -774,16 +767,10 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                                 "subject_set_id": "core_crypto",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": "core_crypto_search",
-                                    "position_rule_id": "constant_hold",
-                                    "family_mix": "spec:-",
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trained",
-                                },
-                            },
+                            "signal_discovery_id": "core_crypto_search",
+                            "position_rule_id": "constant_hold",
+                            "family_mix": "spec:-",
+                            "execution_kind": "trained",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -962,16 +949,10 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                                 "subject_set_id": "core_crypto",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": "core_crypto_search",
-                                    "position_rule_id": "constant_hold",
-                                    "family_mix": "spec:-",
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trained",
-                                },
-                            },
+                            "signal_discovery_id": "core_crypto_search",
+                            "position_rule_id": "constant_hold",
+                            "family_mix": "spec:-",
+                            "execution_kind": "trained",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -1068,7 +1049,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
         assert trading_strategy.strategy_id == "strategy:core_crypto_rule"
         assert trading_strategy.scope.subject_set_id == "core_crypto"
         assert (
-            trading_strategy.signal_policy.definition_policy.signal_discovery_id
+            trading_strategy.signal_discovery_id
             == "core_crypto_search"
         )
         assert (
@@ -1097,16 +1078,10 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                                 "subject_set_id": "broad_9_etf",
                                 "target_id": None,
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": None,
-                                    "position_rule_id": "constant_hold",
-                                    "family_mix": None,
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trainless",
-                                },
-                            },
+                            "signal_discovery_id": None,
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            "execution_kind": "trainless",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -1245,16 +1220,10 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                                 "subject_set_id": "core_crypto",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": None,
-                                    "position_rule_id": "constant_hold",
-                                    "family_mix": None,
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trainless",
-                                },
-                            },
+                            "signal_discovery_id": None,
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            "execution_kind": "trainless",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "all_assets",
@@ -1479,16 +1448,10 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                 "subject_set_id": "core_crypto_top_k",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": None,
-                                    "position_rule_id": "constant_hold",
-                                    "family_mix": None,
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trainless",
-                                },
-                            },
+                            "signal_discovery_id": None,
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            "execution_kind": "trainless",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "top_k",
@@ -1727,16 +1690,10 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                 "subject_set_id": "core_crypto_dual_momentum",
                                 "target_id": "residual_return_3d",
                             },
-                            "signal_policy": {
-                                "definition_policy": {
-                                    "signal_discovery_id": None,
-                                    "position_rule_id": "dual_momentum_hold",
-                                    "family_mix": "lookback=2",
-                                },
-                                "update_policy": {
-                                    "execution_kind": "trainless",
-                                },
-                            },
+                            "signal_discovery_id": None,
+                            "position_rule_id": "dual_momentum_hold",
+                            "family_mix": "lookback=2",
+                            "execution_kind": "trainless",
                             "portfolio_policy": {
                                 "selection_policy": {
                                     "selection_kind": "top_k",

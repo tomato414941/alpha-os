@@ -173,71 +173,6 @@ class TradingStrategyScopeSpec:
 
 
 @dataclass(frozen=True)
-class SignalDefinitionPolicySpec:
-    signal_discovery_id: str | None
-    position_rule_id: str
-    family_mix: str | None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "signal_discovery_id": self.signal_discovery_id,
-            "position_rule_id": self.position_rule_id,
-            "family_mix": self.family_mix,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "SignalDefinitionPolicySpec":
-        return cls(
-            signal_discovery_id=_normalize_optional(
-                None if document.get("signal_discovery_id") is None else str(document["signal_discovery_id"])
-            ),
-            position_rule_id=str(document.get("position_rule_id", "constant_hold")),
-            family_mix=_normalize_optional(
-                None if document.get("family_mix") is None else str(document["family_mix"])
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class SignalUpdatePolicySpec:
-    execution_kind: StrategyExecutionKind
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "execution_kind": self.execution_kind,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "SignalUpdatePolicySpec":
-        return cls(
-            execution_kind=str(document.get("execution_kind", "trainless")),
-        )
-
-
-@dataclass(frozen=True)
-class SignalPolicySpec:
-    definition_policy: SignalDefinitionPolicySpec
-    update_policy: SignalUpdatePolicySpec
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "definition_policy": self.definition_policy.to_document(),
-            "update_policy": self.update_policy.to_document(),
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "SignalPolicySpec":
-        return cls(
-            definition_policy=SignalDefinitionPolicySpec.from_document(
-                dict(document.get("definition_policy", {}))
-            ),
-            update_policy=SignalUpdatePolicySpec.from_document(
-                dict(document.get("update_policy", {}))
-            ),
-        )
-
-
-@dataclass(frozen=True)
 class SelectionPolicySpec:
     selection_kind: str
     top_k: int | None
@@ -722,7 +657,10 @@ class TradingStrategySpec:
     strategy_id: str
     label: str
     scope: TradingStrategyScopeSpec
-    signal_policy: SignalPolicySpec
+    signal_discovery_id: str | None
+    position_rule_id: str
+    family_mix: str | None
+    execution_kind: StrategyExecutionKind
     portfolio: StrategyPortfolioSpec
     created_at: str
     adaptation_policy: AdaptationPolicySpec = field(
@@ -737,7 +675,10 @@ class TradingStrategySpec:
             "strategy_id": self.strategy_id,
             "label": self.label,
             "scope": self.scope.to_document(),
-            "signal_policy": self.signal_policy.to_document(),
+            "signal_discovery_id": self.signal_discovery_id,
+            "position_rule_id": self.position_rule_id,
+            "family_mix": self.family_mix,
+            "execution_kind": self.execution_kind,
             "portfolio": self.portfolio.to_document(),
             "adaptation_policy": self.adaptation_policy.to_document(),
             "created_at": self.created_at,
@@ -786,9 +727,16 @@ class TradingStrategySpec:
             strategy_id=str(document["strategy_id"]),
             label=str(document["label"]),
             scope=TradingStrategyScopeSpec.from_document(dict(document.get("scope", {}))),
-            signal_policy=SignalPolicySpec.from_document(
-                dict(document.get("signal_policy", {}))
+            signal_discovery_id=_normalize_optional(
+                None
+                if document.get("signal_discovery_id") is None
+                else str(document["signal_discovery_id"])
             ),
+            position_rule_id=str(document.get("position_rule_id", "constant_hold")),
+            family_mix=_normalize_optional(
+                None if document.get("family_mix") is None else str(document["family_mix"])
+            ),
+            execution_kind=str(document.get("execution_kind", "trainless")),
             adaptation_policy=AdaptationPolicySpec.from_document(
                 dict(document.get("adaptation_policy", {}))
             ),
@@ -803,14 +751,6 @@ class TradingStrategySpec:
     @property
     def target_id(self) -> str | None:
         return self.scope.target_id
-
-    @property
-    def signal_discovery_id(self) -> str | None:
-        return self.signal_policy.definition_policy.signal_discovery_id
-
-    @property
-    def position_rule_id(self) -> str:
-        return self.signal_policy.definition_policy.position_rule_id
 
     @property
     def selection_kind(self) -> str:
@@ -845,14 +785,10 @@ class TradingStrategySpec:
         return resolve_strategy_execution_spec(
             {
                 "signal_discovery": self.signal_discovery_id or "",
-                "execution_kind": self.signal_policy.update_policy.execution_kind,
+                "execution_kind": self.execution_kind,
                 "position_rule": self.position_rule_id,
             }
         )
-
-    @property
-    def execution_kind(self) -> StrategyExecutionKind:
-        return self.execution.kind
 
     @property
     def requires_signal_train(self) -> bool:

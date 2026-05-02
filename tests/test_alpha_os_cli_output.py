@@ -31,9 +31,6 @@ from alpha_os.trading_strategy import (
     RebalancePolicySpec,
     RiskPolicySpec,
     SelectionPolicySpec,
-    SignalDefinitionPolicySpec,
-    SignalPolicySpec,
-    SignalUpdatePolicySpec,
     SizingPolicySpec,
     StrategyPortfolioSpec,
     TradingStrategyScopeSpec,
@@ -547,14 +544,10 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
                 subject_set_id="global_macro_core",
                 target_id="residual_return_3d",
             ),
-            signal_policy=SignalPolicySpec(
-                definition_policy=SignalDefinitionPolicySpec(
-                    signal_discovery_id="signal-discovery:test",
-                    position_rule_id="constant_hold",
-                    family_mix=None,
-                ),
-                update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
-            ),
+            signal_discovery_id="signal-discovery:test",
+            position_rule_id="constant_hold",
+            family_mix=None,
+            execution_kind="trainless",
             portfolio=_strategy_portfolio(
                 portfolio_policy=PortfolioPolicySpec(
                     selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=3),
@@ -695,14 +688,10 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
                 subject_set_id="macro_pair",
                 target_id="residual_return_3d",
             ),
-            signal_policy=SignalPolicySpec(
-                definition_policy=SignalDefinitionPolicySpec(
-                    signal_discovery_id="signal-discovery:test",
-                    position_rule_id="constant_hold",
-                    family_mix=None,
-                ),
-                update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
-            ),
+            signal_discovery_id="signal-discovery:test",
+            position_rule_id="constant_hold",
+            family_mix=None,
+            execution_kind="trainless",
             portfolio=_strategy_portfolio(
                 portfolio_policy=PortfolioPolicySpec(
                     selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=2),
