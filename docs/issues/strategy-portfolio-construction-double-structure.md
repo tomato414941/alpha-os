@@ -85,6 +85,26 @@ Rebalance cadence should be treated as strategy cadence or evaluation execution
 policy, depending on whether the cadence is part of the trading hypothesis or an
 evaluation override.
 
+### Risk And Exposure Constraints
+
+Risk and exposure constraints are not allocator internals. They belong after raw
+target weights are produced.
+
+The existing `portfolio_construction_pipeline.py` is close to this role: it
+takes target weights and applies direction filtering, overlays, top-k filtering,
+group caps, risk-budget normalization, target-vol scaling, gross exposure caps,
+and net exposure targeting.
+
+The problem is not that constraints exist. The problem is that
+`PortfolioConstructionSpec` mixes allocation policy, constraint policy,
+rebalance cadence, report contract fields, and legacy compatibility in one
+object.
+
+`EqualWeightLongOnlyAllocator` may keep a minimal gross exposure cap for a simple
+standalone rule, but richer constraints such as target volatility, leverage
+caps, net exposure targets, group caps, and risk budgets should remain outside
+the allocator itself.
+
 ## Acceptance Criteria
 
 - A field mapping exists between `StrategyPortfolioSpec` and
