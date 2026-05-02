@@ -30,6 +30,17 @@ hard to connect without adding another parallel path.
 - execution and holding-cost assumptions that may not belong to a strategy spec
 - legacy document compatibility through `from_legacy()`
 
+## Current Decision
+
+`selection_kind` and `top_k` belong together. `top_k` is a parameter of the
+`top_k` selection mode, not an independent portfolio construction concern.
+
+Selection should be treated as part of the portfolio allocation layer: it decides
+which position candidates are eligible to receive weights before sizing assigns
+the final target weights.
+
+`StrategyPortfolioSpec` should not split a selection mode from its parameters.
+
 ## Acceptance Criteria
 
 - A field mapping exists between `StrategyPortfolioSpec` and
@@ -43,4 +54,3 @@ hard to connect without adding another parallel path.
 - One layer is chosen as the future source of truth.
 - The other layer is either marked legacy/adapter-only or given a narrower
   responsibility.
-
