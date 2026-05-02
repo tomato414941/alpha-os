@@ -32,6 +32,8 @@ hard to connect without adding another parallel path.
 
 ## Current Decision
 
+### Selection
+
 `selection_kind` and `top_k` belong together. `top_k` is a parameter of the
 `top_k` selection mode, not an independent portfolio construction concern.
 
@@ -40,6 +42,23 @@ which position candidates are eligible to receive weights before sizing assigns
 the final target weights.
 
 `StrategyPortfolioSpec` should not split a selection mode from its parameters.
+
+### Sizing
+
+Existing `sizing_method=equal_weight` is not the same concept as
+`EqualWeightLongOnlyAllocator`.
+
+The existing `sizing_method` field is part of the rich sizing path. It also
+implies backend classification such as `sizing_engine`, `sizing_family`, history
+requirements, optimizer/report labeling, and skfolio-style model selection.
+
+`EqualWeightLongOnlyAllocator` should not be wired in as a replacement for
+`PortfolioConstructionSizingSpec.sizing_method`.
+
+Sizing should eventually become an internal detail of the portfolio allocation
+layer. Externally, a strategy should describe the allocation policy it wants,
+while the allocation layer decides whether that policy is implemented by a
+simple rule, a history-based allocator, or an optimizer.
 
 ## Acceptance Criteria
 
