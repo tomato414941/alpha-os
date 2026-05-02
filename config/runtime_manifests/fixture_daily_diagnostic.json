@@ -53,7 +53,7 @@
         "signal_policy": {
           "definition_policy": {
             "signal_discovery_id": null,
-            "position_rule_kind": "constant_hold",
+            "position_rule_id": "constant_hold",
             "family_mix": null
           },
           "update_policy": {

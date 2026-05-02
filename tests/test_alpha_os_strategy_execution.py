@@ -8,7 +8,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     signal_discovery_id: str | None = None,
-    position_rule_kind: str = "constant_hold",
+    position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
     execution_kind: str = "trainless",
     selection_kind: str = "all_assets",
@@ -78,7 +78,7 @@ def _build_trading_strategy(
         signal_policy=SignalPolicySpec(
             definition_policy=SignalDefinitionPolicySpec(
                 signal_discovery_id=signal_discovery_id,
-                position_rule_kind=position_rule_kind,
+                position_rule_id=position_rule_id,
                 family_mix=family_mix,
             ),
             update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
@@ -135,7 +135,7 @@ def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
             "position_rule": "relative_strength",
         }
     )
-    by_position_rule_kind = resolve_strategy_execution_spec(
+    by_position_rule_id = resolve_strategy_execution_spec(
         {
             "position_rule": "neural_model",
         }
@@ -147,16 +147,16 @@ def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
     assert by_discovery.retrains_per_fold is True
     assert by_discovery.reuses_frozen_state is False
 
-    assert by_position_rule_kind.kind == "trained"
-    assert by_position_rule_kind.signal_discovery_id is None
-    assert by_position_rule_kind.requires_signal_train is True
+    assert by_position_rule_id.kind == "trained"
+    assert by_position_rule_id.signal_discovery_id is None
+    assert by_position_rule_id.requires_signal_train is True
 
 
 def test_trading_strategy_exposes_frozen_execution_contract():
     strategy = _build_trading_strategy(
         strategy_id="strategy:test",
         label="Frozen Test",
-        position_rule_kind="relative_strength",
+        position_rule_id="relative_strength",
         execution_kind="frozen",
         created_at="2026-04-07T00:00:00Z",
     )

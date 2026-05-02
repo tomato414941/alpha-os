@@ -187,7 +187,7 @@
         "signal_policy": {
           "definition_policy": {
             "signal_discovery_id": "us_etf_broad_rs_lowvol_compare_search",
-            "position_rule_kind": "constant_hold",
+            "position_rule_id": "constant_hold",
             "family_mix": "low_vol_trend,relative_strength"
           },
           "update_policy": {
@@ -234,7 +234,7 @@
         "signal_policy": {
           "definition_policy": {
             "signal_discovery_id": "us_etf_broad_rs_lowvol_compare_search",
-            "position_rule_kind": "constant_hold",
+            "position_rule_id": "constant_hold",
             "family_mix": "low_vol_trend,relative_strength"
           },
           "update_policy": {

@@ -83,7 +83,7 @@
         "signal_policy": {
           "definition_policy": {
             "signal_discovery_id": null,
-            "position_rule_kind": "dual_momentum_hold",
+            "position_rule_id": "dual_momentum_hold",
             "family_mix": "lookback=252"
           },
           "update_policy": {

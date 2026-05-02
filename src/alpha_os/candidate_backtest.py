@@ -122,8 +122,8 @@ def evaluate_trainless_candidate_backtest(
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
     # Trainless candidate backtests currently select positions by rule kind.
-    position_rule_kind = trading_strategy.position_rule_kind
-    if position_rule_kind not in {
+    position_rule_id = trading_strategy.position_rule_id
+    if position_rule_id not in {
         "constant_hold",
         "dual_momentum_hold",
         "crypto_regime_momentum_hold",
@@ -163,9 +163,9 @@ def evaluate_trainless_candidate_backtest(
         subject_set=subject_set,
         subject_planes=subject_planes,
     )
-    if position_rule_kind == "constant_hold":
+    if position_rule_id == "constant_hold":
         position_signal_series_by_subject = None
-    elif position_rule_kind == "dual_momentum_hold":
+    elif position_rule_id == "dual_momentum_hold":
         position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
             family_mix=trading_strategy.signal_policy.definition_policy.family_mix,

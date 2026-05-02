@@ -42,7 +42,7 @@ Position rules should be Python code with tests, not manifest DSL logic.
 ## Current Follow-up
 
 `TradingStrategySpec` stores trainless position rule choice as
-`position_rule_kind`.
+`position_rule_id`.
 
 The duplicate sleeve-level `signal_kind` filter was removed. Sleeve signal
 filtering now uses `signal_source_kind`.
