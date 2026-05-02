@@ -373,7 +373,7 @@ def _register_direct_strategy(store) -> None:
             signal_policy=SignalPolicySpec(
                 definition_policy=SignalDefinitionPolicySpec(
                     signal_discovery_id=None,
-                    candidate_rule_kind="constant_hold",
+                    position_rule_kind="constant_hold",
                     family_mix=None,
                 ),
                 update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),

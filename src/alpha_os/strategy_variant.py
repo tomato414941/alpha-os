@@ -227,7 +227,7 @@ def derive_trading_strategy_from_signal_discovery(
         signal_policy=SignalPolicySpec(
             definition_policy=SignalDefinitionPolicySpec(
                 signal_discovery_id=signal_discovery.signal_discovery_id,
-                candidate_rule_kind="constant_hold",
+                position_rule_kind="constant_hold",
                 family_mix=family_mix_value,
             ),
             update_policy=SignalUpdatePolicySpec(execution_kind="trained"),

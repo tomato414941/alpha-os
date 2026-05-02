@@ -175,13 +175,13 @@ class TradingStrategyScopeSpec:
 @dataclass(frozen=True)
 class SignalDefinitionPolicySpec:
     signal_discovery_id: str | None
-    candidate_rule_kind: str
+    position_rule_kind: str
     family_mix: str | None
 
     def to_document(self) -> dict[str, Any]:
         return {
             "signal_discovery_id": self.signal_discovery_id,
-            "candidate_rule_kind": self.candidate_rule_kind,
+            "position_rule_kind": self.position_rule_kind,
             "family_mix": self.family_mix,
         }
 
@@ -191,7 +191,7 @@ class SignalDefinitionPolicySpec:
             signal_discovery_id=_normalize_optional(
                 None if document.get("signal_discovery_id") is None else str(document["signal_discovery_id"])
             ),
-            candidate_rule_kind=str(document.get("candidate_rule_kind", "constant_hold")),
+            position_rule_kind=str(document.get("position_rule_kind", "constant_hold")),
             family_mix=_normalize_optional(
                 None if document.get("family_mix") is None else str(document["family_mix"])
             ),
@@ -809,8 +809,8 @@ class TradingStrategySpec:
         return self.signal_policy.definition_policy.signal_discovery_id
 
     @property
-    def candidate_rule_kind(self) -> str:
-        return self.signal_policy.definition_policy.candidate_rule_kind
+    def position_rule_kind(self) -> str:
+        return self.signal_policy.definition_policy.position_rule_kind
 
     @property
     def selection_kind(self) -> str:
@@ -846,7 +846,7 @@ class TradingStrategySpec:
             {
                 "signal_discovery": self.signal_discovery_id or "",
                 "execution_kind": self.signal_policy.update_policy.execution_kind,
-                "signal": self.candidate_rule_kind,
+                "position_rule": self.position_rule_kind,
             }
         )
 

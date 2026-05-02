@@ -75,7 +75,7 @@ def _assert_common_strategy_comparison_contract(
 def _strategy_document(
     *,
     strategy_id: str,
-    candidate_rule_kind: str,
+    position_rule_kind: str,
     subject_set_id: str = "crypto_regime_pair",
 ) -> dict[str, object]:
     return {
@@ -89,7 +89,7 @@ def _strategy_document(
             "signal_policy": {
                 "definition_policy": {
                     "signal_discovery_id": None,
-                    "candidate_rule_kind": candidate_rule_kind,
+                    "position_rule_kind": position_rule_kind,
                     "family_mix": None,
                 },
                 "update_policy": {
@@ -197,12 +197,12 @@ def _manifest_document(
         "strategy_specs": [
             _strategy_document(
                 strategy_id="strategy:crypto_regime_momentum_candidate",
-                candidate_rule_kind="crypto_regime_momentum_hold",
+                position_rule_kind="crypto_regime_momentum_hold",
                 subject_set_id=subject_set_id,
             ),
             _strategy_document(
                 strategy_id="strategy:crypto_regime_momentum_baseline",
-                candidate_rule_kind="constant_hold",
+                position_rule_kind="constant_hold",
                 subject_set_id=subject_set_id,
             ),
         ],
@@ -323,10 +323,10 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
         assert candidate_strategy is not None
         assert baseline_strategy is not None
         assert (
-            candidate_strategy.trading_strategy.candidate_rule_kind
+            candidate_strategy.trading_strategy.position_rule_kind
             == "crypto_regime_momentum_hold"
         )
-        assert baseline_strategy.trading_strategy.candidate_rule_kind == "constant_hold"
+        assert baseline_strategy.trading_strategy.position_rule_kind == "constant_hold"
         assert candidate_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
         assert baseline_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
 

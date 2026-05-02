@@ -8,7 +8,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     signal_discovery_id: str | None = None,
-    candidate_rule_kind: str = "constant_hold",
+    position_rule_kind: str = "constant_hold",
     family_mix: str | None = None,
     execution_kind: str = "trainless",
     selection_kind: str = "all_assets",
@@ -78,7 +78,7 @@ def _build_trading_strategy(
         signal_policy=SignalPolicySpec(
             definition_policy=SignalDefinitionPolicySpec(
                 signal_discovery_id=signal_discovery_id,
-                candidate_rule_kind=candidate_rule_kind,
+                position_rule_kind=position_rule_kind,
                 family_mix=family_mix,
             ),
             update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
@@ -114,7 +114,7 @@ def test_resolve_strategy_execution_spec_defaults_to_trainless():
 
     execution = resolve_strategy_execution_spec(
         {
-            "signal": "constant_hold",
+            "position_rule": "constant_hold",
             "selection": "all_assets",
         }
     )
@@ -132,12 +132,12 @@ def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
     by_discovery = resolve_strategy_execution_spec(
         {
             "signal_discovery": "discovery:core",
-            "signal": "relative_strength",
+            "position_rule": "relative_strength",
         }
     )
-    by_candidate_rule_kind = resolve_strategy_execution_spec(
+    by_position_rule_kind = resolve_strategy_execution_spec(
         {
-            "signal": "neural_model",
+            "position_rule": "neural_model",
         }
     )
 
@@ -147,16 +147,16 @@ def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
     assert by_discovery.retrains_per_fold is True
     assert by_discovery.reuses_frozen_state is False
 
-    assert by_candidate_rule_kind.kind == "trained"
-    assert by_candidate_rule_kind.signal_discovery_id is None
-    assert by_candidate_rule_kind.requires_signal_train is True
+    assert by_position_rule_kind.kind == "trained"
+    assert by_position_rule_kind.signal_discovery_id is None
+    assert by_position_rule_kind.requires_signal_train is True
 
 
 def test_trading_strategy_exposes_frozen_execution_contract():
     strategy = _build_trading_strategy(
         strategy_id="strategy:test",
         label="Frozen Test",
-        candidate_rule_kind="relative_strength",
+        position_rule_kind="relative_strength",
         execution_kind="frozen",
         created_at="2026-04-07T00:00:00Z",
     )

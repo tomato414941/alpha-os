@@ -786,7 +786,7 @@ def test_resolve_evaluation_tasks_rejects_override_without_signal_discovery(
                     "signal_policy": {
                         "definition_policy": {
                             "signal_discovery_id": None,
-                            "candidate_rule_kind": "constant_hold",
+                            "position_rule_kind": "constant_hold",
                         },
                         "update_policy": {"execution_kind": "screen"},
                     },

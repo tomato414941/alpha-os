@@ -27,7 +27,7 @@ def resolve_strategy_execution_spec(
         kind: StrategyExecutionKind = explicit
     elif signal_discovery_id is not None:
         kind = "trained"
-    elif axis_map.get("signal") in {
+    elif axis_map.get("position_rule") in {
         "signal_discovery",
         "neural_model",
         "trained_model",

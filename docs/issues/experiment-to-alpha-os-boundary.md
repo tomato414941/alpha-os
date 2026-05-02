@@ -19,7 +19,7 @@ runtime evaluation path.
 Until candidate volume becomes large, use a simple rule:
 
 - if a lightweight experiment beats its baseline, it may be moved into
-  alpha-os as a candidate rule
+  alpha-os as a position rule
 - the moved rule must be evaluated against the same baseline through alpha-os
   artifacts
 - the rule should stay as Python code with tests, not manifest DSL logic

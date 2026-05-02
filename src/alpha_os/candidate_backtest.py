@@ -5,7 +5,7 @@ from typing import Protocol
 
 import pandas as pd
 
-from .candidate_rules import crypto_regime_momentum_eligibility_series_by_subject
+from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
@@ -121,9 +121,8 @@ def evaluate_trainless_candidate_backtest(
         raise ValueError(f"strategy does not exist: {strategy_id}")
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
-    # Trainless candidate backtests currently treat candidate rules as position
-    # rule selectors.
-    position_rule_kind = trading_strategy.candidate_rule_kind
+    # Trainless candidate backtests currently select positions by rule kind.
+    position_rule_kind = trading_strategy.position_rule_kind
     if position_rule_kind not in {
         "constant_hold",
         "dual_momentum_hold",
