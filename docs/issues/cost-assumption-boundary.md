@@ -38,6 +38,11 @@ Use these meanings:
 - evaluation cost assumption: backtest or OOS evaluation contract
 - strategy estimated cost: strategy rule input
 
+Decision rule:
+
+- realized cost used to calculate net results belongs to evaluation
+- estimated cost used to decide whether or how to trade belongs to strategy
+
 ## Close Condition
 
 Close this when alpha-os can distinguish these cost meanings in code or
