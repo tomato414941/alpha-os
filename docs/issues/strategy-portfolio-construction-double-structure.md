@@ -60,6 +60,18 @@ layer. Externally, a strategy should describe the allocation policy it wants,
 while the allocation layer decides whether that policy is implemented by a
 simple rule, a history-based allocator, or an optimizer.
 
+### Direction
+
+`direction_mode` is allocation-layer behavior. It controls how candidate target
+weights are filtered: `long_short` keeps both signs, `long_only` keeps positive
+targets, and `short_only` keeps negative targets.
+
+`long_only` should be treated as a legacy or derived compatibility flag, not as a
+separate source of truth from `direction_mode`.
+
+`EqualWeightLongOnlyAllocator` should be understood as a long-only allocation
+policy, not as a separate direction system.
+
 ## Acceptance Criteria
 
 - A field mapping exists between `StrategyPortfolioSpec` and
