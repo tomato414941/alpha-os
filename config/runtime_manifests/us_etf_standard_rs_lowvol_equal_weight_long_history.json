@@ -432,7 +432,7 @@
         "signal_policy": {
           "definition_policy": {
             "signal_discovery_id": "us_etf_standard_rs_lowvol_search",
-            "signal_kind": "constant_hold",
+            "candidate_rule_kind": "constant_hold",
             "family_mix": "low_vol_trend,relative_strength"
           },
           "update_policy": {

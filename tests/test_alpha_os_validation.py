@@ -11,7 +11,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     signal_discovery_id: str | None = None,
-    signal_kind: str = "constant_hold",
+    candidate_rule_kind: str = "constant_hold",
     family_mix: str | None = None,
     execution_kind: str = "trainless",
     sizing_method: str | None = None,
@@ -55,7 +55,7 @@ def _build_trading_strategy(
         signal_policy=SignalPolicySpec(
             definition_policy=SignalDefinitionPolicySpec(
                 signal_discovery_id=signal_discovery_id,
-                signal_kind=signal_kind,
+                candidate_rule_kind=candidate_rule_kind,
                 family_mix=family_mix,
             ),
             update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
@@ -120,7 +120,7 @@ def _register_search_strategy(
         subject_set_id=subject_set_id,
         target_id=None,
         signal_discovery_id=signal_discovery_id,
-        signal_kind="signal_discovery",
+        candidate_rule_kind="signal_discovery",
         execution_kind="trained",
     )
     store.upsert_trading_strategy(trading_strategy=spec)

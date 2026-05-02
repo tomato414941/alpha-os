@@ -32,7 +32,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     signal_discovery_id: str | None = None,
-    signal_kind: str = "constant_hold",
+    candidate_rule_kind: str = "constant_hold",
     family_mix: str | None = None,
     execution_kind: str = "trainless",
     sizing_method: str | None = None,
@@ -88,7 +88,7 @@ def _build_trading_strategy(
         signal_policy=SignalPolicySpec(
             definition_policy=SignalDefinitionPolicySpec(
                 signal_discovery_id=signal_discovery_id,
-                signal_kind=signal_kind,
+                candidate_rule_kind=candidate_rule_kind,
                 family_mix=family_mix,
             ),
             update_policy=SignalUpdatePolicySpec(execution_kind=execution_kind),
@@ -330,7 +330,7 @@ def test_direct_candidate_backtest_routes_crypto_regime_momentum_eligibility(
         label="Crypto regime momentum",
         subject_set_id="crypto",
         target_id="residual_return_1d",
-        signal_kind="crypto_regime_momentum_hold",
+        candidate_rule_kind="crypto_regime_momentum_hold",
         long_only=True,
     )
     subject_set = SubjectSet(
@@ -777,7 +777,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": "core_crypto_search",
-                                    "signal_kind": "constant_hold",
+                                    "candidate_rule_kind": "constant_hold",
                                     "family_mix": "spec:-",
                                 },
                                 "update_policy": {
@@ -965,7 +965,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": "core_crypto_search",
-                                    "signal_kind": "constant_hold",
+                                    "candidate_rule_kind": "constant_hold",
                                     "family_mix": "spec:-",
                                 },
                                 "update_policy": {
@@ -1100,7 +1100,7 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": None,
-                                    "signal_kind": "constant_hold",
+                                    "candidate_rule_kind": "constant_hold",
                                     "family_mix": None,
                                 },
                                 "update_policy": {
@@ -1248,7 +1248,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": None,
-                                    "signal_kind": "constant_hold",
+                                    "candidate_rule_kind": "constant_hold",
                                     "family_mix": None,
                                 },
                                 "update_policy": {
@@ -1482,7 +1482,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": None,
-                                    "signal_kind": "constant_hold",
+                                    "candidate_rule_kind": "constant_hold",
                                     "family_mix": None,
                                 },
                                 "update_policy": {
@@ -1730,7 +1730,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                             "signal_policy": {
                                 "definition_policy": {
                                     "signal_discovery_id": None,
-                                    "signal_kind": "dual_momentum_hold",
+                                    "candidate_rule_kind": "dual_momentum_hold",
                                     "family_mix": "lookback=2",
                                 },
                                 "update_policy": {
@@ -2664,7 +2664,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             signal_discovery_id="discovery_a",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
-            signal_kind="signal_discovery",
+            candidate_rule_kind="signal_discovery",
             execution_kind="trained",
             created_at="2026-01-01T00:00:00Z",
         )
@@ -2768,7 +2768,7 @@ def test_build_evaluation_plan_rejects_trained_strategy_without_search_provenanc
             label="NN Case",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
-            signal_kind="neural_model",
+            candidate_rule_kind="neural_model",
             execution_kind="trained",
             created_at="2026-04-05T00:00:00Z",
         )

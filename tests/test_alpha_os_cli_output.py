@@ -550,7 +550,7 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
             signal_policy=SignalPolicySpec(
                 definition_policy=SignalDefinitionPolicySpec(
                     signal_discovery_id="signal-discovery:test",
-                    signal_kind="constant_hold",
+                    candidate_rule_kind="constant_hold",
                     family_mix=None,
                 ),
                 update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),
@@ -698,7 +698,7 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
             signal_policy=SignalPolicySpec(
                 definition_policy=SignalDefinitionPolicySpec(
                     signal_discovery_id="signal-discovery:test",
-                    signal_kind="constant_hold",
+                    candidate_rule_kind="constant_hold",
                     family_mix=None,
                 ),
                 update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),

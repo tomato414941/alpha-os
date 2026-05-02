@@ -41,11 +41,11 @@ Candidate rules should be Python code with tests, not manifest DSL logic.
 
 ## Current Follow-up
 
-Rename the newly added crypto regime momentum function away from
-`signal_series` wording before wiring it into runtime evaluation.
+`TradingStrategySpec` now stores trainless candidate rule choice as
+`candidate_rule_kind` instead of `signal_kind`.
 
-Do not rename the whole `signal_kind` schema until the replacement boundary is
-clear from concrete candidate implementations.
+The remaining `signal_kind` usage is sleeve signal filtering, which is a
+separate concern from trainless candidate rule selection.
 
 ## Close Condition
 

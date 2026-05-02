@@ -150,7 +150,7 @@ def _register_direct_strategy(
             signal_policy=SignalPolicySpec(
                 definition_policy=SignalDefinitionPolicySpec(
                     signal_discovery_id=None,
-                    signal_kind="constant_hold",
+                    candidate_rule_kind="constant_hold",
                     family_mix=None,
                 ),
                 update_policy=SignalUpdatePolicySpec(execution_kind="trainless"),

@@ -121,9 +121,9 @@ def evaluate_trainless_candidate_backtest(
         raise ValueError(f"strategy does not exist: {strategy_id}")
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
-    # signal_kind is the persisted compatibility field. Trainless candidate
-    # backtests treat it as a position rule selector.
-    position_rule_kind = trading_strategy.signal_kind
+    # Trainless candidate backtests currently treat candidate rules as position
+    # rule selectors.
+    position_rule_kind = trading_strategy.candidate_rule_kind
     if position_rule_kind not in {
         "constant_hold",
         "dual_momentum_hold",
