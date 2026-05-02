@@ -4,18 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 
-PositionDirection = Literal["long", "short", "flat"]
-
-
-@dataclass(frozen=True)
-class PositionCandidate:
-    subject_id: str
-    direction: PositionDirection
-
-
-@dataclass(frozen=True)
-class PortfolioAllocation:
-    target_weights: dict[str, float]
+_PositionDirection = Literal["long", "short", "flat"]
 
 
 @dataclass(frozen=True)
@@ -28,28 +17,21 @@ class EqualWeightLongOnlyAllocator:
 
     def allocate(
         self,
-        candidates: tuple[PositionCandidate, ...],
-    ) -> PortfolioAllocation:
+        directions_by_subject: dict[str, _PositionDirection],
+    ) -> dict[str, float]:
         long_subject_ids = tuple(
-            candidate.subject_id
-            for candidate in candidates
-            if candidate.direction == "long"
+            subject_id
+            for subject_id, direction in directions_by_subject.items()
+            if direction == "long"
         )
         if not long_subject_ids:
-            return PortfolioAllocation(
-                target_weights={
-                    candidate.subject_id: 0.0
-                    for candidate in candidates
-                }
-            )
+            return {subject_id: 0.0 for subject_id in directions_by_subject}
 
         weight = self.gross_exposure_cap / float(len(long_subject_ids))
-        return PortfolioAllocation(
-            target_weights={
-                candidate.subject_id: (
-                    weight if candidate.subject_id in long_subject_ids else 0.0
-                )
-                for candidate in candidates
-            }
-        )
+        return {
+            subject_id: weight if subject_id in long_subject_ids else 0.0
+            for subject_id in directions_by_subject
+        }
 
+
+__all__ = ("EqualWeightLongOnlyAllocator",)
