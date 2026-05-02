@@ -1,3 +1,11 @@
+"""Small allocation rules that should not depend on rich portfolio construction.
+
+This module exists to keep simple strategy-side portfolio choices explicit:
+given current position directions, produce target weights. It intentionally does
+not own rebalance cadence, execution costs, risk budgets, target volatility,
+group caps, or legacy `PortfolioConstructionSpec` compatibility.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
