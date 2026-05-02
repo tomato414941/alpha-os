@@ -22,7 +22,6 @@ from .portfolio_decision import (
     StructuralUncertaintyInput,
     UncertaintyInput,
 )
-from .portfolio_allocation import EqualWeightLongOnlyAllocator, PositionCandidate
 from .portfolio_concentration import portfolio_effective_n, top_n_gross_share
 from .portfolio_rebalance_friction import (
     PortfolioRebalanceFrictionPolicy,
@@ -89,7 +88,7 @@ PortfolioSizingPolicy: TypeAlias = (
 )
 
 
-class PortfolioAllocator(Protocol):
+class PortfolioSizingAllocator(Protocol):
     def allocate(self, request: SizingRequest) -> SizingSolution:
         ...
 
@@ -140,7 +139,7 @@ class HistoricalModelAllocator:
 
 def portfolio_allocator_for_policy(
     sizing_policy: PortfolioSizingPolicy | None,
-) -> PortfolioAllocator:
+) -> PortfolioSizingAllocator:
     if sizing_policy is None:
         return SignalWeightedAllocator(SignalWeightedSizingPolicy())
     if isinstance(sizing_policy, SignalWeightedSizingPolicy):
@@ -1732,35 +1731,6 @@ def _fallback_history_based_allocation(
     gross_cap = request.gross_exposure_cap
     if gross_cap is None or gross_cap <= 0.0:
         gross_cap = 1.0
-    if all(request.signal_values[index] > 0.0 for index in eligible_indices):
-        eligible_subjects = {
-            request.subject_ids[index]
-            for index in eligible_indices
-        }
-        candidates = tuple(
-            PositionCandidate(
-                subject_id=subject_id,
-                direction="long" if subject_id in eligible_subjects else "flat",
-            )
-            for subject_id in subject_ids
-        )
-        allocation = EqualWeightLongOnlyAllocator(
-            gross_exposure_cap=float(gross_cap),
-        ).allocate(candidates)
-        return SizingSolution(
-            subject_ids=subject_ids,
-            target_weights=tuple(
-                allocation.target_weights.get(subject_id, 0.0)
-                for subject_id in subject_ids
-            ),
-            risk_scales=tuple(1.0 for _ in subject_ids),
-            diagnostics=SizingDiagnostics(
-                backend_id=backend_id,
-                solver="-",
-                status="fallback" if fallback_reason is not None else "ok",
-                fallback_reason=fallback_reason,
-            ),
-        )
     weight_per_subject = float(gross_cap) / float(len(eligible_indices))
     weights = [0.0 for _ in subject_ids]
     for index in eligible_indices:
