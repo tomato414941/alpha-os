@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+# Legacy rich decision backtest path.
+#
+# This module supports sleeve composition, rich sizing policies, construction
+# traces, and execution assumptions. Simple long-only equal-weight candidates do
+# not need to enter this path unless they explicitly need those features.
+
 from dataclasses import dataclass, field
 
 import pandas as pd
