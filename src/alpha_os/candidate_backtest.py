@@ -102,7 +102,7 @@ def subject_backtest_inputs_from_subject_set_planes(
     )
 
 
-def evaluate_direct_strategy_case(
+def evaluate_trainless_candidate_backtest(
     *,
     store: DirectStrategyEvaluationReadPort,
     strategy_id: str,
