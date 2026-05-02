@@ -72,6 +72,19 @@ separate source of truth from `direction_mode`.
 `EqualWeightLongOnlyAllocator` should be understood as a long-only allocation
 policy, not as a separate direction system.
 
+### Rebalance
+
+`rebalance_interval_steps` is not allocator internals. It controls when an
+allocator is invoked, not how target weights are produced at a point in time.
+
+An allocator should transform the current position candidates into current
+target weights. It should not own scheduling, state retention, or the decision
+to keep prior weights between rebalance dates.
+
+Rebalance cadence should be treated as strategy cadence or evaluation execution
+policy, depending on whether the cadence is part of the trading hypothesis or an
+evaluation override.
+
 ## Acceptance Criteria
 
 - A field mapping exists between `StrategyPortfolioSpec` and
