@@ -202,6 +202,8 @@ def test_trading_strategy_exposes_policy_hierarchy():
         trading_strategy.execution_kind == "trained"
     )
     assert trading_strategy.portfolio_policy.selection_policy.selection_kind == "all_assets"
+    assert trading_strategy.portfolio.top_k == 5
+    assert trading_strategy.portfolio.portfolio_construction.top_k == 5
     assert trading_strategy.portfolio_policy.selection_policy.top_k == 5
     assert (
         trading_strategy.portfolio_policy.sizing_policy.sizing_method
@@ -228,6 +230,49 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.holding_cost_policy.borrow_fee_bps_per_step == 2.5
     assert trading_strategy.adaptation_policy.enabled is True
     assert trading_strategy.adaptation_policy.adaptation_blend == 0.35
+
+
+def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
+    trading_strategy = _build_trading_strategy(
+        strategy_id="strategy:test",
+        label="Test",
+        selection_kind="top_k",
+        top_k=3,
+    )
+
+    document = trading_strategy.to_document()
+    portfolio_document = document["portfolio"]
+
+    assert portfolio_document["selection_kind"] == "top_k"
+    assert portfolio_document["top_k"] == 3
+
+
+def test_strategy_portfolio_top_k_falls_back_from_legacy_construction():
+    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+    from alpha_os.trading_strategy import (
+        ExecutionPolicySpec,
+        HoldingCostPolicySpec,
+        RebalanceFrictionPolicySpec,
+        StrategyPortfolioSpec,
+    )
+
+    portfolio = StrategyPortfolioSpec.from_document(
+        {
+            "portfolio_construction": PortfolioConstructionSpec(top_k=4).to_document(),
+            "rebalance_friction_policy": RebalanceFrictionPolicySpec(
+                turnover_friction=None,
+                no_trade_band=None,
+            ).to_document(),
+            "execution_policy": ExecutionPolicySpec(
+                market_impact_bps=None,
+            ).to_document(),
+            "holding_cost_policy": HoldingCostPolicySpec().to_document(),
+            "selection_kind": "top_k",
+        }
+    )
+
+    assert portfolio.top_k == 4
+    assert portfolio.to_portfolio_policy().selection_policy.top_k == 4
 
 
 def test_trading_strategy_spec_round_trips_through_document():

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from .contract_boundaries import (
@@ -546,6 +546,22 @@ class StrategyPortfolioSpec:
         default_factory=HoldingCostPolicySpec
     )
     selection_kind: str = "all_assets"
+    top_k: int | None = None
+
+    def __post_init__(self) -> None:
+        top_k = self.top_k
+        construction_top_k = self.portfolio_construction.top_k
+        if top_k is None:
+            top_k = construction_top_k
+        if top_k is not None and (not isinstance(top_k, int) or top_k < 1):
+            raise ValueError("strategy portfolio top_k must be >= 1")
+        if top_k != construction_top_k:
+            object.__setattr__(
+                self,
+                "portfolio_construction",
+                replace(self.portfolio_construction, top_k=top_k),
+            )
+        object.__setattr__(self, "top_k", top_k)
 
     def to_document(self) -> dict[str, Any]:
         document = {
@@ -560,10 +576,13 @@ class StrategyPortfolioSpec:
             document["holding_cost_policy"] = self.holding_cost_policy.to_document()
         if self.selection_kind != "all_assets":
             document["selection_kind"] = self.selection_kind
+        if self.top_k is not None:
+            document["top_k"] = self.top_k
         return document
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "StrategyPortfolioSpec":
+        top_k = document.get("top_k")
         return cls(
             portfolio_construction=PortfolioConstructionSpec.from_document(
                 document.get("portfolio_construction")
@@ -578,6 +597,7 @@ class StrategyPortfolioSpec:
                 dict(document.get("holding_cost_policy", {}))
             ),
             selection_kind=str(document.get("selection_kind", "all_assets")),
+            top_k=None if top_k is None else int(top_k),
         )
 
     @classmethod
@@ -624,6 +644,7 @@ class StrategyPortfolioSpec:
             execution_policy=execution_policy,
             holding_cost_policy=holding_cost_policy,
             selection_kind=portfolio_policy.selection_policy.selection_kind,
+            top_k=portfolio_policy.selection_policy.top_k,
         )
 
     def to_portfolio_policy(self) -> PortfolioPolicySpec:
@@ -631,7 +652,7 @@ class StrategyPortfolioSpec:
         return PortfolioPolicySpec(
             selection_policy=SelectionPolicySpec(
                 selection_kind=self.selection_kind,
-                top_k=construction.top_k,
+                top_k=self.top_k,
             ),
             sizing_policy=SizingPolicySpec(
                 sizing_method=construction.sizing_method,
