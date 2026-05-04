@@ -239,18 +239,24 @@ def build_report_evaluation_task_contract_fields(
     subject_set=None,
     subject_set_id: str | None = None,
     target_id: str | None = None,
+    selection_kind: str | None = None,
+    top_k: int | None = None,
 ) -> dict[str, str | int | float | bool]:
     rebalance_interval_steps = portfolio_construction.rebalance_interval_steps
     is_hold_baseline = portfolio_construction.construction_kind == "hold_baseline"
+    resolved_top_k = portfolio_construction.top_k if top_k is None else top_k
+    resolved_selection = (
+        selection_kind
+        if selection_kind is not None
+        else "all_assets"
+        if resolved_top_k is None
+        else "top_k"
+    )
     fields: dict[str, str | int | float | bool] = {
         "construction_kind": portfolio_construction.construction_kind,
         "target_id": "-" if target_id is None else target_id,
-        "selection": "all_assets" if portfolio_construction.top_k is None else "top_k",
-        "top_k": (
-            "-"
-            if portfolio_construction.top_k is None
-            else portfolio_construction.top_k
-        ),
+        "selection": resolved_selection,
+        "top_k": "-" if resolved_top_k is None else resolved_top_k,
         "sizing": portfolio_construction.sizing_method or "-",
         "optimizer_backend": _optimizer_backend_for_sizing(
             portfolio_construction.sizing_method,

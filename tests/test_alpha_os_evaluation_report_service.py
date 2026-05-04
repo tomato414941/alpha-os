@@ -92,6 +92,30 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
     )
 
 
+def test_evaluation_task_contract_fields_use_strategy_portfolio_selection():
+    from alpha_os.evaluation_cost_config import (
+        EvaluationRebalanceFrictionPolicySpec,
+        ExecutionCostAssumptionsSpec,
+        HoldingCostAssumptionsSpec,
+    )
+    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+    from alpha_os.evaluation_report_service import (
+        build_report_evaluation_task_contract_fields,
+    )
+
+    fields = build_report_evaluation_task_contract_fields(
+        PortfolioConstructionSpec(top_k=None),
+        rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
+        execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
+        holding_cost_assumptions=HoldingCostAssumptionsSpec(),
+        selection_kind="top_k",
+        top_k=3,
+    )
+
+    assert fields["selection"] == "top_k"
+    assert fields["top_k"] == 3
+
+
 def test_hold_baseline_contract_fields_suppress_active_portfolio_noise():
     from alpha_os.evaluation_cost_config import (
         EvaluationRebalanceFrictionPolicySpec,

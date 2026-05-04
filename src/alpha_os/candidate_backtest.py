@@ -121,6 +121,7 @@ def evaluate_trainless_candidate_backtest(
         raise ValueError(f"strategy does not exist: {strategy_id}")
     trading_strategy = strategy_state.trading_strategy
     selection_kind = trading_strategy.selection_kind
+    selection_top_k = trading_strategy.portfolio.top_k
     # Trainless candidate backtests currently select positions by rule kind.
     position_rule_id = trading_strategy.position_rule_id
     if position_rule_id not in {
@@ -137,9 +138,9 @@ def evaluate_trainless_candidate_backtest(
         raise ValueError(
             "current trainless executor only supports selection=all_assets or selection=top_k"
         )
-    if selection_kind == "top_k" and portfolio_construction.top_k is None:
+    if selection_kind == "top_k" and selection_top_k is None:
         raise ValueError(
-            "trainless top_k executor requires portfolio_construction.top_k"
+            "trainless top_k executor requires strategy portfolio top_k"
         )
     subject_set_state = store.get_subject_set(subject_set_id)
     if subject_set_state is None:

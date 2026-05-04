@@ -544,6 +544,16 @@ class TrainlessEvaluationExecutionStrategy:
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
+                    selection_kind=(
+                        None
+                        if strategy_state is None
+                        else strategy_state.trading_strategy.selection_kind
+                    ),
+                    top_k=(
+                        None
+                        if strategy_state is None
+                        else strategy_state.trading_strategy.portfolio.top_k
+                    ),
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -682,6 +692,16 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
+                    selection_kind=(
+                        None
+                        if strategy_state is None
+                        else strategy_state.trading_strategy.selection_kind
+                    ),
+                    top_k=(
+                        None
+                        if strategy_state is None
+                        else strategy_state.trading_strategy.portfolio.top_k
+                    ),
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
