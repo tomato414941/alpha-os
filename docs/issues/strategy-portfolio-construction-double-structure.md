@@ -13,9 +13,9 @@ TradingStrategySpec
       -> PortfolioConstructionSpec
 ```
 
-The boundary between the two is not clear enough. For example,
-`selection_kind` is stored on `StrategyPortfolioSpec`, while `top_k` is stored on
-`PortfolioConstructionSpec`, even though they are closely related.
+The boundary between the two is not clear enough. `selection_kind` and `top_k`
+now live together on `StrategyPortfolioSpec`, but the surrounding
+`PortfolioConstructionSpec` still mixes multiple responsibilities.
 
 This makes small allocation components such as `EqualWeightLongOnlyAllocator`
 hard to connect without adding another parallel path.
@@ -113,7 +113,7 @@ Current classification:
 |---|---|---|---|
 | `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, rebalance cadence, and compatibility. |
 | `selection_kind` | `StrategyPortfolioSpec` | portfolio allocation | Chooses which candidates may receive weights. Belongs with `top_k`. |
-| `top_k` | `PortfolioConstructionSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; currently split from its mode. |
+| `top_k` | `StrategyPortfolioSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; no longer belongs to `PortfolioConstructionSpec`. |
 | `sizing_policy` | `PortfolioConstructionSpec` | portfolio allocation / legacy unclear | Related to weight creation, but also carries optimizer labels and history requirements. |
 | `rebalance_interval_steps` | `PortfolioConstructionSpec` | strategy decision / evaluation assumption | Strategy-owned if part of the hypothesis; evaluation-owned if only an execution cadence override. |
 | `long_only` | `PortfolioConstructionSpec` | legacy / derived | Derivable from `direction_mode`; should not be a second source of truth. |

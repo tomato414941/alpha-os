@@ -91,7 +91,7 @@ def test_portfolio_construction_exposes_canonical_constraint_boundary():
 
 
 def test_portfolio_construction_defaults_to_rank_tilt_overlay():
-    construction = PortfolioConstructionSpec(top_k=3)
+    construction = PortfolioConstructionSpec()
     document = construction.to_document()
     restored = PortfolioConstructionSpec.from_document(document)
 

@@ -1586,7 +1586,6 @@ def _portfolio_construction_for_decision_args(
         ),
         long_only=base_construction.long_only,
         direction_mode=base_construction.direction_mode,
-        top_k=base_construction.top_k,
         active_overlay=base_construction.active_overlay,
         gross_exposure_cap=(
             base_construction.gross_exposure_cap
@@ -1675,7 +1674,6 @@ def _portfolio_construction_with_sizing_spec(
         rebalance_interval_steps=base.rebalance_interval_steps,
         long_only=base.long_only,
         direction_mode=base.direction_mode,
-        top_k=base.top_k,
         active_overlay=base.active_overlay,
         gross_exposure_cap=base.gross_exposure_cap,
         asset_class_weight_caps=dict(base.asset_class_weight_caps),
@@ -1692,7 +1690,6 @@ def _portfolio_construction_for_decision_strategy(
     if trading_strategy is None:
         return base
     portfolio_policy = trading_strategy.portfolio.to_portfolio_policy()
-    selection_policy = portfolio_policy.selection_policy
     risk_policy = portfolio_policy.risk_policy
     base_construction = PortfolioConstructionSpec() if base is None else base
     rebalance_interval_steps = _rebalance_interval_steps_from_strategy_policy(
@@ -1724,11 +1721,6 @@ def _portfolio_construction_for_decision_strategy(
                     else base_construction.direction_mode
                 )
             )
-        ),
-        top_k=(
-            base_construction.top_k
-            if selection_policy.selection_kind != "top_k" or selection_policy.top_k is None
-            else int(selection_policy.top_k)
         ),
         active_overlay=base_construction.active_overlay,
         gross_exposure_cap=(
@@ -2625,6 +2617,11 @@ def _evaluation_strategy_override_from_document(
             ),
             execution_cost_assumptions=ExecutionCostAssumptionsSpec.from_document(
                 override_document.get("execution_cost_assumptions")
+            ),
+            top_k=(
+                None
+                if override_document.get("top_k") is None
+                else int(override_document["top_k"])
             ),
             holding_cost_assumptions=HoldingCostAssumptionsSpec.from_document(
                 override_document.get("holding_cost_assumptions")
@@ -5104,6 +5101,7 @@ def _run_portfolio_decision_from_input(
         portfolio_state=portfolio_state,
         subject_set=subject_set,
         portfolio_construction=portfolio_construction,
+        top_k=None if trading_strategy is None else trading_strategy.portfolio.top_k,
         risk_by_subject={
             item.subject_id: max(float(item.value), 0.0)
             for item in decision_input.risk_inputs
@@ -5390,7 +5388,6 @@ def _evaluation_trading_config_from_args(
             ),
             long_only=bool(getattr(args, "long_only", False)),
             direction_mode=_direction_mode_from_args(args),
-            top_k=None if getattr(args, "top_k", None) is None else int(args.top_k),
             gross_exposure_cap=(
                 None if args.gross_exposure_cap is None else float(args.gross_exposure_cap)
             ),
@@ -5418,6 +5415,7 @@ def _evaluation_trading_config_from_args(
                 0.0 if args.borrow_fee_bps_per_step is None else float(args.borrow_fee_bps_per_step)
             ),
         ),
+        top_k=None if getattr(args, "top_k", None) is None else int(args.top_k),
     )
 
 

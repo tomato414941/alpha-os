@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Any
 
 from .contract_boundaries import (
@@ -550,17 +550,11 @@ class StrategyPortfolioSpec:
 
     def __post_init__(self) -> None:
         top_k = self.top_k
-        construction_top_k = self.portfolio_construction.top_k
-        if top_k is None:
-            top_k = construction_top_k
+        construction_top_k = getattr(self.portfolio_construction, "top_k", None)
+        if top_k is None and construction_top_k is not None:
+            top_k = int(construction_top_k)
         if top_k is not None and (not isinstance(top_k, int) or top_k < 1):
             raise ValueError("strategy portfolio top_k must be >= 1")
-        if top_k != construction_top_k:
-            object.__setattr__(
-                self,
-                "portfolio_construction",
-                replace(self.portfolio_construction, top_k=top_k),
-            )
         object.__setattr__(self, "top_k", top_k)
 
     def to_document(self) -> dict[str, Any]:
@@ -629,7 +623,6 @@ class StrategyPortfolioSpec:
                     else risk_policy.long_only
                 ),
                 direction_mode=risk_policy.direction_mode,
-                top_k=portfolio_policy.selection_policy.top_k,
                 gross_exposure_cap=risk_policy.gross_exposure_cap,
                 target_vol=risk_policy.target_vol,
                 gross_leverage_cap=risk_policy.gross_leverage_cap,

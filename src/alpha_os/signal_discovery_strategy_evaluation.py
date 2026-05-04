@@ -227,6 +227,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
         ExecutionCostAssumptionsSpec()
     ),
     holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec(),
+    top_k: int | None = None,
 ) -> StrategyEvaluationResult:
     survivors = list(screening_result.survivors)
     survivor_metrics = {item.signal_id: item for item in survivors}
@@ -287,6 +288,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
             rebalance_friction_policy=rebalance_friction_policy,
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
+            top_k=top_k,
         )
         all_step_net_returns.extend(
             float(step.net_return) for step in variant_results.selected.steps
@@ -351,6 +353,7 @@ def build_direct_strategy_evaluation_metric_group_results(
         ExecutionCostAssumptionsSpec()
     ),
     holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec(),
+    top_k: int | None = None,
     signal_value: float = 1.0,
 ) -> StrategyEvaluationResult:
     range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
@@ -378,6 +381,7 @@ def build_direct_strategy_evaluation_metric_group_results(
             rebalance_friction_policy=rebalance_friction_policy,
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
+            top_k=top_k,
         )
         all_step_net_returns.extend(
             float(step.net_return) for step in variant_results.selected.steps
@@ -1114,6 +1118,7 @@ def _run_backtest_variant(
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
     execution_cost_assumptions: ExecutionCostAssumptionsSpec,
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    top_k: int | None,
 ) -> DecisionBacktestResult:
     return run_decision_backtest(
         DecisionBacktestInput(
@@ -1153,7 +1158,7 @@ def _run_backtest_variant(
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
             long_only=portfolio_construction.long_only,
             direction_mode=portfolio_construction.direction_mode,
-            top_k=portfolio_construction.top_k,
+            top_k=top_k,
             active_overlay=portfolio_construction.active_overlay,
             risk_budget=portfolio_construction.risk_budget,
             historical_return_lookback_steps=_historical_return_lookback_steps(
@@ -1406,6 +1411,7 @@ def evaluate_range_backtest_variants(
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
     execution_cost_assumptions: ExecutionCostAssumptionsSpec,
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    top_k: int | None,
 ) -> RangeBacktestVariantResults:
     selected = _run_backtest_variant(
         subject_set_id=subject_set_id,
@@ -1417,6 +1423,7 @@ def evaluate_range_backtest_variants(
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
         holding_cost_assumptions=holding_cost_assumptions,
+        top_k=top_k,
     )
     if _uses_expensive_sizing_optimizer(portfolio_construction):
         daily_rebalance = selected
@@ -1434,6 +1441,7 @@ def evaluate_range_backtest_variants(
             rebalance_friction_policy=rebalance_friction_policy,
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
+            top_k=top_k,
         )
     equal_weight = _run_backtest_variant(
         subject_set_id=subject_set_id,
@@ -1449,6 +1457,7 @@ def evaluate_range_backtest_variants(
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
         holding_cost_assumptions=holding_cost_assumptions,
+        top_k=top_k,
     )
     equal_weight_daily = _run_backtest_variant(
         subject_set_id=subject_set_id,
@@ -1465,6 +1474,7 @@ def evaluate_range_backtest_variants(
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
         holding_cost_assumptions=holding_cost_assumptions,
+        top_k=top_k,
     )
     return RangeBacktestVariantResults(
         selected=selected,

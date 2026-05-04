@@ -244,7 +244,7 @@ def build_report_evaluation_task_contract_fields(
 ) -> dict[str, str | int | float | bool]:
     rebalance_interval_steps = portfolio_construction.rebalance_interval_steps
     is_hold_baseline = portfolio_construction.construction_kind == "hold_baseline"
-    resolved_top_k = portfolio_construction.top_k if top_k is None else top_k
+    resolved_top_k = top_k
     resolved_selection = (
         selection_kind
         if selection_kind is not None

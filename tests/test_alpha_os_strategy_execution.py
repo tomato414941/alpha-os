@@ -203,7 +203,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     )
     assert trading_strategy.portfolio_policy.selection_policy.selection_kind == "all_assets"
     assert trading_strategy.portfolio.top_k == 5
-    assert trading_strategy.portfolio.portfolio_construction.top_k == 5
     assert trading_strategy.portfolio_policy.selection_policy.top_k == 5
     assert (
         trading_strategy.portfolio_policy.sizing_policy.sizing_method
@@ -247,8 +246,7 @@ def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
     assert portfolio_document["top_k"] == 3
 
 
-def test_strategy_portfolio_top_k_falls_back_from_legacy_construction():
-    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
     from alpha_os.trading_strategy import (
         ExecutionPolicySpec,
         HoldingCostPolicySpec,
@@ -258,7 +256,7 @@ def test_strategy_portfolio_top_k_falls_back_from_legacy_construction():
 
     portfolio = StrategyPortfolioSpec.from_document(
         {
-            "portfolio_construction": PortfolioConstructionSpec(top_k=4).to_document(),
+            "portfolio_construction": {},
             "rebalance_friction_policy": RebalanceFrictionPolicySpec(
                 turnover_friction=None,
                 no_trade_band=None,
@@ -268,6 +266,7 @@ def test_strategy_portfolio_top_k_falls_back_from_legacy_construction():
             ).to_document(),
             "holding_cost_policy": HoldingCostPolicySpec().to_document(),
             "selection_kind": "top_k",
+            "top_k": 4,
         }
     )
 

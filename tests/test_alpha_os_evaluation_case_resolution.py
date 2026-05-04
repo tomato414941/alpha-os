@@ -70,7 +70,6 @@ def _make_evaluation_trading_config(
             rebalance_interval_steps=rebalance_interval_steps,
             long_only=long_only,
             direction_mode=direction_mode,
-            top_k=top_k,
             gross_exposure_cap=gross_exposure_cap,
             target_vol=target_vol,
             gross_leverage_cap=gross_leverage_cap,
@@ -81,6 +80,7 @@ def _make_evaluation_trading_config(
         ),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
         execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
+        top_k=top_k,
         holding_cost_assumptions=HoldingCostAssumptionsSpec(),
     )
 
@@ -294,7 +294,7 @@ def test_overridden_strategy_variant_config_preserves_risk_contract():
     assert construction.sizing_method == "hierarchical_risk_parity"
     assert construction.sizing_engine == "history_based"
     assert construction.long_only is False
-    assert construction.top_k == 5
+    assert resolved.top_k == 5
     assert construction.gross_exposure_cap == 1.5
     assert construction.target_vol == 0.18
     assert construction.gross_leverage_cap == 1.8

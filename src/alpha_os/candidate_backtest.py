@@ -191,6 +191,7 @@ def evaluate_trainless_candidate_backtest(
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
         holding_cost_assumptions=holding_cost_assumptions,
+        top_k=selection_top_k,
     )
 
 

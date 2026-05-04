@@ -261,9 +261,9 @@ def test_apply_decision_output_constraints_can_enforce_long_only_top_k():
         ),
         portfolio_construction=PortfolioConstructionSpec(
             long_only=True,
-            top_k=2,
             gross_exposure_cap=1.0,
         ),
+        top_k=2,
     )
 
     targets = {item.subject_id: item for item in constrained.targets}
@@ -340,9 +340,9 @@ def test_apply_decision_output_constraints_top_k_filters_after_overlay():
         ),
         portfolio_construction=PortfolioConstructionSpec(
             long_only=True,
-            top_k=2,
             gross_exposure_cap=1.0,
         ),
+        top_k=2,
     )
 
     targets = {item.subject_id: item for item in constrained.targets}
@@ -384,9 +384,9 @@ def test_apply_decision_output_constraints_can_hold_between_rebalances():
         portfolio_construction=PortfolioConstructionSpec(
             rebalance_interval_steps=5,
             long_only=True,
-            top_k=1,
             gross_exposure_cap=1.0,
         ),
+        top_k=1,
     )
 
     targets = {item.subject_id: item for item in constrained.targets}

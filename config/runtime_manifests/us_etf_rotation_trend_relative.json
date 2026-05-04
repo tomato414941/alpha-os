@@ -216,7 +216,6 @@
         },
         "rebalance_interval_steps": 5,
         "long_only": true,
-        "top_k": 2,
         "gross_exposure_cap": 1.0
       },
       "rebalance_friction_policy": {
@@ -228,7 +227,8 @@
         "market_impact_bps": 5.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "top_k": 2
     }
   ]
 }

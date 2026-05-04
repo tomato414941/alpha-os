@@ -193,7 +193,6 @@
           },
           "rebalance_interval_steps": 252,
           "long_only": true,
-          "top_k": null,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -223,7 +222,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -239,7 +239,6 @@
           },
           "rebalance_interval_steps": 21,
           "long_only": true,
-          "top_k": null,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -269,7 +268,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -288,7 +288,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -343,7 +342,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -362,7 +362,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -424,7 +423,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -443,7 +443,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -505,7 +504,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -524,7 +524,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -586,7 +585,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -605,7 +605,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -667,7 +666,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -686,7 +686,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -748,7 +747,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -767,7 +767,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -829,7 +828,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -848,7 +848,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -903,7 +902,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.0,
           "borrow_fee_bps_per_step": 0.0
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -922,7 +922,6 @@
           },
           "rebalance_interval_steps": 5,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -977,7 +976,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -996,7 +996,6 @@
           },
           "rebalance_interval_steps": 5,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1051,7 +1050,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -1070,7 +1070,6 @@
           },
           "rebalance_interval_steps": 10,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1128,7 +1127,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -1147,7 +1147,6 @@
           },
           "rebalance_interval_steps": 21,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1202,7 +1201,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     },
     {
@@ -1221,7 +1221,6 @@
           },
           "rebalance_interval_steps": 1,
           "long_only": false,
-          "top_k": null,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1275,7 +1274,8 @@
         "holding_cost_assumptions": {
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
-        }
+        },
+        "top_k": null
       }
     }
   ]

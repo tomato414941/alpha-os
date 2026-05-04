@@ -21,6 +21,8 @@ class StrategyEvaluationContext:
     subject_set_id: str
     target_id: str
     base_url: str
+    selection_kind: str
+    top_k: int | None
     portfolio_construction: PortfolioConstructionSpec
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
     execution_cost_assumptions: ExecutionCostAssumptionsSpec

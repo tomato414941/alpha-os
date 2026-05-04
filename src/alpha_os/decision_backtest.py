@@ -145,7 +145,6 @@ class DecisionBacktestInput:
             )
             object.__setattr__(self, "long_only", construction.long_only)
             object.__setattr__(self, "direction_mode", construction.direction_mode)
-            object.__setattr__(self, "top_k", construction.top_k)
             object.__setattr__(self, "active_overlay", construction.active_overlay)
             object.__setattr__(
                 self,

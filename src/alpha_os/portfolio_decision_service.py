@@ -388,6 +388,7 @@ def apply_decision_output_constraints(
     portfolio_state: PortfolioState,
     subject_set: SubjectSet | None = None,
     portfolio_construction: PortfolioConstructionSpec | None = None,
+    top_k: int | None = None,
     risk_by_subject: dict[str, float] | None = None,
 ) -> PortfolioDecisionOutput:
     if portfolio_construction is None:
@@ -447,7 +448,7 @@ def apply_decision_output_constraints(
         constraint_boundary=portfolio_construction.constraint_boundary,
         long_only=portfolio_construction.long_only,
         direction_mode=portfolio_construction.direction_mode,
-        top_k=portfolio_construction.top_k,
+        top_k=top_k,
         active_overlay=portfolio_construction.active_overlay,
         asset_class_by_subject=(
             {} if subject_set is None else subject_set.asset_class_by_subject

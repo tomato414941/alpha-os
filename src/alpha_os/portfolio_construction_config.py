@@ -400,7 +400,6 @@ class PortfolioConstructionSpec:
     rebalance_interval_steps: int = 1
     long_only: bool = False
     direction_mode: str | None = None
-    top_k: int | None = None
     active_overlay: ActiveOverlaySpec | None = field(default_factory=ActiveOverlaySpec)
     gross_exposure_cap: float | None = None
     target_vol: float | None = None
@@ -430,10 +429,6 @@ class PortfolioConstructionSpec:
         )
         object.__setattr__(self, "direction_mode", direction_mode)
         object.__setattr__(self, "long_only", direction_mode == "long_only")
-        if self.top_k is not None and (
-            not isinstance(self.top_k, int) or self.top_k < 1
-        ):
-            raise ValueError("portfolio_construction.top_k must be >= 1")
         if self.active_overlay is not None and not isinstance(
             self.active_overlay,
             ActiveOverlaySpec,
@@ -557,8 +552,6 @@ class PortfolioConstructionSpec:
         }
         if self.direction_mode != "long_short":
             document["direction_mode"] = self.direction_mode
-        if self.top_k is not None:
-            document["top_k"] = self.top_k
         if self.active_overlay is not None:
             document["active_overlay"] = self.active_overlay.to_document()
         if self.gross_exposure_cap is not None:
@@ -614,7 +607,6 @@ class PortfolioConstructionSpec:
                 if document.get("direction_mode") is None
                 else str(document.get("direction_mode"))
             ),
-            top_k=document.get("top_k"),
             active_overlay=(
                 None
                 if construction_kind == "hold_baseline"

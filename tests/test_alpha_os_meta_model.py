@@ -1017,10 +1017,11 @@ def test_checked_in_us_etf_dual_momentum_10y_manifest_applies_cleanly(
         assert len(case_states) == 1
         strategy_state = store.get_trading_strategy(case_states[0].task.strategy_id)
         assert strategy_state is not None
-        construction = strategy_state.trading_strategy.portfolio_construction
+        strategy = strategy_state.trading_strategy
+        construction = strategy.portfolio_construction
         assert construction is not None
         assert construction.rebalance_interval_steps == 21
-        assert construction.top_k == 3
+        assert strategy.portfolio.top_k == 3
         assert construction.target_vol == 0.1
         assert construction.gross_leverage_cap == 1.0
         assert construction.net_exposure_target == 1.0

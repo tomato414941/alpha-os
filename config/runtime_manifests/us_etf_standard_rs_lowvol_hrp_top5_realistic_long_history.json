@@ -481,8 +481,7 @@
         "gross_exposure_cap": 0.9,
         "target_vol": 0.12,
         "gross_leverage_cap": 0.9,
-        "net_exposure_target": 0.9,
-        "top_k": 5
+        "net_exposure_target": 0.9
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.001,
@@ -493,7 +492,8 @@
         "market_impact_bps": 6.0,
         "fee_bps": 0.5,
         "bid_ask_spread_bps": 2.0
-      }
+      },
+      "top_k": 5
     }
   ]
 }

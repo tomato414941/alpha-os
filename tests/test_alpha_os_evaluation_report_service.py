@@ -104,7 +104,7 @@ def test_evaluation_task_contract_fields_use_strategy_portfolio_selection():
     )
 
     fields = build_report_evaluation_task_contract_fields(
-        PortfolioConstructionSpec(top_k=None),
+        PortfolioConstructionSpec(),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
         execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
         holding_cost_assumptions=HoldingCostAssumptionsSpec(),

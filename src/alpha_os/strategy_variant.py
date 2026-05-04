@@ -28,6 +28,7 @@ class StrategyVariantConfig:
     portfolio_construction: PortfolioConstructionSpec
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
     execution_cost_assumptions: ExecutionCostAssumptionsSpec
+    top_k: int | None = None
     holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec()
 
     @property
@@ -61,6 +62,7 @@ def strategy_variant_config_from_strategy(
             fee_bps=execution.fee_bps or 0.0,
             bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
         ),
+        top_k=portfolio.top_k,
         holding_cost_assumptions=HoldingCostAssumptionsSpec(
             funding_bps_per_step=(
                 0.0
@@ -115,7 +117,6 @@ def overridden_strategy_variant_config(
                 if direction_mode is None
                 else direction_mode
             ),
-            top_k=portfolio_construction.top_k,
             active_overlay=portfolio_construction.active_overlay,
             gross_exposure_cap=portfolio_construction.gross_exposure_cap,
             target_vol=portfolio_construction.target_vol,
@@ -127,6 +128,7 @@ def overridden_strategy_variant_config(
         ),
         rebalance_friction_policy=config.rebalance_friction_policy,
         execution_cost_assumptions=config.execution_cost_assumptions,
+        top_k=config.top_k,
         holding_cost_assumptions=config.holding_cost_assumptions,
     )
 
@@ -156,11 +158,7 @@ def derive_trading_strategy_from_signal_discovery(
         else ("spec:" + ",".join(specification_ids) if specification_ids else "-")
     )
     rebalance_value = f"every_{portfolio_construction.rebalance_interval_steps}_steps"
-    top_k_value = (
-        None
-        if portfolio_construction.top_k is None
-        else int(portfolio_construction.top_k)
-    )
+    top_k_value = None if variant_config.top_k is None else int(variant_config.top_k)
     strategy_id = build_trading_strategy_id(
         signal_discovery_id=signal_discovery.signal_discovery_id,
         subject_set_id=definition.subject_set_id,
@@ -255,6 +253,7 @@ def derive_trading_strategy_from_signal_discovery(
                 ),
             ),
             selection_kind="all_assets" if top_k_value is None else "top_k",
+            top_k=top_k_value,
         ),
         created_at=created_at,
         adaptation_policy=AdaptationPolicySpec(
