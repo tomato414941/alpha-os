@@ -1518,6 +1518,9 @@ def _trading_strategy_with_evaluation_config(
             borrow_fee_bps_per_step=holding_costs.borrow_fee_bps_per_step,
         ),
         portfolio_construction=variant_config.portfolio_construction,
+        rebalance_interval_steps=(
+            variant_config.portfolio_construction.rebalance_interval_steps
+        ),
         sleeve_composition=variant_config.portfolio_construction.sleeve_composition,
     )
     return replace(
@@ -1692,18 +1695,10 @@ def _portfolio_construction_for_decision_strategy(
     portfolio_policy = trading_strategy.portfolio.to_portfolio_policy()
     risk_policy = portfolio_policy.risk_policy
     base_construction = PortfolioConstructionSpec() if base is None else base
-    rebalance_interval_steps = _rebalance_interval_steps_from_strategy_policy(
-        portfolio_policy.rebalance_policy.rebalance,
-        portfolio_policy.rebalance_policy.rebalance_interval_steps,
-    )
     return PortfolioConstructionSpec(
         construction_kind=base_construction.construction_kind,
         sizing_policy=base_construction.sizing_policy,
-        rebalance_interval_steps=(
-            base_construction.rebalance_interval_steps
-            if rebalance_interval_steps is None
-            else rebalance_interval_steps
-        ),
+        rebalance_interval_steps=trading_strategy.portfolio.rebalance_interval_steps,
         long_only=(
             base_construction.long_only
             if risk_policy.long_only is None
@@ -5058,14 +5053,12 @@ def _format_runtime_strategy_summary(
     portfolio_policy = trading_strategy.portfolio.to_portfolio_policy()
     risk_policy = portfolio_policy.risk_policy
     selection_policy = portfolio_policy.selection_policy
-    rebalance_policy = portfolio_policy.rebalance_policy
     return (
         f"{trading_strategy.strategy_id} "
         f"selection={selection_policy.selection_kind} "
         f"sizing={sizing_method} "
         f"engine={sizing_engine} "
-        "rebalance="
-        f"{'-' if rebalance_policy.rebalance is None else rebalance_policy.rebalance} "
+        f"rebalance=every_{trading_strategy.portfolio.rebalance_interval_steps}_steps "
         f"top_k={'-' if selection_policy.top_k is None else selection_policy.top_k} "
         f"long_only={'-' if risk_policy.long_only is None else str(risk_policy.long_only).lower()} "
         "gross_exposure_cap="

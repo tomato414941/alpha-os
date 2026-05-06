@@ -89,6 +89,12 @@ Rebalance cadence should be treated as strategy cadence or evaluation execution
 policy, depending on whether the cadence is part of the trading hypothesis or an
 evaluation override.
 
+Current decision: rebalance cadence is strategy-owned for strategy specs.
+`StrategyPortfolioSpec.rebalance_interval_steps` is the source of truth.
+`RebalancePolicySpec` has been removed. `PortfolioConstructionSpec` may still
+accept `rebalance_interval_steps` as compatibility input, but it should not emit
+it as a persisted construction field.
+
 ### Risk And Exposure Constraints
 
 Risk and exposure constraints are not allocator internals. They belong after raw
@@ -119,7 +125,7 @@ Current classification:
 | `selection_kind` | `StrategyPortfolioSpec` | portfolio allocation | Chooses which candidates may receive weights. Belongs with `top_k`. |
 | `top_k` | `StrategyPortfolioSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; no longer belongs to `PortfolioConstructionSpec`. |
 | `sizing_policy` | `PortfolioConstructionSpec` | portfolio allocation / legacy unclear | Related to weight creation, but also carries optimizer labels and history requirements. |
-| `rebalance_interval_steps` | `PortfolioConstructionSpec` | strategy decision / evaluation assumption | Strategy-owned if part of the hypothesis; evaluation-owned if only an execution cadence override. |
+| `rebalance_interval_steps` | `StrategyPortfolioSpec` | strategy-owned | Strategy cadence is part of the trading hypothesis; `PortfolioConstructionSpec` only keeps compatibility input. |
 | `long_only` | `PortfolioConstructionSpec` | legacy / derived | Derivable from `direction_mode`; should not be a second source of truth. |
 | `direction_mode` | `PortfolioConstructionSpec` | portfolio allocation | Determines how long/short/flat candidates are treated before weights are finalized. |
 | `active_overlay` | `PortfolioConstructionSpec` | portfolio allocation / unclear | Appears to alter target weights, but the boundary is still broad. |

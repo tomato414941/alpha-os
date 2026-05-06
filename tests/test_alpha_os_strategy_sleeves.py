@@ -37,7 +37,6 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
         ExecutionPolicySpec,
         PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         SizingPolicySpec,
@@ -54,7 +53,6 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
             top_k=None,
         ),
         sizing_policy=SizingPolicySpec(sizing_method="signal_weighted"),
-        rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
         risk_policy=RiskPolicySpec(
             long_only=False,
             gross_exposure_cap=1.0,

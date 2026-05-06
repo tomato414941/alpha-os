@@ -113,7 +113,6 @@ def build_report_strategy_contract_fields(
     portfolio_policy = portfolio.to_portfolio_policy()
     selection_policy = portfolio_policy.selection_policy
     sizing_policy = portfolio_policy.sizing_policy
-    rebalance_policy = portfolio_policy.rebalance_policy
     risk_policy = portfolio_policy.risk_policy
     friction_policy = portfolio.rebalance_friction_policy
     execution_policy = portfolio.execution_policy
@@ -132,7 +131,7 @@ def build_report_strategy_contract_fields(
             sizing_policy.sizing_method,
             getattr(sizing_policy, "sizing_engine", None),
         ),
-        "rebalance": rebalance_policy.rebalance or "-",
+        "rebalance": f"every_{portfolio.rebalance_interval_steps}_steps",
         "direction_mode": risk_policy.direction_mode or "-",
         "gross_exposure_cap": (
             "-" if risk_policy.gross_exposure_cap is None else risk_policy.gross_exposure_cap

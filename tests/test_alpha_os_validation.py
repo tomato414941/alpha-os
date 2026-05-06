@@ -21,7 +21,6 @@ def _build_trading_strategy(
         SizingPolicySpec,
         ExecutionPolicySpec,
         PortfolioPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -39,7 +38,6 @@ def _build_trading_strategy(
         sizing_policy=SizingPolicySpec(
             sizing_method=sizing_method,
         ),
-        rebalance_policy=RebalancePolicySpec(rebalance=None),
         risk_policy=RiskPolicySpec(long_only=None, gross_exposure_cap=None),
     )
     return TradingStrategySpec(

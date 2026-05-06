@@ -98,10 +98,7 @@ def _strategy_document(
                 "sizing_policy": {
                     "sizing_method": "equal_weight",
                 },
-                "rebalance_policy": {
-                    "rebalance": "every_1_steps",
-                    "rebalance_interval_steps": 1,
-                },
+                                "rebalance_interval_steps": 1,
                 "risk_policy": {
                     "long_only": True,
                     "gross_exposure_cap": 1.0,

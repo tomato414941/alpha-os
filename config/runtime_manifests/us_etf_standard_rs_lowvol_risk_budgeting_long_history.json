@@ -16,9 +16,7 @@
           "sizing_policy": {
             "sizing_method": "risk_budgeting"
           },
-          "rebalance_policy": {
-            "rebalance": "every_5_steps"
-          },
+          "rebalance_interval_steps": 5,
           "risk_policy": {
             "gross_exposure_cap": 0.85,
             "direction_mode": "long_only"

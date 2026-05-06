@@ -28,7 +28,6 @@ from alpha_os.trading_strategy import (
     HoldingCostPolicySpec,
     PortfolioPolicySpec,
     RebalanceFrictionPolicySpec,
-    RebalancePolicySpec,
     RiskPolicySpec,
     SelectionPolicySpec,
     SizingPolicySpec,
@@ -552,7 +551,6 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
                 portfolio_policy=PortfolioPolicySpec(
                     selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=3),
                     sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-                    rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
                     risk_policy=RiskPolicySpec(
                         long_only=True,
                         gross_exposure_cap=1.0,
@@ -696,7 +694,6 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
                 portfolio_policy=PortfolioPolicySpec(
                     selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=2),
                     sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-                    rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
                     risk_policy=RiskPolicySpec(
                         long_only=True,
                         gross_exposure_cap=1.0,

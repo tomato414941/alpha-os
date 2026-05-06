@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from .contract_boundaries import (
@@ -212,40 +212,6 @@ class SizingPolicySpec:
 
 
 @dataclass(frozen=True)
-class RebalancePolicySpec:
-    rebalance: str | None
-    rebalance_interval_steps: int | None = None
-
-    def __post_init__(self) -> None:
-        if self.rebalance_interval_steps is not None and (
-            not isinstance(self.rebalance_interval_steps, int)
-            or self.rebalance_interval_steps < 1
-        ):
-            raise ValueError("rebalance_policy.rebalance_interval_steps must be >= 1")
-
-    def to_document(self) -> dict[str, Any]:
-        document = {
-            "rebalance": self.rebalance,
-        }
-        if self.rebalance_interval_steps is not None:
-            document["rebalance_interval_steps"] = self.rebalance_interval_steps
-        return document
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "RebalancePolicySpec":
-        return cls(
-            rebalance=_normalize_optional(
-                None if document.get("rebalance") is None else str(document["rebalance"])
-            ),
-            rebalance_interval_steps=(
-                None
-                if document.get("rebalance_interval_steps") is None
-                else int(document.get("rebalance_interval_steps"))
-            ),
-        )
-
-
-@dataclass(frozen=True)
 class RiskPolicySpec:
     long_only: bool | None
     gross_exposure_cap: float | None
@@ -330,14 +296,12 @@ class RiskPolicySpec:
 class PortfolioPolicySpec:
     selection_policy: SelectionPolicySpec
     sizing_policy: SizingPolicySpec
-    rebalance_policy: RebalancePolicySpec
     risk_policy: RiskPolicySpec
 
     def to_document(self) -> dict[str, Any]:
         return {
             "selection_policy": self.selection_policy.to_document(),
             "sizing_policy": self.sizing_policy.to_document(),
-            "rebalance_policy": self.rebalance_policy.to_document(),
             "risk_policy": self.risk_policy.to_document(),
         }
 
@@ -349,9 +313,6 @@ class PortfolioPolicySpec:
             ),
             sizing_policy=SizingPolicySpec.from_document(
                 dict(document.get("sizing_policy", {}))
-            ),
-            rebalance_policy=RebalancePolicySpec.from_document(
-                dict(document.get("rebalance_policy", {}))
             ),
             risk_policy=RiskPolicySpec.from_document(
                 dict(document.get("risk_policy", {}))
@@ -518,10 +479,16 @@ class AdaptationPolicySpec:
         )
 
 
-def _rebalance_interval_steps_from_policy(policy: RebalancePolicySpec) -> int:
-    if policy.rebalance_interval_steps is not None:
-        return policy.rebalance_interval_steps
-    rebalance = policy.rebalance
+def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
+    raw_steps = document.get("rebalance_interval_steps")
+    if raw_steps is not None:
+        steps = int(raw_steps)
+        if steps < 1:
+            raise ValueError("rebalance_interval_steps must be >= 1")
+        return steps
+    rebalance = _normalize_optional(
+        None if document.get("rebalance") is None else str(document["rebalance"])
+    )
     if rebalance in {None, "", "-", "none"}:
         return 1
     prefix = "every_"
@@ -531,11 +498,31 @@ def _rebalance_interval_steps_from_policy(policy: RebalancePolicySpec) -> int:
     return 1
 
 
-def _rebalance_policy_from_interval(rebalance_interval_steps: int) -> RebalancePolicySpec:
-    return RebalancePolicySpec(
-        rebalance=f"every_{int(rebalance_interval_steps)}_steps",
-        rebalance_interval_steps=int(rebalance_interval_steps),
-    )
+def _legacy_rebalance_interval_steps_from_strategy_document(
+    document: dict[str, Any],
+    portfolio_construction: PortfolioConstructionSpec | None,
+) -> int:
+    raw_steps = document.get("rebalance_interval_steps")
+    if raw_steps is not None:
+        return _rebalance_interval_steps_from_document(
+            {"rebalance_interval_steps": raw_steps}
+        )
+    portfolio_policy = dict(document.get("portfolio_policy", {}))
+    raw_steps = portfolio_policy.get("rebalance_interval_steps")
+    if raw_steps is not None:
+        return _rebalance_interval_steps_from_document(
+            {"rebalance_interval_steps": raw_steps}
+        )
+    rebalance_policy = portfolio_policy.get("rebalance_policy")
+    if isinstance(rebalance_policy, dict):
+        return _rebalance_interval_steps_from_document(dict(rebalance_policy))
+    if portfolio_construction is not None:
+        return portfolio_construction.rebalance_interval_steps
+    return 1
+
+
+def _rebalance_label(rebalance_interval_steps: int) -> str:
+    return f"every_{int(rebalance_interval_steps)}_steps"
 
 
 @dataclass(frozen=True)
@@ -548,6 +535,7 @@ class StrategyPortfolioSpec:
     )
     selection_kind: str = "all_assets"
     top_k: int | None = None
+    rebalance_interval_steps: int = 1
 
     def __post_init__(self) -> None:
         top_k = self.top_k
@@ -557,12 +545,30 @@ class StrategyPortfolioSpec:
         if top_k is not None and (not isinstance(top_k, int) or top_k < 1):
             raise ValueError("strategy portfolio top_k must be >= 1")
         object.__setattr__(self, "top_k", top_k)
+        if (
+            not isinstance(self.rebalance_interval_steps, int)
+            or self.rebalance_interval_steps < 1
+        ):
+            raise ValueError("strategy portfolio rebalance_interval_steps must be >= 1")
+        if (
+            self.portfolio_construction.rebalance_interval_steps
+            != self.rebalance_interval_steps
+        ):
+            object.__setattr__(
+                self,
+                "portfolio_construction",
+                replace(
+                    self.portfolio_construction,
+                    rebalance_interval_steps=self.rebalance_interval_steps,
+                ),
+            )
 
     def to_document(self) -> dict[str, Any]:
         document = {
             "portfolio_construction": self.portfolio_construction.to_document(),
             "rebalance_friction_policy": self.rebalance_friction_policy.to_document(),
             "execution_policy": self.execution_policy.to_document(),
+            "rebalance_interval_steps": self.rebalance_interval_steps,
         }
         if (
             self.holding_cost_policy.funding_bps_per_step is not None
@@ -578,10 +584,14 @@ class StrategyPortfolioSpec:
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "StrategyPortfolioSpec":
         top_k = document.get("top_k")
+        portfolio_construction = PortfolioConstructionSpec.from_document(
+            document.get("portfolio_construction")
+        )
+        rebalance_interval_steps = document.get("rebalance_interval_steps")
+        if rebalance_interval_steps is None:
+            rebalance_interval_steps = portfolio_construction.rebalance_interval_steps
         return cls(
-            portfolio_construction=PortfolioConstructionSpec.from_document(
-                document.get("portfolio_construction")
-            ),
+            portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec.from_document(
                 dict(document.get("rebalance_friction_policy", {}))
             ),
@@ -593,6 +603,7 @@ class StrategyPortfolioSpec:
             ),
             selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
+            rebalance_interval_steps=int(rebalance_interval_steps),
         )
 
     @classmethod
@@ -604,7 +615,8 @@ class StrategyPortfolioSpec:
         execution_policy: ExecutionPolicySpec,
         holding_cost_policy: HoldingCostPolicySpec,
         portfolio_construction: PortfolioConstructionSpec | None,
-        sleeve_composition: StrategySleeveCompositionSpec | None,
+        rebalance_interval_steps: int = 1,
+        sleeve_composition: StrategySleeveCompositionSpec | None = None,
     ) -> "StrategyPortfolioSpec":
         if portfolio_construction is not None:
             construction = portfolio_construction
@@ -615,9 +627,7 @@ class StrategyPortfolioSpec:
                 sizing_policy=PortfolioConstructionSizingSpec(
                     sizing_method=sizing_method,
                 ),
-                rebalance_interval_steps=_rebalance_interval_steps_from_policy(
-                    portfolio_policy.rebalance_policy
-                ),
+                rebalance_interval_steps=rebalance_interval_steps,
                 long_only=(
                     False
                     if risk_policy.long_only is None
@@ -639,6 +649,7 @@ class StrategyPortfolioSpec:
             holding_cost_policy=holding_cost_policy,
             selection_kind=portfolio_policy.selection_policy.selection_kind,
             top_k=portfolio_policy.selection_policy.top_k,
+            rebalance_interval_steps=rebalance_interval_steps,
         )
 
     def to_portfolio_policy(self) -> PortfolioPolicySpec:
@@ -650,9 +661,6 @@ class StrategyPortfolioSpec:
             ),
             sizing_policy=SizingPolicySpec(
                 sizing_method=construction.sizing_method,
-            ),
-            rebalance_policy=_rebalance_policy_from_interval(
-                construction.rebalance_interval_steps
             ),
             risk_policy=RiskPolicySpec(
                 long_only=construction.long_only,
@@ -716,6 +724,12 @@ class TradingStrategySpec:
         legacy_portfolio_policy = PortfolioPolicySpec.from_document(
             dict(document.get("portfolio_policy", {}))
         )
+        legacy_rebalance_interval_steps = (
+            _legacy_rebalance_interval_steps_from_strategy_document(
+                document,
+                legacy_portfolio_construction,
+            )
+        )
         legacy_rebalance_friction_policy = RebalanceFrictionPolicySpec.from_document(
             dict(document.get("rebalance_friction_policy", {}))
         )
@@ -736,6 +750,7 @@ class TradingStrategySpec:
             execution_policy=legacy_execution_policy,
             holding_cost_policy=legacy_holding_cost_policy,
             portfolio_construction=legacy_portfolio_construction,
+            rebalance_interval_steps=legacy_rebalance_interval_steps,
             sleeve_composition=legacy_sleeve_composition,
         )
         return cls(

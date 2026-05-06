@@ -62,7 +62,7 @@ def _trading_strategy_trace_document(
         "target_id": trading_strategy.target_id,
         "selection_kind": policy.selection_policy.selection_kind,
         "sizing_method": policy.sizing_policy.sizing_method,
-        "rebalance": policy.rebalance_policy.rebalance,
+        "rebalance": f"every_{portfolio.rebalance_interval_steps}_steps",
         "top_k": policy.selection_policy.top_k,
         "direction_mode": risk.direction_mode,
         "gross_exposure_cap": risk.gross_exposure_cap,

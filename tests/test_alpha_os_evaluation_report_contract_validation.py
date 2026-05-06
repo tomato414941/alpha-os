@@ -112,7 +112,6 @@ def _register_direct_strategy(
         HoldingCostPolicySpec,
         PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -127,7 +126,6 @@ def _register_direct_strategy(
             top_k=3,
         ),
         sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-        rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
         risk_policy=RiskPolicySpec(
             long_only=True,
             gross_exposure_cap=1.0,

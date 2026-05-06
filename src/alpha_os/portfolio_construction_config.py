@@ -547,7 +547,6 @@ class PortfolioConstructionSpec:
         document: dict[str, Any] = {
             "construction_kind": self.construction_kind,
             "sizing_policy": self.sizing_policy.to_document(),
-            "rebalance_interval_steps": self.rebalance_interval_steps,
             "direction_mode": self.direction_mode,
         }
         if self.active_overlay is not None:

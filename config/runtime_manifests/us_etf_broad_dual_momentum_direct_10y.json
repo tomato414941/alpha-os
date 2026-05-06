@@ -88,9 +88,7 @@
           "sizing_policy": {
             "sizing_method": "signal_weighted"
           },
-          "rebalance_policy": {
-            "rebalance": "every_21_steps"
-          },
+          "rebalance_interval_steps": 21,
           "risk_policy": {
             "gross_exposure_cap": 1.0,
             "target_vol": 0.1,

@@ -58,10 +58,7 @@
           "sizing_policy": {
             "sizing_method": "equal_weight"
           },
-          "rebalance_policy": {
-            "rebalance": "every_5_steps",
-            "rebalance_interval_steps": 5
-          },
+          "rebalance_interval_steps": 5,
           "risk_policy": {
             "gross_exposure_cap": 1.0,
             "gross_leverage_cap": 1.0,

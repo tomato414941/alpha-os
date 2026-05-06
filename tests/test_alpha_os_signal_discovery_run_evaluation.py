@@ -51,7 +51,6 @@ def _build_trading_strategy(
         SizingPolicySpec,
         ExecutionPolicySpec,
         PortfolioPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -69,7 +68,6 @@ def _build_trading_strategy(
         sizing_policy=SizingPolicySpec(
             sizing_method=sizing_method,
         ),
-        rebalance_policy=RebalancePolicySpec(rebalance=rebalance),
         risk_policy=RiskPolicySpec(
             long_only=long_only,
             gross_exposure_cap=gross_exposure_cap,
@@ -99,6 +97,13 @@ def _build_trading_strategy(
             ),
             holding_cost_policy=HoldingCostPolicySpec(),
             portfolio_construction=None,
+            rebalance_interval_steps=(
+                int(rebalance[len("every_") : -len("_steps")])
+                if isinstance(rebalance, str)
+                and rebalance.startswith("every_")
+                and rebalance.endswith("_steps")
+                else 1
+            ),
             sleeve_composition=None,
         ),
         created_at=created_at,
@@ -777,9 +782,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": False,
                                     "gross_exposure_cap": None,
@@ -959,9 +962,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": False,
                                     "gross_exposure_cap": None,
@@ -1088,9 +1089,7 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_policy": {
-                                    "rebalance": "none",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": None,
                                     "gross_exposure_cap": None,
@@ -1230,9 +1229,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": None,
                                     "gross_exposure_cap": None,
@@ -1458,9 +1455,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                     "top_k": 1,
                                 },
                                 "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": True,
                                     "gross_exposure_cap": 1.0,
@@ -1700,9 +1695,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                     "top_k": 1,
                                 },
                                 "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": True,
                                     "gross_exposure_cap": 1.0,
@@ -3416,10 +3409,7 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             trading_strategy.portfolio_policy.sizing_policy.sizing_method
             == "signal_weighted"
         )
-        assert (
-            trading_strategy.portfolio_policy.rebalance_policy.rebalance
-            == "every_1_steps"
-        )
+        assert trading_strategy.portfolio.rebalance_interval_steps == 1
         initial_signal_discovery_run_count = len(signal_discovery_runs)
         initial_state_count = len(initial_strategy_states)
     finally:

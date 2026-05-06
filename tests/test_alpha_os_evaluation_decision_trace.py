@@ -337,7 +337,6 @@ def _register_direct_strategy(store) -> None:
         ExecutionPolicySpec,
         PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -353,7 +352,6 @@ def _register_direct_strategy(store) -> None:
             top_k=None,
         ),
         sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-        rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
         risk_policy=RiskPolicySpec(
             long_only=True,
             gross_exposure_cap=1.0,

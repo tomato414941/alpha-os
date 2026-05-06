@@ -635,9 +635,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_policy": {
-                                    "rebalance": "every_1_steps",
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": None,
                                     "gross_exposure_cap": None,
@@ -1833,7 +1831,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         HoldingCostPolicySpec,
         PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         SizingPolicySpec,
@@ -1940,7 +1937,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                 top_k=1,
             ),
             sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-            rebalance_policy=RebalancePolicySpec(rebalance="every_1_steps"),
             risk_policy=RiskPolicySpec(
                 long_only=True,
                 gross_exposure_cap=0.5,
@@ -2479,9 +2475,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                     "top_k": None,
                                 },
                                 "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_policy": {
-                                    "rebalance": None,
-                                },
+                                "rebalance_interval_steps": 1,
                                 "risk_policy": {
                                     "long_only": None,
                                     "gross_exposure_cap": None,
@@ -3455,7 +3449,6 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
         SizingPolicySpec,
         ExecutionPolicySpec,
         PortfolioPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -3504,7 +3497,6 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
                 top_k=None,
             ),
             sizing_policy=SizingPolicySpec(sizing_method=None),
-            rebalance_policy=RebalancePolicySpec(rebalance=None),
             risk_policy=RiskPolicySpec(long_only=None, gross_exposure_cap=None),
         )
         spec = TradingStrategySpec(

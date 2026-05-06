@@ -35,7 +35,6 @@ def _build_trading_strategy(
         SizingPolicySpec,
         ExecutionPolicySpec,
         PortfolioPolicySpec,
-        RebalancePolicySpec,
         RiskPolicySpec,
         SelectionPolicySpec,
         StrategyPortfolioSpec,
@@ -53,7 +52,6 @@ def _build_trading_strategy(
         sizing_policy=SizingPolicySpec(
             sizing_method=sizing_method,
         ),
-        rebalance_policy=RebalancePolicySpec(rebalance=rebalance),
         risk_policy=RiskPolicySpec(
             long_only=long_only,
             gross_exposure_cap=gross_exposure_cap,
@@ -92,6 +90,13 @@ def _build_trading_strategy(
                 borrow_fee_bps_per_step=borrow_fee_bps_per_step,
             ),
             portfolio_construction=None,
+            rebalance_interval_steps=(
+                int(rebalance[len("every_") : -len("_steps")])
+                if isinstance(rebalance, str)
+                and rebalance.startswith("every_")
+                and rebalance.endswith("_steps")
+                else 1
+            ),
             sleeve_composition=None,
         ),
         created_at=created_at,
@@ -208,10 +213,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
         trading_strategy.portfolio_policy.sizing_policy.sizing_method
         == "equal_weight"
     )
-    assert (
-        trading_strategy.portfolio_policy.rebalance_policy.rebalance
-        == "every_5_steps"
-    )
+    assert trading_strategy.portfolio.rebalance_interval_steps == 5
     assert trading_strategy.portfolio_policy.risk_policy.long_only is True
     assert trading_strategy.portfolio_policy.risk_policy.gross_exposure_cap == 1.5
     assert trading_strategy.portfolio_policy.risk_policy.asset_class_weight_caps == {
