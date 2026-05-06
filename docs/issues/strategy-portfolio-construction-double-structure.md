@@ -48,9 +48,13 @@ the final target weights.
 Existing `sizing_method=equal_weight` is not the same concept as
 `EqualWeightLongOnlyAllocator`.
 
-The existing `sizing_method` field is part of the rich sizing path. It also
-implies backend classification such as `sizing_engine`, `sizing_family`, history
-requirements, optimizer/report labeling, and skfolio-style model selection.
+The existing `sizing_method` field is part of the legacy rich sizing path. It
+also implies backend classification such as `sizing_engine`, `sizing_family`,
+history requirements, optimizer/report labeling, and skfolio-style model
+selection.
+
+`portfolio_sizing_policy.py` should be treated as a legacy rich sizing path, not
+as the default home for new small allocation rules.
 
 `EqualWeightLongOnlyAllocator` should not be wired in as a replacement for
 `PortfolioConstructionSizingSpec.sizing_method`.
