@@ -110,17 +110,15 @@ def build_report_strategy_contract_fields(
     subject_set=None,
 ) -> dict[str, str | int | float | bool]:
     portfolio = trading_strategy.portfolio
-    portfolio_policy = portfolio.to_portfolio_policy()
-    selection_policy = portfolio_policy.selection_policy
-    sizing_policy = portfolio_policy.sizing_policy
-    risk_policy = portfolio_policy.risk_policy
+    construction = portfolio.portfolio_construction
+    sizing_policy = construction.sizing_policy
     friction_policy = portfolio.rebalance_friction_policy
     execution_policy = portfolio.execution_policy
     holding_cost_policy = portfolio.holding_cost_policy
     fields: dict[str, str | int | float | bool] = {
         "target_id": trading_strategy.target_id or "-",
-        "selection": selection_policy.selection_kind,
-        "top_k": "-" if selection_policy.top_k is None else selection_policy.top_k,
+        "selection": portfolio.selection_kind,
+        "top_k": "-" if portfolio.top_k is None else portfolio.top_k,
         "sizing": sizing_policy.sizing_method or "-",
         "sizing_family": (
             "-"
@@ -132,20 +130,22 @@ def build_report_strategy_contract_fields(
             getattr(sizing_policy, "sizing_engine", None),
         ),
         "rebalance": f"every_{portfolio.rebalance_interval_steps}_steps",
-        "direction_mode": risk_policy.direction_mode or "-",
+        "direction_mode": construction.direction_mode or "-",
         "gross_exposure_cap": (
-            "-" if risk_policy.gross_exposure_cap is None else risk_policy.gross_exposure_cap
+            "-"
+            if construction.gross_exposure_cap is None
+            else construction.gross_exposure_cap
         ),
-        "target_vol": "-" if risk_policy.target_vol is None else risk_policy.target_vol,
+        "target_vol": "-" if construction.target_vol is None else construction.target_vol,
         "gross_leverage_cap": (
             "-"
-            if risk_policy.gross_leverage_cap is None
-            else risk_policy.gross_leverage_cap
+            if construction.gross_leverage_cap is None
+            else construction.gross_leverage_cap
         ),
         "net_exposure_target": (
             "-"
-            if risk_policy.net_exposure_target is None
-            else risk_policy.net_exposure_target
+            if construction.net_exposure_target is None
+            else construction.net_exposure_target
         ),
         "turnover_friction": (
             "-"
@@ -201,28 +201,28 @@ def build_report_strategy_contract_fields(
         sleeves = _format_sleeves(trading_strategy)
         if sleeves is not None:
             fields["sleeves"] = sleeves
-    if risk_policy.asset_class_weight_caps:
+    if construction.asset_class_weight_caps:
         fields["asset_class_weight_caps"] = _format_constraint_caps(
-            risk_policy.asset_class_weight_caps
+            construction.asset_class_weight_caps
         )
-    if risk_policy.cluster_weight_caps:
+    if construction.cluster_weight_caps:
         fields["cluster_weight_caps"] = _format_constraint_caps(
-            risk_policy.cluster_weight_caps
+            construction.cluster_weight_caps
         )
     constraint_stages = active_constraint_stages(
-        risk_policy.constraint_boundary,
+        construction.constraint_boundary,
         field_values={
             "direction_mode": (
-                risk_policy.direction_mode
-                if risk_policy.direction_mode != "long_short"
+                construction.direction_mode
+                if construction.direction_mode != "long_short"
                 else None
             ),
-            "gross_exposure_cap": risk_policy.gross_exposure_cap,
-            "target_vol": risk_policy.target_vol,
-            "gross_leverage_cap": risk_policy.gross_leverage_cap,
-            "net_exposure_target": risk_policy.net_exposure_target,
-            "asset_class_weight_caps": risk_policy.asset_class_weight_caps,
-            "cluster_weight_caps": risk_policy.cluster_weight_caps,
+            "gross_exposure_cap": construction.gross_exposure_cap,
+            "target_vol": construction.target_vol,
+            "gross_leverage_cap": construction.gross_leverage_cap,
+            "net_exposure_target": construction.net_exposure_target,
+            "asset_class_weight_caps": construction.asset_class_weight_caps,
+            "cluster_weight_caps": construction.cluster_weight_caps,
         },
     )
     if constraint_stages:

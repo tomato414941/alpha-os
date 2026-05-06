@@ -351,7 +351,7 @@ def test_derived_trading_strategy_uses_top_k_selection_when_top_k_is_set():
     )
 
     assert strategy.selection_kind == "top_k"
-    assert strategy.portfolio_policy.selection_policy.top_k == 3
+    assert strategy.portfolio.top_k == 3
 
 
 def test_derived_trading_strategy_preserves_risk_policy_constraints():
@@ -373,14 +373,14 @@ def test_derived_trading_strategy_preserves_risk_policy_constraints():
         created_at="2026-04-17T00:00:00Z",
     )
 
-    risk_policy = strategy.portfolio_policy.risk_policy
-    assert risk_policy.long_only is False
-    assert risk_policy.gross_exposure_cap == 1.2
-    assert risk_policy.target_vol == 0.18
-    assert risk_policy.gross_leverage_cap == 1.5
-    assert risk_policy.net_exposure_target == 0.0
-    assert risk_policy.asset_class_weight_caps == {"commodity": 0.35}
-    assert risk_policy.cluster_weight_caps == {"rates_us": 0.3}
+    construction = strategy.portfolio.portfolio_construction
+    assert construction.long_only is False
+    assert construction.gross_exposure_cap == 1.2
+    assert construction.target_vol == 0.18
+    assert construction.gross_leverage_cap == 1.5
+    assert construction.net_exposure_target == 0.0
+    assert construction.asset_class_weight_caps == {"commodity": 0.35}
+    assert construction.cluster_weight_caps == {"rates_us": 0.3}
 
 
 def test_resolve_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_path):

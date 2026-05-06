@@ -205,20 +205,20 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert (
         trading_strategy.execution_kind == "trained"
     )
-    assert trading_strategy.portfolio_policy.selection_policy.selection_kind == "all_assets"
+    assert trading_strategy.portfolio.selection_kind == "all_assets"
     assert trading_strategy.portfolio.top_k == 5
-    assert trading_strategy.portfolio_policy.selection_policy.top_k == 5
+    assert trading_strategy.portfolio.top_k == 5
     assert (
-        trading_strategy.portfolio_policy.sizing_policy.sizing_method
+        trading_strategy.portfolio.portfolio_construction.sizing_method
         == "equal_weight"
     )
     assert trading_strategy.portfolio.rebalance_interval_steps == 5
-    assert trading_strategy.portfolio_policy.risk_policy.long_only is True
-    assert trading_strategy.portfolio_policy.risk_policy.gross_exposure_cap == 1.5
-    assert trading_strategy.portfolio_policy.risk_policy.asset_class_weight_caps == {
+    assert trading_strategy.portfolio.portfolio_construction.long_only is True
+    assert trading_strategy.portfolio.portfolio_construction.gross_exposure_cap == 1.5
+    assert trading_strategy.portfolio.portfolio_construction.asset_class_weight_caps == {
         "equity_index": 0.6
     }
-    assert trading_strategy.portfolio_policy.risk_policy.cluster_weight_caps == {
+    assert trading_strategy.portfolio.portfolio_construction.cluster_weight_caps == {
         "eq_us": 0.25
     }
     assert trading_strategy.rebalance_friction_policy.turnover_friction == 0.1
@@ -273,7 +273,7 @@ def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
     )
 
     assert portfolio.top_k == 4
-    assert portfolio.to_portfolio_policy().selection_policy.top_k == 4
+    assert portfolio.selection_kind == "top_k"
 
 
 def test_trading_strategy_spec_round_trips_through_document():

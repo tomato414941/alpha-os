@@ -26,11 +26,7 @@ from alpha_os.trading_strategy import (
     AdaptationPolicySpec,
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
-    PortfolioPolicySpec,
     RebalanceFrictionPolicySpec,
-    RiskPolicySpec,
-    SelectionPolicySpec,
-    SizingPolicySpec,
     StrategyPortfolioSpec,
     TradingStrategyScopeSpec,
     TradingStrategySpec,
@@ -39,25 +35,36 @@ from alpha_os.trading_strategy import (
 
 def _strategy_portfolio(
     *,
-    portfolio_policy: PortfolioPolicySpec,
+    selection_kind: str,
+    sizing_method: str,
+    direction_mode: str | None,
+    gross_exposure_cap: float | None,
+    top_k: int | None = None,
+    target_vol: float | None = None,
+    gross_leverage_cap: float | None = None,
+    net_exposure_target: float | None = None,
+    asset_class_weight_caps: dict[str, float] | None = None,
+    cluster_weight_caps: dict[str, float] | None = None,
     rebalance_friction_policy: RebalanceFrictionPolicySpec | None = None,
     execution_policy: ExecutionPolicySpec | None = None,
     holding_cost_policy: HoldingCostPolicySpec | None = None,
 ) -> StrategyPortfolioSpec:
-    risk_policy = portfolio_policy.risk_policy
     return StrategyPortfolioSpec(
         portfolio_construction=PortfolioConstructionSpec(
             sizing_policy=PortfolioConstructionSizingSpec(
-                sizing_method=portfolio_policy.sizing_policy.sizing_method
-                or "equal_weight",
+                sizing_method=sizing_method,
             ),
-            direction_mode=risk_policy.direction_mode,
-            gross_exposure_cap=risk_policy.gross_exposure_cap,
-            target_vol=risk_policy.target_vol,
-            gross_leverage_cap=risk_policy.gross_leverage_cap,
-            net_exposure_target=risk_policy.net_exposure_target,
-            asset_class_weight_caps=dict(risk_policy.asset_class_weight_caps),
-            cluster_weight_caps=dict(risk_policy.cluster_weight_caps),
+            direction_mode=direction_mode,
+            gross_exposure_cap=gross_exposure_cap,
+            target_vol=target_vol,
+            gross_leverage_cap=gross_leverage_cap,
+            net_exposure_target=net_exposure_target,
+            asset_class_weight_caps=(
+                {} if asset_class_weight_caps is None else dict(asset_class_weight_caps)
+            ),
+            cluster_weight_caps=(
+                {} if cluster_weight_caps is None else dict(cluster_weight_caps)
+            ),
         ),
         rebalance_friction_policy=(
             RebalanceFrictionPolicySpec()
@@ -70,8 +77,8 @@ def _strategy_portfolio(
             if holding_cost_policy is None
             else holding_cost_policy
         ),
-        selection_kind=portfolio_policy.selection_policy.selection_kind,
-        top_k=portfolio_policy.selection_policy.top_k,
+        selection_kind=selection_kind,
+        top_k=top_k,
     )
 
 
@@ -561,20 +568,16 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
             family_mix=None,
             execution_kind="trainless",
             portfolio=_strategy_portfolio(
-                portfolio_policy=PortfolioPolicySpec(
-                    selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=3),
-                    sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-                        risk_policy=RiskPolicySpec(
-                            long_only=None,
-                            direction_mode="long_only",
-                            gross_exposure_cap=1.0,
-                        target_vol=0.12,
-                        gross_leverage_cap=1.5,
-                        net_exposure_target=0.3,
-                        asset_class_weight_caps={"equity_index": 0.6},
-                        cluster_weight_caps={"risk": 0.4},
-                    ),
-                ),
+                selection_kind="top_k",
+                top_k=3,
+                sizing_method="equal_weight",
+                direction_mode="long_only",
+                gross_exposure_cap=1.0,
+                target_vol=0.12,
+                gross_leverage_cap=1.5,
+                net_exposure_target=0.3,
+                asset_class_weight_caps={"equity_index": 0.6},
+                cluster_weight_caps={"risk": 0.4},
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
                     turnover_friction=0.1,
                     no_trade_band=0.02,
@@ -705,14 +708,11 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
             family_mix=None,
             execution_kind="trainless",
             portfolio=_strategy_portfolio(
-                portfolio_policy=PortfolioPolicySpec(
-                    selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=2),
-                    sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-                    risk_policy=RiskPolicySpec(
-                        long_only=True,
-                        gross_exposure_cap=1.0,
-                    ),
-                ),
+                selection_kind="top_k",
+                top_k=2,
+                sizing_method="equal_weight",
+                direction_mode="long_only",
+                gross_exposure_cap=1.0,
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
                     turnover_friction=0.0,
                     no_trade_band=0.0,
@@ -1062,18 +1062,6 @@ def test_subject_set_store_roundtrip_preserves_universe_policy(tmp_path):
 
 
 def test_strategy_and_portfolio_construction_roundtrip_preserve_broader_constraints():
-    risk_policy = RiskPolicySpec(
-        long_only=True,
-        direction_mode="long_only",
-        gross_exposure_cap=1.0,
-        target_vol=0.12,
-        gross_leverage_cap=1.5,
-        net_exposure_target=0.3,
-    )
-    restored_risk_policy = RiskPolicySpec.from_document(risk_policy.to_document())
-
-    assert restored_risk_policy == risk_policy
-
     portfolio_construction = PortfolioConstructionSpec(
         sizing_policy=PortfolioConstructionSizingSpec(
             sizing_method="signal_weighted",

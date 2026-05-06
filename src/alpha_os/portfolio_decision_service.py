@@ -50,8 +50,7 @@ def _trading_strategy_trace_document(
     trading_strategy: TradingStrategySpec,
 ) -> dict[str, object]:
     portfolio = trading_strategy.portfolio
-    policy = portfolio.to_portfolio_policy()
-    risk = policy.risk_policy
+    construction = portfolio.portfolio_construction
     friction = portfolio.rebalance_friction_policy
     execution = portfolio.execution_policy
     holding = portfolio.holding_cost_policy
@@ -60,15 +59,15 @@ def _trading_strategy_trace_document(
         "label": trading_strategy.label,
         "subject_set_id": trading_strategy.subject_set_id,
         "target_id": trading_strategy.target_id,
-        "selection_kind": policy.selection_policy.selection_kind,
-        "sizing_method": policy.sizing_policy.sizing_method,
+        "selection_kind": portfolio.selection_kind,
+        "sizing_method": construction.sizing_method,
         "rebalance": f"every_{portfolio.rebalance_interval_steps}_steps",
-        "top_k": policy.selection_policy.top_k,
-        "direction_mode": risk.direction_mode,
-        "gross_exposure_cap": risk.gross_exposure_cap,
-        "target_vol": risk.target_vol,
-        "gross_leverage_cap": risk.gross_leverage_cap,
-        "net_exposure_target": risk.net_exposure_target,
+        "top_k": portfolio.top_k,
+        "direction_mode": construction.direction_mode,
+        "gross_exposure_cap": construction.gross_exposure_cap,
+        "target_vol": construction.target_vol,
+        "gross_leverage_cap": construction.gross_leverage_cap,
+        "net_exposure_target": construction.net_exposure_target,
         "turnover_friction": friction.turnover_friction,
         "no_trade_band": friction.no_trade_band,
         "market_impact_bps": execution.market_impact_bps,

@@ -4,14 +4,9 @@ import hashlib
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from .contract_boundaries import (
-    PortfolioConstraintBoundary,
-    default_portfolio_constraint_boundary,
-)
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
-from .portfolio_direction import normalize_portfolio_direction_mode
 from .strategy_execution import (
     StrategyExecutionKind,
     StrategyExecutionSpec,
@@ -166,140 +161,6 @@ class TradingStrategyScopeSpec:
             ),
             target_id=_normalize_optional(
                 None if document.get("target_id") is None else str(document["target_id"])
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class SelectionPolicySpec:
-    selection_kind: str
-    top_k: int | None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "selection_kind": self.selection_kind,
-            "top_k": self.top_k,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "SelectionPolicySpec":
-        top_k = document.get("top_k")
-        return cls(
-            selection_kind=str(document.get("selection_kind", "all_assets")),
-            top_k=None if top_k is None else int(top_k),
-        )
-
-
-@dataclass(frozen=True)
-class SizingPolicySpec:
-    sizing_method: str | None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "sizing_method": self.sizing_method,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "SizingPolicySpec":
-        return cls(
-            sizing_method=_normalize_optional(
-                None
-                if document.get("sizing_method") is None
-                else str(document["sizing_method"])
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class RiskPolicySpec:
-    long_only: bool | None
-    gross_exposure_cap: float | None
-    direction_mode: str | None = None
-    target_vol: float | None = None
-    gross_leverage_cap: float | None = None
-    net_exposure_target: float | None = None
-    asset_class_weight_caps: dict[str, float] = field(default_factory=dict)
-    cluster_weight_caps: dict[str, float] = field(default_factory=dict)
-
-    @property
-    def constraint_boundary(self) -> PortfolioConstraintBoundary:
-        return default_portfolio_constraint_boundary()
-
-    def to_document(self) -> dict[str, Any]:
-        document = {
-            "gross_exposure_cap": self.gross_exposure_cap,
-        }
-        if self.direction_mode is not None:
-            document["direction_mode"] = self.direction_mode
-        if self.target_vol is not None:
-            document["target_vol"] = self.target_vol
-        if self.gross_leverage_cap is not None:
-            document["gross_leverage_cap"] = self.gross_leverage_cap
-        if self.net_exposure_target is not None:
-            document["net_exposure_target"] = self.net_exposure_target
-        if self.asset_class_weight_caps:
-            document["asset_class_weight_caps"] = dict(self.asset_class_weight_caps)
-        if self.cluster_weight_caps:
-            document["cluster_weight_caps"] = dict(self.cluster_weight_caps)
-        return document
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "RiskPolicySpec":
-        gross_exposure_cap = document.get("gross_exposure_cap")
-        target_vol = document.get("target_vol")
-        gross_leverage_cap = document.get("gross_leverage_cap")
-        net_exposure_target = document.get("net_exposure_target")
-        direction_mode = document.get("direction_mode")
-        if direction_mode is not None:
-            direction_mode = normalize_portfolio_direction_mode(
-                str(direction_mode),
-                long_only=False,
-            )
-        return cls(
-            long_only=None if direction_mode is None else direction_mode == "long_only",
-            gross_exposure_cap=(
-                None if gross_exposure_cap is None else float(gross_exposure_cap)
-            ),
-            direction_mode=direction_mode,
-            target_vol=None if target_vol is None else float(target_vol),
-            gross_leverage_cap=(
-                None if gross_leverage_cap is None else float(gross_leverage_cap)
-            ),
-            net_exposure_target=(
-                None if net_exposure_target is None else float(net_exposure_target)
-            ),
-            asset_class_weight_caps=_normalized_weight_caps(
-                document,
-                "asset_class_weight_caps",
-            ),
-            cluster_weight_caps=_normalized_weight_caps(document, "cluster_weight_caps"),
-        )
-
-
-@dataclass(frozen=True)
-class PortfolioPolicySpec:
-    selection_policy: SelectionPolicySpec
-    sizing_policy: SizingPolicySpec
-    risk_policy: RiskPolicySpec
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "selection_policy": self.selection_policy.to_document(),
-            "sizing_policy": self.sizing_policy.to_document(),
-            "risk_policy": self.risk_policy.to_document(),
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "PortfolioPolicySpec":
-        return cls(
-            selection_policy=SelectionPolicySpec.from_document(
-                dict(document.get("selection_policy", {}))
-            ),
-            sizing_policy=SizingPolicySpec.from_document(
-                dict(document.get("sizing_policy", {}))
-            ),
-            risk_policy=RiskPolicySpec.from_document(
-                dict(document.get("risk_policy", {}))
             ),
         )
 
@@ -556,29 +417,6 @@ class StrategyPortfolioSpec:
             rebalance_interval_steps=int(rebalance_interval_steps),
         )
 
-    def to_portfolio_policy(self) -> PortfolioPolicySpec:
-        construction = self.portfolio_construction
-        return PortfolioPolicySpec(
-            selection_policy=SelectionPolicySpec(
-                selection_kind=self.selection_kind,
-                top_k=self.top_k,
-            ),
-            sizing_policy=SizingPolicySpec(
-                sizing_method=construction.sizing_method,
-            ),
-            risk_policy=RiskPolicySpec(
-                long_only=construction.long_only,
-                gross_exposure_cap=construction.gross_exposure_cap,
-                direction_mode=construction.direction_mode,
-                target_vol=construction.target_vol,
-                gross_leverage_cap=construction.gross_leverage_cap,
-                net_exposure_target=construction.net_exposure_target,
-                asset_class_weight_caps=dict(construction.asset_class_weight_caps),
-                cluster_weight_caps=dict(construction.cluster_weight_caps),
-            ),
-        )
-
-
 @dataclass(frozen=True)
 class TradingStrategySpec:
     strategy_id: str
@@ -649,11 +487,7 @@ class TradingStrategySpec:
 
     @property
     def selection_kind(self) -> str:
-        return self.portfolio_policy.selection_policy.selection_kind
-
-    @property
-    def portfolio_policy(self) -> PortfolioPolicySpec:
-        return self.portfolio.to_portfolio_policy()
+        return self.portfolio.selection_kind
 
     @property
     def rebalance_friction_policy(self) -> RebalanceFrictionPolicySpec:

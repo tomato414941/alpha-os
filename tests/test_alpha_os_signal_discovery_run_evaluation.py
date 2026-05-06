@@ -1067,9 +1067,8 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
             trading_strategy.signal_discovery_id
             == "core_crypto_search"
         )
-        assert (
-            trading_strategy.portfolio_policy.sizing_policy.sizing_method
-            == "signal_weighted"
+        assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
+            "signal_weighted"
         )
     finally:
         store.close()
@@ -2764,7 +2763,7 @@ def test_build_evaluation_plan_rejects_trained_strategy_without_search_provenanc
         store.close()
 
 
-def test_build_evaluation_plan_prefers_strategy_portfolio_policy(tmp_path):
+def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_plan import build_evaluation_plan
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
@@ -3395,9 +3394,8 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             == "core_crypto_walk_forward"
         )
         assert trading_strategy.scope.subject_set_id == "core_crypto"
-        assert (
-            trading_strategy.portfolio_policy.sizing_policy.sizing_method
-            == "signal_weighted"
+        assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
+            "signal_weighted"
         )
         assert trading_strategy.portfolio.rebalance_interval_steps == 1
         initial_signal_discovery_run_count = len(signal_discovery_runs)

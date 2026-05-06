@@ -13,7 +13,6 @@ from alpha_os.portfolio_construction_config import (
     PortfolioRiskBudgetSpec,
 )
 from alpha_os.portfolio_decision import SubjectSet
-from alpha_os.trading_strategy import RiskPolicySpec
 
 
 def test_subject_set_contract_boundary_names_field_owners():
@@ -65,18 +64,6 @@ def test_portfolio_constraint_boundary_formats_active_stages():
         "post_sizing_normalization:direction_mode,gross_exposure_cap,"
         "gross_leverage_cap,net_exposure_target,cluster_weight_caps"
     )
-
-
-def test_risk_policy_exposes_canonical_constraint_boundary():
-    risk_policy = RiskPolicySpec(
-        long_only=True,
-        gross_exposure_cap=1.0,
-        target_vol=0.12,
-        gross_leverage_cap=1.5,
-        net_exposure_target=0.3,
-    )
-
-    assert risk_policy.constraint_boundary == default_portfolio_constraint_boundary()
 
 
 def test_portfolio_construction_exposes_canonical_constraint_boundary():
