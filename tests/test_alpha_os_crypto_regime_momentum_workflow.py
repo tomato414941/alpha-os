@@ -329,7 +329,7 @@ def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
             "selection",
             "sizing",
             "rebalance",
-            "long_only",
+            "direction_mode",
             "fee_bps",
             "funding_bps_per_step",
             "borrow_fee_bps_per_step",

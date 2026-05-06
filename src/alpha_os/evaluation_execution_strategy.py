@@ -130,7 +130,12 @@ def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
     return active_constraint_stages(
         execution_request.context.portfolio_construction.constraint_boundary,
         field_values={
-            "long_only": execution_request.context.portfolio_construction.long_only,
+            "direction_mode": (
+                execution_request.context.portfolio_construction.direction_mode
+                if execution_request.context.portfolio_construction.direction_mode
+                != "long_short"
+                else None
+            ),
             "gross_exposure_cap": execution_request.context.portfolio_construction.gross_exposure_cap,
             "target_vol": execution_request.context.portfolio_construction.target_vol,
             "gross_leverage_cap": execution_request.context.portfolio_construction.gross_leverage_cap,

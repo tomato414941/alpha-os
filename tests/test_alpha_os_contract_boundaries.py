@@ -52,7 +52,7 @@ def test_portfolio_constraint_boundary_formats_active_stages():
     assert format_active_constraint_stages(
         boundary,
         field_values={
-            "long_only": True,
+            "direction_mode": "long_only",
             "gross_exposure_cap": 1.0,
             "target_vol": 0.12,
             "gross_leverage_cap": 1.5,
@@ -62,7 +62,7 @@ def test_portfolio_constraint_boundary_formats_active_stages():
         },
     ) == (
         "sizing_time:target_vol;"
-        "post_sizing_normalization:long_only,gross_exposure_cap,"
+        "post_sizing_normalization:direction_mode,gross_exposure_cap,"
         "gross_leverage_cap,net_exposure_target,cluster_weight_caps"
     )
 

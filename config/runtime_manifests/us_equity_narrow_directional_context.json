@@ -144,7 +144,7 @@
           "sizing_engine": "rule_based"
         },
         "rebalance_interval_steps": 1,
-        "long_only": false
+        "direction_mode": "long_short"
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.0,

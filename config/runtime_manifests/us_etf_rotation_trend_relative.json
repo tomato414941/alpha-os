@@ -215,8 +215,8 @@
           "sizing_engine": "rule_based"
         },
         "rebalance_interval_steps": 5,
-        "long_only": true,
-        "gross_exposure_cap": 1.0
+        "gross_exposure_cap": 1.0,
+        "direction_mode": "long_only"
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.001,

@@ -269,7 +269,7 @@ def test_evaluation_report_contract_validation_passes_for_structured_validation_
                     "top_k": 3,
                     "sizing": "equal_weight",
                     "rebalance": "every_1_steps",
-                    "long_only": "true",
+                    "direction_mode": "long_only",
                     "gross_exposure_cap": 1.0,
                     "target_vol": 0.12,
                     "gross_leverage_cap": 1.5,
@@ -280,7 +280,7 @@ def test_evaluation_report_contract_validation_passes_for_structured_validation_
                     "fee_bps": 2.0,
                     "constraint_stages": (
                         "sizing_time:target_vol;"
-                        "post_sizing_normalization:long_only,gross_exposure_cap,"
+                        "post_sizing_normalization:direction_mode,gross_exposure_cap,"
                         "gross_leverage_cap,net_exposure_target"
                     ),
                     "funding_bps_per_step": 1.5,
@@ -304,7 +304,7 @@ def test_evaluation_report_contract_validation_passes_for_structured_validation_
                 },
                 constraint_stages=(
                     "sizing_time:target_vol",
-                    "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
+                    "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
                 ),
                 metric_group_results=(
                     EvaluationMetricGroupResult(
@@ -1032,7 +1032,7 @@ def test_evaluation_report_contract_validation_requires_active_constraint_fields
                     "selection": "top_k",
                     "sizing": "equal_weight",
                     "rebalance": "every_1_steps",
-                    "long_only": "true",
+                    "direction_mode": "long_only",
                     "gross_exposure_cap": 1.0,
                     "gross_leverage_cap": 1.5,
                     "net_exposure_target": 0.3,
@@ -1054,7 +1054,7 @@ def test_evaluation_report_contract_validation_requires_active_constraint_fields
                 },
                 constraint_stages=(
                     "sizing_time:target_vol",
-                    "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
+                    "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
                 ),
             ),
         ),

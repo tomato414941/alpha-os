@@ -133,9 +133,6 @@ def build_report_strategy_contract_fields(
             getattr(sizing_policy, "sizing_engine", None),
         ),
         "rebalance": rebalance_policy.rebalance or "-",
-        "long_only": (
-            "-" if risk_policy.long_only is None else str(risk_policy.long_only).lower()
-        ),
         "direction_mode": risk_policy.direction_mode or "-",
         "gross_exposure_cap": (
             "-" if risk_policy.gross_exposure_cap is None else risk_policy.gross_exposure_cap
@@ -216,7 +213,11 @@ def build_report_strategy_contract_fields(
     constraint_stages = active_constraint_stages(
         risk_policy.constraint_boundary,
         field_values={
-            "long_only": risk_policy.long_only,
+            "direction_mode": (
+                risk_policy.direction_mode
+                if risk_policy.direction_mode != "long_short"
+                else None
+            ),
             "gross_exposure_cap": risk_policy.gross_exposure_cap,
             "target_vol": risk_policy.target_vol,
             "gross_leverage_cap": risk_policy.gross_leverage_cap,
@@ -263,7 +264,6 @@ def build_report_evaluation_task_contract_fields(
             portfolio_construction.sizing_engine,
         ),
         "rebalance": f"every_{rebalance_interval_steps}_steps",
-        "long_only": str(portfolio_construction.long_only).lower(),
         "direction_mode": portfolio_construction.direction_mode,
         "gross_exposure_cap": (
             "-"
@@ -340,7 +340,7 @@ def build_report_evaluation_task_contract_fields(
         if (
             fields["selection"] == "all_assets"
             and fields["sizing"] == "equal_weight"
-            and fields["long_only"] == "true"
+            and fields["direction_mode"] == "long_only"
         ):
             fields["holding_style"] = "equal_weight_hold"
     else:
@@ -415,7 +415,11 @@ def build_report_evaluation_task_contract_fields(
     constraint_stages = active_constraint_stages(
         portfolio_construction.constraint_boundary,
         field_values={
-            "long_only": portfolio_construction.long_only,
+            "direction_mode": (
+                portfolio_construction.direction_mode
+                if portfolio_construction.direction_mode != "long_short"
+                else None
+            ),
             "gross_exposure_cap": portfolio_construction.gross_exposure_cap,
             "target_vol": portfolio_construction.target_vol,
             "gross_leverage_cap": portfolio_construction.gross_leverage_cap,
@@ -447,7 +451,6 @@ def format_report_strategy_contract_fields(
         "sizing_family",
         "optimizer_backend",
         "rebalance",
-        "long_only",
         "direction_mode",
         "gross_exposure_cap",
         "target_vol",

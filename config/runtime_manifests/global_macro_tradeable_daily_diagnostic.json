@@ -98,11 +98,11 @@
             "rebalance_interval_steps": 252
           },
           "risk_policy": {
-            "long_only": true,
             "gross_exposure_cap": 1.0,
             "target_vol": null,
             "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0
+            "net_exposure_target": 1.0,
+            "direction_mode": "long_only"
           }
         },
         "rebalance_friction_policy": {
@@ -192,7 +192,6 @@
             "sizing_engine": "history_based"
           },
           "rebalance_interval_steps": 252,
-          "long_only": true,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -200,7 +199,8 @@
           "risk_budget": {
             "risk_normalization_mode": "none",
             "allow_releverage": false
-          }
+          },
+          "direction_mode": "long_only"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -238,7 +238,6 @@
             "sizing_engine": "history_based"
           },
           "rebalance_interval_steps": 21,
-          "long_only": true,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -246,7 +245,8 @@
           "risk_budget": {
             "risk_normalization_mode": "none",
             "allow_releverage": false
-          }
+          },
+          "direction_mode": "long_only"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -287,7 +287,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -327,7 +326,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.001,
@@ -361,7 +361,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -401,7 +400,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -442,7 +442,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -482,7 +481,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -523,7 +523,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -563,7 +562,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -604,7 +604,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -644,7 +643,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -685,7 +685,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -725,7 +724,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -766,7 +766,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -806,7 +805,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "threshold",
@@ -847,7 +847,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -887,7 +886,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.0,
@@ -921,7 +921,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 5,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -961,7 +960,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.001,
@@ -995,7 +995,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 5,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1035,7 +1034,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.001,
@@ -1069,7 +1069,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 10,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1109,7 +1108,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "execution_mode": "utility_priority",
@@ -1146,7 +1146,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 21,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1186,7 +1185,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.001,
@@ -1220,7 +1220,6 @@
             "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
-          "long_only": false,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1259,7 +1258,8 @@
                 "enabled": true
               }
             ]
-          }
+          },
+          "direction_mode": "long_short"
         },
         "rebalance_friction_policy": {
           "turnover_friction": 0.001,

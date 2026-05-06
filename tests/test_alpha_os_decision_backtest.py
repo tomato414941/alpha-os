@@ -993,7 +993,7 @@ def test_constrained_targets_by_subject_uses_constraint_boundary_for_stage_order
         constraint_boundary=PortfolioConstraintBoundary(
             sizing_time_fields=(),
             post_sizing_normalization_fields=(
-                "long_only",
+                "direction_mode",
                 "gross_exposure_cap",
                 "gross_leverage_cap",
                 "net_exposure_target",

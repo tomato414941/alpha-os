@@ -22,6 +22,10 @@ Treat `direction_mode` as the current implementation name and
 `long_only` should not be a second source of truth. It should only remain, if
 needed, as legacy input compatibility.
 
+Current persisted manifests and report-facing strategy contract fields should
+use `direction_mode`. `long_only` is accepted only as compatibility input where
+older documents or CLI arguments still require it.
+
 ## Acceptance Criteria
 
 - The code has one source of truth for allowed position direction.

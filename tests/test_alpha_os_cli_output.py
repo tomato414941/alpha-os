@@ -129,7 +129,7 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
                     "top_k": 3,
                     "sizing": "equal_weight",
                     "rebalance": "every_1_steps",
-                    "long_only": "true",
+                    "direction_mode": "long_only",
                     "gross_exposure_cap": 1.0,
                     "target_vol": 0.12,
                     "gross_leverage_cap": 1.5,
@@ -140,7 +140,7 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
                     "fee_bps": 2.0,
                     "constraint_stages": (
                         "sizing_time:target_vol;"
-                        "post_sizing_normalization:long_only,gross_exposure_cap,"
+                        "post_sizing_normalization:direction_mode,gross_exposure_cap,"
                         "gross_leverage_cap,net_exposure_target"
                     ),
                     "funding_bps_per_step": 1.5,
@@ -168,7 +168,7 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
                 },
                 constraint_stages=(
                     "sizing_time:target_vol",
-                    "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
+                    "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
                 ),
                 sleeve_attribution_summaries=(
                     SleeveAttributionSummary(
@@ -221,7 +221,7 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
     assert "top_k=3" in captured
     assert "sizing=equal_weight" in captured
     assert "rebalance=every_1_steps" in captured
-    assert "long_only=true" in captured
+    assert "direction_mode=long_only" in captured
     assert "gross_exposure_cap=1.0" in captured
     assert "target_vol=0.12" in captured
     assert "gross_leverage_cap=1.5" in captured
@@ -233,7 +233,7 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
     assert "subject_set_contract_groups=instrument,observation_spec,binding,universe_policy" in captured
     assert "universe_policy=base_currency=USD trading_calendar=24x7 benchmark_id=global_macro_core" in captured
     assert "constraint_stages=sizing_time:target_vol;" in captured
-    assert "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target" in captured
+    assert "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target" in captured
     assert "summary=[bindings=2 instruments=2 subject_kinds=future,perp instrument_types=future,perp" in captured
     assert "contract_groups=instrument,observation_spec,binding,universe_policy" in captured
     assert "sleeve=trend_core kind=trend risk_budget=1.000000 subjects=2" in captured
@@ -260,7 +260,7 @@ def test_print_evaluation_report_lists_task_result_details(capsys):
                     "selection": "all_assets",
                     "sizing": "equal_weight",
                     "rebalance": "every_252_steps",
-                    "long_only": "true",
+                    "direction_mode": "long_only",
                 },
                 metric_group_results=(
                     EvaluationMetricGroupResult(
@@ -610,7 +610,7 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
     assert "cluster_weight_caps=risk=0.4" in context
     assert "constraint_stages=sizing_time:target_vol;" in context
     assert (
-        "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,"
+        "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,"
         "net_exposure_target,asset_class_weight_caps,cluster_weight_caps"
     ) in context
     assert "summary=[bindings=2 instruments=2" in context
@@ -810,7 +810,7 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
                 },
                 constraint_stages=(
                     "sizing_time:target_vol",
-                    "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
+                    "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
                 ),
                 metric_group_results=(
                     EvaluationMetricGroupResult(
@@ -867,7 +867,7 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
     }
     assert task_result.constraint_stages == (
         "sizing_time:target_vol",
-        "post_sizing_normalization:long_only,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
+        "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
     )
 
 
@@ -1053,6 +1053,7 @@ def test_subject_set_store_roundtrip_preserves_universe_policy(tmp_path):
 def test_strategy_and_portfolio_construction_roundtrip_preserve_broader_constraints():
     risk_policy = RiskPolicySpec(
         long_only=True,
+        direction_mode="long_only",
         gross_exposure_cap=1.0,
         target_vol=0.12,
         gross_leverage_cap=1.5,

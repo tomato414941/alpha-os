@@ -118,7 +118,6 @@ def build_trading_strategy_id(
     add("sizing_method", sizing_method)
     add("sizing_engine", sizing_engine)
     add("rebalance", rebalance)
-    add("long_only", None if long_only is None else str(long_only).lower())
     add("direction_mode", direction_mode)
     add("top_k", top_k)
     add("gross_exposure_cap", gross_exposure_cap)
@@ -263,11 +262,13 @@ class RiskPolicySpec:
 
     def to_document(self) -> dict[str, Any]:
         document = {
-            "long_only": self.long_only,
             "gross_exposure_cap": self.gross_exposure_cap,
         }
-        if self.direction_mode is not None:
-            document["direction_mode"] = self.direction_mode
+        direction_mode = self.direction_mode
+        if direction_mode is None and self.long_only is not None:
+            direction_mode = "long_only" if self.long_only else "long_short"
+        if direction_mode is not None:
+            document["direction_mode"] = direction_mode
         if self.target_vol is not None:
             document["target_vol"] = self.target_vol
         if self.gross_leverage_cap is not None:
@@ -656,7 +657,7 @@ class StrategyPortfolioSpec:
             risk_policy=RiskPolicySpec(
                 long_only=construction.long_only,
                 gross_exposure_cap=construction.gross_exposure_cap,
-                direction_mode=None,
+                direction_mode=construction.direction_mode,
                 target_vol=construction.target_vol,
                 gross_leverage_cap=construction.gross_leverage_cap,
                 net_exposure_target=construction.net_exposure_target,

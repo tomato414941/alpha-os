@@ -226,8 +226,8 @@
             "rebalance": "every_5_steps"
           },
           "risk_policy": {
-            "long_only": true,
-            "gross_exposure_cap": 0.85
+            "gross_exposure_cap": 0.85,
+            "direction_mode": "long_only"
           }
         },
         "rebalance_friction_policy": {
@@ -259,8 +259,8 @@
           "sizing_engine": "history_based"
         },
         "rebalance_interval_steps": 5,
-        "long_only": true,
-        "gross_exposure_cap": 0.85
+        "gross_exposure_cap": 0.85,
+        "direction_mode": "long_only"
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.0,

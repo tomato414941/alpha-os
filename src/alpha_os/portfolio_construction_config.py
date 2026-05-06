@@ -548,10 +548,8 @@ class PortfolioConstructionSpec:
             "construction_kind": self.construction_kind,
             "sizing_policy": self.sizing_policy.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
-            "long_only": self.long_only,
+            "direction_mode": self.direction_mode,
         }
-        if self.direction_mode != "long_short":
-            document["direction_mode"] = self.direction_mode
         if self.active_overlay is not None:
             document["active_overlay"] = self.active_overlay.to_document()
         if self.gross_exposure_cap is not None:

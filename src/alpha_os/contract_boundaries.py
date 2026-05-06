@@ -101,7 +101,7 @@ def default_portfolio_constraint_boundary() -> PortfolioConstraintBoundary:
     return PortfolioConstraintBoundary(
         sizing_time_fields=("target_vol",),
         post_sizing_normalization_fields=(
-            "long_only",
+            "direction_mode",
             "gross_exposure_cap",
             "gross_leverage_cap",
             "net_exposure_target",

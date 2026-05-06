@@ -836,9 +836,6 @@ def _format_portfolio_decision_strategy(details: dict[str, object]) -> str | Non
     top_k = strategy.get("top_k")
     if top_k is not None:
         parts.append(f"top_k={top_k}")
-    long_only = strategy.get("long_only")
-    if isinstance(long_only, bool):
-        parts.append(f"long_only={str(long_only).lower()}")
     direction_mode = strategy.get("direction_mode")
     if isinstance(direction_mode, str) and direction_mode:
         parts.append(f"direction_mode={direction_mode}")

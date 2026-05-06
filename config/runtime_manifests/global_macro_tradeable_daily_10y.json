@@ -734,7 +734,6 @@
           "active_weight_budget": 0.0
         },
         "rebalance_interval_steps": 1,
-        "long_only": false,
         "target_vol": 0.18,
         "gross_exposure_cap": 1.5,
         "gross_leverage_cap": 1.5,
@@ -774,7 +773,8 @@
               "enabled": true
             }
           ]
-        }
+        },
+        "direction_mode": "long_short"
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.001,

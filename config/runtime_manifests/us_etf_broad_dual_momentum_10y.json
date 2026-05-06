@@ -309,11 +309,11 @@
           "sizing_engine": "history_based"
         },
         "rebalance_interval_steps": 21,
-        "long_only": true,
         "gross_exposure_cap": 1.0,
         "target_vol": 0.1,
         "gross_leverage_cap": 1.0,
-        "net_exposure_target": 1.0
+        "net_exposure_target": 1.0,
+        "direction_mode": "long_only"
       },
       "rebalance_friction_policy": {
         "turnover_friction": 0.0,

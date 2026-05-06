@@ -63,10 +63,10 @@
             "rebalance_interval_steps": 5
           },
           "risk_policy": {
-            "long_only": true,
             "gross_exposure_cap": 1.0,
             "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0
+            "net_exposure_target": 1.0,
+            "direction_mode": "long_only"
           }
         },
         "rebalance_friction_policy": {
@@ -118,10 +118,10 @@
             "rebalance_interval_steps": 5
           },
           "risk_policy": {
-            "long_only": true,
             "gross_exposure_cap": 1.0,
             "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0
+            "net_exposure_target": 1.0,
+            "direction_mode": "long_only"
           }
         },
         "rebalance_friction_policy": {
