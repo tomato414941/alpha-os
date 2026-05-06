@@ -1494,8 +1494,8 @@ def _trading_strategy_with_evaluation_config(
     friction = variant_config.rebalance_friction_policy
     costs = variant_config.execution_cost_assumptions
     holding_costs = variant_config.holding_cost_assumptions
-    portfolio = StrategyPortfolioSpec.from_legacy(
-        portfolio_policy=trading_strategy.portfolio.to_portfolio_policy(),
+    portfolio = StrategyPortfolioSpec(
+        portfolio_construction=variant_config.portfolio_construction,
         rebalance_friction_policy=RebalanceFrictionPolicySpec(
             turnover_friction=friction.turnover_friction,
             no_trade_band=friction.no_trade_band,
@@ -1517,11 +1517,11 @@ def _trading_strategy_with_evaluation_config(
             funding_bps_per_step=holding_costs.funding_bps_per_step,
             borrow_fee_bps_per_step=holding_costs.borrow_fee_bps_per_step,
         ),
-        portfolio_construction=variant_config.portfolio_construction,
+        selection_kind=trading_strategy.portfolio.selection_kind,
+        top_k=trading_strategy.portfolio.top_k,
         rebalance_interval_steps=(
             variant_config.portfolio_construction.rebalance_interval_steps
         ),
-        sleeve_composition=variant_config.portfolio_construction.sleeve_composition,
     )
     return replace(
         trading_strategy,
@@ -2593,7 +2593,7 @@ def _evaluation_strategy_override_from_document(
     raw_override = document.get("strategy_override")
     has_strategy_override = isinstance(raw_override, dict)
     override_document = raw_override if has_strategy_override else document
-    has_legacy_trading_config = any(
+    has_inline_strategy_config = any(
         key in document
         for key in (
             "portfolio_construction",
@@ -2602,11 +2602,17 @@ def _evaluation_strategy_override_from_document(
             "holding_cost_assumptions",
         )
     )
+    portfolio_construction_document = dict(
+        override_document.get("portfolio_construction") or {}
+    )
+    rebalance_interval_steps = int(override_document.get("rebalance_interval_steps", 1))
+    portfolio_construction = replace(
+        PortfolioConstructionSpec.from_document(portfolio_construction_document),
+        rebalance_interval_steps=rebalance_interval_steps,
+    )
     return (
         _StrategyVariantConfig(
-            portfolio_construction=PortfolioConstructionSpec.from_document(
-                override_document.get("portfolio_construction")
-            ),
+            portfolio_construction=portfolio_construction,
             rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec.from_document(
                 override_document.get("rebalance_friction_policy")
             ),
@@ -2622,7 +2628,7 @@ def _evaluation_strategy_override_from_document(
                 override_document.get("holding_cost_assumptions")
             ),
         ),
-        has_strategy_override or has_legacy_trading_config,
+        has_strategy_override or has_inline_strategy_config,
     )
 
 

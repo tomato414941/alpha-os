@@ -110,30 +110,16 @@ def _register_direct_strategy(
     from alpha_os.trading_strategy import (
         ExecutionPolicySpec,
         HoldingCostPolicySpec,
-        PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
-        SizingPolicySpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
-
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind="top_k",
-            top_k=3,
-        ),
-        sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-        risk_policy=RiskPolicySpec(
-            long_only=True,
-            gross_exposure_cap=1.0,
-            target_vol=0.12,
-            gross_leverage_cap=1.5,
-            net_exposure_target=0.3,
-        ),
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
+
     store.upsert_trading_strategy(
         trading_strategy=TradingStrategySpec(
             strategy_id=strategy_id,
@@ -146,8 +132,17 @@ def _register_direct_strategy(
             position_rule_id="constant_hold",
             family_mix=None,
             execution_kind="trainless",
-            portfolio=StrategyPortfolioSpec.from_legacy(
-                portfolio_policy=portfolio_policy,
+            portfolio=StrategyPortfolioSpec(
+                portfolio_construction=PortfolioConstructionSpec(
+                    sizing_policy=PortfolioConstructionSizingSpec(
+                        sizing_method="equal_weight",
+                    ),
+                    direction_mode="long_only",
+                    gross_exposure_cap=1.0,
+                    target_vol=0.12,
+                    gross_leverage_cap=1.5,
+                    net_exposure_target=0.3,
+                ),
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
                     turnover_friction=0.1,
                     no_trade_band=0.02,
@@ -162,8 +157,8 @@ def _register_direct_strategy(
                     funding_bps_per_step=1.5,
                     borrow_fee_bps_per_step=2.5,
                 ),
-                portfolio_construction=None,
-                sleeve_composition=None,
+                selection_kind="top_k",
+                top_k=3,
             ),
             created_at="2026-04-18T00:00:00Z",
         )

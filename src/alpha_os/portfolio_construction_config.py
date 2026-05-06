@@ -584,21 +584,12 @@ class PortfolioConstructionSpec:
             if document.get("construction_kind") is None
             else str(document.get("construction_kind"))
         )
-        long_only = document.get("long_only", False)
-        if isinstance(long_only, str):
-            if long_only in {"", "-", "false"}:
-                long_only = False
-            elif long_only == "true":
-                long_only = True
-            else:
-                raise ValueError(f"unsupported long_only value: {long_only}")
         return cls(
             construction_kind=construction_kind,
             sizing_policy=PortfolioConstructionSizingSpec.from_document(
                 document.get("sizing_policy")
             ),
-            rebalance_interval_steps=document.get("rebalance_interval_steps", 1),
-            long_only=long_only,
+            long_only=False,
             direction_mode=(
                 None
                 if document.get("direction_mode") is None

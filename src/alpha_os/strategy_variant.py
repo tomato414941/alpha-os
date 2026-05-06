@@ -254,6 +254,7 @@ def derive_trading_strategy_from_signal_discovery(
             ),
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,
+            rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
         ),
         created_at=created_at,
         adaptation_policy=AdaptationPolicySpec(

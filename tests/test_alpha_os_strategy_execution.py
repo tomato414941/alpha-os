@@ -32,37 +32,18 @@ def _build_trading_strategy(
 ):
     from alpha_os.trading_strategy import (
         AdaptationPolicySpec,
-        SizingPolicySpec,
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         HoldingCostPolicySpec,
         RebalanceFrictionPolicySpec,
     )
-
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind=selection_kind,
-            top_k=top_k,
-        ),
-        sizing_policy=SizingPolicySpec(
-            sizing_method=sizing_method,
-        ),
-        risk_policy=RiskPolicySpec(
-            long_only=long_only,
-            gross_exposure_cap=gross_exposure_cap,
-            asset_class_weight_caps=(
-                {} if asset_class_weight_caps is None else dict(asset_class_weight_caps)
-            ),
-            cluster_weight_caps=(
-                {} if cluster_weight_caps is None else dict(cluster_weight_caps)
-            ),
-        ),
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
+
     return TradingStrategySpec(
         strategy_id=strategy_id,
         label=label,
@@ -74,8 +55,26 @@ def _build_trading_strategy(
         position_rule_id=position_rule_id,
         family_mix=family_mix,
         execution_kind=execution_kind,
-        portfolio=StrategyPortfolioSpec.from_legacy(
-            portfolio_policy=portfolio_policy,
+        portfolio=StrategyPortfolioSpec(
+            portfolio_construction=PortfolioConstructionSpec(
+                sizing_policy=PortfolioConstructionSizingSpec(
+                    sizing_method=sizing_method or "equal_weight",
+                ),
+                direction_mode=(
+                    "long_only"
+                    if long_only is True
+                    else "long_short"
+                    if long_only is False
+                    else None
+                ),
+                gross_exposure_cap=gross_exposure_cap,
+                asset_class_weight_caps=(
+                    {} if asset_class_weight_caps is None else dict(asset_class_weight_caps)
+                ),
+                cluster_weight_caps=(
+                    {} if cluster_weight_caps is None else dict(cluster_weight_caps)
+                ),
+            ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
                 turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
@@ -89,7 +88,6 @@ def _build_trading_strategy(
                 funding_bps_per_step=funding_bps_per_step,
                 borrow_fee_bps_per_step=borrow_fee_bps_per_step,
             ),
-            portfolio_construction=None,
             rebalance_interval_steps=(
                 int(rebalance[len("every_") : -len("_steps")])
                 if isinstance(rebalance, str)
@@ -97,7 +95,8 @@ def _build_trading_strategy(
                 and rebalance.endswith("_steps")
                 else 1
             ),
-            sleeve_composition=None,
+            selection_kind=selection_kind,
+            top_k=top_k,
         ),
         created_at=created_at,
         adaptation_policy=AdaptationPolicySpec(
@@ -266,10 +265,11 @@ def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
             "execution_policy": ExecutionPolicySpec(
                 market_impact_bps=None,
             ).to_document(),
-            "holding_cost_policy": HoldingCostPolicySpec().to_document(),
-            "selection_kind": "top_k",
-            "top_k": 4,
-        }
+                "holding_cost_policy": HoldingCostPolicySpec().to_document(),
+                "rebalance_interval_steps": 1,
+                "selection_kind": "top_k",
+                "top_k": 4,
+            }
     )
 
     assert portfolio.top_k == 4

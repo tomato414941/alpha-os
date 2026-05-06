@@ -143,7 +143,6 @@
           "sizing_method": "signal_weighted",
           "sizing_engine": "rule_based"
         },
-        "rebalance_interval_steps": 1,
         "direction_mode": "long_short"
       },
       "rebalance_friction_policy": {
@@ -155,7 +154,8 @@
         "market_impact_bps": 0.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "rebalance_interval_steps": 1
     }
   ]
 }

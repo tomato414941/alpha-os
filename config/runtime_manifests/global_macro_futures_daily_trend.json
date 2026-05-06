@@ -699,7 +699,6 @@
           "sizing_method": "signal_weighted",
           "sizing_engine": "rule_based"
         },
-        "rebalance_interval_steps": 1,
         "target_vol": 0.18,
         "gross_exposure_cap": 1.5,
         "gross_leverage_cap": 1.5,
@@ -746,7 +745,8 @@
         "funding_bps_per_step": 0.5,
         "borrow_fee_bps_per_step": 0.25
       },
-      "top_k": null
+      "top_k": null,
+      "rebalance_interval_steps": 1
     }
   ]
 }

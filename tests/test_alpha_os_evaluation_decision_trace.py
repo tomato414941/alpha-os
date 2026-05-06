@@ -335,28 +335,17 @@ def _register_subject_set(store) -> None:
 def _register_direct_strategy(store) -> None:
     from alpha_os.trading_strategy import (
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
-        SizingPolicySpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         HoldingCostPolicySpec,
     )
-
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind="all_assets",
-            top_k=None,
-        ),
-        sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-        risk_policy=RiskPolicySpec(
-            long_only=True,
-            gross_exposure_cap=1.0,
-        ),
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
+
     store.upsert_trading_strategy(
         trading_strategy=TradingStrategySpec(
             strategy_id="strategy:test",
@@ -369,16 +358,22 @@ def _register_direct_strategy(store) -> None:
             position_rule_id="constant_hold",
             family_mix=None,
             execution_kind="trainless",
-            portfolio=StrategyPortfolioSpec.from_legacy(
-                portfolio_policy=portfolio_policy,
+            portfolio=StrategyPortfolioSpec(
+                portfolio_construction=PortfolioConstructionSpec(
+                    sizing_policy=PortfolioConstructionSizingSpec(
+                        sizing_method="equal_weight",
+                    ),
+                    direction_mode="long_only",
+                    gross_exposure_cap=1.0,
+                ),
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
                     turnover_friction=None,
                     no_trade_band=None,
                 ),
                 execution_policy=ExecutionPolicySpec(market_impact_bps=None),
                 holding_cost_policy=HoldingCostPolicySpec(),
-                portfolio_construction=None,
-                sleeve_composition=None,
+                selection_kind="all_assets",
+                top_k=None,
             ),
             created_at="2026-04-20T00:00:00Z",
         )

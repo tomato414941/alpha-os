@@ -28,7 +28,6 @@ hard to connect without adding another parallel path.
 - `long_only` / `direction_mode`
 - exposure and risk constraints
 - execution and holding-cost assumptions that may not belong to a strategy spec
-- legacy document compatibility through `from_legacy()`
 
 ## Current Decision
 
@@ -70,8 +69,9 @@ simple rule, a history-based allocator, or an optimizer.
 weights are filtered: `long_short` keeps both signs, `long_only` keeps positive
 targets, and `short_only` keeps negative targets.
 
-`long_only` should be treated as a legacy or derived compatibility flag, not as a
-separate source of truth from `direction_mode`.
+`long_only` should be treated only as a derived runtime flag when older internal
+call paths still need a boolean. It must not be accepted as a persisted strategy
+document field or treated as a second source of truth from `direction_mode`.
 
 `EqualWeightLongOnlyAllocator` should be understood as a long-only allocation
 policy, not as a separate direction system.
@@ -91,9 +91,8 @@ evaluation override.
 
 Current decision: rebalance cadence is strategy-owned for strategy specs.
 `StrategyPortfolioSpec.rebalance_interval_steps` is the source of truth.
-`RebalancePolicySpec` has been removed. `PortfolioConstructionSpec` may still
-accept `rebalance_interval_steps` as compatibility input, but it should not emit
-it as a persisted construction field.
+`RebalancePolicySpec` has been removed. `PortfolioConstructionSpec` must not
+accept or emit `rebalance_interval_steps` as a persisted construction field.
 
 ### Risk And Exposure Constraints
 
@@ -106,9 +105,8 @@ group caps, risk-budget normalization, target-vol scaling, gross exposure caps,
 and net exposure targeting.
 
 The problem is not that constraints exist. The problem is that
-`PortfolioConstructionSpec` mixes allocation policy, constraint policy,
-rebalance cadence, report contract fields, and legacy compatibility in one
-object.
+`PortfolioConstructionSpec` mixes allocation policy, constraint policy, and
+report contract fields in one object.
 
 `EqualWeightLongOnlyAllocator` may keep a minimal gross exposure cap for a simple
 standalone rule, but richer constraints such as target volatility, leverage
@@ -121,12 +119,12 @@ Current classification:
 
 | Field | Current location | Classification | Reason |
 |---|---|---|---|
-| `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, rebalance cadence, and compatibility. |
+| `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, and report contract fields. |
 | `selection_kind` | `StrategyPortfolioSpec` | portfolio allocation | Chooses which candidates may receive weights. Belongs with `top_k`. |
 | `top_k` | `StrategyPortfolioSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; no longer belongs to `PortfolioConstructionSpec`. |
 | `sizing_policy` | `PortfolioConstructionSpec` | portfolio allocation / legacy unclear | Related to weight creation, but also carries optimizer labels and history requirements. |
-| `rebalance_interval_steps` | `StrategyPortfolioSpec` | strategy-owned | Strategy cadence is part of the trading hypothesis; `PortfolioConstructionSpec` only keeps compatibility input. |
-| `long_only` | `PortfolioConstructionSpec` | legacy / derived | Derivable from `direction_mode`; should not be a second source of truth. |
+| `rebalance_interval_steps` | `StrategyPortfolioSpec` | strategy-owned | Strategy cadence is part of the trading hypothesis; `PortfolioConstructionSpec` is not an input source. |
+| `long_only` | `PortfolioConstructionSpec` | derived runtime field | Derivable from `direction_mode`; should not be a persisted source of truth. |
 | `direction_mode` | `PortfolioConstructionSpec` | portfolio allocation | Determines how long/short/flat candidates are treated before weights are finalized. |
 | `active_overlay` | `PortfolioConstructionSpec` | portfolio allocation / unclear | Appears to alter target weights, but the boundary is still broad. |
 | `gross_exposure_cap` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains total target weight after allocation. |
@@ -150,7 +148,7 @@ Current classification:
   - strategy-owned
   - evaluation/backtest-owned
   - execution-owned
-  - legacy compatibility
+  - legacy/internal adapter
 - Closely related fields are assigned to one layer, not split across both.
 - One layer is chosen as the future source of truth.
 - The other layer is either marked legacy/adapter-only or given a narrower

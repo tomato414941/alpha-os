@@ -9,7 +9,6 @@ from .contract_boundaries import (
     default_portfolio_constraint_boundary,
 )
 from .portfolio_construction_config import (
-    PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
 from .portfolio_direction import normalize_portfolio_direction_mode
@@ -230,11 +229,8 @@ class RiskPolicySpec:
         document = {
             "gross_exposure_cap": self.gross_exposure_cap,
         }
-        direction_mode = self.direction_mode
-        if direction_mode is None and self.long_only is not None:
-            direction_mode = "long_only" if self.long_only else "long_short"
-        if direction_mode is not None:
-            document["direction_mode"] = direction_mode
+        if self.direction_mode is not None:
+            document["direction_mode"] = self.direction_mode
         if self.target_vol is not None:
             document["target_vol"] = self.target_vol
         if self.gross_leverage_cap is not None:
@@ -253,26 +249,14 @@ class RiskPolicySpec:
         target_vol = document.get("target_vol")
         gross_leverage_cap = document.get("gross_leverage_cap")
         net_exposure_target = document.get("net_exposure_target")
-        long_only = document.get("long_only")
-        if isinstance(long_only, str):
-            normalized_long_only = _normalize_optional(long_only)
-            if normalized_long_only is None:
-                long_only = None
-            elif normalized_long_only == "true":
-                long_only = True
-            elif normalized_long_only == "false":
-                long_only = False
-            else:
-                raise ValueError(f"unsupported long_only value: {long_only}")
         direction_mode = document.get("direction_mode")
         if direction_mode is not None:
             direction_mode = normalize_portfolio_direction_mode(
                 str(direction_mode),
-                long_only=bool(long_only) if long_only is not None else False,
+                long_only=False,
             )
-            long_only = direction_mode == "long_only"
         return cls(
-            long_only=None if long_only is None else bool(long_only),
+            long_only=None if direction_mode is None else direction_mode == "long_only",
             gross_exposure_cap=(
                 None if gross_exposure_cap is None else float(gross_exposure_cap)
             ),
@@ -481,44 +465,12 @@ class AdaptationPolicySpec:
 
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
-    if raw_steps is not None:
-        steps = int(raw_steps)
-        if steps < 1:
-            raise ValueError("rebalance_interval_steps must be >= 1")
-        return steps
-    rebalance = _normalize_optional(
-        None if document.get("rebalance") is None else str(document["rebalance"])
-    )
-    if rebalance in {None, "", "-", "none"}:
-        return 1
-    prefix = "every_"
-    suffix = "_steps"
-    if rebalance.startswith(prefix) and rebalance.endswith(suffix):
-        return int(rebalance[len(prefix) : -len(suffix)])
-    return 1
-
-
-def _legacy_rebalance_interval_steps_from_strategy_document(
-    document: dict[str, Any],
-    portfolio_construction: PortfolioConstructionSpec | None,
-) -> int:
-    raw_steps = document.get("rebalance_interval_steps")
-    if raw_steps is not None:
-        return _rebalance_interval_steps_from_document(
-            {"rebalance_interval_steps": raw_steps}
-        )
-    portfolio_policy = dict(document.get("portfolio_policy", {}))
-    raw_steps = portfolio_policy.get("rebalance_interval_steps")
-    if raw_steps is not None:
-        return _rebalance_interval_steps_from_document(
-            {"rebalance_interval_steps": raw_steps}
-        )
-    rebalance_policy = portfolio_policy.get("rebalance_policy")
-    if isinstance(rebalance_policy, dict):
-        return _rebalance_interval_steps_from_document(dict(rebalance_policy))
-    if portfolio_construction is not None:
-        return portfolio_construction.rebalance_interval_steps
-    return 1
+    if raw_steps is None:
+        raise ValueError("strategy portfolio rebalance_interval_steps is required")
+    steps = int(raw_steps)
+    if steps < 1:
+        raise ValueError("rebalance_interval_steps must be >= 1")
+    return steps
 
 
 def _rebalance_label(rebalance_interval_steps: int) -> str:
@@ -587,9 +539,7 @@ class StrategyPortfolioSpec:
         portfolio_construction = PortfolioConstructionSpec.from_document(
             document.get("portfolio_construction")
         )
-        rebalance_interval_steps = document.get("rebalance_interval_steps")
-        if rebalance_interval_steps is None:
-            rebalance_interval_steps = portfolio_construction.rebalance_interval_steps
+        rebalance_interval_steps = _rebalance_interval_steps_from_document(document)
         return cls(
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec.from_document(
@@ -604,52 +554,6 @@ class StrategyPortfolioSpec:
             selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
             rebalance_interval_steps=int(rebalance_interval_steps),
-        )
-
-    @classmethod
-    def from_legacy(
-        cls,
-        *,
-        portfolio_policy: PortfolioPolicySpec,
-        rebalance_friction_policy: RebalanceFrictionPolicySpec,
-        execution_policy: ExecutionPolicySpec,
-        holding_cost_policy: HoldingCostPolicySpec,
-        portfolio_construction: PortfolioConstructionSpec | None,
-        rebalance_interval_steps: int = 1,
-        sleeve_composition: StrategySleeveCompositionSpec | None = None,
-    ) -> "StrategyPortfolioSpec":
-        if portfolio_construction is not None:
-            construction = portfolio_construction
-        else:
-            risk_policy = portfolio_policy.risk_policy
-            sizing_method = portfolio_policy.sizing_policy.sizing_method or "equal_weight"
-            construction = PortfolioConstructionSpec(
-                sizing_policy=PortfolioConstructionSizingSpec(
-                    sizing_method=sizing_method,
-                ),
-                rebalance_interval_steps=rebalance_interval_steps,
-                long_only=(
-                    False
-                    if risk_policy.long_only is None
-                    else risk_policy.long_only
-                ),
-                direction_mode=risk_policy.direction_mode,
-                gross_exposure_cap=risk_policy.gross_exposure_cap,
-                target_vol=risk_policy.target_vol,
-                gross_leverage_cap=risk_policy.gross_leverage_cap,
-                net_exposure_target=risk_policy.net_exposure_target,
-                asset_class_weight_caps=dict(risk_policy.asset_class_weight_caps),
-                cluster_weight_caps=dict(risk_policy.cluster_weight_caps),
-                sleeve_composition=sleeve_composition,
-            )
-        return cls(
-            portfolio_construction=construction,
-            rebalance_friction_policy=rebalance_friction_policy,
-            execution_policy=execution_policy,
-            holding_cost_policy=holding_cost_policy,
-            selection_kind=portfolio_policy.selection_policy.selection_kind,
-            top_k=portfolio_policy.selection_policy.top_k,
-            rebalance_interval_steps=rebalance_interval_steps,
         )
 
     def to_portfolio_policy(self) -> PortfolioPolicySpec:
@@ -711,48 +615,9 @@ class TradingStrategySpec:
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "TradingStrategySpec":
         portfolio_document = document.get("portfolio")
-        portfolio = (
-            StrategyPortfolioSpec.from_document(dict(portfolio_document))
-            if isinstance(portfolio_document, dict)
-            else None
-        )
-        legacy_portfolio_construction = (
-            PortfolioConstructionSpec.from_document(dict(document["portfolio_construction"]))
-            if document.get("portfolio_construction") is not None
-            else None
-        )
-        legacy_portfolio_policy = PortfolioPolicySpec.from_document(
-            dict(document.get("portfolio_policy", {}))
-        )
-        legacy_rebalance_interval_steps = (
-            _legacy_rebalance_interval_steps_from_strategy_document(
-                document,
-                legacy_portfolio_construction,
-            )
-        )
-        legacy_rebalance_friction_policy = RebalanceFrictionPolicySpec.from_document(
-            dict(document.get("rebalance_friction_policy", {}))
-        )
-        legacy_execution_policy = ExecutionPolicySpec.from_document(
-            dict(document.get("execution_policy", {}))
-        )
-        legacy_holding_cost_policy = HoldingCostPolicySpec.from_document(
-            dict(document.get("holding_cost_policy", {}))
-        )
-        legacy_sleeve_composition = StrategySleeveCompositionSpec.from_document(
-            None
-            if document.get("sleeve_composition") is None
-            else dict(document["sleeve_composition"])
-        )
-        resolved_portfolio = portfolio or StrategyPortfolioSpec.from_legacy(
-            portfolio_policy=legacy_portfolio_policy,
-            rebalance_friction_policy=legacy_rebalance_friction_policy,
-            execution_policy=legacy_execution_policy,
-            holding_cost_policy=legacy_holding_cost_policy,
-            portfolio_construction=legacy_portfolio_construction,
-            rebalance_interval_steps=legacy_rebalance_interval_steps,
-            sleeve_composition=legacy_sleeve_composition,
-        )
+        if not isinstance(portfolio_document, dict):
+            raise ValueError("trading strategy portfolio is required")
+        portfolio = StrategyPortfolioSpec.from_document(dict(portfolio_document))
         return cls(
             strategy_id=str(document["strategy_id"]),
             label=str(document["label"]),
@@ -770,7 +635,7 @@ class TradingStrategySpec:
             adaptation_policy=AdaptationPolicySpec.from_document(
                 dict(document.get("adaptation_policy", {}))
             ),
-            portfolio=resolved_portfolio,
+            portfolio=portfolio,
             created_at=str(document["created_at"]),
         )
 

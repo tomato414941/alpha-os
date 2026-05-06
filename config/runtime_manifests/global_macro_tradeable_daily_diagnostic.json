@@ -85,49 +85,46 @@
           "subject_set_id": "global_macro_tradeable_daily_10y",
           "target_id": "residual_return_5d"
         },
-        "portfolio_policy": {
-          "selection_policy": {
-            "selection_kind": "all_assets",
-            "top_k": null
-          },
-          "sizing_policy": {
-            "sizing_method": "equal_weight"
-          },
-          "rebalance_interval_steps": 252,
-          "risk_policy": {
-            "gross_exposure_cap": 1.0,
-            "target_vol": null,
-            "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0,
-            "direction_mode": "long_only"
-          }
-        },
-        "rebalance_friction_policy": {
-          "turnover_friction": 0.001,
-          "no_trade_band": 0.0,
-          "execution_cost_aversion": 1.5,
-          "execution_mode": "utility_priority",
-          "turnover_budget": null,
-          "benefit_scale": 1.0,
-          "min_trade_utility": 0.0,
-          "uncertainty_aversion": 1.0,
-          "risk_aversion": 0.0,
-          "partial_fill_enabled": true
-        },
-        "execution_policy": {
-          "market_impact_bps": 4.0,
-          "fee_bps": 0.5,
-          "bid_ask_spread_bps": 1.5
-        },
-        "holding_cost_policy": {
-          "funding_bps_per_step": 0.5,
-          "borrow_fee_bps_per_step": 0.25
-        },
         "created_at": "2026-04-23T00:00:00+00:00",
         "signal_discovery_id": null,
         "position_rule_id": "constant_hold",
         "family_mix": null,
-        "execution_kind": "trainless"
+        "execution_kind": "trainless",
+        "portfolio": {
+          "portfolio_construction": {
+            "sizing_policy": {
+              "sizing_method": "equal_weight"
+            },
+            "direction_mode": "long_only",
+            "gross_exposure_cap": 1.0,
+            "target_vol": null,
+            "gross_leverage_cap": 1.0,
+            "net_exposure_target": 1.0
+          },
+          "rebalance_friction_policy": {
+            "turnover_friction": 0.001,
+            "no_trade_band": 0.0,
+            "execution_cost_aversion": 1.5,
+            "execution_mode": "utility_priority",
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 4.0,
+            "fee_bps": 0.5,
+            "bid_ask_spread_bps": 1.5
+          },
+          "rebalance_interval_steps": 252,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.5,
+            "borrow_fee_bps_per_step": 0.25
+          },
+          "selection_kind": "all_assets"
+        }
       }
     }
   ],
@@ -188,7 +185,6 @@
             "sizing_method": "equal_weight",
             "sizing_engine": "history_based"
           },
-          "rebalance_interval_steps": 252,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -220,7 +216,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 252
       }
     },
     {
@@ -234,7 +231,6 @@
             "sizing_method": "equal_weight",
             "sizing_engine": "history_based"
           },
-          "rebalance_interval_steps": 21,
           "target_vol": null,
           "gross_exposure_cap": 1.0,
           "gross_leverage_cap": 1.0,
@@ -266,7 +262,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 21
       }
     },
     {
@@ -283,7 +280,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -340,7 +336,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -357,7 +354,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -421,7 +417,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -438,7 +435,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -502,7 +498,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -519,7 +516,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -583,7 +579,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -600,7 +597,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -664,7 +660,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -681,7 +678,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -745,7 +741,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -762,7 +759,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -826,7 +822,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -843,7 +840,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -900,7 +896,8 @@
           "funding_bps_per_step": 0.0,
           "borrow_fee_bps_per_step": 0.0
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     },
     {
@@ -917,7 +914,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 5,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -974,7 +970,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 5
       }
     },
     {
@@ -991,7 +988,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 5,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1048,7 +1044,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 5
       }
     },
     {
@@ -1065,7 +1062,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 10,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1125,7 +1121,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 10
       }
     },
     {
@@ -1142,7 +1139,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 21,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1199,7 +1195,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 21
       }
     },
     {
@@ -1216,7 +1213,6 @@
             "kind": "rank_tilt",
             "active_weight_budget": 0.0
           },
-          "rebalance_interval_steps": 1,
           "target_vol": 0.18,
           "gross_exposure_cap": 1.5,
           "gross_leverage_cap": 1.5,
@@ -1272,7 +1268,8 @@
           "funding_bps_per_step": 0.5,
           "borrow_fee_bps_per_step": 0.25
         },
-        "top_k": null
+        "top_k": null,
+        "rebalance_interval_steps": 1
       }
     }
   ]

@@ -787,12 +787,13 @@ def test_resolve_evaluation_tasks_rejects_override_without_signal_discovery(
                     "position_rule_id": "constant_hold",
                     "family_mix": None,
                     "execution_kind": "screen",
-                    "portfolio": {
-                        "portfolio_construction": _make_evaluation_trading_config()
-                        .portfolio_construction.to_document(),
-                        "rebalance_friction_policy": {},
-                        "execution_policy": {},
-                    },
+                        "portfolio": {
+                            "portfolio_construction": _make_evaluation_trading_config()
+                            .portfolio_construction.to_document(),
+                            "rebalance_friction_policy": {},
+                            "execution_policy": {},
+                            "rebalance_interval_steps": 1,
+                        },
                     "created_at": "2026-04-19T00:00:00Z",
                 }
             )

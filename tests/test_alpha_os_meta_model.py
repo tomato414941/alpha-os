@@ -5,6 +5,35 @@ from pathlib import Path
 import pytest
 
 
+def _strategy_portfolio_document(
+    *,
+    sizing_method: str,
+    direction_mode: str | None,
+    gross_exposure_cap: float | None,
+    selection_kind: str = "all_assets",
+    top_k: int | None = None,
+    rebalance_interval_steps: int = 1,
+    rebalance_friction_policy: dict[str, object] | None = None,
+    execution_policy: dict[str, object] | None = None,
+) -> dict[str, object]:
+    portfolio: dict[str, object] = {
+        "portfolio_construction": {
+            "sizing_policy": {"sizing_method": sizing_method},
+            "direction_mode": direction_mode,
+            "gross_exposure_cap": gross_exposure_cap,
+        },
+        "rebalance_friction_policy": (
+            {} if rebalance_friction_policy is None else rebalance_friction_policy
+        ),
+        "execution_policy": {} if execution_policy is None else execution_policy,
+        "rebalance_interval_steps": rebalance_interval_steps,
+        "selection_kind": selection_kind,
+    }
+    if top_k is not None:
+        portfolio["top_k"] = top_k
+    return {"portfolio": portfolio}
+
+
 def test_refresh_target_meta_predictions_persists_equal_and_corr_weighted_means(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
     from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
@@ -629,27 +658,20 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                             "position_rule_id": "signal_discovery",
                             "family_mix": None,
                             "execution_kind": "trained",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="equal_weight",
+                                direction_mode=None,
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": None,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1829,14 +1851,14 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         AdaptationPolicySpec,
         ExecutionPolicySpec,
         HoldingCostPolicySpec,
-        PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
-        SizingPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
+    )
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
 
     db_path = tmp_path / "runtime.db"
@@ -1931,17 +1953,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                 ),
             )
         )
-        portfolio_policy = PortfolioPolicySpec(
-            selection_policy=SelectionPolicySpec(
-                selection_kind="top_k",
-                top_k=1,
-            ),
-            sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-            risk_policy=RiskPolicySpec(
-                long_only=True,
-                gross_exposure_cap=0.5,
-            ),
-        )
         store.upsert_trading_strategy(
             trading_strategy=TradingStrategySpec(
                 strategy_id="strategy:paper_core_top1",
@@ -1954,8 +1965,14 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                 position_rule_id="constant_hold",
                 family_mix=None,
                 execution_kind="trainless",
-                portfolio=StrategyPortfolioSpec.from_legacy(
-                    portfolio_policy=portfolio_policy,
+                portfolio=StrategyPortfolioSpec(
+                    portfolio_construction=PortfolioConstructionSpec(
+                        sizing_policy=PortfolioConstructionSizingSpec(
+                            sizing_method="equal_weight",
+                        ),
+                        direction_mode="long_only",
+                        gross_exposure_cap=0.5,
+                    ),
                     rebalance_friction_policy=RebalanceFrictionPolicySpec(
                         turnover_friction=0.15,
                         no_trade_band=0.02,
@@ -1967,8 +1984,8 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                     holding_cost_policy=HoldingCostPolicySpec(
                         funding_bps_per_step=2.5,
                     ),
-                    portfolio_construction=None,
-                    sleeve_composition=None,
+                    selection_kind="top_k",
+                    top_k=1,
                 ),
                 adaptation_policy=AdaptationPolicySpec(
                     enabled=False,
@@ -2469,27 +2486,20 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                             "position_rule_id": "signal_discovery",
                             "family_mix": None,
                             "execution_kind": "trained",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode=None,
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": None,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -3446,16 +3456,16 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
     from alpha_os.signal_discovery import SignalDiscoverySpec
     from alpha_os.store import EvaluationStore
     from alpha_os.trading_strategy import (
-        SizingPolicySpec,
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         RebalanceFrictionPolicySpec,
         HoldingCostPolicySpec,
+    )
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
     import alpha_os.validation_service as validation_service
     from alpha_os.validation_spec import ValidationDateRange, ValidationSpec, write_validation_spec
@@ -3491,14 +3501,6 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
                 target_id="residual_return_3d",
             ),
         )
-        portfolio_policy = PortfolioPolicySpec(
-            selection_policy=SelectionPolicySpec(
-                selection_kind="all_assets",
-                top_k=None,
-            ),
-            sizing_policy=SizingPolicySpec(sizing_method=None),
-            risk_policy=RiskPolicySpec(long_only=None, gross_exposure_cap=None),
-        )
         spec = TradingStrategySpec(
             strategy_id="strategy:core_crypto_search",
             label="Core Crypto Discovery",
@@ -3510,8 +3512,14 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
             position_rule_id="signal_discovery",
             family_mix=None,
             execution_kind="trained",
-            portfolio=StrategyPortfolioSpec.from_legacy(
-                portfolio_policy=portfolio_policy,
+            portfolio=StrategyPortfolioSpec(
+                portfolio_construction=PortfolioConstructionSpec(
+                    sizing_policy=PortfolioConstructionSizingSpec(
+                        sizing_method="equal_weight",
+                    ),
+                    direction_mode=None,
+                    gross_exposure_cap=None,
+                ),
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
                     turnover_friction=None,
                     no_trade_band=None,
@@ -3522,8 +3530,8 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
                     bid_ask_spread_bps=None,
                 ),
                 holding_cost_policy=HoldingCostPolicySpec(),
-                portfolio_construction=None,
-                sleeve_composition=None,
+                selection_kind="all_assets",
+                top_k=None,
             ),
             created_at="2026-03-29T00:00:00+00:00",
         )
@@ -3764,7 +3772,7 @@ def test_global_macro_diagnostic_manifest_contract():
         elif case["evaluation_task_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case":
             assert case["strategy_id"] == "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold"
             assert construction["construction_kind"] == "hold_baseline"
-            assert construction["rebalance_interval_steps"] == 21
+            assert strategy_override["rebalance_interval_steps"] == 21
             assert "signal_discovery_id" not in case
         elif case["evaluation_task_id"] in {
             "global_macro_tradeable_daily_diagnostic_case",
@@ -3786,7 +3794,7 @@ def test_global_macro_diagnostic_manifest_contract():
                     case["signal_discovery_id"]
                     == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
                 )
-                assert construction["rebalance_interval_steps"] == 10
+                assert strategy_override["rebalance_interval_steps"] == 10
                 assert construction["risk_budget"]["target_gross_exposure"] == 0.35
                 assert construction["portfolio_intent"] == {
                     "effective_n_floor": 10.0,
@@ -3819,7 +3827,7 @@ def test_global_macro_diagnostic_manifest_contract():
                     "sizing_method": "signed_mean_variance",
                     "sizing_engine": "optimizer",
                 }
-                assert construction["rebalance_interval_steps"] == 21
+                assert strategy_override["rebalance_interval_steps"] == 21
                 assert (
                     construction["sleeve_composition"]["sleeves"][0][
                         "sleeve_kind"

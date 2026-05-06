@@ -44,8 +44,21 @@ def _strategy_portfolio(
     execution_policy: ExecutionPolicySpec | None = None,
     holding_cost_policy: HoldingCostPolicySpec | None = None,
 ) -> StrategyPortfolioSpec:
-    return StrategyPortfolioSpec.from_legacy(
-        portfolio_policy=portfolio_policy,
+    risk_policy = portfolio_policy.risk_policy
+    return StrategyPortfolioSpec(
+        portfolio_construction=PortfolioConstructionSpec(
+            sizing_policy=PortfolioConstructionSizingSpec(
+                sizing_method=portfolio_policy.sizing_policy.sizing_method
+                or "equal_weight",
+            ),
+            direction_mode=risk_policy.direction_mode,
+            gross_exposure_cap=risk_policy.gross_exposure_cap,
+            target_vol=risk_policy.target_vol,
+            gross_leverage_cap=risk_policy.gross_leverage_cap,
+            net_exposure_target=risk_policy.net_exposure_target,
+            asset_class_weight_caps=dict(risk_policy.asset_class_weight_caps),
+            cluster_weight_caps=dict(risk_policy.cluster_weight_caps),
+        ),
         rebalance_friction_policy=(
             RebalanceFrictionPolicySpec()
             if rebalance_friction_policy is None
@@ -57,8 +70,8 @@ def _strategy_portfolio(
             if holding_cost_policy is None
             else holding_cost_policy
         ),
-        portfolio_construction=None,
-        sleeve_composition=None,
+        selection_kind=portfolio_policy.selection_policy.selection_kind,
+        top_k=portfolio_policy.selection_policy.top_k,
     )
 
 
@@ -551,9 +564,10 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
                 portfolio_policy=PortfolioPolicySpec(
                     selection_policy=SelectionPolicySpec(selection_kind="top_k", top_k=3),
                     sizing_policy=SizingPolicySpec(sizing_method="equal_weight"),
-                    risk_policy=RiskPolicySpec(
-                        long_only=True,
-                        gross_exposure_cap=1.0,
+                        risk_policy=RiskPolicySpec(
+                            long_only=None,
+                            direction_mode="long_only",
+                            gross_exposure_cap=1.0,
                         target_vol=0.12,
                         gross_leverage_cap=1.5,
                         net_exposure_target=0.3,

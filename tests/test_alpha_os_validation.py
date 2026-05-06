@@ -18,28 +18,18 @@ def _build_trading_strategy(
     created_at: str = "2026-03-29T00:00:00+00:00",
 ):
     from alpha_os.trading_strategy import (
-        SizingPolicySpec,
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         RebalanceFrictionPolicySpec,
         HoldingCostPolicySpec,
     )
-
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind="all_assets",
-            top_k=None,
-        ),
-        sizing_policy=SizingPolicySpec(
-            sizing_method=sizing_method,
-        ),
-        risk_policy=RiskPolicySpec(long_only=None, gross_exposure_cap=None),
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
+
     return TradingStrategySpec(
         strategy_id=strategy_id,
         label=label,
@@ -51,8 +41,14 @@ def _build_trading_strategy(
         position_rule_id=position_rule_id,
         family_mix=family_mix,
         execution_kind=execution_kind,
-        portfolio=StrategyPortfolioSpec.from_legacy(
-            portfolio_policy=portfolio_policy,
+        portfolio=StrategyPortfolioSpec(
+            portfolio_construction=PortfolioConstructionSpec(
+                sizing_policy=PortfolioConstructionSizingSpec(
+                    sizing_method=sizing_method or "equal_weight",
+                ),
+                direction_mode=None,
+                gross_exposure_cap=None,
+            ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
                 turnover_friction=None,
                 no_trade_band=None,
@@ -63,8 +59,8 @@ def _build_trading_strategy(
                 bid_ask_spread_bps=None,
             ),
             holding_cost_policy=HoldingCostPolicySpec(),
-            portfolio_construction=None,
-            sleeve_composition=None,
+            selection_kind="all_assets",
+            top_k=None,
         ),
         created_at=created_at,
     )

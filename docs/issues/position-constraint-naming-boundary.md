@@ -19,12 +19,12 @@ Do not rename it immediately.
 Treat `direction_mode` as the current implementation name and
 `position_constraint` as the likely target name if this field is renamed later.
 
-`long_only` should not be a second source of truth. It should only remain, if
-needed, as legacy input compatibility.
+`long_only` should not be a second source of truth. It may remain only as a
+derived internal boolean for call paths that have not yet been renamed.
 
 Current persisted manifests and report-facing strategy contract fields should
-use `direction_mode`. `long_only` is accepted only as compatibility input where
-older documents or CLI arguments still require it.
+use `direction_mode`. Persisted/public strategy documents should not accept
+`long_only` as input.
 
 ## Acceptance Criteria
 

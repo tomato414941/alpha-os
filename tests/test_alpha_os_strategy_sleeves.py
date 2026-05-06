@@ -32,14 +32,13 @@ def _sleeve_composition():
 
 
 def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
-    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
+    )
     from alpha_os.trading_strategy import (
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
         RebalanceFrictionPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
-        SizingPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
@@ -47,17 +46,6 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
     )
 
     composition = _sleeve_composition()
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind="all_assets",
-            top_k=None,
-        ),
-        sizing_policy=SizingPolicySpec(sizing_method="signal_weighted"),
-        risk_policy=RiskPolicySpec(
-            long_only=False,
-            gross_exposure_cap=1.0,
-        ),
-    )
     strategy = TradingStrategySpec(
         strategy_id="strategy:sleeve",
         label="sleeve strategy",
@@ -69,16 +57,23 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
         position_rule_id="constant_hold",
         family_mix=None,
         execution_kind="trainless",
-        portfolio=StrategyPortfolioSpec.from_legacy(
-            portfolio_policy=portfolio_policy,
+        portfolio=StrategyPortfolioSpec(
+            portfolio_construction=PortfolioConstructionSpec(
+                sizing_policy=PortfolioConstructionSizingSpec(
+                    sizing_method="signal_weighted",
+                ),
+                direction_mode="long_short",
+                gross_exposure_cap=1.0,
+                sleeve_composition=composition,
+            ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
                 turnover_friction=0.0,
                 no_trade_band=0.0,
             ),
             execution_policy=ExecutionPolicySpec(market_impact_bps=0.0),
             holding_cost_policy=HoldingCostPolicySpec(),
-            portfolio_construction=None,
-            sleeve_composition=composition,
+            selection_kind="all_assets",
+            top_k=None,
         ),
         created_at="2026-04-19T00:00:00Z",
     )

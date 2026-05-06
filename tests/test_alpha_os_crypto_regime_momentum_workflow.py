@@ -90,42 +90,39 @@ def _strategy_document(
             "position_rule_id": position_rule_id,
             "family_mix": None,
             "execution_kind": "trainless",
-            "portfolio_policy": {
-                "selection_policy": {
-                    "selection_kind": "all_assets",
-                    "top_k": None,
-                },
-                "sizing_policy": {
-                    "sizing_method": "equal_weight",
-                },
-                                "rebalance_interval_steps": 1,
-                "risk_policy": {
-                    "long_only": True,
+            "portfolio": {
+                "portfolio_construction": {
+                    "sizing_policy": {
+                        "sizing_method": "equal_weight",
+                    },
+                    "direction_mode": "long_only",
                     "gross_exposure_cap": 1.0,
                     "gross_leverage_cap": 1.0,
                     "net_exposure_target": 1.0,
                 },
-            },
-            "rebalance_friction_policy": {
-                "turnover_friction": 0.0,
-                "no_trade_band": 0.0,
-                "execution_cost_aversion": 1.0,
-                "execution_mode": "utility_priority",
-                "turnover_budget": None,
-                "benefit_scale": 1.0,
-                "min_trade_utility": 0.0,
-                "uncertainty_aversion": 1.0,
-                "risk_aversion": 0.0,
-                "partial_fill_enabled": True,
-            },
-            "execution_policy": {
-                "market_impact_bps": 0.0,
-                "fee_bps": 5.0,
-                "bid_ask_spread_bps": 0.0,
-            },
-            "holding_cost_policy": {
-                "funding_bps_per_step": 0.0,
-                "borrow_fee_bps_per_step": 0.0,
+                "rebalance_friction_policy": {
+                    "turnover_friction": 0.0,
+                    "no_trade_band": 0.0,
+                    "execution_cost_aversion": 1.0,
+                    "execution_mode": "utility_priority",
+                    "turnover_budget": None,
+                    "benefit_scale": 1.0,
+                    "min_trade_utility": 0.0,
+                    "uncertainty_aversion": 1.0,
+                    "risk_aversion": 0.0,
+                    "partial_fill_enabled": True,
+                },
+                "execution_policy": {
+                    "market_impact_bps": 0.0,
+                    "fee_bps": 5.0,
+                    "bid_ask_spread_bps": 0.0,
+                },
+                "holding_cost_policy": {
+                    "funding_bps_per_step": 0.0,
+                    "borrow_fee_bps_per_step": 0.0,
+                },
+                "rebalance_interval_steps": 1,
+                "selection_kind": "all_assets",
             },
             "created_at": "2026-05-01T00:00:00+00:00",
         }

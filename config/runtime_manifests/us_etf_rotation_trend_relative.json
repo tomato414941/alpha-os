@@ -214,7 +214,6 @@
           "sizing_method": "signal_weighted",
           "sizing_engine": "rule_based"
         },
-        "rebalance_interval_steps": 5,
         "gross_exposure_cap": 1.0,
         "direction_mode": "long_only"
       },
@@ -228,7 +227,8 @@
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
       },
-      "top_k": 2
+      "top_k": 2,
+      "rebalance_interval_steps": 5
     }
   ]
 }

@@ -25,6 +25,35 @@ def _evaluation_policy_parts(
     return {}
 
 
+def _strategy_portfolio_document(
+    *,
+    sizing_method: str,
+    direction_mode: str | None,
+    gross_exposure_cap: float | None,
+    selection_kind: str = "all_assets",
+    top_k: int | None = None,
+    rebalance_interval_steps: int = 1,
+    rebalance_friction_policy: dict[str, object] | None = None,
+    execution_policy: dict[str, object] | None = None,
+) -> dict[str, object]:
+    portfolio: dict[str, object] = {
+        "portfolio_construction": {
+            "sizing_policy": {"sizing_method": sizing_method},
+            "direction_mode": direction_mode,
+            "gross_exposure_cap": gross_exposure_cap,
+        },
+        "rebalance_friction_policy": (
+            {} if rebalance_friction_policy is None else rebalance_friction_policy
+        ),
+        "execution_policy": {} if execution_policy is None else execution_policy,
+        "rebalance_interval_steps": rebalance_interval_steps,
+        "selection_kind": selection_kind,
+    }
+    if top_k is not None:
+        portfolio["top_k"] = top_k
+    return {"portfolio": portfolio}
+
+
 def _build_trading_strategy(
     *,
     strategy_id: str,
@@ -48,31 +77,18 @@ def _build_trading_strategy(
     created_at: str = "2026-04-05T00:00:00Z",
 ):
     from alpha_os.trading_strategy import (
-        SizingPolicySpec,
         ExecutionPolicySpec,
-        PortfolioPolicySpec,
-        RiskPolicySpec,
-        SelectionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         RebalanceFrictionPolicySpec,
         HoldingCostPolicySpec,
     )
-
-    portfolio_policy = PortfolioPolicySpec(
-        selection_policy=SelectionPolicySpec(
-            selection_kind="all_assets",
-            top_k=top_k,
-        ),
-        sizing_policy=SizingPolicySpec(
-            sizing_method=sizing_method,
-        ),
-        risk_policy=RiskPolicySpec(
-            long_only=long_only,
-            gross_exposure_cap=gross_exposure_cap,
-        ),
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
     )
+
     return TradingStrategySpec(
         strategy_id=strategy_id,
         label=label,
@@ -84,8 +100,20 @@ def _build_trading_strategy(
         position_rule_id=position_rule_id,
         family_mix=family_mix,
         execution_kind=execution_kind,
-        portfolio=StrategyPortfolioSpec.from_legacy(
-            portfolio_policy=portfolio_policy,
+        portfolio=StrategyPortfolioSpec(
+            portfolio_construction=PortfolioConstructionSpec(
+                sizing_policy=PortfolioConstructionSizingSpec(
+                    sizing_method=sizing_method or "equal_weight",
+                ),
+                direction_mode=(
+                    "long_only"
+                    if long_only is True
+                    else "long_short"
+                    if long_only is False
+                    else None
+                ),
+                gross_exposure_cap=gross_exposure_cap,
+            ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
                 turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
@@ -96,7 +124,6 @@ def _build_trading_strategy(
                 bid_ask_spread_bps=bid_ask_spread_bps,
             ),
             holding_cost_policy=HoldingCostPolicySpec(),
-            portfolio_construction=None,
             rebalance_interval_steps=(
                 int(rebalance[len("every_") : -len("_steps")])
                 if isinstance(rebalance, str)
@@ -104,7 +131,8 @@ def _build_trading_strategy(
                 and rebalance.endswith("_steps")
                 else 1
             ),
-            sleeve_composition=None,
+            selection_kind="all_assets",
+            top_k=top_k,
         ),
         created_at=created_at,
     )
@@ -776,27 +804,20 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
                             "execution_kind": "trained",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_short",
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": 0.0,
+                                    "no_trade_band": 0.0,
                                 },
-                                "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": False,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": 0.0,
+                                    "fee_bps": 0.0,
+                                    "bid_ask_spread_bps": 0.0,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": 0.0,
-                                "no_trade_band": 0.0,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": 0.0,
-                                "fee_bps": 0.0,
-                                "bid_ask_spread_bps": 0.0,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -956,27 +977,20 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
                             "execution_kind": "trained",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_short",
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": 0.0,
+                                    "no_trade_band": 0.0,
                                 },
-                                "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": False,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": 0.0,
+                                    "fee_bps": 0.0,
+                                    "bid_ask_spread_bps": 0.0,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": 0.0,
-                                "no_trade_band": 0.0,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": 0.0,
-                                "fee_bps": 0.0,
-                                "bid_ask_spread_bps": 0.0,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1083,27 +1097,20 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
                             "execution_kind": "trainless",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="equal_weight",
+                                direction_mode=None,
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": None,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1223,27 +1230,20 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
                             "execution_kind": "trainless",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "all_assets",
-                                    "top_k": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="equal_weight",
+                                direction_mode=None,
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": None,
-                                    "gross_exposure_cap": None,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1449,27 +1449,22 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
                             "execution_kind": "trainless",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "top_k",
-                                    "top_k": 1,
+                            **_strategy_portfolio_document(
+                                sizing_method="equal_weight",
+                                direction_mode="long_only",
+                                gross_exposure_cap=1.0,
+                                selection_kind="top_k",
+                                top_k=1,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "equal_weight"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": True,
-                                    "gross_exposure_cap": 1.0,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1516,7 +1511,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                 "sizing_method": "equal_weight",
                                 "sizing_engine": "history_based"
                             },
-                            "long_only": True,
+                            "direction_mode": "long_only",
                             "top_k": 1,
                             "gross_exposure_cap": 1.0
                         },
@@ -1689,27 +1684,22 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                             "position_rule_id": "dual_momentum_hold",
                             "family_mix": "lookback=2",
                             "execution_kind": "trainless",
-                            "portfolio_policy": {
-                                "selection_policy": {
-                                    "selection_kind": "top_k",
-                                    "top_k": 1,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_only",
+                                gross_exposure_cap=1.0,
+                                selection_kind="top_k",
+                                top_k=1,
+                                rebalance_friction_policy={
+                                    "turnover_friction": None,
+                                    "no_trade_band": None,
                                 },
-                                "sizing_policy": {"sizing_method": "signal_weighted"},
-                                "rebalance_interval_steps": 1,
-                                "risk_policy": {
-                                    "long_only": True,
-                                    "gross_exposure_cap": 1.0,
+                                execution_policy={
+                                    "market_impact_bps": None,
+                                    "fee_bps": None,
+                                    "bid_ask_spread_bps": None,
                                 },
-                            },
-                            "rebalance_friction_policy": {
-                                "turnover_friction": None,
-                                "no_trade_band": None,
-                            },
-                            "execution_policy": {
-                                "market_impact_bps": None,
-                                "fee_bps": None,
-                                "bid_ask_spread_bps": None,
-                            },
+                            ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
                     }
@@ -1757,7 +1747,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                 "sizing_engine": "rule_based"
                             },
                             "rebalance_interval_steps": 1,
-                            "long_only": True,
+                            "direction_mode": "long_only",
                             "top_k": 1,
                             "gross_exposure_cap": 1.0
                         },
@@ -2184,7 +2174,7 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                                 "sizing_engine": "rule_based",
                             },
                             "rebalance_interval_steps": 1,
-                            "long_only": False,
+                            "direction_mode": "long_short",
                             "risk_budget": {
                                 "risk_normalization_mode": "gross",
                                 "target_gross_exposure": 0.5,

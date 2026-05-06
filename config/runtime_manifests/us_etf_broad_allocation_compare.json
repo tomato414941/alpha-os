@@ -187,7 +187,6 @@
           "sizing_method": "equal_weight",
           "sizing_engine": "history_based"
         },
-        "rebalance_interval_steps": 5,
         "gross_exposure_cap": 0.85,
         "direction_mode": "long_only"
       },
@@ -200,7 +199,8 @@
         "market_impact_bps": 5.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "rebalance_interval_steps": 5
     },
     {
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
@@ -211,7 +211,6 @@
           "sizing_method": "minimum_variance",
           "sizing_engine": "history_based"
         },
-        "rebalance_interval_steps": 5,
         "gross_exposure_cap": 0.85,
         "direction_mode": "long_only"
       },
@@ -224,7 +223,8 @@
         "market_impact_bps": 5.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "rebalance_interval_steps": 5
     },
     {
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
@@ -235,7 +235,6 @@
           "sizing_method": "risk_budgeting",
           "sizing_engine": "history_based"
         },
-        "rebalance_interval_steps": 5,
         "gross_exposure_cap": 0.85,
         "direction_mode": "long_only"
       },
@@ -248,7 +247,8 @@
         "market_impact_bps": 5.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "rebalance_interval_steps": 5
     },
     {
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
@@ -259,7 +259,6 @@
           "sizing_method": "hierarchical_risk_parity",
           "sizing_engine": "history_based"
         },
-        "rebalance_interval_steps": 5,
         "gross_exposure_cap": 0.85,
         "direction_mode": "long_only"
       },
@@ -272,7 +271,8 @@
         "market_impact_bps": 5.0,
         "fee_bps": 0.0,
         "bid_ask_spread_bps": 0.0
-      }
+      },
+      "rebalance_interval_steps": 5
     }
   ]
 }
