@@ -1,5 +1,9 @@
 # Strategy Backtest DB Read Boundary
 
+Status: Closed
+
+Closed by: `893635f refactor: rename strategy backtest path`
+
 ## Issue
 
 `evaluate_trainless_strategy_backtest()` mixes strategy backtest logic with DB reads.
@@ -58,3 +62,10 @@ The existing DB-backed function can remain as a thin wrapper.
 - The DB-backed function only resolves `strategy_id` and `subject_set_id`, then delegates.
 - Existing tests continue to pass.
 - No new DB dependency is introduced into the spec-based function.
+
+## Closure Notes
+
+`evaluate_trainless_strategy_backtest_from_specs()` now accepts `TradingStrategySpec`
+and `SubjectSet` directly.
+
+`evaluate_trainless_strategy_backtest()` remains as the DB-backed wrapper.
