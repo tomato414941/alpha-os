@@ -34,6 +34,14 @@ feed the decision backtest and report metric machinery.
 The problem is not that every metric is totally separate. The problem is that
 engine path names still carry conceptual weight.
 
+## Desired Direction
+
+Signal-discovery-derived strategies should eventually flow through the same
+strategy backtest boundary as hand-written strategies.
+
+Signal discovery should produce or select strategy state. It should not remain
+the reason a strategy uses a separate evaluation path.
+
 ## Close Condition
 
 Close this when alpha-os has a clear boundary between candidate production and
