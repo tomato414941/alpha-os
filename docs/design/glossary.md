@@ -8,10 +8,10 @@ If another design note uses a term differently, prefer this file.
 
 | Term | Definition | Notes |
 |------|-----------|-------|
-| **portfolio** | A set of holdings and their weights. | Use `target portfolio` when referring to desired future holdings rather than current holdings. |
-| **universe** | A scoped set of instruments or subjects. | Prefer qualified terms such as `tradable universe` or `evaluation universe`. |
+| **portfolio** | A set of holdings and their weights. | |
+| **universe** | A defined set of instruments, assets, securities, or markets considered for investment, trading, or analysis. | |
 | **backtest** | Testing a strategy or rule on historical data. | Backtests can be in-sample, out-of-sample, or walk-forward depending on the split. |
-| **execution** | Turning trading intent into orders and fills. | This is distinct from backtesting a desired position rule. |
+| **execution** | The process of converting trading decisions into orders and fills. | |
 | **subject** | An allocatable object that may appear in a portfolio decision. | Examples: asset, ETF, index, basket, sleeve. |
 | **observable** | A semantic data requirement that can be requested from `signal-noise`. | Examples: `daily_close`, `daily_return`, `realized_vol_20d`. |
 | **feature** | A reusable derived data series built from observables. | Features are representation-layer inputs to signals. |
@@ -72,7 +72,7 @@ If another design note uses a term differently, prefer this file.
 | **evaluation metric group result** | One result block for one evaluation metric group. | `metric_group_name + source + metrics`. |
 | **evaluation metric group name** | The identifier for an evaluation metric group when a contract references metric fields. | `metric_group_name="decision_quality"` |
 | **evaluation profile** | Legacy term. Do not use it for new code or docs. | Use `evaluation metric group result`. |
-| **benchmark** | Reserved for trading comparison references only. | Examples: S&P 500, TOPIX, MSCI World, 60/40 portfolio, equal-weight portfolio. Do not use it for evaluation settings. |
+| **benchmark** | A reference index, portfolio, or strategy used for comparison. | Examples: S&P 500, TOPIX, MSCI World, 60/40 portfolio, equal-weight portfolio. |
 | **net return** | Return after modeled costs and frictions. | Use gross return when costs and frictions are excluded. |
 | **drawdown** | Decline from a prior peak in portfolio value or cumulative return. | Maximum drawdown is the worst such decline over a period. |
 | **Sharpe ratio** | Return per unit of return volatility. | The annualization and risk-free-rate convention must be stated by the metric producer. |
