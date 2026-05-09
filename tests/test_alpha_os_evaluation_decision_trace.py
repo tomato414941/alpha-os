@@ -582,7 +582,7 @@ def test_evaluation_runner_persists_direct_selected_trace_without_portfolio_deci
         )
 
     monkeypatch.setattr(
-        "alpha_os.evaluation_execution_strategy.evaluate_trainless_candidate_backtest",
+        "alpha_os.evaluation_execution_strategy.evaluate_trainless_strategy_backtest",
         _fake_direct_case,
     )
 

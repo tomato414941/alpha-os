@@ -19,6 +19,7 @@ from .signal_discovery_strategy_evaluation import (
     build_direct_strategy_evaluation_metric_group_results,
 )
 from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_feature_planes
+from .trading_strategy import TradingStrategySpec
 from .universe_contract import validate_subject_set_universe_contract
 
 
@@ -102,7 +103,7 @@ def subject_backtest_inputs_from_subject_set_planes(
     )
 
 
-def evaluate_trainless_candidate_backtest(
+def evaluate_trainless_strategy_backtest(
     *,
     store: DirectStrategyEvaluationReadPort,
     strategy_id: str,
@@ -119,7 +120,36 @@ def evaluate_trainless_candidate_backtest(
     strategy_state = store.get_trading_strategy(strategy_id)
     if strategy_state is None:
         raise ValueError(f"strategy does not exist: {strategy_id}")
-    trading_strategy = strategy_state.trading_strategy
+    subject_set_state = store.get_subject_set(subject_set_id)
+    if subject_set_state is None:
+        raise ValueError(f"subject set does not exist: {subject_set_id}")
+    return evaluate_trainless_strategy_backtest_from_specs(
+        trading_strategy=strategy_state.trading_strategy,
+        subject_set=subject_set_state.definition,
+        target_id=target_id,
+        evaluation_date_ranges=evaluation_date_ranges,
+        base_url=base_url,
+        portfolio_construction=portfolio_construction,
+        rebalance_friction_policy=rebalance_friction_policy,
+        execution_cost_assumptions=execution_cost_assumptions,
+        holding_cost_assumptions=holding_cost_assumptions,
+        feature_plane_repository=feature_plane_repository,
+    )
+
+
+def evaluate_trainless_strategy_backtest_from_specs(
+    *,
+    trading_strategy: TradingStrategySpec,
+    subject_set: SubjectSet,
+    target_id: str,
+    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
+    base_url: str,
+    portfolio_construction: PortfolioConstructionSpec,
+    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
+    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
+    holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    feature_plane_repository: FeaturePlaneRepository | None,
+):
     selection_kind = trading_strategy.selection_kind
     selection_top_k = trading_strategy.portfolio.top_k
     # Trainless candidate backtests currently select positions by rule kind.
@@ -142,10 +172,6 @@ def evaluate_trainless_candidate_backtest(
         raise ValueError(
             "trainless top_k executor requires strategy portfolio top_k"
         )
-    subject_set_state = store.get_subject_set(subject_set_id)
-    if subject_set_state is None:
-        raise ValueError(f"subject set does not exist: {subject_set_id}")
-    subject_set = subject_set_state.definition
     validate_subject_set_universe_contract(subject_set)
     subject_planes = build_subject_set_feature_planes(
         subject_set=subject_set,
@@ -180,7 +206,7 @@ def evaluate_trainless_candidate_backtest(
         subject_return_series_by_subject=subject_return_series_by_subject,
         evaluation_date_ranges=evaluation_date_ranges,
         target_id=target_id,
-        subject_set_id=subject_set_id,
+        subject_set_id=str(subject_set.subject_set_id),
         subject_set=subject_set,
         signal_series_by_subject=position_signal_series_by_subject,
         funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,

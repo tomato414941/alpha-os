@@ -215,7 +215,7 @@ def test_evaluation_task_manifest_legacy_trading_config_still_loads():
 
 
 def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
-    from alpha_os.candidate_backtest import dual_momentum_signal_series_by_subject
+    from alpha_os.strategy_backtest import dual_momentum_signal_series_by_subject
 
     signals = dual_momentum_signal_series_by_subject(
         subject_return_series_by_subject={
@@ -334,10 +334,10 @@ def test_crypto_regime_momentum_eligibility_requires_funding_rate():
         )
 
 
-def test_direct_candidate_backtest_routes_crypto_regime_momentum_eligibility(
+def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     monkeypatch,
 ):
-    import alpha_os.candidate_backtest as candidate_backtest
+    import alpha_os.strategy_backtest as strategy_backtest
     from alpha_os.evaluation_cost_config import (
         EvaluationRebalanceFrictionPolicySpec,
         ExecutionCostAssumptionsSpec,
@@ -381,7 +381,7 @@ def test_direct_candidate_backtest_routes_crypto_regime_momentum_eligibility(
     captured: dict[str, object] = {}
 
     monkeypatch.setattr(
-        candidate_backtest,
+        strategy_backtest,
         "build_subject_set_feature_planes",
         lambda **_: {
             SubjectPlaneKey(asset="BTC", observation_spec_id="btc_daily"): SimpleNamespace(
@@ -396,12 +396,12 @@ def test_direct_candidate_backtest_routes_crypto_regime_momentum_eligibility(
         return ((), ())
 
     monkeypatch.setattr(
-        candidate_backtest,
+        strategy_backtest,
         "build_direct_strategy_evaluation_metric_group_results",
         capture_metric_group_results,
     )
 
-    candidate_backtest.evaluate_trainless_candidate_backtest(
+    strategy_backtest.evaluate_trainless_strategy_backtest(
         store=SimpleNamespace(
             get_trading_strategy=lambda strategy_id: SimpleNamespace(
                 trading_strategy=strategy

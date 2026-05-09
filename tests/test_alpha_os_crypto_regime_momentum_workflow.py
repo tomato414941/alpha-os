@@ -252,7 +252,7 @@ def _manifest_document(
     }
 
 
-def test_crypto_regime_momentum_candidate_backtest_workflow(tmp_path, capsys):
+def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 

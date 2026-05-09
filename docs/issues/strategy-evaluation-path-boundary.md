@@ -7,7 +7,7 @@ on how the candidate was produced.
 
 Examples:
 
-- hand-written trainless rules use `candidate_backtest`
+- hand-written trainless rules use `strategy_backtest`
 - discovered signals use signal discovery execution
 - frozen discovery artifacts use fixed-state replay
 
