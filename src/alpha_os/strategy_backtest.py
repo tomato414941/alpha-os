@@ -103,7 +103,7 @@ def subject_backtest_inputs_from_subject_set_planes(
     )
 
 
-def evaluate_trainless_strategy_backtest(
+def run_strategy_backtest_from_store(
     *,
     store: DirectStrategyEvaluationReadPort,
     strategy_id: str,
@@ -117,13 +117,15 @@ def evaluate_trainless_strategy_backtest(
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
+    # Temporary DB adapter for legacy evaluation execution paths.
+    # Prefer run_strategy_backtest() once strategy and subject set are resolved.
     strategy_state = store.get_trading_strategy(strategy_id)
     if strategy_state is None:
         raise ValueError(f"strategy does not exist: {strategy_id}")
     subject_set_state = store.get_subject_set(subject_set_id)
     if subject_set_state is None:
         raise ValueError(f"subject set does not exist: {subject_set_id}")
-    return evaluate_trainless_strategy_backtest_from_specs(
+    return run_strategy_backtest(
         trading_strategy=strategy_state.trading_strategy,
         subject_set=subject_set_state.definition,
         target_id=target_id,
@@ -137,7 +139,7 @@ def evaluate_trainless_strategy_backtest(
     )
 
 
-def evaluate_trainless_strategy_backtest_from_specs(
+def run_strategy_backtest(
     *,
     trading_strategy: TradingStrategySpec,
     subject_set: SubjectSet,
@@ -152,7 +154,6 @@ def evaluate_trainless_strategy_backtest_from_specs(
 ):
     selection_kind = trading_strategy.selection_kind
     selection_top_k = trading_strategy.portfolio.top_k
-    # Trainless candidate backtests currently select positions by rule kind.
     position_rule_id = trading_strategy.position_rule_id
     if position_rule_id not in {
         "constant_hold",
@@ -160,17 +161,17 @@ def evaluate_trainless_strategy_backtest_from_specs(
         "crypto_regime_momentum_hold",
     }:
         raise ValueError(
-            "current trainless executor only supports "
+            "current strategy backtest only supports "
             "position_rule=constant_hold, position_rule=dual_momentum_hold, or "
             "position_rule=crypto_regime_momentum_hold"
         )
     if selection_kind not in {"all_assets", "top_k"}:
         raise ValueError(
-            "current trainless executor only supports selection=all_assets or selection=top_k"
+            "current strategy backtest only supports selection=all_assets or selection=top_k"
         )
     if selection_kind == "top_k" and selection_top_k is None:
         raise ValueError(
-            "trainless top_k executor requires strategy portfolio top_k"
+            "top_k strategy backtest requires strategy portfolio top_k"
         )
     validate_subject_set_universe_contract(subject_set)
     subject_planes = build_subject_set_feature_planes(

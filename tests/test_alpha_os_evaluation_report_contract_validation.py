@@ -538,7 +538,7 @@ def test_evaluation_report_contract_validation_passes_for_persisted_current_path
         _fake_loader,
     )
     monkeypatch.setattr(
-        "alpha_os.evaluation_execution_strategy.evaluate_trainless_strategy_backtest",
+        "alpha_os.evaluation_execution_strategy.run_strategy_backtest_from_store",
         _fake_direct_case,
     )
 
@@ -740,7 +740,7 @@ def test_evaluate_evaluation_spec_state_rejects_incomplete_universe_policy_for_d
         raise AssertionError("direct evaluation should not run for invalid universe")
 
     monkeypatch.setattr(
-        "alpha_os.evaluation_execution_strategy.evaluate_trainless_strategy_backtest",
+        "alpha_os.evaluation_execution_strategy.run_strategy_backtest_from_store",
         _should_not_run,
     )
 

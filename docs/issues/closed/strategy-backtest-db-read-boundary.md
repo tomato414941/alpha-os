@@ -6,7 +6,7 @@ Closed by: `893635f refactor: rename strategy backtest path`
 
 ## Issue
 
-`evaluate_trainless_strategy_backtest()` mixes strategy backtest logic with DB reads.
+`run_strategy_backtest_from_store()` mixes strategy backtest logic with DB reads.
 
 The function currently reads `TradingStrategySpec` and `SubjectSet` through `store`:
 
@@ -65,7 +65,7 @@ The existing DB-backed function can remain as a thin wrapper.
 
 ## Closure Notes
 
-`evaluate_trainless_strategy_backtest_from_specs()` now accepts `TradingStrategySpec`
-and `SubjectSet` directly.
+`run_strategy_backtest()` now accepts `TradingStrategySpec` and `SubjectSet`
+directly.
 
-`evaluate_trainless_strategy_backtest()` remains as the DB-backed wrapper.
+`run_strategy_backtest_from_store()` remains as the DB-backed wrapper.

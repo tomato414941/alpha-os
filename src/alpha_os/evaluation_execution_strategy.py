@@ -8,7 +8,7 @@ import pandas as pd
 from .contract_boundaries import active_constraint_stages, subject_set_contract_groups
 from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
 from .strategy_backtest import (
-    evaluate_trainless_strategy_backtest,
+    run_strategy_backtest_from_store,
     subject_backtest_inputs_from_subject_set_planes,
 )
 from .evaluation_generation import generate_evaluation_inputs_batch_from_feature_plane
@@ -511,7 +511,7 @@ class TrainlessEvaluationExecutionStrategy:
         subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
         if subject_set_state is not None:
             validate_subject_set_universe_contract(subject_set_state.definition)
-        direct_evaluation = evaluate_trainless_strategy_backtest(
+        direct_evaluation = run_strategy_backtest_from_store(
             store=store,
             strategy_id=execution_request.context.strategy_id,
             subject_set_id=execution_request.context.subject_set_id,

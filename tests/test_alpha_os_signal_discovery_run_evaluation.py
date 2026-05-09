@@ -401,7 +401,7 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         capture_metric_group_results,
     )
 
-    strategy_backtest.evaluate_trainless_strategy_backtest(
+    strategy_backtest.run_strategy_backtest_from_store(
         store=SimpleNamespace(
             get_trading_strategy=lambda strategy_id: SimpleNamespace(
                 trading_strategy=strategy
