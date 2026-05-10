@@ -73,4 +73,5 @@ in place instead of creating a separate issue.
 `universe_policy` is different: it is a widely used persisted/manifest field for
 cross-instrument subject-set assumptions such as base currency, trading
 calendar, and benchmark. Renaming or reshaping it should be handled as a
-separate boundary task if it becomes painful.
+separate boundary task if it becomes painful. See
+[`universe-policy-naming-boundary.md`](./universe-policy-naming-boundary.md).
