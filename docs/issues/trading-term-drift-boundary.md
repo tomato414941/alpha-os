@@ -82,3 +82,8 @@ The glossary definition should stay focused on instruments a strategy may hold
 or trade. Avoid broad notes about all strategy-observed data because strategy
 inputs can include features, macro context, benchmarks, metadata, and other
 non-instrument inputs.
+
+Code review found that `tradable universe` is not first-class in code and is
+usually represented through `SubjectSet`, which also carries observation and
+metadata context. See
+[`tradable-universe-code-boundary.md`](./tradable-universe-code-boundary.md).
