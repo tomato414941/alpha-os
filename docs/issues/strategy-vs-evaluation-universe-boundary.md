@@ -31,7 +31,8 @@ Evaluation inputs should describe what is evaluated in a specific run.
 These concepts should be distinguishable:
 
 - strategy-supported universe: what the strategy can handle
-- input universe: what the strategy observes
+- observed/reference instrument set: instruments the strategy may observe but
+  not trade
 - tradable universe: what the strategy may hold
 - evaluation universe: what this evaluation run measures
 
@@ -51,11 +52,15 @@ of the strategy.
 - Do not rename `SubjectSet` immediately.
 - Do not split the schema immediately.
 - Do not introduce a new universe hierarchy until the current usage is mapped.
+- Do not promote `input universe` as a term unless the project later proves
+  that strategy inputs should be modeled as an instrument-set concept.
 
 ## Acceptance Criteria
 
-- The project has a glossary entry for the universe terms above.
+- The project has glossary entries for the universe terms that should become
+  source-of-truth names.
 - `TradingStrategySpec` and evaluation inputs have a documented ownership
   boundary for universe-related fields.
 - A future schema change can tell whether a universe field belongs to strategy
-  capability, strategy inputs, tradable scope, or evaluation conditions.
+  capability, observed/reference instruments, tradable scope, or evaluation
+  conditions.
