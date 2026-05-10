@@ -40,3 +40,20 @@ definition or moved to a boundary/design note.
   class names, migration plans, or current engine limitations.
 - Project-specific cautions stay short when they appear in the glossary.
 - Longer naming or implementation concerns move to a boundary/design note.
+
+## Review Tracker
+
+Track only terms that are likely to drift into implementation notes or overlap
+with nearby alpha-os concepts. Add terms as they become relevant.
+
+- [ ] `universe`
+- [ ] `tradable universe`
+- [ ] `evaluation universe`
+- [ ] `subject`
+- [ ] `execution`
+- [ ] `execution kind`
+- [ ] `strategy execution`
+- [ ] `strategy execution kind`
+- [ ] `run policy`
+- [ ] `strategy run mode`
+- [ ] `benchmark`
