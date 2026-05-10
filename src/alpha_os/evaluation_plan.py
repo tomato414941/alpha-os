@@ -278,7 +278,7 @@ def build_evaluation_plan(
             subject_set_id = trading_strategy.subject_set_id
             if not isinstance(subject_set_id, str) or not subject_set_id:
                 raise ValueError(
-                    "trainless evaluation task requires strategy subject_set or universe axis: "
+                    "trainless evaluation task requires strategy subject_set: "
                     f"{evaluation_task.evaluation_task_id}"
                 )
             target_id = trading_strategy.target_id or default_target_id
