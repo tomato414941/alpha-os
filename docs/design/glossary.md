@@ -146,9 +146,9 @@ Examples: daily close is available, funding rate is available, shorting is allow
 
 ### tradable universe
 
-The set of instruments a strategy may actually hold or trade in a given context.
+The set of instruments a strategy may hold or trade.
 
-This is narrower than all data the strategy may observe.
+This can differ from instruments observed only as references or context.
 
 ### evaluation universe
 
@@ -482,7 +482,7 @@ So:
 ### Strategy Requirements vs Universe
 
 - **strategy requirements** = conditions that must hold for a strategy to run
-- **tradable universe** = what the strategy may hold or trade in a context
+- **tradable universe** = what the strategy may hold or trade
 - **evaluation universe** = what an evaluation run measures
 
 Strategy inputs are not automatically a universe. Observed data belongs first to

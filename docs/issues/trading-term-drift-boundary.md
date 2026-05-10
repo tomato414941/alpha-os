@@ -47,7 +47,7 @@ Track only terms that are likely to drift into implementation notes or overlap
 with nearby alpha-os concepts. Add terms as they become relevant.
 
 - [x] `universe`
-- [ ] `tradable universe`
+- [x] `tradable universe`
 - [ ] `evaluation universe`
 - [ ] `subject`
 - [ ] `execution`
@@ -75,3 +75,10 @@ cross-instrument subject-set assumptions such as base currency, trading
 calendar, and benchmark. Renaming or reshaping it should be handled as a
 separate boundary task if it becomes painful. See
 [`universe-policy-naming-boundary.md`](./universe-policy-naming-boundary.md).
+
+### `tradable universe`
+
+The glossary definition should stay focused on instruments a strategy may hold
+or trade. Avoid broad notes about all strategy-observed data because strategy
+inputs can include features, macro context, benchmarks, metadata, and other
+non-instrument inputs.
