@@ -79,17 +79,19 @@ If another design note uses a term differently, prefer this file.
 | **turnover** | The amount of portfolio weight or exposure changed over a period. | Turnover convention must be stated when comparing costs or strategies. |
 | **alpha** | Excess return over a benchmark. | `alpha` is an outcome, not a predictive unit. |
 
-Implementation note: `EvaluationTaskResult` is the class name for an evaluation
-task result. Use `EvaluationReport.task_results` in runtime readers and
-serialization because `task_results` is the persisted report field.
-Runtime readers and serialization should use `metric_group_results`.
-One evaluation task has exactly one strategy; one strategy may appear in many
-cases. Runtime case roles are limited to `baseline` and `standard`.
-Candidate/diagnostic-style labels belong in research notes, not manifests or
-reports.
-`Benchmark` is intentionally not an evaluation-settings class name. Reserve it
-for market indexes, benchmark portfolios, and benchmark-relative return/risk
-measurement.
+Short implementation notes:
+
+- `EvaluationTaskResult` is the class name for an evaluation task result. Use
+  `EvaluationReport.task_results` in runtime readers and serialization because
+  `task_results` is the persisted report field.
+- Runtime readers and serialization should use `metric_group_results`.
+- One evaluation task has exactly one strategy; one strategy may appear in many
+  cases. Runtime case roles are limited to `baseline` and `standard`.
+- Candidate/diagnostic-style labels belong in research notes, not manifests or
+  reports.
+- `Benchmark` is intentionally not an evaluation-settings class name. Reserve it
+  for market indexes, benchmark portfolios, and benchmark-relative return/risk
+  measurement.
 
 ## Term Boundaries
 

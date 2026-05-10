@@ -2,37 +2,41 @@
 
 ## Problem
 
-Some glossary entries mix generally used trading terms with alpha-os-specific
-guards or implementation vocabulary.
+Some glossary entries are starting to read like implementation notes rather
+than project terminology.
 
 Examples to watch:
 
-- `universe` should not be defined through alpha-os-only `subject` wording.
-- `execution` should not be defined by contrasting it with the current
-  backtest implementation.
-- `benchmark` is a general comparison reference; alpha-os-specific naming
-  restrictions belong outside the base definition.
+- `universe` can mention alpha-os usage, but should not collapse into
+  "whatever the current `subject_set` table stores."
+- `execution` should describe the domain concept before discussing current
+  backtest mechanics.
+- `benchmark` can describe how alpha-os uses comparison references, but should
+  not become a dumping ground for class-name restrictions.
 
 ## Why It Matters
 
-The glossary should use common trading terms in their ordinary sense where the
-industry meaning is stable enough.
+The glossary should remain useful as the alpha-os domain language, not a
+generic trading dictionary.
 
-If implementation cautions are embedded in those definitions, readers cannot
-tell which parts are trading vocabulary and which parts are alpha-os policy.
+But when transient schema names, migration notes, or implementation cautions
+are embedded directly in definitions, readers cannot tell which parts describe
+the concept and which parts describe today's implementation.
 
 ## Boundary
 
-Base term definitions should stay close to common trading usage.
+Glossary entries may include alpha-os-specific meaning when that meaning is
+part of the domain language.
 
-Project-specific restrictions, naming guards, and schema migration concerns
-should be documented separately from the base definition.
+Short clarifying notes are fine. Longer naming guards, schema migration
+concerns, and implementation cautions should be separated from the core
+definition or moved to a boundary/design note.
 
 ## Acceptance Criteria
 
-- Base trading terms avoid alpha-os-only nouns unless the term is explicitly
-  alpha-os-specific.
-- Project-specific naming restrictions are not mixed into ordinary trading
-  definitions.
-- If alpha-os intentionally uses a trading term differently, the deviation is
-  documented explicitly as a project-specific boundary.
+- Glossary entries still explain alpha-os domain usage, not just generic
+  trading definitions.
+- Core definitions are not primarily phrased in terms of transient table names,
+  class names, migration plans, or current engine limitations.
+- Project-specific cautions stay short when they appear in the glossary.
+- Longer naming or implementation concerns move to a boundary/design note.
