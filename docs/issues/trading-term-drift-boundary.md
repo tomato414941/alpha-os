@@ -49,7 +49,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `universe`
 - [x] `tradable universe`
 - [x] `evaluation universe`
-- [ ] `subject`
+- [x] `subject`
 - [ ] `execution`
 - [ ] `execution kind`
 - [ ] `strategy execution`
@@ -98,3 +98,11 @@ Code review found that evaluation runs do not have a first-class
 The effective subject set is derived from strategy, initial state, or signal
 discovery provenance depending on run mode. See
 [`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
+
+### `subject`
+
+The glossary definition should keep `subject` tied to portfolio-weight-bearing
+allocation units. It may cover assets, instruments, baskets, sleeves, pairs, or
+spreads, but should not expand to every possible prediction or evaluation
+target. Regime or macro-state targets should remain outside `subject` unless
+they become allocation targets.

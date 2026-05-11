@@ -26,9 +26,19 @@ The process of converting trading decisions into orders and fills.
 
 ### subject
 
-An allocatable object that may appear in a portfolio decision.
+An alpha-os internal term for one thing that can carry portfolio weight, such as
+an asset, instrument, basket, sleeve, pair, or spread.
 
-Examples: asset, ETF, index, basket, sleeve.
+Examples:
+
+- `BTC`
+- `BTC_spot`
+- `ETH_BTC_pair`
+- `REIT_basket`
+- `defensive_sleeve`
+
+A subject may be backed by one or more instruments, but it is not identical to
+an instrument.
 
 ### observable
 
