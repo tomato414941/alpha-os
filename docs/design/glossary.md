@@ -238,23 +238,12 @@ One concrete request sent to a strategy engine.
 
 It binds strategy semantics to an engine context and runtime artifacts.
 
-### run policy
-
-The engine-side policy that chooses the run context for a strategy.
-
-Current run modes are `backtest_oos` and `fixed_state_replay`; `paper` and `live` are planned.
-
-### strategy run mode
-
-The engine-side context for how a strategy is run.
-
-Current modes: `backtest_oos`, `fixed_state_replay`; `paper` and `live` are reserved.
-
 ### strategy run spec
 
-The pair of one trading strategy and one run policy.
+The concrete request to run one trading strategy in one engine context.
 
-This is the clean conceptual object for “run this strategy in this context”.
+It should make required run inputs explicit instead of hiding them behind a
+generic mode.
 
 ### strict OOS run inputs
 
@@ -284,7 +273,7 @@ Includes `as_of_timestamp`, `venue_id`, and optional current portfolio state.
 
 The primary evaluation mode for comparing a strategy under train/test separation.
 
-This is the default evaluation-side run mode.
+This is the default evaluation-side request shape.
 
 ### evaluation spec
 
@@ -296,7 +285,8 @@ Defines the measurement recipe: strict OOS, fold layout, costs, metrics.
 
 One executable evaluation defined by `strategy spec + evaluation spec`.
 
-Binds one strategy to one evaluation spec as a concrete run setup, including `signal_train`, run mode, and fixed state.
+Binds one strategy to one evaluation spec as a concrete run setup, including
+required train or fixed-state artifacts.
 
 ### data input
 
@@ -445,19 +435,20 @@ So:
 - signal = predictive unit
 - strategy = trading system
 
-### Trading Strategy vs Run Policy
+### Trading Strategy vs Run Request
 
 - **trading strategy** = what should be traded and how it should be realized
-- **run policy** = in what context that trading strategy should be run
+- **run request** = the concrete engine context and inputs for running that
+  trading strategy
 
 So:
 
 - `trading strategy` belongs to strategy semantics
-- `run policy` belongs to engine context
+- required run inputs belong to engine context
 
 The clean conceptual object is:
 
-- `strategy run spec` = `trading strategy + run policy`
+- `strategy run spec` = `trading strategy + explicit run inputs`
 
 ### Strategy Scope vs Position Rule
 

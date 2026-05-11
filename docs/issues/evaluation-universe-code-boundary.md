@@ -38,7 +38,7 @@ different evaluation universe without redefining strategy or provenance inputs.
 Do not add an `EvaluationUniverse` model yet.
 
 Map current evaluation paths first and document where the effective evaluation
-subject set comes from for each run mode.
+subject set comes from for each current `run_mode` value.
 
 ## Non-Goals
 

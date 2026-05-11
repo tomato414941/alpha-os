@@ -28,7 +28,7 @@ Examples:
   portfolio transition or rebalance friction
 - `trainless` / `trained` / `frozen` are current implementation values and
   should not be promoted into a target glossary term
-- `backtest_oos` / `fixed_state_replay` belongs to run mode
+- `backtest_oos` / `fixed_state_replay` are current `run_mode` values
 - `execution_range` is an evaluation/run contract field, not an order-execution
   field
 
@@ -42,12 +42,16 @@ Prefer scoped terms:
 - `portfolio transition` or `rebalance transition` for movement from current to
   desired portfolio state
 - `strategy run` for running a strategy through an engine
-- `run mode` for `backtest_oos`, `fixed_state_replay`, `paper`, and `live`
+- explicit evaluation job shapes for `backtest_oos` and `fixed_state_replay`
 
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
 The current `execution_kind` field is transitional and should be removed rather
 than renamed as a domain concept. See
 [`execution-kind-removal.md`](./execution-kind-removal.md).
+
+Do not introduce `run policy` or `strategy run mode` as target terms. The
+current `run_mode` field is transitional and should be removed rather than
+renamed as a domain concept. See [`run-mode-removal.md`](./run-mode-removal.md).
 
 ## Non-Goals
 
@@ -59,7 +63,7 @@ than renamed as a domain concept. See
 ## Acceptance Criteria
 
 - Glossary and design docs avoid bare `execution` where the intended layer is
-  market execution, portfolio transition, strategy run, or run mode.
+  market execution, portfolio transition, or strategy run.
 - Existing code paths that use `execution` are classified by semantic layer
   before any rename.
 - Future fields can tell whether they belong to order execution, portfolio

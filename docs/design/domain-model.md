@@ -40,10 +40,9 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
 | **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, frozen replay, paper, live |
-| **run policy** | The engine-side policy that selects the run context for a strategy. | `backtest_oos`, `fixed_state_replay`, `paper`, `live` |
-| **strategy run spec** | One trading strategy paired with one run policy. | strategy under strict OOS; strategy under paper mode |
+| **strategy run spec** | One trading strategy paired with explicit engine-context inputs. | strategy under strict OOS; strategy with a fixed initial state |
 | **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
-| **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including `signal_train`, run mode, and fixed state. | one strategy under one strict OOS evaluation spec |
+| **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or fixed-state artifacts. | one strategy under one strict OOS evaluation spec |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. Connection details are runtime configuration, not evaluation task metadata. | signal-noise service URL; local parquet root |
 | **evaluation task result** | The recorded factual outcome of one evaluation task. | OOS Sharpe, belief corr, turnover, drawdown |
@@ -163,16 +162,16 @@ Run context should be modeled separately:
 ```text
 StrategyRunSpec
 ├─ TradingStrategy
-└─ RunPolicy
+└─ Explicit run inputs
 ```
 
 So:
 
 - `trading strategy` = what should be traded and how it should be realized
-- `run policy` = in what context it should be run
+- explicit run inputs = the engine context and artifacts required to run it
 
-Strategy execution is broader than trading strategy. It additionally includes
-the engine context in which the strategy is run, such as:
+A strategy run is broader than a trading strategy. It additionally includes the
+engine context in which the strategy is run, such as:
 
 - evaluation spec
 - paper or live runtime
@@ -190,9 +189,9 @@ The current repo is still converging, but the practical mapping is now direct:
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
 | `execution_kind` | transitional implementation field | Remove once strategy requirements and run/evaluation state sourcing are represented directly. |
-| `run mode` | `RunPolicy` | `backtest_oos` and `fixed_state_replay` are engine-side choices. |
+| `run_mode` | transitional implementation field | Remove once evaluation job shapes express their required inputs directly. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a trading strategy to an evaluation context. |
-| `EvaluationSpec` | evaluation-specific run-policy details | This is not the full run-policy universe; it is the evaluation branch of it. |
+| `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.
 

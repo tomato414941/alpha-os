@@ -28,7 +28,8 @@ instead of making evaluation planning responsible for replay task resolution.
 
 ## Boundary
 
-Keep `fixed_state_replay` as an engine run mode.
+Treat `fixed_state_replay` as a current `run_mode` value, not as a target
+glossary term.
 
 Treat `create-fixed-state-evaluation-task` as a temporary adapter, not as a core
 research primitive.

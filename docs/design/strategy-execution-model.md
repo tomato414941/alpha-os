@@ -74,13 +74,14 @@ This is distinct from run context:
 ```text
 StrategyRunSpec
 ├─ TradingStrategy
-└─ RunPolicy
+└─ Explicit run inputs
 ```
 
 So:
 
 - `TradingStrategy` defines what should be traded and how it should be realized
-- `RunPolicy` defines the engine-side context in which it should run
+- explicit run inputs define the engine-side context and artifacts required to
+  run it
 
 `prediction` is not a peer of `TradingStrategy`. It is one output produced
 inside `SignalPolicy`.
@@ -132,9 +133,10 @@ Properties:
 - replay can compare downstream behavior without re-running discovery
 - this is the preferred benchmark shape when the upstream state should stay fixed
 
-## Strategy Run Mode
+## Current Evaluation Job Shapes
 
-The current mainline engine contract has distinct run modes.
+The current mainline engine contract still stores `run_mode`. This is a
+transitional implementation field, not a target domain term.
 
 - `backtest_oos`
   - run the strategy under a strict train/test-separated evaluation spec
@@ -148,9 +150,11 @@ The current mainline engine contract has distinct run modes.
 So:
 
 - `execution_kind` is a current implementation field to remove
-- `run mode` belongs to engine context
+- `run_mode` is a current implementation field to remove
 - future strategy requirements should be expressed directly instead of hidden
   behind a single mode-like term
+- future evaluation job shapes should make required inputs explicit instead of
+  hiding them behind a generic mode
 
 ## Current Mainline Mapping
 
@@ -160,14 +164,14 @@ The current codebase is still transitional. The practical mapping is:
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
 | `execution_kind` | transitional implementation field | Do not promote to a glossary term. Remove it once strategy requirements and run/evaluation state sourcing are represented directly. |
-| `run mode` | `RunPolicy` | `backtest_oos` and `fixed_state_replay` are engine-side choices. |
+| `run_mode` | transitional implementation field | Remove once evaluation job shapes express their required inputs directly. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
-| `EvaluationSpec` | evaluation branch of `RunPolicy` | It is not the full run-policy universe, only the evaluation branch. |
+| `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |
 
-### Current Evaluation-Side Run Modes
+### Current Evaluation Job Shapes
 
-| Run mode | Purpose | Required inputs | Retraining during evaluation |
-|----------|---------|-----------------|------------------------------|
+| Current `run_mode` value | Purpose | Required inputs | Retraining during evaluation |
+|--------------------------|---------|-----------------|------------------------------|
 | `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
 | `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `fixed_initial_strategy_state_id`. | Never. |
 
@@ -182,10 +186,10 @@ context. Prediction-level metrics are only one part of the resulting report.
 
 ### Current Run-Input Contracts
 
-The current mainline should treat run-mode inputs as separate contract objects.
+The current mainline should treat these inputs as separate contract objects.
 
-| Run mode | Contract object | Required fields |
-|----------|-----------------|-----------------|
+| Current `run_mode` value | Contract object | Required fields |
+|--------------------------|-----------------|-----------------|
 | `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
 | `fixed_state_replay` | `FixedStateReplayRunInputs` | `evaluation_spec_id`, `fixed_initial_strategy_state_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
 | `paper` | `PaperRunInputs` | `as_of_timestamp`, optional `current_portfolio_state_id` |
@@ -236,7 +240,7 @@ Inputs:
 
 - `evaluation task`
 - evaluation spec
-- current strategy run mode
+- current `run_mode` field
 
 Outputs:
 

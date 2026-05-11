@@ -1,8 +1,9 @@
 # Runtime And Evaluation
 
-## Evaluation Run Modes
+## Current Evaluation Job Shapes
 
-The current mainline uses two evaluation-side run modes.
+The current mainline still stores `run_mode`, but the target shape should be
+explicit evaluation job inputs.
 
 ### `backtest_oos`
 
@@ -27,13 +28,13 @@ Properties:
 
 So:
 
-- `backtest_oos` is the default evaluation mode
-- `fixed_state_replay` is a controlled comparison mode
+- `backtest_oos` is the default evaluation job shape
+- `fixed_state_replay` is a controlled comparison job shape
 - both are evaluation contexts, not strategy semantics
 
-### Evaluation-Mode Inputs
+### Evaluation Job Inputs
 
-The input contract should differ by evaluation mode.
+The input contract should differ by evaluation job shape.
 
 - `backtest_oos`
   - requires an evaluation spec and fold/date-range information
