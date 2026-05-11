@@ -27,6 +27,8 @@ implementations need a shared home.
 - Keep changes aligned with investment hypotheses, signal and strategy-candidate
   generation, portfolio-construction optimization, backtests, OOS evaluation,
   screening, and decision records.
+- Get explicit approval before keeping branches, aliases, or deprecated
+  interfaces for backward compatibility.
 - Do not commit local runtime data, credentials, logs, or machine-specific
   deployment notes.
 - Keep machine-specific operations in `AGENTS.override.md`, which is ignored.
