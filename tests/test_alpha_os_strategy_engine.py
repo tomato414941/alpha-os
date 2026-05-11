@@ -60,7 +60,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
-            run_mode="fixed_state_replay",
             subject_set_id="subject-set:test",
             target_id="target:test",
             base_url="http://example.com",
@@ -88,76 +87,11 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
-    assert request.context.run_mode == "fixed_state_replay"
     assert request.context.subject_set_id == "subject-set:test"
     assert request.artifacts.signal_train_id == "signal-train:test"
     assert request.artifacts.initial_strategy_state_id == "state:test"
     assert request.artifacts.signal_discovery_id == "discovery:test"
     assert request.evaluation_date_ranges[0].label == "test"
-
-    fixed_state_inputs = request.to_fixed_state_replay_run_inputs()
-
-    assert fixed_state_inputs.evaluation_spec_id == "protocol:test"
-    assert fixed_state_inputs.fixed_initial_strategy_state_id == "state:test"
-    assert fixed_state_inputs.execution_range.label == "train"
-    assert fixed_state_inputs.metric_group_names == ("decision_quality",)
-
-
-def test_strategy_evaluation_request_builds_backtest_oos_inputs():
-    from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.strategy_engine import (
-        StrategyEvaluationArtifacts,
-        StrategyEvaluationContext,
-        StrategyEvaluationRequest,
-    )
-
-    request = StrategyEvaluationRequest(
-        evaluation_task_id="case:test",
-        evaluation_spec_id="protocol:test",
-        fold_label="fold_2025",
-        context=StrategyEvaluationContext(
-            strategy_id="strategy:test",
-            run_mode="backtest_oos",
-            subject_set_id="subject-set:test",
-            target_id="target:test",
-            base_url="http://example.com",
-            selection_kind="all_assets",
-            top_k=None,
-            **_evaluation_policy_parts(
-                sizing_method="equal_weight",
-                sizing_engine="history_based",
-            ),
-        ),
-        artifacts=StrategyEvaluationArtifacts(
-            signal_train_id="signal-train:test",
-            initial_strategy_state_id=None,
-            signal_discovery_run_id="signal-discovery-run:test",
-            signal_discovery_id="discovery:test",
-            screening_result_id="screening:test",
-            compressed_belief_id="belief:test",
-        ),
-        execution_range=EvaluationDateRange(
-            label="train",
-            start_date="2025-01-01",
-            end_date="2025-12-31",
-        ),
-        evaluation_date_ranges=(
-            EvaluationDateRange(
-                label="test",
-                start_date="2026-01-01",
-                end_date="2026-03-31",
-            ),
-        ),
-        metric_group_names=("decision_quality",),
-    )
-
-    backtest_oos_inputs = request.to_backtest_oos_run_inputs()
-
-    assert backtest_oos_inputs.evaluation_spec_id == "protocol:test"
-    assert backtest_oos_inputs.execution_range.label == "train"
-    assert backtest_oos_inputs.evaluation_date_ranges[0].label == "test"
-    assert backtest_oos_inputs.metric_group_names == ("decision_quality",)
-
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():
     from alpha_os.evaluation_metric_config import EvaluationMetricConfig

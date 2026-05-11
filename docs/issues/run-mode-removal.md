@@ -28,11 +28,20 @@ required inputs directly.
 
 - `StrategyRunMode`
 - `EvaluationJobSpec.run_mode`
-- `StrategyEvaluationContext.run_mode`
-- `StrategyEvaluationRequest.to_backtest_oos_run_inputs`
-- `StrategyEvaluationRequest.to_fixed_state_replay_run_inputs`
+- `StrategyEvaluationContext.run_mode` removed from the request context
+- `StrategyEvaluationRequest.to_backtest_oos_run_inputs` removed
+- `StrategyEvaluationRequest.to_fixed_state_replay_run_inputs` removed
 - manifest and report payloads that persist `run_mode`
 - validation branches keyed by `backtest_oos` or `fixed_state_replay`
+
+## Current Finding
+
+`StrategyEvaluationContext.run_mode` was only used by request-to-run-input
+helper methods. It can be removed without changing `EvaluationJobSpec.run_mode`.
+
+Removing it leaves `EvaluationJobSpec.run_mode` as the remaining selector for
+fixed-state replay planning. That remaining behavior should be addressed as a
+concrete evaluation job shape rather than another generic mode.
 
 ## Boundary
 

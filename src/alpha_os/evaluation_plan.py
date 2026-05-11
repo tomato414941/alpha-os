@@ -21,7 +21,6 @@ from .strategy_engine import (
     StrategyEvaluationContext,
     StrategyEvaluationRequest,
 )
-from .strategy_run_mode import StrategyRunMode
 
 if TYPE_CHECKING:
     from .store import (
@@ -77,7 +76,6 @@ def _strategy_evaluation_request(
     evaluation_spec_id: str,
     fold_label: str,
     strategy_id: str,
-    run_mode: StrategyRunMode,
     signal_train_id: str,
     initial_strategy_state_id: str | None,
     signal_discovery_run_id: str | None,
@@ -103,7 +101,6 @@ def _strategy_evaluation_request(
         fold_label=fold_label,
         context=StrategyEvaluationContext(
             strategy_id=strategy_id,
-            run_mode=run_mode,
             subject_set_id=subject_set_id,
             target_id=target_id,
             base_url=base_url,
@@ -287,7 +284,6 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
-                        run_mode=run_mode,
                         signal_train_id=strategy_signal_train_id,
                         initial_strategy_state_id=None,
                         signal_discovery_run_id=None,
@@ -332,7 +328,6 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
-                        run_mode=run_mode,
                         signal_train_id=frozen_state.signal_train_id,
                         initial_strategy_state_id=(
                             frozen_state.initial_strategy_state_id
@@ -406,7 +401,6 @@ def build_evaluation_plan(
                     evaluation_spec_id=evaluation_spec_id,
                     fold_label=fold.label,
                     strategy_id=evaluation_task.strategy_id,
-                    run_mode=run_mode,
                     signal_train_id=strategy_signal_train_id,
                     initial_strategy_state_id=initial_strategy_state_id,
                     signal_discovery_run_id=signal_discovery_run_id,

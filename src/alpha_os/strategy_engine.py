@@ -9,13 +9,11 @@ from .evaluation_cost_config import (
 )
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .strategy_run_mode import StrategyRunMode
 
 
 @dataclass(frozen=True)
 class StrategyEvaluationContext:
     strategy_id: str
-    run_mode: StrategyRunMode
     subject_set_id: str
     target_id: str
     base_url: str
@@ -35,23 +33,6 @@ class StrategyEvaluationArtifacts:
     signal_discovery_id: str | None
     screening_result_id: str | None
     compressed_belief_id: str | None
-
-
-@dataclass(frozen=True)
-class BacktestOosRunInputs:
-    evaluation_spec_id: str
-    execution_range: EvaluationDateRange
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...]
-    metric_group_names: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class FixedStateReplayRunInputs:
-    evaluation_spec_id: str
-    fixed_initial_strategy_state_id: str
-    execution_range: EvaluationDateRange
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...]
-    metric_group_names: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -100,35 +81,3 @@ class StrategyEvaluationRequest:
         object.__setattr__(self, "execution_range", execution_range)
         object.__setattr__(self, "evaluation_date_ranges", evaluation_date_ranges)
         object.__setattr__(self, "metric_group_names", metric_group_names)
-
-    def to_backtest_oos_run_inputs(self) -> BacktestOosRunInputs:
-        if self.context.run_mode != "backtest_oos":
-            raise ValueError(
-                "backtest_oos run inputs require run_mode=backtest_oos"
-            )
-        return BacktestOosRunInputs(
-            evaluation_spec_id=self.evaluation_spec_id,
-            execution_range=self.execution_range,
-            evaluation_date_ranges=self.evaluation_date_ranges,
-            metric_group_names=self.metric_group_names,
-        )
-
-    def to_fixed_state_replay_run_inputs(self) -> FixedStateReplayRunInputs:
-        if self.context.run_mode != "fixed_state_replay":
-            raise ValueError(
-                "fixed_state_replay run inputs require "
-                "run_mode=fixed_state_replay"
-            )
-        fixed_initial_strategy_state_id = self.artifacts.initial_strategy_state_id
-        if fixed_initial_strategy_state_id is None:
-            raise ValueError(
-                "fixed_state_replay run inputs require "
-                "initial_strategy_state_id"
-            )
-        return FixedStateReplayRunInputs(
-            evaluation_spec_id=self.evaluation_spec_id,
-            fixed_initial_strategy_state_id=fixed_initial_strategy_state_id,
-            execution_range=self.execution_range,
-            evaluation_date_ranges=self.evaluation_date_ranges,
-            metric_group_names=self.metric_group_names,
-        )
