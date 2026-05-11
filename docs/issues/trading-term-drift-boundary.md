@@ -48,7 +48,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 
 - [x] `universe`
 - [x] `tradable universe`
-- [ ] `evaluation universe`
+- [x] `evaluation universe`
 - [ ] `subject`
 - [ ] `execution`
 - [ ] `execution kind`
@@ -87,3 +87,14 @@ Code review found that `tradable universe` is not first-class in code and is
 usually represented through `SubjectSet`, which also carries observation and
 metadata context. See
 [`tradable-universe-code-boundary.md`](./tradable-universe-code-boundary.md).
+
+### `evaluation universe`
+
+The glossary definition is acceptable: an evaluation universe is the set of
+instruments included in a specific evaluation run.
+
+Code review found that evaluation runs do not have a first-class
+`EvaluationUniverse` model or an evaluation-universe field on `EvaluationSpec`.
+The effective subject set is derived from strategy, initial state, or signal
+discovery provenance depending on run mode. See
+[`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
