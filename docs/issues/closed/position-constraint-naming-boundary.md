@@ -1,5 +1,9 @@
 # Position constraint naming boundary
 
+Status: Closed
+
+Closed by: current portfolio direction handling
+
 ## Issue
 
 `direction_mode` currently represents whether portfolio target weights may be
@@ -32,3 +36,16 @@ use `direction_mode`. Persisted/public strategy documents should not accept
 - The persisted or public name does not make `long_only` and `direction_mode`
   look like separate strategy decisions.
 - If renamed, the target name should express a constraint, not a generic mode.
+
+## Closure Notes
+
+`direction_mode` is the current persisted/public field for allowed position
+direction. Runtime manifests use `direction_mode`.
+
+`PortfolioConstructionSpec.from_document()` does not accept persisted
+`long_only` as input. It constructs with `long_only=False` and normalizes from
+`direction_mode`.
+
+`PortfolioConstructionSpec.__post_init__()` then derives `long_only` from the
+normalized `direction_mode`, so `long_only` remains an internal compatibility
+boolean rather than a second source of truth.
