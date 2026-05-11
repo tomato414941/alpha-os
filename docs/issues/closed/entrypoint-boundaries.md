@@ -1,5 +1,9 @@
 # Entrypoint Boundaries
 
+Status: Closed
+
+Closed by: current documentation map
+
 ## Problem
 
 alpha-os has several entrypoints:
@@ -57,3 +61,17 @@ new entrypoints can be classified without referring to this issue.
 ## Later
 
 Revisit this issue when a concrete evaluation is blocked by entrypoint ambiguity.
+
+## Closure Notes
+
+`docs/README.md` now documents the source-of-truth order for current
+entrypoints, long-horizon design notes, operational truth, and archive/legacy
+context.
+
+The supported entrypoint roles can be classified without this issue:
+
+- root `README.md`: current trusted runtime path and entrypoint commands
+- runtime manifests: primary external entrypoint for executable runs
+- CLI commands: bounded runtime adapter
+- Python APIs: internal application and test entrypoint
+- scripts: legacy or experimental helpers unless explicitly promoted

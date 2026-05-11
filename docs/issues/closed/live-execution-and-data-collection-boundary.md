@@ -1,5 +1,9 @@
 # Live Execution And Data Collection Boundary
 
+Status: Closed
+
+Closed by: current README and signal-noise design boundary
+
 ## Problem
 
 alpha-os has evaluation-time execution cost models, signal-noise adapters, and
@@ -46,3 +50,18 @@ alpha-os should not own:
 Close this when live execution, exchange connector, and data collection
 responsibilities are either explicitly out of scope or owned by separate
 projects, while alpha-os keeps only the evaluation-facing interfaces it needs.
+
+## Closure Notes
+
+The root `README.md` scopes the current mainline to signal discovery research,
+strategy definition, OOS evaluation, and portfolio decision/evaluation flows.
+It does not include live order execution, exchange account sync, or exchange
+connector ownership.
+
+`docs/design/constitution.md` states that `signal-noise` is a separate data
+service. alpha-os owns adapters, contracts, and validation for the data it needs
+from that service, while signal-noise owns its own data product.
+
+This leaves alpha-os responsible for evaluation-facing interfaces and keeps live
+execution, exchange connectors, and data collection outside the current project
+scope.
