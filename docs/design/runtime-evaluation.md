@@ -37,7 +37,7 @@ The input contract should differ by evaluation mode.
 
 - `backtest_oos`
   - requires an evaluation spec and fold/date-range information
-  - may consume train artifacts depending on strategy execution kind
+  - may consume train artifacts depending on strategy requirements
 - `fixed_state_replay`
   - requires the same evaluation spec information
   - additionally requires `fixed_initial_strategy_state_id`

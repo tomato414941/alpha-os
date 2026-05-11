@@ -194,7 +194,7 @@ Current examples are `sizing_method` and, in evaluation/runtime construction, `s
 
 The calculation engine used to realize a sizing method in evaluation or runtime decision construction.
 
-Examples: `rule_based`, `optimizer`, `history_based`. It is narrower than strategy execution engine.
+Examples: `rule_based`, `optimizer`, `history_based`. It is narrower than the strategy run engine.
 
 ### rebalance policy
 
@@ -232,13 +232,7 @@ A concrete structured definition of a strategy.
 
 Defines trading behavior. Current mainline `TradingStrategySpec` is the first-class strategy model.
 
-### strategy execution
-
-Running a strategy through a specific engine.
-
-Examples: strict OOS evaluation, fixed-state replay, paper, live.
-
-### strategy execution request
+### strategy run request
 
 One concrete request sent to a strategy engine.
 
@@ -507,17 +501,17 @@ Inside portfolio policy:
 - rebalance policy decides refresh cadence
 - risk policy decides exposure limits
 
-### Strategy vs Strategy Execution
+### Strategy vs Strategy Run
 
 - **strategy** = what the trading logic means
-- **strategy execution** = how an engine runs that strategy in a specific context
+- **strategy run** = how an engine runs that strategy in a specific context
 
 Different engines may optimize mechanics, but they should not change strategy
 semantics.
 
-### Strategy Execution vs Evaluation
+### Strategy Run vs Evaluation
 
-- **strategy execution** = the broader concept
+- **strategy run** = the broader concept
 - **evaluation** = one engine context that runs a strategy for measurement
 
 So `evaluation` is acceptable when scoped as:

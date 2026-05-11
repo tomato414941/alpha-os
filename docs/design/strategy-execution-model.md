@@ -1,7 +1,7 @@
-# Strategy Execution Model
+# Strategy Run Model
 
-This file is the source of truth for how a `strategy spec` is executed across
-different engines.
+This file is the source of truth for how a `strategy spec` runs across different
+engines.
 
 It separates:
 
@@ -339,7 +339,7 @@ The current codebase should converge on this split:
 - `TradingStrategySpec`
   - strategy semantics
 - `StrategyExecutionRequest`
-  - one engine-specific execution request
+  - current implementation name for one engine-specific strategy run request
 - `EvaluationTask`
   - a strategy-evaluation request shape
 - `EvaluationReport`
@@ -347,5 +347,5 @@ The current codebase should converge on this split:
 
 In other words:
 
-- not every strategy execution is an evaluation
-- but every current mainline evaluation is a form of strategy execution
+- not every strategy run is an evaluation
+- but every current mainline evaluation is a form of strategy run

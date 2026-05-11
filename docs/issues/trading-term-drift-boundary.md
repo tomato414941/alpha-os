@@ -52,7 +52,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `subject`
 - [x] `execution`
 - [x] `execution kind`
-- [ ] `strategy execution`
+- [x] `strategy execution`
 - [x] `strategy execution kind`
 - [ ] `run policy`
 - [ ] `strategy run mode`
@@ -115,7 +115,7 @@ screening, belief synthesis, portfolio construction, and execution paths. See
 
 The glossary definition is acceptable for order/trade execution, but code and
 docs use `execution` across several layers: order execution, portfolio
-transition, strategy execution, current `execution_kind` behavior, and
+transition, current strategy-run wording, current `execution_kind` behavior, and
 evaluation execution ranges. Avoid bare `execution` when a scoped term is
 available. See
 [`execution-term-boundary.md`](./execution-term-boundary.md).
@@ -131,3 +131,11 @@ a domain term to rename. Before replacing it, decide whether the underlying
 classification is needed at all. If the behavior is still needed, express the
 actual requirements directly instead of preserving a single mode-like concept.
 See [`execution-kind-removal.md`](./execution-kind-removal.md).
+
+### `strategy execution`
+
+Do not keep `strategy execution` as a glossary term. It overlaps too easily with
+order/trade `execution`.
+
+Use `strategy run` for the broad concept of running a strategy through an engine
+context, and keep `execution` reserved for order/trade execution.

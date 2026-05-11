@@ -7,14 +7,14 @@
 - order or trade execution: converting decisions into orders and fills
 - portfolio transition: moving current portfolio state toward desired targets
   under turnover, friction, and cost controls
-- strategy execution: running a strategy through an engine
+- strategy run: running a strategy through an engine
 - current `execution_kind` field: `trainless`, `trained`, or `frozen`
   behavior that is not order execution
 - evaluation execution range: the period over which an evaluation engine runs a
   strategy before measuring evaluation ranges
 
 The bare term `execution` can therefore be read as market execution, strategy
-execution, or evaluation engine execution depending on context.
+run, or evaluation engine execution depending on context.
 
 ## Why It Matters
 
@@ -41,7 +41,7 @@ Prefer scoped terms:
 - `order execution` or `trade execution` for orders and fills
 - `portfolio transition` or `rebalance transition` for movement from current to
   desired portfolio state
-- `strategy execution` for running a strategy through an engine
+- `strategy run` for running a strategy through an engine
 - `run mode` for `backtest_oos`, `fixed_state_replay`, `paper`, and `live`
 
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
@@ -59,7 +59,7 @@ than renamed as a domain concept. See
 ## Acceptance Criteria
 
 - Glossary and design docs avoid bare `execution` where the intended layer is
-  market execution, portfolio transition, strategy execution, or run mode.
+  market execution, portfolio transition, strategy run, or run mode.
 - Existing code paths that use `execution` are classified by semantic layer
   before any rename.
 - Future fields can tell whether they belong to order execution, portfolio

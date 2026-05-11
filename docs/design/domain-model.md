@@ -30,7 +30,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **adaptive discovery policy** | A strategy-internal mechanism that re-generates or re-selects signals or sleeves over time. This is part of an adaptive strategy, not the same thing as signal discovery. | monthly family re-selection, rolling sleeve activation |
 | **trading strategy** | The top-level trading object. It combines scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
 | **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | `constant_hold`, `dual_momentum_hold`, `crypto_regime_momentum_hold` |
-| **execution kind** | The strategy execution state mode used by an evaluation engine. | trainless, trained, frozen-style reuse semantics |
+| **execution kind** | Legacy/transitional implementation wording. Do not use as a domain term. | Use explicit strategy requirements and run state sourcing instead. |
 | **signal contribution** | A signal-level input to belief synthesis after screening and prediction orientation. It records prediction, confidence, and marginal signal contribution. | `SignalContribution(signal_id="trend@AAPL", ...)` |
 | **belief synthesis** | The process that combines signal contributions into target-level belief components. | cluster related signal families, compute belief confidence |
 | **compressed belief** | A compact belief artifact produced from belief synthesis for downstream portfolio decisions. | `CompressedBeliefComponent(signal_contribution_count=3, ...)` |
@@ -39,7 +39,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **execution policy** | The strategy sub-policy that defines how desired state should be realized. | urgency, order style, slicing, venue-facing limits |
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
-| **strategy execution** | Running a strategy through a specific engine. | strict OOS evaluation, frozen replay, paper, live |
+| **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, frozen replay, paper, live |
 | **run policy** | The engine-side policy that selects the run context for a strategy. | `backtest_oos`, `fixed_state_replay`, `paper`, `live` |
 | **strategy run spec** | One trading strategy paired with one run policy. | strategy under strict OOS; strategy under paper mode |
 | **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
@@ -179,8 +179,8 @@ the engine context in which the strategy is run, such as:
 - fixed-state replay versus retraining
 - runtime-specific batching or caching
 
-A trading strategy is what we want to define. Strategy execution is how an
-engine runs that trading strategy in a particular context.
+A trading strategy is what we want to define. A strategy run is how an engine
+runs that trading strategy in a particular context.
 
 ## Current Mainline Mapping
 
@@ -189,7 +189,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | Current object | Closest long-horizon concept | Notes |
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
-| `strategy execution kind` | mostly `SignalPolicy` | It currently describes how signal-related state is produced or reused. |
+| `execution_kind` | transitional implementation field | Remove once strategy requirements and run/evaluation state sourcing are represented directly. |
 | `run mode` | `RunPolicy` | `backtest_oos` and `fixed_state_replay` are engine-side choices. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a trading strategy to an evaluation context. |
 | `EvaluationSpec` | evaluation-specific run-policy details | This is not the full run-policy universe; it is the evaluation branch of it. |
