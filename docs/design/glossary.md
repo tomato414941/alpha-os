@@ -172,12 +172,6 @@ The strategy rule that turns inputs into subject-level eligibility, direction, o
 
 Current examples are `constant_hold`, `dual_momentum_hold`, and `crypto_regime_momentum_hold`.
 
-### execution kind
-
-The strategy execution state mode used by an evaluation engine.
-
-Current examples are `trainless`, `trained`, and `frozen`.
-
 ### portfolio policy
 
 The strategy sub-policy that converts predictive inputs into desired portfolio state.
@@ -249,12 +243,6 @@ Examples: strict OOS evaluation, fixed-state replay, paper, live.
 One concrete request sent to a strategy engine.
 
 It binds strategy semantics to an engine context and runtime artifacts.
-
-### strategy execution kind
-
-The strategy-level rule for how signal state is produced or reused.
-
-Current kinds: `trainless`, `trained`, `frozen`. This is distinct from the engine run mode `fixed_state_replay`.
 
 ### run policy
 
@@ -487,7 +475,7 @@ So:
 - `subject_set` and `target` belong to strategy scope
 - `position_rule_id`, `signal_discovery_id`, and `family_mix` describe the
   position rule or the artifacts it depends on
-- `execution_kind` describes whether the rule is trainless, trained, or frozen
+- `execution_kind` is a transitional implementation field, not a glossary term
 
 ### Strategy Requirements vs Universe
 

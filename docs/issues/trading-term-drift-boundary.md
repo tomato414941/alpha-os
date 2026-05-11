@@ -51,9 +51,9 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `evaluation universe`
 - [x] `subject`
 - [x] `execution`
-- [ ] `execution kind`
+- [x] `execution kind`
 - [ ] `strategy execution`
-- [ ] `strategy execution kind`
+- [x] `strategy execution kind`
 - [ ] `run policy`
 - [ ] `strategy run mode`
 - [ ] `benchmark`
@@ -115,6 +115,19 @@ screening, belief synthesis, portfolio construction, and execution paths. See
 
 The glossary definition is acceptable for order/trade execution, but code and
 docs use `execution` across several layers: order execution, portfolio
-transition, strategy execution, strategy execution kind, and evaluation
-execution ranges. Avoid bare `execution` when a scoped term is available. See
+transition, strategy execution, current `execution_kind` behavior, and
+evaluation execution ranges. Avoid bare `execution` when a scoped term is
+available. See
 [`execution-term-boundary.md`](./execution-term-boundary.md).
+
+### `execution kind` / `strategy execution kind`
+
+Do not keep either as a glossary term. These names imply a subtype of
+`execution`, but the current `execution_kind` field is not about order
+execution.
+
+Treat `execution_kind` as a transitional implementation field to remove, not as
+a domain term to rename. Before replacing it, decide whether the underlying
+classification is needed at all. If the behavior is still needed, express the
+actual requirements directly instead of preserving a single mode-like concept.
+See [`execution-kind-removal.md`](./execution-kind-removal.md).

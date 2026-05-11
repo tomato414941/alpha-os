@@ -8,8 +8,8 @@
 - portfolio transition: moving current portfolio state toward desired targets
   under turnover, friction, and cost controls
 - strategy execution: running a strategy through an engine
-- strategy execution kind: `trainless`, `trained`, or `frozen` signal-state
-  behavior
+- current `execution_kind` field: `trainless`, `trained`, or `frozen`
+  behavior that is not order execution
 - evaluation execution range: the period over which an evaluation engine runs a
   strategy before measuring evaluation ranges
 
@@ -26,7 +26,8 @@ Examples:
 - order-style and fill behavior belong to trade/order execution
 - no-trade bands, turnover budgets, and transition utility may belong to
   portfolio transition or rebalance friction
-- `trainless` / `trained` / `frozen` belongs to strategy state semantics
+- `trainless` / `trained` / `frozen` are current implementation values and
+  should not be promoted into a target glossary term
 - `backtest_oos` / `fixed_state_replay` belongs to run mode
 - `execution_range` is an evaluation/run contract field, not an order-execution
   field
@@ -41,13 +42,17 @@ Prefer scoped terms:
 - `portfolio transition` or `rebalance transition` for movement from current to
   desired portfolio state
 - `strategy execution` for running a strategy through an engine
-- `strategy execution kind` for `trainless`, `trained`, and `frozen`
 - `run mode` for `backtest_oos`, `fixed_state_replay`, `paper`, and `live`
+
+Do not introduce `execution kind` or `strategy execution kind` as target terms.
+The current `execution_kind` field is transitional and should be removed rather
+than renamed as a domain concept. See
+[`execution-kind-removal.md`](./execution-kind-removal.md).
 
 ## Non-Goals
 
 - Do not rename existing `execution_range` fields immediately.
-- Do not rename `execution_kind` immediately.
+- Do not remove `execution_kind` immediately.
 - Do not split `ExecutionPolicySpec` immediately.
 - Do not change manifest compatibility as part of terminology cleanup.
 
@@ -58,4 +63,4 @@ Prefer scoped terms:
 - Existing code paths that use `execution` are classified by semantic layer
   before any rename.
 - Future fields can tell whether they belong to order execution, portfolio
-  transition, strategy state semantics, or evaluation/run contracts.
+  transition, strategy requirements, or evaluation/run contracts.

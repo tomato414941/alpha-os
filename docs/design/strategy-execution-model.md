@@ -95,9 +95,10 @@ So the clean relation is:
 Good predictions do not guarantee a good strategy. Good strategy outcomes also
 do not prove that prediction quality was the dominant source of edge.
 
-## Strategy Execution Kind
+## Current State-Handling Values
 
-The current mainline trading-strategy contract has three execution kinds.
+The current mainline trading-strategy contract still stores `execution_kind`.
+This is a transitional implementation field, not a target domain term.
 
 ### `trainless`
 
@@ -146,8 +147,10 @@ The current mainline engine contract has distinct run modes.
 
 So:
 
-- `execution kind` belongs to strategy semantics
+- `execution_kind` is a current implementation field to remove
 - `run mode` belongs to engine context
+- future strategy requirements should be expressed directly instead of hidden
+  behind a single mode-like term
 
 ## Current Mainline Mapping
 
@@ -156,7 +159,7 @@ The current codebase is still transitional. The practical mapping is:
 | Current object | Closest long-horizon concept | Notes |
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
-| `strategy execution kind` | mostly `SignalPolicy` | It describes how signal-related state is produced or reused. |
+| `execution_kind` | transitional implementation field | Do not promote to a glossary term. Remove it once strategy requirements and run/evaluation state sourcing are represented directly. |
 | `run mode` | `RunPolicy` | `backtest_oos` and `fixed_state_replay` are engine-side choices. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
 | `EvaluationSpec` | evaluation branch of `RunPolicy` | It is not the full run-policy universe, only the evaluation branch. |
@@ -165,7 +168,7 @@ The current codebase is still transitional. The practical mapping is:
 
 | Run mode | Purpose | Required inputs | Retraining during evaluation |
 |----------|---------|-----------------|------------------------------|
-| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by its execution kind. | Allowed when the strategy execution kind is `trained`. |
+| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
 | `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `fixed_initial_strategy_state_id`. | Never. |
 
 This means:
