@@ -26,24 +26,22 @@ strategy definition, and out-of-sample evaluation.
 ## Development
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 Install the optional data-service integration only when a compatible
 `signal-noise` package is available:
 
 ```bash
-pip install -e ".[data]"
+uv sync --extra dev --extra data
 ```
 
 ## Testing
 
 ```bash
-ruff check src tests
-PYTHONPATH=src pytest -q
-PYTHONPATH=src python -m alpha_os --help
+uv run ruff check src tests
+uv run pytest -q
+uv run python -m alpha_os --help
 ```
 
 ## Minimal OOS Golden Path
@@ -55,18 +53,18 @@ external data service.
 DB=/tmp/alpha-os-minimal-oos.db
 rm -f "$DB"
 
-PYTHONPATH=src python -m alpha_os apply-manifest \
+uv run python -m alpha_os apply-manifest \
   --manifest examples/minimal_oos.json \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward \
+uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-report \
+uv run python -m alpha_os show-report \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-diagnostics \
+uv run python -m alpha_os show-diagnostics \
   --db "$DB"
 ```
 
@@ -84,26 +82,26 @@ task and runs a strict OOS report.
 DB=/tmp/alpha-os-minimal-fixed-state-oos.db
 rm -f "$DB"
 
-PYTHONPATH=src python -m alpha_os apply-manifest \
+uv run python -m alpha_os apply-manifest \
   --manifest examples/minimal_fixed_state_oos.json \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward \
+uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_train_eval \
   --db "$DB"
 
 # Select the generated initial_strategy_state_id, then create the replay task:
-PYTHONPATH=src python -m alpha_os create-fixed-state-evaluation-task \
+uv run python -m alpha_os create-fixed-state-evaluation-task \
   --source-evaluation-task-id minimal_fixed_state_training_case \
   --source-initial-strategy-state-id <initial_strategy_state_id> \
   --evaluation-spec-id minimal_fixed_state_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os run-walk-forward \
+uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_oos_eval \
   --db "$DB"
 
-PYTHONPATH=src python -m alpha_os show-report \
+uv run python -m alpha_os show-report \
   --db "$DB"
 ```
 
