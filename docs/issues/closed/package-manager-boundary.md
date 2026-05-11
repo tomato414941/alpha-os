@@ -1,5 +1,9 @@
 # Package Manager Boundary
 
+Status: Closed
+
+Closed by: current README and CI setup
+
 ## Problem
 
 alpha-os currently documents setup with `pip install -e ".[dev]"`.
@@ -45,3 +49,17 @@ Evaluate a small `uv` migration:
 - update README setup commands
 - update CI install commands
 - confirm `ruff`, `pytest`, and the golden path still pass
+
+## Closure Notes
+
+The current source of truth remains `pip`.
+
+- `README.md` documents `python3 -m venv .venv` followed by
+  `pip install -e ".[dev]"`.
+- `.github/workflows/ci.yml` installs with
+  `python -m pip install -e ".[dev]"`.
+- `AGENTS.md` points agents to the README for current setup and verification
+  commands.
+
+There is no committed `uv.lock` or competing primary setup path, so setup,
+CI, and agent guidance are aligned.
