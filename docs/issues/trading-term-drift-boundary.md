@@ -50,7 +50,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `tradable universe`
 - [x] `evaluation universe`
 - [x] `subject`
-- [ ] `execution`
+- [x] `execution`
 - [ ] `execution kind`
 - [ ] `strategy execution`
 - [ ] `strategy execution kind`
@@ -110,3 +110,11 @@ they become allocation targets.
 Code review found that `subject_id` appears across prediction, evaluation,
 screening, belief synthesis, portfolio construction, and execution paths. See
 [`subject-id-code-boundary.md`](./subject-id-code-boundary.md).
+
+### `execution`
+
+The glossary definition is acceptable for order/trade execution, but code and
+docs use `execution` across several layers: order execution, portfolio
+transition, strategy execution, strategy execution kind, and evaluation
+execution ranges. Avoid bare `execution` when a scoped term is available. See
+[`execution-term-boundary.md`](./execution-term-boundary.md).
