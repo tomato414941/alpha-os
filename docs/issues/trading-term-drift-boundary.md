@@ -106,3 +106,7 @@ allocation units. It may cover assets, instruments, baskets, sleeves, pairs, or
 spreads, but should not expand to every possible prediction or evaluation
 target. Regime or macro-state targets should remain outside `subject` unless
 they become allocation targets.
+
+Code review found that `subject_id` appears across prediction, evaluation,
+screening, belief synthesis, portfolio construction, and execution paths. See
+[`subject-id-code-boundary.md`](./subject-id-code-boundary.md).
