@@ -56,7 +56,66 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `strategy execution kind`
 - [x] `run policy`
 - [x] `strategy run mode`
+- [ ] `portfolio`
+- [ ] `backtest`
+- [ ] `observable`
+- [ ] `feature`
+- [ ] `representation`
+- [ ] `signal`
+- [ ] `signal expression`
+- [ ] `signal expression language`
+- [ ] `signal family`
+- [ ] `signal discovery`
+- [ ] `thesis`
+- [ ] `research spec`
+- [ ] `experiment plan`
+- [ ] `execution record`
+- [ ] `prediction`
+- [ ] `signal contribution`
+- [ ] `belief`
+- [ ] `sizing method`
+- [ ] `trading strategy`
+- [ ] `strategy scope`
+- [ ] `strategy requirements`
+- [ ] `position rule`
+- [ ] `portfolio policy`
+- [ ] `selection policy`
+- [ ] `sizing policy`
+- [ ] `sizing engine`
+- [ ] `rebalance policy`
+- [ ] `risk policy`
+- [ ] `rebalance friction policy`
+- [ ] `execution policy`
+- [ ] `strategy`
+- [ ] `strategy spec`
+- [ ] `strategy run request`
+- [ ] `strategy run spec`
+- [ ] `strict OOS run inputs`
+- [ ] `fixed-state replay run inputs`
+- [ ] `paper run inputs`
+- [ ] `live run inputs`
+- [ ] `strict OOS evaluation`
+- [ ] `evaluation spec`
+- [ ] `evaluation task`
+- [ ] `data input`
+- [ ] `data source`
+- [ ] `initial strategy state`
+- [ ] `signal train`
+- [ ] `train artifact`
+- [ ] `fixed-state replay`
+- [ ] `evaluation task result`
+- [ ] `evaluation report`
+- [ ] `evaluation metric group`
+- [ ] `evaluation metric`
+- [ ] `evaluation metric group result`
+- [ ] `evaluation metric group name`
+- [ ] `evaluation profile`
 - [ ] `benchmark`
+- [ ] `net return`
+- [ ] `drawdown`
+- [ ] `Sharpe ratio`
+- [ ] `turnover`
+- [ ] `alpha`
 
 ## Review Notes
 
