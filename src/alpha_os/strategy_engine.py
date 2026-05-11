@@ -9,14 +9,12 @@ from .evaluation_cost_config import (
 )
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .strategy_execution import StrategyExecutionKind
 from .strategy_run_mode import StrategyRunMode
 
 
 @dataclass(frozen=True)
 class StrategyEvaluationContext:
     strategy_id: str
-    execution_kind: StrategyExecutionKind
     run_mode: StrategyRunMode
     subject_set_id: str
     target_id: str

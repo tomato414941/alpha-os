@@ -60,7 +60,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
-            execution_kind="frozen",
             run_mode="fixed_state_replay",
             subject_set_id="subject-set:test",
             target_id="target:test",
@@ -89,7 +88,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
-    assert request.context.execution_kind == "frozen"
     assert request.context.run_mode == "fixed_state_replay"
     assert request.context.subject_set_id == "subject-set:test"
     assert request.artifacts.signal_train_id == "signal-train:test"
@@ -119,7 +117,6 @@ def test_strategy_evaluation_request_builds_backtest_oos_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
-            execution_kind="trained",
             run_mode="backtest_oos",
             subject_set_id="subject-set:test",
             target_id="target:test",

@@ -856,6 +856,6 @@ class SignalDiscoveryEvaluationExecutionStrategy:
 def evaluation_execution_strategy_for_request(
     execution_request: StrategyEvaluationRequest,
 ) -> EvaluationExecutionStrategy:
-    if execution_request.context.execution_kind == "trainless":
+    if execution_request.artifacts.signal_discovery_id is None:
         return TrainlessEvaluationExecutionStrategy()
     return SignalDiscoveryEvaluationExecutionStrategy()

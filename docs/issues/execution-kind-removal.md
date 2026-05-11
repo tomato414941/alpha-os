@@ -27,7 +27,8 @@ directly instead of preserving a single mode-like field.
 - `TradingStrategySpec.execution_kind`
 - `StrategyExecutionKind`
 - `StrategyExecutionSpec.kind`
-- `StrategyEvaluationContext.execution_kind`
+- `StrategyEvaluationContext.execution_kind` removed from the request context;
+  executor input-source routing remains tracked separately
 - manifest and report payloads that persist `execution_kind`
 - validation and evaluation-planning branches keyed by `trainless`, `trained`,
   or `frozen`

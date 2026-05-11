@@ -506,7 +506,7 @@ def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
     assert isinstance(
         evaluation_execution_strategy_for_request(
             SimpleNamespace(
-                context=SimpleNamespace(execution_kind="trainless")
+                artifacts=SimpleNamespace(signal_discovery_id=None)
             )
         ),
         TrainlessEvaluationExecutionStrategy,
@@ -514,7 +514,7 @@ def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
     assert isinstance(
         evaluation_execution_strategy_for_request(
             SimpleNamespace(
-                context=SimpleNamespace(execution_kind="trained")
+                artifacts=SimpleNamespace(signal_discovery_id="discovery:test")
             )
         ),
         SignalDiscoveryEvaluationExecutionStrategy,
