@@ -99,12 +99,6 @@ class PreparedStrategyEvaluationInputs:
     compressed_belief_state: object
 
 
-@dataclass(frozen=True)
-class PreparedStrategyEvaluationBaseOutputs:
-    metric_group_result_map: dict[str, EvaluationMetricGroupResult]
-    artifact_refs: dict[str, tuple[str, ...]]
-
-
 class EvaluationExecutionStrategy(Protocol):
     def run(
         self,
@@ -143,11 +137,11 @@ def resolve_prepared_strategy_evaluation_inputs(
     )
 
 
-def build_prepared_strategy_evaluation_base_outputs(
+def build_prepared_strategy_artifact_refs(
     *,
     execution_request: StrategyEvaluationRequest,
     prepared_inputs: PreparedStrategyEvaluationInputs,
-) -> PreparedStrategyEvaluationBaseOutputs:
+) -> dict[str, tuple[str, ...]]:
     strategy_checkpoint = prepared_inputs.strategy_checkpoint
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
@@ -162,10 +156,7 @@ def build_prepared_strategy_evaluation_base_outputs(
         artifact_refs["strategy_checkpoint_ids"] = (
             strategy_checkpoint.strategy_checkpoint_id,
         )
-    return PreparedStrategyEvaluationBaseOutputs(
-        metric_group_result_map={},
-        artifact_refs=artifact_refs,
-    )
+    return artifact_refs
 
 
 def resolve_prepared_strategy_survivor_snapshots(
@@ -666,12 +657,11 @@ class PreparedStrategyEvaluationExecutionStrategy:
             store=store,
             input_refs=input_refs,
         )
-        base_outputs = build_prepared_strategy_evaluation_base_outputs(
+        metric_group_result_map: dict[str, EvaluationMetricGroupResult] = {}
+        artifact_refs = build_prepared_strategy_artifact_refs(
             execution_request=execution_request,
             prepared_inputs=prepared_inputs,
         )
-        metric_group_result_map = base_outputs.metric_group_result_map
-        artifact_refs = base_outputs.artifact_refs
         failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
         subject_set = None
         pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
