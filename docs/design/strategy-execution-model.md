@@ -166,17 +166,12 @@ context. Prediction-level metrics are only one part of the resulting report.
 
 ### Current Run-Input Contracts
 
-The current mainline should treat these inputs as separate contract objects.
+The current mainline treats these inputs as separate contract objects.
 
 | Evaluation job shape | Contract object | Required fields |
 |----------------------|-----------------|-----------------|
 | `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
 | checkpoint-based evaluation | checkpoint evaluation inputs | `evaluation_spec_id`, `strategy_checkpoint_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
-| `paper` | `PaperRunInputs` | `as_of_timestamp`, optional `current_portfolio_state_id` |
-| `live` | `LiveRunInputs` | `as_of_timestamp`, `venue_id`, optional `current_portfolio_state_id` |
-
-Only the first two are active in the current mainline. The `paper` and `live`
-contracts are placeholders for future engines.
 
 ## Current Mainline Workflow
 

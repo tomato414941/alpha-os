@@ -36,19 +36,6 @@ class StrategyEvaluationInputRefs:
     prepared_end_date: str
 
 
-@dataclass(frozen=True)
-class PaperRunInputs:
-    as_of_timestamp: str
-    current_portfolio_state_id: str | None = None
-
-
-@dataclass(frozen=True)
-class LiveRunInputs:
-    as_of_timestamp: str
-    venue_id: str
-    current_portfolio_state_id: str | None = None
-
-
 @dataclass(frozen=True, init=False)
 class StrategyEvaluationRequest:
     evaluation_task_id: str
