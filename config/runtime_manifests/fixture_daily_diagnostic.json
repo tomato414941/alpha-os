@@ -54,7 +54,6 @@
         "signal_discovery_id": null,
         "position_rule_id": "constant_hold",
         "family_mix": null,
-        "execution_kind": "trainless",
         "portfolio": {
           "portfolio_construction": {
             "sizing_policy": {

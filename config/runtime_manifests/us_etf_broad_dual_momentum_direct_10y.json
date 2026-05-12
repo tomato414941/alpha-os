@@ -84,7 +84,6 @@
         "signal_discovery_id": null,
         "position_rule_id": "dual_momentum_hold",
         "family_mix": "lookback=252",
-        "execution_kind": "trainless",
         "portfolio": {
           "portfolio_construction": {
             "sizing_policy": {

@@ -187,7 +187,6 @@
         "signal_discovery_id": "us_etf_broad_rs_lowvol_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend,relative_strength",
-        "execution_kind": "trained",
         "portfolio": {
           "portfolio_construction": {
             "sizing_policy": {
@@ -223,7 +222,6 @@
         "signal_discovery_id": "us_etf_broad_rs_lowvol_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend,relative_strength",
-        "execution_kind": "trained",
         "portfolio": {
           "portfolio_construction": {
             "sizing_policy": {
