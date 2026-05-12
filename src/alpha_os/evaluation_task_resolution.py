@@ -8,7 +8,6 @@ from .evaluation_task import (
     build_evaluation_task_id,
 )
 from .store import EvaluationStore
-from .strategy_training import build_signal_train_id
 from .strategy_variant import (
     derive_trading_strategy_from_signal_discovery,
     overridden_strategy_variant_config,
@@ -184,7 +183,7 @@ def build_evaluation_task_resolution_plan(
         or request.direction_mode is not None
     )
     source_tasks = (
-        _dedupe_tasks_by_signal_train(read_port, existing_tasks)
+        _dedupe_tasks_by_signal_discovery(read_port, existing_tasks)
         if has_strategy_override
         else existing_tasks
     )
@@ -273,11 +272,11 @@ def build_evaluation_task_resolution_plan(
     return EvaluationTaskResolutionPlan(entries=tuple(entries))
 
 
-def _dedupe_tasks_by_signal_train(
+def _dedupe_tasks_by_signal_discovery(
     read_port: EvaluationTaskResolutionReadPort,
     tasks: tuple[EvaluationTask, ...],
 ) -> tuple[EvaluationTask, ...]:
-    unique_tasks_by_signal_train_id: dict[str, EvaluationTask] = {}
+    unique_tasks_by_signal_discovery_id: dict[str | None, EvaluationTask] = {}
     for task in tasks:
         strategy_state = read_port.get_trading_strategy(task.strategy_id)
         if strategy_state is None:
@@ -285,11 +284,12 @@ def _dedupe_tasks_by_signal_train(
                 "evaluation task strategy does not exist: "
                 f"{task.strategy_id}"
             )
-        signal_train_id = build_signal_train_id(
-            signal_discovery_id=strategy_state.trading_strategy.signal_discovery_id,
+        signal_discovery_id = strategy_state.trading_strategy.signal_discovery_id
+        unique_tasks_by_signal_discovery_id.setdefault(
+            signal_discovery_id,
+            task,
         )
-        unique_tasks_by_signal_train_id.setdefault(signal_train_id, task)
-    return tuple(unique_tasks_by_signal_train_id.values())
+    return tuple(unique_tasks_by_signal_discovery_id.values())
 
 
 def persist_evaluation_task_resolution_plan(

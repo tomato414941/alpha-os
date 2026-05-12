@@ -8,7 +8,6 @@ from typing import Any
 class StrategyCheckpoint:
     strategy_checkpoint_id: str
     strategy_id: str
-    signal_train_id: str
     signal_discovery_id: str | None
     subject_set_id: str
     target_id: str
@@ -24,7 +23,6 @@ class StrategyCheckpoint:
     def to_document(self) -> dict[str, Any]:
         document = {
             "strategy_id": self.strategy_id,
-            "signal_train_id": self.signal_train_id,
             "subject_set_id": self.subject_set_id,
             "target_id": self.target_id,
             "fold_label": self.fold_label,
@@ -66,21 +64,11 @@ class StrategyCheckpoint:
             raise ValueError(
                 "strategy checkpoint requires strategy_id when signal_discovery_id is absent"
             )
-        signal_train_id_document = document.get("signal_train_id")
-        if signal_train_id_document is None:
-            if signal_discovery_id is None:
-                raise ValueError(
-                    "strategy checkpoint requires signal_train_id when signal_discovery_id is absent"
-                )
-            signal_train_id = f"signal-train:{signal_discovery_id}"
-        else:
-            signal_train_id = str(signal_train_id_document)
         return cls(
             strategy_checkpoint_id=strategy_checkpoint_id,
             strategy_id=str(
                 strategy_id_document if strategy_id_document is not None else signal_discovery_id
             ),
-            signal_train_id=signal_train_id,
             signal_discovery_id=signal_discovery_id,
             subject_set_id=str(document["subject_set_id"]),
             target_id=str(document["target_id"]),

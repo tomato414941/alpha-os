@@ -136,7 +136,6 @@ def test_strategy_adaptation_state_schema_migrates_from_online_learning_table(tm
         assert migrated_state is not None
         assert migrated_state.strategy_id == "discovery"
         assert migrated_state.signal_discovery_id == "discovery"
-        assert migrated_state.state.signal_train_id == "signal-train:discovery"
 
         listed_states = store.list_strategy_adaptation_states(
             signal_discovery_id="discovery",
@@ -1269,7 +1268,6 @@ def test_compress_screening_result_only_applies_strategy_adaptation_state_when_s
     )
     strategy_adaptation_state = StrategyAdaptationState(
         strategy_id="strategy:test",
-        signal_train_id="signal-train:test",
         signal_discovery_id="discovery",
         source_evaluation_report_id="report-1",
         source_screening_result_id="discovery:screen",

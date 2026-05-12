@@ -172,7 +172,6 @@ def test_synthesize_beliefs_blends_strategy_adaptation_weights_with_baseline_wei
     )
     strategy_adaptation_state = StrategyAdaptationState(
         strategy_id="strategy:test",
-        signal_train_id="signal-train:test",
         signal_discovery_id="discovery",
         source_evaluation_report_id="report-1",
         source_screening_result_id="discovery:screen",

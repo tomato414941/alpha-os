@@ -263,7 +263,6 @@ def persist_strategy_checkpoint(
     store: EvaluationStore,
     *,
     strategy_id: str,
-    signal_train_id: str,
     signal_discovery_id: str | None,
     subject_set_id: str,
     target_id: str,
@@ -278,7 +277,6 @@ def persist_strategy_checkpoint(
     timestamp = _utc_now() if created_at is None else created_at
     strategy_checkpoint = build_strategy_checkpoint(
         strategy_id=strategy_id,
-        signal_train_id=signal_train_id,
         signal_discovery_id=signal_discovery_id,
         subject_set_id=subject_set_id,
         target_id=target_id,

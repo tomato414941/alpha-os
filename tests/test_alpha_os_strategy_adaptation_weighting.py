@@ -9,7 +9,6 @@ def test_build_strategy_adaptation_family_weights_blends_adaptation_and_baseline
 
     state = StrategyAdaptationState(
         strategy_id="strategy:test",
-        signal_train_id="signal-train:test",
         signal_discovery_id="discovery",
         source_evaluation_report_id="report-1",
         source_screening_result_id="discovery:screen:1",
@@ -63,7 +62,6 @@ def test_build_strategy_adaptation_signal_weights_stays_near_baseline_with_one_u
 
     state = StrategyAdaptationState(
         strategy_id="strategy:test",
-        signal_train_id="signal-train:test",
         signal_discovery_id="discovery",
         source_evaluation_report_id="report-1",
         source_screening_result_id="discovery:screen:1",

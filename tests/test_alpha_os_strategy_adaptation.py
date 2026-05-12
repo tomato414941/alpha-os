@@ -79,7 +79,6 @@ def test_build_strategy_adaptation_state_creates_reputations_from_survivors():
     )
 
     assert state.strategy_id == "strategy:discovery"
-    assert state.signal_train_id == "signal-train:discovery"
     assert state.signal_discovery_id == "discovery"
     assert state.source_evaluation_report_id == "report-1"
     assert len(state.signal_reputations) == 2
@@ -107,7 +106,6 @@ def test_build_strategy_adaptation_state_smooths_against_previous_state():
 
     previous_state = StrategyAdaptationState(
         strategy_id="strategy:discovery",
-        signal_train_id="signal-train:discovery",
         signal_discovery_id="discovery",
         source_evaluation_report_id="report-0",
         source_screening_result_id="discovery:screen:0",
@@ -258,7 +256,6 @@ def test_strategy_adaptation_state_roundtrip_allows_missing_signal_discovery_id(
 
     state = StrategyAdaptationState(
         strategy_id="strategy:constant_hold",
-        signal_train_id="signal-train:constant_hold",
         signal_discovery_id=None,
         source_evaluation_report_id="report-1",
         source_screening_result_id="screen-1",
@@ -273,5 +270,4 @@ def test_strategy_adaptation_state_roundtrip_allows_missing_signal_discovery_id(
     )
 
     assert loaded.strategy_id == "strategy:constant_hold"
-    assert loaded.signal_train_id == "signal-train:constant_hold"
     assert loaded.signal_discovery_id is None

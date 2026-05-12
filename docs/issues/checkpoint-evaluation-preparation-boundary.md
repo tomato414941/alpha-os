@@ -55,9 +55,9 @@ runtime workflow instead of a small evaluation boundary.
 That would make lightweight strategy evaluation depend on discovery and DB
 artifact layout again.
 
-If the evaluation use case owns missing-checkpoint preparation, `requires_signal_train`
-also becomes ambiguous: it can mean either "this strategy needs a checkpoint for
-evaluation" or "this evaluation run should train/prepare missing checkpoints."
+If the evaluation use case owns missing-checkpoint preparation, the strategy
+contract becomes ambiguous: it can mean either "this strategy needs a checkpoint
+for evaluation" or "this evaluation run should train/prepare missing checkpoints."
 
 ## Non-Goals
 

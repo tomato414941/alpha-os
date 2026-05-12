@@ -199,7 +199,6 @@ def build_prepared_strategy_evaluation_base_outputs(
         artifact_refs["strategy_checkpoint_ids"] = (
             strategy_checkpoint.strategy_checkpoint_id,
         )
-        artifact_refs["signal_train_ids"] = (strategy_checkpoint.signal_train_id,)
     return PreparedStrategyEvaluationBaseOutputs(
         metric_group_result_map=metric_group_result_map,
         artifact_refs=artifact_refs,

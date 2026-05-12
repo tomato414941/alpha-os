@@ -1167,7 +1167,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
         assert len(evaluation_task_states) == 1
         case = evaluation_task_states[0].task
         assert case.strategy_id == "strategy:buy_and_hold"
-        assert not hasattr(case, "signal_train_id")
         job_spec_state = store.get_evaluation_job_spec(case.evaluation_task_id)
         assert job_spec_state is not None
         assert job_spec_state.job_spec.evaluation_task_id == case.evaluation_task_id
@@ -2002,7 +2001,6 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         task_result = report_state.report.task_results[0]
         assert task_result.signal_discovery_id == "global_macro_futures_daily_trend_search"
         assert task_result.artifact_refs.get("strategy_checkpoint_ids")
-        assert task_result.artifact_refs.get("signal_train_ids")
         decision_metric_group_result = next(
             item
             for item in task_result.metric_group_results
@@ -2541,20 +2539,15 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         EvaluationSpec,
     )
     from alpha_os.strategy_checkpoint import StrategyCheckpoint
-    from alpha_os.strategy_training import build_signal_train_id
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        signal_train_id = build_signal_train_id(
-            signal_discovery_id="discovery_a",
-        )
         store.upsert_strategy_checkpoint(
             state=StrategyCheckpoint(
                 strategy_checkpoint_id="checkpoint_a",
                 strategy_id="strategy_a",
-                signal_train_id=signal_train_id,
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -2572,7 +2565,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             state=StrategyCheckpoint(
                 strategy_checkpoint_id="checkpoint_b",
                 strategy_id="strategy_a",
-                signal_train_id=signal_train_id,
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -2856,7 +2848,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             state=StrategyCheckpoint(
                 strategy_checkpoint_id="checkpoint_a",
                 strategy_id="strategy:checkpoint_case",
-                signal_train_id="signal-train:checkpoint",
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -3008,7 +2999,6 @@ def test_create_checkpoint_evaluation_task_materializes_replay_case(tmp_path, ca
             state=StrategyCheckpoint(
                 strategy_checkpoint_id="state_source",
                 strategy_id="strategy:source",
-                signal_train_id="signal-train:a",
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -3342,7 +3332,6 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
         assert len(report_state.report.task_results) == 2
         for task_result in report_state.report.task_results:
             assert task_result.artifact_refs.get("strategy_checkpoint_ids")
-            assert task_result.artifact_refs.get("signal_train_ids")
             decision_metric_group_result = next(
                 item
                 for item in task_result.metric_group_results
@@ -3365,18 +3354,12 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             item.state.strategy_id == trading_strategy.strategy_id
             for item in strategy_checkpoints_for_strategy
         )
-        expected_signal_train_id = report_state.report.task_results[0].artifact_refs[
-            "signal_train_ids"
-        ][0]
-        assert all(
-            item.state.signal_train_id == expected_signal_train_id
-            for item in strategy_checkpoints_for_strategy
-        )
-        strategy_checkpoints_for_signal_train = store.list_strategy_checkpoints(
+        strategy_checkpoints_for_signal_discovery = store.list_strategy_checkpoints(
             strategy_id=trading_strategy.strategy_id,
+            signal_discovery_id=trading_strategy.signal_discovery_id,
             limit=10,
         )
-        assert len(strategy_checkpoints_for_signal_train) >= 2
+        assert len(strategy_checkpoints_for_signal_discovery) >= 2
         assert evaluation_task_state.task.strategy_id == trading_strategy.strategy_id
         assert (
             evaluation_task_state.task.evaluation_spec_id

@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from .evaluation_task import EvaluationTask
-from .strategy_training import build_signal_train_id
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
     ExecutionCostAssumptionsSpec,
@@ -45,7 +44,6 @@ class EvaluationPlanReadPort(Protocol):
         self,
         *,
         strategy_id: str | None = None,
-        signal_train_id: str | None = None,
         signal_discovery_id: str | None = None,
         fold_label: str | None = None,
         execution_start_date: str | None = None,
@@ -276,9 +274,6 @@ def build_evaluation_plan(
             trading_strategy=trading_strategy,
         )
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
-        strategy_signal_train_id = build_signal_train_id(
-            signal_discovery_id=strategy_signal_discovery_id,
-        )
         if job_spec.strategy_checkpoint_id is not None:
             strategy_checkpoint_id = job_spec.strategy_checkpoint_id
             checkpoint_record = store.get_strategy_checkpoint(
@@ -363,7 +358,7 @@ def build_evaluation_plan(
         for fold in evaluation_spec.resolved_evaluation_folds:
             strategy_checkpoints = store.list_strategy_checkpoints(
                 strategy_id=evaluation_task.strategy_id,
-                signal_train_id=strategy_signal_train_id,
+                signal_discovery_id=strategy_signal_discovery_id,
                 fold_label=fold.label,
                 execution_start_date=fold.execution_range.start_date,
                 execution_end_date=fold.execution_range.end_date,

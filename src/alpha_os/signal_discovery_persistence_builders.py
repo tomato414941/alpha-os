@@ -56,7 +56,6 @@ def build_signal_discovery_run(
 def build_strategy_checkpoint(
     *,
     strategy_id: str,
-    signal_train_id: str,
     signal_discovery_id: str | None,
     subject_set_id: str,
     target_id: str,
@@ -76,7 +75,6 @@ def build_strategy_checkpoint(
             end_date=end_date,
         ),
         strategy_id=strategy_id,
-        signal_train_id=signal_train_id,
         signal_discovery_id=signal_discovery_id,
         subject_set_id=subject_set_id,
         target_id=target_id,

@@ -8,7 +8,6 @@ from alpha_os.evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
 )
-from alpha_os.strategy_training import build_signal_train_id
 from alpha_os.evaluation_task_resolution import (
     EvaluationTaskResolutionRequest,
     build_evaluation_task_resolution_plan,
@@ -110,7 +109,6 @@ def test_evaluation_task_ignores_legacy_trading_config_document_fields():
         document={
             "strategy_id": "strategy:test",
             "evaluation_spec_id": "evaluation_spec:test",
-            "signal_train_id": "signal-train:test",
             "signal_discovery_id": "signal:test",
             "base_url": "http://example.com",
             "created_at": "2026-04-24T00:00:00Z",
@@ -230,9 +228,6 @@ def _persist_strategy_checkpoint_for_fold(
         state=StrategyCheckpoint(
             strategy_checkpoint_id=f"state:{fold.label}",
             strategy_id=evaluation_task.strategy_id,
-            signal_train_id=build_signal_train_id(
-                signal_discovery_id=signal_discovery_id,
-            ),
             signal_discovery_id=signal_discovery_id,
             subject_set_id="global_macro_core",
             target_id="residual_return_5d",

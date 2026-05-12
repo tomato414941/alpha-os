@@ -734,7 +734,6 @@ class SignalDiscoveryRunState:
 class StrategyCheckpointRecord:
     strategy_checkpoint_id: str
     strategy_id: str
-    signal_train_id: str
     signal_discovery_id: str | None
     artifact_json: str
     created_at: str
@@ -1531,19 +1530,9 @@ def _row_to_strategy_checkpoint(
     discovery_value = (
         None if row["signal_discovery_id"] is None else str(row["signal_discovery_id"])
     )
-    signal_train_value = row["signal_train_id"]
-    if signal_train_value is None:
-        signal_train_id = (
-            f"signal-train:{discovery_value}"
-            if discovery_value is not None
-            else ""
-        )
-    else:
-        signal_train_id = str(signal_train_value)
     return StrategyCheckpointRecord(
         strategy_checkpoint_id=str(row["strategy_checkpoint_id"]),
         strategy_id=str(row["strategy_id"]),
-        signal_train_id=signal_train_id,
         signal_discovery_id=discovery_value,
         artifact_json=str(row["artifact_json"]),
         created_at=str(row["created_at"]),
@@ -1872,7 +1861,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS strategy_checkpoints (
                 strategy_checkpoint_id TEXT PRIMARY KEY,
                 strategy_id TEXT NOT NULL,
-                signal_train_id TEXT NOT NULL DEFAULT '',
                 signal_discovery_id TEXT,
                 artifact_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
@@ -2015,7 +2003,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS strategy_adaptation_states (
                 strategy_id TEXT PRIMARY KEY,
                 signal_discovery_id TEXT,
-                signal_train_id TEXT,
                 state_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
@@ -2130,26 +2117,18 @@ class EvaluationStore:
                 if "strategy_id" in legacy_column_names
                 else "signal_discovery_id"
             )
-            resolved_signal_train_id = (
-                "CASE WHEN signal_train_id IS NULL OR signal_train_id = '' "
-                "THEN 'signal-train:' || signal_discovery_id ELSE signal_train_id END"
-                if "signal_train_id" in legacy_column_names
-                else "'signal-train:' || signal_discovery_id"
-            )
             with self.conn:
                 self.conn.execute(
                     f"""
                     INSERT OR REPLACE INTO strategy_adaptation_states (
                         strategy_id,
                         signal_discovery_id,
-                        signal_train_id,
                         state_json,
                         created_at
                     )
                     SELECT
                         {resolved_strategy_id},
                         NULLIF(signal_discovery_id, ''),
-                        {resolved_signal_train_id},
                         state_json,
                         created_at
                     FROM online_learning_states
@@ -2184,19 +2163,12 @@ class EvaluationStore:
             if "strategy_id" in column_names
             else "signal_discovery_id"
         )
-        resolved_signal_train_id = (
-            "CASE WHEN signal_train_id IS NULL OR signal_train_id = '' "
-            "THEN 'signal-train:' || signal_discovery_id ELSE signal_train_id END"
-            if "signal_train_id" in column_names
-            else "'signal-train:' || signal_discovery_id"
-        )
         with self.conn:
             self.conn.execute(
                 """
                 CREATE TABLE strategy_adaptation_states_v2 (
                     strategy_id TEXT PRIMARY KEY,
                     signal_discovery_id TEXT,
-                    signal_train_id TEXT,
                     state_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 )
@@ -2207,14 +2179,12 @@ class EvaluationStore:
                 INSERT OR REPLACE INTO strategy_adaptation_states_v2 (
                     strategy_id,
                     signal_discovery_id,
-                    signal_train_id,
                     state_json,
                     created_at
                 )
                 SELECT
                     {resolved_strategy_id},
                     NULLIF(signal_discovery_id, ''),
-                    {resolved_signal_train_id},
                     state_json,
                     created_at
                 FROM strategy_adaptation_states
@@ -2270,7 +2240,6 @@ class EvaluationStore:
             "evaluation_snapshots.roll_event_json": "TEXT",
             "meta_predictions": "TEXT NOT NULL DEFAULT ''",
             "strategy_checkpoints.strategy_id": "TEXT NOT NULL DEFAULT ''",
-            "strategy_checkpoints.signal_train_id": "TEXT NOT NULL DEFAULT ''",
         }
         for key, definition in required_columns.items():
             if "." in key:
@@ -2298,14 +2267,6 @@ class EvaluationStore:
             UPDATE strategy_checkpoints
             SET strategy_id = signal_discovery_id
             WHERE strategy_id = ''
-            """
-        )
-        self.conn.execute(
-            """
-            UPDATE strategy_checkpoints
-            SET signal_train_id = 'signal-train:' || signal_discovery_id
-            WHERE signal_train_id = ''
-              AND signal_discovery_id IS NOT NULL
             """
         )
         self._backfill_runtime_subject_ids()
@@ -3739,12 +3700,11 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO strategy_checkpoints (
-                    strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+                    strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(strategy_checkpoint_id) DO UPDATE SET
                     strategy_id = excluded.strategy_id,
-                    signal_train_id = excluded.signal_train_id,
                     signal_discovery_id = excluded.signal_discovery_id,
                     artifact_json = excluded.artifact_json,
                     created_at = excluded.created_at
@@ -3752,7 +3712,6 @@ class EvaluationStore:
                 (
                     state.strategy_checkpoint_id,
                     state.strategy_id,
-                    state.signal_train_id,
                     state.signal_discovery_id,
                     json.dumps(state.to_document(), sort_keys=True),
                     state.created_at,
@@ -3866,7 +3825,7 @@ class EvaluationStore:
     ) -> StrategyCheckpointRecord | None:
         row = self.conn.execute(
             """
-            SELECT strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+            SELECT strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
             FROM strategy_checkpoints
             WHERE strategy_checkpoint_id = ?
             """,
@@ -3957,7 +3916,6 @@ class EvaluationStore:
         self,
         *,
         strategy_id: str | None = None,
-        signal_train_id: str | None = None,
         signal_discovery_id: str | None = None,
         fold_label: str | None = None,
         execution_start_date: str | None = None,
@@ -3969,9 +3927,6 @@ class EvaluationStore:
         if strategy_id is not None:
             filters.append("strategy_id = ?")
             params.append(strategy_id)
-        if signal_train_id is not None:
-            filters.append("signal_train_id = ?")
-            params.append(signal_train_id)
         if signal_discovery_id is not None:
             filters.append("signal_discovery_id = ?")
             params.append(signal_discovery_id)
@@ -3990,7 +3945,7 @@ class EvaluationStore:
         params.append(max(int(limit), 1))
         rows = self.conn.execute(
             f"""
-            SELECT strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+            SELECT strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
             FROM strategy_checkpoints
             {where_clause}
             ORDER BY created_at DESC, strategy_checkpoint_id DESC
@@ -4326,19 +4281,17 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO strategy_adaptation_states (
-                    strategy_id, signal_discovery_id, signal_train_id, state_json, created_at
+                    strategy_id, signal_discovery_id, state_json, created_at
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT(strategy_id) DO UPDATE SET
                     signal_discovery_id = excluded.signal_discovery_id,
-                    signal_train_id = excluded.signal_train_id,
                     state_json = excluded.state_json,
                     created_at = excluded.created_at
                 """,
                 (
                     state.strategy_id,
                     state.signal_discovery_id,
-                    state.signal_train_id,
                     json.dumps(state.to_document(), sort_keys=True),
                     state.created_at,
                 ),

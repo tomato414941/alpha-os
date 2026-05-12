@@ -99,7 +99,6 @@ class FamilyReputation:
 @dataclass(frozen=True)
 class StrategyAdaptationState:
     strategy_id: str
-    signal_train_id: str
     signal_discovery_id: str | None
     source_evaluation_report_id: str
     source_screening_result_id: str
@@ -110,7 +109,6 @@ class StrategyAdaptationState:
     def to_document(self) -> dict[str, Any]:
         document = {
             "strategy_id": self.strategy_id,
-            "signal_train_id": self.signal_train_id,
             "source_evaluation_report_id": self.source_evaluation_report_id,
             "source_screening_result_id": self.source_screening_result_id,
             "signal_reputations": [
@@ -136,15 +134,8 @@ class StrategyAdaptationState:
         signal_discovery_id = (
             None if signal_discovery_id_document is None else str(signal_discovery_id_document)
         )
-        signal_train_id = str(
-            document.get(
-                "signal_train_id",
-                f"signal-train:{strategy_id if signal_discovery_id is None else signal_discovery_id}",
-            )
-        )
         return cls(
             strategy_id=strategy_id,
-            signal_train_id=signal_train_id,
             signal_discovery_id=signal_discovery_id,
             source_evaluation_report_id=str(document["source_evaluation_report_id"]),
             source_screening_result_id=str(document["source_screening_result_id"]),
@@ -214,11 +205,6 @@ def build_strategy_adaptation_state(
     screening_result_ids = task_result.artifact_refs.get("screening_result_ids", ())
     return StrategyAdaptationState(
         strategy_id=task_result.strategy_id,
-        signal_train_id=(
-            str(task_result.artifact_refs["signal_train_ids"][0])
-            if task_result.artifact_refs.get("signal_train_ids")
-            else f"signal-train:{screening_result.signal_discovery_id}"
-        ),
         signal_discovery_id=(
             screening_result.signal_discovery_id
             if task_result.signal_discovery_id is None

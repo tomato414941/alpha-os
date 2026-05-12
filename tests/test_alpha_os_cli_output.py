@@ -94,7 +94,6 @@ def test_print_evaluation_tasks_includes_execution_and_holding_costs(capsys):
 
     assert "case:test" in captured
     assert "strategy=strategy:test" in captured
-    assert "signal_train=" not in captured
     assert "gross_exposure_cap=1.0" not in captured
     assert "market_impact_bps=5.0" not in captured
     assert "borrow_fee_bps_per_step=2.5" not in captured

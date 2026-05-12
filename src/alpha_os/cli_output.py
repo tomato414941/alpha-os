@@ -608,7 +608,6 @@ def print_strategy_adaptation_states(states) -> None:
         state = item.state
         print(
             f"  {state.strategy_id} "
-            f"signal_train={state.signal_train_id} "
             f"signal_discovery={state.signal_discovery_id} "
             f"report={state.source_evaluation_report_id} "
             f"screening={state.source_screening_result_id} "

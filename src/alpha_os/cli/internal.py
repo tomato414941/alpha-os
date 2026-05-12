@@ -44,7 +44,6 @@ from ..evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
 )
-from ..strategy_training import build_signal_train_id
 from ..evaluation_job_spec import EvaluationJobSpec
 from ..evaluation_application import (
     RunEvaluationUseCaseRequest,
@@ -4153,59 +4152,51 @@ def _signal_discovery_run_stats_metric_group_result(
 
 
 @dataclass(frozen=True)
-class _SignalTrainGroup:
-    signal_train_id: str
+class _SignalDiscoveryEvaluationGroup:
     signal_discovery_id: str | None
     base_url: str
     evaluation_tasks: tuple[EvaluationTask, ...]
 
 
-def _group_evaluation_tasks_by_signal_train(
+def _group_evaluation_tasks_by_signal_discovery(
     store: EvaluationStore,
     evaluation_tasks: tuple[EvaluationTask, ...],
     *,
     base_url: str,
-) -> tuple[_SignalTrainGroup, ...]:
+) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
     def strategy_lookup(strategy_id: str) -> TradingStrategySpec | None:
         strategy_state = store.get_trading_strategy(strategy_id)
         if strategy_state is None:
             return None
         return strategy_state.trading_strategy
 
-    return _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
+    return _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
         evaluation_tasks,
         strategy_lookup=strategy_lookup,
         base_url=base_url,
     )
 
 
-def _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
+def _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
     evaluation_tasks: tuple[EvaluationTask, ...],
     *,
     strategy_lookup,
     base_url: str,
-) -> tuple[_SignalTrainGroup, ...]:
-    grouped: dict[str, list[EvaluationTask]] = {}
+) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
+    grouped: dict[str | None, list[EvaluationTask]] = {}
     for evaluation_task in evaluation_tasks:
         trading_strategy = strategy_lookup(evaluation_task.strategy_id)
         if trading_strategy is None:
             raise ValueError(f"evaluation task strategy does not exist: {evaluation_task.strategy_id}")
-        signal_train_id = build_signal_train_id(
-            signal_discovery_id=trading_strategy.signal_discovery_id,
-        )
-        grouped.setdefault(signal_train_id, []).append(evaluation_task)
-    groups: list[_SignalTrainGroup] = []
-    for signal_train_id, grouped_cases in sorted(grouped.items()):
-        signal_discovery_id = None
-        for case in grouped_cases:
-            trading_strategy = strategy_lookup(case.strategy_id)
-            if trading_strategy is None:
-                raise ValueError(f"evaluation task strategy does not exist: {case.strategy_id}")
-            if signal_discovery_id is None:
-                signal_discovery_id = trading_strategy.signal_discovery_id
+        signal_discovery_id = trading_strategy.signal_discovery_id
+        grouped.setdefault(signal_discovery_id, []).append(evaluation_task)
+    groups: list[_SignalDiscoveryEvaluationGroup] = []
+    for signal_discovery_id, grouped_cases in sorted(
+        grouped.items(),
+        key=lambda item: "" if item[0] is None else item[0],
+    ):
         groups.append(
-            _SignalTrainGroup(
-                signal_train_id=signal_train_id,
+            _SignalDiscoveryEvaluationGroup(
                 signal_discovery_id=signal_discovery_id,
                 base_url=base_url,
                 evaluation_tasks=tuple(grouped_cases),
@@ -4217,13 +4208,13 @@ def _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
 def _has_complete_strategy_checkpoints_for_fold(
     store: EvaluationStore,
     *,
-    signal_train_group: _SignalTrainGroup,
+    group: _SignalDiscoveryEvaluationGroup,
     fold,
 ) -> bool:
-    for evaluation_task in signal_train_group.evaluation_tasks:
+    for evaluation_task in group.evaluation_tasks:
         strategy_checkpoints = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
-            signal_train_id=signal_train_group.signal_train_id,
+            signal_discovery_id=group.signal_discovery_id,
             fold_label=fold.label,
             execution_start_date=fold.execution_range.start_date,
             execution_end_date=fold.execution_range.end_date,
@@ -4234,14 +4225,14 @@ def _has_complete_strategy_checkpoints_for_fold(
     return True
 
 
-def _backfill_strategy_checkpoints_for_fold_from_signal_train(
+def _backfill_strategy_checkpoints_for_fold_from_signal_discovery(
     store: EvaluationStore,
     *,
-    signal_train_group: _SignalTrainGroup,
+    group: _SignalDiscoveryEvaluationGroup,
     fold,
 ) -> bool:
     shared_strategy_checkpoints = store.list_strategy_checkpoints(
-        signal_train_id=signal_train_group.signal_train_id,
+        signal_discovery_id=group.signal_discovery_id,
         fold_label=fold.label,
         execution_start_date=fold.execution_range.start_date,
         execution_end_date=fold.execution_range.end_date,
@@ -4251,10 +4242,10 @@ def _backfill_strategy_checkpoints_for_fold_from_signal_train(
         return False
     source_state = shared_strategy_checkpoints[0].state
     created_any = False
-    for evaluation_task in signal_train_group.evaluation_tasks:
+    for evaluation_task in group.evaluation_tasks:
         existing_states = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
-            signal_train_id=signal_train_group.signal_train_id,
+            signal_discovery_id=group.signal_discovery_id,
             fold_label=fold.label,
             execution_start_date=fold.execution_range.start_date,
             execution_end_date=fold.execution_range.end_date,
@@ -4272,7 +4263,6 @@ def _backfill_strategy_checkpoints_for_fold_from_signal_train(
                     end_date=fold.execution_range.end_date,
                 ),
                 strategy_id=evaluation_task.strategy_id,
-                signal_train_id=signal_train_group.signal_train_id,
                 signal_discovery_id=source_state.signal_discovery_id,
                 subject_set_id=source_state.subject_set_id,
                 target_id=source_state.target_id,
@@ -4457,7 +4447,7 @@ def _print_diagnostic_evaluation_dry_run(
     evaluation_spec_state,
     resolution_plan: _EvaluationTaskResolutionPlan,
     evaluation_tasks: tuple[EvaluationTask, ...],
-    signal_train_groups: tuple[_SignalTrainGroup, ...],
+    signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
     trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
     strategies_by_case_id: dict[str, TradingStrategySpec],
 ) -> None:
@@ -4466,13 +4456,13 @@ def _print_diagnostic_evaluation_dry_run(
     print(f"  Evaluation spec: {evaluation_spec_state.evaluation_spec_id}")
     print(f"  Folds:    {len(evaluation_spec.resolved_evaluation_folds)}")
     print(f"  Cases:    {len(evaluation_tasks)}")
-    print(f"  Groups:   {len(signal_train_groups)}")
+    print(f"  Groups:   {len(signal_discovery_groups)}")
     print(f"  PlannedWrites: {resolution_plan.pending_write_count}")
     print("  MetricGroups: " + ",".join(evaluation_spec.metric_group_names))
-    for group in signal_train_groups:
+    for group in signal_discovery_groups:
         print(
-            "  SignalTrainGroup: "
-            f"{group.signal_train_id} "
+            "  SignalDiscoveryGroup: "
+            f"{group.signal_discovery_id or '-'} "
             f"has_signal_discovery={str(group.signal_discovery_id is not None).lower()} "
             f"cases={len(group.evaluation_tasks)} "
             f"base_url={group.base_url}"
@@ -4507,7 +4497,7 @@ def _check_diagnostic_evaluation_dry_run(
     manifest_path: Path,
     evaluation_spec_state,
     evaluation_tasks: tuple[EvaluationTask, ...],
-    signal_train_groups: tuple[_SignalTrainGroup, ...],
+    signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
     trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
     strategies_by_case_id: dict[str, TradingStrategySpec],
 ) -> None:
@@ -4516,16 +4506,16 @@ def _check_diagnostic_evaluation_dry_run(
         raise ValueError("diagnostic dry run check failed: evaluation_spec has no folds")
     if not evaluation_tasks:
         raise ValueError("diagnostic dry run check failed: evaluation_spec has no cases")
-    if not signal_train_groups:
+    if not signal_discovery_groups:
         raise ValueError(
-            "diagnostic dry run check failed: no signal train groups resolved"
+            "diagnostic dry run check failed: no signal discovery groups resolved"
         )
     case_ids = {case.evaluation_task_id for case in evaluation_tasks}
-    for group in signal_train_groups:
+    for group in signal_discovery_groups:
         if not group.evaluation_tasks:
             raise ValueError(
-                "diagnostic dry run check failed: signal train group has no cases: "
-                f"{group.signal_train_id}"
+                "diagnostic dry run check failed: signal discovery group has no cases: "
+                f"{group.signal_discovery_id or '-'}"
             )
     for case in evaluation_tasks:
         if not case.strategy_id:
@@ -4770,7 +4760,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
             read_port,
             resolution_plan,
         )
-        signal_train_groups = _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
+        signal_discovery_groups = _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
             evaluation_tasks,
             strategy_lookup=lambda strategy_id: effective_strategies.get(strategy_id),
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
@@ -4789,7 +4779,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
             evaluation_spec_state=evaluation_spec_state,
             resolution_plan=resolution_plan,
             evaluation_tasks=evaluation_tasks,
-            signal_train_groups=signal_train_groups,
+            signal_discovery_groups=signal_discovery_groups,
             trading_configs_by_case_id=trading_configs_by_case_id,
             strategies_by_case_id=strategies_by_case_id,
         )
@@ -4798,7 +4788,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
                 manifest_path=manifest_path,
                 evaluation_spec_state=evaluation_spec_state,
                 evaluation_tasks=evaluation_tasks,
-                signal_train_groups=signal_train_groups,
+                signal_discovery_groups=signal_discovery_groups,
                 trading_configs_by_case_id=trading_configs_by_case_id,
                 strategies_by_case_id=strategies_by_case_id,
             )
