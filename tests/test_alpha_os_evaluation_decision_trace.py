@@ -505,13 +505,13 @@ def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
 
     assert isinstance(
         evaluation_execution_strategy_for_request(
-            SimpleNamespace(artifacts=None)
+            SimpleNamespace(input_refs=None)
         ),
         TrainlessEvaluationExecutionStrategy,
     )
     assert isinstance(
         evaluation_execution_strategy_for_request(
-            SimpleNamespace(artifacts=SimpleNamespace())
+            SimpleNamespace(input_refs=SimpleNamespace())
         ),
         SignalDiscoveryEvaluationExecutionStrategy,
     )

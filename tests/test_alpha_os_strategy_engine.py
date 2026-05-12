@@ -71,7 +71,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             execution_cost_assumptions=policy_parts["execution_cost_assumptions"],
             holding_cost_assumptions=policy_parts["holding_cost_assumptions"],
         ),
-        artifacts=StrategyEvaluationInputRefs(
+        input_refs=StrategyEvaluationInputRefs(
             initial_strategy_state_id="state:test",
             signal_discovery_run_id="signal-discovery-run:test",
             screening_result_id="screening:test",
@@ -88,7 +88,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.context.strategy_id == "strategy:test"
     assert request.context.signal_discovery_id == "discovery:test"
     assert request.context.subject_set_id == "subject-set:test"
-    assert request.artifacts.initial_strategy_state_id == "state:test"
+    assert request.input_refs.initial_strategy_state_id == "state:test"
     assert request.evaluation_date_ranges[0].label == "test"
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():

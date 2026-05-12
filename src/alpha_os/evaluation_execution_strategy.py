@@ -594,33 +594,33 @@ class SignalDiscoveryEvaluationExecutionStrategy:
         context: EvaluationExecutionContext,
     ) -> EvaluationExecutionResult:
         store = context.store
-        artifacts = execution_request.artifacts
-        if artifacts is None:
-            raise ValueError("signal discovery evaluation requires artifacts")
+        input_refs = execution_request.input_refs
+        if input_refs is None:
+            raise ValueError("signal discovery evaluation requires input refs")
         initial_strategy_state_record = (
             None
-            if artifacts.initial_strategy_state_id is None
-            else store.get_initial_strategy_state(artifacts.initial_strategy_state_id)
+            if input_refs.initial_strategy_state_id is None
+            else store.get_initial_strategy_state(input_refs.initial_strategy_state_id)
         )
         initial_strategy_state = (
             None if initial_strategy_state_record is None else initial_strategy_state_record.state
         )
         signal_discovery_run = None
-        if artifacts.signal_discovery_run_id is not None:
+        if input_refs.signal_discovery_run_id is not None:
             signal_discovery_run_state = store.get_signal_discovery_run(
-                artifacts.signal_discovery_run_id
+                input_refs.signal_discovery_run_id
             )
             if signal_discovery_run_state is None:
                 raise ValueError(
-                    f"signal discovery run does not exist: {artifacts.signal_discovery_run_id}"
+                    f"signal discovery run does not exist: {input_refs.signal_discovery_run_id}"
                 )
             signal_discovery_run = signal_discovery_run_state.run
-        screening_state = store.get_screening_result(artifacts.screening_result_id)
+        screening_state = store.get_screening_result(input_refs.screening_result_id)
         if screening_state is None:
-            raise ValueError(f"screening result does not exist: {artifacts.screening_result_id}")
-        compressed_belief_state = store.get_compressed_belief(artifacts.compressed_belief_id)
+            raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
+        compressed_belief_state = store.get_compressed_belief(input_refs.compressed_belief_id)
         if compressed_belief_state is None:
-            raise ValueError(f"compressed belief does not exist: {artifacts.compressed_belief_id}")
+            raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
         metric_group_result_map = {
             "signal_discovery_quality": signal_discovery_quality_metric_group_result(
                 screening_state=screening_state,
@@ -852,6 +852,6 @@ class SignalDiscoveryEvaluationExecutionStrategy:
 def evaluation_execution_strategy_for_request(
     execution_request: StrategyEvaluationRequest,
 ) -> EvaluationExecutionStrategy:
-    if execution_request.artifacts is None:
+    if execution_request.input_refs is None:
         return TrainlessEvaluationExecutionStrategy()
     return SignalDiscoveryEvaluationExecutionStrategy()

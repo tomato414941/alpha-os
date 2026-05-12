@@ -94,14 +94,14 @@ def _strategy_evaluation_request(
     execution_cost_assumptions: ExecutionCostAssumptionsSpec,
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
 ) -> StrategyEvaluationRequest:
-    artifacts = None
+    input_refs = None
     if (
         initial_strategy_state_id is not None
         or signal_discovery_run_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
-        artifacts = StrategyEvaluationInputRefs(
+        input_refs = StrategyEvaluationInputRefs(
             initial_strategy_state_id=initial_strategy_state_id,
             signal_discovery_run_id=signal_discovery_run_id,
             screening_result_id=screening_result_id,
@@ -124,7 +124,7 @@ def _strategy_evaluation_request(
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
         ),
-        artifacts=artifacts,
+        input_refs=input_refs,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,
