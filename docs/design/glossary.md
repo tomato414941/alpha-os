@@ -257,18 +257,6 @@ The engine contract for checkpoint-based evaluation.
 
 Adds `strategy_checkpoint_id` to the strict OOS-style inputs.
 
-### paper run inputs
-
-The planned engine contract for paper execution.
-
-Includes `as_of_timestamp` and optional current portfolio state.
-
-### live run inputs
-
-The planned engine contract for live execution.
-
-Includes `as_of_timestamp`, `venue_id`, and optional current portfolio state.
-
 ### strict OOS evaluation
 
 The primary evaluation mode for comparing a strategy under train/test separation.

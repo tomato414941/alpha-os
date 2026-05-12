@@ -92,8 +92,8 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `strategy run spec`
 - [ ] `strict OOS run inputs`
 - [ ] `checkpoint evaluation inputs`
-- [ ] `paper run inputs`
-- [ ] `live run inputs`
+- [x] `paper run inputs`
+- [x] `live run inputs`
 - [ ] `strict OOS evaluation`
 - [ ] `evaluation spec`
 - [ ] `evaluation task`
