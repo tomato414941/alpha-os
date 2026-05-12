@@ -232,12 +232,6 @@ A concrete structured definition of a strategy.
 
 Defines trading behavior. Current mainline `TradingStrategySpec` is the first-class strategy model.
 
-### strategy run request
-
-One concrete request sent to a strategy engine.
-
-It binds strategy semantics to an engine context and runtime artifacts.
-
 ### strategy run spec
 
 The concrete request to run one trading strategy in one engine context.
@@ -417,10 +411,10 @@ So:
 - signal = predictive unit
 - strategy = trading system
 
-### Trading Strategy vs Run Request
+### Trading Strategy vs Strategy Run Spec
 
 - **trading strategy** = what should be traded and how it should be realized
-- **run request** = the concrete engine context and inputs for running that
+- **strategy run spec** = the concrete engine context and inputs for running that
   trading strategy
 
 So:

@@ -341,7 +341,7 @@ The current codebase should converge on this split:
 - `TradingStrategySpec`
   - strategy semantics
 - `StrategyExecutionRequest`
-  - current implementation name for one engine-specific strategy run request
+  - current implementation name for one engine-specific run spec
 - `EvaluationTask`
   - a strategy-evaluation request shape
 - `EvaluationReport`

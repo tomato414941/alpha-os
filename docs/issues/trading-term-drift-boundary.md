@@ -88,7 +88,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `execution policy`
 - [ ] `strategy`
 - [ ] `strategy spec`
-- [ ] `strategy run request`
+- [x] `strategy run request`
 - [ ] `strategy run spec`
 - [ ] `strict OOS run inputs`
 - [ ] `checkpoint evaluation inputs`
