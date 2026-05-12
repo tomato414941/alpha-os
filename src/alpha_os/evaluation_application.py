@@ -9,6 +9,7 @@ from .data_repositories import (
     ObservationFrameRepository,
 )
 from .evaluation_task import EvaluationTask
+from .evaluation_spec import EvaluationSpec
 from .strategy_training import build_signal_train_id
 from .evaluation_task_resolution import resolve_evaluation_tasks_for_spec
 from .evaluation_report_service import resolve_report_strategy_context
@@ -65,6 +66,22 @@ class RunWalkForwardEvaluationUseCaseRequest:
 @dataclass(frozen=True)
 class RunWalkForwardEvaluationUseCaseResult:
     report_state: object
+
+
+@dataclass(frozen=True)
+class PrepareStrategyCheckpointsForEvaluationRequest:
+    store: EvaluationStore
+    default_target_id: str
+    evaluation_spec: EvaluationSpec
+    evaluation_tasks: tuple[EvaluationTask, ...]
+    base_url: str
+    min_sample_count: int | None
+    min_abs_corr: float | None
+    min_stability_score: float | None
+    max_family_survivors_per_subject: int | None
+    created_at: str
+    feature_plane_repository: FeaturePlaneRepository
+    evaluation_input_repository: EvaluationInputRepository
 
 
 @dataclass(frozen=True)
@@ -233,32 +250,13 @@ def _backfill_strategy_checkpoints_for_fold_from_signal_train(
     return created_any
 
 
-def run_walk_forward_evaluation_use_case(
-    request: RunWalkForwardEvaluationUseCaseRequest,
-) -> RunWalkForwardEvaluationUseCaseResult:
+def prepare_strategy_checkpoints_for_evaluation(
+    request: PrepareStrategyCheckpointsForEvaluationRequest,
+) -> None:
     store = request.store
-    store.ensure_schema()
-    feature_plane_repository = FeaturePlaneRepository(
-        observation_repository=ObservationFrameRepository(store=store)
-    )
-    evaluation_input_repository = EvaluationInputRepository()
-    evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
-    if evaluation_spec_state is None:
-        raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
-    evaluation_spec = evaluation_spec_state.definition
-    evaluation_tasks = resolve_evaluation_tasks_for_spec(
-        store,
-        evaluation_spec_state=evaluation_spec_state,
-        sizing_method=request.sizing_method,
-        sizing_engine=request.sizing_engine,
-        direction_mode=request.direction_mode,
-        strategy_ids=request.strategy_ids,
-        evaluation_task_ids=request.evaluation_task_ids,
-        created_at=request.created_at,
-    )
     signal_train_groups = group_evaluation_tasks_by_signal_train(
         store,
-        evaluation_tasks,
+        request.evaluation_tasks,
         base_url=request.base_url,
     )
     for signal_train_group in signal_train_groups:
@@ -269,7 +267,7 @@ def run_walk_forward_evaluation_use_case(
                 "trained signal train group is missing signal discovery provenance: "
                 f"{signal_train_group.signal_train_id}"
             )
-        for fold in evaluation_spec.resolved_evaluation_folds:
+        for fold in request.evaluation_spec.resolved_evaluation_folds:
             if _has_complete_strategy_checkpoints_for_fold(
                 store,
                 signal_train_group=signal_train_group,
@@ -320,8 +318,8 @@ def run_walk_forward_evaluation_use_case(
                 max_family_survivors_per_subject=(
                     request.max_family_survivors_per_subject
                 ),
-                feature_plane_repository=feature_plane_repository,
-                evaluation_input_repository=evaluation_input_repository,
+                feature_plane_repository=request.feature_plane_repository,
+                evaluation_input_repository=request.evaluation_input_repository,
             )
             persist_signal_discovery_run(
                 store,
@@ -355,6 +353,49 @@ def run_walk_forward_evaluation_use_case(
                     compressed_belief_state=compressed_belief_state,
                     created_at=timestamp,
                 )
+
+
+def run_walk_forward_evaluation_use_case(
+    request: RunWalkForwardEvaluationUseCaseRequest,
+) -> RunWalkForwardEvaluationUseCaseResult:
+    store = request.store
+    store.ensure_schema()
+    feature_plane_repository = FeaturePlaneRepository(
+        observation_repository=ObservationFrameRepository(store=store)
+    )
+    evaluation_input_repository = EvaluationInputRepository()
+    evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
+    if evaluation_spec_state is None:
+        raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
+    evaluation_spec = evaluation_spec_state.definition
+    evaluation_tasks = resolve_evaluation_tasks_for_spec(
+        store,
+        evaluation_spec_state=evaluation_spec_state,
+        sizing_method=request.sizing_method,
+        sizing_engine=request.sizing_engine,
+        direction_mode=request.direction_mode,
+        strategy_ids=request.strategy_ids,
+        evaluation_task_ids=request.evaluation_task_ids,
+        created_at=request.created_at,
+    )
+    prepare_strategy_checkpoints_for_evaluation(
+        PrepareStrategyCheckpointsForEvaluationRequest(
+            store=store,
+            default_target_id=request.default_target_id,
+            evaluation_spec=evaluation_spec,
+            evaluation_tasks=evaluation_tasks,
+            base_url=request.base_url,
+            min_sample_count=request.min_sample_count,
+            min_abs_corr=request.min_abs_corr,
+            min_stability_score=request.min_stability_score,
+            max_family_survivors_per_subject=(
+                request.max_family_survivors_per_subject
+            ),
+            created_at=request.created_at,
+            feature_plane_repository=feature_plane_repository,
+            evaluation_input_repository=evaluation_input_repository,
+        )
+    )
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
             store=store,
