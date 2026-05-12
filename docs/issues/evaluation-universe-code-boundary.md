@@ -7,12 +7,12 @@ in a specific evaluation run.
 
 The code does not have a first-class `EvaluationUniverse` model or an
 evaluation-universe field on `EvaluationSpec`. Current evaluation runs derive
-the effective subject set from the task's strategy, initial strategy state, or
+the effective subject set from the task's strategy, strategy checkpoint, or
 signal discovery run:
 
 - trainless runs use `TradingStrategySpec.subject_set_id`
-- fixed-state replay uses the frozen initial strategy state's `subject_set_id`
-- trained runs use the initial strategy state or signal discovery run
+- fixed-state replay uses the strategy checkpoint's `subject_set_id`
+- trained runs use the strategy checkpoint or signal discovery run
   `subject_set_id`
 
 The resulting `subject_set_id` is then recorded in execution requests and

@@ -6,8 +6,8 @@ from .signal_client import build_signal_client
 from .signal_discovery_compression_service import build_compressed_belief_from_screening_result
 from .signal_discovery_execution import build_signal_discovery_execution_plan
 from .signal_discovery_persistence_builders import (
-    build_initial_strategy_state,
-    build_initial_strategy_state_id as build_initial_strategy_state_id,
+    build_strategy_checkpoint,
+    build_strategy_checkpoint_id as build_strategy_checkpoint_id,
     build_signal_discovery_run,
 )
 from .signal_discovery_screening_service import screen_signal_discovery
@@ -259,7 +259,7 @@ def persist_signal_discovery_run(
     return store.upsert_signal_discovery_run(run=signal_discovery_run)
 
 
-def persist_initial_strategy_state(
+def persist_strategy_checkpoint(
     store: EvaluationStore,
     *,
     strategy_id: str,
@@ -277,7 +277,7 @@ def persist_initial_strategy_state(
     created_at: str | None = None,
 ):
     timestamp = _utc_now() if created_at is None else created_at
-    initial_strategy_state = build_initial_strategy_state(
+    strategy_checkpoint = build_strategy_checkpoint(
         strategy_id=strategy_id,
         signal_train_id=signal_train_id,
         signal_discovery_id=signal_discovery_id,
@@ -292,4 +292,4 @@ def persist_initial_strategy_state(
         compressed_belief_state=compressed_belief_state,
         created_at=timestamp,
     )
-    return store.upsert_initial_strategy_state(state=initial_strategy_state)
+    return store.upsert_strategy_checkpoint(state=strategy_checkpoint)

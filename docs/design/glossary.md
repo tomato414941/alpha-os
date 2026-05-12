@@ -255,7 +255,7 @@ Includes evaluation spec id, execution range, evaluation date ranges, and metric
 
 The engine contract for fixed-state replay.
 
-Adds `fixed_initial_strategy_state_id` to the strict OOS-style inputs.
+Adds `strategy_checkpoint_id` to the strict OOS-style inputs.
 
 ### paper run inputs
 
@@ -286,7 +286,7 @@ Defines the measurement recipe: strict OOS, fold layout, costs, metrics.
 One executable evaluation defined by `strategy spec + evaluation spec`.
 
 Binds one strategy to one evaluation spec as a concrete run setup, including
-required train or fixed-state artifacts.
+required train or strategy checkpoint artifacts.
 
 ### data input
 
@@ -300,11 +300,11 @@ The runtime connection source used to read data.
 
 `base_url` belongs here, not on evaluation tasks.
 
-### initial strategy state
+### strategy checkpoint
 
-A frozen initial state used to execute a strategy in evaluation.
+A strategy checkpoint used to execute a strategy in evaluation.
 
-It may come from a train period or another frozen source.
+It may come from a train period or another checkpoint source.
 
 ### signal train
 
@@ -320,7 +320,7 @@ Examples: selected signals, fitted compression settings.
 
 ### fixed-state replay
 
-Running evaluation with a precomputed initial strategy state instead of retraining.
+Running evaluation with a precomputed strategy checkpoint instead of retraining.
 
 This is a comparison mode, not the default evaluation mode.
 

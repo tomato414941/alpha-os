@@ -1995,13 +1995,13 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
             signal_discovery_id="global_macro_futures_daily_trend_search",
             limit=10,
         )
-        initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="global_macro_futures_daily_trend_search",
             limit=10,
         )
         assert len(signal_discovery_runs) >= 1
-        assert len(initial_strategy_states) >= 1
-        assert {item.state.fold_label for item in initial_strategy_states} >= {
+        assert len(strategy_checkpoints) >= 1
+        assert {item.state.fold_label for item in strategy_checkpoints} >= {
             "fold_2024h1_to_2024m5",
         }
         report_state = store.get_latest_evaluation_report()
@@ -2009,7 +2009,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         assert len(report_state.report.task_results) == 1
         task_result = report_state.report.task_results[0]
         assert task_result.signal_discovery_id == "global_macro_futures_daily_trend_search"
-        assert task_result.artifact_refs.get("initial_strategy_state_ids")
+        assert task_result.artifact_refs.get("strategy_checkpoint_ids")
         assert task_result.artifact_refs.get("signal_train_ids")
         decision_metric_group_result = next(
             item
@@ -2838,7 +2838,7 @@ def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
         store.close()
 
 
-def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
+def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
     from alpha_os.evaluation_plan import build_evaluation_plan
@@ -2847,26 +2847,26 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
         EvaluationFold,
         EvaluationSpec,
     )
-    from alpha_os.initial_strategy_state import InitialStrategyState
+    from alpha_os.strategy_checkpoint import StrategyCheckpoint
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
         trading_strategy = _build_trading_strategy(
-            strategy_id="strategy:frozen_case",
-            label="Frozen Case",
+            strategy_id="strategy:checkpoint_case",
+            label="Checkpoint Case",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
             execution_kind="trained",
             created_at="2026-04-05T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
-        store.upsert_initial_strategy_state(
-            state=InitialStrategyState(
-                initial_strategy_state_id="frozen_state_a",
-                strategy_id="strategy:frozen_case",
-                signal_train_id="signal-train:frozen",
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id="checkpoint_a",
+                strategy_id="strategy:checkpoint_case",
+                signal_train_id="signal-train:checkpoint",
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -2924,22 +2924,22 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
         )
         evaluation_tasks = (
             EvaluationTask(
-                evaluation_task_id="case_frozen",
-                strategy_id="strategy:frozen_case",
-                evaluation_spec_id="protocol_frozen",
+                evaluation_task_id="case_checkpoint",
+                strategy_id="strategy:checkpoint_case",
+                evaluation_spec_id="protocol_checkpoint",
                 **_evaluation_policy_parts(),
             ),
         )
 
         plan = build_evaluation_plan(
             store,
-            evaluation_spec_id="protocol_frozen",
+            evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
             evaluation_job_specs=(
                 EvaluationJobSpec(
-                    evaluation_task_id="case_frozen",
-                    fixed_initial_strategy_state_id="frozen_state_a",
+                    evaluation_task_id="case_checkpoint",
+                    strategy_checkpoint_id="checkpoint_a",
                 ),
             ),
             default_target_id="residual_return_3d",
@@ -2951,9 +2951,9 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
             "fold_2025",
             "fold_2026_q1",
         )
-        assert tuple(item.input_refs.initial_strategy_state_id for item in plan.execution_requests) == (
-            "frozen_state_a",
-            "frozen_state_a",
+        assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
+            "checkpoint_a",
+            "checkpoint_a",
         )
         assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_seed",
@@ -2967,14 +2967,14 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
         store.close()
 
 
-def test_create_frozen_evaluation_task_materializes_replay_case(tmp_path, capsys):
+def test_create_checkpoint_evaluation_task_materializes_replay_case(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationSpec,
     )
-    from alpha_os.initial_strategy_state import InitialStrategyState
+    from alpha_os.strategy_checkpoint import StrategyCheckpoint
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
@@ -3016,9 +3016,9 @@ def test_create_frozen_evaluation_task_materializes_replay_case(tmp_path, capsys
                 ),
             )
         )
-        store.upsert_initial_strategy_state(
-            state=InitialStrategyState(
-                initial_strategy_state_id="state_source",
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id="state_source",
                 strategy_id="strategy:source",
                 signal_train_id="signal-train:a",
                 signal_discovery_id="discovery_a",
@@ -3041,12 +3041,12 @@ def test_create_frozen_evaluation_task_materializes_replay_case(tmp_path, capsys
     assert (
         main(
             [
-                "create-fixed-state-evaluation-task",
+                "create-checkpoint-evaluation-task",
                 "--db",
                 str(db_path),
                 "--source-evaluation-task-id",
                 "case_source",
-                "--source-initial-strategy-state-id",
+                "--source-strategy-checkpoint-id",
                 "state_source",
                 "--evaluation-spec-id",
                 "protocol_long",
@@ -3071,13 +3071,13 @@ def test_create_frozen_evaluation_task_materializes_replay_case(tmp_path, capsys
         )
         assert job_spec_state is not None
         assert job_spec_state.job_spec.run_mode == "fixed_state_replay"
-        assert job_spec_state.job_spec.fixed_initial_strategy_state_id == "state_source"
+        assert job_spec_state.job_spec.strategy_checkpoint_id == "state_source"
         case_document = json.loads(case_state.task_json)
         job_spec_document = json.loads(job_spec_state.job_spec_json)
         assert "run_mode" not in case_document
-        assert "fixed_initial_strategy_state_id" not in case_document
+        assert "strategy_checkpoint_id" not in case_document
         assert job_spec_document["run_mode"] == "fixed_state_replay"
-        assert job_spec_document["fixed_initial_strategy_state_id"] == "state_source"
+        assert job_spec_document["strategy_checkpoint_id"] == "state_source"
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
         assert construction.sizing_method == "equal_weight"
@@ -3341,13 +3341,13 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
-        initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
         assert len(signal_discovery_runs) >= 2
-        assert len(initial_strategy_states) >= 2
-        assert {item.state.fold_label for item in initial_strategy_states} >= {
+        assert len(strategy_checkpoints) >= 2
+        assert {item.state.fold_label for item in strategy_checkpoints} >= {
             "fold_a",
             "fold_b",
         }
@@ -3355,7 +3355,7 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
         assert report_state is not None
         assert len(report_state.report.task_results) == 2
         for task_result in report_state.report.task_results:
-            assert task_result.artifact_refs.get("initial_strategy_state_ids")
+            assert task_result.artifact_refs.get("strategy_checkpoint_ids")
             assert task_result.artifact_refs.get("signal_train_ids")
             decision_metric_group_result = next(
                 item
@@ -3370,27 +3370,27 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
         assert len(strategy_specs) == 1
         trading_strategy = strategy_specs[0].trading_strategy
         assert trading_strategy.strategy_id.startswith("strategy:")
-        strategy_initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints_for_strategy = store.list_strategy_checkpoints(
             strategy_id=trading_strategy.strategy_id,
             limit=10,
         )
-        assert len(strategy_initial_strategy_states) >= 2
+        assert len(strategy_checkpoints_for_strategy) >= 2
         assert all(
             item.state.strategy_id == trading_strategy.strategy_id
-            for item in strategy_initial_strategy_states
+            for item in strategy_checkpoints_for_strategy
         )
         expected_signal_train_id = report_state.report.task_results[0].artifact_refs[
             "signal_train_ids"
         ][0]
         assert all(
             item.state.signal_train_id == expected_signal_train_id
-            for item in strategy_initial_strategy_states
+            for item in strategy_checkpoints_for_strategy
         )
-        signal_train_initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints_for_signal_train = store.list_strategy_checkpoints(
             strategy_id=trading_strategy.strategy_id,
             limit=10,
         )
-        assert len(signal_train_initial_strategy_states) >= 2
+        assert len(strategy_checkpoints_for_signal_train) >= 2
         assert evaluation_task_state.task.strategy_id == trading_strategy.strategy_id
         assert (
             evaluation_task_state.task.evaluation_spec_id
@@ -3402,7 +3402,7 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
         )
         assert trading_strategy.portfolio.rebalance_interval_steps == 1
         initial_signal_discovery_run_count = len(signal_discovery_runs)
-        initial_state_count = len(initial_strategy_states)
+        strategy_checkpoint_count = len(strategy_checkpoints)
     finally:
         store.close()
 
@@ -3475,16 +3475,16 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
-        rerun_initial_strategy_states = store.list_initial_strategy_states(
+        rerun_strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
         assert len(rerun_signal_discovery_runs) == initial_signal_discovery_run_count
-        assert len(rerun_initial_strategy_states) == initial_state_count + 2
-        challenger_initial_strategy_states = store.list_initial_strategy_states(
+        assert len(rerun_strategy_checkpoints) == strategy_checkpoint_count + 2
+        challenger_strategy_checkpoints = store.list_strategy_checkpoints(
             strategy_id="strategy:core_crypto_equal_weight",
             limit=10,
         )
-        assert len(challenger_initial_strategy_states) == 2
+        assert len(challenger_strategy_checkpoints) == 2
     finally:
         store.close()

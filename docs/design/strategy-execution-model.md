@@ -109,7 +109,7 @@ train-period state.
 Properties:
 
 - no signal-train stage is required
-- no initial strategy state is required
+- no strategy checkpoint is required
 - evaluation can run fold-by-fold without upstream retraining
 
 ### `trained`
@@ -119,17 +119,17 @@ Use when the strategy requires train-period state before test-period execution.
 Properties:
 
 - a signal train is required
-- initial strategy state may be created per fold
+- strategy checkpoint may be created per fold
 - strict OOS evaluation may retrain per fold
 
 ### `fixed-state replay`
 
-Use when evaluation should reuse a precomputed fixed initial strategy state rather
+Use when evaluation should reuse a precomputed fixed strategy checkpoint rather
 than retraining during evaluation.
 
 Properties:
 
-- a fixed initial strategy state is required
+- a fixed strategy checkpoint is required
 - replay can compare downstream behavior without re-running discovery
 - this is the preferred benchmark shape when the upstream state should stay fixed
 
@@ -141,7 +141,7 @@ transitional implementation field, not a target domain term.
 - `backtest_oos`
   - run the strategy under a strict train/test-separated evaluation spec
 - `fixed_state_replay`
-  - run the strategy with a fixed initial strategy state instead of retraining
+  - run the strategy with a fixed strategy checkpoint instead of retraining
 - `paper`
   - reserved for future paper-trading execution
 - `live`
@@ -173,7 +173,7 @@ The current codebase is still transitional. The practical mapping is:
 | Current `run_mode` value | Purpose | Required inputs | Retraining during evaluation |
 |--------------------------|---------|-----------------|------------------------------|
 | `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
-| `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `fixed_initial_strategy_state_id`. | Never. |
+| `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
 
 This means:
 
@@ -191,7 +191,7 @@ The current mainline should treat these inputs as separate contract objects.
 | Current `run_mode` value | Contract object | Required fields |
 |--------------------------|-----------------|-----------------|
 | `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
-| `fixed_state_replay` | `FixedStateReplayRunInputs` | `evaluation_spec_id`, `fixed_initial_strategy_state_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
+| `fixed_state_replay` | `FixedStateReplayRunInputs` | `evaluation_spec_id`, `strategy_checkpoint_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
 | `paper` | `PaperRunInputs` | `as_of_timestamp`, optional `current_portfolio_state_id` |
 | `live` | `LiveRunInputs` | `as_of_timestamp`, `venue_id`, optional `current_portfolio_state_id` |
 
@@ -208,7 +208,7 @@ Purpose:
 
 - generate and screen signals
 - produce train-period outputs
-- create `initial strategy state` when needed
+- create `strategy checkpoint` when needed
 
 Inputs:
 
@@ -222,12 +222,12 @@ Outputs:
 - signal discovery run record
 - screening result
 - compressed belief
-- initial strategy state
+- strategy checkpoint
 
 Use this when:
 
 - the strategy needs upstream discovery or fitting
-- a new trained or frozen state must be produced
+- a new trained strategy checkpoint must be produced
 
 ### 2. Evaluation Run
 
@@ -262,7 +262,7 @@ Purpose:
 Inputs:
 
 - `evaluation task`
-- fixed initial strategy state
+- fixed strategy checkpoint
 - evaluation spec
 
 Outputs:

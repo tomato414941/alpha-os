@@ -42,7 +42,7 @@ from .screening import ScreeningResult
 from .signal_discovery_run import SignalDiscoveryRun
 from .trading_strategy import TradingStrategySpec
 from .targets import TargetDefinition, find_target_definition, list_target_definitions
-from .initial_strategy_state import InitialStrategyState
+from .strategy_checkpoint import StrategyCheckpoint
 from .transition_policy import decide_operator_transition
 from .validation_result_set import ValidationResultSet
 
@@ -731,8 +731,8 @@ class SignalDiscoveryRunState:
 
 
 @dataclass(frozen=True)
-class InitialStrategyStateRecord:
-    initial_strategy_state_id: str
+class StrategyCheckpointRecord:
+    strategy_checkpoint_id: str
     strategy_id: str
     signal_train_id: str
     signal_discovery_id: str | None
@@ -740,9 +740,9 @@ class InitialStrategyStateRecord:
     created_at: str
 
     @property
-    def state(self) -> InitialStrategyState:
-        return InitialStrategyState.from_document(
-            initial_strategy_state_id=self.initial_strategy_state_id,
+    def state(self) -> StrategyCheckpoint:
+        return StrategyCheckpoint.from_document(
+            strategy_checkpoint_id=self.strategy_checkpoint_id,
             document=json.loads(self.artifact_json),
         )
 
@@ -1523,9 +1523,9 @@ def _row_to_signal_discovery_run(
     )
 
 
-def _row_to_initial_strategy_state(
+def _row_to_strategy_checkpoint(
     row: sqlite3.Row | None,
-) -> InitialStrategyStateRecord | None:
+) -> StrategyCheckpointRecord | None:
     if row is None:
         return None
     discovery_value = (
@@ -1540,8 +1540,8 @@ def _row_to_initial_strategy_state(
         )
     else:
         signal_train_id = str(signal_train_value)
-    return InitialStrategyStateRecord(
-        initial_strategy_state_id=str(row["initial_strategy_state_id"]),
+    return StrategyCheckpointRecord(
+        strategy_checkpoint_id=str(row["strategy_checkpoint_id"]),
         strategy_id=str(row["strategy_id"]),
         signal_train_id=signal_train_id,
         signal_discovery_id=discovery_value,
@@ -1869,8 +1869,8 @@ class EvaluationStore:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS initial_strategy_states (
-                initial_strategy_state_id TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS strategy_checkpoints (
+                strategy_checkpoint_id TEXT PRIMARY KEY,
                 strategy_id TEXT NOT NULL,
                 signal_train_id TEXT NOT NULL DEFAULT '',
                 signal_discovery_id TEXT,
@@ -2246,7 +2246,7 @@ class EvaluationStore:
                 "evaluation_snapshots",
                 "meta_predictions",
                 "meta_prediction_metrics",
-                "initial_strategy_states",
+                "strategy_checkpoints",
             )
         }
         required_columns = {
@@ -2269,8 +2269,8 @@ class EvaluationStore:
             "evaluation_snapshots.collateral_ccy": "TEXT",
             "evaluation_snapshots.roll_event_json": "TEXT",
             "meta_predictions": "TEXT NOT NULL DEFAULT ''",
-            "initial_strategy_states.strategy_id": "TEXT NOT NULL DEFAULT ''",
-            "initial_strategy_states.signal_train_id": "TEXT NOT NULL DEFAULT ''",
+            "strategy_checkpoints.strategy_id": "TEXT NOT NULL DEFAULT ''",
+            "strategy_checkpoints.signal_train_id": "TEXT NOT NULL DEFAULT ''",
         }
         for key, definition in required_columns.items():
             if "." in key:
@@ -2295,14 +2295,14 @@ class EvaluationStore:
             )
         self.conn.execute(
             """
-            UPDATE initial_strategy_states
+            UPDATE strategy_checkpoints
             SET strategy_id = signal_discovery_id
             WHERE strategy_id = ''
             """
         )
         self.conn.execute(
             """
-            UPDATE initial_strategy_states
+            UPDATE strategy_checkpoints
             SET signal_train_id = 'signal-train:' || signal_discovery_id
             WHERE signal_train_id = ''
               AND signal_discovery_id IS NOT NULL
@@ -3729,20 +3729,20 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def upsert_initial_strategy_state(
+    def upsert_strategy_checkpoint(
         self,
         *,
-        state: InitialStrategyState,
-    ) -> InitialStrategyStateRecord:
+        state: StrategyCheckpoint,
+    ) -> StrategyCheckpointRecord:
         self.ensure_schema()
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO initial_strategy_states (
-                    initial_strategy_state_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+                INSERT INTO strategy_checkpoints (
+                    strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(initial_strategy_state_id) DO UPDATE SET
+                ON CONFLICT(strategy_checkpoint_id) DO UPDATE SET
                     strategy_id = excluded.strategy_id,
                     signal_train_id = excluded.signal_train_id,
                     signal_discovery_id = excluded.signal_discovery_id,
@@ -3750,7 +3750,7 @@ class EvaluationStore:
                     created_at = excluded.created_at
                 """,
                 (
-                    state.initial_strategy_state_id,
+                    state.strategy_checkpoint_id,
                     state.strategy_id,
                     state.signal_train_id,
                     state.signal_discovery_id,
@@ -3758,7 +3758,7 @@ class EvaluationStore:
                     state.created_at,
                 ),
             )
-        persisted = self.get_initial_strategy_state(state.initial_strategy_state_id)
+        persisted = self.get_strategy_checkpoint(state.strategy_checkpoint_id)
         assert persisted is not None
         return persisted
 
@@ -3860,19 +3860,19 @@ class EvaluationStore:
         ).fetchone()
         return _row_to_signal_discovery_run(row)
 
-    def get_initial_strategy_state(
+    def get_strategy_checkpoint(
         self,
-        initial_strategy_state_id: str,
-    ) -> InitialStrategyStateRecord | None:
+        strategy_checkpoint_id: str,
+    ) -> StrategyCheckpointRecord | None:
         row = self.conn.execute(
             """
-            SELECT initial_strategy_state_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
-            FROM initial_strategy_states
-            WHERE initial_strategy_state_id = ?
+            SELECT strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+            FROM strategy_checkpoints
+            WHERE strategy_checkpoint_id = ?
             """,
-            (initial_strategy_state_id,),
+            (strategy_checkpoint_id,),
         ).fetchone()
-        return _row_to_initial_strategy_state(row)
+        return _row_to_strategy_checkpoint(row)
 
     def get_trading_strategy(
         self,
@@ -3953,7 +3953,7 @@ class EvaluationStore:
             _row_to_signal_discovery_run(row) for row in rows if row is not None
         ]
 
-    def list_initial_strategy_states(
+    def list_strategy_checkpoints(
         self,
         *,
         strategy_id: str | None = None,
@@ -3963,7 +3963,7 @@ class EvaluationStore:
         execution_start_date: str | None = None,
         execution_end_date: str | None = None,
         limit: int = 20,
-    ) -> list[InitialStrategyStateRecord]:
+    ) -> list[StrategyCheckpointRecord]:
         filters = []
         params: list[object] = []
         if strategy_id is not None:
@@ -3990,16 +3990,16 @@ class EvaluationStore:
         params.append(max(int(limit), 1))
         rows = self.conn.execute(
             f"""
-            SELECT initial_strategy_state_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
-            FROM initial_strategy_states
+            SELECT strategy_checkpoint_id, strategy_id, signal_train_id, signal_discovery_id, artifact_json, created_at
+            FROM strategy_checkpoints
             {where_clause}
-            ORDER BY created_at DESC, initial_strategy_state_id DESC
+            ORDER BY created_at DESC, strategy_checkpoint_id DESC
             LIMIT ?
             """,
             tuple(params),
         ).fetchall()
         return [
-            _row_to_initial_strategy_state(row)
+            _row_to_strategy_checkpoint(row)
             for row in rows
             if row is not None
         ]

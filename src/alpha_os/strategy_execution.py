@@ -13,7 +13,7 @@ class StrategyExecutionSpec:
     signal_discovery_id: str | None
     requires_signal_train: bool
     retrains_per_fold: bool
-    reuses_frozen_state: bool
+    reuses_strategy_checkpoint: bool
 
 
 def resolve_strategy_execution_spec(
@@ -40,5 +40,5 @@ def resolve_strategy_execution_spec(
         signal_discovery_id=signal_discovery_id,
         requires_signal_train=(kind == "trained"),
         retrains_per_fold=(kind == "trained"),
-        reuses_frozen_state=(kind == "frozen"),
+        reuses_strategy_checkpoint=(kind == "frozen"),
     )

@@ -42,7 +42,7 @@ If the behavior remains necessary, separate the concepts explicitly:
 
 - strategy-side requirements, such as whether train-period state is required
 - run/evaluation-side state sourcing, such as training per fold or using a fixed
-  initial strategy state
+  strategy checkpoint
 
 ## Non-Goals
 

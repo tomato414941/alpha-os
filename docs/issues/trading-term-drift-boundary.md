@@ -99,7 +99,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `evaluation task`
 - [ ] `data input`
 - [ ] `data source`
-- [ ] `initial strategy state`
+- [ ] `strategy checkpoint`
 - [ ] `signal train`
 - [ ] `train artifact`
 - [ ] `fixed-state replay`

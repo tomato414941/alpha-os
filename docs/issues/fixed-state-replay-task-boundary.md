@@ -2,13 +2,13 @@
 
 ## Problem
 
-`create-fixed-state-evaluation-task` is currently needed to connect a persisted
-initial strategy state to a fixed-state replay evaluation task.
+`create-checkpoint-evaluation-task` is currently needed to connect a persisted
+strategy checkpoint to a fixed-state replay evaluation task.
 
 That makes the strict fixed-state OOS path depend on a manual CLI step:
 
 - choose a source evaluation task
-- choose an initial strategy state
+- choose an strategy checkpoint
 - create an evaluation task
 - create an evaluation job spec with `run_mode="fixed_state_replay"`
 
@@ -31,7 +31,7 @@ instead of making evaluation planning responsible for replay task resolution.
 Treat `fixed_state_replay` as a current `run_mode` value, not as a target
 glossary term.
 
-Treat `create-fixed-state-evaluation-task` as a temporary adapter, not as a core
+Treat `create-checkpoint-evaluation-task` as a temporary adapter, not as a core
 research primitive.
 
 ## Desired Direction
@@ -45,4 +45,4 @@ not CLI output flow.
 ## Close Condition
 
 Close this when the strict fixed-state OOS golden path can create or resolve its
-replay task/job spec without calling `create-fixed-state-evaluation-task`.
+replay task/job spec without calling `create-checkpoint-evaluation-task`.

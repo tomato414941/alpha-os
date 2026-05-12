@@ -17,14 +17,14 @@ Desired shape:
 
 ```text
 fixed-state replay preparation
-  -> frozen strategy state
+  -> strategy checkpoint
   -> strategy backtest
 ```
 
 Avoid pushing these responsibilities into strategy backtest:
 
 - finding signal discovery runs
-- choosing initial strategy states
+- choosing strategy checkpoints
 - reading screening results
 - reading compressed beliefs
 - deciding which train-period artifacts apply to a test range

@@ -64,7 +64,7 @@ def test_promoted_evaluation_report_can_create_baseline_state():
             "date_parse": "pass",
             "range_non_overlap": "pass",
             "evaluation_after_execution": "pass",
-            "frozen_state_required": "n/a",
+            "strategy_checkpoint_required": "n/a",
         },
     )
 

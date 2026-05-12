@@ -48,7 +48,7 @@ class EvaluationExecutionReadPort(Protocol):
     def get_subject_set(self, subject_set_id: str):
         ...
 
-    def get_initial_strategy_state(self, initial_strategy_state_id: str):
+    def get_strategy_checkpoint(self, strategy_checkpoint_id: str):
         ...
 
     def get_signal_discovery_run(self, signal_discovery_run_id: str):
@@ -95,7 +95,7 @@ class EvaluationExecutionResult:
 
 @dataclass(frozen=True)
 class PreparedStrategyEvaluationInputs:
-    initial_strategy_state: object | None
+    strategy_checkpoint: object | None
     diagnostic_signal_discovery_run: object | None
     snapshot_set_id: str | None
     prepared_start_date: str
@@ -125,13 +125,13 @@ def resolve_prepared_strategy_evaluation_inputs(
     input_refs: StrategyEvaluationInputRefs,
     diagnostic_refs: StrategyEvaluationDiagnosticRefs | None,
 ) -> PreparedStrategyEvaluationInputs:
-    initial_strategy_state_record = (
+    strategy_checkpoint_record = (
         None
-        if input_refs.initial_strategy_state_id is None
-        else store.get_initial_strategy_state(input_refs.initial_strategy_state_id)
+        if input_refs.strategy_checkpoint_id is None
+        else store.get_strategy_checkpoint(input_refs.strategy_checkpoint_id)
     )
-    initial_strategy_state = (
-        None if initial_strategy_state_record is None else initial_strategy_state_record.state
+    strategy_checkpoint = (
+        None if strategy_checkpoint_record is None else strategy_checkpoint_record.state
     )
     diagnostic_signal_discovery_run = None
     if (
@@ -154,7 +154,7 @@ def resolve_prepared_strategy_evaluation_inputs(
     if compressed_belief_state is None:
         raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
     return PreparedStrategyEvaluationInputs(
-        initial_strategy_state=initial_strategy_state,
+        strategy_checkpoint=strategy_checkpoint,
         diagnostic_signal_discovery_run=diagnostic_signal_discovery_run,
         snapshot_set_id=input_refs.snapshot_set_id,
         prepared_start_date=input_refs.prepared_start_date,
@@ -169,7 +169,7 @@ def build_prepared_strategy_evaluation_base_outputs(
     execution_request: StrategyEvaluationRequest,
     prepared_inputs: PreparedStrategyEvaluationInputs,
 ) -> PreparedStrategyEvaluationBaseOutputs:
-    initial_strategy_state = prepared_inputs.initial_strategy_state
+    strategy_checkpoint = prepared_inputs.strategy_checkpoint
     diagnostic_signal_discovery_run = prepared_inputs.diagnostic_signal_discovery_run
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
@@ -195,11 +195,11 @@ def build_prepared_strategy_evaluation_base_outputs(
         "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
         "evaluation_fold_labels": (execution_request.fold_label,),
     }
-    if initial_strategy_state is not None:
-        artifact_refs["initial_strategy_state_ids"] = (
-            initial_strategy_state.initial_strategy_state_id,
+    if strategy_checkpoint is not None:
+        artifact_refs["strategy_checkpoint_ids"] = (
+            strategy_checkpoint.strategy_checkpoint_id,
         )
-        artifact_refs["signal_train_ids"] = (initial_strategy_state.signal_train_id,)
+        artifact_refs["signal_train_ids"] = (strategy_checkpoint.signal_train_id,)
     return PreparedStrategyEvaluationBaseOutputs(
         metric_group_result_map=metric_group_result_map,
         artifact_refs=artifact_refs,
@@ -213,12 +213,12 @@ def resolve_prepared_strategy_survivor_snapshots(
     prepared_inputs: PreparedStrategyEvaluationInputs,
 ) -> list[EvaluationSnapshot]:
     store = context.store
-    initial_strategy_state = prepared_inputs.initial_strategy_state
+    strategy_checkpoint = prepared_inputs.strategy_checkpoint
     snapshot_set_id = prepared_inputs.snapshot_set_id
     screening_state = prepared_inputs.screening_state
     survivor_signal_ids = (
-        list(initial_strategy_state.survivor_signal_ids)
-        if initial_strategy_state is not None
+        list(strategy_checkpoint.survivor_signal_ids)
+        if strategy_checkpoint is not None
         else [item.signal_id for item in screening_state.result.survivors]
     )
     if requires_frozen_test_application(

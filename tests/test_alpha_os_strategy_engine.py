@@ -73,7 +73,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             holding_cost_assumptions=policy_parts["holding_cost_assumptions"],
         ),
         input_refs=StrategyEvaluationInputRefs(
-            initial_strategy_state_id="state:test",
+            strategy_checkpoint_id="state:test",
             snapshot_set_id="snapshot-set:test",
             screening_result_id="screening:test",
             compressed_belief_id="belief:test",
@@ -94,7 +94,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.context.strategy_id == "strategy:test"
     assert request.context.signal_discovery_id == "discovery:test"
     assert request.context.subject_set_id == "subject-set:test"
-    assert request.input_refs.initial_strategy_state_id == "state:test"
+    assert request.input_refs.strategy_checkpoint_id == "state:test"
     assert request.evaluation_date_ranges[0].label == "test"
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():
@@ -178,14 +178,14 @@ def test_evaluation_job_spec_defaults_run_mode_to_backtest_oos():
     assert job_spec.run_mode == "backtest_oos"
 
 
-def test_fixed_state_replay_requires_fixed_initial_state():
+def test_fixed_state_replay_requires_strategy_checkpoint():
     import pytest
 
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
 
     with pytest.raises(
         ValueError,
-        match="fixed_state_replay evaluation job requires fixed_initial_strategy_state_id",
+        match="fixed_state_replay evaluation job requires strategy_checkpoint_id",
     ):
         EvaluationJobSpec(
             evaluation_task_id="case:test",
@@ -193,13 +193,13 @@ def test_fixed_state_replay_requires_fixed_initial_state():
         )
 
 
-def test_evaluation_job_spec_allows_fixed_initial_state_without_run_mode():
+def test_evaluation_job_spec_allows_strategy_checkpoint_without_run_mode():
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
 
     job_spec = EvaluationJobSpec(
         evaluation_task_id="case:test",
-        fixed_initial_strategy_state_id="state:test",
+        strategy_checkpoint_id="state:test",
     )
 
     assert job_spec.run_mode == "backtest_oos"
-    assert job_spec.fixed_initial_strategy_state_id == "state:test"
+    assert job_spec.strategy_checkpoint_id == "state:test"

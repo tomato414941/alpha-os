@@ -20,7 +20,7 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "run-evaluation": _legacy.cmd_run_evaluation,
     "run-walk-forward-evaluation": _legacy.cmd_run_walk_forward_evaluation,
     "run-walk-forward": _legacy.cmd_run_walk_forward_evaluation,
-    "create-fixed-state-evaluation-task": _legacy.cmd_create_fixed_state_evaluation_task,
+    "create-checkpoint-evaluation-task": _legacy.cmd_create_checkpoint_evaluation_task,
     "show-evaluation-report": _legacy.cmd_show_evaluation_report,
     "show-report": _legacy.cmd_show_evaluation_report,
     "show-evaluation-diagnostics": _legacy.cmd_show_evaluation_diagnostics,

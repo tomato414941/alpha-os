@@ -5,8 +5,8 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class InitialStrategyState:
-    initial_strategy_state_id: str
+class StrategyCheckpoint:
+    strategy_checkpoint_id: str
     strategy_id: str
     signal_train_id: str
     signal_discovery_id: str | None
@@ -46,16 +46,16 @@ class InitialStrategyState:
     def from_document(
         cls,
         *,
-        initial_strategy_state_id: str,
+        strategy_checkpoint_id: str,
         document: dict[str, Any],
-    ) -> "InitialStrategyState":
+    ) -> "StrategyCheckpoint":
         survivor_signal_ids = document.get(
             "survivor_signal_ids",
             document.get("survivor_signal_ids", []),
         )
         if not isinstance(survivor_signal_ids, list):
             raise ValueError(
-                "initial strategy state survivor_signal_ids must be a list"
+                "strategy checkpoint survivor_signal_ids must be a list"
             )
         signal_discovery_id_document = document.get("signal_discovery_id")
         signal_discovery_id = (
@@ -66,19 +66,19 @@ class InitialStrategyState:
         strategy_id_document = document.get("strategy_id")
         if strategy_id_document is None and signal_discovery_id is None:
             raise ValueError(
-                "initial strategy state requires strategy_id when signal_discovery_id is absent"
+                "strategy checkpoint requires strategy_id when signal_discovery_id is absent"
             )
         signal_train_id_document = document.get("signal_train_id")
         if signal_train_id_document is None:
             if signal_discovery_id is None:
                 raise ValueError(
-                    "initial strategy state requires signal_train_id when signal_discovery_id is absent"
+                    "strategy checkpoint requires signal_train_id when signal_discovery_id is absent"
                 )
             signal_train_id = f"signal-train:{signal_discovery_id}"
         else:
             signal_train_id = str(signal_train_id_document)
         return cls(
-            initial_strategy_state_id=initial_strategy_state_id,
+            strategy_checkpoint_id=strategy_checkpoint_id,
             strategy_id=str(
                 strategy_id_document if strategy_id_document is not None else signal_discovery_id
             ),

@@ -118,7 +118,7 @@ from ..signal_generator import (
     materialize_signal_specs,
 )
 from ..signal_discovery_application import (
-    build_initial_strategy_state_id as _app_build_initial_strategy_state_id,
+    build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
     build_prepared_evaluation_snapshot_set_id as _app_build_prepared_evaluation_snapshot_set_id,
     build_signal_discovery_run_id as _app_build_signal_discovery_run_id,
     compress_screening_result_state as _app_compress_screening_result_state,
@@ -169,7 +169,7 @@ from ..subject_set_backfill_service import (
     resolve_subject_set_for_build,
     run_subject_set_backfill,
 )
-from ..initial_strategy_state import InitialStrategyState
+from ..strategy_checkpoint import StrategyCheckpoint
 from ..trading_strategy import (
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
@@ -839,26 +839,26 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
 
-    create_fixed_state_evaluation_task = internal_parser("create-fixed-state-evaluation-task")
-    create_fixed_state_evaluation_task.add_argument("--db", type=str, default=None)
-    create_fixed_state_evaluation_task.add_argument(
+    create_checkpoint_evaluation_task = internal_parser("create-checkpoint-evaluation-task")
+    create_checkpoint_evaluation_task.add_argument("--db", type=str, default=None)
+    create_checkpoint_evaluation_task.add_argument(
         "--source-evaluation-task-id",
         type=str,
         required=True,
     )
-    create_fixed_state_evaluation_task.add_argument(
-        "--source-initial-strategy-state-id",
+    create_checkpoint_evaluation_task.add_argument(
+        "--source-strategy-checkpoint-id",
         type=str,
         required=True,
     )
-    create_fixed_state_evaluation_task.add_argument(
+    create_checkpoint_evaluation_task.add_argument(
         "--evaluation-spec-id",
         type=str,
         required=True,
     )
-    create_fixed_state_evaluation_task.add_argument("--strategy-id", type=str, default=None)
-    create_fixed_state_evaluation_task.add_argument("--label", type=str, default=None)
-    create_fixed_state_evaluation_task.add_argument("--base-url", type=str, default=None)
+    create_checkpoint_evaluation_task.add_argument("--strategy-id", type=str, default=None)
+    create_checkpoint_evaluation_task.add_argument("--label", type=str, default=None)
+    create_checkpoint_evaluation_task.add_argument("--base-url", type=str, default=None)
 
     show_evaluation_report = sub.add_parser(
         "show-evaluation-report",
@@ -2692,15 +2692,15 @@ def _evaluation_task_from_document(
     run_mode = normalize_strategy_run_mode(
         None if document.get("run_mode") is None else str(document["run_mode"])
     )
-    fixed_initial_strategy_state_id = (
+    strategy_checkpoint_id = (
         None
-        if document.get("fixed_initial_strategy_state_id") is None
-        else str(document["fixed_initial_strategy_state_id"])
+        if document.get("strategy_checkpoint_id") is None
+        else str(document["strategy_checkpoint_id"])
     )
     evaluation_job_spec = EvaluationJobSpec(
         evaluation_task_id=evaluation_task_id,
         run_mode=run_mode,
-        fixed_initial_strategy_state_id=fixed_initial_strategy_state_id,
+        strategy_checkpoint_id=strategy_checkpoint_id,
     )
     return trading_strategy, evaluation_task, evaluation_job_spec
 
@@ -3931,7 +3931,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
+def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
         evaluation_spec_state = store.get_evaluation_spec(str(args.evaluation_spec_id))
@@ -3946,16 +3946,16 @@ def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
         if source_task_state is None:
             raise ValueError("source evaluation task does not exist")
         source_task = source_task_state.task
-        source_initial_strategy_state_record = store.get_initial_strategy_state(
-            str(args.source_initial_strategy_state_id)
+        source_strategy_checkpoint_record = store.get_strategy_checkpoint(
+            str(args.source_strategy_checkpoint_id)
         )
-        if source_initial_strategy_state_record is None:
-            raise ValueError("source initial strategy state does not exist")
-        source_initial_strategy_state = source_initial_strategy_state_record.state
+        if source_strategy_checkpoint_record is None:
+            raise ValueError("source strategy checkpoint does not exist")
+        source_strategy_checkpoint = source_strategy_checkpoint_record.state
         strategy_id = source_task.strategy_id if args.strategy_id is None else str(args.strategy_id)
         if store.get_trading_strategy(strategy_id) is None:
             raise ValueError("strategy does not exist")
-        fixed_state_case = EvaluationTask(
+        checkpoint_case = EvaluationTask(
             evaluation_task_id=build_evaluation_task_id(
                 strategy_id=strategy_id,
                 evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
@@ -3963,13 +3963,13 @@ def cmd_create_fixed_state_evaluation_task(args: argparse.Namespace) -> int:
             strategy_id=strategy_id,
             evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         )
-        store.upsert_evaluation_task(task=fixed_state_case)
+        store.upsert_evaluation_task(task=checkpoint_case)
         store.upsert_evaluation_job_spec(
             job_spec=EvaluationJobSpec(
-                evaluation_task_id=fixed_state_case.evaluation_task_id,
+                evaluation_task_id=checkpoint_case.evaluation_task_id,
                 run_mode="fixed_state_replay",
-                fixed_initial_strategy_state_id=(
-                    source_initial_strategy_state.initial_strategy_state_id
+                strategy_checkpoint_id=(
+                    source_strategy_checkpoint.strategy_checkpoint_id
                 ),
             )
         )
@@ -4226,14 +4226,14 @@ def _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
     return tuple(groups)
 
 
-def _has_complete_initial_strategy_states_for_fold(
+def _has_complete_strategy_checkpoints_for_fold(
     store: EvaluationStore,
     *,
     signal_train_group: _SignalTrainGroup,
     fold,
 ) -> bool:
     for evaluation_task in signal_train_group.evaluation_tasks:
-        initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
             signal_train_id=signal_train_group.signal_train_id,
             fold_label=fold.label,
@@ -4241,30 +4241,30 @@ def _has_complete_initial_strategy_states_for_fold(
             execution_end_date=fold.execution_range.end_date,
             limit=1,
         )
-        if not initial_strategy_states:
+        if not strategy_checkpoints:
             return False
     return True
 
 
-def _backfill_initial_strategy_states_for_fold_from_signal_train(
+def _backfill_strategy_checkpoints_for_fold_from_signal_train(
     store: EvaluationStore,
     *,
     signal_train_group: _SignalTrainGroup,
     fold,
 ) -> bool:
-    shared_initial_strategy_states = store.list_initial_strategy_states(
+    shared_strategy_checkpoints = store.list_strategy_checkpoints(
         signal_train_id=signal_train_group.signal_train_id,
         fold_label=fold.label,
         execution_start_date=fold.execution_range.start_date,
         execution_end_date=fold.execution_range.end_date,
         limit=1,
     )
-    if not shared_initial_strategy_states:
+    if not shared_strategy_checkpoints:
         return False
-    source_state = shared_initial_strategy_states[0].state
+    source_state = shared_strategy_checkpoints[0].state
     created_any = False
     for evaluation_task in signal_train_group.evaluation_tasks:
-        existing_states = store.list_initial_strategy_states(
+        existing_states = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
             signal_train_id=signal_train_group.signal_train_id,
             fold_label=fold.label,
@@ -4275,9 +4275,9 @@ def _backfill_initial_strategy_states_for_fold_from_signal_train(
         if existing_states:
             continue
         timestamp = _utc_now()
-        store.upsert_initial_strategy_state(
-            state=InitialStrategyState(
-                initial_strategy_state_id=_app_build_initial_strategy_state_id(
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id=_app_build_strategy_checkpoint_id(
                     strategy_id=evaluation_task.strategy_id,
                     fold_label=fold.label,
                     start_date=fold.execution_range.start_date,
@@ -5703,8 +5703,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command == "create-fixed-state-evaluation-task":
-            return cmd_create_fixed_state_evaluation_task(args)
+        if args.command == "create-checkpoint-evaluation-task":
+            return cmd_create_checkpoint_evaluation_task(args)
         if args.command in {"show-evaluation-report", "show-report"}:
             return cmd_show_evaluation_report(args)
         if args.command in {"show-evaluation-diagnostics", "show-diagnostics"}:

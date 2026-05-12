@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from .initial_strategy_state import InitialStrategyState
+from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_run import SignalDiscoveryRun
 from .subject_set_backfill_service import SubjectSetBackfillResult
 
 
-def build_initial_strategy_state_id(
+def build_strategy_checkpoint_id(
     *,
     strategy_id: str,
     fold_label: str,
@@ -53,7 +53,7 @@ def build_signal_discovery_run(
     )
 
 
-def build_initial_strategy_state(
+def build_strategy_checkpoint(
     *,
     strategy_id: str,
     signal_train_id: str,
@@ -68,9 +68,9 @@ def build_initial_strategy_state(
     screening_state,
     compressed_belief_state,
     created_at: str,
-) -> InitialStrategyState:
-    return InitialStrategyState(
-        initial_strategy_state_id=build_initial_strategy_state_id(
+) -> StrategyCheckpoint:
+    return StrategyCheckpoint(
+        strategy_checkpoint_id=build_strategy_checkpoint_id(
             strategy_id=strategy_id,
             fold_label=fold_label,
             start_date=start_date,

@@ -13,12 +13,12 @@ from .strategy_training import build_signal_train_id
 from .evaluation_task_resolution import resolve_evaluation_tasks_for_spec
 from .evaluation_report_service import resolve_report_strategy_context
 from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
-from .initial_strategy_state import InitialStrategyState
+from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_application import (
-    build_initial_strategy_state_id,
+    build_strategy_checkpoint_id,
     build_prepared_evaluation_snapshot_set_id,
     build_signal_discovery_run_id,
-    persist_initial_strategy_state,
+    persist_strategy_checkpoint,
     persist_signal_discovery_run,
     run_signal_discovery_workflow,
 )
@@ -157,14 +157,14 @@ def group_evaluation_tasks_by_signal_train(
     return tuple(groups)
 
 
-def _has_complete_initial_strategy_states_for_fold(
+def _has_complete_strategy_checkpoints_for_fold(
     store: EvaluationStore,
     *,
     signal_train_group: SignalTrainGroup,
     fold,
 ) -> bool:
     for evaluation_task in signal_train_group.evaluation_tasks:
-        initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
             signal_train_id=signal_train_group.signal_train_id,
             fold_label=fold.label,
@@ -172,31 +172,31 @@ def _has_complete_initial_strategy_states_for_fold(
             execution_end_date=fold.execution_range.end_date,
             limit=1,
         )
-        if not initial_strategy_states:
+        if not strategy_checkpoints:
             return False
     return True
 
 
-def _backfill_initial_strategy_states_for_fold_from_signal_train(
+def _backfill_strategy_checkpoints_for_fold_from_signal_train(
     store: EvaluationStore,
     *,
     signal_train_group: SignalTrainGroup,
     fold,
     created_at: str,
 ) -> bool:
-    shared_initial_strategy_states = store.list_initial_strategy_states(
+    shared_strategy_checkpoints = store.list_strategy_checkpoints(
         signal_train_id=signal_train_group.signal_train_id,
         fold_label=fold.label,
         execution_start_date=fold.execution_range.start_date,
         execution_end_date=fold.execution_range.end_date,
         limit=1,
     )
-    if not shared_initial_strategy_states:
+    if not shared_strategy_checkpoints:
         return False
-    source_state = shared_initial_strategy_states[0].state
+    source_state = shared_strategy_checkpoints[0].state
     created_any = False
     for evaluation_task in signal_train_group.evaluation_tasks:
-        existing_states = store.list_initial_strategy_states(
+        existing_states = store.list_strategy_checkpoints(
             strategy_id=evaluation_task.strategy_id,
             signal_train_id=signal_train_group.signal_train_id,
             fold_label=fold.label,
@@ -206,9 +206,9 @@ def _backfill_initial_strategy_states_for_fold_from_signal_train(
         )
         if existing_states:
             continue
-        store.upsert_initial_strategy_state(
-            state=InitialStrategyState(
-                initial_strategy_state_id=build_initial_strategy_state_id(
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id=build_strategy_checkpoint_id(
                     strategy_id=evaluation_task.strategy_id,
                     fold_label=fold.label,
                     start_date=fold.execution_range.start_date,
@@ -271,13 +271,13 @@ def run_walk_forward_evaluation_use_case(
                 f"{signal_train_group.signal_train_id}"
             )
         for fold in evaluation_spec.resolved_evaluation_folds:
-            if _has_complete_initial_strategy_states_for_fold(
+            if _has_complete_strategy_checkpoints_for_fold(
                 store,
                 signal_train_group=signal_train_group,
                 fold=fold,
             ):
                 continue
-            if _backfill_initial_strategy_states_for_fold_from_signal_train(
+            if _backfill_strategy_checkpoints_for_fold_from_signal_train(
                 store,
                 signal_train_group=signal_train_group,
                 fold=fold,
@@ -341,7 +341,7 @@ def run_walk_forward_evaluation_use_case(
                 created_at=timestamp,
             )
             for evaluation_task in signal_train_group.evaluation_tasks:
-                persist_initial_strategy_state(
+                persist_strategy_checkpoint(
                     store,
                     strategy_id=evaluation_task.strategy_id,
                     signal_train_id=signal_train_group.signal_train_id,

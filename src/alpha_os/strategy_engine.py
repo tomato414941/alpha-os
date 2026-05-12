@@ -28,7 +28,7 @@ class StrategyEvaluationContext:
 
 @dataclass(frozen=True)
 class StrategyEvaluationInputRefs:
-    initial_strategy_state_id: str | None
+    strategy_checkpoint_id: str | None
     snapshot_set_id: str | None
     screening_result_id: str | None
     compressed_belief_id: str | None

@@ -22,7 +22,7 @@ Use this for comparison when upstream state should stay fixed.
 
 Properties:
 
-- a `fixed_initial_strategy_state_id` is required
+- a `strategy_checkpoint_id` is required
 - discovery and retraining are not rerun during evaluation
 - the goal is to isolate downstream strategy behavior
 
@@ -41,7 +41,7 @@ The input contract should differ by evaluation job shape.
   - may consume train artifacts depending on strategy requirements
 - `fixed_state_replay`
   - requires the same evaluation spec information
-  - additionally requires `fixed_initial_strategy_state_id`
+  - additionally requires `strategy_checkpoint_id`
   - must not retrain during evaluation
 
 ## Strategy-Centric View

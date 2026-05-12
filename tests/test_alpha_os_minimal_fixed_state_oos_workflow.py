@@ -39,12 +39,12 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        initial_strategy_states = store.list_initial_strategy_states(
+        strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="minimal_fixed_state_search",
             limit=10,
         )
-        assert initial_strategy_states
-        source_state = initial_strategy_states[0].state
+        assert strategy_checkpoints
+        source_state = strategy_checkpoints[0].state
         assert source_state.signal_train_id
         assert source_state.signal_discovery_run_id
         assert source_state.screening_result_id
@@ -55,11 +55,11 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
     assert (
         main(
             [
-                "create-fixed-state-evaluation-task",
+                "create-checkpoint-evaluation-task",
                 "--source-evaluation-task-id",
                 "minimal_fixed_state_training_case",
-                "--source-initial-strategy-state-id",
-                source_state.initial_strategy_state_id,
+                "--source-strategy-checkpoint-id",
+                source_state.strategy_checkpoint_id,
                 "--evaluation-spec-id",
                 "minimal_fixed_state_oos_eval",
                 "--db",
@@ -89,7 +89,7 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
     assert "OOS contract: rigor_level=fixed_state_oos enforcement=strict" in report_output
     assert "range_non_overlap=pass" in report_output
     assert "evaluation_after_execution=pass" in report_output
-    assert "frozen_state_required=required" in report_output
+    assert "strategy_checkpoint_required=required" in report_output
 
     store = EvaluationStore(db_path)
     try:
@@ -99,7 +99,7 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
         strict_spec = strict_spec_state.definition
         assert strict_spec.rigor_level == "fixed_state_oos"
         assert strict_spec.oos_contract.enforcement == "strict"
-        assert strict_spec.oos_contract.require_frozen_state_for_trained_strategy is True
+        assert strict_spec.oos_contract.require_strategy_checkpoint_for_trained_strategy is True
 
         report_state = store.get_latest_evaluation_report()
         assert report_state is not None
@@ -109,12 +109,12 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
         assert report.oos_contract_summary["enforcement"] == "strict"
         assert report.oos_contract_summary["range_non_overlap"] == "pass"
         assert report.oos_contract_summary["evaluation_after_execution"] == "pass"
-        assert report.oos_contract_summary["frozen_state_required"] == "required"
+        assert report.oos_contract_summary["strategy_checkpoint_required"] == "required"
         assert len(report.task_results) == 1
 
         task_result = report.task_results[0]
-        assert task_result.artifact_refs["initial_strategy_state_ids"] == (
-            source_state.initial_strategy_state_id,
+        assert task_result.artifact_refs["strategy_checkpoint_ids"] == (
+            source_state.strategy_checkpoint_id,
         )
         assert task_result.artifact_refs["signal_train_ids"] == (
             source_state.signal_train_id,

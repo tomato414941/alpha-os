@@ -718,7 +718,7 @@ def print_evaluation_report(
             f"range_non_overlap={summary.get('range_non_overlap', '-')} "
             "evaluation_after_execution="
             f"{summary.get('evaluation_after_execution', '-')} "
-            f"frozen_state_required={summary.get('frozen_state_required', '-')}"
+            f"strategy_checkpoint_required={summary.get('strategy_checkpoint_required', '-')}"
         )
     print("  CrossInstrumentReportContract: " + contract.format_summary())
     if getattr(contract, "report_units", ()):

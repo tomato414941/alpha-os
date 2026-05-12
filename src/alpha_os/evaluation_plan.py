@@ -25,7 +25,7 @@ from .strategy_engine import (
 
 if TYPE_CHECKING:
     from .store import (
-        InitialStrategyStateRecord,
+        StrategyCheckpointRecord,
         SignalDiscoveryRunState,
         TradingStrategyState,
     )
@@ -37,12 +37,12 @@ class EvaluationPlanReadPort(Protocol):
         strategy_id: str,
     ) -> TradingStrategyState | None: ...
 
-    def get_initial_strategy_state(
+    def get_strategy_checkpoint(
         self,
-        initial_strategy_state_id: str,
-    ) -> InitialStrategyStateRecord | None: ...
+        strategy_checkpoint_id: str,
+    ) -> StrategyCheckpointRecord | None: ...
 
-    def list_initial_strategy_states(
+    def list_strategy_checkpoints(
         self,
         *,
         strategy_id: str | None = None,
@@ -52,7 +52,7 @@ class EvaluationPlanReadPort(Protocol):
         execution_start_date: str | None = None,
         execution_end_date: str | None = None,
         limit: int = 20,
-    ) -> list[InitialStrategyStateRecord]: ...
+    ) -> list[StrategyCheckpointRecord]: ...
 
     def list_signal_discovery_runs(
         self,
@@ -78,7 +78,7 @@ def _strategy_evaluation_request(
     fold_label: str,
     strategy_id: str,
     signal_discovery_id: str | None,
-    initial_strategy_state_id: str | None,
+    strategy_checkpoint_id: str | None,
     signal_discovery_run_id: str | None,
     snapshot_set_id: str | None,
     prepared_start_date: str | None,
@@ -100,7 +100,7 @@ def _strategy_evaluation_request(
 ) -> StrategyEvaluationRequest:
     input_refs = None
     if (
-        initial_strategy_state_id is not None
+        strategy_checkpoint_id is not None
         or snapshot_set_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
@@ -108,7 +108,7 @@ def _strategy_evaluation_request(
         if prepared_start_date is None or prepared_end_date is None:
             raise ValueError("prepared evaluation inputs require prepared date range")
         input_refs = StrategyEvaluationInputRefs(
-            initial_strategy_state_id=initial_strategy_state_id,
+            strategy_checkpoint_id=strategy_checkpoint_id,
             snapshot_set_id=snapshot_set_id,
             screening_result_id=screening_result_id,
             compressed_belief_id=compressed_belief_id,
@@ -290,17 +290,17 @@ def build_evaluation_plan(
         strategy_signal_train_id = build_signal_train_id(
             signal_discovery_id=strategy_signal_discovery_id,
         )
-        if job_spec.fixed_initial_strategy_state_id is not None:
-            fixed_initial_strategy_state_id = job_spec.fixed_initial_strategy_state_id
-            frozen_state_record = store.get_initial_strategy_state(
-                fixed_initial_strategy_state_id
+        if job_spec.strategy_checkpoint_id is not None:
+            strategy_checkpoint_id = job_spec.strategy_checkpoint_id
+            checkpoint_record = store.get_strategy_checkpoint(
+                strategy_checkpoint_id
             )
-            if frozen_state_record is None:
+            if checkpoint_record is None:
                 raise ValueError(
-                    "checkpoint replay evaluation task references unknown initial strategy state: "
-                    f"{fixed_initial_strategy_state_id}"
+                    "checkpoint replay evaluation task references unknown strategy checkpoint: "
+                    f"{strategy_checkpoint_id}"
                 )
-            frozen_state = frozen_state_record.state
+            checkpoint = checkpoint_record.state
             for fold in evaluation_spec.resolved_evaluation_folds:
                 execution_requests.append(
                     _strategy_evaluation_request(
@@ -308,18 +308,18 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
-                        signal_discovery_id=frozen_state.signal_discovery_id,
-                        initial_strategy_state_id=(
-                            frozen_state.initial_strategy_state_id
+                        signal_discovery_id=checkpoint.signal_discovery_id,
+                        strategy_checkpoint_id=(
+                            checkpoint.strategy_checkpoint_id
                         ),
-                        signal_discovery_run_id=frozen_state.signal_discovery_run_id,
-                        snapshot_set_id=frozen_state.snapshot_set_id,
-                        prepared_start_date=frozen_state.execution_start_date,
-                        prepared_end_date=frozen_state.execution_end_date,
-                        subject_set_id=frozen_state.subject_set_id,
-                        target_id=frozen_state.target_id,
-                        screening_result_id=frozen_state.screening_result_id,
-                        compressed_belief_id=frozen_state.compressed_belief_id,
+                        signal_discovery_run_id=checkpoint.signal_discovery_run_id,
+                        snapshot_set_id=checkpoint.snapshot_set_id,
+                        prepared_start_date=checkpoint.execution_start_date,
+                        prepared_end_date=checkpoint.execution_end_date,
+                        subject_set_id=checkpoint.subject_set_id,
+                        target_id=checkpoint.target_id,
+                        screening_result_id=checkpoint.screening_result_id,
+                        compressed_belief_id=checkpoint.compressed_belief_id,
                         execution_range=fold.execution_range,
                         evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                         metric_group_names=evaluation_spec.metric_group_names,
@@ -349,7 +349,7 @@ def build_evaluation_plan(
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
                         signal_discovery_id=None,
-                        initial_strategy_state_id=None,
+                        strategy_checkpoint_id=None,
                         signal_discovery_run_id=None,
                         snapshot_set_id=None,
                         prepared_start_date=None,
@@ -377,7 +377,7 @@ def build_evaluation_plan(
                 f"{evaluation_task.evaluation_task_id}"
             )
         for fold in evaluation_spec.resolved_evaluation_folds:
-            initial_strategy_states = store.list_initial_strategy_states(
+            strategy_checkpoints = store.list_strategy_checkpoints(
                 strategy_id=evaluation_task.strategy_id,
                 signal_train_id=strategy_signal_train_id,
                 fold_label=fold.label,
@@ -385,19 +385,19 @@ def build_evaluation_plan(
                 execution_end_date=fold.execution_range.end_date,
                 limit=1,
             )
-            if initial_strategy_states:
-                initial_strategy_state = initial_strategy_states[0].state
-                initial_strategy_state_id = (
-                    initial_strategy_state.initial_strategy_state_id
+            if strategy_checkpoints:
+                strategy_checkpoint = strategy_checkpoints[0].state
+                strategy_checkpoint_id = (
+                    strategy_checkpoint.strategy_checkpoint_id
                 )
-                signal_discovery_run_id = initial_strategy_state.signal_discovery_run_id
-                snapshot_set_id = initial_strategy_state.snapshot_set_id
-                prepared_start_date = initial_strategy_state.execution_start_date
-                prepared_end_date = initial_strategy_state.execution_end_date
-                subject_set_id = initial_strategy_state.subject_set_id
-                target_id = initial_strategy_state.target_id
-                screening_result_id = initial_strategy_state.screening_result_id
-                compressed_belief_id = initial_strategy_state.compressed_belief_id
+                signal_discovery_run_id = strategy_checkpoint.signal_discovery_run_id
+                snapshot_set_id = strategy_checkpoint.snapshot_set_id
+                prepared_start_date = strategy_checkpoint.execution_start_date
+                prepared_end_date = strategy_checkpoint.execution_end_date
+                subject_set_id = strategy_checkpoint.subject_set_id
+                target_id = strategy_checkpoint.target_id
+                screening_result_id = strategy_checkpoint.screening_result_id
+                compressed_belief_id = strategy_checkpoint.compressed_belief_id
             else:
                 signal_discovery_runs = store.list_signal_discovery_runs(
                     signal_discovery_id=strategy_signal_discovery_id,
@@ -407,12 +407,12 @@ def build_evaluation_plan(
                 )
                 if not signal_discovery_runs:
                     raise ValueError(
-                        "evaluation task requires an existing signal discovery run or initial strategy state for "
+                        "evaluation task requires an existing signal discovery run or strategy checkpoint for "
                         f"{evaluation_task.evaluation_task_id} "
                         f"{fold.execution_range.start_date}->{fold.execution_range.end_date}"
                     )
                 signal_discovery_run = signal_discovery_runs[0].run
-                initial_strategy_state_id = None
+                strategy_checkpoint_id = None
                 signal_discovery_run_id = signal_discovery_run.signal_discovery_run_id
                 snapshot_set_id = signal_discovery_run.snapshot_set_id
                 prepared_start_date = signal_discovery_run.execution_start_date
@@ -428,7 +428,7 @@ def build_evaluation_plan(
                     fold_label=fold.label,
                     strategy_id=evaluation_task.strategy_id,
                     signal_discovery_id=strategy_signal_discovery_id,
-                    initial_strategy_state_id=initial_strategy_state_id,
+                    strategy_checkpoint_id=strategy_checkpoint_id,
                     signal_discovery_run_id=signal_discovery_run_id,
                     snapshot_set_id=snapshot_set_id,
                     prepared_start_date=prepared_start_date,

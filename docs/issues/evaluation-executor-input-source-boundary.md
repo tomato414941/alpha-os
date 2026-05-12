@@ -9,7 +9,7 @@ That routing is suspicious because the split is not really about strategy type
 or trade execution. It is mostly about where the evaluation inputs come from:
 
 - strategy spec and subject set inputs
-- signal discovery, screening, compressed belief, or initial strategy state
+- signal discovery, screening, compressed belief, or strategy checkpoint
   artifacts
 
 ## Risk
@@ -46,7 +46,7 @@ training or discovery provenance:
 | Field | Direct path | Fixed-state path | Signal-discovery path | ML analogy |
 | --- | --- | --- | --- | --- |
 | `signal_train_id` | present | present | present | training lineage |
-| `initial_strategy_state_id` | none | present | optional | strategy checkpoint |
+| `strategy_checkpoint_id` | none | present | optional | strategy checkpoint |
 | `signal_discovery_run_id` | none | present | present when using a run | training run |
 | `signal_discovery_id` | none | present | present | training/discovery config |
 | `screening_result_id` | none | present | present | selection result |

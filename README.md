@@ -10,7 +10,7 @@ strategy definition, and out-of-sample evaluation.
 - focus:
   - signal discovery research
   - screening and compressed-belief artifacts
-  - strategy specs and initial strategy state
+  - strategy specs and strategy checkpoints
   - OOS evaluation
   - portfolio decision and evaluation flows
 
@@ -75,7 +75,7 @@ decision traces, and candidate-vs-baseline promotion inputs.
 ## Minimal Fixed-State OOS Golden Path
 
 This workflow also uses only checked-in fixture CSV data. It first materializes
-a source initial strategy state, then creates a fixed-state replay evaluation
+a source strategy checkpoint, then creates a fixed-state replay evaluation
 task and runs a strict OOS report.
 
 ```bash
@@ -90,10 +90,10 @@ uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_train_eval \
   --db "$DB"
 
-# Select the generated initial_strategy_state_id, then create the replay task:
-uv run python -m alpha_os create-fixed-state-evaluation-task \
+# Select the generated strategy_checkpoint_id, then create the replay task:
+uv run python -m alpha_os create-checkpoint-evaluation-task \
   --source-evaluation-task-id minimal_fixed_state_training_case \
-  --source-initial-strategy-state-id <initial_strategy_state_id> \
+  --source-strategy-checkpoint-id <strategy_checkpoint_id> \
   --evaluation-spec-id minimal_fixed_state_oos_eval \
   --db "$DB"
 
@@ -106,7 +106,7 @@ uv run python -m alpha_os show-report \
 ```
 
 The checked-in test `tests/test_alpha_os_minimal_fixed_state_oos_workflow.py`
-verifies strict OOS contract output and fixed-state provenance artifacts.
+verifies strict OOS contract output and strategy checkpoint provenance artifacts.
 
 ## Further Reading
 

@@ -69,7 +69,7 @@ def _report(
                 "date_parse": "pass",
                 "range_non_overlap": "pass",
                 "evaluation_after_execution": "pass",
-                "frozen_state_required": "n/a",
+                "strategy_checkpoint_required": "n/a",
             }
             if oos_contract_summary is None
             else oos_contract_summary
@@ -238,7 +238,7 @@ def test_decide_promotion_is_inconclusive_when_oos_contract_is_warn_only():
                 "date_parse": "pass",
                 "range_non_overlap": "pass",
                 "evaluation_after_execution": "pass",
-                "frozen_state_required": "n/a",
+                "strategy_checkpoint_required": "n/a",
             },
         ),
         rule=PromotionRule(candidate_task_id="candidate", baseline_task_id="baseline"),
@@ -302,7 +302,7 @@ def test_decide_promotion_is_inconclusive_when_baseline_task_is_missing():
             "date_parse": "pass",
             "range_non_overlap": "pass",
             "evaluation_after_execution": "pass",
-            "frozen_state_required": "n/a",
+            "strategy_checkpoint_required": "n/a",
         },
     )
 

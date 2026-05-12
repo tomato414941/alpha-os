@@ -39,10 +39,10 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **execution policy** | The strategy sub-policy that defines how desired state should be realized. | urgency, order style, slicing, venue-facing limits |
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
-| **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, frozen replay, paper, live |
-| **strategy run spec** | One trading strategy paired with explicit engine-context inputs. | strategy under strict OOS; strategy with a fixed initial state |
+| **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, checkpoint replay, paper, live |
+| **strategy run spec** | One trading strategy paired with explicit engine-context inputs. | strategy under strict OOS; strategy with a strategy checkpoint |
 | **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
-| **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or fixed-state artifacts. | one strategy under one strict OOS evaluation spec |
+| **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or strategy checkpoint artifacts. | one strategy under one strict OOS evaluation spec |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. Connection details are runtime configuration, not evaluation task metadata. | signal-noise service URL; local parquet root |
 | **evaluation task result** | The recorded factual outcome of one evaluation task. | OOS Sharpe, belief corr, turnover, drawdown |

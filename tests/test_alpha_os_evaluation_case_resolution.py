@@ -35,7 +35,7 @@ from alpha_os.portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
-from alpha_os.initial_strategy_state import InitialStrategyState
+from alpha_os.strategy_checkpoint import StrategyCheckpoint
 from alpha_os.signal_discovery import SignalDiscoverySpec
 from alpha_os.store import EvaluationStore
 from alpha_os.strategy_sleeves import (
@@ -219,16 +219,16 @@ def _make_evaluation_spec_with_two_folds() -> EvaluationSpec:
     )
 
 
-def _persist_initial_strategy_state_for_fold(
+def _persist_strategy_checkpoint_for_fold(
     store: EvaluationStore,
     *,
     evaluation_task: EvaluationTask,
     fold: EvaluationFold,
     signal_discovery_id: str = "global_macro_search",
 ) -> None:
-    store.upsert_initial_strategy_state(
-        state=InitialStrategyState(
-            initial_strategy_state_id=f"state:{fold.label}",
+    store.upsert_strategy_checkpoint(
+        state=StrategyCheckpoint(
+            strategy_checkpoint_id=f"state:{fold.label}",
             strategy_id=evaluation_task.strategy_id,
             signal_train_id=build_signal_train_id(
                 signal_discovery_id=signal_discovery_id,
@@ -844,7 +844,7 @@ def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()
         for fold in evaluation_spec.resolved_evaluation_folds:
-            _persist_initial_strategy_state_for_fold(
+            _persist_strategy_checkpoint_for_fold(
                 store,
                 evaluation_task=resolved_tasks[0],
                 fold=fold,
