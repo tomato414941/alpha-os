@@ -14,7 +14,11 @@ from .strategy_backtest import (
 from .evaluation_generation import generate_evaluation_inputs_batch_from_feature_plane
 from .evaluation_inputs import EvaluationInput
 from .evaluation_metric_config import requires_decision_evaluation
-from .strategy_engine import StrategyEvaluationInputRefs, StrategyEvaluationRequest
+from .strategy_engine import (
+    StrategyEvaluationDiagnosticRefs,
+    StrategyEvaluationInputRefs,
+    StrategyEvaluationRequest,
+)
 from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_report import (
@@ -92,8 +96,10 @@ class EvaluationExecutionResult:
 @dataclass(frozen=True)
 class PreparedStrategyEvaluationInputs:
     initial_strategy_state: object | None
-    signal_discovery_run: object | None
+    diagnostic_signal_discovery_run: object | None
     snapshot_set_id: str | None
+    prepared_start_date: str
+    prepared_end_date: str
     screening_state: object
     compressed_belief_state: object
 
@@ -117,6 +123,7 @@ def resolve_prepared_strategy_evaluation_inputs(
     *,
     store: EvaluationExecutionReadPort,
     input_refs: StrategyEvaluationInputRefs,
+    diagnostic_refs: StrategyEvaluationDiagnosticRefs | None,
 ) -> PreparedStrategyEvaluationInputs:
     initial_strategy_state_record = (
         None
@@ -126,16 +133,20 @@ def resolve_prepared_strategy_evaluation_inputs(
     initial_strategy_state = (
         None if initial_strategy_state_record is None else initial_strategy_state_record.state
     )
-    signal_discovery_run = None
-    if input_refs.signal_discovery_run_id is not None:
+    diagnostic_signal_discovery_run = None
+    if (
+        diagnostic_refs is not None
+        and diagnostic_refs.signal_discovery_run_id is not None
+    ):
         signal_discovery_run_state = store.get_signal_discovery_run(
-            input_refs.signal_discovery_run_id
+            diagnostic_refs.signal_discovery_run_id
         )
         if signal_discovery_run_state is None:
             raise ValueError(
-                f"signal discovery run does not exist: {input_refs.signal_discovery_run_id}"
+                "signal discovery run does not exist: "
+                f"{diagnostic_refs.signal_discovery_run_id}"
             )
-        signal_discovery_run = signal_discovery_run_state.run
+        diagnostic_signal_discovery_run = signal_discovery_run_state.run
     screening_state = store.get_screening_result(input_refs.screening_result_id)
     if screening_state is None:
         raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
@@ -144,8 +155,10 @@ def resolve_prepared_strategy_evaluation_inputs(
         raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
     return PreparedStrategyEvaluationInputs(
         initial_strategy_state=initial_strategy_state,
-        signal_discovery_run=signal_discovery_run,
+        diagnostic_signal_discovery_run=diagnostic_signal_discovery_run,
         snapshot_set_id=input_refs.snapshot_set_id,
+        prepared_start_date=input_refs.prepared_start_date,
+        prepared_end_date=input_refs.prepared_end_date,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
     )
@@ -157,7 +170,7 @@ def build_prepared_strategy_evaluation_base_outputs(
     prepared_inputs: PreparedStrategyEvaluationInputs,
 ) -> PreparedStrategyEvaluationBaseOutputs:
     initial_strategy_state = prepared_inputs.initial_strategy_state
-    signal_discovery_run = prepared_inputs.signal_discovery_run
+    diagnostic_signal_discovery_run = prepared_inputs.diagnostic_signal_discovery_run
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
     metric_group_result_map = {
@@ -166,18 +179,18 @@ def build_prepared_strategy_evaluation_base_outputs(
             compressed_belief_state=compressed_belief_state,
         ),
     }
-    if signal_discovery_run is not None:
+    if diagnostic_signal_discovery_run is not None:
         metric_group_result_map["system_efficiency"] = (
             system_efficiency_metric_group_result_from_signal_discovery_run(
-                signal_discovery_run
+                diagnostic_signal_discovery_run
             )
         )
     artifact_refs: dict[str, tuple[str, ...]] = {
         "evaluation_task_ids": (execution_request.evaluation_task_id,),
         "strategy_ids": (execution_request.context.strategy_id,),
         "signal_discovery_run_ids": ()
-        if signal_discovery_run is None
-        else (signal_discovery_run.signal_discovery_run_id,),
+        if diagnostic_signal_discovery_run is None
+        else (diagnostic_signal_discovery_run.signal_discovery_run_id,),
         "screening_result_ids": (screening_state.screening_result_id,),
         "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
         "evaluation_fold_labels": (execution_request.fold_label,),
@@ -201,7 +214,6 @@ def resolve_prepared_strategy_survivor_snapshots(
 ) -> list[EvaluationSnapshot]:
     store = context.store
     initial_strategy_state = prepared_inputs.initial_strategy_state
-    signal_discovery_run = prepared_inputs.signal_discovery_run
     snapshot_set_id = prepared_inputs.snapshot_set_id
     screening_state = prepared_inputs.screening_state
     survivor_signal_ids = (
@@ -210,9 +222,8 @@ def resolve_prepared_strategy_survivor_snapshots(
         else [item.signal_id for item in screening_state.result.survivors]
     )
     if requires_frozen_test_application(
-        signal_discovery_run=(
-            signal_discovery_run if signal_discovery_run is not None else initial_strategy_state
-        ),
+        prepared_start_date=prepared_inputs.prepared_start_date,
+        prepared_end_date=prepared_inputs.prepared_end_date,
         evaluation_date_ranges=execution_request.evaluation_date_ranges,
     ):
         if not execution_request.context.base_url:
@@ -370,13 +381,14 @@ def _is_range_within_execution_range(
 
 def requires_frozen_test_application(
     *,
-    signal_discovery_run,
+    prepared_start_date: str,
+    prepared_end_date: str,
     evaluation_date_ranges,
 ) -> bool:
     return any(
         not _is_range_within_execution_range(
-            execution_start_date=signal_discovery_run.execution_start_date,
-            execution_end_date=signal_discovery_run.execution_end_date,
+            execution_start_date=prepared_start_date,
+            execution_end_date=prepared_end_date,
             evaluation_date_range=item,
         )
         for item in evaluation_date_ranges
@@ -755,6 +767,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
         prepared_inputs = resolve_prepared_strategy_evaluation_inputs(
             store=store,
             input_refs=input_refs,
+            diagnostic_refs=execution_request.diagnostic_refs,
         )
         base_outputs = build_prepared_strategy_evaluation_base_outputs(
             execution_request=execution_request,

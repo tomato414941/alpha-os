@@ -2674,7 +2674,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             "fold_2025",
             "fold_2026_q1",
         )
-        assert tuple(item.input_refs.signal_discovery_run_id for item in plan.execution_requests) == (
+        assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_a",
             "signal_discovery_run_b",
         )
@@ -2956,7 +2956,7 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
             "frozen_state_a",
             "frozen_state_a",
         )
-        assert tuple(item.input_refs.signal_discovery_run_id for item in plan.execution_requests) == (
+        assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_seed",
             "signal_discovery_run_seed",
         )

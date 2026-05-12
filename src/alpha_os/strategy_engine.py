@@ -29,10 +29,16 @@ class StrategyEvaluationContext:
 @dataclass(frozen=True)
 class StrategyEvaluationInputRefs:
     initial_strategy_state_id: str | None
-    signal_discovery_run_id: str | None
     snapshot_set_id: str | None
     screening_result_id: str | None
     compressed_belief_id: str | None
+    prepared_start_date: str
+    prepared_end_date: str
+
+
+@dataclass(frozen=True)
+class StrategyEvaluationDiagnosticRefs:
+    signal_discovery_run_id: str | None
 
 
 @dataclass(frozen=True)
@@ -55,6 +61,7 @@ class StrategyEvaluationRequest:
     fold_label: str
     context: StrategyEvaluationContext
     input_refs: StrategyEvaluationInputRefs | None
+    diagnostic_refs: StrategyEvaluationDiagnosticRefs | None
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...]
     metric_group_names: tuple[str, ...]
@@ -70,6 +77,7 @@ class StrategyEvaluationRequest:
         execution_range: EvaluationDateRange,
         evaluation_date_ranges: tuple[EvaluationDateRange, ...],
         metric_group_names: tuple[str, ...],
+        diagnostic_refs: StrategyEvaluationDiagnosticRefs | None = None,
     ) -> None:
         if evaluation_task_id is None:
             raise ValueError("strategy evaluation request requires evaluation_task_id")
@@ -78,6 +86,7 @@ class StrategyEvaluationRequest:
         object.__setattr__(self, "fold_label", fold_label)
         object.__setattr__(self, "context", context)
         object.__setattr__(self, "input_refs", input_refs)
+        object.__setattr__(self, "diagnostic_refs", diagnostic_refs)
         object.__setattr__(self, "execution_range", execution_range)
         object.__setattr__(self, "evaluation_date_ranges", evaluation_date_ranges)
         object.__setattr__(self, "metric_group_names", metric_group_names)

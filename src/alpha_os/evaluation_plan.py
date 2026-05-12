@@ -17,6 +17,7 @@ from .evaluation_spec import (
 )
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .strategy_engine import (
+    StrategyEvaluationDiagnosticRefs,
     StrategyEvaluationInputRefs,
     StrategyEvaluationContext,
     StrategyEvaluationRequest,
@@ -80,6 +81,8 @@ def _strategy_evaluation_request(
     initial_strategy_state_id: str | None,
     signal_discovery_run_id: str | None,
     snapshot_set_id: str | None,
+    prepared_start_date: str | None,
+    prepared_end_date: str | None,
     subject_set_id: str,
     target_id: str,
     screening_result_id: str | None,
@@ -98,18 +101,27 @@ def _strategy_evaluation_request(
     input_refs = None
     if (
         initial_strategy_state_id is not None
-        or signal_discovery_run_id is not None
         or snapshot_set_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
+        if prepared_start_date is None or prepared_end_date is None:
+            raise ValueError("prepared evaluation inputs require prepared date range")
         input_refs = StrategyEvaluationInputRefs(
             initial_strategy_state_id=initial_strategy_state_id,
-            signal_discovery_run_id=signal_discovery_run_id,
             snapshot_set_id=snapshot_set_id,
             screening_result_id=screening_result_id,
             compressed_belief_id=compressed_belief_id,
+            prepared_start_date=prepared_start_date,
+            prepared_end_date=prepared_end_date,
         )
+    diagnostic_refs = (
+        None
+        if signal_discovery_run_id is None
+        else StrategyEvaluationDiagnosticRefs(
+            signal_discovery_run_id=signal_discovery_run_id,
+        )
+    )
     return StrategyEvaluationRequest(
         evaluation_task_id=evaluation_task_id,
         evaluation_spec_id=evaluation_spec_id,
@@ -128,6 +140,7 @@ def _strategy_evaluation_request(
             holding_cost_assumptions=holding_cost_assumptions,
         ),
         input_refs=input_refs,
+        diagnostic_refs=diagnostic_refs,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,
@@ -297,6 +310,8 @@ def build_evaluation_plan(
                         initial_strategy_state_id=None,
                         signal_discovery_run_id=None,
                         snapshot_set_id=None,
+                        prepared_start_date=None,
+                        prepared_end_date=None,
                         subject_set_id=subject_set_id,
                         target_id=target_id,
                         screening_result_id=None,
@@ -343,6 +358,8 @@ def build_evaluation_plan(
                         ),
                         signal_discovery_run_id=frozen_state.signal_discovery_run_id,
                         snapshot_set_id=frozen_state.snapshot_set_id,
+                        prepared_start_date=frozen_state.execution_start_date,
+                        prepared_end_date=frozen_state.execution_end_date,
                         subject_set_id=frozen_state.subject_set_id,
                         target_id=frozen_state.target_id,
                         screening_result_id=frozen_state.screening_result_id,
@@ -381,6 +398,8 @@ def build_evaluation_plan(
                 )
                 signal_discovery_run_id = initial_strategy_state.signal_discovery_run_id
                 snapshot_set_id = initial_strategy_state.snapshot_set_id
+                prepared_start_date = initial_strategy_state.execution_start_date
+                prepared_end_date = initial_strategy_state.execution_end_date
                 subject_set_id = initial_strategy_state.subject_set_id
                 target_id = initial_strategy_state.target_id
                 screening_result_id = initial_strategy_state.screening_result_id
@@ -402,6 +421,8 @@ def build_evaluation_plan(
                 initial_strategy_state_id = None
                 signal_discovery_run_id = signal_discovery_run.signal_discovery_run_id
                 snapshot_set_id = signal_discovery_run.snapshot_set_id
+                prepared_start_date = signal_discovery_run.execution_start_date
+                prepared_end_date = signal_discovery_run.execution_end_date
                 subject_set_id = signal_discovery_run.subject_set_id
                 target_id = signal_discovery_run.target_id or default_target_id
                 screening_result_id = signal_discovery_run.screening_result_id
@@ -416,6 +437,8 @@ def build_evaluation_plan(
                     initial_strategy_state_id=initial_strategy_state_id,
                     signal_discovery_run_id=signal_discovery_run_id,
                     snapshot_set_id=snapshot_set_id,
+                    prepared_start_date=prepared_start_date,
+                    prepared_end_date=prepared_end_date,
                     subject_set_id=subject_set_id,
                     target_id=target_id,
                     screening_result_id=screening_result_id,
