@@ -434,7 +434,7 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     )
 
 
-def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, capsys):
+def test_run_evaluation_uses_archived_prepared_snapshots(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 
@@ -578,7 +578,6 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -667,23 +666,6 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
     finally:
         data_repositories.load_observation_frame = original_loader
     capsys.readouterr()
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        signal_discovery_run_state = store.list_signal_discovery_runs(
-            signal_discovery_id="core_crypto_search",
-            execution_start_date="2026-03-23",
-            execution_end_date="2026-03-24",
-            limit=1,
-        )[0]
-        archived_snapshots = store.list_prepared_evaluation_snapshots(
-            snapshot_set_id=signal_discovery_run_state.run.snapshot_set_id,
-        )
-        latest_snapshots = store.list_evaluation_snapshots(limit=10)
-        assert len(archived_snapshots) > len(latest_snapshots)
-    finally:
-        store.close()
 
     original_loader = data_repositories.load_observation_frame
     data_repositories.load_observation_frame = _fake_loader
@@ -836,7 +818,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -1008,7 +989,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -1982,15 +1962,10 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        signal_discovery_runs = store.list_signal_discovery_runs(
-            signal_discovery_id="global_macro_futures_daily_trend_search",
-            limit=10,
-        )
         strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="global_macro_futures_daily_trend_search",
             limit=10,
         )
-        assert len(signal_discovery_runs) >= 1
         assert len(strategy_checkpoints) >= 1
         assert {item.state.fold_label for item in strategy_checkpoints} >= {
             "fold_2024h1_to_2024m5",
@@ -2653,10 +2628,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             "fold_2025",
             "fold_2026_q1",
         )
-        assert tuple(item.diagnostic_refs for item in plan.execution_requests) == (
-            None,
-            None,
-        )
         assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
             "checkpoint_a",
             "checkpoint_b",
@@ -2935,10 +2906,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             "checkpoint_a",
             "checkpoint_a",
         )
-        assert tuple(item.diagnostic_refs for item in plan.execution_requests) == (
-            None,
-            None,
-        )
         assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
             "snapshot_set_seed",
             "snapshot_set_seed",
@@ -3205,7 +3172,6 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -3313,15 +3279,10 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        signal_discovery_runs = store.list_signal_discovery_runs(
-            signal_discovery_id="core_crypto_search",
-            limit=10,
-        )
         strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
-        assert len(signal_discovery_runs) >= 2
         assert len(strategy_checkpoints) >= 2
         assert {item.state.fold_label for item in strategy_checkpoints} >= {
             "fold_a",
@@ -3370,7 +3331,6 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             "signal_weighted"
         )
         assert trading_strategy.portfolio.rebalance_interval_steps == 1
-        initial_signal_discovery_run_count = len(signal_discovery_runs)
         strategy_checkpoint_count = len(strategy_checkpoints)
     finally:
         store.close()
@@ -3439,15 +3399,10 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        rerun_signal_discovery_runs = store.list_signal_discovery_runs(
-            signal_discovery_id="core_crypto_search",
-            limit=10,
-        )
         rerun_strategy_checkpoints = store.list_strategy_checkpoints(
             signal_discovery_id="core_crypto_search",
             limit=10,
         )
-        assert len(rerun_signal_discovery_runs) == initial_signal_discovery_run_count
         assert len(rerun_strategy_checkpoints) == strategy_checkpoint_count + 2
         challenger_strategy_checkpoints = store.list_strategy_checkpoints(
             strategy_id="strategy:core_crypto_equal_weight",

@@ -15,7 +15,6 @@ from .evaluation_generation import generate_evaluation_inputs_batch_from_feature
 from .evaluation_inputs import EvaluationInput
 from .evaluation_metric_config import DECISION_EVALUATION_METRIC_GROUP_NAMES
 from .strategy_engine import (
-    StrategyEvaluationDiagnosticRefs,
     StrategyEvaluationInputRefs,
     StrategyEvaluationRequest,
 )
@@ -49,9 +48,6 @@ class EvaluationExecutionReadPort(Protocol):
         ...
 
     def get_strategy_checkpoint(self, strategy_checkpoint_id: str):
-        ...
-
-    def get_signal_discovery_run(self, signal_discovery_run_id: str):
         ...
 
     def get_screening_result(self, screening_result_id: str):
@@ -96,7 +92,6 @@ class EvaluationExecutionResult:
 @dataclass(frozen=True)
 class PreparedStrategyEvaluationInputs:
     strategy_checkpoint: object | None
-    diagnostic_signal_discovery_run: object | None
     snapshot_set_id: str | None
     prepared_start_date: str
     prepared_end_date: str
@@ -123,7 +118,6 @@ def resolve_prepared_strategy_evaluation_inputs(
     *,
     store: EvaluationExecutionReadPort,
     input_refs: StrategyEvaluationInputRefs,
-    diagnostic_refs: StrategyEvaluationDiagnosticRefs | None,
 ) -> PreparedStrategyEvaluationInputs:
     strategy_checkpoint_record = (
         None
@@ -133,20 +127,6 @@ def resolve_prepared_strategy_evaluation_inputs(
     strategy_checkpoint = (
         None if strategy_checkpoint_record is None else strategy_checkpoint_record.state
     )
-    diagnostic_signal_discovery_run = None
-    if (
-        diagnostic_refs is not None
-        and diagnostic_refs.signal_discovery_run_id is not None
-    ):
-        signal_discovery_run_state = store.get_signal_discovery_run(
-            diagnostic_refs.signal_discovery_run_id
-        )
-        if signal_discovery_run_state is None:
-            raise ValueError(
-                "signal discovery run does not exist: "
-                f"{diagnostic_refs.signal_discovery_run_id}"
-            )
-        diagnostic_signal_discovery_run = signal_discovery_run_state.run
     screening_state = store.get_screening_result(input_refs.screening_result_id)
     if screening_state is None:
         raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
@@ -155,7 +135,6 @@ def resolve_prepared_strategy_evaluation_inputs(
         raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
     return PreparedStrategyEvaluationInputs(
         strategy_checkpoint=strategy_checkpoint,
-        diagnostic_signal_discovery_run=diagnostic_signal_discovery_run,
         snapshot_set_id=input_refs.snapshot_set_id,
         prepared_start_date=input_refs.prepared_start_date,
         prepared_end_date=input_refs.prepared_end_date,
@@ -170,7 +149,6 @@ def build_prepared_strategy_evaluation_base_outputs(
     prepared_inputs: PreparedStrategyEvaluationInputs,
 ) -> PreparedStrategyEvaluationBaseOutputs:
     strategy_checkpoint = prepared_inputs.strategy_checkpoint
-    diagnostic_signal_discovery_run = prepared_inputs.diagnostic_signal_discovery_run
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
     metric_group_result_map = {
@@ -179,18 +157,9 @@ def build_prepared_strategy_evaluation_base_outputs(
             compressed_belief_state=compressed_belief_state,
         ),
     }
-    if diagnostic_signal_discovery_run is not None:
-        metric_group_result_map["signal_discovery_run_stats"] = (
-            signal_discovery_run_stats_metric_group_result(
-                diagnostic_signal_discovery_run
-            )
-        )
     artifact_refs: dict[str, tuple[str, ...]] = {
         "evaluation_task_ids": (execution_request.evaluation_task_id,),
         "strategy_ids": (execution_request.context.strategy_id,),
-        "signal_discovery_run_ids": ()
-        if diagnostic_signal_discovery_run is None
-        else (diagnostic_signal_discovery_run.signal_discovery_run_id,),
         "screening_result_ids": (screening_state.screening_result_id,),
         "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
         "evaluation_fold_labels": (execution_request.fold_label,),
@@ -304,25 +273,6 @@ def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
             "net_exposure_target": execution_request.context.portfolio_construction.net_exposure_target,
             "asset_class_weight_caps": (execution_request.context.portfolio_construction.asset_class_weight_caps),
             "cluster_weight_caps": execution_request.context.portfolio_construction.cluster_weight_caps,
-        },
-    )
-
-
-def signal_discovery_run_stats_metric_group_result(
-    signal_discovery_run,
-) -> EvaluationMetricGroupResult:
-    return EvaluationMetricGroupResult(
-        metric_group_name="signal_discovery_run_stats",
-        source="signal_discovery_run",
-        metrics={
-            "workflow_runtime_s": round(float(signal_discovery_run.workflow_runtime_s), 6),
-            "total_executables": int(signal_discovery_run.total_executables),
-            "pre_screen_selected": int(signal_discovery_run.pre_screen_selected),
-            "probe_selected": int(signal_discovery_run.probe_selected),
-            "survivor_selected": int(signal_discovery_run.survivor_selected),
-            "persisted_signals": int(signal_discovery_run.persisted_signals),
-            "evaluation_inputs": int(signal_discovery_run.evaluation_inputs),
-            "pruned_snapshots": int(signal_discovery_run.pruned_snapshots),
         },
     )
 
@@ -766,7 +716,6 @@ class PreparedStrategyEvaluationExecutionStrategy:
         prepared_inputs = resolve_prepared_strategy_evaluation_inputs(
             store=store,
             input_refs=input_refs,
-            diagnostic_refs=execution_request.diagnostic_refs,
         )
         base_outputs = build_prepared_strategy_evaluation_base_outputs(
             execution_request=execution_request,

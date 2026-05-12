@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 
 from .data_repositories import (
@@ -17,9 +16,7 @@ from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_application import (
     build_strategy_checkpoint_id,
     build_prepared_evaluation_snapshot_set_id,
-    build_signal_discovery_run_id,
     persist_strategy_checkpoint,
-    persist_signal_discovery_run,
     run_signal_discovery_workflow,
 )
 from .store import EvaluationStore
@@ -261,13 +258,6 @@ def prepare_strategy_checkpoints_for_evaluation(
             ):
                 continue
             timestamp = request.created_at
-            started_at = time.perf_counter()
-            signal_discovery_run_id = build_signal_discovery_run_id(
-                signal_discovery_id=group.signal_discovery_id,
-                start_date=fold.execution_range.start_date,
-                end_date=fold.execution_range.end_date,
-                created_at=timestamp,
-            )
             snapshot_set_id = build_prepared_evaluation_snapshot_set_id(
                 signal_discovery_id=group.signal_discovery_id,
                 start_date=fold.execution_range.start_date,
@@ -275,7 +265,7 @@ def prepare_strategy_checkpoints_for_evaluation(
                 created_at=timestamp,
             )
             (
-                backfill_result,
+                _backfill_result,
                 signal_discovery,
                 subject_set,
                 target_id,
@@ -285,7 +275,6 @@ def prepare_strategy_checkpoints_for_evaluation(
             ) = run_signal_discovery_workflow(
                 store,
                 default_target_id=request.default_target_id,
-                signal_discovery_run_id=signal_discovery_run_id,
                 snapshot_set_id=snapshot_set_id,
                 signal_discovery_id=group.signal_discovery_id,
                 start_date=fold.execution_range.start_date,
@@ -299,22 +288,6 @@ def prepare_strategy_checkpoints_for_evaluation(
                 ),
                 feature_plane_repository=request.feature_plane_repository,
                 evaluation_input_repository=request.evaluation_input_repository,
-            )
-            persist_signal_discovery_run(
-                store,
-                signal_discovery_run_id=signal_discovery_run_id,
-                snapshot_set_id=snapshot_set_id,
-                signal_discovery_id=signal_discovery.signal_discovery_id,
-                subject_set_id=str(subject_set.subject_set_id),
-                target_id=target_id,
-                start_date=fold.execution_range.start_date,
-                end_date=fold.execution_range.end_date,
-                screening_result_id=screening_state.screening_result_id,
-                compressed_belief_id=compressed_belief_state.compressed_belief_id,
-                workflow_runtime_s=time.perf_counter() - started_at,
-                backfill_result=backfill_result,
-                pruned_snapshot_count=pruned_snapshot_count,
-                created_at=timestamp,
             )
             for evaluation_task in group.evaluation_tasks:
                 persist_strategy_checkpoint(

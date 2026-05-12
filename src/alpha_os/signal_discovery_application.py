@@ -8,11 +8,10 @@ from .signal_discovery_execution import build_signal_discovery_execution_plan
 from .signal_discovery_persistence_builders import (
     build_strategy_checkpoint,
     build_strategy_checkpoint_id as build_strategy_checkpoint_id,
-    build_signal_discovery_run,
 )
 from .signal_discovery_screening_service import screen_signal_discovery
 from .store import EvaluationStore, _utc_now
-from .subject_set_backfill_service import SubjectSetBackfillResult, run_subject_set_backfill
+from .subject_set_backfill_service import run_subject_set_backfill
 from .universe_contract import validate_subject_set_universe_contract
 
 
@@ -115,16 +114,6 @@ def prune_screened_snapshots(
     )
 
 
-def build_signal_discovery_run_id(
-    *,
-    signal_discovery_id: str,
-    start_date: str,
-    end_date: str,
-    created_at: str,
-) -> str:
-    return f"{signal_discovery_id}:{start_date}:{end_date}:{created_at}"
-
-
 def build_prepared_evaluation_snapshot_set_id(
     *,
     signal_discovery_id: str,
@@ -139,7 +128,6 @@ def run_signal_discovery_workflow(
     store: EvaluationStore,
     *,
     default_target_id: str,
-    signal_discovery_run_id: str,
     snapshot_set_id: str,
     signal_discovery_id: str,
     start_date: str,
@@ -221,42 +209,6 @@ def run_signal_discovery_workflow(
         compressed_belief_state,
         pruned_snapshot_count,
     )
-
-
-def persist_signal_discovery_run(
-    store: EvaluationStore,
-    *,
-    signal_discovery_run_id: str,
-    snapshot_set_id: str,
-    signal_discovery_id: str,
-    subject_set_id: str,
-    target_id: str,
-    start_date: str,
-    end_date: str,
-    screening_result_id: str,
-    compressed_belief_id: str,
-    workflow_runtime_s: float,
-    backfill_result: SubjectSetBackfillResult,
-    pruned_snapshot_count: int,
-    created_at: str | None = None,
-):
-    timestamp = _utc_now() if created_at is None else created_at
-    signal_discovery_run = build_signal_discovery_run(
-        signal_discovery_run_id=signal_discovery_run_id,
-        snapshot_set_id=snapshot_set_id,
-        signal_discovery_id=signal_discovery_id,
-        subject_set_id=subject_set_id,
-        target_id=target_id,
-        start_date=start_date,
-        end_date=end_date,
-        screening_result_id=screening_result_id,
-        compressed_belief_id=compressed_belief_id,
-        workflow_runtime_s=workflow_runtime_s,
-        backfill_result=backfill_result,
-        pruned_snapshot_count=pruned_snapshot_count,
-        created_at=timestamp,
-    )
-    return store.upsert_signal_discovery_run(run=signal_discovery_run)
 
 
 def persist_strategy_checkpoint(

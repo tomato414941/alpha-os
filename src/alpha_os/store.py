@@ -39,7 +39,6 @@ from .portfolio_decision import (
     UniversePolicySpec,
 )
 from .screening import ScreeningResult
-from .signal_discovery_run import SignalDiscoveryRun
 from .trading_strategy import TradingStrategySpec
 from .targets import TargetDefinition, find_target_definition, list_target_definitions
 from .strategy_checkpoint import StrategyCheckpoint
@@ -712,21 +711,6 @@ class CompressedBeliefState:
         return CompressedBelief.from_document(
             compressed_belief_id=self.compressed_belief_id,
             document=json.loads(self.belief_json),
-        )
-
-
-@dataclass(frozen=True)
-class SignalDiscoveryRunState:
-    signal_discovery_run_id: str
-    signal_discovery_id: str
-    run_json: str
-    created_at: str
-
-    @property
-    def run(self) -> SignalDiscoveryRun:
-        return SignalDiscoveryRun.from_document(
-            signal_discovery_run_id=self.signal_discovery_run_id,
-            document=json.loads(self.run_json),
         )
 
 
@@ -1509,19 +1493,6 @@ def _row_to_compressed_belief(row: sqlite3.Row | None) -> CompressedBeliefState 
     )
 
 
-def _row_to_signal_discovery_run(
-    row: sqlite3.Row | None,
-) -> SignalDiscoveryRunState | None:
-    if row is None:
-        return None
-    return SignalDiscoveryRunState(
-        signal_discovery_run_id=str(row["signal_discovery_run_id"]),
-        signal_discovery_id=str(row["signal_discovery_id"]),
-        run_json=str(row["run_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_strategy_checkpoint(
     row: sqlite3.Row | None,
 ) -> StrategyCheckpointRecord | None:
@@ -1848,13 +1819,6 @@ class EvaluationStore:
                 compressed_belief_id TEXT PRIMARY KEY,
                 signal_discovery_id TEXT NOT NULL,
                 belief_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS signal_discovery_runs (
-                signal_discovery_run_id TEXT PRIMARY KEY,
-                signal_discovery_id TEXT NOT NULL,
-                run_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
 
@@ -3661,35 +3625,6 @@ class EvaluationStore:
             ).fetchall()
         return [_row_to_compressed_belief(row) for row in rows if row is not None]
 
-    def upsert_signal_discovery_run(
-        self,
-        *,
-        run: SignalDiscoveryRun,
-    ) -> SignalDiscoveryRunState:
-        self.ensure_schema()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO signal_discovery_runs (
-                    signal_discovery_run_id, signal_discovery_id, run_json, created_at
-                )
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(signal_discovery_run_id) DO UPDATE SET
-                    signal_discovery_id = excluded.signal_discovery_id,
-                    run_json = excluded.run_json,
-                    created_at = excluded.created_at
-                """,
-                (
-                    run.signal_discovery_run_id,
-                    run.signal_discovery_id,
-                    json.dumps(run.to_document(), sort_keys=True),
-                    run.created_at,
-                ),
-            )
-        state = self.get_signal_discovery_run(run.signal_discovery_run_id)
-        assert state is not None
-        return state
-
     def upsert_strategy_checkpoint(
         self,
         *,
@@ -3805,20 +3740,6 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def get_signal_discovery_run(
-        self,
-        signal_discovery_run_id: str,
-    ) -> SignalDiscoveryRunState | None:
-        row = self.conn.execute(
-            """
-            SELECT signal_discovery_run_id, signal_discovery_id, run_json, created_at
-            FROM signal_discovery_runs
-            WHERE signal_discovery_run_id = ?
-            """,
-            (signal_discovery_run_id,),
-        ).fetchone()
-        return _row_to_signal_discovery_run(row)
-
     def get_strategy_checkpoint(
         self,
         strategy_checkpoint_id: str,
@@ -3874,43 +3795,6 @@ class EvaluationStore:
             (evaluation_task_id,),
         ).fetchone()
         return _row_to_evaluation_job_spec(row)
-
-    def list_signal_discovery_runs(
-        self,
-        *,
-        signal_discovery_id: str | None = None,
-        execution_start_date: str | None = None,
-        execution_end_date: str | None = None,
-        limit: int = 20,
-    ) -> list[SignalDiscoveryRunState]:
-        filters = []
-        params: list[object] = []
-        if signal_discovery_id is not None:
-            filters.append("signal_discovery_id = ?")
-            params.append(signal_discovery_id)
-        if execution_start_date is not None:
-            filters.append("json_extract(run_json, '$.execution_start_date') = ?")
-            params.append(execution_start_date)
-        if execution_end_date is not None:
-            filters.append("json_extract(run_json, '$.execution_end_date') = ?")
-            params.append(execution_end_date)
-        where_clause = ""
-        if filters:
-            where_clause = f"WHERE {' AND '.join(filters)}"
-        params.append(max(int(limit), 1))
-        rows = self.conn.execute(
-            f"""
-            SELECT signal_discovery_run_id, signal_discovery_id, run_json, created_at
-            FROM signal_discovery_runs
-            {where_clause}
-            ORDER BY created_at DESC, signal_discovery_run_id DESC
-            LIMIT ?
-            """,
-            tuple(params),
-        ).fetchall()
-        return [
-            _row_to_signal_discovery_run(row) for row in rows if row is not None
-        ]
 
     def list_strategy_checkpoints(
         self,

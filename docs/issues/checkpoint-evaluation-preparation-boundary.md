@@ -14,7 +14,6 @@ The current walk-forward evaluation use case also owns preparation orchestration
 - decide whether a strategy requires prepared state
 - check whether fold checkpoints already exist
 - run the signal discovery workflow when checkpoints are missing
-- persist `SignalDiscoveryRun`
 - persist `StrategyCheckpoint`
 - evaluate the prepared checkpoints
 
@@ -41,7 +40,6 @@ checkpoint evaluation preparation
 
 Avoid pushing these responsibilities into strategy backtest:
 
-- finding signal discovery runs
 - choosing strategy checkpoints
 - reading screening results
 - reading compressed beliefs

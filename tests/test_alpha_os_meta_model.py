@@ -639,7 +639,6 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                             "end_date": "2026-03-24",
                         },
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                         ],
                     }
@@ -2458,7 +2457,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_run_stats",
                             "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -2693,17 +2691,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        signal_discovery_runs = store.list_signal_discovery_runs(
-            signal_discovery_id="core_crypto_search",
-            execution_start_date="2026-03-23",
-            execution_end_date="2026-03-24",
-            limit=1,
-        )
-        assert len(signal_discovery_runs) == 1
-        archived_snapshots = store.list_prepared_evaluation_snapshots(
-            snapshot_set_id=signal_discovery_runs[0].run.snapshot_set_id,
-        )
-        assert len(archived_snapshots) > len(store.list_evaluation_snapshots(limit=10))
         workflow_decisions = store.list_portfolio_decisions(
             portfolio_id="paper_core_workflow",
             limit=10,

@@ -199,7 +199,6 @@ Inputs:
 
 Outputs:
 
-- signal discovery run record
 - screening result
 - compressed belief
 - strategy checkpoint

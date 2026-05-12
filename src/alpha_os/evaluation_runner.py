@@ -14,7 +14,6 @@ from .evaluation_execution_strategy import (
     signal_discovery_result_stats_metric_group_result as signal_discovery_result_stats_metric_group_result,
     strategy_sleeve_attribution_summaries as strategy_sleeve_attribution_summaries,
     subject_matches_sleeve_filter as subject_matches_sleeve_filter,
-    signal_discovery_run_stats_metric_group_result as signal_discovery_run_stats_metric_group_result,
 )
 from .evaluation_task import EvaluationTask
 from .evaluation_job_spec import EvaluationJobSpec, default_evaluation_job_spec

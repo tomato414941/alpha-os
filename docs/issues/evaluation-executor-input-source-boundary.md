@@ -45,7 +45,6 @@ training or discovery provenance:
 | Field | Direct path | Fixed-state path | Signal-discovery path | ML analogy |
 | --- | --- | --- | --- | --- |
 | `strategy_checkpoint_id` | none | present | optional | strategy checkpoint |
-| `signal_discovery_run_id` | none | none | present when using a run | training run |
 | `signal_discovery_id` | optional | present | present | discovery config |
 | `screening_result_id` | none | present | present | selection result |
 | `compressed_belief_id` | none | present | present | learned state or checkpoint component |

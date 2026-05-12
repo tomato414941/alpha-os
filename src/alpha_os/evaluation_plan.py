@@ -16,7 +16,6 @@ from .evaluation_spec import (
 )
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .strategy_engine import (
-    StrategyEvaluationDiagnosticRefs,
     StrategyEvaluationInputRefs,
     StrategyEvaluationContext,
     StrategyEvaluationRequest,
@@ -67,7 +66,6 @@ def _strategy_evaluation_request(
     strategy_id: str,
     signal_discovery_id: str | None,
     strategy_checkpoint_id: str | None,
-    signal_discovery_run_id: str | None,
     snapshot_set_id: str | None,
     prepared_start_date: str | None,
     prepared_end_date: str | None,
@@ -103,13 +101,6 @@ def _strategy_evaluation_request(
             prepared_start_date=prepared_start_date,
             prepared_end_date=prepared_end_date,
         )
-    diagnostic_refs = (
-        None
-        if signal_discovery_run_id is None
-        else StrategyEvaluationDiagnosticRefs(
-            signal_discovery_run_id=signal_discovery_run_id,
-        )
-    )
     return StrategyEvaluationRequest(
         evaluation_task_id=evaluation_task_id,
         evaluation_spec_id=evaluation_spec_id,
@@ -128,7 +119,6 @@ def _strategy_evaluation_request(
             holding_cost_assumptions=holding_cost_assumptions,
         ),
         input_refs=input_refs,
-        diagnostic_refs=diagnostic_refs,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,
@@ -296,7 +286,6 @@ def build_evaluation_plan(
                         strategy_checkpoint_id=(
                             checkpoint.strategy_checkpoint_id
                         ),
-                        signal_discovery_run_id=None,
                         snapshot_set_id=checkpoint.snapshot_set_id,
                         prepared_start_date=checkpoint.execution_start_date,
                         prepared_end_date=checkpoint.execution_end_date,
@@ -334,7 +323,6 @@ def build_evaluation_plan(
                         strategy_id=evaluation_task.strategy_id,
                         signal_discovery_id=None,
                         strategy_checkpoint_id=None,
-                        signal_discovery_run_id=None,
                         snapshot_set_id=None,
                         prepared_start_date=None,
                         prepared_end_date=None,
@@ -390,7 +378,6 @@ def build_evaluation_plan(
                     strategy_id=evaluation_task.strategy_id,
                     signal_discovery_id=strategy_signal_discovery_id,
                     strategy_checkpoint_id=strategy_checkpoint_id,
-                    signal_discovery_run_id=None,
                     snapshot_set_id=snapshot_set_id,
                     prepared_start_date=prepared_start_date,
                     prepared_end_date=prepared_end_date,

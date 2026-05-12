@@ -14,7 +14,6 @@ EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 
 
 PREPARATION_STATS_METRIC_GROUP_NAMES = (
-    "signal_discovery_run_stats",
     "signal_discovery_result_stats",
 )
 

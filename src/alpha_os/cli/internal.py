@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import time
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from typing import Iterator
@@ -61,9 +60,6 @@ from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
-from ..evaluation_report import (
-    EvaluationMetricGroupResult,
-)
 from ..evaluation_report_service import (
     build_report_evaluation_task_contract_fields,
     resolve_report_strategy_context,
@@ -119,9 +115,7 @@ from ..signal_generator import (
 from ..signal_discovery_application import (
     build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
     build_prepared_evaluation_snapshot_set_id as _app_build_prepared_evaluation_snapshot_set_id,
-    build_signal_discovery_run_id as _app_build_signal_discovery_run_id,
     compress_screening_result_state as _app_compress_screening_result_state,
-    persist_signal_discovery_run as _app_persist_signal_discovery_run,
     run_signal_discovery_workflow as _app_run_signal_discovery_workflow,
     screen_signal_discovery as _app_screen_signal_discovery,
 )
@@ -163,7 +157,6 @@ from ..observation_adapters import resolve_observation_metadata
 from ..signal_discovery_execution import build_signal_discovery_execution_plan
 from ..store import EvaluationStore, _utc_now
 from ..subject_set_backfill_service import (
-    SubjectSetBackfillResult,
     resolve_subject_set_for_build,
     run_subject_set_backfill,
 )
@@ -3837,7 +3830,6 @@ def cmd_compress_screening_result(args: argparse.Namespace) -> int:
 
 def _print_signal_discovery_workflow_output(
     *,
-    signal_discovery_run_id: str | None,
     signal_discovery_id: str,
     screening_state,
     compressed_belief_state,
@@ -3847,8 +3839,6 @@ def _print_signal_discovery_workflow_output(
     print_compressed_belief(compressed_belief_state)
     print("alpha-os workflow output")
     print(f"  SignalDiscovery:     {signal_discovery_id}")
-    if signal_discovery_run_id is not None:
-        print(f"  SignalDiscoveryRunId:           {signal_discovery_run_id}")
     print(f"  ScreeningResultId:     {screening_state.screening_result_id}")
     print(f"  CompressedBeliefId:    {compressed_belief_state.compressed_belief_id}")
     print(f"  PrunedSnapshots:       {pruned_snapshot_count}")
@@ -3861,14 +3851,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             observation_repository=ObservationFrameRepository(store=store)
         )
         evaluation_input_repository = EvaluationInputRepository()
-        started_at = time.perf_counter()
         timestamp = _utc_now()
-        signal_discovery_run_id = _app_build_signal_discovery_run_id(
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            created_at=timestamp,
-        )
         snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
@@ -3876,7 +3859,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             created_at=timestamp,
         )
         (
-            backfill_result,
+            _backfill_result,
             signal_discovery,
             subject_set,
             target_id,
@@ -3886,7 +3869,6 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
         ) = _app_run_signal_discovery_workflow(
             store,
             default_target_id=cfg.target_id,
-            signal_discovery_run_id=signal_discovery_run_id,
             snapshot_set_id=snapshot_set_id,
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
@@ -3899,24 +3881,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             feature_plane_repository=feature_plane_repository,
             evaluation_input_repository=evaluation_input_repository,
         )
-        signal_discovery_run_state = _app_persist_signal_discovery_run(
-            store,
-            signal_discovery_run_id=signal_discovery_run_id,
-            snapshot_set_id=snapshot_set_id,
-            signal_discovery_id=signal_discovery.signal_discovery_id,
-            subject_set_id=str(subject_set.subject_set_id),
-            target_id=target_id,
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            screening_result_id=screening_state.screening_result_id,
-            compressed_belief_id=compressed_belief_state.compressed_belief_id,
-            workflow_runtime_s=time.perf_counter() - started_at,
-            backfill_result=backfill_result,
-            pruned_snapshot_count=pruned_snapshot_count,
-            created_at=timestamp,
-        )
     _print_signal_discovery_workflow_output(
-        signal_discovery_run_id=signal_discovery_run_state.signal_discovery_run_id,
         signal_discovery_id=signal_discovery.signal_discovery_id,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
@@ -3976,14 +3941,7 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             observation_repository=ObservationFrameRepository(store=store)
         )
         evaluation_input_repository = EvaluationInputRepository()
-        started_at = time.perf_counter()
         timestamp = _utc_now()
-        signal_discovery_run_id = _app_build_signal_discovery_run_id(
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            created_at=timestamp,
-        )
         snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
@@ -3991,7 +3949,7 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             created_at=timestamp,
         )
         (
-            backfill_result,
+            _backfill_result,
             signal_discovery,
             subject_set,
             target_id,
@@ -4001,7 +3959,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
         ) = _app_run_signal_discovery_workflow(
             store,
             default_target_id=cfg.target_id,
-            signal_discovery_run_id=signal_discovery_run_id,
             snapshot_set_id=snapshot_set_id,
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
@@ -4013,22 +3970,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             max_family_survivors_per_subject=args.max_family_survivors_per_subject,
             feature_plane_repository=feature_plane_repository,
             evaluation_input_repository=evaluation_input_repository,
-        )
-        signal_discovery_run_state = _app_persist_signal_discovery_run(
-            store,
-            signal_discovery_run_id=signal_discovery_run_id,
-            snapshot_set_id=snapshot_set_id,
-            signal_discovery_id=signal_discovery.signal_discovery_id,
-            subject_set_id=str(subject_set.subject_set_id),
-            target_id=target_id,
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            screening_result_id=screening_state.screening_result_id,
-            compressed_belief_id=compressed_belief_state.compressed_belief_id,
-            workflow_runtime_s=time.perf_counter() - started_at,
-            backfill_result=backfill_result,
-            pruned_snapshot_count=pruned_snapshot_count,
-            created_at=timestamp,
         )
         trading_strategy = _resolved_trading_strategy_for_args(store, args)
         explicit_subject_set = resolve_subject_set_for_build(
@@ -4070,7 +4011,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
         if decision_input is None:
             raise ValueError("portfolio decision could not be built from compressed belief")
         _print_signal_discovery_workflow_output(
-            signal_discovery_run_id=signal_discovery_run_state.signal_discovery_run_id,
             signal_discovery_id=signal_discovery.signal_discovery_id,
             screening_state=screening_state,
             compressed_belief_state=compressed_belief_state,
@@ -4127,28 +4067,6 @@ def _mean(values: list[float]) -> float:
     if not values:
         return 0.0
     return float(sum(values) / len(values))
-
-
-def _signal_discovery_run_stats_metric_group_result(
-    *,
-    workflow_runtime_s: float,
-    backfill_result: SubjectSetBackfillResult,
-    pruned_snapshot_count: int,
-) -> EvaluationMetricGroupResult:
-    return EvaluationMetricGroupResult(
-        metric_group_name="signal_discovery_run_stats",
-        source="native",
-        metrics={
-            "workflow_runtime_s": round(float(workflow_runtime_s), 6),
-            "total_executables": backfill_result.total_executables,
-            "pre_screen_selected": backfill_result.pre_screen_selected_executables,
-            "probe_selected": backfill_result.probe_selected_executables,
-            "survivor_selected": backfill_result.survivor_selected_executables,
-            "persisted_signals": backfill_result.selected_executables,
-            "evaluation_inputs": backfill_result.evaluation_inputs,
-            "pruned_snapshots": pruned_snapshot_count,
-        },
-    )
 
 
 @dataclass(frozen=True)

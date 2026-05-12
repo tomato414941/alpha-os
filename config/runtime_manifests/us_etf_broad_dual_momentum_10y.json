@@ -284,7 +284,6 @@
         }
       ],
       "metric_group_names": [
-        "signal_discovery_run_stats",
         "signal_discovery_result_stats",
         "signed_belief_quality",
         "portfolio_target_return_alignment",
