@@ -40,7 +40,6 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
 | **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, checkpoint replay, paper, live |
-| **strategy run spec** | One trading strategy paired with explicit engine-context inputs. | strategy under strict OOS; strategy with a strategy checkpoint |
 | **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
 | **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or strategy checkpoint artifacts. | one strategy under one strict OOS evaluation spec |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
@@ -159,9 +158,8 @@ TradingStrategy
 Run context should be modeled separately:
 
 ```text
-StrategyRunSpec
-├─ TradingStrategy
-└─ Explicit run inputs
+TradingStrategy
++ explicit run inputs
 ```
 
 So:
@@ -189,7 +187,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
 | `execution_kind` | transitional implementation field | Remove once strategy requirements and run/evaluation state sourcing are represented directly. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
-| `EvaluationTask` | partial `StrategyRunSpec` | It binds a trading strategy to an evaluation context. |
+| `EvaluationTask` | evaluation run context | It binds a trading strategy to an evaluation context. |
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.

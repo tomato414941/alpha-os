@@ -232,13 +232,6 @@ A concrete structured definition of a strategy.
 
 Defines trading behavior. Current mainline `TradingStrategySpec` is the first-class strategy model.
 
-### strategy run spec
-
-The concrete request to run one trading strategy in one engine context.
-
-It should make required run inputs explicit instead of hiding them behind a
-generic mode.
-
 ### strict OOS run inputs
 
 The engine contract for strict OOS evaluation.
@@ -411,20 +404,16 @@ So:
 - signal = predictive unit
 - strategy = trading system
 
-### Trading Strategy vs Strategy Run Spec
+### Trading Strategy vs Run Context
 
 - **trading strategy** = what should be traded and how it should be realized
-- **strategy run spec** = the concrete engine context and inputs for running that
-  trading strategy
+- **run context** = the engine context and inputs for running that trading
+  strategy
 
 So:
 
 - `trading strategy` belongs to strategy semantics
 - required run inputs belong to engine context
-
-The clean conceptual object is:
-
-- `strategy run spec` = `trading strategy + explicit run inputs`
 
 ### Strategy Scope vs Position Rule
 
