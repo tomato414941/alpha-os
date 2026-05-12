@@ -268,6 +268,56 @@ def evaluate_range_backtest_dataset_builder(
     )
 
 
+def build_prepared_range_backtest_dataset_for_range(
+    *,
+    date_range: EvaluationDateRange,
+    snapshots: list[EvaluationSnapshot],
+    all_bundles_by_subject: dict[str, dict[str, object]],
+    survivor_metrics: dict[str, object],
+    component_by_subject_id: dict[str, object],
+    metric_window: int,
+    funding_cost_bps_series_by_subject: dict[str, pd.Series],
+    borrow_fee_bps_series_by_subject: dict[str, pd.Series],
+    roll_cost_bps_series_by_subject: dict[str, pd.Series],
+    contract_multiplier_by_subject: dict[str, float],
+) -> RangeBacktestDataset | None:
+    return build_range_backtest_dataset(
+        date_range=date_range,
+        snapshots=snapshots,
+        all_bundles_by_subject=all_bundles_by_subject,
+        survivor_metrics=survivor_metrics,
+        component_by_subject_id=component_by_subject_id,
+        metric_window=metric_window,
+        funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
+        borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
+        roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
+        contract_multiplier_by_subject=contract_multiplier_by_subject,
+    )
+
+
+def build_direct_range_backtest_dataset_for_range(
+    *,
+    date_range: EvaluationDateRange,
+    subject_return_series_by_subject: dict[str, pd.Series],
+    signal_series_by_subject: dict[str, pd.Series] | None,
+    funding_cost_bps_series_by_subject: dict[str, pd.Series] | None,
+    borrow_fee_bps_series_by_subject: dict[str, pd.Series] | None,
+    roll_cost_bps_series_by_subject: dict[str, pd.Series] | None,
+    contract_multiplier_by_subject: dict[str, float] | None,
+    signal_value: float,
+) -> RangeBacktestDataset | None:
+    return build_direct_range_backtest_dataset(
+        date_range=date_range,
+        subject_return_series_by_subject=subject_return_series_by_subject,
+        signal_series_by_subject=signal_series_by_subject,
+        funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
+        borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
+        roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
+        contract_multiplier_by_subject=contract_multiplier_by_subject,
+        signal_value=signal_value,
+    )
+
+
 def build_signal_discovery_strategy_evaluation_metric_group_results(
     *,
     screening_result,
@@ -327,7 +377,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
     def build_dataset_for_range(
         date_range: EvaluationDateRange,
     ) -> RangeBacktestDataset | None:
-        return build_range_backtest_dataset(
+        return build_prepared_range_backtest_dataset_for_range(
             date_range=date_range,
             snapshots=snapshots,
             all_bundles_by_subject=all_bundles_by_subject,
@@ -404,7 +454,7 @@ def build_direct_strategy_evaluation_metric_group_results(
     def build_dataset_for_range(
         date_range: EvaluationDateRange,
     ) -> RangeBacktestDataset | None:
-        return build_direct_range_backtest_dataset(
+        return build_direct_range_backtest_dataset_for_range(
             date_range=date_range,
             subject_return_series_by_subject=subject_return_series_by_subject,
             signal_series_by_subject=signal_series_by_subject,
