@@ -97,6 +97,12 @@ class PreparedStrategyEvaluationInputs:
     compressed_belief_state: object
 
 
+@dataclass(frozen=True)
+class PreparedStrategyEvaluationBaseOutputs:
+    metric_group_result_map: dict[str, EvaluationMetricGroupResult]
+    artifact_refs: dict[str, tuple[str, ...]]
+
+
 class EvaluationExecutionStrategy(Protocol):
     def run(
         self,
@@ -140,6 +146,48 @@ def resolve_prepared_strategy_evaluation_inputs(
         signal_discovery_run=signal_discovery_run,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
+    )
+
+
+def build_prepared_strategy_evaluation_base_outputs(
+    *,
+    execution_request: StrategyEvaluationRequest,
+    prepared_inputs: PreparedStrategyEvaluationInputs,
+) -> PreparedStrategyEvaluationBaseOutputs:
+    initial_strategy_state = prepared_inputs.initial_strategy_state
+    signal_discovery_run = prepared_inputs.signal_discovery_run
+    screening_state = prepared_inputs.screening_state
+    compressed_belief_state = prepared_inputs.compressed_belief_state
+    metric_group_result_map = {
+        "signal_discovery_quality": signal_discovery_quality_metric_group_result(
+            screening_state=screening_state,
+            compressed_belief_state=compressed_belief_state,
+        ),
+    }
+    if signal_discovery_run is not None:
+        metric_group_result_map["system_efficiency"] = (
+            system_efficiency_metric_group_result_from_signal_discovery_run(
+                signal_discovery_run
+            )
+        )
+    artifact_refs: dict[str, tuple[str, ...]] = {
+        "evaluation_task_ids": (execution_request.evaluation_task_id,),
+        "strategy_ids": (execution_request.context.strategy_id,),
+        "signal_discovery_run_ids": ()
+        if signal_discovery_run is None
+        else (signal_discovery_run.signal_discovery_run_id,),
+        "screening_result_ids": (screening_state.screening_result_id,),
+        "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
+        "evaluation_fold_labels": (execution_request.fold_label,),
+    }
+    if initial_strategy_state is not None:
+        artifact_refs["initial_strategy_state_ids"] = (
+            initial_strategy_state.initial_strategy_state_id,
+        )
+        artifact_refs["signal_train_ids"] = (initial_strategy_state.signal_train_id,)
+    return PreparedStrategyEvaluationBaseOutputs(
+        metric_group_result_map=metric_group_result_map,
+        artifact_refs=artifact_refs,
     )
 
 
@@ -650,33 +698,12 @@ class PreparedStrategyEvaluationExecutionStrategy:
         signal_discovery_run = prepared_inputs.signal_discovery_run
         screening_state = prepared_inputs.screening_state
         compressed_belief_state = prepared_inputs.compressed_belief_state
-        metric_group_result_map = {
-            "signal_discovery_quality": signal_discovery_quality_metric_group_result(
-                screening_state=screening_state,
-                compressed_belief_state=compressed_belief_state,
-            ),
-        }
-        if signal_discovery_run is not None:
-            metric_group_result_map["system_efficiency"] = (
-                system_efficiency_metric_group_result_from_signal_discovery_run(
-                    signal_discovery_run
-                )
-            )
-        artifact_refs: dict[str, tuple[str, ...]] = {
-            "evaluation_task_ids": (execution_request.evaluation_task_id,),
-            "strategy_ids": (execution_request.context.strategy_id,),
-            "signal_discovery_run_ids": ()
-            if signal_discovery_run is None
-            else (signal_discovery_run.signal_discovery_run_id,),
-            "screening_result_ids": (screening_state.screening_result_id,),
-            "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
-            "evaluation_fold_labels": (execution_request.fold_label,),
-        }
-        if initial_strategy_state is not None:
-            artifact_refs["initial_strategy_state_ids"] = (
-                initial_strategy_state.initial_strategy_state_id,
-            )
-            artifact_refs["signal_train_ids"] = (initial_strategy_state.signal_train_id,)
+        base_outputs = build_prepared_strategy_evaluation_base_outputs(
+            execution_request=execution_request,
+            prepared_inputs=prepared_inputs,
+        )
+        metric_group_result_map = base_outputs.metric_group_result_map
+        artifact_refs = base_outputs.artifact_refs
         failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
         subject_set = None
         pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
