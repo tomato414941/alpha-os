@@ -638,30 +638,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         default=DEFAULT_SIGNAL_NOISE_BASE_URL,
     )
 
-    run_signal_discovery = internal_parser("debug-run-signal-discovery")
-    run_signal_discovery.add_argument("--db", type=str, default=None)
-    run_signal_discovery.add_argument("--start-date", type=str, required=True)
-    run_signal_discovery.add_argument("--end-date", type=str, required=True)
-    run_signal_discovery.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        required=True,
-    )
-    run_signal_discovery.add_argument(
-        "--base-url",
-        type=str,
-        default=DEFAULT_SIGNAL_NOISE_BASE_URL,
-    )
-    run_signal_discovery.add_argument("--min-sample-count", type=int, default=None)
-    run_signal_discovery.add_argument("--min-abs-corr", type=float, default=None)
-    run_signal_discovery.add_argument("--min-stability-score", type=float, default=None)
-    run_signal_discovery.add_argument(
-        "--max-family-survivors-per-subject",
-        type=int,
-        default=None,
-    )
-
     run_signal_discovery_decision = internal_parser("run-signal-discovery-decision")
     run_signal_discovery_decision.add_argument("--db", type=str, default=None)
     run_signal_discovery_decision.add_argument("--start-date", type=str, required=True)
@@ -3842,49 +3818,6 @@ def _print_signal_discovery_workflow_output(
     print(f"  CompressedBeliefId:    {compressed_belief_state.compressed_belief_id}")
 
 
-def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        feature_plane_repository = FeaturePlaneRepository(
-            observation_repository=ObservationFrameRepository(store=store)
-        )
-        evaluation_input_repository = EvaluationInputRepository()
-        timestamp = _utc_now()
-        snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            created_at=timestamp,
-        )
-        (
-            signal_discovery,
-            subject_set,
-            target_id,
-            screening_state,
-            compressed_belief_state,
-        ) = _app_run_signal_discovery_workflow(
-            store,
-            default_target_id=cfg.target_id,
-            snapshot_set_id=snapshot_set_id,
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            base_url=str(args.base_url),
-            min_sample_count=args.min_sample_count,
-            min_abs_corr=args.min_abs_corr,
-            min_stability_score=args.min_stability_score,
-            max_family_survivors_per_subject=args.max_family_survivors_per_subject,
-            feature_plane_repository=feature_plane_repository,
-            evaluation_input_repository=evaluation_input_repository,
-        )
-    _print_signal_discovery_workflow_output(
-        signal_discovery_id=signal_discovery.signal_discovery_id,
-        screening_state=screening_state,
-        compressed_belief_state=compressed_belief_state,
-    )
-    return 0
-
-
 def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
@@ -5634,8 +5567,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_backfill_subject_set(args)
         if args.command == "debug-backfill-signal-discovery":
             return cmd_backfill_signal_discovery(args)
-        if args.command == "debug-run-signal-discovery":
-            return cmd_run_signal_discovery(args)
         if args.command == "run-signal-discovery-decision":
             return cmd_run_signal_discovery_decision(args)
         if args.command == "inspect-subject-set":

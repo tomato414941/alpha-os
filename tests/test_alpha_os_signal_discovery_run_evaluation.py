@@ -647,31 +647,6 @@ def test_run_evaluation_uses_archived_prepared_snapshots(tmp_path, capsys):
         assert (
             main(
                 [
-                    "debug-run-signal-discovery",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-23",
-                    "--end-date",
-                    "2026-03-24",
-                    "--signal-discovery-id",
-                    "core_crypto_search",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-    capsys.readouterr()
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
                     "run-walk-forward",
                     "--db",
                     str(db_path),

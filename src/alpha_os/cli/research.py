@@ -14,7 +14,6 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-show-observables": _legacy.cmd_show_observables,
     "debug-backfill-subject-set": _legacy.cmd_backfill_subject_set,
     "debug-backfill-signal-discovery": _legacy.cmd_backfill_signal_discovery,
-    "debug-run-signal-discovery": _legacy.cmd_run_signal_discovery,
     "run-signal-discovery-decision": _legacy.cmd_run_signal_discovery_decision,
     "inspect-subject-set": _legacy.cmd_inspect_subject_set,
     "debug-show-meta-predictions": _legacy.cmd_show_meta_predictions,
@@ -25,4 +24,3 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-screen-signal-discovery": _legacy.cmd_screen_signal_discovery,
     "debug-compress-screening-result": _legacy.cmd_compress_screening_result,
 }
-

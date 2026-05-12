@@ -2553,18 +2553,26 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     try:
         assert (
             main(
-                    [
-                        "debug-run-signal-discovery",
-                        "--db",
-                        str(db_path),
-                        "--start-date",
-                        "2026-03-23",
-                        "--end-date",
-                        "2026-03-24",
-                        "--signal-discovery-id",
-                        "core_crypto_search",
-                        "--base-url",
-                        "http://example.com",
+                [
+                    "run-signal-discovery-decision",
+                    "--db",
+                    str(db_path),
+                    "--start-date",
+                    "2026-03-23",
+                    "--end-date",
+                    "2026-03-24",
+                    "--signal-discovery-id",
+                    "core_crypto_search",
+                    "--base-url",
+                    "http://example.com",
+                    "--portfolio-id",
+                    "paper_core_seed",
+                    "--strategy-id",
+                    "strategy:core_crypto_rule",
+                    "--capital-base",
+                    "5.0",
+                    "--gross-exposure-cap",
+                    "0.8",
                 ]
             )
             == 0
@@ -2590,6 +2598,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "representatives=" in output
     assert "alpha-os workflow output" in output
     assert "CompressedBeliefId:" in output
+    assert "alpha-os portfolio decisions" in output
 
     store = EvaluationStore(db_path)
     try:
