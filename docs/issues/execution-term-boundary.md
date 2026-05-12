@@ -28,7 +28,7 @@ Examples:
   portfolio transition or rebalance friction
 - `trainless` / `trained` / `frozen` are current implementation values and
   should not be promoted into a target glossary term
-- `backtest_oos` / `fixed_state_replay` are current `run_mode` values
+- `backtest_oos` is the current default evaluation `run_mode` value
 - `execution_range` is an evaluation/run contract field, not an order-execution
   field
 
@@ -42,7 +42,7 @@ Prefer scoped terms:
 - `portfolio transition` or `rebalance transition` for movement from current to
   desired portfolio state
 - `strategy run` for running a strategy through an engine
-- explicit evaluation job shapes for `backtest_oos` and `fixed_state_replay`
+- explicit evaluation job shapes for strict OOS and checkpoint-based evaluation
 
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
 The current `execution_kind` field is transitional and should be removed rather

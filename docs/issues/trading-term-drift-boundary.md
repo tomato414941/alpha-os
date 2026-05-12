@@ -91,7 +91,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `strategy run request`
 - [ ] `strategy run spec`
 - [ ] `strict OOS run inputs`
-- [ ] `fixed-state replay run inputs`
+- [ ] `checkpoint evaluation inputs`
 - [ ] `paper run inputs`
 - [ ] `live run inputs`
 - [ ] `strict OOS evaluation`
@@ -102,7 +102,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `strategy checkpoint`
 - [ ] `signal train`
 - [ ] `train artifact`
-- [ ] `fixed-state replay`
+- [ ] `checkpoint-based evaluation`
 - [ ] `evaluation task result`
 - [ ] `evaluation report`
 - [ ] `evaluation metric group`

@@ -175,7 +175,7 @@ engine context in which the strategy is run, such as:
 
 - evaluation spec
 - paper or live runtime
-- fixed-state replay versus retraining
+- checkpoint-based evaluation versus retraining
 - runtime-specific batching or caching
 
 A trading strategy is what we want to define. A strategy run is how an engine

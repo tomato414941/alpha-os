@@ -1,22 +1,23 @@
-# Fixed-State Replay Preparation Boundary
+# Checkpoint Evaluation Preparation Boundary
 
 ## Problem
 
-`fixed_state_replay` is conceptually different from strategy backtest execution.
+Checkpoint-based evaluation is conceptually different from strategy backtest
+execution.
 
 It decides which trained or discovered state should be replayed. The backtest
 should evaluate an already prepared state.
 
 ## Boundary
 
-Treat fixed-state replay as state selection and preparation.
+Treat checkpoint evaluation as state selection and preparation.
 
 Treat strategy backtest as prepared-state evaluation.
 
 Desired shape:
 
 ```text
-fixed-state replay preparation
+checkpoint evaluation preparation
   -> strategy checkpoint
   -> strategy backtest
 ```
@@ -39,13 +40,13 @@ artifact layout again.
 
 ## Non-Goals
 
-- Do not remove fixed-state replay.
+- Do not remove checkpoint-based evaluation.
 - Do not change the current fixed-state OOS workflow immediately.
 - Do not merge signal discovery, screening, and backtest into one abstraction.
 
 ## Acceptance Criteria
 
 - The strategy backtest boundary can evaluate an already prepared state.
-- Fixed-state replay selection remains outside the backtest function.
+- Checkpoint selection remains outside the backtest function.
 - The code path makes it clear which layer prepares state and which layer
   evaluates it.

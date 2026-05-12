@@ -16,7 +16,7 @@ Properties:
 - a `trainless` strategy runs directly without train-period state
 - the goal is to answer whether the strategy performs under strict OOS
 
-### `fixed_state_replay`
+### Checkpoint-Based Evaluation
 
 Use this for comparison when upstream state should stay fixed.
 
@@ -29,7 +29,7 @@ Properties:
 So:
 
 - `backtest_oos` is the default evaluation job shape
-- `fixed_state_replay` is a controlled comparison job shape
+- checkpoint-based evaluation is a controlled comparison job shape
 - both are evaluation contexts, not strategy semantics
 
 ### Evaluation Job Inputs
@@ -39,7 +39,7 @@ The input contract should differ by evaluation job shape.
 - `backtest_oos`
   - requires an evaluation spec and fold/date-range information
   - may consume train artifacts depending on strategy requirements
-- `fixed_state_replay`
+- checkpoint-based evaluation
   - requires the same evaluation spec information
   - additionally requires `strategy_checkpoint_id`
   - must not retrain during evaluation

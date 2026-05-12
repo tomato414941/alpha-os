@@ -31,15 +31,6 @@ class EvaluationJobSpec:
             "strategy_checkpoint_id",
             strategy_checkpoint_id,
         )
-        self.__post_init__()
-
-    def __post_init__(self) -> None:
-        if self.run_mode == "fixed_state_replay":
-            if not self.strategy_checkpoint_id:
-                raise ValueError(
-                    "fixed_state_replay evaluation job requires "
-                    "strategy_checkpoint_id"
-                )
 
     def to_document(self) -> dict[str, Any]:
         document = {

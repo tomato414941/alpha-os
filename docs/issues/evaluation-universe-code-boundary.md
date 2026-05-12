@@ -11,7 +11,7 @@ the effective subject set from the task's strategy, strategy checkpoint, or
 signal discovery run:
 
 - trainless runs use `TradingStrategySpec.subject_set_id`
-- fixed-state replay uses the strategy checkpoint's `subject_set_id`
+- checkpoint-based evaluation uses the strategy checkpoint's `subject_set_id`
 - trained runs use the strategy checkpoint or signal discovery run
   `subject_set_id`
 
@@ -38,13 +38,13 @@ different evaluation universe without redefining strategy or provenance inputs.
 Do not add an `EvaluationUniverse` model yet.
 
 Map current evaluation paths first and document where the effective evaluation
-subject set comes from for each current `run_mode` value.
+subject set comes from for each current evaluation input shape.
 
 ## Non-Goals
 
 - Do not move universe ownership into `EvaluationSpec` immediately.
 - Do not rename `subject_set_id` fields as part of terminology cleanup.
-- Do not change fixed-state replay provenance behavior without a separate
+- Do not change checkpoint-based evaluation provenance behavior without a separate
   replay-specific design.
 
 ## Acceptance Criteria

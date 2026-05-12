@@ -36,7 +36,7 @@ So:
 Examples of engines:
 
 - strict OOS evaluation engine
-- fixed-state replay engine
+- checkpoint evaluation engine
 - paper engine
 - live engine
 
@@ -122,7 +122,7 @@ Properties:
 - strategy checkpoint may be created per fold
 - strict OOS evaluation may retrain per fold
 
-### `fixed-state replay`
+### Checkpoint-Based Evaluation
 
 Use when evaluation should reuse a precomputed fixed strategy checkpoint rather
 than retraining during evaluation.
@@ -140,8 +140,6 @@ transitional implementation field, not a target domain term.
 
 - `backtest_oos`
   - run the strategy under a strict train/test-separated evaluation spec
-- `fixed_state_replay`
-  - run the strategy with a fixed strategy checkpoint instead of retraining
 - `paper`
   - reserved for future paper-trading execution
 - `live`
@@ -170,15 +168,15 @@ The current codebase is still transitional. The practical mapping is:
 
 ### Current Evaluation Job Shapes
 
-| Current `run_mode` value | Purpose | Required inputs | Retraining during evaluation |
-|--------------------------|---------|-----------------|------------------------------|
+| Evaluation job shape | Purpose | Required inputs | Retraining during evaluation |
+|----------------------|---------|-----------------|------------------------------|
 | `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation task`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
-| `fixed_state_replay` | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
+| checkpoint-based evaluation | Compare downstream behavior while holding upstream state fixed. | `evaluation task`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
 
 This means:
 
 - `backtest_oos` is the primary evaluation mode
-- `fixed_state_replay` is a comparison mode, not the default evaluation mode
+- checkpoint-based evaluation is a comparison shape, not the default evaluation mode
 - the difference is owned by the engine contract, not by strategy semantics
 
 The evaluation object remains the trading strategy under a specific engine
@@ -188,10 +186,10 @@ context. Prediction-level metrics are only one part of the resulting report.
 
 The current mainline should treat these inputs as separate contract objects.
 
-| Current `run_mode` value | Contract object | Required fields |
-|--------------------------|-----------------|-----------------|
+| Evaluation job shape | Contract object | Required fields |
+|----------------------|-----------------|-----------------|
 | `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
-| `fixed_state_replay` | `FixedStateReplayRunInputs` | `evaluation_spec_id`, `strategy_checkpoint_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
+| checkpoint-based evaluation | checkpoint evaluation inputs | `evaluation_spec_id`, `strategy_checkpoint_id`, `execution_range`, `evaluation_date_ranges`, `metric_group_names` |
 | `paper` | `PaperRunInputs` | `as_of_timestamp`, optional `current_portfolio_state_id` |
 | `live` | `LiveRunInputs` | `as_of_timestamp`, `venue_id`, optional `current_portfolio_state_id` |
 
@@ -283,13 +281,13 @@ The current mainline should be understood like this:
 
 - discovery finds or fits signal-related state
 - evaluation compares strategies
-- fixed-state replay compares strategies without re-running discovery
+- checkpoint-based evaluation compares strategies without re-running discovery
 
 So:
 
 - discovery does **not** directly decide portfolio outcomes
 - evaluation does **not** invent new signals during replay
-- fixed-state replay does **not** retrain
+- checkpoint-based evaluation does **not** retrain
 
 ## Target Workflow
 

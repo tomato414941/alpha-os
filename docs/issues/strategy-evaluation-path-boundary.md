@@ -9,7 +9,7 @@ Examples:
 
 - hand-written trainless rules use `strategy_backtest`
 - discovered signals use signal discovery execution
-- strategy checkpoint artifacts use fixed-state replay
+- strategy checkpoint artifacts use checkpoint-based evaluation
 
 ## Risk
 

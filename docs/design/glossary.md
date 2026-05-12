@@ -251,9 +251,9 @@ The engine contract for strict OOS evaluation.
 
 Includes evaluation spec id, execution range, evaluation date ranges, and metric_group_names.
 
-### fixed-state replay run inputs
+### checkpoint evaluation inputs
 
-The engine contract for fixed-state replay.
+The engine contract for checkpoint-based evaluation.
 
 Adds `strategy_checkpoint_id` to the strict OOS-style inputs.
 
@@ -318,11 +318,11 @@ A frozen output from train data later applied in test without re-selection.
 
 Examples: selected signals, fitted compression settings.
 
-### fixed-state replay
+### checkpoint-based evaluation
 
 Running evaluation with a precomputed strategy checkpoint instead of retraining.
 
-This is a comparison mode, not the default evaluation mode.
+This is a comparison shape, not the default evaluation shape.
 
 ### evaluation task result
 

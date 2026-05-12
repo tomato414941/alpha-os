@@ -5,7 +5,6 @@ from typing import Literal
 
 StrategyRunMode = Literal[
     "backtest_oos",
-    "fixed_state_replay",
     "paper",
     "live",
 ]
@@ -14,6 +13,6 @@ StrategyRunMode = Literal[
 def normalize_strategy_run_mode(mode: str | None) -> StrategyRunMode:
     if mode is None:
         return "backtest_oos"
-    if mode not in {"backtest_oos", "fixed_state_replay", "paper", "live"}:
+    if mode not in {"backtest_oos", "paper", "live"}:
         raise ValueError(f"unsupported strategy run mode: {mode}")
     return mode

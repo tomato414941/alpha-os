@@ -3967,7 +3967,6 @@ def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
         store.upsert_evaluation_job_spec(
             job_spec=EvaluationJobSpec(
                 evaluation_task_id=checkpoint_case.evaluation_task_id,
-                run_mode="fixed_state_replay",
                 strategy_checkpoint_id=(
                     source_strategy_checkpoint.strategy_checkpoint_id
                 ),

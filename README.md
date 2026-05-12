@@ -75,8 +75,8 @@ decision traces, and candidate-vs-baseline promotion inputs.
 ## Minimal Fixed-State OOS Golden Path
 
 This workflow also uses only checked-in fixture CSV data. It first materializes
-a source strategy checkpoint, then creates a fixed-state replay evaluation
-task and runs a strict OOS report.
+a source strategy checkpoint, then creates a checkpoint-based evaluation task
+and runs a strict OOS report.
 
 ```bash
 DB=/tmp/alpha-os-minimal-fixed-state-oos.db

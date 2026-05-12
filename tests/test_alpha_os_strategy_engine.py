@@ -178,21 +178,6 @@ def test_evaluation_job_spec_defaults_run_mode_to_backtest_oos():
     assert job_spec.run_mode == "backtest_oos"
 
 
-def test_fixed_state_replay_requires_strategy_checkpoint():
-    import pytest
-
-    from alpha_os.evaluation_job_spec import EvaluationJobSpec
-
-    with pytest.raises(
-        ValueError,
-        match="fixed_state_replay evaluation job requires strategy_checkpoint_id",
-    ):
-        EvaluationJobSpec(
-            evaluation_task_id="case:test",
-            run_mode="fixed_state_replay",
-        )
-
-
 def test_evaluation_job_spec_allows_strategy_checkpoint_without_run_mode():
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
 

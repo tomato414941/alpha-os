@@ -3,15 +3,16 @@
 ## Problem
 
 `run_mode` is a persisted implementation field with values such as
-`backtest_oos`, `fixed_state_replay`, `paper`, and `live`.
+`backtest_oos`, `paper`, and `live`.
 
 The field currently behaves like an evaluation-job switch, not a stable domain
 term:
 
 - there is no first-class `RunPolicy` implementation
 - `strategy run mode` duplicates the current `run_mode` field
-- `backtest_oos` and `fixed_state_replay` mainly choose which inputs an
-  evaluation job requires
+- `backtest_oos` mainly names the default evaluation job shape
+- checkpoint-based evaluation is now represented by `strategy_checkpoint_id`,
+  not a separate `run_mode` value
 - `paper` and `live` are reserved values, not current strategy-run domain
   concepts
 
@@ -30,18 +31,17 @@ required inputs directly.
 - `EvaluationJobSpec.run_mode`
 - `StrategyEvaluationContext.run_mode` removed from the request context
 - `StrategyEvaluationRequest.to_backtest_oos_run_inputs` removed
-- `StrategyEvaluationRequest.to_fixed_state_replay_run_inputs` removed
 - manifest and report payloads that persist `run_mode`
-- validation branches keyed by `backtest_oos` or `fixed_state_replay`
+- validation branches keyed by `backtest_oos`
 
 ## Current Finding
 
 `StrategyEvaluationContext.run_mode` was only used by request-to-run-input
 helper methods. It can be removed without changing `EvaluationJobSpec.run_mode`.
 
-Removing it leaves `EvaluationJobSpec.run_mode` as the remaining selector for
-fixed-state replay planning. That remaining behavior should be addressed as a
-concrete evaluation job shape rather than another generic mode.
+`EvaluationJobSpec.run_mode` is no longer the selector for checkpoint-based
+evaluation planning. The remaining behavior is keyed by explicit job inputs,
+especially `strategy_checkpoint_id`.
 
 ## Boundary
 
@@ -51,7 +51,7 @@ first question is whether a mode field is needed at all.
 If the behavior remains necessary, prefer explicit request shapes:
 
 - strict OOS evaluation request inputs
-- fixed-state replay evaluation request inputs
+- checkpoint-based evaluation request inputs
 - future paper or live request inputs when those workflows actually exist
 
 ## Non-Goals
@@ -67,4 +67,4 @@ If the behavior remains necessary, prefer explicit request shapes:
   documented compatibility layer.
 - Evaluation planning no longer depends on a single ambiguous mode if explicit
   request shapes and required inputs are available.
-- Existing persisted artifacts have a migration or compatibility strategy.
+- Existing persisted artifacts are either migrated or intentionally invalidated.

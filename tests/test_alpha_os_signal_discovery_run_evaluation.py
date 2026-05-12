@@ -3070,13 +3070,13 @@ def test_create_checkpoint_evaluation_task_materializes_replay_case(tmp_path, ca
             case_state.task.evaluation_task_id
         )
         assert job_spec_state is not None
-        assert job_spec_state.job_spec.run_mode == "fixed_state_replay"
+        assert job_spec_state.job_spec.run_mode == "backtest_oos"
         assert job_spec_state.job_spec.strategy_checkpoint_id == "state_source"
         case_document = json.loads(case_state.task_json)
         job_spec_document = json.loads(job_spec_state.job_spec_json)
         assert "run_mode" not in case_document
         assert "strategy_checkpoint_id" not in case_document
-        assert job_spec_document["run_mode"] == "fixed_state_replay"
+        assert job_spec_document["run_mode"] == "backtest_oos"
         assert job_spec_document["strategy_checkpoint_id"] == "state_source"
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
