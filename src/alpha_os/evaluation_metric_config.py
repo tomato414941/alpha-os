@@ -14,7 +14,7 @@ EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 
 
 EVALUATION_METRIC_GROUP_NAMES = (
-    "system_efficiency",
+    "signal_discovery_run_stats",
     "signal_discovery_quality",
     "signed_belief_quality",
     "prediction_diagnostics",

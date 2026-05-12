@@ -191,7 +191,7 @@
         }
       ],
       "metric_group_names": [
-        "system_efficiency",
+        "signal_discovery_run_stats",
         "signal_discovery_quality",
         "signed_belief_quality",
         "portfolio_target_return_alignment",

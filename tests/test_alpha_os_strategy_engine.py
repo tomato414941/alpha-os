@@ -151,12 +151,12 @@ def test_requires_decision_evaluation_classifies_metric_group_names():
     )
 
     assert requires_decision_evaluation(("decision_quality",))
-    assert requires_decision_evaluation(("system_efficiency", "robustness"))
+    assert requires_decision_evaluation(("signal_discovery_run_stats", "robustness"))
     assert not requires_decision_evaluation(
-        ("system_efficiency", "signal_discovery_quality")
+        ("signal_discovery_run_stats", "signal_discovery_quality")
     )
     assert set(DECISION_EVALUATION_METRIC_GROUP_NAMES).isdisjoint(
-        {"system_efficiency", "signal_discovery_quality"}
+        {"signal_discovery_run_stats", "signal_discovery_quality"}
     )
 
 

@@ -4136,14 +4136,14 @@ def _mean(values: list[float]) -> float:
     return float(sum(values) / len(values))
 
 
-def _system_efficiency_metric_group_result(
+def _signal_discovery_run_stats_metric_group_result(
     *,
     workflow_runtime_s: float,
     backfill_result: SubjectSetBackfillResult,
     pruned_snapshot_count: int,
 ) -> EvaluationMetricGroupResult:
     return EvaluationMetricGroupResult(
-        metric_group_name="system_efficiency",
+        metric_group_name="signal_discovery_run_stats",
         source="native",
         metrics={
             "workflow_runtime_s": round(float(workflow_runtime_s), 6),

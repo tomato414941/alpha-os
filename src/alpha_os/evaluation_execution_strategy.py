@@ -180,8 +180,8 @@ def build_prepared_strategy_evaluation_base_outputs(
         ),
     }
     if diagnostic_signal_discovery_run is not None:
-        metric_group_result_map["system_efficiency"] = (
-            system_efficiency_metric_group_result_from_signal_discovery_run(
+        metric_group_result_map["signal_discovery_run_stats"] = (
+            signal_discovery_run_stats_metric_group_result(
                 diagnostic_signal_discovery_run
             )
         )
@@ -309,11 +309,11 @@ def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
     )
 
 
-def system_efficiency_metric_group_result_from_signal_discovery_run(
+def signal_discovery_run_stats_metric_group_result(
     signal_discovery_run,
 ) -> EvaluationMetricGroupResult:
     return EvaluationMetricGroupResult(
-        metric_group_name="system_efficiency",
+        metric_group_name="signal_discovery_run_stats",
         source="signal_discovery_run",
         metrics={
             "workflow_runtime_s": round(float(signal_discovery_run.workflow_runtime_s), 6),

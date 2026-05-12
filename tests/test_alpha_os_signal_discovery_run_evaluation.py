@@ -580,7 +580,7 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "system_efficiency",
+                            "signal_discovery_run_stats",
                             "signal_discovery_quality",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -839,7 +839,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "system_efficiency",
+                            "signal_discovery_run_stats",
                             "signal_discovery_quality",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -1012,7 +1012,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "system_efficiency",
+                            "signal_discovery_run_stats",
                             "signal_discovery_quality",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
@@ -3230,7 +3230,7 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "system_efficiency",
+                            "signal_discovery_run_stats",
                             "signal_discovery_quality",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
