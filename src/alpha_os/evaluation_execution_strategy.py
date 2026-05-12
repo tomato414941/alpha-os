@@ -191,6 +191,65 @@ def build_prepared_strategy_evaluation_base_outputs(
     )
 
 
+def resolve_prepared_strategy_survivor_snapshots(
+    *,
+    execution_request: StrategyEvaluationRequest,
+    context: EvaluationExecutionContext,
+    prepared_inputs: PreparedStrategyEvaluationInputs,
+) -> list[EvaluationSnapshot]:
+    store = context.store
+    initial_strategy_state = prepared_inputs.initial_strategy_state
+    signal_discovery_run = prepared_inputs.signal_discovery_run
+    screening_state = prepared_inputs.screening_state
+    survivor_signal_ids = (
+        list(initial_strategy_state.survivor_signal_ids)
+        if initial_strategy_state is not None
+        else [item.signal_id for item in screening_state.result.survivors]
+    )
+    if requires_frozen_test_application(
+        signal_discovery_run=(
+            signal_discovery_run if signal_discovery_run is not None else initial_strategy_state
+        ),
+        evaluation_date_ranges=execution_request.evaluation_date_ranges,
+    ):
+        if not execution_request.context.base_url:
+            raise ValueError("evaluation task is missing base_url")
+        frozen_definitions = frozen_survivor_definitions(
+            store,
+            signal_ids=survivor_signal_ids,
+        )
+        return generate_frozen_survivor_test_snapshots(
+            store,
+            subject_set_id=execution_request.context.subject_set_id,
+            survivor_signal_ids=survivor_signal_ids,
+            start_date=frozen_snapshot_start_date(
+                evaluation_date_ranges=execution_request.evaluation_date_ranges,
+                executable_definitions=frozen_definitions,
+                metric_window=max(context.evaluation_spec.metric_windows),
+                portfolio_construction=execution_request.context.portfolio_construction,
+                trading_calendar=_trading_calendar_for_subject_set(
+                    store,
+                    execution_request.context.subject_set_id,
+                ),
+            ),
+            end_date=max(item.end_date for item in execution_request.evaluation_date_ranges),
+            base_url=execution_request.context.base_url,
+            feature_plane_repository=context.feature_plane_repository,
+            evaluation_input_repository=context.evaluation_input_repository,
+        )
+    survivor_snapshots = []
+    if signal_discovery_run is not None:
+        survivor_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
+            signal_discovery_run_id=(signal_discovery_run.signal_discovery_run_id),
+            signal_ids=survivor_signal_ids,
+        )
+    if not survivor_snapshots:
+        survivor_snapshots = store.list_evaluation_snapshots_for_signals(
+            signal_ids=survivor_signal_ids
+        )
+    return survivor_snapshots
+
+
 def _subject_metadata_by_subject(
     subject_set: SubjectSet | None,
 ) -> dict[str, dict[str, str]]:
@@ -775,57 +834,13 @@ class PreparedStrategyEvaluationExecutionStrategy:
     ):
         store = context.store
         protocol = context.evaluation_spec
-        initial_strategy_state = prepared_inputs.initial_strategy_state
-        signal_discovery_run = prepared_inputs.signal_discovery_run
         screening_state = prepared_inputs.screening_state
         compressed_belief_state = prepared_inputs.compressed_belief_state
-        survivor_signal_ids = (
-            list(initial_strategy_state.survivor_signal_ids)
-            if initial_strategy_state is not None
-            else [item.signal_id for item in screening_state.result.survivors]
+        survivor_snapshots = resolve_prepared_strategy_survivor_snapshots(
+            execution_request=execution_request,
+            context=context,
+            prepared_inputs=prepared_inputs,
         )
-        if requires_frozen_test_application(
-            signal_discovery_run=(
-                signal_discovery_run if signal_discovery_run is not None else initial_strategy_state
-            ),
-            evaluation_date_ranges=execution_request.evaluation_date_ranges,
-        ):
-            if not execution_request.context.base_url:
-                raise ValueError("evaluation task is missing base_url")
-            frozen_definitions = frozen_survivor_definitions(
-                store,
-                signal_ids=survivor_signal_ids,
-            )
-            survivor_snapshots = generate_frozen_survivor_test_snapshots(
-                store,
-                subject_set_id=execution_request.context.subject_set_id,
-                survivor_signal_ids=survivor_signal_ids,
-                start_date=frozen_snapshot_start_date(
-                    evaluation_date_ranges=execution_request.evaluation_date_ranges,
-                    executable_definitions=frozen_definitions,
-                    metric_window=max(protocol.metric_windows),
-                    portfolio_construction=execution_request.context.portfolio_construction,
-                    trading_calendar=_trading_calendar_for_subject_set(
-                        store,
-                        execution_request.context.subject_set_id,
-                    ),
-                ),
-                end_date=max(item.end_date for item in execution_request.evaluation_date_ranges),
-                base_url=execution_request.context.base_url,
-                feature_plane_repository=context.feature_plane_repository,
-                evaluation_input_repository=context.evaluation_input_repository,
-            )
-        else:
-            survivor_snapshots = []
-            if signal_discovery_run is not None:
-                survivor_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
-                    signal_discovery_run_id=(signal_discovery_run.signal_discovery_run_id),
-                    signal_ids=survivor_signal_ids,
-                )
-            if not survivor_snapshots:
-                survivor_snapshots = store.list_evaluation_snapshots_for_signals(
-                    signal_ids=survivor_signal_ids
-                )
         subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
         if subject_set_state is not None:
             validate_subject_set_universe_contract(subject_set_state.definition)
