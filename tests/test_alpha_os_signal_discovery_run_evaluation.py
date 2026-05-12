@@ -2939,7 +2939,6 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
             evaluation_job_specs=(
                 EvaluationJobSpec(
                     evaluation_task_id="case_frozen",
-                    run_mode="fixed_state_replay",
                     fixed_initial_strategy_state_id="frozen_state_a",
                 ),
             ),

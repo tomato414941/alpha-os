@@ -6,7 +6,6 @@ from typing import Any
 from .strategy_run_mode import (
     StrategyRunMode,
     normalize_strategy_run_mode,
-    run_mode_requires_fixed_initial_strategy_state,
 )
 
 
@@ -35,18 +34,12 @@ class EvaluationJobSpec:
         self.__post_init__()
 
     def __post_init__(self) -> None:
-        if run_mode_requires_fixed_initial_strategy_state(self.run_mode):
+        if self.run_mode == "fixed_state_replay":
             if not self.fixed_initial_strategy_state_id:
                 raise ValueError(
                     "fixed_state_replay evaluation job requires "
                     "fixed_initial_strategy_state_id"
                 )
-            return
-        if self.fixed_initial_strategy_state_id is not None:
-            raise ValueError(
-                "only fixed_state_replay evaluation jobs may define "
-                "fixed_initial_strategy_state_id"
-            )
 
     def to_document(self) -> dict[str, Any]:
         document = {

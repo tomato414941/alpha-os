@@ -193,17 +193,13 @@ def test_fixed_state_replay_requires_fixed_initial_state():
         )
 
 
-def test_backtest_oos_rejects_fixed_initial_state():
-    import pytest
-
+def test_evaluation_job_spec_allows_fixed_initial_state_without_run_mode():
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
 
-    with pytest.raises(
-        ValueError,
-        match="only fixed_state_replay evaluation jobs may define fixed_initial_strategy_state_id",
-    ):
-        EvaluationJobSpec(
-            evaluation_task_id="case:test",
-            run_mode="backtest_oos",
-            fixed_initial_strategy_state_id="state:test",
-        )
+    job_spec = EvaluationJobSpec(
+        evaluation_task_id="case:test",
+        fixed_initial_strategy_state_id="state:test",
+    )
+
+    assert job_spec.run_mode == "backtest_oos"
+    assert job_spec.fixed_initial_strategy_state_id == "state:test"

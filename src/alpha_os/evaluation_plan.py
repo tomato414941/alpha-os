@@ -286,11 +286,53 @@ def build_evaluation_plan(
             trading_strategy=trading_strategy,
         )
         execution = trading_strategy.execution
-        run_mode = job_spec.run_mode
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
         strategy_signal_train_id = build_signal_train_id(
             signal_discovery_id=strategy_signal_discovery_id,
         )
+        if job_spec.fixed_initial_strategy_state_id is not None:
+            fixed_initial_strategy_state_id = job_spec.fixed_initial_strategy_state_id
+            frozen_state_record = store.get_initial_strategy_state(
+                fixed_initial_strategy_state_id
+            )
+            if frozen_state_record is None:
+                raise ValueError(
+                    "checkpoint replay evaluation task references unknown initial strategy state: "
+                    f"{fixed_initial_strategy_state_id}"
+                )
+            frozen_state = frozen_state_record.state
+            for fold in evaluation_spec.resolved_evaluation_folds:
+                execution_requests.append(
+                    _strategy_evaluation_request(
+                        evaluation_task_id=evaluation_task.evaluation_task_id,
+                        evaluation_spec_id=evaluation_spec_id,
+                        fold_label=fold.label,
+                        strategy_id=evaluation_task.strategy_id,
+                        signal_discovery_id=frozen_state.signal_discovery_id,
+                        initial_strategy_state_id=(
+                            frozen_state.initial_strategy_state_id
+                        ),
+                        signal_discovery_run_id=frozen_state.signal_discovery_run_id,
+                        snapshot_set_id=frozen_state.snapshot_set_id,
+                        prepared_start_date=frozen_state.execution_start_date,
+                        prepared_end_date=frozen_state.execution_end_date,
+                        subject_set_id=frozen_state.subject_set_id,
+                        target_id=frozen_state.target_id,
+                        screening_result_id=frozen_state.screening_result_id,
+                        compressed_belief_id=frozen_state.compressed_belief_id,
+                        execution_range=fold.execution_range,
+                        evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
+                        metric_group_names=evaluation_spec.metric_group_names,
+                        base_url=base_url,
+                        selection_kind=trading_strategy.selection_kind,
+                        top_k=trading_strategy.portfolio.top_k,
+                        portfolio_construction=portfolio_construction,
+                        rebalance_friction_policy=rebalance_friction_policy,
+                        execution_cost_assumptions=execution_cost_assumptions,
+                        holding_cost_assumptions=holding_cost_assumptions,
+                    )
+                )
+            continue
         if execution.kind == "trainless":
             subject_set_id = trading_strategy.subject_set_id
             if not isinstance(subject_set_id, str) or not subject_set_id:
@@ -316,54 +358,6 @@ def build_evaluation_plan(
                         target_id=target_id,
                         screening_result_id=None,
                         compressed_belief_id=None,
-                        execution_range=fold.execution_range,
-                        evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
-                        metric_group_names=evaluation_spec.metric_group_names,
-                        base_url=base_url,
-                        selection_kind=trading_strategy.selection_kind,
-                        top_k=trading_strategy.portfolio.top_k,
-                        portfolio_construction=portfolio_construction,
-                        rebalance_friction_policy=rebalance_friction_policy,
-                        execution_cost_assumptions=execution_cost_assumptions,
-                        holding_cost_assumptions=holding_cost_assumptions,
-                    )
-                )
-            continue
-        if run_mode == "fixed_state_replay":
-            fixed_initial_strategy_state_id = job_spec.fixed_initial_strategy_state_id
-            if not fixed_initial_strategy_state_id:
-                raise ValueError(
-                    "fixed-state replay evaluation task requires fixed_initial_strategy_state_id: "
-                    f"{evaluation_task.evaluation_task_id}"
-                )
-            frozen_state_record = store.get_initial_strategy_state(
-                fixed_initial_strategy_state_id
-            )
-            if frozen_state_record is None:
-                raise ValueError(
-                    "fixed-state replay evaluation task references unknown initial strategy state: "
-                    f"{fixed_initial_strategy_state_id}"
-                )
-            frozen_state = frozen_state_record.state
-            for fold in evaluation_spec.resolved_evaluation_folds:
-                execution_requests.append(
-                    _strategy_evaluation_request(
-                        evaluation_task_id=evaluation_task.evaluation_task_id,
-                        evaluation_spec_id=evaluation_spec_id,
-                        fold_label=fold.label,
-                        strategy_id=evaluation_task.strategy_id,
-                        signal_discovery_id=frozen_state.signal_discovery_id,
-                        initial_strategy_state_id=(
-                            frozen_state.initial_strategy_state_id
-                        ),
-                        signal_discovery_run_id=frozen_state.signal_discovery_run_id,
-                        snapshot_set_id=frozen_state.snapshot_set_id,
-                        prepared_start_date=frozen_state.execution_start_date,
-                        prepared_end_date=frozen_state.execution_end_date,
-                        subject_set_id=frozen_state.subject_set_id,
-                        target_id=frozen_state.target_id,
-                        screening_result_id=frozen_state.screening_result_id,
-                        compressed_belief_id=frozen_state.compressed_belief_id,
                         execution_range=fold.execution_range,
                         evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                         metric_group_names=evaluation_spec.metric_group_names,
