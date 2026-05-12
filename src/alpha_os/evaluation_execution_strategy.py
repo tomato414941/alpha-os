@@ -13,7 +13,7 @@ from .strategy_backtest import (
 )
 from .evaluation_generation import generate_evaluation_inputs_batch_from_feature_plane
 from .evaluation_inputs import EvaluationInput
-from .evaluation_metric_config import requires_decision_evaluation
+from .evaluation_metric_config import DECISION_EVALUATION_METRIC_GROUP_NAMES
 from .strategy_engine import (
     StrategyEvaluationDiagnosticRefs,
     StrategyEvaluationInputRefs,
@@ -778,7 +778,12 @@ class PreparedStrategyEvaluationExecutionStrategy:
         failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
         subject_set = None
         pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
-        if requires_decision_evaluation(execution_request.metric_group_names):
+        decision_metric_group_names = tuple(
+            item
+            for item in execution_request.metric_group_names
+            if item in DECISION_EVALUATION_METRIC_GROUP_NAMES
+        )
+        if decision_metric_group_names:
             (
                 subject_set,
                 metric_group_result_map,

@@ -13,22 +13,9 @@ DEFAULT_EVALUATION_AGGREGATION_KINDS = (
 EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 
 
-EVALUATION_METRIC_GROUP_NAMES = (
+PREPARATION_STATS_METRIC_GROUP_NAMES = (
     "signal_discovery_run_stats",
     "signal_discovery_result_stats",
-    "signed_belief_quality",
-    "prediction_diagnostics",
-    "portfolio_target_return_alignment",
-    "sizing_policy_quality",
-    "rebalance_policy_quality",
-    "decision_quality",
-    "portfolio_risk_budget",
-    "portfolio_construction_trace",
-    "execution_trace",
-    "cost_drag",
-    "signal_churn",
-    "portfolio_concentration",
-    "robustness",
 )
 
 
@@ -49,8 +36,15 @@ DECISION_EVALUATION_METRIC_GROUP_NAMES = (
 )
 
 
+EVALUATION_METRIC_GROUP_NAMES = (
+    PREPARATION_STATS_METRIC_GROUP_NAMES + DECISION_EVALUATION_METRIC_GROUP_NAMES
+)
+
+
 def requires_decision_evaluation(metric_group_names: tuple[str, ...]) -> bool:
-    return any(item in metric_group_names for item in DECISION_EVALUATION_METRIC_GROUP_NAMES)
+    return any(
+        item in DECISION_EVALUATION_METRIC_GROUP_NAMES for item in metric_group_names
+    )
 
 
 @dataclass(frozen=True)
