@@ -2569,7 +2569,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
                 fold_label="fold_2025",
                 execution_start_date="2025-01-01",
                 execution_end_date="2025-12-31",
-                signal_discovery_run_id="signal_discovery_run_a",
                 snapshot_set_id="snapshot_set_a",
                 screening_result_id="screening_a",
                 compressed_belief_id="belief_a",
@@ -2588,7 +2587,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
                 fold_label="fold_2026_q1",
                 execution_start_date="2026-01-01",
                 execution_end_date="2026-03-31",
-                signal_discovery_run_id="signal_discovery_run_b",
                 snapshot_set_id="snapshot_set_b",
                 screening_result_id="screening_b",
                 compressed_belief_id="belief_b",
@@ -2672,9 +2670,9 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             "fold_2025",
             "fold_2026_q1",
         )
-        assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
-            "signal_discovery_run_a",
-            "signal_discovery_run_b",
+        assert tuple(item.diagnostic_refs for item in plan.execution_requests) == (
+            None,
+            None,
         )
         assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
             "checkpoint_a",
@@ -2875,7 +2873,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
                 fold_label="seed_fold",
                 execution_start_date="2024-01-01",
                 execution_end_date="2024-12-31",
-                signal_discovery_run_id="signal_discovery_run_seed",
                 snapshot_set_id="snapshot_set_seed",
                 screening_result_id="screening_seed",
                 compressed_belief_id="belief_seed",
@@ -2957,9 +2954,9 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             "checkpoint_a",
             "checkpoint_a",
         )
-        assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
-            "signal_discovery_run_seed",
-            "signal_discovery_run_seed",
+        assert tuple(item.diagnostic_refs for item in plan.execution_requests) == (
+            None,
+            None,
         )
         assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
             "snapshot_set_seed",
@@ -3029,7 +3026,6 @@ def test_create_checkpoint_evaluation_task_materializes_replay_case(tmp_path, ca
                 fold_label="fold_seed",
                 execution_start_date="2024-01-01",
                 execution_end_date="2024-12-31",
-                signal_discovery_run_id="signal_discovery_run_seed",
                 snapshot_set_id="snapshot_set_seed",
                 screening_result_id="screening_seed",
                 compressed_belief_id="belief_seed",

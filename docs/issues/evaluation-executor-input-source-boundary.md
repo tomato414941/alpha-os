@@ -47,7 +47,7 @@ training or discovery provenance:
 | --- | --- | --- | --- | --- |
 | `signal_train_id` | present | present | present | training lineage |
 | `strategy_checkpoint_id` | none | present | optional | strategy checkpoint |
-| `signal_discovery_run_id` | none | present | present when using a run | training run |
+| `signal_discovery_run_id` | none | none | present when using a run | training run |
 | `signal_discovery_id` | none | present | present | training/discovery config |
 | `screening_result_id` | none | present | present | selection result |
 | `compressed_belief_id` | none | present | present | learned state or checkpoint component |

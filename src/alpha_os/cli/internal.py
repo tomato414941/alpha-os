@@ -4285,7 +4285,6 @@ def _backfill_strategy_checkpoints_for_fold_from_signal_train(
                 fold_label=source_state.fold_label,
                 execution_start_date=source_state.execution_start_date,
                 execution_end_date=source_state.execution_end_date,
-                signal_discovery_run_id=source_state.signal_discovery_run_id,
                 snapshot_set_id=source_state.snapshot_set_id,
                 screening_result_id=source_state.screening_result_id,
                 compressed_belief_id=source_state.compressed_belief_id,

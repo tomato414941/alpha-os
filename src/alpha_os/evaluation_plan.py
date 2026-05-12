@@ -302,7 +302,7 @@ def build_evaluation_plan(
                         strategy_checkpoint_id=(
                             checkpoint.strategy_checkpoint_id
                         ),
-                        signal_discovery_run_id=checkpoint.signal_discovery_run_id,
+                        signal_discovery_run_id=None,
                         snapshot_set_id=checkpoint.snapshot_set_id,
                         prepared_start_date=checkpoint.execution_start_date,
                         prepared_end_date=checkpoint.execution_end_date,
@@ -380,7 +380,6 @@ def build_evaluation_plan(
                 strategy_checkpoint_id = (
                     strategy_checkpoint.strategy_checkpoint_id
                 )
-                signal_discovery_run_id = strategy_checkpoint.signal_discovery_run_id
                 snapshot_set_id = strategy_checkpoint.snapshot_set_id
                 prepared_start_date = strategy_checkpoint.execution_start_date
                 prepared_end_date = strategy_checkpoint.execution_end_date
@@ -402,7 +401,7 @@ def build_evaluation_plan(
                     strategy_id=evaluation_task.strategy_id,
                     signal_discovery_id=strategy_signal_discovery_id,
                     strategy_checkpoint_id=strategy_checkpoint_id,
-                    signal_discovery_run_id=signal_discovery_run_id,
+                    signal_discovery_run_id=None,
                     snapshot_set_id=snapshot_set_id,
                     prepared_start_date=prepared_start_date,
                     prepared_end_date=prepared_end_date,

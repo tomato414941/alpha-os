@@ -46,7 +46,6 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
         assert strategy_checkpoints
         source_state = strategy_checkpoints[0].state
         assert source_state.signal_train_id
-        assert source_state.signal_discovery_run_id
         assert source_state.screening_result_id
         assert source_state.compressed_belief_id
     finally:
@@ -118,9 +117,6 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
         )
         assert task_result.artifact_refs["signal_train_ids"] == (
             source_state.signal_train_id,
-        )
-        assert task_result.artifact_refs["signal_discovery_run_ids"] == (
-            source_state.signal_discovery_run_id,
         )
         assert task_result.artifact_refs["screening_result_ids"] == (
             source_state.screening_result_id,

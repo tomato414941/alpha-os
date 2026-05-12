@@ -239,7 +239,6 @@ def _persist_strategy_checkpoint_for_fold(
             fold_label=fold.label,
             execution_start_date=fold.execution_range.start_date,
             execution_end_date=fold.execution_range.end_date,
-            signal_discovery_run_id=f"run:{fold.label}",
             snapshot_set_id=f"snapshot-set:{fold.label}",
             screening_result_id=f"screening:{fold.label}",
             compressed_belief_id=f"belief:{fold.label}",

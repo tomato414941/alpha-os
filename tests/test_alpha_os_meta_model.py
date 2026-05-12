@@ -2749,7 +2749,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "sizing=signal_weighted" in evaluation_output
     assert "rebalance=every_1_steps" in evaluation_output
     assert "subject_set=core_crypto summary=[bindings=1" in evaluation_output
-    assert "metric_group_name=signal_discovery_run_stats" in evaluation_output
     assert "metric_group_name=signal_discovery_result_stats" in evaluation_output
     assert "metric_group_name=signed_belief_quality" in evaluation_output
     assert "metric_group_name=portfolio_target_return_alignment" in evaluation_output

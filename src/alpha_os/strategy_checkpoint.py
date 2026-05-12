@@ -15,7 +15,6 @@ class StrategyCheckpoint:
     fold_label: str
     execution_start_date: str
     execution_end_date: str
-    signal_discovery_run_id: str
     snapshot_set_id: str
     screening_result_id: str
     compressed_belief_id: str
@@ -31,7 +30,6 @@ class StrategyCheckpoint:
             "fold_label": self.fold_label,
             "execution_start_date": self.execution_start_date,
             "execution_end_date": self.execution_end_date,
-            "signal_discovery_run_id": self.signal_discovery_run_id,
             "snapshot_set_id": self.snapshot_set_id,
             "screening_result_id": self.screening_result_id,
             "compressed_belief_id": self.compressed_belief_id,
@@ -89,7 +87,6 @@ class StrategyCheckpoint:
             fold_label=str(document["fold_label"]),
             execution_start_date=str(document["execution_start_date"]),
             execution_end_date=str(document["execution_end_date"]),
-            signal_discovery_run_id=str(document["signal_discovery_run_id"]),
             snapshot_set_id=str(document["snapshot_set_id"]),
             screening_result_id=str(document["screening_result_id"]),
             compressed_belief_id=str(document["compressed_belief_id"]),
