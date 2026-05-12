@@ -222,7 +222,6 @@ def derive_trading_strategy_from_signal_discovery(
         signal_discovery_id=signal_discovery.signal_discovery_id,
         position_rule_id="constant_hold",
         family_mix=family_mix_value,
-        execution_kind="trained",
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(

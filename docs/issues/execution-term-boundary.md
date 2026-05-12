@@ -8,8 +8,8 @@
 - portfolio transition: moving current portfolio state toward desired targets
   under turnover, friction, and cost controls
 - strategy run: running a strategy through an engine
-- current `execution_kind` field: `trainless` or `trained`
-  behavior that is not order execution
+- removed `execution_kind` field: previous `trainless` or `trained` behavior
+  that was not order execution
 - evaluation execution range: the period over which an evaluation engine runs a
   strategy before measuring evaluation ranges
 
@@ -26,7 +26,7 @@ Examples:
 - order-style and fill behavior belong to trade/order execution
 - no-trade bands, turnover budgets, and transition utility may belong to
   portfolio transition or rebalance friction
-- `trainless` / `trained` are current implementation values and
+- `trainless` / `trained` were implementation values and
   should not be promoted into a target glossary term
 - `backtest_oos` is a current evaluation-spec rigor level, not a run mode
 - `execution_range` is an evaluation/run contract field, not an order-execution
@@ -45,8 +45,8 @@ Prefer scoped terms:
 - explicit evaluation job shapes for strict OOS and checkpoint-based evaluation
 
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
-The current `execution_kind` field is transitional and should be removed rather
-than renamed as a domain concept. See
+The old `execution_kind` field was removed rather than renamed as a domain
+concept. See
 [`execution-kind-removal.md`](./execution-kind-removal.md).
 
 Do not introduce `run policy` or `strategy run mode` as target terms. The
@@ -56,7 +56,6 @@ old `run_mode` field was removed rather than renamed as a domain concept. See
 ## Non-Goals
 
 - Do not rename existing `execution_range` fields immediately.
-- Do not remove `execution_kind` immediately.
 - Do not split `ExecutionPolicySpec` immediately.
 - Do not change manifest compatibility as part of terminology cleanup.
 

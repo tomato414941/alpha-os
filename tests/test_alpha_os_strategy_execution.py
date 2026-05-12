@@ -10,7 +10,6 @@ def _build_trading_strategy(
     signal_discovery_id: str | None = None,
     position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
-    execution_kind: str = "trainless",
     selection_kind: str = "all_assets",
     sizing_method: str | None = None,
     rebalance: str | None = None,
@@ -54,7 +53,6 @@ def _build_trading_strategy(
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
-        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=PortfolioConstructionSpec(
                 sizing_policy=PortfolioConstructionSizingSpec(
@@ -114,7 +112,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         target_id="residual_return_3d",
         signal_discovery_id="discovery:core",
         family_mix="relative_strength",
-        execution_kind="trained",
         sizing_method="equal_weight",
         rebalance="every_5_steps",
         long_only=True,
@@ -143,9 +140,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert (
         trading_strategy.family_mix
         == "relative_strength"
-    )
-    assert (
-        trading_strategy.execution_kind == "trained"
     )
     assert trading_strategy.portfolio.selection_kind == "all_assets"
     assert trading_strategy.portfolio.top_k == 5

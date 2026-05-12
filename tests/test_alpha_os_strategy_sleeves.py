@@ -56,7 +56,6 @@ def test_strategy_sleeve_composition_round_trips_on_strategy_and_case_config():
         signal_discovery_id=None,
         position_rule_id="constant_hold",
         family_mix=None,
-        execution_kind="trainless",
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=PortfolioConstructionSpec(
                 sizing_policy=PortfolioConstructionSizingSpec(

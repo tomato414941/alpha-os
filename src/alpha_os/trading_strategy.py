@@ -420,7 +420,6 @@ class TradingStrategySpec:
     signal_discovery_id: str | None
     position_rule_id: str
     family_mix: str | None
-    execution_kind: str
     portfolio: StrategyPortfolioSpec
     created_at: str
     adaptation_policy: AdaptationPolicySpec = field(
@@ -438,7 +437,6 @@ class TradingStrategySpec:
             "signal_discovery_id": self.signal_discovery_id,
             "position_rule_id": self.position_rule_id,
             "family_mix": self.family_mix,
-            "execution_kind": self.execution_kind,
             "portfolio": self.portfolio.to_document(),
             "adaptation_policy": self.adaptation_policy.to_document(),
             "created_at": self.created_at,
@@ -464,7 +462,6 @@ class TradingStrategySpec:
             family_mix=_normalize_optional(
                 None if document.get("family_mix") is None else str(document["family_mix"])
             ),
-            execution_kind=str(document.get("execution_kind", "trainless")),
             adaptation_policy=AdaptationPolicySpec.from_document(
                 dict(document.get("adaptation_policy", {}))
             ),

@@ -566,7 +566,6 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
             signal_discovery_id="signal-discovery:test",
             position_rule_id="constant_hold",
             family_mix=None,
-            execution_kind="trainless",
             portfolio=_strategy_portfolio(
                 selection_kind="top_k",
                 top_k=3,
@@ -706,7 +705,6 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
             signal_discovery_id="signal-discovery:test",
             position_rule_id="constant_hold",
             family_mix=None,
-            execution_kind="trainless",
             portfolio=_strategy_portfolio(
                 selection_kind="top_k",
                 top_k=2,

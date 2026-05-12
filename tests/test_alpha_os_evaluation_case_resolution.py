@@ -786,7 +786,6 @@ def test_resolve_evaluation_tasks_rejects_override_without_signal_discovery(
                     "signal_discovery_id": None,
                     "position_rule_id": "constant_hold",
                     "family_mix": None,
-                    "execution_kind": "screen",
                         "portfolio": {
                             "portfolio_construction": _make_evaluation_trading_config()
                             .portfolio_construction.to_document(),

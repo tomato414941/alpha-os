@@ -27,7 +27,6 @@ For a strategy such as `crypto_regime_momentum`, the checked-in JSON contains:
 strategy_id
 position_rule_id
 portfolio
-execution_kind
 ```
 
 After applying the input, the DB stores the same strategy document in
@@ -59,4 +58,3 @@ Treat DB `strategy_specs` rows as runtime artifacts derived from those inputs.
 - Runtime reports can identify which checked-in input produced the DB strategy
   copy, or otherwise make the derivation explicit.
 - No workflow treats both JSON and DB copies as independent sources of truth.
-

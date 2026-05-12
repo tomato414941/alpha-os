@@ -13,7 +13,6 @@ def _build_trading_strategy(
     signal_discovery_id: str | None = None,
     position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
-    execution_kind: str = "trainless",
     sizing_method: str | None = None,
     created_at: str = "2026-03-29T00:00:00+00:00",
 ):
@@ -40,7 +39,6 @@ def _build_trading_strategy(
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
-        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=PortfolioConstructionSpec(
                 sizing_policy=PortfolioConstructionSizingSpec(
@@ -108,7 +106,6 @@ def _register_search_strategy(
         target_id=None,
         signal_discovery_id=signal_discovery_id,
         position_rule_id="signal_discovery",
-        execution_kind="trained",
     )
     store.upsert_trading_strategy(trading_strategy=spec)
 

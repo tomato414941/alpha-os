@@ -657,7 +657,6 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                             "signal_discovery_id": "core_manifest_search",
                             "position_rule_id": "signal_discovery",
                             "family_mix": None,
-                            "execution_kind": "trained",
                             **_strategy_portfolio_document(
                                 sizing_method="equal_weight",
                                 direction_mode=None,
@@ -1964,7 +1963,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                 signal_discovery_id=None,
                 position_rule_id="constant_hold",
                 family_mix=None,
-                execution_kind="trainless",
                 portfolio=StrategyPortfolioSpec(
                     portfolio_construction=PortfolioConstructionSpec(
                         sizing_policy=PortfolioConstructionSizingSpec(
@@ -2485,7 +2483,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "signal_discovery",
                             "family_mix": None,
-                            "execution_kind": "trained",
                             **_strategy_portfolio_document(
                                 sizing_method="signal_weighted",
                                 direction_mode=None,
@@ -3510,7 +3507,6 @@ def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
             signal_discovery_id="core_crypto_search",
             position_rule_id="signal_discovery",
             family_mix=None,
-            execution_kind="trained",
             portfolio=StrategyPortfolioSpec(
                 portfolio_construction=PortfolioConstructionSpec(
                     sizing_policy=PortfolioConstructionSizingSpec(

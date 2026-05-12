@@ -89,7 +89,6 @@ def _strategy_document(
             "signal_discovery_id": None,
             "position_rule_id": position_rule_id,
             "family_mix": None,
-            "execution_kind": "trainless",
             "portfolio": {
                 "portfolio_construction": {
                     "sizing_policy": {

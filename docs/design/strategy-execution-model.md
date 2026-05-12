@@ -96,31 +96,13 @@ So the clean relation is:
 Good predictions do not guarantee a good strategy. Good strategy outcomes also
 do not prove that prediction quality was the dominant source of edge.
 
-## Current State-Handling Values
+## Current State Handling
 
-The current mainline trading-strategy contract still stores `execution_kind`.
-This is a transitional implementation field, not a target domain term.
+The mainline trading-strategy contract no longer stores `execution_kind`.
+Evaluation state sourcing is now represented by explicit inputs:
 
-### `trainless`
-
-Use when the strategy can produce decisions directly from current inputs without
-train-period state.
-
-Properties:
-
-- no signal-train stage is required
-- no strategy checkpoint is required
-- evaluation can run fold-by-fold without upstream retraining
-
-### `trained`
-
-Use when the strategy requires train-period state before test-period execution.
-
-Properties:
-
-- a signal train is required
-- strategy checkpoint may be created per fold
-- strict OOS evaluation may retrain per fold
+- direct strategy evaluation uses the strategy scope and current inputs
+- checkpoint evaluation uses `strategy_checkpoint_id` or fold checkpoints
 
 ### Checkpoint-Based Evaluation
 
@@ -147,7 +129,7 @@ job specs. Evaluation behavior should be represented through explicit inputs.
 
 So:
 
-- `execution_kind` is a current implementation field to remove
+- `execution_kind` has been removed from trading strategy specs
 - `run_mode` has been removed from evaluation job specs
 - future strategy requirements should be expressed directly instead of hidden
   behind a single mode-like term
@@ -161,7 +143,7 @@ The current codebase is still transitional. The practical mapping is:
 | Current object | Closest long-horizon concept | Notes |
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
-| `execution_kind` | transitional implementation field | Do not promote to a glossary term. Remove it once strategy requirements and run/evaluation state sourcing are represented directly. |
+| `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
 | `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |

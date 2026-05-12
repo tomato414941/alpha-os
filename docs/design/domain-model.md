@@ -185,7 +185,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | Current object | Closest long-horizon concept | Notes |
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
-| `execution_kind` | transitional implementation field | Remove once strategy requirements and run/evaluation state sourcing are represented directly. |
+| `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | `EvaluationTask` | evaluation run context | It binds a trading strategy to an evaluation context. |
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
@@ -237,7 +237,8 @@ signal-generation rule is applied.
 Within `SignalPolicy`, the current clean split is:
 
 - `SignalDefinitionPolicy`: which signal logic is used, such as `discovery`, `signal`, and `family_mix`
-- `SignalUpdatePolicy`: how that signal logic is produced or reused, currently expressed by `execution_kind`
+- `SignalUpdatePolicy`: how that signal logic is produced or reused; this is
+  not currently represented by a broad mode field
 
 Within `PortfolioPolicy`, the current clean split is:
 

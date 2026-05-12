@@ -2,7 +2,7 @@
 
 ## Problem
 
-`execution_kind` is a persisted implementation field with values such as
+`execution_kind` was a persisted implementation field with values such as
 `trainless` and `trained`.
 
 The name should not become a domain term:
@@ -22,15 +22,15 @@ Before replacing it, decide whether the underlying classification is needed at
 all. If the behavior is still needed, represent the actual requirements
 directly instead of preserving a single mode-like field.
 
-## Current Places To Audit
+## Completed Removal
 
-- `TradingStrategySpec.execution_kind`
-- `StrategyExecutionKind`
-- `StrategyExecutionSpec.kind`
+- `TradingStrategySpec.execution_kind` removed
+- `StrategyExecutionKind` removed
+- `StrategyExecutionSpec` removed
 - `StrategyEvaluationContext.execution_kind` removed from the request context;
   executor input-source routing remains tracked separately
-- manifest and report payloads that persist `execution_kind`
-- validation and evaluation-planning branches keyed by `trainless` or `trained`
+- manifest and report payloads no longer persist `execution_kind`
+- evaluation planning no longer branches on `trainless` or `trained`
 
 ## Boundary
 
@@ -43,18 +43,9 @@ If the behavior remains necessary, separate the concepts explicitly:
 - run/evaluation-side state sourcing, such as training per fold or using a fixed
   strategy checkpoint
 
-## Non-Goals
-
-- Do not break existing manifests or stored reports without a migration path.
-- Do not rename code mechanically before the conceptual split is decided.
-- Do not reintroduce `execution kind` or `strategy execution kind` as glossary
-  terms.
-
 ## Acceptance Criteria
 
 - New docs do not use `execution kind` or `strategy execution kind`.
-- `execution_kind` is either removed from public payloads or kept only behind a
-  documented compatibility layer.
+- `execution_kind` is removed from public payloads.
 - Evaluation planning no longer depends on a single ambiguous mode if explicit
   requirements and state sources are available.
-- Existing persisted artifacts have a migration or compatibility strategy.

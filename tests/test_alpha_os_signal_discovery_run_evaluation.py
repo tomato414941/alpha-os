@@ -63,7 +63,6 @@ def _build_trading_strategy(
     signal_discovery_id: str | None = None,
     position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
-    execution_kind: str = "trainless",
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -99,7 +98,6 @@ def _build_trading_strategy(
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
-        execution_kind=execution_kind,
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=PortfolioConstructionSpec(
                 sizing_policy=PortfolioConstructionSizingSpec(
@@ -803,7 +801,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
-                            "execution_kind": "trained",
                             **_strategy_portfolio_document(
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
@@ -976,7 +973,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
-                            "execution_kind": "trained",
                             **_strategy_portfolio_document(
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
@@ -1095,7 +1091,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
-                            "execution_kind": "trainless",
                             **_strategy_portfolio_document(
                                 sizing_method="equal_weight",
                                 direction_mode=None,
@@ -1228,7 +1223,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
-                            "execution_kind": "trainless",
                             **_strategy_portfolio_document(
                                 sizing_method="equal_weight",
                                 direction_mode=None,
@@ -1447,7 +1441,6 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
-                            "execution_kind": "trainless",
                             **_strategy_portfolio_document(
                                 sizing_method="equal_weight",
                                 direction_mode="long_only",
@@ -1682,7 +1675,6 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                             "signal_discovery_id": None,
                             "position_rule_id": "dual_momentum_hold",
                             "family_mix": "lookback=2",
-                            "execution_kind": "trainless",
                             **_strategy_portfolio_document(
                                 sizing_method="signal_weighted",
                                 direction_mode="long_only",
@@ -2601,7 +2593,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
             position_rule_id="signal_discovery",
-            execution_kind="trained",
             created_at="2026-01-01T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
@@ -2688,7 +2679,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         store.close()
 
 
-def test_build_evaluation_plan_ignores_execution_kind_for_direct_strategy(
+def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
     tmp_path,
 ):
     from alpha_os.evaluation_task import EvaluationTask
@@ -2709,7 +2700,6 @@ def test_build_evaluation_plan_ignores_execution_kind_for_direct_strategy(
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
             position_rule_id="neural_model",
-            execution_kind="trained",
             created_at="2026-04-05T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
@@ -2781,7 +2771,6 @@ def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
             label="Portfolio Source",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
-            execution_kind="trainless",
             sizing_method="equal_weight",
             rebalance="every_5_steps",
             long_only=True,
@@ -2860,7 +2849,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             label="Checkpoint Case",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
-            execution_kind="trained",
             created_at="2026-04-05T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
@@ -2988,7 +2976,6 @@ def test_create_checkpoint_evaluation_task_materializes_replay_case(tmp_path, ca
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
             sizing_method="equal_weight",
-            execution_kind="trained",
             created_at="2026-04-05T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
@@ -3416,7 +3403,6 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
             subject_set_id="core_crypto",
             target_id="residual_return_3d",
             family_mix="reversal",
-            execution_kind="trained",
             sizing_method="equal_weight",
             rebalance="every_1_steps",
             long_only=True,

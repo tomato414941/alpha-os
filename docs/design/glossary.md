@@ -413,7 +413,8 @@ So:
 - `subject_set` and `target` belong to strategy scope
 - `position_rule_id`, `signal_discovery_id`, and `family_mix` describe the
   position rule or the artifacts it depends on
-- `execution_kind` is a transitional implementation field, not a glossary term
+- `execution_kind` has been removed and should not be reintroduced as a
+  glossary term
 
 ### Strategy Requirements vs Universe
 

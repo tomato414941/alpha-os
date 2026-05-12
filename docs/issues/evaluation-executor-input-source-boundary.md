@@ -2,8 +2,8 @@
 
 ## Problem
 
-`evaluation_execution_strategy_for_request()` currently routes evaluation
-requests through separate executor classes based on `execution_kind`.
+`evaluation_execution_strategy_for_request()` used to route evaluation requests
+through separate executor classes based on `execution_kind`.
 
 That routing is suspicious because the split is not really about strategy type
 or trade execution. It is mostly about where the evaluation inputs come from:
@@ -14,9 +14,8 @@ or trade execution. It is mostly about where the evaluation inputs come from:
 
 ## Risk
 
-Changing the routing condition from `execution_kind` to another indirect field,
-such as `signal_discovery_id`, would remove one dependency without fixing the
-boundary.
+Changing the routing condition from one indirect field to another, such as
+`signal_discovery_id`, would remove one dependency without fixing the boundary.
 
 The executor layer would still be deciding between input-source paths while also
 constructing reports and running the common decision backtest machinery.

@@ -174,21 +174,17 @@ screening, belief synthesis, portfolio construction, and execution paths. See
 
 The glossary definition is acceptable for order/trade execution, but code and
 docs use `execution` across several layers: order execution, portfolio
-transition, current strategy-run wording, current `execution_kind` behavior, and
-evaluation execution ranges. Avoid bare `execution` when a scoped term is
+transition, strategy-run wording, old `execution_kind` behavior, and evaluation
+execution ranges. Avoid bare `execution` when a scoped term is
 available. See
 [`execution-term-boundary.md`](./execution-term-boundary.md).
 
 ### `execution kind` / `strategy execution kind`
 
 Do not keep either as a glossary term. These names imply a subtype of
-`execution`, but the current `execution_kind` field is not about order
-execution.
+`execution`, but the old `execution_kind` field was not about order execution.
 
-Treat `execution_kind` as a transitional implementation field to remove, not as
-a domain term to rename. Before replacing it, decide whether the underlying
-classification is needed at all. If the behavior is still needed, express the
-actual requirements directly instead of preserving a single mode-like concept.
+`execution_kind` has been removed rather than renamed as a domain term.
 See [`execution-kind-removal.md`](./execution-kind-removal.md).
 
 ### `strategy execution`

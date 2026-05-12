@@ -131,7 +131,6 @@ def _register_direct_strategy(
             signal_discovery_id=None,
             position_rule_id="constant_hold",
             family_mix=None,
-            execution_kind="trainless",
             portfolio=StrategyPortfolioSpec(
                 portfolio_construction=PortfolioConstructionSpec(
                     sizing_policy=PortfolioConstructionSizingSpec(
