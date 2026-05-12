@@ -34,11 +34,6 @@ from ..cli_output import (
     print_validation_results,
     print_validation_result_set,
 )
-from ..data_repositories import (
-    EvaluationInputRepository,
-    FeaturePlaneRepository,
-    ObservationFrameRepository,
-)
 from ..evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
@@ -114,9 +109,7 @@ from ..signal_generator import (
 )
 from ..signal_discovery_application import (
     build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
-    build_prepared_evaluation_snapshot_set_id as _app_build_prepared_evaluation_snapshot_set_id,
     compress_screening_result_state as _app_compress_screening_result_state,
-    run_signal_discovery_workflow as _app_run_signal_discovery_workflow,
     screen_signal_discovery as _app_screen_signal_discovery,
 )
 from ..signal_discovery import SignalDiscoverySpec
@@ -637,75 +630,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         type=str,
         default=DEFAULT_SIGNAL_NOISE_BASE_URL,
     )
-
-    run_signal_discovery_decision = internal_parser("run-signal-discovery-decision")
-    run_signal_discovery_decision.add_argument("--db", type=str, default=None)
-    run_signal_discovery_decision.add_argument("--start-date", type=str, required=True)
-    run_signal_discovery_decision.add_argument("--end-date", type=str, required=True)
-    run_signal_discovery_decision.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        required=True,
-    )
-    run_signal_discovery_decision.add_argument(
-        "--base-url",
-        type=str,
-        default=DEFAULT_SIGNAL_NOISE_BASE_URL,
-    )
-    run_signal_discovery_decision.add_argument("--min-sample-count", type=int, default=None)
-    run_signal_discovery_decision.add_argument("--min-abs-corr", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--min-stability-score", type=float, default=None)
-    run_signal_discovery_decision.add_argument(
-        "--max-family-survivors-per-subject",
-        type=int,
-        default=None,
-    )
-    run_signal_discovery_decision.add_argument("--portfolio-id", type=str, default="default")
-    run_signal_discovery_decision.add_argument("--target-id", type=str, default=None)
-    run_signal_discovery_decision.add_argument("--subject-id", type=str, default=None)
-    run_signal_discovery_decision.add_argument("--subject-set-id", type=str, default=None)
-    run_signal_discovery_decision.add_argument("--strategy-id", type=str, default=None)
-    run_signal_discovery_decision.add_argument(
-        "--aggregation-kind",
-        type=str,
-        default=DEFAULT_PRIMARY_AGGREGATION_KIND,
-    )
-    run_signal_discovery_decision.add_argument(
-        "--sizing-method",
-        type=str,
-        choices=(
-            "signal_weighted",
-            "signed_mean_variance",
-            "equal_weight",
-            "minimum_variance",
-            "risk_budgeting",
-            "hierarchical_risk_parity",
-            "conviction_adjusted_hierarchical_risk_parity",
-        ),
-        default=None,
-    )
-    run_signal_discovery_decision.add_argument(
-        "--sizing-engine",
-        type=str,
-        choices=("rule_based", "optimizer", "history_based"),
-        default=None,
-    )
-    run_signal_discovery_decision.add_argument("--risk-window", type=int, default=20)
-    run_signal_discovery_decision.add_argument("--capital-base", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--gross-exposure-cap", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--gross-limit", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--net-limit", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--rebalance-step", type=int, default=None)
-    run_signal_discovery_decision.add_argument("--turnover-friction", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--market-impact-bps", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--fee-bps", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--bid-ask-spread-bps", type=float, default=None)
-    run_signal_discovery_decision.add_argument("--funding-bps-per-step", type=float, default=None)
-    run_signal_discovery_decision.add_argument(
-        "--borrow-fee-bps-per-step", type=float, default=None
-    )
-    run_signal_discovery_decision.add_argument("--no-trade-band", type=float, default=None)
 
     run_evaluation = sub.add_parser(
         "run-evaluation",
@@ -3804,20 +3728,6 @@ def cmd_compress_screening_result(args: argparse.Namespace) -> int:
     return 0
 
 
-def _print_signal_discovery_workflow_output(
-    *,
-    signal_discovery_id: str,
-    screening_state,
-    compressed_belief_state,
-) -> None:
-    print_screening_result(screening_state)
-    print_compressed_belief(compressed_belief_state)
-    print("alpha-os workflow output")
-    print(f"  SignalDiscovery:     {signal_discovery_id}")
-    print(f"  ScreeningResultId:     {screening_state.screening_result_id}")
-    print(f"  CompressedBeliefId:    {compressed_belief_state.compressed_belief_id}")
-
-
 def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
@@ -3860,132 +3770,6 @@ def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
             )
         )
     return 0
-
-
-def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        feature_plane_repository = FeaturePlaneRepository(
-            observation_repository=ObservationFrameRepository(store=store)
-        )
-        evaluation_input_repository = EvaluationInputRepository()
-        timestamp = _utc_now()
-        snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            created_at=timestamp,
-        )
-        (
-            signal_discovery,
-            subject_set,
-            target_id,
-            screening_state,
-            compressed_belief_state,
-        ) = _app_run_signal_discovery_workflow(
-            store,
-            default_target_id=cfg.target_id,
-            snapshot_set_id=snapshot_set_id,
-            signal_discovery_id=str(args.signal_discovery_id),
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            base_url=str(args.base_url),
-            min_sample_count=args.min_sample_count,
-            min_abs_corr=args.min_abs_corr,
-            min_stability_score=args.min_stability_score,
-            max_family_survivors_per_subject=args.max_family_survivors_per_subject,
-            feature_plane_repository=feature_plane_repository,
-            evaluation_input_repository=evaluation_input_repository,
-        )
-        trading_strategy = _resolved_trading_strategy_for_args(store, args)
-        explicit_subject_set = resolve_subject_set_for_build(
-            store,
-            args,
-            inline_subject_set=_subject_set_from_args(args),
-        )
-        decision_subject_set = subject_set if explicit_subject_set is None else explicit_subject_set
-        if args.subject_id is None and decision_subject_set.bindings:
-            subject_id = decision_subject_set.bindings[0].subject_id
-            runtime_asset = decision_subject_set.bindings[0].asset
-        else:
-            subject_id = cfg.default_subject_id if args.subject_id is None else str(args.subject_id)
-            runtime_asset = default_runtime_asset(subject_id)
-        subject_ids = tuple(dict.fromkeys((subject_id,) + decision_subject_set.subject_ids))
-        assumptions = _portfolio_decision_assumptions_from_args(
-            args,
-            subject_ids=subject_ids,
-            trading_strategy=trading_strategy,
-        )
-        config = RuntimeDecisionBuildConfig(
-            aggregation_kind=str(args.aggregation_kind),
-            risk_window=int(args.risk_window),
-            subject_set=decision_subject_set,
-        )
-        portfolio_state = build_runtime_portfolio_state(
-            store,
-            portfolio_id=str(args.portfolio_id),
-            aggregation_kind=config.aggregation_kind,
-        )
-        portfolio_state = _portfolio_state_from_args(portfolio_state, args)
-        decision_input = build_portfolio_decision_input_from_compressed_belief(
-            store,
-            compressed_belief_id=compressed_belief_state.compressed_belief_id,
-            portfolio_id=str(args.portfolio_id),
-            portfolio_state=portfolio_state,
-            assumptions=assumptions,
-        )
-        if decision_input is None:
-            raise ValueError("portfolio decision could not be built from compressed belief")
-        _print_signal_discovery_workflow_output(
-            signal_discovery_id=signal_discovery.signal_discovery_id,
-            screening_state=screening_state,
-            compressed_belief_state=compressed_belief_state,
-        )
-        portfolio_construction = _portfolio_construction_for_decision_strategy(
-            trading_strategy=trading_strategy,
-            base=_portfolio_construction_for_decision_args(
-                args=args,
-                base=(
-                    None
-                    if (
-                        discovered_config := _evaluation_trading_config_for_signal_discovery(
-                            store,
-                            signal_discovery_id=signal_discovery.signal_discovery_id,
-                        )
-                    )
-                    is None
-                    else discovered_config.portfolio_construction
-                ),
-            ),
-        )
-        sizing_spec = _resolved_decision_sizing_spec(
-            args=args,
-            trading_strategy=trading_strategy,
-            base=portfolio_construction,
-        )
-        portfolio_construction = _portfolio_construction_with_sizing_spec(
-            portfolio_construction,
-            sizing_spec=sizing_spec,
-        )
-        sizing_policy = _portfolio_sizing_policy_from_spec(sizing_spec)
-        return _run_portfolio_decision_from_input(
-            store=store,
-            cfg=cfg,
-            target_id=target_id,
-            runtime_asset=runtime_asset,
-            subject_id=subject_id,
-            subject_set=decision_subject_set,
-            decision_input=decision_input,
-            portfolio_state=portfolio_state,
-            config=config,
-            assumptions=assumptions,
-            sizing_policy=sizing_policy,
-            sizing_method=sizing_spec.sizing_method,
-            sizing_engine=sizing_spec.sizing_engine,
-            portfolio_id=str(args.portfolio_id),
-            trading_strategy=trading_strategy,
-            portfolio_construction=portfolio_construction,
-        )
 
 
 def _mean(values: list[float]) -> float:
@@ -5567,8 +5351,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_backfill_subject_set(args)
         if args.command == "debug-backfill-signal-discovery":
             return cmd_backfill_signal_discovery(args)
-        if args.command == "run-signal-discovery-decision":
-            return cmd_run_signal_discovery_decision(args)
         if args.command == "inspect-subject-set":
             return cmd_inspect_subject_set(args)
         if args.command == "debug-status":

@@ -2554,7 +2554,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
         assert (
             main(
                 [
-                    "run-signal-discovery-decision",
+                    "debug-backfill-signal-discovery",
                     "--db",
                     str(db_path),
                     "--start-date",
@@ -2565,20 +2565,46 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                     "core_crypto_search",
                     "--base-url",
                     "http://example.com",
-                    "--portfolio-id",
-                    "paper_core_seed",
-                    "--strategy-id",
-                    "strategy:core_crypto_rule",
-                    "--capital-base",
-                    "5.0",
-                    "--gross-exposure-cap",
-                    "0.8",
                 ]
             )
             == 0
         )
     finally:
         data_repositories.load_observation_frame = original_loader
+    assert (
+        main(
+            [
+                "debug-screen-signal-discovery",
+                "--db",
+                str(db_path),
+                "--signal-discovery-id",
+                "core_crypto_search",
+            ]
+        )
+        == 0
+    )
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        screening_results = store.list_screening_results(
+            signal_discovery_id="core_crypto_search",
+        )
+        assert len(screening_results) == 1
+        screening_result_id = screening_results[0].screening_result_id
+    finally:
+        store.close()
+    assert (
+        main(
+            [
+                "debug-compress-screening-result",
+                "--db",
+                str(db_path),
+                "--screening-result-id",
+                screening_result_id,
+            ]
+        )
+        == 0
+    )
     output = capsys.readouterr().out
     assert "signal_discovery=core_crypto_search" in output
     assert "executables=2" in output
@@ -2596,9 +2622,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "effective_beliefs=" in output
     assert "diversity=" in output
     assert "representatives=" in output
-    assert "alpha-os workflow output" in output
-    assert "CompressedBeliefId:" in output
-    assert "alpha-os portfolio decisions" in output
+    assert "Belief:" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -2625,7 +2649,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
         assert beliefs[0].belief.components[0].cluster_count >= 1
         assert beliefs[0].belief.components[0].effective_belief_count >= 1.0
         assert beliefs[0].belief.components[0].diversity_score > 0.0
-        assert len(store.list_evaluation_snapshots(limit=10)) == 2
+        assert len(store.list_evaluation_snapshots(limit=10)) >= 2
         compressed_belief_id = beliefs[0].compressed_belief_id
     finally:
         store.close()
@@ -2655,62 +2679,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     decision_output = capsys.readouterr().out
     assert "alpha-os portfolio decisions" in decision_output
     assert "subject=BTC_spot" in decision_output
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-signal-discovery-decision",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-24",
-                    "--end-date",
-                    "2026-03-24",
-                    "--signal-discovery-id",
-                    "core_crypto_search",
-                    "--base-url",
-                    "http://example.com",
-                    "--portfolio-id",
-                    "paper_core_workflow",
-                    "--strategy-id",
-                    "strategy:core_crypto_rule",
-                    "--capital-base",
-                    "5.0",
-                    "--gross-exposure-cap",
-                    "0.8",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-    workflow_decision_output = capsys.readouterr().out
-    assert "alpha-os workflow output" in workflow_decision_output
-    assert "CompressedBeliefId:" in workflow_decision_output
-    assert "alpha-os portfolio decisions" in workflow_decision_output
-    assert "Strategy: strategy:core_crypto_rule" in workflow_decision_output
-    assert "sizing=signal_weighted engine=rule_based" in workflow_decision_output
-    assert "rebalance=every_1_steps" in workflow_decision_output
-    assert "portfolio=paper_core_workflow" in workflow_decision_output
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        workflow_decisions = store.list_portfolio_decisions(
-            portfolio_id="paper_core_workflow",
-            limit=10,
-        )
-        assert workflow_decisions
-        workflow_details = workflow_decisions[0].details
-        assert workflow_details is not None
-        assert workflow_details["sizing_method"] == "signal_weighted"
-        assert workflow_details["sizing_engine"] == "rule_based"
-        assert workflow_details["strategy"]["strategy_id"] == "strategy:core_crypto_rule"
-        assert workflow_details["strategy"]["rebalance"] == "every_1_steps"
-    finally:
-        store.close()
 
     original_loader = data_repositories.load_observation_frame
     data_repositories.load_observation_frame = _fake_loader
