@@ -2688,7 +2688,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         store.close()
 
 
-def test_build_evaluation_plan_rejects_trained_strategy_without_search_provenance(
+def test_build_evaluation_plan_ignores_execution_kind_for_direct_strategy(
     tmp_path,
 ):
     from alpha_os.evaluation_task import EvaluationTask
@@ -2748,18 +2748,20 @@ def test_build_evaluation_plan_rejects_trained_strategy_without_search_provenanc
             ),
         )
 
-        with pytest.raises(
-            ValueError,
-            match="trained evaluation task requires signal discovery provenance",
-        ):
-            build_evaluation_plan(
-                store,
-                evaluation_spec_id="protocol_nn",
-                evaluation_spec=evaluation_spec,
-                evaluation_tasks=evaluation_tasks,
-                default_target_id="residual_return_3d",
-                base_url="http://example.com",
-            )
+        plan = build_evaluation_plan(
+            store,
+            evaluation_spec_id="protocol_nn",
+            evaluation_spec=evaluation_spec,
+            evaluation_tasks=evaluation_tasks,
+            default_target_id="residual_return_3d",
+            base_url="http://example.com",
+        )
+
+        assert len(plan.execution_requests) == 1
+        request = plan.execution_requests[0]
+        assert request.context.signal_discovery_id is None
+        assert request.context.subject_set_id == "subject_set_a"
+        assert request.input_refs is None
     finally:
         store.close()
 

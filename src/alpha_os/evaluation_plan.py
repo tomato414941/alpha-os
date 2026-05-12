@@ -275,7 +275,6 @@ def build_evaluation_plan(
         holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
             trading_strategy=trading_strategy,
         )
-        execution = trading_strategy.execution
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
         strategy_signal_train_id = build_signal_train_id(
             signal_discovery_id=strategy_signal_discovery_id,
@@ -323,11 +322,11 @@ def build_evaluation_plan(
                     )
                 )
             continue
-        if execution.kind == "trainless":
+        if strategy_signal_discovery_id is None:
             subject_set_id = trading_strategy.subject_set_id
             if not isinstance(subject_set_id, str) or not subject_set_id:
                 raise ValueError(
-                    "trainless evaluation task requires strategy subject_set: "
+                    "direct evaluation task requires strategy subject_set: "
                     f"{evaluation_task.evaluation_task_id}"
                 )
             target_id = trading_strategy.target_id or default_target_id
@@ -361,11 +360,6 @@ def build_evaluation_plan(
                     )
                 )
             continue
-        if strategy_signal_discovery_id is None:
-            raise ValueError(
-                "trained evaluation task requires signal discovery provenance: "
-                f"{evaluation_task.evaluation_task_id}"
-            )
         for fold in evaluation_spec.resolved_evaluation_folds:
             strategy_checkpoints = store.list_strategy_checkpoints(
                 strategy_id=evaluation_task.strategy_id,
@@ -389,7 +383,7 @@ def build_evaluation_plan(
                 compressed_belief_id = strategy_checkpoint.compressed_belief_id
             else:
                 raise ValueError(
-                    "trained evaluation task requires a strategy checkpoint for "
+                    "checkpoint evaluation task requires a strategy checkpoint for "
                     f"{evaluation_task.evaluation_task_id} "
                     f"{fold.execution_range.start_date}->{fold.execution_range.end_date}"
                 )
