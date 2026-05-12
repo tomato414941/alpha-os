@@ -106,42 +106,6 @@ def _build_trading_strategy(
     )
 
 
-def test_resolve_strategy_execution_spec_defaults_to_trainless():
-    from alpha_os.strategy_execution import resolve_strategy_execution_spec
-
-    execution = resolve_strategy_execution_spec(
-        {
-            "position_rule": "constant_hold",
-            "selection": "all_assets",
-        }
-    )
-
-    assert execution.kind == "trainless"
-    assert execution.signal_discovery_id is None
-
-
-def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
-    from alpha_os.strategy_execution import resolve_strategy_execution_spec
-
-    by_discovery = resolve_strategy_execution_spec(
-        {
-            "signal_discovery": "discovery:core",
-            "position_rule": "relative_strength",
-        }
-    )
-    by_position_rule_id = resolve_strategy_execution_spec(
-        {
-            "position_rule": "neural_model",
-        }
-    )
-
-    assert by_discovery.kind == "trained"
-    assert by_discovery.signal_discovery_id == "discovery:core"
-
-    assert by_position_rule_id.kind == "trained"
-    assert by_position_rule_id.signal_discovery_id is None
-
-
 def test_trading_strategy_exposes_policy_hierarchy():
     trading_strategy = _build_trading_strategy(
         strategy_id="strategy:test",

@@ -7,11 +7,6 @@ from typing import Any
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
-from .strategy_execution import (
-    StrategyExecutionKind,
-    StrategyExecutionSpec,
-    resolve_strategy_execution_spec,
-)
 from .strategy_sleeves import StrategySleeveCompositionSpec
 
 
@@ -425,7 +420,7 @@ class TradingStrategySpec:
     signal_discovery_id: str | None
     position_rule_id: str
     family_mix: str | None
-    execution_kind: StrategyExecutionKind
+    execution_kind: str
     portfolio: StrategyPortfolioSpec
     created_at: str
     adaptation_policy: AdaptationPolicySpec = field(
@@ -508,13 +503,3 @@ class TradingStrategySpec:
     @property
     def sleeve_composition(self) -> StrategySleeveCompositionSpec | None:
         return self.portfolio.portfolio_construction.sleeve_composition
-
-    @property
-    def execution(self) -> StrategyExecutionSpec:
-        return resolve_strategy_execution_spec(
-            {
-                "signal_discovery": self.signal_discovery_id or "",
-                "execution_kind": self.execution_kind,
-                "position_rule": self.position_rule_id,
-            }
-        )
