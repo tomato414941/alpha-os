@@ -40,6 +40,22 @@ mainly before the common backtest machinery:
 - both paths eventually flow through range backtest variant evaluation and
   `run_decision_backtest`
 
+`StrategyEvaluationArtifacts` currently mixes checkpoint-like references with
+training or discovery provenance:
+
+| Field | Direct path | Fixed-state path | Signal-discovery path | ML analogy |
+| --- | --- | --- | --- | --- |
+| `signal_train_id` | present | present | present | training lineage |
+| `initial_strategy_state_id` | none | present | optional | strategy checkpoint |
+| `signal_discovery_run_id` | none | present | present when using a run | training run |
+| `signal_discovery_id` | none | present | present | training/discovery config |
+| `screening_result_id` | none | present | present | selection result |
+| `compressed_belief_id` | none | present | present | learned state or checkpoint component |
+
+This makes the direct path carry a discovery-oriented artifact bundle with many
+empty fields, and it makes checkpoint references hard to distinguish from
+provenance references.
+
 ## Desired Direction
 
 Clarify whether the split belongs at the dataset/input construction layer rather
