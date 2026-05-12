@@ -135,8 +135,8 @@ Properties:
 
 ## Current Evaluation Job Shapes
 
-The current mainline engine contract still stores `run_mode`. This is a
-transitional implementation field, not a target domain term.
+The current mainline engine contract no longer stores `run_mode` on evaluation
+job specs. Evaluation behavior should be represented through explicit inputs.
 
 - `backtest_oos`
   - run the strategy under a strict train/test-separated evaluation spec
@@ -148,7 +148,7 @@ transitional implementation field, not a target domain term.
 So:
 
 - `execution_kind` is a current implementation field to remove
-- `run_mode` is a current implementation field to remove
+- `run_mode` has been removed from evaluation job specs
 - future strategy requirements should be expressed directly instead of hidden
   behind a single mode-like term
 - future evaluation job shapes should make required inputs explicit instead of
@@ -162,7 +162,7 @@ The current codebase is still transitional. The practical mapping is:
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
 | `execution_kind` | transitional implementation field | Do not promote to a glossary term. Remove it once strategy requirements and run/evaluation state sourcing are represented directly. |
-| `run_mode` | transitional implementation field | Remove once evaluation job shapes express their required inputs directly. |
+| `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
 | `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |
 
@@ -238,7 +238,7 @@ Inputs:
 
 - `evaluation task`
 - evaluation spec
-- current `run_mode` field
+- explicit evaluation job inputs
 
 Outputs:
 

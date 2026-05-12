@@ -2,8 +2,8 @@
 
 ## Current Evaluation Job Shapes
 
-The current mainline still stores `run_mode`, but the target shape should be
-explicit evaluation job inputs.
+The current mainline uses explicit evaluation job inputs rather than a generic
+`run_mode` field.
 
 ### `backtest_oos`
 

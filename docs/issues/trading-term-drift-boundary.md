@@ -154,8 +154,8 @@ instruments included in a specific evaluation run.
 
 Code review found that evaluation runs do not have a first-class
 `EvaluationUniverse` model or an evaluation-universe field on `EvaluationSpec`.
-The effective subject set is derived from strategy, initial state, or signal
-discovery provenance depending on the current `run_mode` field. See
+The effective subject set is derived from strategy, strategy checkpoint, or
+signal discovery provenance depending on the evaluation input shape. See
 [`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
 
 ### `subject`
@@ -202,10 +202,9 @@ context, and keep `execution` reserved for order/trade execution.
 ### `run policy` / `strategy run mode`
 
 Do not keep either as a glossary term. `run policy` has no first-class
-implementation, and `strategy run mode` mostly duplicates the current
+implementation, and `strategy run mode` mostly duplicated the removed
 `run_mode` field.
 
-Treat `run_mode` as a transitional implementation field to remove, not as a
-domain term to rename. If the behavior is still needed, express concrete
-evaluation job shapes and their required inputs directly. See
+Treat concrete evaluation job shapes and their required inputs directly. Do not
+reintroduce `run_mode` as a domain term to rename. See
 [`run-mode-removal.md`](./run-mode-removal.md).

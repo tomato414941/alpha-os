@@ -189,7 +189,7 @@ The current repo is still converging, but the practical mapping is now direct:
 |---------------|------------------------------|-------|
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
 | `execution_kind` | transitional implementation field | Remove once strategy requirements and run/evaluation state sourcing are represented directly. |
-| `run_mode` | transitional implementation field | Remove once evaluation job shapes express their required inputs directly. |
+| `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | `EvaluationTask` | partial `StrategyRunSpec` | It binds a trading strategy to an evaluation context. |
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 

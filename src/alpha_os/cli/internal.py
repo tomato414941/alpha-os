@@ -162,7 +162,6 @@ from ..portfolio_sizing_policy import (
 )
 from ..observation_adapters import resolve_observation_metadata
 from ..signal_discovery_execution import build_signal_discovery_execution_plan
-from ..strategy_run_mode import normalize_strategy_run_mode
 from ..store import EvaluationStore, _utc_now
 from ..subject_set_backfill_service import (
     SubjectSetBackfillResult,
@@ -2689,9 +2688,6 @@ def _evaluation_task_from_document(
         strategy_id=trading_strategy.strategy_id,
         evaluation_spec_id=evaluation_spec_id,
     )
-    run_mode = normalize_strategy_run_mode(
-        None if document.get("run_mode") is None else str(document["run_mode"])
-    )
     strategy_checkpoint_id = (
         None
         if document.get("strategy_checkpoint_id") is None
@@ -2699,7 +2695,6 @@ def _evaluation_task_from_document(
     )
     evaluation_job_spec = EvaluationJobSpec(
         evaluation_task_id=evaluation_task_id,
-        run_mode=run_mode,
         strategy_checkpoint_id=strategy_checkpoint_id,
     )
     return trading_strategy, evaluation_task, evaluation_job_spec

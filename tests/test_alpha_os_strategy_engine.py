@@ -170,15 +170,7 @@ def test_requires_decision_evaluation_classifies_metric_group_names():
     )
 
 
-def test_evaluation_job_spec_defaults_run_mode_to_backtest_oos():
-    from alpha_os.evaluation_job_spec import EvaluationJobSpec
-
-    job_spec = EvaluationJobSpec(evaluation_task_id="case:test")
-
-    assert job_spec.run_mode == "backtest_oos"
-
-
-def test_evaluation_job_spec_allows_strategy_checkpoint_without_run_mode():
+def test_evaluation_job_spec_allows_strategy_checkpoint():
     from alpha_os.evaluation_job_spec import EvaluationJobSpec
 
     job_spec = EvaluationJobSpec(
@@ -186,5 +178,4 @@ def test_evaluation_job_spec_allows_strategy_checkpoint_without_run_mode():
         strategy_checkpoint_id="state:test",
     )
 
-    assert job_spec.run_mode == "backtest_oos"
     assert job_spec.strategy_checkpoint_id == "state:test"

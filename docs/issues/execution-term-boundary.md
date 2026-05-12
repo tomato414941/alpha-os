@@ -28,7 +28,7 @@ Examples:
   portfolio transition or rebalance friction
 - `trainless` / `trained` / `frozen` are current implementation values and
   should not be promoted into a target glossary term
-- `backtest_oos` is the current default evaluation `run_mode` value
+- `backtest_oos` is a current evaluation-spec rigor level, not a run mode
 - `execution_range` is an evaluation/run contract field, not an order-execution
   field
 
@@ -50,8 +50,8 @@ than renamed as a domain concept. See
 [`execution-kind-removal.md`](./execution-kind-removal.md).
 
 Do not introduce `run policy` or `strategy run mode` as target terms. The
-current `run_mode` field is transitional and should be removed rather than
-renamed as a domain concept. See [`run-mode-removal.md`](./run-mode-removal.md).
+old `run_mode` field was removed rather than renamed as a domain concept. See
+[`run-mode-removal.md`](./run-mode-removal.md).
 
 ## Non-Goals
 

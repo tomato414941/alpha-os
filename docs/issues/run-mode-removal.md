@@ -2,10 +2,10 @@
 
 ## Problem
 
-`run_mode` is a persisted implementation field with values such as
+`run_mode` was a persisted implementation field with values such as
 `backtest_oos`, `paper`, and `live`.
 
-The field currently behaves like an evaluation-job switch, not a stable domain
+The field behaved like an evaluation-job switch, not a stable domain
 term:
 
 - there is no first-class `RunPolicy` implementation
@@ -18,30 +18,29 @@ term:
 
 ## Goal
 
-Remove `run policy` and `strategy run mode` as glossary terms, and treat
-`run_mode` as a transitional implementation field to remove.
+Remove `run policy` and `strategy run mode` as glossary terms. Remove
+`run_mode` from the active evaluation job spec.
 
 Before replacing it, decide whether a generic mode is needed at all. If the
 behavior remains necessary, represent concrete evaluation job shapes and their
 required inputs directly.
 
-## Current Places To Audit
+## Removed Places
 
 - `StrategyRunMode`
 - `EvaluationJobSpec.run_mode`
 - `StrategyEvaluationContext.run_mode` removed from the request context
 - `StrategyEvaluationRequest.to_backtest_oos_run_inputs` removed
-- manifest and report payloads that persist `run_mode`
+- active manifest job-spec payloads no longer persist `run_mode`
 - validation branches keyed by `backtest_oos`
 
 ## Current Finding
 
 `StrategyEvaluationContext.run_mode` was only used by request-to-run-input
-helper methods. It can be removed without changing `EvaluationJobSpec.run_mode`.
+helper methods and has been removed.
 
-`EvaluationJobSpec.run_mode` is no longer the selector for checkpoint-based
-evaluation planning. The remaining behavior is keyed by explicit job inputs,
-especially `strategy_checkpoint_id`.
+`EvaluationJobSpec.run_mode` has been removed. Checkpoint-based evaluation is
+keyed by explicit job inputs, especially `strategy_checkpoint_id`.
 
 ## Boundary
 
@@ -63,8 +62,7 @@ If the behavior remains necessary, prefer explicit request shapes:
 ## Acceptance Criteria
 
 - New docs do not use `run policy` or `strategy run mode`.
-- `run_mode` is either removed from public payloads or kept only behind a
-  documented compatibility layer.
+- `run_mode` is removed from active job-spec payloads.
 - Evaluation planning no longer depends on a single ambiguous mode if explicit
   request shapes and required inputs are available.
 - Existing persisted artifacts are either migrated or intentionally invalidated.
