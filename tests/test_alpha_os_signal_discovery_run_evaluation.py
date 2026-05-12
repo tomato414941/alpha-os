@@ -2548,7 +2548,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         EvaluationFold,
         EvaluationSpec,
     )
-    from alpha_os.strategy_training import build_signal_train_id
     from alpha_os.signal_discovery_run import SignalDiscoveryRun
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
@@ -2672,10 +2671,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         assert tuple(item.fold_label for item in plan.execution_requests) == (
             "fold_2025",
             "fold_2026_q1",
-        )
-        assert tuple(item.artifacts.signal_train_id for item in plan.execution_requests) == (
-            build_signal_train_id(signal_discovery_id="discovery_a"),
-            build_signal_train_id(signal_discovery_id="discovery_a"),
         )
         assert tuple(item.artifacts.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_a",
@@ -2957,10 +2952,6 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
         assert tuple(item.artifacts.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_seed",
             "signal_discovery_run_seed",
-        )
-        assert tuple(item.artifacts.signal_train_id for item in plan.execution_requests) == (
-            "signal-train:frozen",
-            "signal-train:frozen",
         )
     finally:
         store.close()

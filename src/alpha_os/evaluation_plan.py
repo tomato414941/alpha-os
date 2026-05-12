@@ -76,7 +76,6 @@ def _strategy_evaluation_request(
     evaluation_spec_id: str,
     fold_label: str,
     strategy_id: str,
-    signal_train_id: str | None,
     initial_strategy_state_id: str | None,
     signal_discovery_run_id: str | None,
     signal_discovery_id: str | None,
@@ -97,15 +96,13 @@ def _strategy_evaluation_request(
 ) -> StrategyEvaluationRequest:
     artifacts = None
     if (
-        signal_train_id is not None
-        or initial_strategy_state_id is not None
+        initial_strategy_state_id is not None
         or signal_discovery_run_id is not None
         or signal_discovery_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
         artifacts = StrategyEvaluationArtifacts(
-            signal_train_id=signal_train_id,
             initial_strategy_state_id=initial_strategy_state_id,
             signal_discovery_run_id=signal_discovery_run_id,
             signal_discovery_id=signal_discovery_id,
@@ -294,7 +291,6 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
-                        signal_train_id=None,
                         initial_strategy_state_id=None,
                         signal_discovery_run_id=None,
                         signal_discovery_id=None,
@@ -338,7 +334,6 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
-                        signal_train_id=frozen_state.signal_train_id,
                         initial_strategy_state_id=(
                             frozen_state.initial_strategy_state_id
                         ),
@@ -411,7 +406,6 @@ def build_evaluation_plan(
                     evaluation_spec_id=evaluation_spec_id,
                     fold_label=fold.label,
                     strategy_id=evaluation_task.strategy_id,
-                    signal_train_id=strategy_signal_train_id,
                     initial_strategy_state_id=initial_strategy_state_id,
                     signal_discovery_run_id=signal_discovery_run_id,
                     signal_discovery_id=strategy_signal_discovery_id,

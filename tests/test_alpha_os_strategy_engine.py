@@ -71,7 +71,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             holding_cost_assumptions=policy_parts["holding_cost_assumptions"],
         ),
         artifacts=StrategyEvaluationArtifacts(
-            signal_train_id="signal-train:test",
             initial_strategy_state_id="state:test",
             signal_discovery_run_id="signal-discovery-run:test",
             signal_discovery_id="discovery:test",
@@ -88,7 +87,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
     assert request.context.subject_set_id == "subject-set:test"
-    assert request.artifacts.signal_train_id == "signal-train:test"
     assert request.artifacts.initial_strategy_state_id == "state:test"
     assert request.artifacts.signal_discovery_id == "discovery:test"
     assert request.evaluation_date_ranges[0].label == "test"

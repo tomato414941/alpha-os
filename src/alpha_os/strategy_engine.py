@@ -27,7 +27,6 @@ class StrategyEvaluationContext:
 
 @dataclass(frozen=True)
 class StrategyEvaluationArtifacts:
-    signal_train_id: str | None
     initial_strategy_state_id: str | None
     signal_discovery_run_id: str | None
     signal_discovery_id: str | None
