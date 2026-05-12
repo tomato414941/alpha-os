@@ -89,7 +89,6 @@ class SignalTrainGroup:
     signal_train_id: str
     signal_discovery_id: str | None
     base_url: str
-    requires_signal_train: bool
     evaluation_tasks: tuple[EvaluationTask, ...]
 
 
@@ -151,7 +150,6 @@ def group_evaluation_tasks_by_signal_train(
         grouped.setdefault(signal_train_id, []).append(evaluation_task)
     groups: list[SignalTrainGroup] = []
     for signal_train_id, grouped_cases in sorted(grouped.items()):
-        requires_signal_train = False
         signal_discovery_id = None
         for case in grouped_cases:
             strategy_state = store.get_trading_strategy(case.strategy_id)
@@ -159,15 +157,11 @@ def group_evaluation_tasks_by_signal_train(
                 raise ValueError(f"evaluation task strategy does not exist: {case.strategy_id}")
             if signal_discovery_id is None:
                 signal_discovery_id = strategy_state.trading_strategy.signal_discovery_id
-            if strategy_state.trading_strategy.requires_signal_train:
-                requires_signal_train = True
-                break
         groups.append(
             SignalTrainGroup(
                 signal_train_id=signal_train_id,
                 signal_discovery_id=signal_discovery_id,
                 base_url=base_url,
-                requires_signal_train=requires_signal_train,
                 evaluation_tasks=tuple(grouped_cases),
             )
         )
@@ -260,13 +254,8 @@ def prepare_strategy_checkpoints_for_evaluation(
         base_url=request.base_url,
     )
     for signal_train_group in signal_train_groups:
-        if not signal_train_group.requires_signal_train:
-            continue
         if signal_train_group.signal_discovery_id is None:
-            raise ValueError(
-                "trained signal train group is missing signal discovery provenance: "
-                f"{signal_train_group.signal_train_id}"
-            )
+            continue
         for fold in request.evaluation_spec.resolved_evaluation_folds:
             if _has_complete_strategy_checkpoints_for_fold(
                 store,
