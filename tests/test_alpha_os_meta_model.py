@@ -2729,7 +2729,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
         assert (
             main(
                 [
-                    "run-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",

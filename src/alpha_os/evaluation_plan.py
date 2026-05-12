@@ -26,7 +26,6 @@ from .strategy_engine import (
 if TYPE_CHECKING:
     from .store import (
         StrategyCheckpointRecord,
-        SignalDiscoveryRunState,
         TradingStrategyState,
     )
 
@@ -53,15 +52,6 @@ class EvaluationPlanReadPort(Protocol):
         execution_end_date: str | None = None,
         limit: int = 20,
     ) -> list[StrategyCheckpointRecord]: ...
-
-    def list_signal_discovery_runs(
-        self,
-        *,
-        signal_discovery_id: str | None = None,
-        execution_start_date: str | None = None,
-        execution_end_date: str | None = None,
-        limit: int = 20,
-    ) -> list[SignalDiscoveryRunState]: ...
 
 
 @dataclass(frozen=True)
@@ -399,28 +389,11 @@ def build_evaluation_plan(
                 screening_result_id = strategy_checkpoint.screening_result_id
                 compressed_belief_id = strategy_checkpoint.compressed_belief_id
             else:
-                signal_discovery_runs = store.list_signal_discovery_runs(
-                    signal_discovery_id=strategy_signal_discovery_id,
-                    execution_start_date=fold.execution_range.start_date,
-                    execution_end_date=fold.execution_range.end_date,
-                    limit=1,
+                raise ValueError(
+                    "trained evaluation task requires a strategy checkpoint for "
+                    f"{evaluation_task.evaluation_task_id} "
+                    f"{fold.execution_range.start_date}->{fold.execution_range.end_date}"
                 )
-                if not signal_discovery_runs:
-                    raise ValueError(
-                        "evaluation task requires an existing signal discovery run or strategy checkpoint for "
-                        f"{evaluation_task.evaluation_task_id} "
-                        f"{fold.execution_range.start_date}->{fold.execution_range.end_date}"
-                    )
-                signal_discovery_run = signal_discovery_runs[0].run
-                strategy_checkpoint_id = None
-                signal_discovery_run_id = signal_discovery_run.signal_discovery_run_id
-                snapshot_set_id = signal_discovery_run.snapshot_set_id
-                prepared_start_date = signal_discovery_run.execution_start_date
-                prepared_end_date = signal_discovery_run.execution_end_date
-                subject_set_id = signal_discovery_run.subject_set_id
-                target_id = signal_discovery_run.target_id or default_target_id
-                screening_result_id = signal_discovery_run.screening_result_id
-                compressed_belief_id = signal_discovery_run.compressed_belief_id
             execution_requests.append(
                 _strategy_evaluation_request(
                     evaluation_task_id=evaluation_task.evaluation_task_id,

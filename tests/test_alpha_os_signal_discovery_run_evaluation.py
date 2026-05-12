@@ -693,7 +693,7 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
         assert (
             main(
                 [
-                    "run-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
@@ -2548,53 +2548,51 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         EvaluationFold,
         EvaluationSpec,
     )
-    from alpha_os.signal_discovery_run import SignalDiscoveryRun
+    from alpha_os.strategy_checkpoint import StrategyCheckpoint
+    from alpha_os.strategy_training import build_signal_train_id
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        store.upsert_signal_discovery_run(
-            run=SignalDiscoveryRun(
-                signal_discovery_run_id="signal_discovery_run_a",
-                snapshot_set_id="snapshot_set_a",
+        signal_train_id = build_signal_train_id(
+            signal_discovery_id="discovery_a",
+        )
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id="checkpoint_a",
+                strategy_id="strategy_a",
+                signal_train_id=signal_train_id,
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
+                fold_label="fold_2025",
                 execution_start_date="2025-01-01",
                 execution_end_date="2025-12-31",
+                signal_discovery_run_id="signal_discovery_run_a",
+                snapshot_set_id="snapshot_set_a",
                 screening_result_id="screening_a",
                 compressed_belief_id="belief_a",
-                workflow_runtime_s=1.0,
-                total_executables=10,
-                pre_screen_selected=8,
-                probe_selected=6,
-                survivor_selected=4,
-                persisted_signals=4,
-                evaluation_inputs=4,
-                pruned_snapshots=0,
+                survivor_signal_ids=("h1", "h2"),
                 created_at="2026-01-01T00:00:00Z",
             )
         )
-        store.upsert_signal_discovery_run(
-            run=SignalDiscoveryRun(
-                signal_discovery_run_id="signal_discovery_run_b",
-                snapshot_set_id="snapshot_set_b",
+        store.upsert_strategy_checkpoint(
+            state=StrategyCheckpoint(
+                strategy_checkpoint_id="checkpoint_b",
+                strategy_id="strategy_a",
+                signal_train_id=signal_train_id,
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
+                fold_label="fold_2026_q1",
                 execution_start_date="2026-01-01",
                 execution_end_date="2026-03-31",
+                signal_discovery_run_id="signal_discovery_run_b",
+                snapshot_set_id="snapshot_set_b",
                 screening_result_id="screening_b",
                 compressed_belief_id="belief_b",
-                workflow_runtime_s=1.0,
-                total_executables=10,
-                pre_screen_selected=8,
-                probe_selected=6,
-                survivor_selected=4,
-                persisted_signals=4,
-                evaluation_inputs=4,
-                pruned_snapshots=0,
+                survivor_signal_ids=("h3", "h4"),
                 created_at="2026-04-01T00:00:00Z",
             )
         )
@@ -2677,6 +2675,10 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         assert tuple(item.diagnostic_refs.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_a",
             "signal_discovery_run_b",
+        )
+        assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
+            "checkpoint_a",
+            "checkpoint_b",
         )
         assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
             "snapshot_set_a",
