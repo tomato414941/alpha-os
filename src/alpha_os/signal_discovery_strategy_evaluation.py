@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from typing import Callable
 import warnings
 from statistics import pstdev
 from math import sqrt
@@ -157,6 +158,13 @@ class StrategyEvaluationResult:
         yield self.failure_finding_groups
 
 
+@dataclass(frozen=True)
+class RangeBacktestEvaluationLoopResult:
+    range_summaries: tuple[SignalDiscoveryStrategyEvaluationRangeSummary, ...]
+    selected_trace_results: tuple[EvaluationTraceRangeResult, ...]
+    all_step_net_returns: tuple[float, ...]
+
+
 def _snapshot_backtest_artifacts(
     snapshots: list[EvaluationSnapshot],
 ) -> tuple[
@@ -202,6 +210,61 @@ def _snapshot_backtest_artifacts(
             for subject_id, values in roll_values.items()
         },
         contract_multiplier_by_subject,
+    )
+
+
+def evaluate_range_backtest_dataset_builder(
+    *,
+    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
+    build_dataset_for_range: Callable[[EvaluationDateRange], RangeBacktestDataset | None],
+    subject_set_id: str | None,
+    subject_set: SubjectSet | None,
+    target_id: str,
+    portfolio_construction: PortfolioConstructionSpec,
+    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
+    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
+    holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    top_k: int | None,
+) -> RangeBacktestEvaluationLoopResult:
+    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
+    selected_trace_results: list[EvaluationTraceRangeResult] = []
+    all_step_net_returns: list[float] = []
+    for date_range in evaluation_date_ranges:
+        dataset = build_dataset_for_range(date_range)
+        if dataset is None:
+            continue
+        variant_results = evaluate_range_backtest_variants(
+            subject_set_id=subject_set_id,
+            subject_set=subject_set,
+            target_id=target_id,
+            dataset=dataset,
+            portfolio_construction=portfolio_construction,
+            rebalance_friction_policy=rebalance_friction_policy,
+            execution_cost_assumptions=execution_cost_assumptions,
+            holding_cost_assumptions=holding_cost_assumptions,
+            top_k=top_k,
+        )
+        all_step_net_returns.extend(
+            float(step.net_return) for step in variant_results.selected.steps
+        )
+        selected_trace_results.append(
+            EvaluationTraceRangeResult(
+                range_label=date_range.label,
+                result=variant_results.selected,
+            )
+        )
+        range_summaries.append(
+            _range_summary_from_variant_results(
+                dataset,
+                variant_results,
+                portfolio_construction=portfolio_construction,
+                subject_set=subject_set,
+            )
+        )
+    return RangeBacktestEvaluationLoopResult(
+        range_summaries=tuple(range_summaries),
+        selected_trace_results=tuple(selected_trace_results),
+        all_step_net_returns=tuple(all_step_net_returns),
     )
 
 
@@ -261,11 +324,10 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
         snapshots,
         survivor_metrics=survivor_metrics,
     )
-    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
-    selected_trace_results: list[EvaluationTraceRangeResult] = []
-    all_step_net_returns: list[float] = []
-    for date_range in evaluation_date_ranges:
-        dataset = build_range_backtest_dataset(
+    def build_dataset_for_range(
+        date_range: EvaluationDateRange,
+    ) -> RangeBacktestDataset | None:
+        return build_range_backtest_dataset(
             date_range=date_range,
             snapshots=snapshots,
             all_bundles_by_subject=all_bundles_by_subject,
@@ -277,44 +339,27 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
             roll_cost_bps_series_by_subject=resolved_roll_cost_bps_series_by_subject,
             contract_multiplier_by_subject=resolved_contract_multiplier_by_subject,
         )
-        if dataset is None:
-            continue
-        variant_results = evaluate_range_backtest_variants(
-            subject_set_id=subject_set_id,
-            subject_set=subject_set,
-            target_id=target_id,
-            dataset=dataset,
-            portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
-            top_k=top_k,
-        )
-        all_step_net_returns.extend(
-            float(step.net_return) for step in variant_results.selected.steps
-        )
-        selected_trace_results.append(
-            EvaluationTraceRangeResult(
-                range_label=date_range.label,
-                result=variant_results.selected,
-            )
-        )
-        range_summaries.append(
-            _range_summary_from_variant_results(
-                dataset,
-                variant_results,
-                portfolio_construction=portfolio_construction,
-                subject_set=subject_set,
-            )
-        )
+
+    loop_result = evaluate_range_backtest_dataset_builder(
+        evaluation_date_ranges=evaluation_date_ranges,
+        build_dataset_for_range=build_dataset_for_range,
+        subject_set_id=subject_set_id,
+        subject_set=subject_set,
+        target_id=target_id,
+        portfolio_construction=portfolio_construction,
+        rebalance_friction_policy=rebalance_friction_policy,
+        execution_cost_assumptions=execution_cost_assumptions,
+        holding_cost_assumptions=holding_cost_assumptions,
+        top_k=top_k,
+    )
 
     (
         metric_group_results_by_name,
         failure_finding_groups,
     ) = build_evaluation_metric_group_results_from_range_summaries(
         source="native_plan",
-        range_summaries=range_summaries,
-        all_step_net_returns=all_step_net_returns,
+        range_summaries=list(loop_result.range_summaries),
+        all_step_net_returns=list(loop_result.all_step_net_returns),
         portfolio_construction=portfolio_construction,
         mean_survivor_corr=_mean(
             [float(item.corr) for item in survivors if item.corr is not None]
@@ -330,7 +375,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
     return StrategyEvaluationResult(
         metric_group_results_by_name=metric_group_results_by_name,
         failure_finding_groups=failure_finding_groups,
-        selected_trace_results=tuple(selected_trace_results),
+        selected_trace_results=loop_result.selected_trace_results,
     )
 
 def build_direct_strategy_evaluation_metric_group_results(
@@ -356,11 +401,10 @@ def build_direct_strategy_evaluation_metric_group_results(
     top_k: int | None = None,
     signal_value: float = 1.0,
 ) -> StrategyEvaluationResult:
-    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
-    selected_trace_results: list[EvaluationTraceRangeResult] = []
-    all_step_net_returns: list[float] = []
-    for date_range in evaluation_date_ranges:
-        dataset = build_direct_range_backtest_dataset(
+    def build_dataset_for_range(
+        date_range: EvaluationDateRange,
+    ) -> RangeBacktestDataset | None:
+        return build_direct_range_backtest_dataset(
             date_range=date_range,
             subject_return_series_by_subject=subject_return_series_by_subject,
             signal_series_by_subject=signal_series_by_subject,
@@ -370,50 +414,33 @@ def build_direct_strategy_evaluation_metric_group_results(
             contract_multiplier_by_subject=contract_multiplier_by_subject,
             signal_value=signal_value,
         )
-        if dataset is None:
-            continue
-        variant_results = evaluate_range_backtest_variants(
-            subject_set_id=subject_set_id,
-            subject_set=subject_set,
-            target_id=target_id,
-            dataset=dataset,
-            portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
-            top_k=top_k,
-        )
-        all_step_net_returns.extend(
-            float(step.net_return) for step in variant_results.selected.steps
-        )
-        selected_trace_results.append(
-            EvaluationTraceRangeResult(
-                range_label=date_range.label,
-                result=variant_results.selected,
-            )
-        )
-        range_summaries.append(
-            _range_summary_from_variant_results(
-                dataset,
-                variant_results,
-                portfolio_construction=portfolio_construction,
-                subject_set=subject_set,
-            )
-        )
+
+    loop_result = evaluate_range_backtest_dataset_builder(
+        evaluation_date_ranges=evaluation_date_ranges,
+        build_dataset_for_range=build_dataset_for_range,
+        subject_set_id=subject_set_id,
+        subject_set=subject_set,
+        target_id=target_id,
+        portfolio_construction=portfolio_construction,
+        rebalance_friction_policy=rebalance_friction_policy,
+        execution_cost_assumptions=execution_cost_assumptions,
+        holding_cost_assumptions=holding_cost_assumptions,
+        top_k=top_k,
+    )
     (
         metric_group_results_by_name,
         failure_finding_groups,
     ) = build_evaluation_metric_group_results_from_range_summaries(
         source="direct_plan",
-        range_summaries=range_summaries,
-        all_step_net_returns=all_step_net_returns,
+        range_summaries=list(loop_result.range_summaries),
+        all_step_net_returns=list(loop_result.all_step_net_returns),
         portfolio_construction=portfolio_construction,
         include_signed_belief_failures=False,
     )
     return StrategyEvaluationResult(
         metric_group_results_by_name=metric_group_results_by_name,
         failure_finding_groups=failure_finding_groups,
-        selected_trace_results=tuple(selected_trace_results),
+        selected_trace_results=loop_result.selected_trace_results,
     )
 
 def build_evaluation_metric_group_results_from_range_summaries(
