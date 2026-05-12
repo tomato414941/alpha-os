@@ -17,7 +17,7 @@ from .evaluation_spec import (
 )
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .strategy_engine import (
-    StrategyEvaluationArtifacts,
+    StrategyEvaluationInputRefs,
     StrategyEvaluationContext,
     StrategyEvaluationRequest,
 )
@@ -101,7 +101,7 @@ def _strategy_evaluation_request(
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
-        artifacts = StrategyEvaluationArtifacts(
+        artifacts = StrategyEvaluationInputRefs(
             initial_strategy_state_id=initial_strategy_state_id,
             signal_discovery_run_id=signal_discovery_run_id,
             screening_result_id=screening_result_id,

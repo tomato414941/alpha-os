@@ -27,7 +27,7 @@ class StrategyEvaluationContext:
 
 
 @dataclass(frozen=True)
-class StrategyEvaluationArtifacts:
+class StrategyEvaluationInputRefs:
     initial_strategy_state_id: str | None
     signal_discovery_run_id: str | None
     screening_result_id: str | None
@@ -53,7 +53,7 @@ class StrategyEvaluationRequest:
     evaluation_spec_id: str
     fold_label: str
     context: StrategyEvaluationContext
-    artifacts: StrategyEvaluationArtifacts | None
+    artifacts: StrategyEvaluationInputRefs | None
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...]
     metric_group_names: tuple[str, ...]
@@ -65,7 +65,7 @@ class StrategyEvaluationRequest:
         evaluation_spec_id: str,
         fold_label: str,
         context: StrategyEvaluationContext,
-        artifacts: StrategyEvaluationArtifacts | None,
+        artifacts: StrategyEvaluationInputRefs | None,
         execution_range: EvaluationDateRange,
         evaluation_date_ranges: tuple[EvaluationDateRange, ...],
         metric_group_names: tuple[str, ...],

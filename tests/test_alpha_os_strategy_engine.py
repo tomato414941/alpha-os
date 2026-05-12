@@ -32,8 +32,8 @@ def _evaluation_policy_parts(
 def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     from alpha_os.evaluation_spec import EvaluationDateRange
     from alpha_os.strategy_engine import (
-        StrategyEvaluationArtifacts,
         StrategyEvaluationContext,
+        StrategyEvaluationInputRefs,
         StrategyEvaluationRequest,
     )
 
@@ -71,7 +71,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             execution_cost_assumptions=policy_parts["execution_cost_assumptions"],
             holding_cost_assumptions=policy_parts["holding_cost_assumptions"],
         ),
-        artifacts=StrategyEvaluationArtifacts(
+        artifacts=StrategyEvaluationInputRefs(
             initial_strategy_state_id="state:test",
             signal_discovery_run_id="signal-discovery-run:test",
             screening_result_id="screening:test",
