@@ -265,7 +265,6 @@ def prepare_strategy_checkpoints_for_evaluation(
                 created_at=timestamp,
             )
             (
-                _backfill_result,
                 signal_discovery,
                 subject_set,
                 target_id,

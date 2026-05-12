@@ -201,7 +201,6 @@ def run_signal_discovery_workflow(
         screening_result_id=screening_state.screening_result_id,
     )
     return (
-        backfill_result,
         signal_discovery,
         subject_set,
         plan.target_id,

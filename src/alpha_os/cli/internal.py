@@ -3859,7 +3859,6 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             created_at=timestamp,
         )
         (
-            _backfill_result,
             signal_discovery,
             subject_set,
             target_id,
@@ -3949,7 +3948,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             created_at=timestamp,
         )
         (
-            _backfill_result,
             signal_discovery,
             subject_set,
             target_id,
