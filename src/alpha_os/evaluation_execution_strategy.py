@@ -137,28 +137,6 @@ def resolve_prepared_strategy_evaluation_inputs(
     )
 
 
-def build_prepared_strategy_artifact_refs(
-    *,
-    execution_request: StrategyEvaluationRequest,
-    prepared_inputs: PreparedStrategyEvaluationInputs,
-) -> dict[str, tuple[str, ...]]:
-    strategy_checkpoint = prepared_inputs.strategy_checkpoint
-    screening_state = prepared_inputs.screening_state
-    compressed_belief_state = prepared_inputs.compressed_belief_state
-    artifact_refs: dict[str, tuple[str, ...]] = {
-        "evaluation_task_ids": (execution_request.evaluation_task_id,),
-        "strategy_ids": (execution_request.context.strategy_id,),
-        "screening_result_ids": (screening_state.screening_result_id,),
-        "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
-        "evaluation_fold_labels": (execution_request.fold_label,),
-    }
-    if strategy_checkpoint is not None:
-        artifact_refs["strategy_checkpoint_ids"] = (
-            strategy_checkpoint.strategy_checkpoint_id,
-        )
-    return artifact_refs
-
-
 def resolve_prepared_strategy_survivor_snapshots(
     *,
     execution_request: StrategyEvaluationRequest,
@@ -658,10 +636,20 @@ class PreparedStrategyEvaluationExecutionStrategy:
             input_refs=input_refs,
         )
         metric_group_result_map: dict[str, EvaluationMetricGroupResult] = {}
-        artifact_refs = build_prepared_strategy_artifact_refs(
-            execution_request=execution_request,
-            prepared_inputs=prepared_inputs,
-        )
+        strategy_checkpoint = prepared_inputs.strategy_checkpoint
+        screening_state = prepared_inputs.screening_state
+        compressed_belief_state = prepared_inputs.compressed_belief_state
+        artifact_refs: dict[str, tuple[str, ...]] = {
+            "evaluation_task_ids": (execution_request.evaluation_task_id,),
+            "strategy_ids": (execution_request.context.strategy_id,),
+            "screening_result_ids": (screening_state.screening_result_id,),
+            "compressed_belief_ids": (compressed_belief_state.compressed_belief_id,),
+            "evaluation_fold_labels": (execution_request.fold_label,),
+        }
+        if strategy_checkpoint is not None:
+            artifact_refs["strategy_checkpoint_ids"] = (
+                strategy_checkpoint.strategy_checkpoint_id,
+            )
         failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
         subject_set = None
         pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
