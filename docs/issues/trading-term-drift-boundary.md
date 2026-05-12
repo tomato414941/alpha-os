@@ -109,7 +109,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `evaluation metric`
 - [ ] `evaluation metric group result`
 - [ ] `evaluation metric group name`
-- [ ] `evaluation profile`
+- [x] `evaluation profile`
 - [ ] `benchmark`
 - [ ] `net return`
 - [ ] `drawdown`

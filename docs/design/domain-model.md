@@ -51,7 +51,6 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
 | **evaluation metric group result** | One result block for one evaluation metric group. It is `metric_group_name + source + metrics`. | `EvaluationMetricGroupResult(metric_group_name="decision_quality", metrics={...})` |
 | **evaluation metric group name** | The identifier for an evaluation metric group when a contract references expected metric fields. | `CrossInstrumentMetricContract.metric_group_name="decision_quality"` |
-| **evaluation profile** | Legacy term. Do not use it for new code or docs. | Use `evaluation metric group result`. |
 | **train artifact** | A frozen output produced from the train period and later applied to the test period without re-selection. It is the evaluation-time analogue of a fitted model artifact. | survivor signal set, fitted belief synthesis settings, frozen allocation parameters |
 
 ## Evaluation Result Terminology

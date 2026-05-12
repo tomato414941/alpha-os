@@ -360,12 +360,6 @@ The identifier for an evaluation metric group when a contract references metric 
 
 `metric_group_name="decision_quality"`
 
-### evaluation profile
-
-Legacy term. Do not use it for new code or docs.
-
-Use `evaluation metric group result`.
-
 ### benchmark
 
 A reference index, portfolio, or strategy used for comparison.
