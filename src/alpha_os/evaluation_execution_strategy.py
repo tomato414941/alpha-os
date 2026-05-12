@@ -174,7 +174,7 @@ def build_prepared_strategy_evaluation_base_outputs(
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
     metric_group_result_map = {
-        "signal_discovery_quality": signal_discovery_quality_metric_group_result(
+        "signal_discovery_result_stats": signal_discovery_result_stats_metric_group_result(
             screening_state=screening_state,
             compressed_belief_state=compressed_belief_state,
         ),
@@ -328,7 +328,7 @@ def signal_discovery_run_stats_metric_group_result(
     )
 
 
-def signal_discovery_quality_metric_group_result(
+def signal_discovery_result_stats_metric_group_result(
     *,
     screening_state,
     compressed_belief_state,
@@ -340,7 +340,7 @@ def signal_discovery_quality_metric_group_result(
     survivor_ratio = 0.0 if not candidates else float(len(survivors) / len(candidates))
     components = list(compressed_belief.components)
     return EvaluationMetricGroupResult(
-        metric_group_name="signal_discovery_quality",
+        metric_group_name="signal_discovery_result_stats",
         source="native",
         metrics={
             "candidate_count": len(candidates),

@@ -154,7 +154,7 @@
         }
       ],
       "metric_group_names": [
-        "signal_discovery_quality",
+        "signal_discovery_result_stats",
         "prediction_diagnostics",
         "portfolio_target_return_alignment",
         "sizing_policy_quality",

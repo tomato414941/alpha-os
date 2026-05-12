@@ -11,7 +11,7 @@ from .evaluation_execution_strategy import (
     frozen_survivor_definitions as frozen_survivor_definitions,
     generate_frozen_survivor_test_snapshots as generate_frozen_survivor_test_snapshots,
     requires_frozen_test_application as requires_frozen_test_application,
-    signal_discovery_quality_metric_group_result as signal_discovery_quality_metric_group_result,
+    signal_discovery_result_stats_metric_group_result as signal_discovery_result_stats_metric_group_result,
     strategy_sleeve_attribution_summaries as strategy_sleeve_attribution_summaries,
     subject_matches_sleeve_filter as subject_matches_sleeve_filter,
     signal_discovery_run_stats_metric_group_result as signal_discovery_run_stats_metric_group_result,
