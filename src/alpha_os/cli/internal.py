@@ -3833,7 +3833,6 @@ def _print_signal_discovery_workflow_output(
     signal_discovery_id: str,
     screening_state,
     compressed_belief_state,
-    pruned_snapshot_count: int,
 ) -> None:
     print_screening_result(screening_state)
     print_compressed_belief(compressed_belief_state)
@@ -3841,7 +3840,6 @@ def _print_signal_discovery_workflow_output(
     print(f"  SignalDiscovery:     {signal_discovery_id}")
     print(f"  ScreeningResultId:     {screening_state.screening_result_id}")
     print(f"  CompressedBeliefId:    {compressed_belief_state.compressed_belief_id}")
-    print(f"  PrunedSnapshots:       {pruned_snapshot_count}")
 
 
 def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
@@ -3864,7 +3862,6 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             target_id,
             screening_state,
             compressed_belief_state,
-            pruned_snapshot_count,
         ) = _app_run_signal_discovery_workflow(
             store,
             default_target_id=cfg.target_id,
@@ -3884,7 +3881,6 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
         signal_discovery_id=signal_discovery.signal_discovery_id,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
-        pruned_snapshot_count=pruned_snapshot_count,
     )
     return 0
 
@@ -3953,7 +3949,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             target_id,
             screening_state,
             compressed_belief_state,
-            pruned_snapshot_count,
         ) = _app_run_signal_discovery_workflow(
             store,
             default_target_id=cfg.target_id,
@@ -4012,7 +4007,6 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             signal_discovery_id=signal_discovery.signal_discovery_id,
             screening_state=screening_state,
             compressed_belief_state=compressed_belief_state,
-            pruned_snapshot_count=pruned_snapshot_count,
         )
         portfolio_construction = _portfolio_construction_for_decision_strategy(
             trading_strategy=trading_strategy,

@@ -2591,7 +2591,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "representatives=" in output
     assert "alpha-os workflow output" in output
     assert "CompressedBeliefId:" in output
-    assert "PrunedSnapshots:" in output
 
     store = EvaluationStore(db_path)
     try:

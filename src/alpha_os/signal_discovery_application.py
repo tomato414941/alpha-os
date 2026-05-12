@@ -190,7 +190,7 @@ def run_signal_discovery_workflow(
         snapshot_set_id=snapshot_set_id,
         signal_ids=[item.signal_id for item in screening_state.result.survivors],
     )
-    pruned_snapshot_count = prune_screened_snapshots(
+    prune_screened_snapshots(
         store,
         selected_signal_ids=backfill_result.selected_signal_ids,
         screening_state=screening_state,
@@ -206,7 +206,6 @@ def run_signal_discovery_workflow(
         plan.target_id,
         screening_state,
         compressed_belief_state,
-        pruned_snapshot_count,
     )
 
 

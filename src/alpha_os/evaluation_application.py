@@ -270,7 +270,6 @@ def prepare_strategy_checkpoints_for_evaluation(
                 target_id,
                 screening_state,
                 compressed_belief_state,
-                pruned_snapshot_count,
             ) = run_signal_discovery_workflow(
                 store,
                 default_target_id=request.default_target_id,
