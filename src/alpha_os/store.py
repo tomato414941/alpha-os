@@ -1896,8 +1896,8 @@ class EvaluationStore:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS signal_discovery_run_evaluation_snapshots (
-                signal_discovery_run_id TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS prepared_evaluation_snapshots (
+                snapshot_set_id TEXT NOT NULL,
                 evaluation_id TEXT NOT NULL,
                 subject_id TEXT NOT NULL,
                 asset TEXT NOT NULL,
@@ -1925,7 +1925,7 @@ class EvaluationStore:
                 adapter_kind TEXT,
                 signal_name TEXT,
                 created_at TEXT NOT NULL,
-                PRIMARY KEY (signal_discovery_run_id, evaluation_id, signal_id)
+                PRIMARY KEY (snapshot_set_id, evaluation_id, signal_id)
             );
 
             CREATE TABLE IF NOT EXISTS evaluation_reports (
@@ -2105,7 +2105,7 @@ class EvaluationStore:
         self._seed_builtin_targets()
         self._seed_builtin_observables()
         self._ensure_subject_first_runtime_schema()
-        self._ensure_signal_discovery_run_snapshot_schema()
+        self._ensure_prepared_evaluation_snapshot_schema()
         self._ensure_signal_spec_schema()
         self._ensure_validation_run_columns()
         self._ensure_validation_decision_result_columns()
@@ -2382,11 +2382,11 @@ class EvaluationStore:
             """
         )
 
-    def _ensure_signal_discovery_run_snapshot_schema(self) -> None:
+    def _ensure_prepared_evaluation_snapshot_schema(self) -> None:
         columns = {
             str(row["name"])
             for row in self.conn.execute(
-                "PRAGMA table_info(signal_discovery_run_evaluation_snapshots)"
+                "PRAGMA table_info(prepared_evaluation_snapshots)"
             ).fetchall()
         }
         required_columns = {
@@ -2411,7 +2411,7 @@ class EvaluationStore:
                 continue
             self.conn.execute(
                 f"""
-                ALTER TABLE signal_discovery_run_evaluation_snapshots
+                ALTER TABLE prepared_evaluation_snapshots
                 ADD COLUMN {column_name} {definition}
                 """
             )
@@ -5035,21 +5035,21 @@ class EvaluationStore:
                 deleted += int(self.conn.execute("SELECT changes()").fetchone()[0])
         return deleted
 
-    def archive_signal_discovery_run_evaluation_snapshots(
+    def archive_prepared_evaluation_snapshots(
         self,
         *,
-        signal_discovery_run_id: str,
+        snapshot_set_id: str,
         signal_ids: list[str],
     ) -> int:
         if not signal_ids:
             return 0
         placeholders = ", ".join("?" for _ in signal_ids)
-        params: tuple[object, ...] = (signal_discovery_run_id, *signal_ids)
+        params: tuple[object, ...] = (snapshot_set_id, *signal_ids)
         with self.conn:
             self.conn.execute(
                 f"""
-                INSERT OR REPLACE INTO signal_discovery_run_evaluation_snapshots (
-                    signal_discovery_run_id, evaluation_id, subject_id, asset, target_id,
+                INSERT OR REPLACE INTO prepared_evaluation_snapshots (
+                    snapshot_set_id, evaluation_id, subject_id, asset, target_id,
                     signal_id, prediction_value, observation_value,
                     signed_edge, absolute_error, input_source,
                     input_range_start, input_range_end,
@@ -5075,14 +5075,14 @@ class EvaluationStore:
             )
             return int(self.conn.execute("SELECT changes()").fetchone()[0])
 
-    def list_signal_discovery_run_evaluation_snapshots(
+    def list_prepared_evaluation_snapshots(
         self,
         *,
-        signal_discovery_run_id: str,
+        snapshot_set_id: str,
         signal_ids: list[str] | None = None,
     ) -> list[EvaluationSnapshot]:
-        params: list[object] = [signal_discovery_run_id]
-        where_clause = "WHERE signal_discovery_run_id = ?"
+        params: list[object] = [snapshot_set_id]
+        where_clause = "WHERE snapshot_set_id = ?"
         if signal_ids is not None:
             if not signal_ids:
                 return []
@@ -5099,7 +5099,7 @@ class EvaluationStore:
                    collateral_ccy, roll_event_json,
                    observation_spec_id, observable_id, adapter_kind,
                    signal_name, created_at
-            FROM signal_discovery_run_evaluation_snapshots
+            FROM prepared_evaluation_snapshots
             {where_clause}
             ORDER BY evaluation_id ASC, signal_id ASC
             """,

@@ -679,8 +679,8 @@ def test_run_evaluation_uses_archived_signal_discovery_run_snapshots(tmp_path, c
             execution_end_date="2026-03-24",
             limit=1,
         )[0]
-        archived_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id=signal_discovery_run_state.signal_discovery_run_id,
+        archived_snapshots = store.list_prepared_evaluation_snapshots(
+            snapshot_set_id=signal_discovery_run_state.run.snapshot_set_id,
         )
         latest_snapshots = store.list_evaluation_snapshots(limit=10)
         assert len(archived_snapshots) > len(latest_snapshots)
@@ -2557,6 +2557,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         store.upsert_signal_discovery_run(
             run=SignalDiscoveryRun(
                 signal_discovery_run_id="signal_discovery_run_a",
+                snapshot_set_id="snapshot_set_a",
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -2578,6 +2579,7 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         store.upsert_signal_discovery_run(
             run=SignalDiscoveryRun(
                 signal_discovery_run_id="signal_discovery_run_b",
+                snapshot_set_id="snapshot_set_b",
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
@@ -2675,6 +2677,10 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
         assert tuple(item.input_refs.signal_discovery_run_id for item in plan.execution_requests) == (
             "signal_discovery_run_a",
             "signal_discovery_run_b",
+        )
+        assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
+            "snapshot_set_a",
+            "snapshot_set_b",
         )
         assert plan.execution_requests[0].evaluation_date_ranges[0].label == "test_2026_q1"
         assert plan.execution_requests[1].evaluation_date_ranges[0].label == "test_2026_q2"
@@ -2868,6 +2874,7 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
                 execution_start_date="2024-01-01",
                 execution_end_date="2024-12-31",
                 signal_discovery_run_id="signal_discovery_run_seed",
+                snapshot_set_id="snapshot_set_seed",
                 screening_result_id="screening_seed",
                 compressed_belief_id="belief_seed",
                 survivor_signal_ids=("h1", "h2"),
@@ -2953,6 +2960,10 @@ def test_build_evaluation_plan_supports_frozen_strategy_replay(tmp_path):
             "signal_discovery_run_seed",
             "signal_discovery_run_seed",
         )
+        assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
+            "snapshot_set_seed",
+            "snapshot_set_seed",
+        )
     finally:
         store.close()
 
@@ -3018,6 +3029,7 @@ def test_create_frozen_evaluation_task_materializes_replay_case(tmp_path, capsys
                 execution_start_date="2024-01-01",
                 execution_end_date="2024-12-31",
                 signal_discovery_run_id="signal_discovery_run_seed",
+                snapshot_set_id="snapshot_set_seed",
                 screening_result_id="screening_seed",
                 compressed_belief_id="belief_seed",
                 survivor_signal_ids=("h1",),

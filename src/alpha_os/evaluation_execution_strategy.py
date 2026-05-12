@@ -59,10 +59,10 @@ class EvaluationExecutionReadPort(Protocol):
     def get_signal(self, signal_id: str):
         ...
 
-    def list_signal_discovery_run_evaluation_snapshots(
+    def list_prepared_evaluation_snapshots(
         self,
         *,
-        signal_discovery_run_id: str,
+        snapshot_set_id: str,
         signal_ids: list[str] | None = None,
     ) -> list[EvaluationSnapshot]:
         ...
@@ -93,6 +93,7 @@ class EvaluationExecutionResult:
 class PreparedStrategyEvaluationInputs:
     initial_strategy_state: object | None
     signal_discovery_run: object | None
+    snapshot_set_id: str | None
     screening_state: object
     compressed_belief_state: object
 
@@ -144,6 +145,7 @@ def resolve_prepared_strategy_evaluation_inputs(
     return PreparedStrategyEvaluationInputs(
         initial_strategy_state=initial_strategy_state,
         signal_discovery_run=signal_discovery_run,
+        snapshot_set_id=input_refs.snapshot_set_id,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
     )
@@ -200,6 +202,7 @@ def resolve_prepared_strategy_survivor_snapshots(
     store = context.store
     initial_strategy_state = prepared_inputs.initial_strategy_state
     signal_discovery_run = prepared_inputs.signal_discovery_run
+    snapshot_set_id = prepared_inputs.snapshot_set_id
     screening_state = prepared_inputs.screening_state
     survivor_signal_ids = (
         list(initial_strategy_state.survivor_signal_ids)
@@ -238,9 +241,9 @@ def resolve_prepared_strategy_survivor_snapshots(
             evaluation_input_repository=context.evaluation_input_repository,
         )
     survivor_snapshots = []
-    if signal_discovery_run is not None:
-        survivor_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id=(signal_discovery_run.signal_discovery_run_id),
+    if snapshot_set_id is not None:
+        survivor_snapshots = store.list_prepared_evaluation_snapshots(
+            snapshot_set_id=snapshot_set_id,
             signal_ids=survivor_signal_ids,
         )
     if not survivor_snapshots:

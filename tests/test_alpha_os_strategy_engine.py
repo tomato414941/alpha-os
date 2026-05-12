@@ -74,6 +74,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         input_refs=StrategyEvaluationInputRefs(
             initial_strategy_state_id="state:test",
             signal_discovery_run_id="signal-discovery-run:test",
+            snapshot_set_id="snapshot-set:test",
             screening_result_id="screening:test",
             compressed_belief_id="belief:test",
         ),

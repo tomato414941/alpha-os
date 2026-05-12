@@ -2705,8 +2705,8 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
             limit=1,
         )
         assert len(signal_discovery_runs) == 1
-        archived_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id=signal_discovery_runs[0].signal_discovery_run_id,
+        archived_snapshots = store.list_prepared_evaluation_snapshots(
+            snapshot_set_id=signal_discovery_runs[0].run.snapshot_set_id,
         )
         assert len(archived_snapshots) > len(store.list_evaluation_snapshots(limit=10))
         workflow_decisions = store.list_portfolio_decisions(
@@ -3668,13 +3668,13 @@ def test_apply_evaluations_batch_persists_snapshot_artifacts(tmp_path):
             "roll_reason": "calendar_days_before_expiry",
         }
 
-        archived = store.archive_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id="run-1",
+        archived = store.archive_prepared_evaluation_snapshots(
+            snapshot_set_id="run-1",
             signal_ids=["hyp_a"],
         )
         assert archived == 1
-        archived_snapshots = store.list_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id="run-1",
+        archived_snapshots = store.list_prepared_evaluation_snapshots(
+            snapshot_set_id="run-1",
             signal_ids=["hyp_a"],
         )
         assert len(archived_snapshots) == 1

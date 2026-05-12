@@ -53,8 +53,8 @@ def test_prune_screened_snapshots_removes_non_survivors_and_keeps_survivor_lates
             signal_id="rejected",
             created_at="2026-01-02T00:00:00+00:00",
         )
-        archived_count = store.archive_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id="run-1",
+        archived_count = store.archive_prepared_evaluation_snapshots(
+            snapshot_set_id="run-1",
             signal_ids=["survivor"],
         )
         screening_state = SimpleNamespace(
@@ -73,8 +73,8 @@ def test_prune_screened_snapshots_removes_non_survivors_and_keeps_survivor_lates
         remaining = store.list_evaluation_snapshots_for_signals(
             signal_ids=["survivor", "rejected"]
         )
-        archived = store.list_signal_discovery_run_evaluation_snapshots(
-            signal_discovery_run_id="run-1"
+        archived = store.list_prepared_evaluation_snapshots(
+            snapshot_set_id="run-1"
         )
     finally:
         store.close()
@@ -106,6 +106,7 @@ def test_signal_discovery_run_builder_preserves_backfill_counts():
 
     run = build_signal_discovery_run(
         signal_discovery_run_id="run-1",
+        snapshot_set_id="snapshot-set-1",
         signal_discovery_id="discovery-1",
         subject_set_id="subject-set-1",
         target_id="target-1",

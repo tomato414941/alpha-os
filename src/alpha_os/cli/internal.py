@@ -119,6 +119,7 @@ from ..signal_generator import (
 )
 from ..signal_discovery_application import (
     build_initial_strategy_state_id as _app_build_initial_strategy_state_id,
+    build_prepared_evaluation_snapshot_set_id as _app_build_prepared_evaluation_snapshot_set_id,
     build_signal_discovery_run_id as _app_build_signal_discovery_run_id,
     compress_screening_result_state as _app_compress_screening_result_state,
     persist_signal_discovery_run as _app_persist_signal_discovery_run,
@@ -3874,6 +3875,12 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             end_date=str(args.end_date),
             created_at=timestamp,
         )
+        snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
+            signal_discovery_id=str(args.signal_discovery_id),
+            start_date=str(args.start_date),
+            end_date=str(args.end_date),
+            created_at=timestamp,
+        )
         (
             backfill_result,
             signal_discovery,
@@ -3886,6 +3893,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
             store,
             default_target_id=cfg.target_id,
             signal_discovery_run_id=signal_discovery_run_id,
+            snapshot_set_id=snapshot_set_id,
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
             end_date=str(args.end_date),
@@ -3900,6 +3908,7 @@ def cmd_run_signal_discovery(args: argparse.Namespace) -> int:
         signal_discovery_run_state = _app_persist_signal_discovery_run(
             store,
             signal_discovery_run_id=signal_discovery_run_id,
+            snapshot_set_id=snapshot_set_id,
             signal_discovery_id=signal_discovery.signal_discovery_id,
             subject_set_id=str(subject_set.subject_set_id),
             target_id=target_id,
@@ -3982,6 +3991,12 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             end_date=str(args.end_date),
             created_at=timestamp,
         )
+        snapshot_set_id = _app_build_prepared_evaluation_snapshot_set_id(
+            signal_discovery_id=str(args.signal_discovery_id),
+            start_date=str(args.start_date),
+            end_date=str(args.end_date),
+            created_at=timestamp,
+        )
         (
             backfill_result,
             signal_discovery,
@@ -3994,6 +4009,7 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
             store,
             default_target_id=cfg.target_id,
             signal_discovery_run_id=signal_discovery_run_id,
+            snapshot_set_id=snapshot_set_id,
             signal_discovery_id=str(args.signal_discovery_id),
             start_date=str(args.start_date),
             end_date=str(args.end_date),
@@ -4008,6 +4024,7 @@ def cmd_run_signal_discovery_decision(args: argparse.Namespace) -> int:
         signal_discovery_run_state = _app_persist_signal_discovery_run(
             store,
             signal_discovery_run_id=signal_discovery_run_id,
+            snapshot_set_id=snapshot_set_id,
             signal_discovery_id=signal_discovery.signal_discovery_id,
             subject_set_id=str(subject_set.subject_set_id),
             target_id=target_id,
@@ -4275,6 +4292,7 @@ def _backfill_initial_strategy_states_for_fold_from_signal_train(
                 execution_start_date=source_state.execution_start_date,
                 execution_end_date=source_state.execution_end_date,
                 signal_discovery_run_id=source_state.signal_discovery_run_id,
+                snapshot_set_id=source_state.snapshot_set_id,
                 screening_result_id=source_state.screening_result_id,
                 compressed_belief_id=source_state.compressed_belief_id,
                 survivor_signal_ids=source_state.survivor_signal_ids,

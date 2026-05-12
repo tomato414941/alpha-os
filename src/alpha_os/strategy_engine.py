@@ -30,6 +30,7 @@ class StrategyEvaluationContext:
 class StrategyEvaluationInputRefs:
     initial_strategy_state_id: str | None
     signal_discovery_run_id: str | None
+    snapshot_set_id: str | None
     screening_result_id: str | None
     compressed_belief_id: str | None
 

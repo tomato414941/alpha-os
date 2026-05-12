@@ -79,6 +79,7 @@ def _strategy_evaluation_request(
     signal_discovery_id: str | None,
     initial_strategy_state_id: str | None,
     signal_discovery_run_id: str | None,
+    snapshot_set_id: str | None,
     subject_set_id: str,
     target_id: str,
     screening_result_id: str | None,
@@ -98,12 +99,14 @@ def _strategy_evaluation_request(
     if (
         initial_strategy_state_id is not None
         or signal_discovery_run_id is not None
+        or snapshot_set_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
         input_refs = StrategyEvaluationInputRefs(
             initial_strategy_state_id=initial_strategy_state_id,
             signal_discovery_run_id=signal_discovery_run_id,
+            snapshot_set_id=snapshot_set_id,
             screening_result_id=screening_result_id,
             compressed_belief_id=compressed_belief_id,
         )
@@ -293,6 +296,7 @@ def build_evaluation_plan(
                         signal_discovery_id=None,
                         initial_strategy_state_id=None,
                         signal_discovery_run_id=None,
+                        snapshot_set_id=None,
                         subject_set_id=subject_set_id,
                         target_id=target_id,
                         screening_result_id=None,
@@ -338,6 +342,7 @@ def build_evaluation_plan(
                             frozen_state.initial_strategy_state_id
                         ),
                         signal_discovery_run_id=frozen_state.signal_discovery_run_id,
+                        snapshot_set_id=frozen_state.snapshot_set_id,
                         subject_set_id=frozen_state.subject_set_id,
                         target_id=frozen_state.target_id,
                         screening_result_id=frozen_state.screening_result_id,
@@ -375,6 +380,7 @@ def build_evaluation_plan(
                     initial_strategy_state.initial_strategy_state_id
                 )
                 signal_discovery_run_id = initial_strategy_state.signal_discovery_run_id
+                snapshot_set_id = initial_strategy_state.snapshot_set_id
                 subject_set_id = initial_strategy_state.subject_set_id
                 target_id = initial_strategy_state.target_id
                 screening_result_id = initial_strategy_state.screening_result_id
@@ -395,6 +401,7 @@ def build_evaluation_plan(
                 signal_discovery_run = signal_discovery_runs[0].run
                 initial_strategy_state_id = None
                 signal_discovery_run_id = signal_discovery_run.signal_discovery_run_id
+                snapshot_set_id = signal_discovery_run.snapshot_set_id
                 subject_set_id = signal_discovery_run.subject_set_id
                 target_id = signal_discovery_run.target_id or default_target_id
                 screening_result_id = signal_discovery_run.screening_result_id
@@ -408,6 +415,7 @@ def build_evaluation_plan(
                     signal_discovery_id=strategy_signal_discovery_id,
                     initial_strategy_state_id=initial_strategy_state_id,
                     signal_discovery_run_id=signal_discovery_run_id,
+                    snapshot_set_id=snapshot_set_id,
                     subject_set_id=subject_set_id,
                     target_id=target_id,
                     screening_result_id=screening_result_id,

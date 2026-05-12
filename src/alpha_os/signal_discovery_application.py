@@ -125,11 +125,22 @@ def build_signal_discovery_run_id(
     return f"{signal_discovery_id}:{start_date}:{end_date}:{created_at}"
 
 
+def build_prepared_evaluation_snapshot_set_id(
+    *,
+    signal_discovery_id: str,
+    start_date: str,
+    end_date: str,
+    created_at: str,
+) -> str:
+    return f"snapshot-set:{signal_discovery_id}:{start_date}:{end_date}:{created_at}"
+
+
 def run_signal_discovery_workflow(
     store: EvaluationStore,
     *,
     default_target_id: str,
     signal_discovery_run_id: str,
+    snapshot_set_id: str,
     signal_discovery_id: str,
     start_date: str,
     end_date: str,
@@ -187,8 +198,8 @@ def run_signal_discovery_workflow(
         min_stability_score=min_stability_score,
         max_family_survivors_per_subject=max_family_survivors_per_subject,
     )
-    store.archive_signal_discovery_run_evaluation_snapshots(
-        signal_discovery_run_id=signal_discovery_run_id,
+    store.archive_prepared_evaluation_snapshots(
+        snapshot_set_id=snapshot_set_id,
         signal_ids=[item.signal_id for item in screening_state.result.survivors],
     )
     pruned_snapshot_count = prune_screened_snapshots(
@@ -216,6 +227,7 @@ def persist_signal_discovery_run(
     store: EvaluationStore,
     *,
     signal_discovery_run_id: str,
+    snapshot_set_id: str,
     signal_discovery_id: str,
     subject_set_id: str,
     target_id: str,
@@ -231,6 +243,7 @@ def persist_signal_discovery_run(
     timestamp = _utc_now() if created_at is None else created_at
     signal_discovery_run = build_signal_discovery_run(
         signal_discovery_run_id=signal_discovery_run_id,
+        snapshot_set_id=snapshot_set_id,
         signal_discovery_id=signal_discovery_id,
         subject_set_id=subject_set_id,
         target_id=target_id,
@@ -258,6 +271,7 @@ def persist_initial_strategy_state(
     start_date: str,
     end_date: str,
     signal_discovery_run_id: str,
+    snapshot_set_id: str,
     screening_state,
     compressed_belief_state,
     created_at: str | None = None,
@@ -273,6 +287,7 @@ def persist_initial_strategy_state(
         start_date=start_date,
         end_date=end_date,
         signal_discovery_run_id=signal_discovery_run_id,
+        snapshot_set_id=snapshot_set_id,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
         created_at=timestamp,

@@ -16,6 +16,7 @@ from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_st
 from .initial_strategy_state import InitialStrategyState
 from .signal_discovery_application import (
     build_initial_strategy_state_id,
+    build_prepared_evaluation_snapshot_set_id,
     build_signal_discovery_run_id,
     persist_initial_strategy_state,
     persist_signal_discovery_run,
@@ -222,6 +223,7 @@ def _backfill_initial_strategy_states_for_fold_from_signal_train(
                 execution_start_date=source_state.execution_start_date,
                 execution_end_date=source_state.execution_end_date,
                 signal_discovery_run_id=source_state.signal_discovery_run_id,
+                snapshot_set_id=source_state.snapshot_set_id,
                 screening_result_id=source_state.screening_result_id,
                 compressed_belief_id=source_state.compressed_belief_id,
                 survivor_signal_ids=source_state.survivor_signal_ids,
@@ -290,6 +292,12 @@ def run_walk_forward_evaluation_use_case(
                 end_date=fold.execution_range.end_date,
                 created_at=timestamp,
             )
+            snapshot_set_id = build_prepared_evaluation_snapshot_set_id(
+                signal_discovery_id=signal_train_group.signal_discovery_id,
+                start_date=fold.execution_range.start_date,
+                end_date=fold.execution_range.end_date,
+                created_at=timestamp,
+            )
             (
                 backfill_result,
                 signal_discovery,
@@ -302,6 +310,7 @@ def run_walk_forward_evaluation_use_case(
                 store,
                 default_target_id=request.default_target_id,
                 signal_discovery_run_id=signal_discovery_run_id,
+                snapshot_set_id=snapshot_set_id,
                 signal_discovery_id=signal_train_group.signal_discovery_id,
                 start_date=fold.execution_range.start_date,
                 end_date=fold.execution_range.end_date,
@@ -318,6 +327,7 @@ def run_walk_forward_evaluation_use_case(
             persist_signal_discovery_run(
                 store,
                 signal_discovery_run_id=signal_discovery_run_id,
+                snapshot_set_id=snapshot_set_id,
                 signal_discovery_id=signal_discovery.signal_discovery_id,
                 subject_set_id=str(subject_set.subject_set_id),
                 target_id=target_id,
@@ -342,6 +352,7 @@ def run_walk_forward_evaluation_use_case(
                     start_date=fold.execution_range.start_date,
                     end_date=fold.execution_range.end_date,
                     signal_discovery_run_id=signal_discovery_run_id,
+                    snapshot_set_id=snapshot_set_id,
                     screening_state=screening_state,
                     compressed_belief_state=compressed_belief_state,
                     created_at=timestamp,
