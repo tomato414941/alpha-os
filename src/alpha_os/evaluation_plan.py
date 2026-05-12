@@ -76,9 +76,9 @@ def _strategy_evaluation_request(
     evaluation_spec_id: str,
     fold_label: str,
     strategy_id: str,
+    signal_discovery_id: str | None,
     initial_strategy_state_id: str | None,
     signal_discovery_run_id: str | None,
-    signal_discovery_id: str | None,
     subject_set_id: str,
     target_id: str,
     screening_result_id: str | None,
@@ -98,14 +98,12 @@ def _strategy_evaluation_request(
     if (
         initial_strategy_state_id is not None
         or signal_discovery_run_id is not None
-        or signal_discovery_id is not None
         or screening_result_id is not None
         or compressed_belief_id is not None
     ):
         artifacts = StrategyEvaluationArtifacts(
             initial_strategy_state_id=initial_strategy_state_id,
             signal_discovery_run_id=signal_discovery_run_id,
-            signal_discovery_id=signal_discovery_id,
             screening_result_id=screening_result_id,
             compressed_belief_id=compressed_belief_id,
         )
@@ -115,6 +113,7 @@ def _strategy_evaluation_request(
         fold_label=fold_label,
         context=StrategyEvaluationContext(
             strategy_id=strategy_id,
+            signal_discovery_id=signal_discovery_id,
             subject_set_id=subject_set_id,
             target_id=target_id,
             base_url=base_url,
@@ -291,9 +290,9 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
+                        signal_discovery_id=None,
                         initial_strategy_state_id=None,
                         signal_discovery_run_id=None,
-                        signal_discovery_id=None,
                         subject_set_id=subject_set_id,
                         target_id=target_id,
                         screening_result_id=None,
@@ -334,11 +333,11 @@ def build_evaluation_plan(
                         evaluation_spec_id=evaluation_spec_id,
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
+                        signal_discovery_id=frozen_state.signal_discovery_id,
                         initial_strategy_state_id=(
                             frozen_state.initial_strategy_state_id
                         ),
                         signal_discovery_run_id=frozen_state.signal_discovery_run_id,
-                        signal_discovery_id=frozen_state.signal_discovery_id,
                         subject_set_id=frozen_state.subject_set_id,
                         target_id=frozen_state.target_id,
                         screening_result_id=frozen_state.screening_result_id,
@@ -406,9 +405,9 @@ def build_evaluation_plan(
                     evaluation_spec_id=evaluation_spec_id,
                     fold_label=fold.label,
                     strategy_id=evaluation_task.strategy_id,
+                    signal_discovery_id=strategy_signal_discovery_id,
                     initial_strategy_state_id=initial_strategy_state_id,
                     signal_discovery_run_id=signal_discovery_run_id,
-                    signal_discovery_id=strategy_signal_discovery_id,
                     subject_set_id=subject_set_id,
                     target_id=target_id,
                     screening_result_id=screening_result_id,

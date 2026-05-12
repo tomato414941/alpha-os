@@ -60,6 +60,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
+            signal_discovery_id="discovery:test",
             subject_set_id="subject-set:test",
             target_id="target:test",
             base_url="http://example.com",
@@ -73,7 +74,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         artifacts=StrategyEvaluationArtifacts(
             initial_strategy_state_id="state:test",
             signal_discovery_run_id="signal-discovery-run:test",
-            signal_discovery_id="discovery:test",
             screening_result_id="screening:test",
             compressed_belief_id="belief:test",
         ),
@@ -86,9 +86,9 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
+    assert request.context.signal_discovery_id == "discovery:test"
     assert request.context.subject_set_id == "subject-set:test"
     assert request.artifacts.initial_strategy_state_id == "state:test"
-    assert request.artifacts.signal_discovery_id == "discovery:test"
     assert request.evaluation_date_ranges[0].label == "test"
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():

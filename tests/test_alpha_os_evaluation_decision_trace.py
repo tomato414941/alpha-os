@@ -511,9 +511,7 @@ def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
     )
     assert isinstance(
         evaluation_execution_strategy_for_request(
-            SimpleNamespace(
-                artifacts=SimpleNamespace(signal_discovery_id="discovery:test")
-            )
+            SimpleNamespace(artifacts=SimpleNamespace())
         ),
         SignalDiscoveryEvaluationExecutionStrategy,
     )

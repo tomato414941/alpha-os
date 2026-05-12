@@ -50,9 +50,6 @@ class EvaluationExecutionReadPort(Protocol):
     def get_signal_discovery_run(self, signal_discovery_run_id: str):
         ...
 
-    def get_signal_discovery_spec(self, signal_discovery_id: str):
-        ...
-
     def get_screening_result(self, screening_result_id: str):
         ...
 
@@ -618,9 +615,6 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                     f"signal discovery run does not exist: {artifacts.signal_discovery_run_id}"
                 )
             signal_discovery_run = signal_discovery_run_state.run
-        signal_discovery_state = store.get_signal_discovery_spec(artifacts.signal_discovery_id)
-        if signal_discovery_state is None:
-            raise ValueError(f"signal discovery does not exist: {artifacts.signal_discovery_id}")
         screening_state = store.get_screening_result(artifacts.screening_result_id)
         if screening_state is None:
             raise ValueError(f"screening result does not exist: {artifacts.screening_result_id}")
@@ -682,7 +676,7 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                 evaluation_task_id=execution_request.evaluation_task_id,
                 construction_kind=execution_request.context.portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
-                signal_discovery_id=artifacts.signal_discovery_id,
+                signal_discovery_id=execution_request.context.signal_discovery_id,
                 strategy_contract_fields=build_report_evaluation_task_contract_fields(
                     execution_request.context.portfolio_construction,
                     rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
