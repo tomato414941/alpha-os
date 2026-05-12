@@ -694,10 +694,6 @@ class PreparedStrategyEvaluationExecutionStrategy:
             store=store,
             input_refs=input_refs,
         )
-        initial_strategy_state = prepared_inputs.initial_strategy_state
-        signal_discovery_run = prepared_inputs.signal_discovery_run
-        screening_state = prepared_inputs.screening_state
-        compressed_belief_state = prepared_inputs.compressed_belief_state
         base_outputs = build_prepared_strategy_evaluation_base_outputs(
             execution_request=execution_request,
             prepared_inputs=prepared_inputs,
@@ -716,10 +712,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
             ) = self._run_decision_evaluation_results(
                 execution_request=execution_request,
                 context=context,
-                signal_discovery_run=signal_discovery_run,
-                initial_strategy_state=initial_strategy_state,
-                screening_state=screening_state,
-                compressed_belief_state=compressed_belief_state,
+                prepared_inputs=prepared_inputs,
                 metric_group_result_map=metric_group_result_map,
             )
             artifact_refs["evaluation_range_labels"] = tuple(
@@ -777,14 +770,15 @@ class PreparedStrategyEvaluationExecutionStrategy:
         *,
         execution_request: StrategyEvaluationRequest,
         context: EvaluationExecutionContext,
-        signal_discovery_run,
-        initial_strategy_state,
-        screening_state,
-        compressed_belief_state,
+        prepared_inputs: PreparedStrategyEvaluationInputs,
         metric_group_result_map: dict[str, EvaluationMetricGroupResult],
     ):
         store = context.store
         protocol = context.evaluation_spec
+        initial_strategy_state = prepared_inputs.initial_strategy_state
+        signal_discovery_run = prepared_inputs.signal_discovery_run
+        screening_state = prepared_inputs.screening_state
+        compressed_belief_state = prepared_inputs.compressed_belief_state
         survivor_signal_ids = (
             list(initial_strategy_state.survivor_signal_ids)
             if initial_strategy_state is not None
