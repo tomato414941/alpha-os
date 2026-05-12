@@ -14,7 +14,7 @@ from .strategy_backtest import (
 from .evaluation_generation import generate_evaluation_inputs_batch_from_feature_plane
 from .evaluation_inputs import EvaluationInput
 from .evaluation_metric_config import requires_decision_evaluation
-from .strategy_engine import StrategyEvaluationRequest
+from .strategy_engine import StrategyEvaluationInputRefs, StrategyEvaluationRequest
 from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_report import (
@@ -89,6 +89,14 @@ class EvaluationExecutionResult:
     pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
 
 
+@dataclass(frozen=True)
+class PreparedStrategyEvaluationInputs:
+    initial_strategy_state: object | None
+    signal_discovery_run: object | None
+    screening_state: object
+    compressed_belief_state: object
+
+
 class EvaluationExecutionStrategy(Protocol):
     def run(
         self,
@@ -96,6 +104,43 @@ class EvaluationExecutionStrategy(Protocol):
         execution_request: StrategyEvaluationRequest,
         context: EvaluationExecutionContext,
     ) -> EvaluationExecutionResult: ...
+
+
+def resolve_prepared_strategy_evaluation_inputs(
+    *,
+    store: EvaluationExecutionReadPort,
+    input_refs: StrategyEvaluationInputRefs,
+) -> PreparedStrategyEvaluationInputs:
+    initial_strategy_state_record = (
+        None
+        if input_refs.initial_strategy_state_id is None
+        else store.get_initial_strategy_state(input_refs.initial_strategy_state_id)
+    )
+    initial_strategy_state = (
+        None if initial_strategy_state_record is None else initial_strategy_state_record.state
+    )
+    signal_discovery_run = None
+    if input_refs.signal_discovery_run_id is not None:
+        signal_discovery_run_state = store.get_signal_discovery_run(
+            input_refs.signal_discovery_run_id
+        )
+        if signal_discovery_run_state is None:
+            raise ValueError(
+                f"signal discovery run does not exist: {input_refs.signal_discovery_run_id}"
+            )
+        signal_discovery_run = signal_discovery_run_state.run
+    screening_state = store.get_screening_result(input_refs.screening_result_id)
+    if screening_state is None:
+        raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
+    compressed_belief_state = store.get_compressed_belief(input_refs.compressed_belief_id)
+    if compressed_belief_state is None:
+        raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
+    return PreparedStrategyEvaluationInputs(
+        initial_strategy_state=initial_strategy_state,
+        signal_discovery_run=signal_discovery_run,
+        screening_state=screening_state,
+        compressed_belief_state=compressed_belief_state,
+    )
 
 
 def _subject_metadata_by_subject(
@@ -596,31 +641,15 @@ class PreparedStrategyEvaluationExecutionStrategy:
         store = context.store
         input_refs = execution_request.input_refs
         if input_refs is None:
-            raise ValueError("signal discovery evaluation requires input refs")
-        initial_strategy_state_record = (
-            None
-            if input_refs.initial_strategy_state_id is None
-            else store.get_initial_strategy_state(input_refs.initial_strategy_state_id)
+            raise ValueError("prepared strategy evaluation requires input refs")
+        prepared_inputs = resolve_prepared_strategy_evaluation_inputs(
+            store=store,
+            input_refs=input_refs,
         )
-        initial_strategy_state = (
-            None if initial_strategy_state_record is None else initial_strategy_state_record.state
-        )
-        signal_discovery_run = None
-        if input_refs.signal_discovery_run_id is not None:
-            signal_discovery_run_state = store.get_signal_discovery_run(
-                input_refs.signal_discovery_run_id
-            )
-            if signal_discovery_run_state is None:
-                raise ValueError(
-                    f"signal discovery run does not exist: {input_refs.signal_discovery_run_id}"
-                )
-            signal_discovery_run = signal_discovery_run_state.run
-        screening_state = store.get_screening_result(input_refs.screening_result_id)
-        if screening_state is None:
-            raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
-        compressed_belief_state = store.get_compressed_belief(input_refs.compressed_belief_id)
-        if compressed_belief_state is None:
-            raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
+        initial_strategy_state = prepared_inputs.initial_strategy_state
+        signal_discovery_run = prepared_inputs.signal_discovery_run
+        screening_state = prepared_inputs.screening_state
+        compressed_belief_state = prepared_inputs.compressed_belief_state
         metric_group_result_map = {
             "signal_discovery_quality": signal_discovery_quality_metric_group_result(
                 screening_state=screening_state,
