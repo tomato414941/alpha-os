@@ -4157,7 +4157,6 @@ class _SignalTrainGroup:
     signal_train_id: str
     signal_discovery_id: str | None
     base_url: str
-    requires_signal_train: bool
     evaluation_tasks: tuple[EvaluationTask, ...]
 
 
@@ -4197,7 +4196,6 @@ def _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
         grouped.setdefault(signal_train_id, []).append(evaluation_task)
     groups: list[_SignalTrainGroup] = []
     for signal_train_id, grouped_cases in sorted(grouped.items()):
-        requires_signal_train = False
         signal_discovery_id = None
         for case in grouped_cases:
             trading_strategy = strategy_lookup(case.strategy_id)
@@ -4205,15 +4203,11 @@ def _group_evaluation_tasks_by_signal_train_with_strategy_lookup(
                 raise ValueError(f"evaluation task strategy does not exist: {case.strategy_id}")
             if signal_discovery_id is None:
                 signal_discovery_id = trading_strategy.signal_discovery_id
-            if trading_strategy.requires_signal_train:
-                requires_signal_train = True
-                break
         groups.append(
             _SignalTrainGroup(
                 signal_train_id=signal_train_id,
                 signal_discovery_id=signal_discovery_id,
                 base_url=base_url,
-                requires_signal_train=requires_signal_train,
                 evaluation_tasks=tuple(grouped_cases),
             )
         )
@@ -4479,7 +4473,7 @@ def _print_diagnostic_evaluation_dry_run(
         print(
             "  SignalTrainGroup: "
             f"{group.signal_train_id} "
-            f"requires_signal_train={str(group.requires_signal_train).lower()} "
+            f"has_signal_discovery={str(group.signal_discovery_id is not None).lower()} "
             f"cases={len(group.evaluation_tasks)} "
             f"base_url={group.base_url}"
         )

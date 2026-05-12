@@ -518,7 +518,3 @@ class TradingStrategySpec:
                 "position_rule": self.position_rule_id,
             }
         )
-
-    @property
-    def requires_signal_train(self) -> bool:
-        return self.execution.requires_signal_train

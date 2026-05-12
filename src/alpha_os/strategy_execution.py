@@ -11,8 +11,6 @@ StrategyExecutionKind = Literal["trainless", "trained"]
 class StrategyExecutionSpec:
     kind: StrategyExecutionKind
     signal_discovery_id: str | None
-    requires_signal_train: bool
-    retrains_per_fold: bool
 
 
 def resolve_strategy_execution_spec(
@@ -37,6 +35,4 @@ def resolve_strategy_execution_spec(
     return StrategyExecutionSpec(
         kind=kind,
         signal_discovery_id=signal_discovery_id,
-        requires_signal_train=(kind == "trained"),
-        retrains_per_fold=(kind == "trained"),
     )

@@ -2279,8 +2279,8 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
     output = capsys.readouterr().out
     assert "alpha-os diagnostic dry run" in output
     assert "Cases:    15" in output
-    assert "requires_signal_train=false" in output
-    assert "requires_signal_train=true" in output
+    assert "has_signal_discovery=false" in output
+    assert "has_signal_discovery=true" in output
     assert "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case" in output
     assert "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case" in output
     assert "holding_style=equal_weight_hold" in output
