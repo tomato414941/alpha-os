@@ -54,7 +54,7 @@ class StrategyEvaluationRequest:
     evaluation_spec_id: str
     fold_label: str
     context: StrategyEvaluationContext
-    artifacts: StrategyEvaluationArtifacts
+    artifacts: StrategyEvaluationArtifacts | None
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...]
     metric_group_names: tuple[str, ...]
@@ -66,7 +66,7 @@ class StrategyEvaluationRequest:
         evaluation_spec_id: str,
         fold_label: str,
         context: StrategyEvaluationContext,
-        artifacts: StrategyEvaluationArtifacts,
+        artifacts: StrategyEvaluationArtifacts | None,
         execution_range: EvaluationDateRange,
         evaluation_date_ranges: tuple[EvaluationDateRange, ...],
         metric_group_names: tuple[str, ...],

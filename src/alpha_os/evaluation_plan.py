@@ -95,6 +95,23 @@ def _strategy_evaluation_request(
     execution_cost_assumptions: ExecutionCostAssumptionsSpec,
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
 ) -> StrategyEvaluationRequest:
+    artifacts = None
+    if (
+        signal_train_id is not None
+        or initial_strategy_state_id is not None
+        or signal_discovery_run_id is not None
+        or signal_discovery_id is not None
+        or screening_result_id is not None
+        or compressed_belief_id is not None
+    ):
+        artifacts = StrategyEvaluationArtifacts(
+            signal_train_id=signal_train_id,
+            initial_strategy_state_id=initial_strategy_state_id,
+            signal_discovery_run_id=signal_discovery_run_id,
+            signal_discovery_id=signal_discovery_id,
+            screening_result_id=screening_result_id,
+            compressed_belief_id=compressed_belief_id,
+        )
     return StrategyEvaluationRequest(
         evaluation_task_id=evaluation_task_id,
         evaluation_spec_id=evaluation_spec_id,
@@ -111,14 +128,7 @@ def _strategy_evaluation_request(
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
         ),
-        artifacts=StrategyEvaluationArtifacts(
-            signal_train_id=signal_train_id,
-            initial_strategy_state_id=initial_strategy_state_id,
-            signal_discovery_run_id=signal_discovery_run_id,
-            signal_discovery_id=signal_discovery_id,
-            screening_result_id=screening_result_id,
-            compressed_belief_id=compressed_belief_id,
-        ),
+        artifacts=artifacts,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,

@@ -597,33 +597,36 @@ class SignalDiscoveryEvaluationExecutionStrategy:
         context: EvaluationExecutionContext,
     ) -> EvaluationExecutionResult:
         store = context.store
+        artifacts = execution_request.artifacts
+        if artifacts is None:
+            raise ValueError("signal discovery evaluation requires artifacts")
         initial_strategy_state_record = (
             None
-            if execution_request.artifacts.initial_strategy_state_id is None
-            else store.get_initial_strategy_state(execution_request.artifacts.initial_strategy_state_id)
+            if artifacts.initial_strategy_state_id is None
+            else store.get_initial_strategy_state(artifacts.initial_strategy_state_id)
         )
         initial_strategy_state = (
             None if initial_strategy_state_record is None else initial_strategy_state_record.state
         )
         signal_discovery_run = None
-        if execution_request.artifacts.signal_discovery_run_id is not None:
+        if artifacts.signal_discovery_run_id is not None:
             signal_discovery_run_state = store.get_signal_discovery_run(
-                execution_request.artifacts.signal_discovery_run_id
+                artifacts.signal_discovery_run_id
             )
             if signal_discovery_run_state is None:
                 raise ValueError(
-                    f"signal discovery run does not exist: {execution_request.artifacts.signal_discovery_run_id}"
+                    f"signal discovery run does not exist: {artifacts.signal_discovery_run_id}"
                 )
             signal_discovery_run = signal_discovery_run_state.run
-        signal_discovery_state = store.get_signal_discovery_spec(execution_request.artifacts.signal_discovery_id)
+        signal_discovery_state = store.get_signal_discovery_spec(artifacts.signal_discovery_id)
         if signal_discovery_state is None:
-            raise ValueError(f"signal discovery does not exist: {execution_request.artifacts.signal_discovery_id}")
-        screening_state = store.get_screening_result(execution_request.artifacts.screening_result_id)
+            raise ValueError(f"signal discovery does not exist: {artifacts.signal_discovery_id}")
+        screening_state = store.get_screening_result(artifacts.screening_result_id)
         if screening_state is None:
-            raise ValueError(f"screening result does not exist: {execution_request.artifacts.screening_result_id}")
-        compressed_belief_state = store.get_compressed_belief(execution_request.artifacts.compressed_belief_id)
+            raise ValueError(f"screening result does not exist: {artifacts.screening_result_id}")
+        compressed_belief_state = store.get_compressed_belief(artifacts.compressed_belief_id)
         if compressed_belief_state is None:
-            raise ValueError(f"compressed belief does not exist: {execution_request.artifacts.compressed_belief_id}")
+            raise ValueError(f"compressed belief does not exist: {artifacts.compressed_belief_id}")
         metric_group_result_map = {
             "signal_discovery_quality": signal_discovery_quality_metric_group_result(
                 screening_state=screening_state,
@@ -679,7 +682,7 @@ class SignalDiscoveryEvaluationExecutionStrategy:
                 evaluation_task_id=execution_request.evaluation_task_id,
                 construction_kind=execution_request.context.portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
-                signal_discovery_id=execution_request.artifacts.signal_discovery_id,
+                signal_discovery_id=artifacts.signal_discovery_id,
                 strategy_contract_fields=build_report_evaluation_task_contract_fields(
                     execution_request.context.portfolio_construction,
                     rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
@@ -855,6 +858,6 @@ class SignalDiscoveryEvaluationExecutionStrategy:
 def evaluation_execution_strategy_for_request(
     execution_request: StrategyEvaluationRequest,
 ) -> EvaluationExecutionStrategy:
-    if execution_request.artifacts.signal_discovery_id is None:
+    if execution_request.artifacts is None:
         return TrainlessEvaluationExecutionStrategy()
     return SignalDiscoveryEvaluationExecutionStrategy()
