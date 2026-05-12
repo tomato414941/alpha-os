@@ -3,7 +3,7 @@
 ## Problem
 
 `execution_kind` is a persisted implementation field with values such as
-`trainless`, `trained`, and `frozen`.
+`trainless` and `trained`.
 
 The name should not become a domain term:
 
@@ -30,8 +30,7 @@ directly instead of preserving a single mode-like field.
 - `StrategyEvaluationContext.execution_kind` removed from the request context;
   executor input-source routing remains tracked separately
 - manifest and report payloads that persist `execution_kind`
-- validation and evaluation-planning branches keyed by `trainless`, `trained`,
-  or `frozen`
+- validation and evaluation-planning branches keyed by `trainless` or `trained`
 
 ## Boundary
 

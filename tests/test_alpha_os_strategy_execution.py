@@ -120,7 +120,6 @@ def test_resolve_strategy_execution_spec_defaults_to_trainless():
     assert execution.signal_discovery_id is None
     assert execution.requires_signal_train is False
     assert execution.retrains_per_fold is False
-    assert execution.reuses_strategy_checkpoint is False
 
 
 def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
@@ -142,26 +141,10 @@ def test_resolve_strategy_execution_spec_uses_discovery_or_trained_signal():
     assert by_discovery.signal_discovery_id == "discovery:core"
     assert by_discovery.requires_signal_train is True
     assert by_discovery.retrains_per_fold is True
-    assert by_discovery.reuses_strategy_checkpoint is False
 
     assert by_position_rule_id.kind == "trained"
     assert by_position_rule_id.signal_discovery_id is None
     assert by_position_rule_id.requires_signal_train is True
-
-
-def test_trading_strategy_exposes_frozen_execution_contract():
-    strategy = _build_trading_strategy(
-        strategy_id="strategy:test",
-        label="Frozen Test",
-        position_rule_id="relative_strength",
-        execution_kind="frozen",
-        created_at="2026-04-07T00:00:00Z",
-    )
-
-    assert strategy.execution.kind == "frozen"
-    assert strategy.execution_kind == "frozen"
-    assert strategy.requires_signal_train is False
-    assert strategy.execution.reuses_strategy_checkpoint is True
 
 
 def test_trading_strategy_exposes_policy_hierarchy():

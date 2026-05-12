@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Literal, Mapping
 
 
-StrategyExecutionKind = Literal["trainless", "trained", "frozen"]
+StrategyExecutionKind = Literal["trainless", "trained"]
 
 
 @dataclass(frozen=True)
@@ -13,7 +13,6 @@ class StrategyExecutionSpec:
     signal_discovery_id: str | None
     requires_signal_train: bool
     retrains_per_fold: bool
-    reuses_strategy_checkpoint: bool
 
 
 def resolve_strategy_execution_spec(
@@ -22,7 +21,7 @@ def resolve_strategy_execution_spec(
     signal_discovery_id = axis_map.get("signal_discovery") or None
     explicit = axis_map.get("execution_kind")
     if explicit:
-        if explicit not in {"trainless", "trained", "frozen"}:
+        if explicit not in {"trainless", "trained"}:
             raise ValueError(f"unsupported strategy execution_kind: {explicit}")
         kind: StrategyExecutionKind = explicit
     elif signal_discovery_id is not None:
@@ -40,5 +39,4 @@ def resolve_strategy_execution_spec(
         signal_discovery_id=signal_discovery_id,
         requires_signal_train=(kind == "trained"),
         retrains_per_fold=(kind == "trained"),
-        reuses_strategy_checkpoint=(kind == "frozen"),
     )
