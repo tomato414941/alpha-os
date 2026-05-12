@@ -498,8 +498,8 @@ def test_evaluation_report_repository_persists_report_with_trace(tmp_path):
 
 def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
     from alpha_os.evaluation_execution_strategy import (
-        SignalDiscoveryEvaluationExecutionStrategy,
-        TrainlessEvaluationExecutionStrategy,
+        DirectStrategyEvaluationExecutionStrategy,
+        PreparedStrategyEvaluationExecutionStrategy,
         evaluation_execution_strategy_for_request,
     )
 
@@ -507,13 +507,13 @@ def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
         evaluation_execution_strategy_for_request(
             SimpleNamespace(input_refs=None)
         ),
-        TrainlessEvaluationExecutionStrategy,
+        DirectStrategyEvaluationExecutionStrategy,
     )
     assert isinstance(
         evaluation_execution_strategy_for_request(
             SimpleNamespace(input_refs=SimpleNamespace())
         ),
-        SignalDiscoveryEvaluationExecutionStrategy,
+        PreparedStrategyEvaluationExecutionStrategy,
     )
 
 

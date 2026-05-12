@@ -496,7 +496,7 @@ def subject_matches_sleeve_filter(
 
 
 @dataclass(frozen=True)
-class TrainlessEvaluationExecutionStrategy:
+class DirectStrategyEvaluationExecutionStrategy:
     def run(
         self,
         *,
@@ -586,7 +586,7 @@ class TrainlessEvaluationExecutionStrategy:
 
 
 @dataclass(frozen=True)
-class SignalDiscoveryEvaluationExecutionStrategy:
+class PreparedStrategyEvaluationExecutionStrategy:
     def run(
         self,
         *,
@@ -853,5 +853,5 @@ def evaluation_execution_strategy_for_request(
     execution_request: StrategyEvaluationRequest,
 ) -> EvaluationExecutionStrategy:
     if execution_request.input_refs is None:
-        return TrainlessEvaluationExecutionStrategy()
-    return SignalDiscoveryEvaluationExecutionStrategy()
+        return DirectStrategyEvaluationExecutionStrategy()
+    return PreparedStrategyEvaluationExecutionStrategy()
