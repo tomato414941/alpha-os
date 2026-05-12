@@ -143,25 +143,13 @@ def test_evaluation_spec_rejects_mixed_metric_group_keys():
 def test_requires_decision_evaluation_classifies_metric_group_names():
     from alpha_os.evaluation_metric_config import (
         DECISION_EVALUATION_METRIC_GROUP_NAMES,
-        PREPARATION_STATS_METRIC_GROUP_NAMES,
         requires_decision_evaluation,
     )
 
-    mixed_metric_group_names = (
-        "robustness",
-        "signal_discovery_result_stats",
-    )
     assert requires_decision_evaluation(("decision_quality",))
-    assert requires_decision_evaluation(mixed_metric_group_names)
-    assert not requires_decision_evaluation(
-        ("signal_discovery_result_stats",)
-    )
-    assert PREPARATION_STATS_METRIC_GROUP_NAMES == (
-        "signal_discovery_result_stats",
-    )
-    assert set(DECISION_EVALUATION_METRIC_GROUP_NAMES).isdisjoint(
-        PREPARATION_STATS_METRIC_GROUP_NAMES
-    )
+    assert requires_decision_evaluation(("robustness",))
+    assert not requires_decision_evaluation(())
+    assert "decision_quality" in DECISION_EVALUATION_METRIC_GROUP_NAMES
 
 
 def test_evaluation_job_spec_allows_strategy_checkpoint():

@@ -151,12 +151,6 @@ def build_prepared_strategy_evaluation_base_outputs(
     strategy_checkpoint = prepared_inputs.strategy_checkpoint
     screening_state = prepared_inputs.screening_state
     compressed_belief_state = prepared_inputs.compressed_belief_state
-    metric_group_result_map = {
-        "signal_discovery_result_stats": signal_discovery_result_stats_metric_group_result(
-            screening_state=screening_state,
-            compressed_belief_state=compressed_belief_state,
-        ),
-    }
     artifact_refs: dict[str, tuple[str, ...]] = {
         "evaluation_task_ids": (execution_request.evaluation_task_id,),
         "strategy_ids": (execution_request.context.strategy_id,),
@@ -169,7 +163,7 @@ def build_prepared_strategy_evaluation_base_outputs(
             strategy_checkpoint.strategy_checkpoint_id,
         )
     return PreparedStrategyEvaluationBaseOutputs(
-        metric_group_result_map=metric_group_result_map,
+        metric_group_result_map={},
         artifact_refs=artifact_refs,
     )
 
@@ -251,12 +245,6 @@ def _subject_metadata_by_subject(
     return metadata
 
 
-def _mean(values: list[float]) -> float:
-    if not values:
-        return 0.0
-    return float(sum(values) / len(values))
-
-
 def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
     return active_constraint_stages(
         execution_request.context.portfolio_construction.constraint_boundary,
@@ -273,45 +261,6 @@ def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
             "net_exposure_target": execution_request.context.portfolio_construction.net_exposure_target,
             "asset_class_weight_caps": (execution_request.context.portfolio_construction.asset_class_weight_caps),
             "cluster_weight_caps": execution_request.context.portfolio_construction.cluster_weight_caps,
-        },
-    )
-
-
-def signal_discovery_result_stats_metric_group_result(
-    *,
-    screening_state,
-    compressed_belief_state,
-) -> EvaluationMetricGroupResult:
-    screening_result = screening_state.result
-    compressed_belief = compressed_belief_state.belief
-    candidates = list(screening_result.candidates)
-    survivors = list(screening_result.survivors)
-    survivor_ratio = 0.0 if not candidates else float(len(survivors) / len(candidates))
-    components = list(compressed_belief.components)
-    return EvaluationMetricGroupResult(
-        metric_group_name="signal_discovery_result_stats",
-        source="native",
-        metrics={
-            "candidate_count": len(candidates),
-            "survivor_count": len(survivors),
-            "survivor_ratio": round(survivor_ratio, 6),
-            "component_count": len(components),
-            "mean_family_count": round(
-                _mean([float(item.family_count) for item in components]),
-                6,
-            ),
-            "mean_cluster_count": round(
-                _mean([float(item.cluster_count) for item in components]),
-                6,
-            ),
-            "mean_effective_belief_count": round(
-                _mean([float(item.effective_belief_count) for item in components]),
-                6,
-            ),
-            "mean_diversity_score": round(
-                _mean([float(item.diversity_score) for item in components]),
-                6,
-            ),
         },
     )
 

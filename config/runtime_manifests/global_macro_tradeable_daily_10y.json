@@ -701,7 +701,6 @@
         }
       ],
       "metric_group_names": [
-        "signal_discovery_result_stats",
         "signed_belief_quality",
         "prediction_diagnostics",
         "portfolio_target_return_alignment",

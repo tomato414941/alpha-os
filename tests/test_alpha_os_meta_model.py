@@ -639,7 +639,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                             "end_date": "2026-03-24",
                         },
                         "metric_group_names": [
-                            "signal_discovery_result_stats",
+                            "decision_quality",
                         ],
                     }
                 ],
@@ -2457,7 +2457,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signal_discovery_result_stats",
                             "signed_belief_quality",
                             "portfolio_target_return_alignment",
                             "sizing_policy_quality",
@@ -2730,7 +2729,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "sizing=signal_weighted" in evaluation_output
     assert "rebalance=every_1_steps" in evaluation_output
     assert "subject_set=core_crypto summary=[bindings=1" in evaluation_output
-    assert "metric_group_name=signal_discovery_result_stats" in evaluation_output
     assert "metric_group_name=signed_belief_quality" in evaluation_output
     assert "metric_group_name=portfolio_target_return_alignment" in evaluation_output
     assert "metric_group_name=sizing_policy_quality" in evaluation_output
