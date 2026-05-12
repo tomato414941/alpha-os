@@ -578,7 +578,6 @@ class TrainlessEvaluationExecutionStrategy:
                 artifact_refs={
                     "evaluation_task_ids": (execution_request.evaluation_task_id,),
                     "strategy_ids": (execution_request.context.strategy_id,),
-                    "signal_train_ids": (execution_request.artifacts.signal_train_id,),
                     "evaluation_fold_labels": (execution_request.fold_label,),
                     "evaluation_range_labels": tuple(
                         item.label for item in execution_request.evaluation_date_ranges
