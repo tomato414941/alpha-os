@@ -232,18 +232,6 @@ A concrete structured definition of a strategy.
 
 Defines trading behavior. Current mainline `TradingStrategySpec` is the first-class strategy model.
 
-### strict OOS run inputs
-
-The engine contract for strict OOS evaluation.
-
-Includes evaluation spec id, execution range, evaluation date ranges, and metric_group_names.
-
-### checkpoint evaluation inputs
-
-The engine contract for checkpoint-based evaluation.
-
-Adds `strategy_checkpoint_id` to the strict OOS-style inputs.
-
 ### strict OOS evaluation
 
 The primary evaluation mode for comparing a strategy under train/test separation.
