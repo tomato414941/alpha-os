@@ -15,7 +15,6 @@ from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_st
 from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_application import (
     build_strategy_checkpoint_id,
-    build_prepared_evaluation_snapshot_set_id,
     compress_screening_result_state,
     ensure_subject_set_backend_available,
     persist_strategy_checkpoint,
@@ -263,11 +262,10 @@ def prepare_strategy_checkpoints_for_evaluation(
             ):
                 continue
             timestamp = request.created_at
-            snapshot_set_id = build_prepared_evaluation_snapshot_set_id(
-                signal_discovery_id=group.signal_discovery_id,
-                start_date=fold.execution_range.start_date,
-                end_date=fold.execution_range.end_date,
-                created_at=timestamp,
+            snapshot_set_id = (
+                f"snapshot-set:{group.signal_discovery_id}:"
+                f"{fold.execution_range.start_date}:"
+                f"{fold.execution_range.end_date}:{timestamp}"
             )
             plan = build_signal_discovery_execution_plan(
                 store,

@@ -110,16 +110,6 @@ def prune_screened_snapshots(
     )
 
 
-def build_prepared_evaluation_snapshot_set_id(
-    *,
-    signal_discovery_id: str,
-    start_date: str,
-    end_date: str,
-    created_at: str,
-) -> str:
-    return f"snapshot-set:{signal_discovery_id}:{start_date}:{end_date}:{created_at}"
-
-
 def persist_strategy_checkpoint(
     store: EvaluationStore,
     *,
