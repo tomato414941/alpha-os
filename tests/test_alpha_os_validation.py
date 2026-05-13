@@ -478,7 +478,7 @@ def test_screen_signal_discovery_rejects_incomplete_universe_policy(tmp_path):
         SubjectSet,
         UniversePolicySpec,
     )
-    from alpha_os.signal_discovery_application import screen_signal_discovery
+    from alpha_os.signal_discovery_screening_service import screen_signal_discovery
     from alpha_os.signal_discovery import SignalDiscoverySpec
     from alpha_os.store import EvaluationStore
 

@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
 from .portfolio_decision import SubjectSet
 from .signal_client import build_signal_client
 from .signal_discovery_compression_service import build_compressed_belief_from_screening_result
-from .signal_discovery_execution import build_signal_discovery_execution_plan
 from .signal_discovery_persistence_builders import (
     build_strategy_checkpoint,
     build_strategy_checkpoint_id as build_strategy_checkpoint_id,
 )
-from .signal_discovery_screening_service import screen_signal_discovery
 from .store import EvaluationStore, _utc_now
-from .subject_set_backfill_service import run_subject_set_backfill
 from .universe_contract import validate_subject_set_universe_contract
 
 
@@ -122,91 +118,6 @@ def build_prepared_evaluation_snapshot_set_id(
     created_at: str,
 ) -> str:
     return f"snapshot-set:{signal_discovery_id}:{start_date}:{end_date}:{created_at}"
-
-
-def run_signal_discovery_workflow(
-    store: EvaluationStore,
-    *,
-    default_target_id: str,
-    snapshot_set_id: str,
-    signal_discovery_id: str,
-    start_date: str,
-    end_date: str,
-    base_url: str,
-    min_sample_count: int | None,
-    min_abs_corr: float | None,
-    min_stability_score: float | None,
-    max_family_survivors_per_subject: int | None,
-    feature_plane_repository: FeaturePlaneRepository | None = None,
-    evaluation_input_repository: EvaluationInputRepository | None = None,
-):
-    plan = build_signal_discovery_execution_plan(
-        store,
-        signal_discovery_id=signal_discovery_id,
-        default_target_id=default_target_id,
-    )
-    signal_discovery = plan.signal_discovery
-    subject_set = plan.subject_set
-    ensure_subject_set_backend_available(
-        subject_set,
-        base_url=base_url,
-    )
-    backfill_result = run_subject_set_backfill(
-        store,
-        subject_set=subject_set,
-        subject_set_id=signal_discovery.subject_set_id,
-        signal_spec_ids=list(plan.signal_spec_ids),
-        target_id=plan.target_id,
-        start_date=start_date,
-        end_date=end_date,
-        base_url=base_url,
-        pre_screen_top_k_per_kind=signal_discovery.selection_policy.pre_screen_top_k_per_kind,
-        pre_screen_min_abs_corr=signal_discovery.selection_policy.pre_screen_min_abs_corr,
-        probe_max_dates=signal_discovery.selection_policy.probe_max_dates,
-        probe_min_sample_count=signal_discovery.selection_policy.probe_min_sample_count,
-        probe_min_abs_corr=signal_discovery.selection_policy.probe_min_abs_corr,
-        probe_max_family_survivors_per_subject=(
-            signal_discovery.selection_policy.probe_max_family_survivors_per_subject
-        ),
-        survivor_min_sample_count=(signal_discovery.selection_policy.survivor_min_sample_count),
-        survivor_min_abs_corr=signal_discovery.selection_policy.survivor_min_abs_corr,
-        survivor_max_family_survivors_per_subject=(
-            signal_discovery.selection_policy.survivor_max_family_survivors_per_subject
-        ),
-        family_ids_by_signal_spec_id=(plan.family_ids_by_signal_spec_id),
-        signal_discovery_id=signal_discovery.signal_discovery_id,
-        feature_plane_repository=feature_plane_repository,
-        evaluation_input_repository=evaluation_input_repository,
-    )
-    screening_state = screen_signal_discovery(
-        store,
-        signal_discovery_id=signal_discovery.signal_discovery_id,
-        min_sample_count=min_sample_count,
-        min_abs_corr=min_abs_corr,
-        min_stability_score=min_stability_score,
-        max_family_survivors_per_subject=max_family_survivors_per_subject,
-    )
-    store.archive_prepared_evaluation_snapshots(
-        snapshot_set_id=snapshot_set_id,
-        signal_ids=[item.signal_id for item in screening_state.result.survivors],
-    )
-    prune_screened_snapshots(
-        store,
-        selected_signal_ids=backfill_result.selected_signal_ids,
-        screening_state=screening_state,
-        snapshot_retention=signal_discovery.selection_policy.snapshot_retention,
-    )
-    compressed_belief_state = compress_screening_result_state(
-        store,
-        screening_result_id=screening_state.screening_result_id,
-    )
-    return (
-        signal_discovery,
-        subject_set,
-        plan.target_id,
-        screening_state,
-        compressed_belief_state,
-    )
 
 
 def persist_strategy_checkpoint(
