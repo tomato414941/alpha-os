@@ -3,9 +3,6 @@ from __future__ import annotations
 from .portfolio_decision import SubjectSet
 from .signal_client import build_signal_client
 from .signal_discovery_compression_service import build_compressed_belief_from_screening_result
-from .signal_discovery_persistence_builders import (
-    build_strategy_checkpoint_id as build_strategy_checkpoint_id,
-)
 from .store import EvaluationStore, _utc_now
 from .universe_contract import validate_subject_set_universe_contract
 
@@ -107,4 +104,3 @@ def prune_screened_snapshots(
     return deleted + store.delete_non_latest_evaluation_snapshots_for_signals(
         signal_ids=sorted(survivor_ids)
     )
-

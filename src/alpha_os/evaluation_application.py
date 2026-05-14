@@ -14,13 +14,15 @@ from .evaluation_report_service import resolve_report_strategy_context
 from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
 from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_application import (
-    build_strategy_checkpoint_id,
     compress_screening_result_state,
     ensure_subject_set_backend_available,
     prune_screened_snapshots,
 )
 from .signal_discovery_execution import build_signal_discovery_execution_plan
-from .signal_discovery_persistence_builders import build_strategy_checkpoint
+from .signal_discovery_persistence_builders import (
+    build_strategy_checkpoint,
+    build_strategy_checkpoint_id,
+)
 from .signal_discovery_screening_service import screen_signal_discovery
 from .store import EvaluationStore
 from .subject_set_backfill_service import run_subject_set_backfill

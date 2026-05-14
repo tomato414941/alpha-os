@@ -108,8 +108,10 @@ from ..signal_generator import (
     materialize_signal_specs,
 )
 from ..signal_discovery_application import (
-    build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
     compress_screening_result_state as _app_compress_screening_result_state,
+)
+from ..signal_discovery_persistence_builders import (
+    build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
 )
 from ..signal_discovery_screening_service import (
     screen_signal_discovery as _app_screen_signal_discovery,
