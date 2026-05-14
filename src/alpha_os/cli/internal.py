@@ -9,7 +9,6 @@ from pathlib import Path
 
 from ..cli_output import (
     format_evaluation_diagnostics,
-    print_compressed_belief,
     print_evaluation_tasks,
     print_evaluation_diagnostics,
     print_evaluation_specs,
@@ -106,9 +105,6 @@ from ..signal_generator import (
     SignalDiscoveryGenerationSpec,
     generate_signal_discovery,
     materialize_signal_specs,
-)
-from ..signal_discovery_application import (
-    compress_screening_result_state as _app_compress_screening_result_state,
 )
 from ..signal_discovery_persistence_builders import (
     build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
@@ -881,15 +877,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         type=int,
         default=None,
     )
-
-    compress_screening_result_parser = internal_parser("debug-compress-screening-result")
-    compress_screening_result_parser.add_argument("--db", type=str, default=None)
-    compress_screening_result_parser.add_argument(
-        "--screening-result-id",
-        type=str,
-        required=True,
-    )
-    compress_screening_result_parser.add_argument("--strategy-id", type=str, default=None)
 
     build_decision = internal_parser("decide-portfolio")
     _add_decide_portfolio_arguments(
@@ -3720,18 +3707,6 @@ def cmd_screen_signal_discovery(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_compress_screening_result(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        persisted = _app_compress_screening_result_state(
-            store,
-            screening_result_id=str(args.screening_result_id),
-            strategy_id=(None if args.strategy_id is None else str(args.strategy_id)),
-        )
-    print_compressed_belief(persisted)
-    return 0
-
-
 def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
@@ -5373,8 +5348,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_check_subject_set_backend(args)
         if args.command == "debug-screen-signal-discovery":
             return cmd_screen_signal_discovery(args)
-        if args.command == "debug-compress-screening-result":
-            return cmd_compress_screening_result(args)
         if args.command == "decide-portfolio":
             return cmd_decide_portfolio(args)
         if args.command == "debug-decide-portfolio-runtime":

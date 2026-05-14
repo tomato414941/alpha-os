@@ -21,5 +21,4 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-show-subject-sets": _legacy.cmd_show_subject_sets,
     "check-subject-set-backend": _legacy.cmd_check_subject_set_backend,
     "debug-screen-signal-discovery": _legacy.cmd_screen_signal_discovery,
-    "debug-compress-screening-result": _legacy.cmd_compress_screening_result,
 }

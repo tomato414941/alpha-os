@@ -400,7 +400,6 @@ def print_signal_competition_summary(
             f"baseline={baseline_text}"
         )
 
-
 def print_target_summaries(signals, metrics_by_id) -> None:
     grouped = defaultdict(list)
     for signal in signals:
@@ -1077,35 +1076,4 @@ def print_screening_result(screening_result) -> None:
             f"stability={item.stability_score:.6f} "
             f"samples={item.sample_count} "
             f"rank={item.family_rank if item.family_rank is not None else '-'}"
-        )
-
-
-def print_compressed_belief(compressed_belief) -> None:
-    belief = compressed_belief.belief if hasattr(compressed_belief, "belief") else compressed_belief
-    print("alpha-os compressed belief")
-    print(f"  SignalDiscovery: {belief.signal_discovery_id}")
-    print(f"  Screening:   {belief.screening_result_id}")
-    print(f"  Belief:      {belief.compressed_belief_id}")
-    print(f"  Created:     {belief.created_at}")
-    print(f"  Components:  {len(belief.components)}")
-    for item in belief.components:
-        family_text = ",".join(item.family_ids) if item.family_ids else "-"
-        representative_text = (
-            ",".join(item.representative_signal_ids) if item.representative_signal_ids else "-"
-        )
-        regime_text = ",".join(item.regime_tags) if item.regime_tags else "-"
-        print(
-            f"    subject={item.subject_id} "
-            f"target={item.target_id} "
-            f"belief={item.belief_value:.6f} "
-            f"confidence={item.confidence:.6f} "
-            f"signal_contributions={item.signal_contribution_count} "
-            f"families={family_text} "
-            f"family_count={item.family_count} "
-            f"cluster_count={item.cluster_count} "
-            f"effective_beliefs={item.effective_belief_count:.6f} "
-            f"diversity={item.diversity_score:.6f} "
-            f"mean_marginal_signal_contribution={item.mean_marginal_signal_contribution:.6f} "
-            f"regimes={regime_text} "
-            f"representatives={representative_text}"
         )

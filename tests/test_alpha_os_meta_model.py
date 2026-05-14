@@ -2586,25 +2586,19 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
+        from alpha_os.signal_discovery_application import compress_screening_result_state
+
         screening_results = store.list_screening_results(
             signal_discovery_id="core_crypto_search",
         )
         assert len(screening_results) == 1
         screening_result_id = screening_results[0].screening_result_id
+        compress_screening_result_state(
+            store,
+            screening_result_id=screening_result_id,
+        )
     finally:
         store.close()
-    assert (
-        main(
-            [
-                "debug-compress-screening-result",
-                "--db",
-                str(db_path),
-                "--screening-result-id",
-                screening_result_id,
-            ]
-        )
-        == 0
-    )
     output = capsys.readouterr().out
     assert "signal_discovery=core_crypto_search" in output
     assert "executables=2" in output
@@ -2616,13 +2610,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "Candidates:  total=2 survivors=2" in output
     assert "family=reversal_family" in output
     assert "family=average_gap_family" in output
-    assert "alpha-os compressed belief" in output
-    assert "subject=BTC_spot" in output
-    assert "cluster_count=" in output
-    assert "effective_beliefs=" in output
-    assert "diversity=" in output
-    assert "representatives=" in output
-    assert "Belief:" in output
 
     store = EvaluationStore(db_path)
     try:
