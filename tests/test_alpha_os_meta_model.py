@@ -2551,24 +2551,57 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     original_loader = data_repositories.load_observation_frame
     data_repositories.load_observation_frame = _fake_loader
     try:
-        assert (
-            main(
-                [
-                    "debug-backfill-signal-discovery",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-23",
-                    "--end-date",
-                    "2026-03-24",
-                    "--signal-discovery-id",
-                    "core_crypto_search",
-                    "--base-url",
-                    "http://example.com",
-                ]
+        store = EvaluationStore(db_path)
+        try:
+            store.ensure_schema()
+            from alpha_os.config import load_runtime_config
+            from alpha_os.signal_discovery_execution import (
+                build_signal_discovery_execution_plan,
             )
-            == 0
-        )
+            from alpha_os.subject_set_backfill_service import run_subject_set_backfill
+
+            cfg = load_runtime_config(db_path=str(db_path))
+            plan = build_signal_discovery_execution_plan(
+                store,
+                signal_discovery_id="core_crypto_search",
+                default_target_id=cfg.target_id,
+            )
+            signal_discovery = plan.signal_discovery
+            run_subject_set_backfill(
+                store,
+                subject_set=plan.subject_set,
+                subject_set_id=signal_discovery.subject_set_id,
+                signal_spec_ids=list(plan.signal_spec_ids),
+                target_id=plan.target_id,
+                start_date="2026-03-23",
+                end_date="2026-03-24",
+                base_url="http://example.com",
+                pre_screen_top_k_per_kind=(
+                    signal_discovery.selection_policy.pre_screen_top_k_per_kind
+                ),
+                pre_screen_min_abs_corr=(
+                    signal_discovery.selection_policy.pre_screen_min_abs_corr
+                ),
+                probe_max_dates=signal_discovery.selection_policy.probe_max_dates,
+                probe_min_sample_count=(
+                    signal_discovery.selection_policy.probe_min_sample_count
+                ),
+                probe_min_abs_corr=signal_discovery.selection_policy.probe_min_abs_corr,
+                probe_max_family_survivors_per_subject=(
+                    signal_discovery.selection_policy.probe_max_family_survivors_per_subject
+                ),
+                survivor_min_sample_count=(
+                    signal_discovery.selection_policy.survivor_min_sample_count
+                ),
+                survivor_min_abs_corr=signal_discovery.selection_policy.survivor_min_abs_corr,
+                survivor_max_family_survivors_per_subject=(
+                    signal_discovery.selection_policy.survivor_max_family_survivors_per_subject
+                ),
+                family_ids_by_signal_spec_id=plan.family_ids_by_signal_spec_id,
+                signal_discovery_id=signal_discovery.signal_discovery_id,
+            )
+        finally:
+            store.close()
     finally:
         data_repositories.load_observation_frame = original_loader
     store = EvaluationStore(db_path)

@@ -143,7 +143,6 @@ from ..portfolio_sizing_policy import (
     apply_portfolio_sizing_policy,
 )
 from ..observation_adapters import resolve_observation_metadata
-from ..signal_discovery_execution import build_signal_discovery_execution_plan
 from ..store import EvaluationStore, _utc_now
 from ..subject_set_backfill_service import (
     resolve_subject_set_for_build,
@@ -609,22 +608,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         type=float,
         default=0.0,
         help="Optional cheap pre-screen minimum absolute corr",
-    )
-
-    backfill_signal_discovery = internal_parser("debug-backfill-signal-discovery")
-    backfill_signal_discovery.add_argument("--db", type=str, default=None)
-    backfill_signal_discovery.add_argument("--start-date", type=str, required=True)
-    backfill_signal_discovery.add_argument("--end-date", type=str, required=True)
-    backfill_signal_discovery.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        required=True,
-    )
-    backfill_signal_discovery.add_argument(
-        "--base-url",
-        type=str,
-        default=DEFAULT_SIGNAL_NOISE_BASE_URL,
     )
 
     run_evaluation = sub.add_parser(
@@ -3251,48 +3234,6 @@ def cmd_backfill_subject_set(args: argparse.Namespace) -> int:
         return 0
 
 
-def cmd_backfill_signal_discovery(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        plan = build_signal_discovery_execution_plan(
-            store,
-            signal_discovery_id=str(args.signal_discovery_id),
-            default_target_id=cfg.target_id,
-        )
-        signal_discovery = plan.signal_discovery
-        subject_set = plan.subject_set
-        _ensure_subject_set_backend_available(
-            subject_set,
-            base_url=str(args.base_url),
-        )
-        run_subject_set_backfill(
-            store,
-            subject_set=subject_set,
-            subject_set_id=signal_discovery.subject_set_id,
-            signal_spec_ids=list(plan.signal_spec_ids),
-            target_id=plan.target_id,
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            base_url=str(args.base_url),
-            pre_screen_top_k_per_kind=signal_discovery.selection_policy.pre_screen_top_k_per_kind,
-            pre_screen_min_abs_corr=signal_discovery.selection_policy.pre_screen_min_abs_corr,
-            probe_max_dates=signal_discovery.selection_policy.probe_max_dates,
-            probe_min_sample_count=signal_discovery.selection_policy.probe_min_sample_count,
-            probe_min_abs_corr=signal_discovery.selection_policy.probe_min_abs_corr,
-            probe_max_family_survivors_per_subject=(
-                signal_discovery.selection_policy.probe_max_family_survivors_per_subject
-            ),
-            survivor_min_sample_count=(signal_discovery.selection_policy.survivor_min_sample_count),
-            survivor_min_abs_corr=signal_discovery.selection_policy.survivor_min_abs_corr,
-            survivor_max_family_survivors_per_subject=(
-                signal_discovery.selection_policy.survivor_max_family_survivors_per_subject
-            ),
-            family_ids_by_signal_spec_id=(plan.family_ids_by_signal_spec_id),
-            signal_discovery_id=signal_discovery.signal_discovery_id,
-        )
-        return 0
-
-
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = load_runtime_config(db_path=args.db)
     store = EvaluationStore(cfg.db_path)
@@ -5292,8 +5233,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_apply_signals_backfill(args)
         if args.command == "debug-backfill-subject-set":
             return cmd_backfill_subject_set(args)
-        if args.command == "debug-backfill-signal-discovery":
-            return cmd_backfill_signal_discovery(args)
         if args.command == "inspect-subject-set":
             return cmd_inspect_subject_set(args)
         if args.command == "debug-status":
