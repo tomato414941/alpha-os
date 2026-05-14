@@ -25,7 +25,6 @@ from ..cli_output import (
     print_observables,
     print_strategy_adaptation_states,
     print_portfolio_decisions,
-    print_screening_result,
     print_signal_specs,
     print_subject_set_backend_checks,
     print_subject_sets,
@@ -108,9 +107,6 @@ from ..signal_generator import (
 )
 from ..signal_discovery_persistence_builders import (
     build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
-)
-from ..signal_discovery_screening_service import (
-    screen_signal_discovery as _app_screen_signal_discovery,
 )
 from ..signal_discovery import SignalDiscoverySpec
 from ..evaluation_inputs import (
@@ -860,23 +856,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     check_subject_set_backend.add_argument("--db", type=str, default=None)
     check_subject_set_backend.add_argument("--subject-set-id", type=str, required=True)
     check_subject_set_backend.add_argument("--base-url", type=str, default=None)
-
-    screen_signal_discovery = internal_parser("debug-screen-signal-discovery")
-    screen_signal_discovery.add_argument("--db", type=str, default=None)
-    screen_signal_discovery.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        required=True,
-    )
-    screen_signal_discovery.add_argument("--min-sample-count", type=int, default=None)
-    screen_signal_discovery.add_argument("--min-abs-corr", type=float, default=None)
-    screen_signal_discovery.add_argument("--min-stability-score", type=float, default=None)
-    screen_signal_discovery.add_argument(
-        "--max-family-survivors-per-subject",
-        type=int,
-        default=None,
-    )
 
     build_decision = internal_parser("decide-portfolio")
     _add_decide_portfolio_arguments(
@@ -3692,21 +3671,6 @@ def cmd_check_subject_set_backend(args: argparse.Namespace) -> int:
     return 0 if all(bool(item["available"]) for item in checks) else 2
 
 
-def cmd_screen_signal_discovery(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        persisted = _app_screen_signal_discovery(
-            store,
-            signal_discovery_id=str(args.signal_discovery_id),
-            min_sample_count=args.min_sample_count,
-            min_abs_corr=args.min_abs_corr,
-            min_stability_score=args.min_stability_score,
-            max_family_survivors_per_subject=args.max_family_survivors_per_subject,
-        )
-    print_screening_result(persisted)
-    return 0
-
-
 def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
@@ -5346,8 +5310,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_show_subject_sets(args)
         if args.command == "check-subject-set-backend":
             return cmd_check_subject_set_backend(args)
-        if args.command == "debug-screen-signal-discovery":
-            return cmd_screen_signal_discovery(args)
         if args.command == "decide-portfolio":
             return cmd_decide_portfolio(args)
         if args.command == "debug-decide-portfolio-runtime":

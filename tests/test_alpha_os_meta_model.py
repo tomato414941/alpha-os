@@ -2571,22 +2571,16 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
         )
     finally:
         data_repositories.load_observation_frame = original_loader
-    assert (
-        main(
-            [
-                "debug-screen-signal-discovery",
-                "--db",
-                str(db_path),
-                "--signal-discovery-id",
-                "core_crypto_search",
-            ]
-        )
-        == 0
-    )
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
         from alpha_os.signal_discovery_application import compress_screening_result_state
+        from alpha_os.signal_discovery_screening_service import screen_signal_discovery
+
+        screen_signal_discovery(
+            store,
+            signal_discovery_id="core_crypto_search",
+        )
 
         screening_results = store.list_screening_results(
             signal_discovery_id="core_crypto_search",
@@ -2605,11 +2599,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "pre_screen_selected=3/3" in output
     assert "probe_selected=2/3" in output
     assert "survivor_selected=2/2" in output
-    assert "alpha-os screening" in output
-    assert "SignalDiscovery: core_crypto_search" in output
-    assert "Candidates:  total=2 survivors=2" in output
-    assert "family=reversal_family" in output
-    assert "family=average_gap_family" in output
 
     store = EvaluationStore(db_path)
     try:

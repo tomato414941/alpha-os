@@ -813,7 +813,6 @@ def print_subject_set_backend_checks(
             )
         print(line)
 
-
 def _format_portfolio_decision_strategy(details: dict[str, object]) -> str | None:
     strategy = details.get("strategy")
     if not isinstance(strategy, dict):
@@ -1044,36 +1043,3 @@ def print_validation_result_set(
         if universe_policy_text is not None:
             line += " universe_policy=" + universe_policy_text
         print(line)
-
-
-def print_screening_result(screening_result) -> None:
-    result = screening_result.result if hasattr(screening_result, "result") else screening_result
-    survivors = result.survivors
-    print("alpha-os screening")
-    print(f"  SignalDiscovery: {result.signal_discovery_id}")
-    print(f"  Result:      {result.screening_result_id}")
-    print(f"  Created:     {result.created_at}")
-    print(
-        "  Policy:      "
-        f"min_samples={result.policy.min_sample_count} "
-        f"min_abs_corr={result.policy.min_abs_corr:.6f} "
-        f"min_stability={result.policy.min_stability_score:.6f} "
-        f"adaptive_budget={str(result.policy.adaptive_family_budget).lower()} "
-        f"adaptive_scale={result.policy.adaptive_budget_stability_scale:.6f} "
-        f"max_family_survivors={result.policy.max_family_survivors_per_subject}"
-    )
-    print(f"  Candidates:  total={len(result.candidates)} survivors={len(survivors)}")
-    for item in survivors:
-        corr_text = "n/a" if item.corr is None else f"{item.corr:.6f}"
-        print(
-            f"    keep hyp={item.signal_id} "
-            f"family={item.family_id or '-'} "
-            f"subject={item.subject_id} "
-            f"kind={item.kind or '-'} "
-            f"lookback={item.lookback if item.lookback is not None else '-'} "
-            f"score={item.score:.6f} "
-            f"corr={corr_text} "
-            f"stability={item.stability_score:.6f} "
-            f"samples={item.sample_count} "
-            f"rank={item.family_rank if item.family_rank is not None else '-'}"
-        )
