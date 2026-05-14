@@ -4,7 +4,6 @@ from .portfolio_decision import SubjectSet
 from .signal_client import build_signal_client
 from .signal_discovery_compression_service import build_compressed_belief_from_screening_result
 from .signal_discovery_persistence_builders import (
-    build_strategy_checkpoint,
     build_strategy_checkpoint_id as build_strategy_checkpoint_id,
 )
 from .store import EvaluationStore, _utc_now
@@ -109,34 +108,3 @@ def prune_screened_snapshots(
         signal_ids=sorted(survivor_ids)
     )
 
-
-def persist_strategy_checkpoint(
-    store: EvaluationStore,
-    *,
-    strategy_id: str,
-    signal_discovery_id: str | None,
-    subject_set_id: str,
-    target_id: str,
-    fold_label: str,
-    start_date: str,
-    end_date: str,
-    snapshot_set_id: str,
-    screening_state,
-    compressed_belief_state,
-    created_at: str | None = None,
-):
-    timestamp = _utc_now() if created_at is None else created_at
-    strategy_checkpoint = build_strategy_checkpoint(
-        strategy_id=strategy_id,
-        signal_discovery_id=signal_discovery_id,
-        subject_set_id=subject_set_id,
-        target_id=target_id,
-        fold_label=fold_label,
-        start_date=start_date,
-        end_date=end_date,
-        snapshot_set_id=snapshot_set_id,
-        screening_state=screening_state,
-        compressed_belief_state=compressed_belief_state,
-        created_at=timestamp,
-    )
-    return store.upsert_strategy_checkpoint(state=strategy_checkpoint)

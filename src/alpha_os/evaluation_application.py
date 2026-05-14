@@ -17,10 +17,10 @@ from .signal_discovery_application import (
     build_strategy_checkpoint_id,
     compress_screening_result_state,
     ensure_subject_set_backend_available,
-    persist_strategy_checkpoint,
     prune_screened_snapshots,
 )
 from .signal_discovery_execution import build_signal_discovery_execution_plan
+from .signal_discovery_persistence_builders import build_strategy_checkpoint
 from .signal_discovery_screening_service import screen_signal_discovery
 from .store import EvaluationStore
 from .subject_set_backfill_service import run_subject_set_backfill
@@ -340,19 +340,20 @@ def prepare_strategy_checkpoints_for_evaluation(
                 screening_result_id=screening_state.screening_result_id,
             )
             for evaluation_task in group.evaluation_tasks:
-                persist_strategy_checkpoint(
-                    store,
-                    strategy_id=evaluation_task.strategy_id,
-                    signal_discovery_id=signal_discovery.signal_discovery_id,
-                    subject_set_id=str(subject_set.subject_set_id),
-                    target_id=plan.target_id,
-                    fold_label=fold.label,
-                    start_date=fold.execution_range.start_date,
-                    end_date=fold.execution_range.end_date,
-                    snapshot_set_id=snapshot_set_id,
-                    screening_state=screening_state,
-                    compressed_belief_state=compressed_belief_state,
-                    created_at=timestamp,
+                store.upsert_strategy_checkpoint(
+                    state=build_strategy_checkpoint(
+                        strategy_id=evaluation_task.strategy_id,
+                        signal_discovery_id=signal_discovery.signal_discovery_id,
+                        subject_set_id=str(subject_set.subject_set_id),
+                        target_id=plan.target_id,
+                        fold_label=fold.label,
+                        start_date=fold.execution_range.start_date,
+                        end_date=fold.execution_range.end_date,
+                        snapshot_set_id=snapshot_set_id,
+                        screening_state=screening_state,
+                        compressed_belief_state=compressed_belief_state,
+                        created_at=timestamp,
+                    )
                 )
 
 
