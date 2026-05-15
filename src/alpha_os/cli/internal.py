@@ -146,7 +146,6 @@ from ..observation_adapters import resolve_observation_metadata
 from ..store import EvaluationStore, _utc_now
 from ..subject_set_backfill_service import (
     resolve_subject_set_for_build,
-    run_subject_set_backfill,
 )
 from ..strategy_checkpoint import StrategyCheckpoint
 from ..trading_strategy import (
@@ -571,44 +570,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         help="Repeat to include multiple active signals",
     )
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-
-    backfill_subject_set = internal_parser("debug-backfill-subject-set")
-    backfill_subject_set.add_argument("--db", type=str, default=None)
-    backfill_subject_set.add_argument("--start-date", type=str, required=True)
-    backfill_subject_set.add_argument("--end-date", type=str, required=True)
-    backfill_subject_set.add_argument("--subject-set-id", type=str, required=True)
-    backfill_subject_set.add_argument(
-        "--signal-spec-id",
-        "--signal-candidate-spec-id",
-        type=str,
-        action="append",
-        dest="signal_spec_id",
-        required=True,
-        help="Repeat to include multiple signal specs",
-    )
-    backfill_subject_set.add_argument(
-        "--target-id",
-        type=str,
-        default=None,
-        help="Optional target override for all generated executable signals",
-    )
-    backfill_subject_set.add_argument(
-        "--base-url",
-        type=str,
-        default=DEFAULT_SIGNAL_NOISE_BASE_URL,
-    )
-    backfill_subject_set.add_argument(
-        "--pre-screen-top-k-per-kind",
-        type=int,
-        default=None,
-        help="Optional cheap pre-screen cap per signal kind before full backfill",
-    )
-    backfill_subject_set.add_argument(
-        "--pre-screen-min-abs-corr",
-        type=float,
-        default=0.0,
-        help="Optional cheap pre-screen minimum absolute corr",
-    )
 
     run_evaluation = sub.add_parser(
         "run-evaluation",
@@ -3202,38 +3163,6 @@ def cmd_apply_signals_backfill(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_backfill_subject_set(args: argparse.Namespace) -> int:
-    signal_spec_ids = _unique_signal_ids(args.signal_spec_id)
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        state = store.get_subject_set(str(args.subject_set_id))
-        if state is None:
-            raise ValueError(f"unknown subject set: {args.subject_set_id}")
-        validate_subject_set_universe_contract(state.definition)
-        _ensure_subject_set_backend_available(
-            state.definition,
-            base_url=str(args.base_url),
-        )
-        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
-        run_subject_set_backfill(
-            store,
-            subject_set=state.definition,
-            subject_set_id=str(args.subject_set_id),
-            signal_spec_ids=signal_spec_ids,
-            target_id=target_id,
-            start_date=str(args.start_date),
-            end_date=str(args.end_date),
-            base_url=str(args.base_url),
-            pre_screen_top_k_per_kind=(
-                None
-                if args.pre_screen_top_k_per_kind is None
-                else int(args.pre_screen_top_k_per_kind)
-            ),
-            pre_screen_min_abs_corr=float(args.pre_screen_min_abs_corr),
-        )
-        return 0
-
-
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = load_runtime_config(db_path=args.db)
     store = EvaluationStore(cfg.db_path)
@@ -5231,8 +5160,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_apply_backfill(args)
         if args.command == "debug-apply-signal-candidates-backfill":
             return cmd_apply_signals_backfill(args)
-        if args.command == "debug-backfill-subject-set":
-            return cmd_backfill_subject_set(args)
         if args.command == "inspect-subject-set":
             return cmd_inspect_subject_set(args)
         if args.command == "debug-status":

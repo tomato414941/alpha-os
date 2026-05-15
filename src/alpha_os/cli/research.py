@@ -12,7 +12,6 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-show-signal-candidate-specs": _legacy.cmd_show_signal_specs,
     "debug-register-observable": _legacy.cmd_register_observable,
     "debug-show-observables": _legacy.cmd_show_observables,
-    "debug-backfill-subject-set": _legacy.cmd_backfill_subject_set,
     "inspect-subject-set": _legacy.cmd_inspect_subject_set,
     "debug-show-meta-predictions": _legacy.cmd_show_meta_predictions,
     "debug-compare-meta-aggregations": _legacy.cmd_compare_meta_aggregations,

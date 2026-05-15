@@ -34,6 +34,46 @@ def _strategy_portfolio_document(
     return {"portfolio": portfolio}
 
 
+def _run_subject_set_backfill_for_test(
+    db_path: Path,
+    *,
+    subject_set_id: str,
+    signal_spec_ids: list[str],
+    start_date: str,
+    end_date: str,
+    base_url: str = "http://example.com",
+    pre_screen_top_k_per_kind: int | None = None,
+    pre_screen_min_abs_corr: float = 0.0,
+) -> None:
+    from alpha_os.config import load_runtime_config
+    from alpha_os.store import EvaluationStore
+    from alpha_os.subject_set_backfill_service import run_subject_set_backfill
+    from alpha_os.universe_contract import validate_subject_set_universe_contract
+
+    cfg = load_runtime_config(db_path=str(db_path))
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        state = store.get_subject_set(subject_set_id)
+        if state is None:
+            raise ValueError(f"unknown subject set: {subject_set_id}")
+        validate_subject_set_universe_contract(state.definition)
+        run_subject_set_backfill(
+            store,
+            subject_set=state.definition,
+            subject_set_id=subject_set_id,
+            signal_spec_ids=signal_spec_ids,
+            target_id=cfg.target_id,
+            start_date=start_date,
+            end_date=end_date,
+            base_url=base_url,
+            pre_screen_top_k_per_kind=pre_screen_top_k_per_kind,
+            pre_screen_min_abs_corr=pre_screen_min_abs_corr,
+        )
+    finally:
+        store.close()
+
+
 def test_refresh_target_meta_predictions_persists_equal_and_corr_weighted_means(tmp_path):
     from alpha_os.evaluation_runtime import apply_evaluation
     from alpha_os.meta_aggregation_service import refresh_target_meta_predictions
@@ -1539,31 +1579,13 @@ def test_backfill_subject_set_can_pre_screen_before_full_materialization(tmp_pat
     original_loader = data_repositories_module.load_observation_frame
     data_repositories_module.load_observation_frame = _fake_loader
     try:
-        assert (
-            main(
-                [
-                    "debug-backfill-subject-set",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-23",
-                    "--end-date",
-                    "2026-03-24",
-                    "--subject-set-id",
-                    "core_crypto",
-                    "--signal-candidate-spec-id",
-                    "reversal_1d",
-                    "--signal-candidate-spec-id",
-                    "reversal_3d",
-                    "--signal-candidate-spec-id",
-                    "average_gap_3d",
-                    "--pre-screen-top-k-per-kind",
-                    "1",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
+        _run_subject_set_backfill_for_test(
+            db_path,
+            subject_set_id="core_crypto",
+            signal_spec_ids=["reversal_1d", "reversal_3d", "average_gap_3d"],
+            start_date="2026-03-23",
+            end_date="2026-03-24",
+            pre_screen_top_k_per_kind=1,
         )
     finally:
         data_repositories_module.load_observation_frame = original_loader
@@ -2140,25 +2162,12 @@ def test_multi_subject_runtime_e2e_from_subject_set_backfill(tmp_path, capsys):
             == 0
         )
         capsys.readouterr()
-        assert (
-            main(
-                [
-                    "debug-backfill-subject-set",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-22",
-                    "--end-date",
-                    "2026-03-22",
-                    "--subject-set-id",
-                    "core_crypto",
-                    "--signal-candidate-spec-id",
-                    "reversal_1d",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
+        _run_subject_set_backfill_for_test(
+            db_path,
+            subject_set_id="core_crypto",
+            signal_spec_ids=["reversal_1d"],
+            start_date="2026-03-22",
+            end_date="2026-03-22",
         )
         capsys.readouterr()
     finally:
@@ -2266,25 +2275,12 @@ def test_apply_subject_set_backfill_registers_executables_and_builds_runtime(tmp
     original_loader = data_repositories.load_observation_frame
     data_repositories.load_observation_frame = _fake_loader
     try:
-        assert (
-            main(
-                [
-                    "debug-backfill-subject-set",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-22",
-                    "--end-date",
-                    "2026-03-22",
-                    "--subject-set-id",
-                    "core_crypto",
-                    "--signal-candidate-spec-id",
-                    "reversal_1d",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
+        _run_subject_set_backfill_for_test(
+            db_path,
+            subject_set_id="core_crypto",
+            signal_spec_ids=["reversal_1d"],
+            start_date="2026-03-22",
+            end_date="2026-03-22",
         )
     finally:
         data_repositories.load_observation_frame = original_loader
@@ -2860,27 +2856,12 @@ def test_core_crypto_4_end_to_end_runtime_smoke(tmp_path, capsys):
     original_loader = data_repositories.load_observation_frame
     data_repositories.load_observation_frame = _fake_loader
     try:
-        assert (
-            main(
-                [
-                    "debug-backfill-subject-set",
-                    "--db",
-                    str(db_path),
-                    "--start-date",
-                    "2026-03-23",
-                    "--end-date",
-                    "2026-03-24",
-                    "--subject-set-id",
-                    "core_crypto_4",
-                    "--signal-candidate-spec-id",
-                    "reversal_1d",
-                    "--signal-candidate-spec-id",
-                    "average_gap_3d",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
+        _run_subject_set_backfill_for_test(
+            db_path,
+            subject_set_id="core_crypto_4",
+            signal_spec_ids=["reversal_1d", "average_gap_3d"],
+            start_date="2026-03-23",
+            end_date="2026-03-24",
         )
         backfill_output = capsys.readouterr().out
         assert "subject_set=core_crypto_4" in backfill_output
