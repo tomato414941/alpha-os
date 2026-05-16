@@ -19,6 +19,13 @@ Strategy estimated cost is an input to the strategy's decision process, such as
 avoiding trades when expected spread, slippage, funding, or borrow cost is too
 high.
 
+In RL terms, realized cost belongs to the world or environment: it is part of
+the reward calculation after an actor takes an action.
+
+Expected or predicted cost belongs to the policy or actor side when it changes
+the decision before the action is taken. It is not the same object as the
+realized cost charged by the environment.
+
 ## Risk
 
 If these meanings are mixed, alpha-os can blur:
@@ -42,6 +49,20 @@ Decision rule:
 
 - realized cost used to calculate net results belongs to evaluation
 - estimated cost used to decide whether or how to trade belongs to strategy
+
+## Current Suspects
+
+- `ExecutionCostAssumptionsSpec` carries fields such as `fee_bps`,
+  `market_impact_bps`, and spread assumptions. These look like world or
+  simulator assumptions, but they can also be used by policy-side trade utility.
+- `HoldingCostAssumptionsSpec` carries funding and borrow assumptions. These are
+  closer to realized environment costs.
+- `EvaluationRebalanceFrictionPolicySpec` carries decision-facing fields such as
+  `execution_cost_aversion`, `min_trade_utility`, and no-trade behavior. These
+  are closer to policy or actor behavior.
+
+The code should not rely on a generic cost object to stand for both expected
+decision cost and realized environment cost.
 
 ## Close Condition
 
