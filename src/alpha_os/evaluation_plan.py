@@ -213,6 +213,35 @@ def _holding_cost_assumptions_for_strategy(
     )
 
 
+def _resolve_strategy_checkpoint_for_fold(
+    store: EvaluationPlanReadPort,
+    *,
+    strategy_id: str,
+    signal_discovery_id: str,
+    fold,
+) -> StrategyCheckpointRecord | None:
+    strategy_checkpoints = store.list_strategy_checkpoints(
+        strategy_id=strategy_id,
+        signal_discovery_id=signal_discovery_id,
+        fold_label=fold.label,
+        execution_start_date=fold.execution_range.start_date,
+        execution_end_date=fold.execution_range.end_date,
+        limit=1,
+    )
+    if strategy_checkpoints:
+        return strategy_checkpoints[0]
+    strategy_checkpoints = store.list_strategy_checkpoints(
+        strategy_id=strategy_id,
+        signal_discovery_id=signal_discovery_id,
+        execution_start_date=fold.execution_range.start_date,
+        execution_end_date=fold.execution_range.end_date,
+        limit=1,
+    )
+    if not strategy_checkpoints:
+        return None
+    return strategy_checkpoints[0]
+
+
 def build_evaluation_plan(
     store: EvaluationPlanReadPort,
     *,
@@ -284,24 +313,14 @@ def build_evaluation_plan(
                 )
             continue
         for fold in evaluation_spec.resolved_evaluation_folds:
-            strategy_checkpoints = store.list_strategy_checkpoints(
+            strategy_checkpoint_record = _resolve_strategy_checkpoint_for_fold(
+                store,
                 strategy_id=evaluation_task.strategy_id,
                 signal_discovery_id=strategy_signal_discovery_id,
-                fold_label=fold.label,
-                execution_start_date=fold.execution_range.start_date,
-                execution_end_date=fold.execution_range.end_date,
-                limit=1,
+                fold=fold,
             )
-            if not strategy_checkpoints:
-                strategy_checkpoints = store.list_strategy_checkpoints(
-                    strategy_id=evaluation_task.strategy_id,
-                    signal_discovery_id=strategy_signal_discovery_id,
-                    execution_start_date=fold.execution_range.start_date,
-                    execution_end_date=fold.execution_range.end_date,
-                    limit=1,
-                )
-            if strategy_checkpoints:
-                strategy_checkpoint = strategy_checkpoints[0].state
+            if strategy_checkpoint_record is not None:
+                strategy_checkpoint = strategy_checkpoint_record.state
                 strategy_checkpoint_id = (
                     strategy_checkpoint.strategy_checkpoint_id
                 )
