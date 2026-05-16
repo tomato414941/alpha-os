@@ -14,7 +14,6 @@ from .portfolio_construction_config import PortfolioConstructionSpec
 @dataclass(frozen=True)
 class StrategyEvaluationContext:
     strategy_id: str
-    signal_discovery_id: str | None
     subject_set_id: str
     target_id: str
     base_url: str

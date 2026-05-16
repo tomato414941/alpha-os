@@ -60,7 +60,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
-            signal_discovery_id="discovery:test",
             subject_set_id="subject-set:test",
             target_id="target:test",
             base_url="http://example.com",
@@ -83,7 +82,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
-    assert request.context.signal_discovery_id == "discovery:test"
     assert request.context.subject_set_id == "subject-set:test"
     assert request.input_refs.strategy_checkpoint_id == "state:test"
     assert request.evaluation_date_ranges[0].label == "test"

@@ -2676,7 +2676,6 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
 
         assert len(plan.execution_requests) == 1
         request = plan.execution_requests[0]
-        assert request.context.signal_discovery_id is None
         assert request.context.subject_set_id == "subject_set_a"
         assert request.input_refs is None
     finally:

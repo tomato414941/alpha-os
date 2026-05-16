@@ -679,12 +679,15 @@ class PreparedStrategyEvaluationExecutionStrategy:
             )
 
         strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+        signal_discovery_id = (
+            None if strategy_checkpoint is None else strategy_checkpoint.signal_discovery_id
+        )
         return EvaluationExecutionResult(
             task_result=EvaluationTaskResult(
                 evaluation_task_id=execution_request.evaluation_task_id,
                 construction_kind=execution_request.context.portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
-                signal_discovery_id=execution_request.context.signal_discovery_id,
+                signal_discovery_id=signal_discovery_id,
                 strategy_contract_fields=build_report_evaluation_task_contract_fields(
                     execution_request.context.portfolio_construction,
                     rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
