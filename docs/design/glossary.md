@@ -124,8 +124,6 @@ The labeled outcome definition that a signal, belief, or strategy is evaluated a
 
 Examples: `residual_return_1d`, `residual_return_3d`, `residual_return_5d`.
 
-Do not use `target` by itself when the intended meaning is prediction target.
-
 ### signal contribution
 
 A signal-level input to belief synthesis after screening and prediction orientation.
