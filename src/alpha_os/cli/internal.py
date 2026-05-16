@@ -36,7 +36,6 @@ from ..evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
 )
-from ..evaluation_job_spec import EvaluationJobSpec
 from ..evaluation_application import (
     RunEvaluationUseCaseRequest,
     RunWalkForwardEvaluationUseCaseRequest,
@@ -1974,7 +1973,6 @@ class _RuntimeManifestReadPort:
         self.trading_strategies: dict[str, TradingStrategySpec] = {}
         self.evaluation_specs: dict[str, EvaluationSpec] = {}
         self.evaluation_tasks: dict[str, EvaluationTask] = {}
-        self.evaluation_job_specs: dict[str, EvaluationJobSpec] = {}
         for manifest_path in manifest_paths:
             self._apply_manifest_document(_load_runtime_manifest(manifest_path))
 
@@ -2057,16 +2055,13 @@ class _RuntimeManifestReadPort:
                 raise ValueError("evaluation task manifest is missing evaluation_spec_id")
             if self.get_evaluation_spec(evaluation_spec_id) is None:
                 raise ValueError(f"unknown evaluation spec for evaluation task: {evaluation_spec_id}")
-            trading_strategy, evaluation_task, evaluation_job_spec = _evaluation_task_from_document(
+            trading_strategy, evaluation_task = _evaluation_task_from_document(
                 self,
                 evaluation_spec_id=evaluation_spec_id,
                 document=item,
             )
             self.trading_strategies[trading_strategy.strategy_id] = trading_strategy
             self.evaluation_tasks[evaluation_task.evaluation_task_id] = evaluation_task
-            self.evaluation_job_specs[
-                evaluation_job_spec.evaluation_task_id
-            ] = evaluation_job_spec
 
     def _add_signal_spec_document(self, document: object) -> None:
         if not isinstance(document, dict):
@@ -2405,7 +2400,7 @@ def _evaluation_task_from_document(
     *,
     evaluation_spec_id: str,
     document: dict[str, object],
-) -> tuple[TradingStrategySpec, EvaluationTask, EvaluationJobSpec]:
+) -> tuple[TradingStrategySpec, EvaluationTask]:
     strategy_id = document.get("strategy_id")
     signal_discovery_id = document.get("signal_discovery_id")
     strategy_override_config, has_strategy_override = (
@@ -2473,16 +2468,9 @@ def _evaluation_task_from_document(
         strategy_id=trading_strategy.strategy_id,
         evaluation_spec_id=evaluation_spec_id,
     )
-    strategy_checkpoint_id = (
-        None
-        if document.get("strategy_checkpoint_id") is None
-        else str(document["strategy_checkpoint_id"])
-    )
-    evaluation_job_spec = EvaluationJobSpec(
-        evaluation_task_id=evaluation_task_id,
-        strategy_checkpoint_id=strategy_checkpoint_id,
-    )
-    return trading_strategy, evaluation_task, evaluation_job_spec
+    if document.get("strategy_checkpoint_id") is not None:
+        raise ValueError("evaluation task manifest no longer supports strategy_checkpoint_id")
+    return trading_strategy, evaluation_task
 
 
 def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
@@ -2678,14 +2666,13 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
                 raise ValueError("evaluation task manifest is missing evaluation_spec_id")
             if store.get_evaluation_spec(evaluation_spec_id) is None:
                 raise ValueError(f"unknown evaluation spec for evaluation task: {evaluation_spec_id}")
-            trading_strategy, evaluation_task, evaluation_job_spec = _evaluation_task_from_document(
+            trading_strategy, evaluation_task = _evaluation_task_from_document(
                 store,
                 evaluation_spec_id=evaluation_spec_id,
                 document=item,
             )
             store.upsert_trading_strategy(trading_strategy=trading_strategy)
             state = store.upsert_evaluation_task(task=evaluation_task)
-            store.upsert_evaluation_job_spec(job_spec=evaluation_job_spec)
             registered_evaluation_tasks.append(state)
             created_evaluation_tasks += 1
     print("Applied runtime manifest")

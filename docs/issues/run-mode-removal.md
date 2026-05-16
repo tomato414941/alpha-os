@@ -28,7 +28,7 @@ required inputs directly.
 ## Removed Places
 
 - `StrategyRunMode`
-- `EvaluationJobSpec.run_mode`
+- persisted evaluation job specs
 - `StrategyEvaluationContext.run_mode` removed from the request context
 - `StrategyEvaluationRequest.to_backtest_oos_run_inputs` removed
 - active manifest job-spec payloads no longer persist `run_mode`
@@ -39,8 +39,8 @@ required inputs directly.
 `StrategyEvaluationContext.run_mode` was only used by request-to-run-input
 helper methods and has been removed.
 
-`EvaluationJobSpec.run_mode` has been removed. Checkpoint-based evaluation is
-keyed by explicit job inputs, especially `strategy_checkpoint_id`.
+Persisted evaluation job specs have been removed. Checkpoint-based evaluation is
+keyed by explicit evaluation request inputs, especially `strategy_checkpoint_id`.
 
 ## Boundary
 

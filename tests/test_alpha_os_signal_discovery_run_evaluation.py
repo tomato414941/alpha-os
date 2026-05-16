@@ -1119,9 +1119,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
         assert len(evaluation_task_states) == 1
         case = evaluation_task_states[0].task
         assert case.strategy_id == "strategy:buy_and_hold"
-        job_spec_state = store.get_evaluation_job_spec(case.evaluation_task_id)
-        assert job_spec_state is not None
-        assert job_spec_state.job_spec.evaluation_task_id == case.evaluation_task_id
     finally:
         store.close()
 
@@ -2765,7 +2762,6 @@ def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
 
 def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_job_spec import EvaluationJobSpec
     from alpha_os.evaluation_plan import build_evaluation_plan
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
@@ -2858,12 +2854,7 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
-            evaluation_job_specs=(
-                EvaluationJobSpec(
-                    evaluation_task_id="case_checkpoint",
-                    strategy_checkpoint_id="checkpoint_a",
-                ),
-            ),
+            strategy_checkpoint_ids_by_task_id={"case_checkpoint": "checkpoint_a"},
             default_target_id="residual_return_3d",
             base_url="http://example.com",
         )

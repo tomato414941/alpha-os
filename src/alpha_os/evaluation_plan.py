@@ -9,7 +9,6 @@ from .evaluation_cost_config import (
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
-from .evaluation_job_spec import EvaluationJobSpec, default_evaluation_job_spec
 from .evaluation_spec import (
     EvaluationSpec,
     EvaluationDateRange,
@@ -220,30 +219,15 @@ def build_evaluation_plan(
     evaluation_spec_id: str,
     evaluation_spec: EvaluationSpec,
     evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
-    evaluation_job_specs: tuple[EvaluationJobSpec, ...] | None = None,
+    strategy_checkpoint_ids_by_task_id: dict[str, str] | None = None,
     default_target_id: str,
     base_url: str,
 ) -> EvaluationPlan:
     execution_requests: list[StrategyEvaluationRequest] = []
     if evaluation_tasks is None:
         raise ValueError("evaluation plan requires evaluation_tasks")
-    job_specs_by_case_id = (
-        {
-            case.evaluation_task_id: default_evaluation_job_spec(
-                case.evaluation_task_id
-            )
-            for case in evaluation_tasks
-        }
-        if evaluation_job_specs is None
-        else {job.evaluation_task_id: job for job in evaluation_job_specs}
-    )
+    checkpoint_ids_by_task_id = strategy_checkpoint_ids_by_task_id or {}
     for evaluation_task in evaluation_tasks:
-        job_spec = job_specs_by_case_id.get(evaluation_task.evaluation_task_id)
-        if job_spec is None:
-            raise ValueError(
-                "evaluation job spec does not exist for case: "
-                f"{evaluation_task.evaluation_task_id}"
-            )
         strategy_state = store.get_trading_strategy(evaluation_task.strategy_id)
         if strategy_state is None:
             raise ValueError(
@@ -264,8 +248,10 @@ def build_evaluation_plan(
             trading_strategy=trading_strategy,
         )
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
-        if job_spec.strategy_checkpoint_id is not None:
-            strategy_checkpoint_id = job_spec.strategy_checkpoint_id
+        strategy_checkpoint_id = checkpoint_ids_by_task_id.get(
+            evaluation_task.evaluation_task_id
+        )
+        if strategy_checkpoint_id is not None:
             checkpoint_record = store.get_strategy_checkpoint(
                 strategy_checkpoint_id
             )

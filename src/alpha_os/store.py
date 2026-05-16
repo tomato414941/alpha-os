@@ -14,7 +14,6 @@ from .cross_instrument_contract import (
     default_validation_result_set_cross_instrument_contract,
 )
 from .evaluation_task import EvaluationTask
-from .evaluation_job_spec import EvaluationJobSpec
 from .evaluation_spec import EvaluationSpec
 from .evaluation_report import EvaluationReport
 from .signal_registry import (
@@ -755,17 +754,6 @@ class EvaluationTaskState:
             evaluation_task_id=self.evaluation_task_id,
             document=json.loads(self.task_json),
         )
-
-
-@dataclass(frozen=True)
-class EvaluationJobSpecState:
-    evaluation_task_id: str
-    job_spec_json: str
-    created_at: str
-
-    @property
-    def job_spec(self) -> EvaluationJobSpec:
-        return EvaluationJobSpec.from_document(json.loads(self.job_spec_json))
 
 
 @dataclass(frozen=True)
@@ -1530,18 +1518,6 @@ def _row_to_evaluation_task(row: sqlite3.Row | None) -> EvaluationTaskState | No
     )
 
 
-def _row_to_evaluation_job_spec(
-    row: sqlite3.Row | None,
-) -> EvaluationJobSpecState | None:
-    if row is None:
-        return None
-    return EvaluationJobSpecState(
-        evaluation_task_id=str(row["evaluation_task_id"]),
-        job_spec_json=str(row["job_spec_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_validation_signal_result(
     row: sqlite3.Row | None,
 ) -> ValidationSignalResultState | None:
@@ -1839,12 +1815,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS evaluation_tasks (
                 evaluation_task_id TEXT PRIMARY KEY,
                 task_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS evaluation_job_specs (
-                evaluation_task_id TEXT PRIMARY KEY,
-                job_spec_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
 
@@ -3713,33 +3683,6 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def upsert_evaluation_job_spec(
-        self,
-        *,
-        job_spec: EvaluationJobSpec,
-    ) -> EvaluationJobSpecState:
-        self.ensure_schema()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO evaluation_job_specs (
-                    evaluation_task_id, job_spec_json, created_at
-                )
-                VALUES (?, ?, ?)
-                ON CONFLICT(evaluation_task_id) DO UPDATE SET
-                    job_spec_json = excluded.job_spec_json,
-                    created_at = excluded.created_at
-                """,
-                (
-                    job_spec.evaluation_task_id,
-                    json.dumps(job_spec.to_document(), sort_keys=True),
-                    _utc_now(),
-                ),
-            )
-        state = self.get_evaluation_job_spec(job_spec.evaluation_task_id)
-        assert state is not None
-        return state
-
     def get_strategy_checkpoint(
         self,
         strategy_checkpoint_id: str,
@@ -3781,20 +3724,6 @@ class EvaluationStore:
             (evaluation_task_id,),
         ).fetchone()
         return _row_to_evaluation_task(row)
-
-    def get_evaluation_job_spec(
-        self,
-        evaluation_task_id: str,
-    ) -> EvaluationJobSpecState | None:
-        row = self.conn.execute(
-            """
-            SELECT evaluation_task_id, job_spec_json, created_at
-            FROM evaluation_job_specs
-            WHERE evaluation_task_id = ?
-            """,
-            (evaluation_task_id,),
-        ).fetchone()
-        return _row_to_evaluation_job_spec(row)
 
     def list_strategy_checkpoints(
         self,

@@ -150,14 +150,3 @@ def test_requires_decision_evaluation_classifies_metric_group_names():
     assert requires_decision_evaluation(("robustness",))
     assert not requires_decision_evaluation(())
     assert "decision_quality" in DECISION_EVALUATION_METRIC_GROUP_NAMES
-
-
-def test_evaluation_job_spec_allows_strategy_checkpoint():
-    from alpha_os.evaluation_job_spec import EvaluationJobSpec
-
-    job_spec = EvaluationJobSpec(
-        evaluation_task_id="case:test",
-        strategy_checkpoint_id="state:test",
-    )
-
-    assert job_spec.strategy_checkpoint_id == "state:test"
