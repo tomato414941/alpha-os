@@ -543,6 +543,9 @@ class DirectStrategyEvaluationExecutionStrategy:
     ) -> EvaluationExecutionResult:
         store = context.store
         strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+        trading_strategy = (
+            None if strategy_state is None else strategy_state.trading_strategy
+        )
         subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
         if subject_set_state is not None:
             validate_subject_set_universe_contract(subject_set_state.definition)
@@ -584,7 +587,9 @@ class DirectStrategyEvaluationExecutionStrategy:
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
-                    selection_kind=execution_request.context.selection_kind,
+                    selection_kind=(
+                        None if trading_strategy is None else trading_strategy.selection_kind
+                    ),
                     top_k=execution_request.context.top_k,
                 ),
                 subject_set_facts=(
@@ -600,7 +605,7 @@ class DirectStrategyEvaluationExecutionStrategy:
                 ),
                 constraint_stages=_constraint_stages_for_entry(execution_request),
                 sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
-                    None if strategy_state is None else strategy_state.trading_strategy,
+                    trading_strategy,
                     subject_set,
                     sleeve_composition=execution_request.context.portfolio_construction.sleeve_composition,
                 ),
@@ -679,6 +684,9 @@ class PreparedStrategyEvaluationExecutionStrategy:
             )
 
         strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+        trading_strategy = (
+            None if strategy_state is None else strategy_state.trading_strategy
+        )
         signal_discovery_id = (
             None if strategy_checkpoint is None else strategy_checkpoint.signal_discovery_id
         )
@@ -696,7 +704,9 @@ class PreparedStrategyEvaluationExecutionStrategy:
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
-                    selection_kind=execution_request.context.selection_kind,
+                    selection_kind=(
+                        None if trading_strategy is None else trading_strategy.selection_kind
+                    ),
                     top_k=execution_request.context.top_k,
                 ),
                 subject_set_facts=(
@@ -712,7 +722,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 ),
                 constraint_stages=_constraint_stages_for_entry(execution_request),
                 sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
-                    None if strategy_state is None else strategy_state.trading_strategy,
+                    trading_strategy,
                     subject_set,
                     sleeve_composition=execution_request.context.portfolio_construction.sleeve_composition,
                 ),

@@ -63,7 +63,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             subject_set_id="subject-set:test",
             target_id="target:test",
             base_url="http://example.com",
-            selection_kind="all_assets",
             top_k=None,
             portfolio_construction=policy_parts["portfolio_construction"],
             rebalance_friction_policy=policy_parts["rebalance_friction_policy"],
