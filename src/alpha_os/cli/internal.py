@@ -670,27 +670,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
 
-    create_checkpoint_evaluation_task = internal_parser("create-checkpoint-evaluation-task")
-    create_checkpoint_evaluation_task.add_argument("--db", type=str, default=None)
-    create_checkpoint_evaluation_task.add_argument(
-        "--source-evaluation-task-id",
-        type=str,
-        required=True,
-    )
-    create_checkpoint_evaluation_task.add_argument(
-        "--source-strategy-checkpoint-id",
-        type=str,
-        required=True,
-    )
-    create_checkpoint_evaluation_task.add_argument(
-        "--evaluation-spec-id",
-        type=str,
-        required=True,
-    )
-    create_checkpoint_evaluation_task.add_argument("--strategy-id", type=str, default=None)
-    create_checkpoint_evaluation_task.add_argument("--label", type=str, default=None)
-    create_checkpoint_evaluation_task.add_argument("--base-url", type=str, default=None)
-
     show_evaluation_report = sub.add_parser(
         "show-evaluation-report",
         aliases=["show-report"],
@@ -3541,50 +3520,6 @@ def cmd_check_subject_set_backend(args: argparse.Namespace) -> int:
     return 0 if all(bool(item["available"]) for item in checks) else 2
 
 
-def cmd_create_checkpoint_evaluation_task(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        evaluation_spec_state = store.get_evaluation_spec(str(args.evaluation_spec_id))
-        if evaluation_spec_state is None:
-            raise ValueError("evaluation spec does not exist")
-        source_task_id = getattr(
-            args,
-            "source_evaluation_task_id",
-            getattr(args, "source_evaluation_task_id", None),
-        )
-        source_task_state = store.get_evaluation_task(str(source_task_id))
-        if source_task_state is None:
-            raise ValueError("source evaluation task does not exist")
-        source_task = source_task_state.task
-        source_strategy_checkpoint_record = store.get_strategy_checkpoint(
-            str(args.source_strategy_checkpoint_id)
-        )
-        if source_strategy_checkpoint_record is None:
-            raise ValueError("source strategy checkpoint does not exist")
-        source_strategy_checkpoint = source_strategy_checkpoint_record.state
-        strategy_id = source_task.strategy_id if args.strategy_id is None else str(args.strategy_id)
-        if store.get_trading_strategy(strategy_id) is None:
-            raise ValueError("strategy does not exist")
-        checkpoint_case = EvaluationTask(
-            evaluation_task_id=build_evaluation_task_id(
-                strategy_id=strategy_id,
-                evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-            ),
-            strategy_id=strategy_id,
-            evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-        )
-        store.upsert_evaluation_task(task=checkpoint_case)
-        store.upsert_evaluation_job_spec(
-            job_spec=EvaluationJobSpec(
-                evaluation_task_id=checkpoint_case.evaluation_task_id,
-                strategy_checkpoint_id=(
-                    source_strategy_checkpoint.strategy_checkpoint_id
-                ),
-            )
-        )
-    return 0
-
-
 def _mean(values: list[float]) -> float:
     if not values:
         return 0.0
@@ -5120,8 +5055,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command == "create-checkpoint-evaluation-task":
-            return cmd_create_checkpoint_evaluation_task(args)
         if args.command in {"show-evaluation-report", "show-report"}:
             return cmd_show_evaluation_report(args)
         if args.command in {"show-evaluation-diagnostics", "show-diagnostics"}:

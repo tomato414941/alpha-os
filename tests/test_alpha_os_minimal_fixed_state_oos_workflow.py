@@ -1,4 +1,7 @@
 from alpha_os.cli import main
+from alpha_os.evaluation_job_spec import EvaluationJobSpec
+from alpha_os.evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
+from alpha_os.evaluation_task import EvaluationTask, build_evaluation_task_id
 from alpha_os.store import EvaluationStore
 
 
@@ -47,40 +50,36 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
         source_state = strategy_checkpoints[0].state
         assert source_state.screening_result_id
         assert source_state.compressed_belief_id
+        source_task_state = store.get_evaluation_task("minimal_fixed_state_training_case")
+        assert source_task_state is not None
+        source_task = source_task_state.task
+        strict_spec_state = store.get_evaluation_spec("minimal_fixed_state_oos_eval")
+        assert strict_spec_state is not None
+        checkpoint_task = EvaluationTask(
+            evaluation_task_id=build_evaluation_task_id(
+                strategy_id=source_task.strategy_id,
+                evaluation_spec_id=strict_spec_state.evaluation_spec_id,
+            ),
+            strategy_id=source_task.strategy_id,
+            evaluation_spec_id=strict_spec_state.evaluation_spec_id,
+        )
+        evaluate_evaluation_spec_state(
+            EvaluationRunRequest(
+                store=store,
+                default_target_id="residual_return_3d",
+                evaluation_spec_state=strict_spec_state,
+                evaluation_tasks=(checkpoint_task,),
+                evaluation_job_specs=(
+                    EvaluationJobSpec(
+                        evaluation_task_id=checkpoint_task.evaluation_task_id,
+                        strategy_checkpoint_id=source_state.strategy_checkpoint_id,
+                    ),
+                ),
+                base_url="http://127.0.0.1:8000",
+            )
+        )
     finally:
         store.close()
-
-    assert (
-        main(
-            [
-                "create-checkpoint-evaluation-task",
-                "--source-evaluation-task-id",
-                "minimal_fixed_state_training_case",
-                "--source-strategy-checkpoint-id",
-                source_state.strategy_checkpoint_id,
-                "--evaluation-spec-id",
-                "minimal_fixed_state_oos_eval",
-                "--db",
-                str(db_path),
-            ]
-        )
-        == 0
-    )
-    capsys.readouterr()
-
-    assert (
-        main(
-            [
-                "run-walk-forward-evaluation",
-                "--evaluation-spec-id",
-                "minimal_fixed_state_oos_eval",
-                "--db",
-                str(db_path),
-            ]
-        )
-        == 0
-    )
-    capsys.readouterr()
 
     assert main(["show-evaluation-report", "--db", str(db_path)]) == 0
     report_output = capsys.readouterr().out

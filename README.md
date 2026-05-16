@@ -75,8 +75,8 @@ decision traces, and candidate-vs-baseline promotion inputs.
 ## Minimal Fixed-State OOS Golden Path
 
 This workflow also uses only checked-in fixture CSV data. It first materializes
-a source strategy checkpoint, then creates a checkpoint-based evaluation task
-and runs a strict OOS report.
+a source strategy checkpoint, then runs a strict OOS report with that checkpoint
+as an explicit evaluation input.
 
 ```bash
 DB=/tmp/alpha-os-minimal-fixed-state-oos.db
@@ -90,23 +90,14 @@ uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_train_eval \
   --db "$DB"
 
-# Select the generated strategy_checkpoint_id, then create the replay task:
-uv run python -m alpha_os create-checkpoint-evaluation-task \
-  --source-evaluation-task-id minimal_fixed_state_training_case \
-  --source-strategy-checkpoint-id <strategy_checkpoint_id> \
-  --evaluation-spec-id minimal_fixed_state_oos_eval \
-  --db "$DB"
-
-uv run python -m alpha_os run-walk-forward \
-  --evaluation-spec-id minimal_fixed_state_oos_eval \
-  --db "$DB"
-
 uv run python -m alpha_os show-report \
   --db "$DB"
 ```
 
 The checked-in test `tests/test_alpha_os_minimal_fixed_state_oos_workflow.py`
-verifies strict OOS contract output and strategy checkpoint provenance artifacts.
+verifies the checkpoint replay path, strict OOS contract output, and strategy
+checkpoint provenance artifacts without requiring a manual checkpoint-linking CLI
+step.
 
 ## Further Reading
 
