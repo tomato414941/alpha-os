@@ -2745,7 +2745,6 @@ def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
         assert construction.sizing_engine == "history_based"
         assert construction.rebalance_interval_steps == 5
         assert construction.long_only is True
-        assert plan.execution_requests[0].context.top_k == 3
         assert construction.gross_exposure_cap == 0.8
         assert construction.target_vol is None
         assert construction.gross_leverage_cap is None

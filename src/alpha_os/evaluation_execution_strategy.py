@@ -590,7 +590,9 @@ class DirectStrategyEvaluationExecutionStrategy:
                     selection_kind=(
                         None if trading_strategy is None else trading_strategy.selection_kind
                     ),
-                    top_k=execution_request.context.top_k,
+                    top_k=(
+                        None if trading_strategy is None else trading_strategy.portfolio.top_k
+                    ),
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -707,7 +709,9 @@ class PreparedStrategyEvaluationExecutionStrategy:
                     selection_kind=(
                         None if trading_strategy is None else trading_strategy.selection_kind
                     ),
-                    top_k=execution_request.context.top_k,
+                    top_k=(
+                        None if trading_strategy is None else trading_strategy.portfolio.top_k
+                    ),
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -747,6 +751,10 @@ class PreparedStrategyEvaluationExecutionStrategy:
     ):
         store = context.store
         protocol = context.evaluation_spec
+        strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+        trading_strategy = (
+            None if strategy_state is None else strategy_state.trading_strategy
+        )
         screening_state = prepared_inputs.screening_state
         compressed_belief_state = prepared_inputs.compressed_belief_state
         survivor_snapshots = resolve_prepared_strategy_survivor_snapshots(
@@ -804,7 +812,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
             rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
             execution_cost_assumptions=execution_request.context.execution_cost_assumptions,
             holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
-            top_k=execution_request.context.top_k,
+            top_k=None if trading_strategy is None else trading_strategy.portfolio.top_k,
         )
         native_metric_group_results, failure_finding_groups = native_evaluation
         subject_metadata_by_subject = _subject_metadata_by_subject(subject_set)
