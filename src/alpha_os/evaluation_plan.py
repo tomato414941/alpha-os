@@ -58,7 +58,6 @@ def _strategy_evaluation_request(
     fold_label: str,
     strategy_id: str,
     strategy_checkpoint_id: str | None,
-    subject_set_id: str,
     target_id: str,
     execution_range: EvaluationDateRange,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
@@ -76,7 +75,6 @@ def _strategy_evaluation_request(
         fold_label=fold_label,
         context=StrategyEvaluationContext(
             strategy_id=strategy_id,
-            subject_set_id=subject_set_id,
             target_id=target_id,
             base_url=base_url,
         ),
@@ -153,7 +151,6 @@ def build_evaluation_plan(
                         fold_label=fold.label,
                         strategy_id=evaluation_task.strategy_id,
                         strategy_checkpoint_id=None,
-                        subject_set_id=subject_set_id,
                         target_id=target_id,
                         execution_range=fold.execution_range,
                         evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
@@ -174,7 +171,6 @@ def build_evaluation_plan(
                 strategy_checkpoint_id = (
                     strategy_checkpoint.strategy_checkpoint_id
                 )
-                subject_set_id = strategy_checkpoint.subject_set_id
                 target_id = strategy_checkpoint.target_id
             else:
                 raise ValueError(
@@ -189,7 +185,6 @@ def build_evaluation_plan(
                     fold_label=fold.label,
                     strategy_id=evaluation_task.strategy_id,
                     strategy_checkpoint_id=strategy_checkpoint_id,
-                    subject_set_id=subject_set_id,
                     target_id=target_id,
                     execution_range=fold.execution_range,
                     evaluation_date_ranges=fold.resolved_evaluation_date_ranges,

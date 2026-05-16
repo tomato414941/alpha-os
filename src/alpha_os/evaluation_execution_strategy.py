@@ -152,6 +152,7 @@ def resolve_prepared_strategy_survivor_snapshots(
     context: EvaluationExecutionContext,
     prepared_inputs: PreparedStrategyEvaluationInputs,
     portfolio_construction: PortfolioConstructionSpec,
+    subject_set_id: str,
 ) -> list[EvaluationSnapshot]:
     store = context.store
     strategy_checkpoint = prepared_inputs.strategy_checkpoint
@@ -175,7 +176,7 @@ def resolve_prepared_strategy_survivor_snapshots(
         )
         return generate_frozen_survivor_test_snapshots(
             store,
-            subject_set_id=execution_request.context.subject_set_id,
+            subject_set_id=subject_set_id,
             survivor_signal_ids=survivor_signal_ids,
             start_date=frozen_snapshot_start_date(
                 evaluation_date_ranges=execution_request.evaluation_date_ranges,
@@ -184,7 +185,7 @@ def resolve_prepared_strategy_survivor_snapshots(
                 portfolio_construction=portfolio_construction,
                 trading_calendar=_trading_calendar_for_subject_set(
                     store,
-                    execution_request.context.subject_set_id,
+                    subject_set_id,
                 ),
             ),
             end_date=max(item.end_date for item in execution_request.evaluation_date_ranges),
@@ -298,6 +299,25 @@ def _trading_strategy_for_request(
             f"{execution_request.context.strategy_id}"
         )
     return strategy_state.trading_strategy
+
+
+def _subject_set_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
+    subject_set_id = trading_strategy.subject_set_id
+    if not isinstance(subject_set_id, str) or not subject_set_id:
+        raise ValueError(
+            "evaluation task strategy is missing subject_set: "
+            f"{trading_strategy.strategy_id}"
+        )
+    return subject_set_id
+
+
+def _subject_set_id_for_prepared_inputs(
+    prepared_inputs: PreparedStrategyEvaluationInputs,
+) -> str:
+    strategy_checkpoint = prepared_inputs.strategy_checkpoint
+    if strategy_checkpoint is None:
+        raise ValueError("prepared strategy evaluation requires a strategy checkpoint")
+    return strategy_checkpoint.subject_set_id
 
 
 def _constraint_stages_for_portfolio_construction(
@@ -637,13 +657,14 @@ class DirectStrategyEvaluationExecutionStrategy:
         holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
             trading_strategy
         )
-        subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
+        subject_set_id = _subject_set_id_for_strategy(trading_strategy)
+        subject_set_state = store.get_subject_set(subject_set_id)
         if subject_set_state is not None:
             validate_subject_set_universe_contract(subject_set_state.definition)
         direct_evaluation = run_strategy_backtest_from_store(
             store=store,
             strategy_id=execution_request.context.strategy_id,
-            subject_set_id=execution_request.context.subject_set_id,
+            subject_set_id=subject_set_id,
             target_id=execution_request.context.target_id,
             evaluation_date_ranges=execution_request.evaluation_date_ranges,
             base_url=execution_request.context.base_url,
@@ -676,7 +697,7 @@ class DirectStrategyEvaluationExecutionStrategy:
                     execution_cost_assumptions=execution_cost_assumptions,
                     holding_cost_assumptions=holding_cost_assumptions,
                     subject_set=subject_set,
-                    subject_set_id=execution_request.context.subject_set_id,
+                    subject_set_id=subject_set_id,
                     target_id=execution_request.context.target_id,
                     selection_kind=trading_strategy.selection_kind,
                     top_k=trading_strategy.portfolio.top_k,
@@ -788,6 +809,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
         signal_discovery_id = (
             None if strategy_checkpoint is None else strategy_checkpoint.signal_discovery_id
         )
+        subject_set_id = _subject_set_id_for_prepared_inputs(prepared_inputs)
         return EvaluationExecutionResult(
             task_result=EvaluationTaskResult(
                 evaluation_task_id=execution_request.evaluation_task_id,
@@ -800,7 +822,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
                     execution_cost_assumptions=execution_cost_assumptions,
                     holding_cost_assumptions=holding_cost_assumptions,
                     subject_set=subject_set,
-                    subject_set_id=execution_request.context.subject_set_id,
+                    subject_set_id=subject_set_id,
                     target_id=execution_request.context.target_id,
                     selection_kind=trading_strategy.selection_kind,
                     top_k=trading_strategy.portfolio.top_k,
@@ -858,13 +880,15 @@ class PreparedStrategyEvaluationExecutionStrategy:
         )
         screening_state = prepared_inputs.screening_state
         compressed_belief_state = prepared_inputs.compressed_belief_state
+        subject_set_id = _subject_set_id_for_prepared_inputs(prepared_inputs)
         survivor_snapshots = resolve_prepared_strategy_survivor_snapshots(
             execution_request=execution_request,
             context=context,
             prepared_inputs=prepared_inputs,
             portfolio_construction=portfolio_construction,
+            subject_set_id=subject_set_id,
         )
-        subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
+        subject_set_state = store.get_subject_set(subject_set_id)
         if subject_set_state is not None:
             validate_subject_set_universe_contract(subject_set_state.definition)
         subject_set = None if subject_set_state is None else subject_set_state.definition
@@ -900,7 +924,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
         native_evaluation = build_signal_discovery_strategy_evaluation_metric_group_results(
             screening_result=screening_state.result,
             compressed_belief=compressed_belief_state.belief,
-            subject_set_id=execution_request.context.subject_set_id,
+            subject_set_id=subject_set_id,
             subject_set=subject_set,
             funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
             borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
