@@ -2682,7 +2682,7 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
         store.close()
 
 
-def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
+def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_plan import build_evaluation_plan
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
@@ -2740,15 +2740,10 @@ def test_build_evaluation_plan_prefers_strategy_portfolio_config(tmp_path):
             base_url="http://example.com",
         )
 
-        construction = plan.execution_requests[0].context.portfolio_construction
-        assert construction.sizing_method == "equal_weight"
-        assert construction.sizing_engine == "history_based"
-        assert construction.rebalance_interval_steps == 5
-        assert construction.long_only is True
-        assert construction.gross_exposure_cap == 0.8
-        assert construction.target_vol is None
-        assert construction.gross_leverage_cap is None
-        assert construction.net_exposure_target is None
+        request = plan.execution_requests[0]
+        assert request.context.strategy_id == "strategy:portfolio_source"
+        assert request.context.subject_set_id == "subject_set_a"
+        assert request.context.target_id == "residual_return_3d"
         assert plan.execution_requests[0].input_refs is None
     finally:
         store.close()

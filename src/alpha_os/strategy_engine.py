@@ -2,13 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
-)
 from .evaluation_spec import EvaluationDateRange
-from .portfolio_construction_config import PortfolioConstructionSpec
 
 
 @dataclass(frozen=True)
@@ -17,10 +11,6 @@ class StrategyEvaluationContext:
     subject_set_id: str
     target_id: str
     base_url: str
-    portfolio_construction: PortfolioConstructionSpec
-    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec
-    holding_cost_assumptions: HoldingCostAssumptionsSpec
 
 
 @dataclass(frozen=True)

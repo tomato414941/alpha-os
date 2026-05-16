@@ -4,16 +4,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from .evaluation_task import EvaluationTask
-from .evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
-)
 from .evaluation_spec import (
     EvaluationSpec,
     EvaluationDateRange,
 )
-from .portfolio_construction_config import PortfolioConstructionSpec
 from .strategy_engine import (
     StrategyEvaluationInputRefs,
     StrategyEvaluationContext,
@@ -70,10 +64,6 @@ def _strategy_evaluation_request(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     metric_group_names: tuple[str, ...],
     base_url: str,
-    portfolio_construction: PortfolioConstructionSpec,
-    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
-    holding_cost_assumptions: HoldingCostAssumptionsSpec,
 ) -> StrategyEvaluationRequest:
     input_refs = None
     if strategy_checkpoint_id is not None:
@@ -89,104 +79,11 @@ def _strategy_evaluation_request(
             subject_set_id=subject_set_id,
             target_id=target_id,
             base_url=base_url,
-            portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
         ),
         input_refs=input_refs,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,
-    )
-
-
-def _rebalance_interval_steps_from_strategy(
-    rebalance: str | None,
-    rebalance_interval_steps: int | None,
-) -> int | None:
-    if rebalance_interval_steps is not None:
-        return int(rebalance_interval_steps)
-    if rebalance in {None, "", "-", "none"}:
-        return None
-    prefix = "every_"
-    suffix = "_steps"
-    if not rebalance.startswith(prefix) or not rebalance.endswith(suffix):
-        raise ValueError(f"unsupported strategy rebalance policy: {rebalance}")
-    value = rebalance[len(prefix) : -len(suffix)]
-    try:
-        steps = int(value)
-    except ValueError as exc:
-        raise ValueError(f"unsupported strategy rebalance policy: {rebalance}") from exc
-    if steps < 1:
-        raise ValueError(f"unsupported strategy rebalance policy: {rebalance}")
-    return steps
-
-
-def _portfolio_construction_for_strategy(
-    *,
-    trading_strategy,
-) -> PortfolioConstructionSpec:
-    return trading_strategy.portfolio.portfolio_construction
-
-
-def _rebalance_friction_policy_for_strategy(
-    *,
-    trading_strategy,
-) -> EvaluationRebalanceFrictionPolicySpec:
-    strategy_policy = trading_strategy.portfolio.rebalance_friction_policy
-    if strategy_policy is not None:
-        return EvaluationRebalanceFrictionPolicySpec.from_document(
-            {
-                key: value
-                for key, value in strategy_policy.to_document().items()
-                if value is not None
-            }
-        )
-    raise ValueError(
-        "trading strategy is missing rebalance_friction_policy: "
-        f"{trading_strategy.strategy_id}"
-    )
-
-
-def _execution_cost_assumptions_for_strategy(
-    *,
-    trading_strategy,
-) -> ExecutionCostAssumptionsSpec:
-    strategy_policy = trading_strategy.portfolio.execution_policy
-    if strategy_policy is not None:
-        return ExecutionCostAssumptionsSpec(
-            market_impact_bps=strategy_policy.market_impact_bps or 0.0,
-            fee_bps=strategy_policy.fee_bps or 0.0,
-            bid_ask_spread_bps=strategy_policy.bid_ask_spread_bps or 0.0,
-        )
-    raise ValueError(
-        "trading strategy is missing execution_policy: "
-        f"{trading_strategy.strategy_id}"
-    )
-
-
-def _holding_cost_assumptions_for_strategy(
-    *,
-    trading_strategy,
-) -> HoldingCostAssumptionsSpec:
-    strategy_policy = trading_strategy.portfolio.holding_cost_policy
-    if strategy_policy is not None:
-        return HoldingCostAssumptionsSpec(
-            funding_bps_per_step=(
-                0.0
-                if strategy_policy.funding_bps_per_step is None
-                else strategy_policy.funding_bps_per_step
-            ),
-            borrow_fee_bps_per_step=(
-                0.0
-                if strategy_policy.borrow_fee_bps_per_step is None
-                else strategy_policy.borrow_fee_bps_per_step
-            ),
-        )
-    raise ValueError(
-        "trading strategy is missing holding_cost_policy: "
-        f"{trading_strategy.strategy_id}"
     )
 
 
@@ -239,18 +136,6 @@ def build_evaluation_plan(
                 f"{evaluation_task.strategy_id}"
             )
         trading_strategy = strategy_state.trading_strategy
-        portfolio_construction = _portfolio_construction_for_strategy(
-            trading_strategy=trading_strategy,
-        )
-        rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
-            trading_strategy=trading_strategy,
-        )
-        execution_cost_assumptions = _execution_cost_assumptions_for_strategy(
-            trading_strategy=trading_strategy,
-        )
-        holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
-            trading_strategy=trading_strategy,
-        )
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
         if strategy_signal_discovery_id is None:
             subject_set_id = trading_strategy.subject_set_id
@@ -274,10 +159,6 @@ def build_evaluation_plan(
                         evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                         metric_group_names=evaluation_spec.metric_group_names,
                         base_url=base_url,
-                        portfolio_construction=portfolio_construction,
-                        rebalance_friction_policy=rebalance_friction_policy,
-                        execution_cost_assumptions=execution_cost_assumptions,
-                        holding_cost_assumptions=holding_cost_assumptions,
                     )
                 )
             continue
@@ -314,10 +195,6 @@ def build_evaluation_plan(
                     evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                     metric_group_names=evaluation_spec.metric_group_names,
                     base_url=base_url,
-                    portfolio_construction=portfolio_construction,
-                    rebalance_friction_policy=rebalance_friction_policy,
-                    execution_cost_assumptions=execution_cost_assumptions,
-                    holding_cost_assumptions=holding_cost_assumptions,
                 )
             )
     return EvaluationPlan(

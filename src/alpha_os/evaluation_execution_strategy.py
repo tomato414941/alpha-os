@@ -7,6 +7,11 @@ import pandas as pd
 
 from .contract_boundaries import active_constraint_stages, subject_set_contract_groups
 from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
+from .evaluation_cost_config import (
+    EvaluationRebalanceFrictionPolicySpec,
+    ExecutionCostAssumptionsSpec,
+    HoldingCostAssumptionsSpec,
+)
 from .strategy_backtest import (
     run_strategy_backtest_from_store,
     subject_backtest_inputs_from_subject_set_planes,
@@ -146,6 +151,7 @@ def resolve_prepared_strategy_survivor_snapshots(
     execution_request: StrategyEvaluationRequest,
     context: EvaluationExecutionContext,
     prepared_inputs: PreparedStrategyEvaluationInputs,
+    portfolio_construction: PortfolioConstructionSpec,
 ) -> list[EvaluationSnapshot]:
     store = context.store
     strategy_checkpoint = prepared_inputs.strategy_checkpoint
@@ -175,7 +181,7 @@ def resolve_prepared_strategy_survivor_snapshots(
                 evaluation_date_ranges=execution_request.evaluation_date_ranges,
                 executable_definitions=frozen_definitions,
                 metric_window=max(context.evaluation_spec.metric_windows),
-                portfolio_construction=execution_request.context.portfolio_construction,
+                portfolio_construction=portfolio_construction,
                 trading_calendar=_trading_calendar_for_subject_set(
                     store,
                     execution_request.context.subject_set_id,
@@ -218,22 +224,100 @@ def _subject_metadata_by_subject(
     return metadata
 
 
-def _constraint_stages_for_entry(execution_request: StrategyEvaluationRequest):
+def _portfolio_construction_for_strategy(
+    trading_strategy: TradingStrategySpec,
+) -> PortfolioConstructionSpec:
+    return trading_strategy.portfolio.portfolio_construction
+
+
+def _rebalance_friction_policy_for_strategy(
+    trading_strategy: TradingStrategySpec,
+) -> EvaluationRebalanceFrictionPolicySpec:
+    strategy_policy = trading_strategy.portfolio.rebalance_friction_policy
+    if strategy_policy is not None:
+        return EvaluationRebalanceFrictionPolicySpec.from_document(
+            {
+                key: value
+                for key, value in strategy_policy.to_document().items()
+                if value is not None
+            }
+        )
+    raise ValueError(
+        "trading strategy is missing rebalance_friction_policy: "
+        f"{trading_strategy.strategy_id}"
+    )
+
+
+def _execution_cost_assumptions_for_strategy(
+    trading_strategy: TradingStrategySpec,
+) -> ExecutionCostAssumptionsSpec:
+    strategy_policy = trading_strategy.portfolio.execution_policy
+    if strategy_policy is not None:
+        return ExecutionCostAssumptionsSpec(
+            market_impact_bps=strategy_policy.market_impact_bps or 0.0,
+            fee_bps=strategy_policy.fee_bps or 0.0,
+            bid_ask_spread_bps=strategy_policy.bid_ask_spread_bps or 0.0,
+        )
+    raise ValueError(
+        "trading strategy is missing execution_policy: "
+        f"{trading_strategy.strategy_id}"
+    )
+
+
+def _holding_cost_assumptions_for_strategy(
+    trading_strategy: TradingStrategySpec,
+) -> HoldingCostAssumptionsSpec:
+    strategy_policy = trading_strategy.portfolio.holding_cost_policy
+    if strategy_policy is not None:
+        return HoldingCostAssumptionsSpec(
+            funding_bps_per_step=(
+                0.0
+                if strategy_policy.funding_bps_per_step is None
+                else strategy_policy.funding_bps_per_step
+            ),
+            borrow_fee_bps_per_step=(
+                0.0
+                if strategy_policy.borrow_fee_bps_per_step is None
+                else strategy_policy.borrow_fee_bps_per_step
+            ),
+        )
+    raise ValueError(
+        "trading strategy is missing holding_cost_policy: "
+        f"{trading_strategy.strategy_id}"
+    )
+
+
+def _trading_strategy_for_request(
+    store: EvaluationExecutionReadPort,
+    execution_request: StrategyEvaluationRequest,
+) -> TradingStrategySpec:
+    strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+    if strategy_state is None:
+        raise ValueError(
+            "evaluation task strategy does not exist: "
+            f"{execution_request.context.strategy_id}"
+        )
+    return strategy_state.trading_strategy
+
+
+def _constraint_stages_for_portfolio_construction(
+    portfolio_construction: PortfolioConstructionSpec,
+):
     return active_constraint_stages(
-        execution_request.context.portfolio_construction.constraint_boundary,
+        portfolio_construction.constraint_boundary,
         field_values={
             "direction_mode": (
-                execution_request.context.portfolio_construction.direction_mode
-                if execution_request.context.portfolio_construction.direction_mode
+                portfolio_construction.direction_mode
+                if portfolio_construction.direction_mode
                 != "long_short"
                 else None
             ),
-            "gross_exposure_cap": execution_request.context.portfolio_construction.gross_exposure_cap,
-            "target_vol": execution_request.context.portfolio_construction.target_vol,
-            "gross_leverage_cap": execution_request.context.portfolio_construction.gross_leverage_cap,
-            "net_exposure_target": execution_request.context.portfolio_construction.net_exposure_target,
-            "asset_class_weight_caps": (execution_request.context.portfolio_construction.asset_class_weight_caps),
-            "cluster_weight_caps": execution_request.context.portfolio_construction.cluster_weight_caps,
+            "gross_exposure_cap": portfolio_construction.gross_exposure_cap,
+            "target_vol": portfolio_construction.target_vol,
+            "gross_leverage_cap": portfolio_construction.gross_leverage_cap,
+            "net_exposure_target": portfolio_construction.net_exposure_target,
+            "asset_class_weight_caps": portfolio_construction.asset_class_weight_caps,
+            "cluster_weight_caps": portfolio_construction.cluster_weight_caps,
         },
     )
 
@@ -542,9 +626,16 @@ class DirectStrategyEvaluationExecutionStrategy:
         context: EvaluationExecutionContext,
     ) -> EvaluationExecutionResult:
         store = context.store
-        strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
-        trading_strategy = (
-            None if strategy_state is None else strategy_state.trading_strategy
+        trading_strategy = _trading_strategy_for_request(store, execution_request)
+        portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
+        rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
+            trading_strategy
+        )
+        execution_cost_assumptions = _execution_cost_assumptions_for_strategy(
+            trading_strategy
+        )
+        holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
+            trading_strategy
         )
         subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
         if subject_set_state is not None:
@@ -556,10 +647,10 @@ class DirectStrategyEvaluationExecutionStrategy:
             target_id=execution_request.context.target_id,
             evaluation_date_ranges=execution_request.evaluation_date_ranges,
             base_url=execution_request.context.base_url,
-            portfolio_construction=execution_request.context.portfolio_construction,
-            rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
-            execution_cost_assumptions=execution_request.context.execution_cost_assumptions,
-            holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
+            portfolio_construction=portfolio_construction,
+            rebalance_friction_policy=rebalance_friction_policy,
+            execution_cost_assumptions=execution_cost_assumptions,
+            holding_cost_assumptions=holding_cost_assumptions,
             feature_plane_repository=context.feature_plane_repository,
         )
         direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
@@ -577,22 +668,18 @@ class DirectStrategyEvaluationExecutionStrategy:
         return EvaluationExecutionResult(
             task_result=EvaluationTaskResult(
                 evaluation_task_id=execution_request.evaluation_task_id,
-                construction_kind=execution_request.context.portfolio_construction.construction_kind,
+                construction_kind=portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
                 strategy_contract_fields=build_report_evaluation_task_contract_fields(
-                    execution_request.context.portfolio_construction,
-                    rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
-                    execution_cost_assumptions=execution_request.context.execution_cost_assumptions,
-                    holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
+                    portfolio_construction,
+                    rebalance_friction_policy=rebalance_friction_policy,
+                    execution_cost_assumptions=execution_cost_assumptions,
+                    holding_cost_assumptions=holding_cost_assumptions,
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
-                    selection_kind=(
-                        None if trading_strategy is None else trading_strategy.selection_kind
-                    ),
-                    top_k=(
-                        None if trading_strategy is None else trading_strategy.portfolio.top_k
-                    ),
+                    selection_kind=trading_strategy.selection_kind,
+                    top_k=trading_strategy.portfolio.top_k,
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -605,11 +692,13 @@ class DirectStrategyEvaluationExecutionStrategy:
                 universe_policy_fields=(
                     {} if subject_set is None else subject_set.universe_policy.to_document()
                 ),
-                constraint_stages=_constraint_stages_for_entry(execution_request),
+                constraint_stages=_constraint_stages_for_portfolio_construction(
+                    portfolio_construction
+                ),
                 sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
                     trading_strategy,
                     subject_set,
-                    sleeve_composition=execution_request.context.portfolio_construction.sleeve_composition,
+                    sleeve_composition=portfolio_construction.sleeve_composition,
                 ),
                 metric_group_results=tuple(
                     direct_metric_group_results[metric_group_name]
@@ -685,9 +774,16 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 item.label for item in execution_request.evaluation_date_ranges
             )
 
-        strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
-        trading_strategy = (
-            None if strategy_state is None else strategy_state.trading_strategy
+        trading_strategy = _trading_strategy_for_request(store, execution_request)
+        portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
+        rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
+            trading_strategy
+        )
+        execution_cost_assumptions = _execution_cost_assumptions_for_strategy(
+            trading_strategy
+        )
+        holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
+            trading_strategy
         )
         signal_discovery_id = (
             None if strategy_checkpoint is None else strategy_checkpoint.signal_discovery_id
@@ -695,23 +791,19 @@ class PreparedStrategyEvaluationExecutionStrategy:
         return EvaluationExecutionResult(
             task_result=EvaluationTaskResult(
                 evaluation_task_id=execution_request.evaluation_task_id,
-                construction_kind=execution_request.context.portfolio_construction.construction_kind,
+                construction_kind=portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
                 signal_discovery_id=signal_discovery_id,
                 strategy_contract_fields=build_report_evaluation_task_contract_fields(
-                    execution_request.context.portfolio_construction,
-                    rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
-                    execution_cost_assumptions=execution_request.context.execution_cost_assumptions,
-                    holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
+                    portfolio_construction,
+                    rebalance_friction_policy=rebalance_friction_policy,
+                    execution_cost_assumptions=execution_cost_assumptions,
+                    holding_cost_assumptions=holding_cost_assumptions,
                     subject_set=subject_set,
                     subject_set_id=execution_request.context.subject_set_id,
                     target_id=execution_request.context.target_id,
-                    selection_kind=(
-                        None if trading_strategy is None else trading_strategy.selection_kind
-                    ),
-                    top_k=(
-                        None if trading_strategy is None else trading_strategy.portfolio.top_k
-                    ),
+                    selection_kind=trading_strategy.selection_kind,
+                    top_k=trading_strategy.portfolio.top_k,
                 ),
                 subject_set_facts=(
                     None if subject_set is None else format_subject_set_facts(subject_set)
@@ -724,11 +816,13 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 universe_policy_fields=(
                     {} if subject_set is None else subject_set.universe_policy.to_document()
                 ),
-                constraint_stages=_constraint_stages_for_entry(execution_request),
+                constraint_stages=_constraint_stages_for_portfolio_construction(
+                    portfolio_construction
+                ),
                 sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
                     trading_strategy,
                     subject_set,
-                    sleeve_composition=execution_request.context.portfolio_construction.sleeve_composition,
+                    sleeve_composition=portfolio_construction.sleeve_composition,
                 ),
                 metric_group_results=tuple(
                     metric_group_result_map[metric_group_name]
@@ -751,9 +845,16 @@ class PreparedStrategyEvaluationExecutionStrategy:
     ):
         store = context.store
         protocol = context.evaluation_spec
-        strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
-        trading_strategy = (
-            None if strategy_state is None else strategy_state.trading_strategy
+        trading_strategy = _trading_strategy_for_request(store, execution_request)
+        portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
+        rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
+            trading_strategy
+        )
+        execution_cost_assumptions = _execution_cost_assumptions_for_strategy(
+            trading_strategy
+        )
+        holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
+            trading_strategy
         )
         screening_state = prepared_inputs.screening_state
         compressed_belief_state = prepared_inputs.compressed_belief_state
@@ -761,6 +862,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
             execution_request=execution_request,
             context=context,
             prepared_inputs=prepared_inputs,
+            portfolio_construction=portfolio_construction,
         )
         subject_set_state = store.get_subject_set(execution_request.context.subject_set_id)
         if subject_set_state is not None:
@@ -808,11 +910,11 @@ class PreparedStrategyEvaluationExecutionStrategy:
             snapshots=survivor_snapshots,
             evaluation_date_ranges=execution_request.evaluation_date_ranges,
             metric_window=max(protocol.metric_windows),
-            portfolio_construction=execution_request.context.portfolio_construction,
-            rebalance_friction_policy=execution_request.context.rebalance_friction_policy,
-            execution_cost_assumptions=execution_request.context.execution_cost_assumptions,
-            holding_cost_assumptions=execution_request.context.holding_cost_assumptions,
-            top_k=None if trading_strategy is None else trading_strategy.portfolio.top_k,
+            portfolio_construction=portfolio_construction,
+            rebalance_friction_policy=rebalance_friction_policy,
+            execution_cost_assumptions=execution_cost_assumptions,
+            holding_cost_assumptions=holding_cost_assumptions,
+            top_k=trading_strategy.portfolio.top_k,
         )
         native_metric_group_results, failure_finding_groups = native_evaluation
         subject_metadata_by_subject = _subject_metadata_by_subject(subject_set)
