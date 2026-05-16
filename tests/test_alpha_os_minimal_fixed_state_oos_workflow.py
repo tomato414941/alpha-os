@@ -68,9 +68,6 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
                 default_target_id="residual_return_3d",
                 evaluation_spec_state=strict_spec_state,
                 evaluation_tasks=(checkpoint_task,),
-                strategy_checkpoint_ids_by_task_id={
-                    checkpoint_task.evaluation_task_id: source_state.strategy_checkpoint_id,
-                },
                 base_url="http://127.0.0.1:8000",
             )
         )

@@ -42,7 +42,6 @@ class EvaluationRunRequest:
     evaluation_spec_state: object
     evaluation_tasks: tuple[EvaluationTask, ...]
     base_url: str
-    strategy_checkpoint_ids_by_task_id: dict[str, str] | None = None
     feature_plane_repository: FeaturePlaneRepository | None = None
     evaluation_input_repository: EvaluationInputRepository | None = None
     report_writer: EvaluationReportWriter | None = None
@@ -55,7 +54,6 @@ class EvaluationRunRequest:
         evaluation_spec_state: object,
         evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
         base_url: str,
-        strategy_checkpoint_ids_by_task_id: dict[str, str] | None = None,
         feature_plane_repository: FeaturePlaneRepository | None = None,
         evaluation_input_repository: EvaluationInputRepository | None = None,
         report_writer: EvaluationReportWriter | None = None,
@@ -67,11 +65,6 @@ class EvaluationRunRequest:
         object.__setattr__(self, "evaluation_spec_state", evaluation_spec_state)
         object.__setattr__(self, "evaluation_tasks", evaluation_tasks)
         object.__setattr__(self, "base_url", base_url)
-        object.__setattr__(
-            self,
-            "strategy_checkpoint_ids_by_task_id",
-            strategy_checkpoint_ids_by_task_id,
-        )
         object.__setattr__(self, "feature_plane_repository", feature_plane_repository)
         object.__setattr__(
             self,
@@ -107,7 +100,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         evaluation_spec=evaluation_spec,
         evaluation_tasks=request.evaluation_tasks,
-        strategy_checkpoint_ids_by_task_id=request.strategy_checkpoint_ids_by_task_id,
         default_target_id=request.default_target_id,
         base_url=request.base_url,
     )

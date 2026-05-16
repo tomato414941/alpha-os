@@ -219,14 +219,12 @@ def build_evaluation_plan(
     evaluation_spec_id: str,
     evaluation_spec: EvaluationSpec,
     evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
-    strategy_checkpoint_ids_by_task_id: dict[str, str] | None = None,
     default_target_id: str,
     base_url: str,
 ) -> EvaluationPlan:
     execution_requests: list[StrategyEvaluationRequest] = []
     if evaluation_tasks is None:
         raise ValueError("evaluation plan requires evaluation_tasks")
-    checkpoint_ids_by_task_id = strategy_checkpoint_ids_by_task_id or {}
     for evaluation_task in evaluation_tasks:
         strategy_state = store.get_trading_strategy(evaluation_task.strategy_id)
         if strategy_state is None:
@@ -248,50 +246,6 @@ def build_evaluation_plan(
             trading_strategy=trading_strategy,
         )
         strategy_signal_discovery_id = trading_strategy.signal_discovery_id
-        strategy_checkpoint_id = checkpoint_ids_by_task_id.get(
-            evaluation_task.evaluation_task_id
-        )
-        if strategy_checkpoint_id is not None:
-            checkpoint_record = store.get_strategy_checkpoint(
-                strategy_checkpoint_id
-            )
-            if checkpoint_record is None:
-                raise ValueError(
-                    "checkpoint replay evaluation task references unknown strategy checkpoint: "
-                    f"{strategy_checkpoint_id}"
-                )
-            checkpoint = checkpoint_record.state
-            for fold in evaluation_spec.resolved_evaluation_folds:
-                execution_requests.append(
-                    _strategy_evaluation_request(
-                        evaluation_task_id=evaluation_task.evaluation_task_id,
-                        evaluation_spec_id=evaluation_spec_id,
-                        fold_label=fold.label,
-                        strategy_id=evaluation_task.strategy_id,
-                        signal_discovery_id=checkpoint.signal_discovery_id,
-                        strategy_checkpoint_id=(
-                            checkpoint.strategy_checkpoint_id
-                        ),
-                        snapshot_set_id=checkpoint.snapshot_set_id,
-                        prepared_start_date=checkpoint.execution_start_date,
-                        prepared_end_date=checkpoint.execution_end_date,
-                        subject_set_id=checkpoint.subject_set_id,
-                        target_id=checkpoint.target_id,
-                        screening_result_id=checkpoint.screening_result_id,
-                        compressed_belief_id=checkpoint.compressed_belief_id,
-                        execution_range=fold.execution_range,
-                        evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
-                        metric_group_names=evaluation_spec.metric_group_names,
-                        base_url=base_url,
-                        selection_kind=trading_strategy.selection_kind,
-                        top_k=trading_strategy.portfolio.top_k,
-                        portfolio_construction=portfolio_construction,
-                        rebalance_friction_policy=rebalance_friction_policy,
-                        execution_cost_assumptions=execution_cost_assumptions,
-                        holding_cost_assumptions=holding_cost_assumptions,
-                    )
-                )
-            continue
         if strategy_signal_discovery_id is None:
             subject_set_id = trading_strategy.subject_set_id
             if not isinstance(subject_set_id, str) or not subject_set_id:
@@ -338,6 +292,14 @@ def build_evaluation_plan(
                 execution_end_date=fold.execution_range.end_date,
                 limit=1,
             )
+            if not strategy_checkpoints:
+                strategy_checkpoints = store.list_strategy_checkpoints(
+                    strategy_id=evaluation_task.strategy_id,
+                    signal_discovery_id=strategy_signal_discovery_id,
+                    execution_start_date=fold.execution_range.start_date,
+                    execution_end_date=fold.execution_range.end_date,
+                    limit=1,
+                )
             if strategy_checkpoints:
                 strategy_checkpoint = strategy_checkpoints[0].state
                 strategy_checkpoint_id = (

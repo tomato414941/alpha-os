@@ -2777,6 +2777,7 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
         trading_strategy = _build_trading_strategy(
             strategy_id="strategy:checkpoint_case",
             label="Checkpoint Case",
+            signal_discovery_id="discovery_a",
             subject_set_id="subject_set_a",
             target_id="residual_return_3d",
             created_at="2026-04-05T00:00:00Z",
@@ -2789,9 +2790,9 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
                 signal_discovery_id="discovery_a",
                 subject_set_id="subject_set_a",
                 target_id="residual_return_3d",
-                fold_label="seed_fold",
-                execution_start_date="2024-01-01",
-                execution_end_date="2024-12-31",
+                fold_label="source_fold",
+                execution_start_date="2025-01-01",
+                execution_end_date="2025-12-31",
                 snapshot_set_id="snapshot_set_seed",
                 screening_result_id="screening_seed",
                 compressed_belief_id="belief_seed",
@@ -2821,21 +2822,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
                         ),
                     ),
                 ),
-                EvaluationFold(
-                    label="fold_2026_q1",
-                    execution_range=EvaluationDateRange(
-                        label="train_2026_q1",
-                        start_date="2026-01-01",
-                        end_date="2026-03-31",
-                    ),
-                    evaluation_date_ranges=(
-                        EvaluationDateRange(
-                            label="test_2026_q2",
-                            start_date="2026-04-01",
-                            end_date="2026-06-30",
-                        ),
-                    ),
-                ),
             ),
             metric_group_names=("decision_quality",),
             metric_windows=(20,),
@@ -2854,22 +2840,16 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
-            strategy_checkpoint_ids_by_task_id={"case_checkpoint": "checkpoint_a"},
             default_target_id="residual_return_3d",
             base_url="http://example.com",
         )
 
-        assert len(plan.execution_requests) == 2
-        assert tuple(item.fold_label for item in plan.execution_requests) == (
-            "fold_2025",
-            "fold_2026_q1",
-        )
+        assert len(plan.execution_requests) == 1
+        assert tuple(item.fold_label for item in plan.execution_requests) == ("fold_2025",)
         assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
-            "checkpoint_a",
             "checkpoint_a",
         )
         assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
-            "snapshot_set_seed",
             "snapshot_set_seed",
         )
     finally:
