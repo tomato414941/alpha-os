@@ -73,11 +73,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         ),
         input_refs=StrategyEvaluationInputRefs(
             strategy_checkpoint_id="state:test",
-            snapshot_set_id="snapshot-set:test",
-            screening_result_id="screening:test",
-            compressed_belief_id="belief:test",
-            prepared_start_date="2025-01-01",
-            prepared_end_date="2025-12-31",
         ),
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,

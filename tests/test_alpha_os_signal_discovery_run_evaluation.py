@@ -2600,10 +2600,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             "checkpoint_a",
             "checkpoint_b",
         )
-        assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
-            "snapshot_set_a",
-            "snapshot_set_b",
-        )
         assert plan.execution_requests[0].evaluation_date_ranges[0].label == "test_2026_q1"
         assert plan.execution_requests[1].evaluation_date_ranges[0].label == "test_2026_q2"
     finally:
@@ -2848,9 +2844,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
         assert tuple(item.fold_label for item in plan.execution_requests) == ("fold_2025",)
         assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
             "checkpoint_a",
-        )
-        assert tuple(item.input_refs.snapshot_set_id for item in plan.execution_requests) == (
-            "snapshot_set_seed",
         )
     finally:
         store.close()

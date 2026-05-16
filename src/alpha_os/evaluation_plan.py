@@ -65,13 +65,8 @@ def _strategy_evaluation_request(
     strategy_id: str,
     signal_discovery_id: str | None,
     strategy_checkpoint_id: str | None,
-    snapshot_set_id: str | None,
-    prepared_start_date: str | None,
-    prepared_end_date: str | None,
     subject_set_id: str,
     target_id: str,
-    screening_result_id: str | None,
-    compressed_belief_id: str | None,
     execution_range: EvaluationDateRange,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     metric_group_names: tuple[str, ...],
@@ -84,21 +79,9 @@ def _strategy_evaluation_request(
     holding_cost_assumptions: HoldingCostAssumptionsSpec,
 ) -> StrategyEvaluationRequest:
     input_refs = None
-    if (
-        strategy_checkpoint_id is not None
-        or snapshot_set_id is not None
-        or screening_result_id is not None
-        or compressed_belief_id is not None
-    ):
-        if prepared_start_date is None or prepared_end_date is None:
-            raise ValueError("prepared evaluation inputs require prepared date range")
+    if strategy_checkpoint_id is not None:
         input_refs = StrategyEvaluationInputRefs(
             strategy_checkpoint_id=strategy_checkpoint_id,
-            snapshot_set_id=snapshot_set_id,
-            screening_result_id=screening_result_id,
-            compressed_belief_id=compressed_belief_id,
-            prepared_start_date=prepared_start_date,
-            prepared_end_date=prepared_end_date,
         )
     return StrategyEvaluationRequest(
         evaluation_task_id=evaluation_task_id,
@@ -292,13 +275,8 @@ def build_evaluation_plan(
                         strategy_id=evaluation_task.strategy_id,
                         signal_discovery_id=None,
                         strategy_checkpoint_id=None,
-                        snapshot_set_id=None,
-                        prepared_start_date=None,
-                        prepared_end_date=None,
                         subject_set_id=subject_set_id,
                         target_id=target_id,
-                        screening_result_id=None,
-                        compressed_belief_id=None,
                         execution_range=fold.execution_range,
                         evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                         metric_group_names=evaluation_spec.metric_group_names,
@@ -324,13 +302,8 @@ def build_evaluation_plan(
                 strategy_checkpoint_id = (
                     strategy_checkpoint.strategy_checkpoint_id
                 )
-                snapshot_set_id = strategy_checkpoint.snapshot_set_id
-                prepared_start_date = strategy_checkpoint.execution_start_date
-                prepared_end_date = strategy_checkpoint.execution_end_date
                 subject_set_id = strategy_checkpoint.subject_set_id
                 target_id = strategy_checkpoint.target_id
-                screening_result_id = strategy_checkpoint.screening_result_id
-                compressed_belief_id = strategy_checkpoint.compressed_belief_id
             else:
                 raise ValueError(
                     "checkpoint evaluation task requires a strategy checkpoint for "
@@ -345,13 +318,8 @@ def build_evaluation_plan(
                     strategy_id=evaluation_task.strategy_id,
                     signal_discovery_id=strategy_signal_discovery_id,
                     strategy_checkpoint_id=strategy_checkpoint_id,
-                    snapshot_set_id=snapshot_set_id,
-                    prepared_start_date=prepared_start_date,
-                    prepared_end_date=prepared_end_date,
                     subject_set_id=subject_set_id,
                     target_id=target_id,
-                    screening_result_id=screening_result_id,
-                    compressed_belief_id=compressed_belief_id,
                     execution_range=fold.execution_range,
                     evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                     metric_group_names=evaluation_spec.metric_group_names,

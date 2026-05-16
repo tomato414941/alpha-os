@@ -113,25 +113,29 @@ def resolve_prepared_strategy_evaluation_inputs(
     store: EvaluationExecutionReadPort,
     input_refs: StrategyEvaluationInputRefs,
 ) -> PreparedStrategyEvaluationInputs:
-    strategy_checkpoint_record = (
-        None
-        if input_refs.strategy_checkpoint_id is None
-        else store.get_strategy_checkpoint(input_refs.strategy_checkpoint_id)
-    )
-    strategy_checkpoint = (
-        None if strategy_checkpoint_record is None else strategy_checkpoint_record.state
-    )
-    screening_state = store.get_screening_result(input_refs.screening_result_id)
+    strategy_checkpoint_record = store.get_strategy_checkpoint(input_refs.strategy_checkpoint_id)
+    if strategy_checkpoint_record is None:
+        raise ValueError(
+            f"strategy checkpoint does not exist: {input_refs.strategy_checkpoint_id}"
+        )
+    strategy_checkpoint = strategy_checkpoint_record.state
+    screening_state = store.get_screening_result(strategy_checkpoint.screening_result_id)
     if screening_state is None:
-        raise ValueError(f"screening result does not exist: {input_refs.screening_result_id}")
-    compressed_belief_state = store.get_compressed_belief(input_refs.compressed_belief_id)
+        raise ValueError(
+            f"screening result does not exist: {strategy_checkpoint.screening_result_id}"
+        )
+    compressed_belief_state = store.get_compressed_belief(
+        strategy_checkpoint.compressed_belief_id
+    )
     if compressed_belief_state is None:
-        raise ValueError(f"compressed belief does not exist: {input_refs.compressed_belief_id}")
+        raise ValueError(
+            f"compressed belief does not exist: {strategy_checkpoint.compressed_belief_id}"
+        )
     return PreparedStrategyEvaluationInputs(
         strategy_checkpoint=strategy_checkpoint,
-        snapshot_set_id=input_refs.snapshot_set_id,
-        prepared_start_date=input_refs.prepared_start_date,
-        prepared_end_date=input_refs.prepared_end_date,
+        snapshot_set_id=strategy_checkpoint.snapshot_set_id,
+        prepared_start_date=strategy_checkpoint.execution_start_date,
+        prepared_end_date=strategy_checkpoint.execution_end_date,
         screening_state=screening_state,
         compressed_belief_state=compressed_belief_state,
     )
