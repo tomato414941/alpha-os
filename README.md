@@ -60,17 +60,11 @@ uv run python -m alpha_os apply-manifest \
 uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_oos_eval \
   --db "$DB"
-
-uv run python -m alpha_os show-report \
-  --db "$DB"
-
-uv run python -m alpha_os show-diagnostics \
-  --db "$DB"
 ```
 
 The checked-in test `tests/test_alpha_os_minimal_oos_workflow.py` verifies that
-this path preserves fixed train/evaluation ranges, report contract fields,
-decision traces, and candidate-vs-baseline promotion inputs.
+this path preserves fixed train/evaluation ranges, report contract fields, and
+candidate-vs-baseline promotion inputs.
 
 ## Minimal Fixed-State OOS Golden Path
 
@@ -88,9 +82,6 @@ uv run python -m alpha_os apply-manifest \
 
 uv run python -m alpha_os run-walk-forward \
   --evaluation-spec-id minimal_fixed_state_train_eval \
-  --db "$DB"
-
-uv run python -m alpha_os show-report \
   --db "$DB"
 ```
 

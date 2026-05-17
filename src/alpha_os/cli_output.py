@@ -3,10 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .cross_instrument_contract import (
-    default_evaluation_report_cross_instrument_contract,
     default_validation_result_set_cross_instrument_contract,
 )
-from .evaluation_report_service import format_report_strategy_contract_fields
 from .subject_set_facts import format_subject_set_facts
 from .validation_result_set import build_validation_result_set
 
@@ -18,73 +16,6 @@ def _format_universe_policy_fields(
     if not parts:
         return None
     return " ".join(parts)
-
-
-def _metric_group_result_metric(task_result, dimension: str, metric: str) -> float | None:
-    for metric_group_result in task_result.metric_group_results:
-        if metric_group_result.metric_group_name != dimension:
-            continue
-        value = metric_group_result.metrics.get(metric)
-        if isinstance(value, bool):
-            return float(value)
-        if isinstance(value, int | float):
-            return float(value)
-        return None
-    return None
-
-
-def _format_optional_metric(value: float | None) -> str:
-    return "-" if value is None else f"{value:.6f}"
-
-
-def _format_case_metric_facts(report) -> list[str]:
-    if not report.task_results:
-        return []
-    lines = ["  CaseMetricFacts:"]
-    for task_result in report.task_results:
-        net = _metric_group_result_metric(task_result, "decision_quality", "mean_decision_net_return")
-        drawdown = _metric_group_result_metric(
-            task_result,
-            "decision_quality",
-            "mean_decision_drawdown",
-        )
-        turnover = _metric_group_result_metric(
-            task_result,
-            "decision_quality",
-            "mean_decision_turnover",
-        )
-        cost_drag = _metric_group_result_metric(
-            task_result,
-            "cost_drag",
-            "execution_cost_to_gross_pnl",
-        )
-        top3_share = _metric_group_result_metric(
-            task_result,
-            "portfolio_concentration",
-            "mean_top3_gross_share",
-        )
-        target_return_corr = _metric_group_result_metric(
-            task_result,
-            "portfolio_target_return_alignment",
-            "mean_range_portfolio_target_return_corr",
-        )
-        rejected_turnover = _metric_group_result_metric(
-            task_result,
-            "execution_trace",
-            "utility_rejected_turnover",
-        )
-        lines.append(
-            "    Task: "
-            f"{task_result.evaluation_task_id} "
-            f"net={_format_optional_metric(net)} "
-            f"drawdown={_format_optional_metric(drawdown)} "
-            f"turnover={_format_optional_metric(turnover)} "
-            f"cost_drag={_format_optional_metric(cost_drag)} "
-            f"top3_share={_format_optional_metric(top3_share)} "
-            f"target_return_corr={_format_optional_metric(target_return_corr)} "
-            f"utility_rejected_turnover={_format_optional_metric(rejected_turnover)}"
-        )
-    return lines
 
 
 def format_snapshot_replay_artifacts(snapshot) -> str | None:
@@ -100,25 +31,6 @@ def format_snapshot_replay_artifacts(snapshot) -> str | None:
     if not parts:
         return None
     return " ".join(parts)
-
-
-def _format_sleeve_attribution(summary) -> str:
-    return (
-        f"sleeve={summary.sleeve_id} "
-        f"kind={summary.sleeve_kind} "
-        f"risk_budget={summary.risk_budget:.6f} "
-        f"subjects={summary.subject_count} "
-        f"signal={summary.mean_signal:.6f} "
-        f"abs_signal={summary.mean_abs_signal:.6f} "
-        f"gross={summary.mean_gross_notional_exposure:.6f} "
-        f"net={summary.mean_net_notional_exposure:.6f} "
-        f"long={summary.mean_long_notional_exposure:.6f} "
-        f"short={summary.mean_short_notional_exposure:.6f} "
-        f"cost={summary.total_cost_notional:.6f} "
-        f"funding={summary.total_funding_cost_notional:.6f} "
-        f"borrow={summary.total_borrow_cost_notional:.6f} "
-        f"roll={summary.total_roll_cost_notional:.6f}"
-    )
 
 
 def print_signal_details(signal) -> None:
@@ -498,104 +410,6 @@ def print_evaluation_tasks(cases) -> None:
             f"strategy={case.strategy_id} "
         )
 
-
-
-def print_evaluation_report(
-    report_state,
-    *,
-    strategy_subject_set_context: dict[str, str] | None = None,
-) -> None:
-    report = report_state.report if hasattr(report_state, "report") else report_state
-    contract = getattr(
-        report,
-        "cross_instrument_contract",
-        default_evaluation_report_cross_instrument_contract(),
-    )
-    print("alpha-os evaluation report")
-    print(f"  Report:    {report.evaluation_report_id}")
-    print(f"  Evaluation spec:  {report.evaluation_spec_id}")
-    print(f"  Lane:      {report.evaluation_lane}")
-    print(f"  Created:   {report.created_at}")
-    if getattr(report, "oos_contract_summary", None):
-        summary = report.oos_contract_summary
-        print(
-            "  OOS contract: "
-            f"rigor_level={summary.get('rigor_level', '-')} "
-            f"enforcement={summary.get('enforcement', '-')} "
-            f"date_parse={summary.get('date_parse', '-')} "
-            f"range_non_overlap={summary.get('range_non_overlap', '-')} "
-            "evaluation_after_execution="
-            f"{summary.get('evaluation_after_execution', '-')} "
-            f"strategy_checkpoint_required={summary.get('strategy_checkpoint_required', '-')}"
-        )
-    print("  CrossInstrumentReportContract: " + contract.format_summary())
-    if getattr(contract, "report_units", ()):
-        print("  ReportUnits: " + contract.format_report_units())
-    if getattr(contract, "metric_contracts", ()):
-        print("  MetricContracts: " + contract.format_metric_contracts())
-    print(f"  TaskResults: {len(report.task_results)}")
-    for line in _format_case_metric_facts(report):
-        print(line)
-    def _print_task_result(task_result) -> None:
-        line = (
-            f"  Task: {task_result.evaluation_task_id} "
-            f"construction={task_result.construction_kind} "
-            f"strategy={task_result.strategy_id}"
-            f"{'' if task_result.signal_discovery_id is None else ' signal_discovery=' + task_result.signal_discovery_id}"
-        )
-        if task_result.strategy_contract_fields:
-            line += " " + format_report_strategy_contract_fields(
-                task_result.strategy_contract_fields,
-                subject_set_facts=task_result.subject_set_facts,
-            )
-        elif (
-            strategy_subject_set_context is not None
-            and task_result.strategy_id in strategy_subject_set_context
-        ):
-            line += f" {strategy_subject_set_context[task_result.strategy_id]}"
-        print(line)
-        if task_result.subject_set_contract_groups:
-            print(
-                "    subject_set_contract_groups=" + ",".join(task_result.subject_set_contract_groups)
-            )
-        universe_policy_text = _format_universe_policy_fields(task_result.universe_policy_fields)
-        if universe_policy_text is not None:
-            print("    universe_policy=" + universe_policy_text)
-        if task_result.constraint_stages:
-            print("    constraint_stages=" + ";".join(task_result.constraint_stages))
-        for sleeve_summary in task_result.sleeve_attribution_summaries:
-            print("    " + _format_sleeve_attribution(sleeve_summary))
-        outcome = task_result.cross_instrument_outcome
-        metric_group_outcomes = task_result.metric_group_results if outcome is None else outcome.metric_group_outcomes
-        for metric_group_result in metric_group_outcomes:
-            metrics_text = " ".join(
-                f"{key}={value}" for key, value in sorted(metric_group_result.metrics.items())
-            )
-            print(
-                f"    metric_group_name={metric_group_result.metric_group_name} "
-                f"source={metric_group_result.source} {metrics_text}"
-            )
-        failure_finding_outcomes = task_result.failure_finding_groups if outcome is None else outcome.failure_finding_outcomes
-        for failure_result in failure_finding_outcomes:
-            max_severity = getattr(failure_result, "max_severity", None)
-            print(
-                f"    failure_metric_group={failure_result.metric_group_name} "
-                f"source={failure_result.source} "
-                f"findings={getattr(failure_result, 'finding_count', len(getattr(failure_result, 'findings', ())))}"
-                + ("" if max_severity is None else f" max_severity={float(max_severity):.6f}")
-            )
-            for case in getattr(failure_result, "findings", ()):
-                metrics_text = " ".join(
-                    f"{key}={value}" for key, value in sorted(case.metrics.items())
-                )
-                print(f"      label={case.label} severity={case.severity:.6f} {metrics_text}")
-        for name, values in sorted(task_result.artifact_refs.items()):
-            print(f"    {name}={','.join(values) if values else '-'}")
-
-    if report.task_results:
-        print("  TaskResultDetails:")
-        for task_result in report.task_results:
-            _print_task_result(task_result)
 
 
 def print_subject_set_backend_checks(

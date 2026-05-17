@@ -278,9 +278,6 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
     )
     capsys.readouterr()
 
-    assert main(["show-evaluation-report", "--db", str(db_path)]) == 0
-    capsys.readouterr()
-
     store = EvaluationStore(Path(db_path))
     try:
         report_state = store.get_latest_evaluation_report()

@@ -1305,8 +1305,8 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
         data_repositories.load_observation_frame = original_loader
 
     output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in output
-    assert "strategy=strategy:buy_and_hold" in output
+    assert "alpha-os evaluation run" in output
+    assert "TaskResults: 1" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -1539,8 +1539,8 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
         data_repositories.load_observation_frame = original_loader
 
     output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in output
-    assert "strategy=strategy:top_k_hold" in output
+    assert "alpha-os evaluation run" in output
+    assert "TaskResults: 1" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -1774,8 +1774,8 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
         data_repositories.load_observation_frame = original_loader
 
     output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in output
-    assert "strategy=strategy:dual_momentum_hold" in output
+    assert "alpha-os evaluation run" in output
+    assert "TaskResults: 1" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -1925,8 +1925,8 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         data_repositories.load_observation_frame = original_loader
 
     output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in output
-    assert "evaluation_fold_labels=fold_2024h1_to_2024m5" in output
+    assert "alpha-os evaluation run" in output
+    assert "TaskResults: 1" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -3130,9 +3130,8 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
         data_repositories.load_observation_frame = original_loader
 
     output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in output
-    assert "evaluation_fold_labels=fold_a" in output
-    assert "evaluation_fold_labels=fold_b" in output
+    assert "alpha-os evaluation run" in output
+    assert "TaskResults: 2" in output
 
     store = EvaluationStore(db_path)
     try:

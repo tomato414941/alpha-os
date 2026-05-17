@@ -10,7 +10,6 @@ from .data_repositories import (
 from .evaluation_task import EvaluationTask
 from .evaluation_spec import EvaluationSpec
 from .evaluation_task_resolution import resolve_evaluation_tasks_for_spec
-from .evaluation_report_service import resolve_report_strategy_context
 from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
 from .strategy_checkpoint import StrategyCheckpoint
 from .signal_discovery_application import (
@@ -43,7 +42,6 @@ class RunEvaluationUseCaseRequest:
 @dataclass(frozen=True)
 class RunEvaluationUseCaseResult:
     report_state: object
-    report_subject_set_context: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -123,13 +121,7 @@ def run_evaluation_use_case(
             evaluation_input_repository=evaluation_input_repository,
         )
     )
-    return RunEvaluationUseCaseResult(
-        report_state=report_state,
-        report_subject_set_context=resolve_report_strategy_context(
-            store,
-            report_state=report_state,
-        ),
-    )
+    return RunEvaluationUseCaseResult(report_state=report_state)
 
 
 def group_evaluation_tasks_by_signal_discovery(

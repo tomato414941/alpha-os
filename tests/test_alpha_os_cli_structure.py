@@ -76,12 +76,10 @@ def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
         "list-manifests",
         "run-evaluation",
         "run-walk-forward",
-        "show-report",
     }
     hidden_commands = {
         "list-runtime-manifests",
         "run-walk-forward-evaluation",
-        "show-evaluation-report",
         "run-diagnostic-evaluation",
         "inspect-runtime-resources",
         "debug-status",
@@ -104,7 +102,6 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
     captured = capsys.readouterr().out
     assert "apply-manifest" in captured
     assert "run-walk-forward" in captured
-    assert "show-report" in captured
     assert "run-walk-forward-evaluation" not in captured
     assert "run-diagnostic-evaluation" not in captured
     assert "debug-apply-evaluation" not in captured
@@ -143,11 +140,6 @@ def test_cli_public_aliases_parse_to_existing_arguments():
     assert run_args.evaluation_spec_id == "minimal_oos_eval"
     assert run_args.db == "runtime.db"
 
-    report_args = parser.parse_args(["show-report", "--db", "runtime.db"])
-    assert report_args.command == "show-report"
-    assert report_args.db == "runtime.db"
-
-
 def test_cli_legacy_public_commands_remain_parseable():
     parser = build_cli_parser()
 
@@ -165,10 +157,6 @@ def test_cli_legacy_public_commands_remain_parseable():
     )
     assert run_args.command == "run-walk-forward-evaluation"
     assert run_args.evaluation_spec_id == "minimal_oos_eval"
-
-    report_args = parser.parse_args(["show-evaluation-report", "--db", "runtime.db"])
-    assert report_args.command == "show-evaluation-report"
-
 
 def test_cli_entrypoint_preserves_value_error_exit_contract(monkeypatch):
     import alpha_os.cli as cli

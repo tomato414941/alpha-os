@@ -5,28 +5,23 @@
 `evaluation_report_service.py` is necessary because alpha-os needs evaluation
 reports as artifacts, not just metric dictionaries.
 
-However, the module currently mixes several responsibilities:
+The module used to mix report construction with display-time fallback logic.
+After removing CLI report rendering, it now mostly builds the contract fields
+stored on evaluation task results.
 
-- report artifact construction
-- strategy contract field extraction
 - evaluation task contract field extraction
-- subject set fact formatting
-- report display ordering
-- OOS contract summary formatting
 
 This makes small strategy-schema changes, such as moving `top_k` ownership,
 touch report code directly.
 
 ## Boundary
 
-Keep the module responsible for building evaluation report artifacts.
+Keep the module responsible for building persisted evaluation task contract
+fields.
 
-Move or isolate responsibilities that are only input extraction or display
-formatting:
+Move or isolate responsibilities that are only strategy/portfolio extraction:
 
-- strategy contract extraction
 - evaluation task contract extraction
-- display-only field ordering
 
 ## Non-Goal
 
@@ -35,5 +30,5 @@ artifact boundary is still useful.
 
 ## Close Condition
 
-Close this when changing a strategy field does not require editing report
-artifact construction unless the report schema itself changes.
+Close this when changing a strategy or portfolio field does not require editing
+report code unless the stored evaluation task contract itself changes.

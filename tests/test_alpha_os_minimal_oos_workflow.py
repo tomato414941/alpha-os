@@ -38,21 +38,9 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         == 0
     )
     run_output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in run_output
-    assert "evaluation_fold_labels=minimal_train_to_test" in run_output
-    assert "evaluation_range_labels=minimal_test" in run_output
-
-    assert main(["show-evaluation-report", "--db", str(db_path)]) == 0
-    report_output = capsys.readouterr().out
-    assert "TaskResults: 2" in report_output
-    assert "strategy:minimal_oos_candidate_equal_weight_hold" in report_output
-    assert "strategy:minimal_oos_baseline_equal_weight_hold" in report_output
-    assert "subject_set=minimal_oos_pair" in report_output
-    assert "target_id=residual_return_1d" in report_output
-    assert "fee_bps=0.0" in report_output
-    assert "OOS contract: rigor_level=diagnostic enforcement=warn" in report_output
-    assert "range_non_overlap=pass" in report_output
-    assert "evaluation_after_execution=pass" in report_output
+    assert "alpha-os evaluation run" in run_output
+    assert "Evaluation spec:  minimal_oos_eval" in run_output
+    assert "TaskResults: 2" in run_output
 
     store = EvaluationStore(db_path)
     try:

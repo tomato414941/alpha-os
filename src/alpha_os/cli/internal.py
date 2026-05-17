@@ -10,7 +10,6 @@ from pathlib import Path
 from ..cli_output import (
     print_evaluation_tasks,
     print_evaluation_specs,
-    print_evaluation_report,
     format_snapshot_replay_artifacts,
     print_evaluation_snapshot,
     print_signal_competition_summary,
@@ -49,9 +48,6 @@ from ..evaluation_spec import EvaluationSpec
 from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
-)
-from ..evaluation_report_service import (
-    resolve_report_strategy_context,
 )
 from ..evaluation_task_resolution import (
     EvaluationTaskResolutionPlan as _EvaluationTaskResolutionPlan,
@@ -281,7 +277,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         "apply-manifest",
         "run-evaluation",
         "run-walk-forward",
-        "show-report",
         "list-manifests",
     )
     parser = argparse.ArgumentParser(
@@ -661,14 +656,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
-
-    show_evaluation_report = sub.add_parser(
-        "show-evaluation-report",
-        aliases=["show-report"],
-        help="Show one persisted evaluation report",
-    )
-    show_evaluation_report.add_argument("--db", type=str, default=None)
-    show_evaluation_report.add_argument("--report-id", type=str, default=None)
 
     rebuild_strategy_adaptation_state = internal_parser("rebuild-strategy-adaptation-state")
     rebuild_strategy_adaptation_state.add_argument("--db", type=str, default=None)
@@ -3637,10 +3624,7 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
                 created_at=_utc_now(),
             )
         )
-    print_evaluation_report(
-        result.report_state,
-        strategy_subject_set_context=result.report_subject_set_context,
-    )
+    _print_evaluation_run_summary(result.report_state)
     return 0
 
 
@@ -3672,7 +3656,7 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
                 created_at=_utc_now(),
             )
         )
-    print_evaluation_report(result.report_state)
+    _print_evaluation_run_summary(result.report_state)
     return 0
 
 
@@ -4168,21 +4152,12 @@ def _resolve_evaluation_report(store: EvaluationStore, report_id: str | None):
     )
 
 
-def cmd_show_evaluation_report(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        report_state = _resolve_evaluation_report(store, args.report_id)
-        if report_state is None:
-            raise ValueError("evaluation report does not exist")
-        report_subject_set_context = resolve_report_strategy_context(
-            store,
-            report_state=report_state,
-        )
-    print_evaluation_report(
-        report_state,
-        strategy_subject_set_context=report_subject_set_context,
-    )
-    return 0
+def _print_evaluation_run_summary(report_state) -> None:
+    report = report_state.report if hasattr(report_state, "report") else report_state
+    print("alpha-os evaluation run")
+    print(f"  Report:    {report.evaluation_report_id}")
+    print(f"  Evaluation spec:  {report.evaluation_spec_id}")
+    print(f"  TaskResults: {len(report.task_results)}")
 
 
 def _resolve_strategy_adaptation_task_result(
@@ -4936,8 +4911,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command in {"show-evaluation-report", "show-report"}:
-            return cmd_show_evaluation_report(args)
         if args.command == "rebuild-strategy-adaptation-state":
             return cmd_rebuild_strategy_adaptation_state(args)
         if args.command == "show-strategy-adaptation-states":

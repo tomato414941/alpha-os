@@ -28,7 +28,6 @@ Current coupling includes:
 - promotion decisions read candidate and baseline task results from an
   `EvaluationReport`
 - baseline/adaptation provenance uses `evaluation_report_id`
-- CLI displays the latest `EvaluationReport`
 - store tables and APIs are named around reports
 - contract validation validates an `EvaluationReport`
 
@@ -49,7 +48,6 @@ Do not merge result primitives back into report code.
 
 - `EvaluationReport`
 - `evaluation_reports` store table
-- `show-evaluation-report` CLI command
 - `promotion_decision.py` inputs
 - `source_evaluation_report_id` provenance fields
 

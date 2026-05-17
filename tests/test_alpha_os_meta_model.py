@@ -2703,27 +2703,9 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     finally:
         data_repositories.load_observation_frame = original_loader
     evaluation_output = capsys.readouterr().out
-    assert "alpha-os evaluation report" in evaluation_output
+    assert "alpha-os evaluation run" in evaluation_output
     assert "Evaluation spec:  core_crypto_eval" in evaluation_output
-    assert "CrossInstrumentReportContract:" in evaluation_output
-    assert "contract=strategy,subject_set,universe_policy,instrument_mix,selection,sizing,rebalance,risk_caps,costs outcomes=metric_group_outcomes,failure_finding_outcomes" in evaluation_output
-    assert "selection=all_assets" in evaluation_output
-    assert "sizing=signal_weighted" in evaluation_output
-    assert "rebalance=every_1_steps" in evaluation_output
-    assert "subject_set=core_crypto summary=[bindings=1" in evaluation_output
-    assert "metric_group_name=signed_belief_quality" in evaluation_output
-    assert "metric_group_name=portfolio_target_return_alignment" in evaluation_output
-    assert "metric_group_name=sizing_policy_quality" in evaluation_output
-    assert "metric_group_name=rebalance_policy_quality" in evaluation_output
-    assert "metric_group_name=decision_quality" in evaluation_output
-    assert "metric_group_name=robustness" in evaluation_output
-    assert "source=native_plan" in evaluation_output
-    assert "failure_metric_group=decision_quality" in evaluation_output
-    assert "failure_metric_group=sizing_policy_quality" in evaluation_output
-    assert "failure_metric_group=rebalance_policy_quality" in evaluation_output
-    assert "failure_metric_group=signed_belief_quality" in evaluation_output
-    assert "failure_metric_group=portfolio_target_return_alignment" in evaluation_output
-    assert "evaluation_range_labels=eval_window" in evaluation_output
+    assert "TaskResults: 1" in evaluation_output
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()

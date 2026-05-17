@@ -73,13 +73,6 @@ def test_minimal_fixed_state_oos_golden_path_runs_without_external_services(
     finally:
         store.close()
 
-    assert main(["show-evaluation-report", "--db", str(db_path)]) == 0
-    report_output = capsys.readouterr().out
-    assert "OOS contract: rigor_level=fixed_state_oos enforcement=strict" in report_output
-    assert "range_non_overlap=pass" in report_output
-    assert "evaluation_after_execution=pass" in report_output
-    assert "strategy_checkpoint_required=required" in report_output
-
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
