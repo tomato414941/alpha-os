@@ -1148,10 +1148,10 @@ def test_apply_runtime_manifest_rejects_incomplete_multi_subject_universe_policy
 
 def test_rebuild_strategy_adaptation_state_from_evaluation_report(tmp_path, capsys):
     from alpha_os.cli import main
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import (
         EvaluationTaskResult,
         EvaluationMetricGroupResult,
-        EvaluationReport,
     )
     from alpha_os.screening import (
         ScreeningCandidateResult,

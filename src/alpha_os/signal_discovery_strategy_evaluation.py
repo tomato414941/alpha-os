@@ -42,7 +42,7 @@ from .portfolio_sizing_policy import (
     SignalWeightedSizingPolicy,
     SignedMeanVarianceSizingPolicy,
 )
-from .evaluation_report import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
+from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 from .scoring import numerai_corr
 from .store import EvaluationSnapshot
 

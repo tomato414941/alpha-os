@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_build_strategy_adaptation_state_creates_reputations_from_survivors():
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_result import (
         EvaluationTaskResult,
         EvaluationMetricGroupResult,
     )
@@ -91,7 +91,7 @@ def test_build_strategy_adaptation_state_creates_reputations_from_survivors():
 
 
 def test_build_strategy_adaptation_state_smooths_against_previous_state():
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.strategy_adaptation import (
         FamilyReputation,
         StrategyAdaptationState,
@@ -195,7 +195,7 @@ def test_build_strategy_adaptation_state_smooths_against_previous_state():
 def test_build_strategy_adaptation_state_uses_mmc_to_build_contribution_score():
     from types import SimpleNamespace
 
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.strategy_adaptation import build_strategy_adaptation_state
     from alpha_os.screening import ScreeningCandidateResult, ScreeningPolicy, ScreeningResult
 

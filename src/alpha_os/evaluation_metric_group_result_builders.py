@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .evaluation_report import EvaluationMetricGroupResult
+from .evaluation_result import EvaluationMetricGroupResult
 
 
 def build_prediction_diagnostics_metric_group_result(

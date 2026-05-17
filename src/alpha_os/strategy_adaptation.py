@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .evaluation_report import EvaluationTaskResult
+from .evaluation_result import EvaluationTaskResult
 from .screening import ScreeningResult
 
 

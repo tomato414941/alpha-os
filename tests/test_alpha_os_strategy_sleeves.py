@@ -209,7 +209,7 @@ def test_strategy_sleeve_composition_rejects_duplicate_ids_and_empty_filters():
 
 
 def test_evaluation_task_result_serializes_sleeve_attribution():
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.strategy_sleeves import SleeveAttributionSummary
 
     summary = EvaluationTaskResult(

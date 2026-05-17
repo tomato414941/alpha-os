@@ -1,8 +1,8 @@
 import pytest
 
-from alpha_os.evaluation_report import (
+from alpha_os.evaluation_report import EvaluationReport
+from alpha_os.evaluation_result import (
     EvaluationMetricGroupResult,
-    EvaluationReport,
     EvaluationTaskResult,
 )
 from alpha_os.promotion_decision import (

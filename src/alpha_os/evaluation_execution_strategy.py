@@ -25,7 +25,7 @@ from .strategy_engine import (
 )
 from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .evaluation_report import (
+from .evaluation_result import (
     EvaluationTaskResult,
     EvaluationMetricGroupResult,
     EvaluationFailureFindingGroup,

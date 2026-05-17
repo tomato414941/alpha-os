@@ -476,7 +476,7 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
 
 
 def test_common_strategy_comparison_contract_rejects_missing_required_metric():
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_result import (
         EvaluationMetricGroupResult,
         EvaluationTaskResult,
     )

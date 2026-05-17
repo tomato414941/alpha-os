@@ -180,10 +180,10 @@ def _build_direct_evaluation_task_for_strategy(strategy_id: str):
 
 def test_evaluation_report_contract_validation_passes_for_structured_validation_and_report(tmp_path):
     import alpha_os.validation_service as validation_service
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import (
         EvaluationTaskResult,
         EvaluationMetricGroupResult,
-        EvaluationReport,
         EvaluationFailureFinding,
         EvaluationFailureFindingGroup,
     )
@@ -439,7 +439,7 @@ def test_evaluation_report_contract_validation_passes_for_persisted_current_path
         EvaluationSpec,
     )
     from alpha_os.evaluation_report_contract_validation import validate_evaluation_report_contract
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_result import (
         EvaluationMetricGroupResult,
         EvaluationFailureFinding,
         EvaluationFailureFindingGroup,
@@ -591,7 +591,8 @@ def test_evaluation_report_contract_validation_passes_for_persisted_current_path
 
 def test_evaluation_report_contract_validation_detects_universe_policy_mismatch(tmp_path):
     import alpha_os.validation_service as validation_service
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.evaluation_report_contract_validation import validate_evaluation_report_contract
     from alpha_os.store import EvaluationStore
     from alpha_os.validation_service import run_validation
@@ -897,7 +898,8 @@ def test_run_subject_set_backfill_rejects_incomplete_universe_policy(tmp_path):
 
 def test_evaluation_report_contract_validation_reports_missing_structured_contracts():
     from alpha_os.cross_instrument_contract import CrossInstrumentReportContract
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.evaluation_report_contract_validation import validate_evaluation_report_contract
 
     validation_run = SimpleNamespace(
@@ -951,7 +953,8 @@ def test_evaluation_report_contract_validation_requires_active_constraint_fields
         default_evaluation_report_cross_instrument_contract,
         default_validation_result_set_cross_instrument_contract,
     )
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.evaluation_report_contract_validation import validate_evaluation_report_contract
     from alpha_os.validation_result_set import (
         ValidationDecisionSummary,

@@ -131,7 +131,8 @@ def test_print_evaluation_snapshot_includes_replay_artifacts(capsys):
 
 
 def test_print_evaluation_report_includes_subject_set_context(capsys):
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.strategy_sleeves import SleeveAttributionSummary
 
     report = EvaluationReport(
@@ -261,8 +262,9 @@ def test_print_evaluation_report_includes_subject_set_context(capsys):
 
 
 def test_print_evaluation_report_lists_task_result_details(capsys):
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
-    from alpha_os.evaluation_report import EvaluationMetricGroupResult
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationMetricGroupResult
 
     report = EvaluationReport(
         evaluation_report_id="report:test",
@@ -408,7 +410,7 @@ def test_print_evaluation_report_lists_task_result_details(capsys):
 
 
 def test_evaluation_task_result_builds_cross_instrument_outcome():
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
+    from alpha_os.evaluation_result import EvaluationTaskResult, EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 
     task_result = EvaluationTaskResult(
         evaluation_task_id="case:test",
@@ -447,7 +449,7 @@ def test_evaluation_task_result_builds_cross_instrument_outcome():
 
 
 def test_evaluation_task_result_rejects_legacy_profiles_field():
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
 
     with pytest.raises(ValueError, match="profiles field is no longer supported"):
         EvaluationTaskResult.from_document(
@@ -461,7 +463,7 @@ def test_evaluation_task_result_rejects_legacy_profiles_field():
 
 
 def test_evaluation_task_result_rejects_legacy_failure_profiles_field():
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
 
     with pytest.raises(ValueError, match="failure_profiles field is no longer supported"):
         EvaluationTaskResult.from_document(
@@ -475,7 +477,7 @@ def test_evaluation_task_result_rejects_legacy_failure_profiles_field():
 
 
 def test_evaluation_task_result_rejects_legacy_subject_set_summary_field():
-    from alpha_os.evaluation_report import EvaluationTaskResult
+    from alpha_os.evaluation_result import EvaluationTaskResult
 
     with pytest.raises(
         ValueError,
@@ -493,7 +495,8 @@ def test_evaluation_task_result_rejects_legacy_subject_set_summary_field():
 
 
 def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.evaluation_report_service import resolve_report_strategy_context
     from alpha_os.store import EvaluationStore
 
@@ -640,7 +643,8 @@ def test_resolve_report_strategy_context_includes_subject_set_facts(tmp_path):
 
 
 def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_path):
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.evaluation_report_service import resolve_report_strategy_context
     from alpha_os.store import EvaluationStore
 
@@ -745,7 +749,8 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
 
 def test_current_evaluation_task_metadata_enriches_legacy_report(tmp_path):
     from alpha_os.cli import _with_current_evaluation_task_metadata
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
     from alpha_os.store import EvaluationStore
 
     store = EvaluationStore(tmp_path / "runtime.db")
@@ -790,10 +795,10 @@ def test_current_evaluation_task_metadata_enriches_legacy_report(tmp_path):
 
 
 def test_evaluation_report_roundtrips_cross_instrument_outcome():
-    from alpha_os.evaluation_report import (
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import (
         EvaluationTaskResult,
         EvaluationMetricGroupResult,
-        EvaluationReport,
     )
 
     report = EvaluationReport(

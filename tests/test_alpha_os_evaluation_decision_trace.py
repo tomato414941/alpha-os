@@ -219,7 +219,8 @@ def _persist_report(store, *, report_id: str = "report:test") -> None:
 
 
 def test_evaluation_report_lane_round_trips_and_defaults():
-    from alpha_os.evaluation_report import EvaluationTaskResult, EvaluationReport
+    from alpha_os.evaluation_report import EvaluationReport
+    from alpha_os.evaluation_result import EvaluationTaskResult
 
     legacy = EvaluationReport.from_document(
         evaluation_report_id="report:legacy",
@@ -521,7 +522,7 @@ def test_evaluation_runner_persists_direct_selected_trace_without_portfolio_deci
     monkeypatch,
 ):
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
-    from alpha_os.evaluation_report import EvaluationMetricGroupResult
+    from alpha_os.evaluation_result import EvaluationMetricGroupResult
     from alpha_os.evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
     from alpha_os.signal_discovery_strategy_evaluation import (
         EvaluationTraceRangeResult,
