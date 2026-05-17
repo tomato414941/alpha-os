@@ -51,7 +51,6 @@ from ..portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from ..evaluation_report_service import (
-    build_report_evaluation_task_contract_fields,
     resolve_report_strategy_context,
 )
 from ..evaluation_task_resolution import (
@@ -4169,68 +4168,18 @@ def _resolve_evaluation_report(store: EvaluationStore, report_id: str | None):
     )
 
 
-def _with_current_evaluation_task_metadata(
-    store: EvaluationStore,
-    report_state,
-):
-    report = report_state.report if hasattr(report_state, "report") else report_state
-    changed = False
-    enriched_task_results = []
-    for task_result in report.task_results:
-        case_state = store.get_evaluation_task(task_result.evaluation_task_id)
-        if case_state is None:
-            enriched_task_results.append(task_result)
-            continue
-        case = case_state.task
-        try:
-            trading_config = _evaluation_trading_config_for_case(store, case)
-        except ValueError:
-            enriched_task_results.append(task_result)
-            continue
-        strategy_contract_fields = build_report_evaluation_task_contract_fields(
-            trading_config.portfolio_construction,
-            rebalance_friction_policy=trading_config.rebalance_friction_policy,
-            execution_cost_assumptions=trading_config.execution_cost_assumptions,
-            holding_cost_assumptions=trading_config.holding_cost_assumptions,
-        )
-        for key in (
-            "target_id",
-            "subject_set",
-            "base_currency",
-            "trading_calendar",
-            "benchmark_id",
-        ):
-            value = task_result.strategy_contract_fields.get(key)
-            if value is not None:
-                strategy_contract_fields[key] = value
-        enriched_task_result = replace(
-            task_result,
-            construction_kind=trading_config.portfolio_construction.construction_kind,
-            strategy_contract_fields=strategy_contract_fields,
-        )
-        changed = changed or enriched_task_result != task_result
-        enriched_task_results.append(enriched_task_result)
-    if not changed:
-        return report
-    return replace(report, task_results=tuple(enriched_task_results))
-
-
-_with_current_evaluation_task_metadata = _with_current_evaluation_task_metadata
-
-
 def cmd_show_evaluation_report(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
         store.ensure_schema()
         report_state = _resolve_evaluation_report(store, args.report_id)
         if report_state is None:
             raise ValueError("evaluation report does not exist")
-        effective_report = _with_current_evaluation_task_metadata(store, report_state)
         report_subject_set_context = resolve_report_strategy_context(
             store,
-            report_state=effective_report,
+            report_state=report_state,
         )
     print_evaluation_report(
-        effective_report,
+        report_state,
         strategy_subject_set_context=report_subject_set_context,
     )
     return 0

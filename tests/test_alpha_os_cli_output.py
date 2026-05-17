@@ -747,53 +747,6 @@ def test_resolve_report_strategy_context_rejects_incomplete_universe_policy(tmp_
         resolve_report_strategy_context(store, report_state=report)
 
 
-def test_current_evaluation_task_metadata_enriches_legacy_report(tmp_path):
-    from alpha_os.cli import _with_current_evaluation_task_metadata
-    from alpha_os.evaluation_report import EvaluationReport
-    from alpha_os.evaluation_result import EvaluationTaskResult
-    from alpha_os.store import EvaluationStore
-
-    store = EvaluationStore(tmp_path / "runtime.db")
-    store.ensure_schema()
-    store.upsert_evaluation_task(
-        task=EvaluationTask(
-            evaluation_task_id="case:hold",
-            strategy_id="strategy:hold",
-            evaluation_spec_id="protocol:test",
-        )
-    )
-    legacy_report = EvaluationReport(
-        evaluation_report_id="report:test",
-        evaluation_spec_id="protocol:test",
-        task_results=(
-            EvaluationTaskResult(
-                evaluation_task_id="case:hold",
-                strategy_id="strategy:hold",
-                strategy_contract_fields={
-                    "construction_kind": "active_portfolio",
-                    "selection": "all_assets",
-                    "sizing": "equal_weight",
-                    "active_overlay": "rank_tilt",
-                    "sizing_family": "risk_budget_allocator",
-                    "subject_set": "global_macro_core",
-                    "base_currency": "USD",
-                },
-            ),
-        ),
-        created_at="2026-04-23T00:00:00Z",
-    )
-
-    enriched_report = _with_current_evaluation_task_metadata(store, legacy_report)
-
-    task_result = enriched_report.task_results[0]
-    assert task_result.construction_kind == "active_portfolio"
-    assert task_result.strategy_contract_fields["construction_kind"] == "active_portfolio"
-    assert task_result.strategy_contract_fields["active_overlay"] == "rank_tilt"
-    assert task_result.strategy_contract_fields["sizing_family"] == "risk_budget_allocator"
-    assert task_result.strategy_contract_fields["subject_set"] == "global_macro_core"
-    assert task_result.strategy_contract_fields["base_currency"] == "USD"
-
-
 def test_evaluation_report_roundtrips_cross_instrument_outcome():
     from alpha_os.evaluation_report import EvaluationReport
     from alpha_os.evaluation_result import (
