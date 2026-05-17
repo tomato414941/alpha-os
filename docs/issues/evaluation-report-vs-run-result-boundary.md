@@ -14,7 +14,6 @@ After splitting result primitives into `evaluation_result.py`, the remaining
 - `created_at`
 - `evaluation_lane`
 - `oos_contract_summary`
-- `cross_instrument_contract`
 
 This looks closer to an evaluation run result artifact than to a report.
 
@@ -26,7 +25,6 @@ and audit concerns as one concept.
 Current coupling includes:
 
 - store tables and APIs are named around reports
-- contract validation validates an `EvaluationReport`
 
 These uses need an evaluation result artifact, but not necessarily a
 human-facing report concept.

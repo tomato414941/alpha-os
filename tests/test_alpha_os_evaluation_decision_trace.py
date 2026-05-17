@@ -96,20 +96,6 @@ def test_evaluation_report_lane_round_trips_and_defaults():
             },
         )
 
-    with pytest.raises(
-        ValueError,
-        match="cross_instrument_criteria field is no longer supported",
-    ):
-        EvaluationReport.from_document(
-            evaluation_report_id="report:legacy-contract",
-            document={
-                "evaluation_spec_id": "evaluation_spec:test",
-                "task_results": [],
-                "created_at": "2026-04-21T00:00:00Z",
-                "cross_instrument_criteria": {},
-            },
-        )
-
     report = EvaluationReport(
         evaluation_report_id="report:test",
         evaluation_spec_id="evaluation_spec:test",

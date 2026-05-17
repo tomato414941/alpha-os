@@ -202,22 +202,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
         document=report.to_document(),
     )
 
-    assert restored.cross_instrument_contract.outcome_fields == (
-        "metric_group_outcomes",
-        "failure_finding_outcomes",
-    )
-    assert tuple(
-        item.unit_id for item in restored.cross_instrument_contract.report_units
-    ) == (
-        "task_result",
-        "metric_group_outcome",
-        "failure_finding_outcome",
-    )
-    assert any(
-        item.outcome_kind == "metric_group_outcome"
-        and item.metric_group_name == "decision_quality"
-        for item in restored.cross_instrument_contract.metric_contracts
-    )
     assert "task_results" in restored.to_document()
     assert "summaries" not in restored.to_document()
     task_result = restored.task_results[0]

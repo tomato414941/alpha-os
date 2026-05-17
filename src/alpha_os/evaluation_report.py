@@ -3,10 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .cross_instrument_contract import (
-    CrossInstrumentReportContract,
-    default_evaluation_report_cross_instrument_contract,
-)
 from .evaluation_lane import normalize_evaluation_lane
 from .evaluation_result import EvaluationTaskResult
 
@@ -19,9 +15,6 @@ class EvaluationReport:
     created_at: str
     evaluation_lane: str = "backtest_oos"
     oos_contract_summary: dict[str, str] = field(default_factory=dict)
-    cross_instrument_contract: CrossInstrumentReportContract = field(
-        default_factory=default_evaluation_report_cross_instrument_contract
-    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -37,7 +30,6 @@ class EvaluationReport:
             "oos_contract_summary": dict(self.oos_contract_summary),
             "task_results": [item.to_document() for item in self.task_results],
             "created_at": self.created_at,
-            "cross_instrument_contract": self.cross_instrument_contract.to_document(),
         }
 
     @classmethod
@@ -52,16 +44,10 @@ class EvaluationReport:
         created_at = document.get("created_at")
         evaluation_lane = document.get("evaluation_lane")
         oos_contract_summary = document.get("oos_contract_summary", {})
-        contract_document = document.get("cross_instrument_contract")
         if "summaries" in document:
             raise ValueError(
                 "evaluation report summaries field is no longer supported; "
                 "use task_results"
-            )
-        if "cross_instrument_criteria" in document:
-            raise ValueError(
-                "evaluation report cross_instrument_criteria field is no longer "
-                "supported; use cross_instrument_contract"
             )
         if not isinstance(evaluation_spec_id, str) or not evaluation_spec_id:
             raise ValueError("evaluation report is missing evaluation_spec_id")
@@ -71,8 +57,6 @@ class EvaluationReport:
             raise ValueError("evaluation report is missing created_at")
         if not isinstance(oos_contract_summary, dict):
             raise ValueError("evaluation report oos_contract_summary is invalid")
-        if contract_document is not None and not isinstance(contract_document, dict):
-            raise ValueError("evaluation report cross_instrument_contract is invalid")
         return cls(
             evaluation_report_id=evaluation_report_id,
             evaluation_spec_id=evaluation_spec_id,
@@ -86,9 +70,4 @@ class EvaluationReport:
             oos_contract_summary={
                 str(key): str(value) for key, value in oos_contract_summary.items()
             },
-            cross_instrument_contract=(
-                default_evaluation_report_cross_instrument_contract()
-                if contract_document is None
-                else CrossInstrumentReportContract.from_document(contract_document)
-            ),
         )
