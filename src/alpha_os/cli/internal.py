@@ -60,7 +60,6 @@ from ..strategy_variant import (
     strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
 from ..subject_set_facts import format_subject_set_facts
-from ..strategy_adaptation import build_strategy_adaptation_state
 from ..observables import ObservableDefinition
 from ..evaluation_runtime import (
     apply_evaluation,
@@ -656,18 +655,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
-
-    rebuild_strategy_adaptation_state = internal_parser("rebuild-strategy-adaptation-state")
-    rebuild_strategy_adaptation_state.add_argument("--db", type=str, default=None)
-    rebuild_strategy_adaptation_state.add_argument("--report-id", type=str, default=None)
-    rebuild_strategy_adaptation_state.add_argument("--strategy-id", type=str, default=None)
-    rebuild_strategy_adaptation_state.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        default=None,
-    )
-    rebuild_strategy_adaptation_state.add_argument("--smoothing", type=float, default=0.5)
 
     show_strategy_adaptation_states = internal_parser("show-strategy-adaptation-states")
     show_strategy_adaptation_states.add_argument("--db", type=str, default=None)
@@ -4144,94 +4131,12 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
     return result
 
 
-def _resolve_evaluation_report(store: EvaluationStore, report_id: str | None):
-    return (
-        store.get_latest_evaluation_report()
-        if report_id is None
-        else store.get_evaluation_report(str(report_id))
-    )
-
-
 def _print_evaluation_run_summary(report_state) -> None:
     report = report_state.report if hasattr(report_state, "report") else report_state
     print("alpha-os evaluation run")
     print(f"  Report:    {report.evaluation_report_id}")
     print(f"  Evaluation spec:  {report.evaluation_spec_id}")
     print(f"  TaskResults: {len(report.task_results)}")
-
-
-def _resolve_strategy_adaptation_task_result(
-    *,
-    report_state,
-    strategy_id: str | None,
-    signal_discovery_id: str | None,
-):
-    report = report_state.report
-    if strategy_id is not None:
-        for task_result in report.task_results:
-            if task_result.strategy_id == strategy_id:
-                return task_result
-        raise ValueError(f"evaluation report does not contain strategy: {strategy_id}")
-    if signal_discovery_id is not None:
-        for task_result in report.task_results:
-            if task_result.signal_discovery_id == signal_discovery_id:
-                return task_result
-        raise ValueError(
-            f"evaluation report does not contain signal discovery: {signal_discovery_id}"
-        )
-    if len(report.task_results) != 1:
-        raise ValueError(
-            "rebuild-strategy-adaptation-state requires --signal-discovery-id when the report contains multiple signal discoveries"
-        )
-    return report.task_results[0]
-
-
-def cmd_rebuild_strategy_adaptation_state(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        report_state = _resolve_evaluation_report(store, args.report_id)
-        if report_state is None:
-            raise ValueError("evaluation report does not exist")
-        task_result = _resolve_strategy_adaptation_task_result(
-            report_state=report_state,
-            strategy_id=(None if args.strategy_id is None else str(args.strategy_id)),
-            signal_discovery_id=(
-                None if args.signal_discovery_id is None else str(args.signal_discovery_id)
-            ),
-        )
-        screening_result_ids = task_result.artifact_refs.get("screening_result_ids", ())
-        if not screening_result_ids:
-            raise ValueError(
-                "evaluation report task result does not reference a screening result"
-            )
-        screening_state = store.get_screening_result(str(screening_result_ids[0]))
-        if screening_state is None:
-            raise ValueError("screening result referenced by evaluation report does not exist")
-        metrics_by_signal_id = {
-            item.signal_id: item
-            for item in store.list_signal_metrics(
-                signal_ids=[item.signal_id for item in screening_state.result.survivors]
-            )
-        }
-        previous_strategy_adaptation_state = store.get_strategy_adaptation_state(
-            task_result.strategy_id
-        )
-        strategy_adaptation_state = build_strategy_adaptation_state(
-            evaluation_report_id=report_state.evaluation_report_id,
-            task_result=task_result,
-            screening_result=screening_state.result,
-            metrics_by_signal_id=metrics_by_signal_id,
-            previous_state=(
-                None
-                if previous_strategy_adaptation_state is None
-                else previous_strategy_adaptation_state.state
-            ),
-            smoothing=float(args.smoothing),
-            created_at=_utc_now(),
-        )
-        persisted_state = store.upsert_strategy_adaptation_state(state=strategy_adaptation_state)
-    print_strategy_adaptation_states([persisted_state])
-    return 0
 
 
 def cmd_show_strategy_adaptation_states(args: argparse.Namespace) -> int:
@@ -4911,8 +4816,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command == "rebuild-strategy-adaptation-state":
-            return cmd_rebuild_strategy_adaptation_state(args)
         if args.command == "show-strategy-adaptation-states":
             return cmd_show_strategy_adaptation_states(args)
         if args.command == "debug-register-signal-candidate-spec":
