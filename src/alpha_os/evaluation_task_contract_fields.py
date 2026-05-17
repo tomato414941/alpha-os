@@ -54,7 +54,7 @@ def _add_subject_set_fields(
             fields["benchmark_id"] = universe_policy.benchmark_id
 
 
-def build_report_evaluation_task_contract_fields(
+def build_evaluation_task_contract_fields(
     portfolio_construction,
     *,
     rebalance_friction_policy,

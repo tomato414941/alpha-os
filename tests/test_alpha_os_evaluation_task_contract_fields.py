@@ -12,8 +12,8 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
         PortfolioConstructionSpec,
         PortfolioRiskBudgetSpec,
     )
-    from alpha_os.evaluation_report_service import (
-        build_report_evaluation_task_contract_fields,
+    from alpha_os.evaluation_task_contract_fields import (
+        build_evaluation_task_contract_fields,
     )
     from alpha_os.portfolio_decision import SubjectSet, UniversePolicySpec
     from alpha_os.strategy_sleeves import StrategySleeveCompositionSpec
@@ -57,7 +57,7 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
         ),
     )
 
-    fields = build_report_evaluation_task_contract_fields(
+    fields = build_evaluation_task_contract_fields(
         portfolio_construction,
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(
             turnover_friction=0.001,
@@ -99,11 +99,11 @@ def test_evaluation_task_contract_fields_use_strategy_portfolio_selection():
         HoldingCostAssumptionsSpec,
     )
     from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
-    from alpha_os.evaluation_report_service import (
-        build_report_evaluation_task_contract_fields,
+    from alpha_os.evaluation_task_contract_fields import (
+        build_evaluation_task_contract_fields,
     )
 
-    fields = build_report_evaluation_task_contract_fields(
+    fields = build_evaluation_task_contract_fields(
         PortfolioConstructionSpec(),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
         execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
@@ -126,11 +126,11 @@ def test_hold_baseline_contract_fields_suppress_active_portfolio_noise():
         PortfolioConstructionSizingSpec,
         PortfolioConstructionSpec,
     )
-    from alpha_os.evaluation_report_service import (
-        build_report_evaluation_task_contract_fields,
+    from alpha_os.evaluation_task_contract_fields import (
+        build_evaluation_task_contract_fields,
     )
 
-    fields = build_report_evaluation_task_contract_fields(
+    fields = build_evaluation_task_contract_fields(
         PortfolioConstructionSpec(
             construction_kind="hold_baseline",
             sizing_policy=PortfolioConstructionSizingSpec(

@@ -30,7 +30,7 @@ from .evaluation_result import (
     EvaluationMetricGroupResult,
     EvaluationFailureFindingGroup,
 )
-from .evaluation_report_service import build_report_evaluation_task_contract_fields
+from .evaluation_task_contract_fields import build_evaluation_task_contract_fields
 from .portfolio_decision import SubjectSet
 from .signal_discovery_strategy_evaluation import (
     build_signal_discovery_strategy_evaluation_metric_group_results,
@@ -660,7 +660,7 @@ class DirectStrategyEvaluationExecutionStrategy:
                 evaluation_task_id=execution_request.evaluation_task_id,
                 construction_kind=portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
-                strategy_contract_fields=build_report_evaluation_task_contract_fields(
+                strategy_contract_fields=build_evaluation_task_contract_fields(
                     portfolio_construction,
                     rebalance_friction_policy=rebalance_friction_policy,
                     execution_cost_assumptions=execution_cost_assumptions,
@@ -782,7 +782,7 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 construction_kind=portfolio_construction.construction_kind,
                 strategy_id=execution_request.context.strategy_id,
                 signal_discovery_id=signal_discovery_id,
-                strategy_contract_fields=build_report_evaluation_task_contract_fields(
+                strategy_contract_fields=build_evaluation_task_contract_fields(
                     portfolio_construction,
                     rebalance_friction_policy=rebalance_friction_policy,
                     execution_cost_assumptions=execution_cost_assumptions,
