@@ -57,32 +57,14 @@ def compress_screening_result_state(
     prediction_values_by_signal_id = {
         item.signal_id: item.prediction_value for item in latest_snapshots
     }
-    strategy_adaptation_state_record = None
-    adaptation_blend = 0.2
     if strategy_id is not None:
         strategy_state = store.get_trading_strategy(strategy_id)
         if strategy_state is None:
             raise ValueError(f"unknown strategy: {strategy_id}")
-        trading_strategy = strategy_state.trading_strategy
-        adaptation_blend = trading_strategy.adaptation_policy.adaptation_blend
-        if not trading_strategy.adaptation_policy.enabled:
-            strategy_id = None
-        else:
-            strategy_adaptation_state_record = store.get_strategy_adaptation_state(strategy_id)
-            if strategy_adaptation_state_record is None:
-                raise ValueError(
-                    f"strategy adaptation state does not exist for strategy: {strategy_id}"
-                )
     belief = build_compressed_belief_from_screening_result(
         screening_result=result,
         prediction_values_by_signal_id=prediction_values_by_signal_id,
         created_at=_utc_now(),
-        strategy_adaptation_state=(
-            None
-            if strategy_adaptation_state_record is None
-            else strategy_adaptation_state_record.state
-        ),
-        adaptation_blend=adaptation_blend,
     )
     return store.upsert_compressed_belief(belief=belief)
 

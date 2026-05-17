@@ -322,32 +322,6 @@ def print_signal_discovery_specs(discoverys) -> None:
         )
 
 
-def print_strategy_adaptation_states(states) -> None:
-    print("alpha-os strategy adaptation states")
-    print(f"  Count:    {len(states)}")
-    for item in states:
-        state = item.state
-        print(
-            f"  {state.strategy_id} "
-            f"signal_discovery={state.signal_discovery_id} "
-            f"report={state.source_evaluation_report_id} "
-            f"screening={state.source_screening_result_id} "
-            f"signals={len(state.signal_reputations)} "
-            f"families={len(state.family_reputations)} "
-            f"updated={state.created_at}"
-        )
-        for family in state.family_reputations:
-            print(
-                f"    family={family.family_id} "
-                f"edge={family.mean_edge_score:.6f} "
-                f"confidence={family.mean_confidence:.6f} "
-                f"stability={family.mean_stability_score:.6f} "
-                f"subjects={family.subject_coverage} "
-                f"members={family.member_count} "
-                f"updates={family.update_count}"
-            )
-
-
 def print_signal_specs(specifications) -> None:
     print("alpha-os signal specs")
     print(f"  Count:    {len(specifications)}")

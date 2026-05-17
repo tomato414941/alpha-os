@@ -20,7 +20,6 @@ from ..cli_output import (
     print_meta_prediction_metrics,
     print_meta_predictions,
     print_observables,
-    print_strategy_adaptation_states,
     print_portfolio_decisions,
     print_signal_specs,
     print_subject_set_backend_checks,
@@ -655,17 +654,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
-
-    show_strategy_adaptation_states = internal_parser("show-strategy-adaptation-states")
-    show_strategy_adaptation_states.add_argument("--db", type=str, default=None)
-    show_strategy_adaptation_states.add_argument("--strategy-id", type=str, default=None)
-    show_strategy_adaptation_states.add_argument(
-        "--signal-discovery-id",
-        dest="signal_discovery_id",
-        type=str,
-        default=None,
-    )
-    show_strategy_adaptation_states.add_argument("--limit", type=int, default=20)
 
     inspect_subject_set = internal_parser("inspect-subject-set")
     inspect_subject_set.add_argument("--db", type=str, default=None)
@@ -4139,31 +4127,6 @@ def _print_evaluation_run_summary(report_state) -> None:
     print(f"  TaskResults: {len(report.task_results)}")
 
 
-def cmd_show_strategy_adaptation_states(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        if args.strategy_id is not None:
-            matched_states = store.list_strategy_adaptation_states(
-                strategy_id=str(args.strategy_id),
-                limit=max(int(args.limit), 1),
-            )
-            if not matched_states:
-                raise ValueError("strategy adaptation state does not exist")
-            states = matched_states
-        elif args.signal_discovery_id is None:
-            states = store.list_strategy_adaptation_states(limit=int(args.limit))
-        else:
-            matched_states = store.list_strategy_adaptation_states(
-                signal_discovery_id=str(args.signal_discovery_id),
-                limit=max(int(args.limit), 1),
-            )
-            if not matched_states:
-                raise ValueError("strategy adaptation state does not exist")
-            states = matched_states
-    print_strategy_adaptation_states(states)
-    return 0
-
-
 def _format_runtime_strategy_summary(
     trading_strategy: TradingStrategySpec,
     *,
@@ -4816,8 +4779,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command == "show-strategy-adaptation-states":
-            return cmd_show_strategy_adaptation_states(args)
         if args.command == "debug-register-signal-candidate-spec":
             return cmd_register_signal_spec(args)
         if args.command == "debug-show-signal-candidate-specs":

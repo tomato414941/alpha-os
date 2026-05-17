@@ -3,9 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .strategy_adaptation import StrategyAdaptationState
-from .strategy_adaptation_weighting import build_strategy_adaptation_signal_weights
-
 
 @dataclass(frozen=True)
 class SignalContribution:
@@ -221,8 +218,6 @@ def synthesize_beliefs(
     screening_result_id: str,
     signal_contributions: tuple[SignalContribution, ...],
     created_at: str,
-    strategy_adaptation_state: StrategyAdaptationState | None = None,
-    adaptation_blend: float = 0.2,
 ) -> BeliefSynthesisResult:
     grouped: dict[tuple[str, str], list[SignalContribution]] = {}
     for item in signal_contributions:
@@ -243,16 +238,8 @@ def synthesize_beliefs(
                 family_contributions,
                 key=lambda row: (-row.confidence, row.signal_id),
             )
-            signal_weights = build_strategy_adaptation_signal_weights(
-                signal_ids=tuple(
-                    item.signal_id for item in ordered_family_contributions
-                ),
-                strategy_adaptation_state=strategy_adaptation_state,
-                blend=adaptation_blend,
-            )
             total_family_weight = sum(
                 item.confidence
-                * signal_weights[item.signal_id].blended_multiplier
                 for item in ordered_family_contributions
             )
             if total_family_weight <= 0.0:
@@ -267,9 +254,7 @@ def synthesize_beliefs(
                         item,
                         (
                             item.confidence
-                            * signal_weights[item.signal_id].blended_multiplier
-                        )
-                        / total_family_weight,
+                        ) / total_family_weight,
                     )
                     for item in ordered_family_contributions
                 ]
@@ -309,11 +294,7 @@ def synthesize_beliefs(
                     ),
                 }
             )
-        cluster_rows = _cluster_family_rows(
-            family_rows,
-            strategy_adaptation_state=strategy_adaptation_state,
-            adaptation_blend=adaptation_blend,
-        )
+        cluster_rows = _cluster_family_rows(family_rows)
         total_cluster_weight = sum(float(row["ensemble_weight"]) for row in cluster_rows)
         if total_cluster_weight <= 0.0:
             total_cluster_weight = float(len(cluster_rows))
@@ -421,9 +402,6 @@ def synthesize_beliefs(
 
 def _cluster_family_rows(
     family_rows: list[dict[str, Any]],
-    *,
-    strategy_adaptation_state: StrategyAdaptationState | None = None,
-    adaptation_blend: float = 0.2,
 ) -> list[dict[str, Any]]:
     clusters: list[dict[str, Any]] = []
     ordered_rows = sorted(

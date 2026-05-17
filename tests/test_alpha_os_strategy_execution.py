@@ -25,12 +25,9 @@ def _build_trading_strategy(
     borrow_fee_bps_per_step: float | None = None,
     turnover_friction: float | None = None,
     no_trade_band: float | None = None,
-    adaptation_enabled: bool = False,
-    adaptation_blend: float = 0.2,
     created_at: str = "2026-04-08T00:00:00Z",
 ):
     from alpha_os.trading_strategy import (
-        AdaptationPolicySpec,
         ExecutionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
@@ -97,10 +94,6 @@ def _build_trading_strategy(
             top_k=top_k,
         ),
         created_at=created_at,
-        adaptation_policy=AdaptationPolicySpec(
-            enabled=adaptation_enabled,
-            adaptation_blend=adaptation_blend,
-        ),
     )
 
 
@@ -126,8 +119,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         borrow_fee_bps_per_step=2.5,
         turnover_friction=0.1,
         no_trade_band=0.02,
-        adaptation_enabled=True,
-        adaptation_blend=0.35,
     )
 
     assert trading_strategy.strategy_id == "strategy:test"
@@ -164,9 +155,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.execution_policy.bid_ask_spread_bps == 3.0
     assert trading_strategy.holding_cost_policy.funding_bps_per_step == 1.5
     assert trading_strategy.holding_cost_policy.borrow_fee_bps_per_step == 2.5
-    assert trading_strategy.adaptation_policy.enabled is True
-    assert trading_strategy.adaptation_policy.adaptation_blend == 0.35
-
 
 def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
     trading_strategy = _build_trading_strategy(

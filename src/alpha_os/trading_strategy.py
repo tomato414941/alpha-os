@@ -89,8 +89,6 @@ def build_trading_strategy_id(
     no_trade_band: float | None = None,
     funding_bps_per_step: float | None = None,
     borrow_fee_bps_per_step: float | None = None,
-    adaptation_enabled: bool | None = None,
-    adaptation_blend: float | None = None,
     sleeve_composition: StrategySleeveCompositionSpec | None = None,
 ) -> str:
     parts: list[tuple[str, str]] = []
@@ -122,11 +120,6 @@ def build_trading_strategy_id(
     add("borrow_fee_bps_per_step", borrow_fee_bps_per_step)
     add("turnover_friction", turnover_friction)
     add("no_trade_band", no_trade_band)
-    add(
-        "adaptation_enabled",
-        None if adaptation_enabled is None else str(adaptation_enabled).lower(),
-    )
-    add("adaptation_blend", adaptation_blend)
     if sleeve_composition is not None:
         add("sleeve_composition", sleeve_composition.stable_payload())
 
@@ -288,37 +281,6 @@ class HoldingCostPolicySpec:
         )
 
 
-@dataclass(frozen=True)
-class AdaptationPolicySpec:
-    enabled: bool
-    adaptation_blend: float
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "enabled": self.enabled,
-            "adaptation_blend": self.adaptation_blend,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "AdaptationPolicySpec":
-        enabled = document.get("enabled", False)
-        if isinstance(enabled, str):
-            normalized_enabled = _normalize_optional(enabled)
-            if normalized_enabled is None:
-                enabled = False
-            elif normalized_enabled == "true":
-                enabled = True
-            elif normalized_enabled == "false":
-                enabled = False
-            else:
-                raise ValueError(f"unsupported adaptation enabled value: {enabled}")
-        adaptation_blend = document.get("adaptation_blend", 0.2)
-        return cls(
-            enabled=bool(enabled),
-            adaptation_blend=float(adaptation_blend),
-        )
-
-
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
     if raw_steps is None:
@@ -422,12 +384,6 @@ class TradingStrategySpec:
     family_mix: str | None
     portfolio: StrategyPortfolioSpec
     created_at: str
-    adaptation_policy: AdaptationPolicySpec = field(
-        default_factory=lambda: AdaptationPolicySpec(
-            enabled=False,
-            adaptation_blend=0.2,
-        )
-    )
 
     def to_document(self) -> dict[str, Any]:
         document = {
@@ -438,7 +394,6 @@ class TradingStrategySpec:
             "position_rule_id": self.position_rule_id,
             "family_mix": self.family_mix,
             "portfolio": self.portfolio.to_document(),
-            "adaptation_policy": self.adaptation_policy.to_document(),
             "created_at": self.created_at,
         }
         return document
@@ -461,9 +416,6 @@ class TradingStrategySpec:
             position_rule_id=str(document.get("position_rule_id", "constant_hold")),
             family_mix=_normalize_optional(
                 None if document.get("family_mix") is None else str(document["family_mix"])
-            ),
-            adaptation_policy=AdaptationPolicySpec.from_document(
-                dict(document.get("adaptation_policy", {}))
             ),
             portfolio=portfolio,
             created_at=str(document["created_at"]),

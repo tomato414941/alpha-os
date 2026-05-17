@@ -183,8 +183,6 @@ def compress_screening_result(
     survivors,
     prediction_values_by_signal_id: dict[str, float] | None = None,
     created_at: str,
-    strategy_adaptation_state=None,
-    adaptation_blend: float = 0.2,
 ) -> CompressedBelief:
     signal_contributions = build_signal_contributions(
         survivors=survivors,
@@ -195,8 +193,6 @@ def compress_screening_result(
         screening_result_id=screening_result_id,
         signal_contributions=signal_contributions,
         created_at=created_at,
-        strategy_adaptation_state=strategy_adaptation_state,
-        adaptation_blend=adaptation_blend,
     )
     return CompressedBelief(
         compressed_belief_id=f"{screening_result_id}:compressed",

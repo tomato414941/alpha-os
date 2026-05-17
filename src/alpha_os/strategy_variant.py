@@ -12,7 +12,6 @@ from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from .trading_strategy import (
-    AdaptationPolicySpec,
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
     RebalanceFrictionPolicySpec,
@@ -205,8 +204,6 @@ def derive_trading_strategy_from_signal_discovery(
         borrow_fee_bps_per_step=float(
             holding_cost_assumptions.borrow_fee_bps_per_step
         ),
-        adaptation_enabled=True,
-        adaptation_blend=0.2,
         sleeve_composition=portfolio_construction.sleeve_composition,
     )
     return TradingStrategySpec(
@@ -256,8 +253,4 @@ def derive_trading_strategy_from_signal_discovery(
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
         ),
         created_at=created_at,
-        adaptation_policy=AdaptationPolicySpec(
-            enabled=True,
-            adaptation_blend=0.2,
-        ),
     )

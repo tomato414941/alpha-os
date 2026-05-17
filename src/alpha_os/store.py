@@ -29,7 +29,6 @@ from .observables import (
     find_observable_definition,
     list_observable_definitions,
 )
-from .strategy_adaptation import StrategyAdaptationState
 from .portfolio_decision import (
     InstrumentSpec,
     ObservationSpec,
@@ -771,21 +770,6 @@ class EvaluationReportState:
         )
 
 
-@dataclass(frozen=True)
-class StrategyAdaptationStateRecord:
-    strategy_id: str
-    signal_discovery_id: str | None
-    state_json: str
-    created_at: str
-
-    @property
-    def state(self) -> StrategyAdaptationState:
-        return StrategyAdaptationState.from_document(
-            strategy_id=self.strategy_id,
-            document=json.loads(self.state_json),
-        )
-
-
 @dataclass(frozen=True, init=False)
 class ValidationSignalResultState:
     run_id: str
@@ -1283,23 +1267,6 @@ def _row_to_evaluation_report(row: sqlite3.Row | None) -> EvaluationReportState 
     )
 
 
-def _row_to_strategy_adaptation_state(
-    row: sqlite3.Row | None,
-) -> StrategyAdaptationStateRecord | None:
-    if row is None:
-        return None
-    return StrategyAdaptationStateRecord(
-        strategy_id=str(row["strategy_id"]),
-        signal_discovery_id=(
-            None
-            if row["signal_discovery_id"] is None or str(row["signal_discovery_id"]) == ""
-            else str(row["signal_discovery_id"])
-        ),
-        state_json=str(row["state_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_screening_result(row: sqlite3.Row | None) -> ScreeningResultState | None:
     if row is None:
         return None
@@ -1698,13 +1665,6 @@ class EvaluationStore:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS strategy_adaptation_states (
-                strategy_id TEXT PRIMARY KEY,
-                signal_discovery_id TEXT,
-                state_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
             CREATE TABLE IF NOT EXISTS validation_signal_results (
                 run_id TEXT NOT NULL,
                 date_range_label TEXT NOT NULL,
@@ -1786,7 +1746,6 @@ class EvaluationStore:
             );
             """
         )
-        self._ensure_strategy_adaptation_state_schema()
         self._seed_builtin_targets()
         self._seed_builtin_observables()
         self._ensure_subject_first_runtime_schema()
@@ -1795,111 +1754,6 @@ class EvaluationStore:
         self._ensure_validation_run_columns()
         self._ensure_validation_decision_result_columns()
         self.conn.commit()
-
-    def _ensure_strategy_adaptation_state_schema(self) -> None:
-        legacy_table_exists = self.conn.execute(
-            """
-            SELECT 1
-            FROM sqlite_master
-            WHERE type = 'table' AND name = 'online_learning_states'
-            """
-        ).fetchone()
-        if legacy_table_exists is not None:
-            legacy_columns = self.conn.execute(
-                "PRAGMA table_info(online_learning_states)"
-            ).fetchall()
-            legacy_column_names = {str(row["name"]) for row in legacy_columns}
-            resolved_strategy_id = (
-                "CASE WHEN strategy_id IS NULL OR strategy_id = '' "
-                "THEN signal_discovery_id ELSE strategy_id END"
-                if "strategy_id" in legacy_column_names
-                else "signal_discovery_id"
-            )
-            with self.conn:
-                self.conn.execute(
-                    f"""
-                    INSERT OR REPLACE INTO strategy_adaptation_states (
-                        strategy_id,
-                        signal_discovery_id,
-                        state_json,
-                        created_at
-                    )
-                    SELECT
-                        {resolved_strategy_id},
-                        NULLIF(signal_discovery_id, ''),
-                        state_json,
-                        created_at
-                    FROM online_learning_states
-                    WHERE {resolved_strategy_id} IS NOT NULL
-                      AND {resolved_strategy_id} != ''
-                    """
-                )
-                self.conn.execute("DROP TABLE online_learning_states")
-        columns = self.conn.execute(
-            "PRAGMA table_info(strategy_adaptation_states)"
-        ).fetchall()
-        if not columns:
-            return
-        column_names = {str(row["name"]) for row in columns}
-        primary_key_columns = [
-            str(row["name"])
-            for row in columns
-            if int(row["pk"]) > 0
-        ]
-        requires_rebuild = primary_key_columns != ["strategy_id"]
-        if not requires_rebuild:
-            self.conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_strategy_adaptation_states_signal_discovery_id
-                ON strategy_adaptation_states(signal_discovery_id)
-                """
-            )
-            return
-        resolved_strategy_id = (
-            "CASE WHEN strategy_id IS NULL OR strategy_id = '' "
-            "THEN signal_discovery_id ELSE strategy_id END"
-            if "strategy_id" in column_names
-            else "signal_discovery_id"
-        )
-        with self.conn:
-            self.conn.execute(
-                """
-                CREATE TABLE strategy_adaptation_states_v2 (
-                    strategy_id TEXT PRIMARY KEY,
-                    signal_discovery_id TEXT,
-                    state_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                )
-                """
-            )
-            self.conn.execute(
-                f"""
-                INSERT OR REPLACE INTO strategy_adaptation_states_v2 (
-                    strategy_id,
-                    signal_discovery_id,
-                    state_json,
-                    created_at
-                )
-                SELECT
-                    {resolved_strategy_id},
-                    NULLIF(signal_discovery_id, ''),
-                    state_json,
-                    created_at
-                FROM strategy_adaptation_states
-                WHERE {resolved_strategy_id} IS NOT NULL
-                  AND {resolved_strategy_id} != ''
-                """
-            )
-            self.conn.execute("DROP TABLE strategy_adaptation_states")
-            self.conn.execute(
-                "ALTER TABLE strategy_adaptation_states_v2 RENAME TO strategy_adaptation_states"
-            )
-            self.conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_strategy_adaptation_states_signal_discovery_id
-                ON strategy_adaptation_states(signal_discovery_id)
-                """
-            )
 
     def _ensure_subject_first_runtime_schema(self) -> None:
         table_columns = {
@@ -3612,35 +3466,6 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def upsert_strategy_adaptation_state(
-        self,
-        *,
-        state: StrategyAdaptationState,
-    ) -> StrategyAdaptationStateRecord:
-        self.ensure_schema()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO strategy_adaptation_states (
-                    strategy_id, signal_discovery_id, state_json, created_at
-                )
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(strategy_id) DO UPDATE SET
-                    signal_discovery_id = excluded.signal_discovery_id,
-                    state_json = excluded.state_json,
-                    created_at = excluded.created_at
-                """,
-                (
-                    state.strategy_id,
-                    state.signal_discovery_id,
-                    json.dumps(state.to_document(), sort_keys=True),
-                    state.created_at,
-                ),
-            )
-        persisted = self.get_strategy_adaptation_state(state.strategy_id)
-        assert persisted is not None
-        return persisted
-
     def get_evaluation_report(
         self,
         evaluation_report_id: str,
@@ -3665,20 +3490,6 @@ class EvaluationStore:
             """
         ).fetchone()
         return _row_to_evaluation_report(row)
-
-    def get_strategy_adaptation_state(
-        self,
-        strategy_id: str,
-    ) -> StrategyAdaptationStateRecord | None:
-        row = self.conn.execute(
-            """
-            SELECT strategy_id, signal_discovery_id, state_json, created_at
-            FROM strategy_adaptation_states
-            WHERE strategy_id = ?
-            """,
-            (strategy_id,),
-        ).fetchone()
-        return _row_to_strategy_adaptation_state(row)
 
     def list_evaluation_reports(
         self,
@@ -3711,37 +3522,6 @@ class EvaluationStore:
                 ),
             ).fetchall()
         return [_row_to_evaluation_report(row) for row in rows if row is not None]
-
-    def list_strategy_adaptation_states(
-        self,
-        *,
-        strategy_id: str | None = None,
-        signal_discovery_id: str | None = None,
-        limit: int = 20,
-    ) -> list[StrategyAdaptationStateRecord]:
-        filters = []
-        params: list[object] = []
-        if strategy_id is not None:
-            filters.append("strategy_id = ?")
-            params.append(strategy_id)
-        if signal_discovery_id is not None:
-            filters.append("signal_discovery_id = ?")
-            params.append(signal_discovery_id)
-        where_clause = ""
-        if filters:
-            where_clause = f"WHERE {' AND '.join(filters)}"
-        params.append(max(int(limit), 1))
-        rows = self.conn.execute(
-            f"""
-            SELECT strategy_id, signal_discovery_id, state_json, created_at
-            FROM strategy_adaptation_states
-            {where_clause}
-            ORDER BY created_at DESC, strategy_id DESC
-            LIMIT ?
-            """,
-            tuple(params),
-        ).fetchall()
-        return [_row_to_strategy_adaptation_state(row) for row in rows if row is not None]
 
     def upsert_validation_signal_result(
         self,
