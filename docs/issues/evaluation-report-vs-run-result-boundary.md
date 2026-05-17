@@ -29,7 +29,7 @@ Current coupling includes:
   `EvaluationReport`
 - baseline/adaptation provenance uses `evaluation_report_id`
 - CLI displays the latest `EvaluationReport`
-- store tables and repository APIs are named around reports
+- store tables and APIs are named around reports
 - contract validation validates an `EvaluationReport`
 
 These uses need an evaluation result artifact, but not necessarily a
@@ -48,7 +48,6 @@ Do not merge result primitives back into report code.
 ## Current Suspects
 
 - `EvaluationReport`
-- `EvaluationReportRepository`
 - `evaluation_reports` store table
 - `show-evaluation-report` CLI command
 - `promotion_decision.py` inputs

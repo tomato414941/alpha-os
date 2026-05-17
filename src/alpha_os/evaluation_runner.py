@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
 from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
@@ -15,9 +16,9 @@ from .evaluation_execution_strategy import (
 from .evaluation_task import EvaluationTask
 from .evaluation_plan import build_evaluation_plan
 from .evaluation_report import EvaluationReport
-from .evaluation_report_repository import EvaluationReportRepository
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
+
 
 @dataclass(frozen=True, init=False)
 class EvaluationRunRequest:
@@ -56,7 +57,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
     store = request.store
     evaluation_spec_state = request.evaluation_spec_state
     evaluation_spec = evaluation_spec_state.definition
-    report_repository = EvaluationReportRepository(store)
     evaluation_plan = build_evaluation_plan(
         store,
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
@@ -85,4 +85,4 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         created_at=timestamp,
         oos_contract_summary=build_oos_contract_summary(evaluation_spec),
     )
-    return report_repository.upsert_report(report=report)
+    return store.upsert_evaluation_report(report=report)
