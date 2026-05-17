@@ -848,7 +848,6 @@ def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
             evaluation_spec_id="macro_eval",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=resolved_tasks,
-            default_target_id="residual_return_5d",
             base_url="https://signal-noise.example",
         )
 

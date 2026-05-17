@@ -31,7 +31,6 @@ from .subject_set_backfill_service import run_subject_set_backfill
 @dataclass(frozen=True)
 class RunEvaluationUseCaseRequest:
     store: EvaluationStore
-    default_target_id: str
     evaluation_spec_id: str
     sizing_method: str | None
     sizing_engine: str | None
@@ -117,7 +116,6 @@ def run_evaluation_use_case(
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
             store=store,
-            default_target_id=request.default_target_id,
             evaluation_spec_state=evaluation_spec_state,
             evaluation_tasks=evaluation_tasks,
             base_url=request.base_url,
@@ -403,7 +401,6 @@ def run_walk_forward_evaluation_use_case(
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
             store=store,
-            default_target_id=request.default_target_id,
             evaluation_spec_state=evaluation_spec_state,
             evaluation_tasks=evaluation_tasks,
             base_url=request.base_url,

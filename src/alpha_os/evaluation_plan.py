@@ -120,7 +120,6 @@ def build_evaluation_plan(
     evaluation_spec_id: str,
     evaluation_spec: EvaluationSpec,
     evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
-    default_target_id: str,
     base_url: str,
 ) -> EvaluationPlan:
     execution_requests: list[StrategyEvaluationRequest] = []
@@ -142,7 +141,12 @@ def build_evaluation_plan(
                     "direct evaluation task requires strategy subject_set: "
                     f"{evaluation_task.evaluation_task_id}"
                 )
-            target_id = trading_strategy.target_id or default_target_id
+            target_id = trading_strategy.target_id
+            if not isinstance(target_id, str) or not target_id:
+                raise ValueError(
+                    "direct evaluation task requires strategy prediction target: "
+                    f"{evaluation_task.evaluation_task_id}"
+                )
             for fold in evaluation_spec.resolved_evaluation_folds:
                 execution_requests.append(
                     _strategy_evaluation_request(

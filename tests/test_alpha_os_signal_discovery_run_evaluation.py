@@ -2587,7 +2587,6 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             evaluation_spec_id="protocol_a",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
-            default_target_id="residual_return_3d",
             base_url="http://example.com",
         )
 
@@ -2670,7 +2669,6 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
             evaluation_spec_id="protocol_nn",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
-            default_target_id="residual_return_3d",
             base_url="http://example.com",
         )
 
@@ -2678,6 +2676,56 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
         request = plan.execution_requests[0]
         assert request.context.strategy_id == "strategy:nn_case"
         assert request.input_refs is None
+    finally:
+        store.close()
+
+
+def test_build_evaluation_plan_rejects_direct_strategy_without_target(tmp_path):
+    from alpha_os.evaluation_task import EvaluationTask
+    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
+    from alpha_os.store import EvaluationStore
+
+    db_path = tmp_path / "runtime.db"
+    store = EvaluationStore(db_path)
+    try:
+        store.ensure_schema()
+        trading_strategy = _build_trading_strategy(
+            strategy_id="strategy:targetless",
+            label="Targetless",
+            subject_set_id="subject_set_a",
+            target_id=None,
+            position_rule_id="constant_hold",
+            created_at="2026-04-05T00:00:00Z",
+        )
+        store.upsert_trading_strategy(trading_strategy=trading_strategy)
+        evaluation_spec = EvaluationSpec(
+            execution_range=EvaluationDateRange(
+                label="eval",
+                start_date="2026-01-01",
+                end_date="2026-03-31",
+            ),
+            metric_group_names=("decision_quality",),
+            metric_windows=(20,),
+        )
+        evaluation_task = EvaluationTask(
+            evaluation_task_id="case:targetless",
+            strategy_id="strategy:targetless",
+            evaluation_spec_id="protocol_targetless",
+            **_evaluation_policy_parts(),
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="direct evaluation task requires strategy prediction target",
+        ):
+            build_evaluation_plan(
+                store,
+                evaluation_spec_id="protocol_targetless",
+                evaluation_spec=evaluation_spec,
+                evaluation_tasks=(evaluation_task,),
+                base_url="http://example.com",
+            )
     finally:
         store.close()
 
@@ -2736,7 +2784,6 @@ def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path)
             evaluation_spec_id="protocol_portfolio_source",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=(evaluation_task,),
-            default_target_id="residual_return_3d",
             base_url="http://example.com",
         )
 
@@ -2828,7 +2875,6 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
             evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
-            default_target_id="residual_return_3d",
             base_url="http://example.com",
         )
 

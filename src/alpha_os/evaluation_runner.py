@@ -38,7 +38,6 @@ class EvaluationReportWriter(Protocol):
 @dataclass(frozen=True, init=False)
 class EvaluationRunRequest:
     store: EvaluationStore
-    default_target_id: str
     evaluation_spec_state: object
     evaluation_tasks: tuple[EvaluationTask, ...]
     base_url: str
@@ -50,7 +49,6 @@ class EvaluationRunRequest:
         self,
         *,
         store: EvaluationStore,
-        default_target_id: str,
         evaluation_spec_state: object,
         evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
         base_url: str,
@@ -61,7 +59,6 @@ class EvaluationRunRequest:
         if evaluation_tasks is None:
             raise ValueError("evaluation run request requires evaluation_tasks")
         object.__setattr__(self, "store", store)
-        object.__setattr__(self, "default_target_id", default_target_id)
         object.__setattr__(self, "evaluation_spec_state", evaluation_spec_state)
         object.__setattr__(self, "evaluation_tasks", evaluation_tasks)
         object.__setattr__(self, "base_url", base_url)
@@ -100,7 +97,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         evaluation_spec=evaluation_spec,
         evaluation_tasks=request.evaluation_tasks,
-        default_target_id=request.default_target_id,
         base_url=request.base_url,
     )
     task_results = []

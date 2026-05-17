@@ -564,7 +564,6 @@ def test_evaluation_report_contract_validation_passes_for_persisted_current_path
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
             store=store,
-            default_target_id="residual_return_3d",
             evaluation_spec_state=evaluation_spec_state,
             evaluation_tasks=(_build_direct_evaluation_task(),),
             base_url="http://example.com",
@@ -748,7 +747,6 @@ def test_evaluate_evaluation_spec_state_rejects_incomplete_universe_policy_for_d
             evaluate_evaluation_spec_state(
                     EvaluationRunRequest(
                         store=store,
-                        default_target_id="residual_return_3d",
                         evaluation_spec_state=evaluation_spec_state,
                         evaluation_tasks=(
                             _build_direct_evaluation_task_for_strategy("strategy:multi"),

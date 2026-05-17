@@ -584,7 +584,6 @@ def test_evaluation_runner_persists_direct_selected_trace_without_portfolio_deci
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
             store=store,
-            default_target_id="residual_return_3d",
             evaluation_spec_state=evaluation_spec_state,
             evaluation_tasks=(_build_direct_evaluation_task(),),
             base_url="http://example.com",

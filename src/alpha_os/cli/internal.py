@@ -3647,7 +3647,6 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
         result = run_evaluation_use_case(
             RunEvaluationUseCaseRequest(
                 store=store,
-                default_target_id=cfg.target_id,
                 evaluation_spec_id=str(args.evaluation_spec_id),
                 sizing_method=(
                     None if args.sizing_method is None else str(args.sizing_method)
