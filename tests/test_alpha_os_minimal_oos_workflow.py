@@ -3,7 +3,6 @@ from pathlib import Path
 
 def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys):
     from alpha_os.cli import main
-    from alpha_os.promotion_decision import PromotionRule, decide_promotion
     from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "alpha-os.db"
@@ -96,25 +95,5 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert candidate_result.strategy_contract_fields["subject_set"] == "minimal_oos_pair"
         assert candidate_result.strategy_contract_fields["target_id"] == "residual_return_1d"
         assert candidate_result.strategy_contract_fields["fee_bps"] == 0.0
-
-        promotion_decision = decide_promotion(
-            evaluation_report=report,
-            rule=PromotionRule(
-                candidate_task_id="minimal_oos_candidate_equal_weight_hold_case",
-                baseline_task_id="minimal_oos_baseline_equal_weight_hold_case",
-            ),
-            created_at="2026-04-30T00:00:00Z",
-        )
-        assert promotion_decision.status == "inconclusive"
-        assert promotion_decision.metrics["baseline_task_id"] == (
-            "minimal_oos_baseline_equal_weight_hold_case"
-        )
-        assert (
-            promotion_decision.reasons
-            == (
-                "promotion requires OOS contract enforcement=strict",
-                "promotion requires OOS rigor level",
-            )
-        )
     finally:
         store.close()

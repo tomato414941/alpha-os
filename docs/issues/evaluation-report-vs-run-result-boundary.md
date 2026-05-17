@@ -21,12 +21,10 @@ This looks closer to an evaluation run result artifact than to a report.
 ## Risk
 
 The report name can make downstream code treat persistence, display,
-promotion, and audit concerns as one concept.
+and audit concerns as one concept.
 
 Current coupling includes:
 
-- promotion decisions read candidate and baseline task results from an
-  `EvaluationReport`
 - store tables and APIs are named around reports
 - contract validation validates an `EvaluationReport`
 
@@ -47,13 +45,12 @@ Do not merge result primitives back into report code.
 
 - `EvaluationReport`
 - `evaluation_reports` store table
-- `promotion_decision.py` inputs
 
 ## Desired Direction
 
 Clarify whether the persisted artifact is:
 
-- a run result used by promotion/baseline workflows, or
+- a run result used by evaluation workflows, or
 - a human-facing report built from run results.
 
 If it is a run result, prefer naming and APIs that say evaluation run/result.

@@ -63,8 +63,7 @@ uv run python -m alpha_os run-walk-forward \
 ```
 
 The checked-in test `tests/test_alpha_os_minimal_oos_workflow.py` verifies that
-this path preserves fixed train/evaluation ranges, report contract fields, and
-candidate-vs-baseline promotion inputs.
+this path preserves fixed train/evaluation ranges and report contract fields.
 
 ## Minimal Fixed-State OOS Golden Path
 
