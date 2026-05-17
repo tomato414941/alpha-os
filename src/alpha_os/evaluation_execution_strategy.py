@@ -30,7 +30,6 @@ from .evaluation_result import (
     EvaluationMetricGroupResult,
     EvaluationFailureFindingGroup,
 )
-from .evaluation_report_repository import PendingEvaluationDecisionTrace
 from .evaluation_report_service import build_report_evaluation_task_contract_fields
 from .portfolio_decision import SubjectSet
 from .signal_discovery_strategy_evaluation import (
@@ -91,7 +90,6 @@ class EvaluationExecutionContext:
 @dataclass(frozen=True)
 class EvaluationExecutionResult:
     task_result: EvaluationTaskResult
-    pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -204,25 +202,6 @@ def resolve_prepared_strategy_survivor_snapshots(
             signal_ids=survivor_signal_ids
         )
     return survivor_snapshots
-
-
-def _subject_metadata_by_subject(
-    subject_set: SubjectSet | None,
-) -> dict[str, dict[str, str]]:
-    if subject_set is None:
-        return {}
-    metadata: dict[str, dict[str, str]] = {}
-    for subject_id in subject_set.subject_ids:
-        instrument = subject_set.instrument_for_subject(subject_id)
-        if instrument is None:
-            metadata[subject_id] = {}
-            continue
-        values = {
-            "asset_class": instrument.asset_class,
-            "cluster": instrument.cluster,
-        }
-        metadata[subject_id] = {key: value for key, value in values.items() if value is not None}
-    return metadata
 
 
 def _portfolio_construction_for_strategy(
@@ -676,16 +655,6 @@ class DirectStrategyEvaluationExecutionStrategy:
         )
         direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
         subject_set = None if subject_set_state is None else subject_set_state.definition
-        pending_traces = tuple(
-            PendingEvaluationDecisionTrace(
-                evaluation_task_id=execution_request.evaluation_task_id,
-                evaluation_fold_label=execution_request.fold_label,
-                evaluation_range_label=trace_result.range_label,
-                result=trace_result.result,
-                subject_metadata_by_subject=_subject_metadata_by_subject(subject_set),
-            )
-            for trace_result in getattr(direct_evaluation, "selected_trace_results", ())
-        )
         return EvaluationExecutionResult(
             task_result=EvaluationTaskResult(
                 evaluation_task_id=execution_request.evaluation_task_id,
@@ -736,7 +705,6 @@ class DirectStrategyEvaluationExecutionStrategy:
                     ),
                 },
             ),
-            pending_decision_traces=pending_traces,
         )
 
 
@@ -773,7 +741,6 @@ class PreparedStrategyEvaluationExecutionStrategy:
             )
         failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
         subject_set = None
-        pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...] = ()
         decision_metric_group_names = tuple(
             item
             for item in execution_request.metric_group_names
@@ -784,7 +751,6 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 subject_set,
                 metric_group_result_map,
                 failure_finding_groups,
-                pending_decision_traces,
             ) = self._run_decision_evaluation_results(
                 execution_request=execution_request,
                 context=context,
@@ -854,7 +820,6 @@ class PreparedStrategyEvaluationExecutionStrategy:
                 failure_finding_groups=failure_finding_groups,
                 artifact_refs=artifact_refs,
             ),
-            pending_decision_traces=pending_decision_traces,
         )
 
     def _run_decision_evaluation_results(
@@ -941,23 +906,11 @@ class PreparedStrategyEvaluationExecutionStrategy:
             top_k=trading_strategy.portfolio.top_k,
         )
         native_metric_group_results, failure_finding_groups = native_evaluation
-        subject_metadata_by_subject = _subject_metadata_by_subject(subject_set)
-        pending_decision_traces = tuple(
-            PendingEvaluationDecisionTrace(
-                evaluation_task_id=execution_request.evaluation_task_id,
-                evaluation_fold_label=execution_request.fold_label,
-                evaluation_range_label=trace_result.range_label,
-                result=trace_result.result,
-                subject_metadata_by_subject=subject_metadata_by_subject,
-            )
-            for trace_result in getattr(native_evaluation, "selected_trace_results", ())
-        )
         metric_group_result_map.update(native_metric_group_results)
         return (
             subject_set,
             metric_group_result_map,
             failure_finding_groups,
-            pending_decision_traces,
         )
 
 

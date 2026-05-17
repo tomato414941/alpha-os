@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 
 _REQUIRED_COMPARISON_METRICS = (
@@ -39,22 +38,14 @@ def _assert_numeric_metrics(metrics: dict[str, object], names: tuple[str, ...]) 
         assert isinstance(metrics[name], (int, float))
 
 
-def _trace_period(trace_steps) -> tuple[str, str]:
-    assert trace_steps
-    dates = tuple(item.step_as_of for item in trace_steps)
-    return min(dates), max(dates)
-
-
 def _assert_common_strategy_comparison_contract(
     candidate,
     comparison_target,
     *,
-    candidate_trace_steps,
-    comparison_target_trace_steps,
     require_same_subject_set: bool = False,
 ) -> None:
-    assert _trace_period(candidate_trace_steps) == _trace_period(
-        comparison_target_trace_steps
+    assert candidate.artifact_refs.get("evaluation_range_labels") == (
+        comparison_target.artifact_refs.get("evaluation_range_labels")
     )
     for field_name in _COMPARISON_COST_FIELDS:
         assert candidate.strategy_contract_fields[field_name] == (
@@ -332,8 +323,6 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
                 baseline.strategy_contract_fields[key]
             )
 
-        trace_steps_by_task_id = {}
-
         for task_result in (candidate, baseline):
             decision_quality = _metric_group_metrics(
                 task_result,
@@ -353,29 +342,9 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
                 robustness,
                 ("worst_decision_net_return",),
             )
-            trace_steps = store.list_evaluation_decision_trace_steps(
-                evaluation_report_id=report.evaluation_report_id,
-                evaluation_task_id=task_result.evaluation_task_id,
-                evaluation_fold_label="crypto_regime_train_to_test",
-                evaluation_range_label="crypto_regime_test",
-                limit=1000,
-            )
-            assert trace_steps
-            assert {item.target_id for item in trace_steps} == {"residual_return_1d"}
-            assert {item.subject_set_id for item in trace_steps} == {
-                "crypto_regime_pair"
-            }
-            assert min(item.step_as_of for item in trace_steps) >= "2026-02-01"
-            assert max(item.step_as_of for item in trace_steps) <= "2026-03-02"
-            trace_steps_by_task_id[task_result.evaluation_task_id] = trace_steps
-
         _assert_common_strategy_comparison_contract(
             candidate,
             baseline,
-            candidate_trace_steps=trace_steps_by_task_id[candidate.evaluation_task_id],
-            comparison_target_trace_steps=trace_steps_by_task_id[
-                baseline.evaluation_task_id
-            ],
             require_same_subject_set=True,
         )
     finally:
@@ -532,14 +501,10 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
             ),
         ),
     )
-    trace_steps = (SimpleNamespace(step_as_of="2026-01-01"),)
-
     try:
         _assert_common_strategy_comparison_contract(
             candidate,
             comparison_target,
-            candidate_trace_steps=trace_steps,
-            comparison_target_trace_steps=trace_steps,
         )
     except AssertionError:
         return

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
-
 from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
 from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
@@ -17,23 +15,9 @@ from .evaluation_execution_strategy import (
 from .evaluation_task import EvaluationTask
 from .evaluation_plan import build_evaluation_plan
 from .evaluation_report import EvaluationReport
-from .evaluation_report_repository import (
-    EvaluationReportRepository,
-    PendingEvaluationDecisionTrace,
-)
+from .evaluation_report_repository import EvaluationReportRepository
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
-
-
-class EvaluationReportWriter(Protocol):
-    def upsert_report_with_traces(
-        self,
-        *,
-        report: EvaluationReport,
-        pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...],
-    ):
-        ...
-
 
 @dataclass(frozen=True, init=False)
 class EvaluationRunRequest:
@@ -43,7 +27,6 @@ class EvaluationRunRequest:
     base_url: str
     feature_plane_repository: FeaturePlaneRepository | None = None
     evaluation_input_repository: EvaluationInputRepository | None = None
-    report_writer: EvaluationReportWriter | None = None
 
     def __init__(
         self,
@@ -54,7 +37,6 @@ class EvaluationRunRequest:
         base_url: str,
         feature_plane_repository: FeaturePlaneRepository | None = None,
         evaluation_input_repository: EvaluationInputRepository | None = None,
-        report_writer: EvaluationReportWriter | None = None,
     ) -> None:
         if evaluation_tasks is None:
             raise ValueError("evaluation run request requires evaluation_tasks")
@@ -68,30 +50,13 @@ class EvaluationRunRequest:
             "evaluation_input_repository",
             evaluation_input_repository,
         )
-        object.__setattr__(self, "report_writer", report_writer)
-
-
-def persist_evaluation_report_with_traces(
-    report_writer: EvaluationReportWriter,
-    *,
-    report: EvaluationReport,
-    pending_decision_traces: tuple[PendingEvaluationDecisionTrace, ...],
-):
-    return report_writer.upsert_report_with_traces(
-        report=report,
-        pending_decision_traces=pending_decision_traces,
-    )
 
 
 def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
     store = request.store
     evaluation_spec_state = request.evaluation_spec_state
     evaluation_spec = evaluation_spec_state.definition
-    report_writer = (
-        EvaluationReportRepository(store)
-        if request.report_writer is None
-        else request.report_writer
-    )
+    report_repository = EvaluationReportRepository(store)
     evaluation_plan = build_evaluation_plan(
         store,
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
@@ -100,7 +65,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         base_url=request.base_url,
     )
     task_results = []
-    pending_decision_traces: list[PendingEvaluationDecisionTrace] = []
     timestamp = _utc_now()
     execution_context = EvaluationExecutionContext(
         store=store,
@@ -114,7 +78,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
             context=execution_context,
         )
         task_results.append(execution_result.task_result)
-        pending_decision_traces.extend(execution_result.pending_decision_traces)
     report = EvaluationReport(
         evaluation_report_id=f"{evaluation_spec_state.evaluation_spec_id}:{timestamp}",
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
@@ -122,8 +85,4 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         created_at=timestamp,
         oos_contract_summary=build_oos_contract_summary(evaluation_spec),
     )
-    return persist_evaluation_report_with_traces(
-        report_writer,
-        report=report,
-        pending_decision_traces=tuple(pending_decision_traces),
-    )
+    return report_repository.upsert_report(report=report)

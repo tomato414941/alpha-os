@@ -77,13 +77,11 @@ def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
         "run-evaluation",
         "run-walk-forward",
         "show-report",
-        "show-diagnostics",
     }
     hidden_commands = {
         "list-runtime-manifests",
         "run-walk-forward-evaluation",
         "show-evaluation-report",
-        "show-evaluation-diagnostics",
         "run-diagnostic-evaluation",
         "inspect-runtime-resources",
         "debug-status",
@@ -107,7 +105,6 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
     assert "apply-manifest" in captured
     assert "run-walk-forward" in captured
     assert "show-report" in captured
-    assert "show-diagnostics" in captured
     assert "run-walk-forward-evaluation" not in captured
     assert "run-diagnostic-evaluation" not in captured
     assert "debug-apply-evaluation" not in captured
@@ -150,10 +147,6 @@ def test_cli_public_aliases_parse_to_existing_arguments():
     assert report_args.command == "show-report"
     assert report_args.db == "runtime.db"
 
-    diagnostics_args = parser.parse_args(["show-diagnostics", "--db", "runtime.db"])
-    assert diagnostics_args.command == "show-diagnostics"
-    assert diagnostics_args.db == "runtime.db"
-
 
 def test_cli_legacy_public_commands_remain_parseable():
     parser = build_cli_parser()
@@ -175,11 +168,6 @@ def test_cli_legacy_public_commands_remain_parseable():
 
     report_args = parser.parse_args(["show-evaluation-report", "--db", "runtime.db"])
     assert report_args.command == "show-evaluation-report"
-
-    diagnostics_args = parser.parse_args(
-        ["show-evaluation-diagnostics", "--db", "runtime.db"]
-    )
-    assert diagnostics_args.command == "show-evaluation-diagnostics"
 
 
 def test_cli_entrypoint_preserves_value_error_exit_contract(monkeypatch):

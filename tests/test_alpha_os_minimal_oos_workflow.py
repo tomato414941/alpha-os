@@ -54,11 +54,6 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
     assert "range_non_overlap=pass" in report_output
     assert "evaluation_after_execution=pass" in report_output
 
-    assert main(["show-evaluation-diagnostics", "--db", str(db_path)]) == 0
-    diagnostics_output = capsys.readouterr().out
-    assert "alpha-os evaluation diagnostics" in diagnostics_output
-    assert "Range: minimal_test" in diagnostics_output
-
     store = EvaluationStore(db_path)
     try:
         evaluation_spec_state = store.get_evaluation_spec("minimal_oos_eval")
@@ -113,11 +108,6 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert candidate_result.strategy_contract_fields["subject_set"] == "minimal_oos_pair"
         assert candidate_result.strategy_contract_fields["target_id"] == "residual_return_1d"
         assert candidate_result.strategy_contract_fields["fee_bps"] == 0.0
-
-        trace_steps = store.list_evaluation_decision_trace_steps(
-            evaluation_report_id=report.evaluation_report_id
-        )
-        assert trace_steps
 
         promotion_decision = decide_promotion(
             evaluation_report=report,

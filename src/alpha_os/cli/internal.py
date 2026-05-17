@@ -8,9 +8,7 @@ from typing import Iterator
 from pathlib import Path
 
 from ..cli_output import (
-    format_evaluation_diagnostics,
     print_evaluation_tasks,
-    print_evaluation_diagnostics,
     print_evaluation_specs,
     print_evaluation_report,
     format_snapshot_replay_artifacts,
@@ -55,9 +53,6 @@ from ..portfolio_construction_config import (
 from ..evaluation_report_service import (
     build_report_evaluation_task_contract_fields,
     resolve_report_strategy_context,
-)
-from ..evaluation_decision_trace_diagnostics import (
-    build_evaluation_decision_trace_diagnostics,
 )
 from ..evaluation_task_resolution import (
     EvaluationTaskResolutionPlan as _EvaluationTaskResolutionPlan,
@@ -288,7 +283,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         "run-evaluation",
         "run-walk-forward",
         "show-report",
-        "show-diagnostics",
         "list-manifests",
     )
     parser = argparse.ArgumentParser(
@@ -676,26 +670,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     show_evaluation_report.add_argument("--db", type=str, default=None)
     show_evaluation_report.add_argument("--report-id", type=str, default=None)
-
-    show_evaluation_diagnostics = sub.add_parser(
-        "show-evaluation-diagnostics",
-        aliases=["show-diagnostics"],
-        help="Show diagnostics from persisted evaluation decision traces",
-    )
-    show_evaluation_diagnostics.add_argument("--db", type=str, default=None)
-    show_evaluation_diagnostics.add_argument("--report-id", type=str, default=None)
-    show_evaluation_diagnostics.add_argument(
-        "--range-label",
-        action="append",
-        default=None,
-    )
-    show_evaluation_diagnostics.add_argument(
-        "--variant",
-        type=str,
-        default="selected",
-    )
-    show_evaluation_diagnostics.add_argument("--top-n", type=int, default=8)
-    show_evaluation_diagnostics.add_argument("--output", type=str, default=None)
 
     rebuild_strategy_adaptation_state = internal_parser("rebuild-strategy-adaptation-state")
     rebuild_strategy_adaptation_state.add_argument("--db", type=str, default=None)
@@ -4262,34 +4236,6 @@ def cmd_show_evaluation_report(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_show_evaluation_diagnostics(args: argparse.Namespace) -> int:
-    range_labels = (
-        None if args.range_label is None else tuple(str(item) for item in args.range_label)
-    )
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        report_state = _resolve_evaluation_report(store, args.report_id)
-        if report_state is None:
-            raise ValueError("evaluation report does not exist")
-        diagnostics = build_evaluation_decision_trace_diagnostics(
-            store,
-            evaluation_report_id=report_state.evaluation_report_id,
-            range_labels=range_labels,
-            variant=str(args.variant),
-            top_n=int(args.top_n),
-        )
-    if args.output is not None:
-        path = Path(args.output)
-        path.write_text(
-            format_evaluation_diagnostics(diagnostics) + "\n",
-            encoding="utf-8",
-        )
-        print(f"Wrote evaluation diagnostics: {path}")
-        return 0
-    print_evaluation_diagnostics(diagnostics)
-    return 0
-
-
 def _resolve_strategy_adaptation_task_result(
     *,
     report_state,
@@ -5043,8 +4989,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_walk_forward_evaluation(args)
         if args.command in {"show-evaluation-report", "show-report"}:
             return cmd_show_evaluation_report(args)
-        if args.command in {"show-evaluation-diagnostics", "show-diagnostics"}:
-            return cmd_show_evaluation_diagnostics(args)
         if args.command == "rebuild-strategy-adaptation-state":
             return cmd_rebuild_strategy_adaptation_state(args)
         if args.command == "show-strategy-adaptation-states":

@@ -22,8 +22,6 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "run-walk-forward": _legacy.cmd_run_walk_forward_evaluation,
     "show-evaluation-report": _legacy.cmd_show_evaluation_report,
     "show-report": _legacy.cmd_show_evaluation_report,
-    "show-evaluation-diagnostics": _legacy.cmd_show_evaluation_diagnostics,
-    "show-diagnostics": _legacy.cmd_show_evaluation_diagnostics,
     "debug-show-evaluations": _legacy.cmd_show_evaluations,
     "rebuild-strategy-adaptation-state": _legacy.cmd_rebuild_strategy_adaptation_state,
     "show-strategy-adaptation-states": _legacy.cmd_show_strategy_adaptation_states,
