@@ -25,7 +25,6 @@ from ..cli_output import (
     print_subject_set_backend_checks,
     print_subject_sets,
     print_target_summaries,
-    print_validation_results,
 )
 from ..evaluation_task import (
     EvaluationTask,
@@ -57,7 +56,6 @@ from ..strategy_variant import (
     derive_trading_strategy_from_signal_discovery as _derive_trading_strategy_from_signal_discovery,
     strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
-from ..subject_set_facts import format_subject_set_facts
 from ..observables import ObservableDefinition
 from ..evaluation_runtime import (
     apply_evaluation,
@@ -143,13 +141,6 @@ from ..trading_strategy import (
 )
 from ..universe_contract import validate_subject_set_universe_contract
 from ..signal_client import build_signal_client
-from ..validation_service import run_validation, run_validation_for_strategies
-from ..validation_spec import (
-    ValidationSpec,
-    default_validation_spec,
-    load_validation_spec,
-    write_validation_spec,
-)
 
 
 @dataclass(frozen=True)
@@ -733,83 +724,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_decisions.add_argument("--aggregation-kind", type=str, default=None)
     show_decisions.add_argument("--limit", type=int, default=10)
     show_decisions.add_argument("--details", action="store_true")
-
-    validate_subject_set = internal_parser("debug-validate-subject-set")
-    validate_subject_set.add_argument("--db", type=str, default=None)
-    validate_subject_set.add_argument(
-        "--subject-set-id",
-        type=str,
-        action="append",
-        default=[],
-        help="Repeat to include multiple subject sets when no explicit spec is provided",
-    )
-    validate_subject_set.add_argument(
-        "--spec",
-        type=str,
-        default=None,
-        help="Optional explicit validation spec JSON",
-    )
-    validate_subject_set.add_argument(
-        "--out-spec",
-        type=str,
-        default=None,
-        help="Optional path to write the generated validation spec JSON",
-    )
-    validate_subject_set.add_argument("--base-url", type=str, default=None)
-    validate_subject_set.add_argument(
-        "--details",
-        action="store_true",
-        help="Print raw validation results before the summary",
-    )
-
-    validate_strategy = internal_parser("validate-strategy")
-    validate_strategy.add_argument("--db", type=str, default=None)
-    validate_strategy.add_argument(
-        "--strategy-id",
-        type=str,
-        action="append",
-        default=[],
-        required=True,
-        help="Repeat to include multiple strategies in the validation scope",
-    )
-    validate_strategy.add_argument(
-        "--spec",
-        type=str,
-        default=None,
-        help="Optional explicit validation spec JSON; subject sets are resolved from strategies",
-    )
-    validate_strategy.add_argument(
-        "--out-spec",
-        type=str,
-        default=None,
-        help="Optional path to write the generated validation spec JSON",
-    )
-    validate_strategy.add_argument("--base-url", type=str, default=None)
-    validate_strategy.add_argument(
-        "--details",
-        action="store_true",
-        help="Print raw validation results before the summary",
-    )
-
-    write_validation = internal_parser("debug-write-validation-spec")
-    write_validation.add_argument("--out", type=str, required=True)
-    write_validation.add_argument(
-        "--subject-set-id",
-        type=str,
-        action="append",
-        required=True,
-        help="Repeat to include multiple subject sets in the validation spec",
-    )
-    write_validation.add_argument("--base-url", type=str, default=None)
-
-    run_validation_cmd = internal_parser("debug-run-validation")
-    run_validation_cmd.add_argument("--db", type=str, default=None)
-    run_validation_cmd.add_argument("--spec", type=str, required=True)
-    run_validation_cmd.add_argument("--base-url", type=str, default=None)
-
-    show_validation = internal_parser("debug-show-validation")
-    show_validation.add_argument("--db", type=str, default=None)
-    show_validation.add_argument("--run-id", type=str, default=None)
 
     sub._choices_actions = [
         action for action in sub._choices_actions if action.dest in public_commands
@@ -1739,17 +1653,6 @@ def _list_portfolio_decisions_for_subject_set(
     allowed_subject_ids = set(subject_set.subject_ids)
     filtered = [item for item in scanned if item.subject_id in allowed_subject_ids]
     return filtered[:max_limit]
-
-
-def _resolve_validation_run(store: EvaluationStore, run_id: str | None):
-    run = (
-        store.get_latest_validation_run()
-        if run_id is None
-        else store.get_validation_run(str(run_id))
-    )
-    if run is None:
-        raise ValueError("validation run does not exist")
-    return run
 
 
 def _resolve_evaluation_input(
@@ -4518,207 +4421,6 @@ def cmd_show_portfolio_decisions(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_debug_write_validation_spec(args: argparse.Namespace) -> int:
-    spec = default_validation_spec(
-        subject_set_ids=tuple(str(item) for item in args.subject_set_id),
-    )
-    if args.base_url is not None:
-        spec = spec.__class__(
-            signal_ids=spec.signal_ids,
-            target_ids=spec.target_ids,
-            date_ranges=spec.date_ranges,
-            metric_windows=spec.metric_windows,
-            aggregation_kinds=spec.aggregation_kinds,
-            subject_set_ids=spec.subject_set_ids,
-            base_url=str(args.base_url),
-        )
-    path = write_validation_spec(args.out, spec)
-    print(f"Wrote validation spec: {path}")
-    return 0
-
-
-def cmd_debug_run_validation(args: argparse.Namespace) -> int:
-    spec = load_validation_spec(args.spec)
-    if args.base_url is not None:
-        spec = spec.__class__(
-            signal_ids=spec.signal_ids,
-            target_ids=spec.target_ids,
-            date_ranges=spec.date_ranges,
-            metric_windows=spec.metric_windows,
-            aggregation_kinds=spec.aggregation_kinds,
-            subject_set_ids=spec.subject_set_ids,
-            base_url=str(args.base_url),
-        )
-    with _runtime_store(args.db) as (_cfg, store):
-        result = run_validation(store, spec=spec)
-    print("Validation complete")
-    print(f"  Run:      {result.run_id}")
-    print(f"  Signal:   {result.signal_result_count}")
-    print(f"  Meta:     {result.meta_result_count}")
-    print(f"  Decision: {result.decision_result_count}")
-    return 0
-
-
-def cmd_debug_show_validation(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        run = _resolve_validation_run(store, args.run_id)
-        signal_results = store.list_validation_signal_results(run_id=run.run_id)
-        meta_results = store.list_validation_meta_results(run_id=run.run_id)
-        decision_results = store.list_validation_decision_results(run_id=run.run_id)
-        subject_set_facts_by_id = _resolve_validation_subject_set_facts_by_id(
-            store,
-            run=run,
-            decision_results=decision_results,
-        )
-    print_validation_results(
-        run,
-        signal_results,
-        meta_results,
-        decision_results,
-        subject_set_facts_by_id=subject_set_facts_by_id,
-    )
-    return 0
-
-
-def _spec_with_validation_scope(
-    spec: ValidationSpec,
-    *,
-    subject_set_ids: tuple[str, ...],
-    base_url: str | None,
-) -> ValidationSpec:
-    return spec.__class__(
-        signal_ids=spec.signal_ids,
-        target_ids=spec.target_ids,
-        date_ranges=spec.date_ranges,
-        metric_windows=spec.metric_windows,
-        aggregation_kinds=spec.aggregation_kinds,
-        subject_set_ids=subject_set_ids,
-        base_url=spec.base_url if base_url is None else str(base_url),
-    )
-
-
-def _resolve_validation_subject_set_facts_by_id(
-    store: EvaluationStore,
-    *,
-    run,
-    decision_results,
-) -> dict[str, str]:
-    subject_set_ids: set[str] = set()
-    try:
-        spec_document = json.loads(run.spec_json)
-    except json.JSONDecodeError:
-        spec_document = {}
-    subject_set_documents = spec_document.get("subject_set_ids")
-    if isinstance(subject_set_documents, list):
-        for item in subject_set_documents:
-            if item is not None:
-                subject_set_ids.add(str(item))
-    for item in decision_results:
-        if item.subject_set_id is not None:
-            subject_set_ids.add(item.subject_set_id)
-    facts_by_id: dict[str, str] = {}
-    for subject_set_id in sorted(subject_set_ids):
-        state = store.get_subject_set(subject_set_id)
-        if state is None:
-            continue
-        facts_by_id[subject_set_id] = format_subject_set_facts(state.definition)
-    return facts_by_id
-
-
-def cmd_validate_subject_set(args: argparse.Namespace) -> int:
-    if args.spec is None:
-        subject_set_ids = tuple(str(item) for item in args.subject_set_id)
-        if not subject_set_ids:
-            raise ValueError(
-                "debug-validate-subject-set requires --subject-set-id when --spec is omitted"
-            )
-        spec = default_validation_spec(subject_set_ids=subject_set_ids)
-    else:
-        spec = load_validation_spec(args.spec)
-    spec = _spec_with_validation_scope(
-        spec,
-        subject_set_ids=spec.subject_set_ids,
-        base_url=args.base_url,
-    )
-    if args.out_spec is not None:
-        path = write_validation_spec(args.out_spec, spec)
-        print(f"Wrote validation spec: {path}")
-    with _runtime_store(args.db) as (_cfg, store):
-        result = run_validation(store, spec=spec)
-        run = store.get_validation_run(result.run_id)
-        if run is None:
-            raise RuntimeError(f"validation run disappeared: {result.run_id}")
-        signal_results = store.list_validation_signal_results(run_id=run.run_id)
-        meta_results = store.list_validation_meta_results(run_id=run.run_id)
-        decision_results = store.list_validation_decision_results(run_id=run.run_id)
-        subject_set_facts_by_id = _resolve_validation_subject_set_facts_by_id(
-            store,
-            run=run,
-            decision_results=decision_results,
-        )
-    print("Validation complete")
-    print(f"  Run:      {result.run_id}")
-    print(f"  Signal:   {result.signal_result_count}")
-    print(f"  Meta:     {result.meta_result_count}")
-    print(f"  Decision: {result.decision_result_count}")
-    if bool(args.details):
-        print_validation_results(
-            run,
-            signal_results,
-            meta_results,
-            decision_results,
-            subject_set_facts_by_id=subject_set_facts_by_id,
-        )
-    return 0
-
-
-def cmd_validate_strategy(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        if args.strategy_id:
-            strategy_ids = tuple(str(item) for item in args.strategy_id)
-        else:
-            strategy_ids = ()
-        if args.spec is None and not strategy_ids:
-            raise ValueError("validate-strategy requires --strategy-id when --spec is omitted")
-        base_spec = None if args.spec is None else load_validation_spec(args.spec)
-        plan, result = run_validation_for_strategies(
-            store,
-            strategy_ids=strategy_ids,
-            spec=base_spec,
-            base_url=args.base_url,
-        )
-        spec = plan.spec
-        if args.out_spec is not None:
-            path = write_validation_spec(args.out_spec, spec)
-            print(f"Wrote validation spec: {path}")
-        run = store.get_validation_run(result.run_id)
-        if run is None:
-            raise RuntimeError(f"validation run disappeared: {result.run_id}")
-        signal_results = store.list_validation_signal_results(run_id=run.run_id)
-        meta_results = store.list_validation_meta_results(run_id=run.run_id)
-        decision_results = store.list_validation_decision_results(run_id=run.run_id)
-        subject_set_facts_by_id = _resolve_validation_subject_set_facts_by_id(
-            store,
-            run=run,
-            decision_results=decision_results,
-        )
-    print("Validation complete")
-    print(f"  Run:      {result.run_id}")
-    print(f"  Signal:   {result.signal_result_count}")
-    print(f"  Meta:     {result.meta_result_count}")
-    print(f"  Decision: {result.decision_result_count}")
-    if bool(args.details):
-        print_validation_results(
-            run,
-            signal_results,
-            meta_results,
-            decision_results,
-            subject_set_facts_by_id=subject_set_facts_by_id,
-        )
-    return 0
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
@@ -4791,16 +4493,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_debug_decide_portfolio_runtime(args)
         if args.command == "debug-show-portfolio-decisions":
             return cmd_show_portfolio_decisions(args)
-        if args.command == "debug-validate-subject-set":
-            return cmd_validate_subject_set(args)
-        if args.command == "validate-strategy":
-            return cmd_validate_strategy(args)
-        if args.command == "debug-write-validation-spec":
-            return cmd_debug_write_validation_spec(args)
-        if args.command == "debug-run-validation":
-            return cmd_debug_run_validation(args)
-        if args.command == "debug-show-validation":
-            return cmd_debug_show_validation(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")

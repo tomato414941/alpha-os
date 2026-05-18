@@ -16,9 +16,4 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "decide-portfolio": _legacy.cmd_decide_portfolio,
     "debug-decide-portfolio-runtime": _legacy.cmd_debug_decide_portfolio_runtime,
     "debug-show-portfolio-decisions": _legacy.cmd_show_portfolio_decisions,
-    "debug-validate-subject-set": _legacy.cmd_validate_subject_set,
-    "validate-strategy": _legacy.cmd_validate_strategy,
-    "debug-write-validation-spec": _legacy.cmd_debug_write_validation_spec,
-    "debug-run-validation": _legacy.cmd_debug_run_validation,
-    "debug-show-validation": _legacy.cmd_debug_show_validation,
 }
