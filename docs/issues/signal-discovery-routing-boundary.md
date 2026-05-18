@@ -3,8 +3,8 @@
 ## Problem
 
 `signal_discovery_id` is no longer just provenance. It is used as a routing key
-across evaluation, checkpoint preparation, validation, and portfolio decision
-input construction.
+across evaluation, checkpoint preparation, and portfolio decision input
+construction.
 
 This makes `SignalDiscovery` look like a primary domain axis even though it is
 closer to an internal strategy preparation/search step.
@@ -21,8 +21,6 @@ That creates misleading boundaries:
 - checkpoint preparation groups evaluation tasks by `signal_discovery_id`
 - strategy overrides rebuild strategies from the referenced signal discovery
   spec
-- validation recovers subject set, signal specs, and prediction target through
-  `signal_discovery_id`
 - portfolio decision input construction recovers subject set through compressed
   belief provenance
 
@@ -45,8 +43,6 @@ load the signal search specification.
   `signal_discovery_id`
 - `evaluation_task_resolution.py` derives strategy variants from
   `signal_discovery_id`
-- `validation_service.py` requires strategy signal discovery provenance to
-  build validation inputs
 - `portfolio_decision_service.py` resolves subject set through compressed belief
   `signal_discovery_id`
 
@@ -60,7 +56,7 @@ Start with evaluation:
 - checkpoint preparation should move toward strategy/preparation inputs rather
   than grouping by `signal_discovery_id`
 
-After that, revisit validation and portfolio decision input construction.
+After that, revisit portfolio decision input construction.
 
 ## Close Condition
 

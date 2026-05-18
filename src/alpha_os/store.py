@@ -657,13 +657,6 @@ class MetaPredictionMetricState:
 
 
 @dataclass(frozen=True)
-class ValidationRunState:
-    run_id: str
-    spec_json: str
-    created_at: str
-
-
-@dataclass(frozen=True)
 class ScreeningResultState:
     screening_result_id: str
     signal_discovery_id: str
@@ -751,101 +744,6 @@ class EvaluationReportState:
         )
 
 
-@dataclass(frozen=True, init=False)
-class ValidationSignalResultState:
-    run_id: str
-    date_range_label: str
-    start_date: str
-    end_date: str
-    target_id: str
-    signal_id: str
-    window_size: int
-    corr: float
-    mmc: float | None
-    sample_count: int
-    mmc_sample_count: int
-    mmc_peer_count: int
-    mmc_baseline_type: str | None
-    updated_at: str
-
-    def __init__(
-        self,
-        *,
-        run_id: str,
-        date_range_label: str,
-        start_date: str,
-        end_date: str,
-        target_id: str,
-
-        signal_id: str | None = None,
-        window_size: int,
-        corr: float,
-        mmc: float | None,
-        sample_count: int,
-        mmc_sample_count: int,
-        mmc_peer_count: int,
-        mmc_baseline_type: str | None,
-        updated_at: str,
-    ) -> None:
-        resolved_signal_id = signal_id
-        if resolved_signal_id is None:
-            raise ValueError("validation result requires signal_id")
-        object.__setattr__(self, "run_id", run_id)
-        object.__setattr__(self, "date_range_label", date_range_label)
-        object.__setattr__(self, "start_date", start_date)
-        object.__setattr__(self, "end_date", end_date)
-        object.__setattr__(self, "target_id", target_id)
-        object.__setattr__(self, "signal_id", str(resolved_signal_id))
-        object.__setattr__(self, "window_size", window_size)
-        object.__setattr__(self, "corr", corr)
-        object.__setattr__(self, "mmc", mmc)
-        object.__setattr__(self, "sample_count", sample_count)
-        object.__setattr__(self, "mmc_sample_count", mmc_sample_count)
-        object.__setattr__(self, "mmc_peer_count", mmc_peer_count)
-        object.__setattr__(self, "mmc_baseline_type", mmc_baseline_type)
-        object.__setattr__(self, "updated_at", updated_at)
-
-@dataclass(frozen=True)
-class ValidationMetaResultState:
-    run_id: str
-    date_range_label: str
-    start_date: str
-    end_date: str
-    target_id: str
-    aggregation_kind: str
-    window_size: int
-    corr: float
-    sample_count: int
-    updated_at: str
-
-
-@dataclass(frozen=True)
-class ValidationDecisionResultState:
-    run_id: str
-    date_range_label: str
-    start_date: str
-    end_date: str
-    target_id: str
-    subject_set_id: str
-    aggregation_kind: str
-    window_size: int
-    gross_return_total: float
-    net_return_total: float
-    max_drawdown: float
-    mean_turnover: float
-    mean_gross_notional_exposure: float
-    mean_net_notional_exposure: float
-    mean_long_notional_exposure: float
-    mean_short_notional_exposure: float
-    mean_traded_notional: float
-    cost_notional_total: float
-    funding_cost_notional_total: float
-    borrow_cost_notional_total: float
-    roll_cost_notional_total: float
-    step_count: int
-    updated_at: str
-
-
 @dataclass(frozen=True)
 class PortfolioDecisionState:
     portfolio_id: str
@@ -871,7 +769,6 @@ class PortfolioDecisionState:
 
 
 SignalMetricState = SignalMetricState
-ValidationSignalResultState = ValidationSignalResultState
 
 
 def _row_to_signal(
@@ -1217,16 +1114,6 @@ def _row_to_portfolio_decision(row: sqlite3.Row | None) -> PortfolioDecisionStat
     )
 
 
-def _row_to_validation_run(row: sqlite3.Row | None) -> ValidationRunState | None:
-    if row is None:
-        return None
-    return ValidationRunState(
-        run_id=str(row["run_id"]),
-        spec_json=str(row["spec_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_evaluation_report(row: sqlite3.Row | None) -> EvaluationReportState | None:
     if row is None:
         return None
@@ -1297,92 +1184,10 @@ def _row_to_evaluation_task(row: sqlite3.Row | None) -> EvaluationTaskState | No
     )
 
 
-def _row_to_validation_signal_result(
-    row: sqlite3.Row | None,
-) -> ValidationSignalResultState | None:
-    if row is None:
-        return None
-    return ValidationSignalResultState(
-        run_id=str(row["run_id"]),
-        date_range_label=str(row["date_range_label"]),
-        start_date=str(row["start_date"]),
-        end_date=str(row["end_date"]),
-        target_id=str(row["target_id"]),
-        signal_id=str(row["signal_id"]),
-        window_size=int(row["window_size"]),
-        corr=float(row["corr"]),
-        mmc=None if row["mmc"] is None else float(row["mmc"]),
-        sample_count=int(row["sample_count"]),
-        mmc_sample_count=int(row["mmc_sample_count"]),
-        mmc_peer_count=int(row["mmc_peer_count"]),
-        mmc_baseline_type=None
-        if row["mmc_baseline_type"] is None
-        else str(row["mmc_baseline_type"]),
-        updated_at=str(row["updated_at"]),
-    )
-
-
 def _row_to_signal_metric_legacy(
     row: sqlite3.Row | None,
 ) -> SignalMetricState | None:
     return _row_to_signal_metric(row)
-
-
-def _row_to_validation_signal_result_legacy(
-    row: sqlite3.Row | None,
-) -> ValidationSignalResultState | None:
-    return _row_to_validation_signal_result(row)
-
-
-def _row_to_validation_meta_result(
-    row: sqlite3.Row | None,
-) -> ValidationMetaResultState | None:
-    if row is None:
-        return None
-    return ValidationMetaResultState(
-        run_id=str(row["run_id"]),
-        date_range_label=str(row["date_range_label"]),
-        start_date=str(row["start_date"]),
-        end_date=str(row["end_date"]),
-        target_id=str(row["target_id"]),
-        aggregation_kind=str(row["aggregation_kind"]),
-        window_size=int(row["window_size"]),
-        corr=float(row["corr"]),
-        sample_count=int(row["sample_count"]),
-        updated_at=str(row["updated_at"]),
-    )
-
-
-def _row_to_validation_decision_result(
-    row: sqlite3.Row | None,
-) -> ValidationDecisionResultState | None:
-    if row is None:
-        return None
-    return ValidationDecisionResultState(
-        run_id=str(row["run_id"]),
-        date_range_label=str(row["date_range_label"]),
-        start_date=str(row["start_date"]),
-        end_date=str(row["end_date"]),
-        target_id=str(row["target_id"]),
-        subject_set_id=str(row["subject_set_id"]),
-        aggregation_kind=str(row["aggregation_kind"]),
-        window_size=int(row["window_size"]),
-        gross_return_total=float(row["gross_return_total"]),
-        net_return_total=float(row["net_return_total"]),
-        max_drawdown=float(row["max_drawdown"]),
-        mean_turnover=float(row["mean_turnover"]),
-        mean_gross_notional_exposure=float(row["mean_gross_notional_exposure"]),
-        mean_net_notional_exposure=float(row["mean_net_notional_exposure"]),
-        mean_long_notional_exposure=float(row["mean_long_notional_exposure"]),
-        mean_short_notional_exposure=float(row["mean_short_notional_exposure"]),
-        mean_traded_notional=float(row["mean_traded_notional"]),
-        cost_notional_total=float(row["cost_notional_total"]),
-        funding_cost_notional_total=float(row["funding_cost_notional_total"]),
-        borrow_cost_notional_total=float(row["borrow_cost_notional_total"]),
-        roll_cost_notional_total=float(row["roll_cost_notional_total"]),
-        step_count=int(row["step_count"]),
-        updated_at=str(row["updated_at"]),
-    )
 
 
 class EvaluationStore:
@@ -1555,12 +1360,6 @@ class EvaluationStore:
                 PRIMARY KEY (aggregation_kind, subject_id, target_id)
             );
 
-            CREATE TABLE IF NOT EXISTS validation_runs (
-                run_id TEXT PRIMARY KEY,
-                spec_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
             CREATE TABLE IF NOT EXISTS screening_results (
                 screening_result_id TEXT PRIMARY KEY,
                 signal_discovery_id TEXT NOT NULL,
@@ -1634,68 +1433,6 @@ class EvaluationStore:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS validation_signal_results (
-                run_id TEXT NOT NULL,
-                date_range_label TEXT NOT NULL,
-                start_date TEXT NOT NULL,
-                end_date TEXT NOT NULL,
-                target_id TEXT NOT NULL,
-                signal_id TEXT NOT NULL,
-                window_size INTEGER NOT NULL,
-                corr REAL NOT NULL,
-                mmc REAL,
-                sample_count INTEGER NOT NULL,
-                mmc_sample_count INTEGER NOT NULL,
-                mmc_peer_count INTEGER NOT NULL,
-                mmc_baseline_type TEXT,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (run_id, date_range_label, target_id, signal_id, window_size)
-            );
-
-            CREATE TABLE IF NOT EXISTS validation_meta_results (
-                run_id TEXT NOT NULL,
-                date_range_label TEXT NOT NULL,
-                start_date TEXT NOT NULL,
-                end_date TEXT NOT NULL,
-                target_id TEXT NOT NULL,
-                aggregation_kind TEXT NOT NULL,
-                window_size INTEGER NOT NULL,
-                corr REAL NOT NULL,
-                sample_count INTEGER NOT NULL,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (run_id, date_range_label, target_id, aggregation_kind, window_size)
-            );
-
-            CREATE TABLE IF NOT EXISTS validation_decision_results (
-                run_id TEXT NOT NULL,
-                date_range_label TEXT NOT NULL,
-                start_date TEXT NOT NULL,
-                end_date TEXT NOT NULL,
-                target_id TEXT NOT NULL,
-                subject_set_id TEXT NOT NULL DEFAULT '',
-                aggregation_kind TEXT NOT NULL,
-                window_size INTEGER NOT NULL,
-                gross_return_total REAL NOT NULL,
-                net_return_total REAL NOT NULL,
-                max_drawdown REAL NOT NULL,
-                mean_turnover REAL NOT NULL,
-                mean_gross_notional_exposure REAL NOT NULL DEFAULT 0.0,
-                mean_net_notional_exposure REAL NOT NULL DEFAULT 0.0,
-                mean_long_notional_exposure REAL NOT NULL DEFAULT 0.0,
-                mean_short_notional_exposure REAL NOT NULL DEFAULT 0.0,
-                mean_traded_notional REAL NOT NULL DEFAULT 0.0,
-                cost_notional_total REAL NOT NULL DEFAULT 0.0,
-                funding_cost_notional_total REAL NOT NULL DEFAULT 0.0,
-                borrow_cost_notional_total REAL NOT NULL DEFAULT 0.0,
-                roll_cost_notional_total REAL NOT NULL DEFAULT 0.0,
-                step_count INTEGER NOT NULL,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (
-                    run_id, date_range_label, target_id, subject_set_id,
-                    aggregation_kind, window_size
-                )
-            );
-
             CREATE TABLE IF NOT EXISTS portfolio_decisions (
                 portfolio_id TEXT NOT NULL,
                 subject_id TEXT NOT NULL,
@@ -1720,7 +1457,6 @@ class EvaluationStore:
         self._ensure_subject_first_runtime_schema()
         self._ensure_prepared_evaluation_snapshot_schema()
         self._ensure_signal_spec_schema()
-        self._ensure_validation_decision_result_columns()
         self.conn.commit()
 
     def _ensure_subject_first_runtime_schema(self) -> None:
@@ -1980,44 +1716,6 @@ class EvaluationStore:
                 )
                 for row in rows
             ],
-        )
-
-    def _ensure_validation_decision_result_columns(self) -> None:
-        columns = {
-            str(row["name"])
-            for row in self.conn.execute(
-                "PRAGMA table_info(validation_decision_results)"
-            ).fetchall()
-        }
-        required_columns = {
-            "subject_set_id": "TEXT NOT NULL DEFAULT ''",
-            "mean_gross_notional_exposure": "REAL NOT NULL DEFAULT 0.0",
-            "mean_net_notional_exposure": "REAL NOT NULL DEFAULT 0.0",
-            "mean_long_notional_exposure": "REAL NOT NULL DEFAULT 0.0",
-            "mean_short_notional_exposure": "REAL NOT NULL DEFAULT 0.0",
-            "mean_traded_notional": "REAL NOT NULL DEFAULT 0.0",
-            "cost_notional_total": "REAL NOT NULL DEFAULT 0.0",
-            "funding_cost_notional_total": "REAL NOT NULL DEFAULT 0.0",
-            "borrow_cost_notional_total": "REAL NOT NULL DEFAULT 0.0",
-            "roll_cost_notional_total": "REAL NOT NULL DEFAULT 0.0",
-        }
-        for name, definition in required_columns.items():
-            if name in columns:
-                continue
-            self.conn.execute(
-                f"""
-                ALTER TABLE validation_decision_results
-                ADD COLUMN {name} {definition}
-                """
-            )
-        self.conn.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_validation_decision_results_scope
-            ON validation_decision_results (
-                run_id, date_range_label, target_id, subject_set_id,
-                aggregation_kind, window_size
-            )
-            """
         )
 
     def _seed_builtin_targets(self) -> None:
@@ -2947,52 +2645,6 @@ class EvaluationStore:
         ).fetchall()
         return [_row_to_portfolio_decision(row) for row in rows if row is not None]
 
-    def create_validation_run(
-        self,
-        *,
-        run_id: str,
-        spec_json: str,
-        recorded_at: str | None = None,
-    ) -> None:
-        self.ensure_schema()
-        timestamp = recorded_at or _utc_now()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO validation_runs (
-                    run_id, spec_json, created_at
-                )
-                VALUES (?, ?, ?)
-                """,
-                (
-                    run_id,
-                    spec_json,
-                    timestamp,
-                ),
-            )
-
-    def get_validation_run(self, run_id: str) -> ValidationRunState | None:
-        row = self.conn.execute(
-            """
-            SELECT run_id, spec_json, created_at
-            FROM validation_runs
-            WHERE run_id = ?
-            """,
-            (run_id,),
-        ).fetchone()
-        return _row_to_validation_run(row)
-
-    def get_latest_validation_run(self) -> ValidationRunState | None:
-        row = self.conn.execute(
-            """
-            SELECT run_id, spec_json, created_at
-            FROM validation_runs
-            ORDER BY created_at DESC, run_id DESC
-            LIMIT 1
-            """
-        ).fetchone()
-        return _row_to_validation_run(row)
-
     def upsert_screening_result(
         self,
         *,
@@ -3456,269 +3108,6 @@ class EvaluationStore:
                 ),
             ).fetchall()
         return [_row_to_evaluation_report(row) for row in rows if row is not None]
-
-    def upsert_validation_signal_result(
-        self,
-        *,
-        run_id: str,
-        date_range_label: str,
-        start_date: str,
-        end_date: str,
-        target_id: str,
-        signal_id: str,
-        window_size: int,
-        corr: float,
-        mmc: float | None,
-        sample_count: int,
-        mmc_sample_count: int,
-        mmc_peer_count: int,
-        mmc_baseline_type: str | None,
-        recorded_at: str | None = None,
-    ) -> None:
-        self.ensure_schema()
-        timestamp = recorded_at or _utc_now()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO validation_signal_results (
-                    run_id, date_range_label, start_date, end_date, target_id,
-                    signal_id, window_size, corr, mmc, sample_count,
-                    mmc_sample_count, mmc_peer_count, mmc_baseline_type, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(run_id, date_range_label, target_id, signal_id, window_size)
-                DO UPDATE SET
-                    corr = excluded.corr,
-                    mmc = excluded.mmc,
-                    sample_count = excluded.sample_count,
-                    mmc_sample_count = excluded.mmc_sample_count,
-                    mmc_peer_count = excluded.mmc_peer_count,
-                    mmc_baseline_type = excluded.mmc_baseline_type,
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    run_id,
-                    date_range_label,
-                    start_date,
-                    end_date,
-                    target_id,
-                    signal_id,
-                    int(window_size),
-                    float(corr),
-                    None if mmc is None else float(mmc),
-                    int(sample_count),
-                    int(mmc_sample_count),
-                    int(mmc_peer_count),
-                    mmc_baseline_type,
-                    timestamp,
-                ),
-            )
-
-    def list_validation_signal_results(
-        self,
-        *,
-        run_id: str,
-    ) -> list[ValidationSignalResultState]:
-        rows = self.conn.execute(
-            """
-            SELECT run_id, date_range_label, start_date, end_date, target_id,
-                   signal_id, window_size, corr, mmc, sample_count,
-                   mmc_sample_count, mmc_peer_count, mmc_baseline_type, updated_at
-            FROM validation_signal_results
-            WHERE run_id = ?
-            ORDER BY date_range_label ASC, target_id ASC, window_size ASC, corr DESC, signal_id ASC
-            """,
-            (run_id,),
-        ).fetchall()
-        return [
-            _row_to_validation_signal_result(row)
-            for row in rows
-            if row is not None
-        ]
-
-    def upsert_validation_meta_result(
-        self,
-        *,
-        run_id: str,
-        date_range_label: str,
-        start_date: str,
-        end_date: str,
-        target_id: str,
-        aggregation_kind: str,
-        window_size: int,
-        corr: float,
-        sample_count: int,
-        recorded_at: str | None = None,
-    ) -> None:
-        self.ensure_schema()
-        timestamp = recorded_at or _utc_now()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO validation_meta_results (
-                    run_id, date_range_label, start_date, end_date, target_id,
-                    aggregation_kind, window_size, corr, sample_count, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(run_id, date_range_label, target_id, aggregation_kind, window_size)
-                DO UPDATE SET
-                    corr = excluded.corr,
-                    sample_count = excluded.sample_count,
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    run_id,
-                    date_range_label,
-                    start_date,
-                    end_date,
-                    target_id,
-                    aggregation_kind,
-                    int(window_size),
-                    float(corr),
-                    int(sample_count),
-                    timestamp,
-                ),
-            )
-
-    def list_validation_meta_results(
-        self,
-        *,
-        run_id: str,
-    ) -> list[ValidationMetaResultState]:
-        rows = self.conn.execute(
-            """
-            SELECT run_id, date_range_label, start_date, end_date, target_id,
-                   aggregation_kind, window_size, corr, sample_count, updated_at
-            FROM validation_meta_results
-            WHERE run_id = ?
-            ORDER BY date_range_label ASC, target_id ASC, window_size ASC, corr DESC, aggregation_kind ASC
-            """,
-            (run_id,),
-        ).fetchall()
-        return [
-            _row_to_validation_meta_result(row)
-            for row in rows
-            if row is not None
-        ]
-
-    def upsert_validation_decision_result(
-        self,
-        *,
-        run_id: str,
-        date_range_label: str,
-        start_date: str,
-        end_date: str,
-        target_id: str,
-        subject_set_id: str,
-        aggregation_kind: str,
-        window_size: int,
-        gross_return_total: float,
-        net_return_total: float,
-        max_drawdown: float,
-        mean_turnover: float,
-        mean_gross_notional_exposure: float,
-        mean_net_notional_exposure: float,
-        mean_long_notional_exposure: float,
-        mean_short_notional_exposure: float,
-        mean_traded_notional: float,
-        cost_notional_total: float,
-        funding_cost_notional_total: float,
-        borrow_cost_notional_total: float,
-        roll_cost_notional_total: float,
-        step_count: int,
-        recorded_at: str | None = None,
-    ) -> None:
-        self.ensure_schema()
-        timestamp = recorded_at or _utc_now()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO validation_decision_results (
-                    run_id, date_range_label, start_date, end_date, target_id,
-                    subject_set_id, aggregation_kind, window_size, gross_return_total,
-                    net_return_total, max_drawdown, mean_turnover,
-                    mean_gross_notional_exposure, mean_net_notional_exposure,
-                    mean_long_notional_exposure, mean_short_notional_exposure,
-                    mean_traded_notional, cost_notional_total,
-                    funding_cost_notional_total, borrow_cost_notional_total,
-                    roll_cost_notional_total, step_count, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(
-                    run_id, date_range_label, target_id, subject_set_id,
-                    aggregation_kind, window_size
-                )
-                DO UPDATE SET
-                    gross_return_total = excluded.gross_return_total,
-                    net_return_total = excluded.net_return_total,
-                    max_drawdown = excluded.max_drawdown,
-                    mean_turnover = excluded.mean_turnover,
-                    mean_gross_notional_exposure = excluded.mean_gross_notional_exposure,
-                    mean_net_notional_exposure = excluded.mean_net_notional_exposure,
-                    mean_long_notional_exposure = excluded.mean_long_notional_exposure,
-                    mean_short_notional_exposure = excluded.mean_short_notional_exposure,
-                    mean_traded_notional = excluded.mean_traded_notional,
-                    cost_notional_total = excluded.cost_notional_total,
-                    funding_cost_notional_total = excluded.funding_cost_notional_total,
-                    borrow_cost_notional_total = excluded.borrow_cost_notional_total,
-                    roll_cost_notional_total = excluded.roll_cost_notional_total,
-                    step_count = excluded.step_count,
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    run_id,
-                    date_range_label,
-                    start_date,
-                    end_date,
-                    target_id,
-                    subject_set_id,
-                    aggregation_kind,
-                    int(window_size),
-                    float(gross_return_total),
-                    float(net_return_total),
-                    float(max_drawdown),
-                    float(mean_turnover),
-                    float(mean_gross_notional_exposure),
-                    float(mean_net_notional_exposure),
-                    float(mean_long_notional_exposure),
-                    float(mean_short_notional_exposure),
-                    float(mean_traded_notional),
-                    float(cost_notional_total),
-                    float(funding_cost_notional_total),
-                    float(borrow_cost_notional_total),
-                    float(roll_cost_notional_total),
-                    int(step_count),
-                    timestamp,
-                ),
-            )
-
-    def list_validation_decision_results(
-        self,
-        *,
-        run_id: str,
-    ) -> list[ValidationDecisionResultState]:
-        rows = self.conn.execute(
-            """
-            SELECT run_id, date_range_label, start_date, end_date, target_id,
-                   subject_set_id, aggregation_kind, window_size, gross_return_total,
-                   net_return_total, max_drawdown, mean_turnover,
-                   mean_gross_notional_exposure, mean_net_notional_exposure,
-                   mean_long_notional_exposure, mean_short_notional_exposure,
-                   mean_traded_notional, cost_notional_total,
-                   funding_cost_notional_total, borrow_cost_notional_total,
-                   roll_cost_notional_total, step_count, updated_at
-            FROM validation_decision_results
-            WHERE run_id = ?
-            ORDER BY date_range_label ASC, target_id ASC, subject_set_id ASC,
-                     window_size ASC, net_return_total DESC, aggregation_kind ASC
-            """,
-            (run_id,),
-        ).fetchall()
-        return [
-            _row_to_validation_decision_result(row)
-            for row in rows
-            if row is not None
-        ]
 
     def set_signal_status(
         self,
