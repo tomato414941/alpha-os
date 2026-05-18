@@ -25,27 +25,6 @@ class ValidationSignalSummary:
     mean_corr: float
     mean_mmc: float | None
 
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "signal_id": self.signal_id,
-            "conditions": self.conditions,
-            "positive_corr": self.positive_corr,
-            "mean_corr": self.mean_corr,
-            "mean_mmc": self.mean_mmc,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "ValidationSignalSummary":
-        return cls(
-            signal_id=str(document["signal_id"]),
-            conditions=int(document["conditions"]),
-            positive_corr=int(document["positive_corr"]),
-            mean_corr=float(document["mean_corr"]),
-            mean_mmc=(
-                None if document.get("mean_mmc") is None else float(document["mean_mmc"])
-            ),
-        )
-
 
 @dataclass(frozen=True)
 class ValidationMetaSummary:
@@ -53,23 +32,6 @@ class ValidationMetaSummary:
     conditions: int
     wins: int
     mean_corr: float
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "aggregation_kind": self.aggregation_kind,
-            "conditions": self.conditions,
-            "wins": self.wins,
-            "mean_corr": self.mean_corr,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "ValidationMetaSummary":
-        return cls(
-            aggregation_kind=str(document["aggregation_kind"]),
-            conditions=int(document["conditions"]),
-            wins=int(document["wins"]),
-            mean_corr=float(document["mean_corr"]),
-        )
 
 
 @dataclass(frozen=True)
@@ -94,119 +56,12 @@ class ValidationDecisionSummary:
     subject_set_contract_groups: tuple[str, ...] = ()
     universe_policy_fields: dict[str, str | None] = field(default_factory=dict)
 
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "subject_set_id": self.subject_set_id,
-            "subject_set_contract_groups": list(self.subject_set_contract_groups),
-            "universe_policy_fields": dict(self.universe_policy_fields),
-            "aggregation_kind": self.aggregation_kind,
-            "conditions": self.conditions,
-            "wins": self.wins,
-            "negative_conditions": self.negative_conditions,
-            "mean_net": self.mean_net,
-            "worst_net": self.worst_net,
-            "mean_drawdown": self.mean_drawdown,
-            "mean_gross_notional": self.mean_gross_notional,
-            "mean_net_notional": self.mean_net_notional,
-            "mean_long_notional": self.mean_long_notional,
-            "mean_short_notional": self.mean_short_notional,
-            "mean_traded_notional": self.mean_traded_notional,
-            "total_cost_notional": self.total_cost_notional,
-            "total_funding_cost_notional": self.total_funding_cost_notional,
-            "total_borrow_cost_notional": self.total_borrow_cost_notional,
-            "total_roll_cost_notional": self.total_roll_cost_notional,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "ValidationDecisionSummary":
-        subject_set_id = document.get("subject_set_id")
-        subject_set_contract_groups = document.get("subject_set_contract_groups", [])
-        universe_policy_fields = document.get("universe_policy_fields", {})
-        if not isinstance(subject_set_contract_groups, list):
-            raise ValueError(
-                "validation decision summary subject_set_contract_groups are invalid"
-            )
-        if not isinstance(universe_policy_fields, dict):
-            raise ValueError(
-                "validation decision summary universe_policy_fields are invalid"
-            )
-        return cls(
-            subject_set_id=None if subject_set_id in {None, ""} else str(subject_set_id),
-            subject_set_contract_groups=tuple(
-                str(item) for item in subject_set_contract_groups
-            ),
-            universe_policy_fields={
-                str(key): (
-                    None if value is None else str(value)
-                )
-                for key, value in universe_policy_fields.items()
-            },
-            aggregation_kind=str(document["aggregation_kind"]),
-            conditions=int(document["conditions"]),
-            wins=int(document["wins"]),
-            negative_conditions=int(document["negative_conditions"]),
-            mean_net=float(document["mean_net"]),
-            worst_net=float(document["worst_net"]),
-            mean_drawdown=float(document["mean_drawdown"]),
-            mean_gross_notional=float(document["mean_gross_notional"]),
-            mean_net_notional=float(document.get("mean_net_notional", 0.0)),
-            mean_long_notional=float(document.get("mean_long_notional", 0.0)),
-            mean_short_notional=float(document.get("mean_short_notional", 0.0)),
-            mean_traded_notional=float(document["mean_traded_notional"]),
-            total_cost_notional=float(document["total_cost_notional"]),
-            total_funding_cost_notional=float(
-                document.get("total_funding_cost_notional", 0.0)
-            ),
-            total_borrow_cost_notional=float(
-                document.get("total_borrow_cost_notional", 0.0)
-            ),
-            total_roll_cost_notional=float(
-                document.get("total_roll_cost_notional", 0.0)
-            ),
-        )
-
 
 @dataclass(frozen=True)
 class ValidationResultSet:
     signal_summaries: tuple[ValidationSignalSummary, ...]
     meta_summaries: tuple[ValidationMetaSummary, ...]
     decision_summaries: tuple[ValidationDecisionSummary, ...]
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "signal_summaries": [item.to_document() for item in self.signal_summaries],
-            "meta_summaries": [item.to_document() for item in self.meta_summaries],
-            "decision_summaries": [item.to_document() for item in self.decision_summaries],
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "ValidationResultSet":
-        signal_summaries = document.get("signal_summaries", [])
-        meta_summaries = document.get("meta_summaries", [])
-        decision_summaries = document.get("decision_summaries", [])
-        if not isinstance(signal_summaries, list):
-            raise ValueError("validation result set signal_summaries are invalid")
-        if not isinstance(meta_summaries, list):
-            raise ValueError("validation result set meta_summaries are invalid")
-        if not isinstance(decision_summaries, list):
-            raise ValueError("validation result set decision_summaries are invalid")
-        return cls(
-            signal_summaries=tuple(
-                ValidationSignalSummary.from_document(item)
-                for item in signal_summaries
-                if isinstance(item, dict)
-            ),
-            meta_summaries=tuple(
-                ValidationMetaSummary.from_document(item)
-                for item in meta_summaries
-                if isinstance(item, dict)
-            ),
-            decision_summaries=tuple(
-                ValidationDecisionSummary.from_document(item)
-                for item in decision_summaries
-                if isinstance(item, dict)
-            ),
-        )
 
 
 def build_validation_result_set(
