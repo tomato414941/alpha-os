@@ -1,9 +1,7 @@
-import pytest
-
 from alpha_os.cli import main
 
 
-def test_minimal_fixed_state_oos_requires_prepared_strategy_checkpoint(
+def test_minimal_fixed_state_oos_training_eval_runs_without_checkpoint_preparation(
     tmp_path,
     capsys,
 ):
@@ -23,7 +21,7 @@ def test_minimal_fixed_state_oos_requires_prepared_strategy_checkpoint(
     )
     capsys.readouterr()
 
-    with pytest.raises(SystemExit) as exc_info:
+    assert (
         main(
             [
                 "run-walk-forward-evaluation",
@@ -33,6 +31,10 @@ def test_minimal_fixed_state_oos_requires_prepared_strategy_checkpoint(
                 str(db_path),
             ]
         )
+        == 0
+    )
 
-    assert exc_info.value.code == 2
-    assert "requires a strategy checkpoint" in capsys.readouterr().err
+    output = capsys.readouterr().out
+    assert "alpha-os evaluation run" in output
+    assert "Evaluation spec:  minimal_fixed_state_train_eval" in output
+    assert "TaskResults: 1" in output

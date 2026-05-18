@@ -2,8 +2,9 @@
 
 ## Problem
 
-`signal_discovery_id` is no longer just provenance. It is used as a routing key
-across evaluation and portfolio decision input construction.
+`signal_discovery_id` is no longer just provenance. It is still used as a
+routing key across portfolio decision input construction and some strategy
+resolution paths.
 
 This makes `SignalDiscovery` look like a primary domain axis even though it is
 closer to an internal strategy preparation/search step.
@@ -15,8 +16,6 @@ came from `SignalDiscovery`.
 
 That creates misleading boundaries:
 
-- evaluation chooses direct vs checkpoint paths from
-  `trading_strategy.signal_discovery_id`
 - strategy overrides rebuild strategies from the referenced signal discovery
   spec
 - portfolio decision input construction recovers subject set through compressed
@@ -36,7 +35,6 @@ load the signal search specification.
 
 ## Current Suspects
 
-- `evaluation_plan.py` branches on `trading_strategy.signal_discovery_id is None`
 - `evaluation_task_resolution.py` derives strategy variants from
   `signal_discovery_id`
 - `portfolio_decision_service.py` resolves subject set through compressed belief
@@ -44,13 +42,8 @@ load the signal search specification.
 
 ## Desired Direction
 
-Start with evaluation:
-
-- direct vs checkpoint evaluation should be based on available or required
-  strategy checkpoint state, not on whether the strategy has discovery
-  provenance
-
-After that, revisit portfolio decision input construction.
+Evaluation planning now prefers direct strategy evaluation when the strategy is
+directly executable. Revisit portfolio decision input construction next.
 
 ## Close Condition
 

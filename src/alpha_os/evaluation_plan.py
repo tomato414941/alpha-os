@@ -51,6 +51,15 @@ class EvaluationPlan:
     execution_requests: tuple[StrategyEvaluationRequest, ...]
 
 
+DIRECT_STRATEGY_POSITION_RULE_IDS = frozenset(
+    {
+        "constant_hold",
+        "dual_momentum_hold",
+        "crypto_regime_momentum_hold",
+    }
+)
+
+
 def _strategy_evaluation_request(
     *,
     evaluation_task_id: str,
@@ -133,20 +142,15 @@ def build_evaluation_plan(
                 f"{evaluation_task.strategy_id}"
             )
         trading_strategy = strategy_state.trading_strategy
-        strategy_signal_discovery_id = trading_strategy.signal_discovery_id
-        if strategy_signal_discovery_id is None:
-            subject_set_id = trading_strategy.subject_set_id
-            if not isinstance(subject_set_id, str) or not subject_set_id:
-                raise ValueError(
-                    "direct evaluation task requires strategy subject_set: "
-                    f"{evaluation_task.evaluation_task_id}"
-                )
-            target_id = trading_strategy.target_id
-            if not isinstance(target_id, str) or not target_id:
-                raise ValueError(
-                    "direct evaluation task requires strategy prediction target: "
-                    f"{evaluation_task.evaluation_task_id}"
-                )
+        subject_set_id = trading_strategy.subject_set_id
+        target_id = trading_strategy.target_id
+        if (
+            isinstance(subject_set_id, str)
+            and subject_set_id
+            and isinstance(target_id, str)
+            and target_id
+            and trading_strategy.position_rule_id in DIRECT_STRATEGY_POSITION_RULE_IDS
+        ):
             for fold in evaluation_spec.resolved_evaluation_folds:
                 execution_requests.append(
                     _strategy_evaluation_request(
@@ -163,6 +167,17 @@ def build_evaluation_plan(
                     )
                 )
             continue
+        strategy_signal_discovery_id = trading_strategy.signal_discovery_id
+        if strategy_signal_discovery_id is None:
+            if not isinstance(subject_set_id, str) or not subject_set_id:
+                raise ValueError(
+                    "direct evaluation task requires strategy subject_set: "
+                    f"{evaluation_task.evaluation_task_id}"
+                )
+            raise ValueError(
+                "direct evaluation task requires strategy prediction target: "
+                f"{evaluation_task.evaluation_task_id}"
+            )
         for fold in evaluation_spec.resolved_evaluation_folds:
             strategy_checkpoint_record = _resolve_strategy_checkpoint_for_fold(
                 store,
@@ -172,9 +187,7 @@ def build_evaluation_plan(
             )
             if strategy_checkpoint_record is not None:
                 strategy_checkpoint = strategy_checkpoint_record.state
-                strategy_checkpoint_id = (
-                    strategy_checkpoint.strategy_checkpoint_id
-                )
+                strategy_checkpoint_id = strategy_checkpoint.strategy_checkpoint_id
                 target_id = strategy_checkpoint.target_id
             else:
                 raise ValueError(
