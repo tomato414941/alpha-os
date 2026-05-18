@@ -53,14 +53,12 @@ runtime workflow instead of a small evaluation boundary.
 That would make lightweight strategy evaluation depend on discovery and DB
 artifact layout again.
 
-If the evaluation use case owns missing-checkpoint preparation, the strategy
-contract becomes ambiguous: it can mean either "this strategy needs a checkpoint
-for evaluation" or "this evaluation run should train/prepare missing checkpoints."
+The evaluation use case no longer owns missing-checkpoint preparation. A
+checkpoint-based evaluation now fails when the required checkpoint is missing.
 
 ## Non-Goals
 
 - Do not remove checkpoint-based evaluation.
-- Do not change the current fixed-state OOS workflow immediately.
 - Do not merge signal discovery, screening, and backtest into one abstraction.
 - Do not replace `execution_kind` with another broad mode flag.
 

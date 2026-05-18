@@ -64,8 +64,6 @@ Prefer this direction:
 - `build_evaluation_plan()` mixes evaluation scheduling with checkpoint lookup
 - `evaluation_execution_strategy.py` mixes input construction, strategy state
   loading, rollout execution, and report assembly
-- `prepare_strategy_checkpoints_for_evaluation()` prepares fitted state inside
-  the evaluation use case
 - `signal_discovery_id` is used as a routing key instead of local provenance
 
 ## Desired Direction

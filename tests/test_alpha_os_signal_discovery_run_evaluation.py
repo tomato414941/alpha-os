@@ -434,9 +434,8 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     )
 
 
-def test_run_evaluation_uses_archived_prepared_snapshots(tmp_path, capsys):
+def test_run_walk_forward_requires_prepared_strategy_checkpoint(tmp_path, capsys):
     from alpha_os.cli import main
-    from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
     manifest_path = tmp_path / "runtime-manifest.json"
@@ -619,62 +618,19 @@ def test_run_evaluation_uses_archived_prepared_snapshots(tmp_path, capsys):
     )
     capsys.readouterr()
 
-    def _fake_loader(observation_spec, *, asset: str, base_url: str, client=None):
-        import pandas as pd
-
-        assert asset == "BTC"
-        return pd.DataFrame(
-            {
-                "timestamp": [
-                    "2026-03-20T00:00:00Z",
-                    "2026-03-21T00:00:00Z",
-                    "2026-03-22T00:00:00Z",
-                    "2026-03-23T00:00:00Z",
-                    "2026-03-24T00:00:00Z",
-                    "2026-03-25T00:00:00Z",
-                    "2026-03-26T00:00:00Z",
-                    "2026-03-27T00:00:00Z",
-                ],
-                "value": [100.0, 101.0, 103.0, 102.0, 104.0, 105.0, 107.0, 106.0],
-            }
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run-walk-forward",
+                "--db",
+                str(db_path),
+                "--evaluation-spec-id",
+                "core_crypto_eval",
+            ]
         )
 
-    import alpha_os.data_repositories as data_repositories
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-walk-forward",
-                    "--db",
-                    str(db_path),
-                    "--evaluation-spec-id",
-                    "core_crypto_eval",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-    capsys.readouterr()
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        task_result = report_state.report.task_results[0]
-        decision_metric_group_result = next(
-            item for item in task_result.metric_group_results if item.metric_group_name == "decision_quality"
-        )
-        assert decision_metric_group_result.metrics["mean_decision_step_count"] > 1.0
-        assert decision_metric_group_result.metrics["total_decision_step_count"] > 1
-        assert "annualized_step_sharpe" in decision_metric_group_result.metrics
-        assert "pooled_step_max_drawdown" in decision_metric_group_result.metrics
-    finally:
-        store.close()
+    assert exc_info.value.code == 2
+    assert "requires a strategy checkpoint" in capsys.readouterr().err
 
 
 def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys):
@@ -1794,7 +1750,9 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
         store.close()
 
 
-def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(tmp_path, capsys):
+def test_run_walk_forward_checked_in_global_macro_manifest_requires_checkpoint(
+    tmp_path, capsys
+):
     from pathlib import Path
 
     import json
@@ -1873,95 +1831,27 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
     )
     capsys.readouterr()
 
-    asset_phase = {
-        asset: (index % 17) * 0.23
-        for index, asset in enumerate(("ES", "ZN", "CL", "GC", "BTCUSDT", "ETHUSDT"))
-    }
-
-    def _fake_loader(observation_spec, *, asset: str, base_url: str, client=None):
-        dates = pd.date_range("2023-11-01", "2024-05-31", freq="D", tz="UTC")
-        index = np.arange(len(dates), dtype=float)
-        phase = asset_phase[asset]
-        latent = (
-            0.0009
-            + 0.0030 * np.sin(index / 11.0 + phase)
-            + 0.0014 * np.cos(index / 27.0 + phase * 0.5)
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run-walk-forward-evaluation",
+                "--db",
+                str(db_path),
+                "--evaluation-spec-id",
+                "global_macro_futures_daily_trend_eval",
+                "--base-url",
+                "http://example.com",
+            ]
         )
-        latent = np.clip(latent, -0.01, 0.01)
-        close = 100.0 * np.cumprod(1.0 + latent)
-        frame = pd.DataFrame(
-            {
-                "timestamp": dates.strftime("%Y-%m-%dT00:00:00Z"),
-                "value": close,
-                "front_price": close,
-                "next_price": close * (1.0 + latent * 0.8),
-                "basis": latent * 1.2,
-                "open_interest": 10000.0 + index * (1.0 + (phase % 1.0)),
-            }
-        )
-        frame["funding_rate"] = latent * (0.8 if asset.endswith("USDT") else 0.2)
-        return frame
 
-    import alpha_os.data_repositories as data_repositories
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-walk-forward-evaluation",
-                    "--db",
-                    str(db_path),
-                    "--evaluation-spec-id",
-                    "global_macro_futures_daily_trend_eval",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-
-    output = capsys.readouterr().out
-    assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        strategy_checkpoints = store.list_strategy_checkpoints(
-            signal_discovery_id="global_macro_futures_daily_trend_search",
-            limit=10,
-        )
-        assert len(strategy_checkpoints) >= 1
-        assert {item.state.fold_label for item in strategy_checkpoints} >= {
-            "fold_2024h1_to_2024m5",
-        }
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert len(report_state.report.task_results) == 1
-        task_result = report_state.report.task_results[0]
-        assert task_result.signal_discovery_id == "global_macro_futures_daily_trend_search"
-        assert task_result.artifact_refs.get("strategy_checkpoint_ids")
-        decision_metric_group_result = next(
-            item
-            for item in task_result.metric_group_results
-            if item.metric_group_name == "decision_quality"
-        )
-        assert decision_metric_group_result.metrics["total_decision_step_count"] > 0
-    finally:
-        store.close()
+    assert exc_info.value.code == 2
+    assert "requires a strategy checkpoint" in capsys.readouterr().err
 
 
-def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
+def test_run_diagnostic_evaluation_requires_prepared_strategy_checkpoint(
     tmp_path, capsys
 ):
-    import numpy as np
-
     from alpha_os.cli import main
-    from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
     base_manifest_path = tmp_path / "base-runtime-manifest.json"
@@ -2123,70 +2013,24 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
         encoding="utf-8",
     )
 
-    def _fake_loader(observation_spec, *, asset: str, base_url: str, client=None):
-        dates = pd.date_range("2025-12-25", "2026-01-12", freq="D", tz="UTC")
-        index = np.arange(len(dates), dtype=float)
-        slope = 0.002 if asset == "AAA" else -0.001
-        close = 100.0 * np.cumprod(1.0 + slope + 0.0005 * np.sin(index))
-        return pd.DataFrame(
-            {
-                "timestamp": dates.strftime("%Y-%m-%dT00:00:00Z"),
-                "value": close,
-            }
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run-diagnostic-evaluation",
+                "--db",
+                str(db_path),
+                "--manifest",
+                str(diagnostic_manifest_path),
+                "--evaluation-spec-id",
+                "diagnostic_eval",
+                "--base-url",
+                "http://override.example",
+                "--details",
+            ]
         )
 
-    import alpha_os.data_repositories as data_repositories
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-diagnostic-evaluation",
-                    "--db",
-                    str(db_path),
-                    "--manifest",
-                    str(diagnostic_manifest_path),
-                    "--evaluation-spec-id",
-                    "diagnostic_eval",
-                    "--base-url",
-                    "http://override.example",
-                    "--details",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-
-    output = capsys.readouterr().out
-    assert "alpha-os diagnostic focus" in output
-    assert "prediction_diagnostics:" in output
-    assert "portfolio_construction_trace:" in output
-    assert "execution_trace:" in output
-    assert "cost_drag:" in output
-    assert "signal_churn:" in output
-    assert "portfolio_concentration:" in output
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        assert store.get_subject_set("diagnostic_subjects") is not None
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert report_state.report.evaluation_spec_id == "diagnostic_eval"
-        task_result = report_state.report.task_results[0]
-        assert {item.metric_group_name for item in task_result.metric_group_results} >= {
-            "prediction_diagnostics",
-            "portfolio_construction_trace",
-            "execution_trace",
-            "cost_drag",
-            "signal_churn",
-            "portfolio_concentration",
-        }
-    finally:
-        store.close()
+    assert exc_info.value.code == 2
+    assert "requires a strategy checkpoint" in capsys.readouterr().err
 
 
 def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
@@ -2887,10 +2731,11 @@ def test_build_evaluation_plan_supports_strategy_checkpoint_replay(tmp_path):
         store.close()
 
 
-def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
+def test_run_walk_forward_evaluation_rejects_missing_fold_checkpoints(
+    tmp_path, capsys
+):
     from alpha_os.cli import main
-    from alpha_os.evaluation_task import EvaluationTask, build_evaluation_task_id
-    from alpha_os.store import EvaluationStore
+
     db_path = tmp_path / "runtime.db"
     manifest_path = tmp_path / "runtime-manifest.json"
     manifest_path.write_text(
@@ -3072,199 +2917,18 @@ def test_run_walk_forward_evaluation_executes_fold_runs(tmp_path, capsys):
     )
     capsys.readouterr()
 
-    def _fake_loader(observation_spec, *, asset: str, base_url: str, client=None):
-        import pandas as pd
-
-        assert asset == "BTC"
-        return pd.DataFrame(
-            {
-                "timestamp": [
-                    "2026-03-20T00:00:00Z",
-                    "2026-03-21T00:00:00Z",
-                    "2026-03-22T00:00:00Z",
-                    "2026-03-23T00:00:00Z",
-                    "2026-03-24T00:00:00Z",
-                    "2026-03-25T00:00:00Z",
-                    "2026-03-26T00:00:00Z",
-                    "2026-03-27T00:00:00Z",
-                    "2026-03-28T00:00:00Z",
-                    "2026-03-29T00:00:00Z",
-                    "2026-03-30T00:00:00Z",
-                ],
-                "value": [
-                    100.0,
-                    101.0,
-                    103.0,
-                    102.0,
-                    104.0,
-                    105.0,
-                    107.0,
-                    106.0,
-                    108.0,
-                    109.0,
-                    111.0,
-                ],
-            }
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run-walk-forward-evaluation",
+                "--db",
+                str(db_path),
+                "--evaluation-spec-id",
+                "core_crypto_walk_forward",
+                "--base-url",
+                "http://example.com",
+            ]
         )
 
-    import alpha_os.data_repositories as data_repositories
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-walk-forward-evaluation",
-                    "--db",
-                    str(db_path),
-                    "--evaluation-spec-id",
-                    "core_crypto_walk_forward",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-
-    output = capsys.readouterr().out
-    assert "alpha-os evaluation run" in output
-    assert "TaskResults: 2" in output
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        strategy_checkpoints = store.list_strategy_checkpoints(
-            signal_discovery_id="core_crypto_search",
-            limit=10,
-        )
-        assert len(strategy_checkpoints) >= 2
-        assert {item.state.fold_label for item in strategy_checkpoints} >= {
-            "fold_a",
-            "fold_b",
-        }
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert len(report_state.report.task_results) == 2
-        for task_result in report_state.report.task_results:
-            assert task_result.artifact_refs.get("strategy_checkpoint_ids")
-            decision_metric_group_result = next(
-                item
-                for item in task_result.metric_group_results
-                if item.metric_group_name == "decision_quality"
-            )
-            assert decision_metric_group_result.metrics["total_decision_step_count"] > 0
-        evaluation_tasks = store.list_evaluation_tasks(limit=10)
-        assert len(evaluation_tasks) == 1
-        evaluation_task_state = evaluation_tasks[0]
-        strategy_specs = store.list_trading_strategies(limit=10)
-        assert len(strategy_specs) == 1
-        trading_strategy = strategy_specs[0].trading_strategy
-        assert trading_strategy.strategy_id.startswith("strategy:")
-        strategy_checkpoints_for_strategy = store.list_strategy_checkpoints(
-            strategy_id=trading_strategy.strategy_id,
-            limit=10,
-        )
-        assert len(strategy_checkpoints_for_strategy) >= 2
-        assert all(
-            item.state.strategy_id == trading_strategy.strategy_id
-            for item in strategy_checkpoints_for_strategy
-        )
-        strategy_checkpoints_for_signal_discovery = store.list_strategy_checkpoints(
-            strategy_id=trading_strategy.strategy_id,
-            signal_discovery_id=trading_strategy.signal_discovery_id,
-            limit=10,
-        )
-        assert len(strategy_checkpoints_for_signal_discovery) >= 2
-        assert evaluation_task_state.task.strategy_id == trading_strategy.strategy_id
-        assert (
-            evaluation_task_state.task.evaluation_spec_id
-            == "core_crypto_walk_forward"
-        )
-        assert trading_strategy.scope.subject_set_id == "core_crypto"
-        assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
-            "signal_weighted"
-        )
-        assert trading_strategy.portfolio.rebalance_interval_steps == 1
-        strategy_checkpoint_count = len(strategy_checkpoints)
-    finally:
-        store.close()
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        evaluation_task_state = store.list_evaluation_tasks(limit=10)[0]
-        challenger_strategy = _build_trading_strategy(
-            strategy_id="strategy:core_crypto_equal_weight",
-            label="core_crypto_equal_weight",
-            signal_discovery_id="core_crypto_search",
-            subject_set_id="core_crypto",
-            target_id="residual_return_3d",
-            family_mix="reversal",
-            sizing_method="equal_weight",
-            rebalance="every_1_steps",
-            long_only=True,
-            gross_exposure_cap=1.0,
-            market_impact_bps=0.0,
-            turnover_friction=0.0,
-            no_trade_band=0.0,
-            created_at="2026-04-05T00:00:00+00:00",
-        )
-        store.upsert_trading_strategy(trading_strategy=challenger_strategy)
-        challenger_task = EvaluationTask(
-            evaluation_task_id=build_evaluation_task_id(
-                strategy_id=challenger_strategy.strategy_id,
-                evaluation_spec_id="core_crypto_walk_forward",
-            ),
-            strategy_id=challenger_strategy.strategy_id,
-            evaluation_spec_id="core_crypto_walk_forward",
-            **_evaluation_policy_parts(
-                sizing_method="equal_weight",
-                sizing_engine="history_based",
-            ),
-        )
-        store.upsert_evaluation_task(task=challenger_task)
-    finally:
-        store.close()
-
-    import alpha_os.data_repositories as data_repositories
-
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-walk-forward-evaluation",
-                    "--db",
-                    str(db_path),
-                    "--evaluation-spec-id",
-                    "core_crypto_walk_forward",
-                    "--base-url",
-                    "http://example.com",
-                ]
-            )
-            == 0
-        )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-
-    capsys.readouterr()
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        rerun_strategy_checkpoints = store.list_strategy_checkpoints(
-            signal_discovery_id="core_crypto_search",
-            limit=10,
-        )
-        assert len(rerun_strategy_checkpoints) == strategy_checkpoint_count + 2
-        challenger_strategy_checkpoints = store.list_strategy_checkpoints(
-            strategy_id="strategy:core_crypto_equal_weight",
-            limit=10,
-        )
-        assert len(challenger_strategy_checkpoints) == 2
-    finally:
-        store.close()
+    assert exc_info.value.code == 2
+    assert "requires a strategy checkpoint" in capsys.readouterr().err

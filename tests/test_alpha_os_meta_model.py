@@ -2320,48 +2320,19 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
     assert "alpha-os portfolio decisions" in decision_output
     assert "subject=BTC_spot" in decision_output
 
-    original_loader = data_repositories.load_observation_frame
-    data_repositories.load_observation_frame = _fake_loader
-    try:
-        assert (
-            main(
-                [
-                    "run-walk-forward",
-                    "--db",
-                    str(db_path),
-                    "--evaluation-spec-id",
-                    "core_crypto_eval",
-                ]
-            )
-            == 0
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run-walk-forward",
+                "--db",
+                str(db_path),
+                "--evaluation-spec-id",
+                "core_crypto_eval",
+            ]
         )
-    finally:
-        data_repositories.load_observation_frame = original_loader
-    evaluation_output = capsys.readouterr().out
-    assert "alpha-os evaluation run" in evaluation_output
-    assert "Evaluation spec:  core_crypto_eval" in evaluation_output
-    assert "TaskResults: 1" in evaluation_output
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        task_result = report_state.report.task_results[0]
-        assert task_result.cross_instrument_outcome is not None
-        outcome_dimensions = {
-            item.metric_group_name for item in task_result.cross_instrument_outcome.metric_group_outcomes
-        }
-        assert "decision_quality" in outcome_dimensions
-        failure_metric_groups = {
-            item.metric_group_name for item in task_result.cross_instrument_outcome.failure_finding_outcomes
-        }
-        assert "decision_quality" in failure_metric_groups
-        decision_metric_group_result = next(
-            item for item in task_result.metric_group_results if item.metric_group_name == "decision_quality"
-        )
-        assert decision_metric_group_result.metrics["mean_decision_step_count"] > 1.0
-    finally:
-        store.close()
+
+    assert exc_info.value.code == 2
+    assert "requires a strategy checkpoint" in capsys.readouterr().err
 
 
 def test_core_crypto_4_end_to_end_runtime_smoke(tmp_path, capsys):

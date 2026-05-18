@@ -89,9 +89,6 @@ from ..signal_generator import (
     generate_signal_discovery,
     materialize_signal_specs,
 )
-from ..signal_discovery_persistence_builders import (
-    build_strategy_checkpoint_id as _app_build_strategy_checkpoint_id,
-)
 from ..signal_discovery import SignalDiscoverySpec
 from ..evaluation_inputs import (
     EvaluationInput,
@@ -131,7 +128,6 @@ from ..store import EvaluationStore, _utc_now
 from ..subject_set_backfill_service import (
     resolve_subject_set_for_build,
 )
-from ..strategy_checkpoint import StrategyCheckpoint
 from ..trading_strategy import (
     ExecutionPolicySpec,
     HoldingCostPolicySpec,
@@ -606,14 +602,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     run_walk_forward_evaluation.add_argument(
         "--base-url",
         type=str,
-        default=None,
-    )
-    run_walk_forward_evaluation.add_argument("--min-sample-count", type=int, default=None)
-    run_walk_forward_evaluation.add_argument("--min-abs-corr", type=float, default=None)
-    run_walk_forward_evaluation.add_argument("--min-stability-score", type=float, default=None)
-    run_walk_forward_evaluation.add_argument(
-        "--max-family-survivors-per-subject",
-        type=int,
         default=None,
     )
     run_walk_forward_evaluation.add_argument(
@@ -3400,81 +3388,6 @@ def _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
     return tuple(groups)
 
 
-def _has_complete_strategy_checkpoints_for_fold(
-    store: EvaluationStore,
-    *,
-    group: _SignalDiscoveryEvaluationGroup,
-    fold,
-) -> bool:
-    for evaluation_task in group.evaluation_tasks:
-        strategy_checkpoints = store.list_strategy_checkpoints(
-            strategy_id=evaluation_task.strategy_id,
-            signal_discovery_id=group.signal_discovery_id,
-            fold_label=fold.label,
-            execution_start_date=fold.execution_range.start_date,
-            execution_end_date=fold.execution_range.end_date,
-            limit=1,
-        )
-        if not strategy_checkpoints:
-            return False
-    return True
-
-
-def _backfill_strategy_checkpoints_for_fold_from_signal_discovery(
-    store: EvaluationStore,
-    *,
-    group: _SignalDiscoveryEvaluationGroup,
-    fold,
-) -> bool:
-    shared_strategy_checkpoints = store.list_strategy_checkpoints(
-        signal_discovery_id=group.signal_discovery_id,
-        fold_label=fold.label,
-        execution_start_date=fold.execution_range.start_date,
-        execution_end_date=fold.execution_range.end_date,
-        limit=1,
-    )
-    if not shared_strategy_checkpoints:
-        return False
-    source_state = shared_strategy_checkpoints[0].state
-    created_any = False
-    for evaluation_task in group.evaluation_tasks:
-        existing_states = store.list_strategy_checkpoints(
-            strategy_id=evaluation_task.strategy_id,
-            signal_discovery_id=group.signal_discovery_id,
-            fold_label=fold.label,
-            execution_start_date=fold.execution_range.start_date,
-            execution_end_date=fold.execution_range.end_date,
-            limit=1,
-        )
-        if existing_states:
-            continue
-        timestamp = _utc_now()
-        store.upsert_strategy_checkpoint(
-            state=StrategyCheckpoint(
-                strategy_checkpoint_id=_app_build_strategy_checkpoint_id(
-                    strategy_id=evaluation_task.strategy_id,
-                    fold_label=fold.label,
-                    start_date=fold.execution_range.start_date,
-                    end_date=fold.execution_range.end_date,
-                ),
-                strategy_id=evaluation_task.strategy_id,
-                signal_discovery_id=source_state.signal_discovery_id,
-                subject_set_id=source_state.subject_set_id,
-                target_id=source_state.target_id,
-                fold_label=source_state.fold_label,
-                execution_start_date=source_state.execution_start_date,
-                execution_end_date=source_state.execution_end_date,
-                snapshot_set_id=source_state.snapshot_set_id,
-                screening_result_id=source_state.screening_result_id,
-                compressed_belief_id=source_state.compressed_belief_id,
-                survivor_signal_ids=source_state.survivor_signal_ids,
-                created_at=timestamp,
-            )
-        )
-        created_any = True
-    return created_any
-
-
 def cmd_run_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         result = run_evaluation_use_case(
@@ -3502,11 +3415,10 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
 
 
 def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
+    with _runtime_store(args.db) as (_cfg, store):
         result = run_walk_forward_evaluation_use_case(
             RunWalkForwardEvaluationUseCaseRequest(
                 store=store,
-                default_target_id=cfg.target_id,
                 evaluation_spec_id=str(args.evaluation_spec_id),
                 sizing_method=(
                     None if args.sizing_method is None else str(args.sizing_method)
@@ -3522,10 +3434,6 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
                 ),
                 evaluation_task_ids=getattr(args, "evaluation_task_ids", None),
                 base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-                min_sample_count=args.min_sample_count,
-                min_abs_corr=args.min_abs_corr,
-                min_stability_score=args.min_stability_score,
-                max_family_survivors_per_subject=args.max_family_survivors_per_subject,
                 created_at=_utc_now(),
             )
         )
@@ -3995,10 +3903,6 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_id=str(args.evaluation_spec_id),
         strategy_id=None,
         base_url=args.base_url,
-        min_sample_count=None,
-        min_abs_corr=None,
-        min_stability_score=None,
-        max_family_survivors_per_subject=None,
         sizing_method=None,
         sizing_engine=None,
         direction_mode=None,
