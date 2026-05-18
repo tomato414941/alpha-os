@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from .cross_instrument_contract import (
-    default_validation_result_set_cross_instrument_contract,
-)
 from .subject_set_facts import format_subject_set_facts
 from .validation_result_set import build_validation_result_set
 
@@ -577,16 +574,8 @@ def print_validation_result_set(
     *,
     subject_set_facts_by_id: dict[str, str] | None = None,
 ) -> None:
-    contract = getattr(
-        run,
-        "cross_instrument_contract",
-        default_validation_result_set_cross_instrument_contract(),
-    )
     print("alpha-os validation summary")
     print(f"  Run:      {run.run_id}")
-    print("  CrossInstrumentReportContract: " + contract.format_summary())
-    if getattr(contract, "report_units", ()):
-        print("  ReportUnits: " + contract.format_report_units())
     result_set = getattr(run, "validation_result_set", None)
     if result_set is None:
         result_set = build_validation_result_set(

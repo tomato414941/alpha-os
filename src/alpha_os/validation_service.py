@@ -6,10 +6,6 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
-from .cross_instrument_contract import (
-    CrossInstrumentReportContract,
-    default_validation_result_set_cross_instrument_contract,
-)
 from .contract_boundaries import subject_set_contract_groups
 from .evaluation_generation import (
     _daily_close_series,
@@ -41,7 +37,6 @@ class ValidationRunResult:
     signal_result_count: int
     meta_result_count: int
     decision_result_count: int
-    cross_instrument_contract: CrossInstrumentReportContract
     validation_result_set: ValidationResultSet
 
 
@@ -395,7 +390,6 @@ def run_validation(
     timestamp = recorded_at or _utc_now()
     run_id = timestamp
     spec_json = json.dumps(spec.to_document(), sort_keys=True)
-    cross_instrument_contract = default_validation_result_set_cross_instrument_contract()
     signal_frames: dict[str, object] = {}
     signal_results: list[dict[str, object]] = []
     meta_results: list[dict[str, object]] = []
@@ -552,7 +546,6 @@ def run_validation(
     store.create_validation_run(
         run_id=run_id,
         spec_json=spec_json,
-        cross_instrument_contract=cross_instrument_contract,
         validation_result_set=validation_result_set,
         recorded_at=timestamp,
     )
@@ -569,6 +562,5 @@ def run_validation(
         signal_result_count=len(signal_results),
         meta_result_count=len(meta_results),
         decision_result_count=len(decision_results),
-        cross_instrument_contract=cross_instrument_contract,
         validation_result_set=validation_result_set,
     )

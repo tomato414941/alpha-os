@@ -9,10 +9,6 @@ from typing import Any
 
 from .config import DEFAULT_SUBJECT_ID, DEFAULT_TARGET, default_runtime_asset
 from .compression import CompressedBelief
-from .cross_instrument_contract import (
-    CrossInstrumentReportContract,
-    default_validation_result_set_cross_instrument_contract,
-)
 from .evaluation_task import EvaluationTask
 from .evaluation_spec import EvaluationSpec
 from .evaluation_report import EvaluationReport
@@ -666,14 +662,7 @@ class ValidationRunState:
     run_id: str
     spec_json: str
     created_at: str
-    criteria_json: str | None = None
     summary_json: str | None = None
-
-    @property
-    def cross_instrument_contract(self) -> CrossInstrumentReportContract:
-        if self.criteria_json is None:
-            return default_validation_result_set_cross_instrument_contract()
-        return CrossInstrumentReportContract.from_document(json.loads(self.criteria_json))
 
     @property
     def validation_result_set(self) -> ValidationResultSet | None:
@@ -1243,11 +1232,6 @@ def _row_to_validation_run(row: sqlite3.Row | None) -> ValidationRunState | None
         run_id=str(row["run_id"]),
         spec_json=str(row["spec_json"]),
         created_at=str(row["created_at"]),
-        criteria_json=(
-            None
-            if "criteria_json" not in row.keys() or row["criteria_json"] is None
-            else str(row["criteria_json"])
-        ),
         summary_json=(
             None
             if "summary_json" not in row.keys() or row["summary_json"] is None
@@ -1587,7 +1571,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS validation_runs (
                 run_id TEXT PRIMARY KEY,
                 spec_json TEXT NOT NULL,
-                criteria_json TEXT,
                 summary_json TEXT,
                 created_at TEXT NOT NULL
             );
@@ -2060,7 +2043,6 @@ class EvaluationStore:
             ).fetchall()
         }
         required_columns = {
-            "criteria_json": "TEXT",
             "summary_json": "TEXT",
         }
         for name, definition in required_columns.items():
@@ -3005,29 +2987,22 @@ class EvaluationStore:
         *,
         run_id: str,
         spec_json: str,
-        cross_instrument_contract: CrossInstrumentReportContract | None = None,
         validation_result_set: ValidationResultSet | None = None,
         recorded_at: str | None = None,
     ) -> None:
         self.ensure_schema()
         timestamp = recorded_at or _utc_now()
-        criteria = (
-            default_validation_result_set_cross_instrument_contract()
-            if cross_instrument_contract is None
-            else cross_instrument_contract
-        )
         with self.conn:
             self.conn.execute(
                 """
                 INSERT INTO validation_runs (
-                    run_id, spec_json, criteria_json, summary_json, created_at
+                    run_id, spec_json, summary_json, created_at
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     run_id,
                     spec_json,
-                    json.dumps(criteria.to_document(), sort_keys=True),
                     (
                         None
                         if validation_result_set is None
@@ -3040,7 +3015,7 @@ class EvaluationStore:
     def get_validation_run(self, run_id: str) -> ValidationRunState | None:
         row = self.conn.execute(
             """
-            SELECT run_id, spec_json, criteria_json, summary_json, created_at
+            SELECT run_id, spec_json, summary_json, created_at
             FROM validation_runs
             WHERE run_id = ?
             """,
@@ -3051,7 +3026,7 @@ class EvaluationStore:
     def get_latest_validation_run(self) -> ValidationRunState | None:
         row = self.conn.execute(
             """
-            SELECT run_id, spec_json, criteria_json, summary_json, created_at
+            SELECT run_id, spec_json, summary_json, created_at
             FROM validation_runs
             ORDER BY created_at DESC, run_id DESC
             LIMIT 1

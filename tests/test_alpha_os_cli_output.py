@@ -287,9 +287,6 @@ def test_print_validation_result_set_includes_subject_set_facts(capsys):
     )
     captured = capsys.readouterr().out
 
-    assert "CrossInstrumentReportContract:" in captured
-    assert "contract=subject_set,universe_policy,instrument_mix,aggregation_kind outcomes=mean_net,mean_drawdown,mean_net_notional,mean_long_notional,mean_short_notional,mean_traded_notional,total_cost_notional,total_funding_cost_notional,total_borrow_cost_notional,total_roll_cost_notional" in captured
-    assert "ReportUnits: signal_level=signal_id, meta_aggregation=aggregation_kind, decision_aggregation=subject_set_id+aggregation_kind" in captured
     assert "subject_set=global_macro_core" in captured
     assert "subject_set_contract_groups=instrument,observation_spec,binding,universe_policy" in captured
     assert "universe_policy=base_currency=USD trading_calendar=24x7 benchmark_id=global_macro_core" in captured

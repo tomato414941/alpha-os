@@ -356,31 +356,6 @@ def test_run_validation_persists_results(tmp_path):
             "residual_return_1d",
             "residual_return_3d",
         ]
-        assert run.cross_instrument_contract.contract_fields == (
-            "subject_set",
-            "universe_policy",
-            "instrument_mix",
-            "aggregation_kind",
-        )
-        assert run.cross_instrument_contract.outcome_fields == (
-            "mean_net",
-            "mean_drawdown",
-            "mean_net_notional",
-            "mean_long_notional",
-            "mean_short_notional",
-            "mean_traded_notional",
-            "total_cost_notional",
-            "total_funding_cost_notional",
-            "total_borrow_cost_notional",
-            "total_roll_cost_notional",
-        )
-        assert tuple(
-            item.unit_id for item in run.cross_instrument_contract.report_units
-        ) == (
-            "signal_level",
-            "meta_aggregation",
-            "decision_aggregation",
-        )
         assert run.validation_result_set is not None
         assert len(run.validation_result_set.signal_summaries) == 2
         assert len(run.validation_result_set.meta_summaries) == 2
