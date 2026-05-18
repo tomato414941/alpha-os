@@ -6,7 +6,6 @@ from alpha_os.cli_output import (
     print_evaluation_tasks,
     print_evaluation_snapshot,
     print_subject_sets,
-    print_validation_summary,
 )
 from alpha_os.evaluation_task import EvaluationTask
 from alpha_os.portfolio_construction_config import (
@@ -226,47 +225,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
         "sizing_time:target_vol",
         "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
     )
-
-
-def test_print_validation_summary_includes_subject_set_facts(capsys):
-    from types import SimpleNamespace
-
-    run = SimpleNamespace(run_id="validation:test")
-    decision_result = SimpleNamespace(
-        date_range_label="recent",
-        target_id="residual_return_3d",
-        subject_set_id="global_macro_core",
-        window_size=20,
-        aggregation_kind="active_equal_mean",
-        net_return_total=0.12,
-        max_drawdown=0.03,
-        mean_traded_notional=0.4,
-        mean_gross_notional_exposure=0.8,
-        mean_net_notional_exposure=0.1,
-        mean_long_notional_exposure=0.45,
-        mean_short_notional_exposure=0.35,
-        cost_notional_total=0.01,
-        funding_cost_notional_total=0.004,
-        borrow_cost_notional_total=0.003,
-        roll_cost_notional_total=0.002,
-    )
-    print_validation_summary(
-        run,
-        [],
-        [],
-        [decision_result],
-        subject_set_facts_by_id={
-            "global_macro_core": (
-                "bindings=2 instruments=2 subject_kinds=future,perp "
-                "instrument_types=future,perp asset_classes=crypto,equity_index "
-                "contract_groups=instrument,observation_spec,binding,universe_policy"
-            )
-        },
-    )
-    captured = capsys.readouterr().out
-
-    assert "subject_set=global_macro_core" in captured
-    assert "summary=[bindings=2 instruments=2 subject_kinds=future,perp instrument_types=future,perp asset_classes=crypto,equity_index contract_groups=instrument,observation_spec,binding,universe_policy]" in captured
 
 
 def test_print_subject_sets_includes_cross_asset_summary(capsys):

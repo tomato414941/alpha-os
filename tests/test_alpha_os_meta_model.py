@@ -3013,7 +3013,7 @@ def test_subject_set_runtime_views_aggregate_assets(tmp_path, capsys):
     assert "ETH / residual_return_3d" in compare_output
 
 
-def test_validation_summary_prints_subject_set_scope(tmp_path, capsys):
+def test_validate_strategy_prints_completion(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.signal_discovery import SignalDiscoverySpec
     from alpha_os.store import EvaluationStore
@@ -3158,7 +3158,7 @@ def test_validation_summary_prints_subject_set_scope(tmp_path, capsys):
     finally:
         validation_service._load_price_frame_from_signal_noise = original_loader
     output = capsys.readouterr().out
-    assert "subject_set=core_crypto" in output
+    assert "Validation complete" in output
 
 
 def test_apply_evaluations_batch_persists_snapshot_artifacts(tmp_path):

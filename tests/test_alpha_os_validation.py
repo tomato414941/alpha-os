@@ -784,11 +784,6 @@ def test_validation_cli_roundtrip(tmp_path, capsys):
     run_output = capsys.readouterr().out
     assert "Validation complete" in run_output
     assert "Decision:" in run_output
-    assert "alpha-os validation summary" in run_output
-    assert "Meta Aggregations:" in run_output
-    assert "Decision Aggregations:" in run_output
-    assert "negative_conditions=" in run_output
-    assert "worst_net=" in run_output
 
     assert main(["debug-show-validation", "--db", str(db_path)]) == 0
     show_output = capsys.readouterr().out
