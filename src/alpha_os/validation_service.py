@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
-from .contract_boundaries import subject_set_contract_groups
 from .evaluation_generation import (
     _daily_close_series,
     _resolve_observation_spec,
@@ -27,7 +26,6 @@ from .validation_engine import (
     slice_validation_bundle,
 )
 from .validation_spec import ValidationSpec
-from .validation_result_set import ValidationResultSet, build_validation_result_set
 
 
 @dataclass(frozen=True)
@@ -37,7 +35,6 @@ class ValidationRunResult:
     signal_result_count: int
     meta_result_count: int
     decision_result_count: int
-    validation_result_set: ValidationResultSet
 
 
 @dataclass(frozen=True)
@@ -527,26 +524,9 @@ def run_validation(
                             }
                         )
 
-    validation_result_set = build_validation_result_set(
-        signal_results=signal_results,
-        meta_results=meta_results,
-        decision_results=decision_results,
-        subject_set_contract_groups_by_id={
-            subject_set_id: subject_set_contract_groups(subject_set.definition.contract_boundary)
-            for subject_set_id in spec.subject_set_ids
-            if (subject_set := store.get_subject_set(subject_set_id)) is not None
-        },
-        universe_policy_by_subject_set_id={
-            subject_set_id: subject_set.definition.universe_policy.to_document()
-            for subject_set_id in spec.subject_set_ids
-            if (subject_set := store.get_subject_set(subject_set_id)) is not None
-        },
-    )
-
     store.create_validation_run(
         run_id=run_id,
         spec_json=spec_json,
-        validation_result_set=validation_result_set,
         recorded_at=timestamp,
     )
     for item in signal_results:
@@ -562,5 +542,4 @@ def run_validation(
         signal_result_count=len(signal_results),
         meta_result_count=len(meta_results),
         decision_result_count=len(decision_results),
-        validation_result_set=validation_result_set,
     )

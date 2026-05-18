@@ -576,13 +576,11 @@ def print_validation_result_set(
 ) -> None:
     print("alpha-os validation summary")
     print(f"  Run:      {run.run_id}")
-    result_set = getattr(run, "validation_result_set", None)
-    if result_set is None:
-        result_set = build_validation_result_set(
-            signal_results=signal_results,
-            meta_results=meta_results,
-            decision_results=decision_results,
-        )
+    result_set = build_validation_result_set(
+        signal_results=signal_results,
+        meta_results=meta_results,
+        decision_results=decision_results,
+    )
     print("  Signals:")
     for item in result_set.signal_summaries:
         mean_mmc_text = "n/a" if item.mean_mmc is None else f"{item.mean_mmc:.6f}"

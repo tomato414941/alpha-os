@@ -298,6 +298,7 @@ def test_signal_discovery_execution_plan_rejects_incomplete_universe_policy(tmp_
 
 def test_run_validation_persists_results(tmp_path):
     from alpha_os.store import EvaluationStore
+    from alpha_os.validation_result_set import build_validation_result_set
     from alpha_os.validation_service import run_validation
     from alpha_os.validation_spec import ValidationDateRange, ValidationSpec
     import alpha_os.validation_service as validation_service
@@ -356,19 +357,24 @@ def test_run_validation_persists_results(tmp_path):
             "residual_return_1d",
             "residual_return_3d",
         ]
-        assert run.validation_result_set is not None
-        assert len(run.validation_result_set.signal_summaries) == 2
-        assert len(run.validation_result_set.meta_summaries) == 2
-        assert len(run.validation_result_set.decision_summaries) == 2
-        decision_summary = run.validation_result_set.decision_summaries[0]
+        signal_results = store.list_validation_signal_results(run_id=result.run_id)
+        meta_results = store.list_validation_meta_results(run_id=result.run_id)
+        decision_results = store.list_validation_decision_results(run_id=result.run_id)
+
+        result_set = build_validation_result_set(
+            signal_results=signal_results,
+            meta_results=meta_results,
+            decision_results=decision_results,
+        )
+        assert len(result_set.signal_summaries) == 2
+        assert len(result_set.meta_summaries) == 2
+        assert len(result_set.decision_summaries) == 2
+        decision_summary = result_set.decision_summaries[0]
         assert decision_summary.subject_set_id == "core_crypto"
         assert decision_summary.aggregation_kind in {
             "active_equal_mean",
             "corr_weighted_mean",
         }
-        signal_results = store.list_validation_signal_results(run_id=result.run_id)
-        meta_results = store.list_validation_meta_results(run_id=result.run_id)
-        decision_results = store.list_validation_decision_results(run_id=result.run_id)
         assert len(signal_results) == 4
         assert len(meta_results) == 4
         assert len(decision_results) == 4

@@ -37,7 +37,6 @@ from .trading_strategy import TradingStrategySpec
 from .targets import TargetDefinition, find_target_definition, list_target_definitions
 from .strategy_checkpoint import StrategyCheckpoint
 from .transition_policy import decide_operator_transition
-from .validation_result_set import ValidationResultSet
 
 
 def _utc_now() -> str:
@@ -662,13 +661,6 @@ class ValidationRunState:
     run_id: str
     spec_json: str
     created_at: str
-    summary_json: str | None = None
-
-    @property
-    def validation_result_set(self) -> ValidationResultSet | None:
-        if self.summary_json is None:
-            return None
-        return ValidationResultSet.from_document(json.loads(self.summary_json))
 
 
 @dataclass(frozen=True)
@@ -1232,11 +1224,6 @@ def _row_to_validation_run(row: sqlite3.Row | None) -> ValidationRunState | None
         run_id=str(row["run_id"]),
         spec_json=str(row["spec_json"]),
         created_at=str(row["created_at"]),
-        summary_json=(
-            None
-            if "summary_json" not in row.keys() or row["summary_json"] is None
-            else str(row["summary_json"])
-        ),
     )
 
 
@@ -1571,7 +1558,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS validation_runs (
                 run_id TEXT PRIMARY KEY,
                 spec_json TEXT NOT NULL,
-                summary_json TEXT,
                 created_at TEXT NOT NULL
             );
 
@@ -1734,7 +1720,6 @@ class EvaluationStore:
         self._ensure_subject_first_runtime_schema()
         self._ensure_prepared_evaluation_snapshot_schema()
         self._ensure_signal_spec_schema()
-        self._ensure_validation_run_columns()
         self._ensure_validation_decision_result_columns()
         self.conn.commit()
 
@@ -2034,26 +2019,6 @@ class EvaluationStore:
             )
             """
         )
-
-    def _ensure_validation_run_columns(self) -> None:
-        columns = {
-            str(row["name"])
-            for row in self.conn.execute(
-                "PRAGMA table_info(validation_runs)"
-            ).fetchall()
-        }
-        required_columns = {
-            "summary_json": "TEXT",
-        }
-        for name, definition in required_columns.items():
-            if name in columns:
-                continue
-            self.conn.execute(
-                f"""
-                ALTER TABLE validation_runs
-                ADD COLUMN {name} {definition}
-                """
-            )
 
     def _seed_builtin_targets(self) -> None:
         timestamp = _utc_now()
@@ -2987,7 +2952,6 @@ class EvaluationStore:
         *,
         run_id: str,
         spec_json: str,
-        validation_result_set: ValidationResultSet | None = None,
         recorded_at: str | None = None,
     ) -> None:
         self.ensure_schema()
@@ -2996,18 +2960,13 @@ class EvaluationStore:
             self.conn.execute(
                 """
                 INSERT INTO validation_runs (
-                    run_id, spec_json, summary_json, created_at
+                    run_id, spec_json, created_at
                 )
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?)
                 """,
                 (
                     run_id,
                     spec_json,
-                    (
-                        None
-                        if validation_result_set is None
-                        else json.dumps(validation_result_set.to_document(), sort_keys=True)
-                    ),
                     timestamp,
                 ),
             )
@@ -3015,7 +2974,7 @@ class EvaluationStore:
     def get_validation_run(self, run_id: str) -> ValidationRunState | None:
         row = self.conn.execute(
             """
-            SELECT run_id, spec_json, summary_json, created_at
+            SELECT run_id, spec_json, created_at
             FROM validation_runs
             WHERE run_id = ?
             """,
@@ -3026,7 +2985,7 @@ class EvaluationStore:
     def get_latest_validation_run(self) -> ValidationRunState | None:
         row = self.conn.execute(
             """
-            SELECT run_id, spec_json, summary_json, created_at
+            SELECT run_id, spec_json, created_at
             FROM validation_runs
             ORDER BY created_at DESC, run_id DESC
             LIMIT 1

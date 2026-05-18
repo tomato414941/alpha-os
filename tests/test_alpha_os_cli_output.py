@@ -230,7 +230,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
 
 def test_print_validation_result_set_includes_subject_set_facts(capsys):
     from types import SimpleNamespace
-    from alpha_os.validation_result_set import build_validation_result_set
 
     run = SimpleNamespace(run_id="validation:test")
     decision_result = SimpleNamespace(
@@ -251,27 +250,6 @@ def test_print_validation_result_set_includes_subject_set_facts(capsys):
         borrow_cost_notional_total=0.003,
         roll_cost_notional_total=0.002,
     )
-    run.validation_result_set = build_validation_result_set(
-        [],
-        [],
-        [decision_result],
-        subject_set_contract_groups_by_id={
-            "global_macro_core": (
-                "instrument",
-                "observation_spec",
-                "binding",
-                "universe_policy",
-            ),
-        },
-        universe_policy_by_subject_set_id={
-            "global_macro_core": {
-                "base_currency": "USD",
-                "trading_calendar": "24x7",
-                "benchmark_id": "global_macro_core",
-            },
-        },
-    )
-
     print_validation_result_set(
         run,
         [],
@@ -288,8 +266,6 @@ def test_print_validation_result_set_includes_subject_set_facts(capsys):
     captured = capsys.readouterr().out
 
     assert "subject_set=global_macro_core" in captured
-    assert "subject_set_contract_groups=instrument,observation_spec,binding,universe_policy" in captured
-    assert "universe_policy=base_currency=USD trading_calendar=24x7 benchmark_id=global_macro_core" in captured
     assert "summary=[bindings=2 instruments=2 subject_kinds=future,perp instrument_types=future,perp asset_classes=crypto,equity_index contract_groups=instrument,observation_spec,binding,universe_policy]" in captured
 
 
