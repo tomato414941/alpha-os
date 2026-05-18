@@ -784,6 +784,11 @@ def test_validation_cli_roundtrip(tmp_path, capsys):
     run_output = capsys.readouterr().out
     assert "Validation complete" in run_output
     assert "Decision:" in run_output
+    assert "alpha-os validation summary" in run_output
+    assert "Meta Aggregations:" in run_output
+    assert "Decision Aggregations:" in run_output
+    assert "negative_conditions=" in run_output
+    assert "worst_net=" in run_output
 
     assert main(["debug-show-validation", "--db", str(db_path)]) == 0
     show_output = capsys.readouterr().out
@@ -791,14 +796,6 @@ def test_validation_cli_roundtrip(tmp_path, capsys):
     assert "Signal Results:" in show_output
     assert "Meta Results:" in show_output
     assert "Decision Results:" in show_output
-
-    assert main(["debug-summarize-validation", "--db", str(db_path)]) == 0
-    summary_output = capsys.readouterr().out
-    assert "alpha-os validation summary" in summary_output
-    assert "Meta Aggregations:" in summary_output
-    assert "Decision Aggregations:" in summary_output
-    assert "negative_conditions=" in summary_output
-    assert "worst_net=" in summary_output
 
 
 def test_validate_strategy_cli_roundtrip(tmp_path, capsys):

@@ -3157,18 +3157,6 @@ def test_validation_summary_prints_subject_set_scope(tmp_path, capsys):
         )
     finally:
         validation_service._load_price_frame_from_signal_noise = original_loader
-    capsys.readouterr()
-
-    assert (
-        main(
-            [
-                "debug-summarize-validation",
-                "--db",
-                str(db_path),
-            ]
-        )
-        == 0
-    )
     output = capsys.readouterr().out
     assert "subject_set=core_crypto" in output
 

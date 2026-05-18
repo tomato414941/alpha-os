@@ -812,10 +812,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_validation.add_argument("--db", type=str, default=None)
     show_validation.add_argument("--run-id", type=str, default=None)
 
-    summarize_validation = internal_parser("debug-summarize-validation")
-    summarize_validation.add_argument("--db", type=str, default=None)
-    summarize_validation.add_argument("--run-id", type=str, default=None)
-
     sub._choices_actions = [
         action for action in sub._choices_actions if action.dest in public_commands
     ]
@@ -4585,27 +4581,6 @@ def cmd_debug_show_validation(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_debug_summarize_validation(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        run = _resolve_validation_run(store, args.run_id)
-        signal_results = store.list_validation_signal_results(run_id=run.run_id)
-        meta_results = store.list_validation_meta_results(run_id=run.run_id)
-        decision_results = store.list_validation_decision_results(run_id=run.run_id)
-        subject_set_facts_by_id = _resolve_validation_subject_set_facts_by_id(
-            store,
-            run=run,
-            decision_results=decision_results,
-        )
-    print_validation_summary(
-        run,
-        signal_results,
-        meta_results,
-        decision_results,
-        subject_set_facts_by_id=subject_set_facts_by_id,
-    )
-    return 0
-
-
 def _spec_with_validation_scope(
     spec: ValidationSpec,
     *,
@@ -4841,8 +4816,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_debug_run_validation(args)
         if args.command == "debug-show-validation":
             return cmd_debug_show_validation(args)
-        if args.command == "debug-summarize-validation":
-            return cmd_debug_summarize_validation(args)
     except ValueError as exc:
         parser.error(str(exc))
     parser.error(f"unknown command: {args.command}")

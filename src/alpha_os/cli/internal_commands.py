@@ -21,5 +21,4 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "debug-write-validation-spec": _legacy.cmd_debug_write_validation_spec,
     "debug-run-validation": _legacy.cmd_debug_run_validation,
     "debug-show-validation": _legacy.cmd_debug_show_validation,
-    "debug-summarize-validation": _legacy.cmd_debug_summarize_validation,
 }
