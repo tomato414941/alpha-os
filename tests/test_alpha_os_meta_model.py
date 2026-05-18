@@ -3013,7 +3013,7 @@ def test_subject_set_runtime_views_aggregate_assets(tmp_path, capsys):
     assert "ETH / residual_return_3d" in compare_output
 
 
-def test_validation_result_set_prints_subject_set_scope(tmp_path, capsys):
+def test_validation_summary_prints_subject_set_scope(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.signal_discovery import SignalDiscoverySpec
     from alpha_os.store import EvaluationStore

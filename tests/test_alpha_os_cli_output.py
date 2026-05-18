@@ -6,7 +6,7 @@ from alpha_os.cli_output import (
     print_evaluation_tasks,
     print_evaluation_snapshot,
     print_subject_sets,
-    print_validation_result_set,
+    print_validation_summary,
 )
 from alpha_os.evaluation_task import EvaluationTask
 from alpha_os.portfolio_construction_config import (
@@ -228,7 +228,7 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
     )
 
 
-def test_print_validation_result_set_includes_subject_set_facts(capsys):
+def test_print_validation_summary_includes_subject_set_facts(capsys):
     from types import SimpleNamespace
 
     run = SimpleNamespace(run_id="validation:test")
@@ -250,7 +250,7 @@ def test_print_validation_result_set_includes_subject_set_facts(capsys):
         borrow_cost_notional_total=0.003,
         roll_cost_notional_total=0.002,
     )
-    print_validation_result_set(
+    print_validation_summary(
         run,
         [],
         [],

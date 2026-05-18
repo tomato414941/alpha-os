@@ -3,7 +3,19 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .subject_set_facts import format_subject_set_facts
-from .validation_result_set import build_validation_result_set
+
+
+def _field(item: object, name: str):
+    if isinstance(item, dict):
+        return item.get(name)
+    return getattr(item, name)
+
+
+def _float_field(item: object, name: str, *, default: float = 0.0) -> float:
+    value = _field(item, name)
+    if value is None:
+        return float(default)
+    return float(value)
 
 
 def _format_universe_policy_fields(
@@ -566,7 +578,7 @@ def print_validation_results(
         print(line)
 
 
-def print_validation_result_set(
+def print_validation_summary(
     run,
     signal_results,
     meta_results,
@@ -576,45 +588,40 @@ def print_validation_result_set(
 ) -> None:
     print("alpha-os validation summary")
     print(f"  Run:      {run.run_id}")
-    result_set = build_validation_result_set(
-        signal_results=signal_results,
-        meta_results=meta_results,
-        decision_results=decision_results,
-    )
     print("  Signals:")
-    for item in result_set.signal_summaries:
-        mean_mmc_text = "n/a" if item.mean_mmc is None else f"{item.mean_mmc:.6f}"
+    for item in _validation_signal_summary_rows(signal_results):
+        mean_mmc_text = "n/a" if item["mean_mmc"] is None else f"{item['mean_mmc']:.6f}"
         print(
-            f"    {item.signal_id} conditions={item.conditions} "
-            f"positive_corr={item.positive_corr} "
-            f"mean_corr={item.mean_corr:.6f} mean_mmc={mean_mmc_text}"
+            f"    {item['signal_id']} conditions={item['conditions']} "
+            f"positive_corr={item['positive_corr']} "
+            f"mean_corr={item['mean_corr']:.6f} mean_mmc={mean_mmc_text}"
         )
     print("  Meta Aggregations:")
-    for item in result_set.meta_summaries:
+    for item in _validation_meta_summary_rows(meta_results):
         print(
-            f"    {item.aggregation_kind} conditions={item.conditions} "
-            f"wins={item.wins} mean_corr={item.mean_corr:.6f}"
+            f"    {item['aggregation_kind']} conditions={item['conditions']} "
+            f"wins={item['wins']} mean_corr={item['mean_corr']:.6f}"
         )
     print("  Decision Aggregations:")
-    for item in result_set.decision_summaries:
-        subject_set_id = item.subject_set_id
+    for item in _validation_decision_summary_rows(decision_results):
+        subject_set_id = item["subject_set_id"]
         line = (
             f"    subject_set={subject_set_id or '-'} "
-            f"kind={item.aggregation_kind} conditions={item.conditions} "
-            f"wins={item.wins} "
-            f"negative_conditions={item.negative_conditions} "
-            f"mean_net={item.mean_net:.6f} "
-            f"worst_net={item.worst_net:.6f} "
-            f"mean_drawdown={item.mean_drawdown:.6f} "
-            f"mean_gross_notional={item.mean_gross_notional:.6f} "
-            f"mean_net_notional={item.mean_net_notional:.6f} "
-            f"mean_long_notional={item.mean_long_notional:.6f} "
-            f"mean_short_notional={item.mean_short_notional:.6f} "
-            f"mean_traded_notional={item.mean_traded_notional:.6f} "
-            f"total_cost_notional={item.total_cost_notional:.6f} "
-            f"total_funding_cost_notional={item.total_funding_cost_notional:.6f} "
-            f"total_borrow_cost_notional={item.total_borrow_cost_notional:.6f} "
-            f"total_roll_cost_notional={item.total_roll_cost_notional:.6f}"
+            f"kind={item['aggregation_kind']} conditions={item['conditions']} "
+            f"wins={item['wins']} "
+            f"negative_conditions={item['negative_conditions']} "
+            f"mean_net={item['mean_net']:.6f} "
+            f"worst_net={item['worst_net']:.6f} "
+            f"mean_drawdown={item['mean_drawdown']:.6f} "
+            f"mean_gross_notional={item['mean_gross_notional']:.6f} "
+            f"mean_net_notional={item['mean_net_notional']:.6f} "
+            f"mean_long_notional={item['mean_long_notional']:.6f} "
+            f"mean_short_notional={item['mean_short_notional']:.6f} "
+            f"mean_traded_notional={item['mean_traded_notional']:.6f} "
+            f"total_cost_notional={item['total_cost_notional']:.6f} "
+            f"total_funding_cost_notional={item['total_funding_cost_notional']:.6f} "
+            f"total_borrow_cost_notional={item['total_borrow_cost_notional']:.6f} "
+            f"total_roll_cost_notional={item['total_roll_cost_notional']:.6f}"
         )
         if (
             subject_set_facts_by_id is not None
@@ -622,9 +629,158 @@ def print_validation_result_set(
             and subject_set_id in subject_set_facts_by_id
         ):
             line += f" summary=[{subject_set_facts_by_id[subject_set_id]}]"
-        if item.subject_set_contract_groups:
-            line += " subject_set_contract_groups=" + ",".join(item.subject_set_contract_groups)
-        universe_policy_text = _format_universe_policy_fields(item.universe_policy_fields)
+        universe_policy_text = _format_universe_policy_fields(item["universe_policy_fields"])
         if universe_policy_text is not None:
             line += " universe_policy=" + universe_policy_text
         print(line)
+
+
+def _validation_signal_summary_rows(signal_results) -> tuple[dict[str, object], ...]:
+    grouped: dict[str, list[object]] = {}
+    for item in signal_results:
+        grouped.setdefault(str(_field(item, "signal_id")), []).append(item)
+    return tuple(
+        {
+            "signal_id": signal_id,
+            "conditions": len(items),
+            "positive_corr": sum(
+                1 for item in items if float(_field(item, "corr")) > 0.0
+            ),
+            "mean_corr": sum(float(_field(item, "corr")) for item in items) / len(items),
+            "mean_mmc": _mean_optional_float(items, "mmc"),
+        }
+        for signal_id, items in sorted(grouped.items())
+    )
+
+
+def _validation_meta_summary_rows(meta_results) -> tuple[dict[str, object], ...]:
+    grouped: dict[str, list[object]] = {}
+    by_condition: dict[tuple[str, str, int], list[object]] = {}
+    for item in meta_results:
+        aggregation_kind = str(_field(item, "aggregation_kind"))
+        grouped.setdefault(aggregation_kind, []).append(item)
+        condition_key = (
+            str(_field(item, "date_range_label")),
+            str(_field(item, "target_id")),
+            int(_field(item, "window_size")),
+        )
+        by_condition.setdefault(condition_key, []).append(item)
+    wins: dict[str, int] = {}
+    for items in by_condition.values():
+        ordered = sorted(
+            items,
+            key=lambda item: (
+                -float(_field(item, "corr")),
+                str(_field(item, "aggregation_kind")),
+            ),
+        )
+        if ordered:
+            winner = str(_field(ordered[0], "aggregation_kind"))
+            wins[winner] = wins.get(winner, 0) + 1
+    return tuple(
+        {
+            "aggregation_kind": aggregation_kind,
+            "conditions": len(items),
+            "wins": wins.get(aggregation_kind, 0),
+            "mean_corr": sum(float(_field(item, "corr")) for item in items) / len(items),
+        }
+        for aggregation_kind, items in sorted(grouped.items())
+    )
+
+
+def _validation_decision_summary_rows(decision_results) -> tuple[dict[str, object], ...]:
+    grouped: dict[tuple[str | None, str], list[object]] = {}
+    by_condition: dict[tuple[str, str, str | None, int], list[object]] = {}
+    for item in decision_results:
+        subject_set_id = _field(item, "subject_set_id")
+        normalized_subject_set_id = (
+            None if subject_set_id in {None, ""} else str(subject_set_id)
+        )
+        aggregation_kind = str(_field(item, "aggregation_kind"))
+        group_key = (normalized_subject_set_id, aggregation_kind)
+        grouped.setdefault(group_key, []).append(item)
+        condition_key = (
+            str(_field(item, "date_range_label")),
+            str(_field(item, "target_id")),
+            normalized_subject_set_id,
+            int(_field(item, "window_size")),
+        )
+        by_condition.setdefault(condition_key, []).append(item)
+    wins: dict[tuple[str | None, str], int] = {}
+    for items in by_condition.values():
+        ordered = sorted(
+            items,
+            key=lambda item: (
+                -float(_field(item, "net_return_total")),
+                float(_field(item, "max_drawdown")),
+                str(_field(item, "aggregation_kind")),
+            ),
+        )
+        if ordered:
+            winner_subject_set_id = _field(ordered[0], "subject_set_id")
+            winner_key = (
+                None if winner_subject_set_id in {None, ""} else str(winner_subject_set_id),
+                str(_field(ordered[0], "aggregation_kind")),
+            )
+            wins[winner_key] = wins.get(winner_key, 0) + 1
+    return tuple(
+        {
+            "subject_set_id": subject_set_id,
+            "aggregation_kind": aggregation_kind,
+            "conditions": len(items),
+            "wins": wins.get((subject_set_id, aggregation_kind), 0),
+            "negative_conditions": sum(
+                1 for item in items if float(_field(item, "net_return_total")) <= 0.0
+            ),
+            "mean_net": sum(_float_field(item, "net_return_total") for item in items)
+            / len(items),
+            "worst_net": min(_float_field(item, "net_return_total") for item in items),
+            "mean_drawdown": sum(_float_field(item, "max_drawdown") for item in items)
+            / len(items),
+            "mean_gross_notional": sum(
+                _float_field(item, "mean_gross_notional_exposure") for item in items
+            )
+            / len(items),
+            "mean_net_notional": sum(
+                _float_field(item, "mean_net_notional_exposure") for item in items
+            )
+            / len(items),
+            "mean_long_notional": sum(
+                _float_field(item, "mean_long_notional_exposure") for item in items
+            )
+            / len(items),
+            "mean_short_notional": sum(
+                _float_field(item, "mean_short_notional_exposure") for item in items
+            )
+            / len(items),
+            "mean_traded_notional": sum(
+                _float_field(item, "mean_traded_notional") for item in items
+            )
+            / len(items),
+            "total_cost_notional": sum(
+                _float_field(item, "cost_notional_total") for item in items
+            ),
+            "total_funding_cost_notional": sum(
+                _float_field(item, "funding_cost_notional_total") for item in items
+            ),
+            "total_borrow_cost_notional": sum(
+                _float_field(item, "borrow_cost_notional_total") for item in items
+            ),
+            "total_roll_cost_notional": sum(
+                _float_field(item, "roll_cost_notional_total") for item in items
+            ),
+            "universe_policy_fields": {},
+        }
+        for (subject_set_id, aggregation_kind), items in sorted(grouped.items())
+    )
+
+
+def _mean_optional_float(items: list[object], name: str) -> float | None:
+    values = [
+        float(_field(item, name))
+        for item in items
+        if _field(item, name) is not None
+    ]
+    if not values:
+        return None
+    return sum(values) / len(values)

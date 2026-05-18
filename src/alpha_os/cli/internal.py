@@ -26,7 +26,7 @@ from ..cli_output import (
     print_subject_sets,
     print_target_summaries,
     print_validation_results,
-    print_validation_result_set,
+    print_validation_summary,
 )
 from ..evaluation_task import (
     EvaluationTask,
@@ -4596,7 +4596,7 @@ def cmd_debug_summarize_validation(args: argparse.Namespace) -> int:
             run=run,
             decision_results=decision_results,
         )
-    print_validation_result_set(
+    print_validation_summary(
         run,
         signal_results,
         meta_results,
@@ -4695,7 +4695,7 @@ def cmd_validate_subject_set(args: argparse.Namespace) -> int:
             decision_results,
             subject_set_facts_by_id=subject_set_facts_by_id,
         )
-    print_validation_result_set(
+    print_validation_summary(
         run,
         signal_results,
         meta_results,
@@ -4749,7 +4749,7 @@ def cmd_validate_strategy(args: argparse.Namespace) -> int:
             decision_results,
             subject_set_facts_by_id=subject_set_facts_by_id,
         )
-    print_validation_result_set(
+    print_validation_summary(
         run,
         signal_results,
         meta_results,
