@@ -31,8 +31,6 @@ from ..evaluation_task import (
     build_evaluation_task_id,
 )
 from ..evaluation_application import (
-    RunEvaluationUseCaseRequest,
-    RunWalkForwardEvaluationUseCaseRequest,
     run_evaluation_use_case,
     run_walk_forward_evaluation_use_case,
 )
@@ -3333,38 +3331,34 @@ def _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
 
 def cmd_run_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
-        result = run_evaluation_use_case(
-            RunEvaluationUseCaseRequest(
-                store=store,
-                evaluation_spec_id=str(args.evaluation_spec_id),
-                strategy_ids=(
-                    None
-                    if args.strategy_id is None
-                    else tuple(str(item) for item in args.strategy_id)
-                ),
-                base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-            )
+        report_state = run_evaluation_use_case(
+            store=store,
+            evaluation_spec_id=str(args.evaluation_spec_id),
+            strategy_ids=(
+                None
+                if args.strategy_id is None
+                else tuple(str(item) for item in args.strategy_id)
+            ),
+            base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
         )
-    _print_evaluation_run_summary(result.report_state)
+    _print_evaluation_run_summary(report_state)
     return 0
 
 
 def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
-        result = run_walk_forward_evaluation_use_case(
-            RunWalkForwardEvaluationUseCaseRequest(
-                store=store,
-                evaluation_spec_id=str(args.evaluation_spec_id),
-                strategy_ids=(
-                    None
-                    if args.strategy_id is None
-                    else tuple(str(item) for item in args.strategy_id)
-                ),
-                evaluation_task_ids=getattr(args, "evaluation_task_ids", None),
-                base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-            )
+        report_state = run_walk_forward_evaluation_use_case(
+            store=store,
+            evaluation_spec_id=str(args.evaluation_spec_id),
+            strategy_ids=(
+                None
+                if args.strategy_id is None
+                else tuple(str(item) for item in args.strategy_id)
+            ),
+            evaluation_task_ids=getattr(args, "evaluation_task_ids", None),
+            base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
         )
-    _print_evaluation_run_summary(result.report_state)
+    _print_evaluation_run_summary(report_state)
     return 0
 
 
