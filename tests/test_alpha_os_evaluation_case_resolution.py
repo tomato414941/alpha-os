@@ -11,7 +11,6 @@ from alpha_os.evaluation_task import (
 from alpha_os.evaluation_task_resolution import (
     EvaluationTaskResolutionRequest,
     build_evaluation_task_resolution_plan,
-    persist_evaluation_task_resolution_plan,
     resolve_evaluation_tasks_for_spec,
 )
 from alpha_os.strategy_variant import (
@@ -394,10 +393,7 @@ def test_resolve_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_
         resolved_tasks = resolve_evaluation_tasks_for_spec(
             store,
             evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method=None,
-            sizing_engine=None,
             strategy_ids=None,
-            created_at="2026-04-18T00:00:00Z",
         )
 
         refreshed_state = store.get_trading_strategy(current_strategy.strategy_id)
@@ -439,10 +435,7 @@ def test_resolve_evaluation_tasks_dedupes_base_url_override(tmp_path):
         resolved_tasks = resolve_evaluation_tasks_for_spec(
             store,
             evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method=None,
-            sizing_engine=None,
             strategy_ids=None,
-            created_at="2026-04-19T00:00:00Z",
         )
 
         assert len(resolved_tasks) == 1
@@ -481,107 +474,12 @@ def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
         resolved_tasks = resolve_evaluation_tasks_for_spec(
             store,
             evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method=None,
-            sizing_engine=None,
             strategy_ids=(strategy_b.strategy_id,),
-            created_at="2026-04-18T00:00:00Z",
         )
 
         assert len(resolved_tasks) == 1
         assert resolved_tasks[0].strategy_id == strategy_b.strategy_id
         assert resolved_tasks[0].strategy_id != strategy_a.strategy_id
-    finally:
-        store.close()
-
-
-def test_resolve_evaluation_tasks_ignores_sizing_override(tmp_path):
-    store = EvaluationStore(tmp_path / "runtime.db")
-    try:
-        store.ensure_schema()
-        config = _make_evaluation_trading_config(
-            sizing_method="signal_weighted",
-            sizing_engine="rule_based",
-            long_only=False,
-            gross_exposure_cap=1.5,
-            target_vol=0.18,
-            gross_leverage_cap=1.8,
-            net_exposure_target=0.0,
-            asset_class_weight_caps={"commodity": 0.4},
-            cluster_weight_caps={"rates": 0.35},
-        )
-        strategy, source_task = _register_signal_discovery_case(
-            store,
-            signal_discovery_id="global_macro_search",
-            evaluation_spec_id="macro_eval",
-            base_url="https://signal-noise.example",
-            config=config,
-            created_at="2026-04-18T00:00:00Z",
-        )
-
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
-            store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method="hierarchical_risk_parity",
-            sizing_engine=None,
-            strategy_ids=None,
-            created_at="2026-04-19T00:00:00Z",
-        )
-
-        assert len(resolved_tasks) == 1
-        resolved_case = resolved_tasks[0]
-        assert resolved_case == source_task
-        assert resolved_case.strategy_id == strategy.strategy_id
-        strategy_state = store.get_trading_strategy(resolved_case.strategy_id)
-        assert strategy_state is not None
-        construction = strategy_state.trading_strategy.portfolio_construction
-        assert construction is not None
-        assert construction.sizing_method == "signal_weighted"
-        assert construction.sizing_engine == "rule_based"
-        assert construction.target_vol == 0.18
-        assert construction.gross_leverage_cap == 1.8
-        assert construction.net_exposure_target == 0.0
-        assert construction.asset_class_weight_caps == {"commodity": 0.4}
-        assert construction.cluster_weight_caps == {"rates": 0.35}
-    finally:
-        store.close()
-
-
-def test_resolve_evaluation_tasks_ignores_sizing_engine_override(tmp_path):
-    store = EvaluationStore(tmp_path / "runtime.db")
-    try:
-        store.ensure_schema()
-        config = _make_evaluation_trading_config(
-            sizing_method="signal_weighted",
-            sizing_engine="rule_based",
-        )
-        source_strategy, source_task = _register_signal_discovery_case(
-            store,
-            signal_discovery_id="global_macro_search",
-            evaluation_spec_id="macro_eval",
-            base_url="https://signal-noise.example",
-            config=config,
-            created_at="2026-04-17T00:00:00Z",
-        )
-
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
-            store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method=None,
-            sizing_engine="optimizer",
-            strategy_ids=None,
-            created_at="2026-04-19T00:00:00Z",
-        )
-
-        assert len(resolved_tasks) == 1
-        resolved_case = resolved_tasks[0]
-        assert resolved_case == source_task
-        assert resolved_case.strategy_id == source_strategy.strategy_id
-        strategy_state = store.get_trading_strategy(resolved_case.strategy_id)
-        assert strategy_state is not None
-        construction = strategy_state.trading_strategy.portfolio_construction
-        assert construction is not None
-        assert construction.sizing_method == "signal_weighted"
-        assert construction.sizing_engine == "rule_based"
     finally:
         store.close()
 
@@ -608,10 +506,7 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
             store,
             EvaluationTaskResolutionRequest(
                 evaluation_spec_id="macro_eval",
-                sizing_method="hierarchical_risk_parity",
-                sizing_engine=None,
                 strategy_ids=None,
-                created_at="2026-04-19T00:00:00Z",
             ),
         )
 
@@ -619,13 +514,7 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
         assert plan.entries[0].reason == "existing"
         assert plan.entries[0].resolution_action == "existing"
         assert plan.entries[0].source_task == _case
-        assert plan.pending_write_count == 0
-        assert not plan.has_pending_writes
-
-        persisted_tasks = persist_evaluation_task_resolution_plan(store, plan)
-
-        assert persisted_tasks == plan.tasks
-        assert persisted_tasks == (_case,)
+        assert plan.tasks == (_case,)
     finally:
         store.close()
 
@@ -653,10 +542,7 @@ def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_r
             store,
             EvaluationTaskResolutionRequest(
                 evaluation_spec_id="macro_eval",
-                sizing_method=None,
-                sizing_engine=None,
                 strategy_ids=None,
-                created_at="2026-04-19T00:00:00Z",
             ),
         )
 
@@ -665,8 +551,6 @@ def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_r
         assert plan.entries[0].reason == "existing"
         assert plan.entries[0].resolution_action == "existing"
         assert plan.entries[0].source_task == case
-        assert plan.pending_write_count == 0
-        assert not plan.has_pending_writes
         assert (
             store.get_trading_strategy(strategy.strategy_id).trading_strategy.created_at
             == "2026-04-17T00:00:00Z"
@@ -687,10 +571,7 @@ def test_resolve_evaluation_tasks_rejects_protocol_without_cases(tmp_path):
             resolve_evaluation_tasks_for_spec(
                 store,
                 evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-                sizing_method=None,
-                sizing_engine=None,
                 strategy_ids=None,
-                created_at="2026-04-19T00:00:00Z",
             )
     finally:
         store.close()
@@ -716,58 +597,8 @@ def test_resolve_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
             resolve_evaluation_tasks_for_spec(
                 store,
                 evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-                sizing_method=None,
-                sizing_engine=None,
                 strategy_ids=("strategy:missing",),
-                created_at="2026-04-19T00:00:00Z",
             )
-    finally:
-        store.close()
-
-
-def test_resolve_evaluation_tasks_ignores_override_without_signal_discovery(
-    tmp_path,
-):
-    store = EvaluationStore(tmp_path / "runtime.db")
-    try:
-        store.ensure_schema()
-        source_task = EvaluationTask(
-            evaluation_task_id="case:manual",
-            strategy_id="strategy:manual",
-            evaluation_spec_id="macro_eval",
-        )
-        store.upsert_trading_strategy(
-            trading_strategy=TradingStrategySpec.from_document(
-                {
-                    "strategy_id": "strategy:manual",
-                    "label": "Manual",
-                    "scope": {},
-                    "signal_discovery_id": None,
-                    "position_rule_id": "constant_hold",
-                    "family_mix": None,
-                        "portfolio": {
-                            "portfolio_construction": _make_evaluation_trading_config()
-                            .portfolio_construction.to_document(),
-                            "rebalance_friction_policy": {},
-                            "execution_policy": {},
-                            "rebalance_interval_steps": 1,
-                        },
-                    "created_at": "2026-04-19T00:00:00Z",
-                }
-            )
-        )
-        store.upsert_evaluation_task(task=source_task)
-
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
-            store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method="hierarchical_risk_parity",
-            sizing_engine=None,
-            strategy_ids=None,
-            created_at="2026-04-19T00:00:00Z",
-        )
-
-        assert resolved_tasks == (source_task,)
     finally:
         store.close()
 
@@ -792,10 +623,7 @@ def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
         resolved_tasks = resolve_evaluation_tasks_for_spec(
             store,
             evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-            sizing_method=None,
-            sizing_engine=None,
             strategy_ids=None,
-            created_at="2026-04-19T00:00:00Z",
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()
 

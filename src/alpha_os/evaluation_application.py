@@ -15,12 +15,8 @@ from .store import EvaluationStore
 class RunEvaluationUseCaseRequest:
     store: EvaluationStore
     evaluation_spec_id: str
-    sizing_method: str | None
-    sizing_engine: str | None
-    direction_mode: str | None
     strategy_ids: tuple[str, ...] | None
     base_url: str
-    created_at: str
 
 
 @dataclass(frozen=True)
@@ -32,13 +28,9 @@ class RunEvaluationUseCaseResult:
 class RunWalkForwardEvaluationUseCaseRequest:
     store: EvaluationStore
     evaluation_spec_id: str
-    sizing_method: str | None
-    sizing_engine: str | None
-    direction_mode: str | None
     strategy_ids: tuple[str, ...] | None
     evaluation_task_ids: tuple[str, ...] | None
     base_url: str
-    created_at: str
 
 
 @dataclass(frozen=True)
@@ -60,11 +52,7 @@ def run_evaluation_use_case(
     evaluation_tasks = resolve_evaluation_tasks_for_spec(
         store,
         evaluation_spec_state=evaluation_spec_state,
-        sizing_method=request.sizing_method,
-        sizing_engine=request.sizing_engine,
-        direction_mode=request.direction_mode,
         strategy_ids=request.strategy_ids,
-        created_at=request.created_at,
     )
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(
@@ -92,12 +80,8 @@ def run_walk_forward_evaluation_use_case(
     evaluation_tasks = resolve_evaluation_tasks_for_spec(
         store,
         evaluation_spec_state=evaluation_spec_state,
-        sizing_method=request.sizing_method,
-        sizing_engine=request.sizing_engine,
-        direction_mode=request.direction_mode,
         strategy_ids=request.strategy_ids,
         evaluation_task_ids=request.evaluation_task_ids,
-        created_at=request.created_at,
     )
     report_state = evaluate_evaluation_spec_state(
         EvaluationRunRequest(

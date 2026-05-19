@@ -23,11 +23,7 @@ class EvaluationTaskResolutionReadPort(Protocol):
 @dataclass(frozen=True)
 class EvaluationTaskResolutionRequest:
     evaluation_spec_id: str
-    sizing_method: str | None
-    sizing_engine: str | None
     strategy_ids: tuple[str, ...] | None
-    created_at: str
-    direction_mode: str | None = None
     evaluation_task_ids: tuple[str, ...] | None = None
 
 
@@ -42,14 +38,6 @@ class EvaluationTaskResolutionEntry:
 @dataclass(frozen=True)
 class EvaluationTaskResolutionPlan:
     entries: tuple[EvaluationTaskResolutionEntry, ...]
-
-    @property
-    def pending_write_count(self) -> int:
-        return 0
-
-    @property
-    def has_pending_writes(self) -> bool:
-        return self.pending_write_count > 0
 
     @property
     def tasks(self) -> tuple[EvaluationTask, ...]:
@@ -123,34 +111,19 @@ def build_evaluation_task_resolution_plan(
     return EvaluationTaskResolutionPlan(entries=tuple(entries))
 
 
-def persist_evaluation_task_resolution_plan(
-    write_port,
-    plan: EvaluationTaskResolutionPlan,
-) -> tuple[EvaluationTask, ...]:
-    return plan.tasks
-
-
 def resolve_evaluation_tasks_for_spec(
     store: EvaluationStore,
     *,
     evaluation_spec_state,
-    sizing_method: str | None,
-    sizing_engine: str | None,
     strategy_ids: tuple[str, ...] | None,
-    created_at: str,
-    direction_mode: str | None = None,
     evaluation_task_ids: tuple[str, ...] | None = None,
 ) -> tuple[EvaluationTask, ...]:
     plan = build_evaluation_task_resolution_plan(
         store,
         EvaluationTaskResolutionRequest(
             evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-            sizing_method=sizing_method,
-            sizing_engine=sizing_engine,
             strategy_ids=strategy_ids,
-            created_at=created_at,
-            direction_mode=direction_mode,
             evaluation_task_ids=evaluation_task_ids,
         ),
     )
-    return persist_evaluation_task_resolution_plan(store, plan)
+    return plan.tasks

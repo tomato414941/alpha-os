@@ -554,33 +554,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         default=None,
     )
     run_evaluation.add_argument(
-        "--sizing-method",
-        type=str,
-        choices=(
-            "signal_weighted",
-            "signed_mean_variance",
-            "equal_weight",
-            "minimum_variance",
-            "risk_budgeting",
-            "hierarchical_risk_parity",
-            "conviction_adjusted_hierarchical_risk_parity",
-        ),
-        default=None,
-    )
-    run_evaluation.add_argument(
-        "--sizing-engine",
-        type=str,
-        choices=("rule_based", "optimizer", "history_based"),
-        default=None,
-    )
-    run_evaluation.add_argument(
-        "--direction-mode",
-        type=str,
-        choices=PORTFOLIO_DIRECTION_MODES,
-        default=None,
-    )
-    run_evaluation.add_argument("--long-only", action="store_true")
-    run_evaluation.add_argument(
         "--base-url",
         type=str,
         default=None,
@@ -604,33 +577,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         type=str,
         default=None,
     )
-    run_walk_forward_evaluation.add_argument(
-        "--sizing-method",
-        type=str,
-        choices=(
-            "signal_weighted",
-            "signed_mean_variance",
-            "equal_weight",
-            "minimum_variance",
-            "risk_budgeting",
-            "hierarchical_risk_parity",
-            "conviction_adjusted_hierarchical_risk_parity",
-        ),
-        default=None,
-    )
-    run_walk_forward_evaluation.add_argument(
-        "--sizing-engine",
-        type=str,
-        choices=("rule_based", "optimizer", "history_based"),
-        default=None,
-    )
-    run_walk_forward_evaluation.add_argument(
-        "--direction-mode",
-        type=str,
-        choices=PORTFOLIO_DIRECTION_MODES,
-        default=None,
-    )
-    run_walk_forward_evaluation.add_argument("--long-only", action="store_true")
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
 
     inspect_subject_set = internal_parser("inspect-subject-set")
@@ -3394,20 +3340,12 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
             RunEvaluationUseCaseRequest(
                 store=store,
                 evaluation_spec_id=str(args.evaluation_spec_id),
-                sizing_method=(
-                    None if args.sizing_method is None else str(args.sizing_method)
-                ),
-                sizing_engine=(
-                    None if args.sizing_engine is None else str(args.sizing_engine)
-                ),
-                direction_mode=_direction_mode_from_args(args),
                 strategy_ids=(
                     None
                     if args.strategy_id is None
                     else tuple(str(item) for item in args.strategy_id)
                 ),
                 base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-                created_at=_utc_now(),
             )
         )
     _print_evaluation_run_summary(result.report_state)
@@ -3420,13 +3358,6 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
             RunWalkForwardEvaluationUseCaseRequest(
                 store=store,
                 evaluation_spec_id=str(args.evaluation_spec_id),
-                sizing_method=(
-                    None if args.sizing_method is None else str(args.sizing_method)
-                ),
-                sizing_engine=(
-                    None if args.sizing_engine is None else str(args.sizing_engine)
-                ),
-                direction_mode=_direction_mode_from_args(args),
                 strategy_ids=(
                     None
                     if args.strategy_id is None
@@ -3434,7 +3365,6 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
                 ),
                 evaluation_task_ids=getattr(args, "evaluation_task_ids", None),
                 base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-                created_at=_utc_now(),
             )
         )
     _print_evaluation_run_summary(result.report_state)
@@ -3544,7 +3474,6 @@ def _print_diagnostic_evaluation_focus(report_state) -> None:
 def _print_diagnostic_evaluation_dry_run(
     *,
     evaluation_spec_state,
-    resolution_plan: _EvaluationTaskResolutionPlan,
     evaluation_tasks: tuple[EvaluationTask, ...],
     signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
     trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
@@ -3556,7 +3485,6 @@ def _print_diagnostic_evaluation_dry_run(
     print(f"  Folds:    {len(evaluation_spec.resolved_evaluation_folds)}")
     print(f"  Cases:    {len(evaluation_tasks)}")
     print(f"  Groups:   {len(signal_discovery_groups)}")
-    print(f"  PlannedWrites: {resolution_plan.pending_write_count}")
     print("  MetricGroups: " + ",".join(evaluation_spec.metric_group_names))
     for group in signal_discovery_groups:
         print(
@@ -3844,11 +3772,8 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
             read_port,
             _EvaluationTaskResolutionRequest(
                 evaluation_spec_id=str(args.evaluation_spec_id),
-                sizing_method=None,
-                sizing_engine=None,
                 strategy_ids=None,
                 evaluation_task_ids=manifest_evaluation_task_ids,
-                created_at=timestamp,
             ),
         )
         evaluation_tasks = resolution_plan.tasks
@@ -3873,7 +3798,6 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         }
         _print_diagnostic_evaluation_dry_run(
             evaluation_spec_state=evaluation_spec_state,
-            resolution_plan=resolution_plan,
             evaluation_tasks=evaluation_tasks,
             signal_discovery_groups=signal_discovery_groups,
             trading_configs_by_case_id=trading_configs_by_case_id,
@@ -3900,10 +3824,6 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_id=str(args.evaluation_spec_id),
         strategy_id=None,
         base_url=args.base_url,
-        sizing_method=None,
-        sizing_engine=None,
-        direction_mode=None,
-        long_only=False,
         details=args.details,
         evaluation_task_ids=manifest_evaluation_task_ids,
     )
