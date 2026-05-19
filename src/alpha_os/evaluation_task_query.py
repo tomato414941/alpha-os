@@ -41,7 +41,7 @@ def select_evaluation_tasks(
             raise ValueError(
                 "evaluation spec does not contain requested strategies: "
                 f"{evaluation_spec_id}"
-    )
+            )
     return tuple(
         sorted(
             existing_tasks,
