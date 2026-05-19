@@ -36,7 +36,6 @@ class EvaluationOosContract:
     enforcement: OosContractEnforcement = "warn"
     require_non_overlapping_ranges: bool = True
     require_evaluation_after_execution: bool = True
-    require_strategy_checkpoint_for_trained_strategy: bool = False
 
     def __post_init__(self) -> None:
         if self.enforcement not in OOS_CONTRACT_ENFORCEMENTS:
@@ -48,9 +47,6 @@ class EvaluationOosContract:
             "require_non_overlapping_ranges": self.require_non_overlapping_ranges,
             "require_evaluation_after_execution": (
                 self.require_evaluation_after_execution
-            ),
-            "require_strategy_checkpoint_for_trained_strategy": (
-                self.require_strategy_checkpoint_for_trained_strategy
             ),
         }
 
@@ -70,9 +66,6 @@ class EvaluationOosContract:
             ),
             require_evaluation_after_execution=bool(
                 document.get("require_evaluation_after_execution", True)
-            ),
-            require_strategy_checkpoint_for_trained_strategy=bool(
-                document.get("require_strategy_checkpoint_for_trained_strategy", False)
             ),
         )
 
@@ -326,11 +319,6 @@ def build_oos_contract_summary(spec: "EvaluationSpec") -> dict[str, str]:
         "evaluation_after_execution": _contract_result_status(
             enabled=spec.oos_contract.require_evaluation_after_execution,
             violated=has_evaluation_before_or_inside_execution,
-        ),
-        "strategy_checkpoint_required": (
-            "required"
-            if spec.oos_contract.require_strategy_checkpoint_for_trained_strategy
-            else "n/a"
         ),
     }
 

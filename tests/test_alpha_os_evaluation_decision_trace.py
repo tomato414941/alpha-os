@@ -106,7 +106,6 @@ def test_evaluation_report_lane_round_trips_and_defaults():
             "date_parse": "pass",
             "range_non_overlap": "pass",
             "evaluation_after_execution": "pass",
-            "strategy_checkpoint_required": "n/a",
         },
         task_results=(
             EvaluationTaskResult(

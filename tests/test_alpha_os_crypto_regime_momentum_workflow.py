@@ -221,7 +221,6 @@ def _manifest_document(
                     "enforcement": "warn",
                     "require_non_overlapping_ranges": True,
                     "require_evaluation_after_execution": True,
-                    "require_strategy_checkpoint_for_trained_strategy": False,
                 },
             }
         ],
