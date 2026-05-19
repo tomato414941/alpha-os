@@ -1,25 +1,10 @@
 from __future__ import annotations
 
-from typing import Protocol
-
 from .evaluation_task import EvaluationTask
 
 
-class EvaluationTaskQueryReadPort(Protocol):
-    def list_evaluation_tasks(
-        self,
-        *,
-        evaluation_spec_id: str | None = None,
-        limit: int = 100,
-    ):
-        ...
-
-    def get_trading_strategy(self, strategy_id: str):
-        ...
-
-
 def select_evaluation_tasks(
-    read_port: EvaluationTaskQueryReadPort,
+    read_port,
     *,
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
