@@ -664,7 +664,7 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
         store.close()
 
 
-def test_build_evaluation_task_resolution_plan_exposes_refresh_without_persisting(
+def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_refresh(
     tmp_path,
 ):
     store = EvaluationStore(tmp_path / "runtime.db")
@@ -696,13 +696,13 @@ def test_build_evaluation_task_resolution_plan_exposes_refresh_without_persistin
 
         assert plan.tasks == (case,)
         assert len(plan.entries) == 1
-        assert plan.entries[0].reason == "refresh_generated_strategy"
-        assert plan.entries[0].resolution_action == "refresh_generated_strategy"
+        assert plan.entries[0].reason == "existing"
+        assert plan.entries[0].resolution_action == "existing"
         assert plan.entries[0].source_task == case
         assert plan.entries[0].task_to_persist is None
-        assert plan.entries[0].trading_strategy_to_persist is not None
-        assert plan.pending_write_count == 1
-        assert plan.has_pending_writes
+        assert plan.entries[0].trading_strategy_to_persist is None
+        assert plan.pending_write_count == 0
+        assert not plan.has_pending_writes
         assert (
             store.get_trading_strategy(strategy.strategy_id).trading_strategy.created_at
             == "2026-04-17T00:00:00Z"

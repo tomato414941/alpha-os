@@ -93,53 +93,6 @@ class EvaluationTaskResolutionPlan:
         )
 
 
-def build_generated_trading_strategy_refresh_for_task(
-    read_port: EvaluationTaskResolutionReadPort,
-    *,
-    source_task: EvaluationTask,
-    created_at: str,
-) -> TradingStrategySpec | None:
-    source_strategy_state = read_port.get_trading_strategy(source_task.strategy_id)
-    if source_strategy_state is None:
-        return None
-    signal_discovery_id = source_strategy_state.trading_strategy.signal_discovery_id
-    if signal_discovery_id is None:
-        return None
-    try:
-        source_config = strategy_variant_config_from_strategy(
-            source_strategy_state.trading_strategy
-        )
-    except ValueError:
-        return None
-    signal_discovery_state = read_port.get_signal_discovery_spec(signal_discovery_id)
-    if signal_discovery_state is None:
-        return None
-    trading_strategy = derive_trading_strategy_from_signal_discovery(
-        signal_discovery=signal_discovery_state,
-        variant_config=source_config,
-        created_at=created_at,
-    )
-    if trading_strategy.strategy_id != source_task.strategy_id:
-        return None
-    return trading_strategy
-
-
-def refresh_generated_trading_strategy_for_task(
-    store: EvaluationStore,
-    *,
-    source_task: EvaluationTask,
-    created_at: str,
-) -> None:
-    trading_strategy = build_generated_trading_strategy_refresh_for_task(
-        store,
-        source_task=source_task,
-        created_at=created_at,
-    )
-    if trading_strategy is None:
-        return
-    store.upsert_trading_strategy(trading_strategy=trading_strategy)
-
-
 def build_evaluation_task_resolution_plan(
     read_port: EvaluationTaskResolutionReadPort,
     request: EvaluationTaskResolutionRequest,
@@ -215,26 +168,12 @@ def build_evaluation_task_resolution_plan(
             else source_config
         )
         if resolved_config == source_config:
-            refresh_strategy = build_generated_trading_strategy_refresh_for_task(
-                read_port,
-                source_task=source_task,
-                created_at=request.created_at,
-            )
             entries.append(
                 EvaluationTaskResolutionEntry(
                     task=source_task,
                     source_task=source_task,
-                    trading_strategy_to_persist=refresh_strategy,
-                    resolution_action=(
-                        "refresh_generated_strategy"
-                        if refresh_strategy is not None
-                        else "existing"
-                    ),
-                    reason=(
-                        "refresh_generated_strategy"
-                        if refresh_strategy is not None
-                        else "existing"
-                    ),
+                    resolution_action="existing",
+                    reason="existing",
                 )
             )
             continue
