@@ -46,8 +46,8 @@ from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
-from ..evaluation_task_resolution import (
-    resolve_evaluation_tasks as _resolve_evaluation_tasks,
+from ..evaluation_task_query import (
+    select_evaluation_tasks as _select_evaluation_tasks,
 )
 from ..strategy_variant import (
     StrategyVariantConfig as _StrategyVariantConfig,
@@ -3765,7 +3765,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_state = read_port.get_evaluation_spec(str(args.evaluation_spec_id))
         if evaluation_spec_state is None:
             raise ValueError(f"evaluation spec does not exist: {args.evaluation_spec_id}")
-        evaluation_tasks = _resolve_evaluation_tasks(
+        evaluation_tasks = _select_evaluation_tasks(
             read_port,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=None,

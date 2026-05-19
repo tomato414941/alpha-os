@@ -6,7 +6,7 @@ from .data_repositories import (
     FeaturePlaneRepository,
     ObservationFrameRepository,
 )
-from .evaluation_task_resolution import resolve_evaluation_tasks_for_spec
+from .evaluation_task_query import select_evaluation_tasks
 from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
 from .store import EvaluationStore
 
@@ -49,9 +49,9 @@ def run_evaluation_use_case(
     evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
     if evaluation_spec_state is None:
         raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
-    evaluation_tasks = resolve_evaluation_tasks_for_spec(
+    evaluation_tasks = select_evaluation_tasks(
         store,
-        evaluation_spec_state=evaluation_spec_state,
+        evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         strategy_ids=request.strategy_ids,
     )
     report_state = evaluate_evaluation_spec_state(
@@ -77,9 +77,9 @@ def run_walk_forward_evaluation_use_case(
     evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
     if evaluation_spec_state is None:
         raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
-    evaluation_tasks = resolve_evaluation_tasks_for_spec(
+    evaluation_tasks = select_evaluation_tasks(
         store,
-        evaluation_spec_state=evaluation_spec_state,
+        evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         strategy_ids=request.strategy_ids,
         evaluation_task_ids=request.evaluation_task_ids,
     )

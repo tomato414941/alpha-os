@@ -8,9 +8,8 @@ from alpha_os.evaluation_task import (
     EvaluationTask,
     build_evaluation_task_id,
 )
-from alpha_os.evaluation_task_resolution import (
-    resolve_evaluation_tasks,
-    resolve_evaluation_tasks_for_spec,
+from alpha_os.evaluation_task_query import (
+    select_evaluation_tasks,
 )
 from alpha_os.strategy_variant import (
     StrategyVariantConfig,
@@ -349,7 +348,7 @@ def test_derived_trading_strategy_preserves_risk_policy_constraints():
     assert construction.cluster_weight_caps == {"rates_us": 0.3}
 
 
-def test_resolve_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_path):
+def test_select_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -389,9 +388,9 @@ def test_resolve_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_
             )
         )
 
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
+        resolved_tasks = select_evaluation_tasks(
             store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+            evaluation_spec_id="macro_eval",
             strategy_ids=None,
         )
 
@@ -407,7 +406,7 @@ def test_resolve_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_
         store.close()
 
 
-def test_resolve_evaluation_tasks_dedupes_base_url_override(tmp_path):
+def test_select_evaluation_tasks_dedupes_base_url_override(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -431,9 +430,9 @@ def test_resolve_evaluation_tasks_dedupes_base_url_override(tmp_path):
             config=config,
             created_at="2026-04-18T00:00:00Z",
         )
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
+        resolved_tasks = select_evaluation_tasks(
             store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+            evaluation_spec_id="macro_eval",
             strategy_ids=None,
         )
 
@@ -443,7 +442,7 @@ def test_resolve_evaluation_tasks_dedupes_base_url_override(tmp_path):
         store.close()
 
 
-def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
+def test_select_evaluation_tasks_filters_strategy_ids(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -470,9 +469,9 @@ def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
             signal_spec_id="carry_5d",
         )
 
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
+        resolved_tasks = select_evaluation_tasks(
             store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+            evaluation_spec_id="macro_eval",
             strategy_ids=(strategy_b.strategy_id,),
         )
 
@@ -483,7 +482,7 @@ def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
         store.close()
 
 
-def test_resolve_evaluation_tasks_is_read_only(tmp_path):
+def test_select_evaluation_tasks_is_read_only(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -501,7 +500,7 @@ def test_resolve_evaluation_tasks_is_read_only(tmp_path):
             created_at="2026-04-17T00:00:00Z",
         )
 
-        resolved_tasks = resolve_evaluation_tasks(
+        resolved_tasks = select_evaluation_tasks(
             store,
             evaluation_spec_id="macro_eval",
             strategy_ids=None,
@@ -512,7 +511,7 @@ def test_resolve_evaluation_tasks_is_read_only(tmp_path):
         store.close()
 
 
-def test_resolve_evaluation_tasks_keeps_existing_strategy_without_refresh(
+def test_select_evaluation_tasks_keeps_existing_strategy_without_refresh(
     tmp_path,
 ):
     store = EvaluationStore(tmp_path / "runtime.db")
@@ -531,7 +530,7 @@ def test_resolve_evaluation_tasks_keeps_existing_strategy_without_refresh(
             created_at="2026-04-17T00:00:00Z",
         )
 
-        resolved_tasks = resolve_evaluation_tasks(
+        resolved_tasks = select_evaluation_tasks(
             store,
             evaluation_spec_id="macro_eval",
             strategy_ids=None,
@@ -546,7 +545,7 @@ def test_resolve_evaluation_tasks_keeps_existing_strategy_without_refresh(
         store.close()
 
 
-def test_resolve_evaluation_tasks_rejects_protocol_without_cases(tmp_path):
+def test_select_evaluation_tasks_rejects_protocol_without_cases(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -555,16 +554,16 @@ def test_resolve_evaluation_tasks_rejects_protocol_without_cases(tmp_path):
             ValueError,
             match="evaluation spec requires at least one evaluation task",
         ):
-            resolve_evaluation_tasks_for_spec(
+            select_evaluation_tasks(
                 store,
-                evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+                evaluation_spec_id="macro_eval",
                 strategy_ids=None,
             )
     finally:
         store.close()
 
 
-def test_resolve_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
+def test_select_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -581,16 +580,16 @@ def test_resolve_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
             ValueError,
             match="evaluation spec does not contain requested strategies",
         ):
-            resolve_evaluation_tasks_for_spec(
+            select_evaluation_tasks(
                 store,
-                evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+                evaluation_spec_id="macro_eval",
                 strategy_ids=("strategy:missing",),
             )
     finally:
         store.close()
 
 
-def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
+def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -607,9 +606,9 @@ def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
                 config=config,
                 created_at=created_at,
             )
-        resolved_tasks = resolve_evaluation_tasks_for_spec(
+        resolved_tasks = select_evaluation_tasks(
             store,
-            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+            evaluation_spec_id="macro_eval",
             strategy_ids=None,
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()

@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from .evaluation_task import EvaluationTask
-from .store import EvaluationStore
 
 
-class EvaluationTaskResolutionReadPort(Protocol):
+class EvaluationTaskQueryReadPort(Protocol):
     def list_evaluation_tasks(
         self,
         *,
@@ -19,8 +18,8 @@ class EvaluationTaskResolutionReadPort(Protocol):
         ...
 
 
-def resolve_evaluation_tasks(
-    read_port: EvaluationTaskResolutionReadPort,
+def select_evaluation_tasks(
+    read_port: EvaluationTaskQueryReadPort,
     *,
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
@@ -57,10 +56,10 @@ def resolve_evaluation_tasks(
             raise ValueError(
                 "evaluation spec does not contain requested strategies: "
                 f"{evaluation_spec_id}"
-            )
+    )
     for task in existing_tasks:
-        source_strategy_state = read_port.get_trading_strategy(task.strategy_id)
-        if source_strategy_state is None:
+        strategy_state = read_port.get_trading_strategy(task.strategy_id)
+        if strategy_state is None:
             raise ValueError(
                 f"evaluation task strategy does not exist: {task.strategy_id}"
             )
@@ -75,19 +74,4 @@ def resolve_evaluation_tasks(
                 item.evaluation_task_id,
             ),
         )
-    )
-
-
-def resolve_evaluation_tasks_for_spec(
-    store: EvaluationStore,
-    *,
-    evaluation_spec_state,
-    strategy_ids: tuple[str, ...] | None,
-    evaluation_task_ids: tuple[str, ...] | None = None,
-) -> tuple[EvaluationTask, ...]:
-    return resolve_evaluation_tasks(
-        store,
-        evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-        strategy_ids=strategy_ids,
-        evaluation_task_ids=evaluation_task_ids,
     )
