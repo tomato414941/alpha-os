@@ -3817,9 +3817,6 @@ def _effective_trading_strategies_for_resolution_plan(
 ) -> dict[str, TradingStrategySpec]:
     strategies: dict[str, TradingStrategySpec] = {}
     for entry in plan.entries:
-        if entry.trading_strategy_to_persist is not None:
-            strategies[entry.task.strategy_id] = entry.trading_strategy_to_persist
-            continue
         state = read_port.get_trading_strategy(entry.task.strategy_id)
         if state is None:
             raise ValueError(

@@ -29,21 +29,22 @@ not route through the feature-selection/search job that produced it.
 Do not treat `signal_discovery_id` as the general way to decide how a strategy
 is evaluated.
 
-Use strategy state and checkpoint state as the evaluation boundary. Keep
-`signal_discovery_id` as provenance unless a local workflow explicitly needs to
-load the signal search specification.
+Use strategy state as the evaluation boundary. Future checkpoint state should be
+introduced only after the checkpoint model is defined. Keep `signal_discovery_id`
+as provenance unless a local workflow explicitly needs to load the signal search
+specification.
 
 ## Current Suspects
 
-- `evaluation_task_resolution.py` derives strategy variants from
-  `signal_discovery_id`
 - `portfolio_decision_service.py` resolves subject set through compressed belief
   `signal_discovery_id`
 
 ## Desired Direction
 
-Evaluation planning now prefers direct strategy evaluation when the strategy is
-directly executable. Revisit portfolio decision input construction next.
+Evaluation task resolution no longer derives strategy variants from
+`signal_discovery_id`. Evaluation planning now prefers direct strategy
+evaluation when the strategy is directly executable. Revisit portfolio decision
+input construction next.
 
 ## Close Condition
 

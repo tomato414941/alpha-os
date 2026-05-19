@@ -3,17 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .evaluation_task import (
-    EvaluationTask,
-    build_evaluation_task_id,
-)
+from .evaluation_task import EvaluationTask
 from .store import EvaluationStore
-from .strategy_variant import (
-    derive_trading_strategy_from_signal_discovery,
-    overridden_strategy_variant_config,
-    strategy_variant_config_from_strategy,
-)
-from .trading_strategy import TradingStrategySpec
 
 
 class EvaluationTaskResolutionReadPort(Protocol):
@@ -26,17 +17,6 @@ class EvaluationTaskResolutionReadPort(Protocol):
         ...
 
     def get_trading_strategy(self, strategy_id: str):
-        ...
-
-    def get_signal_discovery_spec(self, signal_discovery_id: str):
-        ...
-
-
-class EvaluationTaskResolutionWritePort(Protocol):
-    def upsert_trading_strategy(self, *, trading_strategy: TradingStrategySpec):
-        ...
-
-    def upsert_evaluation_task(self, *, task: EvaluationTask):
         ...
 
 
@@ -55,8 +35,6 @@ class EvaluationTaskResolutionRequest:
 class EvaluationTaskResolutionEntry:
     task: EvaluationTask
     source_task: EvaluationTask | None = None
-    trading_strategy_to_persist: TradingStrategySpec | None = None
-    task_to_persist: EvaluationTask | None = None
     resolution_action: str = "existing"
     reason: str = "existing"
 
@@ -67,11 +45,7 @@ class EvaluationTaskResolutionPlan:
 
     @property
     def pending_write_count(self) -> int:
-        return sum(
-            int(entry.trading_strategy_to_persist is not None)
-            + int(entry.task_to_persist is not None)
-            for entry in self.entries
-        )
+        return 0
 
     @property
     def has_pending_writes(self) -> bool:
@@ -130,118 +104,29 @@ def build_evaluation_task_resolution_plan(
                 "evaluation spec does not contain requested strategies: "
                 f"{evaluation_spec_id}"
             )
-    has_strategy_override = (
-        request.sizing_method is not None
-        or request.sizing_engine is not None
-        or request.direction_mode is not None
-    )
-    source_tasks = (
-        _dedupe_tasks_by_signal_discovery(read_port, existing_tasks)
-        if has_strategy_override
-        else existing_tasks
-    )
     entries: list[EvaluationTaskResolutionEntry] = []
-    for source_task in source_tasks:
+    for source_task in existing_tasks:
         source_strategy_state = read_port.get_trading_strategy(source_task.strategy_id)
         if source_strategy_state is None:
             raise ValueError(
                 "evaluation task strategy does not exist: "
                 f"{source_task.strategy_id}"
             )
-        source_signal_discovery_id = source_strategy_state.trading_strategy.signal_discovery_id
-        if has_strategy_override and source_signal_discovery_id is None:
-            raise ValueError(
-                "unknown signal discovery for evaluation task override: "
-                f"{source_signal_discovery_id}"
-            )
-        source_config = strategy_variant_config_from_strategy(
-            source_strategy_state.trading_strategy
-        )
-        resolved_config = (
-            overridden_strategy_variant_config(
-                source_config,
-                sizing_method=request.sizing_method,
-                sizing_engine=request.sizing_engine,
-                direction_mode=request.direction_mode,
-            )
-            if has_strategy_override
-            else source_config
-        )
-        if resolved_config == source_config:
-            entries.append(
-                EvaluationTaskResolutionEntry(
-                    task=source_task,
-                    source_task=source_task,
-                    resolution_action="existing",
-                    reason="existing",
-                )
-            )
-            continue
-        signal_discovery_state = read_port.get_signal_discovery_spec(
-            source_signal_discovery_id
-        )
-        if signal_discovery_state is None:
-            raise ValueError(
-                "unknown signal discovery for evaluation task override: "
-                f"{source_signal_discovery_id}"
-            )
-        trading_strategy = derive_trading_strategy_from_signal_discovery(
-            signal_discovery=signal_discovery_state,
-            variant_config=resolved_config,
-            created_at=request.created_at,
-        )
-        derived_task = EvaluationTask(
-            evaluation_task_id=build_evaluation_task_id(
-                strategy_id=trading_strategy.strategy_id,
-                evaluation_spec_id=evaluation_spec_id,
-            ),
-            strategy_id=trading_strategy.strategy_id,
-            evaluation_spec_id=evaluation_spec_id,
-        )
         entries.append(
             EvaluationTaskResolutionEntry(
-                task=derived_task,
+                task=source_task,
                 source_task=source_task,
-                trading_strategy_to_persist=trading_strategy,
-                task_to_persist=derived_task,
-                resolution_action="derived_override",
-                reason="derived_override",
+                resolution_action="existing",
+                reason="existing",
             )
         )
     return EvaluationTaskResolutionPlan(entries=tuple(entries))
 
 
-def _dedupe_tasks_by_signal_discovery(
-    read_port: EvaluationTaskResolutionReadPort,
-    tasks: tuple[EvaluationTask, ...],
-) -> tuple[EvaluationTask, ...]:
-    unique_tasks_by_signal_discovery_id: dict[str | None, EvaluationTask] = {}
-    for task in tasks:
-        strategy_state = read_port.get_trading_strategy(task.strategy_id)
-        if strategy_state is None:
-            raise ValueError(
-                "evaluation task strategy does not exist: "
-                f"{task.strategy_id}"
-            )
-        signal_discovery_id = strategy_state.trading_strategy.signal_discovery_id
-        unique_tasks_by_signal_discovery_id.setdefault(
-            signal_discovery_id,
-            task,
-        )
-    return tuple(unique_tasks_by_signal_discovery_id.values())
-
-
 def persist_evaluation_task_resolution_plan(
-    write_port: EvaluationTaskResolutionWritePort,
+    write_port,
     plan: EvaluationTaskResolutionPlan,
 ) -> tuple[EvaluationTask, ...]:
-    for entry in plan.entries:
-        if entry.trading_strategy_to_persist is not None:
-            write_port.upsert_trading_strategy(
-                trading_strategy=entry.trading_strategy_to_persist
-            )
-        if entry.task_to_persist is not None:
-            write_port.upsert_evaluation_task(task=entry.task_to_persist)
     return plan.tasks
 
 

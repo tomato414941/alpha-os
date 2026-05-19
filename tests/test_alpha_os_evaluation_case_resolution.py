@@ -494,7 +494,7 @@ def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
         store.close()
 
 
-def test_resolve_evaluation_tasks_dedupes_sizing_and_base_url_override(tmp_path):
+def test_resolve_evaluation_tasks_ignores_sizing_override(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -509,18 +509,14 @@ def test_resolve_evaluation_tasks_dedupes_sizing_and_base_url_override(tmp_path)
             asset_class_weight_caps={"commodity": 0.4},
             cluster_weight_caps={"rates": 0.35},
         )
-        for base_url, created_at in (
-            ("http://127.0.0.1:8000", "2026-04-17T00:00:00Z"),
-            ("https://signal-noise.example", "2026-04-18T00:00:00Z"),
-        ):
-            _register_signal_discovery_case(
-                store,
-                signal_discovery_id="global_macro_search",
-                evaluation_spec_id="macro_eval",
-                base_url=base_url,
-                config=config,
-                created_at=created_at,
-            )
+        strategy, source_task = _register_signal_discovery_case(
+            store,
+            signal_discovery_id="global_macro_search",
+            evaluation_spec_id="macro_eval",
+            base_url="https://signal-noise.example",
+            config=config,
+            created_at="2026-04-18T00:00:00Z",
+        )
 
         resolved_tasks = resolve_evaluation_tasks_for_spec(
             store,
@@ -533,12 +529,14 @@ def test_resolve_evaluation_tasks_dedupes_sizing_and_base_url_override(tmp_path)
 
         assert len(resolved_tasks) == 1
         resolved_case = resolved_tasks[0]
+        assert resolved_case == source_task
+        assert resolved_case.strategy_id == strategy.strategy_id
         strategy_state = store.get_trading_strategy(resolved_case.strategy_id)
         assert strategy_state is not None
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
-        assert construction.sizing_method == "hierarchical_risk_parity"
-        assert construction.sizing_engine == "history_based"
+        assert construction.sizing_method == "signal_weighted"
+        assert construction.sizing_engine == "rule_based"
         assert construction.target_vol == 0.18
         assert construction.gross_leverage_cap == 1.8
         assert construction.net_exposure_target == 0.0
@@ -548,7 +546,7 @@ def test_resolve_evaluation_tasks_dedupes_sizing_and_base_url_override(tmp_path)
         store.close()
 
 
-def test_resolve_evaluation_tasks_applies_sizing_engine_only_override(tmp_path):
+def test_resolve_evaluation_tasks_ignores_sizing_engine_override(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -556,7 +554,7 @@ def test_resolve_evaluation_tasks_applies_sizing_engine_only_override(tmp_path):
             sizing_method="signal_weighted",
             sizing_engine="rule_based",
         )
-        _source_strategy, source_task = _register_signal_discovery_case(
+        source_strategy, source_task = _register_signal_discovery_case(
             store,
             signal_discovery_id="global_macro_search",
             evaluation_spec_id="macro_eval",
@@ -576,13 +574,14 @@ def test_resolve_evaluation_tasks_applies_sizing_engine_only_override(tmp_path):
 
         assert len(resolved_tasks) == 1
         resolved_case = resolved_tasks[0]
+        assert resolved_case == source_task
+        assert resolved_case.strategy_id == source_strategy.strategy_id
         strategy_state = store.get_trading_strategy(resolved_case.strategy_id)
         assert strategy_state is not None
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
         assert construction.sizing_method == "signal_weighted"
-        assert construction.sizing_engine == "optimizer"
-        assert resolved_case.evaluation_task_id != source_task.evaluation_task_id
+        assert construction.sizing_engine == "rule_based"
     finally:
         store.close()
 
@@ -615,24 +614,18 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
                 created_at="2026-04-19T00:00:00Z",
             ),
         )
-        derived_task = plan.tasks[0]
 
         assert len(plan.entries) == 1
-        assert plan.entries[0].reason == "derived_override"
-        assert plan.entries[0].resolution_action == "derived_override"
+        assert plan.entries[0].reason == "existing"
+        assert plan.entries[0].resolution_action == "existing"
         assert plan.entries[0].source_task == _case
-        assert plan.entries[0].trading_strategy_to_persist is not None
-        assert plan.entries[0].task_to_persist == derived_task
-        assert plan.pending_write_count == 2
-        assert plan.has_pending_writes
-        assert store.get_trading_strategy(derived_task.strategy_id) is None
-        assert store.get_evaluation_task(derived_task.evaluation_task_id) is None
+        assert plan.pending_write_count == 0
+        assert not plan.has_pending_writes
 
         persisted_tasks = persist_evaluation_task_resolution_plan(store, plan)
 
         assert persisted_tasks == plan.tasks
-        assert store.get_trading_strategy(derived_task.strategy_id) is not None
-        assert store.get_evaluation_task(derived_task.evaluation_task_id) is not None
+        assert persisted_tasks == (_case,)
     finally:
         store.close()
 
@@ -672,8 +665,6 @@ def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_r
         assert plan.entries[0].reason == "existing"
         assert plan.entries[0].resolution_action == "existing"
         assert plan.entries[0].source_task == case
-        assert plan.entries[0].task_to_persist is None
-        assert plan.entries[0].trading_strategy_to_persist is None
         assert plan.pending_write_count == 0
         assert not plan.has_pending_writes
         assert (
@@ -734,7 +725,7 @@ def test_resolve_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
         store.close()
 
 
-def test_resolve_evaluation_tasks_rejects_override_without_signal_discovery(
+def test_resolve_evaluation_tasks_ignores_override_without_signal_discovery(
     tmp_path,
 ):
     store = EvaluationStore(tmp_path / "runtime.db")
@@ -767,18 +758,16 @@ def test_resolve_evaluation_tasks_rejects_override_without_signal_discovery(
         )
         store.upsert_evaluation_task(task=source_task)
 
-        with pytest.raises(
-            ValueError,
-            match="unknown signal discovery for evaluation task override",
-        ):
-            resolve_evaluation_tasks_for_spec(
-                store,
-                evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
-                sizing_method="hierarchical_risk_parity",
-                sizing_engine=None,
-                strategy_ids=None,
-                created_at="2026-04-19T00:00:00Z",
-            )
+        resolved_tasks = resolve_evaluation_tasks_for_spec(
+            store,
+            evaluation_spec_state=SimpleNamespace(evaluation_spec_id="macro_eval"),
+            sizing_method="hierarchical_risk_parity",
+            sizing_engine=None,
+            strategy_ids=None,
+            created_at="2026-04-19T00:00:00Z",
+        )
+
+        assert resolved_tasks == (source_task,)
     finally:
         store.close()
 
