@@ -34,7 +34,6 @@ from alpha_os.portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
-from alpha_os.strategy_checkpoint import StrategyCheckpoint
 from alpha_os.signal_discovery import SignalDiscoverySpec
 from alpha_os.store import EvaluationStore
 from alpha_os.strategy_sleeves import (
@@ -214,32 +213,6 @@ def _make_evaluation_spec_with_two_folds() -> EvaluationSpec:
         ),
         metric_group_names=("decision_quality",),
         metric_windows=(20,),
-    )
-
-
-def _persist_strategy_checkpoint_for_fold(
-    store: EvaluationStore,
-    *,
-    evaluation_task: EvaluationTask,
-    fold: EvaluationFold,
-    signal_discovery_id: str = "global_macro_search",
-) -> None:
-    store.upsert_strategy_checkpoint(
-        state=StrategyCheckpoint(
-            strategy_checkpoint_id=f"state:{fold.label}",
-            strategy_id=evaluation_task.strategy_id,
-            signal_discovery_id=signal_discovery_id,
-            subject_set_id="global_macro_core",
-            target_id="residual_return_5d",
-            fold_label=fold.label,
-            execution_start_date=fold.execution_range.start_date,
-            execution_end_date=fold.execution_range.end_date,
-            snapshot_set_id=f"snapshot-set:{fold.label}",
-            screening_result_id=f"screening:{fold.label}",
-            compressed_belief_id=f"belief:{fold.label}",
-            survivor_signal_ids=("momentum_1d",),
-            created_at="2026-04-19T00:00:00Z",
-        )
     )
 
 
@@ -836,12 +809,6 @@ def test_deduped_resolved_tasks_build_fold_count_plan_entries(tmp_path):
             created_at="2026-04-19T00:00:00Z",
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()
-        for fold in evaluation_spec.resolved_evaluation_folds:
-            _persist_strategy_checkpoint_for_fold(
-                store,
-                evaluation_task=resolved_tasks[0],
-                fold=fold,
-            )
 
         plan = build_evaluation_plan(
             store,

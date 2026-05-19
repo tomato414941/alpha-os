@@ -35,7 +35,6 @@ from .portfolio_decision import (
 from .screening import ScreeningResult
 from .trading_strategy import TradingStrategySpec
 from .targets import TargetDefinition, find_target_definition, list_target_definitions
-from .strategy_checkpoint import StrategyCheckpoint
 from .transition_policy import decide_operator_transition
 
 
@@ -687,22 +686,6 @@ class CompressedBeliefState:
 
 
 @dataclass(frozen=True)
-class StrategyCheckpointRecord:
-    strategy_checkpoint_id: str
-    strategy_id: str
-    signal_discovery_id: str | None
-    artifact_json: str
-    created_at: str
-
-    @property
-    def state(self) -> StrategyCheckpoint:
-        return StrategyCheckpoint.from_document(
-            strategy_checkpoint_id=self.strategy_checkpoint_id,
-            document=json.loads(self.artifact_json),
-        )
-
-
-@dataclass(frozen=True)
 class TradingStrategyState:
     strategy_id: str
     spec_json: str
@@ -1147,23 +1130,6 @@ def _row_to_compressed_belief(row: sqlite3.Row | None) -> CompressedBeliefState 
     )
 
 
-def _row_to_strategy_checkpoint(
-    row: sqlite3.Row | None,
-) -> StrategyCheckpointRecord | None:
-    if row is None:
-        return None
-    discovery_value = (
-        None if row["signal_discovery_id"] is None else str(row["signal_discovery_id"])
-    )
-    return StrategyCheckpointRecord(
-        strategy_checkpoint_id=str(row["strategy_checkpoint_id"]),
-        strategy_id=str(row["strategy_id"]),
-        signal_discovery_id=discovery_value,
-        artifact_json=str(row["artifact_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_trading_strategy(row: sqlite3.Row | None) -> TradingStrategyState | None:
     if row is None:
         return None
@@ -1374,14 +1340,6 @@ class EvaluationStore:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS strategy_checkpoints (
-                strategy_checkpoint_id TEXT PRIMARY KEY,
-                strategy_id TEXT NOT NULL,
-                signal_discovery_id TEXT,
-                artifact_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
             CREATE TABLE IF NOT EXISTS strategy_specs (
                 strategy_id TEXT PRIMARY KEY,
                 spec_json TEXT NOT NULL,
@@ -1472,7 +1430,6 @@ class EvaluationStore:
                 "evaluation_snapshots",
                 "meta_predictions",
                 "meta_prediction_metrics",
-                "strategy_checkpoints",
             )
         }
         required_columns = {
@@ -1495,7 +1452,6 @@ class EvaluationStore:
             "evaluation_snapshots.collateral_ccy": "TEXT",
             "evaluation_snapshots.roll_event_json": "TEXT",
             "meta_predictions": "TEXT NOT NULL DEFAULT ''",
-            "strategy_checkpoints.strategy_id": "TEXT NOT NULL DEFAULT ''",
         }
         for key, definition in required_columns.items():
             if "." in key:
@@ -1518,13 +1474,6 @@ class EvaluationStore:
                 ADD COLUMN subject_id {definition}
                 """
             )
-        self.conn.execute(
-            """
-            UPDATE strategy_checkpoints
-            SET strategy_id = signal_discovery_id
-            WHERE strategy_id = ''
-            """
-        )
         self._backfill_runtime_subject_ids()
         self._ensure_subject_first_meta_prediction_metrics_table()
 
@@ -2799,37 +2748,6 @@ class EvaluationStore:
             ).fetchall()
         return [_row_to_compressed_belief(row) for row in rows if row is not None]
 
-    def upsert_strategy_checkpoint(
-        self,
-        *,
-        state: StrategyCheckpoint,
-    ) -> StrategyCheckpointRecord:
-        self.ensure_schema()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO strategy_checkpoints (
-                    strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
-                )
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(strategy_checkpoint_id) DO UPDATE SET
-                    strategy_id = excluded.strategy_id,
-                    signal_discovery_id = excluded.signal_discovery_id,
-                    artifact_json = excluded.artifact_json,
-                    created_at = excluded.created_at
-                """,
-                (
-                    state.strategy_checkpoint_id,
-                    state.strategy_id,
-                    state.signal_discovery_id,
-                    json.dumps(state.to_document(), sort_keys=True),
-                    state.created_at,
-                ),
-            )
-        persisted = self.get_strategy_checkpoint(state.strategy_checkpoint_id)
-        assert persisted is not None
-        return persisted
-
     def upsert_trading_strategy(
         self,
         *,
@@ -2887,20 +2805,6 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def get_strategy_checkpoint(
-        self,
-        strategy_checkpoint_id: str,
-    ) -> StrategyCheckpointRecord | None:
-        row = self.conn.execute(
-            """
-            SELECT strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
-            FROM strategy_checkpoints
-            WHERE strategy_checkpoint_id = ?
-            """,
-            (strategy_checkpoint_id,),
-        ).fetchone()
-        return _row_to_strategy_checkpoint(row)
-
     def get_trading_strategy(
         self,
         strategy_id: str,
@@ -2928,53 +2832,6 @@ class EvaluationStore:
             (evaluation_task_id,),
         ).fetchone()
         return _row_to_evaluation_task(row)
-
-    def list_strategy_checkpoints(
-        self,
-        *,
-        strategy_id: str | None = None,
-        signal_discovery_id: str | None = None,
-        fold_label: str | None = None,
-        execution_start_date: str | None = None,
-        execution_end_date: str | None = None,
-        limit: int = 20,
-    ) -> list[StrategyCheckpointRecord]:
-        filters = []
-        params: list[object] = []
-        if strategy_id is not None:
-            filters.append("strategy_id = ?")
-            params.append(strategy_id)
-        if signal_discovery_id is not None:
-            filters.append("signal_discovery_id = ?")
-            params.append(signal_discovery_id)
-        if fold_label is not None:
-            filters.append("json_extract(artifact_json, '$.fold_label') = ?")
-            params.append(fold_label)
-        if execution_start_date is not None:
-            filters.append("json_extract(artifact_json, '$.execution_start_date') = ?")
-            params.append(execution_start_date)
-        if execution_end_date is not None:
-            filters.append("json_extract(artifact_json, '$.execution_end_date') = ?")
-            params.append(execution_end_date)
-        where_clause = ""
-        if filters:
-            where_clause = f"WHERE {' AND '.join(filters)}"
-        params.append(max(int(limit), 1))
-        rows = self.conn.execute(
-            f"""
-            SELECT strategy_checkpoint_id, strategy_id, signal_discovery_id, artifact_json, created_at
-            FROM strategy_checkpoints
-            {where_clause}
-            ORDER BY created_at DESC, strategy_checkpoint_id DESC
-            LIMIT ?
-            """,
-            tuple(params),
-        ).fetchall()
-        return [
-            _row_to_strategy_checkpoint(row)
-            for row in rows
-            if row is not None
-        ]
 
     def list_trading_strategies(
         self,

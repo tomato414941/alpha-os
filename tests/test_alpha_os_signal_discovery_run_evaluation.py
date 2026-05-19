@@ -2431,46 +2431,11 @@ def test_build_evaluation_plan_does_not_resolve_checkpoints_from_folds(tmp_path)
         EvaluationFold,
         EvaluationSpec,
     )
-    from alpha_os.strategy_checkpoint import StrategyCheckpoint
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        store.upsert_strategy_checkpoint(
-            state=StrategyCheckpoint(
-                strategy_checkpoint_id="checkpoint_a",
-                strategy_id="strategy_a",
-                signal_discovery_id="discovery_a",
-                subject_set_id="subject_set_a",
-                target_id="residual_return_3d",
-                fold_label="fold_2025",
-                execution_start_date="2025-01-01",
-                execution_end_date="2025-12-31",
-                snapshot_set_id="snapshot_set_a",
-                screening_result_id="screening_a",
-                compressed_belief_id="belief_a",
-                survivor_signal_ids=("h1", "h2"),
-                created_at="2026-01-01T00:00:00Z",
-            )
-        )
-        store.upsert_strategy_checkpoint(
-            state=StrategyCheckpoint(
-                strategy_checkpoint_id="checkpoint_b",
-                strategy_id="strategy_a",
-                signal_discovery_id="discovery_a",
-                subject_set_id="subject_set_a",
-                target_id="residual_return_3d",
-                fold_label="fold_2026_q1",
-                execution_start_date="2026-01-01",
-                execution_end_date="2026-03-31",
-                snapshot_set_id="snapshot_set_b",
-                screening_result_id="screening_b",
-                compressed_belief_id="belief_b",
-                survivor_signal_ids=("h3", "h4"),
-                created_at="2026-04-01T00:00:00Z",
-            )
-        )
         trading_strategy = _build_trading_strategy(
             strategy_id="strategy_a",
             label="Strategy A",
@@ -2735,7 +2700,7 @@ def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path)
         store.close()
 
 
-def test_build_evaluation_plan_prefers_direct_strategy_over_checkpoint_provenance(tmp_path):
+def test_build_evaluation_plan_prefers_direct_strategy_over_discovery_provenance(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_plan import build_evaluation_plan
     from alpha_os.evaluation_spec import (
@@ -2743,7 +2708,6 @@ def test_build_evaluation_plan_prefers_direct_strategy_over_checkpoint_provenanc
         EvaluationFold,
         EvaluationSpec,
     )
-    from alpha_os.strategy_checkpoint import StrategyCheckpoint
     from alpha_os.store import EvaluationStore
     db_path = tmp_path / "runtime.db"
     store = EvaluationStore(db_path)
@@ -2758,23 +2722,6 @@ def test_build_evaluation_plan_prefers_direct_strategy_over_checkpoint_provenanc
             created_at="2026-04-05T00:00:00Z",
         )
         store.upsert_trading_strategy(trading_strategy=trading_strategy)
-        store.upsert_strategy_checkpoint(
-            state=StrategyCheckpoint(
-                strategy_checkpoint_id="checkpoint_a",
-                strategy_id="strategy:checkpoint_case",
-                signal_discovery_id="discovery_a",
-                subject_set_id="subject_set_a",
-                target_id="residual_return_3d",
-                fold_label="source_fold",
-                execution_start_date="2025-01-01",
-                execution_end_date="2025-12-31",
-                snapshot_set_id="snapshot_set_seed",
-                screening_result_id="screening_seed",
-                compressed_belief_id="belief_seed",
-                survivor_signal_ids=("h1", "h2"),
-                created_at="2026-04-05T00:00:00Z",
-            )
-        )
         evaluation_spec = EvaluationSpec(
             execution_range=EvaluationDateRange(
                 label="compat_window",

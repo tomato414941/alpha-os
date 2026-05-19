@@ -18,13 +18,14 @@ an executed workflow. It is closer to a search or selection specification:
 The current name blurs two different concepts:
 
 - search specification
-- prepared checkpoint used for evaluation
+- fitted or prepared strategy state
 
 ## Boundary
 
 Do not treat `SignalDiscovery` as a trained strategy, model, or checkpoint.
 
-Keep `StrategyCheckpoint` as the fixed state used for evaluation.
+Do not reuse the removed `StrategyCheckpoint` input-bundle shape as the
+canonical checkpoint model.
 
 ## Desired Direction
 

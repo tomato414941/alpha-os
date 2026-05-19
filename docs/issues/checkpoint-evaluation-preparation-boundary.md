@@ -14,7 +14,7 @@ The current walk-forward evaluation use case also owns preparation orchestration
 - decide whether a strategy requires prepared state
 - check whether fold checkpoints already exist
 - run the signal discovery workflow when checkpoints are missing
-- persist `StrategyCheckpoint`
+- persist a future strategy checkpoint model
 - evaluate the prepared checkpoints
 
 In ML/RL terms, this mixes training or preparation with evaluation. Evaluation
@@ -34,7 +34,7 @@ Desired shape:
 
 ```text
 checkpoint evaluation preparation
-  -> strategy checkpoint
+  -> strategy checkpoint model
   -> strategy backtest
 ```
 
@@ -69,3 +69,8 @@ checkpoint-based evaluation now fails when the required checkpoint is missing.
 - Checkpoint creation is separated from evaluation execution.
 - The code path makes it clear which layer prepares state and which layer
   evaluates it.
+
+## Current Status
+
+The previous `StrategyCheckpoint` persistence path was removed because it was a
+signal-discovery input bundle, not a clean checkpoint model.
