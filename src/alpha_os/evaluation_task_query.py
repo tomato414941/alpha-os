@@ -42,12 +42,6 @@ def select_evaluation_tasks(
                 "evaluation spec does not contain requested strategies: "
                 f"{evaluation_spec_id}"
     )
-    for task in existing_tasks:
-        strategy_state = read_port.get_trading_strategy(task.strategy_id)
-        if strategy_state is None:
-            raise ValueError(
-                f"evaluation task strategy does not exist: {task.strategy_id}"
-            )
     unique_tasks: dict[str, EvaluationTask] = {}
     for task in existing_tasks:
         unique_tasks.setdefault(task.evaluation_task_id, task)
