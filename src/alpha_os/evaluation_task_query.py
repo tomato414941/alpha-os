@@ -42,12 +42,9 @@ def select_evaluation_tasks(
                 "evaluation spec does not contain requested strategies: "
                 f"{evaluation_spec_id}"
     )
-    unique_tasks: dict[str, EvaluationTask] = {}
-    for task in existing_tasks:
-        unique_tasks.setdefault(task.evaluation_task_id, task)
     return tuple(
         sorted(
-            unique_tasks.values(),
+            existing_tasks,
             key=lambda item: (
                 item.strategy_id,
                 item.evaluation_task_id,

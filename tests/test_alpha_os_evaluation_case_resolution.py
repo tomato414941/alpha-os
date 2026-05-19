@@ -406,7 +406,7 @@ def test_select_evaluation_tasks_does_not_repair_strategy_from_case_config(tmp_p
         store.close()
 
 
-def test_select_evaluation_tasks_dedupes_base_url_override(tmp_path):
+def test_select_evaluation_tasks_returns_stored_tasks(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
