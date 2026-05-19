@@ -6,11 +6,11 @@ The glossary defines `evaluation universe` as the set of instruments included
 in a specific evaluation run.
 
 The code does not have a first-class `EvaluationUniverse` model or an
-evaluation-universe field on `EvaluationSpec`. Current evaluation runs derive
-the effective subject set from the task's strategy or strategy checkpoint:
+evaluation-universe field on `EvaluationSpec`. Current direct evaluation runs
+derive the effective subject set from the task's strategy:
 
-- trainless runs use `TradingStrategySpec.subject_set_id`
-- checkpoint-based evaluation uses the strategy checkpoint's `subject_set_id`
+- direct strategy runs use `TradingStrategySpec.subject_set_id`
+- the removed checkpoint path used checkpoint-owned subject-set metadata
 
 The resulting `subject_set_id` is then recorded in execution requests and
 evaluation reports as subject-set context.
@@ -23,7 +23,7 @@ implementation currently derives it from strategy or provenance state.
 That can make it hard to tell whether a subject set belongs to:
 
 - the strategy definition
-- the training/discovery provenance
+- the training/preparation provenance
 - the concrete evaluation run
 - the report comparison contract
 
@@ -41,12 +41,13 @@ subject set comes from for each current evaluation input shape.
 
 - Do not move universe ownership into `EvaluationSpec` immediately.
 - Do not rename `subject_set_id` fields as part of terminology cleanup.
-- Do not change checkpoint-based evaluation provenance behavior without a separate
-  replay-specific design.
+- Do not reintroduce checkpoint-owned universe behavior without a separate
+  checkpoint design.
 
 ## Acceptance Criteria
 
 - Evaluation paths document how the effective evaluation subject set is chosen.
 - Reports make clear which subject set was actually evaluated.
 - A future schema or API change can tell whether a subject-set field is owned by
-  strategy definition, training/discovery provenance, or evaluation conditions.
+  strategy definition, training/preparation provenance, or evaluation
+  conditions.

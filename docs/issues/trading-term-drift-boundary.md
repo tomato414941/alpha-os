@@ -154,8 +154,8 @@ instruments included in a specific evaluation run.
 
 Code review found that evaluation runs do not have a first-class
 `EvaluationUniverse` model or an evaluation-universe field on `EvaluationSpec`.
-The effective subject set is derived from strategy, strategy checkpoint, or
-signal discovery provenance depending on the evaluation input shape. See
+The current effective subject set is derived from strategy state. The removed
+checkpoint path used checkpoint-owned subject-set metadata. See
 [`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
 
 ### `subject`

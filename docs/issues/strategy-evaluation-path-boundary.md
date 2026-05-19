@@ -9,7 +9,7 @@ Examples:
 
 - hand-written trainless rules use `strategy_backtest`
 - discovered signals use signal discovery execution
-- strategy checkpoint artifacts use checkpoint-based evaluation
+- the removed strategy-checkpoint path used checkpoint-based evaluation
 
 ## Risk
 
@@ -33,6 +33,10 @@ feed the decision backtest and report metric machinery.
 
 The problem is not that every metric is totally separate. The problem is that
 engine path names still carry conceptual weight.
+
+The previous checkpoint-based evaluation path has been removed. A future
+checkpoint path should be introduced only after the checkpoint concept is
+defined.
 
 ## Desired Direction
 

@@ -42,7 +42,8 @@ Prefer scoped terms:
 - `portfolio transition` or `rebalance transition` for movement from current to
   desired portfolio state
 - `strategy run` for running a strategy through an engine
-- explicit evaluation job shapes for strict OOS and checkpoint-based evaluation
+- explicit evaluation job shapes for strict OOS and future checkpoint-based
+  evaluation, if checkpoint support returns
 
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
 The old `execution_kind` field was removed rather than renamed as a domain

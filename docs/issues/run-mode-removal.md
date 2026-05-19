@@ -11,8 +11,8 @@ term:
 - there is no first-class `RunPolicy` implementation
 - `strategy run mode` duplicates the current `run_mode` field
 - `backtest_oos` mainly names the default evaluation job shape
-- checkpoint-based evaluation is now represented by `strategy_checkpoint_id`,
-  not a separate `run_mode` value
+- checkpoint-based evaluation is no longer represented in the active evaluation
+  request shape
 - `paper` and `live` are reserved values, not current strategy-run domain
   concepts
 
@@ -39,8 +39,8 @@ required inputs directly.
 `StrategyEvaluationContext.run_mode` was only used by request-to-run-input
 helper methods and has been removed.
 
-Persisted evaluation job specs have been removed. Checkpoint-based evaluation is
-keyed by explicit evaluation request inputs, especially `strategy_checkpoint_id`.
+Persisted evaluation job specs have been removed. The previous checkpoint input
+shape was removed with `StrategyEvaluationInputRefs`.
 
 ## Boundary
 
@@ -50,7 +50,8 @@ first question is whether a mode field is needed at all.
 If the behavior remains necessary, prefer explicit request shapes:
 
 - strict OOS evaluation request inputs
-- checkpoint-based evaluation request inputs
+- future checkpoint-based evaluation request inputs, after the checkpoint model
+  is defined
 - future paper or live request inputs when those workflows actually exist
 
 ## Non-Goals

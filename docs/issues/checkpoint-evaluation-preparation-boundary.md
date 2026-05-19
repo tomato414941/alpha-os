@@ -3,12 +3,14 @@
 ## Problem
 
 Checkpoint-based evaluation is conceptually different from strategy backtest
-execution.
+execution, but the project no longer has an active checkpoint-based evaluation
+implementation.
 
 It decides which trained or discovered state should be replayed. The backtest
 should evaluate an already prepared state.
 
-The current walk-forward evaluation use case also owns preparation orchestration:
+The removed walk-forward checkpoint path owned too much preparation
+orchestration:
 
 - resolve evaluation tasks
 - decide whether a strategy requires prepared state
@@ -23,7 +25,7 @@ that checkpoint.
 
 ## Boundary
 
-Treat checkpoint evaluation as state selection and preparation.
+Treat future checkpoint evaluation as state selection and preparation.
 
 Treat strategy backtest as prepared-state evaluation.
 
@@ -33,7 +35,7 @@ concern.
 Desired shape:
 
 ```text
-checkpoint evaluation preparation
+future checkpoint evaluation preparation
   -> strategy checkpoint model
   -> strategy backtest
 ```
@@ -53,12 +55,14 @@ runtime workflow instead of a small evaluation boundary.
 That would make lightweight strategy evaluation depend on discovery and DB
 artifact layout again.
 
-The evaluation use case no longer owns missing-checkpoint preparation. A
-checkpoint-based evaluation now fails when the required checkpoint is missing.
+The evaluation use case no longer owns missing-checkpoint preparation. The old
+checkpoint-based evaluation path has been removed until a clean checkpoint model
+exists.
 
 ## Non-Goals
 
-- Do not remove checkpoint-based evaluation.
+- Do not reintroduce checkpoint-based evaluation before the checkpoint model is
+  defined.
 - Do not merge signal discovery, screening, and backtest into one abstraction.
 - Do not replace `execution_kind` with another broad mode flag.
 
@@ -69,6 +73,8 @@ checkpoint-based evaluation now fails when the required checkpoint is missing.
 - Checkpoint creation is separated from evaluation execution.
 - The code path makes it clear which layer prepares state and which layer
   evaluates it.
+- Any future checkpoint-based evaluation consumes an explicit checkpoint input
+  shape instead of discovering one from evaluation planning.
 
 ## Current Status
 
