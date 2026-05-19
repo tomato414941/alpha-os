@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Protocol
 
 from .evaluation_task import EvaluationTask
@@ -20,18 +19,13 @@ class EvaluationTaskResolutionReadPort(Protocol):
         ...
 
 
-@dataclass(frozen=True)
-class EvaluationTaskResolutionRequest:
-    evaluation_spec_id: str
-    strategy_ids: tuple[str, ...] | None
-    evaluation_task_ids: tuple[str, ...] | None = None
-
-
-def resolve_evaluation_tasks_for_request(
+def resolve_evaluation_tasks(
     read_port: EvaluationTaskResolutionReadPort,
-    request: EvaluationTaskResolutionRequest,
+    *,
+    evaluation_spec_id: str,
+    strategy_ids: tuple[str, ...] | None,
+    evaluation_task_ids: tuple[str, ...] | None = None,
 ) -> tuple[EvaluationTask, ...]:
-    evaluation_spec_id = request.evaluation_spec_id
     existing_tasks = tuple(
         state.task
         for state in read_port.list_evaluation_tasks(
@@ -44,8 +38,8 @@ def resolve_evaluation_tasks_for_request(
             "evaluation spec requires at least one evaluation task: "
             f"{evaluation_spec_id}"
         )
-    if request.evaluation_task_ids is not None:
-        allowed_task_ids = set(request.evaluation_task_ids)
+    if evaluation_task_ids is not None:
+        allowed_task_ids = set(evaluation_task_ids)
         existing_tasks = tuple(
             item for item in existing_tasks if item.evaluation_task_id in allowed_task_ids
         )
@@ -54,8 +48,8 @@ def resolve_evaluation_tasks_for_request(
                 "evaluation spec does not contain requested evaluation tasks: "
                 f"{evaluation_spec_id}"
             )
-    if request.strategy_ids:
-        allowed_strategy_ids = set(request.strategy_ids)
+    if strategy_ids:
+        allowed_strategy_ids = set(strategy_ids)
         existing_tasks = tuple(
             item for item in existing_tasks if item.strategy_id in allowed_strategy_ids
         )
@@ -91,11 +85,9 @@ def resolve_evaluation_tasks_for_spec(
     strategy_ids: tuple[str, ...] | None,
     evaluation_task_ids: tuple[str, ...] | None = None,
 ) -> tuple[EvaluationTask, ...]:
-    return resolve_evaluation_tasks_for_request(
+    return resolve_evaluation_tasks(
         store,
-        EvaluationTaskResolutionRequest(
-            evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-            strategy_ids=strategy_ids,
-            evaluation_task_ids=evaluation_task_ids,
-        ),
+        evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
+        strategy_ids=strategy_ids,
+        evaluation_task_ids=evaluation_task_ids,
     )

@@ -47,8 +47,7 @@ from ..portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from ..evaluation_task_resolution import (
-    EvaluationTaskResolutionRequest as _EvaluationTaskResolutionRequest,
-    resolve_evaluation_tasks_for_request as _resolve_evaluation_tasks_for_request,
+    resolve_evaluation_tasks as _resolve_evaluation_tasks,
 )
 from ..strategy_variant import (
     StrategyVariantConfig as _StrategyVariantConfig,
@@ -3766,13 +3765,11 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_state = read_port.get_evaluation_spec(str(args.evaluation_spec_id))
         if evaluation_spec_state is None:
             raise ValueError(f"evaluation spec does not exist: {args.evaluation_spec_id}")
-        evaluation_tasks = _resolve_evaluation_tasks_for_request(
+        evaluation_tasks = _resolve_evaluation_tasks(
             read_port,
-            _EvaluationTaskResolutionRequest(
-                evaluation_spec_id=str(args.evaluation_spec_id),
-                strategy_ids=None,
-                evaluation_task_ids=manifest_evaluation_task_ids,
-            ),
+            evaluation_spec_id=str(args.evaluation_spec_id),
+            strategy_ids=None,
+            evaluation_task_ids=manifest_evaluation_task_ids,
         )
         effective_strategies = _trading_strategies_for_evaluation_tasks(
             read_port,
