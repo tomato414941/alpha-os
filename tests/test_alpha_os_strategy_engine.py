@@ -5,7 +5,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     from alpha_os.evaluation_spec import EvaluationDateRange
     from alpha_os.strategy_engine import (
         StrategyEvaluationContext,
-        StrategyEvaluationInputRefs,
         StrategyEvaluationRequest,
     )
 
@@ -30,9 +29,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
             target_id="target:test",
             base_url="http://example.com",
         ),
-        input_refs=StrategyEvaluationInputRefs(
-            strategy_checkpoint_id="state:test",
-        ),
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=("decision_quality",),
@@ -42,7 +38,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
     assert request.context.strategy_id == "strategy:test"
-    assert request.input_refs.strategy_checkpoint_id == "state:test"
     assert request.evaluation_date_ranges[0].label == "test"
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():

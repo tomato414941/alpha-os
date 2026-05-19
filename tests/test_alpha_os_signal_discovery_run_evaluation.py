@@ -2617,7 +2617,6 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
         assert len(plan.execution_requests) == 1
         request = plan.execution_requests[0]
         assert request.context.strategy_id == "strategy:nn_case"
-        assert request.input_refs is None
     finally:
         store.close()
 
@@ -2732,7 +2731,6 @@ def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path)
         request = plan.execution_requests[0]
         assert request.context.strategy_id == "strategy:portfolio_source"
         assert request.context.target_id == "residual_return_3d"
-        assert plan.execution_requests[0].input_refs is None
     finally:
         store.close()
 
@@ -2822,7 +2820,6 @@ def test_build_evaluation_plan_prefers_direct_strategy_over_checkpoint_provenanc
 
         assert len(plan.execution_requests) == 1
         assert tuple(item.fold_label for item in plan.execution_requests) == ("fold_2025",)
-        assert tuple(item.input_refs for item in plan.execution_requests) == (None,)
     finally:
         store.close()
 

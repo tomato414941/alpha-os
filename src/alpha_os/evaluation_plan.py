@@ -63,7 +63,6 @@ def _strategy_evaluation_request(
             target_id=target_id,
             base_url=base_url,
         ),
-        input_refs=None,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,

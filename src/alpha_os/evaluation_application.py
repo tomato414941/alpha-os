@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .data_repositories import (
-    EvaluationInputRepository,
     FeaturePlaneRepository,
     ObservationFrameRepository,
 )
@@ -55,7 +54,6 @@ def run_evaluation_use_case(
     feature_plane_repository = FeaturePlaneRepository(
         observation_repository=ObservationFrameRepository(store=store)
     )
-    evaluation_input_repository = EvaluationInputRepository()
     evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
     if evaluation_spec_state is None:
         raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
@@ -75,7 +73,6 @@ def run_evaluation_use_case(
             evaluation_tasks=evaluation_tasks,
             base_url=request.base_url,
             feature_plane_repository=feature_plane_repository,
-            evaluation_input_repository=evaluation_input_repository,
         )
     )
     return RunEvaluationUseCaseResult(report_state=report_state)
@@ -89,7 +86,6 @@ def run_walk_forward_evaluation_use_case(
     feature_plane_repository = FeaturePlaneRepository(
         observation_repository=ObservationFrameRepository(store=store)
     )
-    evaluation_input_repository = EvaluationInputRepository()
     evaluation_spec_state = store.get_evaluation_spec(request.evaluation_spec_id)
     if evaluation_spec_state is None:
         raise ValueError(f"evaluation spec does not exist: {request.evaluation_spec_id}")
@@ -110,7 +106,6 @@ def run_walk_forward_evaluation_use_case(
             evaluation_tasks=evaluation_tasks,
             base_url=request.base_url,
             feature_plane_repository=feature_plane_repository,
-            evaluation_input_repository=evaluation_input_repository,
         )
     )
     return RunWalkForwardEvaluationUseCaseResult(report_state=report_state)

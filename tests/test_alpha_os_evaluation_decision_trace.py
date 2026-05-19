@@ -232,21 +232,14 @@ def _build_direct_evaluation_task():
 def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
     from alpha_os.evaluation_execution_strategy import (
         DirectStrategyEvaluationExecutionStrategy,
-        PreparedStrategyEvaluationExecutionStrategy,
         evaluation_execution_strategy_for_request,
     )
 
     assert isinstance(
         evaluation_execution_strategy_for_request(
-            SimpleNamespace(input_refs=None)
+            SimpleNamespace()
         ),
         DirectStrategyEvaluationExecutionStrategy,
-    )
-    assert isinstance(
-        evaluation_execution_strategy_for_request(
-            SimpleNamespace(input_refs=SimpleNamespace())
-        ),
-        PreparedStrategyEvaluationExecutionStrategy,
     )
 
 

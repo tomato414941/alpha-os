@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .data_repositories import EvaluationInputRepository, FeaturePlaneRepository
+from .data_repositories import FeaturePlaneRepository
 from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
     evaluation_execution_strategy_for_request,
-    frozen_snapshot_start_date as frozen_snapshot_start_date,
-    frozen_survivor_definitions as frozen_survivor_definitions,
-    generate_frozen_survivor_test_snapshots as generate_frozen_survivor_test_snapshots,
-    requires_frozen_test_application as requires_frozen_test_application,
     strategy_sleeve_attribution_summaries as strategy_sleeve_attribution_summaries,
     subject_matches_sleeve_filter as subject_matches_sleeve_filter,
 )
@@ -27,7 +23,6 @@ class EvaluationRunRequest:
     evaluation_tasks: tuple[EvaluationTask, ...]
     base_url: str
     feature_plane_repository: FeaturePlaneRepository | None = None
-    evaluation_input_repository: EvaluationInputRepository | None = None
 
     def __init__(
         self,
@@ -37,7 +32,6 @@ class EvaluationRunRequest:
         evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
         base_url: str,
         feature_plane_repository: FeaturePlaneRepository | None = None,
-        evaluation_input_repository: EvaluationInputRepository | None = None,
     ) -> None:
         if evaluation_tasks is None:
             raise ValueError("evaluation run request requires evaluation_tasks")
@@ -46,11 +40,6 @@ class EvaluationRunRequest:
         object.__setattr__(self, "evaluation_tasks", evaluation_tasks)
         object.__setattr__(self, "base_url", base_url)
         object.__setattr__(self, "feature_plane_repository", feature_plane_repository)
-        object.__setattr__(
-            self,
-            "evaluation_input_repository",
-            evaluation_input_repository,
-        )
 
 
 def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
@@ -70,7 +59,6 @@ def evaluate_evaluation_spec_state(request: EvaluationRunRequest):
         store=store,
         evaluation_spec=evaluation_spec,
         feature_plane_repository=request.feature_plane_repository,
-        evaluation_input_repository=request.evaluation_input_repository,
     )
     for execution_request in evaluation_plan.execution_requests:
         execution_result = evaluation_execution_strategy_for_request(execution_request).run(
