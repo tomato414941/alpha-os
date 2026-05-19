@@ -47,9 +47,8 @@ from ..portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from ..evaluation_task_resolution import (
-    EvaluationTaskResolutionPlan as _EvaluationTaskResolutionPlan,
     EvaluationTaskResolutionRequest as _EvaluationTaskResolutionRequest,
-    build_evaluation_task_resolution_plan as _build_evaluation_task_resolution_plan,
+    resolve_evaluation_tasks_for_request as _resolve_evaluation_tasks_for_request,
 )
 from ..strategy_variant import (
     StrategyVariantConfig as _StrategyVariantConfig,
@@ -3739,18 +3738,18 @@ def _check_diagnostic_evaluation_dry_run(
             "must use an enabled mean-reversion sleeve"
         )
 
-def _effective_trading_strategies_for_resolution_plan(
+def _trading_strategies_for_evaluation_tasks(
     read_port,
-    plan: _EvaluationTaskResolutionPlan,
+    evaluation_tasks: tuple[EvaluationTask, ...],
 ) -> dict[str, TradingStrategySpec]:
     strategies: dict[str, TradingStrategySpec] = {}
-    for entry in plan.entries:
-        state = read_port.get_trading_strategy(entry.task.strategy_id)
+    for task in evaluation_tasks:
+        state = read_port.get_trading_strategy(task.strategy_id)
         if state is None:
             raise ValueError(
-                f"evaluation task strategy does not exist: {entry.task.strategy_id}"
+                f"evaluation task strategy does not exist: {task.strategy_id}"
             )
-        strategies[entry.task.strategy_id] = state.trading_strategy
+        strategies[task.strategy_id] = state.trading_strategy
     return strategies
 
 
@@ -3768,7 +3767,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_state = read_port.get_evaluation_spec(str(args.evaluation_spec_id))
         if evaluation_spec_state is None:
             raise ValueError(f"evaluation spec does not exist: {args.evaluation_spec_id}")
-        resolution_plan = _build_evaluation_task_resolution_plan(
+        evaluation_tasks = _resolve_evaluation_tasks_for_request(
             read_port,
             _EvaluationTaskResolutionRequest(
                 evaluation_spec_id=str(args.evaluation_spec_id),
@@ -3776,10 +3775,9 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
                 evaluation_task_ids=manifest_evaluation_task_ids,
             ),
         )
-        evaluation_tasks = resolution_plan.tasks
-        effective_strategies = _effective_trading_strategies_for_resolution_plan(
+        effective_strategies = _trading_strategies_for_evaluation_tasks(
             read_port,
-            resolution_plan,
+            evaluation_tasks,
         )
         signal_discovery_groups = _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
             evaluation_tasks,

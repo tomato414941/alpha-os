@@ -10,7 +10,7 @@ from alpha_os.evaluation_task import (
 )
 from alpha_os.evaluation_task_resolution import (
     EvaluationTaskResolutionRequest,
-    build_evaluation_task_resolution_plan,
+    resolve_evaluation_tasks_for_request,
     resolve_evaluation_tasks_for_spec,
 )
 from alpha_os.strategy_variant import (
@@ -484,7 +484,7 @@ def test_resolve_evaluation_tasks_filters_strategy_ids(tmp_path):
         store.close()
 
 
-def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
+def test_resolve_evaluation_tasks_for_request_is_read_only(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -502,7 +502,7 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
             created_at="2026-04-17T00:00:00Z",
         )
 
-        plan = build_evaluation_task_resolution_plan(
+        resolved_tasks = resolve_evaluation_tasks_for_request(
             store,
             EvaluationTaskResolutionRequest(
                 evaluation_spec_id="macro_eval",
@@ -510,16 +510,12 @@ def test_build_evaluation_task_resolution_plan_is_read_only(tmp_path):
             ),
         )
 
-        assert len(plan.entries) == 1
-        assert plan.entries[0].reason == "existing"
-        assert plan.entries[0].resolution_action == "existing"
-        assert plan.entries[0].source_task == _case
-        assert plan.tasks == (_case,)
+        assert resolved_tasks == (_case,)
     finally:
         store.close()
 
 
-def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_refresh(
+def test_resolve_evaluation_tasks_for_request_keeps_existing_strategy_without_refresh(
     tmp_path,
 ):
     store = EvaluationStore(tmp_path / "runtime.db")
@@ -538,7 +534,7 @@ def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_r
             created_at="2026-04-17T00:00:00Z",
         )
 
-        plan = build_evaluation_task_resolution_plan(
+        resolved_tasks = resolve_evaluation_tasks_for_request(
             store,
             EvaluationTaskResolutionRequest(
                 evaluation_spec_id="macro_eval",
@@ -546,11 +542,7 @@ def test_build_evaluation_task_resolution_plan_keeps_existing_strategy_without_r
             ),
         )
 
-        assert plan.tasks == (case,)
-        assert len(plan.entries) == 1
-        assert plan.entries[0].reason == "existing"
-        assert plan.entries[0].resolution_action == "existing"
-        assert plan.entries[0].source_task == case
+        assert resolved_tasks == (case,)
         assert (
             store.get_trading_strategy(strategy.strategy_id).trading_strategy.created_at
             == "2026-04-17T00:00:00Z"
