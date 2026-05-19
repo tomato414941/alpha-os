@@ -2423,7 +2423,7 @@ def test_run_diagnostic_evaluation_dry_run_check_rejects_finding_count_mismatch(
     assert exc_info.value.code == 2
 
 
-def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
+def test_build_evaluation_plan_does_not_resolve_checkpoints_from_folds(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_plan import build_evaluation_plan
     from alpha_os.evaluation_spec import (
@@ -2532,25 +2532,17 @@ def test_build_evaluation_plan_supports_explicit_folds(tmp_path):
             ),
         )
 
-        plan = build_evaluation_plan(
-            store,
-            evaluation_spec_id="protocol_a",
-            evaluation_spec=evaluation_spec,
-            evaluation_tasks=evaluation_tasks,
-            base_url="http://example.com",
-        )
-
-        assert len(plan.execution_requests) == 2
-        assert tuple(item.fold_label for item in plan.execution_requests) == (
-            "fold_2025",
-            "fold_2026_q1",
-        )
-        assert tuple(item.input_refs.strategy_checkpoint_id for item in plan.execution_requests) == (
-            "checkpoint_a",
-            "checkpoint_b",
-        )
-        assert plan.execution_requests[0].evaluation_date_ranges[0].label == "test_2026_q1"
-        assert plan.execution_requests[1].evaluation_date_ranges[0].label == "test_2026_q2"
+        with pytest.raises(
+            ValueError,
+            match="evaluation plan does not resolve strategy checkpoints",
+        ):
+            build_evaluation_plan(
+                store,
+                evaluation_spec_id="protocol_a",
+                evaluation_spec=evaluation_spec,
+                evaluation_tasks=evaluation_tasks,
+                base_url="http://example.com",
+            )
     finally:
         store.close()
 

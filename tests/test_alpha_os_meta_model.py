@@ -2332,7 +2332,10 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
         )
 
     assert exc_info.value.code == 2
-    assert "requires a strategy checkpoint" in capsys.readouterr().err
+    assert (
+        "evaluation plan does not resolve strategy checkpoints"
+        in capsys.readouterr().err
+    )
 
 
 def test_core_crypto_4_end_to_end_runtime_smoke(tmp_path, capsys):
