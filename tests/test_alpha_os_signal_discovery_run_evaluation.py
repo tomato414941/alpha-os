@@ -1792,7 +1792,6 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(
     import pandas as pd
 
     from alpha_os.cli import main
-    from alpha_os.store import EvaluationStore
 
     db_path = tmp_path / "runtime.db"
     source_manifest_path = (

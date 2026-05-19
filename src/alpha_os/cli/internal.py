@@ -106,7 +106,6 @@ from ..portfolio_decision import (
     SubjectSet,
     UniversePolicySpec,
 )
-from ..portfolio_direction import PORTFOLIO_DIRECTION_MODES
 from ..portfolio_decision_service import (
     apply_decision_output_constraints,
     RuntimeDecisionBuildConfig,
