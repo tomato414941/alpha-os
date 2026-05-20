@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .contract_boundaries import active_constraint_stages
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
@@ -15,8 +14,6 @@ from .strategy_engine import StrategyEvaluationRequest
 from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
-from .portfolio_decision import SubjectSet
-from .strategy_sleeves import SleeveAttributionSummary, StrategySleeveCompositionSpec
 from .trading_strategy import TradingStrategySpec
 from .universe_contract import validate_subject_set_universe_contract
 
@@ -122,91 +119,6 @@ def _subject_set_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
     return subject_set_id
 
 
-def _constraint_stages_for_portfolio_construction(
-    portfolio_construction: PortfolioConstructionSpec,
-):
-    return active_constraint_stages(
-        portfolio_construction.constraint_boundary,
-        field_values={
-            "direction_mode": (
-                portfolio_construction.direction_mode
-                if portfolio_construction.direction_mode
-                != "long_short"
-                else None
-            ),
-            "gross_exposure_cap": portfolio_construction.gross_exposure_cap,
-            "target_vol": portfolio_construction.target_vol,
-            "gross_leverage_cap": portfolio_construction.gross_leverage_cap,
-            "net_exposure_target": portfolio_construction.net_exposure_target,
-            "asset_class_weight_caps": portfolio_construction.asset_class_weight_caps,
-            "cluster_weight_caps": portfolio_construction.cluster_weight_caps,
-        },
-    )
-
-
-def strategy_sleeve_attribution_summaries(
-    trading_strategy: TradingStrategySpec | None,
-    subject_set: SubjectSet | None,
-    *,
-    sleeve_composition: StrategySleeveCompositionSpec | None = None,
-) -> tuple[SleeveAttributionSummary, ...]:
-    composition = sleeve_composition
-    if composition is None and trading_strategy is not None:
-        composition = trading_strategy.portfolio.portfolio_construction.sleeve_composition
-    if composition is None:
-        return ()
-    subject_ids = () if subject_set is None else subject_set.subject_ids
-    summaries: list[SleeveAttributionSummary] = []
-    for sleeve in composition.enabled_sleeves:
-        eligible_subject_ids = set(subject_ids)
-        subject_filter = sleeve.subject_filter
-        if subject_filter.subject_ids:
-            eligible_subject_ids &= set(subject_filter.subject_ids)
-        if subject_set is not None:
-            eligible_subject_ids = {
-                subject_id
-                for subject_id in eligible_subject_ids
-                if subject_matches_sleeve_filter(
-                    subject_set,
-                    subject_id=subject_id,
-                    instrument_types=subject_filter.instrument_types,
-                    asset_classes=subject_filter.asset_classes,
-                    regions=subject_filter.regions,
-                    clusters=subject_filter.clusters,
-                )
-            }
-        summaries.append(
-            SleeveAttributionSummary(
-                sleeve_id=sleeve.sleeve_id,
-                sleeve_kind=sleeve.sleeve_kind,
-                risk_budget=sleeve.risk_budget,
-                subject_count=len(eligible_subject_ids),
-            )
-        )
-    return tuple(summaries)
-
-
-def subject_matches_sleeve_filter(
-    subject_set: SubjectSet,
-    *,
-    subject_id: str,
-    instrument_types: tuple[str, ...],
-    asset_classes: tuple[str, ...],
-    regions: tuple[str, ...],
-    clusters: tuple[str, ...],
-) -> bool:
-    instrument = subject_set.instrument_for_subject(subject_id)
-    if instrument is None:
-        return not any((instrument_types, asset_classes, regions, clusters))
-    checks = (
-        (instrument.instrument_type, instrument_types),
-        (instrument.asset_class, asset_classes),
-        (instrument.region, regions),
-        (instrument.cluster, clusters),
-    )
-    return all(not allowed_values or value in allowed_values for value, allowed_values in checks)
-
-
 def run_strategy_evaluation_task(
     execution_request: StrategyEvaluationRequest,
     *,
@@ -242,19 +154,10 @@ def run_strategy_evaluation_task(
         feature_plane_repository=context.feature_plane_repository,
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
-    subject_set = None if subject_set_state is None else subject_set_state.definition
     return EvaluationTaskResult(
         evaluation_task_id=execution_request.evaluation_task_id,
         construction_kind=portfolio_construction.construction_kind,
         strategy_id=execution_request.context.strategy_id,
-        constraint_stages=_constraint_stages_for_portfolio_construction(
-            portfolio_construction
-        ),
-        sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
-            trading_strategy,
-            subject_set,
-            sleeve_composition=portfolio_construction.sleeve_composition,
-        ),
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]
             for metric_group_name in execution_request.metric_group_names

@@ -207,26 +207,3 @@ def test_strategy_sleeve_composition_rejects_duplicate_ids_and_empty_filters():
     with pytest.raises(ValueError, match="no eligible subjects"):
         apply_portfolio_sizing_policy(decision_input)
 
-
-def test_evaluation_task_result_serializes_sleeve_attribution():
-    from alpha_os.evaluation_result import EvaluationTaskResult
-    from alpha_os.strategy_sleeves import SleeveAttributionSummary
-
-    summary = EvaluationTaskResult(
-        evaluation_task_id="case:sleeve",
-        strategy_id="strategy:sleeve",
-        sleeve_attribution_summaries=(
-            SleeveAttributionSummary(
-                sleeve_id="trend_core",
-                sleeve_kind="trend",
-                risk_budget=1.0,
-                subject_count=2,
-                mean_signal=0.25,
-                mean_abs_signal=0.75,
-                mean_gross_notional_exposure=1.2,
-            ),
-        ),
-    )
-
-    restored = EvaluationTaskResult.from_document(summary.to_document())
-    assert restored.sleeve_attribution_summaries == summary.sleeve_attribution_summaries

@@ -8,7 +8,6 @@ from .cross_instrument_outcome import (
     build_cross_instrument_outcome,
 )
 from .evaluation_lane import normalize_evaluation_lane
-from .strategy_sleeves import SleeveAttributionSummary
 
 
 _METRIC_SCALAR_TYPES = (str, int, float, bool)
@@ -167,8 +166,6 @@ class EvaluationTaskResult:
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
     cross_instrument_outcome: CrossInstrumentOutcome | None = None
-    constraint_stages: tuple[str, ...] = ()
-    sleeve_attribution_summaries: tuple[SleeveAttributionSummary, ...] = ()
     evaluation_task_id: str | None = None
     strategy_id: str | None = None
 
@@ -204,10 +201,6 @@ class EvaluationTaskResult:
                 item.to_document() for item in self.failure_finding_groups
             ],
             "cross_instrument_outcome": self.cross_instrument_outcome.to_document(),
-            "constraint_stages": list(self.constraint_stages),
-            "sleeve_attribution_summaries": [
-                item.to_document() for item in self.sleeve_attribution_summaries
-            ],
         }
         return document
 
@@ -240,8 +233,6 @@ class EvaluationTaskResult:
         metric_group_results = document.get("metric_group_results", [])
         failure_finding_groups = document.get("failure_finding_groups", [])
         cross_instrument_outcome = document.get("cross_instrument_outcome")
-        constraint_stages = document.get("constraint_stages", [])
-        sleeve_attribution_summaries = document.get("sleeve_attribution_summaries", [])
         if not isinstance(metric_group_results, list):
             raise ValueError(
                 "evaluation task result metric_group_results are invalid"
@@ -250,12 +241,6 @@ class EvaluationTaskResult:
             raise ValueError("evaluation task result failure_finding_groups are invalid")
         if cross_instrument_outcome is not None and not isinstance(cross_instrument_outcome, dict):
             raise ValueError("evaluation task result cross_instrument_outcome is invalid")
-        if not isinstance(constraint_stages, list):
-            raise ValueError("evaluation task result constraint_stages is invalid")
-        if not isinstance(sleeve_attribution_summaries, list):
-            raise ValueError(
-                "evaluation task result sleeve_attribution_summaries are invalid"
-            )
         return cls(
             evaluation_task_id=(
                 None
@@ -281,11 +266,5 @@ class EvaluationTaskResult:
                 None
                 if cross_instrument_outcome is None
                 else CrossInstrumentOutcome.from_document(cross_instrument_outcome)
-            ),
-            constraint_stages=tuple(str(item) for item in constraint_stages),
-            sleeve_attribution_summaries=tuple(
-                SleeveAttributionSummary.from_document(item)
-                for item in sleeve_attribution_summaries
-                if isinstance(item, dict)
             ),
         )

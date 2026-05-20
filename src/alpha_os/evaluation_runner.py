@@ -4,8 +4,6 @@ from .data_repositories import FeaturePlaneRepository
 from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
     run_strategy_evaluation_task,
-    strategy_sleeve_attribution_summaries as strategy_sleeve_attribution_summaries,
-    subject_matches_sleeve_filter as subject_matches_sleeve_filter,
 )
 from .evaluation_task import EvaluationTask
 from .evaluation_plan import build_evaluation_plan

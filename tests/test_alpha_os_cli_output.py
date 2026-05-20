@@ -149,10 +149,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
             EvaluationTaskResult(
                 evaluation_task_id="case:test",
                 strategy_id="strategy:test",
-                constraint_stages=(
-                    "sizing_time:target_vol",
-                    "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
-                ),
                 metric_group_results=(
                     EvaluationMetricGroupResult(
                         metric_group_name="decision_quality",
@@ -177,10 +173,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
     assert "profiles" not in task_result.to_document()
     assert task_result.cross_instrument_outcome is not None
     assert task_result.cross_instrument_outcome.metric_group_outcomes[0].metric_group_name == "decision_quality"
-    assert task_result.constraint_stages == (
-        "sizing_time:target_vol",
-        "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
-    )
 
 
 def test_print_subject_sets_includes_cross_asset_summary(capsys):
