@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from .contract_boundaries import active_constraint_stages
-
-
 def _format_constraint_caps(values: dict[str, float]) -> str:
     if not values:
         return "-"
@@ -235,22 +232,4 @@ def build_evaluation_task_contract_fields(
         sleeves = _format_sleeve_composition(portfolio_construction.sleeve_composition)
         if sleeves is not None:
             fields["sleeves"] = sleeves
-    constraint_stages = active_constraint_stages(
-        portfolio_construction.constraint_boundary,
-        field_values={
-            "direction_mode": (
-                portfolio_construction.direction_mode
-                if portfolio_construction.direction_mode != "long_short"
-                else None
-            ),
-            "gross_exposure_cap": portfolio_construction.gross_exposure_cap,
-            "target_vol": portfolio_construction.target_vol,
-            "gross_leverage_cap": portfolio_construction.gross_leverage_cap,
-            "net_exposure_target": portfolio_construction.net_exposure_target,
-            "asset_class_weight_caps": portfolio_construction.asset_class_weight_caps,
-            "cluster_weight_caps": portfolio_construction.cluster_weight_caps,
-        },
-    )
-    if constraint_stages:
-        fields["constraint_stages"] = ";".join(constraint_stages)
     return fields

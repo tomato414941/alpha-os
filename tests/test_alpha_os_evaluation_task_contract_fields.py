@@ -86,10 +86,6 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
     assert fields["sleeves"] == "trend_core:trend:1.0"
     assert fields["base_currency"] == "USD"
     assert fields["trading_calendar"] == "multi_venue"
-    assert "sizing_time:target_vol" in str(fields["constraint_stages"])
-    assert "gross_leverage_cap,net_exposure_target" in str(
-        fields["constraint_stages"]
-    )
 
 
 def test_evaluation_task_contract_fields_use_strategy_portfolio_selection():
