@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
 
 
@@ -226,20 +224,6 @@ def _build_direct_evaluation_task():
         evaluation_task_id="case:test",
         strategy_id="strategy:test",
         evaluation_spec_id="evaluation_spec:test",
-    )
-
-
-def test_evaluation_execution_strategy_resolver_selects_execution_strategy():
-    from alpha_os.evaluation_execution_strategy import (
-        DirectStrategyEvaluationExecutionStrategy,
-        evaluation_execution_strategy_for_request,
-    )
-
-    assert isinstance(
-        evaluation_execution_strategy_for_request(
-            SimpleNamespace()
-        ),
-        DirectStrategyEvaluationExecutionStrategy,
     )
 
 
