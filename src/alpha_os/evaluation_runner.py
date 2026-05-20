@@ -38,11 +38,12 @@ def evaluate_evaluation_spec_state(
         feature_plane_repository=feature_plane_repository,
     )
     for execution_request in evaluation_plan.execution_requests:
-        execution_result = evaluation_execution_strategy_for_request(execution_request).run(
-            execution_request=execution_request,
-            context=execution_context,
+        task_results.append(
+            evaluation_execution_strategy_for_request(execution_request).run(
+                execution_request=execution_request,
+                context=execution_context,
+            )
         )
-        task_results.append(execution_result.task_result)
     report = EvaluationReport(
         evaluation_report_id=f"{evaluation_spec_state.evaluation_spec_id}:{timestamp}",
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,

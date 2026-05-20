@@ -38,18 +38,13 @@ class EvaluationExecutionContext:
     feature_plane_repository: FeaturePlaneRepository | None = None
 
 
-@dataclass(frozen=True)
-class EvaluationExecutionResult:
-    task_result: EvaluationTaskResult
-
-
 class EvaluationExecutionStrategy(Protocol):
     def run(
         self,
         *,
         execution_request: StrategyEvaluationRequest,
         context: EvaluationExecutionContext,
-    ) -> EvaluationExecutionResult: ...
+    ) -> EvaluationTaskResult: ...
 
 
 def _portfolio_construction_for_strategy(
@@ -230,7 +225,7 @@ class DirectStrategyEvaluationExecutionStrategy:
         *,
         execution_request: StrategyEvaluationRequest,
         context: EvaluationExecutionContext,
-    ) -> EvaluationExecutionResult:
+    ) -> EvaluationTaskResult:
         store = context.store
         trading_strategy = _trading_strategy_for_request(store, execution_request)
         portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
@@ -262,56 +257,54 @@ class DirectStrategyEvaluationExecutionStrategy:
         )
         direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
         subject_set = None if subject_set_state is None else subject_set_state.definition
-        return EvaluationExecutionResult(
-            task_result=EvaluationTaskResult(
-                evaluation_task_id=execution_request.evaluation_task_id,
-                construction_kind=portfolio_construction.construction_kind,
-                strategy_id=execution_request.context.strategy_id,
-                strategy_contract_fields=build_evaluation_task_contract_fields(
-                    portfolio_construction,
-                    rebalance_friction_policy=rebalance_friction_policy,
-                    execution_cost_assumptions=execution_cost_assumptions,
-                    holding_cost_assumptions=holding_cost_assumptions,
-                    subject_set=subject_set,
-                    subject_set_id=subject_set_id,
-                    target_id=execution_request.context.target_id,
-                    selection_kind=trading_strategy.selection_kind,
-                    top_k=trading_strategy.portfolio.top_k,
-                ),
-                subject_set_facts=(
-                    None if subject_set is None else format_subject_set_facts(subject_set)
-                ),
-                subject_set_contract_groups=(
-                    ()
-                    if subject_set is None
-                    else subject_set_contract_groups(subject_set.contract_boundary)
-                ),
-                universe_policy_fields=(
-                    {} if subject_set is None else subject_set.universe_policy.to_document()
-                ),
-                constraint_stages=_constraint_stages_for_portfolio_construction(
-                    portfolio_construction
-                ),
-                sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
-                    trading_strategy,
-                    subject_set,
-                    sleeve_composition=portfolio_construction.sleeve_composition,
-                ),
-                metric_group_results=tuple(
-                    direct_metric_group_results[metric_group_name]
-                    for metric_group_name in execution_request.metric_group_names
-                    if metric_group_name in direct_metric_group_results
-                ),
-                failure_finding_groups=direct_failure_finding_groups,
-                artifact_refs={
-                    "evaluation_task_ids": (execution_request.evaluation_task_id,),
-                    "strategy_ids": (execution_request.context.strategy_id,),
-                    "evaluation_fold_labels": (execution_request.fold_label,),
-                    "evaluation_range_labels": tuple(
-                        item.label for item in execution_request.evaluation_date_ranges
-                    ),
-                },
+        return EvaluationTaskResult(
+            evaluation_task_id=execution_request.evaluation_task_id,
+            construction_kind=portfolio_construction.construction_kind,
+            strategy_id=execution_request.context.strategy_id,
+            strategy_contract_fields=build_evaluation_task_contract_fields(
+                portfolio_construction,
+                rebalance_friction_policy=rebalance_friction_policy,
+                execution_cost_assumptions=execution_cost_assumptions,
+                holding_cost_assumptions=holding_cost_assumptions,
+                subject_set=subject_set,
+                subject_set_id=subject_set_id,
+                target_id=execution_request.context.target_id,
+                selection_kind=trading_strategy.selection_kind,
+                top_k=trading_strategy.portfolio.top_k,
             ),
+            subject_set_facts=(
+                None if subject_set is None else format_subject_set_facts(subject_set)
+            ),
+            subject_set_contract_groups=(
+                ()
+                if subject_set is None
+                else subject_set_contract_groups(subject_set.contract_boundary)
+            ),
+            universe_policy_fields=(
+                {} if subject_set is None else subject_set.universe_policy.to_document()
+            ),
+            constraint_stages=_constraint_stages_for_portfolio_construction(
+                portfolio_construction
+            ),
+            sleeve_attribution_summaries=strategy_sleeve_attribution_summaries(
+                trading_strategy,
+                subject_set,
+                sleeve_composition=portfolio_construction.sleeve_composition,
+            ),
+            metric_group_results=tuple(
+                direct_metric_group_results[metric_group_name]
+                for metric_group_name in execution_request.metric_group_names
+                if metric_group_name in direct_metric_group_results
+            ),
+            failure_finding_groups=direct_failure_finding_groups,
+            artifact_refs={
+                "evaluation_task_ids": (execution_request.evaluation_task_id,),
+                "strategy_ids": (execution_request.context.strategy_id,),
+                "evaluation_fold_labels": (execution_request.fold_label,),
+                "evaluation_range_labels": tuple(
+                    item.label for item in execution_request.evaluation_date_ranges
+                ),
+            },
         )
 
 
