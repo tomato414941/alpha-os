@@ -2421,9 +2421,9 @@ def test_run_diagnostic_evaluation_dry_run_check_rejects_finding_count_mismatch(
     assert exc_info.value.code == 2
 
 
-def test_build_evaluation_plan_does_not_resolve_checkpoints_from_folds(tmp_path):
+def test_build_strategy_evaluation_requests_does_not_resolve_checkpoints_from_folds(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
@@ -2497,9 +2497,9 @@ def test_build_evaluation_plan_does_not_resolve_checkpoints_from_folds(tmp_path)
 
         with pytest.raises(
             ValueError,
-            match="evaluation plan does not resolve strategy checkpoints",
+            match="strategy evaluation request builder does not resolve checkpoints",
         ):
-            build_evaluation_plan(
+            build_strategy_evaluation_requests(
                 store,
                 evaluation_spec_id="protocol_a",
                 evaluation_spec=evaluation_spec,
@@ -2510,11 +2510,11 @@ def test_build_evaluation_plan_does_not_resolve_checkpoints_from_folds(tmp_path)
         store.close()
 
 
-def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
+def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discovery(
     tmp_path,
 ):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
@@ -2569,7 +2569,7 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
             ),
         )
 
-        plan = build_evaluation_plan(
+        execution_requests = build_strategy_evaluation_requests(
             store,
             evaluation_spec_id="protocol_nn",
             evaluation_spec=evaluation_spec,
@@ -2577,16 +2577,16 @@ def test_build_evaluation_plan_uses_direct_strategy_without_discovery(
             base_url="http://example.com",
         )
 
-        assert len(plan.execution_requests) == 1
-        request = plan.execution_requests[0]
+        assert len(execution_requests) == 1
+        request = execution_requests[0]
         assert request.context.strategy_id == "strategy:nn_case"
     finally:
         store.close()
 
 
-def test_build_evaluation_plan_rejects_direct_strategy_without_target(tmp_path):
+def test_build_strategy_evaluation_requests_rejects_direct_strategy_without_target(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.store import EvaluationStore
 
@@ -2623,7 +2623,7 @@ def test_build_evaluation_plan_rejects_direct_strategy_without_target(tmp_path):
             ValueError,
             match="direct evaluation task requires strategy prediction target",
         ):
-            build_evaluation_plan(
+            build_strategy_evaluation_requests(
                 store,
                 evaluation_spec_id="protocol_targetless",
                 evaluation_spec=evaluation_spec,
@@ -2634,9 +2634,9 @@ def test_build_evaluation_plan_rejects_direct_strategy_without_target(tmp_path):
         store.close()
 
 
-def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path):
+def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_context(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.store import EvaluationStore
 
@@ -2683,7 +2683,7 @@ def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path)
             ),
         )
 
-        plan = build_evaluation_plan(
+        execution_requests = build_strategy_evaluation_requests(
             store,
             evaluation_spec_id="protocol_portfolio_source",
             evaluation_spec=evaluation_spec,
@@ -2691,16 +2691,16 @@ def test_build_evaluation_plan_keeps_strategy_portfolio_out_of_context(tmp_path)
             base_url="http://example.com",
         )
 
-        request = plan.execution_requests[0]
+        request = execution_requests[0]
         assert request.context.strategy_id == "strategy:portfolio_source"
         assert request.context.target_id == "residual_return_3d"
     finally:
         store.close()
 
 
-def test_build_evaluation_plan_prefers_direct_strategy_over_discovery_provenance(tmp_path):
+def test_build_strategy_evaluation_requests_prefers_direct_strategy_over_discovery_provenance(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_evaluation_plan
+    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
@@ -2755,7 +2755,7 @@ def test_build_evaluation_plan_prefers_direct_strategy_over_discovery_provenance
             ),
         )
 
-        plan = build_evaluation_plan(
+        execution_requests = build_strategy_evaluation_requests(
             store,
             evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
@@ -2763,8 +2763,8 @@ def test_build_evaluation_plan_prefers_direct_strategy_over_discovery_provenance
             base_url="http://example.com",
         )
 
-        assert len(plan.execution_requests) == 1
-        assert tuple(item.fold_label for item in plan.execution_requests) == ("fold_2025",)
+        assert len(execution_requests) == 1
+        assert tuple(item.fold_label for item in execution_requests) == ("fold_2025",)
     finally:
         store.close()
 

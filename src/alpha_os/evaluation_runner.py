@@ -6,7 +6,7 @@ from .evaluation_execution_strategy import (
     run_strategy_evaluation_task,
 )
 from .evaluation_task import EvaluationTask
-from .evaluation_plan import build_evaluation_plan
+from .evaluation_plan import build_strategy_evaluation_requests
 from .evaluation_report import EvaluationReport
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
@@ -21,7 +21,7 @@ def evaluate_evaluation_spec_state(
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):
     evaluation_spec = evaluation_spec_state.definition
-    evaluation_plan = build_evaluation_plan(
+    execution_requests = build_strategy_evaluation_requests(
         store,
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         evaluation_spec=evaluation_spec,
@@ -34,7 +34,7 @@ def evaluate_evaluation_spec_state(
         store=store,
         feature_plane_repository=feature_plane_repository,
     )
-    for execution_request in evaluation_plan.execution_requests:
+    for execution_request in execution_requests:
         task_results.append(
             run_strategy_evaluation_task(
                 execution_request=execution_request,

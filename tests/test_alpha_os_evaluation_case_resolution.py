@@ -21,7 +21,7 @@ from alpha_os.evaluation_cost_config import (
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
-from alpha_os.evaluation_plan import build_evaluation_plan
+from alpha_os.evaluation_plan import build_strategy_evaluation_requests
 from alpha_os.evaluation_spec import (
     EvaluationDateRange,
     EvaluationFold,
@@ -613,7 +613,7 @@ def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()
 
-        plan = build_evaluation_plan(
+        execution_requests = build_strategy_evaluation_requests(
             store,
             evaluation_spec_id="macro_eval",
             evaluation_spec=evaluation_spec,
@@ -631,10 +631,10 @@ def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
                     for item in entry.evaluation_date_ranges
                 ),
             )
-            for entry in plan.execution_requests
+            for entry in execution_requests
         }
         assert len(resolved_tasks) == 1
-        assert len(plan.execution_requests) == 2
-        assert len(summary_keys) == len(plan.execution_requests)
+        assert len(execution_requests) == 2
+        assert len(summary_keys) == len(execution_requests)
     finally:
         store.close()

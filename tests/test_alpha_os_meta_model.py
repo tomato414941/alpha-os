@@ -2333,7 +2333,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
 
     assert exc_info.value.code == 2
     assert (
-        "evaluation plan does not resolve strategy checkpoints"
+        "strategy evaluation request builder does not resolve checkpoints"
         in capsys.readouterr().err
     )
 

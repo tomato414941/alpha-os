@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from .evaluation_task import EvaluationTask
@@ -19,18 +18,11 @@ if TYPE_CHECKING:
     )
 
 
-class EvaluationPlanReadPort(Protocol):
+class EvaluationRequestBuildReadPort(Protocol):
     def get_trading_strategy(
         self,
         strategy_id: str,
     ) -> TradingStrategyState | None: ...
-
-
-@dataclass(frozen=True)
-class EvaluationPlan:
-    evaluation_spec_id: str
-    metric_group_names: tuple[str, ...]
-    execution_requests: tuple[StrategyEvaluationRequest, ...]
 
 
 DIRECT_STRATEGY_POSITION_RULE_IDS = frozenset(
@@ -69,17 +61,17 @@ def _strategy_evaluation_request(
     )
 
 
-def build_evaluation_plan(
-    store: EvaluationPlanReadPort,
+def build_strategy_evaluation_requests(
+    store: EvaluationRequestBuildReadPort,
     *,
     evaluation_spec_id: str,
     evaluation_spec: EvaluationSpec,
     evaluation_tasks: tuple[EvaluationTask, ...] | None = None,
     base_url: str,
-) -> EvaluationPlan:
+) -> tuple[StrategyEvaluationRequest, ...]:
     execution_requests: list[StrategyEvaluationRequest] = []
     if evaluation_tasks is None:
-        raise ValueError("evaluation plan requires evaluation_tasks")
+        raise ValueError("strategy evaluation request builder requires evaluation_tasks")
     for evaluation_task in evaluation_tasks:
         strategy_state = store.get_trading_strategy(evaluation_task.strategy_id)
         if strategy_state is None:
@@ -123,11 +115,7 @@ def build_evaluation_plan(
                 f"{evaluation_task.evaluation_task_id}"
             )
         raise ValueError(
-            "evaluation plan does not resolve strategy checkpoints: "
+            "strategy evaluation request builder does not resolve checkpoints: "
             f"{evaluation_task.evaluation_task_id}"
         )
-    return EvaluationPlan(
-        evaluation_spec_id=evaluation_spec_id,
-        metric_group_names=evaluation_spec.metric_group_names,
-        execution_requests=tuple(execution_requests),
-    )
+    return tuple(execution_requests)
