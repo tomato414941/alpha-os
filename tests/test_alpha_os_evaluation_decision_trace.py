@@ -249,7 +249,7 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
 ):
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.evaluation_result import EvaluationMetricGroupResult
-    from alpha_os.evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
+    from alpha_os.evaluation_runner import evaluate_evaluation_spec_state
     from alpha_os.signal_discovery_strategy_evaluation import (
         EvaluationTraceRangeResult,
         StrategyEvaluationResult,
@@ -309,12 +309,10 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
     )
 
     report_state = evaluate_evaluation_spec_state(
-        EvaluationRunRequest(
-            store=store,
-            evaluation_spec_state=evaluation_spec_state,
-            evaluation_tasks=(_build_direct_evaluation_task(),),
-            base_url="http://example.com",
-        )
+        store=store,
+        evaluation_spec_state=evaluation_spec_state,
+        evaluation_tasks=(_build_direct_evaluation_task(),),
+        base_url="http://example.com",
     )
 
     assert report_state.evaluation_report_id.startswith("evaluation_spec:test:")

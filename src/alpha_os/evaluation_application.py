@@ -5,7 +5,7 @@ from .data_repositories import (
     ObservationFrameRepository,
 )
 from .evaluation_task_query import select_evaluation_tasks
-from .evaluation_runner import EvaluationRunRequest, evaluate_evaluation_spec_state
+from .evaluation_runner import evaluate_evaluation_spec_state
 from .store import EvaluationStore
 
 
@@ -29,13 +29,11 @@ def run_evaluation_use_case(
         strategy_ids=strategy_ids,
     )
     return evaluate_evaluation_spec_state(
-        EvaluationRunRequest(
-            store=store,
-            evaluation_spec_state=evaluation_spec_state,
-            evaluation_tasks=evaluation_tasks,
-            base_url=base_url,
-            feature_plane_repository=feature_plane_repository,
-        )
+        store=store,
+        evaluation_spec_state=evaluation_spec_state,
+        evaluation_tasks=evaluation_tasks,
+        base_url=base_url,
+        feature_plane_repository=feature_plane_repository,
     )
 
 
@@ -61,11 +59,9 @@ def run_walk_forward_evaluation_use_case(
         evaluation_task_ids=evaluation_task_ids,
     )
     return evaluate_evaluation_spec_state(
-        EvaluationRunRequest(
-            store=store,
-            evaluation_spec_state=evaluation_spec_state,
-            evaluation_tasks=evaluation_tasks,
-            base_url=base_url,
-            feature_plane_repository=feature_plane_repository,
-        )
+        store=store,
+        evaluation_spec_state=evaluation_spec_state,
+        evaluation_tasks=evaluation_tasks,
+        base_url=base_url,
+        feature_plane_repository=feature_plane_repository,
     )
