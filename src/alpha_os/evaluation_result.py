@@ -175,7 +175,6 @@ class EvaluationTaskResult:
     universe_policy_fields: dict[str, str | None] = field(default_factory=dict)
     constraint_stages: tuple[str, ...] = ()
     sleeve_attribution_summaries: tuple[SleeveAttributionSummary, ...] = ()
-    artifact_refs: dict[str, tuple[str, ...]] = field(default_factory=dict)
     evaluation_task_id: str | None = None
     strategy_id: str | None = None
     signal_discovery_id: str | None = None
@@ -184,14 +183,6 @@ class EvaluationTaskResult:
         evaluation_lane = normalize_evaluation_lane(self.evaluation_lane)
         evaluation_task_id = self.evaluation_task_id
         strategy_id = self.strategy_id
-        if evaluation_task_id is None:
-            values = self.artifact_refs.get("evaluation_task_ids", ())
-            if values:
-                evaluation_task_id = str(values[0])
-        if strategy_id is None:
-            values = self.artifact_refs.get("strategy_ids", ())
-            if values:
-                strategy_id = str(values[0])
         if evaluation_task_id is None:
             evaluation_task_id = self.signal_discovery_id
         if strategy_id is None:
@@ -232,9 +223,6 @@ class EvaluationTaskResult:
             "sleeve_attribution_summaries": [
                 item.to_document() for item in self.sleeve_attribution_summaries
             ],
-            "artifact_refs": {
-                key: list(value) for key, value in self.artifact_refs.items()
-            },
         }
         if self.signal_discovery_id is not None:
             document["signal_discovery_id"] = self.signal_discovery_id
@@ -281,7 +269,6 @@ class EvaluationTaskResult:
         universe_policy_fields = document.get("universe_policy_fields", {})
         constraint_stages = document.get("constraint_stages", [])
         sleeve_attribution_summaries = document.get("sleeve_attribution_summaries", [])
-        artifact_refs = document.get("artifact_refs", {})
         if not isinstance(metric_group_results, list):
             raise ValueError(
                 "evaluation task result metric_group_results are invalid"
@@ -306,8 +293,6 @@ class EvaluationTaskResult:
             raise ValueError(
                 "evaluation task result sleeve_attribution_summaries are invalid"
             )
-        if not isinstance(artifact_refs, dict):
-            raise ValueError("evaluation task result artifact_refs are invalid")
         return cls(
             evaluation_task_id=(
                 None
@@ -358,9 +343,4 @@ class EvaluationTaskResult:
                 for item in sleeve_attribution_summaries
                 if isinstance(item, dict)
             ),
-            artifact_refs={
-                str(key): tuple(str(item) for item in value)
-                for key, value in artifact_refs.items()
-                if isinstance(value, list)
-            },
         )

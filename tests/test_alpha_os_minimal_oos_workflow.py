@@ -86,12 +86,6 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert candidate_result.strategy_id == (
             "strategy:minimal_oos_candidate_equal_weight_hold"
         )
-        assert candidate_result.artifact_refs["evaluation_fold_labels"] == (
-            "minimal_train_to_test",
-        )
-        assert candidate_result.artifact_refs["evaluation_range_labels"] == (
-            "minimal_test",
-        )
         assert candidate_result.strategy_contract_fields["subject_set"] == "minimal_oos_pair"
         assert candidate_result.strategy_contract_fields["target_id"] == "residual_return_1d"
         assert candidate_result.strategy_contract_fields["fee_bps"] == 0.0

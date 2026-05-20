@@ -285,12 +285,4 @@ def run_strategy_evaluation_task(
             if metric_group_name in direct_metric_group_results
         ),
         failure_finding_groups=direct_failure_finding_groups,
-        artifact_refs={
-            "evaluation_task_ids": (execution_request.evaluation_task_id,),
-            "strategy_ids": (execution_request.context.strategy_id,),
-            "evaluation_fold_labels": (execution_request.fold_label,),
-            "evaluation_range_labels": tuple(
-                item.label for item in execution_request.evaluation_date_ranges
-            ),
-        },
     )

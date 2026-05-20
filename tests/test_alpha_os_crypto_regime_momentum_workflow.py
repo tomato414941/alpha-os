@@ -44,9 +44,6 @@ def _assert_common_strategy_comparison_contract(
     *,
     require_same_subject_set: bool = False,
 ) -> None:
-    assert candidate.artifact_refs.get("evaluation_range_labels") == (
-        comparison_target.artifact_refs.get("evaluation_range_labels")
-    )
     for field_name in _COMPARISON_COST_FIELDS:
         assert candidate.strategy_contract_fields[field_name] == (
             comparison_target.strategy_contract_fields[field_name]
