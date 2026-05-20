@@ -149,17 +149,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
             EvaluationTaskResult(
                 evaluation_task_id="case:test",
                 strategy_id="strategy:test",
-                subject_set_contract_groups=(
-                    "instrument",
-                    "observation_spec",
-                    "binding",
-                    "universe_policy",
-                ),
-                universe_policy_fields={
-                    "base_currency": "USD",
-                    "trading_calendar": "24x7",
-                    "benchmark_id": "global_macro_core",
-                },
                 constraint_stages=(
                     "sizing_time:target_vol",
                     "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",
@@ -188,17 +177,6 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
     assert "profiles" not in task_result.to_document()
     assert task_result.cross_instrument_outcome is not None
     assert task_result.cross_instrument_outcome.metric_group_outcomes[0].metric_group_name == "decision_quality"
-    assert task_result.subject_set_contract_groups == (
-        "instrument",
-        "observation_spec",
-        "binding",
-        "universe_policy",
-    )
-    assert task_result.universe_policy_fields == {
-        "base_currency": "USD",
-        "trading_calendar": "24x7",
-        "benchmark_id": "global_macro_core",
-    }
     assert task_result.constraint_stages == (
         "sizing_time:target_vol",
         "post_sizing_normalization:direction_mode,gross_exposure_cap,gross_leverage_cap,net_exposure_target",

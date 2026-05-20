@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from .cross_instrument_outcome import (
@@ -167,8 +167,6 @@ class EvaluationTaskResult:
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
     cross_instrument_outcome: CrossInstrumentOutcome | None = None
-    subject_set_contract_groups: tuple[str, ...] = ()
-    universe_policy_fields: dict[str, str | None] = field(default_factory=dict)
     constraint_stages: tuple[str, ...] = ()
     sleeve_attribution_summaries: tuple[SleeveAttributionSummary, ...] = ()
     evaluation_task_id: str | None = None
@@ -206,8 +204,6 @@ class EvaluationTaskResult:
                 item.to_document() for item in self.failure_finding_groups
             ],
             "cross_instrument_outcome": self.cross_instrument_outcome.to_document(),
-            "subject_set_contract_groups": list(self.subject_set_contract_groups),
-            "universe_policy_fields": dict(self.universe_policy_fields),
             "constraint_stages": list(self.constraint_stages),
             "sleeve_attribution_summaries": [
                 item.to_document() for item in self.sleeve_attribution_summaries
@@ -244,8 +240,6 @@ class EvaluationTaskResult:
         metric_group_results = document.get("metric_group_results", [])
         failure_finding_groups = document.get("failure_finding_groups", [])
         cross_instrument_outcome = document.get("cross_instrument_outcome")
-        subject_set_contract_groups = document.get("subject_set_contract_groups", [])
-        universe_policy_fields = document.get("universe_policy_fields", {})
         constraint_stages = document.get("constraint_stages", [])
         sleeve_attribution_summaries = document.get("sleeve_attribution_summaries", [])
         if not isinstance(metric_group_results, list):
@@ -256,12 +250,6 @@ class EvaluationTaskResult:
             raise ValueError("evaluation task result failure_finding_groups are invalid")
         if cross_instrument_outcome is not None and not isinstance(cross_instrument_outcome, dict):
             raise ValueError("evaluation task result cross_instrument_outcome is invalid")
-        if not isinstance(subject_set_contract_groups, list):
-            raise ValueError(
-                "evaluation task result subject_set_contract_groups are invalid"
-            )
-        if not isinstance(universe_policy_fields, dict):
-            raise ValueError("evaluation task result universe_policy_fields are invalid")
         if not isinstance(constraint_stages, list):
             raise ValueError("evaluation task result constraint_stages is invalid")
         if not isinstance(sleeve_attribution_summaries, list):
@@ -294,15 +282,6 @@ class EvaluationTaskResult:
                 if cross_instrument_outcome is None
                 else CrossInstrumentOutcome.from_document(cross_instrument_outcome)
             ),
-            subject_set_contract_groups=tuple(
-                str(item) for item in subject_set_contract_groups
-            ),
-            universe_policy_fields={
-                str(key): (
-                    None if value is None else str(value)
-                )
-                for key, value in universe_policy_fields.items()
-            },
             constraint_stages=tuple(str(item) for item in constraint_stages),
             sleeve_attribution_summaries=tuple(
                 SleeveAttributionSummary.from_document(item)

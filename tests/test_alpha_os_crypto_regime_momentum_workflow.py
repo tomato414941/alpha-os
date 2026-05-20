@@ -32,20 +32,10 @@ def _assert_numeric_metrics(metrics: dict[str, object], names: tuple[str, ...]) 
         assert isinstance(metrics[name], (int, float))
 
 
-def _assert_common_strategy_comparison_contract(
-    candidate,
-    comparison_target,
-    *,
-    require_same_subject_set: bool = False,
-) -> None:
+def _assert_common_strategy_comparison_contract(candidate, comparison_target) -> None:
     for task_result in (candidate, comparison_target):
         for metric_group_name, metric_name in _REQUIRED_COMPARISON_METRICS:
             _metric(task_result, metric_group_name, metric_name)
-
-    if require_same_subject_set:
-        assert candidate.universe_policy_fields == (
-            comparison_target.universe_policy_fields
-        )
 
 
 def _strategy_document(
@@ -334,7 +324,6 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
         _assert_common_strategy_comparison_contract(
             candidate,
             baseline,
-            require_same_subject_set=True,
         )
     finally:
         store.close()

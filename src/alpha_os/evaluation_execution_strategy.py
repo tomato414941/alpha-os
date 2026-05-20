@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .contract_boundaries import active_constraint_stages, subject_set_contract_groups
+from .contract_boundaries import active_constraint_stages
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
@@ -247,14 +247,6 @@ def run_strategy_evaluation_task(
         evaluation_task_id=execution_request.evaluation_task_id,
         construction_kind=portfolio_construction.construction_kind,
         strategy_id=execution_request.context.strategy_id,
-        subject_set_contract_groups=(
-            ()
-            if subject_set is None
-            else subject_set_contract_groups(subject_set.contract_boundary)
-        ),
-        universe_policy_fields=(
-            {} if subject_set is None else subject_set.universe_policy.to_document()
-        ),
         constraint_stages=_constraint_stages_for_portfolio_construction(
             portfolio_construction
         ),
