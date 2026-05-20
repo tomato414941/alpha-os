@@ -7,7 +7,6 @@ from .cross_instrument_outcome import (
     CrossInstrumentOutcome,
     build_cross_instrument_outcome,
 )
-from .evaluation_lane import normalize_evaluation_lane
 
 
 _METRIC_SCALAR_TYPES = (str, int, float, bool)
@@ -161,8 +160,6 @@ class EvaluationFailureFindingGroup:
 
 @dataclass(frozen=True, kw_only=True)
 class EvaluationTaskResult:
-    evaluation_lane: str = "backtest_oos"
-    construction_kind: str = "active_portfolio"
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
     cross_instrument_outcome: CrossInstrumentOutcome | None = None
@@ -170,7 +167,6 @@ class EvaluationTaskResult:
     strategy_id: str | None = None
 
     def __post_init__(self) -> None:
-        evaluation_lane = normalize_evaluation_lane(self.evaluation_lane)
         evaluation_task_id = self.evaluation_task_id
         strategy_id = self.strategy_id
         if not isinstance(evaluation_task_id, str) or not evaluation_task_id:
@@ -183,15 +179,12 @@ class EvaluationTaskResult:
                 metric_group_results=self.metric_group_results,
                 failure_finding_groups=self.failure_finding_groups,
             )
-        object.__setattr__(self, "evaluation_lane", evaluation_lane)
         object.__setattr__(self, "evaluation_task_id", evaluation_task_id)
         object.__setattr__(self, "strategy_id", strategy_id)
         object.__setattr__(self, "cross_instrument_outcome", cross_instrument_outcome)
 
     def to_document(self) -> dict[str, Any]:
         document = {
-            "evaluation_lane": self.evaluation_lane,
-            "construction_kind": self.construction_kind,
             "evaluation_task_id": self.evaluation_task_id,
             "strategy_id": self.strategy_id,
             "metric_group_results": [
@@ -208,8 +201,6 @@ class EvaluationTaskResult:
     def from_document(cls, document: dict[str, Any]) -> "EvaluationTaskResult":
         evaluation_task_id = document.get("evaluation_task_id")
         strategy_id = document.get("strategy_id")
-        evaluation_lane = document.get("evaluation_lane")
-        construction_kind = document.get("construction_kind", "active_portfolio")
         if "profiles" in document:
             raise ValueError(
                 "evaluation task result profiles field is no longer supported; "
@@ -248,10 +239,6 @@ class EvaluationTaskResult:
                 else str(evaluation_task_id)
             ),
             strategy_id=None if strategy_id is None else str(strategy_id),
-            evaluation_lane=(
-                None if evaluation_lane is None else str(evaluation_lane)
-            ),
-            construction_kind=str(construction_kind),
             metric_group_results=tuple(
                 EvaluationMetricGroupResult.from_document(item)
                 for item in metric_group_results

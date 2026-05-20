@@ -156,7 +156,6 @@ def run_strategy_evaluation_task(
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
     return EvaluationTaskResult(
         evaluation_task_id=execution_request.evaluation_task_id,
-        construction_kind=portfolio_construction.construction_kind,
         strategy_id=execution_request.context.strategy_id,
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]

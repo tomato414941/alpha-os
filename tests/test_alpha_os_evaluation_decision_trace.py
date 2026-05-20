@@ -107,7 +107,6 @@ def test_evaluation_report_lane_round_trips_and_defaults():
         },
         task_results=(
             EvaluationTaskResult(
-                evaluation_lane="diagnostic",
                 evaluation_task_id="case:test",
                 strategy_id="strategy:test",
             ),
@@ -122,7 +121,6 @@ def test_evaluation_report_lane_round_trips_and_defaults():
     assert restored.evaluation_lane == "diagnostic"
     assert restored.oos_contract_summary["rigor_level"] == "diagnostic"
     assert restored.oos_contract_summary["enforcement"] == "warn"
-    assert restored.task_results[0].evaluation_lane == "diagnostic"
 
 
 def _register_subject_set(store) -> None:
