@@ -167,7 +167,6 @@ class EvaluationTaskResult:
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
     cross_instrument_outcome: CrossInstrumentOutcome | None = None
-    subject_set_facts: str | None = None
     subject_set_contract_groups: tuple[str, ...] = ()
     universe_policy_fields: dict[str, str | None] = field(default_factory=dict)
     constraint_stages: tuple[str, ...] = ()
@@ -207,7 +206,6 @@ class EvaluationTaskResult:
                 item.to_document() for item in self.failure_finding_groups
             ],
             "cross_instrument_outcome": self.cross_instrument_outcome.to_document(),
-            "subject_set_facts": self.subject_set_facts,
             "subject_set_contract_groups": list(self.subject_set_contract_groups),
             "universe_policy_fields": dict(self.universe_policy_fields),
             "constraint_stages": list(self.constraint_stages),
@@ -243,15 +241,9 @@ class EvaluationTaskResult:
                 "evaluation task result failure_results field is no longer "
                 "supported; use failure_finding_groups"
             )
-        if "subject_set_summary" in document:
-            raise ValueError(
-                "evaluation task result subject_set_summary field is no longer "
-                "supported; use subject_set_facts"
-            )
         metric_group_results = document.get("metric_group_results", [])
         failure_finding_groups = document.get("failure_finding_groups", [])
         cross_instrument_outcome = document.get("cross_instrument_outcome")
-        subject_set_facts = document.get("subject_set_facts")
         subject_set_contract_groups = document.get("subject_set_contract_groups", [])
         universe_policy_fields = document.get("universe_policy_fields", {})
         constraint_stages = document.get("constraint_stages", [])
@@ -264,8 +256,6 @@ class EvaluationTaskResult:
             raise ValueError("evaluation task result failure_finding_groups are invalid")
         if cross_instrument_outcome is not None and not isinstance(cross_instrument_outcome, dict):
             raise ValueError("evaluation task result cross_instrument_outcome is invalid")
-        if subject_set_facts is not None and not isinstance(subject_set_facts, str):
-            raise ValueError("evaluation task result subject_set_facts is invalid")
         if not isinstance(subject_set_contract_groups, list):
             raise ValueError(
                 "evaluation task result subject_set_contract_groups are invalid"
@@ -304,7 +294,6 @@ class EvaluationTaskResult:
                 if cross_instrument_outcome is None
                 else CrossInstrumentOutcome.from_document(cross_instrument_outcome)
             ),
-            subject_set_facts=subject_set_facts,
             subject_set_contract_groups=tuple(
                 str(item) for item in subject_set_contract_groups
             ),

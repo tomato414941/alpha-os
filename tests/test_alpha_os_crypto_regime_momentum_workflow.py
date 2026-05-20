@@ -43,7 +43,6 @@ def _assert_common_strategy_comparison_contract(
             _metric(task_result, metric_group_name, metric_name)
 
     if require_same_subject_set:
-        assert candidate.subject_set_facts == comparison_target.subject_set_facts
         assert candidate.universe_policy_fields == (
             comparison_target.universe_policy_fields
         )

@@ -17,7 +17,6 @@ from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
 from .portfolio_decision import SubjectSet
 from .strategy_sleeves import SleeveAttributionSummary, StrategySleeveCompositionSpec
-from .subject_set_facts import format_subject_set_facts
 from .trading_strategy import TradingStrategySpec
 from .universe_contract import validate_subject_set_universe_contract
 
@@ -248,9 +247,6 @@ def run_strategy_evaluation_task(
         evaluation_task_id=execution_request.evaluation_task_id,
         construction_kind=portfolio_construction.construction_kind,
         strategy_id=execution_request.context.strategy_id,
-        subject_set_facts=(
-            None if subject_set is None else format_subject_set_facts(subject_set)
-        ),
         subject_set_contract_groups=(
             ()
             if subject_set is None
