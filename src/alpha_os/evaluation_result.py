@@ -3,12 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .cross_instrument_outcome import (
-    CrossInstrumentOutcome,
-    build_cross_instrument_outcome,
-)
-
-
 _METRIC_SCALAR_TYPES = (str, int, float, bool)
 
 
@@ -162,7 +156,6 @@ class EvaluationFailureFindingGroup:
 class EvaluationTaskResult:
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
-    cross_instrument_outcome: CrossInstrumentOutcome | None = None
     evaluation_task_id: str | None = None
     strategy_id: str | None = None
 
@@ -173,15 +166,8 @@ class EvaluationTaskResult:
             raise ValueError("evaluation task result is missing evaluation_task_id")
         if not isinstance(strategy_id, str) or not strategy_id:
             raise ValueError("evaluation task result is missing strategy_id")
-        cross_instrument_outcome = self.cross_instrument_outcome
-        if cross_instrument_outcome is None:
-            cross_instrument_outcome = build_cross_instrument_outcome(
-                metric_group_results=self.metric_group_results,
-                failure_finding_groups=self.failure_finding_groups,
-            )
         object.__setattr__(self, "evaluation_task_id", evaluation_task_id)
         object.__setattr__(self, "strategy_id", strategy_id)
-        object.__setattr__(self, "cross_instrument_outcome", cross_instrument_outcome)
 
     def to_document(self) -> dict[str, Any]:
         document = {
@@ -193,7 +179,6 @@ class EvaluationTaskResult:
             "failure_finding_groups": [
                 item.to_document() for item in self.failure_finding_groups
             ],
-            "cross_instrument_outcome": self.cross_instrument_outcome.to_document(),
         }
         return document
 
@@ -223,15 +208,12 @@ class EvaluationTaskResult:
             )
         metric_group_results = document.get("metric_group_results", [])
         failure_finding_groups = document.get("failure_finding_groups", [])
-        cross_instrument_outcome = document.get("cross_instrument_outcome")
         if not isinstance(metric_group_results, list):
             raise ValueError(
                 "evaluation task result metric_group_results are invalid"
             )
         if not isinstance(failure_finding_groups, list):
             raise ValueError("evaluation task result failure_finding_groups are invalid")
-        if cross_instrument_outcome is not None and not isinstance(cross_instrument_outcome, dict):
-            raise ValueError("evaluation task result cross_instrument_outcome is invalid")
         return cls(
             evaluation_task_id=(
                 None
@@ -248,10 +230,5 @@ class EvaluationTaskResult:
                 EvaluationFailureFindingGroup.from_document(item)
                 for item in failure_finding_groups
                 if isinstance(item, dict)
-            ),
-            cross_instrument_outcome=(
-                None
-                if cross_instrument_outcome is None
-                else CrossInstrumentOutcome.from_document(cross_instrument_outcome)
             ),
         )

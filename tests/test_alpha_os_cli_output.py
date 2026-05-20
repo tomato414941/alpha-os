@@ -68,45 +68,6 @@ def test_print_evaluation_snapshot_includes_replay_artifacts(capsys):
     assert "Replay:   funding_bps=1.500000 borrow_bps=2.500000 roll_bps=0.750000 multiplier=5.000000" in captured
 
 
-def test_evaluation_task_result_builds_cross_instrument_outcome():
-    from alpha_os.evaluation_result import EvaluationTaskResult, EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
-
-    task_result = EvaluationTaskResult(
-        evaluation_task_id="case:test",
-        strategy_id="strategy:test",
-        metric_group_results=(
-            EvaluationMetricGroupResult(
-                metric_group_name="decision_quality",
-                source="native_plan",
-                metrics={"mean_decision_net_return": 0.12},
-            ),
-        ),
-        failure_finding_groups=(
-            EvaluationFailureFindingGroup(
-                metric_group_name="decision_quality",
-                source="native_plan",
-                findings=(
-                    EvaluationFailureFinding(
-                        label="tail",
-                        severity=0.25,
-                        metrics={"decision_net_return": -0.25},
-                    ),
-                ),
-            ),
-        ),
-    )
-
-    assert task_result.cross_instrument_outcome is not None
-    assert task_result.cross_instrument_outcome.metric_group_outcomes[0].metric_group_name == "decision_quality"
-    assert (
-        task_result.cross_instrument_outcome.metric_group_outcomes[0].metrics["mean_decision_net_return"]
-        == 0.12
-    )
-    assert task_result.cross_instrument_outcome.failure_finding_outcomes[0].metric_group_name == "decision_quality"
-    assert task_result.cross_instrument_outcome.failure_finding_outcomes[0].finding_count == 1
-    assert task_result.cross_instrument_outcome.failure_finding_outcomes[0].max_severity == 0.25
-
-
 def test_evaluation_task_result_rejects_legacy_profiles_field():
     from alpha_os.evaluation_result import EvaluationTaskResult
 
@@ -135,7 +96,7 @@ def test_evaluation_task_result_rejects_legacy_failure_profiles_field():
         )
 
 
-def test_evaluation_report_roundtrips_cross_instrument_outcome():
+def test_evaluation_report_roundtrips_task_metric_groups():
     from alpha_os.evaluation_report import EvaluationReport
     from alpha_os.evaluation_result import (
         EvaluationTaskResult,
@@ -171,8 +132,7 @@ def test_evaluation_report_roundtrips_cross_instrument_outcome():
     task_result = restored.task_results[0]
     assert "metric_group_results" in task_result.to_document()
     assert "profiles" not in task_result.to_document()
-    assert task_result.cross_instrument_outcome is not None
-    assert task_result.cross_instrument_outcome.metric_group_outcomes[0].metric_group_name == "decision_quality"
+    assert task_result.metric_group_results[0].metric_group_name == "decision_quality"
 
 
 def test_print_subject_sets_includes_cross_asset_summary(capsys):
