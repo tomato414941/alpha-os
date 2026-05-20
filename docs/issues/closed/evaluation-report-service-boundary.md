@@ -2,7 +2,7 @@
 
 Status: Closed
 
-Closed by: `evaluation_task_contract_fields.py`
+Closed by: evaluation contract fields were removed from `EvaluationTaskResult`.
 
 ## Issue
 
@@ -23,9 +23,12 @@ touch report code directly.
 Keep persisted evaluation task contract field extraction separate from report
 display and report artifact ownership.
 
-The implementation now lives in `evaluation_task_contract_fields.py`.
+The intermediate `evaluation_task_contract_fields.py` helper has since been
+removed. Evaluation reports no longer store a flattened strategy contract
+snapshot.
 
-- evaluation task contract extraction
+- evaluation task metrics
+- explicit subject set, universe policy, constraint, and sleeve metadata
 
 ## Non-Goal
 

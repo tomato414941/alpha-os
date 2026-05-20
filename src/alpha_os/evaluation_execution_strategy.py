@@ -15,7 +15,6 @@ from .strategy_engine import StrategyEvaluationRequest
 from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
-from .evaluation_task_contract_fields import build_evaluation_task_contract_fields
 from .portfolio_decision import SubjectSet
 from .strategy_sleeves import SleeveAttributionSummary, StrategySleeveCompositionSpec
 from .subject_set_facts import format_subject_set_facts
@@ -249,15 +248,6 @@ def run_strategy_evaluation_task(
         evaluation_task_id=execution_request.evaluation_task_id,
         construction_kind=portfolio_construction.construction_kind,
         strategy_id=execution_request.context.strategy_id,
-        strategy_contract_fields=build_evaluation_task_contract_fields(
-            portfolio_construction,
-            rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
-            target_id=execution_request.context.target_id,
-            selection_kind=trading_strategy.selection_kind,
-            top_k=trading_strategy.portfolio.top_k,
-        ),
         subject_set_facts=(
             None if subject_set is None else format_subject_set_facts(subject_set)
         ),

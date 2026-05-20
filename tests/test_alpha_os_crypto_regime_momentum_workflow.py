@@ -11,12 +11,6 @@ _REQUIRED_COMPARISON_METRICS = (
     ("decision_quality", "mean_decision_turnover"),
 )
 
-_COMPARISON_COST_FIELDS = (
-    "fee_bps",
-    "funding_bps_per_step",
-    "borrow_fee_bps_per_step",
-)
-
 
 def _metric_group_metrics(task_result, metric_group_name: str) -> dict[str, object]:
     for group in task_result.metric_group_results:
@@ -44,11 +38,6 @@ def _assert_common_strategy_comparison_contract(
     *,
     require_same_subject_set: bool = False,
 ) -> None:
-    for field_name in _COMPARISON_COST_FIELDS:
-        assert candidate.strategy_contract_fields[field_name] == (
-            comparison_target.strategy_contract_fields[field_name]
-        )
-
     for task_result in (candidate, comparison_target):
         for metric_group_name, metric_name in _REQUIRED_COMPARISON_METRICS:
             _metric(task_result, metric_group_name, metric_name)
@@ -286,8 +275,6 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
         baseline = task_results["crypto_regime_momentum_baseline_case"]
         assert candidate.strategy_id == "strategy:crypto_regime_momentum_candidate"
         assert baseline.strategy_id == "strategy:crypto_regime_momentum_baseline"
-        assert candidate.strategy_contract_fields["target_id"] == "residual_return_1d"
-        assert baseline.strategy_contract_fields["target_id"] == "residual_return_1d"
 
         candidate_strategy = store.get_trading_strategy(candidate.strategy_id)
         baseline_strategy = store.get_trading_strategy(baseline.strategy_id)
@@ -300,21 +287,31 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
         assert baseline_strategy.trading_strategy.position_rule_id == "constant_hold"
         assert candidate_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
         assert baseline_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
-
-        shared_contract_keys = (
-            "target_id",
-            "selection",
-            "sizing",
-            "rebalance",
-            "direction_mode",
-            "fee_bps",
-            "funding_bps_per_step",
-            "borrow_fee_bps_per_step",
+        assert (
+            candidate_strategy.trading_strategy.target_id
+            == baseline_strategy.trading_strategy.target_id
+            == "residual_return_1d"
         )
-        for key in shared_contract_keys:
-            assert candidate.strategy_contract_fields[key] == (
-                baseline.strategy_contract_fields[key]
-            )
+        assert (
+            candidate_strategy.trading_strategy.selection_kind
+            == baseline_strategy.trading_strategy.selection_kind
+            == "all_assets"
+        )
+        assert (
+            candidate_strategy.trading_strategy.portfolio.execution_policy.fee_bps
+            == baseline_strategy.trading_strategy.portfolio.execution_policy.fee_bps
+            == 5.0
+        )
+        assert (
+            candidate_strategy.trading_strategy.portfolio.holding_cost_policy.funding_bps_per_step
+            == baseline_strategy.trading_strategy.portfolio.holding_cost_policy.funding_bps_per_step
+            == 0.0
+        )
+        assert (
+            candidate_strategy.trading_strategy.portfolio.holding_cost_policy.borrow_fee_bps_per_step
+            == baseline_strategy.trading_strategy.portfolio.holding_cost_policy.borrow_fee_bps_per_step
+            == 0.0
+        )
 
         for task_result in (candidate, baseline):
             decision_quality = _metric_group_metrics(
@@ -446,11 +443,6 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
     candidate = EvaluationTaskResult(
         evaluation_task_id="candidate",
         strategy_id="strategy:candidate",
-        strategy_contract_fields={
-            "fee_bps": 5.0,
-            "funding_bps_per_step": 0.0,
-            "borrow_fee_bps_per_step": 0.0,
-        },
         metric_group_results=(
             EvaluationMetricGroupResult(
                 metric_group_name="decision_quality",
@@ -471,11 +463,6 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
     comparison_target = EvaluationTaskResult(
         evaluation_task_id="comparison",
         strategy_id="strategy:comparison",
-        strategy_contract_fields={
-            "fee_bps": 5.0,
-            "funding_bps_per_step": 0.0,
-            "borrow_fee_bps_per_step": 0.0,
-        },
         metric_group_results=(
             EvaluationMetricGroupResult(
                 metric_group_name="decision_quality",
