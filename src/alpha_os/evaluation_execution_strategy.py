@@ -11,7 +11,6 @@ from .evaluation_cost_config import (
 )
 from .strategy_backtest import run_strategy_backtest_from_store
 from .strategy_engine import StrategyEvaluationRequest
-from .evaluation_spec import EvaluationSpec
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
 from .trading_strategy import TradingStrategySpec
@@ -29,7 +28,6 @@ class EvaluationExecutionReadPort(Protocol):
 @dataclass(frozen=True)
 class EvaluationExecutionContext:
     store: EvaluationExecutionReadPort
-    evaluation_spec: EvaluationSpec
     feature_plane_repository: FeaturePlaneRepository | None = None
 
 

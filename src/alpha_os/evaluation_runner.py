@@ -32,7 +32,6 @@ def evaluate_evaluation_spec_state(
     timestamp = _utc_now()
     execution_context = EvaluationExecutionContext(
         store=store,
-        evaluation_spec=evaluation_spec,
         feature_plane_repository=feature_plane_repository,
     )
     for execution_request in evaluation_plan.execution_requests:
