@@ -177,16 +177,11 @@ class EvaluationTaskResult:
     sleeve_attribution_summaries: tuple[SleeveAttributionSummary, ...] = ()
     evaluation_task_id: str | None = None
     strategy_id: str | None = None
-    signal_discovery_id: str | None = None
 
     def __post_init__(self) -> None:
         evaluation_lane = normalize_evaluation_lane(self.evaluation_lane)
         evaluation_task_id = self.evaluation_task_id
         strategy_id = self.strategy_id
-        if evaluation_task_id is None:
-            evaluation_task_id = self.signal_discovery_id
-        if strategy_id is None:
-            strategy_id = self.signal_discovery_id
         if not isinstance(evaluation_task_id, str) or not evaluation_task_id:
             raise ValueError("evaluation task result is missing evaluation_task_id")
         if not isinstance(strategy_id, str) or not strategy_id:
@@ -224,15 +219,12 @@ class EvaluationTaskResult:
                 item.to_document() for item in self.sleeve_attribution_summaries
             ],
         }
-        if self.signal_discovery_id is not None:
-            document["signal_discovery_id"] = self.signal_discovery_id
         return document
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "EvaluationTaskResult":
         evaluation_task_id = document.get("evaluation_task_id")
         strategy_id = document.get("strategy_id")
-        signal_discovery_id = document.get("signal_discovery_id")
         evaluation_lane = document.get("evaluation_lane")
         construction_kind = document.get("construction_kind", "active_portfolio")
         if "profiles" in document:
@@ -300,9 +292,6 @@ class EvaluationTaskResult:
                 else str(evaluation_task_id)
             ),
             strategy_id=None if strategy_id is None else str(strategy_id),
-            signal_discovery_id=(
-                None if signal_discovery_id is None else str(signal_discovery_id)
-            ),
             evaluation_lane=(
                 None if evaluation_lane is None else str(evaluation_lane)
             ),

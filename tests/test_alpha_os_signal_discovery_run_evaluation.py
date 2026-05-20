@@ -1303,7 +1303,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
         assert report_state is not None
         assert len(report_state.report.task_results) == 1
         task_result = report_state.report.task_results[0]
-        assert task_result.signal_discovery_id is None
         decision_metric_group_result = next(
             item
             for item in task_result.metric_group_results
