@@ -31,34 +31,12 @@ def _optimizer_backend_for_sizing(
     return "rule_based_signal_weighted"
 
 
-def _add_subject_set_fields(
-    fields: dict[str, str | int | float | bool],
-    *,
-    subject_set,
-    subject_set_id: str | None,
-) -> None:
-    if subject_set_id is not None:
-        fields["subject_set"] = subject_set_id
-    if subject_set is None:
-        return
-    universe_policy = getattr(subject_set, "universe_policy", None)
-    if universe_policy is not None:
-        if universe_policy.base_currency is not None:
-            fields["base_currency"] = universe_policy.base_currency
-        if universe_policy.trading_calendar is not None:
-            fields["trading_calendar"] = universe_policy.trading_calendar
-        if universe_policy.benchmark_id is not None:
-            fields["benchmark_id"] = universe_policy.benchmark_id
-
-
 def build_evaluation_task_contract_fields(
     portfolio_construction,
     *,
     rebalance_friction_policy,
     execution_cost_assumptions,
     holding_cost_assumptions,
-    subject_set=None,
-    subject_set_id: str | None = None,
     target_id: str | None = None,
     selection_kind: str | None = None,
     top_k: int | None = None,
@@ -191,11 +169,6 @@ def build_evaluation_task_contract_fields(
         fields["allow_releverage"] = str(
             portfolio_construction.risk_budget.allow_releverage
         ).lower()
-    _add_subject_set_fields(
-        fields,
-        subject_set=subject_set,
-        subject_set_id=subject_set_id,
-    )
     if not is_hold_baseline and portfolio_construction.asset_class_weight_caps:
         fields["asset_class_weight_caps"] = _format_constraint_caps(
             portfolio_construction.asset_class_weight_caps

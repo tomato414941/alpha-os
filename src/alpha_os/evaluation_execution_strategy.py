@@ -254,8 +254,6 @@ def run_strategy_evaluation_task(
             rebalance_friction_policy=rebalance_friction_policy,
             execution_cost_assumptions=execution_cost_assumptions,
             holding_cost_assumptions=holding_cost_assumptions,
-            subject_set=subject_set,
-            subject_set_id=subject_set_id,
             target_id=execution_request.context.target_id,
             selection_kind=trading_strategy.selection_kind,
             top_k=trading_strategy.portfolio.top_k,

@@ -15,7 +15,6 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
     from alpha_os.evaluation_task_contract_fields import (
         build_evaluation_task_contract_fields,
     )
-    from alpha_os.portfolio_decision import SubjectSet, UniversePolicySpec
     from alpha_os.strategy_sleeves import StrategySleeveCompositionSpec
 
     portfolio_construction = PortfolioConstructionSpec(
@@ -48,15 +47,6 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
             }
         ),
     )
-    subject_set = SubjectSet(
-        subject_set_id="global_macro_tradeable_daily_10y",
-        universe_policy=UniversePolicySpec(
-            base_currency="USD",
-            trading_calendar="multi_venue",
-            benchmark_id="global_macro_tradeable_daily_10y",
-        ),
-    )
-
     fields = build_evaluation_task_contract_fields(
         portfolio_construction,
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(
@@ -71,8 +61,6 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
             funding_bps_per_step=0.5,
             borrow_fee_bps_per_step=0.25,
         ),
-        subject_set=subject_set,
-        subject_set_id="global_macro_tradeable_daily_10y",
     )
 
     assert fields["sizing"] == "hierarchical_risk_parity"
@@ -84,8 +72,6 @@ def test_evaluation_task_contract_fields_use_portfolio_construction_risk_policy(
     assert fields["allow_releverage"] == "true"
     assert fields["sleeve_count"] == 1
     assert fields["sleeves"] == "trend_core:trend:1.0"
-    assert fields["base_currency"] == "USD"
-    assert fields["trading_calendar"] == "multi_venue"
 
 
 def test_evaluation_task_contract_fields_use_strategy_portfolio_selection():
@@ -152,7 +138,6 @@ def test_hold_baseline_contract_fields_suppress_active_portfolio_noise():
             funding_bps_per_step=0.5,
             borrow_fee_bps_per_step=0.25,
         ),
-        subject_set_id="global_macro_tradeable_daily_10y",
     )
 
     assert fields["construction_kind"] == "hold_baseline"
