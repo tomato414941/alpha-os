@@ -2421,7 +2421,7 @@ def test_run_diagnostic_evaluation_dry_run_check_rejects_finding_count_mismatch(
     assert exc_info.value.code == 2
 
 
-def test_build_strategy_evaluation_requests_does_not_resolve_checkpoints_from_folds(tmp_path):
+def test_build_strategy_evaluation_requests_does_not_branch_on_position_rule(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_plan import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
@@ -2495,17 +2495,19 @@ def test_build_strategy_evaluation_requests_does_not_resolve_checkpoints_from_fo
             ),
         )
 
-        with pytest.raises(
-            ValueError,
-            match="strategy evaluation request builder does not resolve checkpoints",
-        ):
-            build_strategy_evaluation_requests(
-                store,
-                evaluation_spec_id="protocol_a",
-                evaluation_spec=evaluation_spec,
-                evaluation_tasks=evaluation_tasks,
-                base_url="http://example.com",
-            )
+        execution_requests = build_strategy_evaluation_requests(
+            store,
+            evaluation_spec_id="protocol_a",
+            evaluation_spec=evaluation_spec,
+            evaluation_tasks=evaluation_tasks,
+            base_url="http://example.com",
+        )
+
+        assert len(execution_requests) == 2
+        assert tuple(item.fold_label for item in execution_requests) == (
+            "fold_2025",
+            "fold_2026_q1",
+        )
     finally:
         store.close()
 

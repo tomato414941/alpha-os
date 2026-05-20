@@ -2333,7 +2333,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
 
     assert exc_info.value.code == 2
     assert (
-        "strategy evaluation request builder does not resolve checkpoints"
+        "current strategy backtest only supports position_rule=constant_hold"
         in capsys.readouterr().err
     )
 

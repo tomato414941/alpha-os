@@ -25,15 +25,6 @@ class EvaluationRequestBuildReadPort(Protocol):
     ) -> TradingStrategyState | None: ...
 
 
-DIRECT_STRATEGY_POSITION_RULE_IDS = frozenset(
-    {
-        "constant_hold",
-        "dual_momentum_hold",
-        "crypto_regime_momentum_hold",
-    }
-)
-
-
 def _strategy_evaluation_request(
     *,
     evaluation_task_id: str,
@@ -87,7 +78,6 @@ def build_strategy_evaluation_requests(
             and subject_set_id
             and isinstance(target_id, str)
             and target_id
-            and trading_strategy.position_rule_id in DIRECT_STRATEGY_POSITION_RULE_IDS
         ):
             for fold in evaluation_spec.resolved_evaluation_folds:
                 execution_requests.append(
@@ -114,8 +104,4 @@ def build_strategy_evaluation_requests(
                 "direct evaluation task requires strategy prediction target: "
                 f"{evaluation_task.evaluation_task_id}"
             )
-        raise ValueError(
-            "strategy evaluation request builder does not resolve checkpoints: "
-            f"{evaluation_task.evaluation_task_id}"
-        )
     return tuple(execution_requests)
