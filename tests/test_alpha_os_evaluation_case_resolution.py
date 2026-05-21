@@ -623,7 +623,7 @@ def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
         summary_keys = {
             (
                 entry.evaluation_task_id,
-                entry.context.strategy_id,
+                entry.strategy_id,
                 entry.fold_label,
                 tuple(
                     (item.label, item.start_date, item.end_date)

@@ -98,11 +98,11 @@ def _trading_strategy_for_request(
     store: EvaluationExecutionReadPort,
     execution_request: StrategyEvaluationRequest,
 ) -> TradingStrategySpec:
-    strategy_state = store.get_trading_strategy(execution_request.context.strategy_id)
+    strategy_state = store.get_trading_strategy(execution_request.strategy_id)
     if strategy_state is None:
         raise ValueError(
             "evaluation task strategy does not exist: "
-            f"{execution_request.context.strategy_id}"
+            f"{execution_request.strategy_id}"
         )
     return strategy_state.trading_strategy
 
@@ -151,11 +151,11 @@ def run_strategy_evaluation_task(
         validate_subject_set_universe_contract(subject_set_state.definition)
     direct_evaluation = run_strategy_backtest_from_store(
         store=store,
-        strategy_id=execution_request.context.strategy_id,
+        strategy_id=execution_request.strategy_id,
         subject_set_id=subject_set_id,
         target_id=target_id,
         evaluation_date_ranges=execution_request.evaluation_date_ranges,
-        base_url=execution_request.context.base_url,
+        base_url=execution_request.base_url,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
@@ -165,7 +165,7 @@ def run_strategy_evaluation_task(
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
     return EvaluationTaskResult(
         evaluation_task_id=execution_request.evaluation_task_id,
-        strategy_id=execution_request.context.strategy_id,
+        strategy_id=execution_request.strategy_id,
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]
             for metric_group_name in execution_request.metric_group_names

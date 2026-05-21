@@ -6,7 +6,6 @@ from .evaluation_spec import (
     EvaluationDateRange,
 )
 from .strategy_engine import (
-    StrategyEvaluationContext,
     StrategyEvaluationRequest,
 )
 
@@ -26,10 +25,8 @@ def _strategy_evaluation_request(
         evaluation_task_id=evaluation_task_id,
         evaluation_spec_id=evaluation_spec_id,
         fold_label=fold_label,
-        context=StrategyEvaluationContext(
-            strategy_id=strategy_id,
-            base_url=base_url,
-        ),
+        strategy_id=strategy_id,
+        base_url=base_url,
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=metric_group_names,

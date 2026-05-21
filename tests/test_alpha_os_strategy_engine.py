@@ -3,10 +3,7 @@ from __future__ import annotations
 
 def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.strategy_engine import (
-        StrategyEvaluationContext,
-        StrategyEvaluationRequest,
-    )
+    from alpha_os.strategy_engine import StrategyEvaluationRequest
 
     execution_range = EvaluationDateRange(
         label="train",
@@ -24,10 +21,8 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         evaluation_task_id="case:test",
         evaluation_spec_id="protocol:test",
         fold_label="fold_2025",
-        context=StrategyEvaluationContext(
-            strategy_id="strategy:test",
-            base_url="http://example.com",
-        ),
+        strategy_id="strategy:test",
+        base_url="http://example.com",
         execution_range=execution_range,
         evaluation_date_ranges=evaluation_date_ranges,
         metric_group_names=("decision_quality",),
@@ -36,7 +31,7 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     assert request.evaluation_task_id == "case:test"
     assert request.evaluation_spec_id == "protocol:test"
     assert request.fold_label == "fold_2025"
-    assert request.context.strategy_id == "strategy:test"
+    assert request.strategy_id == "strategy:test"
     assert request.evaluation_date_ranges[0].label == "test"
 
 def test_evaluation_spec_reads_legacy_dimensions_but_writes_metric_group_names():

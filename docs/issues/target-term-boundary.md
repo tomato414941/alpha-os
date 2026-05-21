@@ -43,7 +43,7 @@ volatility, target exposure, or target position.
 
 ## Current Suspects
 
-- `StrategyEvaluationContext.target_id`
+- `TradingStrategySpec.target_id`
 - `EvaluationRunRequest.default_target_id`
 - `TradingStrategyScopeSpec.target_id`
 - `TargetDefinition`

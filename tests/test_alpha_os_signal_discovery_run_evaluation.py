@@ -2579,7 +2579,7 @@ def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discove
 
         assert len(execution_requests) == 1
         request = execution_requests[0]
-        assert request.context.strategy_id == "strategy:nn_case"
+        assert request.strategy_id == "strategy:nn_case"
     finally:
         store.close()
 
@@ -2627,7 +2627,7 @@ def test_build_strategy_evaluation_requests_does_not_read_strategy_target(tmp_pa
         )
 
         assert len(execution_requests) == 1
-        assert execution_requests[0].context.strategy_id == "strategy:targetless"
+        assert execution_requests[0].strategy_id == "strategy:targetless"
     finally:
         store.close()
 
@@ -2689,7 +2689,7 @@ def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_cont
         )
 
         request = execution_requests[0]
-        assert request.context.strategy_id == "strategy:portfolio_source"
+        assert request.strategy_id == "strategy:portfolio_source"
     finally:
         store.close()
 

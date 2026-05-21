@@ -29,14 +29,14 @@ required inputs directly.
 
 - `StrategyRunMode`
 - persisted evaluation job specs
-- `StrategyEvaluationContext.run_mode` removed from the request context
+- `StrategyEvaluationRequest` no longer carries `run_mode`
 - `StrategyEvaluationRequest.to_backtest_oos_run_inputs` removed
 - active manifest job-spec payloads no longer persist `run_mode`
 - validation branches keyed by `backtest_oos`
 
 ## Current Finding
 
-`StrategyEvaluationContext.run_mode` was only used by request-to-run-input
+`run_mode` on strategy evaluation requests was only used by request-to-run-input
 helper methods and has been removed.
 
 Persisted evaluation job specs have been removed. The previous checkpoint input
