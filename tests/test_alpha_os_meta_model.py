@@ -34,6 +34,16 @@ def _strategy_portfolio_document(
     return {"portfolio": portfolio}
 
 
+def _single_strategy_for_signal_discovery(store, signal_discovery_id: str):
+    matches = [
+        state
+        for state in store.list_trading_strategies(limit=1000)
+        if state.trading_strategy.signal_discovery_id == signal_discovery_id
+    ]
+    assert len(matches) == 1
+    return matches[0]
+
+
 def _run_subject_set_backfill_for_test(
     db_path: Path,
     *,
@@ -863,13 +873,10 @@ def test_checked_in_global_macro_manifest_applies_cleanly(tmp_path, capsys):
 
     store = EvaluationStore(db_path)
     try:
-        case_states = store.list_evaluation_tasks(
-            evaluation_spec_id="global_macro_futures_daily_trend_eval",
-            limit=5,
+        strategy_state = _single_strategy_for_signal_discovery(
+            store,
+            "global_macro_futures_daily_trend_search",
         )
-        assert len(case_states) == 1
-        strategy_state = store.get_trading_strategy(case_states[0].task.strategy_id)
-        assert strategy_state is not None
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
         assert construction.asset_class_weight_caps["equity_index"] == 0.55
@@ -923,13 +930,10 @@ def test_checked_in_global_macro_tradeable_daily_10y_manifest_applies_cleanly(
 
     store = EvaluationStore(db_path)
     try:
-        case_states = store.list_evaluation_tasks(
-            evaluation_spec_id="global_macro_tradeable_daily_10y_eval",
-            limit=5,
+        strategy_state = _single_strategy_for_signal_discovery(
+            store,
+            "global_macro_tradeable_daily_10y_search",
         )
-        assert len(case_states) == 1
-        strategy_state = store.get_trading_strategy(case_states[0].task.strategy_id)
-        assert strategy_state is not None
         construction = strategy_state.trading_strategy.portfolio_construction
         assert construction is not None
         assert construction.sizing_method == "diversified_risk_budget"
@@ -994,13 +998,10 @@ def test_checked_in_us_etf_dual_momentum_10y_manifest_applies_cleanly(
 
     store = EvaluationStore(db_path)
     try:
-        case_states = store.list_evaluation_tasks(
-            evaluation_spec_id="us_etf_broad_dual_momentum_eval_10y",
-            limit=5,
+        strategy_state = _single_strategy_for_signal_discovery(
+            store,
+            "us_etf_broad_dual_momentum_search",
         )
-        assert len(case_states) == 1
-        strategy_state = store.get_trading_strategy(case_states[0].task.strategy_id)
-        assert strategy_state is not None
         strategy = strategy_state.trading_strategy
         construction = strategy.portfolio_construction
         assert construction is not None

@@ -76,13 +76,13 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert report.oos_contract_summary["range_non_overlap"] == "pass"
         assert report.oos_contract_summary["evaluation_after_execution"] == "pass"
         assert len(report.task_results) == 2
-        task_results = {item.evaluation_task_id: item for item in report.task_results}
+        task_results = {item.strategy_id: item for item in report.task_results}
         assert set(task_results) == {
-            "minimal_oos_candidate_equal_weight_hold_case",
-            "minimal_oos_baseline_equal_weight_hold_case",
+            "strategy:minimal_oos_candidate_equal_weight_hold",
+            "strategy:minimal_oos_baseline_equal_weight_hold",
         }
 
-        candidate_result = task_results["minimal_oos_candidate_equal_weight_hold_case"]
+        candidate_result = task_results["strategy:minimal_oos_candidate_equal_weight_hold"]
         assert candidate_result.strategy_id == (
             "strategy:minimal_oos_candidate_equal_weight_hold"
         )

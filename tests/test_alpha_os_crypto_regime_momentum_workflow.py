@@ -259,9 +259,9 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
         report = report_state.report
         assert report.evaluation_spec_id == "crypto_regime_momentum_eval"
         assert len(report.task_results) == 2
-        task_results = {item.evaluation_task_id: item for item in report.task_results}
-        candidate = task_results["crypto_regime_momentum_candidate_case"]
-        baseline = task_results["crypto_regime_momentum_baseline_case"]
+        task_results = {item.strategy_id: item for item in report.task_results}
+        candidate = task_results["strategy:crypto_regime_momentum_candidate"]
+        baseline = task_results["strategy:crypto_regime_momentum_baseline"]
         assert candidate.strategy_id == "strategy:crypto_regime_momentum_candidate"
         assert baseline.strategy_id == "strategy:crypto_regime_momentum_baseline"
 
@@ -391,9 +391,9 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
         report_state = store.get_latest_evaluation_report()
         assert report_state is not None
         report = report_state.report
-        task_results = {item.evaluation_task_id: item for item in report.task_results}
-        candidate = task_results["crypto_regime_momentum_candidate_case"]
-        baseline = task_results["crypto_regime_momentum_baseline_case"]
+        task_results = {item.strategy_id: item for item in report.task_results}
+        candidate = task_results["strategy:crypto_regime_momentum_candidate"]
+        baseline = task_results["strategy:crypto_regime_momentum_baseline"]
 
         candidate_mean_net = _metric(
             candidate,

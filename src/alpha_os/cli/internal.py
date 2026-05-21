@@ -293,7 +293,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
             "apply-manifest",
             help=(
                 "Apply runtime manifest resources including observables, signal specs, "
-                "subject sets, strategy specs, evaluation specs, and evaluation tasks"
+                "subject sets, strategy specs, evaluation specs, and evaluation targets"
             ),
         )
         apply_manifest.add_argument("--db", type=str, default=None)
@@ -988,31 +988,17 @@ def _evaluation_trading_config_for_signal_discovery(
     if signal_discovery_id is None:
         return None
     matching = [
-        state.task
-        for state in store.list_evaluation_tasks(limit=1000)
-        if (
-            (strategy_state := store.get_trading_strategy(state.task.strategy_id))
-            is not None
-            and strategy_state.trading_strategy.signal_discovery_id
-            == signal_discovery_id
-        )
+        state.trading_strategy
+        for state in store.list_trading_strategies(limit=1000)
+        if state.trading_strategy.signal_discovery_id == signal_discovery_id
     ]
     if not matching:
         return None
     if len(matching) == 1:
-        strategy_state = store.get_trading_strategy(matching[0].strategy_id)
-        if strategy_state is not None:
-            return _strategy_variant_config_from_strategy(
-                strategy_state.trading_strategy
-            )
-        return None
+        return _strategy_variant_config_from_strategy(matching[0])
     exact = [item for item in matching if item.strategy_id.startswith("strategy:")]
     if len(exact) == 1:
-        strategy_state = store.get_trading_strategy(exact[0].strategy_id)
-        if strategy_state is not None:
-            return _strategy_variant_config_from_strategy(
-                strategy_state.trading_strategy
-            )
+        return _strategy_variant_config_from_strategy(exact[0])
     return None
 
 
@@ -2434,8 +2420,7 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
                 document=item,
             )
             store.upsert_trading_strategy(trading_strategy=trading_strategy)
-            state = store.upsert_evaluation_task(task=evaluation_task)
-            registered_evaluation_tasks.append(state)
+            registered_evaluation_tasks.append(evaluation_task)
             created_evaluation_tasks += 1
     print("Applied runtime manifest")
     print(f"  DB:             {cfg.db_path}")
@@ -2461,8 +2446,8 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         f"total={len(evaluation_spec_documents)} upserted={created_evaluation_specs}"
     )
     print(
-        "  EvalTasks:      "
-        f"total={len(evaluation_task_documents)} upserted={created_evaluation_tasks}"
+        "  EvalTargets:    "
+        f"total={len(evaluation_task_documents)} applied={created_evaluation_tasks}"
     )
     if registered_subject_sets:
         print_subject_sets(registered_subject_sets)
@@ -2487,9 +2472,6 @@ def cmd_inspect_runtime_resources(args: argparse.Namespace) -> int:
         evaluation_specs = store.list_evaluation_specs(
             limit=int(args.evaluation_spec_limit)
         )
-        evaluation_tasks = store.list_evaluation_tasks(
-            limit=int(args.evaluation_spec_limit) * 10
-        )
     print("alpha-os runtime resources")
     print(f"  DB:       {cfg.db_path}")
     print_observables(observables)
@@ -2497,7 +2479,6 @@ def cmd_inspect_runtime_resources(args: argparse.Namespace) -> int:
     print_subject_sets(subject_sets)
     print_signal_discovery_specs(signal_discoveries)
     print_evaluation_specs(evaluation_specs)
-    print_evaluation_tasks(evaluation_tasks)
     return 0
 
 
@@ -3355,8 +3336,8 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
                 if args.strategy_id is None
                 else tuple(str(item) for item in args.strategy_id)
             ),
-            evaluation_task_ids=getattr(args, "evaluation_task_ids", None),
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
+            evaluation_tasks=getattr(args, "evaluation_tasks", None),
         )
     _print_evaluation_run_summary(report_state)
     return 0
@@ -3807,13 +3788,22 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
             argparse.Namespace(db=args.db, manifest=str(base_manifest_path))
         )
     cmd_apply_runtime_manifest(argparse.Namespace(db=args.db, manifest=str(manifest_path)))
+    read_port = _RuntimeManifestReadPort(
+        manifest_paths=_runtime_manifest_paths_with_extends(manifest_path),
+        created_at=_utc_now(),
+    )
     run_args = argparse.Namespace(
         db=args.db,
         evaluation_spec_id=str(args.evaluation_spec_id),
         strategy_id=None,
         base_url=args.base_url,
         details=args.details,
-        evaluation_task_ids=manifest_evaluation_task_ids,
+        evaluation_tasks=_select_evaluation_tasks(
+            read_port,
+            evaluation_spec_id=str(args.evaluation_spec_id),
+            strategy_ids=None,
+            evaluation_task_ids=manifest_evaluation_task_ids,
+        ),
     )
     result = cmd_run_walk_forward_evaluation(run_args)
     if bool(args.details):

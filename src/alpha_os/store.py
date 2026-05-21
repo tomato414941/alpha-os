@@ -9,7 +9,6 @@ from typing import Any
 
 from .config import DEFAULT_SUBJECT_ID, DEFAULT_TARGET, default_runtime_asset
 from .compression import CompressedBelief
-from .evaluation_task import EvaluationTask
 from .evaluation_spec import EvaluationSpec
 from .evaluation_report import EvaluationReport
 from .signal_registry import (
@@ -699,20 +698,6 @@ class TradingStrategyState:
 
 
 @dataclass(frozen=True)
-class EvaluationTaskState:
-    evaluation_task_id: str
-    task_json: str
-    created_at: str
-
-    @property
-    def task(self) -> EvaluationTask:
-        return EvaluationTask.from_document(
-            evaluation_task_id=self.evaluation_task_id,
-            document=json.loads(self.task_json),
-        )
-
-
-@dataclass(frozen=True)
 class EvaluationReportState:
     evaluation_report_id: str
     evaluation_spec_id: str
@@ -1140,16 +1125,6 @@ def _row_to_trading_strategy(row: sqlite3.Row | None) -> TradingStrategyState | 
     )
 
 
-def _row_to_evaluation_task(row: sqlite3.Row | None) -> EvaluationTaskState | None:
-    if row is None:
-        return None
-    return EvaluationTaskState(
-        evaluation_task_id=str(row["evaluation_task_id"]),
-        task_json=str(row["task_json"]),
-        created_at=str(row["created_at"]),
-    )
-
-
 def _row_to_signal_metric_legacy(
     row: sqlite3.Row | None,
 ) -> SignalMetricState | None:
@@ -1343,12 +1318,6 @@ class EvaluationStore:
             CREATE TABLE IF NOT EXISTS strategy_specs (
                 strategy_id TEXT PRIMARY KEY,
                 spec_json TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS evaluation_tasks (
-                evaluation_task_id TEXT PRIMARY KEY,
-                task_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
 
@@ -2778,33 +2747,6 @@ class EvaluationStore:
         assert state is not None
         return state
 
-    def upsert_evaluation_task(
-        self,
-        *,
-        task: EvaluationTask,
-    ) -> EvaluationTaskState:
-        self.ensure_schema()
-        with self.conn:
-            self.conn.execute(
-                """
-                INSERT INTO evaluation_tasks (
-                    evaluation_task_id, task_json, created_at
-                )
-                VALUES (?, ?, ?)
-                ON CONFLICT(evaluation_task_id) DO UPDATE SET
-                    task_json = excluded.task_json,
-                    created_at = excluded.created_at
-                """,
-                (
-                    task.evaluation_task_id,
-                    json.dumps(task.to_document(), sort_keys=True),
-                    _utc_now(),
-                ),
-            )
-        state = self.get_evaluation_task(task.evaluation_task_id)
-        assert state is not None
-        return state
-
     def get_trading_strategy(
         self,
         strategy_id: str,
@@ -2818,20 +2760,6 @@ class EvaluationStore:
             (strategy_id,),
         ).fetchone()
         return _row_to_trading_strategy(row)
-
-    def get_evaluation_task(
-        self,
-        evaluation_task_id: str,
-    ) -> EvaluationTaskState | None:
-        row = self.conn.execute(
-            """
-            SELECT evaluation_task_id, task_json, created_at
-            FROM evaluation_tasks
-            WHERE evaluation_task_id = ?
-            """,
-            (evaluation_task_id,),
-        ).fetchone()
-        return _row_to_evaluation_task(row)
 
     def list_trading_strategies(
         self,
@@ -2848,37 +2776,6 @@ class EvaluationStore:
             (max(int(limit), 1),),
         ).fetchall()
         return [_row_to_trading_strategy(row) for row in rows if row is not None]
-
-    def list_evaluation_tasks(
-        self,
-        *,
-        strategy_id: str | None = None,
-        evaluation_spec_id: str | None = None,
-        limit: int = 20,
-    ) -> list[EvaluationTaskState]:
-        filters = []
-        params: list[object] = []
-        if strategy_id is not None:
-            filters.append("json_extract(task_json, '$.strategy_id') = ?")
-            params.append(strategy_id)
-        if evaluation_spec_id is not None:
-            filters.append("json_extract(task_json, '$.evaluation_spec_id') = ?")
-            params.append(evaluation_spec_id)
-        where_clause = ""
-        if filters:
-            where_clause = f"WHERE {' AND '.join(filters)}"
-        params.append(max(int(limit), 1))
-        rows = self.conn.execute(
-            f"""
-            SELECT evaluation_task_id, task_json, created_at
-            FROM evaluation_tasks
-            {where_clause}
-            ORDER BY created_at DESC, evaluation_task_id DESC
-            LIMIT ?
-            """,
-            tuple(params),
-        ).fetchall()
-        return [_row_to_evaluation_task(row) for row in rows if row is not None]
 
     def upsert_evaluation_report(
         self,

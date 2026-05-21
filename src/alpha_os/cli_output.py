@@ -361,7 +361,7 @@ print_evaluation_specs = print_evaluation_specs
 
 
 def print_evaluation_tasks(cases) -> None:
-    print("alpha-os evaluation tasks")
+    print("alpha-os evaluation targets")
     print(f"  Count:    {len(cases)}")
     for item in cases:
         case = item.task if hasattr(item, "task") else item

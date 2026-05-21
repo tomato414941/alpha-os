@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
-from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -828,9 +827,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
         assert strategy_state is not None
         trading_strategy = strategy_state.trading_strategy
         assert trading_strategy.signal_discovery_id == "core_crypto_search"
-        evaluation_task_states = store.list_evaluation_tasks(limit=10)
-        assert len(evaluation_task_states) == 1
-        assert evaluation_task_states[0].task.strategy_id == "strategy:core_crypto_rule"
     finally:
         store.close()
 
@@ -1103,10 +1099,8 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        evaluation_task_states = store.list_evaluation_tasks(limit=10)
-        assert len(evaluation_task_states) == 1
-        case = evaluation_task_states[0].task
-        assert case.strategy_id == "strategy:buy_and_hold"
+        strategy_state = store.get_trading_strategy("strategy:buy_and_hold")
+        assert strategy_state is not None
     finally:
         store.close()
 
@@ -2316,72 +2310,6 @@ def test_run_diagnostic_evaluation_dry_run_check_passes_without_report(
         assert store.get_latest_evaluation_report() is None
     finally:
         store.close()
-
-
-def test_run_diagnostic_evaluation_dry_run_check_ignores_stale_tasks(
-    tmp_path, capsys
-):
-    from alpha_os.cli import (
-        _extended_runtime_manifest_paths,
-        _resolve_runtime_manifest_path,
-        main,
-    )
-    from alpha_os.store import EvaluationStore
-
-    db_path = tmp_path / "runtime.db"
-    manifest_path = _resolve_runtime_manifest_path(
-        "global_macro_tradeable_daily_diagnostic"
-    )
-
-    for path in (*_extended_runtime_manifest_paths(manifest_path), manifest_path):
-        assert (
-            main(
-                [
-                    "apply-manifest",
-                    "--db",
-                    str(db_path),
-                    "--manifest",
-                    str(path),
-                ]
-            )
-            == 0
-        )
-    capsys.readouterr()
-
-    store = EvaluationStore(db_path)
-    try:
-        store.ensure_schema()
-        source_state = store.get_evaluation_task(
-            "global_macro_tradeable_daily_diagnostic_mean_reversion_case"
-        )
-        assert source_state is not None
-        stale_task = replace(
-            source_state.task,
-            evaluation_task_id=(
-                "global_macro_tradeable_daily_diagnostic_term_structure_carry_case"
-            ),
-        )
-        store.upsert_evaluation_task(task=stale_task)
-    finally:
-        store.close()
-
-    assert (
-        main(
-            [
-                "run-diagnostic-evaluation",
-                "--db",
-                str(db_path),
-                "--dry-run",
-                "--check",
-            ]
-        )
-        == 0
-    )
-
-    output = capsys.readouterr().out
-    assert "Cases:    15" in output
-    assert "global_macro_tradeable_daily_diagnostic_term_structure_carry_case" not in output
-    assert "DryRunCheck: passed" in output
 
 
 def test_run_diagnostic_evaluation_check_requires_dry_run(tmp_path):

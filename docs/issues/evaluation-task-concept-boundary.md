@@ -56,6 +56,13 @@ definitions rather than evaluation task rows.
 Avoid compatibility aliases or deprecated task interfaces unless explicitly
 approved.
 
+## Current Status
+
+`EvaluationTask` is no longer stored in a dedicated database table. Runtime
+manifests may still contain `evaluation_tasks` rows, but those rows are applied
+as strategy/evaluation targets and kept in memory when a manifest-scoped command
+needs explicit case identifiers.
+
 ## Close Condition
 
 Close this when the evaluation path no longer requires a standalone persisted
