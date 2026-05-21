@@ -6,7 +6,7 @@ from .evaluation_execution_strategy import (
     run_strategy_evaluation_task,
 )
 from .evaluation_task import EvaluationTask
-from .evaluation_plan import build_strategy_evaluation_requests
+from .evaluation_request_builder import build_strategy_evaluation_requests
 from .evaluation_report import EvaluationReport
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now

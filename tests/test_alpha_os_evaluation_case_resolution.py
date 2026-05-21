@@ -21,7 +21,7 @@ from alpha_os.evaluation_cost_config import (
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
-from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
 from alpha_os.evaluation_spec import (
     EvaluationDateRange,
     EvaluationFold,

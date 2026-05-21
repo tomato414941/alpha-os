@@ -2423,7 +2423,7 @@ def test_run_diagnostic_evaluation_dry_run_check_rejects_finding_count_mismatch(
 
 def test_build_strategy_evaluation_requests_does_not_branch_on_position_rule(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+    from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
@@ -2516,7 +2516,7 @@ def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discove
     tmp_path,
 ):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+    from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
@@ -2588,7 +2588,7 @@ def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discove
 
 def test_build_strategy_evaluation_requests_rejects_direct_strategy_without_target(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+    from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.store import EvaluationStore
 
@@ -2638,7 +2638,7 @@ def test_build_strategy_evaluation_requests_rejects_direct_strategy_without_targ
 
 def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_context(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+    from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.store import EvaluationStore
 
@@ -2702,7 +2702,7 @@ def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_cont
 
 def test_build_strategy_evaluation_requests_prefers_direct_strategy_over_discovery_provenance(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
-    from alpha_os.evaluation_plan import build_strategy_evaluation_requests
+    from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationFold,
