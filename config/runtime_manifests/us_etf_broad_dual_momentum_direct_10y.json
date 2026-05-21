@@ -284,32 +284,9 @@
   ],
   "evaluation_cases": [
     {
+      "evaluation_case_id": "us_etf_broad_dual_momentum_direct_eval_10y:strategy:us_etf_broad_dual_momentum_direct_10y",
       "evaluation_spec_id": "us_etf_broad_dual_momentum_direct_eval_10y",
-      "strategy_id": "strategy:us_etf_broad_dual_momentum_direct_10y",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "signal_weighted",
-          "sizing_engine": "rule_based"
-        },
-        "gross_exposure_cap": 1.0,
-        "target_vol": 0.1,
-        "gross_leverage_cap": 1.0,
-        "net_exposure_target": 1.0,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "top_k": 3,
-      "rebalance_interval_steps": 21
+      "strategy_id": "strategy:us_etf_broad_dual_momentum_direct_10y"
     }
   ]
 }

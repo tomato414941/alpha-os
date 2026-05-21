@@ -41,7 +41,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
 | **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, checkpoint replay, paper, live |
 | **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
-| **evaluation case** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or strategy checkpoint artifacts. | one strategy under one strict OOS evaluation spec |
+| **evaluation case** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec and carries only the case id plus those references. | one strategy under one strict OOS evaluation spec |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. Connection details are runtime configuration, not evaluation case metadata. | signal-noise service URL; local parquet root |
 | **evaluation result** | The recorded factual outcome of one evaluated strategy case. | OOS Sharpe, belief corr, turnover, drawdown |
@@ -113,7 +113,8 @@ as the same thing as offline signal discovery.
 ## Evaluation Case Semantics
 
 An evaluation case is runtime setup, not research taxonomy. It does not carry a
-case role or data-source URL.
+case role, data-source URL, strategy construction override, or checkpoint
+artifact reference.
 
 `base_url` is runtime data-source connection configuration. It may flow through
 execution requests and execution-plan entries, but it is not persisted on

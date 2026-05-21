@@ -247,52 +247,14 @@
   ],
   "evaluation_cases": [
     {
+      "evaluation_case_id": "us_etf_broad_rs_lowvol_compare_eval:strategy:c395ecfb8db4",
       "evaluation_spec_id": "us_etf_broad_rs_lowvol_compare_eval",
-      "strategy_id": "strategy:c395ecfb8db4",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "equal_weight",
-          "sizing_engine": "history_based"
-        },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+      "strategy_id": "strategy:c395ecfb8db4"
     },
     {
+      "evaluation_case_id": "us_etf_broad_rs_lowvol_compare_eval:strategy:cc621abf3c7a",
       "evaluation_spec_id": "us_etf_broad_rs_lowvol_compare_eval",
-      "strategy_id": "strategy:cc621abf3c7a",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "risk_budgeting",
-          "sizing_engine": "history_based"
-        },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+      "strategy_id": "strategy:cc621abf3c7a"
     }
   ]
 }

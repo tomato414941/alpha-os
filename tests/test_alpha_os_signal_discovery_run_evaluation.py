@@ -161,56 +161,6 @@ def test_evaluation_trading_config_from_args_accepts_direction_mode():
     assert config.portfolio_construction.long_only is False
 
 
-def test_evaluation_case_manifest_strategy_override_takes_precedence():
-    from alpha_os.cli import _evaluation_strategy_override_from_document
-
-    config, has_override = _evaluation_strategy_override_from_document(
-        {
-            "portfolio_construction": {
-                "sizing_policy": {
-                    "sizing_method": "equal_weight",
-                    "sizing_engine": "history_based",
-                }
-            },
-            "strategy_override": {
-                "portfolio_construction": {
-                    "sizing_policy": {
-                        "sizing_method": "signed_mean_variance",
-                        "sizing_engine": "optimizer",
-                    }
-                },
-                "rebalance_friction_policy": {
-                    "turnover_budget": 0.25,
-                },
-            },
-        }
-    )
-
-    assert has_override is True
-    assert config.portfolio_construction.sizing_method == "signed_mean_variance"
-    assert config.portfolio_construction.sizing_engine == "optimizer"
-    assert config.rebalance_friction_policy.turnover_budget == 0.25
-
-
-def test_evaluation_case_manifest_legacy_trading_config_still_loads():
-    from alpha_os.cli import _evaluation_strategy_override_from_document
-
-    config, has_override = _evaluation_strategy_override_from_document(
-        {
-            "portfolio_construction": {
-                "sizing_policy": {
-                    "sizing_method": "equal_weight",
-                    "sizing_engine": "history_based",
-                }
-            }
-        }
-    )
-
-    assert has_override is True
-    assert config.portfolio_construction.sizing_method == "equal_weight"
-    assert config.portfolio_construction.sizing_engine == "history_based"
-
-
 def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
     from alpha_os.strategy_backtest import dual_momentum_signal_series_by_subject
 
@@ -587,16 +537,40 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                         ],
                     }
                 ],
+                "strategy_specs": [
+                    {
+                        "trading_strategy": {
+                            "strategy_id": "strategy:core_crypto_rule",
+                            "label": "Core Crypto Rule",
+                            "scope": {
+                                "subject_set_id": "core_crypto",
+                                "target_id": "residual_return_3d",
+                            },
+                            "signal_discovery_id": "core_crypto_search",
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_short",
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": 0.0,
+                                    "no_trade_band": 0.0,
+                                },
+                                execution_policy={
+                                    "market_impact_bps": 0.0,
+                                    "fee_bps": 0.0,
+                                    "bid_ask_spread_bps": 0.0,
+                                },
+                            ),
+                            "created_at": "2026-04-05T00:00:00+00:00",
+                        }
+                    }
+                ],
                 "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
-                        "signal_discovery_id": "core_crypto_search",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"}
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
+                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },
@@ -792,12 +766,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"},
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -959,12 +927,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"},
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -1068,12 +1030,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                     {
                         "evaluation_spec_id": "buy_and_hold_eval",
                         "strategy_id": "strategy:buy_and_hold",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "equal_weight", "sizing_engine": "history_based"},
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -1207,12 +1163,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                     {
                         "evaluation_spec_id": "buy_and_hold_walk_forward",
                         "strategy_id": "strategy:buy_and_hold",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "equal_weight", "sizing_engine": "history_based"}
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -1426,18 +1376,6 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                     {
                         "evaluation_spec_id": "top_k_hold_walk_forward",
                         "strategy_id": "strategy:top_k_hold",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {
-                                "sizing_method": "equal_weight",
-                                "sizing_engine": "history_based"
-                            },
-                            "direction_mode": "long_only",
-                            "top_k": 1,
-                            "gross_exposure_cap": 1.0
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -1660,19 +1598,6 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                     {
                         "evaluation_spec_id": "dual_momentum_hold_walk_forward",
                         "strategy_id": "strategy:dual_momentum_hold",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {
-                                "sizing_method": "signal_weighted",
-                                "sizing_engine": "rule_based"
-                            },
-                            "rebalance_interval_steps": 1,
-                            "direction_mode": "long_only",
-                            "top_k": 1,
-                            "gross_exposure_cap": 1.0
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -2051,27 +1976,41 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                         ],
                     }
                 ],
+                "strategy_specs": [
+                    {
+                        "trading_strategy": {
+                            "strategy_id": "strategy:diagnostic_rule",
+                            "label": "Diagnostic Rule",
+                            "scope": {
+                                "subject_set_id": "diagnostic_subjects",
+                                "target_id": "residual_return_1d",
+                            },
+                            "signal_discovery_id": "diagnostic_search",
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_short",
+                                gross_exposure_cap=0.5,
+                                rebalance_friction_policy={
+                                    "turnover_friction": 0.0,
+                                    "no_trade_band": 0.0,
+                                },
+                                execution_policy={
+                                    "market_impact_bps": 0.0,
+                                    "fee_bps": 0.0,
+                                    "bid_ask_spread_bps": 0.0,
+                                },
+                            ),
+                            "created_at": "2026-04-05T00:00:00+00:00",
+                        }
+                    }
+                ],
                 "evaluation_cases": [
                     {
                         "evaluation_case_id": "diagnostic_case",
                         "evaluation_spec_id": "diagnostic_eval",
-                        "signal_discovery_id": "diagnostic_search",
-                        "base_url": "http://manifest.example",
-                        "portfolio_construction": {
-                            "sizing_policy": {
-                                "sizing_method": "signal_weighted",
-                                "sizing_engine": "rule_based",
-                            },
-                            "rebalance_interval_steps": 1,
-                            "direction_mode": "long_short",
-                            "risk_budget": {
-                                "risk_normalization_mode": "gross",
-                                "target_gross_exposure": 0.5,
-                            },
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
-                        "holding_cost_assumptions": {},
+                        "strategy_id": "strategy:diagnostic_rule",
                     }
                 ],
             },
@@ -2503,16 +2442,40 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                         ],
                     }
                 ],
+                "strategy_specs": [
+                    {
+                        "trading_strategy": {
+                            "strategy_id": "strategy:core_crypto_rule",
+                            "label": "Core Crypto Rule",
+                            "scope": {
+                                "subject_set_id": "core_crypto",
+                                "target_id": "residual_return_3d",
+                            },
+                            "signal_discovery_id": "core_crypto_search",
+                            "position_rule_id": "constant_hold",
+                            "family_mix": None,
+                            **_strategy_portfolio_document(
+                                sizing_method="signal_weighted",
+                                direction_mode="long_short",
+                                gross_exposure_cap=None,
+                                rebalance_friction_policy={
+                                    "turnover_friction": 0.0,
+                                    "no_trade_band": 0.0,
+                                },
+                                execution_policy={
+                                    "market_impact_bps": 0.0,
+                                    "fee_bps": 0.0,
+                                    "bid_ask_spread_bps": 0.0,
+                                },
+                            ),
+                            "created_at": "2026-04-05T00:00:00+00:00",
+                        }
+                    }
+                ],
                 "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_walk_forward",
-                        "signal_discovery_id": "core_crypto_search",
-                        "base_url": "http://example.com",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"}
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
+                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },

@@ -654,12 +654,6 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                     {
                         "evaluation_spec_id": "core_manifest_eval",
                         "strategy_id": "strategy:core_manifest_rule",
-                        "base_url": "http://127.0.0.1:8000",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"}
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -2132,12 +2126,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
-                        "base_url": "http://127.0.0.1:8000",
-                        "portfolio_construction": {
-                            "sizing_policy": {"sizing_method": "signal_weighted", "sizing_engine": "rule_based"}
-                        },
-                        "rebalance_friction_policy": {},
-                        "execution_cost_assumptions": {},
                     }
                 ],
             },
@@ -3135,21 +3123,23 @@ def test_global_macro_diagnostic_manifest_contract():
         "global_macro_tradeable_daily_diagnostic_weekly_rebalance_case",
         "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
     } == case_ids
+    strategies_by_id = {
+        item["trading_strategy"]["strategy_id"]: item["trading_strategy"]
+        for item in manifest["strategy_specs"]
+    }
     for case in findings:
+        assert set(case) == {"evaluation_case_id", "evaluation_spec_id", "strategy_id"}
         assert case["evaluation_spec_id"] == "global_macro_tradeable_daily_diagnostic_eval"
-        strategy_override = case["strategy_override"]
-        construction = strategy_override["portfolio_construction"]
-        assert "portfolio_construction" not in case
-        assert "rebalance_friction_policy" not in case
+        strategy = strategies_by_id[case["strategy_id"]]
+        portfolio = strategy["portfolio"]
+        construction = portfolio["portfolio_construction"]
         if case["evaluation_case_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case":
-            assert case["strategy_id"] == "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold"
             assert construction["construction_kind"] == "hold_baseline"
-            assert "signal_discovery_id" not in case
+            assert strategy["signal_discovery_id"] is None
         elif case["evaluation_case_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case":
-            assert case["strategy_id"] == "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold"
             assert construction["construction_kind"] == "hold_baseline"
-            assert strategy_override["rebalance_interval_steps"] == 21
-            assert "signal_discovery_id" not in case
+            assert portfolio["rebalance_interval_steps"] == 21
+            assert strategy["signal_discovery_id"] is None
         elif case["evaluation_case_id"] in {
             "global_macro_tradeable_daily_diagnostic_case",
             "global_macro_tradeable_daily_diagnostic_cost_aware_execution_case",
@@ -3167,10 +3157,10 @@ def test_global_macro_diagnostic_manifest_contract():
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case"
             ):
                 assert (
-                    case["signal_discovery_id"]
+                    strategy["signal_discovery_id"]
                     == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
                 )
-                assert strategy_override["rebalance_interval_steps"] == 10
+                assert portfolio["rebalance_interval_steps"] == 10
                 assert construction["risk_budget"]["target_gross_exposure"] == 0.35
                 assert construction["portfolio_intent"] == {
                     "effective_n_floor": 10.0,
@@ -3183,7 +3173,7 @@ def test_global_macro_diagnostic_manifest_contract():
                     ]
                     == "mean_reversion"
                 )
-                assert strategy_override["rebalance_friction_policy"] == {
+                expected_rebalance_policy = {
                     "execution_mode": "utility_priority",
                     "turnover_friction": 0.001,
                     "no_trade_band": 0.01,
@@ -3191,19 +3181,25 @@ def test_global_macro_diagnostic_manifest_contract():
                     "turnover_budget": 0.025,
                     "partial_fill_enabled": True,
                 }
+                assert expected_rebalance_policy.items() <= portfolio[
+                    "rebalance_friction_policy"
+                ].items()
             if (
                 case["evaluation_case_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
             ):
                 assert (
-                    case["signal_discovery_id"]
+                    strategy["signal_discovery_id"]
                     == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
                 )
-                assert construction["sizing_policy"] == {
+                expected_sizing_policy = {
                     "sizing_method": "signed_mean_variance",
                     "sizing_engine": "optimizer",
                 }
-                assert strategy_override["rebalance_interval_steps"] == 21
+                assert expected_sizing_policy.items() <= construction[
+                    "sizing_policy"
+                ].items()
+                assert portfolio["rebalance_interval_steps"] == 21
                 assert (
                     construction["sleeve_composition"]["sleeves"][0][
                         "sleeve_kind"
@@ -3215,7 +3211,7 @@ def test_global_macro_diagnostic_manifest_contract():
             == "global_macro_tradeable_daily_diagnostic_mean_reversion_case"
         ):
             assert (
-                case["signal_discovery_id"]
+                strategy["signal_discovery_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
             )
             assert (
@@ -3225,4 +3221,7 @@ def test_global_macro_diagnostic_manifest_contract():
                 == "mean_reversion"
             )
         else:
-            assert case["signal_discovery_id"] == "global_macro_tradeable_daily_diagnostic_search"
+            assert (
+                strategy["signal_discovery_id"]
+                == "global_macro_tradeable_daily_diagnostic_search"
+            )

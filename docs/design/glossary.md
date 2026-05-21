@@ -254,8 +254,8 @@ Defines the measurement recipe: strict OOS, fold layout, costs, metrics.
 
 One executable evaluation defined by `strategy spec + evaluation spec`.
 
-Binds one strategy to one evaluation spec as a concrete run setup, including
-required train or strategy checkpoint artifacts.
+Binds one strategy to one evaluation spec and carries only the case id plus
+those references.
 
 ### data input
 

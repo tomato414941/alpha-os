@@ -208,17 +208,60 @@
     {
       "evaluation_case_id": "minimal_fixed_state_training_case",
       "evaluation_spec_id": "minimal_fixed_state_train_eval",
-      "signal_discovery_id": "minimal_fixed_state_search",
-      "base_url": "http://fixture.local",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "signal_weighted",
-          "sizing_engine": "rule_based"
-        }
-      },
-      "rebalance_friction_policy": {},
-      "execution_cost_assumptions": {},
-      "holding_cost_assumptions": {}
+      "strategy_id": "strategy:064cd95f8791__minimal_fixed_state_training_case"
+    }
+  ],
+  "strategy_specs": [
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:064cd95f8791__minimal_fixed_state_training_case",
+        "label": "minimal_fixed_state_search:signal_weighted:every_1_steps:strategy:064cd95f8791__minimal_fixed_state_training_case",
+        "scope": {
+          "subject_set_id": "minimal_fixed_state_pair",
+          "target_id": "residual_return_3d"
+        },
+        "signal_discovery_id": "minimal_fixed_state_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "minimal_fixed_reversal_family",
+        "portfolio": {
+          "portfolio_construction": {
+            "construction_kind": "active_portfolio",
+            "sizing_policy": {
+              "sizing_method": "signal_weighted",
+              "sizing_engine": "rule_based",
+              "sizing_family": "signed_optimizer"
+            },
+            "direction_mode": "long_short",
+            "active_overlay": {
+              "kind": "rank_tilt",
+              "active_weight_budget": 0.3
+            }
+          },
+          "rebalance_friction_policy": {
+            "execution_mode": "utility_priority",
+            "turnover_friction": 0.0,
+            "no_trade_band": 0.0,
+            "execution_cost_aversion": 1.0,
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 0.0,
+            "fee_bps": 0.0,
+            "bid_ask_spread_bps": 0.0
+          },
+          "rebalance_interval_steps": 1,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0
+          }
+        },
+        "created_at": "2026-04-21T00:00:00Z"
+      }
     }
   ]
 }

@@ -26,6 +26,11 @@ It is already connected to loaders, CLI commands, tests, README examples, and
 golden paths. Splitting it now would create a broad infrastructure change before
 a concrete evaluation requires it.
 
+Inside that structure, keep `evaluation_cases` thin. A case row should only bind
+`evaluation_case_id`, `evaluation_spec_id`, and `strategy_id`. Strategy
+construction, portfolio policy, costs, data-source connection details, and
+checkpoint artifacts belong outside the case row.
+
 ## Risk
 
 New responsibilities may keep getting added to runtime manifests because they

@@ -204,13 +204,11 @@ def _manifest_document(
                 "evaluation_case_id": "crypto_regime_momentum_candidate_case",
                 "evaluation_spec_id": evaluation_spec_id,
                 "strategy_id": "strategy:crypto_regime_momentum_candidate",
-                "base_url": "fixture://local",
             },
             {
                 "evaluation_case_id": "crypto_regime_momentum_baseline_case",
                 "evaluation_spec_id": evaluation_spec_id,
                 "strategy_id": "strategy:crypto_regime_momentum_baseline",
-                "base_url": "fixture://local",
             },
         ],
     }

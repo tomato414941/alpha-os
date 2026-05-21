@@ -177,100 +177,234 @@
   ],
   "evaluation_cases": [
     {
+      "evaluation_case_id": "us_etf_broad_allocation_compare_eval:strategy:729f4ce8b629",
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
-      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "equal_weight",
-          "sizing_engine": "history_based"
-        },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+      "strategy_id": "strategy:729f4ce8b629"
     },
     {
+      "evaluation_case_id": "us_etf_broad_allocation_compare_eval:strategy:f7da91c34dd2",
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
-      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "minimum_variance",
-          "sizing_engine": "history_based"
-        },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+      "strategy_id": "strategy:f7da91c34dd2"
     },
     {
+      "evaluation_case_id": "us_etf_broad_allocation_compare_eval:strategy:c83c6fcc7469",
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
-      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "risk_budgeting",
-          "sizing_engine": "history_based"
-        },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+      "strategy_id": "strategy:c83c6fcc7469"
     },
     {
+      "evaluation_case_id": "us_etf_broad_allocation_compare_eval:strategy:a9fcff51f5ce",
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
-      "signal_discovery_id": "us_etf_broad_allocation_compare_search",
-      "base_url": "http://127.0.0.1:8000",
-      "portfolio_construction": {
-        "sizing_policy": {
-          "sizing_method": "hierarchical_risk_parity",
-          "sizing_engine": "history_based"
+      "strategy_id": "strategy:a9fcff51f5ce"
+    }
+  ],
+  "strategy_specs": [
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:729f4ce8b629",
+        "label": "us_etf_broad_allocation_compare_search:equal_weight:every_5_steps",
+        "scope": {
+          "subject_set_id": "us_etf_broad_multi_asset",
+          "target_id": "residual_return_5d"
         },
-        "gross_exposure_cap": 0.85,
-        "direction_mode": "long_only"
-      },
-      "rebalance_friction_policy": {
-        "turnover_friction": 0.0,
-        "no_trade_band": 0.02,
-        "execution_cost_aversion": 1.0
-      },
-      "execution_cost_assumptions": {
-        "market_impact_bps": 5.0,
-        "fee_bps": 0.0,
-        "bid_ask_spread_bps": 0.0
-      },
-      "rebalance_interval_steps": 5
+        "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
+        "portfolio": {
+          "portfolio_construction": {
+            "construction_kind": "active_portfolio",
+            "sizing_policy": {
+              "sizing_method": "equal_weight",
+              "sizing_engine": "history_based",
+              "sizing_family": "risk_budget_allocator"
+            },
+            "direction_mode": "long_only",
+            "active_overlay": {
+              "kind": "rank_tilt",
+              "active_weight_budget": 0.3
+            },
+            "gross_exposure_cap": 0.85
+          },
+          "rebalance_friction_policy": {
+            "execution_mode": "utility_priority",
+            "turnover_friction": 0.0,
+            "no_trade_band": 0.02,
+            "execution_cost_aversion": 1.0,
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 5.0,
+            "fee_bps": 0.0,
+            "bid_ask_spread_bps": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0
+          }
+        },
+        "created_at": "2026-04-21T00:00:00Z"
+      }
+    },
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:f7da91c34dd2",
+        "label": "us_etf_broad_allocation_compare_search:minimum_variance:every_5_steps",
+        "scope": {
+          "subject_set_id": "us_etf_broad_multi_asset",
+          "target_id": "residual_return_5d"
+        },
+        "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
+        "portfolio": {
+          "portfolio_construction": {
+            "construction_kind": "active_portfolio",
+            "sizing_policy": {
+              "sizing_method": "minimum_variance",
+              "sizing_engine": "history_based",
+              "sizing_family": "risk_budget_allocator"
+            },
+            "direction_mode": "long_only",
+            "active_overlay": {
+              "kind": "rank_tilt",
+              "active_weight_budget": 0.3
+            },
+            "gross_exposure_cap": 0.85
+          },
+          "rebalance_friction_policy": {
+            "execution_mode": "utility_priority",
+            "turnover_friction": 0.0,
+            "no_trade_band": 0.02,
+            "execution_cost_aversion": 1.0,
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 5.0,
+            "fee_bps": 0.0,
+            "bid_ask_spread_bps": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0
+          }
+        },
+        "created_at": "2026-04-21T00:00:00Z"
+      }
+    },
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:c83c6fcc7469",
+        "label": "us_etf_broad_allocation_compare_search:risk_budgeting:every_5_steps",
+        "scope": {
+          "subject_set_id": "us_etf_broad_multi_asset",
+          "target_id": "residual_return_5d"
+        },
+        "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
+        "portfolio": {
+          "portfolio_construction": {
+            "construction_kind": "active_portfolio",
+            "sizing_policy": {
+              "sizing_method": "risk_budgeting",
+              "sizing_engine": "history_based",
+              "sizing_family": "risk_budget_allocator"
+            },
+            "direction_mode": "long_only",
+            "active_overlay": {
+              "kind": "rank_tilt",
+              "active_weight_budget": 0.3
+            },
+            "gross_exposure_cap": 0.85
+          },
+          "rebalance_friction_policy": {
+            "execution_mode": "utility_priority",
+            "turnover_friction": 0.0,
+            "no_trade_band": 0.02,
+            "execution_cost_aversion": 1.0,
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 5.0,
+            "fee_bps": 0.0,
+            "bid_ask_spread_bps": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0
+          }
+        },
+        "created_at": "2026-04-21T00:00:00Z"
+      }
+    },
+    {
+      "trading_strategy": {
+        "strategy_id": "strategy:a9fcff51f5ce",
+        "label": "us_etf_broad_allocation_compare_search:hierarchical_risk_parity:every_5_steps",
+        "scope": {
+          "subject_set_id": "us_etf_broad_multi_asset",
+          "target_id": "residual_return_5d"
+        },
+        "signal_discovery_id": "us_etf_broad_allocation_compare_search",
+        "position_rule_id": "constant_hold",
+        "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
+        "portfolio": {
+          "portfolio_construction": {
+            "construction_kind": "active_portfolio",
+            "sizing_policy": {
+              "sizing_method": "hierarchical_risk_parity",
+              "sizing_engine": "history_based",
+              "sizing_family": "risk_budget_allocator"
+            },
+            "direction_mode": "long_only",
+            "active_overlay": {
+              "kind": "rank_tilt",
+              "active_weight_budget": 0.3
+            },
+            "gross_exposure_cap": 0.85
+          },
+          "rebalance_friction_policy": {
+            "execution_mode": "utility_priority",
+            "turnover_friction": 0.0,
+            "no_trade_band": 0.02,
+            "execution_cost_aversion": 1.0,
+            "turnover_budget": null,
+            "benefit_scale": 1.0,
+            "min_trade_utility": 0.0,
+            "uncertainty_aversion": 1.0,
+            "risk_aversion": 0.0,
+            "partial_fill_enabled": true
+          },
+          "execution_policy": {
+            "market_impact_bps": 5.0,
+            "fee_bps": 0.0,
+            "bid_ask_spread_bps": 0.0
+          },
+          "rebalance_interval_steps": 5,
+          "holding_cost_policy": {
+            "funding_bps_per_step": 0.0,
+            "borrow_fee_bps_per_step": 0.0
+          }
+        },
+        "created_at": "2026-04-21T00:00:00Z"
+      }
     }
   ]
 }

@@ -131,8 +131,7 @@
     {
       "evaluation_case_id": "fixture_daily_equal_weight_hold_case",
       "evaluation_spec_id": "fixture_daily_diagnostic_eval",
-      "strategy_id": "strategy:fixture_daily_equal_weight_hold",
-      "base_url": "fixture://local"
+      "strategy_id": "strategy:fixture_daily_equal_weight_hold"
     }
   ]
 }

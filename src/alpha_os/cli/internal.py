@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from contextlib import contextmanager
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Iterator
 from pathlib import Path
 
@@ -42,7 +42,6 @@ from ..portfolio_construction_config import (
 )
 from ..strategy_variant import (
     StrategyVariantConfig as _StrategyVariantConfig,
-    derive_trading_strategy_from_signal_discovery as _derive_trading_strategy_from_signal_discovery,
     strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
 from ..observables import ObservableDefinition
@@ -117,10 +116,6 @@ from ..subject_set_backfill_service import (
     resolve_subject_set_for_build,
 )
 from ..trading_strategy import (
-    ExecutionPolicySpec,
-    HoldingCostPolicySpec,
-    RebalanceFrictionPolicySpec,
-    StrategyPortfolioSpec,
     TradingStrategySpec,
 )
 from ..universe_contract import validate_subject_set_universe_contract
@@ -1009,56 +1004,6 @@ def _evaluation_trading_config_for_compressed_belief(
     )
 
 
-def _trading_strategy_with_evaluation_config(
-    trading_strategy: TradingStrategySpec,
-    *,
-    strategy_id: str,
-    variant_config: _StrategyVariantConfig,
-) -> TradingStrategySpec:
-    friction = variant_config.rebalance_friction_policy
-    costs = variant_config.execution_cost_assumptions
-    holding_costs = variant_config.holding_cost_assumptions
-    portfolio = StrategyPortfolioSpec(
-        portfolio_construction=variant_config.portfolio_construction,
-        rebalance_friction_policy=RebalanceFrictionPolicySpec(
-            turnover_friction=friction.turnover_friction,
-            no_trade_band=friction.no_trade_band,
-            execution_cost_aversion=friction.execution_cost_aversion,
-            execution_mode=friction.execution_mode,
-            turnover_budget=friction.turnover_budget,
-            benefit_scale=friction.benefit_scale,
-            min_trade_utility=friction.min_trade_utility,
-            uncertainty_aversion=friction.uncertainty_aversion,
-            risk_aversion=friction.risk_aversion,
-            partial_fill_enabled=friction.partial_fill_enabled,
-        ),
-        execution_policy=ExecutionPolicySpec(
-            market_impact_bps=costs.market_impact_bps,
-            fee_bps=costs.fee_bps,
-            bid_ask_spread_bps=costs.bid_ask_spread_bps,
-        ),
-        holding_cost_policy=HoldingCostPolicySpec(
-            funding_bps_per_step=holding_costs.funding_bps_per_step,
-            borrow_fee_bps_per_step=holding_costs.borrow_fee_bps_per_step,
-        ),
-        selection_kind=trading_strategy.portfolio.selection_kind,
-        top_k=trading_strategy.portfolio.top_k,
-        rebalance_interval_steps=(
-            variant_config.portfolio_construction.rebalance_interval_steps
-        ),
-    )
-    return replace(
-        trading_strategy,
-        strategy_id=strategy_id,
-        label=(
-            trading_strategy.label
-            if strategy_id == trading_strategy.strategy_id
-            else f"{trading_strategy.label}:{strategy_id}"
-        ),
-        portfolio=portfolio,
-    )
-
-
 def _resolved_trading_strategy_for_args(
     store: EvaluationStore,
     args: argparse.Namespace,
@@ -1848,12 +1793,11 @@ class _RuntimeManifestReadPort:
                 raise ValueError("evaluation case manifest is missing evaluation_spec_id")
             if self.get_evaluation_spec(evaluation_spec_id) is None:
                 raise ValueError(f"unknown evaluation spec for evaluation case: {evaluation_spec_id}")
-            trading_strategy, evaluation_case = _evaluation_case_from_document(
+            evaluation_case = _evaluation_case_from_document(
                 self,
                 evaluation_spec_id=evaluation_spec_id,
                 document=item,
             )
-            self.trading_strategies[trading_strategy.strategy_id] = trading_strategy
             self.evaluation_cases_by_spec.setdefault(evaluation_spec_id, {})[
                 _case_key(evaluation_case)
             ] = evaluation_case
@@ -2149,123 +2093,37 @@ def _trading_strategy_from_document(
     )
 
 
-def _evaluation_strategy_override_from_document(
-    document: dict[str, object],
-) -> tuple[_StrategyVariantConfig, bool]:
-    raw_override = document.get("strategy_override")
-    has_strategy_override = isinstance(raw_override, dict)
-    override_document = raw_override if has_strategy_override else document
-    has_inline_strategy_config = any(
-        key in document
-        for key in (
-            "portfolio_construction",
-            "rebalance_friction_policy",
-            "execution_cost_assumptions",
-            "holding_cost_assumptions",
-        )
-    )
-    portfolio_construction_document = dict(
-        override_document.get("portfolio_construction") or {}
-    )
-    rebalance_interval_steps = int(override_document.get("rebalance_interval_steps", 1))
-    portfolio_construction = replace(
-        PortfolioConstructionSpec.from_document(portfolio_construction_document),
-        rebalance_interval_steps=rebalance_interval_steps,
-    )
-    return (
-        _StrategyVariantConfig(
-            portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec.from_document(
-                override_document.get("rebalance_friction_policy")
-            ),
-            execution_cost_assumptions=ExecutionCostAssumptionsSpec.from_document(
-                override_document.get("execution_cost_assumptions")
-            ),
-            top_k=(
-                None
-                if override_document.get("top_k") is None
-                else int(override_document["top_k"])
-            ),
-            holding_cost_assumptions=HoldingCostAssumptionsSpec.from_document(
-                override_document.get("holding_cost_assumptions")
-            ),
-        ),
-        has_strategy_override or has_inline_strategy_config,
-    )
-
-
 def _evaluation_case_from_document(
     store: EvaluationStore,
     *,
     evaluation_spec_id: str,
     document: dict[str, object],
-) -> tuple[TradingStrategySpec, tuple[str, str]]:
+) -> tuple[str, str]:
+    allowed_fields = {"evaluation_case_id", "evaluation_spec_id", "strategy_id"}
+    unsupported_fields = sorted(set(document) - allowed_fields)
+    if unsupported_fields:
+        raise ValueError(
+            "evaluation case manifest only supports evaluation_case_id, "
+            "evaluation_spec_id, and strategy_id: "
+            + ",".join(unsupported_fields)
+        )
     strategy_id = document.get("strategy_id")
-    signal_discovery_id = document.get("signal_discovery_id")
-    strategy_override_config, has_strategy_override = (
-        _evaluation_strategy_override_from_document(document)
-    )
-    if isinstance(strategy_id, str) and strategy_id:
-        trading_strategy_state = store.get_trading_strategy(strategy_id)
-        if trading_strategy_state is None:
-            raise ValueError(f"unknown strategy for evaluation case: {strategy_id}")
-        trading_strategy = trading_strategy_state.trading_strategy
-        evaluation_trading_config = (
-            strategy_override_config
-            if has_strategy_override
-            else _strategy_variant_config_from_strategy(trading_strategy)
-        )
-    else:
-        if not isinstance(signal_discovery_id, str) or not signal_discovery_id:
-            raise ValueError(
-                "evaluation case manifest is missing strategy_id or signal_discovery_id"
-            )
-        signal_discovery_state = store.get_signal_discovery_spec(signal_discovery_id)
-        if signal_discovery_state is None:
-            raise ValueError(f"unknown signal discovery for evaluation case: {signal_discovery_id}")
-        evaluation_trading_config = strategy_override_config
-        trading_strategy = _derive_trading_strategy_from_signal_discovery(
-            signal_discovery=signal_discovery_state,
-            variant_config=evaluation_trading_config,
-            created_at=_utc_now(),
-        )
-    if not isinstance(signal_discovery_id, str) or not signal_discovery_id:
-        resolved_signal_discovery_id = trading_strategy.signal_discovery_id
-        signal_discovery_id = (
-            resolved_signal_discovery_id
-            if isinstance(resolved_signal_discovery_id, str) and resolved_signal_discovery_id
-            else None
+    if not isinstance(strategy_id, str) or not strategy_id:
+        raise ValueError("evaluation case manifest is missing strategy_id")
+    if store.get_trading_strategy(strategy_id) is None:
+        raise ValueError(f"unknown strategy for evaluation case: {strategy_id}")
+    if document.get("evaluation_spec_id") != evaluation_spec_id:
+        raise ValueError(
+            "evaluation case manifest evaluation_spec_id does not match selected "
+            f"evaluation spec: {evaluation_spec_id}"
         )
     evaluation_case_id = document.get("evaluation_case_id")
     if not isinstance(evaluation_case_id, str) or not evaluation_case_id:
         evaluation_case_id = _build_evaluation_result_key(
             evaluation_spec_id=evaluation_spec_id,
-            strategy_id=trading_strategy.strategy_id,
+            strategy_id=strategy_id,
         )
-    has_explicit_evaluation_case_id = isinstance(
-        document.get("evaluation_case_id"),
-        str,
-    )
-    if has_strategy_override:
-        generated_strategy_id = f"{trading_strategy.strategy_id}__{evaluation_case_id}"
-        trading_strategy = _trading_strategy_with_evaluation_config(
-            trading_strategy,
-            strategy_id=(
-                generated_strategy_id
-                if has_explicit_evaluation_case_id
-                else trading_strategy.strategy_id
-            ),
-            variant_config=evaluation_trading_config,
-        )
-        if not has_explicit_evaluation_case_id:
-            evaluation_case_id = _build_evaluation_result_key(
-                evaluation_spec_id=evaluation_spec_id,
-                strategy_id=trading_strategy.strategy_id,
-            )
-    evaluation_case = (evaluation_case_id, trading_strategy.strategy_id)
-    if document.get("strategy_checkpoint_id") is not None:
-        raise ValueError("evaluation case manifest no longer supports strategy_checkpoint_id")
-    return trading_strategy, evaluation_case
+    return evaluation_case_id, strategy_id
 
 
 def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
@@ -2458,12 +2316,11 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
                 raise ValueError("evaluation case manifest is missing evaluation_spec_id")
             if store.get_evaluation_spec(evaluation_spec_id) is None:
                 raise ValueError(f"unknown evaluation spec for evaluation case: {evaluation_spec_id}")
-            trading_strategy, evaluation_case = _evaluation_case_from_document(
+            evaluation_case = _evaluation_case_from_document(
                 store,
                 evaluation_spec_id=evaluation_spec_id,
                 document=item,
             )
-            store.upsert_trading_strategy(trading_strategy=trading_strategy)
             registered_evaluation_cases.append(evaluation_case)
             created_evaluation_cases += 1
     print("Applied runtime manifest")
