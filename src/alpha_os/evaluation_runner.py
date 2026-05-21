@@ -5,17 +5,18 @@ from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
     run_strategy_evaluation,
 )
-from .evaluation_task import EvaluationTask
 from .evaluation_report import EvaluationReport
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
+
+EvaluationTarget = tuple[str, str]
 
 
 def evaluate_evaluation_spec_state(
     *,
     store: EvaluationStore,
     evaluation_spec_state: object,
-    evaluation_tasks: tuple[EvaluationTask, ...],
+    evaluation_targets: tuple[EvaluationTarget, ...],
     base_url: str,
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):
@@ -26,12 +27,12 @@ def evaluate_evaluation_spec_state(
         store=store,
         feature_plane_repository=feature_plane_repository,
     )
-    for evaluation_task in evaluation_tasks:
+    for result_key, strategy_id in evaluation_targets:
         for fold in evaluation_spec.resolved_evaluation_folds:
             task_results.append(
                 run_strategy_evaluation(
-                    result_key=evaluation_task.evaluation_task_id,
-                    strategy_id=evaluation_task.strategy_id,
+                    result_key=result_key,
+                    strategy_id=strategy_id,
                     evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                     metric_group_names=evaluation_spec.metric_group_names,
                     base_url=base_url,

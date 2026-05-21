@@ -7,7 +7,6 @@ from alpha_os.cli_output import (
     print_evaluation_snapshot,
     print_subject_sets,
 )
-from alpha_os.evaluation_task import EvaluationTask
 from alpha_os.portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
@@ -21,11 +20,7 @@ from alpha_os.portfolio_decision import (
     UniversePolicySpec,
 )
 def test_print_evaluation_tasks_includes_execution_and_holding_costs(capsys):
-    case = EvaluationTask(
-        evaluation_task_id="case:test",
-        strategy_id="strategy:test",
-        evaluation_spec_id="protocol:test",
-    )
+    case = ("case:test", "strategy:test")
 
     print_evaluation_tasks([case])
     captured = capsys.readouterr().out

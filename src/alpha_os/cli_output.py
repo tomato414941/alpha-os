@@ -364,11 +364,15 @@ def print_evaluation_tasks(cases) -> None:
     print("alpha-os evaluation targets")
     print(f"  Count:    {len(cases)}")
     for item in cases:
-        case = item.task if hasattr(item, "task") else item
+        if isinstance(item, tuple):
+            result_key, strategy_id = item
+        else:
+            case = item.task if hasattr(item, "task") else item
+            result_key = case.evaluation_task_id
+            strategy_id = case.strategy_id
         print(
-            f"  {case.evaluation_task_id} "
-            f"evaluation_spec={case.evaluation_spec_id} "
-            f"strategy={case.strategy_id} "
+            f"  {result_key} "
+            f"strategy={strategy_id} "
         )
 
 

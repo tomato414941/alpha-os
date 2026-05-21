@@ -145,7 +145,7 @@ The current codebase is still transitional. The practical mapping is:
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
-| `EvaluationTask` | partial `StrategyRunSpec` | It binds a strategy-shaped object to an evaluation context. |
+| evaluation target tuple | partial `StrategyRunSpec` | It binds a result key to a strategy id for one evaluation run. |
 | `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |
 
 ### Current Evaluation Job Shapes
@@ -318,8 +318,8 @@ The current codebase should converge on this split:
   - strategy semantics
 - `StrategyExecutionRequest`
   - current implementation name for one engine-specific run spec
-- `EvaluationTask`
-  - a strategy-evaluation request shape
+- evaluation target tuple
+  - transient result key and strategy id selected for one run
 - `EvaluationReport`
   - the recorded result of strategy evaluation
 

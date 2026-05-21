@@ -216,13 +216,7 @@ def _register_direct_strategy(store) -> None:
 
 
 def _build_direct_evaluation_task():
-    from alpha_os.evaluation_task import EvaluationTask
-
-    return EvaluationTask(
-        evaluation_task_id="case:test",
-        strategy_id="strategy:test",
-        evaluation_spec_id="evaluation_spec:test",
-    )
+    return ("case:test", "strategy:test")
 
 
 def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
@@ -293,7 +287,7 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
     report_state = evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
-        evaluation_tasks=(_build_direct_evaluation_task(),),
+        evaluation_targets=(_build_direct_evaluation_task(),),
         base_url="http://example.com",
     )
 

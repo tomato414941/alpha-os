@@ -64,18 +64,18 @@ confusing the metric group concept with the contract field name.
 
 ```text
 EvaluationSpec = evaluation settings
-EvaluationTask = strategy + evaluation settings
-EvaluationTaskResult = recorded factual outcome of one evaluation task
-EvaluationReport = persisted container of evaluation task results
-EvaluationMetricGroupResult = one metric group result block inside a task result
+EvaluationTarget = transient result key + strategy id selected for an evaluation run
+EvaluationTaskResult = recorded factual outcome of one evaluated strategy target
+EvaluationReport = persisted container of evaluation target results
+EvaluationMetricGroupResult = one metric group result block inside a target result
 ```
 
 Reserve `Benchmark` for trading comparison references such as market indexes,
 benchmark portfolios, excess-return bases, and benchmark-relative risk
 measurement. Do not use `Benchmark` for evaluation settings.
 
-One `EvaluationTask` has exactly one strategy. A strategy may appear in many
-evaluation tasks under different protocols or run setups.
+One evaluation target has exactly one strategy. A strategy may appear in many
+evaluation runs under different settings.
 
 Do not use `profile` to mean an evaluation configuration template. Use
 `EvaluationSpec` for evaluation settings.
@@ -84,8 +84,8 @@ Evaluation reports should record and display measured facts. Relative
 comparisons between findings are separate comparison views, not part of the core
 evaluation result terminology.
 
-The implementation name for an evaluation task result is `EvaluationTaskResult`.
-Treat it as a task-level result record, not as a comparison row.
+The implementation name for an evaluation target result is `EvaluationTaskResult`.
+Treat it as a target-level result record, not as a comparison row.
 `EvaluationReport.task_results` remains the runtime and persisted field for
 evaluation task results.
 
@@ -112,17 +112,17 @@ as the same thing as offline signal discovery.
 
 ## Evaluation Case Semantics
 
-An evaluation task is runtime setup, not research taxonomy. It does not carry a
+An evaluation target is runtime setup, not research taxonomy. It does not carry a
 case role or data-source URL.
 
 `base_url` is runtime data-source connection configuration. It may flow through
 execution requests and execution-plan entries, but it is not persisted on
-`EvaluationTask`. The evaluation model should eventually refer to a `DataInput`
+an evaluation target. The evaluation model should eventually refer to a `DataInput`
 such as a fixed dataset or online stream, while the runtime maps that input to a
 connection source.
 
 Comparison anchors such as "baseline" are chosen by comparison views or
-research notes. They are not fields on `EvaluationTask` or
+research notes. They are not fields on evaluation targets or
 `EvaluationTaskResult`.
 
 Use candidate/diagnostic-style wording only in documents and research notes:
@@ -187,7 +187,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
-| `EvaluationTask` | evaluation run context | It binds a trading strategy to an evaluation context. |
+| evaluation target tuple | transient run input | It binds a result key to a trading strategy for one run. |
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.

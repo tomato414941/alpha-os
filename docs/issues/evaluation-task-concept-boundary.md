@@ -58,13 +58,13 @@ approved.
 
 ## Current Status
 
-`EvaluationTask` is no longer stored in a dedicated database table. Runtime
-manifests may still contain `evaluation_tasks` rows, but those rows are applied
-as strategy/evaluation targets and kept in memory when a manifest-scoped command
-needs explicit case identifiers.
+`EvaluationTask` is no longer stored in a dedicated database table, and the
+input-side `EvaluationTask` class has been removed. Runtime manifests may still
+contain `evaluation_tasks` rows, but those rows are applied as
+strategy/evaluation targets and kept as transient `(result_key, strategy_id)`
+tuples when a manifest-scoped command needs explicit case identifiers.
 
 ## Close Condition
 
-Close this when the evaluation path no longer requires a standalone persisted
-`EvaluationTask`, or when the project explicitly decides that a first-class
-evaluation case object is required.
+Close this when the manifest field name is resolved and result-side
+`EvaluationTaskResult` naming is either retained intentionally or replaced.

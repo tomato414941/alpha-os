@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from alpha_os.evaluation_task import (
-    EvaluationTask,
-)
 from alpha_os.strategy_variant import (
     StrategyVariantConfig,
     derive_trading_strategy_from_signal_discovery,
@@ -88,35 +85,6 @@ def _make_signal_discovery(
         signal_discovery_id=signal_discovery_id,
         definition=definition,
     )
-
-
-def test_evaluation_task_ignores_legacy_trading_config_document_fields():
-    case = EvaluationTask.from_document(
-        evaluation_task_id="case:legacy",
-        document={
-            "strategy_id": "strategy:test",
-            "evaluation_spec_id": "evaluation_spec:test",
-            "signal_discovery_id": "signal:test",
-            "base_url": "http://example.com",
-            "created_at": "2026-04-24T00:00:00Z",
-            "portfolio_construction": PortfolioConstructionSpec(
-                sizing_policy=PortfolioConstructionSizingSpec(
-                    sizing_method="equal_weight",
-                    sizing_engine="history_based",
-                )
-            ).to_document(),
-            "rebalance_friction_policy": EvaluationRebalanceFrictionPolicySpec().to_document(),
-            "execution_cost_assumptions": ExecutionCostAssumptionsSpec().to_document(),
-            "holding_cost_assumptions": HoldingCostAssumptionsSpec().to_document(),
-        },
-    )
-
-    assert not hasattr(case, "portfolio_construction")
-    assert not hasattr(case, "rebalance_friction_policy")
-    assert not hasattr(case, "execution_cost_assumptions")
-    assert not hasattr(case, "holding_cost_assumptions")
-    assert "portfolio_construction" not in case.to_document()
-    assert "holding_cost_assumptions" not in case.to_document()
 
 
 def _make_evaluation_spec_with_two_folds() -> EvaluationSpec:
