@@ -330,16 +330,6 @@ class RiskBudgetNormalizationStage:
                 target_budget=request.risk_budget.target_gross_exposure,
                 allow_releverage=request.risk_budget.allow_releverage,
             )
-        if mode == "estimated_vol":
-            return _scale_to_budget(
-                targets,
-                current_budget=_estimated_portfolio_vol(
-                    targets,
-                    risk_by_subject=request.risk_by_subject,
-                ),
-                target_budget=request.target_vol,
-                allow_releverage=request.risk_budget.allow_releverage,
-            )
         return targets
 
 
@@ -471,19 +461,6 @@ def _scale_to_budget(
 
 def _gross_weight(targets: list[PortfolioTarget]) -> float:
     return sum(abs(float(item.target_weight)) for item in targets)
-
-
-def _estimated_portfolio_vol(
-    targets: list[PortfolioTarget],
-    *,
-    risk_by_subject: dict[str, float],
-) -> float:
-    weighted_risk_terms = [
-        float(item.target_weight)
-        * max(float(risk_by_subject.get(item.subject_id, 0.0)), 0.0)
-        for item in targets
-    ]
-    return math.sqrt(sum(value * value for value in weighted_risk_terms))
 
 
 def _stage_trace(

@@ -150,8 +150,9 @@ def test_portfolio_construction_roundtrips_risk_budget():
 
 
 def test_portfolio_risk_budget_rejects_unknown_normalization_mode():
-    with pytest.raises(ValueError, match="risk_normalization_mode"):
-        PortfolioRiskBudgetSpec(risk_normalization_mode="unsupported")
+    for mode in ("unsupported", "estimated_vol"):
+        with pytest.raises(ValueError, match="risk_normalization_mode"):
+            PortfolioRiskBudgetSpec(risk_normalization_mode=mode)
 
 
 def test_portfolio_risk_budget_parses_string_boolean_without_truthy_leak():

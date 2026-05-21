@@ -40,7 +40,6 @@ SIZING_FAMILIES = (
 RISK_NORMALIZATION_MODES = (
     "none",
     "gross",
-    "estimated_vol",
 )
 
 

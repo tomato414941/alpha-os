@@ -18,10 +18,9 @@ This is not a general risk budget object.
 
 ## Current Use
 
-`risk_budget` currently supports two normalization modes:
+`risk_budget` currently supports one active normalization mode:
 
 - `gross`: scale target weights toward `target_gross_exposure`
-- `estimated_vol`: scale estimated portfolio volatility toward `target_vol`
 
 In checked-in runtime manifests, the object is only used with
 `risk_normalization_mode: gross`. In practice, it behaves like gross exposure
@@ -58,8 +57,9 @@ Prefer a narrower future name if the behavior is kept, such as:
 - `exposure_normalization`
 - `target_exposure_policy`
 
-Before renaming, decide whether `estimated_vol` mode is still needed. If it is
-not used, prefer removing it instead of preserving a second normalization path.
+Avoid adding volatility targeting back under this object. If volatility
+targeting is needed, represent it explicitly instead of hiding it behind a
+generic risk budget name.
 
 ## Close Condition
 
