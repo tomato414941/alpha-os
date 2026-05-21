@@ -614,7 +614,6 @@ def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
         evaluation_spec = _make_evaluation_spec_with_two_folds()
 
         execution_requests = build_strategy_evaluation_requests(
-            store,
             evaluation_spec_id="macro_eval",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=resolved_tasks,

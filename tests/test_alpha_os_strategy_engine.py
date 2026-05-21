@@ -26,7 +26,6 @@ def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
         fold_label="fold_2025",
         context=StrategyEvaluationContext(
             strategy_id="strategy:test",
-            target_id="target:test",
             base_url="http://example.com",
         ),
         execution_range=execution_range,

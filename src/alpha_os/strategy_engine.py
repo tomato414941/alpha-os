@@ -8,7 +8,6 @@ from .evaluation_spec import EvaluationDateRange
 @dataclass(frozen=True)
 class StrategyEvaluationContext:
     strategy_id: str
-    target_id: str
     base_url: str
 
 

@@ -117,6 +117,16 @@ def _subject_set_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
     return subject_set_id
 
 
+def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
+    target_id = trading_strategy.target_id
+    if not isinstance(target_id, str) or not target_id:
+        raise ValueError(
+            "evaluation task strategy is missing prediction target: "
+            f"{trading_strategy.strategy_id}"
+        )
+    return target_id
+
+
 def run_strategy_evaluation_task(
     execution_request: StrategyEvaluationRequest,
     *,
@@ -135,6 +145,7 @@ def run_strategy_evaluation_task(
         trading_strategy
     )
     subject_set_id = _subject_set_id_for_strategy(trading_strategy)
+    target_id = _target_id_for_strategy(trading_strategy)
     subject_set_state = store.get_subject_set(subject_set_id)
     if subject_set_state is not None:
         validate_subject_set_universe_contract(subject_set_state.definition)
@@ -142,7 +153,7 @@ def run_strategy_evaluation_task(
         store=store,
         strategy_id=execution_request.context.strategy_id,
         subject_set_id=subject_set_id,
-        target_id=execution_request.context.target_id,
+        target_id=target_id,
         evaluation_date_ranges=execution_request.evaluation_date_ranges,
         base_url=execution_request.context.base_url,
         portfolio_construction=portfolio_construction,

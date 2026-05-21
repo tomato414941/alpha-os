@@ -22,7 +22,6 @@ def evaluate_evaluation_spec_state(
 ):
     evaluation_spec = evaluation_spec_state.definition
     execution_requests = build_strategy_evaluation_requests(
-        store,
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         evaluation_spec=evaluation_spec,
         evaluation_tasks=evaluation_tasks,

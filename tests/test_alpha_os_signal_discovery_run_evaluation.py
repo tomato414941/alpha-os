@@ -2496,7 +2496,6 @@ def test_build_strategy_evaluation_requests_does_not_branch_on_position_rule(tmp
         )
 
         execution_requests = build_strategy_evaluation_requests(
-            store,
             evaluation_spec_id="protocol_a",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
@@ -2572,7 +2571,6 @@ def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discove
         )
 
         execution_requests = build_strategy_evaluation_requests(
-            store,
             evaluation_spec_id="protocol_nn",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
@@ -2586,7 +2584,7 @@ def test_build_strategy_evaluation_requests_uses_direct_strategy_without_discove
         store.close()
 
 
-def test_build_strategy_evaluation_requests_rejects_direct_strategy_without_target(tmp_path):
+def test_build_strategy_evaluation_requests_does_not_read_strategy_target(tmp_path):
     from alpha_os.evaluation_task import EvaluationTask
     from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
@@ -2621,17 +2619,15 @@ def test_build_strategy_evaluation_requests_rejects_direct_strategy_without_targ
             **_evaluation_policy_parts(),
         )
 
-        with pytest.raises(
-            ValueError,
-            match="direct evaluation task requires strategy prediction target",
-        ):
-            build_strategy_evaluation_requests(
-                store,
-                evaluation_spec_id="protocol_targetless",
-                evaluation_spec=evaluation_spec,
-                evaluation_tasks=(evaluation_task,),
-                base_url="http://example.com",
-            )
+        execution_requests = build_strategy_evaluation_requests(
+            evaluation_spec_id="protocol_targetless",
+            evaluation_spec=evaluation_spec,
+            evaluation_tasks=(evaluation_task,),
+            base_url="http://example.com",
+        )
+
+        assert len(execution_requests) == 1
+        assert execution_requests[0].context.strategy_id == "strategy:targetless"
     finally:
         store.close()
 
@@ -2686,7 +2682,6 @@ def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_cont
         )
 
         execution_requests = build_strategy_evaluation_requests(
-            store,
             evaluation_spec_id="protocol_portfolio_source",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=(evaluation_task,),
@@ -2695,7 +2690,6 @@ def test_build_strategy_evaluation_requests_keeps_strategy_portfolio_out_of_cont
 
         request = execution_requests[0]
         assert request.context.strategy_id == "strategy:portfolio_source"
-        assert request.context.target_id == "residual_return_3d"
     finally:
         store.close()
 
@@ -2758,7 +2752,6 @@ def test_build_strategy_evaluation_requests_prefers_direct_strategy_over_discove
         )
 
         execution_requests = build_strategy_evaluation_requests(
-            store,
             evaluation_spec_id="protocol_checkpoint",
             evaluation_spec=evaluation_spec,
             evaluation_tasks=evaluation_tasks,
