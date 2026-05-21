@@ -21,7 +21,6 @@ from alpha_os.evaluation_cost_config import (
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
-from alpha_os.evaluation_request_builder import build_strategy_evaluation_requests
 from alpha_os.evaluation_spec import (
     EvaluationDateRange,
     EvaluationFold,
@@ -589,7 +588,7 @@ def test_select_evaluation_tasks_rejects_unknown_strategy_filter(tmp_path):
         store.close()
 
 
-def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
+def test_selected_tasks_expand_across_evaluation_folds(tmp_path):
     store = EvaluationStore(tmp_path / "runtime.db")
     try:
         store.ensure_schema()
@@ -613,27 +612,20 @@ def test_selected_tasks_build_fold_count_plan_entries(tmp_path):
         )
         evaluation_spec = _make_evaluation_spec_with_two_folds()
 
-        execution_requests = build_strategy_evaluation_requests(
-            evaluation_spec_id="macro_eval",
-            evaluation_spec=evaluation_spec,
-            evaluation_tasks=resolved_tasks,
-            base_url="https://signal-noise.example",
-        )
-
         summary_keys = {
             (
-                entry.evaluation_task_id,
-                entry.strategy_id,
-                entry.fold_label,
+                task.evaluation_task_id,
+                task.strategy_id,
+                fold.label,
                 tuple(
                     (item.label, item.start_date, item.end_date)
-                    for item in entry.evaluation_date_ranges
+                    for item in fold.resolved_evaluation_date_ranges
                 ),
             )
-            for entry in execution_requests
+            for task in resolved_tasks
+            for fold in evaluation_spec.resolved_evaluation_folds
         }
         assert len(resolved_tasks) == 1
-        assert len(execution_requests) == 2
-        assert len(summary_keys) == len(execution_requests)
+        assert len(summary_keys) == 2
     finally:
         store.close()

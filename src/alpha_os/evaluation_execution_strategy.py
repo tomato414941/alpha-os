@@ -9,8 +9,9 @@ from .evaluation_cost_config import (
     ExecutionCostAssumptionsSpec,
     HoldingCostAssumptionsSpec,
 )
+from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
-from .evaluation_request import StrategyEvaluationRequest
+from .evaluation_task import EvaluationTask
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
 from .trading_strategy import TradingStrategySpec
@@ -94,15 +95,15 @@ def _holding_cost_assumptions_for_strategy(
     )
 
 
-def _trading_strategy_for_request(
+def _trading_strategy_for_task(
     store: EvaluationExecutionReadPort,
-    execution_request: StrategyEvaluationRequest,
+    evaluation_task: EvaluationTask,
 ) -> TradingStrategySpec:
-    strategy_state = store.get_trading_strategy(execution_request.strategy_id)
+    strategy_state = store.get_trading_strategy(evaluation_task.strategy_id)
     if strategy_state is None:
         raise ValueError(
             "evaluation task strategy does not exist: "
-            f"{execution_request.strategy_id}"
+            f"{evaluation_task.strategy_id}"
         )
     return strategy_state.trading_strategy
 
@@ -128,12 +129,15 @@ def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
 
 
 def run_strategy_evaluation(
-    execution_request: StrategyEvaluationRequest,
     *,
+    evaluation_task: EvaluationTask,
+    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
+    metric_group_names: tuple[str, ...],
+    base_url: str,
     context: EvaluationExecutionContext,
 ) -> EvaluationTaskResult:
     store = context.store
-    trading_strategy = _trading_strategy_for_request(store, execution_request)
+    trading_strategy = _trading_strategy_for_task(store, evaluation_task)
     portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
     rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
         trading_strategy
@@ -151,11 +155,11 @@ def run_strategy_evaluation(
         validate_subject_set_universe_contract(subject_set_state.definition)
     direct_evaluation = run_strategy_backtest_from_store(
         store=store,
-        strategy_id=execution_request.strategy_id,
+        strategy_id=evaluation_task.strategy_id,
         subject_set_id=subject_set_id,
         target_id=target_id,
-        evaluation_date_ranges=execution_request.evaluation_date_ranges,
-        base_url=execution_request.base_url,
+        evaluation_date_ranges=evaluation_date_ranges,
+        base_url=base_url,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
         execution_cost_assumptions=execution_cost_assumptions,
@@ -164,11 +168,11 @@ def run_strategy_evaluation(
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
     return EvaluationTaskResult(
-        evaluation_task_id=execution_request.evaluation_task_id,
-        strategy_id=execution_request.strategy_id,
+        evaluation_task_id=evaluation_task.evaluation_task_id,
+        strategy_id=evaluation_task.strategy_id,
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]
-            for metric_group_name in execution_request.metric_group_names
+            for metric_group_name in metric_group_names
             if metric_group_name in direct_metric_group_results
         ),
         failure_finding_groups=direct_failure_finding_groups,

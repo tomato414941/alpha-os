@@ -6,7 +6,6 @@ from .evaluation_execution_strategy import (
     run_strategy_evaluation,
 )
 from .evaluation_task import EvaluationTask
-from .evaluation_request_builder import build_strategy_evaluation_requests
 from .evaluation_report import EvaluationReport
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
@@ -21,25 +20,23 @@ def evaluate_evaluation_spec_state(
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):
     evaluation_spec = evaluation_spec_state.definition
-    execution_requests = build_strategy_evaluation_requests(
-        evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
-        evaluation_spec=evaluation_spec,
-        evaluation_tasks=evaluation_tasks,
-        base_url=base_url,
-    )
     task_results = []
     timestamp = _utc_now()
     execution_context = EvaluationExecutionContext(
         store=store,
         feature_plane_repository=feature_plane_repository,
     )
-    for execution_request in execution_requests:
-        task_results.append(
-            run_strategy_evaluation(
-                execution_request=execution_request,
-                context=execution_context,
+    for evaluation_task in evaluation_tasks:
+        for fold in evaluation_spec.resolved_evaluation_folds:
+            task_results.append(
+                run_strategy_evaluation(
+                    evaluation_task=evaluation_task,
+                    evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
+                    metric_group_names=evaluation_spec.metric_group_names,
+                    base_url=base_url,
+                    context=execution_context,
+                )
             )
-        )
     report = EvaluationReport(
         evaluation_report_id=f"{evaluation_spec_state.evaluation_spec_id}:{timestamp}",
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,

@@ -61,7 +61,7 @@ Prefer this direction:
 
 ## Current Suspects
 
-- `build_strategy_evaluation_requests()` must stay limited to evaluation request scheduling
+- `evaluation_runner.py` must keep fold scheduling separate from strategy loading
 - `evaluation_execution_strategy.py` mixes input construction, strategy state
   loading, rollout execution, and report assembly
 - `signal_discovery_id` is used as a routing key instead of local provenance
