@@ -8,7 +8,7 @@ from .contract_boundaries import (
     PortfolioConstraintBoundary,
     default_portfolio_constraint_boundary,
 )
-from .portfolio_construction_config import PortfolioConstructionSpec, PortfolioRiskBudgetSpec
+from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_decision import (
     CostInput,
     DependenceInput,
@@ -90,7 +90,6 @@ class DecisionBacktestInput:
     target_vol: float | None = None
     gross_leverage_cap: float | None = None
     net_exposure_target: float | None = None
-    risk_budget: PortfolioRiskBudgetSpec | None = None
     turnover_friction: float = 0.0
     market_impact_bps: float = 0.0
     fee_bps: float = 0.0
@@ -137,7 +136,6 @@ class DecisionBacktestInput:
             object.__setattr__(self, "target_vol", construction.target_vol)
             object.__setattr__(self, "gross_leverage_cap", construction.gross_leverage_cap)
             object.__setattr__(self, "net_exposure_target", construction.net_exposure_target)
-            object.__setattr__(self, "risk_budget", construction.risk_budget)
             object.__setattr__(
                 self,
                 "rebalance_interval_steps",
@@ -604,7 +602,6 @@ def _build_rebalance_targets(
             gross_leverage_cap=backtest_input.gross_leverage_cap,
             net_exposure_target=backtest_input.net_exposure_target,
             target_vol=backtest_input.target_vol,
-            risk_budget=backtest_input.risk_budget,
             risk_by_subject={
                 subject_id: max(
                     float(_optional_value(row, ("risk", subject_id)) or 0.0),
@@ -1347,7 +1344,6 @@ def constrained_targets_by_subject(
     net_exposure_target: float | None,
     target_vol: float | None = None,
     risk_by_subject: dict[str, float] | None = None,
-    risk_budget: PortfolioRiskBudgetSpec | None = None,
     constraint_boundary: PortfolioConstraintBoundary | None = None,
     long_only: bool,
     top_k: int | None,
@@ -1367,7 +1363,6 @@ def constrained_targets_by_subject(
         net_exposure_target=net_exposure_target,
         target_vol=target_vol,
         risk_by_subject=risk_by_subject,
-        risk_budget=risk_budget,
         constraint_boundary=constraint_boundary or default_portfolio_constraint_boundary(),
         long_only=long_only,
         direction_mode=direction_mode,

@@ -626,149 +626,7 @@ def test_constrained_targets_by_subject_respects_gross_leverage_cap():
     assert sum(abs(item.target_weight) for item in constrained.values()) == pytest.approx(1.0)
 
 
-def test_constrained_targets_by_subject_scales_up_to_gross_risk_budget():
-    from alpha_os.decision_backtest import constrained_targets_by_subject
-    from alpha_os.portfolio_construction_config import PortfolioRiskBudgetSpec
-    from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
-    constrained = constrained_targets_by_subject(
-        (
-            PortfolioTarget(subject_id="A", target_weight=0.10, position_delta=0.0),
-            PortfolioTarget(subject_id="B", target_weight=-0.10, position_delta=0.0),
-        ),
-        current_weights={},
-        capital_base=1.0,
-        gross_exposure_cap=None,
-        gross_leverage_cap=None,
-        net_exposure_target=None,
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.50,
-            allow_releverage=True,
-        ),
-        long_only=False,
-        top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
-        asset_class_by_subject={},
-        cluster_by_subject={},
-        asset_class_weight_caps={},
-        cluster_weight_caps={},
-    )
-
-    assert constrained["A"].target_weight == pytest.approx(0.25)
-    assert constrained["B"].target_weight == pytest.approx(-0.25)
-    assert sum(abs(item.target_weight) for item in constrained.values()) == pytest.approx(0.50)
-    assert sum(item.target_weight for item in constrained.values()) == pytest.approx(0.0)
-
-
-def test_constrained_targets_by_subject_does_not_releverage_without_permission():
-    from alpha_os.decision_backtest import constrained_targets_by_subject
-    from alpha_os.portfolio_construction_config import PortfolioRiskBudgetSpec
-    from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
-    constrained = constrained_targets_by_subject(
-        (
-            PortfolioTarget(subject_id="A", target_weight=0.10, position_delta=0.0),
-            PortfolioTarget(subject_id="B", target_weight=-0.10, position_delta=0.0),
-        ),
-        current_weights={},
-        capital_base=1.0,
-        gross_exposure_cap=None,
-        gross_leverage_cap=None,
-        net_exposure_target=None,
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.50,
-            allow_releverage=False,
-        ),
-        long_only=False,
-        top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
-        asset_class_by_subject={},
-        cluster_by_subject={},
-        asset_class_weight_caps={},
-        cluster_weight_caps={},
-    )
-
-    assert constrained["A"].target_weight == pytest.approx(0.10)
-    assert constrained["B"].target_weight == pytest.approx(-0.10)
-    assert sum(abs(item.target_weight) for item in constrained.values()) == pytest.approx(0.20)
-
-
-def test_constrained_targets_by_subject_scales_down_to_gross_risk_budget():
-    from alpha_os.decision_backtest import constrained_targets_by_subject
-    from alpha_os.portfolio_construction_config import PortfolioRiskBudgetSpec
-    from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
-    constrained = constrained_targets_by_subject(
-        (
-            PortfolioTarget(subject_id="A", target_weight=0.60, position_delta=0.0),
-            PortfolioTarget(subject_id="B", target_weight=-0.40, position_delta=0.0),
-        ),
-        current_weights={},
-        capital_base=1.0,
-        gross_exposure_cap=None,
-        gross_leverage_cap=None,
-        net_exposure_target=None,
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.50,
-            allow_releverage=False,
-        ),
-        long_only=False,
-        top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
-        asset_class_by_subject={},
-        cluster_by_subject={},
-        asset_class_weight_caps={},
-        cluster_weight_caps={},
-    )
-
-    assert constrained["A"].target_weight == pytest.approx(0.30)
-    assert constrained["B"].target_weight == pytest.approx(-0.20)
-    assert sum(abs(item.target_weight) for item in constrained.values()) == pytest.approx(0.50)
-
-
-def test_constrained_targets_by_subject_keeps_final_gross_cap_after_risk_budget():
-    from alpha_os.decision_backtest import constrained_targets_by_subject
-    from alpha_os.portfolio_construction_config import PortfolioRiskBudgetSpec
-    from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
-    constrained = constrained_targets_by_subject(
-        (
-            PortfolioTarget(subject_id="A", target_weight=0.10, position_delta=0.0),
-            PortfolioTarget(subject_id="B", target_weight=-0.10, position_delta=0.0),
-        ),
-        current_weights={},
-        capital_base=1.0,
-        gross_exposure_cap=None,
-        gross_leverage_cap=0.40,
-        net_exposure_target=None,
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.50,
-            allow_releverage=True,
-        ),
-        long_only=False,
-        top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
-        asset_class_by_subject={},
-        cluster_by_subject={},
-        asset_class_weight_caps={},
-        cluster_weight_caps={},
-    )
-
-    assert sum(abs(item.target_weight) for item in constrained.values()) == pytest.approx(0.40)
-    assert constrained["A"].target_weight == pytest.approx(0.20)
-    assert constrained["B"].target_weight == pytest.approx(-0.20)
-
-
 def test_portfolio_construction_pipeline_returns_stage_trace():
-    from alpha_os.portfolio_construction_config import PortfolioRiskBudgetSpec
     from alpha_os.portfolio_construction_pipeline import (
         build_portfolio_construction_request,
         construct_portfolio_targets,
@@ -786,11 +644,6 @@ def test_portfolio_construction_pipeline_returns_stage_trace():
         gross_exposure_cap=None,
         gross_leverage_cap=0.40,
         net_exposure_target=None,
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.50,
-            allow_releverage=True,
-        ),
         long_only=False,
         top_k=None,
         active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
@@ -803,10 +656,8 @@ def test_portfolio_construction_pipeline_returns_stage_trace():
     result = construct_portfolio_targets(request)
     traces = {item.stage_name: item for item in result.trace}
 
-    assert sum(abs(item.target_weight) for item in result.targets.values()) == pytest.approx(0.40)
-    assert traces["risk_budget_normalization"].gross_delta == pytest.approx(0.30)
-    assert traces["gross_exposure_cap"].after.gross_exposure == pytest.approx(0.40)
-    assert traces["risk_budget_normalization"].changed_subject_count == 2
+    assert sum(abs(item.target_weight) for item in result.targets.values()) == pytest.approx(0.20)
+    assert traces["gross_exposure_cap"].after.gross_exposure == pytest.approx(0.20)
 
 
 def test_constrained_targets_by_subject_can_shift_to_net_exposure_target():

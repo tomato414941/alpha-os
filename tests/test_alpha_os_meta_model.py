@@ -3104,7 +3104,7 @@ def test_global_macro_diagnostic_manifest_contract():
         "rebalance_policy_quality",
     } <= set(evaluation_spec["metric_group_names"])
     findings = manifest["evaluation_cases"]
-    assert len(findings) == 15
+    assert len(findings) == 14
     case_ids = {item["evaluation_case_id"] for item in findings}
     assert {
         "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
@@ -3121,7 +3121,6 @@ def test_global_macro_diagnostic_manifest_contract():
         "global_macro_tradeable_daily_diagnostic_legacy_proportional_execution_case",
         "global_macro_tradeable_daily_diagnostic_no_cost_case",
         "global_macro_tradeable_daily_diagnostic_weekly_rebalance_case",
-        "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
     } == case_ids
     strategies_by_id = {
         item["trading_strategy"]["strategy_id"]: item["trading_strategy"]
@@ -3161,7 +3160,6 @@ def test_global_macro_diagnostic_manifest_contract():
                     == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
                 )
                 assert portfolio["rebalance_interval_steps"] == 10
-                assert construction["risk_budget"]["target_gross_exposure"] == 0.35
                 assert construction["portfolio_intent"] == {
                     "effective_n_floor": 10.0,
                     "top_gross_share_cap_n": 3,

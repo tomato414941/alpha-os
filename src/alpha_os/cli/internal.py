@@ -1066,7 +1066,6 @@ def _portfolio_construction_for_decision_args(
         ),
         asset_class_weight_caps=dict(base_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(base_construction.cluster_weight_caps),
-        risk_budget=base_construction.risk_budget,
     )
 
 
@@ -1150,7 +1149,6 @@ def _portfolio_construction_with_sizing_spec(
         gross_exposure_cap=base.gross_exposure_cap,
         asset_class_weight_caps=dict(base.asset_class_weight_caps),
         cluster_weight_caps=dict(base.cluster_weight_caps),
-        risk_budget=base.risk_budget,
     )
 
 
@@ -1185,7 +1183,6 @@ def _portfolio_construction_for_decision_strategy(
             if not construction.cluster_weight_caps
             else dict(construction.cluster_weight_caps)
         ),
-        risk_budget=base_construction.risk_budget,
     )
 
 
@@ -3252,7 +3249,6 @@ _DIAGNOSTIC_PROFILE_METRIC_GROUPS = {
         "mean_prediction_coverage",
     ),
     "portfolio_construction_trace": (
-        "risk_budget_stage_mean_gross_delta",
         "case_vol_stage_mean_gross_delta",
         "net_case_stage_mean_net_delta",
         "top_k_stage_mean_active_count_delta",
@@ -3295,7 +3291,7 @@ _DIAGNOSTIC_PROFILE_METRIC_GROUPS = {
 }
 
 
-_DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT = 15
+_DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT = 14
 _DIAGNOSTIC_DRY_RUN_REQUIRED_CASE_IDS = {
     "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
     "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
@@ -3306,7 +3302,6 @@ _DIAGNOSTIC_DRY_RUN_REQUIRED_CASE_IDS = {
     "global_macro_tradeable_daily_diagnostic_utility_tighter_benefit_case",
     "global_macro_tradeable_daily_diagnostic_utility_looser_budget_case",
     "global_macro_tradeable_daily_diagnostic_utility_no_budget_case",
-    "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
 }
 def _diagnostic_optimizer_backend(
     sizing_method: str | None,
@@ -3542,12 +3537,6 @@ def _check_diagnostic_evaluation_dry_run(
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use rebalance_interval_steps=10"
-        )
-    constrained_risk_budget = constrained_config.portfolio_construction.risk_budget
-    if constrained_risk_budget.target_gross_exposure != 0.35:
-        raise ValueError(
-            "diagnostic dry run check failed: constrained mean-reversion lane "
-            "must use target_gross_exposure=0.35"
         )
     constrained_intent = constrained_config.portfolio_construction.portfolio_intent
     if (

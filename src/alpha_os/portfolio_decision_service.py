@@ -442,7 +442,6 @@ def apply_decision_output_constraints(
         net_exposure_target=portfolio_construction.net_exposure_target,
         target_vol=portfolio_construction.target_vol,
         risk_by_subject=risk_by_subject,
-        risk_budget=portfolio_construction.risk_budget,
         constraint_boundary=portfolio_construction.constraint_boundary,
         long_only=portfolio_construction.long_only,
         direction_mode=portfolio_construction.direction_mode,

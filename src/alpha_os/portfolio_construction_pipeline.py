@@ -8,7 +8,6 @@ from .contract_boundaries import (
     PortfolioConstraintBoundary,
     default_portfolio_constraint_boundary,
 )
-from .portfolio_construction_config import PortfolioRiskBudgetSpec
 from .portfolio_concentration import portfolio_effective_n, top_n_gross_share
 from .portfolio_decision import PortfolioTarget
 from .portfolio_direction import normalize_portfolio_direction_mode
@@ -25,7 +24,6 @@ class PortfolioConstructionRequest:
     net_exposure_target: float | None
     target_vol: float | None
     risk_by_subject: dict[str, float]
-    risk_budget: PortfolioRiskBudgetSpec | None
     constraint_boundary: PortfolioConstraintBoundary
     long_only: bool
     direction_mode: str
@@ -118,7 +116,6 @@ def default_portfolio_construction_pipeline() -> PortfolioConstructionPipeline:
                 boundary_field="cluster_weight_caps",
                 group_field="cluster",
             ),
-            RiskBudgetNormalizationStage(),
             TargetVolCapStage(),
             GrossExposureCapStage(),
             NetExposureTargetStage(),
@@ -137,7 +134,6 @@ def build_portfolio_construction_request(
     net_exposure_target: float | None,
     target_vol: float | None = None,
     risk_by_subject: dict[str, float] | None = None,
-    risk_budget: PortfolioRiskBudgetSpec | None = None,
     constraint_boundary: PortfolioConstraintBoundary | None = None,
     long_only: bool,
     top_k: int | None,
@@ -161,7 +157,6 @@ def build_portfolio_construction_request(
         net_exposure_target=net_exposure_target,
         target_vol=target_vol,
         risk_by_subject=risk_by_subject or {},
-        risk_budget=risk_budget,
         constraint_boundary=constraint_boundary or default_portfolio_constraint_boundary(),
         long_only=normalized_direction_mode == "long_only",
         direction_mode=normalized_direction_mode,
@@ -312,27 +307,6 @@ class TargetVolCapStage:
         ]
 
 
-class RiskBudgetNormalizationStage:
-    def apply(
-        self,
-        targets: list[PortfolioTarget],
-        request: PortfolioConstructionRequest,
-    ) -> list[PortfolioTarget]:
-        if request.risk_budget is None:
-            return targets
-        mode = request.risk_budget.risk_normalization_mode
-        if mode == "none":
-            return targets
-        if mode == "gross":
-            return _scale_to_budget(
-                targets,
-                current_budget=_gross_weight(targets),
-                target_budget=request.risk_budget.target_gross_exposure,
-                allow_releverage=request.risk_budget.allow_releverage,
-            )
-        return targets
-
-
 class GrossExposureCapStage:
     def apply(
         self,
@@ -431,34 +405,6 @@ def apply_net_exposure_target_without_relevering(
     return _reduce_positive_exposure(adjusted, amount=abs(delta))
 
 
-def _scale_to_budget(
-    targets: list[PortfolioTarget],
-    *,
-    current_budget: float,
-    target_budget: float | None,
-    allow_releverage: bool,
-) -> list[PortfolioTarget]:
-    if target_budget is None:
-        return targets
-    current = max(float(current_budget), 0.0)
-    target = max(float(target_budget), 0.0)
-    if current <= 0.0:
-        return targets
-    if current < target and not allow_releverage:
-        return targets
-    if abs(current - target) <= 1e-12:
-        return targets
-    scale = target / current
-    return [
-        _target_with_weight(
-            item,
-            float(item.target_weight) * scale,
-            entry_allowed=bool(item.entry_allowed),
-        )
-        for item in targets
-    ]
-
-
 def _gross_weight(targets: list[PortfolioTarget]) -> float:
     return sum(abs(float(item.target_weight)) for item in targets)
 
@@ -511,8 +457,6 @@ def _stage_name(stage: PortfolioConstructionStage) -> str:
         return "active_overlay"
     if isinstance(stage, TopKStage):
         return "top_k"
-    if isinstance(stage, RiskBudgetNormalizationStage):
-        return "risk_budget_normalization"
     if isinstance(stage, TargetVolCapStage):
         return "target_vol_cap"
     if isinstance(stage, GrossExposureCapStage):

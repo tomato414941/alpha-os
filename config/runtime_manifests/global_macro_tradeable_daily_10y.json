@@ -707,7 +707,6 @@
         "sizing_policy_quality",
         "rebalance_policy_quality",
         "decision_quality",
-        "portfolio_risk_budget",
         "portfolio_construction_trace",
         "portfolio_concentration",
         "robustness"
@@ -771,11 +770,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "risk_budget": {
-              "risk_normalization_mode": "gross",
-              "target_gross_exposure": 0.5,
-              "allow_releverage": true
             },
             "sleeve_composition": {
               "combination_method": "risk_budgeted_signal_blend",

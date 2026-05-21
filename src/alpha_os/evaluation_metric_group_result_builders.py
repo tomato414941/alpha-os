@@ -62,15 +62,6 @@ def build_portfolio_construction_trace_metric_group_result(
         metric_group_name="portfolio_construction_trace",
         source=source,
         metrics={
-            "risk_budget_stage_mean_gross_delta": round(
-                mean(
-                    [
-                        item.risk_budget_stage_mean_gross_delta
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
             "target_vol_stage_mean_gross_delta": round(
                 mean(
                     [item.target_vol_stage_mean_gross_delta for item in range_summaries]

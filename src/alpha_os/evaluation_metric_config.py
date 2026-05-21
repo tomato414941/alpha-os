@@ -20,7 +20,6 @@ DECISION_EVALUATION_METRIC_GROUP_NAMES = (
     "sizing_policy_quality",
     "rebalance_policy_quality",
     "decision_quality",
-    "portfolio_risk_budget",
     "portfolio_construction_trace",
     "execution_trace",
     "cost_drag",

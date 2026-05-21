@@ -37,12 +37,6 @@ SIZING_FAMILIES = (
 )
 
 
-RISK_NORMALIZATION_MODES = (
-    "none",
-    "gross",
-)
-
-
 CONSTRUCTION_KINDS = (
     "active_portfolio",
     "hold_baseline",
@@ -97,24 +91,6 @@ def _normalized_weight_caps(
             )
         normalized[str(group_name)] = float(cap_value)
     return normalized
-
-
-def _optional_bool_from_document(
-    document: dict[str, Any],
-    field_name: str,
-    *,
-    default: bool,
-) -> bool:
-    value = document.get(field_name, default)
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"true", "1", "yes"}:
-            return True
-        if normalized in {"false", "0", "no", "", "-"}:
-            return False
-    raise ValueError(f"portfolio_construction.risk_budget.{field_name} must be boolean")
 
 
 @dataclass(frozen=True)
@@ -322,75 +298,6 @@ class PortfolioIntentSpec:
 
 
 @dataclass(frozen=True)
-class PortfolioRiskBudgetSpec:
-    risk_normalization_mode: str = "none"
-    target_gross_exposure: float | None = None
-    allow_releverage: bool = False
-
-    def __post_init__(self) -> None:
-        mode = str(self.risk_normalization_mode)
-        if mode not in RISK_NORMALIZATION_MODES:
-            raise ValueError(
-                "portfolio_construction.risk_budget.risk_normalization_mode "
-                "must be one of: "
-                + ", ".join(RISK_NORMALIZATION_MODES)
-            )
-        object.__setattr__(self, "risk_normalization_mode", mode)
-        if self.target_gross_exposure is not None:
-            if not isinstance(self.target_gross_exposure, int | float):
-                raise ValueError(
-                    "portfolio_construction.risk_budget.target_gross_exposure "
-                    "must be numeric"
-                )
-            if float(self.target_gross_exposure) < 0.0:
-                raise ValueError(
-                    "portfolio_construction.risk_budget.target_gross_exposure "
-                    "must be >= 0"
-                )
-            object.__setattr__(
-                self,
-                "target_gross_exposure",
-                float(self.target_gross_exposure),
-            )
-        if not isinstance(self.allow_releverage, bool):
-            raise ValueError(
-                "portfolio_construction.risk_budget.allow_releverage must be boolean"
-            )
-
-    def to_document(self) -> dict[str, Any]:
-        document: dict[str, Any] = {}
-        if self.risk_normalization_mode != "none":
-            document["risk_normalization_mode"] = self.risk_normalization_mode
-        if self.target_gross_exposure is not None:
-            document["target_gross_exposure"] = self.target_gross_exposure
-        if self.allow_releverage:
-            document["allow_releverage"] = self.allow_releverage
-        return document
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any] | None) -> "PortfolioRiskBudgetSpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("portfolio_construction.risk_budget must be an object")
-        return cls(
-            risk_normalization_mode=str(
-                document.get("risk_normalization_mode", "none")
-            ),
-            target_gross_exposure=(
-                None
-                if document.get("target_gross_exposure") is None
-                else float(document.get("target_gross_exposure"))
-            ),
-            allow_releverage=_optional_bool_from_document(
-                document,
-                "allow_releverage",
-                default=False,
-            ),
-        )
-
-
-@dataclass(frozen=True)
 class PortfolioConstructionSpec:
     construction_kind: str = "active_portfolio"
     sizing_policy: PortfolioConstructionSizingSpec = field(
@@ -407,7 +314,6 @@ class PortfolioConstructionSpec:
     asset_class_weight_caps: dict[str, float] = field(default_factory=dict)
     cluster_weight_caps: dict[str, float] = field(default_factory=dict)
     portfolio_intent: PortfolioIntentSpec = field(default_factory=PortfolioIntentSpec)
-    risk_budget: PortfolioRiskBudgetSpec = field(default_factory=PortfolioRiskBudgetSpec)
     sleeve_composition: StrategySleeveCompositionSpec | None = None
 
     def __post_init__(self) -> None:
@@ -465,18 +371,6 @@ class PortfolioConstructionSpec:
             raise ValueError(
                 "portfolio_construction.portfolio_intent must be PortfolioIntentSpec"
             )
-        if not isinstance(self.risk_budget, PortfolioRiskBudgetSpec):
-            object.__setattr__(
-                self,
-                "risk_budget",
-                PortfolioRiskBudgetSpec.from_document(
-                    _document_from_compatible_spec(self.risk_budget)
-                ),
-            )
-        if not isinstance(self.risk_budget, PortfolioRiskBudgetSpec):
-            raise ValueError(
-                "portfolio_construction.risk_budget must be PortfolioRiskBudgetSpec"
-            )
         for field_name, caps in (
             ("asset_class_weight_caps", self.asset_class_weight_caps),
             ("cluster_weight_caps", self.cluster_weight_caps),
@@ -517,14 +411,6 @@ class PortfolioConstructionSpec:
                 raise ValueError(
                     "hold_baseline portfolio_construction must not define portfolio_intent constraints"
                 )
-            if self.risk_budget.target_gross_exposure is not None:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define target_gross_exposure"
-                )
-            if self.risk_budget.allow_releverage:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not allow releverage"
-                )
             if self.sleeve_composition is not None:
                 raise ValueError(
                     "hold_baseline portfolio_construction must not define sleeve_composition"
@@ -564,8 +450,6 @@ class PortfolioConstructionSpec:
             document["cluster_weight_caps"] = dict(self.cluster_weight_caps)
         if self.portfolio_intent.to_document():
             document["portfolio_intent"] = self.portfolio_intent.to_document()
-        if self.risk_budget.to_document():
-            document["risk_budget"] = self.risk_budget.to_document()
         if self.sleeve_composition is not None:
             document["sleeve_composition"] = self.sleeve_composition.to_document()
         return document
@@ -630,9 +514,6 @@ class PortfolioConstructionSpec:
             ),
             portfolio_intent=PortfolioIntentSpec.from_document(
                 document.get("portfolio_intent")
-            ),
-            risk_budget=PortfolioRiskBudgetSpec.from_document(
-                document.get("risk_budget")
             ),
             sleeve_composition=StrategySleeveCompositionSpec.from_document(
                 (

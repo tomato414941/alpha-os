@@ -10,7 +10,6 @@ from alpha_os.contract_boundaries import (
 )
 from alpha_os.portfolio_construction_config import (
     PortfolioConstructionSpec,
-    PortfolioRiskBudgetSpec,
 )
 from alpha_os.portfolio_decision import SubjectSet
 
@@ -127,41 +126,3 @@ def test_portfolio_construction_roundtrips_portfolio_intent():
     assert restored.portfolio_intent.top_gross_share_cap_n == 3
     assert restored.portfolio_intent.top_gross_share_cap == pytest.approx(0.55)
 
-
-def test_portfolio_construction_roundtrips_risk_budget():
-    construction = PortfolioConstructionSpec(
-        risk_budget=PortfolioRiskBudgetSpec(
-            risk_normalization_mode="gross",
-            target_gross_exposure=0.5,
-            allow_releverage=True,
-        )
-    )
-    document = construction.to_document()
-    restored = PortfolioConstructionSpec.from_document(document)
-
-    assert document["risk_budget"] == {
-        "risk_normalization_mode": "gross",
-        "target_gross_exposure": 0.5,
-        "allow_releverage": True,
-    }
-    assert restored.risk_budget.risk_normalization_mode == "gross"
-    assert restored.risk_budget.target_gross_exposure == pytest.approx(0.5)
-    assert restored.risk_budget.allow_releverage is True
-
-
-def test_portfolio_risk_budget_rejects_unknown_normalization_mode():
-    for mode in ("unsupported", "estimated_vol"):
-        with pytest.raises(ValueError, match="risk_normalization_mode"):
-            PortfolioRiskBudgetSpec(risk_normalization_mode=mode)
-
-
-def test_portfolio_risk_budget_parses_string_boolean_without_truthy_leak():
-    restored = PortfolioRiskBudgetSpec.from_document(
-        {
-            "risk_normalization_mode": "gross",
-            "target_gross_exposure": 0.5,
-            "allow_releverage": "false",
-        }
-    )
-
-    assert restored.allow_releverage is False

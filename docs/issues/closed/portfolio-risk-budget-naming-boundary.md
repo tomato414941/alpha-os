@@ -66,3 +66,9 @@ generic risk budget name.
 Close this when `risk_budget` has either been renamed to a narrower
 normalization or exposure concept, or removed in favor of explicit
 `target_vol`, `gross_exposure_cap`, and `gross_leverage_cap` behavior.
+
+## Resolution
+
+Closed by removing `portfolio_construction.risk_budget`, its gross exposure
+normalization stage, and the dedicated `portfolio_risk_budget` evaluation
+metric group.

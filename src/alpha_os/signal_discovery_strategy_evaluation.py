@@ -77,11 +77,6 @@ class SignalDiscoveryStrategyEvaluationRangeSummary:
     optimizer_backend: str
     optimizer_status: str
     optimizer_fallback_reason: str
-    risk_normalization_mode: str
-    target_gross_exposure: float
-    mean_gross_budget_utilization: float
-    mean_gross_budget_error: float
-    risk_budget_stage_mean_gross_delta: float
     target_vol_stage_mean_gross_delta: float
     net_target_stage_mean_net_delta: float
     top_k_stage_mean_active_count_delta: float
@@ -670,37 +665,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             ),
         },
     )
-    risk_budget_metric_group_result = EvaluationMetricGroupResult(
-        metric_group_name="portfolio_risk_budget",
-        source=source,
-        metrics={
-            "risk_normalization_mode": (
-                portfolio_construction.risk_budget.risk_normalization_mode
-            ),
-            "allow_releverage": str(
-                portfolio_construction.risk_budget.allow_releverage
-            ).lower(),
-            "target_gross_exposure": (
-                "-"
-                if portfolio_construction.risk_budget.target_gross_exposure is None
-                else portfolio_construction.risk_budget.target_gross_exposure
-            ),
-            "mean_gross_budget_utilization": round(
-                _mean([item.mean_gross_budget_utilization for item in range_summaries]),
-                6,
-            ),
-            "mean_gross_budget_error": round(
-                _mean([item.mean_gross_budget_error for item in range_summaries]),
-                6,
-            ),
-            "mean_decision_gross_leverage_exposure": round(
-                _mean(
-                    [item.decision_gross_leverage_exposure for item in range_summaries]
-                ),
-                6,
-            ),
-        },
-    )
     construction_trace_metric_group_result = (
         build_portfolio_construction_trace_metric_group_result(
             source=source,
@@ -1055,7 +1019,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
                 portfolio_target_return_alignment_metric_group_result
             ),
             decision_metric_group_result.metric_group_name: decision_metric_group_result,
-            risk_budget_metric_group_result.metric_group_name: risk_budget_metric_group_result,
             construction_trace_metric_group_result.metric_group_name: (
                 construction_trace_metric_group_result
             ),
@@ -1237,7 +1200,6 @@ def _run_backtest_variant(
             direction_mode=portfolio_construction.direction_mode,
             top_k=top_k,
             active_overlay=portfolio_construction.active_overlay,
-            risk_budget=portfolio_construction.risk_budget,
             historical_return_lookback_steps=_historical_return_lookback_steps(
                 portfolio_construction
             ),
@@ -1575,10 +1537,6 @@ def _range_summary_from_variant_results(
         min_abs_weight=portfolio_construction.portfolio_intent.concentration_min_abs_weight,
         top_intent_n=portfolio_construction.portfolio_intent.top_gross_share_cap_n,
     )
-    risk_budget = _portfolio_risk_budget_from_backtest(
-        selected,
-        portfolio_construction=portfolio_construction,
-    )
     construction_impact = _portfolio_construction_stage_impact_from_backtest(selected)
     execution_impact = _execution_trace_from_backtest(selected)
     cost_drag = _cost_drag_from_backtest(selected, subject_set=subject_set)
@@ -1619,15 +1577,6 @@ def _range_summary_from_variant_results(
         optimizer_fallback_reason=str(
             optimizer_diagnostics["optimizer_fallback_reason"]
         ),
-        risk_normalization_mode=str(risk_budget["risk_normalization_mode"]),
-        target_gross_exposure=float(risk_budget["target_gross_exposure"]),
-        mean_gross_budget_utilization=float(
-            risk_budget["mean_gross_budget_utilization"]
-        ),
-        mean_gross_budget_error=float(risk_budget["mean_gross_budget_error"]),
-        risk_budget_stage_mean_gross_delta=construction_impact[
-            "risk_budget_stage_mean_gross_delta"
-        ],
         target_vol_stage_mean_gross_delta=construction_impact[
             "target_vol_stage_mean_gross_delta"
         ],
@@ -1683,33 +1632,6 @@ def _range_summary_from_variant_results(
     )
 
 
-def _portfolio_risk_budget_from_backtest(
-    result: DecisionBacktestResult,
-    *,
-    portfolio_construction: PortfolioConstructionSpec,
-) -> dict[str, float | str]:
-    risk_budget = portfolio_construction.risk_budget
-    target_gross = risk_budget.target_gross_exposure
-    if target_gross is None or target_gross <= 0.0:
-        return {
-            "risk_normalization_mode": risk_budget.risk_normalization_mode,
-            "target_gross_exposure": 0.0,
-            "mean_gross_budget_utilization": 0.0,
-            "mean_gross_budget_error": 0.0,
-        }
-    gross_values = [float(step.gross_leverage_exposure) for step in result.steps]
-    return {
-        "risk_normalization_mode": risk_budget.risk_normalization_mode,
-        "target_gross_exposure": float(target_gross),
-        "mean_gross_budget_utilization": _mean(
-            [value / float(target_gross) for value in gross_values]
-        ),
-        "mean_gross_budget_error": _mean(
-            [abs(value - float(target_gross)) for value in gross_values]
-        ),
-    }
-
-
 def _optimizer_diagnostics_from_backtest(
     result: DecisionBacktestResult,
 ) -> dict[str, str]:
@@ -1755,13 +1677,6 @@ def _portfolio_construction_stage_impact_from_backtest(
         for trace in getattr(step, "construction_trace", ())
     ]
     return {
-        "risk_budget_stage_mean_gross_delta": _mean(
-            [
-                item.gross_delta
-                for item in traces
-                if item.stage_name == "risk_budget_normalization"
-            ]
-        ),
         "target_vol_stage_mean_gross_delta": _mean(
             [
                 item.gross_delta
@@ -2127,10 +2042,8 @@ def _failure_finding_groups(
     rebalance_policy_cases: list[EvaluationFailureFinding] = []
     signed_belief_cases: list[EvaluationFailureFinding] = []
     portfolio_target_return_alignment_cases: list[EvaluationFailureFinding] = []
-    risk_budget_cases: list[EvaluationFailureFinding] = []
     concentration_cases: list[EvaluationFailureFinding] = []
     intent = portfolio_construction.portfolio_intent
-    risk_budget = portfolio_construction.risk_budget
     for item in sorted(
         range_summaries,
         key=lambda row: (
@@ -2224,34 +2137,6 @@ def _failure_finding_groups(
                     },
                 )
             )
-        if (
-            risk_budget.risk_normalization_mode != "none"
-            and risk_budget.target_gross_exposure is not None
-        ):
-            tolerance = max(float(risk_budget.target_gross_exposure) * 0.05, 0.02)
-            if item.mean_gross_budget_error > tolerance:
-                risk_budget_cases.append(
-                    EvaluationFailureFinding(
-                        label=item.label,
-                        severity=abs(float(item.mean_gross_budget_error)),
-                        metrics={
-                            "risk_normalization_mode": item.risk_normalization_mode,
-                            "target_gross_exposure": round(
-                                item.target_gross_exposure,
-                                6,
-                            ),
-                            "mean_gross_budget_utilization": round(
-                                item.mean_gross_budget_utilization,
-                                6,
-                            ),
-                            "mean_gross_budget_error": round(
-                                item.mean_gross_budget_error,
-                                6,
-                            ),
-                            "step_count": item.step_count,
-                        },
-                    )
-                )
         concentration_severity = 0.0
         if intent.effective_n_floor is not None:
             concentration_severity = max(
@@ -2320,11 +2205,6 @@ def _failure_finding_groups(
             metric_group_name="portfolio_target_return_alignment",
             source=source,
             findings=tuple(portfolio_target_return_alignment_cases),
-        ),
-        EvaluationFailureFindingGroup(
-            metric_group_name="portfolio_risk_budget",
-            source=source,
-            findings=tuple(risk_budget_cases),
         ),
         EvaluationFailureFindingGroup(
             metric_group_name="portfolio_concentration",

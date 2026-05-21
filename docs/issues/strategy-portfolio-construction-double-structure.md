@@ -134,7 +134,6 @@ Current classification:
 | `asset_class_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `cluster_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `portfolio_intent` | `PortfolioConstructionSpec` | legacy / unclear | Captures effective-N and concentration constraints, but the name is vague. |
-| `risk_budget` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Risk normalization and target exposure controls. |
 | `sleeve_composition` | `PortfolioConstructionSpec` | strategy decision / portfolio allocation | Could be core hypothesis structure or allocation blending. |
 | `rebalance_friction_policy` | `StrategyPortfolioSpec` | strategy decision / evaluation assumption | Strategy-owned if it controls trade decisions; evaluation-owned if it only models friction. |
 | `execution_policy` | `StrategyPortfolioSpec` | evaluation assumption | `fee_bps`, `market_impact_bps`, and spread assumptions are used to calculate net results. |

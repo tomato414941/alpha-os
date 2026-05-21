@@ -1966,7 +1966,6 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                             "prediction_diagnostics",
                             "portfolio_target_return_alignment",
                         "decision_quality",
-                        "portfolio_risk_budget",
                         "portfolio_construction_trace",
                         "execution_trace",
                         "cost_drag",
@@ -2092,7 +2091,7 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
 
     output = capsys.readouterr().out
     assert "alpha-os diagnostic dry run" in output
-    assert "Cases:    15" in output
+    assert "Cases:    14" in output
     assert "has_signal_discovery=false" in output
     assert "has_signal_discovery=true" in output
     assert "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case" in output
@@ -2109,7 +2108,6 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
         "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
         in output
     )
-    assert "global_macro_tradeable_daily_diagnostic_no_risk_budget_case" in output
     assert "optimizer_backend=cvxpy_signed_mean_variance" in output
     assert "benefit_scale=2.0" in output
     assert "turnover_budget=0.025" in output
