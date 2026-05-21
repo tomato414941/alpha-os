@@ -47,7 +47,7 @@ Regimes, macro states, and other non-allocatable targets should not use
 - Do not rename `subject_id` immediately.
 - Do not introduce a generic `target_id` replacement for all existing
   `subject_id` fields.
-- Do not change persisted prediction, evaluation, or report schemas as part of
+- Do not change persisted prediction, evaluation, or run result schemas as part of
   terminology cleanup.
 
 ## Acceptance Criteria

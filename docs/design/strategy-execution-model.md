@@ -45,7 +45,7 @@ names are acceptable when they stay scoped:
 
 - `evaluation spec`
 - `evaluation task`
-- `evaluation report`
+- `evaluation run result`
 
 These should be read as **trading-strategy evaluation** concepts, not as generic
 execution concepts.
@@ -162,7 +162,7 @@ This means:
 - the difference is owned by the engine contract, not by strategy semantics
 
 The evaluation object remains the trading strategy under a specific engine
-context. Prediction-level metrics are only one part of the resulting report.
+context. Prediction-level metrics are only one part of the resulting run result.
 
 ### Current Run-Input Contracts
 
@@ -218,7 +218,7 @@ Inputs:
 
 Outputs:
 
-- evaluation report
+- evaluation run result
 - evaluation metric group results
 - fold-level runtime artifacts
 
@@ -241,7 +241,7 @@ Inputs:
 
 Outputs:
 
-- evaluation report
+- evaluation run result
 - replay-only comparison metrics
 
 Use this when:
@@ -320,7 +320,7 @@ The current codebase should converge on this split:
   - current implementation name for one engine-specific run spec
 - evaluation target tuple
   - transient result key and strategy id selected for one run
-- `EvaluationReport`
+- `EvaluationRunResult`
   - the recorded result of strategy evaluation
 
 In other words:

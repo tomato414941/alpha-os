@@ -67,4 +67,4 @@ tuples when a manifest-scoped command needs explicit case identifiers.
 ## Close Condition
 
 Close this when the manifest field name is resolved and result-side
-`EvaluationTaskResult` naming is either retained intentionally or replaced.
+`EvaluationResult` naming is either retained intentionally or replaced.

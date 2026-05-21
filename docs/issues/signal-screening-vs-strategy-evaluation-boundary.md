@@ -33,5 +33,5 @@ candidate strategy comparisons.
 
 ## Close Condition
 
-Close this when the naming, docs, and report labels make it clear that
+Close this when the naming, docs, and run result labels make it clear that
 discovery-stage scoring is screening, not final strategy evaluation.

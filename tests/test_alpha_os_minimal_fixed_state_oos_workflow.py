@@ -37,4 +37,4 @@ def test_minimal_fixed_state_oos_training_eval_runs_without_checkpoint_preparati
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
     assert "Evaluation spec:  minimal_fixed_state_train_eval" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output

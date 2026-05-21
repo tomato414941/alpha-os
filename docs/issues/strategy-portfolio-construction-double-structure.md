@@ -49,7 +49,7 @@ Existing `sizing_method=equal_weight` is not the same concept as
 
 The existing `sizing_method` field is part of the legacy rich sizing path. It
 also implies backend classification such as `sizing_engine`, `sizing_family`,
-history requirements, optimizer/report labeling, and skfolio-style model
+history requirements, optimizer/run result labeling, and skfolio-style model
 selection.
 
 `portfolio_sizing_policy.py` should be treated as a legacy rich sizing path, not
@@ -106,7 +106,7 @@ and net exposure targeting.
 
 The problem is not that constraints exist. The problem is that
 `PortfolioConstructionSpec` mixes allocation policy, constraint policy, and
-report contract fields in one object.
+run result contract fields in one object.
 
 `EqualWeightLongOnlyAllocator` may keep a minimal gross exposure cap for a simple
 standalone rule, but richer constraints such as target volatility, leverage
@@ -119,7 +119,7 @@ Current classification:
 
 | Field | Current location | Classification | Reason |
 |---|---|---|---|
-| `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, and report contract fields. |
+| `portfolio_construction` | `StrategyPortfolioSpec` | legacy / unclear | Parent object mixing allocation, constraints, and run result contract fields. |
 | `selection_kind` | `StrategyPortfolioSpec` | portfolio allocation | Chooses which candidates may receive weights. Belongs with `top_k`. |
 | `top_k` | `StrategyPortfolioSpec` | portfolio allocation | Parameter of `selection_kind=top_k`; no longer belongs to `PortfolioConstructionSpec`. |
 | `sizing_policy` | `PortfolioConstructionSpec` | portfolio allocation / legacy unclear | Related to weight creation, but also carries optimizer labels and history requirements. |

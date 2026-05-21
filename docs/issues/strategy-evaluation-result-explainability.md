@@ -2,17 +2,17 @@
 
 ## Problem
 
-An evaluation report should make it possible to tell what was evaluated without
+An evaluation run result should make it possible to tell what was evaluated without
 reverse-engineering execution paths or unrelated artifacts.
 
 ## Risk
 
-If report meaning has to be inferred from execution path names, artifact refs,
+If run result meaning has to be inferred from execution path names, artifact refs,
 or absent fields, readers can misunderstand what a result represents.
 
 ## Boundary
 
-This issue is about report facts.
+This issue is about run result facts.
 
 It is separate from:
 
@@ -25,7 +25,7 @@ It is separate from:
 Reports already expose strategy ids, artifact refs, strategy contract fields,
 metric groups, and decision traces.
 
-Do not add new explanatory fields until there is a concrete report question
+Do not add new explanatory fields until there is a concrete run result question
 that cannot be answered from those facts.
 
 ## Close Condition

@@ -25,7 +25,7 @@ That can make it hard to tell whether a subject set belongs to:
 - the strategy definition
 - the training/preparation provenance
 - the concrete evaluation run
-- the report comparison contract
+- the run result comparison contract
 
 If this remains implicit, the same strategy may be difficult to evaluate under a
 different evaluation universe without redefining strategy or provenance inputs.

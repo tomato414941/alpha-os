@@ -68,7 +68,7 @@ def _register_run_diagnostic_evaluation(
         action="store_true",
         help=(
             "Apply manifests and validate the diagnostic case plan without "
-            "running signal discovery, backtests, or report generation"
+            "running signal discovery, backtests, or run result generation"
         ),
     )
     parser.add_argument(

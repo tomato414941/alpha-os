@@ -62,7 +62,7 @@ Backtest OOS requires:
 - reproducible inputs
 - explicit portfolio construction
 - cost, funding, roll, borrow, and multiplier treatment when relevant
-- report and decision trace persistence
+- run result and decision trace persistence
 - enough diagnostics to explain failure, not only aggregate metrics
 
 ### Promotion Or Rejection

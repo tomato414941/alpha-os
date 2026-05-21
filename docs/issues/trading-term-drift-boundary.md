@@ -103,8 +103,8 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [ ] `signal train`
 - [ ] `train artifact`
 - [ ] `checkpoint-based evaluation`
-- [ ] `evaluation task result`
-- [ ] `evaluation report`
+- [ ] `evaluation result`
+- [ ] `evaluation run result`
 - [ ] `evaluation metric group`
 - [ ] `evaluation metric`
 - [ ] `evaluation metric group result`

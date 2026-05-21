@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 
 def _build_trace_result():
     from alpha_os.decision_backtest import (
@@ -70,32 +68,28 @@ def _build_trace_result():
     )
 
 
-def test_evaluation_report_lane_round_trips_and_defaults():
-    from alpha_os.evaluation_report import EvaluationReport
-    from alpha_os.evaluation_result import EvaluationTaskResult
+def test_evaluation_run_result_lane_round_trips_and_defaults():
+    from alpha_os.evaluation_run_result import EvaluationRunResult
+    from alpha_os.evaluation_result import EvaluationResult
 
-    legacy = EvaluationReport.from_document(
-        evaluation_report_id="report:legacy",
+    default_lane = EvaluationRunResult.from_document(
+        evaluation_run_result_id="run_result:legacy",
         document={
             "evaluation_spec_id": "evaluation_spec:test",
-            "task_results": [],
+            "results": {
+                "case:test": {
+                    "strategy_id": "strategy:test",
+                    "metric_group_results": [],
+                    "failure_finding_groups": [],
+                }
+            },
             "created_at": "2026-04-21T00:00:00Z",
         },
     )
-    assert legacy.evaluation_lane == "backtest_oos"
+    assert default_lane.evaluation_lane == "backtest_oos"
 
-    with pytest.raises(ValueError, match="summaries field is no longer supported"):
-        EvaluationReport.from_document(
-            evaluation_report_id="report:legacy-summaries",
-            document={
-                "evaluation_spec_id": "evaluation_spec:test",
-                "summaries": [],
-                "created_at": "2026-04-21T00:00:00Z",
-            },
-        )
-
-    report = EvaluationReport(
-        evaluation_report_id="report:test",
+    run_result = EvaluationRunResult(
+        evaluation_run_result_id="run_result:test",
         evaluation_spec_id="evaluation_spec:test",
         evaluation_lane="diagnostic",
         oos_contract_summary={
@@ -105,17 +99,16 @@ def test_evaluation_report_lane_round_trips_and_defaults():
             "range_non_overlap": "pass",
             "evaluation_after_execution": "pass",
         },
-        task_results=(
-            EvaluationTaskResult(
-                evaluation_task_id="case:test",
+        results={
+            "case:test": EvaluationResult(
                 strategy_id="strategy:test",
-            ),
-        ),
+            )
+        },
         created_at="2026-04-21T00:00:00Z",
     )
-    restored = EvaluationReport.from_document(
-        evaluation_report_id="report:test",
-        document=report.to_document(),
+    restored = EvaluationRunResult.from_document(
+        evaluation_run_result_id="run_result:test",
+        document=run_result.to_document(),
     )
 
     assert restored.evaluation_lane == "diagnostic"
@@ -284,15 +277,15 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
         _fake_direct_case,
     )
 
-    report_state = evaluate_evaluation_spec_state(
+    run_result_state = evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
         evaluation_targets=(_build_direct_evaluation_task(),),
         base_url="http://example.com",
     )
 
-    assert report_state.evaluation_report_id.startswith("evaluation_spec:test:")
-    assert len(report_state.report.task_results) == 1
-    assert report_state.report.task_results[0].evaluation_task_id == "case:test"
+    assert run_result_state.evaluation_run_result_id.startswith("evaluation_spec:test:")
+    assert len(run_result_state.run_result.results) == 1
+    assert tuple(run_result_state.run_result.results) == ("case:test",)
     assert store.list_portfolio_decisions(limit=10) == []
     store.close()

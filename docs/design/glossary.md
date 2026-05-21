@@ -293,17 +293,18 @@ Running evaluation with a precomputed strategy checkpoint instead of retraining.
 
 This is a comparison shape, not the default evaluation shape.
 
-### evaluation task result
+### evaluation result
 
-The recorded factual result of one evaluation task.
+The recorded factual result of one evaluated strategy target.
 
-Includes metric group results, failure finding groups, and artifact references.
+Includes metric group results and failure finding groups.
 
-### evaluation report
+### evaluation run result
 
-A persisted record container for one or more evaluation task results. It is not a comparison object.
+A persisted record container for one or more evaluation results. It is not a
+comparison object or a human-facing report.
 
-Includes task results from one evaluation run.
+Includes results from one evaluation run.
 
 ### evaluation metric group
 
@@ -366,14 +367,14 @@ Excess return over a benchmark.
 `alpha` is an outcome, not a predictive unit.
 Short implementation notes:
 
-- `EvaluationTaskResult` is the class name for an evaluation task result. Use
-  `EvaluationReport.task_results` in runtime readers and serialization because
-  `task_results` is the persisted report field.
+- `EvaluationResult` is the class name for an evaluation result. Use
+  `EvaluationRunResult.results` in runtime readers and serialization because
+  `results` is the persisted run result field.
 - Runtime readers and serialization should use `metric_group_results`.
 - One evaluation task has exactly one strategy; one strategy may appear in many
   cases. Runtime case roles are limited to `baseline` and `standard`.
 - Candidate/diagnostic-style labels belong in research notes, not manifests or
-  reports.
+  run results.
 - `Benchmark` is intentionally not an evaluation-settings class name. Reserve it
   for market indexes, benchmark portfolios, and benchmark-relative return/risk
   measurement.
@@ -469,7 +470,7 @@ So `evaluation` is acceptable when scoped as:
 
 - `evaluation spec`
 - `evaluation task`
-- `evaluation report`
+- `evaluation run result`
 
 Bare `evaluation` should not become the universal name for all strategy
 execution.
@@ -540,7 +541,7 @@ The following legacy terms should not be used as new source-of-truth names:
 | `signal candidate` | `signal` |
 | `dsl` as a bare name | `signal expression language` when the distinction matters |
 | `search` when meaning generated-and-screened signal space | `signal discovery` |
-| `experiment` as universal comparison object | usually `evaluation task` or `evaluation report`, depending on context |
+| `experiment` as universal comparison object | usually `evaluation task` or `evaluation run result`, depending on context |
 
 ## Naming Rule
 

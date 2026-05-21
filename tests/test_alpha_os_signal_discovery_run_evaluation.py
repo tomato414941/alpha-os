@@ -661,7 +661,7 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output
 
 
 def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys):
@@ -1288,18 +1288,18 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output
 
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert len(report_state.report.task_results) == 1
-        task_result = report_state.report.task_results[0]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        assert len(run_result_state.run_result.results) == 1
+        result = next(iter(run_result_state.run_result.results.values()))
         decision_metric_group_result = next(
             item
-            for item in task_result.metric_group_results
+            for item in result.metric_group_results
             if item.metric_group_name == "decision_quality"
         )
         assert decision_metric_group_result.metrics["total_decision_step_count"] > 0
@@ -1521,17 +1521,17 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output
 
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        task_result = report_state.report.task_results[0]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        result = next(iter(run_result_state.run_result.results.values()))
         decision_metric_group_result = next(
             item
-            for item in task_result.metric_group_results
+            for item in result.metric_group_results
             if item.metric_group_name == "decision_quality"
         )
         assert decision_metric_group_result.metrics["total_decision_step_count"] > 0
@@ -1756,17 +1756,17 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output
 
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        task_result = report_state.report.task_results[0]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        result = next(iter(run_result_state.run_result.results.values()))
         decision_metric_group_result = next(
             item
-            for item in task_result.metric_group_results
+            for item in result.metric_group_results
             if item.metric_group_name == "decision_quality"
         )
         assert decision_metric_group_result.metrics["total_decision_step_count"] > 0
@@ -1908,7 +1908,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 1" in output
+    assert "Results: 1" in output
 
 
 def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
@@ -2124,9 +2124,9 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert report_state.report.evaluation_spec_id == "diagnostic_eval"
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        assert run_result_state.run_result.evaluation_spec_id == "diagnostic_eval"
     finally:
         store.close()
 
@@ -2179,7 +2179,7 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        assert store.get_latest_evaluation_report() is None
+        assert store.get_latest_evaluation_run_result() is None
     finally:
         store.close()
 
@@ -2238,12 +2238,12 @@ def test_run_fixture_diagnostic_evaluation_uses_local_csv_data(tmp_path, capsys)
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        assert report_state.report.evaluation_spec_id == "fixture_daily_diagnostic_eval"
-        task_result = report_state.report.task_results[0]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        assert run_result_state.run_result.evaluation_spec_id == "fixture_daily_diagnostic_eval"
+        result = next(iter(run_result_state.run_result.results.values()))
         metric_names = {
-            item.metric_group_name for item in task_result.metric_group_results
+            item.metric_group_name for item in result.metric_group_results
         }
         assert metric_names >= {
             "portfolio_target_return_alignment",
@@ -2307,7 +2307,7 @@ def test_run_diagnostic_evaluation_dry_run_check_passes_without_report(
     store = EvaluationStore(db_path)
     try:
         store.ensure_schema()
-        assert store.get_latest_evaluation_report() is None
+        assert store.get_latest_evaluation_run_result() is None
     finally:
         store.close()
 
@@ -2594,4 +2594,4 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
 
     output = capsys.readouterr().out
     assert "alpha-os evaluation run" in output
-    assert "TaskResults: 2" in output
+    assert "Results: 2" in output

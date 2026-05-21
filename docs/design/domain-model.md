@@ -44,9 +44,9 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **evaluation task** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec as a concrete run setup, including required train or strategy checkpoint artifacts. | one strategy under one strict OOS evaluation spec |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. Connection details are runtime configuration, not evaluation task metadata. | signal-noise service URL; local parquet root |
-| **evaluation task result** | The recorded factual outcome of one evaluation task. | OOS Sharpe, belief corr, turnover, drawdown |
-| **evaluation report** | A persisted record container for one or more evaluation task results. It is not a comparison object. | task results from one evaluation run |
-| **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation report. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
+| **evaluation result** | The recorded factual outcome of one evaluated strategy target. | OOS Sharpe, belief corr, turnover, drawdown |
+| **evaluation run result** | A persisted record container for one or more evaluation results. It is not a comparison object or a human-facing report. | results from one evaluation run |
+| **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation run result. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
 | **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
 | **evaluation metric group result** | One result block for one evaluation metric group. It is `metric_group_name + source + metrics`. | `EvaluationMetricGroupResult(metric_group_name="decision_quality", metrics={...})` |
 | **evaluation metric group name** | The identifier for an evaluation metric group when a contract references expected metric fields. | `CrossInstrumentMetricContract.metric_group_name="decision_quality"` |
@@ -59,14 +59,14 @@ The old profile-oriented implementation name has been removed.
 Read `evaluation metric group` as `evaluation category` or `metric group`; it is
 the grouping key for related metrics such as decision quality, cost drag, or
 concentration.
-In report contracts, use `metric_group_name` for this identifier to avoid
+In run result contracts, use `metric_group_name` for this identifier to avoid
 confusing the metric group concept with the contract field name.
 
 ```text
 EvaluationSpec = evaluation settings
 EvaluationTarget = transient result key + strategy id selected for an evaluation run
-EvaluationTaskResult = recorded factual outcome of one evaluated strategy target
-EvaluationReport = persisted container of evaluation target results
+EvaluationResult = recorded factual outcome of one evaluated strategy target
+EvaluationRunResult = persisted container of evaluation target results
 EvaluationMetricGroupResult = one metric group result block inside a target result
 ```
 
@@ -80,19 +80,19 @@ evaluation runs under different settings.
 Do not use `profile` to mean an evaluation configuration template. Use
 `EvaluationSpec` for evaluation settings.
 
-Evaluation reports should record and display measured facts. Relative
-comparisons between findings are separate comparison views, not part of the core
-evaluation result terminology.
+Evaluation run results should record measured facts. Human-facing reports and
+relative comparisons are downstream views, not part of the core evaluation
+result terminology.
 
-The implementation name for an evaluation target result is `EvaluationTaskResult`.
+The implementation name for an evaluation target result is `EvaluationResult`.
 Treat it as a target-level result record, not as a comparison row.
-`EvaluationReport.task_results` remains the runtime and persisted field for
-evaluation task results.
+`EvaluationRunResult.results` remains the runtime and persisted field for
+evaluation results.
 
-Use `EvaluationReport.task_results` in display, validation, diagnostics, and
+Use `EvaluationRunResult.results` in display, validation, diagnostics, and
 analysis code.
 
-Use `EvaluationTaskResult.metric_group_results` in runtime readers and persisted
+Use `EvaluationResult.metric_group_results` in runtime readers and persisted
 documents.
 
 ## Signal And Strategy Boundary
@@ -123,7 +123,7 @@ connection source.
 
 Comparison anchors such as "baseline" are chosen by comparison views or
 research notes. They are not fields on evaluation targets or
-`EvaluationTaskResult`.
+`EvaluationResult`.
 
 Use candidate/diagnostic-style wording only in documents and research notes:
 
@@ -132,7 +132,7 @@ Use candidate/diagnostic-style wording only in documents and research notes:
   fails
 
 These labels are useful for human discussion, but they are not manifest schema,
-report schema, evaluation task roles, or strategy kinds.
+run result schema, evaluation task roles, or strategy kinds.
 
 Trading strategy is the first-class trading concept. It should usually include:
 

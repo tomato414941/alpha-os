@@ -29,7 +29,7 @@ which is about the comparison contract that makes candidate results comparable.
 ## Current Finding
 
 Hand-written trainless candidates and signal-discovery-derived candidates both
-feed the decision backtest and report metric machinery.
+feed the decision backtest and run result metric machinery.
 
 The problem is not that every metric is totally separate. The problem is that
 engine path names still carry conceptual weight.

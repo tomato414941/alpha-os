@@ -29,7 +29,7 @@ directly instead of preserving a single mode-like field.
 - `StrategyExecutionSpec` removed
 - strategy evaluation no longer carries `execution_kind`;
   executor input-source routing remains tracked separately
-- manifest and report payloads no longer persist `execution_kind`
+- manifest and run result payloads no longer persist `execution_kind`
 - evaluation planning no longer branches on `trainless` or `trained`
 
 ## Boundary

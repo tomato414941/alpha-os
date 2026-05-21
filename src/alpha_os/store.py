@@ -10,7 +10,7 @@ from typing import Any
 from .config import DEFAULT_SUBJECT_ID, DEFAULT_TARGET, default_runtime_asset
 from .compression import CompressedBelief
 from .evaluation_spec import EvaluationSpec
-from .evaluation_report import EvaluationReport
+from .evaluation_run_result import EvaluationRunResult
 from .signal_registry import (
     SignalDefinition,
     SignalSpec,
@@ -698,17 +698,17 @@ class TradingStrategyState:
 
 
 @dataclass(frozen=True)
-class EvaluationReportState:
-    evaluation_report_id: str
+class EvaluationRunResultState:
+    evaluation_run_result_id: str
     evaluation_spec_id: str
-    report_json: str
+    run_result_json: str
     created_at: str
 
     @property
-    def report(self) -> EvaluationReport:
-        return EvaluationReport.from_document(
-            evaluation_report_id=self.evaluation_report_id,
-            document=json.loads(self.report_json),
+    def run_result(self) -> EvaluationRunResult:
+        return EvaluationRunResult.from_document(
+            evaluation_run_result_id=self.evaluation_run_result_id,
+            document=json.loads(self.run_result_json),
         )
 
 
@@ -1082,13 +1082,15 @@ def _row_to_portfolio_decision(row: sqlite3.Row | None) -> PortfolioDecisionStat
     )
 
 
-def _row_to_evaluation_report(row: sqlite3.Row | None) -> EvaluationReportState | None:
+def _row_to_evaluation_run_result(
+    row: sqlite3.Row | None,
+) -> EvaluationRunResultState | None:
     if row is None:
         return None
-    return EvaluationReportState(
-        evaluation_report_id=str(row["evaluation_report_id"]),
+    return EvaluationRunResultState(
+        evaluation_run_result_id=str(row["evaluation_run_result_id"]),
         evaluation_spec_id=str(row["evaluation_spec_id"]),
-        report_json=str(row["report_json"]),
+        run_result_json=str(row["run_result_json"]),
         created_at=str(row["created_at"]),
     )
 
@@ -1353,10 +1355,10 @@ class EvaluationStore:
                 PRIMARY KEY (snapshot_set_id, evaluation_id, signal_id)
             );
 
-            CREATE TABLE IF NOT EXISTS evaluation_reports (
-                evaluation_report_id TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS evaluation_run_results (
+                evaluation_run_result_id TEXT PRIMARY KEY,
                 evaluation_spec_id TEXT NOT NULL,
-                report_json TEXT NOT NULL,
+                run_result_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
 
@@ -2777,72 +2779,72 @@ class EvaluationStore:
         ).fetchall()
         return [_row_to_trading_strategy(row) for row in rows if row is not None]
 
-    def upsert_evaluation_report(
+    def upsert_evaluation_run_result(
         self,
         *,
-        report: EvaluationReport,
-    ) -> EvaluationReportState:
+        run_result: EvaluationRunResult,
+    ) -> EvaluationRunResultState:
         self.ensure_schema()
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO evaluation_reports (
-                    evaluation_report_id, evaluation_spec_id, report_json, created_at
+                INSERT INTO evaluation_run_results (
+                    evaluation_run_result_id, evaluation_spec_id, run_result_json, created_at
                 )
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT(evaluation_report_id) DO UPDATE SET
+                ON CONFLICT(evaluation_run_result_id) DO UPDATE SET
                     evaluation_spec_id = excluded.evaluation_spec_id,
-                    report_json = excluded.report_json,
+                    run_result_json = excluded.run_result_json,
                     created_at = excluded.created_at
                 """,
                 (
-                    report.evaluation_report_id,
-                    report.evaluation_spec_id,
-                    json.dumps(report.to_document(), sort_keys=True),
-                    report.created_at,
+                    run_result.evaluation_run_result_id,
+                    run_result.evaluation_spec_id,
+                    json.dumps(run_result.to_document(), sort_keys=True),
+                    run_result.created_at,
                 ),
             )
-        state = self.get_evaluation_report(report.evaluation_report_id)
+        state = self.get_evaluation_run_result(run_result.evaluation_run_result_id)
         assert state is not None
         return state
 
-    def get_evaluation_report(
+    def get_evaluation_run_result(
         self,
-        evaluation_report_id: str,
-    ) -> EvaluationReportState | None:
+        evaluation_run_result_id: str,
+    ) -> EvaluationRunResultState | None:
         row = self.conn.execute(
             """
-            SELECT evaluation_report_id, evaluation_spec_id, report_json, created_at
-            FROM evaluation_reports
-            WHERE evaluation_report_id = ?
+            SELECT evaluation_run_result_id, evaluation_spec_id, run_result_json, created_at
+            FROM evaluation_run_results
+            WHERE evaluation_run_result_id = ?
             """,
-            (evaluation_report_id,),
+            (evaluation_run_result_id,),
         ).fetchone()
-        return _row_to_evaluation_report(row)
+        return _row_to_evaluation_run_result(row)
 
-    def get_latest_evaluation_report(self) -> EvaluationReportState | None:
+    def get_latest_evaluation_run_result(self) -> EvaluationRunResultState | None:
         row = self.conn.execute(
             """
-            SELECT evaluation_report_id, evaluation_spec_id, report_json, created_at
-            FROM evaluation_reports
-            ORDER BY created_at DESC, evaluation_report_id DESC
+            SELECT evaluation_run_result_id, evaluation_spec_id, run_result_json, created_at
+            FROM evaluation_run_results
+            ORDER BY created_at DESC, evaluation_run_result_id DESC
             LIMIT 1
             """
         ).fetchone()
-        return _row_to_evaluation_report(row)
+        return _row_to_evaluation_run_result(row)
 
-    def list_evaluation_reports(
+    def list_evaluation_run_results(
         self,
         *,
         evaluation_spec_id: str | None = None,
         limit: int = 20,
-    ) -> list[EvaluationReportState]:
+    ) -> list[EvaluationRunResultState]:
         if evaluation_spec_id is None:
             rows = self.conn.execute(
                 """
-                SELECT evaluation_report_id, evaluation_spec_id, report_json, created_at
-                FROM evaluation_reports
-                ORDER BY created_at DESC, evaluation_report_id DESC
+                SELECT evaluation_run_result_id, evaluation_spec_id, run_result_json, created_at
+                FROM evaluation_run_results
+                ORDER BY created_at DESC, evaluation_run_result_id DESC
                 LIMIT ?
                 """,
                 (max(int(limit), 1),),
@@ -2850,10 +2852,10 @@ class EvaluationStore:
         else:
             rows = self.conn.execute(
                 """
-                SELECT evaluation_report_id, evaluation_spec_id, report_json, created_at
-                FROM evaluation_reports
+                SELECT evaluation_run_result_id, evaluation_spec_id, run_result_json, created_at
+                FROM evaluation_run_results
                 WHERE evaluation_spec_id = ?
-                ORDER BY created_at DESC, evaluation_report_id DESC
+                ORDER BY created_at DESC, evaluation_run_result_id DESC
                 LIMIT ?
                 """,
                 (
@@ -2861,7 +2863,7 @@ class EvaluationStore:
                     max(int(limit), 1),
                 ),
             ).fetchall()
-        return [_row_to_evaluation_report(row) for row in rows if row is not None]
+        return [_row_to_evaluation_run_result(row) for row in rows if row is not None]
 
     def set_signal_status(
         self,

@@ -63,7 +63,7 @@ Prefer this direction:
 
 - `evaluation_runner.py` must keep fold scheduling separate from strategy loading
 - `evaluation_execution_strategy.py` mixes input construction, strategy state
-  loading, rollout execution, and report assembly
+  loading, rollout execution, and run result assembly
 - `signal_discovery_id` is used as a routing key instead of local provenance
 
 ## Desired Direction

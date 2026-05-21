@@ -19,7 +19,7 @@ If `universe_policy` is read as "how to build the universe," future fields may
 be added to the wrong object.
 
 The current fields are used to make multi-subject validation, evaluation, and
-report comparison coherent. They do not decide which subjects belong to the set.
+run result comparison coherent. They do not decide which subjects belong to the set.
 
 ## Boundary
 
@@ -36,14 +36,14 @@ When changing this area, distinguish at least:
 
 - Do not rename `universe_policy` immediately.
 - Do not change manifest compatibility as part of terminology cleanup.
-- Do not split `SubjectSet` schema until consumers and report contracts are
+- Do not split `SubjectSet` schema until consumers and run result contracts are
   mapped.
 
 ## Acceptance Criteria
 
 - The project has a clearer name or documented reason to keep
   `universe_policy`.
-- Manifest, store, validation, report, and CLI consumers are mapped before any
+- Manifest, store, validation, run result, and CLI consumers are mapped before any
   rename.
 - If renamed, old persisted/manifest documents have an explicit compatibility
   path.

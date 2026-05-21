@@ -25,7 +25,7 @@ Examples:
 - selection policy may operate on tradable candidates
 - feature generation may operate on observed/reference instruments
 - evaluation may require a fixed evaluated set
-- report comparison may require the same tradable universe
+- run result comparison may require the same tradable universe
 
 ## Boundary
 

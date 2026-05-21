@@ -6,7 +6,7 @@
 
 - evaluation protocol: execution range, evaluation folds, rigor level, and OOS
   contract
-- metric/report configuration: `metric_group_names`, `metric_windows`, and
+- metric/run result configuration: `metric_group_names`, `metric_windows`, and
   `aggregation_kinds`
 - target scoping helpers such as `target_ids`
 
@@ -18,7 +18,7 @@ related but not the same concern.
 
 If more behavior keeps accumulating on `EvaluationSpec`, it may become a broad
 evaluation settings bag. That would make it harder to tell whether a field is
-part of the measurement protocol, report selection, or evaluation target
+part of the measurement protocol, run result selection, or evaluation target
 selection.
 
 ## Boundary
@@ -50,6 +50,6 @@ field or subdocument instead of spreading metric config fields directly across
 ## Acceptance Criteria
 
 - It is clear which fields are evaluation protocol fields.
-- It is clear which fields are metric/report configuration fields.
+- It is clear which fields are metric/run result configuration fields.
 - `target_ids` ownership is either justified on `EvaluationSpec` or moved to a
   more specific boundary issue.

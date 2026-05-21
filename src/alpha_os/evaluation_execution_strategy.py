@@ -12,7 +12,7 @@ from .evaluation_cost_config import (
 from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .evaluation_result import EvaluationTaskResult
+from .evaluation_result import EvaluationResult
 from .trading_strategy import TradingStrategySpec
 from .universe_contract import validate_subject_set_universe_contract
 
@@ -126,13 +126,12 @@ def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
 
 def run_strategy_evaluation(
     *,
-    result_key: str,
     strategy_id: str,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     metric_group_names: tuple[str, ...],
     base_url: str,
     context: EvaluationExecutionContext,
-) -> EvaluationTaskResult:
+) -> EvaluationResult:
     store = context.store
     trading_strategy = _trading_strategy_for_id(store, strategy_id)
     portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
@@ -164,8 +163,7 @@ def run_strategy_evaluation(
         feature_plane_repository=context.feature_plane_repository,
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
-    return EvaluationTaskResult(
-        evaluation_task_id=result_key,
+    return EvaluationResult(
         strategy_id=strategy_id,
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]

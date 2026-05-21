@@ -39,7 +39,7 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
     run_output = capsys.readouterr().out
     assert "alpha-os evaluation run" in run_output
     assert "Evaluation spec:  minimal_oos_eval" in run_output
-    assert "TaskResults: 2" in run_output
+    assert "Results: 2" in run_output
 
     store = EvaluationStore(db_path)
     try:
@@ -67,22 +67,22 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
         assert candidate_strategy.trading_strategy.scope.subject_set_id == "minimal_oos_pair"
         assert candidate_strategy.trading_strategy.scope.target_id == "residual_return_1d"
 
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        report = report_state.report
-        assert report.evaluation_spec_id == "minimal_oos_eval"
-        assert report.oos_contract_summary["rigor_level"] == "diagnostic"
-        assert report.oos_contract_summary["enforcement"] == "warn"
-        assert report.oos_contract_summary["range_non_overlap"] == "pass"
-        assert report.oos_contract_summary["evaluation_after_execution"] == "pass"
-        assert len(report.task_results) == 2
-        task_results = {item.strategy_id: item for item in report.task_results}
-        assert set(task_results) == {
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        run_result = run_result_state.run_result
+        assert run_result.evaluation_spec_id == "minimal_oos_eval"
+        assert run_result.oos_contract_summary["rigor_level"] == "diagnostic"
+        assert run_result.oos_contract_summary["enforcement"] == "warn"
+        assert run_result.oos_contract_summary["range_non_overlap"] == "pass"
+        assert run_result.oos_contract_summary["evaluation_after_execution"] == "pass"
+        assert len(run_result.results) == 2
+        results = {item.strategy_id: item for item in run_result.results.values()}
+        assert set(results) == {
             "strategy:minimal_oos_candidate_equal_weight_hold",
             "strategy:minimal_oos_baseline_equal_weight_hold",
         }
 
-        candidate_result = task_results["strategy:minimal_oos_candidate_equal_weight_hold"]
+        candidate_result = results["strategy:minimal_oos_candidate_equal_weight_hold"]
         assert candidate_result.strategy_id == (
             "strategy:minimal_oos_candidate_equal_weight_hold"
         )

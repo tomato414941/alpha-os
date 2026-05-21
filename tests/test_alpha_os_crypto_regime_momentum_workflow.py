@@ -254,14 +254,14 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
 
     store = EvaluationStore(Path(db_path))
     try:
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        report = report_state.report
-        assert report.evaluation_spec_id == "crypto_regime_momentum_eval"
-        assert len(report.task_results) == 2
-        task_results = {item.strategy_id: item for item in report.task_results}
-        candidate = task_results["strategy:crypto_regime_momentum_candidate"]
-        baseline = task_results["strategy:crypto_regime_momentum_baseline"]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        run_result = run_result_state.run_result
+        assert run_result.evaluation_spec_id == "crypto_regime_momentum_eval"
+        assert len(run_result.results) == 2
+        results = {item.strategy_id: item for item in run_result.results.values()}
+        candidate = results["strategy:crypto_regime_momentum_candidate"]
+        baseline = results["strategy:crypto_regime_momentum_baseline"]
         assert candidate.strategy_id == "strategy:crypto_regime_momentum_candidate"
         assert baseline.strategy_id == "strategy:crypto_regime_momentum_baseline"
 
@@ -388,12 +388,12 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
 
     store = EvaluationStore(Path(db_path))
     try:
-        report_state = store.get_latest_evaluation_report()
-        assert report_state is not None
-        report = report_state.report
-        task_results = {item.strategy_id: item for item in report.task_results}
-        candidate = task_results["strategy:crypto_regime_momentum_candidate"]
-        baseline = task_results["strategy:crypto_regime_momentum_baseline"]
+        run_result_state = store.get_latest_evaluation_run_result()
+        assert run_result_state is not None
+        run_result = run_result_state.run_result
+        results = {item.strategy_id: item for item in run_result.results.values()}
+        candidate = results["strategy:crypto_regime_momentum_candidate"]
+        baseline = results["strategy:crypto_regime_momentum_baseline"]
 
         candidate_mean_net = _metric(
             candidate,
@@ -425,11 +425,10 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
 def test_common_strategy_comparison_contract_rejects_missing_required_metric():
     from alpha_os.evaluation_result import (
         EvaluationMetricGroupResult,
-        EvaluationTaskResult,
+        EvaluationResult,
     )
 
-    candidate = EvaluationTaskResult(
-        evaluation_task_id="candidate",
+    candidate = EvaluationResult(
         strategy_id="strategy:candidate",
         metric_group_results=(
             EvaluationMetricGroupResult(
@@ -448,8 +447,7 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
             ),
         ),
     )
-    comparison_target = EvaluationTaskResult(
-        evaluation_task_id="comparison",
+    comparison_target = EvaluationResult(
         strategy_id="strategy:comparison",
         metric_group_results=(
             EvaluationMetricGroupResult(

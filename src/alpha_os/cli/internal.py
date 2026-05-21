@@ -316,7 +316,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
             action="store_true",
             help=(
                 "Apply manifests and validate the diagnostic case plan without "
-                "running signal discovery, backtests, or report generation"
+                "running signal discovery, backtests, or run result generation"
             ),
         )
         run_diagnostic_evaluation.add_argument(
@@ -3364,7 +3364,7 @@ def _group_evaluation_tasks_by_signal_discovery_with_strategy_lookup(
 
 def cmd_run_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
-        report_state = run_evaluation_use_case(
+        run_result_state = run_evaluation_use_case(
             store=store,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=(
@@ -3374,13 +3374,13 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
             ),
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
         )
-    _print_evaluation_run_summary(report_state)
+    _print_evaluation_run_summary(run_result_state)
     return 0
 
 
 def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (_cfg, store):
-        report_state = run_walk_forward_evaluation_use_case(
+        run_result_state = run_walk_forward_evaluation_use_case(
             store=store,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=(
@@ -3391,7 +3391,7 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
             evaluation_targets=getattr(args, "evaluation_targets", None),
         )
-    _print_evaluation_run_summary(report_state)
+    _print_evaluation_run_summary(run_result_state)
     return 0
 
 
@@ -3474,14 +3474,20 @@ def _diagnostic_optimizer_backend(
     return "rule_based_signal_weighted"
 
 
-def _print_diagnostic_evaluation_focus(report_state) -> None:
-    report = report_state.report if hasattr(report_state, "report") else report_state
+def _print_diagnostic_evaluation_focus(run_result_state) -> None:
+    run_result = (
+        run_result_state.run_result
+        if hasattr(run_result_state, "run_result")
+        else run_result_state
+    )
     print("alpha-os diagnostic focus")
-    print(f"  Report:   {report.evaluation_report_id}")
-    print(f"  Evaluation spec: {report.evaluation_spec_id}")
-    for task_result in report.task_results:
-        print(f"  Task: {task_result.evaluation_task_id}")
-        metric_group_result_map = {item.metric_group_name: item for item in task_result.metric_group_results}
+    print(f"  RunResult:   {run_result.evaluation_run_result_id}")
+    print(f"  Evaluation spec: {run_result.evaluation_spec_id}")
+    for result_key, result in run_result.results.items():
+        print(f"  Result: {result_key}")
+        metric_group_result_map = {
+            item.metric_group_name: item for item in result.metric_group_results
+        }
         for metric_group_name, metric_names in _DIAGNOSTIC_PROFILE_METRIC_GROUPS.items():
             metric_group_result = metric_group_result_map.get(metric_group_name)
             if metric_group_result is None:
@@ -3524,7 +3530,7 @@ def _print_diagnostic_evaluation_dry_run(
         friction = trading_config.rebalance_friction_policy
         costs = trading_config.execution_cost_assumptions
         print(
-            "  Task: "
+            "  Result: "
             f"{_target_key(case)} "
             f"strategy={_target_strategy_id(case)} "
             f"signal_discovery={strategies_by_case_id[_target_key(case)].signal_discovery_id or '-'} "
@@ -3861,19 +3867,23 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
     if bool(args.details):
         with _runtime_store(args.db) as (_cfg, store):
             store.ensure_schema()
-            report_state = store.get_latest_evaluation_report()
-            if report_state is None:
-                raise ValueError("diagnostic evaluation report was not persisted")
-        _print_diagnostic_evaluation_focus(report_state)
+            run_result_state = store.get_latest_evaluation_run_result()
+            if run_result_state is None:
+                raise ValueError("diagnostic evaluation run result was not persisted")
+        _print_diagnostic_evaluation_focus(run_result_state)
     return result
 
 
-def _print_evaluation_run_summary(report_state) -> None:
-    report = report_state.report if hasattr(report_state, "report") else report_state
+def _print_evaluation_run_summary(run_result_state) -> None:
+    run_result = (
+        run_result_state.run_result
+        if hasattr(run_result_state, "run_result")
+        else run_result_state
+    )
     print("alpha-os evaluation run")
-    print(f"  Report:    {report.evaluation_report_id}")
-    print(f"  Evaluation spec:  {report.evaluation_spec_id}")
-    print(f"  TaskResults: {len(report.task_results)}")
+    print(f"  RunResult:    {run_result.evaluation_run_result_id}")
+    print(f"  Evaluation spec:  {run_result.evaluation_spec_id}")
+    print(f"  Results: {len(run_result.results)}")
 
 
 def _format_runtime_strategy_summary(

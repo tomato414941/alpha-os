@@ -153,25 +153,19 @@ class EvaluationFailureFindingGroup:
 
 
 @dataclass(frozen=True, kw_only=True)
-class EvaluationTaskResult:
+class EvaluationResult:
     metric_group_results: tuple[EvaluationMetricGroupResult, ...] = ()
     failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...] = ()
-    evaluation_task_id: str | None = None
     strategy_id: str | None = None
 
     def __post_init__(self) -> None:
-        evaluation_task_id = self.evaluation_task_id
         strategy_id = self.strategy_id
-        if not isinstance(evaluation_task_id, str) or not evaluation_task_id:
-            raise ValueError("evaluation task result is missing evaluation_task_id")
         if not isinstance(strategy_id, str) or not strategy_id:
-            raise ValueError("evaluation task result is missing strategy_id")
-        object.__setattr__(self, "evaluation_task_id", evaluation_task_id)
+            raise ValueError("evaluation result is missing strategy_id")
         object.__setattr__(self, "strategy_id", strategy_id)
 
     def to_document(self) -> dict[str, Any]:
         document = {
-            "evaluation_task_id": self.evaluation_task_id,
             "strategy_id": self.strategy_id,
             "metric_group_results": [
                 item.to_document() for item in self.metric_group_results
@@ -183,43 +177,37 @@ class EvaluationTaskResult:
         return document
 
     @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "EvaluationTaskResult":
-        evaluation_task_id = document.get("evaluation_task_id")
+    def from_document(cls, document: dict[str, Any]) -> "EvaluationResult":
         strategy_id = document.get("strategy_id")
         if "profiles" in document:
             raise ValueError(
-                "evaluation task result profiles field is no longer supported; "
+                "evaluation result profiles field is no longer supported; "
                 "use metric_group_results"
             )
         if "dimension_results" in document:
             raise ValueError(
-                "evaluation task result dimension_results field is no longer "
+                "evaluation result dimension_results field is no longer "
                 "supported; use metric_group_results"
             )
         if "failure_profiles" in document:
             raise ValueError(
-                "evaluation task result failure_profiles field is no longer "
+                "evaluation result failure_profiles field is no longer "
                 "supported; use failure_finding_groups"
             )
         if "failure_results" in document:
             raise ValueError(
-                "evaluation task result failure_results field is no longer "
+                "evaluation result failure_results field is no longer "
                 "supported; use failure_finding_groups"
             )
         metric_group_results = document.get("metric_group_results", [])
         failure_finding_groups = document.get("failure_finding_groups", [])
         if not isinstance(metric_group_results, list):
             raise ValueError(
-                "evaluation task result metric_group_results are invalid"
+                "evaluation result metric_group_results are invalid"
             )
         if not isinstance(failure_finding_groups, list):
-            raise ValueError("evaluation task result failure_finding_groups are invalid")
+            raise ValueError("evaluation result failure_finding_groups are invalid")
         return cls(
-            evaluation_task_id=(
-                None
-                if evaluation_task_id is None
-                else str(evaluation_task_id)
-            ),
             strategy_id=None if strategy_id is None else str(strategy_id),
             metric_group_results=tuple(
                 EvaluationMetricGroupResult.from_document(item)

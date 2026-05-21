@@ -63,13 +63,12 @@ def test_print_evaluation_snapshot_includes_replay_artifacts(capsys):
     assert "Replay:   funding_bps=1.500000 borrow_bps=2.500000 roll_bps=0.750000 multiplier=5.000000" in captured
 
 
-def test_evaluation_task_result_rejects_legacy_profiles_field():
-    from alpha_os.evaluation_result import EvaluationTaskResult
+def test_evaluation_result_rejects_legacy_profiles_field():
+    from alpha_os.evaluation_result import EvaluationResult
 
     with pytest.raises(ValueError, match="profiles field is no longer supported"):
-        EvaluationTaskResult.from_document(
+        EvaluationResult.from_document(
             {
-                "evaluation_task_id": "case:test",
                 "strategy_id": "strategy:test",
                 "profiles": [],
                 "failure_finding_groups": [],
@@ -77,13 +76,12 @@ def test_evaluation_task_result_rejects_legacy_profiles_field():
         )
 
 
-def test_evaluation_task_result_rejects_legacy_failure_profiles_field():
-    from alpha_os.evaluation_result import EvaluationTaskResult
+def test_evaluation_result_rejects_legacy_failure_profiles_field():
+    from alpha_os.evaluation_result import EvaluationResult
 
     with pytest.raises(ValueError, match="failure_profiles field is no longer supported"):
-        EvaluationTaskResult.from_document(
+        EvaluationResult.from_document(
             {
-                "evaluation_task_id": "case:test",
                 "strategy_id": "strategy:test",
                 "metric_group_results": [],
                 "failure_profiles": [],
@@ -91,19 +89,18 @@ def test_evaluation_task_result_rejects_legacy_failure_profiles_field():
         )
 
 
-def test_evaluation_report_roundtrips_task_metric_groups():
-    from alpha_os.evaluation_report import EvaluationReport
+def test_evaluation_run_result_roundtrips_metric_groups():
+    from alpha_os.evaluation_run_result import EvaluationRunResult
     from alpha_os.evaluation_result import (
-        EvaluationTaskResult,
+        EvaluationResult,
         EvaluationMetricGroupResult,
     )
 
-    report = EvaluationReport(
-        evaluation_report_id="report:test",
+    run_result = EvaluationRunResult(
+        evaluation_run_result_id="run_result:test",
         evaluation_spec_id="protocol:test",
-        task_results=(
-            EvaluationTaskResult(
-                evaluation_task_id="case:test",
+        results={
+            "case:test": EvaluationResult(
                 strategy_id="strategy:test",
                 metric_group_results=(
                     EvaluationMetricGroupResult(
@@ -112,22 +109,22 @@ def test_evaluation_report_roundtrips_task_metric_groups():
                         metrics={"mean_decision_net_return": 0.12},
                     ),
                 ),
-            ),
-        ),
+            )
+        },
         created_at="2026-04-18T00:00:00Z",
     )
 
-    restored = EvaluationReport.from_document(
-        evaluation_report_id="report:test",
-        document=report.to_document(),
+    restored = EvaluationRunResult.from_document(
+        evaluation_run_result_id="run_result:test",
+        document=run_result.to_document(),
     )
 
-    assert "task_results" in restored.to_document()
+    assert "results" in restored.to_document()
     assert "summaries" not in restored.to_document()
-    task_result = restored.task_results[0]
-    assert "metric_group_results" in task_result.to_document()
-    assert "profiles" not in task_result.to_document()
-    assert task_result.metric_group_results[0].metric_group_name == "decision_quality"
+    result = restored.results["case:test"]
+    assert "metric_group_results" in result.to_document()
+    assert "profiles" not in result.to_document()
+    assert result.metric_group_results[0].metric_group_name == "decision_quality"
 
 
 def test_print_subject_sets_includes_cross_asset_summary(capsys):
