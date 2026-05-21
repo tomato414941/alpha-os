@@ -3,7 +3,7 @@ from __future__ import annotations
 
 def test_strategy_evaluation_request_carries_evaluation_execution_inputs():
     from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.strategy_engine import StrategyEvaluationRequest
+    from alpha_os.evaluation_request import StrategyEvaluationRequest
 
     execution_range = EvaluationDateRange(
         label="train",

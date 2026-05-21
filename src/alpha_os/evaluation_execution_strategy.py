@@ -10,7 +10,7 @@ from .evaluation_cost_config import (
     HoldingCostAssumptionsSpec,
 )
 from .strategy_backtest import run_strategy_backtest_from_store
-from .strategy_engine import StrategyEvaluationRequest
+from .evaluation_request import StrategyEvaluationRequest
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
 from .trading_strategy import TradingStrategySpec

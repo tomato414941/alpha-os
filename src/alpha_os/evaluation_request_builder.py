@@ -5,7 +5,7 @@ from .evaluation_spec import (
     EvaluationSpec,
     EvaluationDateRange,
 )
-from .strategy_engine import (
+from .evaluation_request import (
     StrategyEvaluationRequest,
 )
 
