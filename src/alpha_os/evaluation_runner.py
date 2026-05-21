@@ -3,7 +3,7 @@ from __future__ import annotations
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_execution_strategy import (
     EvaluationExecutionContext,
-    run_strategy_evaluation_task,
+    run_strategy_evaluation,
 )
 from .evaluation_task import EvaluationTask
 from .evaluation_request_builder import build_strategy_evaluation_requests
@@ -35,7 +35,7 @@ def evaluate_evaluation_spec_state(
     )
     for execution_request in execution_requests:
         task_results.append(
-            run_strategy_evaluation_task(
+            run_strategy_evaluation(
                 execution_request=execution_request,
                 context=execution_context,
             )

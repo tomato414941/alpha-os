@@ -127,7 +127,7 @@ def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
     return target_id
 
 
-def run_strategy_evaluation_task(
+def run_strategy_evaluation(
     execution_request: StrategyEvaluationRequest,
     *,
     context: EvaluationExecutionContext,
