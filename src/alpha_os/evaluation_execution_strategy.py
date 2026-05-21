@@ -11,7 +11,6 @@ from .evaluation_cost_config import (
 )
 from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
-from .evaluation_task import EvaluationTask
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_result import EvaluationTaskResult
 from .trading_strategy import TradingStrategySpec
@@ -95,16 +94,13 @@ def _holding_cost_assumptions_for_strategy(
     )
 
 
-def _trading_strategy_for_task(
+def _trading_strategy_for_id(
     store: EvaluationExecutionReadPort,
-    evaluation_task: EvaluationTask,
+    strategy_id: str,
 ) -> TradingStrategySpec:
-    strategy_state = store.get_trading_strategy(evaluation_task.strategy_id)
+    strategy_state = store.get_trading_strategy(strategy_id)
     if strategy_state is None:
-        raise ValueError(
-            "evaluation task strategy does not exist: "
-            f"{evaluation_task.strategy_id}"
-        )
+        raise ValueError(f"evaluation strategy does not exist: {strategy_id}")
     return strategy_state.trading_strategy
 
 
@@ -112,7 +108,7 @@ def _subject_set_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
     subject_set_id = trading_strategy.subject_set_id
     if not isinstance(subject_set_id, str) or not subject_set_id:
         raise ValueError(
-            "evaluation task strategy is missing subject_set: "
+            "evaluation strategy is missing subject_set: "
             f"{trading_strategy.strategy_id}"
         )
     return subject_set_id
@@ -122,7 +118,7 @@ def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
     target_id = trading_strategy.target_id
     if not isinstance(target_id, str) or not target_id:
         raise ValueError(
-            "evaluation task strategy is missing prediction target: "
+            "evaluation strategy is missing prediction target: "
             f"{trading_strategy.strategy_id}"
         )
     return target_id
@@ -130,14 +126,15 @@ def _target_id_for_strategy(trading_strategy: TradingStrategySpec) -> str:
 
 def run_strategy_evaluation(
     *,
-    evaluation_task: EvaluationTask,
+    result_key: str,
+    strategy_id: str,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     metric_group_names: tuple[str, ...],
     base_url: str,
     context: EvaluationExecutionContext,
 ) -> EvaluationTaskResult:
     store = context.store
-    trading_strategy = _trading_strategy_for_task(store, evaluation_task)
+    trading_strategy = _trading_strategy_for_id(store, strategy_id)
     portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
     rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
         trading_strategy
@@ -155,7 +152,7 @@ def run_strategy_evaluation(
         validate_subject_set_universe_contract(subject_set_state.definition)
     direct_evaluation = run_strategy_backtest_from_store(
         store=store,
-        strategy_id=evaluation_task.strategy_id,
+        strategy_id=strategy_id,
         subject_set_id=subject_set_id,
         target_id=target_id,
         evaluation_date_ranges=evaluation_date_ranges,
@@ -168,8 +165,8 @@ def run_strategy_evaluation(
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation
     return EvaluationTaskResult(
-        evaluation_task_id=evaluation_task.evaluation_task_id,
-        strategy_id=evaluation_task.strategy_id,
+        evaluation_task_id=result_key,
+        strategy_id=strategy_id,
         metric_group_results=tuple(
             direct_metric_group_results[metric_group_name]
             for metric_group_name in metric_group_names

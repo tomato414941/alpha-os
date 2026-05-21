@@ -30,7 +30,8 @@ def evaluate_evaluation_spec_state(
         for fold in evaluation_spec.resolved_evaluation_folds:
             task_results.append(
                 run_strategy_evaluation(
-                    evaluation_task=evaluation_task,
+                    result_key=evaluation_task.evaluation_task_id,
+                    strategy_id=evaluation_task.strategy_id,
                     evaluation_date_ranges=fold.resolved_evaluation_date_ranges,
                     metric_group_names=evaluation_spec.metric_group_names,
                     base_url=base_url,
