@@ -459,7 +459,7 @@
       }
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "us_etf_standard_rs_lowvol_eval_long_history",
       "strategy_id": "strategy:us_etf_standard_rs_lowvol_hrp_top5_realistic",

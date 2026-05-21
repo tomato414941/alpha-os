@@ -650,7 +650,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                         }
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_manifest_eval",
                         "strategy_id": "strategy:core_manifest_rule",
@@ -2128,7 +2128,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                         }
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
@@ -3115,9 +3115,9 @@ def test_global_macro_diagnostic_manifest_contract():
         "sizing_policy_quality",
         "rebalance_policy_quality",
     } <= set(evaluation_spec["metric_group_names"])
-    findings = manifest["evaluation_tasks"]
+    findings = manifest["evaluation_cases"]
     assert len(findings) == 15
-    case_ids = {item["evaluation_task_id"] for item in findings}
+    case_ids = {item["evaluation_case_id"] for item in findings}
     assert {
         "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
         "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
@@ -3141,16 +3141,16 @@ def test_global_macro_diagnostic_manifest_contract():
         construction = strategy_override["portfolio_construction"]
         assert "portfolio_construction" not in case
         assert "rebalance_friction_policy" not in case
-        if case["evaluation_task_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case":
+        if case["evaluation_case_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case":
             assert case["strategy_id"] == "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold"
             assert construction["construction_kind"] == "hold_baseline"
             assert "signal_discovery_id" not in case
-        elif case["evaluation_task_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case":
+        elif case["evaluation_case_id"] == "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case":
             assert case["strategy_id"] == "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold"
             assert construction["construction_kind"] == "hold_baseline"
             assert strategy_override["rebalance_interval_steps"] == 21
             assert "signal_discovery_id" not in case
-        elif case["evaluation_task_id"] in {
+        elif case["evaluation_case_id"] in {
             "global_macro_tradeable_daily_diagnostic_case",
             "global_macro_tradeable_daily_diagnostic_cost_aware_execution_case",
             "global_macro_tradeable_daily_diagnostic_utility_tighter_benefit_case",
@@ -3163,7 +3163,7 @@ def test_global_macro_diagnostic_manifest_contract():
             "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case",
         }:
             if (
-                case["evaluation_task_id"]
+                case["evaluation_case_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case"
             ):
                 assert (
@@ -3192,7 +3192,7 @@ def test_global_macro_diagnostic_manifest_contract():
                     "partial_fill_enabled": True,
                 }
             if (
-                case["evaluation_task_id"]
+                case["evaluation_case_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
             ):
                 assert (
@@ -3211,7 +3211,7 @@ def test_global_macro_diagnostic_manifest_contract():
                     == "mean_reversion"
                 )
         elif (
-            case["evaluation_task_id"]
+            case["evaluation_case_id"]
             == "global_macro_tradeable_daily_diagnostic_mean_reversion_case"
         ):
             assert (

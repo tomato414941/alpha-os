@@ -11,23 +11,23 @@ owned report display or report construction.
 
 The module used to mix report construction with display-time fallback logic.
 After removing CLI report rendering, it only built the contract fields stored
-on evaluation task results.
+on evaluation case results.
 
-- evaluation task contract field extraction
+- evaluation case contract field extraction
 
 This makes small strategy-schema changes, such as moving `top_k` ownership,
 touch report code directly.
 
 ## Boundary
 
-Keep persisted evaluation task contract field extraction separate from report
+Keep persisted evaluation case contract field extraction separate from report
 display and report artifact ownership.
 
-The intermediate `evaluation_task_contract_fields.py` helper has since been
+The intermediate `evaluation_case_contract_fields.py` helper has since been
 removed. Evaluation reports no longer store a flattened strategy contract
 snapshot.
 
-- evaluation task metrics
+- evaluation case metrics
 - explicit subject set, universe policy, constraint, and sleeve metadata
 
 ## Non-Goal
@@ -38,4 +38,4 @@ artifact naming question is tracked separately.
 ## Close Condition
 
 Close this when changing a strategy or portfolio field does not require editing
-report code unless the stored evaluation task contract itself changes.
+report code unless the stored evaluation case contract itself changes.

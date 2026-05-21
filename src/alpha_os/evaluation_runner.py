@@ -9,14 +9,14 @@ from .evaluation_run_result import EvaluationRunResult
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
 
-EvaluationTarget = tuple[str, str]
+EvaluationCase = tuple[str, str]
 
 
 def evaluate_evaluation_spec_state(
     *,
     store: EvaluationStore,
     evaluation_spec_state: object,
-    evaluation_targets: tuple[EvaluationTarget, ...],
+    evaluation_cases: tuple[EvaluationCase, ...],
     base_url: str,
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):
@@ -28,7 +28,7 @@ def evaluate_evaluation_spec_state(
         feature_plane_repository=feature_plane_repository,
     )
     folds = tuple(evaluation_spec.resolved_evaluation_folds)
-    for result_key, strategy_id in evaluation_targets:
+    for result_key, strategy_id in evaluation_cases:
         for fold in folds:
             effective_result_key = (
                 result_key if len(folds) == 1 else f"{result_key}:{fold.label}"

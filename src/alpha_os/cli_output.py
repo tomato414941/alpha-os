@@ -360,15 +360,15 @@ def print_evaluation_specs(evaluation_specs) -> None:
 print_evaluation_specs = print_evaluation_specs
 
 
-def print_evaluation_tasks(cases) -> None:
-    print("alpha-os evaluation targets")
+def print_evaluation_cases(cases) -> None:
+    print("alpha-os evaluation cases")
     print(f"  Count:    {len(cases)}")
     for item in cases:
         if isinstance(item, tuple):
             result_key, strategy_id = item
         else:
             case = item.task if hasattr(item, "task") else item
-            result_key = case.evaluation_task_id
+            result_key = case.evaluation_case_id
             strategy_id = case.strategy_id
         print(
             f"  {result_key} "

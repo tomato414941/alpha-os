@@ -14,7 +14,7 @@ They can include:
 - observation bindings
 - strategy specs
 - evaluation specs
-- evaluation tasks
+- evaluation cases
 - portfolio settings
 - cost assumptions
 

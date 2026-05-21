@@ -202,7 +202,7 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "us_etf_rotation_trend_relative_eval",
       "signal_discovery_id": "us_etf_rotation_trend_relative_search",

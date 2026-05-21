@@ -182,15 +182,15 @@
       }
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
-      "evaluation_task_id": "minimal_oos_candidate_equal_weight_hold_case",
+      "evaluation_case_id": "minimal_oos_candidate_equal_weight_hold_case",
       "evaluation_spec_id": "minimal_oos_eval",
       "strategy_id": "strategy:minimal_oos_candidate_equal_weight_hold",
       "base_url": "fixture://local"
     },
     {
-      "evaluation_task_id": "minimal_oos_baseline_equal_weight_hold_case",
+      "evaluation_case_id": "minimal_oos_baseline_equal_weight_hold_case",
       "evaluation_spec_id": "minimal_oos_eval",
       "strategy_id": "strategy:minimal_oos_baseline_equal_weight_hold",
       "base_url": "fixture://local"

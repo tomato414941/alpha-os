@@ -282,7 +282,7 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "us_etf_broad_dual_momentum_direct_eval_10y",
       "strategy_id": "strategy:us_etf_broad_dual_momentum_direct_10y",

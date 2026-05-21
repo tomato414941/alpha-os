@@ -717,7 +717,7 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "global_macro_tradeable_daily_10y_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_10y_search",

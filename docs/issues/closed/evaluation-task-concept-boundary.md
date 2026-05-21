@@ -1,12 +1,18 @@
 # Evaluation Task Concept Boundary
 
+Status: closed
+
+Closed by: runtime manifests now use `evaluation_cases` /
+`evaluation_case_id`, and runtime selection uses transient `EvaluationCase`
+tuples instead of an `EvaluationTask` concept.
+
 ## Problem
 
 `EvaluationTask` is not an execution task or job.
 
 It currently stores only:
 
-- `evaluation_task_id`
+- `evaluation_case_id`
 - `strategy_id`
 - `evaluation_spec_id`
 
@@ -49,9 +55,9 @@ That does not necessarily require a dedicated persisted `EvaluationTask` object.
 
 Prefer removing the standalone `EvaluationTask` concept.
 
-Investigate moving the evaluation target list toward the evaluation spec or the
+Investigate moving the evaluation case list toward the evaluation spec or the
 evaluation run request, while keeping strategy construction owned by strategy
-definitions rather than evaluation task rows.
+definitions rather than evaluation case rows.
 
 Avoid compatibility aliases or deprecated task interfaces unless explicitly
 approved.
@@ -59,12 +65,12 @@ approved.
 ## Current Status
 
 `EvaluationTask` is no longer stored in a dedicated database table, and the
-input-side `EvaluationTask` class has been removed. Runtime manifests may still
-contain `evaluation_tasks` rows, but those rows are applied as
-strategy/evaluation targets and kept as transient `(result_key, strategy_id)`
-tuples when a manifest-scoped command needs explicit case identifiers.
+input-side `EvaluationTask` class has been removed. Runtime manifests now use
+`evaluation_cases` rows with optional `evaluation_case_id` fields. Those rows
+are applied as strategy/evaluation cases and kept as transient
+`(result_key, strategy_id)` tuples when a manifest-scoped command needs explicit
+case identifiers.
 
 ## Close Condition
 
-Close this when the manifest field name is resolved and result-side
-`EvaluationResult` naming is either retained intentionally or replaced.
+Closed.

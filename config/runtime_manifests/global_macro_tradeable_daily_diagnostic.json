@@ -171,9 +171,9 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "strategy_id": "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold",
       "strategy_override": {
@@ -219,7 +219,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "strategy_id": "strategy:global_macro_tradeable_daily_diagnostic_equal_weight_hold",
       "strategy_override": {
@@ -265,7 +265,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -339,7 +339,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_cost_aware_execution_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_cost_aware_execution_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -420,7 +420,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_looser_benefit_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_utility_looser_benefit_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -501,7 +501,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_tighter_benefit_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_utility_tighter_benefit_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -582,7 +582,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_looser_budget_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_utility_looser_budget_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -663,7 +663,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_utility_no_budget_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_utility_no_budget_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -744,7 +744,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_legacy_proportional_execution_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_legacy_proportional_execution_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -825,7 +825,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_no_cost_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_no_cost_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -899,7 +899,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_weekly_rebalance_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_weekly_rebalance_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {
@@ -973,7 +973,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
       "strategy_override": {
@@ -1047,7 +1047,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
       "strategy_override": {
@@ -1124,7 +1124,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_mean_reversion_search",
       "strategy_override": {
@@ -1198,7 +1198,7 @@
       }
     },
     {
-      "evaluation_task_id": "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
+      "evaluation_case_id": "global_macro_tradeable_daily_diagnostic_no_risk_budget_case",
       "evaluation_spec_id": "global_macro_tradeable_daily_diagnostic_eval",
       "signal_discovery_id": "global_macro_tradeable_daily_diagnostic_search",
       "strategy_override": {

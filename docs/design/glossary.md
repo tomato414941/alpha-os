@@ -250,7 +250,7 @@ The rules for how a strategy is evaluated.
 
 Defines the measurement recipe: strict OOS, fold layout, costs, metrics.
 
-### evaluation task
+### evaluation case
 
 One executable evaluation defined by `strategy spec + evaluation spec`.
 
@@ -267,7 +267,7 @@ A bounded dataset for offline evaluation or a stream for online evaluation.
 
 The runtime connection source used to read data.
 
-`base_url` belongs here, not on evaluation tasks.
+`base_url` belongs here, not on evaluation cases.
 
 ### strategy checkpoint
 
@@ -371,7 +371,7 @@ Short implementation notes:
   `EvaluationRunResult.results` in runtime readers and serialization because
   `results` is the persisted run result field.
 - Runtime readers and serialization should use `metric_group_results`.
-- One evaluation task has exactly one strategy; one strategy may appear in many
+- One evaluation case has exactly one strategy; one strategy may appear in many
   cases. Runtime case roles are limited to `baseline` and `standard`.
 - Candidate/diagnostic-style labels belong in research notes, not manifests or
   run results.
@@ -469,7 +469,7 @@ semantics.
 So `evaluation` is acceptable when scoped as:
 
 - `evaluation spec`
-- `evaluation task`
+- `evaluation case`
 - `evaluation run result`
 
 Bare `evaluation` should not become the universal name for all strategy
@@ -541,7 +541,7 @@ The following legacy terms should not be used as new source-of-truth names:
 | `signal candidate` | `signal` |
 | `dsl` as a bare name | `signal expression language` when the distinction matters |
 | `search` when meaning generated-and-screened signal space | `signal discovery` |
-| `experiment` as universal comparison object | usually `evaluation task` or `evaluation run result`, depending on context |
+| `experiment` as universal comparison object | usually `evaluation case` or `evaluation run result`, depending on context |
 
 ## Naming Rule
 

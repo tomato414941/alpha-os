@@ -687,7 +687,7 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "global_macro_futures_daily_trend_eval",
       "signal_discovery_id": "global_macro_futures_daily_trend_search",

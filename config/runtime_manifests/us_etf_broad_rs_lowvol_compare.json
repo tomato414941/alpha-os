@@ -245,7 +245,7 @@
       }
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "us_etf_broad_rs_lowvol_compare_eval",
       "strategy_id": "strategy:c395ecfb8db4",

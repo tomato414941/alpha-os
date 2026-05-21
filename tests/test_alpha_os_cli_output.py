@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from alpha_os.cli_output import (
-    print_evaluation_tasks,
+    print_evaluation_cases,
     print_evaluation_snapshot,
     print_subject_sets,
 )
@@ -19,10 +19,10 @@ from alpha_os.portfolio_decision import (
     SubjectSet,
     UniversePolicySpec,
 )
-def test_print_evaluation_tasks_includes_execution_and_holding_costs(capsys):
+def test_print_evaluation_cases_includes_execution_and_holding_costs(capsys):
     case = ("case:test", "strategy:test")
 
-    print_evaluation_tasks([case])
+    print_evaluation_cases([case])
     captured = capsys.readouterr().out
 
     assert "case:test" in captured

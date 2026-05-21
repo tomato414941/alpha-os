@@ -12,7 +12,7 @@ They currently collect several run-time concerns in one file:
 - signal discovery configuration
 - evaluation specs
 - strategy specs
-- evaluation tasks
+- evaluation cases
 - portfolio and cost assumptions
 
 This is useful for reproducible runs, but it makes the manifest easy to treat as

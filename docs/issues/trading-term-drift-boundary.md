@@ -96,7 +96,7 @@ with nearby alpha-os concepts. Add terms as they become relevant.
 - [x] `live run inputs`
 - [ ] `strict OOS evaluation`
 - [ ] `evaluation spec`
-- [ ] `evaluation task`
+- [ ] `evaluation case`
 - [ ] `data input`
 - [ ] `data source`
 - [ ] `strategy checkpoint`

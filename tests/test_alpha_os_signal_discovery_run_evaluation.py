@@ -161,7 +161,7 @@ def test_evaluation_trading_config_from_args_accepts_direction_mode():
     assert config.portfolio_construction.long_only is False
 
 
-def test_evaluation_task_manifest_strategy_override_takes_precedence():
+def test_evaluation_case_manifest_strategy_override_takes_precedence():
     from alpha_os.cli import _evaluation_strategy_override_from_document
 
     config, has_override = _evaluation_strategy_override_from_document(
@@ -192,7 +192,7 @@ def test_evaluation_task_manifest_strategy_override_takes_precedence():
     assert config.rebalance_friction_policy.turnover_budget == 0.25
 
 
-def test_evaluation_task_manifest_legacy_trading_config_still_loads():
+def test_evaluation_case_manifest_legacy_trading_config_still_loads():
     from alpha_os.cli import _evaluation_strategy_override_from_document
 
     config, has_override = _evaluation_strategy_override_from_document(
@@ -587,7 +587,7 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "signal_discovery_id": "core_crypto_search",
@@ -788,7 +788,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
@@ -955,7 +955,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
                         "strategy_id": "strategy:core_crypto_rule",
@@ -1006,7 +1006,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
         store.close()
 
 
-def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, capsys):
+def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 
@@ -1064,7 +1064,7 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_task(tmp_path, ca
                         "metric_group_names": ["decision_quality"],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "buy_and_hold_eval",
                         "strategy_id": "strategy:buy_and_hold",
@@ -1203,7 +1203,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "buy_and_hold_walk_forward",
                         "strategy_id": "strategy:buy_and_hold",
@@ -1422,7 +1422,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "top_k_hold_walk_forward",
                         "strategy_id": "strategy:top_k_hold",
@@ -1656,7 +1656,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "dual_momentum_hold_walk_forward",
                         "strategy_id": "strategy:dual_momentum_hold",
@@ -2051,9 +2051,9 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
-                        "evaluation_task_id": "diagnostic_case",
+                        "evaluation_case_id": "diagnostic_case",
                         "evaluation_spec_id": "diagnostic_eval",
                         "signal_discovery_id": "diagnostic_search",
                         "base_url": "http://manifest.example",
@@ -2503,7 +2503,7 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                         ],
                     }
                 ],
-                "evaluation_tasks": [
+                "evaluation_cases": [
                     {
                         "evaluation_spec_id": "core_crypto_walk_forward",
                         "signal_discovery_id": "core_crypto_search",

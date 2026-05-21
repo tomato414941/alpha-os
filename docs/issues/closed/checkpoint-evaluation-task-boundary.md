@@ -3,13 +3,13 @@
 ## Problem
 
 `create-checkpoint-evaluation-task` was previously needed to connect a persisted
-strategy checkpoint to a checkpoint-based evaluation task.
+strategy checkpoint to a checkpoint-based evaluation case.
 
 That made the strict fixed-state OOS path depend on a manual CLI step:
 
-- choose a source evaluation task
+- choose a source evaluation case
 - choose a strategy checkpoint
-- create an evaluation task
+- create an evaluation case
 - create an evaluation job spec with `strategy_checkpoint_id`
 
 ## Risk

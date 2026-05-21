@@ -175,7 +175,7 @@
       ]
     }
   ],
-  "evaluation_tasks": [
+  "evaluation_cases": [
     {
       "evaluation_spec_id": "us_etf_broad_allocation_compare_eval",
       "signal_discovery_id": "us_etf_broad_allocation_compare_search",

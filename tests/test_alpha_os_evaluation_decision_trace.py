@@ -208,7 +208,7 @@ def _register_direct_strategy(store) -> None:
     )
 
 
-def _build_direct_evaluation_task():
+def _build_direct_evaluation_case():
     return ("case:test", "strategy:test")
 
 
@@ -280,7 +280,7 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
     run_result_state = evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
-        evaluation_targets=(_build_direct_evaluation_task(),),
+        evaluation_cases=(_build_direct_evaluation_case(),),
         base_url="http://example.com",
     )
 

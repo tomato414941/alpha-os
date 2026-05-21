@@ -4,7 +4,7 @@ from .data_repositories import (
     FeaturePlaneRepository,
     ObservationFrameRepository,
 )
-from .evaluation_runner import EvaluationTarget, evaluate_evaluation_spec_state
+from .evaluation_runner import EvaluationCase, evaluate_evaluation_spec_state
 from .store import EvaluationStore
 
 
@@ -16,11 +16,11 @@ def _build_evaluation_result_key(
     return f"{evaluation_spec_id}:{strategy_id}"
 
 
-def _evaluation_targets_for_strategy_ids(
+def _evaluation_cases_for_strategy_ids(
     *,
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
-) -> tuple[EvaluationTarget, ...]:
+) -> tuple[EvaluationCase, ...]:
     if not strategy_ids:
         raise ValueError(
             "evaluation requires at least one strategy_id when no manifest cases "
@@ -64,14 +64,14 @@ def run_evaluation_use_case(
         raise ValueError(f"evaluation spec does not exist: {evaluation_spec_id}")
     if not strategy_ids:
         strategy_ids = _all_strategy_ids(store)
-    evaluation_targets = _evaluation_targets_for_strategy_ids(
+    evaluation_cases = _evaluation_cases_for_strategy_ids(
         evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
         strategy_ids=strategy_ids,
     )
     return evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
-        evaluation_targets=evaluation_targets,
+        evaluation_cases=evaluation_cases,
         base_url=base_url,
         feature_plane_repository=feature_plane_repository,
     )
@@ -83,7 +83,7 @@ def run_walk_forward_evaluation_use_case(
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
     base_url: str,
-    evaluation_targets: tuple[EvaluationTarget, ...] | None = None,
+    evaluation_cases: tuple[EvaluationCase, ...] | None = None,
 ):
     store.ensure_schema()
     feature_plane_repository = FeaturePlaneRepository(
@@ -92,17 +92,17 @@ def run_walk_forward_evaluation_use_case(
     evaluation_spec_state = store.get_evaluation_spec(evaluation_spec_id)
     if evaluation_spec_state is None:
         raise ValueError(f"evaluation spec does not exist: {evaluation_spec_id}")
-    if evaluation_targets is None:
+    if evaluation_cases is None:
         if not strategy_ids:
             strategy_ids = _all_strategy_ids(store)
-        evaluation_targets = _evaluation_targets_for_strategy_ids(
+        evaluation_cases = _evaluation_cases_for_strategy_ids(
             evaluation_spec_id=evaluation_spec_state.evaluation_spec_id,
             strategy_ids=strategy_ids,
         )
     return evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
-        evaluation_targets=evaluation_targets,
+        evaluation_cases=evaluation_cases,
         base_url=base_url,
         feature_plane_repository=feature_plane_repository,
     )

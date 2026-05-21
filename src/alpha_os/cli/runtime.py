@@ -36,7 +36,7 @@ def _register_apply_manifest(
         name,
         help=(
             "Apply runtime manifest resources including observables, signal specs, "
-            "subject sets, strategy specs, evaluation specs, and evaluation targets"
+            "subject sets, strategy specs, evaluation specs, and evaluation cases"
         ),
     )
     parser.add_argument("--db", type=str, default=None)
