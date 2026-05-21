@@ -3,8 +3,8 @@
 Status: closed
 
 Closed by: runtime manifests now use `evaluation_cases` /
-`evaluation_case_id`, and runtime selection uses transient `EvaluationCase`
-tuples instead of an `EvaluationTask` concept.
+`evaluation_case_id`, and runtime selection uses transient
+`(result_key, strategy_id)` tuples instead of an `EvaluationTask` concept.
 
 ## Problem
 
@@ -36,8 +36,7 @@ The current shape spreads through:
 - evaluation result identifiers
 - documentation
 
-Renaming it to `EvaluationCase` would improve wording, but may preserve an
-unnecessary object.
+Renaming it alone would improve wording, but may preserve an unnecessary object.
 
 ## Boundary
 

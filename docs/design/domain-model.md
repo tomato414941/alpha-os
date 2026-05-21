@@ -64,7 +64,7 @@ confusing the metric group concept with the contract field name.
 
 ```text
 EvaluationSpec = evaluation settings
-EvaluationCase = transient result key + strategy id selected for an evaluation run
+evaluation case entry = transient result key + strategy id selected for an evaluation run
 EvaluationResult = recorded factual outcome of one evaluated strategy case
 EvaluationRunResult = persisted container of evaluation case results
 EvaluationMetricGroupResult = one metric group result block inside a case result

@@ -4,7 +4,7 @@ from .data_repositories import (
     FeaturePlaneRepository,
     ObservationFrameRepository,
 )
-from .evaluation_runner import EvaluationCase, evaluate_evaluation_spec_state
+from .evaluation_runner import evaluate_evaluation_spec_state
 from .store import EvaluationStore
 
 
@@ -20,7 +20,7 @@ def _evaluation_cases_for_strategy_ids(
     *,
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
-) -> tuple[EvaluationCase, ...]:
+) -> tuple[tuple[str, str], ...]:
     if not strategy_ids:
         raise ValueError(
             "evaluation requires at least one strategy_id when no manifest cases "
@@ -83,7 +83,7 @@ def run_walk_forward_evaluation_use_case(
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
     base_url: str,
-    evaluation_cases: tuple[EvaluationCase, ...] | None = None,
+    evaluation_cases: tuple[tuple[str, str], ...] | None = None,
 ):
     store.ensure_schema()
     feature_plane_repository = FeaturePlaneRepository(

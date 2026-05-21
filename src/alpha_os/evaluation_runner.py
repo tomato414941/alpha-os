@@ -9,14 +9,12 @@ from .evaluation_run_result import EvaluationRunResult
 from .evaluation_spec import build_oos_contract_summary
 from .store import EvaluationStore, _utc_now
 
-EvaluationCase = tuple[str, str]
-
 
 def evaluate_evaluation_spec_state(
     *,
     store: EvaluationStore,
     evaluation_spec_state: object,
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
     base_url: str,
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):

@@ -126,8 +126,6 @@ from ..trading_strategy import (
 from ..universe_contract import validate_subject_set_universe_contract
 from ..signal_client import build_signal_client
 
-EvaluationCase = tuple[str, str]
-
 
 @dataclass(frozen=True)
 class _RuntimeManifestCatalogEntry:
@@ -1662,11 +1660,11 @@ def _build_evaluation_result_key(
     return f"{evaluation_spec_id}:{strategy_id}"
 
 
-def _case_key(case: EvaluationCase) -> str:
+def _case_key(case: tuple[str, str]) -> str:
     return case[0]
 
 
-def _case_strategy_id(case: EvaluationCase) -> str:
+def _case_strategy_id(case: tuple[str, str]) -> str:
     return case[1]
 
 
@@ -1676,7 +1674,7 @@ def _select_evaluation_cases(
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
     evaluation_case_ids: tuple[str, ...] | None = None,
-) -> tuple[EvaluationCase, ...]:
+) -> tuple[tuple[str, str], ...]:
     cases = tuple(
         read_port.list_evaluation_cases(
             evaluation_spec_id=evaluation_spec_id,
@@ -1770,7 +1768,7 @@ class _RuntimeManifestReadPort:
         self.signal_discoveries: dict[str, SignalDiscoverySpec] = {}
         self.trading_strategies: dict[str, TradingStrategySpec] = {}
         self.evaluation_specs: dict[str, EvaluationSpec] = {}
-        self.evaluation_cases_by_spec: dict[str, dict[str, EvaluationCase]] = {}
+        self.evaluation_cases_by_spec: dict[str, dict[str, tuple[str, str]]] = {}
         for manifest_path in manifest_paths:
             self._apply_manifest_document(_load_runtime_manifest(manifest_path))
 
@@ -2201,7 +2199,7 @@ def _evaluation_case_from_document(
     *,
     evaluation_spec_id: str,
     document: dict[str, object],
-) -> tuple[TradingStrategySpec, EvaluationCase]:
+) -> tuple[TradingStrategySpec, tuple[str, str]]:
     strategy_id = document.get("strategy_id")
     signal_discovery_id = document.get("signal_discovery_id")
     strategy_override_config, has_strategy_override = (
@@ -3306,12 +3304,12 @@ def _mean(values: list[float]) -> float:
 class _SignalDiscoveryEvaluationGroup:
     signal_discovery_id: str | None
     base_url: str
-    evaluation_cases: tuple[EvaluationCase, ...]
+    evaluation_cases: tuple[tuple[str, str], ...]
 
 
 def _group_evaluation_cases_by_signal_discovery(
     store: EvaluationStore,
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
     *,
     base_url: str,
 ) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
@@ -3329,12 +3327,12 @@ def _group_evaluation_cases_by_signal_discovery(
 
 
 def _group_evaluation_cases_by_signal_discovery_with_strategy_lookup(
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
     *,
     strategy_lookup,
     base_url: str,
 ) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
-    grouped: dict[str | None, list[EvaluationCase]] = {}
+    grouped: dict[str | None, list[tuple[str, str]]] = {}
     for evaluation_case in evaluation_cases:
         trading_strategy = strategy_lookup(_case_strategy_id(evaluation_case))
         if trading_strategy is None:
@@ -3498,7 +3496,7 @@ def _print_diagnostic_evaluation_focus(run_result_state) -> None:
 def _print_diagnostic_evaluation_dry_run(
     *,
     evaluation_spec_state,
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
     signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
     trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
     strategies_by_case_id: dict[str, TradingStrategySpec],
@@ -3547,7 +3545,7 @@ def _check_diagnostic_evaluation_dry_run(
     *,
     manifest_path: Path,
     evaluation_spec_state,
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
     signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
     trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
     strategies_by_case_id: dict[str, TradingStrategySpec],
@@ -3765,7 +3763,7 @@ def _check_diagnostic_evaluation_dry_run(
 
 def _trading_strategies_for_evaluation_cases(
     read_port,
-    evaluation_cases: tuple[EvaluationCase, ...],
+    evaluation_cases: tuple[tuple[str, str], ...],
 ) -> dict[str, TradingStrategySpec]:
     strategies: dict[str, TradingStrategySpec] = {}
     for case in evaluation_cases:
