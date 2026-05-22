@@ -32,7 +32,7 @@ from ..evaluation_application import (
 )
 from ..evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    MarketAssumptions,
+    TradingEnvironment,
 )
 from ..evaluation_spec import EvaluationSpec
 from ..portfolio_construction_config import (
@@ -3371,7 +3371,7 @@ def _print_diagnostic_evaluation_dry_run(
         trading_config = trading_configs_by_case_id[_case_key(case)]
         construction = trading_config.portfolio_construction
         friction = trading_config.rebalance_friction_policy
-        market_assumptions = trading_config.market_assumptions
+        trading_environment = trading_config.trading_environment
         print(
             "  Result: "
             f"{_case_key(case)} "
@@ -3388,7 +3388,7 @@ def _print_diagnostic_evaluation_dry_run(
             f"benefit_scale={friction.benefit_scale} "
             f"min_trade_utility={friction.min_trade_utility} "
             f"partial_fill_enabled={str(friction.partial_fill_enabled).lower()} "
-            f"cost_bps={market_assumptions.market_impact_bps + market_assumptions.fee_bps + market_assumptions.bid_ask_spread_bps}"
+            f"cost_bps={trading_environment.market_impact_bps + trading_environment.fee_bps + trading_environment.bid_ask_spread_bps}"
         )
 
 
@@ -4035,7 +4035,7 @@ def _evaluation_trading_config_from_args(
             ),
             no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
         ),
-        market_assumptions=MarketAssumptions(
+        trading_environment=TradingEnvironment(
             market_impact_bps=(
                 0.0 if args.market_impact_bps is None else float(args.market_impact_bps)
             ),

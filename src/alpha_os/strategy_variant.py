@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    MarketAssumptions,
+    TradingEnvironment,
 )
 from .portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
@@ -25,7 +25,7 @@ from .trading_strategy import (
 class StrategyVariantConfig:
     portfolio_construction: PortfolioConstructionSpec
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
-    market_assumptions: MarketAssumptions
+    trading_environment: TradingEnvironment
     top_k: int | None = None
 
     @property
@@ -54,7 +54,7 @@ def strategy_variant_config_from_strategy(
                 if value is not None
             }
         ),
-        market_assumptions=MarketAssumptions(
+        trading_environment=TradingEnvironment(
             market_impact_bps=execution.market_impact_bps or 0.0,
             fee_bps=execution.fee_bps or 0.0,
             bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
@@ -121,7 +121,7 @@ def overridden_strategy_variant_config(
             cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
         ),
         rebalance_friction_policy=config.rebalance_friction_policy,
-        market_assumptions=config.market_assumptions,
+        trading_environment=config.trading_environment,
         top_k=config.top_k,
     )
 
@@ -135,7 +135,7 @@ def derive_trading_strategy_from_signal_discovery(
     definition = signal_discovery.definition
     portfolio_construction = variant_config.portfolio_construction
     rebalance_friction_policy = variant_config.rebalance_friction_policy
-    market_assumptions = variant_config.market_assumptions
+    trading_environment = variant_config.trading_environment
     sizing_method = portfolio_construction.sizing_method
     family_ids = tuple(
         sorted(
@@ -188,13 +188,13 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        market_impact_bps=float(market_assumptions.market_impact_bps),
-        fee_bps=float(market_assumptions.fee_bps),
-        bid_ask_spread_bps=float(market_assumptions.bid_ask_spread_bps),
+        market_impact_bps=float(trading_environment.market_impact_bps),
+        fee_bps=float(trading_environment.fee_bps),
+        bid_ask_spread_bps=float(trading_environment.bid_ask_spread_bps),
         turnover_friction=float(rebalance_friction_policy.turnover_friction),
         no_trade_band=float(rebalance_friction_policy.no_trade_band),
-        funding_bps_per_step=float(market_assumptions.funding_bps_per_step),
-        borrow_fee_bps_per_step=float(market_assumptions.borrow_fee_bps_per_step),
+        funding_bps_per_step=float(trading_environment.funding_bps_per_step),
+        borrow_fee_bps_per_step=float(trading_environment.borrow_fee_bps_per_step),
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,
@@ -226,13 +226,13 @@ def derive_trading_strategy_from_signal_discovery(
                 partial_fill_enabled=rebalance_friction_policy.partial_fill_enabled,
             ),
             execution_policy=ExecutionPolicySpec(
-                market_impact_bps=float(market_assumptions.market_impact_bps),
-                fee_bps=float(market_assumptions.fee_bps),
-                bid_ask_spread_bps=float(market_assumptions.bid_ask_spread_bps),
+                market_impact_bps=float(trading_environment.market_impact_bps),
+                fee_bps=float(trading_environment.fee_bps),
+                bid_ask_spread_bps=float(trading_environment.bid_ask_spread_bps),
             ),
             holding_cost_policy=HoldingCostPolicySpec(
-                funding_bps_per_step=float(market_assumptions.funding_bps_per_step),
-                borrow_fee_bps_per_step=float(market_assumptions.borrow_fee_bps_per_step),
+                funding_bps_per_step=float(trading_environment.funding_bps_per_step),
+                borrow_fee_bps_per_step=float(trading_environment.borrow_fee_bps_per_step),
             ),
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,

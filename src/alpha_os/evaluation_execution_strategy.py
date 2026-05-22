@@ -6,7 +6,7 @@ from typing import Protocol
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    MarketAssumptions,
+    TradingEnvironment,
 )
 from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
@@ -54,12 +54,12 @@ def _rebalance_friction_policy_for_strategy(
     )
 
 
-def _market_assumptions_for_strategy(
+def _trading_environment_for_strategy(
     trading_strategy: TradingStrategySpec,
-) -> MarketAssumptions:
+) -> TradingEnvironment:
     execution = trading_strategy.portfolio.execution_policy
     holding = trading_strategy.portfolio.holding_cost_policy
-    return MarketAssumptions(
+    return TradingEnvironment(
         market_impact_bps=execution.market_impact_bps or 0.0,
         fee_bps=execution.fee_bps or 0.0,
         bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
@@ -120,7 +120,7 @@ def run_strategy_evaluation(
     rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
         trading_strategy
     )
-    market_assumptions = _market_assumptions_for_strategy(trading_strategy)
+    trading_environment = _trading_environment_for_strategy(trading_strategy)
     subject_set_id = _subject_set_id_for_strategy(trading_strategy)
     target_id = _target_id_for_strategy(trading_strategy)
     subject_set_state = store.get_subject_set(subject_set_id)
@@ -135,7 +135,7 @@ def run_strategy_evaluation(
         base_url=base_url,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        market_assumptions=market_assumptions,
+        trading_environment=trading_environment,
         feature_plane_repository=context.feature_plane_repository,
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation

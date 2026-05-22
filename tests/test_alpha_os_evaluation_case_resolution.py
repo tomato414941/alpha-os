@@ -9,7 +9,7 @@ from alpha_os.strategy_variant import (
 )
 from alpha_os.evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    MarketAssumptions,
+    TradingEnvironment,
 )
 from alpha_os.evaluation_spec import (
     EvaluationDateRange,
@@ -55,7 +55,7 @@ def _make_evaluation_trading_config(
             cluster_weight_caps={} if cluster_weight_caps is None else cluster_weight_caps,
         ),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
-        market_assumptions=MarketAssumptions(),
+        trading_environment=TradingEnvironment(),
         top_k=top_k,
     )
 

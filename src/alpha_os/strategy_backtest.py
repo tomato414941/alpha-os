@@ -9,7 +9,7 @@ from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    MarketAssumptions,
+    TradingEnvironment,
 )
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
@@ -112,7 +112,7 @@ def run_strategy_backtest_from_store(
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    market_assumptions: MarketAssumptions,
+    trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
     # Temporary DB adapter for legacy evaluation execution paths.
@@ -131,7 +131,7 @@ def run_strategy_backtest_from_store(
         base_url=base_url,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        market_assumptions=market_assumptions,
+        trading_environment=trading_environment,
         feature_plane_repository=feature_plane_repository,
     )
 
@@ -145,7 +145,7 @@ def run_strategy_backtest(
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    market_assumptions: MarketAssumptions,
+    trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
     selection_kind = trading_strategy.selection_kind
@@ -212,7 +212,7 @@ def run_strategy_backtest(
         contract_multiplier_by_subject=contract_multiplier_by_subject,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        market_assumptions=market_assumptions,
+        trading_environment=trading_environment,
         top_k=selection_top_k,
     )
 

@@ -72,13 +72,13 @@ Before moving fields, classify each use as one of:
 - environment cost charged after an action
 - evaluation metric or diagnostic assumption
 
-Long term, prefer environment or evaluation-owned cost assumptions for backtest
-net-return calculation. Keep strategy-owned cost fields only when the strategy
-actually uses the value to decide actions.
+Long term, prefer an environment-owned representation for backtest net-return
+calculation. Keep strategy-owned cost fields only when the strategy actually
+uses the value to decide actions.
 
-`MarketAssumptions` now groups execution and holding costs in the evaluation /
-backtest path without adding another `Spec`. This is an intermediate step; the
-persisted strategy manifest fields still need to move out of
+`TradingEnvironment` now represents the trading world boundary used by the
+evaluation / backtest path to charge execution and holding costs. This is an
+intermediate step; the persisted strategy manifest fields still need to move out of
 `TradingStrategySpec.portfolio`.
 
 ## Close Condition

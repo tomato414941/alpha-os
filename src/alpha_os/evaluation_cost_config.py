@@ -191,7 +191,7 @@ class HoldingCostAssumptionsSpec:
 
 
 @dataclass(frozen=True)
-class MarketAssumptions:
+class TradingEnvironment:
     market_impact_bps: float = 0.0
     fee_bps: float = 0.0
     bid_ask_spread_bps: float = 0.0
@@ -207,7 +207,7 @@ class MarketAssumptions:
             ("borrow_fee_bps_per_step", self.borrow_fee_bps_per_step),
         ):
             if not isinstance(value, (int, float)):
-                raise ValueError(f"market assumptions {field_name} must be numeric")
+                raise ValueError(f"trading environment {field_name} must be numeric")
 
     @classmethod
     def from_cost_assumptions(
@@ -215,7 +215,7 @@ class MarketAssumptions:
         *,
         execution_cost_assumptions: ExecutionCostAssumptionsSpec,
         holding_cost_assumptions: HoldingCostAssumptionsSpec,
-    ) -> "MarketAssumptions":
+    ) -> "TradingEnvironment":
         return cls(
             market_impact_bps=float(execution_cost_assumptions.market_impact_bps),
             fee_bps=float(execution_cost_assumptions.fee_bps),
