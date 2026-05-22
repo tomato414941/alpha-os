@@ -321,7 +321,7 @@ def test_build_backtest_step_accounting_splits_cost_components():
             subject_set_id=None,
             target_id="carry",
             subject_series=(),
-            turnover_friction=0.01,
+            turnover_cost_rate=0.01,
             market_impact_bps=1.0,
             fee_bps=2.0,
             bid_ask_spread_bps=3.0,
@@ -370,7 +370,7 @@ def test_run_decision_backtest_respects_no_trade_band_and_turnover_cost():
                 ),
             ),
             no_trade_band=0.05,
-            turnover_friction=0.1,
+            turnover_cost_rate=0.1,
         )
     )
 

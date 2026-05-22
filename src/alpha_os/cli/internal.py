@@ -713,7 +713,7 @@ def _add_decide_portfolio_arguments(
     parser.add_argument("--gross-limit", type=float, default=None)
     parser.add_argument("--net-limit", type=float, default=None)
     parser.add_argument("--rebalance-step", type=int, default=None)
-    parser.add_argument("--turnover-friction", type=float, default=None)
+    parser.add_argument("--turnover-cost-rate", type=float, default=None)
     parser.add_argument("--market-impact-bps", type=float, default=None)
     parser.add_argument("--fee-bps", type=float, default=None)
     parser.add_argument("--bid-ask-spread-bps", type=float, default=None)
@@ -824,17 +824,17 @@ def _portfolio_decision_assumptions_from_args(
         None if trading_strategy is None else trading_strategy.portfolio.trading_environment
     )
     cost_inputs: list[CostInput] = []
-    turnover_friction = (
-        rebalance_friction_policy.turnover_friction
-        if args.turnover_friction is None and rebalance_friction_policy is not None
-        else args.turnover_friction
+    turnover_cost_rate = (
+        trading_environment.turnover_cost_rate
+        if args.turnover_cost_rate is None and trading_environment is not None
+        else args.turnover_cost_rate
     )
-    if turnover_friction is not None:
+    if turnover_cost_rate is not None:
         cost_inputs.append(
             CostInput(
-                name="turnover_friction",
+                name="turnover_cost_rate",
                 subject_id=None,
-                value=float(turnover_friction),
+                value=float(turnover_cost_rate),
                 basis="per_turnover",
                 unit="weight",
             )
@@ -3997,12 +3997,14 @@ def _evaluation_trading_config_from_args(
             ),
         ),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(
-            turnover_friction=(
-                0.0 if args.turnover_friction is None else float(args.turnover_friction)
-            ),
             no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
         ),
         trading_environment=TradingEnvironment(
+            turnover_cost_rate=(
+                0.0
+                if args.turnover_cost_rate is None
+                else float(args.turnover_cost_rate)
+            ),
             market_impact_bps=(
                 0.0 if args.market_impact_bps is None else float(args.market_impact_bps)
             ),

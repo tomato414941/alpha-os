@@ -462,7 +462,7 @@ class SizingRequest:
     holding_period_days: int
     current_drawdown: float
     recent_turnover: float
-    turnover_friction: float
+    turnover_cost_rate: float
 
 
 @dataclass(frozen=True)

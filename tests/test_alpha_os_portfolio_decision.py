@@ -781,7 +781,7 @@ def test_optimizer_policy_penalizes_turnover_from_current_weights():
         ),
         cost_inputs=(
             CostInput(
-                name="turnover_friction",
+                name="turnover_cost_rate",
                 subject_id=None,
                 value=0.5,
                 basis="per_turnover",
@@ -796,7 +796,7 @@ def test_optimizer_policy_penalizes_turnover_from_current_weights():
             max_abs_weight=1.0,
         ),
         rebalance_friction_policy=PortfolioRebalanceFrictionPolicy(
-            turnover_friction_aversion=1.0,
+            turnover_cost_aversion=1.0,
             signal_horizon_shortfall_aversion=1.0,
             recent_turnover_aversion=1.0,
         ),
@@ -994,7 +994,7 @@ def test_build_sizing_request_exposes_standardized_sizing_inputs():
                 unit="weight",
             ),
             CostInput(
-                name="turnover_friction",
+                name="turnover_cost_rate",
                 subject_id=None,
                 value=0.02,
                 basis="per_turnover",
@@ -1057,7 +1057,7 @@ def test_build_sizing_request_exposes_standardized_sizing_inputs():
     assert request.net_exposure_cap == pytest.approx(0.5)
     assert request.capital_base == pytest.approx(2.0)
     assert request.signal_horizons == (5, 5)
-    assert request.turnover_friction == pytest.approx(0.02)
+    assert request.turnover_cost_rate == pytest.approx(0.02)
 
 
 def test_signed_mean_variance_policy_returns_signed_forecast_weights():

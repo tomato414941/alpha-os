@@ -23,18 +23,12 @@ friction assumption.
 
 Current fields include:
 
-- `turnover_friction`
 - `no_trade_band`
 - `execution_cost_aversion`
-- `execution_mode`
 - `turnover_budget`
-- `benefit_scale`
-- `min_trade_utility`
-- `uncertainty_aversion`
-- `risk_aversion`
-- `partial_fill_enabled`
 
-These fields do not all belong to one semantic layer.
+These fields are smaller than before, but the object is still named as
+`friction` even though it controls portfolio transition behavior.
 
 ## Field Classification
 
@@ -42,36 +36,32 @@ Initial classification:
 
 | Field | Likely responsibility |
 |---|---|
-| `turnover_friction` | mixed: environment cost and policy-side expected cost |
 | `no_trade_band` | policy / transition rule |
 | `execution_cost_aversion` | policy |
-| `execution_mode` | policy |
 | `turnover_budget` | policy / transition constraint |
-| `benefit_scale` | policy |
-| `min_trade_utility` | policy |
-| `uncertainty_aversion` | policy |
-| `risk_aversion` | policy |
-| `partial_fill_enabled` | transition execution / simulator |
+
+`turnover_cost_rate` is now represented on `TradingEnvironment`, not on
+`rebalance_friction_policy`.
 
 ## RL Analogy
 
 The strategy or policy produces a desired action.
 
 The transition layer decides what action actually happens after applying
-turnover budgets, no-trade bands, utility thresholds, and partial-fill behavior.
+turnover budgets and no-trade bands.
 
 The world or environment then applies realized costs and rewards.
 
-`rebalance_friction_policy` currently mixes parts of these layers. It should not
-be moved wholesale into world or evaluation config, because several fields
-directly change the action before costs are charged.
+`rebalance_friction_policy` still names policy-side transition behavior as
+friction. It should not be moved wholesale into world or evaluation config,
+because the remaining fields directly change the action before costs are
+charged.
 
 ## Risk
 
 Keeping the current name encourages two mistakes:
 
 - treating policy-side action suppression as a simple cost assumption
-- treating environment costs as if they were strategy behavior
 
 It also makes `execution_policy` terminology more confusing, because there is
 already a separate `portfolio_execution_policy.ExecutionPolicySpec` that better
@@ -87,12 +77,8 @@ Prefer a future split or rename around a clearer concept such as:
 - `trade_transition_policy`
 - `rebalance_transition_policy`
 
-Before renaming, decide how to separate:
-
-- policy-side expected cost and utility controls
-- portfolio transition constraints
-- simulator or environment execution effects
-- realized cost calculation
+Before renaming, decide whether the remaining fields should become direct
+arguments to transition functions instead of another policy object.
 
 ## Close Condition
 

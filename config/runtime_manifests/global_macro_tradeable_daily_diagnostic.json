@@ -101,20 +101,14 @@
             "net_exposure_target": 1.0
           },
           "rebalance_friction_policy": {
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "execution_mode": "utility_priority",
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 252,
           "selection_kind": "all_assets",
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -149,19 +143,13 @@
             "net_exposure_target": 1.0
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 252,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -197,19 +185,13 @@
             "net_exposure_target": 1.0
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 21,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -269,19 +251,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -341,19 +317,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.04,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.04
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -413,19 +383,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.04,
-            "benefit_scale": 2.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.04
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -485,19 +449,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.04,
-            "benefit_scale": 0.5,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.04
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -557,19 +515,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.08,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.08
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -629,19 +581,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -701,19 +647,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "threshold",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.005,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.04,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.04
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -773,19 +713,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.0,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 0.0,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
+            "turnover_cost_rate": 0.0,
             "market_impact_bps": 0.0,
             "fee_bps": 0.0,
             "bid_ask_spread_bps": 0.0,
@@ -845,19 +779,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -917,19 +845,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -989,19 +911,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.01,
             "execution_cost_aversion": 3.0,
-            "turnover_budget": 0.025,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": 0.025
           },
           "rebalance_interval_steps": 10,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,
@@ -1061,19 +977,13 @@
             }
           },
           "rebalance_friction_policy": {
-            "execution_mode": "utility_priority",
-            "turnover_friction": 0.001,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.5,
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 21,
           "trading_environment": {
+            "turnover_cost_rate": 0.001,
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
             "bid_ask_spread_bps": 1.5,

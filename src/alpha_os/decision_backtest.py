@@ -85,7 +85,7 @@ class DecisionBacktestInput:
     target_vol: float | None = None
     gross_leverage_cap: float | None = None
     net_exposure_target: float | None = None
-    turnover_friction: float = 0.0
+    turnover_cost_rate: float = 0.0
     market_impact_bps: float = 0.0
     fee_bps: float = 0.0
     bid_ask_spread_bps: float = 0.0
@@ -594,7 +594,7 @@ def _execution_policy_for_backtest(
     return ExecutionPolicySpec.from_cost_controls(
         no_trade_band=backtest_input.no_trade_band,
         turnover_budget=backtest_input.turnover_budget,
-        turnover_friction=backtest_input.turnover_friction,
+        turnover_cost_rate=backtest_input.turnover_cost_rate,
         market_impact_bps=backtest_input.market_impact_bps,
         fee_bps=backtest_input.fee_bps,
         bid_ask_spread_bps=backtest_input.bid_ask_spread_bps,
@@ -604,7 +604,7 @@ def _execution_policy_for_backtest(
 
 def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float:
     return (
-        max(backtest_input.turnover_friction, 0.0)
+        max(backtest_input.turnover_cost_rate, 0.0)
         + max(backtest_input.market_impact_bps, 0.0) / 10000.0
         + max(backtest_input.fee_bps, 0.0) / 10000.0
         + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0
@@ -613,7 +613,7 @@ def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float
 
 def _execution_friction_level(backtest_input: DecisionBacktestInput) -> float:
     return (
-        max(backtest_input.turnover_friction, 0.0)
+        max(backtest_input.turnover_cost_rate, 0.0)
         + max(backtest_input.market_impact_bps, 0.0) / 10000.0
     )
 
@@ -766,7 +766,7 @@ def build_decision_backtest_subject_steps(
         traded_notional = abs(delta) * capital_base
         gross_pnl_notional = target_notional * realized_return
         execution_cost_notional = (
-            max(backtest_input.turnover_friction, 0.0) * traded_notional
+            max(backtest_input.turnover_cost_rate, 0.0) * traded_notional
             + max(backtest_input.market_impact_bps, 0.0) / 10000.0 * traded_notional
             + max(backtest_input.fee_bps, 0.0) / 10000.0 * traded_notional
             + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
@@ -901,7 +901,7 @@ def build_backtest_step_accounting(
         + subject_borrow_cost_notional
     )
     cost_notional = (
-        max(backtest_input.turnover_friction, 0.0) * traded_notional
+        max(backtest_input.turnover_cost_rate, 0.0) * traded_notional
         + max(backtest_input.market_impact_bps, 0.0) / 10000.0 * traded_notional
         + max(backtest_input.fee_bps, 0.0) / 10000.0 * traded_notional
         + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
@@ -1180,12 +1180,12 @@ def _cost_inputs_for_backtest(
     subject_ids: tuple[str, ...],
 ) -> tuple[CostInput, ...]:
     items: list[CostInput] = []
-    if backtest_input.turnover_friction > 0.0:
+    if backtest_input.turnover_cost_rate > 0.0:
         items.append(
             CostInput(
-                name="turnover_friction",
+                name="turnover_cost_rate",
                 subject_id=None,
-                value=float(backtest_input.turnover_friction),
+                value=float(backtest_input.turnover_cost_rate),
                 basis="per_turnover",
                 unit="weight",
             )

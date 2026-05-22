@@ -39,14 +39,14 @@ class ExecutionPolicySpec:
         *,
         no_trade_band: float,
         turnover_budget: float | None,
-        turnover_friction: float,
+        turnover_cost_rate: float,
         market_impact_bps: float,
         fee_bps: float,
         bid_ask_spread_bps: float,
         execution_cost_aversion: float,
     ) -> "ExecutionPolicySpec":
         per_turnover_cost = (
-            max(float(turnover_friction), 0.0)
+            max(float(turnover_cost_rate), 0.0)
             + max(float(market_impact_bps), 0.0) / 10000.0
             + max(float(fee_bps), 0.0) / 10000.0
             + max(float(bid_ask_spread_bps), 0.0) / 10000.0
@@ -56,17 +56,17 @@ class ExecutionPolicySpec:
             if turnover_budget is not None
             else 0.0
         )
-        turnover_friction_aversion = 1.0
+        turnover_cost_aversion = 1.0
         return cls(
             no_trade_band=max(float(no_trade_band), 0.0),
             turnover_budget=turnover_budget,
             cost_soft_threshold=cost_soft_threshold,
             transition_soft_threshold=(
-                max(float(turnover_friction), 0.0) * turnover_friction_aversion
+                max(float(turnover_cost_rate), 0.0) * turnover_cost_aversion
             ),
             execution_friction_aversion=(
                 max(float(execution_cost_aversion), 0.0)
-                + turnover_friction_aversion
+                + turnover_cost_aversion
             ),
             recent_turnover_aversion=max(float(execution_cost_aversion), 0.0),
             signal_horizon_shortfall_aversion=1.0,
@@ -394,4 +394,3 @@ def _shrink_from_level(level: float, aversion: float) -> float:
     if level <= 0.0 or aversion <= 0.0:
         return 1.0
     return float(1.0 / (1.0 + aversion * level))
-

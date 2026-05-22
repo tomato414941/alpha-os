@@ -23,7 +23,7 @@ def _build_trading_strategy(
     bid_ask_spread_bps: float | None = None,
     funding_bps_per_step: float | None = None,
     borrow_fee_bps_per_step: float | None = None,
-    turnover_friction: float | None = None,
+    turnover_cost_rate: float | None = None,
     no_trade_band: float | None = None,
     created_at: str = "2026-04-08T00:00:00Z",
 ):
@@ -70,10 +70,12 @@ def _build_trading_strategy(
                 ),
             ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
             ),
             trading_environment=TradingEnvironment(
+                turnover_cost_rate=(
+                    0.0 if turnover_cost_rate is None else turnover_cost_rate
+                ),
                 market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
                 fee_bps=0.0 if fee_bps is None else fee_bps,
                 bid_ask_spread_bps=(
@@ -120,7 +122,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
         bid_ask_spread_bps=3.0,
         funding_bps_per_step=1.5,
         borrow_fee_bps_per_step=2.5,
-        turnover_friction=0.1,
+        turnover_cost_rate=0.1,
         no_trade_band=0.02,
     )
 
@@ -151,8 +153,8 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.portfolio.portfolio_construction.cluster_weight_caps == {
         "eq_us": 0.25
     }
-    assert trading_strategy.rebalance_friction_policy.turnover_friction == 0.1
     assert trading_strategy.rebalance_friction_policy.no_trade_band == 0.02
+    assert trading_strategy.trading_environment.turnover_cost_rate == 0.1
     assert trading_strategy.trading_environment.market_impact_bps == 5.0
     assert trading_strategy.trading_environment.fee_bps == 2.0
     assert trading_strategy.trading_environment.bid_ask_spread_bps == 3.0
@@ -184,7 +186,6 @@ def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
         {
             "portfolio_construction": {},
             "rebalance_friction_policy": RebalanceFrictionPolicySpec(
-                turnover_friction=None,
                 no_trade_band=None,
             ).to_document(),
             "trading_environment": {},
@@ -220,7 +221,7 @@ def test_trading_strategy_spec_round_trips_through_document():
         bid_ask_spread_bps=3.0,
         funding_bps_per_step=1.5,
         borrow_fee_bps_per_step=2.5,
-        turnover_friction=0.1,
+        turnover_cost_rate=0.1,
         no_trade_band=0.02,
     )
 

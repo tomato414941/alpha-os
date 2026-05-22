@@ -16,14 +16,12 @@ def _float_from_document(
 
 @dataclass(frozen=True)
 class EvaluationRebalanceFrictionPolicySpec:
-    turnover_friction: float = 0.0
     no_trade_band: float = 0.0
     execution_cost_aversion: float = 1.0
     turnover_budget: float | None = None
 
     def __post_init__(self) -> None:
         for field_name, value in (
-            ("turnover_friction", self.turnover_friction),
             ("no_trade_band", self.no_trade_band),
             ("execution_cost_aversion", self.execution_cost_aversion),
         ):
@@ -44,7 +42,6 @@ class EvaluationRebalanceFrictionPolicySpec:
 
     def to_document(self) -> dict[str, Any]:
         return {
-            "turnover_friction": self.turnover_friction,
             "no_trade_band": self.no_trade_band,
             "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
@@ -59,7 +56,6 @@ class EvaluationRebalanceFrictionPolicySpec:
         if not isinstance(document, dict):
             raise ValueError("rebalance_friction_policy must be an object")
         return cls(
-            turnover_friction=float(document.get("turnover_friction", 0.0)),
             no_trade_band=float(document.get("no_trade_band", 0.0)),
             execution_cost_aversion=float(
                 document.get("execution_cost_aversion", 1.0)
@@ -149,6 +145,7 @@ class HoldingCostAssumptionsSpec:
 
 @dataclass(frozen=True)
 class TradingEnvironment:
+    turnover_cost_rate: float = 0.0
     market_impact_bps: float = 0.0
     fee_bps: float = 0.0
     bid_ask_spread_bps: float = 0.0
@@ -157,6 +154,7 @@ class TradingEnvironment:
 
     def __post_init__(self) -> None:
         for field_name, value in (
+            ("turnover_cost_rate", self.turnover_cost_rate),
             ("market_impact_bps", self.market_impact_bps),
             ("fee_bps", self.fee_bps),
             ("bid_ask_spread_bps", self.bid_ask_spread_bps),
@@ -173,6 +171,9 @@ class TradingEnvironment:
         if not isinstance(document, dict):
             raise ValueError("trading_environment must be an object")
         return cls(
+            turnover_cost_rate=_float_from_document(
+                document, "turnover_cost_rate", default=0.0
+            ),
             market_impact_bps=_float_from_document(
                 document, "market_impact_bps", default=0.0
             ),
@@ -190,6 +191,7 @@ class TradingEnvironment:
 
     def to_document(self) -> dict[str, Any]:
         return {
+            "turnover_cost_rate": self.turnover_cost_rate,
             "market_impact_bps": self.market_impact_bps,
             "fee_bps": self.fee_bps,
             "bid_ask_spread_bps": self.bid_ask_spread_bps,

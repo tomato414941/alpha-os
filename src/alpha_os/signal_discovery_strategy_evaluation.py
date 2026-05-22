@@ -1136,7 +1136,7 @@ def _run_backtest_variant(
             target_vol=portfolio_construction.target_vol,
             gross_leverage_cap=portfolio_construction.gross_leverage_cap,
             net_exposure_target=portfolio_construction.net_exposure_target,
-            turnover_friction=rebalance_friction_policy.turnover_friction,
+            turnover_cost_rate=trading_environment.turnover_cost_rate,
             market_impact_bps=trading_environment.market_impact_bps,
             fee_bps=trading_environment.fee_bps,
             bid_ask_spread_bps=trading_environment.bid_ask_spread_bps,

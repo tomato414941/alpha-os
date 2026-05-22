@@ -225,13 +225,13 @@
             "gross_exposure_cap": 0.85
           },
           "rebalance_friction_policy": {
-            "turnover_friction": 0.0,
             "no_trade_band": 0.02,
             "execution_cost_aversion": 1.0
           },
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",
           "trading_environment": {
+            "turnover_cost_rate": 0.0,
             "market_impact_bps": 5.0,
             "fee_bps": 0.0,
             "bid_ask_spread_bps": 0.0

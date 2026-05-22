@@ -66,7 +66,6 @@ def _strategy_document(
                     "net_exposure_target": 1.0,
                 },
                 "rebalance_friction_policy": {
-                    "turnover_friction": 0.0,
                     "no_trade_band": 0.0,
                     "execution_cost_aversion": 1.0,
                     "turnover_budget": None,

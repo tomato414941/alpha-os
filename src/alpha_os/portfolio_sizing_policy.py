@@ -285,9 +285,9 @@ def build_sizing_request(decision_input: PortfolioDecisionInput) -> SizingReques
         holding_period_days=max(decision_input.portfolio_state.holding_period_days, 0),
         current_drawdown=max(decision_input.portfolio_state.current_drawdown, 0.0),
         recent_turnover=max(decision_input.portfolio_state.recent_turnover, 0.0),
-        turnover_friction=_global_cost_value(
+        turnover_cost_rate=_global_cost_value(
             decision_input.cost_inputs,
-            "turnover_friction",
+            "turnover_cost_rate",
         ),
     )
 

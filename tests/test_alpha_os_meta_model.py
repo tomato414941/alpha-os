@@ -639,7 +639,6 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                 direction_mode=None,
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -1620,10 +1619,10 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                         gross_exposure_cap=0.5,
                     ),
                     rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                        turnover_friction=0.15,
                         no_trade_band=0.02,
                     ),
                     trading_environment=TradingEnvironment(
+                        turnover_cost_rate=0.15,
                         market_impact_bps=7.0,
                         fee_bps=1.5,
                         funding_bps_per_step=2.5,
@@ -1680,8 +1679,8 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         assert strategy_details["top_k"] == 1
         cost_inputs = details["assumptions"]["cost_inputs"]
         names = {item["name"] for item in cost_inputs}
-        assert {"turnover_friction", "market_impact", "fee_bps", "funding_bps_per_step", "no_trade_band"} <= names
-        turnover_item = next(item for item in cost_inputs if item["name"] == "turnover_friction")
+        assert {"turnover_cost_rate", "market_impact", "fee_bps", "funding_bps_per_step", "no_trade_band"} <= names
+        turnover_item = next(item for item in cost_inputs if item["name"] == "turnover_cost_rate")
         funding_item = next(item for item in cost_inputs if item["name"] == "funding_bps_per_step")
         assert turnover_item["value"] == 0.15
         assert funding_item["value"] == 2.5
@@ -2102,7 +2101,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                 direction_mode=None,
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -3159,7 +3157,6 @@ def test_global_macro_diagnostic_manifest_contract():
                     "top_gross_share_cap": 0.4,
                 }
                 expected_rebalance_policy = {
-                    "turnover_friction": 0.001,
                     "no_trade_band": 0.01,
                     "execution_cost_aversion": 3.0,
                     "turnover_budget": 0.025,
@@ -3167,6 +3164,7 @@ def test_global_macro_diagnostic_manifest_contract():
                 assert expected_rebalance_policy.items() <= portfolio[
                     "rebalance_friction_policy"
                 ].items()
+                assert portfolio["trading_environment"]["turnover_cost_rate"] == 0.001
             if (
                 case["evaluation_case_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"

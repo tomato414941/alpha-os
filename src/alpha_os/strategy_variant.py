@@ -170,7 +170,6 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        turnover_friction=float(rebalance_friction_policy.turnover_friction),
         no_trade_band=float(rebalance_friction_policy.no_trade_band),
     )
     return TradingStrategySpec(
@@ -189,7 +188,6 @@ def derive_trading_strategy_from_signal_discovery(
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                turnover_friction=float(rebalance_friction_policy.turnover_friction),
                 no_trade_band=float(rebalance_friction_policy.no_trade_band),
                 execution_cost_aversion=float(
                     rebalance_friction_policy.execution_cost_aversion

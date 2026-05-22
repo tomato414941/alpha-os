@@ -58,8 +58,8 @@ Decision rule:
 - `HoldingCostAssumptionsSpec` carries funding and borrow assumptions. These are
   closer to realized environment costs.
 - `EvaluationRebalanceFrictionPolicySpec` carries decision-facing fields such as
-  `execution_cost_aversion`, `min_trade_utility`, and no-trade behavior. These
-  are closer to policy or actor behavior.
+  `execution_cost_aversion` and no-trade behavior. These are closer to policy or
+  actor behavior.
 
 The code should not rely on a generic cost object to stand for both expected
 decision cost and realized environment cost.

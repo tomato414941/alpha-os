@@ -194,7 +194,6 @@ def _register_direct_strategy(store) -> None:
                     gross_exposure_cap=1.0,
                 ),
                 rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                    turnover_friction=None,
                     no_trade_band=None,
                 ),
                 trading_environment=TradingEnvironment(),

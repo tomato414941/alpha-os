@@ -72,7 +72,7 @@ def _build_trading_strategy(
     market_impact_bps: float | None = None,
     fee_bps: float | None = None,
     bid_ask_spread_bps: float | None = None,
-    turnover_friction: float | None = None,
+    turnover_cost_rate: float | None = None,
     no_trade_band: float | None = None,
     created_at: str = "2026-04-05T00:00:00Z",
 ):
@@ -113,10 +113,12 @@ def _build_trading_strategy(
                 gross_exposure_cap=gross_exposure_cap,
             ),
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
             ),
             trading_environment=TradingEnvironment(
+                turnover_cost_rate=(
+                    0.0 if turnover_cost_rate is None else turnover_cost_rate
+                ),
                 market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
                 fee_bps=0.0 if fee_bps is None else fee_bps,
                 bid_ask_spread_bps=(
@@ -149,7 +151,7 @@ def test_evaluation_trading_config_from_args_accepts_direction_mode():
             direction_mode="short_only",
             top_k=None,
             gross_exposure_cap=None,
-            turnover_friction=None,
+            turnover_cost_rate=None,
             no_trade_band=None,
             market_impact_bps=None,
             fee_bps=None,
@@ -554,7 +556,6 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
                                 trading_environment={
@@ -723,7 +724,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
                                 trading_environment={
@@ -884,7 +884,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
                                 trading_environment={
@@ -994,7 +993,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                                 direction_mode=None,
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -1114,7 +1112,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                                 direction_mode=None,
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -1327,7 +1324,6 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                 selection_kind="top_k",
                                 top_k=1,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -1549,7 +1545,6 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                 selection_kind="top_k",
                                 top_k=1,
                                 rebalance_friction_policy={
-                                    "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
                                 trading_environment={
@@ -1992,7 +1987,6 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                                 direction_mode="long_short",
                                 gross_exposure_cap=0.5,
                                 rebalance_friction_policy={
-                                    "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
                                 trading_environment={
@@ -2455,7 +2449,6 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
                                 rebalance_friction_policy={
-                                    "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
                                 trading_environment={

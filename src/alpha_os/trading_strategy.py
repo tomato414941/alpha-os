@@ -68,7 +68,6 @@ def build_trading_strategy_id(
     target_vol: float | None = None,
     gross_leverage_cap: float | None = None,
     net_exposure_target: float | None = None,
-    turnover_friction: float | None = None,
     no_trade_band: float | None = None,
 ) -> str:
     parts: list[tuple[str, str]] = []
@@ -93,7 +92,6 @@ def build_trading_strategy_id(
     add("target_vol", target_vol)
     add("gross_leverage_cap", gross_leverage_cap)
     add("net_exposure_target", net_exposure_target)
-    add("turnover_friction", turnover_friction)
     add("no_trade_band", no_trade_band)
     payload = "|".join(f"{name}={value}" for name, value in sorted(parts))
     digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
@@ -127,14 +125,12 @@ class TradingStrategyScopeSpec:
 
 @dataclass(frozen=True)
 class RebalanceFrictionPolicySpec:
-    turnover_friction: float | None
     no_trade_band: float | None
     execution_cost_aversion: float | None = None
     turnover_budget: float | None = None
 
     def to_document(self) -> dict[str, Any]:
         return {
-            "turnover_friction": self.turnover_friction,
             "no_trade_band": self.no_trade_band,
             "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
@@ -142,14 +138,10 @@ class RebalanceFrictionPolicySpec:
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "RebalanceFrictionPolicySpec":
-        turnover_friction = document.get("turnover_friction")
         no_trade_band = document.get("no_trade_band")
         execution_cost_aversion = document.get("execution_cost_aversion")
         turnover_budget = document.get("turnover_budget")
         return cls(
-            turnover_friction=(
-                None if turnover_friction is None else float(turnover_friction)
-            ),
             no_trade_band=None if no_trade_band is None else float(no_trade_band),
             execution_cost_aversion=(
                 None

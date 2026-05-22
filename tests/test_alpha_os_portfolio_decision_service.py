@@ -482,7 +482,7 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
             assumptions=PortfolioDecisionAssumptions(
                 cost_inputs=(
                     CostInput(
-                        name="turnover_friction",
+                        name="turnover_cost_rate",
                         subject_id=None,
                         value=0.01,
                         basis="per_turnover",
@@ -508,7 +508,7 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
         assert {item.name for item in decision_input.cost_inputs} == {
             "market_impact",
             "no_trade_band",
-            "turnover_friction",
+            "turnover_cost_rate",
         }
         assert decision_input.dependence_inputs[0].right_subject_id == "ETH"
     finally:
