@@ -6,8 +6,7 @@ from typing import Protocol
 from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
+    MarketAssumptions,
 )
 from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
@@ -55,42 +54,25 @@ def _rebalance_friction_policy_for_strategy(
     )
 
 
-def _execution_cost_assumptions_for_strategy(
+def _market_assumptions_for_strategy(
     trading_strategy: TradingStrategySpec,
-) -> ExecutionCostAssumptionsSpec:
-    strategy_policy = trading_strategy.portfolio.execution_policy
-    if strategy_policy is not None:
-        return ExecutionCostAssumptionsSpec(
-            market_impact_bps=strategy_policy.market_impact_bps or 0.0,
-            fee_bps=strategy_policy.fee_bps or 0.0,
-            bid_ask_spread_bps=strategy_policy.bid_ask_spread_bps or 0.0,
-        )
-    raise ValueError(
-        "trading strategy is missing execution_policy: "
-        f"{trading_strategy.strategy_id}"
-    )
-
-
-def _holding_cost_assumptions_for_strategy(
-    trading_strategy: TradingStrategySpec,
-) -> HoldingCostAssumptionsSpec:
-    strategy_policy = trading_strategy.portfolio.holding_cost_policy
-    if strategy_policy is not None:
-        return HoldingCostAssumptionsSpec(
-            funding_bps_per_step=(
-                0.0
-                if strategy_policy.funding_bps_per_step is None
-                else strategy_policy.funding_bps_per_step
-            ),
-            borrow_fee_bps_per_step=(
-                0.0
-                if strategy_policy.borrow_fee_bps_per_step is None
-                else strategy_policy.borrow_fee_bps_per_step
-            ),
-        )
-    raise ValueError(
-        "trading strategy is missing holding_cost_policy: "
-        f"{trading_strategy.strategy_id}"
+) -> MarketAssumptions:
+    execution = trading_strategy.portfolio.execution_policy
+    holding = trading_strategy.portfolio.holding_cost_policy
+    return MarketAssumptions(
+        market_impact_bps=execution.market_impact_bps or 0.0,
+        fee_bps=execution.fee_bps or 0.0,
+        bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
+        funding_bps_per_step=(
+            0.0
+            if holding.funding_bps_per_step is None
+            else holding.funding_bps_per_step
+        ),
+        borrow_fee_bps_per_step=(
+            0.0
+            if holding.borrow_fee_bps_per_step is None
+            else holding.borrow_fee_bps_per_step
+        ),
     )
 
 
@@ -138,12 +120,7 @@ def run_strategy_evaluation(
     rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
         trading_strategy
     )
-    execution_cost_assumptions = _execution_cost_assumptions_for_strategy(
-        trading_strategy
-    )
-    holding_cost_assumptions = _holding_cost_assumptions_for_strategy(
-        trading_strategy
-    )
+    market_assumptions = _market_assumptions_for_strategy(trading_strategy)
     subject_set_id = _subject_set_id_for_strategy(trading_strategy)
     target_id = _target_id_for_strategy(trading_strategy)
     subject_set_state = store.get_subject_set(subject_set_id)
@@ -158,8 +135,7 @@ def run_strategy_evaluation(
         base_url=base_url,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         feature_plane_repository=context.feature_plane_repository,
     )
     direct_metric_group_results, direct_failure_finding_groups = direct_evaluation

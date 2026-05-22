@@ -4,8 +4,7 @@ from dataclasses import dataclass
 
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
+    MarketAssumptions,
 )
 from .portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
@@ -26,9 +25,8 @@ from .trading_strategy import (
 class StrategyVariantConfig:
     portfolio_construction: PortfolioConstructionSpec
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec
+    market_assumptions: MarketAssumptions
     top_k: int | None = None
-    holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec()
 
     @property
     def sizing_method(self) -> str:
@@ -56,13 +54,10 @@ def strategy_variant_config_from_strategy(
                 if value is not None
             }
         ),
-        execution_cost_assumptions=ExecutionCostAssumptionsSpec(
+        market_assumptions=MarketAssumptions(
             market_impact_bps=execution.market_impact_bps or 0.0,
             fee_bps=execution.fee_bps or 0.0,
             bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
-        ),
-        top_k=portfolio.top_k,
-        holding_cost_assumptions=HoldingCostAssumptionsSpec(
             funding_bps_per_step=(
                 0.0
                 if holding.funding_bps_per_step is None
@@ -74,6 +69,7 @@ def strategy_variant_config_from_strategy(
                 else holding.borrow_fee_bps_per_step
             ),
         ),
+        top_k=portfolio.top_k,
     )
 
 
@@ -125,9 +121,8 @@ def overridden_strategy_variant_config(
             cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
         ),
         rebalance_friction_policy=config.rebalance_friction_policy,
-        execution_cost_assumptions=config.execution_cost_assumptions,
+        market_assumptions=config.market_assumptions,
         top_k=config.top_k,
-        holding_cost_assumptions=config.holding_cost_assumptions,
     )
 
 
@@ -140,8 +135,7 @@ def derive_trading_strategy_from_signal_discovery(
     definition = signal_discovery.definition
     portfolio_construction = variant_config.portfolio_construction
     rebalance_friction_policy = variant_config.rebalance_friction_policy
-    execution_cost_assumptions = variant_config.execution_cost_assumptions
-    holding_cost_assumptions = variant_config.holding_cost_assumptions
+    market_assumptions = variant_config.market_assumptions
     sizing_method = portfolio_construction.sizing_method
     family_ids = tuple(
         sorted(
@@ -194,15 +188,13 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        market_impact_bps=float(execution_cost_assumptions.market_impact_bps),
-        fee_bps=float(execution_cost_assumptions.fee_bps),
-        bid_ask_spread_bps=float(execution_cost_assumptions.bid_ask_spread_bps),
+        market_impact_bps=float(market_assumptions.market_impact_bps),
+        fee_bps=float(market_assumptions.fee_bps),
+        bid_ask_spread_bps=float(market_assumptions.bid_ask_spread_bps),
         turnover_friction=float(rebalance_friction_policy.turnover_friction),
         no_trade_band=float(rebalance_friction_policy.no_trade_band),
-        funding_bps_per_step=float(holding_cost_assumptions.funding_bps_per_step),
-        borrow_fee_bps_per_step=float(
-            holding_cost_assumptions.borrow_fee_bps_per_step
-        ),
+        funding_bps_per_step=float(market_assumptions.funding_bps_per_step),
+        borrow_fee_bps_per_step=float(market_assumptions.borrow_fee_bps_per_step),
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,
@@ -234,17 +226,13 @@ def derive_trading_strategy_from_signal_discovery(
                 partial_fill_enabled=rebalance_friction_policy.partial_fill_enabled,
             ),
             execution_policy=ExecutionPolicySpec(
-                market_impact_bps=float(execution_cost_assumptions.market_impact_bps),
-                fee_bps=float(execution_cost_assumptions.fee_bps),
-                bid_ask_spread_bps=float(execution_cost_assumptions.bid_ask_spread_bps),
+                market_impact_bps=float(market_assumptions.market_impact_bps),
+                fee_bps=float(market_assumptions.fee_bps),
+                bid_ask_spread_bps=float(market_assumptions.bid_ask_spread_bps),
             ),
             holding_cost_policy=HoldingCostPolicySpec(
-                funding_bps_per_step=float(
-                    holding_cost_assumptions.funding_bps_per_step
-                ),
-                borrow_fee_bps_per_step=float(
-                    holding_cost_assumptions.borrow_fee_bps_per_step
-                ),
+                funding_bps_per_step=float(market_assumptions.funding_bps_per_step),
+                borrow_fee_bps_per_step=float(market_assumptions.borrow_fee_bps_per_step),
             ),
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,

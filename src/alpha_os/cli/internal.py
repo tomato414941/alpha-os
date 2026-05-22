@@ -32,8 +32,7 @@ from ..evaluation_application import (
 )
 from ..evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
+    MarketAssumptions,
 )
 from ..evaluation_spec import EvaluationSpec
 from ..portfolio_construction_config import (
@@ -3372,7 +3371,7 @@ def _print_diagnostic_evaluation_dry_run(
         trading_config = trading_configs_by_case_id[_case_key(case)]
         construction = trading_config.portfolio_construction
         friction = trading_config.rebalance_friction_policy
-        costs = trading_config.execution_cost_assumptions
+        market_assumptions = trading_config.market_assumptions
         print(
             "  Result: "
             f"{_case_key(case)} "
@@ -3389,7 +3388,7 @@ def _print_diagnostic_evaluation_dry_run(
             f"benefit_scale={friction.benefit_scale} "
             f"min_trade_utility={friction.min_trade_utility} "
             f"partial_fill_enabled={str(friction.partial_fill_enabled).lower()} "
-            f"cost_bps={costs.market_impact_bps + costs.fee_bps + costs.bid_ask_spread_bps}"
+            f"cost_bps={market_assumptions.market_impact_bps + market_assumptions.fee_bps + market_assumptions.bid_ask_spread_bps}"
         )
 
 
@@ -4036,7 +4035,7 @@ def _evaluation_trading_config_from_args(
             ),
             no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
         ),
-        execution_cost_assumptions=ExecutionCostAssumptionsSpec(
+        market_assumptions=MarketAssumptions(
             market_impact_bps=(
                 0.0 if args.market_impact_bps is None else float(args.market_impact_bps)
             ),
@@ -4044,8 +4043,6 @@ def _evaluation_trading_config_from_args(
             bid_ask_spread_bps=0.0
             if args.bid_ask_spread_bps is None
             else float(args.bid_ask_spread_bps),
-        ),
-        holding_cost_assumptions=HoldingCostAssumptionsSpec(
             funding_bps_per_step=(
                 0.0 if args.funding_bps_per_step is None else float(args.funding_bps_per_step)
             ),

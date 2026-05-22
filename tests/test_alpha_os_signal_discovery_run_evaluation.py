@@ -287,8 +287,7 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     import alpha_os.strategy_backtest as strategy_backtest
     from alpha_os.evaluation_cost_config import (
         EvaluationRebalanceFrictionPolicySpec,
-        ExecutionCostAssumptionsSpec,
-        HoldingCostAssumptionsSpec,
+        MarketAssumptions,
     )
     from alpha_os.evaluation_spec import EvaluationDateRange
     from alpha_os.portfolio_decision import (
@@ -370,8 +369,7 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         base_url="fixture://",
         portfolio_construction=strategy.portfolio_construction,
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
-        execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
-        holding_cost_assumptions=HoldingCostAssumptionsSpec(),
+        market_assumptions=MarketAssumptions(),
         feature_plane_repository=None,
     )
 

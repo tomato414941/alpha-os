@@ -18,8 +18,7 @@ from .decision_backtest import (
 )
 from .evaluation_cost_config import (
     EvaluationRebalanceFrictionPolicySpec,
-    ExecutionCostAssumptionsSpec,
-    HoldingCostAssumptionsSpec,
+    MarketAssumptions,
 )
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import (
@@ -217,8 +216,7 @@ def evaluate_range_backtest_dataset_builder(
     target_id: str,
     portfolio_construction: PortfolioConstructionSpec,
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
-    holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    market_assumptions: MarketAssumptions,
     top_k: int | None,
 ) -> RangeBacktestEvaluationLoopResult:
     range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
@@ -235,8 +233,7 @@ def evaluate_range_backtest_dataset_builder(
             dataset=dataset,
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
+            market_assumptions=market_assumptions,
             top_k=top_k,
         )
         all_step_net_returns.extend(
@@ -331,10 +328,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec = (
         EvaluationRebalanceFrictionPolicySpec()
     ),
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec = (
-        ExecutionCostAssumptionsSpec()
-    ),
-    holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec(),
+    market_assumptions: MarketAssumptions = MarketAssumptions(),
     top_k: int | None = None,
 ) -> StrategyEvaluationResult:
     survivors = list(screening_result.survivors)
@@ -393,8 +387,7 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
         target_id=target_id,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         top_k=top_k,
     )
 
@@ -439,10 +432,7 @@ def build_direct_strategy_evaluation_metric_group_results(
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec = (
         EvaluationRebalanceFrictionPolicySpec()
     ),
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec = (
-        ExecutionCostAssumptionsSpec()
-    ),
-    holding_cost_assumptions: HoldingCostAssumptionsSpec = HoldingCostAssumptionsSpec(),
+    market_assumptions: MarketAssumptions = MarketAssumptions(),
     top_k: int | None = None,
     signal_value: float = 1.0,
 ) -> StrategyEvaluationResult:
@@ -468,8 +458,7 @@ def build_direct_strategy_evaluation_metric_group_results(
         target_id=target_id,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         top_k=top_k,
     )
     (
@@ -1156,8 +1145,7 @@ def _run_backtest_variant(
     dependence_series: tuple[DependenceBacktestSeries, ...],
     portfolio_construction: PortfolioConstructionSpec,
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
-    holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    market_assumptions: MarketAssumptions,
     top_k: int | None,
 ) -> DecisionBacktestResult:
     return run_decision_backtest(
@@ -1181,11 +1169,11 @@ def _run_backtest_variant(
             gross_leverage_cap=portfolio_construction.gross_leverage_cap,
             net_exposure_target=portfolio_construction.net_exposure_target,
             turnover_friction=rebalance_friction_policy.turnover_friction,
-            market_impact_bps=execution_cost_assumptions.market_impact_bps,
-            fee_bps=execution_cost_assumptions.fee_bps,
-            bid_ask_spread_bps=execution_cost_assumptions.bid_ask_spread_bps,
-            funding_bps_per_step=holding_cost_assumptions.funding_bps_per_step,
-            borrow_fee_bps_per_step=holding_cost_assumptions.borrow_fee_bps_per_step,
+            market_impact_bps=market_assumptions.market_impact_bps,
+            fee_bps=market_assumptions.fee_bps,
+            bid_ask_spread_bps=market_assumptions.bid_ask_spread_bps,
+            funding_bps_per_step=market_assumptions.funding_bps_per_step,
+            borrow_fee_bps_per_step=market_assumptions.borrow_fee_bps_per_step,
             execution_cost_aversion=rebalance_friction_policy.execution_cost_aversion,
             execution_mode=rebalance_friction_policy.execution_mode,
             benefit_scale=rebalance_friction_policy.benefit_scale,
@@ -1447,8 +1435,7 @@ def evaluate_range_backtest_variants(
     dataset: RangeBacktestDataset,
     portfolio_construction: PortfolioConstructionSpec,
     rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
-    execution_cost_assumptions: ExecutionCostAssumptionsSpec,
-    holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    market_assumptions: MarketAssumptions,
     top_k: int | None,
 ) -> RangeBacktestVariantResults:
     selected = _run_backtest_variant(
@@ -1459,8 +1446,7 @@ def evaluate_range_backtest_variants(
         dependence_series=dataset.dependence_series,
         portfolio_construction=portfolio_construction,
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         top_k=top_k,
     )
     if _uses_expensive_sizing_optimizer(portfolio_construction):
@@ -1477,8 +1463,7 @@ def evaluate_range_backtest_variants(
                 rebalance_interval_steps=1,
             ),
             rebalance_friction_policy=rebalance_friction_policy,
-            execution_cost_assumptions=execution_cost_assumptions,
-            holding_cost_assumptions=holding_cost_assumptions,
+            market_assumptions=market_assumptions,
             top_k=top_k,
         )
     equal_weight = _run_backtest_variant(
@@ -1493,8 +1478,7 @@ def evaluate_range_backtest_variants(
             sizing_engine="history_based",
         ),
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         top_k=top_k,
     )
     equal_weight_daily = _run_backtest_variant(
@@ -1510,8 +1494,7 @@ def evaluate_range_backtest_variants(
             rebalance_interval_steps=1,
         ),
         rebalance_friction_policy=rebalance_friction_policy,
-        execution_cost_assumptions=execution_cost_assumptions,
-        holding_cost_assumptions=holding_cost_assumptions,
+        market_assumptions=market_assumptions,
         top_k=top_k,
     )
     return RangeBacktestVariantResults(

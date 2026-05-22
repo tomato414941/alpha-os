@@ -188,3 +188,49 @@ class HoldingCostAssumptionsSpec:
                 document.get("borrow_fee_bps_per_step", 0.0)
             ),
         )
+
+
+@dataclass(frozen=True)
+class MarketAssumptions:
+    market_impact_bps: float = 0.0
+    fee_bps: float = 0.0
+    bid_ask_spread_bps: float = 0.0
+    funding_bps_per_step: float = 0.0
+    borrow_fee_bps_per_step: float = 0.0
+
+    def __post_init__(self) -> None:
+        for field_name, value in (
+            ("market_impact_bps", self.market_impact_bps),
+            ("fee_bps", self.fee_bps),
+            ("bid_ask_spread_bps", self.bid_ask_spread_bps),
+            ("funding_bps_per_step", self.funding_bps_per_step),
+            ("borrow_fee_bps_per_step", self.borrow_fee_bps_per_step),
+        ):
+            if not isinstance(value, (int, float)):
+                raise ValueError(f"market assumptions {field_name} must be numeric")
+
+    @classmethod
+    def from_cost_assumptions(
+        cls,
+        *,
+        execution_cost_assumptions: ExecutionCostAssumptionsSpec,
+        holding_cost_assumptions: HoldingCostAssumptionsSpec,
+    ) -> "MarketAssumptions":
+        return cls(
+            market_impact_bps=float(execution_cost_assumptions.market_impact_bps),
+            fee_bps=float(execution_cost_assumptions.fee_bps),
+            bid_ask_spread_bps=float(execution_cost_assumptions.bid_ask_spread_bps),
+            funding_bps_per_step=float(holding_cost_assumptions.funding_bps_per_step),
+            borrow_fee_bps_per_step=float(
+                holding_cost_assumptions.borrow_fee_bps_per_step
+            ),
+        )
+
+    def to_document(self) -> dict[str, Any]:
+        return {
+            "market_impact_bps": self.market_impact_bps,
+            "fee_bps": self.fee_bps,
+            "bid_ask_spread_bps": self.bid_ask_spread_bps,
+            "funding_bps_per_step": self.funding_bps_per_step,
+            "borrow_fee_bps_per_step": self.borrow_fee_bps_per_step,
+        }

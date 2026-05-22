@@ -76,6 +76,11 @@ Long term, prefer environment or evaluation-owned cost assumptions for backtest
 net-return calculation. Keep strategy-owned cost fields only when the strategy
 actually uses the value to decide actions.
 
+`MarketAssumptions` now groups execution and holding costs in the evaluation /
+backtest path without adding another `Spec`. This is an intermediate step; the
+persisted strategy manifest fields still need to move out of
+`TradingStrategySpec.portfolio`.
+
 ## Close Condition
 
 Close this when `execution_policy` and `holding_cost_policy` are either moved
