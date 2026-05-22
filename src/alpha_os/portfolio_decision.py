@@ -7,7 +7,6 @@ from .contract_boundaries import (
     SubjectSetContractBoundary,
     default_subject_set_contract_boundary,
 )
-from .strategy_sleeves import StrategySleeveCompositionSpec
 
 
 @dataclass(frozen=True)
@@ -288,7 +287,6 @@ class PredictiveSignalInput:
     value: float
     confidence: float | None = None
     source_kind: str | None = None
-    sleeve_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -390,7 +388,6 @@ class PortfolioDecisionInput:
     portfolio_state: PortfolioState = field(default_factory=PortfolioState)
     observed_inputs: ObservedPortfolioInputs = field(default_factory=ObservedPortfolioInputs)
     assumptions: PortfolioDecisionAssumptions = field(default_factory=PortfolioDecisionAssumptions)
-    sleeve_composition: StrategySleeveCompositionSpec | None = None
     subject_metadata_by_subject: dict[str, dict[str, str]] = field(default_factory=dict)
 
     @property

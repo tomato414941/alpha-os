@@ -1203,7 +1203,6 @@ def _run_backtest_variant(
             historical_return_lookback_steps=_historical_return_lookback_steps(
                 portfolio_construction
             ),
-            sleeve_composition=portfolio_construction.sleeve_composition,
             subject_metadata_by_subject=_subject_metadata_by_subject(subject_set),
         ),
         sizing_policy=_portfolio_sizing_policy_from_config(portfolio_construction),

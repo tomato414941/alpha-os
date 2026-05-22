@@ -27,7 +27,6 @@ from .portfolio_rebalance_friction import (
     PortfolioRebalanceFrictionPolicy,
     apply_portfolio_rebalance_friction,
 )
-from .strategy_sleeve_composition import compose_portfolio_decision_input
 
 
 @dataclass(frozen=True)
@@ -159,7 +158,6 @@ def apply_portfolio_sizing_policy(
     rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
     apply_rebalance_friction: bool = True,
 ) -> PortfolioDecisionOutput:
-    decision_input, _ = compose_portfolio_decision_input(decision_input)
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,

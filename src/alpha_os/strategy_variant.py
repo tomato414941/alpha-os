@@ -123,7 +123,6 @@ def overridden_strategy_variant_config(
             net_exposure_target=portfolio_construction.net_exposure_target,
             asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
             cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-            sleeve_composition=portfolio_construction.sleeve_composition,
         ),
         rebalance_friction_policy=config.rebalance_friction_policy,
         execution_cost_assumptions=config.execution_cost_assumptions,
@@ -204,7 +203,6 @@ def derive_trading_strategy_from_signal_discovery(
         borrow_fee_bps_per_step=float(
             holding_cost_assumptions.borrow_fee_bps_per_step
         ),
-        sleeve_composition=portfolio_construction.sleeve_composition,
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,

@@ -940,12 +940,6 @@ def test_checked_in_global_macro_tradeable_daily_10y_manifest_applies_cleanly(
         assert construction.portfolio_intent.effective_n_floor == 8.0
         assert construction.portfolio_intent.top_gross_share_cap_n == 3
         assert construction.portfolio_intent.top_gross_share_cap == 0.55
-        assert construction.sleeve_composition is not None
-        assert [
-            sleeve.sleeve_id
-            for sleeve in construction.sleeve_composition.sleeves
-            if sleeve.enabled
-        ] == ["trend_core"]
     finally:
         store.close()
 
@@ -3165,12 +3159,6 @@ def test_global_macro_diagnostic_manifest_contract():
                     "top_gross_share_cap_n": 3,
                     "top_gross_share_cap": 0.4,
                 }
-                assert (
-                    construction["sleeve_composition"]["sleeves"][0][
-                        "sleeve_kind"
-                    ]
-                    == "mean_reversion"
-                )
                 expected_rebalance_policy = {
                     "execution_mode": "utility_priority",
                     "turnover_friction": 0.001,
@@ -3198,12 +3186,6 @@ def test_global_macro_diagnostic_manifest_contract():
                     "sizing_policy"
                 ].items()
                 assert portfolio["rebalance_interval_steps"] == 21
-                assert (
-                    construction["sleeve_composition"]["sleeves"][0][
-                        "sleeve_kind"
-                    ]
-                    == "mean_reversion"
-                )
         elif (
             case["evaluation_case_id"]
             == "global_macro_tradeable_daily_diagnostic_mean_reversion_case"
@@ -3211,12 +3193,6 @@ def test_global_macro_diagnostic_manifest_contract():
             assert (
                 strategy["signal_discovery_id"]
                 == "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
-            )
-            assert (
-                construction["sleeve_composition"]["sleeves"][0][
-                    "sleeve_kind"
-                ]
-                == "mean_reversion"
             )
         else:
             assert (

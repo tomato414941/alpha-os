@@ -9,7 +9,6 @@ from .contract_boundaries import (
 )
 from .portfolio_direction import normalize_portfolio_direction_mode
 from .portfolio_overlay import ActiveOverlaySpec
-from .strategy_sleeves import StrategySleeveCompositionSpec
 
 
 SIZING_METHODS = (
@@ -314,7 +313,6 @@ class PortfolioConstructionSpec:
     asset_class_weight_caps: dict[str, float] = field(default_factory=dict)
     cluster_weight_caps: dict[str, float] = field(default_factory=dict)
     portfolio_intent: PortfolioIntentSpec = field(default_factory=PortfolioIntentSpec)
-    sleeve_composition: StrategySleeveCompositionSpec | None = None
 
     def __post_init__(self) -> None:
         construction_kind = normalize_construction_kind(self.construction_kind)
@@ -411,10 +409,6 @@ class PortfolioConstructionSpec:
                 raise ValueError(
                     "hold_baseline portfolio_construction must not define portfolio_intent constraints"
                 )
-            if self.sleeve_composition is not None:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define sleeve_composition"
-                )
 
     @property
     def sizing_method(self) -> str:
@@ -450,8 +444,6 @@ class PortfolioConstructionSpec:
             document["cluster_weight_caps"] = dict(self.cluster_weight_caps)
         if self.portfolio_intent.to_document():
             document["portfolio_intent"] = self.portfolio_intent.to_document()
-        if self.sleeve_composition is not None:
-            document["sleeve_composition"] = self.sleeve_composition.to_document()
         return document
 
     @classmethod
@@ -514,13 +506,6 @@ class PortfolioConstructionSpec:
             ),
             portfolio_intent=PortfolioIntentSpec.from_document(
                 document.get("portfolio_intent")
-            ),
-            sleeve_composition=StrategySleeveCompositionSpec.from_document(
-                (
-                    None
-                    if document.get("sleeve_composition") is None
-                    else dict(document.get("sleeve_composition"))
-                )
             ),
         )
 

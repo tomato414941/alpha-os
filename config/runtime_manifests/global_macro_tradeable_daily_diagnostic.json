@@ -272,18 +272,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -358,18 +346,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -444,18 +420,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -530,18 +494,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -616,18 +568,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -702,18 +642,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -788,18 +716,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -874,18 +790,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -960,18 +864,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -1046,18 +938,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "mean_reversion_core",
-                  "sleeve_kind": "mean_reversion",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -1132,18 +1012,6 @@
               "effective_n_floor": 10.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.4
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "mean_reversion_core",
-                  "sleeve_kind": "mean_reversion",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {
@@ -1218,18 +1086,6 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "mean_reversion_core",
-                  "sleeve_kind": "mean_reversion",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {

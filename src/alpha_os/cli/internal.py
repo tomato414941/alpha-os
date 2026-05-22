@@ -3510,17 +3510,6 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: orthogonal lane must use "
             "mean-reversion signal discovery"
         )
-    sleeve_composition = configs_by_id[
-        _case_key(orthogonal_case)
-    ].portfolio_construction.sleeve_composition
-    if sleeve_composition is None or not any(
-        sleeve.sleeve_kind == "mean_reversion"
-        for sleeve in sleeve_composition.enabled_sleeves
-    ):
-        raise ValueError(
-            "diagnostic dry run check failed: orthogonal lane must use "
-            "an enabled mean-reversion sleeve"
-        )
     constrained_case = cases_by_id[
         "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case"
     ]
@@ -3559,17 +3548,6 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use the moderate friction controls"
         )
-    constrained_sleeve_composition = (
-        constrained_config.portfolio_construction.sleeve_composition
-    )
-    if constrained_sleeve_composition is None or not any(
-        sleeve.sleeve_kind == "mean_reversion"
-        for sleeve in constrained_sleeve_composition.enabled_sleeves
-    ):
-        raise ValueError(
-            "diagnostic dry run check failed: constrained mean-reversion lane "
-            "must use an enabled mean-reversion sleeve"
-        )
     optimizer_case = cases_by_id[
         "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
     ]
@@ -3595,18 +3573,6 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: optimizer mean-reversion lane "
             "must use rebalance_interval_steps=21"
         )
-    optimizer_sleeve_composition = (
-        optimizer_config.portfolio_construction.sleeve_composition
-    )
-    if optimizer_sleeve_composition is None or not any(
-        sleeve.sleeve_kind == "mean_reversion"
-        for sleeve in optimizer_sleeve_composition.enabled_sleeves
-    ):
-        raise ValueError(
-            "diagnostic dry run check failed: optimizer mean-reversion lane "
-            "must use an enabled mean-reversion sleeve"
-        )
-
 def _trading_strategies_for_evaluation_cases(
     read_port,
     evaluation_cases: tuple[tuple[str, str], ...],

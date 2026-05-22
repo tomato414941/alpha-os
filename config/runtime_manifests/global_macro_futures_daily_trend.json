@@ -736,18 +736,6 @@
               "fx_usd": 0.2,
               "commodity_energy": 0.18,
               "crypto_perp": 0.2
-            },
-            "sleeve_composition": {
-              "combination_method": "risk_budgeted_signal_blend",
-              "normalize_risk_budgets": true,
-              "sleeves": [
-                {
-                  "sleeve_id": "trend_core",
-                  "sleeve_kind": "trend",
-                  "risk_budget": 1.0,
-                  "enabled": true
-                }
-              ]
             }
           },
           "rebalance_friction_policy": {

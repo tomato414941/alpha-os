@@ -41,11 +41,6 @@ from .portfolio_sizing_policy import (
     PortfolioSizingPolicy,
     apply_portfolio_sizing_policy,
 )
-from .strategy_sleeve_composition import (
-    SleeveSignalContribution,
-    compose_portfolio_decision_input,
-)
-from .strategy_sleeves import SleeveAttributionSummary, StrategySleeveCompositionSpec
 from .targets import find_target_definition
 
 
@@ -112,7 +107,6 @@ class DecisionBacktestInput:
     top_k: int | None = None
     active_overlay: ActiveOverlaySpec | None = field(default_factory=ActiveOverlaySpec)
     historical_return_lookback_steps: int | None = None
-    sleeve_composition: StrategySleeveCompositionSpec | None = None
     subject_metadata_by_subject: dict[str, dict[str, str]] | None = None
 
     @property
@@ -144,11 +138,6 @@ class DecisionBacktestInput:
             object.__setattr__(self, "long_only", construction.long_only)
             object.__setattr__(self, "direction_mode", construction.direction_mode)
             object.__setattr__(self, "active_overlay", construction.active_overlay)
-            object.__setattr__(
-                self,
-                "sleeve_composition",
-                construction.sleeve_composition,
-            )
         direction_mode = normalize_portfolio_direction_mode(
             self.direction_mode,
             long_only=self.long_only,
@@ -226,7 +215,6 @@ class DecisionBacktestResult:
     subject_ids: tuple[str, ...]
     steps: tuple[DecisionBacktestStep, ...]
     initial_capital_base: float = 1.0
-    sleeve_attribution_summaries: tuple[SleeveAttributionSummary, ...] = ()
 
     @property
     def gross_return_total(self) -> float:
@@ -403,15 +391,11 @@ def run_decision_backtest(
     subject_ids = _subject_ids(backtest_input)
     state = _initial_backtest_state(backtest_input)
     steps: list[DecisionBacktestStep] = []
-    sleeve_attribution_builder = _SleeveBacktestAttributionBuilder(
-        backtest_input.sleeve_composition
-    )
 
     for date, row in aligned.iterrows():
         if _is_rebalance_step(state, backtest_input):
             (
                 desired_targets_by_subject,
-                sleeve_composition_result,
                 construction_trace,
                 sizing_diagnostics,
             ) = _build_rebalance_targets(
@@ -461,14 +445,6 @@ def run_decision_backtest(
                 )
             )
             targets_by_subject = execution_result.executed_targets
-            sleeve_attribution_builder.capture_rebalance(
-                sleeve_composition_result.contributions
-                if sleeve_composition_result is not None
-                else (),
-                targets_by_subject=targets_by_subject,
-                capital_base=state.capital_base,
-                row=row,
-            )
             execution_trace = execution_result.trace
         else:
             targets_by_subject = build_hold_targets(
@@ -535,7 +511,6 @@ def run_decision_backtest(
         subject_ids=subject_ids,
         steps=tuple(steps),
         initial_capital_base=max(float(backtest_input.initial_capital_base), 0.0),
-        sleeve_attribution_summaries=sleeve_attribution_builder.summaries(),
     )
 
 
@@ -574,7 +549,6 @@ def _build_rebalance_targets(
     sizing_policy: PortfolioSizingPolicy | None,
 ) -> tuple[
     dict[str, PortfolioTarget],
-    object | None,
     tuple[PortfolioConstructionStageTrace, ...],
     SizingDiagnostics,
 ]:
@@ -584,9 +558,6 @@ def _build_rebalance_targets(
         row=row,
         date=date,
         subject_ids=subject_ids,
-    )
-    decision_input, sleeve_composition_result = compose_portfolio_decision_input(
-        decision_input
     )
     decision_output = apply_portfolio_sizing_policy(
         decision_input,
@@ -638,7 +609,6 @@ def _build_rebalance_targets(
     )
     return (
         construction_result.targets,
-        sleeve_composition_result,
         construction_result.trace,
         decision_output.sizing_diagnostics,
     )
@@ -778,7 +748,6 @@ def _portfolio_decision_input_for_backtest_row(
                 subject_ids=subject_ids,
             ),
         ),
-        sleeve_composition=backtest_input.sleeve_composition,
         subject_metadata_by_subject=(
             {}
             if backtest_input.subject_metadata_by_subject is None
@@ -1076,170 +1045,6 @@ def advance_portfolio_state(
         recent_turnover=float(accounting.turnover),
         rebalance_step=state.rebalance_step + 1,
     )
-
-
-class _SleeveBacktestAttributionBuilder:
-    def __init__(self, composition: StrategySleeveCompositionSpec | None) -> None:
-        self._composition = composition
-        self._subject_ids: dict[str, set[str]] = {}
-        self._signal_sum: dict[str, float] = {}
-        self._abs_signal_sum: dict[str, float] = {}
-        self._signal_count: dict[str, int] = {}
-        self._gross_exposure_sum: dict[str, float] = {}
-        self._net_exposure_sum: dict[str, float] = {}
-        self._long_exposure_sum: dict[str, float] = {}
-        self._short_exposure_sum: dict[str, float] = {}
-        self._funding_cost_sum: dict[str, float] = {}
-        self._borrow_cost_sum: dict[str, float] = {}
-        self._roll_cost_sum: dict[str, float] = {}
-        self._rebalance_count = 0
-
-    def capture_rebalance(
-        self,
-        contributions: tuple[SleeveSignalContribution, ...],
-        *,
-        targets_by_subject: dict[str, PortfolioTarget],
-        capital_base: float,
-        row: pd.Series,
-    ) -> None:
-        if self._composition is None:
-            return
-        self._rebalance_count += 1
-        contribution_weight_by_subject = self._contribution_weight_by_subject(contributions)
-        for contribution in contributions:
-            sleeve_id = contribution.sleeve_id
-            self._subject_ids.setdefault(sleeve_id, set()).add(contribution.subject_id)
-            self._signal_sum[sleeve_id] = (
-                self._signal_sum.get(sleeve_id, 0.0) + contribution.raw_signal_value
-            )
-            self._abs_signal_sum[sleeve_id] = (
-                self._abs_signal_sum.get(sleeve_id, 0.0)
-                + abs(contribution.raw_signal_value)
-            )
-            self._signal_count[sleeve_id] = self._signal_count.get(sleeve_id, 0) + 1
-        for contribution in contributions:
-            subject_weights = contribution_weight_by_subject.get(contribution.subject_id, {})
-            allocation_weight = subject_weights.get(contribution.sleeve_id, 0.0)
-            if allocation_weight <= 0.0:
-                continue
-            target = targets_by_subject.get(contribution.subject_id)
-            if target is None:
-                continue
-            target_notional = (
-                float(target.target_notional)
-                if target.target_notional is not None
-                else float(target.target_weight) * capital_base
-            )
-            sleeve_id = contribution.sleeve_id
-            self._gross_exposure_sum[sleeve_id] = (
-                self._gross_exposure_sum.get(sleeve_id, 0.0)
-                + abs(target_notional) * allocation_weight
-            )
-            self._net_exposure_sum[sleeve_id] = (
-                self._net_exposure_sum.get(sleeve_id, 0.0)
-                + target_notional * allocation_weight
-            )
-            self._long_exposure_sum[sleeve_id] = (
-                self._long_exposure_sum.get(sleeve_id, 0.0)
-                + max(target_notional, 0.0) * allocation_weight
-            )
-            self._short_exposure_sum[sleeve_id] = (
-                self._short_exposure_sum.get(sleeve_id, 0.0)
-                + abs(min(target_notional, 0.0)) * allocation_weight
-            )
-            funding_cost = (
-                float(_optional_value(row, ("funding_cost_bps", contribution.subject_id), default=0.0))
-                / 10000.0
-                * target_notional
-            )
-            borrow_cost = (
-                max(
-                    float(_optional_value(row, ("borrow_fee_bps", contribution.subject_id), default=0.0)),
-                    0.0,
-                )
-                / 10000.0
-                * abs(min(target_notional, 0.0))
-            )
-            roll_cost = (
-                max(
-                    float(_optional_value(row, ("roll_cost_bps", contribution.subject_id), default=0.0)),
-                    0.0,
-                )
-                / 10000.0
-                * abs(target_notional)
-            )
-            self._funding_cost_sum[sleeve_id] = (
-                self._funding_cost_sum.get(sleeve_id, 0.0)
-                + funding_cost * allocation_weight
-            )
-            self._borrow_cost_sum[sleeve_id] = (
-                self._borrow_cost_sum.get(sleeve_id, 0.0)
-                + borrow_cost * allocation_weight
-            )
-            self._roll_cost_sum[sleeve_id] = (
-                self._roll_cost_sum.get(sleeve_id, 0.0)
-                + roll_cost * allocation_weight
-            )
-
-    def summaries(self) -> tuple[SleeveAttributionSummary, ...]:
-        if self._composition is None:
-            return ()
-        divisor = max(self._rebalance_count, 1)
-        summaries: list[SleeveAttributionSummary] = []
-        for sleeve in self._composition.enabled_sleeves:
-            signal_count = max(self._signal_count.get(sleeve.sleeve_id, 0), 1)
-            funding_cost = self._funding_cost_sum.get(sleeve.sleeve_id, 0.0)
-            borrow_cost = self._borrow_cost_sum.get(sleeve.sleeve_id, 0.0)
-            roll_cost = self._roll_cost_sum.get(sleeve.sleeve_id, 0.0)
-            summaries.append(
-                SleeveAttributionSummary(
-                    sleeve_id=sleeve.sleeve_id,
-                    sleeve_kind=sleeve.sleeve_kind,
-                    risk_budget=sleeve.risk_budget,
-                    subject_count=len(self._subject_ids.get(sleeve.sleeve_id, set())),
-                    mean_signal=self._signal_sum.get(sleeve.sleeve_id, 0.0) / signal_count,
-                    mean_abs_signal=(
-                        self._abs_signal_sum.get(sleeve.sleeve_id, 0.0) / signal_count
-                    ),
-                    mean_gross_notional_exposure=(
-                        self._gross_exposure_sum.get(sleeve.sleeve_id, 0.0) / divisor
-                    ),
-                    mean_net_notional_exposure=(
-                        self._net_exposure_sum.get(sleeve.sleeve_id, 0.0) / divisor
-                    ),
-                    mean_long_notional_exposure=(
-                        self._long_exposure_sum.get(sleeve.sleeve_id, 0.0) / divisor
-                    ),
-                    mean_short_notional_exposure=(
-                        self._short_exposure_sum.get(sleeve.sleeve_id, 0.0) / divisor
-                    ),
-                    total_cost_notional=funding_cost + borrow_cost + roll_cost,
-                    total_funding_cost_notional=funding_cost,
-                    total_borrow_cost_notional=borrow_cost,
-                    total_roll_cost_notional=roll_cost,
-                )
-            )
-        return tuple(summaries)
-
-    @staticmethod
-    def _contribution_weight_by_subject(
-        contributions: tuple[SleeveSignalContribution, ...],
-    ) -> dict[str, dict[str, float]]:
-        values_by_subject: dict[str, dict[str, float]] = {}
-        for contribution in contributions:
-            values_by_subject.setdefault(contribution.subject_id, {})[
-                contribution.sleeve_id
-            ] = abs(contribution.weighted_signal_value)
-        weights_by_subject: dict[str, dict[str, float]] = {}
-        for subject_id, values in values_by_subject.items():
-            total = sum(values.values())
-            if total <= 0.0:
-                continue
-            weights_by_subject[subject_id] = {
-                sleeve_id: value / total
-                for sleeve_id, value in values.items()
-            }
-        return weights_by_subject
 
 
 def _subject_ids(backtest_input: DecisionBacktestInput) -> tuple[str, ...]:

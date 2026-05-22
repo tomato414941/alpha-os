@@ -22,10 +22,6 @@ from alpha_os.portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from alpha_os.signal_discovery import SignalDiscoverySpec
-from alpha_os.strategy_sleeves import (
-    StrategySleeveCompositionSpec,
-    StrategySleeveSpec,
-)
 
 
 def _make_evaluation_trading_config(
@@ -42,7 +38,6 @@ def _make_evaluation_trading_config(
     net_exposure_target: float | None = None,
     asset_class_weight_caps: dict[str, float] | None = None,
     cluster_weight_caps: dict[str, float] | None = None,
-    sleeve_composition: StrategySleeveCompositionSpec | None = None,
 ) -> StrategyVariantConfig:
     return StrategyVariantConfig(
         portfolio_construction=PortfolioConstructionSpec(
@@ -59,7 +54,6 @@ def _make_evaluation_trading_config(
             net_exposure_target=net_exposure_target,
             asset_class_weight_caps={} if asset_class_weight_caps is None else asset_class_weight_caps,
             cluster_weight_caps={} if cluster_weight_caps is None else cluster_weight_caps,
-            sleeve_composition=sleeve_composition,
         ),
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
         execution_cost_assumptions=ExecutionCostAssumptionsSpec(),
@@ -144,15 +138,6 @@ def test_overridden_strategy_variant_config_returns_same_config_without_override
 
 
 def test_overridden_strategy_variant_config_preserves_risk_contract():
-    sleeve_composition = StrategySleeveCompositionSpec(
-        sleeves=(
-            StrategySleeveSpec(
-                sleeve_id="trend",
-                sleeve_kind="trend",
-                risk_budget=1.0,
-            ),
-        )
-    )
     config = _make_evaluation_trading_config(
         sizing_method="signal_weighted",
         sizing_engine="rule_based",
@@ -164,7 +149,6 @@ def test_overridden_strategy_variant_config_preserves_risk_contract():
         net_exposure_target=0.0,
         asset_class_weight_caps={"commodity": 0.4},
         cluster_weight_caps={"rates": 0.35},
-        sleeve_composition=sleeve_composition,
     )
 
     resolved = overridden_strategy_variant_config(
@@ -184,7 +168,6 @@ def test_overridden_strategy_variant_config_preserves_risk_contract():
     assert construction.net_exposure_target == 0.0
     assert construction.asset_class_weight_caps == {"commodity": 0.4}
     assert construction.cluster_weight_caps == {"rates": 0.35}
-    assert construction.sleeve_composition == sleeve_composition
 
 
 def test_overridden_strategy_variant_config_can_override_direction_mode():

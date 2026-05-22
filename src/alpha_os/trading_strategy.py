@@ -7,7 +7,6 @@ from typing import Any
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
-from .strategy_sleeves import StrategySleeveCompositionSpec
 
 
 def _normalize_optional(value: str | None) -> str | None:
@@ -89,7 +88,6 @@ def build_trading_strategy_id(
     no_trade_band: float | None = None,
     funding_bps_per_step: float | None = None,
     borrow_fee_bps_per_step: float | None = None,
-    sleeve_composition: StrategySleeveCompositionSpec | None = None,
 ) -> str:
     parts: list[tuple[str, str]] = []
 
@@ -120,9 +118,6 @@ def build_trading_strategy_id(
     add("borrow_fee_bps_per_step", borrow_fee_bps_per_step)
     add("turnover_friction", turnover_friction)
     add("no_trade_band", no_trade_band)
-    if sleeve_composition is not None:
-        add("sleeve_composition", sleeve_composition.stable_payload())
-
     payload = "|".join(f"{name}={value}" for name, value in sorted(parts))
     digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
     return f"strategy:{digest}"
@@ -448,7 +443,3 @@ class TradingStrategySpec:
     @property
     def portfolio_construction(self) -> PortfolioConstructionSpec:
         return self.portfolio.portfolio_construction
-
-    @property
-    def sleeve_composition(self) -> StrategySleeveCompositionSpec | None:
-        return self.portfolio.portfolio_construction.sleeve_composition
