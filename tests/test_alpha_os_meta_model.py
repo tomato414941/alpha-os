@@ -14,7 +14,7 @@ def _strategy_portfolio_document(
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
     rebalance_friction_policy: dict[str, object] | None = None,
-    execution_policy: dict[str, object] | None = None,
+    trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
     portfolio: dict[str, object] = {
         "portfolio_construction": {
@@ -25,7 +25,9 @@ def _strategy_portfolio_document(
         "rebalance_friction_policy": (
             {} if rebalance_friction_policy is None else rebalance_friction_policy
         ),
-        "execution_policy": {} if execution_policy is None else execution_policy,
+        "trading_environment": (
+            {} if trading_environment is None else trading_environment
+        ),
         "rebalance_interval_steps": rebalance_interval_steps,
         "selection_kind": selection_kind,
     }
@@ -640,7 +642,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,
@@ -1494,9 +1496,8 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         UniversePolicySpec,
     )
     from alpha_os.store import EvaluationStore
+    from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
-        ExecutionPolicySpec,
-        HoldingCostPolicySpec,
         RebalanceFrictionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
@@ -1622,11 +1623,9 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                         turnover_friction=0.15,
                         no_trade_band=0.02,
                     ),
-                    execution_policy=ExecutionPolicySpec(
+                    trading_environment=TradingEnvironment(
                         market_impact_bps=7.0,
                         fee_bps=1.5,
-                    ),
-                    holding_cost_policy=HoldingCostPolicySpec(
                         funding_bps_per_step=2.5,
                     ),
                     selection_kind="top_k",
@@ -2106,7 +2105,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,

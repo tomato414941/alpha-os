@@ -820,11 +820,8 @@ def _portfolio_decision_assumptions_from_args(
     rebalance_friction_policy = (
         None if trading_strategy is None else trading_strategy.portfolio.rebalance_friction_policy
     )
-    execution_policy = (
-        None if trading_strategy is None else trading_strategy.portfolio.execution_policy
-    )
-    holding_cost_policy = (
-        None if trading_strategy is None else trading_strategy.portfolio.holding_cost_policy
+    trading_environment = (
+        None if trading_strategy is None else trading_strategy.portfolio.trading_environment
     )
     cost_inputs: list[CostInput] = []
     turnover_friction = (
@@ -843,8 +840,8 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     market_impact_bps = (
-        execution_policy.market_impact_bps
-        if args.market_impact_bps is None and execution_policy is not None
+        trading_environment.market_impact_bps
+        if args.market_impact_bps is None and trading_environment is not None
         else args.market_impact_bps
     )
     if market_impact_bps is not None:
@@ -859,8 +856,8 @@ def _portfolio_decision_assumptions_from_args(
                 )
             )
     fee_bps = (
-        execution_policy.fee_bps
-        if getattr(args, "fee_bps", None) is None and execution_policy is not None
+        trading_environment.fee_bps
+        if getattr(args, "fee_bps", None) is None and trading_environment is not None
         else getattr(args, "fee_bps", None)
     )
     if fee_bps is not None:
@@ -874,8 +871,8 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     bid_ask_spread_bps = (
-        execution_policy.bid_ask_spread_bps
-        if getattr(args, "bid_ask_spread_bps", None) is None and execution_policy is not None
+        trading_environment.bid_ask_spread_bps
+        if getattr(args, "bid_ask_spread_bps", None) is None and trading_environment is not None
         else getattr(args, "bid_ask_spread_bps", None)
     )
     if bid_ask_spread_bps is not None:
@@ -889,8 +886,8 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     funding_bps_per_step = (
-        holding_cost_policy.funding_bps_per_step
-        if getattr(args, "funding_bps_per_step", None) is None and holding_cost_policy is not None
+        trading_environment.funding_bps_per_step
+        if getattr(args, "funding_bps_per_step", None) is None and trading_environment is not None
         else getattr(args, "funding_bps_per_step", None)
     )
     if funding_bps_per_step is not None:
@@ -904,9 +901,9 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     borrow_fee_bps_per_step = (
-        holding_cost_policy.borrow_fee_bps_per_step
+        trading_environment.borrow_fee_bps_per_step
         if getattr(args, "borrow_fee_bps_per_step", None) is None
-        and holding_cost_policy is not None
+        and trading_environment is not None
         else getattr(args, "borrow_fee_bps_per_step", None)
     )
     if borrow_fee_bps_per_step is not None:

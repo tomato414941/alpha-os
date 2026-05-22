@@ -199,13 +199,13 @@
             "no_trade_band": 0.02,
             "execution_cost_aversion": 1.0
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 5,
+          "selection_kind": "all_assets",
+          "trading_environment": {
             "market_impact_bps": 5.0,
             "fee_bps": 0.0,
             "bid_ask_spread_bps": 0.0
-          },
-          "rebalance_interval_steps": 5,
-          "selection_kind": "all_assets"
+          }
         }
       }
     },
@@ -234,13 +234,13 @@
             "no_trade_band": 0.02,
             "execution_cost_aversion": 1.0
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 5,
+          "selection_kind": "all_assets",
+          "trading_environment": {
             "market_impact_bps": 5.0,
             "fee_bps": 0.0,
             "bid_ask_spread_bps": 0.0
-          },
-          "rebalance_interval_steps": 5,
-          "selection_kind": "all_assets"
+          }
         }
       }
     }

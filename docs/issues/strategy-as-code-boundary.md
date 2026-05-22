@@ -20,8 +20,7 @@ Current strategy documents often include:
 - `family_mix`
 - `portfolio_construction`
 - `rebalance_friction_policy`
-- `execution_policy`
-- `holding_cost_policy`
+- `trading_environment`
 - `signal_discovery_id`
 
 Some of these fields may be part of the strategy. Others look more like

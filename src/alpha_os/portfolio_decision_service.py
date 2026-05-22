@@ -52,8 +52,7 @@ def _trading_strategy_trace_document(
     portfolio = trading_strategy.portfolio
     construction = portfolio.portfolio_construction
     friction = portfolio.rebalance_friction_policy
-    execution = portfolio.execution_policy
-    holding = portfolio.holding_cost_policy
+    trading_environment = portfolio.trading_environment
     return {
         "strategy_id": trading_strategy.strategy_id,
         "label": trading_strategy.label,
@@ -70,11 +69,11 @@ def _trading_strategy_trace_document(
         "net_exposure_target": construction.net_exposure_target,
         "turnover_friction": friction.turnover_friction,
         "no_trade_band": friction.no_trade_band,
-        "market_impact_bps": execution.market_impact_bps,
-        "fee_bps": execution.fee_bps,
-        "bid_ask_spread_bps": execution.bid_ask_spread_bps,
-        "funding_bps_per_step": holding.funding_bps_per_step,
-        "borrow_fee_bps_per_step": holding.borrow_fee_bps_per_step,
+        "market_impact_bps": trading_environment.market_impact_bps,
+        "fee_bps": trading_environment.fee_bps,
+        "bid_ask_spread_bps": trading_environment.bid_ask_spread_bps,
+        "funding_bps_per_step": trading_environment.funding_bps_per_step,
+        "borrow_fee_bps_per_step": trading_environment.borrow_fee_bps_per_step,
     }
 
 

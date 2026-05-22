@@ -22,6 +22,16 @@ def _optional_bool_from_document(
     raise ValueError(f"{field_name} must be boolean")
 
 
+def _float_from_document(
+    document: dict[str, Any],
+    field_name: str,
+    *,
+    default: float,
+) -> float:
+    value = document.get(field_name)
+    return default if value is None else float(value)
+
+
 @dataclass(frozen=True)
 class EvaluationRebalanceFrictionPolicySpec:
     execution_mode: str = "utility_priority"
@@ -210,19 +220,24 @@ class TradingEnvironment:
                 raise ValueError(f"trading environment {field_name} must be numeric")
 
     @classmethod
-    def from_cost_assumptions(
-        cls,
-        *,
-        execution_cost_assumptions: ExecutionCostAssumptionsSpec,
-        holding_cost_assumptions: HoldingCostAssumptionsSpec,
-    ) -> "TradingEnvironment":
+    def from_document(cls, document: dict[str, Any] | None) -> "TradingEnvironment":
+        if document is None:
+            return cls()
+        if not isinstance(document, dict):
+            raise ValueError("trading_environment must be an object")
         return cls(
-            market_impact_bps=float(execution_cost_assumptions.market_impact_bps),
-            fee_bps=float(execution_cost_assumptions.fee_bps),
-            bid_ask_spread_bps=float(execution_cost_assumptions.bid_ask_spread_bps),
-            funding_bps_per_step=float(holding_cost_assumptions.funding_bps_per_step),
-            borrow_fee_bps_per_step=float(
-                holding_cost_assumptions.borrow_fee_bps_per_step
+            market_impact_bps=_float_from_document(
+                document, "market_impact_bps", default=0.0
+            ),
+            fee_bps=_float_from_document(document, "fee_bps", default=0.0),
+            bid_ask_spread_bps=_float_from_document(
+                document, "bid_ask_spread_bps", default=0.0
+            ),
+            funding_bps_per_step=_float_from_document(
+                document, "funding_bps_per_step", default=0.0
+            ),
+            borrow_fee_bps_per_step=_float_from_document(
+                document, "borrow_fee_bps_per_step", default=0.0
             ),
         )
 

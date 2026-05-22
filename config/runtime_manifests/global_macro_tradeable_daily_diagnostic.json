@@ -112,17 +112,15 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 252,
+          "selection_kind": "all_assets",
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 252,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
-          },
-          "selection_kind": "all_assets"
+          }
         }
       }
     },
@@ -162,13 +160,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 252,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 252,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -212,13 +208,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 21,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 21,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -286,13 +280,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -360,13 +352,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -434,13 +424,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -508,13 +496,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -582,13 +568,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -656,13 +640,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -730,13 +712,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -804,13 +784,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 0.0,
             "fee_bps": 0.0,
-            "bid_ask_spread_bps": 0.0
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 0.0,
             "funding_bps_per_step": 0.0,
             "borrow_fee_bps_per_step": 0.0
           }
@@ -878,13 +856,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 5,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 5,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -952,13 +928,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 5,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 5,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -1026,13 +1000,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 10,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 10,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }
@@ -1100,13 +1072,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 21,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 21,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }

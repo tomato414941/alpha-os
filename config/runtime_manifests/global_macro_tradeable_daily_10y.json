@@ -784,13 +784,11 @@
             "risk_aversion": 0.0,
             "partial_fill_enabled": true
           },
-          "execution_policy": {
+          "rebalance_interval_steps": 1,
+          "trading_environment": {
             "market_impact_bps": 4.0,
             "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5
-          },
-          "rebalance_interval_steps": 1,
-          "holding_cost_policy": {
+            "bid_ask_spread_bps": 1.5,
             "funding_bps_per_step": 0.5,
             "borrow_fee_bps_per_step": 0.25
           }

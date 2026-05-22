@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from typing import Any
 
+from .evaluation_cost_config import TradingEnvironment
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
@@ -81,13 +82,8 @@ def build_trading_strategy_id(
     target_vol: float | None = None,
     gross_leverage_cap: float | None = None,
     net_exposure_target: float | None = None,
-    market_impact_bps: float | None = None,
-    fee_bps: float | None = None,
-    bid_ask_spread_bps: float | None = None,
     turnover_friction: float | None = None,
     no_trade_band: float | None = None,
-    funding_bps_per_step: float | None = None,
-    borrow_fee_bps_per_step: float | None = None,
 ) -> str:
     parts: list[tuple[str, str]] = []
 
@@ -111,11 +107,6 @@ def build_trading_strategy_id(
     add("target_vol", target_vol)
     add("gross_leverage_cap", gross_leverage_cap)
     add("net_exposure_target", net_exposure_target)
-    add("market_impact_bps", market_impact_bps)
-    add("fee_bps", fee_bps)
-    add("bid_ask_spread_bps", bid_ask_spread_bps)
-    add("funding_bps_per_step", funding_bps_per_step)
-    add("borrow_fee_bps_per_step", borrow_fee_bps_per_step)
     add("turnover_friction", turnover_friction)
     add("no_trade_band", no_trade_band)
     payload = "|".join(f"{name}={value}" for name, value in sorted(parts))
@@ -218,64 +209,6 @@ class RebalanceFrictionPolicySpec:
         )
 
 
-@dataclass(frozen=True)
-class ExecutionPolicySpec:
-    market_impact_bps: float | None
-    fee_bps: float | None = None
-    bid_ask_spread_bps: float | None = None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "market_impact_bps": self.market_impact_bps,
-            "fee_bps": self.fee_bps,
-            "bid_ask_spread_bps": self.bid_ask_spread_bps,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "ExecutionPolicySpec":
-        market_impact_bps = document.get("market_impact_bps")
-        fee_bps = document.get("fee_bps")
-        bid_ask_spread_bps = document.get("bid_ask_spread_bps")
-        return cls(
-            market_impact_bps=(
-                None
-                if market_impact_bps is None
-                else float(market_impact_bps)
-            ),
-            fee_bps=None if fee_bps is None else float(fee_bps),
-            bid_ask_spread_bps=None if bid_ask_spread_bps is None else float(bid_ask_spread_bps),
-        )
-
-
-@dataclass(frozen=True)
-class HoldingCostPolicySpec:
-    funding_bps_per_step: float | None = None
-    borrow_fee_bps_per_step: float | None = None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "funding_bps_per_step": self.funding_bps_per_step,
-            "borrow_fee_bps_per_step": self.borrow_fee_bps_per_step,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "HoldingCostPolicySpec":
-        funding_bps_per_step = document.get("funding_bps_per_step")
-        borrow_fee_bps_per_step = document.get("borrow_fee_bps_per_step")
-        return cls(
-            funding_bps_per_step=(
-                None
-                if funding_bps_per_step is None
-                else float(funding_bps_per_step)
-            ),
-            borrow_fee_bps_per_step=(
-                None
-                if borrow_fee_bps_per_step is None
-                else float(borrow_fee_bps_per_step)
-            ),
-        )
-
-
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
     if raw_steps is None:
@@ -294,10 +227,7 @@ def _rebalance_label(rebalance_interval_steps: int) -> str:
 class StrategyPortfolioSpec:
     portfolio_construction: PortfolioConstructionSpec
     rebalance_friction_policy: RebalanceFrictionPolicySpec
-    execution_policy: ExecutionPolicySpec
-    holding_cost_policy: HoldingCostPolicySpec = field(
-        default_factory=HoldingCostPolicySpec
-    )
+    trading_environment: TradingEnvironment
     selection_kind: str = "all_assets"
     top_k: int | None = None
     rebalance_interval_steps: int = 1
@@ -332,14 +262,9 @@ class StrategyPortfolioSpec:
         document = {
             "portfolio_construction": self.portfolio_construction.to_document(),
             "rebalance_friction_policy": self.rebalance_friction_policy.to_document(),
-            "execution_policy": self.execution_policy.to_document(),
+            "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
         }
-        if (
-            self.holding_cost_policy.funding_bps_per_step is not None
-            or self.holding_cost_policy.borrow_fee_bps_per_step is not None
-        ):
-            document["holding_cost_policy"] = self.holding_cost_policy.to_document()
         if self.selection_kind != "all_assets":
             document["selection_kind"] = self.selection_kind
         if self.top_k is not None:
@@ -358,11 +283,8 @@ class StrategyPortfolioSpec:
             rebalance_friction_policy=RebalanceFrictionPolicySpec.from_document(
                 dict(document.get("rebalance_friction_policy", {}))
             ),
-            execution_policy=ExecutionPolicySpec.from_document(
-                dict(document.get("execution_policy", {}))
-            ),
-            holding_cost_policy=HoldingCostPolicySpec.from_document(
-                dict(document.get("holding_cost_policy", {}))
+            trading_environment=TradingEnvironment.from_document(
+                document.get("trading_environment")
             ),
             selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
@@ -433,12 +355,8 @@ class TradingStrategySpec:
         return self.portfolio.rebalance_friction_policy
 
     @property
-    def execution_policy(self) -> ExecutionPolicySpec:
-        return self.portfolio.execution_policy
-
-    @property
-    def holding_cost_policy(self) -> HoldingCostPolicySpec:
-        return self.portfolio.holding_cost_policy
+    def trading_environment(self) -> TradingEnvironment:
+        return self.portfolio.trading_environment
 
     @property
     def portfolio_construction(self) -> PortfolioConstructionSpec:

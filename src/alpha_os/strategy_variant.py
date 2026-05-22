@@ -11,8 +11,6 @@ from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from .trading_strategy import (
-    ExecutionPolicySpec,
-    HoldingCostPolicySpec,
     RebalanceFrictionPolicySpec,
     StrategyPortfolioSpec,
     TradingStrategyScopeSpec,
@@ -43,8 +41,6 @@ def strategy_variant_config_from_strategy(
     portfolio = trading_strategy.portfolio
     construction = portfolio.portfolio_construction
     friction = portfolio.rebalance_friction_policy
-    execution = portfolio.execution_policy
-    holding = portfolio.holding_cost_policy
     return StrategyVariantConfig(
         portfolio_construction=construction,
         rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec.from_document(
@@ -54,21 +50,7 @@ def strategy_variant_config_from_strategy(
                 if value is not None
             }
         ),
-        trading_environment=TradingEnvironment(
-            market_impact_bps=execution.market_impact_bps or 0.0,
-            fee_bps=execution.fee_bps or 0.0,
-            bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
-            funding_bps_per_step=(
-                0.0
-                if holding.funding_bps_per_step is None
-                else holding.funding_bps_per_step
-            ),
-            borrow_fee_bps_per_step=(
-                0.0
-                if holding.borrow_fee_bps_per_step is None
-                else holding.borrow_fee_bps_per_step
-            ),
-        ),
+        trading_environment=portfolio.trading_environment,
         top_k=portfolio.top_k,
     )
 
@@ -188,13 +170,8 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        market_impact_bps=float(trading_environment.market_impact_bps),
-        fee_bps=float(trading_environment.fee_bps),
-        bid_ask_spread_bps=float(trading_environment.bid_ask_spread_bps),
         turnover_friction=float(rebalance_friction_policy.turnover_friction),
         no_trade_band=float(rebalance_friction_policy.no_trade_band),
-        funding_bps_per_step=float(trading_environment.funding_bps_per_step),
-        borrow_fee_bps_per_step=float(trading_environment.borrow_fee_bps_per_step),
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,
@@ -225,15 +202,7 @@ def derive_trading_strategy_from_signal_discovery(
                 risk_aversion=rebalance_friction_policy.risk_aversion,
                 partial_fill_enabled=rebalance_friction_policy.partial_fill_enabled,
             ),
-            execution_policy=ExecutionPolicySpec(
-                market_impact_bps=float(trading_environment.market_impact_bps),
-                fee_bps=float(trading_environment.fee_bps),
-                bid_ask_spread_bps=float(trading_environment.bid_ask_spread_bps),
-            ),
-            holding_cost_policy=HoldingCostPolicySpec(
-                funding_bps_per_step=float(trading_environment.funding_bps_per_step),
-                borrow_fee_bps_per_step=float(trading_environment.borrow_fee_bps_per_step),
-            ),
+            trading_environment=trading_environment,
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,

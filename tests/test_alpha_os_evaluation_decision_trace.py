@@ -162,13 +162,12 @@ def _register_subject_set(store) -> None:
 
 
 def _register_direct_strategy(store) -> None:
+    from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
-        ExecutionPolicySpec,
         RebalanceFrictionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
-        HoldingCostPolicySpec,
     )
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
@@ -198,8 +197,7 @@ def _register_direct_strategy(store) -> None:
                     turnover_friction=None,
                     no_trade_band=None,
                 ),
-                execution_policy=ExecutionPolicySpec(market_impact_bps=None),
-                holding_cost_policy=HoldingCostPolicySpec(),
+                trading_environment=TradingEnvironment(),
                 selection_kind="all_assets",
                 top_k=None,
             ),

@@ -2,19 +2,17 @@
 
 ## Problem
 
-`TradingStrategySpec.portfolio` currently carries `execution_policy` and
-`holding_cost_policy`.
+`TradingStrategySpec.portfolio` used to carry separate `execution_policy` and
+`holding_cost_policy` fields.
 
 Those names make the fields look strategy-owned, but their current main use is
 to feed evaluation cost assumptions:
 
 ```text
-TradingStrategySpec.portfolio.execution_policy
-  -> ExecutionCostAssumptionsSpec
+TradingStrategySpec.portfolio.trading_environment
   -> backtest net-return / cost-drag calculation
 
-TradingStrategySpec.portfolio.holding_cost_policy
-  -> HoldingCostAssumptionsSpec
+TradingStrategySpec.portfolio.trading_environment
   -> backtest funding / borrow cost calculation
 ```
 
@@ -39,19 +37,15 @@ by the environment after the action.
 
 ## Current Signal
 
-`execution_policy` in `TradingStrategySpec` contains:
+`TradingEnvironment` now contains:
 
 - `market_impact_bps`
 - `fee_bps`
 - `bid_ask_spread_bps`
-
-`holding_cost_policy` contains:
-
 - `funding_bps_per_step`
 - `borrow_fee_bps_per_step`
 
-These are currently closer to `ExecutionCostAssumptionsSpec` and
-`HoldingCostAssumptionsSpec` than to strategy behavior.
+These are environment-side trading costs, not strategy behavior.
 
 ## Risk
 
@@ -77,12 +71,9 @@ calculation. Keep strategy-owned cost fields only when the strategy actually
 uses the value to decide actions.
 
 `TradingEnvironment` now represents the trading world boundary used by the
-evaluation / backtest path to charge execution and holding costs. This is an
-intermediate step; the persisted strategy manifest fields still need to move out of
-`TradingStrategySpec.portfolio`.
+evaluation / backtest path to charge execution and holding costs.
 
 ## Close Condition
 
-Close this when `execution_policy` and `holding_cost_policy` are either moved
-out of `TradingStrategySpec.portfolio` or explicitly documented as policy inputs
-with environment-side cost assumptions represented separately.
+Close this when remaining strategy/environment cost coupling is either removed
+or explicitly documented as intentional.

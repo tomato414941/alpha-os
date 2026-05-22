@@ -77,12 +77,10 @@ def _strategy_document(
                     "risk_aversion": 0.0,
                     "partial_fill_enabled": True,
                 },
-                "execution_policy": {
+                "trading_environment": {
                     "market_impact_bps": 0.0,
                     "fee_bps": 5.0,
                     "bid_ask_spread_bps": 0.0,
-                },
-                "holding_cost_policy": {
                     "funding_bps_per_step": 0.0,
                     "borrow_fee_bps_per_step": 0.0,
                 },
@@ -285,18 +283,18 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
             == "all_assets"
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.execution_policy.fee_bps
-            == baseline_strategy.trading_strategy.portfolio.execution_policy.fee_bps
+            candidate_strategy.trading_strategy.portfolio.trading_environment.fee_bps
+            == baseline_strategy.trading_strategy.portfolio.trading_environment.fee_bps
             == 5.0
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.holding_cost_policy.funding_bps_per_step
-            == baseline_strategy.trading_strategy.portfolio.holding_cost_policy.funding_bps_per_step
+            candidate_strategy.trading_strategy.portfolio.trading_environment.funding_bps_per_step
+            == baseline_strategy.trading_strategy.portfolio.trading_environment.funding_bps_per_step
             == 0.0
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.holding_cost_policy.borrow_fee_bps_per_step
-            == baseline_strategy.trading_strategy.portfolio.holding_cost_policy.borrow_fee_bps_per_step
+            candidate_strategy.trading_strategy.portfolio.trading_environment.borrow_fee_bps_per_step
+            == baseline_strategy.trading_strategy.portfolio.trading_environment.borrow_fee_bps_per_step
             == 0.0
         )
 

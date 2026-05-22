@@ -33,7 +33,7 @@ def _strategy_portfolio_document(
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
     rebalance_friction_policy: dict[str, object] | None = None,
-    execution_policy: dict[str, object] | None = None,
+    trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
     portfolio: dict[str, object] = {
         "portfolio_construction": {
@@ -44,7 +44,9 @@ def _strategy_portfolio_document(
         "rebalance_friction_policy": (
             {} if rebalance_friction_policy is None else rebalance_friction_policy
         ),
-        "execution_policy": {} if execution_policy is None else execution_policy,
+        "trading_environment": (
+            {} if trading_environment is None else trading_environment
+        ),
         "rebalance_interval_steps": rebalance_interval_steps,
         "selection_kind": selection_kind,
     }
@@ -74,13 +76,12 @@ def _build_trading_strategy(
     no_trade_band: float | None = None,
     created_at: str = "2026-04-05T00:00:00Z",
 ):
+    from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
-        ExecutionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
         RebalanceFrictionPolicySpec,
-        HoldingCostPolicySpec,
     )
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
@@ -115,12 +116,13 @@ def _build_trading_strategy(
                 turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
             ),
-            execution_policy=ExecutionPolicySpec(
-                market_impact_bps=market_impact_bps,
-                fee_bps=fee_bps,
-                bid_ask_spread_bps=bid_ask_spread_bps,
+            trading_environment=TradingEnvironment(
+                market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
+                fee_bps=0.0 if fee_bps is None else fee_bps,
+                bid_ask_spread_bps=(
+                    0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps
+                ),
             ),
-            holding_cost_policy=HoldingCostPolicySpec(),
             rebalance_interval_steps=(
                 int(rebalance[len("every_") : -len("_steps")])
                 if isinstance(rebalance, str)
@@ -555,7 +557,7 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                                     "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
                                     "bid_ask_spread_bps": 0.0,
@@ -724,7 +726,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                                     "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
                                     "bid_ask_spread_bps": 0.0,
@@ -885,7 +887,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                                     "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
                                     "bid_ask_spread_bps": 0.0,
@@ -995,7 +997,7 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,
@@ -1115,7 +1117,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,
@@ -1328,7 +1330,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,
@@ -1550,7 +1552,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                     "turnover_friction": None,
                                     "no_trade_band": None,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
                                     "bid_ask_spread_bps": None,
@@ -1993,7 +1995,7 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                                     "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
                                     "bid_ask_spread_bps": 0.0,
@@ -2458,7 +2460,7 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                                     "turnover_friction": 0.0,
                                     "no_trade_band": 0.0,
                                 },
-                                execution_policy={
+                                trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
                                     "bid_ask_spread_bps": 0.0,

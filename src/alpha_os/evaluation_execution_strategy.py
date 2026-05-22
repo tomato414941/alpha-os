@@ -57,23 +57,7 @@ def _rebalance_friction_policy_for_strategy(
 def _trading_environment_for_strategy(
     trading_strategy: TradingStrategySpec,
 ) -> TradingEnvironment:
-    execution = trading_strategy.portfolio.execution_policy
-    holding = trading_strategy.portfolio.holding_cost_policy
-    return TradingEnvironment(
-        market_impact_bps=execution.market_impact_bps or 0.0,
-        fee_bps=execution.fee_bps or 0.0,
-        bid_ask_spread_bps=execution.bid_ask_spread_bps or 0.0,
-        funding_bps_per_step=(
-            0.0
-            if holding.funding_bps_per_step is None
-            else holding.funding_bps_per_step
-        ),
-        borrow_fee_bps_per_step=(
-            0.0
-            if holding.borrow_fee_bps_per_step is None
-            else holding.borrow_fee_bps_per_step
-        ),
-    )
+    return trading_strategy.portfolio.trading_environment
 
 
 def _trading_strategy_for_id(

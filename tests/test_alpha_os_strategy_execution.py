@@ -27,12 +27,11 @@ def _build_trading_strategy(
     no_trade_band: float | None = None,
     created_at: str = "2026-04-08T00:00:00Z",
 ):
+    from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
-        ExecutionPolicySpec,
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
-        HoldingCostPolicySpec,
         RebalanceFrictionPolicySpec,
     )
     from alpha_os.portfolio_construction_config import (
@@ -74,14 +73,18 @@ def _build_trading_strategy(
                 turnover_friction=turnover_friction,
                 no_trade_band=no_trade_band,
             ),
-            execution_policy=ExecutionPolicySpec(
-                market_impact_bps=market_impact_bps,
-                fee_bps=fee_bps,
-                bid_ask_spread_bps=bid_ask_spread_bps,
-            ),
-            holding_cost_policy=HoldingCostPolicySpec(
-                funding_bps_per_step=funding_bps_per_step,
-                borrow_fee_bps_per_step=borrow_fee_bps_per_step,
+            trading_environment=TradingEnvironment(
+                market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
+                fee_bps=0.0 if fee_bps is None else fee_bps,
+                bid_ask_spread_bps=(
+                    0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps
+                ),
+                funding_bps_per_step=(
+                    0.0 if funding_bps_per_step is None else funding_bps_per_step
+                ),
+                borrow_fee_bps_per_step=(
+                    0.0 if borrow_fee_bps_per_step is None else borrow_fee_bps_per_step
+                ),
             ),
             rebalance_interval_steps=(
                 int(rebalance[len("every_") : -len("_steps")])
@@ -150,11 +153,11 @@ def test_trading_strategy_exposes_policy_hierarchy():
     }
     assert trading_strategy.rebalance_friction_policy.turnover_friction == 0.1
     assert trading_strategy.rebalance_friction_policy.no_trade_band == 0.02
-    assert trading_strategy.execution_policy.market_impact_bps == 5.0
-    assert trading_strategy.execution_policy.fee_bps == 2.0
-    assert trading_strategy.execution_policy.bid_ask_spread_bps == 3.0
-    assert trading_strategy.holding_cost_policy.funding_bps_per_step == 1.5
-    assert trading_strategy.holding_cost_policy.borrow_fee_bps_per_step == 2.5
+    assert trading_strategy.trading_environment.market_impact_bps == 5.0
+    assert trading_strategy.trading_environment.fee_bps == 2.0
+    assert trading_strategy.trading_environment.bid_ask_spread_bps == 3.0
+    assert trading_strategy.trading_environment.funding_bps_per_step == 1.5
+    assert trading_strategy.trading_environment.borrow_fee_bps_per_step == 2.5
 
 def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
     trading_strategy = _build_trading_strategy(
@@ -173,8 +176,6 @@ def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
 
 def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
     from alpha_os.trading_strategy import (
-        ExecutionPolicySpec,
-        HoldingCostPolicySpec,
         RebalanceFrictionPolicySpec,
         StrategyPortfolioSpec,
     )
@@ -186,14 +187,11 @@ def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
                 turnover_friction=None,
                 no_trade_band=None,
             ).to_document(),
-            "execution_policy": ExecutionPolicySpec(
-                market_impact_bps=None,
-            ).to_document(),
-                "holding_cost_policy": HoldingCostPolicySpec().to_document(),
-                "rebalance_interval_steps": 1,
-                "selection_kind": "top_k",
-                "top_k": 4,
-            }
+            "trading_environment": {},
+            "rebalance_interval_steps": 1,
+            "selection_kind": "top_k",
+            "top_k": 4,
+        }
     )
 
     assert portfolio.top_k == 4

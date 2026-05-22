@@ -135,8 +135,7 @@ Current classification:
 | `cluster_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `portfolio_intent` | `PortfolioConstructionSpec` | legacy / unclear | Captures effective-N and concentration constraints, but the name is vague. |
 | `rebalance_friction_policy` | `StrategyPortfolioSpec` | strategy decision / evaluation assumption | Strategy-owned if it controls trade decisions; evaluation-owned if it only models friction. |
-| `execution_policy` | `StrategyPortfolioSpec` | evaluation assumption | `fee_bps`, `market_impact_bps`, and spread assumptions are used to calculate net results. |
-| `holding_cost_policy` | `StrategyPortfolioSpec` | evaluation assumption / strategy input | Evaluation-owned when deducted from returns; strategy-owned only when used for decisions. |
+| `trading_environment` | `StrategyPortfolioSpec` | environment cost model | Charges execution and holding costs in evaluation / backtest. |
 
 ## Acceptance Criteria
 
