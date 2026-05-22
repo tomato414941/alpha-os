@@ -84,8 +84,10 @@ Prefer:
   - north star
   - lifecycle stages
   - rigor levels and non-negotiables
-- [`glossary.md`](./design/glossary.md)
-  - source of truth for terminology
+- [`glossary.md`](./glossary.md)
+  - current terminology entrypoint
+- [`glossary.old.md`](./design/glossary.old.md)
+  - historical terminology notes
 - [`domain-model.md`](./design/domain-model.md)
   - domain relationships
 - [`strategy-execution-model.md`](./design/strategy-execution-model.md)

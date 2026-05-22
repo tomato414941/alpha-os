@@ -14,30 +14,32 @@ Prefer these files in this order:
 1. [`../../DESIGN.md`](../../DESIGN.md)
    - short design summary
    - entrypoint into the design set
-2. [`glossary.md`](./glossary.md)
-   - source of truth for terms
+2. [`../glossary.md`](../glossary.md)
+   - current terminology entrypoint
+3. [`glossary.old.md`](./glossary.old.md)
+   - historical terminology notes
    - signal / strategy / discovery boundary
-3. [`constitution.md`](./constitution.md)
+4. [`constitution.md`](./constitution.md)
    - north star
    - lifecycle stages
    - rigor levels and non-negotiables
-4. [`signal-discovery-system.md`](./signal-discovery-system.md)
+5. [`signal-discovery-system.md`](./signal-discovery-system.md)
    - greenfield system boundary
    - signal-discovery target shape
    - current gap map
-5. [`domain-model.md`](./domain-model.md)
+6. [`domain-model.md`](./domain-model.md)
    - domain relationships
    - strategy hierarchy
-6. [`strategy-execution-model.md`](./strategy-execution-model.md)
+7. [`strategy-execution-model.md`](./strategy-execution-model.md)
    - strategy vs engine boundary
    - current mainline workflow
    - target execution workflow
-7. [`runtime-evaluation.md`](./runtime-evaluation.md)
+8. [`runtime-evaluation.md`](./runtime-evaluation.md)
    - evaluation principles
    - targets
    - horizons
    - pipeline stages
-8. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
+9. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
    - minimum facts required to compare strategy results
    - required metrics
    - optional same-subject-set check

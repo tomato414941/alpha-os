@@ -1,6 +1,6 @@
 # Domain Model
 
-Terminology definitions live in [`glossary.md`](./glossary.md).
+Terminology definitions live in [`glossary.md`](../glossary.md).
 This file focuses on relationships between domain objects.
 
 ## Core Terms
