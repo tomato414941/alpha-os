@@ -3260,11 +3260,6 @@ _DIAGNOSTIC_PROFILE_METRIC_GROUPS = {
         "mean_turnover_suppression",
         "mean_skipped_trade_count",
         "mean_expected_execution_cost",
-        "mean_trade_utility",
-        "negative_utility_trade_fraction",
-        "utility_rejected_turnover",
-        "priority_filled_turnover",
-        "partial_fill_count",
     ),
     "cost_drag": (
         "cost_to_gross_pnl",
@@ -3380,11 +3375,7 @@ def _print_diagnostic_evaluation_dry_run(
             f"engine={construction.sizing_engine or '-'} "
             f"optimizer_backend={_diagnostic_optimizer_backend(construction.sizing_method, construction.sizing_engine)} "
             f"rebalance_steps={construction.rebalance_interval_steps} "
-            f"execution_mode={friction.execution_mode} "
             f"turnover_budget={friction.turnover_budget if friction.turnover_budget is not None else '-'} "
-            f"benefit_scale={friction.benefit_scale} "
-            f"min_trade_utility={friction.min_trade_utility} "
-            f"partial_fill_enabled={str(friction.partial_fill_enabled).lower()} "
             f"cost_bps={trading_environment.market_impact_bps + trading_environment.fee_bps + trading_environment.bid_ask_spread_bps}"
         )
 
@@ -3436,26 +3427,6 @@ def _check_diagnostic_evaluation_dry_run(
         )
     cases_by_id = {_case_key(case): case for case in evaluation_cases}
     configs_by_id = trading_configs_by_case_id
-    looser_benefit = cases_by_id[
-        "global_macro_tradeable_daily_diagnostic_utility_looser_benefit_case"
-    ]
-    if configs_by_id[_case_key(looser_benefit)].rebalance_friction_policy.benefit_scale != 2.0:
-        raise ValueError(
-            "diagnostic dry run check failed: looser benefit lane must use "
-            "benefit_scale=2.0"
-        )
-    legacy_case = cases_by_id.get(
-        "global_macro_tradeable_daily_diagnostic_legacy_proportional_execution_case"
-    )
-    if (
-        legacy_case is None
-        or configs_by_id[_case_key(legacy_case)].rebalance_friction_policy.execution_mode
-        != "threshold"
-    ):
-        raise ValueError(
-            "diagnostic dry run check failed: legacy proportional lane must use "
-            "execution_mode=threshold"
-        )
     equal_weight_hold_case = cases_by_id[
         "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case"
     ]
@@ -3538,7 +3509,6 @@ def _check_diagnostic_evaluation_dry_run(
         constrained_friction.no_trade_band != 0.01
         or constrained_friction.execution_cost_aversion != 3.0
         or constrained_friction.turnover_budget != 0.025
-        or not constrained_friction.partial_fill_enabled
     ):
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "

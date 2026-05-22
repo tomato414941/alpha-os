@@ -194,13 +194,7 @@ def derive_trading_strategy_from_signal_discovery(
                 execution_cost_aversion=float(
                     rebalance_friction_policy.execution_cost_aversion
                 ),
-                execution_mode=rebalance_friction_policy.execution_mode,
                 turnover_budget=rebalance_friction_policy.turnover_budget,
-                benefit_scale=rebalance_friction_policy.benefit_scale,
-                min_trade_utility=rebalance_friction_policy.min_trade_utility,
-                uncertainty_aversion=rebalance_friction_policy.uncertainty_aversion,
-                risk_aversion=rebalance_friction_policy.risk_aversion,
-                partial_fill_enabled=rebalance_friction_policy.partial_fill_enabled,
             ),
             trading_environment=trading_environment,
             selection_kind="all_assets" if top_k_value is None else "top_k",

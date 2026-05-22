@@ -2109,9 +2109,7 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
         in output
     )
     assert "optimizer_backend=cvxpy_signed_mean_variance" in output
-    assert "benefit_scale=2.0" in output
     assert "turnover_budget=0.025" in output
-    assert "execution_mode=threshold" in output
 
     store = EvaluationStore(db_path)
     try:

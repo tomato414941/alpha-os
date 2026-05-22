@@ -4,24 +4,6 @@ from dataclasses import dataclass
 from typing import Any
 
 
-def _optional_bool_from_document(
-    document: dict[str, Any],
-    field_name: str,
-    *,
-    default: bool,
-) -> bool:
-    value = document.get(field_name, default)
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"true", "1", "yes"}:
-            return True
-        if normalized in {"false", "0", "no", "", "-"}:
-            return False
-    raise ValueError(f"{field_name} must be boolean")
-
-
 def _float_from_document(
     document: dict[str, Any],
     field_name: str,
@@ -34,31 +16,16 @@ def _float_from_document(
 
 @dataclass(frozen=True)
 class EvaluationRebalanceFrictionPolicySpec:
-    execution_mode: str = "utility_priority"
     turnover_friction: float = 0.0
     no_trade_band: float = 0.0
     execution_cost_aversion: float = 1.0
     turnover_budget: float | None = None
-    benefit_scale: float = 1.0
-    min_trade_utility: float = 0.0
-    uncertainty_aversion: float = 1.0
-    risk_aversion: float = 0.0
-    partial_fill_enabled: bool = True
 
     def __post_init__(self) -> None:
-        if self.execution_mode not in {"threshold", "utility_priority"}:
-            raise ValueError(
-                "rebalance_friction_policy.execution_mode must be threshold "
-                "or utility_priority"
-            )
         for field_name, value in (
             ("turnover_friction", self.turnover_friction),
             ("no_trade_band", self.no_trade_band),
             ("execution_cost_aversion", self.execution_cost_aversion),
-            ("benefit_scale", self.benefit_scale),
-            ("min_trade_utility", self.min_trade_utility),
-            ("uncertainty_aversion", self.uncertainty_aversion),
-            ("risk_aversion", self.risk_aversion),
         ):
             if not isinstance(value, (int, float)):
                 raise ValueError(
@@ -68,10 +35,6 @@ class EvaluationRebalanceFrictionPolicySpec:
                 raise ValueError(
                     f"rebalance_friction_policy.{field_name} must be >= 0"
                 )
-        if not isinstance(self.partial_fill_enabled, bool):
-            raise ValueError(
-                "rebalance_friction_policy.partial_fill_enabled must be boolean"
-            )
         if self.turnover_budget is not None and not isinstance(
             self.turnover_budget, (int, float)
         ):
@@ -81,16 +44,10 @@ class EvaluationRebalanceFrictionPolicySpec:
 
     def to_document(self) -> dict[str, Any]:
         return {
-            "execution_mode": self.execution_mode,
             "turnover_friction": self.turnover_friction,
             "no_trade_band": self.no_trade_band,
             "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
-            "benefit_scale": self.benefit_scale,
-            "min_trade_utility": self.min_trade_utility,
-            "uncertainty_aversion": self.uncertainty_aversion,
-            "risk_aversion": self.risk_aversion,
-            "partial_fill_enabled": self.partial_fill_enabled,
         }
 
     @classmethod
@@ -102,7 +59,6 @@ class EvaluationRebalanceFrictionPolicySpec:
         if not isinstance(document, dict):
             raise ValueError("rebalance_friction_policy must be an object")
         return cls(
-            execution_mode=str(document.get("execution_mode", "utility_priority")),
             turnover_friction=float(document.get("turnover_friction", 0.0)),
             no_trade_band=float(document.get("no_trade_band", 0.0)),
             execution_cost_aversion=float(
@@ -112,15 +68,6 @@ class EvaluationRebalanceFrictionPolicySpec:
                 None
                 if document.get("turnover_budget") is None
                 else float(document.get("turnover_budget"))
-            ),
-            benefit_scale=float(document.get("benefit_scale", 1.0)),
-            min_trade_utility=float(document.get("min_trade_utility", 0.0)),
-            uncertainty_aversion=float(document.get("uncertainty_aversion", 1.0)),
-            risk_aversion=float(document.get("risk_aversion", 0.0)),
-            partial_fill_enabled=_optional_bool_from_document(
-                document,
-                "partial_fill_enabled",
-                default=True,
             ),
         )
 

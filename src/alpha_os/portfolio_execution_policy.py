@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import sqrt
 
 from .portfolio_decision import PortfolioTarget
 
 
-_EXECUTION_MODES = ("threshold", "utility_priority")
-
-
 @dataclass(frozen=True)
 class ExecutionPolicySpec:
-    mode: str = "utility_priority"
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
     cost_soft_threshold: float = 0.0
@@ -19,18 +14,8 @@ class ExecutionPolicySpec:
     execution_friction_aversion: float = 0.0
     recent_turnover_aversion: float = 0.0
     signal_horizon_shortfall_aversion: float = 1.0
-    min_trade_utility: float = 0.0
-    benefit_scale: float = 1.0
-    uncertainty_aversion: float = 1.0
-    risk_aversion: float = 0.0
-    partial_fill_enabled: bool = True
 
     def __post_init__(self) -> None:
-        if self.mode not in _EXECUTION_MODES:
-            raise ValueError(
-                "execution_policy.mode must be one of: "
-                + ", ".join(_EXECUTION_MODES)
-            )
         if self.no_trade_band < 0.0:
             raise ValueError("execution_policy.no_trade_band must be >= 0")
         if self.turnover_budget is not None and self.turnover_budget < 0.0:
@@ -47,16 +32,6 @@ class ExecutionPolicySpec:
             raise ValueError(
                 "execution_policy.signal_horizon_shortfall_aversion must be >= 0"
             )
-        if self.min_trade_utility < 0.0:
-            raise ValueError("execution_policy.min_trade_utility must be >= 0")
-        if self.benefit_scale < 0.0:
-            raise ValueError("execution_policy.benefit_scale must be >= 0")
-        if self.uncertainty_aversion < 0.0:
-            raise ValueError("execution_policy.uncertainty_aversion must be >= 0")
-        if self.risk_aversion < 0.0:
-            raise ValueError("execution_policy.risk_aversion must be >= 0")
-        if not isinstance(self.partial_fill_enabled, bool):
-            raise ValueError("execution_policy.partial_fill_enabled must be boolean")
 
     @classmethod
     def from_cost_controls(
@@ -69,12 +44,6 @@ class ExecutionPolicySpec:
         fee_bps: float,
         bid_ask_spread_bps: float,
         execution_cost_aversion: float,
-        mode: str = "utility_priority",
-        benefit_scale: float = 1.0,
-        min_trade_utility: float = 0.0,
-        uncertainty_aversion: float = 1.0,
-        risk_aversion: float = 0.0,
-        partial_fill_enabled: bool = True,
     ) -> "ExecutionPolicySpec":
         per_turnover_cost = (
             max(float(turnover_friction), 0.0)
@@ -89,7 +58,6 @@ class ExecutionPolicySpec:
         )
         turnover_friction_aversion = 1.0
         return cls(
-            mode=mode,
             no_trade_band=max(float(no_trade_band), 0.0),
             turnover_budget=turnover_budget,
             cost_soft_threshold=cost_soft_threshold,
@@ -102,11 +70,6 @@ class ExecutionPolicySpec:
             ),
             recent_turnover_aversion=max(float(execution_cost_aversion), 0.0),
             signal_horizon_shortfall_aversion=1.0,
-            min_trade_utility=max(float(min_trade_utility), 0.0),
-            benefit_scale=max(float(benefit_scale), 0.0),
-            uncertainty_aversion=max(float(uncertainty_aversion), 0.0),
-            risk_aversion=max(float(risk_aversion), 0.0),
-            partial_fill_enabled=partial_fill_enabled,
         )
 
 
@@ -120,10 +83,7 @@ class SubjectTradeTransition:
     executed_delta: float
     skipped: bool
     reason: str
-    expected_trade_benefit: float = 0.0
     expected_trade_cost: float = 0.0
-    trade_utility: float = 0.0
-    priority_score: float = 0.0
     rejected_reason: str | None = None
 
 
@@ -135,12 +95,6 @@ class TradeTransitionTrace:
     skipped_trade_count: int
     expected_execution_cost: float
     turnover_budget: float | None
-    mean_trade_utility: float
-    negative_utility_trade_count: int
-    negative_utility_trade_fraction: float
-    utility_rejected_turnover: float
-    priority_filled_turnover: float
-    partial_fill_count: int
     subjects: tuple[SubjectTradeTransition, ...]
 
 
@@ -153,10 +107,6 @@ class TradeTransitionRequest:
     recent_turnover: float = 0.0
     holding_period_days: int = 0
     signal_horizon_by_subject: dict[str, int | None] | None = None
-    signal_value_by_subject: dict[str, float] | None = None
-    confidence_by_subject: dict[str, float] | None = None
-    uncertainty_by_subject: dict[str, float] | None = None
-    risk_by_subject: dict[str, float] | None = None
     execution_friction_level: float = 0.0
     per_turnover_cost: float = 0.0
 
@@ -175,10 +125,7 @@ class _TradeTransitionCandidate:
     desired_delta: float
     adjusted_delta: float
     risk_scale: float
-    expected_trade_benefit: float
     expected_trade_cost: float
-    trade_utility: float
-    priority_score: float
     rejected_reason: str | None
 
 
@@ -219,40 +166,14 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
                 policy.signal_horizon_shortfall_aversion
             ),
         )
-        expected_trade_benefit = _expected_trade_benefit(
-            adjusted_delta,
-            capital_base=request.capital_base,
-            signal_value=_subject_signal_value(request, subject_id),
-            confidence=_subject_level(
-                request.confidence_by_subject,
-                subject_id,
-                default=1.0,
-            ),
-            uncertainty=_subject_level(
-                request.uncertainty_by_subject,
-                subject_id,
-                default=0.0,
-            ),
-            risk=_subject_level(request.risk_by_subject, subject_id, default=0.0),
-            signal_horizon=signal_horizon,
-            policy=policy,
-        )
         expected_trade_cost = _expected_trade_cost(
             adjusted_delta,
             capital_base=request.capital_base,
             per_turnover_cost=request.per_turnover_cost,
         )
-        trade_utility = expected_trade_benefit - expected_trade_cost
-        priority_score = _priority_score(
-            trade_utility=trade_utility,
-            adjusted_delta=adjusted_delta,
-        )
         rejected_reason = _candidate_rejected_reason(
             desired_delta=desired_delta,
             adjusted_delta=adjusted_delta,
-            trade_utility=trade_utility,
-            min_trade_utility=policy.min_trade_utility,
-            mode=policy.mode,
         )
         candidates.append(
             _TradeTransitionCandidate(
@@ -262,10 +183,7 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
                 desired_delta=desired_delta,
                 adjusted_delta=adjusted_delta,
                 risk_scale=1.0 if target is None else float(target.risk_scale),
-                expected_trade_benefit=expected_trade_benefit,
                 expected_trade_cost=expected_trade_cost,
-                trade_utility=trade_utility,
-                priority_score=priority_score,
                 rejected_reason=rejected_reason,
             )
         )
@@ -273,7 +191,7 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
     desired_turnover = sum(
         abs(candidate.desired_delta) for candidate in candidates
     )
-    executed_delta_by_subject, budget_rejected_subjects, partial_fill_count = (
+    executed_delta_by_subject, budget_rejected_subjects = (
         _executed_deltas_from_candidates(candidates, policy=policy)
     )
 
@@ -303,10 +221,7 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
                 executed_delta=executed_delta,
                 skipped=skipped,
                 reason=reason,
-                expected_trade_benefit=candidate.expected_trade_benefit,
                 expected_trade_cost=candidate.expected_trade_cost,
-                trade_utility=candidate.trade_utility,
-                priority_score=candidate.priority_score,
                 rejected_reason=reason if skipped else None,
             )
         )
@@ -322,17 +237,6 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
         )
 
     executed_turnover = sum(abs(item.executed_delta) for item in transitions)
-    negative_utility_trade_count = sum(
-        1
-        for item in transitions
-        if abs(item.desired_delta) > 0.0
-        and item.trade_utility <= policy.min_trade_utility
-    )
-    utility_rejected_turnover = sum(
-        abs(candidate.adjusted_delta)
-        for candidate in candidates
-        if candidate.rejected_reason == "negative_utility"
-    )
     trace = TradeTransitionTrace(
         desired_turnover=float(desired_turnover),
         executed_turnover=float(executed_turnover),
@@ -344,17 +248,6 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
             * max(float(request.per_turnover_cost), 0.0)
         ),
         turnover_budget=policy.turnover_budget,
-        mean_trade_utility=_mean(
-            [item.trade_utility for item in transitions if abs(item.desired_delta) > 0.0]
-        ),
-        negative_utility_trade_count=negative_utility_trade_count,
-        negative_utility_trade_fraction=(
-            float(negative_utility_trade_count)
-            / float(max(sum(1 for item in transitions if abs(item.desired_delta) > 0.0), 1))
-        ),
-        utility_rejected_turnover=float(utility_rejected_turnover),
-        priority_filled_turnover=float(executed_turnover),
-        partial_fill_count=partial_fill_count,
         subjects=tuple(transitions),
     )
     return TradeTransitionResult(
@@ -367,17 +260,15 @@ def _executed_deltas_from_candidates(
     candidates: list[_TradeTransitionCandidate],
     *,
     policy: ExecutionPolicySpec,
-) -> tuple[dict[str, float], set[str], int]:
-    if policy.mode == "threshold":
-        return _threshold_executed_deltas(candidates, policy=policy)
-    return _utility_priority_executed_deltas(candidates, policy=policy)
+) -> tuple[dict[str, float], set[str]]:
+    return _budget_scaled_executed_deltas(candidates, policy=policy)
 
 
-def _threshold_executed_deltas(
+def _budget_scaled_executed_deltas(
     candidates: list[_TradeTransitionCandidate],
     *,
     policy: ExecutionPolicySpec,
-) -> tuple[dict[str, float], set[str], int]:
+) -> tuple[dict[str, float], set[str]]:
     adjusted_turnover = sum(abs(item.adjusted_delta) for item in candidates)
     budget_scale = 1.0
     if (
@@ -393,93 +284,19 @@ def _threshold_executed_deltas(
             for item in candidates
         },
         set(),
-        0,
     )
-
-
-def _utility_priority_executed_deltas(
-    candidates: list[_TradeTransitionCandidate],
-    *,
-    policy: ExecutionPolicySpec,
-) -> tuple[dict[str, float], set[str], int]:
-    executed: dict[str, float] = {item.subject_id: 0.0 for item in candidates}
-    budget_rejected: set[str] = set()
-    partial_fill_count = 0
-    eligible = [
-        item
-        for item in candidates
-        if item.rejected_reason is None and abs(item.adjusted_delta) > 0.0
-    ]
-    eligible = sorted(
-        eligible,
-        key=lambda item: (-item.priority_score, item.subject_id),
-    )
-    remaining_turnover = (
-        None if policy.turnover_budget is None else max(float(policy.turnover_budget), 0.0)
-    )
-    for item in eligible:
-        requested_turnover = abs(item.adjusted_delta)
-        if remaining_turnover is None:
-            executed[item.subject_id] = item.adjusted_delta
-            continue
-        if requested_turnover <= remaining_turnover:
-            executed[item.subject_id] = item.adjusted_delta
-            remaining_turnover -= requested_turnover
-            continue
-        if policy.partial_fill_enabled and remaining_turnover > 0.0:
-            direction = 1.0 if item.adjusted_delta > 0.0 else -1.0
-            executed[item.subject_id] = direction * remaining_turnover
-            remaining_turnover = 0.0
-            partial_fill_count += 1
-            continue
-        budget_rejected.add(item.subject_id)
-    for item in eligible:
-        if abs(executed[item.subject_id]) == 0.0:
-            budget_rejected.add(item.subject_id)
-    return executed, budget_rejected, partial_fill_count
 
 
 def _candidate_rejected_reason(
     *,
     desired_delta: float,
     adjusted_delta: float,
-    trade_utility: float,
-    min_trade_utility: float,
-    mode: str,
 ) -> str | None:
     if abs(desired_delta) == 0.0:
         return None
     if abs(adjusted_delta) == 0.0:
         return "threshold"
-    if mode == "utility_priority" and trade_utility <= min_trade_utility:
-        return "negative_utility"
     return None
-
-
-def _expected_trade_benefit(
-    adjusted_delta: float,
-    *,
-    capital_base: float,
-    signal_value: float,
-    confidence: float,
-    uncertainty: float,
-    risk: float,
-    signal_horizon: int | None,
-    policy: ExecutionPolicySpec,
-) -> float:
-    horizon_scale = sqrt(float(max(signal_horizon or 1, 1)))
-    uncertainty_scale = _shrink_from_level(uncertainty, policy.uncertainty_aversion)
-    risk_scale = _shrink_from_level(risk, policy.risk_aversion)
-    return float(
-        abs(adjusted_delta)
-        * max(float(capital_base), 0.0)
-        * abs(float(signal_value))
-        * max(float(confidence), 0.0)
-        * horizon_scale
-        * max(float(policy.benefit_scale), 0.0)
-        * uncertainty_scale
-        * risk_scale
-    )
 
 
 def _expected_trade_cost(
@@ -493,32 +310,6 @@ def _expected_trade_cost(
         * max(float(capital_base), 0.0)
         * max(float(per_turnover_cost), 0.0)
     )
-
-
-def _priority_score(*, trade_utility: float, adjusted_delta: float) -> float:
-    if abs(adjusted_delta) == 0.0:
-        return 0.0
-    return float(trade_utility / abs(adjusted_delta))
-
-
-def _subject_signal_value(
-    request: TradeTransitionRequest,
-    subject_id: str,
-) -> float:
-    if request.signal_value_by_subject is None:
-        return 1.0
-    return float(request.signal_value_by_subject.get(subject_id, 0.0))
-
-
-def _subject_level(
-    values_by_subject: dict[str, float] | None,
-    subject_id: str,
-    *,
-    default: float,
-) -> float:
-    if values_by_subject is None:
-        return float(default)
-    return float(values_by_subject.get(subject_id, default))
 
 
 def _execution_delta(
@@ -604,8 +395,3 @@ def _shrink_from_level(level: float, aversion: float) -> float:
         return 1.0
     return float(1.0 / (1.0 + aversion * level))
 
-
-def _mean(values: list[float]) -> float:
-    if not values:
-        return 0.0
-    return float(sum(values) / len(values))

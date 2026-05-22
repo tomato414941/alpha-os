@@ -16,20 +16,6 @@ def _normalize_optional(value: str | None) -> str | None:
     return value
 
 
-def _optional_bool(value: Any, *, field_name: str) -> bool | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"true", "1", "yes"}:
-            return True
-        if normalized in {"false", "0", "no", "", "-"}:
-            return False
-    raise ValueError(f"{field_name} must be boolean")
-
-
 def _normalized_weight_caps(
     document: dict[str, Any],
     field_name: str,
@@ -144,26 +130,14 @@ class RebalanceFrictionPolicySpec:
     turnover_friction: float | None
     no_trade_band: float | None
     execution_cost_aversion: float | None = None
-    execution_mode: str | None = None
     turnover_budget: float | None = None
-    benefit_scale: float | None = None
-    min_trade_utility: float | None = None
-    uncertainty_aversion: float | None = None
-    risk_aversion: float | None = None
-    partial_fill_enabled: bool | None = None
 
     def to_document(self) -> dict[str, Any]:
         return {
-            "execution_mode": self.execution_mode,
             "turnover_friction": self.turnover_friction,
             "no_trade_band": self.no_trade_band,
             "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
-            "benefit_scale": self.benefit_scale,
-            "min_trade_utility": self.min_trade_utility,
-            "uncertainty_aversion": self.uncertainty_aversion,
-            "risk_aversion": self.risk_aversion,
-            "partial_fill_enabled": self.partial_fill_enabled,
         }
 
     @classmethod
@@ -171,13 +145,7 @@ class RebalanceFrictionPolicySpec:
         turnover_friction = document.get("turnover_friction")
         no_trade_band = document.get("no_trade_band")
         execution_cost_aversion = document.get("execution_cost_aversion")
-        execution_mode = document.get("execution_mode")
         turnover_budget = document.get("turnover_budget")
-        benefit_scale = document.get("benefit_scale")
-        min_trade_utility = document.get("min_trade_utility")
-        uncertainty_aversion = document.get("uncertainty_aversion")
-        risk_aversion = document.get("risk_aversion")
-        partial_fill_enabled = document.get("partial_fill_enabled")
         return cls(
             turnover_friction=(
                 None if turnover_friction is None else float(turnover_friction)
@@ -188,23 +156,8 @@ class RebalanceFrictionPolicySpec:
                 if execution_cost_aversion is None
                 else float(execution_cost_aversion)
             ),
-            execution_mode=(
-                None if execution_mode is None else str(execution_mode)
-            ),
             turnover_budget=(
                 None if turnover_budget is None else float(turnover_budget)
-            ),
-            benefit_scale=None if benefit_scale is None else float(benefit_scale),
-            min_trade_utility=(
-                None if min_trade_utility is None else float(min_trade_utility)
-            ),
-            uncertainty_aversion=(
-                None if uncertainty_aversion is None else float(uncertainty_aversion)
-            ),
-            risk_aversion=None if risk_aversion is None else float(risk_aversion),
-            partial_fill_enabled=_optional_bool(
-                partial_fill_enabled,
-                field_name="rebalance_friction_policy.partial_fill_enabled",
             ),
         )
 

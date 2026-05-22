@@ -84,12 +84,6 @@ class SignalDiscoveryStrategyEvaluationRangeSummary:
     mean_turnover_suppression: float
     mean_skipped_trade_count: float
     mean_expected_execution_cost: float
-    mean_trade_utility: float
-    negative_utility_trade_count: float
-    negative_utility_trade_fraction: float
-    utility_rejected_turnover: float
-    priority_filled_turnover: float
-    partial_fill_count: float
     cost_to_gross_pnl: float
     execution_cost_to_gross_pnl: float
     total_execution_cost_notional: float
@@ -685,32 +679,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
                 _mean([item.mean_expected_execution_cost for item in range_summaries]),
                 6,
             ),
-            "mean_trade_utility": round(
-                _mean([item.mean_trade_utility for item in range_summaries]),
-                6,
-            ),
-            "negative_utility_trade_count": round(
-                _mean([item.negative_utility_trade_count for item in range_summaries]),
-                6,
-            ),
-            "negative_utility_trade_fraction": round(
-                _mean(
-                    [item.negative_utility_trade_fraction for item in range_summaries]
-                ),
-                6,
-            ),
-            "utility_rejected_turnover": round(
-                _mean([item.utility_rejected_turnover for item in range_summaries]),
-                6,
-            ),
-            "priority_filled_turnover": round(
-                _mean([item.priority_filled_turnover for item in range_summaries]),
-                6,
-            ),
-            "partial_fill_count": round(
-                _mean([item.partial_fill_count for item in range_summaries]),
-                6,
-            ),
         },
     )
     cost_drag_metric_group_result = EvaluationMetricGroupResult(
@@ -1175,12 +1143,6 @@ def _run_backtest_variant(
             funding_bps_per_step=trading_environment.funding_bps_per_step,
             borrow_fee_bps_per_step=trading_environment.borrow_fee_bps_per_step,
             execution_cost_aversion=rebalance_friction_policy.execution_cost_aversion,
-            execution_mode=rebalance_friction_policy.execution_mode,
-            benefit_scale=rebalance_friction_policy.benefit_scale,
-            min_trade_utility=rebalance_friction_policy.min_trade_utility,
-            uncertainty_aversion=rebalance_friction_policy.uncertainty_aversion,
-            risk_aversion=rebalance_friction_policy.risk_aversion,
-            partial_fill_enabled=rebalance_friction_policy.partial_fill_enabled,
             no_trade_band=rebalance_friction_policy.no_trade_band,
             turnover_budget=rebalance_friction_policy.turnover_budget,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
@@ -1575,16 +1537,6 @@ def _range_summary_from_variant_results(
         mean_expected_execution_cost=execution_impact[
             "mean_expected_execution_cost"
         ],
-        mean_trade_utility=execution_impact["mean_trade_utility"],
-        negative_utility_trade_count=execution_impact[
-            "negative_utility_trade_count"
-        ],
-        negative_utility_trade_fraction=execution_impact[
-            "negative_utility_trade_fraction"
-        ],
-        utility_rejected_turnover=execution_impact["utility_rejected_turnover"],
-        priority_filled_turnover=execution_impact["priority_filled_turnover"],
-        partial_fill_count=execution_impact["partial_fill_count"],
         cost_to_gross_pnl=float(cost_drag["cost_to_gross_pnl"]),
         execution_cost_to_gross_pnl=float(cost_drag["execution_cost_to_gross_pnl"]),
         total_execution_cost_notional=float(cost_drag["total_execution_cost_notional"]),
@@ -1704,24 +1656,6 @@ def _execution_trace_from_backtest(result: DecisionBacktestResult) -> dict[str, 
         ),
         "mean_expected_execution_cost": _mean(
             [float(item.expected_execution_cost) for item in traces]
-        ),
-        "mean_trade_utility": _mean(
-            [float(item.mean_trade_utility) for item in traces]
-        ),
-        "negative_utility_trade_count": _mean(
-            [float(item.negative_utility_trade_count) for item in traces]
-        ),
-        "negative_utility_trade_fraction": _mean(
-            [float(item.negative_utility_trade_fraction) for item in traces]
-        ),
-        "utility_rejected_turnover": _mean(
-            [float(item.utility_rejected_turnover) for item in traces]
-        ),
-        "priority_filled_turnover": _mean(
-            [float(item.priority_filled_turnover) for item in traces]
-        ),
-        "partial_fill_count": _mean(
-            [float(item.partial_fill_count) for item in traces]
         ),
     }
 

@@ -69,13 +69,7 @@ def _strategy_document(
                     "turnover_friction": 0.0,
                     "no_trade_band": 0.0,
                     "execution_cost_aversion": 1.0,
-                    "execution_mode": "utility_priority",
                     "turnover_budget": None,
-                    "benefit_scale": 1.0,
-                    "min_trade_utility": 0.0,
-                    "uncertainty_aversion": 1.0,
-                    "risk_aversion": 0.0,
-                    "partial_fill_enabled": True,
                 },
                 "trading_environment": {
                     "market_impact_bps": 0.0,

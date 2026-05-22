@@ -68,13 +68,7 @@
             "turnover_friction": 0.0,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.0,
-            "execution_mode": "utility_priority",
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",
@@ -114,13 +108,7 @@
             "turnover_friction": 0.0,
             "no_trade_band": 0.0,
             "execution_cost_aversion": 1.0,
-            "execution_mode": "utility_priority",
-            "turnover_budget": null,
-            "benefit_scale": 1.0,
-            "min_trade_utility": 0.0,
-            "uncertainty_aversion": 1.0,
-            "risk_aversion": 0.0,
-            "partial_fill_enabled": true
+            "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",

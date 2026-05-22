@@ -3159,12 +3159,10 @@ def test_global_macro_diagnostic_manifest_contract():
                     "top_gross_share_cap": 0.4,
                 }
                 expected_rebalance_policy = {
-                    "execution_mode": "utility_priority",
                     "turnover_friction": 0.001,
                     "no_trade_band": 0.01,
                     "execution_cost_aversion": 3.0,
                     "turnover_budget": 0.025,
-                    "partial_fill_enabled": True,
                 }
                 assert expected_rebalance_policy.items() <= portfolio[
                     "rebalance_friction_policy"

@@ -92,12 +92,6 @@ class DecisionBacktestInput:
     funding_bps_per_step: float = 0.0
     borrow_fee_bps_per_step: float = 0.0
     execution_cost_aversion: float = 1.0
-    execution_mode: str = "utility_priority"
-    benefit_scale: float = 1.0
-    min_trade_utility: float = 0.0
-    uncertainty_aversion: float = 1.0
-    risk_aversion: float = 0.0
-    partial_fill_enabled: bool = True
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
     execution_policy: ExecutionPolicySpec | None = None
@@ -418,28 +412,6 @@ def run_decision_backtest(
                         backtest_input,
                         subject_ids=subject_ids,
                     ),
-                    signal_value_by_subject=_execution_signal_value_by_subject(
-                        row,
-                        subject_ids=subject_ids,
-                    ),
-                    confidence_by_subject=_execution_optional_value_by_subject(
-                        row,
-                        subject_ids=subject_ids,
-                        column_name="confidence",
-                        default=1.0,
-                    ),
-                    uncertainty_by_subject=_execution_optional_value_by_subject(
-                        row,
-                        subject_ids=subject_ids,
-                        column_name="uncertainty",
-                        default=0.0,
-                    ),
-                    risk_by_subject=_execution_optional_value_by_subject(
-                        row,
-                        subject_ids=subject_ids,
-                        column_name="risk",
-                        default=0.0,
-                    ),
                     execution_friction_level=_execution_friction_level(backtest_input),
                     per_turnover_cost=_per_turnover_execution_cost(backtest_input),
                 )
@@ -627,12 +599,6 @@ def _execution_policy_for_backtest(
         fee_bps=backtest_input.fee_bps,
         bid_ask_spread_bps=backtest_input.bid_ask_spread_bps,
         execution_cost_aversion=backtest_input.execution_cost_aversion,
-        mode=backtest_input.execution_mode,
-        benefit_scale=backtest_input.benefit_scale,
-        min_trade_utility=backtest_input.min_trade_utility,
-        uncertainty_aversion=backtest_input.uncertainty_aversion,
-        risk_aversion=backtest_input.risk_aversion,
-        partial_fill_enabled=backtest_input.partial_fill_enabled,
     )
 
 
@@ -660,33 +626,6 @@ def _signal_horizon_by_subject(
     target_definition = find_target_definition(backtest_input.target_id)
     horizon_days = None if target_definition is None else target_definition.horizon_days
     return {subject_id: horizon_days for subject_id in subject_ids}
-
-
-def _execution_signal_value_by_subject(
-    row: pd.Series,
-    *,
-    subject_ids: tuple[str, ...],
-) -> dict[str, float]:
-    return {
-        subject_id: float(
-            _optional_value(row, ("signal", subject_id), default=0.0)
-        )
-        for subject_id in subject_ids
-    }
-
-
-def _execution_optional_value_by_subject(
-    row: pd.Series,
-    *,
-    subject_ids: tuple[str, ...],
-    column_name: str,
-    default: float,
-) -> dict[str, float]:
-    values: dict[str, float] = {}
-    for subject_id in subject_ids:
-        value = _optional_value(row, (column_name, subject_id), default=default)
-        values[subject_id] = float(default if value is None else value)
-    return values
 
 
 def _portfolio_decision_input_for_backtest_row(
