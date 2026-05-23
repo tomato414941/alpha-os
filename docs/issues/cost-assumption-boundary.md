@@ -57,8 +57,8 @@ Decision rule:
   simulator assumptions, but they can also be used by policy-side trade utility.
 - `HoldingCostAssumptionsSpec` carries funding and borrow assumptions. These are
   closer to realized environment costs.
-- `EvaluationRebalanceFrictionPolicySpec` carries decision-facing fields such as
-  no-trade behavior. These are closer to policy or actor behavior.
+- `no_trade_band` and `turnover_budget` are decision-facing portfolio fields.
+  They are closer to policy or actor behavior than to realized cost.
 
 The code should not rely on a generic cost object to stand for both expected
 decision cost and realized environment cost.

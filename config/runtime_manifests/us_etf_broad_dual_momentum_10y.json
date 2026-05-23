@@ -333,10 +333,9 @@
             "gross_leverage_cap": 1.0,
             "net_exposure_target": 1.0
           },
-          "rebalance_friction_policy": {
-            "no_trade_band": 0.02,
-            "turnover_budget": null
-          },
+          "no_trade_band": 0.02,
+
+          "turnover_budget": null,
           "rebalance_interval_steps": 21,
           "selection_kind": "top_k",
           "top_k": 3,

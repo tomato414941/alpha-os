@@ -123,29 +123,6 @@ class TradingStrategyScopeSpec:
         )
 
 
-@dataclass(frozen=True)
-class RebalanceFrictionPolicySpec:
-    no_trade_band: float | None
-    turnover_budget: float | None = None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "no_trade_band": self.no_trade_band,
-            "turnover_budget": self.turnover_budget,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "RebalanceFrictionPolicySpec":
-        no_trade_band = document.get("no_trade_band")
-        turnover_budget = document.get("turnover_budget")
-        return cls(
-            no_trade_band=None if no_trade_band is None else float(no_trade_band),
-            turnover_budget=(
-                None if turnover_budget is None else float(turnover_budget)
-            ),
-        )
-
-
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
     if raw_steps is None:
@@ -163,11 +140,12 @@ def _rebalance_label(rebalance_interval_steps: int) -> str:
 @dataclass(frozen=True)
 class StrategyPortfolioSpec:
     portfolio_construction: PortfolioConstructionSpec
-    rebalance_friction_policy: RebalanceFrictionPolicySpec
     trading_environment: TradingEnvironment
     selection_kind: str = "all_assets"
     top_k: int | None = None
     rebalance_interval_steps: int = 1
+    no_trade_band: float | None = None
+    turnover_budget: float | None = None
 
     def __post_init__(self) -> None:
         top_k = self.top_k
@@ -182,6 +160,10 @@ class StrategyPortfolioSpec:
             or self.rebalance_interval_steps < 1
         ):
             raise ValueError("strategy portfolio rebalance_interval_steps must be >= 1")
+        if self.no_trade_band is not None and float(self.no_trade_band) < 0.0:
+            raise ValueError("strategy portfolio no_trade_band must be >= 0")
+        if self.turnover_budget is not None and float(self.turnover_budget) < 0.0:
+            raise ValueError("strategy portfolio turnover_budget must be >= 0")
         if (
             self.portfolio_construction.rebalance_interval_steps
             != self.rebalance_interval_steps
@@ -198,10 +180,13 @@ class StrategyPortfolioSpec:
     def to_document(self) -> dict[str, Any]:
         document = {
             "portfolio_construction": self.portfolio_construction.to_document(),
-            "rebalance_friction_policy": self.rebalance_friction_policy.to_document(),
             "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
         }
+        if self.no_trade_band is not None:
+            document["no_trade_band"] = self.no_trade_band
+        if self.turnover_budget is not None:
+            document["turnover_budget"] = self.turnover_budget
         if self.selection_kind != "all_assets":
             document["selection_kind"] = self.selection_kind
         if self.top_k is not None:
@@ -215,17 +200,20 @@ class StrategyPortfolioSpec:
             document.get("portfolio_construction")
         )
         rebalance_interval_steps = _rebalance_interval_steps_from_document(document)
+        no_trade_band = document.get("no_trade_band")
+        turnover_budget = document.get("turnover_budget")
         return cls(
             portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=RebalanceFrictionPolicySpec.from_document(
-                dict(document.get("rebalance_friction_policy", {}))
-            ),
             trading_environment=TradingEnvironment.from_document(
                 document.get("trading_environment")
             ),
             selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
             rebalance_interval_steps=int(rebalance_interval_steps),
+            no_trade_band=None if no_trade_band is None else float(no_trade_band),
+            turnover_budget=(
+                None if turnover_budget is None else float(turnover_budget)
+            ),
         )
 
 @dataclass(frozen=True)
@@ -286,10 +274,6 @@ class TradingStrategySpec:
     @property
     def selection_kind(self) -> str:
         return self.portfolio.selection_kind
-
-    @property
-    def rebalance_friction_policy(self) -> RebalanceFrictionPolicySpec:
-        return self.portfolio.rebalance_friction_policy
 
     @property
     def trading_environment(self) -> TradingEnvironment:

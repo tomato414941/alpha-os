@@ -2,15 +2,15 @@
 
 ## Problem
 
-`rebalance_friction_policy` is too narrow a name for its current behavior.
+Resolved: the persisted `rebalance_friction_policy` object was removed.
 
 The current object does not only describe rebalance friction. It controls how a
 desired portfolio target is converted into an executed portfolio target.
 
-In code, the flow is:
+The old flow was:
 
 ```text
-rebalance_friction_policy
+no_trade_band / turnover_budget
   -> DecisionBacktestInput
   -> portfolio_execution_policy.ExecutionPolicySpec
   -> apply_execution_policy()
@@ -21,13 +21,12 @@ friction assumption.
 
 ## Current Field Shape
 
-Current fields include:
+The remaining transition controls are now direct portfolio fields:
 
 - `no_trade_band`
 - `turnover_budget`
 
-These fields are smaller than before, but the object is still named as
-`friction` even though it controls portfolio transition behavior.
+The old `friction` object no longer exists in strategy documents.
 
 ## Field Classification
 
@@ -38,8 +37,8 @@ Initial classification:
 | `no_trade_band` | policy / transition rule |
 | `turnover_budget` | policy / transition constraint |
 
-`turnover_cost_rate` is now represented on `TradingEnvironment`, not on
-`rebalance_friction_policy`.
+`turnover_cost_rate` is represented on `TradingEnvironment`, not on the
+strategy transition controls.
 
 ## RL Analogy
 
@@ -50,36 +49,24 @@ turnover budgets and no-trade bands.
 
 The world or environment then applies realized costs and rewards.
 
-`rebalance_friction_policy` still names policy-side transition behavior as
-friction. It should not be moved wholesale into world or evaluation config,
-because the remaining fields directly change the action before costs are
-charged.
+The remaining fields directly change the action before costs are charged, so
+they stay with the strategy portfolio shape rather than the market environment.
 
 ## Risk
 
-Keeping the current name encourages two mistakes:
+The old name encouraged two mistakes:
 
 - treating policy-side action suppression as a simple cost assumption
 
-It also makes `execution_policy` terminology more confusing, because there is
-already a separate `portfolio_execution_policy.ExecutionPolicySpec` that better
-describes the action transition behavior.
+There is still a separate `portfolio_execution_policy.ExecutionPolicySpec` in
+the lower-level execution path, so that boundary may need separate cleanup.
 
 ## Direction
 
-Do not delete this object as if it were only an evaluation cost assumption.
-
-Prefer a future split or rename around a clearer concept such as:
-
-- `portfolio_transition_policy`
-- `trade_transition_policy`
-- `rebalance_transition_policy`
-
-Before renaming, decide whether the remaining fields should become direct
-arguments to transition functions instead of another policy object.
+No further wrapper object is needed for now. Keep the direct fields until a
+real transition abstraction becomes necessary.
 
 ## Close Condition
 
-Close this when `rebalance_friction_policy` has been renamed or split so that
-policy-side transition behavior is no longer described as generic friction, and
-environment cost assumptions are represented separately.
+Closed when the persisted wrapper was removed and environment cost assumptions
+were represented separately.

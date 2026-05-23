@@ -32,7 +32,6 @@ def _build_trading_strategy(
         StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
-        RebalanceFrictionPolicySpec,
     )
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
@@ -69,9 +68,7 @@ def _build_trading_strategy(
                     {} if cluster_weight_caps is None else dict(cluster_weight_caps)
                 ),
             ),
-            rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                no_trade_band=no_trade_band,
-            ),
+            no_trade_band=no_trade_band,
             trading_environment=TradingEnvironment(
                 turnover_cost_rate=(
                     0.0 if turnover_cost_rate is None else turnover_cost_rate
@@ -153,7 +150,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.portfolio.portfolio_construction.cluster_weight_caps == {
         "eq_us": 0.25
     }
-    assert trading_strategy.rebalance_friction_policy.no_trade_band == 0.02
+    assert trading_strategy.portfolio.no_trade_band == 0.02
     assert trading_strategy.trading_environment.turnover_cost_rate == 0.1
     assert trading_strategy.trading_environment.market_impact_bps == 5.0
     assert trading_strategy.trading_environment.fee_bps == 2.0
@@ -177,17 +174,11 @@ def test_strategy_portfolio_top_k_is_serialized_with_selection_policy():
 
 
 def test_strategy_portfolio_top_k_round_trips_from_portfolio_document():
-    from alpha_os.trading_strategy import (
-        RebalanceFrictionPolicySpec,
-        StrategyPortfolioSpec,
-    )
+    from alpha_os.trading_strategy import StrategyPortfolioSpec
 
     portfolio = StrategyPortfolioSpec.from_document(
         {
             "portfolio_construction": {},
-            "rebalance_friction_policy": RebalanceFrictionPolicySpec(
-                no_trade_band=None,
-            ).to_document(),
             "trading_environment": {},
             "rebalance_interval_steps": 1,
             "selection_kind": "top_k",

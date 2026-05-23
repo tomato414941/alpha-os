@@ -7,10 +7,7 @@ import pandas as pd
 
 from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
 from .data_repositories import FeaturePlaneRepository
-from .evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    TradingEnvironment,
-)
+from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_decision import SubjectSet
@@ -111,7 +108,8 @@ def run_strategy_backtest_from_store(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
-    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
+    no_trade_band: float,
+    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
@@ -130,7 +128,8 @@ def run_strategy_backtest_from_store(
         evaluation_date_ranges=evaluation_date_ranges,
         base_url=base_url,
         portfolio_construction=portfolio_construction,
-        rebalance_friction_policy=rebalance_friction_policy,
+        no_trade_band=no_trade_band,
+        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         feature_plane_repository=feature_plane_repository,
     )
@@ -144,7 +143,8 @@ def run_strategy_backtest(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
-    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec,
+    no_trade_band: float,
+    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
@@ -211,7 +211,8 @@ def run_strategy_backtest(
         roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
         contract_multiplier_by_subject=contract_multiplier_by_subject,
         portfolio_construction=portfolio_construction,
-        rebalance_friction_policy=rebalance_friction_policy,
+        no_trade_band=no_trade_band,
+        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=selection_top_k,
     )

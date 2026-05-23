@@ -65,10 +65,8 @@ def _strategy_document(
                     "gross_leverage_cap": 1.0,
                     "net_exposure_target": 1.0,
                 },
-                "rebalance_friction_policy": {
-                    "no_trade_band": 0.0,
-                    "turnover_budget": None,
-                },
+                "no_trade_band": 0.0,
+                "turnover_budget": None,
                 "trading_environment": {
                     "market_impact_bps": 0.0,
                     "fee_bps": 5.0,

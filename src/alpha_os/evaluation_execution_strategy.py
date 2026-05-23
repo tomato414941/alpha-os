@@ -4,10 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .data_repositories import FeaturePlaneRepository
-from .evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    TradingEnvironment,
-)
+from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
 from .strategy_backtest import run_strategy_backtest_from_store
 from .portfolio_construction_config import PortfolioConstructionSpec
@@ -34,24 +31,6 @@ def _portfolio_construction_for_strategy(
     trading_strategy: TradingStrategySpec,
 ) -> PortfolioConstructionSpec:
     return trading_strategy.portfolio.portfolio_construction
-
-
-def _rebalance_friction_policy_for_strategy(
-    trading_strategy: TradingStrategySpec,
-) -> EvaluationRebalanceFrictionPolicySpec:
-    strategy_policy = trading_strategy.portfolio.rebalance_friction_policy
-    if strategy_policy is not None:
-        return EvaluationRebalanceFrictionPolicySpec.from_document(
-            {
-                key: value
-                for key, value in strategy_policy.to_document().items()
-                if value is not None
-            }
-        )
-    raise ValueError(
-        "trading strategy is missing rebalance_friction_policy: "
-        f"{trading_strategy.strategy_id}"
-    )
 
 
 def _trading_environment_for_strategy(
@@ -101,9 +80,7 @@ def run_strategy_evaluation(
     store = context.store
     trading_strategy = _trading_strategy_for_id(store, strategy_id)
     portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
-    rebalance_friction_policy = _rebalance_friction_policy_for_strategy(
-        trading_strategy
-    )
+    portfolio = trading_strategy.portfolio
     trading_environment = _trading_environment_for_strategy(trading_strategy)
     subject_set_id = _subject_set_id_for_strategy(trading_strategy)
     target_id = _target_id_for_strategy(trading_strategy)
@@ -118,7 +95,8 @@ def run_strategy_evaluation(
         evaluation_date_ranges=evaluation_date_ranges,
         base_url=base_url,
         portfolio_construction=portfolio_construction,
-        rebalance_friction_policy=rebalance_friction_policy,
+        no_trade_band=0.0 if portfolio.no_trade_band is None else portfolio.no_trade_band,
+        turnover_budget=portfolio.turnover_budget,
         trading_environment=trading_environment,
         feature_plane_repository=context.feature_plane_repository,
     )

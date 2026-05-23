@@ -30,10 +30,7 @@ from ..evaluation_application import (
     run_evaluation_use_case,
     run_walk_forward_evaluation_use_case,
 )
-from ..evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    TradingEnvironment,
-)
+from ..evaluation_cost_config import TradingEnvironment
 from ..evaluation_spec import EvaluationSpec
 from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
@@ -817,9 +814,7 @@ def _portfolio_decision_assumptions_from_args(
                 unit="weight",
             )
         )
-    rebalance_friction_policy = (
-        None if trading_strategy is None else trading_strategy.portfolio.rebalance_friction_policy
-    )
+    portfolio = None if trading_strategy is None else trading_strategy.portfolio
     trading_environment = (
         None if trading_strategy is None else trading_strategy.portfolio.trading_environment
     )
@@ -917,8 +912,8 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     no_trade_band = (
-        rebalance_friction_policy.no_trade_band
-        if args.no_trade_band is None and rebalance_friction_policy is not None
+        portfolio.no_trade_band
+        if args.no_trade_band is None and portfolio is not None
         else args.no_trade_band
     )
     if no_trade_band is not None:
@@ -3362,7 +3357,6 @@ def _print_diagnostic_evaluation_dry_run(
     for case in evaluation_cases:
         trading_config = trading_configs_by_case_id[_case_key(case)]
         construction = trading_config.portfolio_construction
-        friction = trading_config.rebalance_friction_policy
         trading_environment = trading_config.trading_environment
         print(
             "  Result: "
@@ -3375,7 +3369,7 @@ def _print_diagnostic_evaluation_dry_run(
             f"engine={construction.sizing_engine or '-'} "
             f"optimizer_backend={_diagnostic_optimizer_backend(construction.sizing_method, construction.sizing_engine)} "
             f"rebalance_steps={construction.rebalance_interval_steps} "
-            f"turnover_budget={friction.turnover_budget if friction.turnover_budget is not None else '-'} "
+            f"turnover_budget={trading_config.turnover_budget if trading_config.turnover_budget is not None else '-'} "
             f"cost_bps={trading_environment.market_impact_bps + trading_environment.fee_bps + trading_environment.bid_ask_spread_bps}"
         )
 
@@ -3504,10 +3498,9 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use the moderate concentration constraints"
         )
-    constrained_friction = constrained_config.rebalance_friction_policy
     if (
-        constrained_friction.no_trade_band != 0.01
-        or constrained_friction.turnover_budget != 0.025
+        constrained_config.no_trade_band != 0.01
+        or constrained_config.turnover_budget != 0.025
     ):
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "
@@ -3995,9 +3988,7 @@ def _evaluation_trading_config_from_args(
                 None if args.gross_exposure_cap is None else float(args.gross_exposure_cap)
             ),
         ),
-        rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(
-            no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
-        ),
+        no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
         trading_environment=TradingEnvironment(
             turnover_cost_rate=(
                 0.0

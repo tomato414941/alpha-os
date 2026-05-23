@@ -15,54 +15,6 @@ def _float_from_document(
 
 
 @dataclass(frozen=True)
-class EvaluationRebalanceFrictionPolicySpec:
-    no_trade_band: float = 0.0
-    turnover_budget: float | None = None
-
-    def __post_init__(self) -> None:
-        for field_name, value in (
-            ("no_trade_band", self.no_trade_band),
-        ):
-            if not isinstance(value, (int, float)):
-                raise ValueError(
-                    f"rebalance_friction_policy.{field_name} must be numeric"
-                )
-            if float(value) < 0.0:
-                raise ValueError(
-                    f"rebalance_friction_policy.{field_name} must be >= 0"
-                )
-        if self.turnover_budget is not None and not isinstance(
-            self.turnover_budget, (int, float)
-        ):
-            raise ValueError("rebalance_friction_policy.turnover_budget must be numeric")
-        if self.turnover_budget is not None and float(self.turnover_budget) < 0.0:
-            raise ValueError("rebalance_friction_policy.turnover_budget must be >= 0")
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "no_trade_band": self.no_trade_band,
-            "turnover_budget": self.turnover_budget,
-        }
-
-    @classmethod
-    def from_document(
-        cls, document: dict[str, Any] | None
-    ) -> "EvaluationRebalanceFrictionPolicySpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("rebalance_friction_policy must be an object")
-        return cls(
-            no_trade_band=float(document.get("no_trade_band", 0.0)),
-            turnover_budget=(
-                None
-                if document.get("turnover_budget") is None
-                else float(document.get("turnover_budget"))
-            ),
-        )
-
-
-@dataclass(frozen=True)
 class ExecutionCostAssumptionsSpec:
     market_impact_bps: float = 0.0
     fee_bps: float = 0.0

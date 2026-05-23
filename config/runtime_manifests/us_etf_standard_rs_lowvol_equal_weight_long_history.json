@@ -442,9 +442,7 @@
             "gross_leverage_cap": 0.85,
             "net_exposure_target": 0.85
           },
-          "rebalance_friction_policy": {
-            "no_trade_band": 0.02
-          },
+          "no_trade_band": 0.02,
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",
           "trading_environment": {

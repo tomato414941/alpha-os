@@ -51,7 +51,6 @@ def _trading_strategy_trace_document(
 ) -> dict[str, object]:
     portfolio = trading_strategy.portfolio
     construction = portfolio.portfolio_construction
-    friction = portfolio.rebalance_friction_policy
     trading_environment = portfolio.trading_environment
     return {
         "strategy_id": trading_strategy.strategy_id,
@@ -67,7 +66,7 @@ def _trading_strategy_trace_document(
         "target_vol": construction.target_vol,
         "gross_leverage_cap": construction.gross_leverage_cap,
         "net_exposure_target": construction.net_exposure_target,
-        "no_trade_band": friction.no_trade_band,
+        "no_trade_band": portfolio.no_trade_band,
         "turnover_cost_rate": trading_environment.turnover_cost_rate,
         "market_impact_bps": trading_environment.market_impact_bps,
         "fee_bps": trading_environment.fee_bps,

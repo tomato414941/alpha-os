@@ -163,9 +163,7 @@ def _register_subject_set(store) -> None:
 
 def _register_direct_strategy(store) -> None:
     from alpha_os.evaluation_cost_config import TradingEnvironment
-    from alpha_os.trading_strategy import (
-        RebalanceFrictionPolicySpec,
-        StrategyPortfolioSpec,
+    from alpha_os.trading_strategy import (        StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
@@ -193,9 +191,7 @@ def _register_direct_strategy(store) -> None:
                     direction_mode="long_only",
                     gross_exposure_cap=1.0,
                 ),
-                rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                    no_trade_band=None,
-                ),
+            no_trade_band=None,
                 trading_environment=TradingEnvironment(),
                 selection_kind="all_assets",
                 top_k=None,

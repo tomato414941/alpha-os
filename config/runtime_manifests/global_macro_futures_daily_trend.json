@@ -738,10 +738,9 @@
               "crypto_perp": 0.2
             }
           },
-          "rebalance_friction_policy": {
-            "no_trade_band": 0.0,
-            "turnover_budget": null
-          },
+          "no_trade_band": 0.0,
+
+          "turnover_budget": null,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,

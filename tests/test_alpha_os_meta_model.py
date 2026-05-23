@@ -13,7 +13,8 @@ def _strategy_portfolio_document(
     selection_kind: str = "all_assets",
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
-    rebalance_friction_policy: dict[str, object] | None = None,
+    no_trade_band: float | None = None,
+    turnover_budget: float | None = None,
     trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
     portfolio: dict[str, object] = {
@@ -22,9 +23,6 @@ def _strategy_portfolio_document(
             "direction_mode": direction_mode,
             "gross_exposure_cap": gross_exposure_cap,
         },
-        "rebalance_friction_policy": (
-            {} if rebalance_friction_policy is None else rebalance_friction_policy
-        ),
         "trading_environment": (
             {} if trading_environment is None else trading_environment
         ),
@@ -33,6 +31,10 @@ def _strategy_portfolio_document(
     }
     if top_k is not None:
         portfolio["top_k"] = top_k
+    if no_trade_band is not None:
+        portfolio["no_trade_band"] = no_trade_band
+    if turnover_budget is not None:
+        portfolio["turnover_budget"] = turnover_budget
     return {"portfolio": portfolio}
 
 
@@ -638,9 +640,7 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                 sizing_method="equal_weight",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                rebalance_friction_policy={
-                                    "no_trade_band": None,
-                                },
+                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1496,9 +1496,7 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
     )
     from alpha_os.store import EvaluationStore
     from alpha_os.evaluation_cost_config import TradingEnvironment
-    from alpha_os.trading_strategy import (
-        RebalanceFrictionPolicySpec,
-        StrategyPortfolioSpec,
+    from alpha_os.trading_strategy import (        StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
@@ -1618,9 +1616,7 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                         direction_mode="long_only",
                         gross_exposure_cap=0.5,
                     ),
-                    rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                        no_trade_band=0.02,
-                    ),
+            no_trade_band=0.02,
                     trading_environment=TradingEnvironment(
                         turnover_cost_rate=0.15,
                         market_impact_bps=7.0,
@@ -2100,9 +2096,7 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                 sizing_method="signal_weighted",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                rebalance_friction_policy={
-                                    "no_trade_band": None,
-                                },
+                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -3156,13 +3150,8 @@ def test_global_macro_diagnostic_manifest_contract():
                     "top_gross_share_cap_n": 3,
                     "top_gross_share_cap": 0.4,
                 }
-                expected_rebalance_policy = {
-                    "no_trade_band": 0.01,
-                    "turnover_budget": 0.025,
-                }
-                assert expected_rebalance_policy.items() <= portfolio[
-                    "rebalance_friction_policy"
-                ].items()
+                assert portfolio["no_trade_band"] == 0.01
+                assert portfolio["turnover_budget"] == 0.025
                 assert portfolio["trading_environment"]["turnover_cost_rate"] == 0.001
             if (
                 case["evaluation_case_id"]

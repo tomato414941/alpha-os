@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    TradingEnvironment,
-)
+from .evaluation_cost_config import TradingEnvironment
 from .portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
 )
 from .trading_strategy import (
-    RebalanceFrictionPolicySpec,
     StrategyPortfolioSpec,
     TradingStrategyScopeSpec,
     TradingStrategySpec,
@@ -22,9 +18,10 @@ from .trading_strategy import (
 @dataclass(frozen=True)
 class StrategyVariantConfig:
     portfolio_construction: PortfolioConstructionSpec
-    rebalance_friction_policy: EvaluationRebalanceFrictionPolicySpec
     trading_environment: TradingEnvironment
     top_k: int | None = None
+    no_trade_band: float = 0.0
+    turnover_budget: float | None = None
 
     @property
     def sizing_method(self) -> str:
@@ -40,18 +37,12 @@ def strategy_variant_config_from_strategy(
 ) -> StrategyVariantConfig:
     portfolio = trading_strategy.portfolio
     construction = portfolio.portfolio_construction
-    friction = portfolio.rebalance_friction_policy
     return StrategyVariantConfig(
         portfolio_construction=construction,
-        rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec.from_document(
-            {
-                key: value
-                for key, value in friction.to_document().items()
-                if value is not None
-            }
-        ),
         trading_environment=portfolio.trading_environment,
         top_k=portfolio.top_k,
+        no_trade_band=0.0 if portfolio.no_trade_band is None else portfolio.no_trade_band,
+        turnover_budget=portfolio.turnover_budget,
     )
 
 
@@ -102,9 +93,10 @@ def overridden_strategy_variant_config(
             asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
             cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
         ),
-        rebalance_friction_policy=config.rebalance_friction_policy,
         trading_environment=config.trading_environment,
         top_k=config.top_k,
+        no_trade_band=config.no_trade_band,
+        turnover_budget=config.turnover_budget,
     )
 
 
@@ -116,7 +108,6 @@ def derive_trading_strategy_from_signal_discovery(
 ) -> TradingStrategySpec:
     definition = signal_discovery.definition
     portfolio_construction = variant_config.portfolio_construction
-    rebalance_friction_policy = variant_config.rebalance_friction_policy
     trading_environment = variant_config.trading_environment
     sizing_method = portfolio_construction.sizing_method
     family_ids = tuple(
@@ -170,7 +161,7 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        no_trade_band=float(rebalance_friction_policy.no_trade_band),
+        no_trade_band=float(variant_config.no_trade_band),
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,
@@ -187,14 +178,12 @@ def derive_trading_strategy_from_signal_discovery(
         family_mix=family_mix_value,
         portfolio=StrategyPortfolioSpec(
             portfolio_construction=portfolio_construction,
-            rebalance_friction_policy=RebalanceFrictionPolicySpec(
-                no_trade_band=float(rebalance_friction_policy.no_trade_band),
-                turnover_budget=rebalance_friction_policy.turnover_budget,
-            ),
             trading_environment=trading_environment,
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
+            no_trade_band=float(variant_config.no_trade_band),
+            turnover_budget=variant_config.turnover_budget,
         ),
         created_at=created_at,
     )

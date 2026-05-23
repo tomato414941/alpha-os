@@ -7,9 +7,7 @@ from alpha_os.strategy_variant import (
     derive_trading_strategy_from_signal_discovery,
     overridden_strategy_variant_config,
 )
-from alpha_os.evaluation_cost_config import (
-    EvaluationRebalanceFrictionPolicySpec,
-    TradingEnvironment,
+from alpha_os.evaluation_cost_config import (    TradingEnvironment,
 )
 from alpha_os.evaluation_spec import (
     EvaluationDateRange,
@@ -54,7 +52,8 @@ def _make_evaluation_trading_config(
             asset_class_weight_caps={} if asset_class_weight_caps is None else asset_class_weight_caps,
             cluster_weight_caps={} if cluster_weight_caps is None else cluster_weight_caps,
         ),
-        rebalance_friction_policy=EvaluationRebalanceFrictionPolicySpec(),
+        no_trade_band=0.0,
+        turnover_budget=None,
         trading_environment=TradingEnvironment(),
         top_k=top_k,
     )

@@ -134,7 +134,7 @@ Current classification:
 | `asset_class_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `cluster_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `portfolio_intent` | `PortfolioConstructionSpec` | legacy / unclear | Captures effective-N and concentration constraints, but the name is vague. |
-| `rebalance_friction_policy` | `StrategyPortfolioSpec` | strategy decision / evaluation assumption | Strategy-owned if it controls trade decisions; evaluation-owned if it only models friction. |
+| `no_trade_band` / `turnover_budget` | `StrategyPortfolioSpec` | strategy decision / transition control | Strategy-owned because these fields suppress or constrain portfolio changes before realized costs are charged. |
 | `trading_environment` | `StrategyPortfolioSpec` | environment cost model | Charges execution and holding costs in evaluation / backtest. |
 
 ## Acceptance Criteria
