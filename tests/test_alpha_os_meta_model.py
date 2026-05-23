@@ -3158,7 +3158,6 @@ def test_global_macro_diagnostic_manifest_contract():
                 }
                 expected_rebalance_policy = {
                     "no_trade_band": 0.01,
-                    "execution_cost_aversion": 3.0,
                     "turnover_budget": 0.025,
                 }
                 assert expected_rebalance_policy.items() <= portfolio[

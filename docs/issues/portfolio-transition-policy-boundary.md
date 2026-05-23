@@ -24,7 +24,6 @@ friction assumption.
 Current fields include:
 
 - `no_trade_band`
-- `execution_cost_aversion`
 - `turnover_budget`
 
 These fields are smaller than before, but the object is still named as
@@ -37,7 +36,6 @@ Initial classification:
 | Field | Likely responsibility |
 |---|---|
 | `no_trade_band` | policy / transition rule |
-| `execution_cost_aversion` | policy |
 | `turnover_budget` | policy / transition constraint |
 
 `turnover_cost_rate` is now represented on `TradingEnvironment`, not on

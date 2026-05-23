@@ -1142,7 +1142,6 @@ def _run_backtest_variant(
             bid_ask_spread_bps=trading_environment.bid_ask_spread_bps,
             funding_bps_per_step=trading_environment.funding_bps_per_step,
             borrow_fee_bps_per_step=trading_environment.borrow_fee_bps_per_step,
-            execution_cost_aversion=rebalance_friction_policy.execution_cost_aversion,
             no_trade_band=rebalance_friction_policy.no_trade_band,
             turnover_budget=rebalance_friction_policy.turnover_budget,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,

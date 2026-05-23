@@ -91,7 +91,6 @@ class DecisionBacktestInput:
     bid_ask_spread_bps: float = 0.0
     funding_bps_per_step: float = 0.0
     borrow_fee_bps_per_step: float = 0.0
-    execution_cost_aversion: float = 1.0
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
     execution_policy: ExecutionPolicySpec | None = None
@@ -406,13 +405,11 @@ def run_decision_backtest(
                     current_weights=state.current_weights,
                     capital_base=state.capital_base,
                     execution_policy=_execution_policy_for_backtest(backtest_input),
-                    recent_turnover=state.recent_turnover,
                     holding_period_days=state.holding_period_days,
                     signal_horizon_by_subject=_signal_horizon_by_subject(
                         backtest_input,
                         subject_ids=subject_ids,
                     ),
-                    execution_friction_level=_execution_friction_level(backtest_input),
                     per_turnover_cost=_per_turnover_execution_cost(backtest_input),
                 )
             )
@@ -595,10 +592,6 @@ def _execution_policy_for_backtest(
         no_trade_band=backtest_input.no_trade_band,
         turnover_budget=backtest_input.turnover_budget,
         turnover_cost_rate=backtest_input.turnover_cost_rate,
-        market_impact_bps=backtest_input.market_impact_bps,
-        fee_bps=backtest_input.fee_bps,
-        bid_ask_spread_bps=backtest_input.bid_ask_spread_bps,
-        execution_cost_aversion=backtest_input.execution_cost_aversion,
     )
 
 
@@ -608,13 +601,6 @@ def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float
         + max(backtest_input.market_impact_bps, 0.0) / 10000.0
         + max(backtest_input.fee_bps, 0.0) / 10000.0
         + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0
-    )
-
-
-def _execution_friction_level(backtest_input: DecisionBacktestInput) -> float:
-    return (
-        max(backtest_input.turnover_cost_rate, 0.0)
-        + max(backtest_input.market_impact_bps, 0.0) / 10000.0
     )
 
 

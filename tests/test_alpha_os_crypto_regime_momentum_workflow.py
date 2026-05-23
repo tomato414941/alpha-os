@@ -67,7 +67,6 @@ def _strategy_document(
                 },
                 "rebalance_friction_policy": {
                     "no_trade_band": 0.0,
-                    "execution_cost_aversion": 1.0,
                     "turnover_budget": None,
                 },
                 "trading_environment": {

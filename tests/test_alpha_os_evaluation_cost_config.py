@@ -9,17 +9,14 @@ def test_rebalance_friction_policy_round_trips_rebalance_controls():
     policy = EvaluationRebalanceFrictionPolicySpec.from_document(
         {
             "no_trade_band": 0.01,
-            "execution_cost_aversion": 2.0,
             "turnover_budget": 0.05,
         }
     )
 
     assert policy.no_trade_band == pytest.approx(0.01)
-    assert policy.execution_cost_aversion == pytest.approx(2.0)
     assert policy.turnover_budget == pytest.approx(0.05)
     assert policy.to_document() == {
         "no_trade_band": pytest.approx(0.01),
-        "execution_cost_aversion": pytest.approx(2.0),
         "turnover_budget": pytest.approx(0.05),
     }
 

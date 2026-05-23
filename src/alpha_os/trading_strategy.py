@@ -126,28 +126,20 @@ class TradingStrategyScopeSpec:
 @dataclass(frozen=True)
 class RebalanceFrictionPolicySpec:
     no_trade_band: float | None
-    execution_cost_aversion: float | None = None
     turnover_budget: float | None = None
 
     def to_document(self) -> dict[str, Any]:
         return {
             "no_trade_band": self.no_trade_band,
-            "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
         }
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "RebalanceFrictionPolicySpec":
         no_trade_band = document.get("no_trade_band")
-        execution_cost_aversion = document.get("execution_cost_aversion")
         turnover_budget = document.get("turnover_budget")
         return cls(
             no_trade_band=None if no_trade_band is None else float(no_trade_band),
-            execution_cost_aversion=(
-                None
-                if execution_cost_aversion is None
-                else float(execution_cost_aversion)
-            ),
             turnover_budget=(
                 None if turnover_budget is None else float(turnover_budget)
             ),

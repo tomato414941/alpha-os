@@ -459,8 +459,8 @@ def test_rule_based_policy_applies_signal_risk_uncertainty_and_cost():
 
     assert len(decision_output.targets) == 1
     assert decision_output.targets[0].subject_id == "BTC"
-    assert decision_output.targets[0].target_weight == pytest.approx(0.138889, rel=1e-5)
-    assert decision_output.targets[0].position_delta == pytest.approx(0.138889, rel=1e-5)
+    assert decision_output.targets[0].target_weight == pytest.approx(0.151515, rel=1e-5)
+    assert decision_output.targets[0].position_delta == pytest.approx(0.151515, rel=1e-5)
     assert decision_output.targets[0].risk_scale == pytest.approx(0.666667, rel=1e-5)
     assert decision_output.targets[0].entry_allowed is True
 

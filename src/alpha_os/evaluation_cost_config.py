@@ -17,13 +17,11 @@ def _float_from_document(
 @dataclass(frozen=True)
 class EvaluationRebalanceFrictionPolicySpec:
     no_trade_band: float = 0.0
-    execution_cost_aversion: float = 1.0
     turnover_budget: float | None = None
 
     def __post_init__(self) -> None:
         for field_name, value in (
             ("no_trade_band", self.no_trade_band),
-            ("execution_cost_aversion", self.execution_cost_aversion),
         ):
             if not isinstance(value, (int, float)):
                 raise ValueError(
@@ -43,7 +41,6 @@ class EvaluationRebalanceFrictionPolicySpec:
     def to_document(self) -> dict[str, Any]:
         return {
             "no_trade_band": self.no_trade_band,
-            "execution_cost_aversion": self.execution_cost_aversion,
             "turnover_budget": self.turnover_budget,
         }
 
@@ -57,9 +54,6 @@ class EvaluationRebalanceFrictionPolicySpec:
             raise ValueError("rebalance_friction_policy must be an object")
         return cls(
             no_trade_band=float(document.get("no_trade_band", 0.0)),
-            execution_cost_aversion=float(
-                document.get("execution_cost_aversion", 1.0)
-            ),
             turnover_budget=(
                 None
                 if document.get("turnover_budget") is None

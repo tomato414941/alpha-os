@@ -189,9 +189,6 @@ def derive_trading_strategy_from_signal_discovery(
             portfolio_construction=portfolio_construction,
             rebalance_friction_policy=RebalanceFrictionPolicySpec(
                 no_trade_band=float(rebalance_friction_policy.no_trade_band),
-                execution_cost_aversion=float(
-                    rebalance_friction_policy.execution_cost_aversion
-                ),
                 turnover_budget=rebalance_friction_policy.turnover_budget,
             ),
             trading_environment=trading_environment,

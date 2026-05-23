@@ -8,7 +8,6 @@ from .portfolio_decision import PortfolioTarget, SizingRequest
 @dataclass(frozen=True)
 class PortfolioRebalanceFrictionPolicy:
     signal_horizon_shortfall_aversion: float = 1.0
-    execution_cost_aversion: float = 1.0
     turnover_cost_aversion: float = 1.0
     recent_turnover_aversion: float = 1.0
 
@@ -51,8 +50,7 @@ def apply_portfolio_rebalance_friction(
             )
             delta *= _shrink_from_level(
                 request.market_impact_levels[index] + max(request.turnover_cost_rate, 0.0),
-                rebalance_friction_policy.execution_cost_aversion
-                + rebalance_friction_policy.turnover_cost_aversion,
+                rebalance_friction_policy.turnover_cost_aversion,
             )
             target_weight = current_weight + delta
         adjusted_targets.append(

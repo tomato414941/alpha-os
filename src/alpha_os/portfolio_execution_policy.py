@@ -9,10 +9,7 @@ from .portfolio_decision import PortfolioTarget
 class ExecutionPolicySpec:
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
-    cost_soft_threshold: float = 0.0
     transition_soft_threshold: float = 0.0
-    execution_friction_aversion: float = 0.0
-    recent_turnover_aversion: float = 0.0
     signal_horizon_shortfall_aversion: float = 1.0
 
     def __post_init__(self) -> None:
@@ -20,14 +17,8 @@ class ExecutionPolicySpec:
             raise ValueError("execution_policy.no_trade_band must be >= 0")
         if self.turnover_budget is not None and self.turnover_budget < 0.0:
             raise ValueError("execution_policy.turnover_budget must be >= 0")
-        if self.cost_soft_threshold < 0.0:
-            raise ValueError("execution_policy.cost_soft_threshold must be >= 0")
         if self.transition_soft_threshold < 0.0:
             raise ValueError("execution_policy.transition_soft_threshold must be >= 0")
-        if self.execution_friction_aversion < 0.0:
-            raise ValueError("execution_policy.execution_friction_aversion must be >= 0")
-        if self.recent_turnover_aversion < 0.0:
-            raise ValueError("execution_policy.recent_turnover_aversion must be >= 0")
         if self.signal_horizon_shortfall_aversion < 0.0:
             raise ValueError(
                 "execution_policy.signal_horizon_shortfall_aversion must be >= 0"
@@ -40,35 +31,14 @@ class ExecutionPolicySpec:
         no_trade_band: float,
         turnover_budget: float | None,
         turnover_cost_rate: float,
-        market_impact_bps: float,
-        fee_bps: float,
-        bid_ask_spread_bps: float,
-        execution_cost_aversion: float,
     ) -> "ExecutionPolicySpec":
-        per_turnover_cost = (
-            max(float(turnover_cost_rate), 0.0)
-            + max(float(market_impact_bps), 0.0) / 10000.0
-            + max(float(fee_bps), 0.0) / 10000.0
-            + max(float(bid_ask_spread_bps), 0.0) / 10000.0
-        )
-        cost_soft_threshold = (
-            per_turnover_cost * max(float(execution_cost_aversion), 0.0)
-            if turnover_budget is not None
-            else 0.0
-        )
         turnover_cost_aversion = 1.0
         return cls(
             no_trade_band=max(float(no_trade_band), 0.0),
             turnover_budget=turnover_budget,
-            cost_soft_threshold=cost_soft_threshold,
             transition_soft_threshold=(
                 max(float(turnover_cost_rate), 0.0) * turnover_cost_aversion
             ),
-            execution_friction_aversion=(
-                max(float(execution_cost_aversion), 0.0)
-                + turnover_cost_aversion
-            ),
-            recent_turnover_aversion=max(float(execution_cost_aversion), 0.0),
             signal_horizon_shortfall_aversion=1.0,
         )
 
@@ -104,10 +74,8 @@ class TradeTransitionRequest:
     current_weights: dict[str, float]
     capital_base: float
     execution_policy: ExecutionPolicySpec
-    recent_turnover: float = 0.0
     holding_period_days: int = 0
     signal_horizon_by_subject: dict[str, int | None] | None = None
-    execution_friction_level: float = 0.0
     per_turnover_cost: float = 0.0
 
 
@@ -134,10 +102,6 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
     all_subjects = sorted(
         set(request.desired_targets) | set(request.current_weights)
     )
-    recent_turnover_shrink = _shrink_from_level(
-        request.recent_turnover,
-        policy.recent_turnover_aversion,
-    )
     candidates: list[_TradeTransitionCandidate] = []
     for subject_id in all_subjects:
         target = request.desired_targets.get(subject_id)
@@ -153,13 +117,9 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
             desired_delta,
             current_weight=current_weight,
             no_trade_band=policy.no_trade_band,
-            cost_soft_threshold=policy.cost_soft_threshold,
             transition_soft_threshold=(
                 policy.transition_soft_threshold if abs(current_weight) > 0.0 else 0.0
             ),
-            execution_friction_level=request.execution_friction_level,
-            execution_friction_aversion=policy.execution_friction_aversion,
-            recent_turnover_shrink=recent_turnover_shrink,
             holding_period_days=request.holding_period_days,
             signal_horizon=signal_horizon,
             signal_horizon_shortfall_aversion=(
@@ -317,30 +277,20 @@ def _execution_delta(
     *,
     current_weight: float,
     no_trade_band: float,
-    cost_soft_threshold: float,
     transition_soft_threshold: float,
-    execution_friction_level: float,
-    execution_friction_aversion: float,
-    recent_turnover_shrink: float,
     holding_period_days: int,
     signal_horizon: int | None,
     signal_horizon_shortfall_aversion: float,
 ) -> float:
     if abs(desired_delta) <= no_trade_band:
         return 0.0
-    threshold = max(float(cost_soft_threshold), float(transition_soft_threshold))
-    delta = _soft_threshold(desired_delta, threshold)
+    delta = _soft_threshold(desired_delta, transition_soft_threshold)
     if abs(current_weight) > 0.0:
         delta *= _holding_period_shrink(
             holding_period_days=holding_period_days,
             signal_horizon=signal_horizon,
             aversion=signal_horizon_shortfall_aversion,
         )
-    delta *= recent_turnover_shrink
-    delta *= _shrink_from_level(
-        execution_friction_level,
-        execution_friction_aversion,
-    )
     return delta
 
 

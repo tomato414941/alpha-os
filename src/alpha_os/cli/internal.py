@@ -3507,7 +3507,6 @@ def _check_diagnostic_evaluation_dry_run(
     constrained_friction = constrained_config.rebalance_friction_policy
     if (
         constrained_friction.no_trade_band != 0.01
-        or constrained_friction.execution_cost_aversion != 3.0
         or constrained_friction.turnover_budget != 0.025
     ):
         raise ValueError(

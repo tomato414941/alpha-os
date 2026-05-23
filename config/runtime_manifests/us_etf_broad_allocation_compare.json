@@ -226,7 +226,6 @@
           },
           "rebalance_friction_policy": {
             "no_trade_band": 0.02,
-            "execution_cost_aversion": 1.0,
             "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
@@ -270,7 +269,6 @@
           },
           "rebalance_friction_policy": {
             "no_trade_band": 0.02,
-            "execution_cost_aversion": 1.0,
             "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
@@ -314,7 +312,6 @@
           },
           "rebalance_friction_policy": {
             "no_trade_band": 0.02,
-            "execution_cost_aversion": 1.0,
             "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
@@ -358,7 +355,6 @@
           },
           "rebalance_friction_policy": {
             "no_trade_band": 0.02,
-            "execution_cost_aversion": 1.0,
             "turnover_budget": null
           },
           "rebalance_interval_steps": 5,
