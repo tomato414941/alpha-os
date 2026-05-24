@@ -59,29 +59,3 @@ def test_execution_policy_scales_deltas_to_turnover_budget():
     assert result.trace.executed_turnover == pytest.approx(0.30)
     assert result.executed_targets["A"].target_weight == pytest.approx(0.15)
     assert result.executed_targets["B"].target_weight == pytest.approx(-0.15)
-
-
-def test_execution_policy_soft_thresholds_turnover_cost_for_existing_positions():
-    from alpha_os.portfolio_execution_policy import (
-        ExecutionPolicySpec,
-        TradeTransitionRequest,
-        apply_execution_policy,
-    )
-
-    result = apply_execution_policy(
-        TradeTransitionRequest(
-            desired_targets={
-                "A": _target("A", 0.105),
-                "B": _target("B", 0.14),
-            },
-            current_weights={"A": 0.10, "B": 0.10},
-            capital_base=10.0,
-            execution_policy=ExecutionPolicySpec(transition_soft_threshold=0.02),
-            per_turnover_cost=0.01,
-        )
-    )
-
-    assert result.executed_targets["A"].target_weight == pytest.approx(0.10)
-    assert result.executed_targets["B"].target_weight == pytest.approx(0.12)
-    assert result.trace.skipped_trade_count == 1
-    assert result.trace.expected_execution_cost == pytest.approx(0.002)

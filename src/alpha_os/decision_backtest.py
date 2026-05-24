@@ -41,7 +41,6 @@ from .portfolio_sizing_policy import (
     PortfolioSizingPolicy,
     apply_portfolio_sizing_policy,
 )
-from .targets import find_target_definition
 
 
 @dataclass(frozen=True)
@@ -405,11 +404,6 @@ def run_decision_backtest(
                     current_weights=state.current_weights,
                     capital_base=state.capital_base,
                     execution_policy=_execution_policy_for_backtest(backtest_input),
-                    holding_period_days=state.holding_period_days,
-                    signal_horizon_by_subject=_signal_horizon_by_subject(
-                        backtest_input,
-                        subject_ids=subject_ids,
-                    ),
                     per_turnover_cost=_per_turnover_execution_cost(backtest_input),
                 )
             )
@@ -587,10 +581,9 @@ def _execution_policy_for_backtest(
 ) -> ExecutionPolicySpec:
     if backtest_input.execution_policy is not None:
         return backtest_input.execution_policy
-    return ExecutionPolicySpec.from_cost_controls(
-        no_trade_band=backtest_input.no_trade_band,
+    return ExecutionPolicySpec(
+        no_trade_band=max(float(backtest_input.no_trade_band), 0.0),
         turnover_budget=backtest_input.turnover_budget,
-        turnover_cost_rate=backtest_input.turnover_cost_rate,
     )
 
 
@@ -601,16 +594,6 @@ def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float
         + max(backtest_input.fee_bps, 0.0) / 10000.0
         + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0
     )
-
-
-def _signal_horizon_by_subject(
-    backtest_input: DecisionBacktestInput,
-    *,
-    subject_ids: tuple[str, ...],
-) -> dict[str, int | None]:
-    target_definition = find_target_definition(backtest_input.target_id)
-    horizon_days = None if target_definition is None else target_definition.horizon_days
-    return {subject_id: horizon_days for subject_id in subject_ids}
 
 
 def _portfolio_decision_input_for_backtest_row(

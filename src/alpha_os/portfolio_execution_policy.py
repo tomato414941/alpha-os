@@ -9,38 +9,12 @@ from .portfolio_decision import PortfolioTarget
 class ExecutionPolicySpec:
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
-    transition_soft_threshold: float = 0.0
-    signal_horizon_shortfall_aversion: float = 1.0
 
     def __post_init__(self) -> None:
         if self.no_trade_band < 0.0:
             raise ValueError("execution_policy.no_trade_band must be >= 0")
         if self.turnover_budget is not None and self.turnover_budget < 0.0:
             raise ValueError("execution_policy.turnover_budget must be >= 0")
-        if self.transition_soft_threshold < 0.0:
-            raise ValueError("execution_policy.transition_soft_threshold must be >= 0")
-        if self.signal_horizon_shortfall_aversion < 0.0:
-            raise ValueError(
-                "execution_policy.signal_horizon_shortfall_aversion must be >= 0"
-            )
-
-    @classmethod
-    def from_cost_controls(
-        cls,
-        *,
-        no_trade_band: float,
-        turnover_budget: float | None,
-        turnover_cost_rate: float,
-    ) -> "ExecutionPolicySpec":
-        turnover_cost_aversion = 1.0
-        return cls(
-            no_trade_band=max(float(no_trade_band), 0.0),
-            turnover_budget=turnover_budget,
-            transition_soft_threshold=(
-                max(float(turnover_cost_rate), 0.0) * turnover_cost_aversion
-            ),
-            signal_horizon_shortfall_aversion=1.0,
-        )
 
 
 @dataclass(frozen=True)
@@ -74,8 +48,6 @@ class TradeTransitionRequest:
     current_weights: dict[str, float]
     capital_base: float
     execution_policy: ExecutionPolicySpec
-    holding_period_days: int = 0
-    signal_horizon_by_subject: dict[str, int | None] | None = None
     per_turnover_cost: float = 0.0
 
 
@@ -108,23 +80,9 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
         current_weight = float(request.current_weights.get(subject_id, 0.0))
         desired_weight = current_weight if target is None else float(target.target_weight)
         desired_delta = desired_weight - current_weight
-        signal_horizon = (
-            None
-            if request.signal_horizon_by_subject is None
-            else request.signal_horizon_by_subject.get(subject_id)
-        )
         adjusted_delta = _execution_delta(
             desired_delta,
-            current_weight=current_weight,
             no_trade_band=policy.no_trade_band,
-            transition_soft_threshold=(
-                policy.transition_soft_threshold if abs(current_weight) > 0.0 else 0.0
-            ),
-            holding_period_days=request.holding_period_days,
-            signal_horizon=signal_horizon,
-            signal_horizon_shortfall_aversion=(
-                policy.signal_horizon_shortfall_aversion
-            ),
         )
         expected_trade_cost = _expected_trade_cost(
             adjusted_delta,
@@ -275,37 +233,11 @@ def _expected_trade_cost(
 def _execution_delta(
     desired_delta: float,
     *,
-    current_weight: float,
     no_trade_band: float,
-    transition_soft_threshold: float,
-    holding_period_days: int,
-    signal_horizon: int | None,
-    signal_horizon_shortfall_aversion: float,
 ) -> float:
     if abs(desired_delta) <= no_trade_band:
         return 0.0
-    delta = _soft_threshold(desired_delta, transition_soft_threshold)
-    if abs(current_weight) > 0.0:
-        delta *= _holding_period_shrink(
-            holding_period_days=holding_period_days,
-            signal_horizon=signal_horizon,
-            aversion=signal_horizon_shortfall_aversion,
-        )
-    return delta
-
-
-def _holding_period_shrink(
-    *,
-    holding_period_days: int,
-    signal_horizon: int | None,
-    aversion: float,
-) -> float:
-    if aversion <= 0.0 or signal_horizon is None or signal_horizon <= 0:
-        return 1.0
-    if holding_period_days >= signal_horizon:
-        return 1.0
-    shortfall_ratio = float(signal_horizon - holding_period_days) / float(signal_horizon)
-    return _shrink_from_level(shortfall_ratio, aversion)
+    return float(desired_delta)
 
 
 def _transition_reason(
@@ -325,22 +257,4 @@ def _transition_reason(
         return "turnover_budget"
     if abs(executed_delta) < abs(adjusted_delta):
         return "turnover_budget"
-    if abs(executed_delta) < abs(desired_delta):
-        return "cost_aware_shrink"
     return "executed"
-
-
-def _soft_threshold(value: float, threshold: float) -> float:
-    if threshold <= 0.0:
-        return float(value)
-    if value > threshold:
-        return float(value - threshold)
-    if value < -threshold:
-        return float(value + threshold)
-    return 0.0
-
-
-def _shrink_from_level(level: float, aversion: float) -> float:
-    if level <= 0.0 or aversion <= 0.0:
-        return 1.0
-    return float(1.0 / (1.0 + aversion * level))
