@@ -23,10 +23,6 @@ from .portfolio_decision import (
     UncertaintyInput,
 )
 from .portfolio_concentration import portfolio_effective_n, top_n_gross_share
-from .portfolio_rebalance_friction import (
-    PortfolioRebalanceFrictionPolicy,
-    apply_portfolio_rebalance_friction,
-)
 
 
 @dataclass(frozen=True)
@@ -155,14 +151,10 @@ def portfolio_allocator_for_policy(
 def apply_portfolio_sizing_policy(
     decision_input: PortfolioDecisionInput,
     sizing_policy: PortfolioSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
-    apply_rebalance_friction: bool = True,
 ) -> PortfolioDecisionOutput:
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,
-        rebalance_friction_policy=rebalance_friction_policy,
-        apply_rebalance_friction=apply_rebalance_friction,
     )
 
 
@@ -170,18 +162,11 @@ def apply_portfolio_allocator(
     decision_input: PortfolioDecisionInput,
     *,
     sizing_policy: PortfolioSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
-    apply_rebalance_friction: bool = True,
 ) -> PortfolioDecisionOutput:
     request = build_sizing_request(decision_input)
     allocator = portfolio_allocator_for_policy(sizing_policy)
     solution = allocator.allocate(request)
-    solution = _finalize_sizing_solution(
-        request,
-        solution,
-        rebalance_friction_policy=rebalance_friction_policy,
-        apply_rebalance_friction=apply_rebalance_friction,
-    )
+    solution = _finalize_sizing_solution(request, solution)
     return _portfolio_decision_output_from_solution(
         decision_input=decision_input,
         solution=solution,
@@ -304,13 +289,11 @@ def _subject_metadata_value(
 def apply_signal_weighted_sizing(
     decision_input: PortfolioDecisionInput,
     sizing_policy: SignalWeightedSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
 ) -> PortfolioDecisionOutput:
     sizing_policy = sizing_policy or SignalWeightedSizingPolicy()
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,
-        rebalance_friction_policy=rebalance_friction_policy,
     )
 
 
@@ -383,39 +366,33 @@ def apply_signal_weighted_allocation(
 def apply_constrained_optimizer_sizing(
     decision_input: PortfolioDecisionInput,
     sizing_policy: ConstrainedOptimizerSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
 ) -> PortfolioDecisionOutput:
     sizing_policy = sizing_policy or ConstrainedOptimizerSizingPolicy()
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,
-        rebalance_friction_policy=rebalance_friction_policy,
     )
 
 
 def apply_signed_mean_variance_sizing(
     decision_input: PortfolioDecisionInput,
     sizing_policy: SignedMeanVarianceSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
 ) -> PortfolioDecisionOutput:
     sizing_policy = sizing_policy or SignedMeanVarianceSizingPolicy()
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,
-        rebalance_friction_policy=rebalance_friction_policy,
     )
 
 
 def apply_historical_model_sizing(
     decision_input: PortfolioDecisionInput,
     sizing_policy: HistoricalModelSizingPolicy | None = None,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
 ) -> PortfolioDecisionOutput:
     sizing_policy = sizing_policy or HistoricalModelSizingPolicy()
     return apply_portfolio_allocator(
         decision_input,
         sizing_policy=sizing_policy,
-        rebalance_friction_policy=rebalance_friction_policy,
     )
 
 
@@ -1751,9 +1728,6 @@ def _fallback_history_based_allocation(
 def _finalize_sizing_solution(
     request: SizingRequest,
     solution: SizingSolution,
-    *,
-    rebalance_friction_policy: PortfolioRebalanceFrictionPolicy | None = None,
-    apply_rebalance_friction: bool = True,
 ) -> SizingSolution:
     current_weights_by_subject = dict(
         zip(solution.subject_ids, request.current_weights, strict=True)
@@ -1765,12 +1739,6 @@ def _finalize_sizing_solution(
         capital_base=request.capital_base,
         risk_scales=solution.risk_scales,
     )
-    if apply_rebalance_friction:
-        targets = apply_portfolio_rebalance_friction(
-            request,
-            targets,
-            rebalance_friction_policy=rebalance_friction_policy,
-        )
     if request.gross_exposure_cap is not None and request.gross_exposure_cap > 0.0:
         targets = _apply_gross_cap(
             targets,

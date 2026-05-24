@@ -459,15 +459,14 @@ def test_rule_based_policy_applies_signal_risk_uncertainty_and_cost():
 
     assert len(decision_output.targets) == 1
     assert decision_output.targets[0].subject_id == "BTC"
-    assert decision_output.targets[0].target_weight == pytest.approx(0.151515, rel=1e-5)
-    assert decision_output.targets[0].position_delta == pytest.approx(0.151515, rel=1e-5)
+    assert decision_output.targets[0].target_weight == pytest.approx(0.166667, rel=1e-5)
+    assert decision_output.targets[0].position_delta == pytest.approx(0.166667, rel=1e-5)
     assert decision_output.targets[0].risk_scale == pytest.approx(0.666667, rel=1e-5)
     assert decision_output.targets[0].entry_allowed is True
 
 
-def test_rule_based_policy_respects_no_trade_band_and_gross_cap():
+def test_rule_based_policy_respects_gross_cap():
     from alpha_os.portfolio_decision import (
-        CostInput,
         DependenceInput,
         PortfolioState,
         PredictiveSignalInput,
@@ -509,15 +508,6 @@ def test_rule_based_policy_respects_no_trade_band_and_gross_cap():
                 unit="weight",
             ),
         ),
-        cost_inputs=(
-            CostInput(
-                name="no_trade_band",
-                subject_id="SOL",
-                value=0.05,
-                basis="per_delta_weight",
-                unit="weight",
-            ),
-        ),
         dependence_inputs=(
             DependenceInput(
                 name="hidden_bet_overlap",
@@ -534,12 +524,12 @@ def test_rule_based_policy_respects_no_trade_band_and_gross_cap():
         target.subject_id: target for target in decision_output.targets
     }
 
-    assert targets_by_subject["BTC"].target_weight == pytest.approx(0.2)
-    assert targets_by_subject["ETH"].target_weight == pytest.approx(0.2)
-    assert targets_by_subject["SOL"].target_weight == pytest.approx(0.0)
+    assert targets_by_subject["BTC"].target_weight == pytest.approx(0.1935483871)
+    assert targets_by_subject["ETH"].target_weight == pytest.approx(0.1935483871)
+    assert targets_by_subject["SOL"].target_weight == pytest.approx(0.0129032258)
 
 
-def test_rule_based_policy_uses_drawdown_and_recent_turnover_state():
+def test_rule_based_policy_uses_drawdown_state():
     from alpha_os.portfolio_decision import (
         PortfolioPositionState,
         PortfolioState,
@@ -565,31 +555,12 @@ def test_rule_based_policy_uses_drawdown_and_recent_turnover_state():
             ),
         )
     )
-    same_position_output = apply_signal_weighted_sizing(
-        _decision_input(
-            portfolio_state=PortfolioState(
-                portfolio_id="paper_core",
-                holding_period_days=3,
-                positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
-            ),
-            predictive_signals=(
-                PredictiveSignalInput(
-                    source_id="corr_weighted_mean",
-                    source_kind="meta_prediction",
-                    subject_id="BTC",
-                    target_id="residual_return_3d",
-                    value=1.0,
-                ),
-            ),
-        )
-    )
     stressed_output = apply_signal_weighted_sizing(
         _decision_input(
             portfolio_state=PortfolioState(
                 portfolio_id="paper_core",
                 holding_period_days=3,
                 positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
-                recent_turnover=0.5,
                 current_drawdown=0.25,
             ),
             predictive_signals=(
@@ -606,53 +577,6 @@ def test_rule_based_policy_uses_drawdown_and_recent_turnover_state():
 
     assert baseline_output.targets[0].target_weight == pytest.approx(1.0)
     assert stressed_output.targets[0].target_weight < baseline_output.targets[0].target_weight
-    assert stressed_output.targets[0].position_delta < same_position_output.targets[0].position_delta
-
-
-def test_rule_based_policy_penalizes_short_holding_period():
-    from alpha_os.portfolio_decision import (
-        PortfolioPositionState,
-        PortfolioState,
-        PredictiveSignalInput,
-    )
-    from alpha_os.portfolio_sizing_policy import apply_signal_weighted_sizing
-
-    early_output = apply_signal_weighted_sizing(
-        _decision_input(
-            portfolio_state=PortfolioState(
-                holding_period_days=0,
-                positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
-            ),
-            predictive_signals=(
-                PredictiveSignalInput(
-                    source_id="corr_weighted_mean",
-                    source_kind="meta_prediction",
-                    subject_id="BTC",
-                    target_id="residual_return_3d",
-                    value=0.3,
-                ),
-            ),
-        )
-    )
-    mature_output = apply_signal_weighted_sizing(
-        _decision_input(
-            portfolio_state=PortfolioState(
-                holding_period_days=3,
-                positions=(PortfolioPositionState(subject_id="BTC", weight=0.2),),
-            ),
-            predictive_signals=(
-                PredictiveSignalInput(
-                    source_id="corr_weighted_mean",
-                    source_kind="meta_prediction",
-                    subject_id="BTC",
-                    target_id="residual_return_3d",
-                    value=0.3,
-                ),
-            ),
-        )
-    )
-
-    assert early_output.targets[0].target_weight < mature_output.targets[0].target_weight
 
 
 def test_optimizer_policy_respects_weight_and_gross_constraints():
@@ -748,9 +672,8 @@ def test_optimizer_policy_uses_state_limits_and_capital_base():
     assert all(target.target_notional is not None for target in decision_output.targets)
 
 
-def test_optimizer_policy_penalizes_turnover_from_current_weights():
+def test_optimizer_policy_returns_desired_target_before_execution_controls():
     from alpha_os.portfolio_decision import (
-        CostInput,
         PortfolioPositionState,
         PortfolioState,
         PredictiveSignalInput,
@@ -759,10 +682,6 @@ def test_optimizer_policy_penalizes_turnover_from_current_weights():
         ConstrainedOptimizerSizingPolicy,
         apply_constrained_optimizer_sizing,
     )
-    from alpha_os.portfolio_rebalance_friction import (
-        PortfolioRebalanceFrictionPolicy,
-    )
-
     decision_input = _decision_input(
         as_of="2026-03-29T00:00:00+00:00",
         portfolio_state=PortfolioState(
@@ -779,15 +698,6 @@ def test_optimizer_policy_penalizes_turnover_from_current_weights():
                 value=0.1,
             ),
         ),
-        cost_inputs=(
-            CostInput(
-                name="turnover_cost_rate",
-                subject_id=None,
-                value=0.5,
-                basis="per_turnover",
-                unit="weight",
-            ),
-        ),
     )
 
     decision_output = apply_constrained_optimizer_sizing(
@@ -795,17 +705,11 @@ def test_optimizer_policy_penalizes_turnover_from_current_weights():
         sizing_policy=ConstrainedOptimizerSizingPolicy(
             max_abs_weight=1.0,
         ),
-        rebalance_friction_policy=PortfolioRebalanceFrictionPolicy(
-            turnover_cost_aversion=1.0,
-            signal_horizon_shortfall_aversion=1.0,
-            recent_turnover_aversion=1.0,
-        ),
     )
 
     assert len(decision_output.targets) == 1
     assert decision_output.targets[0].target_weight > 0.0
-    assert abs(decision_output.targets[0].target_weight - 0.4) < 0.05
-    assert abs(decision_output.targets[0].position_delta) < 0.05
+    assert decision_output.targets[0].position_delta > 0.0
 
 
 def test_optimizer_policy_penalizes_model_uncertainty():

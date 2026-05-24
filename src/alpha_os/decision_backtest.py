@@ -531,7 +531,6 @@ def _build_rebalance_targets(
     decision_output = apply_portfolio_sizing_policy(
         decision_input,
         sizing_policy=sizing_policy,
-        apply_rebalance_friction=False,
     )
     construction_result = construct_portfolio_targets(
         build_portfolio_construction_request(
