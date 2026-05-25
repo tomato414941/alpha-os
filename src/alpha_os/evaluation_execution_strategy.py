@@ -80,7 +80,6 @@ def run_strategy_evaluation(
     store = context.store
     trading_strategy = _trading_strategy_for_id(store, strategy_id)
     portfolio_construction = _portfolio_construction_for_strategy(trading_strategy)
-    portfolio = trading_strategy.portfolio
     trading_environment = _trading_environment_for_strategy(trading_strategy)
     subject_set_id = _subject_set_id_for_strategy(trading_strategy)
     target_id = _target_id_for_strategy(trading_strategy)
@@ -95,8 +94,6 @@ def run_strategy_evaluation(
         evaluation_date_ranges=evaluation_date_ranges,
         base_url=base_url,
         portfolio_construction=portfolio_construction,
-        no_trade_band=0.0 if portfolio.no_trade_band is None else portfolio.no_trade_band,
-        turnover_budget=portfolio.turnover_budget,
         trading_environment=trading_environment,
         feature_plane_repository=context.feature_plane_repository,
     )

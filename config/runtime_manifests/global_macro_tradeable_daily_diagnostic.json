@@ -100,9 +100,6 @@
             "gross_leverage_cap": 1.0,
             "net_exposure_target": 1.0
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 252,
           "selection_kind": "all_assets",
           "trading_environment": {
@@ -140,9 +137,6 @@
             "gross_leverage_cap": 1.0,
             "net_exposure_target": 1.0
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 252,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -180,9 +174,6 @@
             "gross_leverage_cap": 1.0,
             "net_exposure_target": 1.0
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 21,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -244,9 +235,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -308,9 +296,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": 0.04,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -372,9 +357,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": 0.04,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -436,9 +418,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": 0.04,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -500,9 +479,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": 0.08,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -564,9 +540,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -628,9 +601,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.005,
-
-          "turnover_budget": 0.04,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -692,9 +662,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 1,
           "trading_environment": {
             "turnover_cost_rate": 0.0,
@@ -756,9 +723,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 5,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -820,9 +784,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 5,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -884,9 +845,6 @@
               "top_gross_share_cap": 0.4
             }
           },
-          "no_trade_band": 0.01,
-
-          "turnover_budget": 0.025,
           "rebalance_interval_steps": 10,
           "trading_environment": {
             "turnover_cost_rate": 0.001,
@@ -948,9 +906,6 @@
               "top_gross_share_cap": 0.55
             }
           },
-          "no_trade_band": 0.0,
-
-          "turnover_budget": null,
           "rebalance_interval_steps": 21,
           "trading_environment": {
             "turnover_cost_rate": 0.001,

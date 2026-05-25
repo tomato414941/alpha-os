@@ -13,8 +13,6 @@ def _strategy_portfolio_document(
     selection_kind: str = "all_assets",
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
-    no_trade_band: float | None = None,
-    turnover_budget: float | None = None,
     trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
     portfolio: dict[str, object] = {
@@ -31,10 +29,6 @@ def _strategy_portfolio_document(
     }
     if top_k is not None:
         portfolio["top_k"] = top_k
-    if no_trade_band is not None:
-        portfolio["no_trade_band"] = no_trade_band
-    if turnover_budget is not None:
-        portfolio["turnover_budget"] = turnover_budget
     return {"portfolio": portfolio}
 
 
@@ -640,7 +634,6 @@ def test_apply_and_inspect_runtime_manifest_cli(tmp_path, capsys):
                                 sizing_method="equal_weight",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1616,7 +1609,6 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
                         direction_mode="long_only",
                         gross_exposure_cap=0.5,
                     ),
-            no_trade_band=0.02,
                     trading_environment=TradingEnvironment(
                         turnover_cost_rate=0.15,
                         market_impact_bps=7.0,
@@ -1675,7 +1667,7 @@ def test_debug_decide_portfolio_runtime_uses_strategy_scope_and_constraints(tmp_
         assert strategy_details["top_k"] == 1
         cost_inputs = details["assumptions"]["cost_inputs"]
         names = {item["name"] for item in cost_inputs}
-        assert {"turnover_cost_rate", "market_impact", "fee_bps", "funding_bps_per_step", "no_trade_band"} <= names
+        assert {"turnover_cost_rate", "market_impact", "fee_bps", "funding_bps_per_step"} <= names
         turnover_item = next(item for item in cost_inputs if item["name"] == "turnover_cost_rate")
         funding_item = next(item for item in cost_inputs if item["name"] == "funding_bps_per_step")
         assert turnover_item["value"] == 0.15
@@ -2096,7 +2088,6 @@ def test_screen_discovery_persists_survivors(tmp_path, capsys):
                                 sizing_method="signal_weighted",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -3150,8 +3141,6 @@ def test_global_macro_diagnostic_manifest_contract():
                     "top_gross_share_cap_n": 3,
                     "top_gross_share_cap": 0.4,
                 }
-                assert portfolio["no_trade_band"] == 0.01
-                assert portfolio["turnover_budget"] == 0.025
                 assert portfolio["trading_environment"]["turnover_cost_rate"] == 0.001
             if (
                 case["evaluation_case_id"]

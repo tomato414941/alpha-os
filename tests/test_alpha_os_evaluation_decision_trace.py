@@ -191,7 +191,6 @@ def _register_direct_strategy(store) -> None:
                     direction_mode="long_only",
                     gross_exposure_cap=1.0,
                 ),
-            no_trade_band=None,
                 trading_environment=TradingEnvironment(),
                 selection_kind="all_assets",
                 top_k=None,

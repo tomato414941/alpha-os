@@ -68,7 +68,6 @@ def build_trading_strategy_id(
     target_vol: float | None = None,
     gross_leverage_cap: float | None = None,
     net_exposure_target: float | None = None,
-    no_trade_band: float | None = None,
 ) -> str:
     parts: list[tuple[str, str]] = []
 
@@ -92,7 +91,6 @@ def build_trading_strategy_id(
     add("target_vol", target_vol)
     add("gross_leverage_cap", gross_leverage_cap)
     add("net_exposure_target", net_exposure_target)
-    add("no_trade_band", no_trade_band)
     payload = "|".join(f"{name}={value}" for name, value in sorted(parts))
     digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
     return f"strategy:{digest}"
@@ -144,8 +142,6 @@ class StrategyPortfolioSpec:
     selection_kind: str = "all_assets"
     top_k: int | None = None
     rebalance_interval_steps: int = 1
-    no_trade_band: float | None = None
-    turnover_budget: float | None = None
 
     def __post_init__(self) -> None:
         top_k = self.top_k
@@ -160,10 +156,6 @@ class StrategyPortfolioSpec:
             or self.rebalance_interval_steps < 1
         ):
             raise ValueError("strategy portfolio rebalance_interval_steps must be >= 1")
-        if self.no_trade_band is not None and float(self.no_trade_band) < 0.0:
-            raise ValueError("strategy portfolio no_trade_band must be >= 0")
-        if self.turnover_budget is not None and float(self.turnover_budget) < 0.0:
-            raise ValueError("strategy portfolio turnover_budget must be >= 0")
         if (
             self.portfolio_construction.rebalance_interval_steps
             != self.rebalance_interval_steps
@@ -183,10 +175,6 @@ class StrategyPortfolioSpec:
             "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
         }
-        if self.no_trade_band is not None:
-            document["no_trade_band"] = self.no_trade_band
-        if self.turnover_budget is not None:
-            document["turnover_budget"] = self.turnover_budget
         if self.selection_kind != "all_assets":
             document["selection_kind"] = self.selection_kind
         if self.top_k is not None:
@@ -200,8 +188,6 @@ class StrategyPortfolioSpec:
             document.get("portfolio_construction")
         )
         rebalance_interval_steps = _rebalance_interval_steps_from_document(document)
-        no_trade_band = document.get("no_trade_band")
-        turnover_budget = document.get("turnover_budget")
         return cls(
             portfolio_construction=portfolio_construction,
             trading_environment=TradingEnvironment.from_document(
@@ -210,10 +196,6 @@ class StrategyPortfolioSpec:
             selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
             rebalance_interval_steps=int(rebalance_interval_steps),
-            no_trade_band=None if no_trade_band is None else float(no_trade_band),
-            turnover_budget=(
-                None if turnover_budget is None else float(turnover_budget)
-            ),
         )
 
 @dataclass(frozen=True)

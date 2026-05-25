@@ -194,7 +194,6 @@
             "direction_mode": "long_only",
             "gross_exposure_cap": 0.85
           },
-          "no_trade_band": 0.02,
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",
           "trading_environment": {
@@ -226,7 +225,6 @@
             "direction_mode": "long_only",
             "gross_exposure_cap": 0.85
           },
-          "no_trade_band": 0.02,
           "rebalance_interval_steps": 5,
           "selection_kind": "all_assets",
           "trading_environment": {

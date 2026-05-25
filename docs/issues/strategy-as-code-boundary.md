@@ -19,8 +19,6 @@ Current strategy documents often include:
 - `position_rule_id`
 - `family_mix`
 - `portfolio_construction`
-- `no_trade_band`
-- `turnover_budget`
 - `trading_environment`
 - `signal_discovery_id`
 

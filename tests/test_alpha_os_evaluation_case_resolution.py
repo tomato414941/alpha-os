@@ -52,8 +52,6 @@ def _make_evaluation_trading_config(
             asset_class_weight_caps={} if asset_class_weight_caps is None else asset_class_weight_caps,
             cluster_weight_caps={} if cluster_weight_caps is None else cluster_weight_caps,
         ),
-        no_trade_band=0.0,
-        turnover_budget=None,
         trading_environment=TradingEnvironment(),
         top_k=top_k,
     )

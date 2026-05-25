@@ -108,10 +108,10 @@ def run_strategy_backtest_from_store(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
-    no_trade_band: float,
-    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
+    no_trade_band: float = 0.0,
+    turnover_budget: float | None = None,
 ):
     # Temporary DB adapter for legacy evaluation execution paths.
     # Prefer run_strategy_backtest() once strategy and subject set are resolved.
@@ -143,10 +143,10 @@ def run_strategy_backtest(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
-    no_trade_band: float,
-    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
+    no_trade_band: float = 0.0,
+    turnover_budget: float | None = None,
 ):
     selection_kind = trading_strategy.selection_kind
     selection_top_k = trading_strategy.portfolio.top_k

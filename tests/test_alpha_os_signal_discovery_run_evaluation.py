@@ -32,8 +32,6 @@ def _strategy_portfolio_document(
     selection_kind: str = "all_assets",
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
-    no_trade_band: float | None = None,
-    turnover_budget: float | None = None,
     trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
     portfolio: dict[str, object] = {
@@ -50,10 +48,6 @@ def _strategy_portfolio_document(
     }
     if top_k is not None:
         portfolio["top_k"] = top_k
-    if no_trade_band is not None:
-        portfolio["no_trade_band"] = no_trade_band
-    if turnover_budget is not None:
-        portfolio["turnover_budget"] = turnover_budget
     return {"portfolio": portfolio}
 
 
@@ -75,7 +69,6 @@ def _build_trading_strategy(
     fee_bps: float | None = None,
     bid_ask_spread_bps: float | None = None,
     turnover_cost_rate: float | None = None,
-    no_trade_band: float | None = None,
     created_at: str = "2026-04-05T00:00:00Z",
 ):
     from alpha_os.evaluation_cost_config import TradingEnvironment
@@ -113,7 +106,6 @@ def _build_trading_strategy(
                 ),
                 gross_exposure_cap=gross_exposure_cap,
             ),
-            no_trade_band=no_trade_band,
             trading_environment=TradingEnvironment(
                 turnover_cost_rate=(
                     0.0 if turnover_cost_rate is None else turnover_cost_rate
@@ -151,7 +143,6 @@ def test_evaluation_trading_config_from_args_accepts_direction_mode():
             top_k=None,
             gross_exposure_cap=None,
             turnover_cost_rate=None,
-            no_trade_band=None,
             market_impact_bps=None,
             fee_bps=None,
             bid_ask_spread_bps=None,
@@ -369,8 +360,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         ),
         base_url="fixture://",
         portfolio_construction=strategy.portfolio_construction,
-        no_trade_band=0.0,
-        turnover_budget=None,
         trading_environment=TradingEnvironment(),
         feature_plane_repository=None,
     )
@@ -553,7 +542,6 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
-                                no_trade_band=0.0,
                                 trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
@@ -719,7 +707,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
-                                no_trade_band=0.0,
                                 trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
@@ -877,7 +864,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
-                                no_trade_band=0.0,
                                 trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
@@ -984,7 +970,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                                 sizing_method="equal_weight",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1101,7 +1086,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                                 sizing_method="equal_weight",
                                 direction_mode=None,
                                 gross_exposure_cap=None,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1311,7 +1295,6 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                                 gross_exposure_cap=1.0,
                                 selection_kind="top_k",
                                 top_k=1,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1530,7 +1513,6 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                                 gross_exposure_cap=1.0,
                                 selection_kind="top_k",
                                 top_k=1,
-                                no_trade_band=None,
                                 trading_environment={
                                     "market_impact_bps": None,
                                     "fee_bps": None,
@@ -1970,7 +1952,6 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
                                 gross_exposure_cap=0.5,
-                                no_trade_band=0.0,
                                 trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,
@@ -2085,7 +2066,6 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
         in output
     )
     assert "optimizer_backend=cvxpy_signed_mean_variance" in output
-    assert "turnover_budget=0.025" in output
 
     store = EvaluationStore(db_path)
     try:
@@ -2430,7 +2410,6 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                                 sizing_method="signal_weighted",
                                 direction_mode="long_short",
                                 gross_exposure_cap=None,
-                                no_trade_band=0.0,
                                 trading_environment={
                                     "market_impact_bps": 0.0,
                                     "fee_bps": 0.0,

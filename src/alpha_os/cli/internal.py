@@ -814,7 +814,6 @@ def _portfolio_decision_assumptions_from_args(
                 unit="weight",
             )
         )
-    portfolio = None if trading_strategy is None else trading_strategy.portfolio
     trading_environment = (
         None if trading_strategy is None else trading_strategy.portfolio.trading_environment
     )
@@ -911,18 +910,13 @@ def _portfolio_decision_assumptions_from_args(
                 unit="bps",
             )
         )
-    no_trade_band = (
-        portfolio.no_trade_band
-        if args.no_trade_band is None and portfolio is not None
-        else args.no_trade_band
-    )
-    if no_trade_band is not None:
+    if args.no_trade_band is not None:
         for subject_id in subject_ids:
             cost_inputs.append(
                 CostInput(
                     name="no_trade_band",
                     subject_id=subject_id,
-                    value=float(no_trade_band),
+                    value=float(args.no_trade_band),
                     basis="per_delta_weight",
                     unit="weight",
                 )
@@ -3369,7 +3363,6 @@ def _print_diagnostic_evaluation_dry_run(
             f"engine={construction.sizing_engine or '-'} "
             f"optimizer_backend={_diagnostic_optimizer_backend(construction.sizing_method, construction.sizing_engine)} "
             f"rebalance_steps={construction.rebalance_interval_steps} "
-            f"turnover_budget={trading_config.turnover_budget if trading_config.turnover_budget is not None else '-'} "
             f"cost_bps={trading_environment.market_impact_bps + trading_environment.fee_bps + trading_environment.bid_ask_spread_bps}"
         )
 
@@ -3497,14 +3490,6 @@ def _check_diagnostic_evaluation_dry_run(
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use the moderate concentration constraints"
-        )
-    if (
-        constrained_config.no_trade_band != 0.01
-        or constrained_config.turnover_budget != 0.025
-    ):
-        raise ValueError(
-            "diagnostic dry run check failed: constrained mean-reversion lane "
-            "must use the moderate friction controls"
         )
     optimizer_case = cases_by_id[
         "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
@@ -3988,7 +3973,6 @@ def _evaluation_trading_config_from_args(
                 None if args.gross_exposure_cap is None else float(args.gross_exposure_cap)
             ),
         ),
-        no_trade_band=(0.0 if args.no_trade_band is None else float(args.no_trade_band)),
         trading_environment=TradingEnvironment(
             turnover_cost_rate=(
                 0.0

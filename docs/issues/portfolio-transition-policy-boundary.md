@@ -21,12 +21,13 @@ friction assumption.
 
 ## Current Field Shape
 
-The remaining transition controls are now direct portfolio fields:
+The remaining transition controls are backtest rollout inputs:
 
 - `no_trade_band`
 - `turnover_budget`
 
-The old `friction` object no longer exists in strategy documents.
+The old `friction` object no longer exists in strategy documents, and these
+controls are no longer strategy portfolio fields.
 
 ## Field Classification
 
@@ -38,7 +39,7 @@ Initial classification:
 | `turnover_budget` | policy / transition constraint |
 
 `turnover_cost_rate` is represented on `TradingEnvironment`, not on the
-strategy transition controls.
+transition controls.
 
 ## RL Analogy
 
@@ -50,7 +51,8 @@ turnover budgets and no-trade bands.
 The world or environment then applies realized costs and rewards.
 
 The remaining fields directly change the action before costs are charged, so
-they stay with the strategy portfolio shape rather than the market environment.
+they belong to rollout transition handling rather than the strategy portfolio
+shape.
 
 ## Risk
 

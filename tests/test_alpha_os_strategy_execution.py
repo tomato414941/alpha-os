@@ -24,7 +24,6 @@ def _build_trading_strategy(
     funding_bps_per_step: float | None = None,
     borrow_fee_bps_per_step: float | None = None,
     turnover_cost_rate: float | None = None,
-    no_trade_band: float | None = None,
     created_at: str = "2026-04-08T00:00:00Z",
 ):
     from alpha_os.evaluation_cost_config import TradingEnvironment
@@ -68,7 +67,6 @@ def _build_trading_strategy(
                     {} if cluster_weight_caps is None else dict(cluster_weight_caps)
                 ),
             ),
-            no_trade_band=no_trade_band,
             trading_environment=TradingEnvironment(
                 turnover_cost_rate=(
                     0.0 if turnover_cost_rate is None else turnover_cost_rate
@@ -120,7 +118,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         funding_bps_per_step=1.5,
         borrow_fee_bps_per_step=2.5,
         turnover_cost_rate=0.1,
-        no_trade_band=0.02,
     )
 
     assert trading_strategy.strategy_id == "strategy:test"
@@ -150,7 +147,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.portfolio.portfolio_construction.cluster_weight_caps == {
         "eq_us": 0.25
     }
-    assert trading_strategy.portfolio.no_trade_band == 0.02
     assert trading_strategy.trading_environment.turnover_cost_rate == 0.1
     assert trading_strategy.trading_environment.market_impact_bps == 5.0
     assert trading_strategy.trading_environment.fee_bps == 2.0
@@ -213,7 +209,6 @@ def test_trading_strategy_spec_round_trips_through_document():
         funding_bps_per_step=1.5,
         borrow_fee_bps_per_step=2.5,
         turnover_cost_rate=0.1,
-        no_trade_band=0.02,
     )
 
     round_tripped = TradingStrategySpec.from_document(strategy.to_document())

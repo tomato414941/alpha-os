@@ -20,8 +20,6 @@ class StrategyVariantConfig:
     portfolio_construction: PortfolioConstructionSpec
     trading_environment: TradingEnvironment
     top_k: int | None = None
-    no_trade_band: float = 0.0
-    turnover_budget: float | None = None
 
     @property
     def sizing_method(self) -> str:
@@ -41,8 +39,6 @@ def strategy_variant_config_from_strategy(
         portfolio_construction=construction,
         trading_environment=portfolio.trading_environment,
         top_k=portfolio.top_k,
-        no_trade_band=0.0 if portfolio.no_trade_band is None else portfolio.no_trade_band,
-        turnover_budget=portfolio.turnover_budget,
     )
 
 
@@ -95,8 +91,6 @@ def overridden_strategy_variant_config(
         ),
         trading_environment=config.trading_environment,
         top_k=config.top_k,
-        no_trade_band=config.no_trade_band,
-        turnover_budget=config.turnover_budget,
     )
 
 
@@ -161,7 +155,6 @@ def derive_trading_strategy_from_signal_discovery(
         ),
         asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-        no_trade_band=float(variant_config.no_trade_band),
     )
     return TradingStrategySpec(
         strategy_id=strategy_id,
@@ -182,8 +175,6 @@ def derive_trading_strategy_from_signal_discovery(
             selection_kind="all_assets" if top_k_value is None else "top_k",
             top_k=top_k_value,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
-            no_trade_band=float(variant_config.no_trade_band),
-            turnover_budget=variant_config.turnover_budget,
         ),
         created_at=created_at,
     )
