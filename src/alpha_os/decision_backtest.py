@@ -30,11 +30,10 @@ from .portfolio_construction_pipeline import (
     build_portfolio_construction_request,
     construct_portfolio_targets,
 )
-from .portfolio_execution_policy import (
-    ExecutionPolicySpec,
+from .portfolio_trade_transition import (
     TradeTransitionRequest,
     TradeTransitionTrace,
-    apply_execution_policy,
+    apply_trade_transition,
 )
 from .portfolio_overlay import ActiveOverlaySpec
 from .portfolio_sizing_policy import (
@@ -92,7 +91,6 @@ class DecisionBacktestInput:
     borrow_fee_bps_per_step: float = 0.0
     no_trade_band: float = 0.0
     turnover_budget: float | None = None
-    execution_policy: ExecutionPolicySpec | None = None
     rebalance_interval_steps: int = 1
     long_only: bool = False
     direction_mode: str | None = None
@@ -398,12 +396,13 @@ def run_decision_backtest(
                 subject_ids=subject_ids,
                 sizing_policy=sizing_policy,
             )
-            execution_result = apply_execution_policy(
+            execution_result = apply_trade_transition(
                 TradeTransitionRequest(
                     desired_targets=desired_targets_by_subject,
                     current_weights=state.current_weights,
                     capital_base=state.capital_base,
-                    execution_policy=_execution_policy_for_backtest(backtest_input),
+                    no_trade_band=max(float(backtest_input.no_trade_band), 0.0),
+                    turnover_budget=backtest_input.turnover_budget,
                     per_turnover_cost=_per_turnover_execution_cost(backtest_input),
                 )
             )
@@ -573,17 +572,6 @@ def _build_rebalance_targets(
         construction_result.targets,
         construction_result.trace,
         decision_output.sizing_diagnostics,
-    )
-
-
-def _execution_policy_for_backtest(
-    backtest_input: DecisionBacktestInput,
-) -> ExecutionPolicySpec:
-    if backtest_input.execution_policy is not None:
-        return backtest_input.execution_policy
-    return ExecutionPolicySpec(
-        no_trade_band=max(float(backtest_input.no_trade_band), 0.0),
-        turnover_budget=backtest_input.turnover_budget,
     )
 
 

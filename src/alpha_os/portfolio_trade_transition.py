@@ -6,18 +6,6 @@ from .portfolio_decision import PortfolioTarget
 
 
 @dataclass(frozen=True)
-class ExecutionPolicySpec:
-    no_trade_band: float = 0.0
-    turnover_budget: float | None = None
-
-    def __post_init__(self) -> None:
-        if self.no_trade_band < 0.0:
-            raise ValueError("execution_policy.no_trade_band must be >= 0")
-        if self.turnover_budget is not None and self.turnover_budget < 0.0:
-            raise ValueError("execution_policy.turnover_budget must be >= 0")
-
-
-@dataclass(frozen=True)
 class SubjectTradeTransition:
     subject_id: str
     current_weight: float
@@ -47,8 +35,15 @@ class TradeTransitionRequest:
     desired_targets: dict[str, PortfolioTarget]
     current_weights: dict[str, float]
     capital_base: float
-    execution_policy: ExecutionPolicySpec
+    no_trade_band: float = 0.0
+    turnover_budget: float | None = None
     per_turnover_cost: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.no_trade_band < 0.0:
+            raise ValueError("trade transition no_trade_band must be >= 0")
+        if self.turnover_budget is not None and self.turnover_budget < 0.0:
+            raise ValueError("trade transition turnover_budget must be >= 0")
 
 
 @dataclass(frozen=True)
@@ -69,8 +64,7 @@ class _TradeTransitionCandidate:
     rejected_reason: str | None
 
 
-def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionResult:
-    policy = request.execution_policy
+def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionResult:
     all_subjects = sorted(
         set(request.desired_targets) | set(request.current_weights)
     )
@@ -82,7 +76,7 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
         desired_delta = desired_weight - current_weight
         adjusted_delta = _execution_delta(
             desired_delta,
-            no_trade_band=policy.no_trade_band,
+            no_trade_band=request.no_trade_band,
         )
         expected_trade_cost = _expected_trade_cost(
             adjusted_delta,
@@ -110,7 +104,10 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
         abs(candidate.desired_delta) for candidate in candidates
     )
     executed_delta_by_subject, budget_rejected_subjects = (
-        _executed_deltas_from_candidates(candidates, policy=policy)
+        _executed_deltas_from_candidates(
+            candidates,
+            turnover_budget=request.turnover_budget,
+        )
     )
 
     executed_targets: dict[str, PortfolioTarget] = {}
@@ -165,7 +162,7 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
             * max(float(request.capital_base), 0.0)
             * max(float(request.per_turnover_cost), 0.0)
         ),
-        turnover_budget=policy.turnover_budget,
+        turnover_budget=request.turnover_budget,
         subjects=tuple(transitions),
     )
     return TradeTransitionResult(
@@ -177,25 +174,28 @@ def apply_execution_policy(request: TradeTransitionRequest) -> TradeTransitionRe
 def _executed_deltas_from_candidates(
     candidates: list[_TradeTransitionCandidate],
     *,
-    policy: ExecutionPolicySpec,
+    turnover_budget: float | None,
 ) -> tuple[dict[str, float], set[str]]:
-    return _budget_scaled_executed_deltas(candidates, policy=policy)
+    return _budget_scaled_executed_deltas(
+        candidates,
+        turnover_budget=turnover_budget,
+    )
 
 
 def _budget_scaled_executed_deltas(
     candidates: list[_TradeTransitionCandidate],
     *,
-    policy: ExecutionPolicySpec,
+    turnover_budget: float | None,
 ) -> tuple[dict[str, float], set[str]]:
     adjusted_turnover = sum(abs(item.adjusted_delta) for item in candidates)
     budget_scale = 1.0
     if (
-        policy.turnover_budget is not None
-        and policy.turnover_budget >= 0.0
-        and adjusted_turnover > policy.turnover_budget
+        turnover_budget is not None
+        and turnover_budget >= 0.0
+        and adjusted_turnover > turnover_budget
         and adjusted_turnover > 0.0
     ):
-        budget_scale = float(policy.turnover_budget) / float(adjusted_turnover)
+        budget_scale = float(turnover_budget) / float(adjusted_turnover)
     return (
         {
             item.subject_id: float(item.adjusted_delta * budget_scale)

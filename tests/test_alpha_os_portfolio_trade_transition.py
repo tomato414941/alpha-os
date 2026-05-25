@@ -14,19 +14,18 @@ def _target(subject_id: str, weight: float):
     )
 
 
-def test_execution_policy_holds_small_delta_inside_no_trade_band():
-    from alpha_os.portfolio_execution_policy import (
-        ExecutionPolicySpec,
+def test_trade_transition_holds_small_delta_inside_no_trade_band():
+    from alpha_os.portfolio_trade_transition import (
         TradeTransitionRequest,
-        apply_execution_policy,
+        apply_trade_transition,
     )
 
-    result = apply_execution_policy(
+    result = apply_trade_transition(
         TradeTransitionRequest(
             desired_targets={"A": _target("A", 0.103)},
             current_weights={"A": 0.10},
             capital_base=1.0,
-            execution_policy=ExecutionPolicySpec(no_trade_band=0.005),
+            no_trade_band=0.005,
         )
     )
 
@@ -36,14 +35,13 @@ def test_execution_policy_holds_small_delta_inside_no_trade_band():
     assert result.trace.skipped_trade_count == 1
 
 
-def test_execution_policy_scales_deltas_to_turnover_budget():
-    from alpha_os.portfolio_execution_policy import (
-        ExecutionPolicySpec,
+def test_trade_transition_scales_deltas_to_turnover_budget():
+    from alpha_os.portfolio_trade_transition import (
         TradeTransitionRequest,
-        apply_execution_policy,
+        apply_trade_transition,
     )
 
-    result = apply_execution_policy(
+    result = apply_trade_transition(
         TradeTransitionRequest(
             desired_targets={
                 "A": _target("A", 0.30),
@@ -51,7 +49,7 @@ def test_execution_policy_scales_deltas_to_turnover_budget():
             },
             current_weights={"A": 0.0, "B": 0.0},
             capital_base=1.0,
-            execution_policy=ExecutionPolicySpec(turnover_budget=0.30),
+            turnover_budget=0.30,
         )
     )
 

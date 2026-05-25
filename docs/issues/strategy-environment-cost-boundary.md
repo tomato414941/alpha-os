@@ -2,8 +2,8 @@
 
 ## Problem
 
-`TradingStrategySpec.portfolio` used to carry separate `execution_policy` and
-`holding_cost_policy` fields.
+`TradingStrategySpec.portfolio` used to carry separate execution and holding
+cost fields.
 
 Those names make the fields look strategy-owned, but their current main use is
 to feed evaluation cost assumptions:

@@ -12,8 +12,8 @@ The old flow was:
 ```text
 no_trade_band / turnover_budget
   -> DecisionBacktestInput
-  -> portfolio_execution_policy.ExecutionPolicySpec
-  -> apply_execution_policy()
+  -> portfolio_trade_transition.TradeTransitionRequest
+  -> apply_trade_transition()
 ```
 
 This is closer to a portfolio or trade transition policy than to a simple
@@ -58,8 +58,8 @@ The old name encouraged two mistakes:
 
 - treating policy-side action suppression as a simple cost assumption
 
-There is still a separate `portfolio_execution_policy.ExecutionPolicySpec` in
-the lower-level execution path, so that boundary may need separate cleanup.
+The lower-level path now uses direct trade-transition inputs rather than a
+separate policy object.
 
 ## Direction
 

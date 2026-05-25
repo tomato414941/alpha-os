@@ -57,7 +57,6 @@ old `run_mode` field was removed rather than renamed as a domain concept. See
 ## Non-Goals
 
 - Do not rename existing `execution_range` fields immediately.
-- Do not split `ExecutionPolicySpec` immediately.
 - Do not change manifest compatibility as part of terminology cleanup.
 
 ## Acceptance Criteria
