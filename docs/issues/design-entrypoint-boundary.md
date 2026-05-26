@@ -2,10 +2,10 @@
 
 ## Problem
 
-`DESIGN.md`, `docs/README.md`, and `docs/design/README.md` overlap as
-documentation entrypoints.
+Root-level `DESIGN.md`, `docs/README.md`, and `docs/design/README.md`
+previously overlapped as documentation entrypoints.
 
-`DESIGN.md` currently mixes:
+`DESIGN.md` mixed:
 
 - documentation entrypoint
 - long-horizon design summary
@@ -23,27 +23,45 @@ design notes have moved on.
 
 ## Boundary
 
-This issue is about the responsibility of root-level `DESIGN.md`.
+This issue is about retiring root-level `DESIGN.md` without losing potentially
+useful historical design context.
 
 It is not about rewriting all design notes, deleting historical context, or
 changing runtime behavior.
 
-Until this issue is resolved, do not expand `DESIGN.md` or add new design
-content to it. New design content should go to `docs/design/`, `docs/issues/`,
-or `docs/glossary.md`, depending on whether it is a durable design note, an open
+New design content should go to `docs/design/`, `docs/issues/`, or
+`docs/glossary.md`, depending on whether it is a durable design note, an open
 boundary issue, or a term definition.
 
 ## Next Step
 
-Classify each section of `DESIGN.md` as one of:
+Root-level `DESIGN.md` has been removed as an active documentation entrypoint.
+The last remaining summary is retained below for review only.
 
-- keep as compatibility pointer
-- move to `docs/design/README.md`
-- move to `docs/README.md`
+Classify each retained summary line as one of:
+
 - delete as stale
 - review before changing
 
+## Retained Historical Summary
+
+The removed `DESIGN.md` summary said the intended architecture was:
+
+- research-to-evaluation lifecycle first
+- signal-discovery-centered rather than legacy `alpha`-centered
+- target-centric rather than one-horizon-by-default
+- representation-first for large-scale predictive logic
+- selection-and-compression-first for large discovery spaces
+- portfolio-level for allocation and execution outcomes
+- producer-consumer separated at the prediction boundary
+- scalable through template/binding/sleeve-state separation rather than
+  endlessly duplicating asset-specific records
+
+It also framed the current repository as an in-place migration and asked whether
+the repo moves closer to the target shape while keeping legacy isolated from
+runtime truth.
+
 ## Close Condition
 
-Close this when `DESIGN.md` has a clear role and no longer competes with
-`docs/README.md` or `docs/design/README.md` as a source of truth.
+Close this when the retained summary has either been discarded or explicitly
+accepted as still-useful historical context.

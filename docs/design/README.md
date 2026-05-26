@@ -9,37 +9,34 @@ Use these files when the question is architectural rather than operational:
 - how the runtime should scale beyond one bounded sleeve
 - how production and consumption should be separated
 
-Prefer these files in this order:
+Use these files by question:
 
-1. [`../../DESIGN.md`](../../DESIGN.md)
-   - short design summary
-   - entrypoint into the design set
-2. [`../glossary.md`](../glossary.md)
+1. [`../glossary.md`](../glossary.md)
    - current terminology entrypoint
-3. [`glossary.old.md`](./glossary.old.md)
+2. [`glossary.old.md`](./glossary.old.md)
    - historical terminology notes
    - signal / strategy / discovery boundary
-4. [`constitution.md`](./constitution.md)
+3. [`constitution.md`](./constitution.md)
    - north star
    - lifecycle stages
    - rigor levels and non-negotiables
-5. [`signal-discovery-system.md`](./signal-discovery-system.md)
+4. [`signal-discovery-system.md`](./signal-discovery-system.md)
    - greenfield system boundary
    - signal-discovery target shape
    - current gap map
-6. [`domain-model.md`](./domain-model.md)
+5. [`domain-model.md`](./domain-model.md)
    - domain relationships
    - strategy hierarchy
-7. [`strategy-execution-model.md`](./strategy-execution-model.md)
+6. [`strategy-execution-model.md`](./strategy-execution-model.md)
    - strategy vs engine boundary
    - current mainline workflow
    - target execution workflow
-8. [`runtime-evaluation.md`](./runtime-evaluation.md)
+7. [`runtime-evaluation.md`](./runtime-evaluation.md)
    - evaluation principles
    - targets
    - horizons
    - pipeline stages
-9. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
+8. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
    - minimum facts required to compare strategy results
    - required metrics
    - optional same-subject-set check

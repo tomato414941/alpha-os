@@ -17,9 +17,6 @@ For most work, read in this order:
    - current trusted runtime path
    - quick orientation
 2. One design note, depending on the question:
-   - [`DESIGN.md`](../DESIGN.md)
-     - short design summary
-     - entrypoint into long-horizon design notes
    - [`docs/design/README.md`](./design/README.md)
      - detailed design map
      - domain model, evaluation, architecture, scaling
@@ -47,7 +44,6 @@ Prefer:
 
 Prefer:
 
-- [`DESIGN.md`](../DESIGN.md)
 - [`docs/design/constitution.md`](./design/constitution.md)
 - [`docs/design/README.md`](./design/README.md)
 
@@ -55,7 +51,6 @@ Prefer:
 
 Prefer:
 
-- [`DESIGN.md`](../DESIGN.md)
 - [`scaling-and-migration.md`](./design/scaling-and-migration.md)
 
 ### "When are two strategy results comparable?"
@@ -76,8 +71,6 @@ Prefer:
 
 ### Long-Horizon Design
 
-- [`DESIGN.md`](../DESIGN.md)
-  - short architectural summary
 - [`docs/design/README.md`](./design/README.md)
   - design note map
 - [`constitution.md`](./design/constitution.md)
@@ -115,4 +108,4 @@ Legacy registry-era context should be read from:
 If two documents seem to disagree, prefer:
 
 1. `README.md` for current entrypoints
-2. `DESIGN.md` and `docs/design/` for target architecture
+2. `docs/design/` for target architecture
