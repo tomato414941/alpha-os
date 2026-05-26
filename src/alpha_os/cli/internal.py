@@ -3234,8 +3234,6 @@ _DIAGNOSTIC_PROFILE_METRIC_GROUPS = {
     "execution_trace": (
         "mean_desired_turnover",
         "mean_executed_turnover",
-        "mean_turnover_suppression",
-        "mean_skipped_trade_count",
         "mean_expected_execution_cost",
     ),
     "cost_drag": (

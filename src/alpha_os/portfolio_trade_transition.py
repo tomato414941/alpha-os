@@ -13,8 +13,6 @@ class SubjectTradeTransition:
     executed_weight: float
     desired_delta: float
     executed_delta: float
-    skipped: bool
-    reason: str
     expected_trade_cost: float = 0.0
 
 
@@ -22,8 +20,6 @@ class SubjectTradeTransition:
 class TradeTransitionTrace:
     desired_turnover: float
     executed_turnover: float
-    turnover_suppression: float
-    skipped_trade_count: int
     expected_execution_cost: float
     subjects: tuple[SubjectTradeTransition, ...]
 
@@ -88,8 +84,6 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
     for candidate in candidates:
         executed_delta = executed_delta_by_subject.get(candidate.subject_id, 0.0)
         executed_weight = candidate.current_weight + executed_delta
-        reason = _transition_reason(desired_delta=candidate.desired_delta)
-        skipped = abs(executed_delta) == 0.0 and abs(candidate.desired_delta) > 0.0
         transitions.append(
             SubjectTradeTransition(
                 subject_id=candidate.subject_id,
@@ -98,8 +92,6 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
                 executed_weight=float(executed_weight),
                 desired_delta=candidate.desired_delta,
                 executed_delta=executed_delta,
-                skipped=skipped,
-                reason=reason,
                 expected_trade_cost=candidate.expected_trade_cost,
             )
         )
@@ -118,8 +110,6 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
     trace = TradeTransitionTrace(
         desired_turnover=float(desired_turnover),
         executed_turnover=float(executed_turnover),
-        turnover_suppression=float(max(desired_turnover - executed_turnover, 0.0)),
-        skipped_trade_count=sum(1 for item in transitions if item.skipped),
         expected_execution_cost=float(
             executed_turnover
             * max(float(request.capital_base), 0.0)
@@ -153,9 +143,3 @@ def _expected_trade_cost(
         * max(float(capital_base), 0.0)
         * max(float(per_turnover_cost), 0.0)
     )
-
-
-def _transition_reason(*, desired_delta: float) -> str:
-    if abs(desired_delta) == 0.0:
-        return "unchanged"
-    return "executed"

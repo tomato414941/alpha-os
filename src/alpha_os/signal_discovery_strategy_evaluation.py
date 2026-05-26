@@ -78,8 +78,6 @@ class SignalDiscoveryStrategyEvaluationRangeSummary:
     top_k_stage_mean_active_count_delta: float
     mean_desired_turnover: float
     mean_executed_turnover: float
-    mean_turnover_suppression: float
-    mean_skipped_trade_count: float
     mean_expected_execution_cost: float
     cost_to_gross_pnl: float
     execution_cost_to_gross_pnl: float
@@ -652,14 +650,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             ),
             "mean_executed_turnover": round(
                 _mean([item.mean_executed_turnover for item in range_summaries]),
-                6,
-            ),
-            "mean_turnover_suppression": round(
-                _mean([item.mean_turnover_suppression for item in range_summaries]),
-                6,
-            ),
-            "mean_skipped_trade_count": round(
-                _mean([item.mean_skipped_trade_count for item in range_summaries]),
                 6,
             ),
             "mean_expected_execution_cost": round(
@@ -1510,8 +1500,6 @@ def _range_summary_from_variant_results(
         ],
         mean_desired_turnover=execution_impact["mean_desired_turnover"],
         mean_executed_turnover=execution_impact["mean_executed_turnover"],
-        mean_turnover_suppression=execution_impact["mean_turnover_suppression"],
-        mean_skipped_trade_count=execution_impact["mean_skipped_trade_count"],
         mean_expected_execution_cost=execution_impact[
             "mean_expected_execution_cost"
         ],
@@ -1625,12 +1613,6 @@ def _execution_trace_from_backtest(result: DecisionBacktestResult) -> dict[str, 
         ),
         "mean_executed_turnover": _mean(
             [float(item.executed_turnover) for item in traces]
-        ),
-        "mean_turnover_suppression": _mean(
-            [float(item.turnover_suppression) for item in traces]
-        ),
-        "mean_skipped_trade_count": _mean(
-            [float(item.skipped_trade_count) for item in traces]
         ),
         "mean_expected_execution_cost": _mean(
             [float(item.expected_execution_cost) for item in traces]
