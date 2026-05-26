@@ -30,11 +30,6 @@ from .portfolio_construction_pipeline import (
     build_portfolio_construction_request,
     construct_portfolio_targets,
 )
-from .portfolio_trade_transition import (
-    TradeTransitionRequest,
-    TradeTransitionTrace,
-    apply_trade_transition,
-)
 from .portfolio_overlay import ActiveOverlaySpec
 from .portfolio_sizing_policy import (
     PortfolioSizingPolicy,
@@ -162,6 +157,25 @@ class DecisionBacktestSubjectStep:
 
 
 @dataclass(frozen=True)
+class SubjectRebalanceTrace:
+    subject_id: str
+    current_weight: float
+    desired_weight: float
+    executed_weight: float
+    desired_delta: float
+    executed_delta: float
+    expected_trade_cost: float = 0.0
+
+
+@dataclass(frozen=True)
+class RebalanceTrace:
+    desired_turnover: float
+    executed_turnover: float
+    expected_execution_cost: float
+    subjects: tuple[SubjectRebalanceTrace, ...]
+
+
+@dataclass(frozen=True)
 class DecisionBacktestStep:
     date: str
     subject_steps: tuple[DecisionBacktestSubjectStep, ...]
@@ -187,7 +201,7 @@ class DecisionBacktestStep:
     gross_equity: float
     net_equity: float
     construction_trace: tuple[PortfolioConstructionStageTrace, ...] = ()
-    execution_trace: TradeTransitionTrace | None = None
+    execution_trace: RebalanceTrace | None = None
     sizing_diagnostics: SizingDiagnostics = field(default_factory=SizingDiagnostics)
 
     @property
@@ -394,16 +408,12 @@ def run_decision_backtest(
                 subject_ids=subject_ids,
                 sizing_policy=sizing_policy,
             )
-            execution_result = apply_trade_transition(
-                TradeTransitionRequest(
-                    desired_targets=desired_targets_by_subject,
-                    current_weights=state.current_weights,
-                    capital_base=state.capital_base,
-                    per_turnover_cost=_per_turnover_execution_cost(backtest_input),
-                )
+            targets_by_subject, execution_trace = _execute_rebalance_targets(
+                desired_targets=desired_targets_by_subject,
+                current_weights=state.current_weights,
+                capital_base=state.capital_base,
+                per_turnover_cost=_per_turnover_execution_cost(backtest_input),
             )
-            targets_by_subject = execution_result.executed_targets
-            execution_trace = execution_result.trace
         else:
             targets_by_subject = build_hold_targets(
                 subject_ids=subject_ids,
@@ -577,6 +587,61 @@ def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float
         + max(backtest_input.market_impact_bps, 0.0) / 10000.0
         + max(backtest_input.fee_bps, 0.0) / 10000.0
         + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0
+    )
+
+
+def _execute_rebalance_targets(
+    *,
+    desired_targets: dict[str, PortfolioTarget],
+    current_weights: dict[str, float],
+    capital_base: float,
+    per_turnover_cost: float,
+) -> tuple[dict[str, PortfolioTarget], RebalanceTrace]:
+    all_subjects = sorted(set(desired_targets) | set(current_weights))
+    executed_targets: dict[str, PortfolioTarget] = {}
+    subject_traces: list[SubjectRebalanceTrace] = []
+
+    for subject_id in all_subjects:
+        target = desired_targets.get(subject_id)
+        current_weight = float(current_weights.get(subject_id, 0.0))
+        desired_weight = current_weight if target is None else float(target.target_weight)
+        delta = desired_weight - current_weight
+        executed_weight = current_weight + delta
+        expected_trade_cost = (
+            abs(delta)
+            * max(float(capital_base), 0.0)
+            * max(float(per_turnover_cost), 0.0)
+        )
+        subject_traces.append(
+            SubjectRebalanceTrace(
+                subject_id=subject_id,
+                current_weight=current_weight,
+                desired_weight=desired_weight,
+                executed_weight=float(executed_weight),
+                desired_delta=float(delta),
+                executed_delta=float(delta),
+                expected_trade_cost=float(expected_trade_cost),
+            )
+        )
+        executed_targets[subject_id] = PortfolioTarget(
+            subject_id=subject_id,
+            target_weight=float(executed_weight),
+            position_delta=float(delta),
+            target_notional=float(executed_weight * capital_base),
+            entry_allowed=abs(current_weight) > 0.0 or abs(executed_weight) > 0.0,
+            risk_scale=1.0 if target is None else float(target.risk_scale),
+        )
+
+    executed_turnover = sum(abs(item.executed_delta) for item in subject_traces)
+    return executed_targets, RebalanceTrace(
+        desired_turnover=sum(abs(item.desired_delta) for item in subject_traces),
+        executed_turnover=float(executed_turnover),
+        expected_execution_cost=float(
+            executed_turnover
+            * max(float(capital_base), 0.0)
+            * max(float(per_turnover_cost), 0.0)
+        ),
+        subjects=tuple(subject_traces),
     )
 
 

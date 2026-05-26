@@ -13,8 +13,7 @@ The old flow was:
 ```text
 transition budget input
   -> DecisionBacktestInput
-  -> portfolio_trade_transition.TradeTransitionRequest
-  -> apply_trade_transition()
+  -> portfolio trade transition layer
 ```
 
 This is closer to a portfolio or trade transition policy than to a simple
@@ -22,8 +21,8 @@ friction assumption.
 
 ## Current Field Shape
 
-The old `friction` object no longer exists in strategy documents, and the direct
-transition budget input was removed from backtest rollout inputs.
+The old `friction` object, direct transition budget input, and standalone
+portfolio trade transition module no longer exist.
 
 ## Field Classification
 
