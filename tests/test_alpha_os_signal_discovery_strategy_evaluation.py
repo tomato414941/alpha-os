@@ -39,7 +39,7 @@ def test_build_range_backtest_dataset_creates_subject_series():
         _bundles_by_subject,
         build_range_backtest_dataset,
     )
-    from alpha_os.store import EvaluationSnapshot
+    from alpha_os.evaluation_snapshot import EvaluationSnapshot
 
     snapshots = [
         EvaluationSnapshot(
@@ -178,7 +178,7 @@ def test_build_signal_discovery_strategy_evaluation_metric_group_results_uses_ex
         ScreeningPolicy,
         ScreeningResult,
     )
-    from alpha_os.store import EvaluationSnapshot
+    from alpha_os.evaluation_snapshot import EvaluationSnapshot
 
     captured = {}
 
@@ -313,7 +313,7 @@ def test_build_signal_discovery_strategy_evaluation_metric_group_results_uses_sn
         ScreeningPolicy,
         ScreeningResult,
     )
-    from alpha_os.store import EvaluationSnapshot
+    from alpha_os.evaluation_snapshot import EvaluationSnapshot
 
     captured = {}
 

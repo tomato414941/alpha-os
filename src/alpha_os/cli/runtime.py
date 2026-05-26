@@ -131,7 +131,6 @@ COMMAND_HANDLERS: dict[str, CommandHandler] = {
 COMMAND_HANDLERS.update(
     {
         "inspect-runtime-resources": _legacy.cmd_inspect_runtime_resources,
-        "debug-status": _legacy.cmd_status,
     }
 )
 

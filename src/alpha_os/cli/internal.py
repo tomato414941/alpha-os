@@ -10,21 +10,12 @@ from pathlib import Path
 from ..cli_output import (
     print_evaluation_cases,
     print_evaluation_specs,
-    format_snapshot_replay_artifacts,
-    print_evaluation_snapshot,
-    print_signal_competition_summary,
-    print_signal_details,
-    print_signal_metric,
     print_signal_discovery_specs,
-    print_meta_aggregation_comparison,
-    print_meta_prediction_metrics,
-    print_meta_predictions,
     print_observables,
     print_portfolio_decisions,
     print_signal_specs,
     print_subject_set_backend_checks,
     print_subject_sets,
-    print_target_summaries,
 )
 from ..evaluation_application import (
     run_evaluation_use_case,
@@ -41,29 +32,14 @@ from ..strategy_variant import (
     strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
 from ..observables import ObservableDefinition
-from ..evaluation_runtime import (
-    apply_evaluation,
-    apply_evaluations_batch,
-    update_evaluation_state,
-)
-from ..evaluation_generation import (
-    generate_evaluation_input_from_signal_noise,
-    generate_evaluation_inputs_from_signal_noise,
-    write_evaluation_input,
-    write_evaluation_inputs,
-)
 from ..config import (
     DEFAULT_SIGNAL_NOISE_BASE_URL,
-    DEFAULT_SUBJECT_ID,
-    DEFAULT_TARGET,
     default_runtime_asset,
     load_runtime_config,
 )
 from ..signal_registry import (
-    SignalDefinition,
     SignalSpec,
     build_signal_spec,
-    executable_signal_from_document,
 )
 from ..signal_generator import (
     SignalDiscoveryGenerationSpec,
@@ -71,12 +47,6 @@ from ..signal_generator import (
     materialize_signal_specs,
 )
 from ..signal_discovery import SignalDiscoverySpec
-from ..evaluation_inputs import (
-    EvaluationInput,
-    load_evaluation_input,
-    load_evaluation_inputs,
-)
-from ..meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
 from ..portfolio_decision import (
     InstrumentSpec,
     ObservationSpec,
@@ -91,7 +61,6 @@ from ..portfolio_decision import (
 from ..portfolio_decision_service import (
     apply_decision_output_constraints,
     RuntimeDecisionBuildConfig,
-    build_portfolio_decision_input,
     build_portfolio_decision_input_from_compressed_belief,
     build_runtime_portfolio_state,
     persist_portfolio_decision_output,
@@ -105,9 +74,6 @@ from ..portfolio_sizing_policy import (
 )
 from ..observation_adapters import resolve_observation_metadata
 from ..store import EvaluationStore, _utc_now
-from ..subject_set_backfill_service import (
-    resolve_subject_set_for_build,
-)
 from ..trading_strategy import (
     TradingStrategySpec,
 )
@@ -124,6 +90,9 @@ class _RuntimeManifestCatalogEntry:
     subject_set_count: int
     signal_discovery_count: int
     evaluation_spec_count: int
+
+
+DEFAULT_PRIMARY_AGGREGATION_KIND = "corr_weighted_mean"
 
 
 def _runtime_manifest_dir() -> Path:
@@ -339,75 +308,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_observables.add_argument("--db", type=str, default=None)
     show_observables.add_argument("--limit", type=int, default=50)
 
-    finalize = internal_parser("debug-finalize-observation")
-    finalize.add_argument("--db", type=str, default=None)
-    finalize.add_argument("--date", type=str, required=True)
-    finalize.add_argument("--observation", type=float, required=True)
-    finalize.add_argument("--evaluation-id", type=str, default=None)
-    finalize.add_argument("--target-id", type=str, default=None)
-    finalize.add_argument("--subject-id", type=str, default=None)
-
-    generate_input = internal_parser("debug-generate-evaluation-input")
-    generate_input.add_argument("--db", type=str, default=None)
-    generate_input.add_argument("--date", type=str, required=True)
-    generate_input.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    generate_input.add_argument("--out", type=str, required=True)
-    generate_input.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-
-    generate_inputs = internal_parser("debug-generate-evaluation-inputs")
-    generate_inputs.add_argument("--db", type=str, default=None)
-    generate_inputs.add_argument("--start-date", type=str, required=True)
-    generate_inputs.add_argument("--end-date", type=str, required=True)
-    generate_inputs.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    generate_inputs.add_argument("--out", type=str, required=True)
-    generate_inputs.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-
-    backfill = internal_parser("debug-apply-backfill")
-    backfill.add_argument("--db", type=str, default=None)
-    backfill.add_argument("--start-date", type=str, required=True)
-    backfill.add_argument("--end-date", type=str, required=True)
-    backfill.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    backfill.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-    backfill.add_argument(
-        "--out",
-        type=str,
-        default=None,
-        help="Optional path to write the generated evaluation-input JSON array",
-    )
-
-    backfill_many = internal_parser("debug-apply-signal-candidates-backfill")
-    backfill_many.add_argument("--db", type=str, default=None)
-    backfill_many.add_argument("--start-date", type=str, required=True)
-    backfill_many.add_argument("--end-date", type=str, required=True)
-    backfill_many.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        type=str,
-        action="append",
-        dest="signal_id",
-        required=True,
-        help="Repeat to include multiple signals",
-    )
-    backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-
     run_evaluation = sub.add_parser(
         "run-evaluation",
         help="Execute one evaluation spec",
@@ -445,25 +345,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     run_walk_forward_evaluation.add_argument("--details", action="store_true")
 
-    inspect_subject_set = internal_parser("inspect-subject-set")
-    inspect_subject_set.add_argument("--db", type=str, default=None)
-    inspect_subject_set.add_argument("--subject-set-id", type=str, default=None)
-    inspect_subject_set.add_argument("--portfolio-id", type=str, default=None)
-    inspect_subject_set.add_argument("--target-id", type=str, default=None)
-    inspect_subject_set.add_argument("--evaluation-limit", type=int, default=5)
-    inspect_subject_set.add_argument("--prediction-limit", type=int, default=5)
-    inspect_subject_set.add_argument("--decision-limit", type=int, default=10)
-    inspect_subject_set.add_argument("--details", action="store_true")
-
-    status = internal_parser("debug-status")
-    status.add_argument("--db", type=str, default=None)
-    status.add_argument("--subject-set-id", type=str, default=None)
-
-    compare_meta = internal_parser("debug-compare-meta-aggregations")
-    compare_meta.add_argument("--db", type=str, default=None)
-    compare_meta.add_argument("--target-id", type=str, default=None)
-    compare_meta.add_argument("--subject-set-id", type=str, default=None)
-
     register_subject_set = internal_parser("debug-register-subject-set")
     register_subject_set.add_argument("--db", type=str, default=None)
     register_subject_set.add_argument("--subject-set-id", type=str, required=True)
@@ -498,12 +379,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     _add_decide_portfolio_arguments(
         build_decision,
         require_compressed_belief=True,
-    )
-
-    debug_build_decision = internal_parser("debug-decide-portfolio-runtime")
-    _add_decide_portfolio_arguments(
-        debug_build_decision,
-        require_compressed_belief=False,
     )
 
     show_decisions = internal_parser("debug-show-portfolio-decisions")
@@ -603,73 +478,6 @@ def _runtime_store(db_path: str | None) -> Iterator[tuple[object, EvaluationStor
         yield cfg, store
     finally:
         store.close()
-
-
-def _active_signal_definition(
-    store: EvaluationStore,
-    *,
-    signal_id: str,
-) -> SignalDefinition:
-    signal = store.get_signal(signal_id)
-    if signal is None:
-        raise ValueError(f"signal must exist before generation: {signal_id}")
-    if signal.definition is None:
-        raise ValueError(
-            f"signal does not define an executable generation rule: {signal_id}"
-        )
-    return SignalDefinition.from_document(
-        signal_id=signal.signal_id,
-        document=signal.definition,
-        asset=signal.asset,
-    )
-
-
-def _executable_signal(
-    store: EvaluationStore,
-    *,
-    signal_id: str,
-):
-    store.ensure_schema()
-    signal = store.get_signal(signal_id)
-    if signal is None:
-        raise ValueError(f"signal must exist before execution: {signal_id}")
-    return executable_signal_from_document(
-        signal_id=signal.signal_id,
-        asset=signal.asset,
-        document=signal.definition,
-        target_id=signal.target_id,
-    )
-
-
-def _generate_backfill_inputs_for_signal(
-    store: EvaluationStore,
-    *,
-    signal_id: str,
-    start_date: str,
-    end_date: str,
-    base_url: str,
-) -> list[EvaluationInput]:
-    definition = _active_signal_definition(
-        store,
-        signal_id=signal_id,
-    )
-    return generate_evaluation_inputs_from_signal_noise(
-        start_date=start_date,
-        end_date=end_date,
-        signal_id=signal_id,
-        base_url=base_url,
-        definition=definition,
-    )
-
-
-def _unique_signal_ids(values: list[str]) -> list[str]:
-    seen: set[str] = set()
-    ordered: list[str] = []
-    for value in values:
-        if value not in seen:
-            seen.add(value)
-            ordered.append(value)
-    return ordered
 
 
 def _portfolio_decision_assumptions_from_args(
@@ -1116,11 +924,19 @@ def _resolved_subject_set_for_decision_build(
     args: argparse.Namespace,
     trading_strategy: TradingStrategySpec | None,
 ) -> SubjectSet | None:
-    subject_set = resolve_subject_set_for_build(
-        store,
-        args,
-        inline_subject_set=_subject_set_from_args(args),
-    )
+    subject_set_id = None if args.subject_set_id is None else str(args.subject_set_id).strip()
+    inline_subject_set = _subject_set_from_args(args)
+    if subject_set_id and inline_subject_set is not None:
+        raise ValueError("subject-set-id and subject-binding cannot be used together")
+    if subject_set_id:
+        state = store.get_subject_set(subject_set_id)
+        if state is None:
+            raise ValueError(f"unknown subject set: {subject_set_id}")
+        subject_set = state.definition
+    else:
+        subject_set = inline_subject_set
+    if subject_set is not None:
+        validate_subject_set_universe_contract(subject_set)
     if subject_set is not None:
         return subject_set
     if args.subject_id is not None:
@@ -1224,98 +1040,6 @@ def _ensure_subject_set_backend_available(
     raise ValueError(f"subject set contains unavailable backend observations: {joined}")
 
 
-def _latest_snapshot_for_subjects(
-    store: EvaluationStore,
-    *,
-    subject_ids: tuple[str, ...],
-) -> object | None:
-    if not subject_ids:
-        snapshots = store.list_evaluation_snapshots(limit=1)
-        return snapshots[0] if snapshots else None
-    for snapshot in store.list_evaluation_snapshots(limit=200):
-        if snapshot.subject_id in subject_ids:
-            return snapshot
-    return None
-
-
-def _list_signals_for_subjects(
-    store: EvaluationStore,
-    *,
-    subject_ids: tuple[str, ...],
-    default_subject_id: str,
-) -> list:
-    scoped_subject_ids = subject_ids or (default_subject_id,)
-    signals: list = []
-    for subject_id in scoped_subject_ids:
-        signals.extend(store.list_signals(subject_id=subject_id, target_id=None))
-    return signals
-
-
-def _list_meta_predictions_for_subjects(
-    store: EvaluationStore,
-    *,
-    subject_ids: tuple[str, ...],
-    default_subject_id: str,
-    fallback_assets: tuple[str, ...] = (),
-    limit: int,
-) -> list:
-    scoped_subject_ids = subject_ids or (default_subject_id,)
-    items = []
-    for subject_id in scoped_subject_ids:
-        items.extend(store.list_meta_predictions(subject_id=subject_id, limit=limit))
-    if not items and fallback_assets:
-        for asset in fallback_assets:
-            items.extend(store.list_meta_predictions(asset=asset, limit=limit))
-    ordered = sorted(
-        items,
-        key=lambda item: (item.updated_at, item.evaluation_id, item.aggregation_kind),
-        reverse=True,
-    )
-    return ordered[: max(int(limit), 1)]
-
-
-def _list_meta_metrics_for_subjects(
-    store: EvaluationStore,
-    *,
-    subject_ids: tuple[str, ...],
-    default_subject_id: str,
-    fallback_assets: tuple[str, ...] = (),
-    target_id: str | None = None,
-) -> list:
-    scoped_subject_ids = subject_ids or (default_subject_id,)
-    items = []
-    for subject_id in scoped_subject_ids:
-        items.extend(
-            store.list_meta_prediction_metrics(
-                subject_id=subject_id,
-                target_id=target_id,
-            )
-        )
-    if not items and fallback_assets:
-        for asset in fallback_assets:
-            items.extend(
-                store.list_meta_prediction_metrics(
-                    asset=asset,
-                    target_id=target_id,
-                )
-            )
-    return items
-
-
-def _list_evaluation_snapshots_for_subjects(
-    store: EvaluationStore,
-    *,
-    subject_ids: tuple[str, ...],
-    limit: int,
-) -> list:
-    if not subject_ids:
-        return store.list_evaluation_snapshots(limit=limit)
-    max_limit = max(int(limit), 1)
-    scanned = store.list_evaluation_snapshots(limit=max_limit * max(len(subject_ids), 1) * 20)
-    filtered = [item for item in scanned if item.subject_id in subject_ids]
-    return filtered[:max_limit]
-
-
 def _list_portfolio_decisions_for_subject_set(
     store: EvaluationStore,
     *,
@@ -1341,82 +1065,12 @@ def _list_portfolio_decisions_for_subject_set(
     return filtered[:max_limit]
 
 
-def _resolve_evaluation_input(
-    args: argparse.Namespace,
-    *,
-    default_target_id: str,
-    default_subject_id: str,
-) -> EvaluationInput:
-    if args.input:
-        evaluation_input = load_evaluation_input(args.input)
-        if (
-            args.evaluation_id is not None
-            or args.target_id is not None
-            or args.subject_id is not None
-        ):
-            evaluation_input = EvaluationInput(
-                date=evaluation_input.date,
-                signal_id=evaluation_input.signal_id,
-                prediction=evaluation_input.prediction,
-                observation=evaluation_input.observation,
-                evaluation_id=(
-                    evaluation_input.evaluation_id
-                    if args.evaluation_id is None
-                    else str(args.evaluation_id)
-                ),
-                subject_id=(
-                    evaluation_input.subject_id if args.subject_id is None else str(args.subject_id)
-                ),
-                target_id=(
-                    evaluation_input.target_id if args.target_id is None else str(args.target_id)
-                ),
-                funding_cost_bps=evaluation_input.funding_cost_bps,
-                borrow_fee_bps=evaluation_input.borrow_fee_bps,
-                roll_cost_bps=evaluation_input.roll_cost_bps,
-                contract_multiplier=evaluation_input.contract_multiplier,
-            )
-        return evaluation_input
-
-    required = {
-        "date": args.date,
-        "signal_id": args.signal_id,
-        "prediction": args.prediction,
-        "observation": args.observation,
-    }
-    missing = [name for name, value in required.items() if value is None]
-    if missing:
-        joined = ", ".join(missing)
-        raise ValueError(f"apply-evaluation requires --input or manual values for: {joined}")
-    return EvaluationInput(
-        date=str(args.date),
-        signal_id=str(args.signal_id),
-        prediction=float(args.prediction),
-        observation=float(args.observation),
-        evaluation_id=None if args.evaluation_id is None else str(args.evaluation_id),
-        subject_id=default_subject_id if args.subject_id is None else str(args.subject_id),
-        target_id=default_target_id if args.target_id is None else str(args.target_id),
-    )
-
-
 def cmd_init_db(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
     print(f"Initialized runtime db: {cfg.db_path}")
     print(f"  Subject:  {cfg.default_subject_id}")
     print(f"  Target:   {cfg.target_id}")
-    return 0
-
-
-def cmd_register_signal(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
-        signal, created = store.register_signal(
-            args.signal_id,
-            target_id=target_id,
-        )
-    outcome = "created" if created else "existing"
-    print(f"Signal [{outcome}] {signal.signal_id}")
-    print_signal_details(signal)
     return 0
 
 
@@ -2302,575 +1956,6 @@ def _observable_definition_from_args(args: argparse.Namespace) -> ObservableDefi
     )
 
 
-def cmd_record_prediction(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
-        executable = _executable_signal(store, signal_id=str(args.signal_id))
-        subject_id = executable.subject_id if args.subject_id is None else str(args.subject_id)
-        evaluation_id = args.evaluation_id or _default_evaluation_id(
-            subject_id=subject_id,
-            target_id=target_id,
-            date=args.date,
-        )
-        prediction, created = store.record_prediction(
-            evaluation_id=evaluation_id,
-            signal_id=args.signal_id,
-            prediction_value=args.prediction,
-            subject_id=subject_id,
-            asset=executable.asset,
-            target_id=target_id,
-        )
-    outcome = "created" if created else "existing"
-    print(f"Prediction [{outcome}] {prediction.evaluation_id}")
-    print(f"  Subject:  {subject_id}")
-    print(f"  Asset:    {prediction.asset}")
-    print(f"  Target:   {prediction.target_id}")
-    print(f"  Signal:   {prediction.signal_id}")
-    print(f"  Value:    {prediction.value:.6f}")
-    return 0
-
-
-def cmd_finalize_observation(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
-        subject_id = cfg.default_subject_id if args.subject_id is None else str(args.subject_id)
-        evaluation_id = args.evaluation_id or _default_evaluation_id(
-            subject_id=subject_id,
-            target_id=target_id,
-            date=args.date,
-        )
-        observation, created = store.finalize_observation(
-            evaluation_id=evaluation_id,
-            observation_value=args.observation,
-            subject_id=subject_id,
-            asset=default_runtime_asset(subject_id),
-            target_id=target_id,
-        )
-    outcome = "created" if created else "existing"
-    print(f"Observation [{outcome}] {observation.evaluation_id}")
-    print(f"  Subject:  {subject_id}")
-    print(f"  Asset:    {observation.asset}")
-    print(f"  Target:   {observation.target_id}")
-    print(f"  Value:    {observation.value:.6f}")
-    return 0
-
-
-def cmd_update_state(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        target_id = cfg.target_id if args.target_id is None else str(args.target_id)
-        executable = _executable_signal(store, signal_id=str(args.signal_id))
-        subject_id = executable.subject_id if args.subject_id is None else str(args.subject_id)
-        evaluation_id = args.evaluation_id or _default_evaluation_id(
-            subject_id=subject_id,
-            target_id=target_id,
-            date=args.date,
-        )
-        snapshot, created = update_evaluation_state(
-            store,
-            evaluation_id=evaluation_id,
-            signal_id=args.signal_id,
-            subject_id=subject_id,
-            target_id=target_id,
-        )
-        metric = store.get_signal_metric(args.signal_id)
-    print_evaluation_snapshot(snapshot, created=created)
-    print_signal_metric(metric)
-    return 0
-
-
-def cmd_generate_evaluation_input(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        definition = _active_signal_definition(
-            store,
-            signal_id=args.signal_id,
-        )
-    evaluation_input = generate_evaluation_input_from_signal_noise(
-        date=args.date,
-        signal_id=args.signal_id,
-        base_url=args.base_url,
-        definition=definition,
-    )
-    output_path = write_evaluation_input(args.out, evaluation_input)
-    print(f"Generated evaluation input: {output_path}")
-    print(f"  Subject:  {evaluation_input.subject_id}")
-    print(f"  Target:   {evaluation_input.target_id}")
-    print(f"  Date:     {evaluation_input.date}")
-    print(f"  Signal:   {evaluation_input.signal_id}")
-    print(
-        f"  Signal:   pred={evaluation_input.prediction:.6f} obs={evaluation_input.observation:.6f}"
-    )
-    return 0
-
-
-def cmd_generate_evaluation_inputs(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        store.ensure_schema()
-        definition = _active_signal_definition(
-            store,
-            signal_id=args.signal_id,
-        )
-    evaluation_inputs = generate_evaluation_inputs_from_signal_noise(
-        start_date=args.start_date,
-        end_date=args.end_date,
-        signal_id=args.signal_id,
-        base_url=args.base_url,
-        definition=definition,
-    )
-    output_path = write_evaluation_inputs(args.out, evaluation_inputs)
-    print(f"Generated evaluation inputs: {output_path}")
-    print(f"  Count:    {len(evaluation_inputs)}")
-    if evaluation_inputs:
-        print(f"  Subject:  {evaluation_inputs[0].subject_id}")
-        print(f"  Target:   {evaluation_inputs[0].target_id}")
-        print(f"  Range:    {evaluation_inputs[0].date} -> {evaluation_inputs[-1].date}")
-    else:
-        print(f"  Subject:  {DEFAULT_SUBJECT_ID}")
-        print(f"  Target:   {DEFAULT_TARGET}")
-    return 0
-
-
-def cmd_apply_evaluation(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        default_subject_id = (
-            cfg.default_subject_id
-            if args.signal_id is None
-            else _executable_signal(store, signal_id=str(args.signal_id)).subject_id
-        )
-        evaluation_input = _resolve_evaluation_input(
-            args,
-            default_target_id=cfg.target_id,
-            default_subject_id=default_subject_id,
-        )
-        input_source = "json_file" if args.input else "manual"
-        evaluation_id = evaluation_input.evaluation_id or _default_evaluation_id(
-            subject_id=evaluation_input.subject_id,
-            target_id=evaluation_input.target_id,
-            date=evaluation_input.date,
-        )
-        snapshot, created = apply_evaluation(
-            store,
-            evaluation_id=evaluation_id,
-            signal_id=evaluation_input.signal_id,
-            prediction_value=evaluation_input.prediction,
-            observation_value=evaluation_input.observation,
-            target_id=evaluation_input.target_id,
-            subject_id=evaluation_input.subject_id,
-            input_source=input_source,
-            funding_cost_bps=evaluation_input.funding_cost_bps,
-            borrow_fee_bps=evaluation_input.borrow_fee_bps,
-            roll_cost_bps=evaluation_input.roll_cost_bps,
-            contract_multiplier=evaluation_input.contract_multiplier,
-        )
-        metric = store.get_signal_metric(evaluation_input.signal_id)
-    print_evaluation_snapshot(snapshot, created=created)
-    print_signal_metric(metric)
-    return 0
-
-
-def cmd_apply_evaluations(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    evaluation_inputs = load_evaluation_inputs(args.input)
-    return _apply_evaluation_inputs(
-        cfg.db_path,
-        evaluation_inputs,
-        input_source="json_batch",
-    )
-
-
-def _apply_evaluation_inputs(
-    db_path: Path,
-    evaluation_inputs: list[EvaluationInput],
-    *,
-    input_source: str,
-    input_range_start: str | None = None,
-    input_range_end: str | None = None,
-) -> int:
-    with _runtime_store(str(db_path)) as (_cfg, store):
-        latest_snapshot, created_count, existing_count = apply_evaluations_batch(
-            store,
-            evaluation_inputs=evaluation_inputs,
-            input_source=input_source,
-            input_range_start=input_range_start,
-            input_range_end=input_range_end,
-        )
-        if evaluation_inputs:
-            latest_metric = store.get_signal_metric(evaluation_inputs[-1].signal_id)
-        else:
-            latest_metric = None
-
-    print(
-        "Batch complete: "
-        f"evaluations={len(evaluation_inputs)} created={created_count} existing={existing_count}"
-    )
-    if latest_snapshot is not None:
-        print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.signal_id}")
-        print_signal_metric(latest_metric)
-    return 0
-
-
-def cmd_apply_backfill(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        evaluation_inputs = _generate_backfill_inputs_for_signal(
-            store,
-            signal_id=args.signal_id,
-            start_date=args.start_date,
-            end_date=args.end_date,
-            base_url=args.base_url,
-        )
-    if args.out is not None:
-        output_path = write_evaluation_inputs(args.out, evaluation_inputs)
-        print(f"Wrote evaluation inputs: {output_path}")
-    return _apply_evaluation_inputs(
-        cfg.db_path,
-        evaluation_inputs,
-        input_source="signal_noise_backfill",
-        input_range_start=args.start_date,
-        input_range_end=args.end_date,
-    )
-
-
-def cmd_apply_signals_backfill(args: argparse.Namespace) -> int:
-    signal_ids = _unique_signal_ids(args.signal_id)
-
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        all_evaluation_inputs: list[EvaluationInput] = []
-        for signal_id in signal_ids:
-            evaluation_inputs = _generate_backfill_inputs_for_signal(
-                store,
-                signal_id=signal_id,
-                start_date=args.start_date,
-                end_date=args.end_date,
-                base_url=args.base_url,
-            )
-            all_evaluation_inputs.extend(evaluation_inputs)
-        latest_snapshot, created_count, existing_count = apply_evaluations_batch(
-            store,
-            evaluation_inputs=all_evaluation_inputs,
-            input_source="signal_noise_backfill",
-            input_range_start=args.start_date,
-            input_range_end=args.end_date,
-        )
-        print(
-            "Batch complete: "
-            f"signals={len(signal_ids)} "
-            f"evaluations={len(all_evaluation_inputs)} "
-            f"created={created_count} existing={existing_count}"
-        )
-        if latest_snapshot is not None:
-            print(f"  Latest:   {latest_snapshot.evaluation_id} / {latest_snapshot.signal_id}")
-        print_signal_competition_summary(
-            store,
-            signal_ids=signal_ids,
-        )
-    return 0
-
-
-def cmd_status(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        subject_set, scoped_subject_ids = _resolved_subject_set_scope(
-            store,
-            subject_set_id=args.subject_set_id,
-        )
-        signals = _list_signals_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-        )
-        metrics = (
-            []
-            if not signals
-            else store.list_signal_metrics(signal_ids=[item.signal_id for item in signals])
-        )
-        latest = _latest_snapshot_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-        )
-    finally:
-        store.close()
-
-    print("alpha-os status")
-    print(f"  DB:       {Path(cfg.db_path)}")
-    if subject_set is None:
-        print(f"  Subject:  {cfg.default_subject_id}")
-    else:
-        print(f"  SubjectSet: {subject_set.subject_set_id}")
-        print("  Subjects: " + ", ".join(subject_set.subject_ids))
-        print("  Assets:   " + ", ".join(binding.asset for binding in subject_set.bindings))
-    print("  Targets:  all")
-    if latest is None and not signals:
-        print("  Latest:   no evaluations recorded")
-        return 0
-    if latest is not None:
-        print(f"  Latest:   {latest.evaluation_id} / {latest.signal_id}")
-    else:
-        print("  Latest:   no evaluations recorded")
-    total = len(signals)
-    print(f"  Signal:   total={total}")
-    tracked = len(metrics)
-    mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
-    mmcs = [item.mmc for item in metrics if item.mmc is not None]
-    mean_mmc_text = "n/a" if not mmcs else f"{sum(mmcs) / len(mmcs):.6f}"
-    print(f"  Metrics:  tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}")
-    print_target_summaries(
-        signals,
-        {item.signal_id: item for item in metrics},
-    )
-    return 0
-
-
-def cmd_inspect_subject_set(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        subject_set, scoped_subject_ids = _resolved_subject_set_scope(
-            store,
-            subject_set_id=args.subject_set_id,
-        )
-        signals = _list_signals_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-        )
-        metrics = (
-            []
-            if not signals
-            else store.list_signal_metrics(signal_ids=[item.signal_id for item in signals])
-        )
-        latest = _latest_snapshot_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-        )
-        snapshots = _list_evaluation_snapshots_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            limit=int(args.evaluation_limit),
-        )
-        fallback_assets = (
-            () if subject_set is None else tuple(binding.asset for binding in subject_set.bindings)
-        )
-        meta_predictions = _list_meta_predictions_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-            fallback_assets=fallback_assets,
-            limit=int(args.prediction_limit),
-        )
-        meta_metrics = _list_meta_metrics_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-            fallback_assets=fallback_assets,
-            target_id=None if args.target_id is None else str(args.target_id),
-        )
-        decisions = _list_portfolio_decisions_for_subject_set(
-            store,
-            portfolio_id=None if args.portfolio_id is None else str(args.portfolio_id),
-            subject_set=subject_set,
-            target_id=None if args.target_id is None else str(args.target_id),
-            aggregation_kind=None,
-            limit=int(args.decision_limit),
-        )
-    finally:
-        store.close()
-
-    print("alpha-os subject-set inspection")
-    print(f"  DB:       {Path(cfg.db_path)}")
-    if subject_set is None:
-        print(f"  Subject:  {cfg.default_subject_id}")
-    else:
-        print(f"  SubjectSet: {subject_set.subject_set_id}")
-        print("  Subjects: " + ", ".join(subject_set.subject_ids))
-        print("  Assets:   " + ", ".join(binding.asset for binding in subject_set.bindings))
-    print("  Status:")
-    if latest is None and not signals:
-        print("    Latest: no evaluations recorded")
-    else:
-        if latest is None:
-            print("    Latest: no evaluations recorded")
-        else:
-            print(f"    Latest: {latest.evaluation_id} / {latest.signal_id}")
-        total = len(signals)
-        print(f"    Signal: total={total}")
-        tracked = len(metrics)
-        mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
-        mmcs = [item.mmc for item in metrics if item.mmc is not None]
-        mean_mmc_text = "n/a" if not mmcs else f"{sum(mmcs) / len(mmcs):.6f}"
-        print(f"    Metrics: tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}")
-        print_target_summaries(
-            signals,
-            {item.signal_id: item for item in metrics},
-        )
-    print("  Evaluations:")
-    if not snapshots:
-        print("    none")
-    else:
-        for snapshot in snapshots:
-            range_text = "-"
-            if snapshot.input_range_start or snapshot.input_range_end:
-                start = snapshot.input_range_start or "-"
-                end = snapshot.input_range_end or "-"
-                range_text = f"{start}->{end}"
-            observation_text = "-"
-            if snapshot.observable_id is not None and snapshot.adapter_kind is not None:
-                observation_text = f"{snapshot.observable_id}@{snapshot.adapter_kind}"
-                if snapshot.observation_spec_id is not None:
-                    observation_text = (
-                        f"{snapshot.observation_spec_id}={snapshot.observable_id}@"
-                        f"{snapshot.adapter_kind}"
-                    )
-            replay_artifacts = format_snapshot_replay_artifacts(snapshot)
-            replay_text = "" if replay_artifacts is None else f" replay={replay_artifacts}"
-            print(
-                f"    {snapshot.evaluation_id} hyp={snapshot.signal_id} "
-                f"source={snapshot.input_source or '-'} observation={observation_text} "
-                f"range={range_text} pred={snapshot.prediction_value:.6f} "
-                f"obs={snapshot.observation_value:.6f} edge={snapshot.signed_edge:.6f}"
-                f"{replay_text}"
-            )
-    print("  Meta:")
-    print_meta_predictions(meta_predictions)
-    print_meta_prediction_metrics(meta_metrics)
-    print("  Decisions:")
-    print_portfolio_decisions(decisions, show_details=bool(args.details))
-    return 0
-
-
-def cmd_show_evaluations(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        subject_set, scoped_subject_ids = _resolved_subject_set_scope(
-            store,
-            subject_set_id=args.subject_set_id,
-        )
-        snapshots = _list_evaluation_snapshots_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            limit=args.limit,
-        )
-    finally:
-        store.close()
-
-    print("alpha-os evaluations")
-    print(f"  DB:       {Path(cfg.db_path)}")
-    if subject_set is None:
-        print(f"  Subject:  {cfg.default_subject_id}")
-    else:
-        print(f"  SubjectSet: {subject_set.subject_set_id}")
-        print("  Subjects: " + ", ".join(subject_set.subject_ids))
-        print("  Assets:   " + ", ".join(binding.asset for binding in subject_set.bindings))
-    print(f"  Count:    {len(snapshots)}")
-    for snapshot in snapshots:
-        range_text = "-"
-        if snapshot.input_range_start or snapshot.input_range_end:
-            start = snapshot.input_range_start or "-"
-            end = snapshot.input_range_end or "-"
-            range_text = f"{start}->{end}"
-        observation_text = "-"
-        if snapshot.observable_id is not None and snapshot.adapter_kind is not None:
-            observation_text = f"{snapshot.observable_id}@{snapshot.adapter_kind}"
-            if snapshot.observation_spec_id is not None:
-                observation_text = (
-                    f"{snapshot.observation_spec_id}={snapshot.observable_id}@"
-                    f"{snapshot.adapter_kind}"
-                )
-        replay_artifacts = format_snapshot_replay_artifacts(snapshot)
-        replay_text = "" if replay_artifacts is None else f" replay={replay_artifacts}"
-        print(
-            f"  {snapshot.evaluation_id} "
-            f"hyp={snapshot.signal_id} "
-            f"source={snapshot.input_source or '-'} "
-            f"observation={observation_text} "
-            f"range={range_text} "
-            f"pred={snapshot.prediction_value:.6f} "
-            f"obs={snapshot.observation_value:.6f} "
-            f"edge={snapshot.signed_edge:.6f}"
-            f"{replay_text}"
-        )
-    return 0
-
-
-def cmd_show_meta_predictions(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        subject_set, scoped_subject_ids = _resolved_subject_set_scope(
-            store,
-            subject_set_id=args.subject_set_id,
-        )
-        fallback_assets = (
-            () if subject_set is None else tuple(binding.asset for binding in subject_set.bindings)
-        )
-        meta_predictions = _list_meta_predictions_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-            fallback_assets=fallback_assets,
-            limit=args.limit,
-        )
-        meta_metrics = _list_meta_metrics_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-            fallback_assets=fallback_assets,
-        )
-    finally:
-        store.close()
-
-    print(f"  DB:       {Path(cfg.db_path)}")
-    if subject_set is None:
-        print(f"  Subject:  {cfg.default_subject_id}")
-    else:
-        print(f"  SubjectSet: {subject_set.subject_set_id}")
-        print("  Subjects: " + ", ".join(subject_set.subject_ids))
-        print("  Assets:   " + ", ".join(binding.asset for binding in subject_set.bindings))
-    print_meta_predictions(meta_predictions)
-    print_meta_prediction_metrics(meta_metrics)
-    return 0
-
-
-def cmd_compare_meta_aggregations(args: argparse.Namespace) -> int:
-    cfg = load_runtime_config(db_path=args.db)
-    store = EvaluationStore(cfg.db_path)
-    try:
-        store.ensure_schema()
-        subject_set, scoped_subject_ids = _resolved_subject_set_scope(
-            store,
-            subject_set_id=args.subject_set_id,
-        )
-        fallback_assets = (
-            () if subject_set is None else tuple(binding.asset for binding in subject_set.bindings)
-        )
-        metrics = _list_meta_metrics_for_subjects(
-            store,
-            subject_ids=scoped_subject_ids,
-            default_subject_id=cfg.default_subject_id,
-            fallback_assets=fallback_assets,
-            target_id=None if args.target_id is None else str(args.target_id),
-        )
-    finally:
-        store.close()
-
-    print(f"  DB:       {Path(cfg.db_path)}")
-    if subject_set is None:
-        print(f"  Subject:  {cfg.default_subject_id}")
-    else:
-        print(f"  SubjectSet: {subject_set.subject_set_id}")
-        print("  Subjects: " + ", ".join(subject_set.subject_ids))
-        print("  Assets:   " + ", ".join(binding.asset for binding in subject_set.bindings))
-    print_meta_aggregation_comparison(metrics)
-    return 0
-
-
 def cmd_register_subject_set(args: argparse.Namespace) -> int:
     cfg = load_runtime_config(db_path=args.db)
     subject_set = _subject_set_from_args(args)
@@ -3624,98 +2709,6 @@ def cmd_decide_portfolio(args: argparse.Namespace) -> int:
         )
 
 
-def cmd_debug_decide_portfolio_runtime(args: argparse.Namespace) -> int:
-    with _runtime_store(args.db) as (cfg, store):
-        store.ensure_schema()
-        trading_strategy = _resolved_trading_strategy_for_args(store, args)
-        target_id = _resolved_target_id_for_decision_build(
-            cfg,
-            args,
-            trading_strategy=trading_strategy,
-        )
-        subject_set = _resolved_subject_set_for_decision_build(
-            store,
-            args=args,
-            trading_strategy=trading_strategy,
-        )
-        if args.subject_id is None:
-            if subject_set is not None and subject_set.bindings:
-                subject_id = subject_set.bindings[0].subject_id
-                runtime_asset = subject_set.bindings[0].asset
-            else:
-                subject_id = cfg.default_subject_id
-                runtime_asset = default_runtime_asset(subject_id)
-        else:
-            subject_id = str(args.subject_id)
-            runtime_asset = default_runtime_asset(subject_id)
-        subject_ids = tuple(
-            dict.fromkeys((subject_id,) + (() if subject_set is None else subject_set.subject_ids))
-        )
-        assumptions = _portfolio_decision_assumptions_from_args(
-            args,
-            subject_ids=subject_ids,
-            trading_strategy=trading_strategy,
-        )
-        config = RuntimeDecisionBuildConfig(
-            aggregation_kind=str(args.aggregation_kind),
-            risk_window=int(args.risk_window),
-            subject_set=subject_set,
-        )
-        portfolio_state = build_runtime_portfolio_state(
-            store,
-            portfolio_id=str(args.portfolio_id),
-            aggregation_kind=config.aggregation_kind,
-        )
-        portfolio_state = _portfolio_state_from_args(portfolio_state, args)
-        decision_input = build_portfolio_decision_input(
-            store,
-            runtime_asset=runtime_asset,
-            target_id=target_id,
-            portfolio_id=str(args.portfolio_id),
-            subject_id=subject_id,
-            portfolio_state=portfolio_state,
-            config=config,
-            assumptions=assumptions,
-        )
-        if decision_input is None:
-            raise ValueError("portfolio decision could not be built from current runtime state")
-        portfolio_construction = _portfolio_construction_for_decision_strategy(
-            trading_strategy=trading_strategy,
-            base=_portfolio_construction_for_decision_args(
-                args=args,
-                base=None,
-            ),
-        )
-        sizing_spec = _resolved_decision_sizing_spec(
-            args=args,
-            trading_strategy=trading_strategy,
-            base=portfolio_construction,
-        )
-        portfolio_construction = _portfolio_construction_with_sizing_spec(
-            portfolio_construction,
-            sizing_spec=sizing_spec,
-        )
-        sizing_policy = _portfolio_sizing_policy_from_spec(sizing_spec)
-        return _run_portfolio_decision_from_input(
-            store=store,
-            cfg=cfg,
-            target_id=target_id,
-            runtime_asset=runtime_asset,
-            subject_id=subject_id,
-            subject_set=subject_set,
-            decision_input=decision_input,
-            portfolio_state=portfolio_state,
-            config=config,
-            assumptions=assumptions,
-            sizing_policy=sizing_policy,
-            sizing_method=sizing_spec.sizing_method,
-            sizing_engine=sizing_spec.sizing_engine,
-            portfolio_id=str(args.portfolio_id),
-            trading_strategy=trading_strategy,
-            portfolio_construction=portfolio_construction,
-        )
-
-
 def _portfolio_sizing_policy_from_args(
     args: argparse.Namespace,
 ) -> (
@@ -3857,22 +2850,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_register_observable(args)
         if args.command == "debug-show-observables":
             return cmd_show_observables(args)
-        if args.command == "debug-finalize-observation":
-            return cmd_finalize_observation(args)
-        if args.command == "debug-generate-evaluation-input":
-            return cmd_generate_evaluation_input(args)
-        if args.command == "debug-generate-evaluation-inputs":
-            return cmd_generate_evaluation_inputs(args)
-        if args.command == "debug-apply-backfill":
-            return cmd_apply_backfill(args)
-        if args.command == "debug-apply-signal-candidates-backfill":
-            return cmd_apply_signals_backfill(args)
-        if args.command == "inspect-subject-set":
-            return cmd_inspect_subject_set(args)
-        if args.command == "debug-status":
-            return cmd_status(args)
-        if args.command == "debug-compare-meta-aggregations":
-            return cmd_compare_meta_aggregations(args)
         if args.command == "debug-register-subject-set":
             return cmd_register_subject_set(args)
         if args.command == "debug-show-subject-sets":
@@ -3881,8 +2858,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_check_subject_set_backend(args)
         if args.command == "decide-portfolio":
             return cmd_decide_portfolio(args)
-        if args.command == "debug-decide-portfolio-runtime":
-            return cmd_debug_decide_portfolio_runtime(args)
         if args.command == "debug-show-portfolio-decisions":
             return cmd_show_portfolio_decisions(args)
     except ValueError as exc:

@@ -4,25 +4,19 @@ import json
 from dataclasses import dataclass
 from dataclasses import asdict
 
-from .config import DEFAULT_SUBJECT_ID, DEFAULT_TARGET, default_runtime_asset
 from .decision_backtest import constrained_targets_by_subject, hold_position_target
-from .meta_aggregation_service import DEFAULT_PRIMARY_AGGREGATION_KIND
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_decision_inputs import (
-    build_runtime_observed_inputs,
     build_runtime_observed_dependence_inputs,
     holding_period_days,
-    merge_observed_inputs,
     portfolio_state_from_decision_details,
     realized_observation_volatility,
     volatility_scaled_market_impact_bps,
 )
 from .portfolio_decision import (
     CostInput,
-    DependenceInput,
     HistoricalReturnInput,
     ModelUncertaintyInput,
-    ObservationSpec,
     ObservedPortfolioInputs,
     PortfolioDecisionInput,
     PortfolioDecisionAssumptions,
@@ -31,17 +25,12 @@ from .portfolio_decision import (
     PortfolioState,
     PortfolioTarget,
     RiskInput,
-    SubjectObservationBinding,
     SubjectSet,
     PredictiveSignalInput,
     UncertaintyInput,
 )
 from .trading_strategy import TradingStrategySpec
-from .portfolio_sizing_policy import (
-    PortfolioSizingPolicy,
-    apply_portfolio_sizing_policy,
-)
-from .store import EvaluationStore, MetaPredictionMetricState, MetaPredictionState
+from .store import EvaluationStore
 from .universe_contract import validate_subject_set_universe_contract
 
 
@@ -76,147 +65,10 @@ def _trading_strategy_trace_document(
 
 @dataclass(frozen=True)
 class RuntimeDecisionBuildConfig:
-    aggregation_kind: str = DEFAULT_PRIMARY_AGGREGATION_KIND
+    aggregation_kind: str = "corr_weighted_mean"
     risk_window: int = 20
     dependence_window: int = 20
     subject_set: SubjectSet | None = None
-
-
-def build_portfolio_decision_input(
-    store: EvaluationStore,
-    *,
-    runtime_asset: str | None = None,
-    target_id: str = DEFAULT_TARGET,
-    portfolio_id: str | None = None,
-    subject_id: str | None = None,
-    portfolio_state: PortfolioState,
-    config: RuntimeDecisionBuildConfig | None = None,
-    assumptions: PortfolioDecisionAssumptions | None = None,
-) -> PortfolioDecisionInput | None:
-    config = config or RuntimeDecisionBuildConfig()
-    assumptions = assumptions or PortfolioDecisionAssumptions()
-    resolved_subject_id = DEFAULT_SUBJECT_ID if subject_id is None else subject_id
-    resolved_runtime_asset = (
-        default_runtime_asset(resolved_subject_id)
-        if runtime_asset is None
-        else runtime_asset
-    )
-    subject_set = _resolved_subject_set(
-        runtime_asset=resolved_runtime_asset,
-        subject_id=resolved_subject_id,
-        configured_subject_set=config.subject_set,
-    )
-    observed_inputs_by_subject = []
-    observed_as_of_values: list[str] = []
-    observation_series_by_subject: dict[str, dict[str, float]] = {}
-    for item in subject_set.bindings:
-        meta_prediction = _latest_meta_prediction(
-            store,
-            subject_id=item.subject_id,
-            asset=item.asset,
-            target_id=target_id,
-            aggregation_kind=config.aggregation_kind,
-        )
-        if meta_prediction is None:
-            continue
-        metric = _meta_metric(
-            store,
-            subject_id=item.subject_id,
-            asset=item.asset,
-            target_id=target_id,
-            aggregation_kind=config.aggregation_kind,
-        )
-        realized_vol = _realized_observation_volatility(
-            store,
-            subject_id=item.subject_id,
-            asset=item.asset,
-            target_id=target_id,
-            window_size=config.risk_window,
-        )
-        observed_inputs_by_subject.append(
-            build_runtime_observed_inputs(
-                meta_prediction=meta_prediction,
-                metric=metric,
-                subject_id=item.subject_id,
-                target_id=target_id,
-                aggregation_kind=config.aggregation_kind,
-                risk_window=config.risk_window,
-                realized_volatility=realized_vol,
-            )
-        )
-        observed_as_of_values.append(meta_prediction.updated_at)
-        observation_series = _observation_series_by_date(
-            store,
-            subject_id=item.subject_id,
-            asset=item.asset,
-            target_id=target_id,
-            window_size=max(config.dependence_window, config.risk_window, 60),
-        )
-        if observation_series:
-            observation_series_by_subject[item.subject_id] = observation_series
-    if not observed_inputs_by_subject:
-        return None
-
-    observed_dependence_inputs = _observed_dependence_inputs(
-        store,
-        subject_set=subject_set,
-        target_id=target_id,
-        portfolio_state=portfolio_state,
-        config=config,
-    )
-
-    observed_inputs = merge_observed_inputs(
-        *observed_inputs_by_subject,
-        dependence_inputs=observed_dependence_inputs,
-        historical_return_inputs=_historical_return_inputs(
-            observation_series_by_subject=observation_series_by_subject,
-            subject_ids=subject_set.subject_ids,
-        ),
-    )
-
-    return PortfolioDecisionInput(
-        portfolio_id=portfolio_id,
-        as_of=max(observed_as_of_values),
-        portfolio_state=portfolio_state,
-        observed_inputs=observed_inputs,
-        assumptions=assumptions,
-    )
-
-
-def build_portfolio_decision_output(
-    store: EvaluationStore,
-    *,
-    runtime_asset: str | None = None,
-    target_id: str = DEFAULT_TARGET,
-    portfolio_id: str | None = None,
-    subject_id: str | None = None,
-    portfolio_state: PortfolioState,
-    config: RuntimeDecisionBuildConfig | None = None,
-    assumptions: PortfolioDecisionAssumptions | None = None,
-    sizing_policy: PortfolioSizingPolicy | None = None,
-) -> PortfolioDecisionOutput | None:
-    decision_input = build_portfolio_decision_input(
-        store,
-        runtime_asset=runtime_asset,
-        target_id=target_id,
-        portfolio_id=portfolio_id,
-        subject_id=subject_id,
-        portfolio_state=portfolio_state,
-        config=config,
-        assumptions=assumptions,
-    )
-    if decision_input is None:
-        return None
-    decision_output = apply_portfolio_sizing_policy(
-        decision_input,
-        sizing_policy=sizing_policy,
-    )
-    return PortfolioDecisionOutput(
-        portfolio_id=portfolio_id,
-        as_of=decision_output.as_of,
-        targets=decision_output.targets,
-        sizing_diagnostics=decision_output.sizing_diagnostics,
-    )
 
 
 def build_portfolio_decision_input_from_compressed_belief(
@@ -816,55 +668,6 @@ def _proxy_component_summary(
     }
 
 
-def _latest_meta_prediction(
-    store: EvaluationStore,
-    *,
-    subject_id: str,
-    asset: str,
-    target_id: str,
-    aggregation_kind: str,
-) -> MetaPredictionState | None:
-    items = store.list_meta_predictions(
-        subject_id=subject_id,
-        asset=asset,
-        target_id=target_id,
-        aggregation_kind=aggregation_kind,
-        limit=1,
-    )
-    if not items:
-        items = store.list_meta_predictions(
-            asset=asset,
-            target_id=target_id,
-            aggregation_kind=aggregation_kind,
-            limit=1,
-        )
-    return items[0] if items else None
-
-
-def _meta_metric(
-    store: EvaluationStore,
-    *,
-    subject_id: str,
-    asset: str,
-    target_id: str,
-    aggregation_kind: str,
-) -> MetaPredictionMetricState | None:
-    items = store.list_meta_prediction_metrics(
-        subject_id=subject_id,
-        asset=asset,
-        target_id=target_id,
-    )
-    if not items:
-        items = store.list_meta_prediction_metrics(
-            asset=asset,
-            target_id=target_id,
-        )
-    for item in items:
-        if item.aggregation_kind == aggregation_kind:
-            return item
-    return None
-
-
 def _realized_observation_volatility(
     store: EvaluationStore,
     *,
@@ -881,114 +684,6 @@ def _realized_observation_volatility(
     )
     values = [item.value for item in observations]
     return realized_observation_volatility(values)
-
-
-def _observed_dependence_inputs(
-    store: EvaluationStore,
-    *,
-    subject_set: SubjectSet,
-    target_id: str,
-    portfolio_state: PortfolioState,
-    config: RuntimeDecisionBuildConfig,
-) -> tuple[DependenceInput, ...]:
-    subject_asset_map = subject_set.asset_by_subject
-    observation_series_by_subject: dict[str, dict[str, float]] = {}
-    decision_subject_ids = subject_set.subject_ids
-    for observed_subject_id in {
-        *decision_subject_ids,
-        *(position.subject_id for position in portfolio_state.positions),
-    }:
-        runtime_subject_asset = subject_asset_map.get(observed_subject_id)
-        if runtime_subject_asset is None:
-            continue
-        series = _observation_series_by_date(
-            store,
-            subject_id=observed_subject_id,
-            asset=runtime_subject_asset,
-            target_id=target_id,
-            window_size=config.dependence_window,
-        )
-        if series:
-            observation_series_by_subject[observed_subject_id] = series
-    return build_runtime_observed_dependence_inputs(
-        subject_ids=tuple(
-            subject_id
-            for subject_id in sorted(
-                set(decision_subject_ids)
-                | {
-                    position.subject_id
-                    for position in portfolio_state.positions
-                    if position.subject_id in observation_series_by_subject
-                }
-            )
-        ),
-        observation_series_by_subject=observation_series_by_subject,
-    )
-
-
-def _resolved_subject_set(
-    *,
-    runtime_asset: str,
-    subject_id: str,
-    configured_subject_set: SubjectSet | None,
-) -> SubjectSet:
-    observation_specs: list[ObservationSpec] = [
-        ObservationSpec(
-            observation_spec_id="__runtime__",
-            observable_id="daily_close",
-            source_id="runtime",
-        )
-    ]
-    if configured_subject_set is not None:
-        subject_set_id = configured_subject_set.subject_set_id
-        configured_bindings = configured_subject_set.bindings
-        configured_instruments = configured_subject_set.instruments
-        universe_policy = configured_subject_set.universe_policy
-        configured_primary = next(
-            (
-                item
-                for item in configured_bindings
-                if item.subject_id == subject_id
-            ),
-            None,
-        )
-        for item in configured_subject_set.observation_specs:
-            if item.observation_spec_id == "__runtime__":
-                continue
-            observation_specs.append(item)
-    else:
-        subject_set_id = None
-        configured_bindings = ()
-        configured_instruments = ()
-        configured_primary = None
-        from .portfolio_decision import UniversePolicySpec
-
-        universe_policy = UniversePolicySpec()
-    if configured_primary is None:
-        ordered: list[SubjectObservationBinding] = [
-            SubjectObservationBinding(
-                subject_id=subject_id,
-                asset=runtime_asset,
-                observation_spec_id="__runtime__",
-            )
-        ]
-    else:
-        ordered = [configured_primary]
-    seen_subject_ids = {subject_id}
-    for item in configured_bindings:
-        if item.subject_id in seen_subject_ids:
-            continue
-        ordered.append(item)
-        seen_subject_ids.add(item.subject_id)
-    resolved_subject_set = SubjectSet(
-        subject_set_id=subject_set_id,
-        instruments=tuple(configured_instruments),
-        observation_specs=tuple(observation_specs),
-        bindings=tuple(ordered),
-        universe_policy=universe_policy,
-    )
-    validate_subject_set_universe_contract(resolved_subject_set)
-    return resolved_subject_set
 
 
 def _observation_series_by_date(

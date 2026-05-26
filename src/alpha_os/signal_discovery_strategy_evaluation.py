@@ -40,7 +40,7 @@ from .portfolio_sizing_policy import (
 )
 from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 from .scoring import numerai_corr
-from .store import EvaluationSnapshot
+from .evaluation_snapshot import EvaluationSnapshot
 
 
 @dataclass(frozen=True)
