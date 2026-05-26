@@ -110,7 +110,6 @@ def run_strategy_backtest_from_store(
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
-    turnover_budget: float | None = None,
 ):
     # Temporary DB adapter for legacy evaluation execution paths.
     # Prefer run_strategy_backtest() once strategy and subject set are resolved.
@@ -127,7 +126,6 @@ def run_strategy_backtest_from_store(
         evaluation_date_ranges=evaluation_date_ranges,
         base_url=base_url,
         portfolio_construction=portfolio_construction,
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         feature_plane_repository=feature_plane_repository,
     )
@@ -143,7 +141,6 @@ def run_strategy_backtest(
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
     feature_plane_repository: FeaturePlaneRepository | None,
-    turnover_budget: float | None = None,
 ):
     selection_kind = trading_strategy.selection_kind
     selection_top_k = trading_strategy.portfolio.top_k
@@ -208,7 +205,6 @@ def run_strategy_backtest(
         roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
         contract_multiplier_by_subject=contract_multiplier_by_subject,
         portfolio_construction=portfolio_construction,
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=selection_top_k,
     )

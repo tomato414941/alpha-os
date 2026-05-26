@@ -57,8 +57,6 @@ Decision rule:
   simulator assumptions, but they can also be used by policy-side trade utility.
 - `HoldingCostAssumptionsSpec` carries funding and borrow assumptions. These are
   closer to realized environment costs.
-- `turnover_budget` is a backtest rollout transition control. It is closer to
-  environment or adapter behavior than to realized cost.
 
 The code should not rely on a generic cost object to stand for both expected
 decision cost and realized environment cost.

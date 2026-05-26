@@ -89,7 +89,6 @@ class DecisionBacktestInput:
     bid_ask_spread_bps: float = 0.0
     funding_bps_per_step: float = 0.0
     borrow_fee_bps_per_step: float = 0.0
-    turnover_budget: float | None = None
     rebalance_interval_steps: int = 1
     long_only: bool = False
     direction_mode: str | None = None
@@ -400,7 +399,6 @@ def run_decision_backtest(
                     desired_targets=desired_targets_by_subject,
                     current_weights=state.current_weights,
                     capital_base=state.capital_base,
-                    turnover_budget=backtest_input.turnover_budget,
                     per_turnover_cost=_per_turnover_execution_cost(backtest_input),
                 )
             )

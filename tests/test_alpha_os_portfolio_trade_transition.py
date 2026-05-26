@@ -14,7 +14,7 @@ def _target(subject_id: str, weight: float):
     )
 
 
-def test_trade_transition_scales_deltas_to_turnover_budget():
+def test_trade_transition_executes_desired_deltas():
     from alpha_os.portfolio_trade_transition import (
         TradeTransitionRequest,
         apply_trade_transition,
@@ -28,11 +28,10 @@ def test_trade_transition_scales_deltas_to_turnover_budget():
             },
             current_weights={"A": 0.0, "B": 0.0},
             capital_base=1.0,
-            turnover_budget=0.30,
         )
     )
 
     assert result.trace.desired_turnover == pytest.approx(0.60)
-    assert result.trace.executed_turnover == pytest.approx(0.30)
-    assert result.executed_targets["A"].target_weight == pytest.approx(0.15)
-    assert result.executed_targets["B"].target_weight == pytest.approx(-0.15)
+    assert result.trace.executed_turnover == pytest.approx(0.60)
+    assert result.executed_targets["A"].target_weight == pytest.approx(0.30)
+    assert result.executed_targets["B"].target_weight == pytest.approx(-0.30)

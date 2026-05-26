@@ -16,7 +16,6 @@ class SubjectTradeTransition:
     skipped: bool
     reason: str
     expected_trade_cost: float = 0.0
-    rejected_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -26,7 +25,6 @@ class TradeTransitionTrace:
     turnover_suppression: float
     skipped_trade_count: int
     expected_execution_cost: float
-    turnover_budget: float | None
     subjects: tuple[SubjectTradeTransition, ...]
 
 
@@ -35,12 +33,7 @@ class TradeTransitionRequest:
     desired_targets: dict[str, PortfolioTarget]
     current_weights: dict[str, float]
     capital_base: float
-    turnover_budget: float | None = None
     per_turnover_cost: float = 0.0
-
-    def __post_init__(self) -> None:
-        if self.turnover_budget is not None and self.turnover_budget < 0.0:
-            raise ValueError("trade transition turnover_budget must be >= 0")
 
 
 @dataclass(frozen=True)
@@ -55,10 +48,8 @@ class _TradeTransitionCandidate:
     current_weight: float
     desired_weight: float
     desired_delta: float
-    adjusted_delta: float
     risk_scale: float
     expected_trade_cost: float
-    rejected_reason: str | None
 
 
 def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionResult:
@@ -71,9 +62,8 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
         current_weight = float(request.current_weights.get(subject_id, 0.0))
         desired_weight = current_weight if target is None else float(target.target_weight)
         desired_delta = desired_weight - current_weight
-        adjusted_delta = float(desired_delta)
         expected_trade_cost = _expected_trade_cost(
-            adjusted_delta,
+            desired_delta,
             capital_base=request.capital_base,
             per_turnover_cost=request.per_turnover_cost,
         )
@@ -83,38 +73,22 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
                 current_weight=current_weight,
                 desired_weight=desired_weight,
                 desired_delta=desired_delta,
-                adjusted_delta=adjusted_delta,
                 risk_scale=1.0 if target is None else float(target.risk_scale),
                 expected_trade_cost=expected_trade_cost,
-                rejected_reason=None,
             )
         )
 
     desired_turnover = sum(
         abs(candidate.desired_delta) for candidate in candidates
     )
-    executed_delta_by_subject, budget_rejected_subjects = (
-        _executed_deltas_from_candidates(
-            candidates,
-            turnover_budget=request.turnover_budget,
-        )
-    )
+    executed_delta_by_subject = _executed_deltas_from_candidates(candidates)
 
     executed_targets: dict[str, PortfolioTarget] = {}
     transitions: list[SubjectTradeTransition] = []
     for candidate in candidates:
         executed_delta = executed_delta_by_subject.get(candidate.subject_id, 0.0)
         executed_weight = candidate.current_weight + executed_delta
-        reason = _transition_reason(
-            desired_delta=candidate.desired_delta,
-            adjusted_delta=candidate.adjusted_delta,
-            executed_delta=executed_delta,
-            rejected_reason=(
-                "turnover_budget"
-                if candidate.subject_id in budget_rejected_subjects
-                else candidate.rejected_reason
-            ),
-        )
+        reason = _transition_reason(desired_delta=candidate.desired_delta)
         skipped = abs(executed_delta) == 0.0 and abs(candidate.desired_delta) > 0.0
         transitions.append(
             SubjectTradeTransition(
@@ -127,7 +101,6 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
                 skipped=skipped,
                 reason=reason,
                 expected_trade_cost=candidate.expected_trade_cost,
-                rejected_reason=reason if skipped else None,
             )
         )
         executed_targets[candidate.subject_id] = PortfolioTarget(
@@ -152,7 +125,6 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
             * max(float(request.capital_base), 0.0)
             * max(float(request.per_turnover_cost), 0.0)
         ),
-        turnover_budget=request.turnover_budget,
         subjects=tuple(transitions),
     )
     return TradeTransitionResult(
@@ -163,64 +135,27 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
 
 def _executed_deltas_from_candidates(
     candidates: list[_TradeTransitionCandidate],
-    *,
-    turnover_budget: float | None,
-) -> tuple[dict[str, float], set[str]]:
-    return _budget_scaled_executed_deltas(
-        candidates,
-        turnover_budget=turnover_budget,
-    )
-
-
-def _budget_scaled_executed_deltas(
-    candidates: list[_TradeTransitionCandidate],
-    *,
-    turnover_budget: float | None,
-) -> tuple[dict[str, float], set[str]]:
-    adjusted_turnover = sum(abs(item.adjusted_delta) for item in candidates)
-    budget_scale = 1.0
-    if (
-        turnover_budget is not None
-        and turnover_budget >= 0.0
-        and adjusted_turnover > turnover_budget
-        and adjusted_turnover > 0.0
-    ):
-        budget_scale = float(turnover_budget) / float(adjusted_turnover)
-    return (
-        {
-            item.subject_id: float(item.adjusted_delta * budget_scale)
-            for item in candidates
-        },
-        set(),
-    )
+) -> dict[str, float]:
+    return {
+        item.subject_id: float(item.desired_delta)
+        for item in candidates
+    }
 
 
 def _expected_trade_cost(
-    adjusted_delta: float,
+    weight_delta: float,
     *,
     capital_base: float,
     per_turnover_cost: float,
 ) -> float:
     return float(
-        abs(adjusted_delta)
+        abs(weight_delta)
         * max(float(capital_base), 0.0)
         * max(float(per_turnover_cost), 0.0)
     )
 
 
-def _transition_reason(
-    *,
-    desired_delta: float,
-    adjusted_delta: float,
-    executed_delta: float,
-    rejected_reason: str | None,
-) -> str:
+def _transition_reason(*, desired_delta: float) -> str:
     if abs(desired_delta) == 0.0:
         return "unchanged"
-    if rejected_reason is not None:
-        return rejected_reason
-    if abs(executed_delta) == 0.0:
-        return "turnover_budget"
-    if abs(executed_delta) < abs(adjusted_delta):
-        return "turnover_budget"
     return "executed"

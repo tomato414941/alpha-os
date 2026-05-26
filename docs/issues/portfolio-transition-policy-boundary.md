@@ -2,15 +2,16 @@
 
 ## Problem
 
-Resolved: the persisted `rebalance_friction_policy` object was removed.
+Resolved: the persisted `rebalance_friction_policy` object and direct
+transition budget input were removed.
 
-The current object does not only describe rebalance friction. It controls how a
-desired portfolio target is converted into an executed portfolio target.
+The old object did not only describe rebalance friction. It controlled how a
+desired portfolio target was converted into an executed portfolio target.
 
 The old flow was:
 
 ```text
-turnover_budget
+transition budget input
   -> DecisionBacktestInput
   -> portfolio_trade_transition.TradeTransitionRequest
   -> apply_trade_transition()
@@ -21,12 +22,8 @@ friction assumption.
 
 ## Current Field Shape
 
-The remaining transition control is a backtest rollout input:
-
-- `turnover_budget`
-
-The old `friction` object no longer exists in strategy documents, and these
-controls are no longer strategy portfolio fields.
+The old `friction` object no longer exists in strategy documents, and the direct
+transition budget input was removed from backtest rollout inputs.
 
 ## Field Classification
 
@@ -34,7 +31,7 @@ Initial classification:
 
 | Field | Likely responsibility |
 |---|---|
-| `turnover_budget` | policy / transition constraint |
+| direct action suppression | policy / transition constraint |
 
 `turnover_cost_rate` is represented on `TradingEnvironment`, not on the
 transition controls.
@@ -43,14 +40,13 @@ transition controls.
 
 The strategy or policy produces a desired action.
 
-The transition layer decides what action actually happens after applying
-turnover budgets.
+If a transition layer exists, it decides what action actually happens after
+applying explicit action suppression rules.
 
 The world or environment then applies realized costs and rewards.
 
-The remaining fields directly change the action before costs are charged, so
-they belong to rollout transition handling rather than the strategy portfolio
-shape.
+Action suppression belongs to rollout transition handling rather than the
+strategy portfolio shape.
 
 ## Risk
 
@@ -63,8 +59,8 @@ separate policy object.
 
 ## Direction
 
-No further wrapper object is needed for now. Keep the direct fields until a
-real transition abstraction becomes necessary.
+No further wrapper object is needed for now. Add a transition abstraction only
+when a real execution or action-suppression rule needs one.
 
 ## Close Condition
 

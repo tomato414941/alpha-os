@@ -24,8 +24,7 @@ wrong layer.
 Examples:
 
 - order-style and fill behavior belong to trade/order execution
-- no-trade bands, turnover budgets, and transition utility may belong to
-  portfolio transition or rebalance friction
+- transition utility may belong to portfolio transition or rebalance friction
 - `trainless` / `trained` were implementation values and
   should not be promoted into a target glossary term
 - `backtest_oos` is a current evaluation-spec rigor level, not a run mode

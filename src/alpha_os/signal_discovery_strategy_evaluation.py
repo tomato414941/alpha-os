@@ -206,7 +206,6 @@ def evaluate_range_backtest_dataset_builder(
     subject_set: SubjectSet | None,
     target_id: str,
     portfolio_construction: PortfolioConstructionSpec,
-    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     top_k: int | None,
 ) -> RangeBacktestEvaluationLoopResult:
@@ -223,7 +222,6 @@ def evaluate_range_backtest_dataset_builder(
             target_id=target_id,
             dataset=dataset,
             portfolio_construction=portfolio_construction,
-            turnover_budget=turnover_budget,
             trading_environment=trading_environment,
             top_k=top_k,
         )
@@ -316,7 +314,6 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     metric_window: int,
     portfolio_construction: PortfolioConstructionSpec = PortfolioConstructionSpec(),
-    turnover_budget: float | None = None,
     trading_environment: TradingEnvironment = TradingEnvironment(),
     top_k: int | None = None,
 ) -> StrategyEvaluationResult:
@@ -375,7 +372,6 @@ def build_signal_discovery_strategy_evaluation_metric_group_results(
         subject_set=subject_set,
         target_id=target_id,
         portfolio_construction=portfolio_construction,
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=top_k,
     )
@@ -418,7 +414,6 @@ def build_direct_strategy_evaluation_metric_group_results(
     roll_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
     contract_multiplier_by_subject: dict[str, float] | None = None,
     portfolio_construction: PortfolioConstructionSpec = PortfolioConstructionSpec(),
-    turnover_budget: float | None = None,
     trading_environment: TradingEnvironment = TradingEnvironment(),
     top_k: int | None = None,
     signal_value: float = 1.0,
@@ -444,7 +439,6 @@ def build_direct_strategy_evaluation_metric_group_results(
         subject_set=subject_set,
         target_id=target_id,
         portfolio_construction=portfolio_construction,
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=top_k,
     )
@@ -1105,7 +1099,6 @@ def _run_backtest_variant(
     subject_series: tuple[SubjectBacktestSeries, ...],
     dependence_series: tuple[DependenceBacktestSeries, ...],
     portfolio_construction: PortfolioConstructionSpec,
-    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     top_k: int | None,
 ) -> DecisionBacktestResult:
@@ -1135,7 +1128,6 @@ def _run_backtest_variant(
             bid_ask_spread_bps=trading_environment.bid_ask_spread_bps,
             funding_bps_per_step=trading_environment.funding_bps_per_step,
             borrow_fee_bps_per_step=trading_environment.borrow_fee_bps_per_step,
-            turnover_budget=turnover_budget,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
             long_only=portfolio_construction.long_only,
             direction_mode=portfolio_construction.direction_mode,
@@ -1387,7 +1379,6 @@ def evaluate_range_backtest_variants(
     target_id: str,
     dataset: RangeBacktestDataset,
     portfolio_construction: PortfolioConstructionSpec,
-    turnover_budget: float | None,
     trading_environment: TradingEnvironment,
     top_k: int | None,
 ) -> RangeBacktestVariantResults:
@@ -1398,7 +1389,6 @@ def evaluate_range_backtest_variants(
         subject_series=dataset.subject_series,
         dependence_series=dataset.dependence_series,
         portfolio_construction=portfolio_construction,
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=top_k,
     )
@@ -1415,7 +1405,6 @@ def evaluate_range_backtest_variants(
                 portfolio_construction,
                 rebalance_interval_steps=1,
             ),
-            turnover_budget=turnover_budget,
             trading_environment=trading_environment,
             top_k=top_k,
         )
@@ -1430,7 +1419,6 @@ def evaluate_range_backtest_variants(
             sizing_method="equal_weight",
             sizing_engine="history_based",
         ),
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=top_k,
     )
@@ -1446,7 +1434,6 @@ def evaluate_range_backtest_variants(
             sizing_engine="history_based",
             rebalance_interval_steps=1,
         ),
-        turnover_budget=turnover_budget,
         trading_environment=trading_environment,
         top_k=top_k,
     )
