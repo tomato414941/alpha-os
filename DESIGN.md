@@ -33,10 +33,3 @@ migration. So design work should be judged against this question:
 
 - does the current repo move closer to the target shape while keeping legacy
   isolated from runtime truth?
-
-## Practical Rule
-
-If this file and another design note seem to disagree:
-
-1. prefer the more specific file under `docs/design/`
-2. prefer `README.md` for current runtime entrypoints
