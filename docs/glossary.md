@@ -1,6 +1,6 @@
 # Glossary
 
-## trading strategy (strategy)
+## trading strategy
 
 A policy-like decision component that consumes observations and optional
 strategy state, then produces trading actions and optional next strategy state.
