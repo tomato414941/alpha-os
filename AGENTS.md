@@ -1,15 +1,5 @@
 # alpha-os Agent Guide
 
-## Project
-
-`alpha_os` supports:
-
-- lightweight investment hypothesis research
-- signal, strategy-candidate, and portfolio-construction generation, screening,
-  and constrained optimization
-- strategy candidate backtesting and OOS evaluation
-- promotion, rejection, and baseline decision records
-
 ## Structure
 
 Prefer a modular monolith with vertical slices and AI-readable boundaries.
