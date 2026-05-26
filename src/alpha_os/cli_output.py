@@ -33,7 +33,6 @@ def print_signal_details(signal) -> None:
         print(f"  Lookback: {signal.lookback}")
     if signal.horizon_days is not None:
         print(f"  Horizon:  {signal.horizon_days}d")
-    print(f"  Status:   {signal.status}")
     print(f"  Evals:    {signal.observation_count}")
 
 
@@ -100,7 +99,6 @@ def print_signal_competition_summary(
         print(
             f"  {signal.signal_id} "
             f"kind={kind} observation={observation_text} lookback={lookback} horizon={horizon} "
-            f"status={signal.status} "
             f"corr={0.0 if metric is None else metric.corr:.6f} "
             f"mmc={mmc_text} "
             f"evals={signal.observation_count if metric is None else metric.sample_count} "
@@ -116,8 +114,6 @@ def print_target_summaries(signals, metrics_by_id) -> None:
 
     print("  Targets:")
     for target_id, target_signals in sorted(grouped.items()):
-        active = sum(1 for item in target_signals if item.status == "active")
-        inactive = sum(1 for item in target_signals if item.status == "inactive")
         target_metrics = [
             metrics_by_id[item.signal_id]
             for item in target_signals
@@ -129,7 +125,6 @@ def print_target_summaries(signals, metrics_by_id) -> None:
         mean_mmc_text = "n/a" if not target_mmcs else f"{sum(target_mmcs) / len(target_mmcs):.6f}"
         print(
             f"    {target_id}: total={len(target_signals)} "
-            f"active={active} inactive={inactive} "
             f"tracked={tracked} mean_corr={mean_corr:.6f} mean_mmc={mean_mmc_text}"
         )
 

@@ -313,7 +313,7 @@ Good signals do not automatically imply a good portfolio.
 The runtime should distinguish between:
 
 - many candidate signals
-- many active signals
+- many evaluated signals
 - many effective independent bets
 
 The thing that matters is effective breadth rather than raw count.

@@ -8,7 +8,7 @@ from .config import DEFAULT_SUBJECT_ID, DEFAULT_TARGET, default_runtime_asset
 from .scoring import DEFAULT_METRIC_WINDOW, compute_signal_metrics
 from .store import EvaluationStore
 
-MMC_BASELINE_ACTIVE_PEER_MEAN = "active_peer_mean"
+MMC_BASELINE_PEER_MEAN = "peer_mean"
 
 
 def _utc_now() -> str:
@@ -94,7 +94,6 @@ def refresh_signal_metrics(
         WHERE p.evaluation_id IN ({placeholders})
           AND h.subject_id = ?
           AND h.target_id = ?
-          AND h.status = 'active'
           AND p.signal_id <> ?
         """,
         tuple(evaluation_ids) + (resolved_subject_id, target_id, signal_id),
@@ -107,7 +106,6 @@ def refresh_signal_metrics(
         WHERE p.evaluation_id IN ({placeholders})
           AND h.subject_id = ?
           AND h.target_id = ?
-          AND h.status = 'active'
           AND p.signal_id <> ?
         GROUP BY p.evaluation_id
         ORDER BY p.evaluation_id ASC
@@ -152,7 +150,7 @@ def refresh_signal_metrics(
                 signal_id,
                 metrics.corr,
                 metrics.mmc,
-                MMC_BASELINE_ACTIVE_PEER_MEAN,
+                MMC_BASELINE_PEER_MEAN,
                 int(peer_count),
                 metrics.sample_count,
                 metrics.mmc_sample_count,

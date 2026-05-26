@@ -130,22 +130,22 @@ def test_refresh_signal_metrics_uses_only_active_peers(tmp_path):
                 observation_value=obs,
             )
 
-        store.set_signal_status("hyp_c", action="deactivate")
         refresh_signal_metrics(store, signal_id="hyp_a", window_size=4)
         metric = store.get_signal_metric("hyp_a")
         assert metric is not None
 
+        peer_mean = [(b + c) / 2.0 for b, c in zip(pred_b, pred_c)]
         expected = compute_signal_metrics(
             predictions=pd.Series(pred_a, index=[f"BTC:residual_return_3d:e{i}" for i in range(1, 5)], dtype=float),
             target=pd.Series(observations, index=[f"BTC:residual_return_3d:e{i}" for i in range(1, 5)], dtype=float),
-            meta_model=pd.Series(pred_b, index=[f"BTC:residual_return_3d:e{i}" for i in range(1, 5)], dtype=float),
+            meta_model=pd.Series(peer_mean, index=[f"BTC:residual_return_3d:e{i}" for i in range(1, 5)], dtype=float),
             window_size=4,
         )
 
         assert metric.corr == pytest.approx(expected.corr)
         assert metric.mmc == pytest.approx(expected.mmc)
-        assert metric.mmc_baseline_type == "active_peer_mean"
-        assert metric.mmc_peer_count == 1
+        assert metric.mmc_baseline_type == "peer_mean"
+        assert metric.mmc_peer_count == 2
         assert metric.mmc_sample_count == 4
     finally:
         store.close()
@@ -179,7 +179,7 @@ def test_refresh_signal_metrics_sets_nullable_mmc_when_no_active_peers(tmp_path)
         metric = store.get_signal_metric("hyp_a")
         assert metric is not None
         assert metric.mmc is None
-        assert metric.mmc_baseline_type == "active_peer_mean"
+        assert metric.mmc_baseline_type == "peer_mean"
         assert metric.mmc_peer_count == 0
         assert metric.mmc_sample_count == 0
     finally:
@@ -225,7 +225,7 @@ def test_apply_evaluation_refreshes_target_metrics_across_grouped_signal_runs(tm
 
         for signal_id, metric in metrics.items():
             assert metric is not None, signal_id
-            assert metric.mmc_baseline_type == "active_peer_mean"
+            assert metric.mmc_baseline_type == "peer_mean"
             assert metric.mmc_peer_count == 2
             assert metric.sample_count == 4
             assert metric.mmc_sample_count == 4

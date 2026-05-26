@@ -75,15 +75,12 @@ def refresh_target_meta_predictions(
 ) -> None:
     resolved_subject_id = DEFAULT_SUBJECT_ID if subject_id is None else subject_id
     resolved_asset = default_runtime_asset(resolved_subject_id) if asset is None else asset
-    active_signals = store.list_signals(
+    signals = store.list_signals(
         subject_id=resolved_subject_id,
         asset=resolved_asset,
         target_id=target_id,
     )
-    active_signals = [
-        item for item in active_signals if item.status == "active"
-    ]
-    if not active_signals:
+    if not signals:
         return
 
     rows = store.conn.execute(
@@ -91,7 +88,7 @@ def refresh_target_meta_predictions(
         SELECT p.evaluation_id, p.signal_id, p.value
         FROM predictions AS p
         JOIN signals AS h ON h.signal_id = p.signal_id
-        WHERE h.subject_id = ? AND h.target_id = ? AND h.status = 'active'
+        WHERE h.subject_id = ? AND h.target_id = ?
         ORDER BY p.evaluation_id ASC, p.signal_id ASC
         """,
         (resolved_subject_id, target_id),

@@ -50,8 +50,7 @@ def screen_signal_discovery(
                 subject_id=subject_id,
                 target_id=signal_discovery.target_id,
             )
-            if item.status == "active"
-            and item.specification_signal_id in resolved_specification_id_set
+            if item.specification_signal_id in resolved_specification_id_set
         )
     selection_policy = signal_discovery.selection_policy
     metrics_by_id = {

@@ -172,7 +172,7 @@ def test_register_signal_creates_state_and_is_idempotent(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT definition_json, status, prediction_count, observation_count
+            SELECT definition_json, prediction_count, observation_count
             FROM signals
             WHERE signal_id = 'momentum_1d'
             """
@@ -200,7 +200,7 @@ def test_register_signal_creates_state_and_is_idempotent(tmp_path, capsys):
             },
             "params": {"lookback": 1},
         }
-        assert row[1:] == ("active", 0, 0)
+        assert row[1:] == (0, 0)
     finally:
         conn.close()
 
@@ -255,7 +255,7 @@ def test_register_signal_supports_new_builtin_definition(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT definition_json, status, prediction_count, observation_count
+            SELECT definition_json, prediction_count, observation_count
             FROM signals
             WHERE signal_id = 'reversal_5d'
             """
@@ -283,7 +283,7 @@ def test_register_signal_supports_new_builtin_definition(tmp_path, capsys):
             },
             "params": {"lookback": 5},
         }
-        assert row[1:] == ("active", 0, 0)
+        assert row[1:] == (0, 0)
     finally:
         conn.close()
 
@@ -305,7 +305,7 @@ def test_register_signal_supports_additional_kind_definition(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT definition_json, status, prediction_count, observation_count
+            SELECT definition_json, prediction_count, observation_count
             FROM signals
             WHERE signal_id = 'average_gap_3d'
             """
@@ -333,7 +333,7 @@ def test_register_signal_supports_additional_kind_definition(tmp_path, capsys):
             },
             "params": {"lookback": 3},
         }
-        assert row[1:] == ("active", 0, 0)
+        assert row[1:] == (0, 0)
     finally:
         conn.close()
 
@@ -352,12 +352,12 @@ def test_register_signal_keeps_unknown_definition_nullable(tmp_path, capsys):
     try:
         row = conn.execute(
             """
-            SELECT definition_json, status
+            SELECT definition_json
             FROM signals
             WHERE signal_id = 'hyp_1'
             """
         ).fetchone()
-        assert row == (None, "active")
+        assert row == (None,)
     finally:
         conn.close()
 
@@ -654,13 +654,13 @@ def test_update_state_uses_recorded_prediction_and_observation(tmp_path, capsys)
         snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
-            SELECT status, prediction_count, observation_count
+            SELECT prediction_count, observation_count
             FROM signals
             WHERE signal_id = 'hyp_1'
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("active", 1, 1)
+        assert state_row == (1, 1)
     finally:
         conn.close()
 
@@ -696,13 +696,13 @@ def test_update_state_is_idempotent_for_same_evaluation(tmp_path, capsys):
         snapshot_count = conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0]
         state_row = conn.execute(
             """
-            SELECT status, prediction_count, observation_count
+            SELECT prediction_count, observation_count
             FROM signals
             WHERE signal_id = 'hyp_1'
             """
         ).fetchone()
         assert snapshot_count == 1
-        assert state_row == ("active", 1, 1)
+        assert state_row == (1, 1)
     finally:
         conn.close()
 
@@ -888,157 +888,14 @@ def test_v2_smoke_flow_registers_records_finalizes_and_updates(tmp_path, capsys)
             "observations": conn.execute("SELECT COUNT(*) FROM observations").fetchone()[0],
             "snapshots": conn.execute("SELECT COUNT(*) FROM evaluation_snapshots").fetchone()[0],
         }
-        status_row = conn.execute(
-            "SELECT status FROM signals WHERE signal_id = 'hyp_1'"
-        ).fetchone()
         assert counts == {
             "signals": 1,
             "predictions": 1,
             "observations": 1,
             "snapshots": 1,
         }
-        assert status_row == ("active",)
     finally:
         conn.close()
-
-
-def test_activate_and_deactivate_signal_follow_state_machine(tmp_path, capsys):
-    from alpha_os.cli import main
-
-    db_path = tmp_path / "runtime.db"
-    _register_signal(main, db_path, "hyp_1")
-    _record_prediction(main, db_path, "2026-03-26", "hyp_1", "0.5")
-    _finalize_observation(main, db_path, "2026-03-26", "0.2")
-    assert (
-        main(
-            [
-                "debug-update-state",
-                "--db",
-                str(db_path),
-                "--date",
-                "2026-03-26",
-                "--signal-candidate-id",
-                "hyp_1",
-            ]
-        )
-        == 0
-    )
-    capsys.readouterr()
-
-    assert (
-        main(["deactivate-signal-candidate", "--db", str(db_path), "--signal-candidate-id", "hyp_1"])
-        == 0
-    )
-    deactivate_output = capsys.readouterr().out
-    assert "Signal [deactivated] hyp_1" in deactivate_output
-
-    assert (
-        main(["activate-signal-candidate", "--db", str(db_path), "--signal-candidate-id", "hyp_1"])
-        == 0
-    )
-    activate_output = capsys.readouterr().out
-    assert "Signal [activated] hyp_1" in activate_output
-
-    conn = sqlite3.connect(db_path)
-    try:
-        row = conn.execute(
-            "SELECT status FROM signals WHERE signal_id = 'hyp_1'"
-        ).fetchone()
-        assert row == ("active",)
-    finally:
-        conn.close()
-
-
-def test_deactivate_allows_active_signal(tmp_path, capsys):
-    from alpha_os.cli import main
-
-    db_path = tmp_path / "runtime.db"
-    _register_signal(main, db_path, "hyp_1")
-    capsys.readouterr()
-
-    assert (
-        main(["deactivate-signal-candidate", "--db", str(db_path), "--signal-candidate-id", "hyp_1"])
-        == 0
-    )
-    output = capsys.readouterr().out
-    assert "Signal [deactivated] hyp_1" in output
-
-
-def test_activate_rejects_non_inactive_signal(tmp_path):
-    from alpha_os.cli import main
-
-    db_path = tmp_path / "runtime.db"
-    _register_signal(main, db_path, "hyp_1")
-
-    try:
-        main(["activate-signal-candidate", "--db", str(db_path), "--signal-candidate-id", "hyp_1"])
-    except SystemExit as exc:
-        assert exc.code == 2
-    else:
-        raise AssertionError("expected parser exit for invalid activate transition")
-
-
-def test_inactive_signal_rejects_new_prediction_and_update(tmp_path):
-    from alpha_os.cli import main
-
-    db_path = tmp_path / "runtime.db"
-    _register_signal(main, db_path, "hyp_1")
-    _record_prediction(main, db_path, "2026-03-26", "hyp_1", "0.5")
-    _finalize_observation(main, db_path, "2026-03-26", "0.2")
-    assert (
-        main(
-            [
-                "debug-update-state",
-                "--db",
-                str(db_path),
-                "--date",
-                "2026-03-26",
-                "--signal-candidate-id",
-                "hyp_1",
-            ]
-        )
-        == 0
-    )
-    assert (
-        main(["deactivate-signal-candidate", "--db", str(db_path), "--signal-candidate-id", "hyp_1"])
-        == 0
-    )
-
-    try:
-        main(
-            [
-                "debug-record-prediction",
-                "--db",
-                str(db_path),
-                "--date",
-                "2026-03-27",
-                "--signal-candidate-id",
-                "hyp_1",
-                "--prediction",
-                "0.1",
-            ]
-        )
-    except SystemExit as exc:
-        assert exc.code == 2
-    else:
-        raise AssertionError("expected parser exit for inactive prediction record")
-
-    try:
-        main(
-            [
-                "debug-update-state",
-                "--db",
-                str(db_path),
-                "--date",
-                "2026-03-27",
-                "--signal-candidate-id",
-                "hyp_1",
-            ]
-        )
-    except SystemExit as exc:
-        assert exc.code == 2
-    else:
-        raise AssertionError("expected parser exit for inactive update")
 
 
 def test_run_cycle_rejects_mismatched_pre_recorded_observation(tmp_path):

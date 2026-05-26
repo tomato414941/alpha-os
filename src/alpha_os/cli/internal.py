@@ -46,9 +46,6 @@ from ..evaluation_runtime import (
     apply_evaluations_batch,
     update_evaluation_state,
 )
-from ..metrics_service import refresh_target_metrics
-from ..meta_aggregation_service import refresh_target_meta_predictions
-from ..meta_metrics_service import refresh_target_meta_prediction_metrics
 from ..evaluation_generation import (
     generate_evaluation_input_from_signal_noise,
     generate_evaluation_inputs_from_signal_noise,
@@ -372,26 +369,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_observables.add_argument("--db", type=str, default=None)
     show_observables.add_argument("--limit", type=int, default=50)
 
-    deactivate = internal_parser("deactivate-signal-candidate")
-    deactivate.add_argument("--db", type=str, default=None)
-    deactivate.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-
-    activate = internal_parser("activate-signal-candidate")
-    activate.add_argument("--db", type=str, default=None)
-    activate.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-
     record = internal_parser("debug-record-prediction")
     record.add_argument("--db", type=str, default=None)
     record.add_argument("--date", type=str, required=True)
@@ -517,7 +494,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
         action="append",
         dest="signal_id",
         required=True,
-        help="Repeat to include multiple active signals",
+        help="Repeat to include multiple signals",
     )
     backfill_many.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
 
@@ -736,11 +713,9 @@ def _active_signal_definition(
     signal = store.get_signal(signal_id)
     if signal is None:
         raise ValueError(f"signal must exist before generation: {signal_id}")
-    if signal.status != "active":
-        raise ValueError(f"signal must be active before generation: {signal_id}")
     if signal.definition is None:
         raise ValueError(
-            f"active signal does not define an executable generation rule: {signal_id}"
+            f"signal does not define an executable generation rule: {signal_id}"
         )
     return SignalDefinition.from_document(
         signal_id=signal.signal_id,
@@ -2427,56 +2402,6 @@ def _observable_definition_from_args(args: argparse.Namespace) -> ObservableDefi
     )
 
 
-def _cmd_change_signal_status(
-    args: argparse.Namespace,
-    *,
-    action: str,
-    verb: str,
-) -> int:
-    with _runtime_store(args.db) as (_cfg, store):
-        signal = store.set_signal_status(
-            args.signal_id,
-            action=action,
-        )
-        refresh_target_metrics(
-            store,
-            subject_id=signal.subject_id,
-            asset=signal.asset,
-            target_id=signal.target_id,
-        )
-        refresh_target_meta_predictions(
-            store,
-            subject_id=signal.subject_id,
-            asset=signal.asset,
-            target_id=signal.target_id,
-        )
-        refresh_target_meta_prediction_metrics(
-            store,
-            subject_id=signal.subject_id,
-            asset=signal.asset,
-            target_id=signal.target_id,
-        )
-    print(f"Signal [{verb}] {signal.signal_id}")
-    print_signal_details(signal)
-    return 0
-
-
-def cmd_deactivate_signal(args: argparse.Namespace) -> int:
-    return _cmd_change_signal_status(
-        args,
-        action="deactivate",
-        verb="deactivated",
-    )
-
-
-def cmd_activate_signal(args: argparse.Namespace) -> int:
-    return _cmd_change_signal_status(
-        args,
-        action="activate",
-        verb="activated",
-    )
-
-
 def cmd_record_prediction(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         target_id = cfg.target_id if args.target_id is None else str(args.target_id)
@@ -2786,9 +2711,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     else:
         print("  Latest:   no evaluations recorded")
     total = len(signals)
-    active = sum(1 for item in signals if item.status == "active")
-    inactive = sum(1 for item in signals if item.status == "inactive")
-    print(f"  Signal:   total={total} active={active} inactive={inactive}")
+    print(f"  Signal:   total={total}")
     tracked = len(metrics)
     mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
     mmcs = [item.mmc for item in metrics if item.mmc is not None]
@@ -2874,9 +2797,7 @@ def cmd_inspect_subject_set(args: argparse.Namespace) -> int:
         else:
             print(f"    Latest: {latest.evaluation_id} / {latest.signal_id}")
         total = len(signals)
-        active = sum(1 for item in signals if item.status == "active")
-        inactive = sum(1 for item in signals if item.status == "inactive")
-        print(f"    Signal: total={total} active={active} inactive={inactive}")
+        print(f"    Signal: total={total}")
         tracked = len(metrics)
         mean_corr = 0.0 if tracked == 0 else sum(item.corr for item in metrics) / tracked
         mmcs = [item.mmc for item in metrics if item.mmc is not None]
@@ -4040,10 +3961,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_register_observable(args)
         if args.command == "debug-show-observables":
             return cmd_show_observables(args)
-        if args.command == "deactivate-signal-candidate":
-            return cmd_deactivate_signal(args)
-        if args.command == "activate-signal-candidate":
-            return cmd_activate_signal(args)
         if args.command == "debug-record-prediction":
             return cmd_record_prediction(args)
         if args.command == "debug-finalize-observation":

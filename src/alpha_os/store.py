@@ -34,7 +34,6 @@ from .portfolio_decision import (
 from .screening import ScreeningResult
 from .trading_strategy import TradingStrategySpec
 from .targets import TargetDefinition, find_target_definition, list_target_definitions
-from .transition_policy import decide_operator_transition
 
 
 def _utc_now() -> str:
@@ -49,7 +48,6 @@ class SignalState:
     asset: str
     target_id: str
     definition_json: str | None
-    status: str
     prediction_count: int
     observation_count: int
 
@@ -64,7 +62,6 @@ class SignalState:
         asset: str,
         target_id: str,
         definition_json: str | None,
-        status: str,
         prediction_count: int,
         observation_count: int,
     ) -> None:
@@ -85,7 +82,6 @@ class SignalState:
         object.__setattr__(self, "asset", asset)
         object.__setattr__(self, "target_id", target_id)
         object.__setattr__(self, "definition_json", definition_json)
-        object.__setattr__(self, "status", status)
         object.__setattr__(self, "prediction_count", prediction_count)
         object.__setattr__(self, "observation_count", observation_count)
     @property
@@ -766,7 +762,6 @@ def _row_to_signal(
         definition_json=None
         if row["definition_json"] is None
         else str(row["definition_json"]),
-        status=str(row["status"]),
         prediction_count=int(row["prediction_count"]),
         observation_count=int(row["observation_count"]),
     )
@@ -1196,7 +1191,6 @@ class EvaluationStore:
                 asset TEXT NOT NULL,
                 target_id TEXT NOT NULL,
                 definition_json TEXT,
-                status TEXT NOT NULL,
                 prediction_count INTEGER NOT NULL,
                 observation_count INTEGER NOT NULL,
                 created_at TEXT NOT NULL,
@@ -2154,8 +2148,7 @@ class EvaluationStore:
         row = self.conn.execute(
             """
             SELECT signal_id, specification_signal_id, subject_id, asset, target_id,
-                   definition_json, status,
-                   prediction_count, observation_count
+                   definition_json, prediction_count, observation_count
             FROM signals
             WHERE signal_id = ?
             """,
@@ -2179,8 +2172,7 @@ class EvaluationStore:
             rows = self.conn.execute(
                 """
                 SELECT signal_id, specification_signal_id, subject_id, asset, target_id,
-                       definition_json, status,
-                       prediction_count, observation_count
+                       definition_json, prediction_count, observation_count
                 FROM signals
                 WHERE subject_id = ?
                 ORDER BY target_id ASC, observation_count DESC, prediction_count DESC, signal_id ASC
@@ -2191,8 +2183,7 @@ class EvaluationStore:
             rows = self.conn.execute(
                 """
                 SELECT signal_id, specification_signal_id, subject_id, asset, target_id,
-                       definition_json, status,
-                       prediction_count, observation_count
+                       definition_json, prediction_count, observation_count
                 FROM signals
                 WHERE subject_id = ? AND target_id = ?
                 ORDER BY observation_count DESC, prediction_count DESC, signal_id ASC
@@ -2203,8 +2194,7 @@ class EvaluationStore:
             rows = self.conn.execute(
                 """
                 SELECT signal_id, specification_signal_id, subject_id, asset, target_id,
-                       definition_json, status,
-                       prediction_count, observation_count
+                       definition_json, prediction_count, observation_count
                 FROM signals
                 WHERE asset = ?
                 ORDER BY target_id ASC, observation_count DESC, prediction_count DESC, signal_id ASC
@@ -2215,8 +2205,7 @@ class EvaluationStore:
             rows = self.conn.execute(
                 """
                 SELECT signal_id, specification_signal_id, subject_id, asset, target_id,
-                       definition_json, status,
-                       prediction_count, observation_count
+                       definition_json, prediction_count, observation_count
                 FROM signals
                 WHERE asset = ? AND target_id = ?
                 ORDER BY observation_count DESC, prediction_count DESC, signal_id ASC
@@ -2865,37 +2854,6 @@ class EvaluationStore:
             ).fetchall()
         return [_row_to_evaluation_run_result(row) for row in rows if row is not None]
 
-    def set_signal_status(
-        self,
-        signal_id: str,
-        *,
-        action: str,
-        recorded_at: str | None = None,
-    ) -> SignalState:
-        self.ensure_schema()
-        signal = self.get_signal(signal_id)
-        if signal is None:
-            raise ValueError(f"signal does not exist: {signal_id}")
-        decision = decide_operator_transition(
-            current_status=signal.status,
-            action=action,
-        )
-
-        timestamp = recorded_at or _utc_now()
-        with self.conn:
-            self.conn.execute(
-                """
-                UPDATE signals
-                SET status = ?, updated_at = ?
-                WHERE signal_id = ?
-                """,
-                (decision.next_status, timestamp, signal_id),
-            )
-
-        updated = self.get_signal(signal_id)
-        assert updated is not None
-        return updated
-
     def register_signal(
         self,
         signal_id: str,
@@ -2963,10 +2921,9 @@ class EvaluationStore:
                 """
                 INSERT INTO signals (
                     signal_id, specification_signal_id, subject_id, asset, target_id,
-                    definition_json, status,
-                    prediction_count, observation_count, created_at, updated_at
+                    definition_json, prediction_count, observation_count, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, 'active', 0, 0, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?)
                 """,
                 (
                     signal_id,
@@ -3276,11 +3233,6 @@ class EvaluationStore:
         if signal is None:
             raise ValueError(
                 f"signal must exist before recording predictions: {signal_id}"
-            )
-        if signal.status != "active":
-            raise ValueError(
-                "prediction cannot be recorded while signal is "
-                f"{signal.status}: {signal_id}"
             )
         resolved_asset = signal.asset if asset is None else asset
         if signal.asset != resolved_asset:

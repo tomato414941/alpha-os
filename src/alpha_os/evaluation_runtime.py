@@ -97,11 +97,6 @@ def update_evaluation_state(
         if observation_spec is None
         else observation_spec
     )
-    if signal.status != "active":
-        raise ValueError(
-            "state cannot be updated while signal is "
-            f"{signal.status}: {resolved_signal_id}"
-        )
     if signal.target_id != target_id:
         raise ValueError(
             "evaluation target does not match signal target: "
@@ -353,11 +348,6 @@ def apply_evaluations_batch(
             raise ValueError(
                 "signal must exist before applying evaluation batch: "
                 f"{evaluation_input.signal_id}"
-            )
-        if signal.status != "active":
-            raise ValueError(
-                "evaluation batch requires active signals: "
-                f"{evaluation_input.signal_id} is {signal.status}"
             )
         executable = executable_cache.get(evaluation_input.signal_id)
         if executable is None:
