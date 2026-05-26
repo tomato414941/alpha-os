@@ -14,27 +14,6 @@ def _target(subject_id: str, weight: float):
     )
 
 
-def test_trade_transition_holds_small_delta_inside_no_trade_band():
-    from alpha_os.portfolio_trade_transition import (
-        TradeTransitionRequest,
-        apply_trade_transition,
-    )
-
-    result = apply_trade_transition(
-        TradeTransitionRequest(
-            desired_targets={"A": _target("A", 0.103)},
-            current_weights={"A": 0.10},
-            capital_base=1.0,
-            no_trade_band=0.005,
-        )
-    )
-
-    assert result.executed_targets["A"].target_weight == pytest.approx(0.10)
-    assert result.trace.desired_turnover == pytest.approx(0.003)
-    assert result.trace.executed_turnover == pytest.approx(0.0)
-    assert result.trace.skipped_trade_count == 1
-
-
 def test_trade_transition_scales_deltas_to_turnover_budget():
     from alpha_os.portfolio_trade_transition import (
         TradeTransitionRequest,

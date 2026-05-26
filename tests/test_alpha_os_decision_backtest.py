@@ -344,7 +344,7 @@ def test_build_backtest_step_accounting_splits_cost_components():
     assert accounting.net_pnl_notional == pytest.approx(0.13592)
 
 
-def test_run_decision_backtest_respects_no_trade_band_and_turnover_cost():
+def test_run_decision_backtest_charges_turnover_cost():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
@@ -369,7 +369,6 @@ def test_run_decision_backtest_respects_no_trade_band_and_turnover_cost():
                     ),
                 ),
             ),
-            no_trade_band=0.05,
             turnover_cost_rate=0.1,
         )
     )

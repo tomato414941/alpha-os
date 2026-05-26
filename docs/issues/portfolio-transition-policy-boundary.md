@@ -10,7 +10,7 @@ desired portfolio target is converted into an executed portfolio target.
 The old flow was:
 
 ```text
-no_trade_band / turnover_budget
+turnover_budget
   -> DecisionBacktestInput
   -> portfolio_trade_transition.TradeTransitionRequest
   -> apply_trade_transition()
@@ -21,9 +21,8 @@ friction assumption.
 
 ## Current Field Shape
 
-The remaining transition controls are backtest rollout inputs:
+The remaining transition control is a backtest rollout input:
 
-- `no_trade_band`
 - `turnover_budget`
 
 The old `friction` object no longer exists in strategy documents, and these
@@ -35,7 +34,6 @@ Initial classification:
 
 | Field | Likely responsibility |
 |---|---|
-| `no_trade_band` | policy / transition rule |
 | `turnover_budget` | policy / transition constraint |
 
 `turnover_cost_rate` is represented on `TradingEnvironment`, not on the
@@ -46,7 +44,7 @@ transition controls.
 The strategy or policy produces a desired action.
 
 The transition layer decides what action actually happens after applying
-turnover budgets and no-trade bands.
+turnover budgets.
 
 The world or environment then applies realized costs and rewards.
 

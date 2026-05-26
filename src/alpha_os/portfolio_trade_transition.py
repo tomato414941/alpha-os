@@ -35,13 +35,10 @@ class TradeTransitionRequest:
     desired_targets: dict[str, PortfolioTarget]
     current_weights: dict[str, float]
     capital_base: float
-    no_trade_band: float = 0.0
     turnover_budget: float | None = None
     per_turnover_cost: float = 0.0
 
     def __post_init__(self) -> None:
-        if self.no_trade_band < 0.0:
-            raise ValueError("trade transition no_trade_band must be >= 0")
         if self.turnover_budget is not None and self.turnover_budget < 0.0:
             raise ValueError("trade transition turnover_budget must be >= 0")
 
@@ -74,18 +71,11 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
         current_weight = float(request.current_weights.get(subject_id, 0.0))
         desired_weight = current_weight if target is None else float(target.target_weight)
         desired_delta = desired_weight - current_weight
-        adjusted_delta = _execution_delta(
-            desired_delta,
-            no_trade_band=request.no_trade_band,
-        )
+        adjusted_delta = float(desired_delta)
         expected_trade_cost = _expected_trade_cost(
             adjusted_delta,
             capital_base=request.capital_base,
             per_turnover_cost=request.per_turnover_cost,
-        )
-        rejected_reason = _candidate_rejected_reason(
-            desired_delta=desired_delta,
-            adjusted_delta=adjusted_delta,
         )
         candidates.append(
             _TradeTransitionCandidate(
@@ -96,7 +86,7 @@ def apply_trade_transition(request: TradeTransitionRequest) -> TradeTransitionRe
                 adjusted_delta=adjusted_delta,
                 risk_scale=1.0 if target is None else float(target.risk_scale),
                 expected_trade_cost=expected_trade_cost,
-                rejected_reason=rejected_reason,
+                rejected_reason=None,
             )
         )
 
@@ -205,18 +195,6 @@ def _budget_scaled_executed_deltas(
     )
 
 
-def _candidate_rejected_reason(
-    *,
-    desired_delta: float,
-    adjusted_delta: float,
-) -> str | None:
-    if abs(desired_delta) == 0.0:
-        return None
-    if abs(adjusted_delta) == 0.0:
-        return "threshold"
-    return None
-
-
 def _expected_trade_cost(
     adjusted_delta: float,
     *,
@@ -230,16 +208,6 @@ def _expected_trade_cost(
     )
 
 
-def _execution_delta(
-    desired_delta: float,
-    *,
-    no_trade_band: float,
-) -> float:
-    if abs(desired_delta) <= no_trade_band:
-        return 0.0
-    return float(desired_delta)
-
-
 def _transition_reason(
     *,
     desired_delta: float,
@@ -251,8 +219,6 @@ def _transition_reason(
         return "unchanged"
     if rejected_reason is not None:
         return rejected_reason
-    if abs(adjusted_delta) == 0.0:
-        return "threshold"
     if abs(executed_delta) == 0.0:
         return "turnover_budget"
     if abs(executed_delta) < abs(adjusted_delta):
