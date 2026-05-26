@@ -4,16 +4,6 @@ Maintenance note: do not expand this file. Treat it as frozen until
 `docs/issues/design-entrypoint-boundary.md` decides whether it remains only as a
 compatibility pointer or is removed.
 
-This file is the short entrypoint for long-horizon architecture.
-
-It is not the source of truth for:
-
-- current CLI entrypoints
-
-For those, prefer:
-
-- [`README.md`](./README.md)
-
 ## Design Summary
 
 The intended architecture is:
