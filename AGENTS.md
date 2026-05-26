@@ -19,6 +19,4 @@ implementations need a shared home.
 
 ## Testing
 
-- Run focused tests for narrow changes.
-- Use `uv` for project setup and command execution.
-- Use the README for current setup and full verification commands.
+- Use `uv` for project commands.
