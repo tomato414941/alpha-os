@@ -13,7 +13,6 @@ from .portfolio_decision_inputs import (
     build_runtime_observed_dependence_inputs,
     holding_period_days,
     merge_observed_inputs,
-    no_trade_band_from_market_impact_bps,
     portfolio_state_from_decision_details,
     realized_observation_volatility,
     volatility_scaled_market_impact_bps,
@@ -314,22 +313,13 @@ def build_portfolio_decision_input_from_compressed_belief(
                 )
             )
             market_impact_bps = volatility_scaled_market_impact_bps(realized_volatility)
-            cost_inputs.extend(
-                (
-                    CostInput(
-                        name="market_impact",
-                        subject_id=component.subject_id,
-                        value=market_impact_bps,
-                        basis="per_notional",
-                        unit="bps",
-                    ),
-                    CostInput(
-                        name="no_trade_band",
-                        subject_id=component.subject_id,
-                        value=no_trade_band_from_market_impact_bps(market_impact_bps),
-                        basis="per_delta_weight",
-                        unit="weight",
-                    ),
+            cost_inputs.append(
+                CostInput(
+                    name="market_impact",
+                    subject_id=component.subject_id,
+                    value=market_impact_bps,
+                    basis="per_notional",
+                    unit="bps",
                 )
             )
             observation_series = _observation_series_by_date(

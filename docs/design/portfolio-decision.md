@@ -173,7 +173,6 @@ Typical early examples include:
 - `expected_slippage`
 - `turnover_penalty`
 - `impact_proxy`
-- `no_trade_band`
 
 This lets the portfolio layer represent executable friction explicitly rather
 than hiding it inside arbitrary constants.

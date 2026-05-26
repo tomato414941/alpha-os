@@ -1197,16 +1197,6 @@ def _cost_inputs_for_backtest(
                     unit="bps",
                 )
             )
-        if backtest_input.no_trade_band > 0.0:
-            items.append(
-                CostInput(
-                    name="no_trade_band",
-                    subject_id=subject_id,
-                    value=float(backtest_input.no_trade_band),
-                    basis="per_delta_weight",
-                    unit="weight",
-                )
-            )
     return tuple(items)
 
 

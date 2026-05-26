@@ -451,7 +451,6 @@ class SizingRequest:
     structural_uncertainty_values: tuple[float, ...]
     dependence_values: tuple[float, ...]
     dependence_penalty_matrix: tuple[tuple[float, ...], ...]
-    no_trade_bands: tuple[float, ...]
     market_impact_levels: tuple[float, ...]
     transaction_cost_levels: tuple[float, ...]
     short_cost_levels: tuple[float, ...]

@@ -1297,8 +1297,6 @@ def test_build_and_show_portfolio_decisions_cli(tmp_path, capsys):
                 "3",
                 "--market-impact-bps",
                 "25",
-                "--no-trade-band",
-                "0.01",
             ]
         )
         == 0

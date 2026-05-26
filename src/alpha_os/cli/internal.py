@@ -716,7 +716,6 @@ def _add_decide_portfolio_arguments(
     parser.add_argument("--bid-ask-spread-bps", type=float, default=None)
     parser.add_argument("--funding-bps-per-step", type=float, default=None)
     parser.add_argument("--borrow-fee-bps-per-step", type=float, default=None)
-    parser.add_argument("--no-trade-band", type=float, default=None)
 
 
 @contextmanager
@@ -910,17 +909,6 @@ def _portfolio_decision_assumptions_from_args(
                 unit="bps",
             )
         )
-    if args.no_trade_band is not None:
-        for subject_id in subject_ids:
-            cost_inputs.append(
-                CostInput(
-                    name="no_trade_band",
-                    subject_id=subject_id,
-                    value=float(args.no_trade_band),
-                    basis="per_delta_weight",
-                    unit="weight",
-                )
-            )
     return PortfolioDecisionAssumptions(
         risk_inputs=tuple(risk_inputs),
         cost_inputs=tuple(cost_inputs),

@@ -41,10 +41,7 @@ def test_build_runtime_observed_inputs_translates_runtime_artifacts():
     assert observed.predictive_signals[0].confidence == 0.4
     assert observed.risk_inputs[0].name == "realized_vol_20"
     assert observed.risk_inputs[0].value == 0.12
-    assert {item.name for item in observed.cost_inputs} == {
-        "market_impact",
-        "no_trade_band",
-    }
+    assert {item.name for item in observed.cost_inputs} == {"market_impact"}
     assert len(observed.uncertainty_inputs) == 1
     assert observed.uncertainty_inputs[0].source_id == "corr_weighted_mean"
     assert observed.uncertainty_inputs[0].target_id == "residual_return_3d"
@@ -156,11 +153,9 @@ def test_contributor_uncertainty_estimates_capture_dispersion_and_concentration(
 
 def test_observed_cost_estimates_scale_from_volatility():
     from alpha_os.portfolio_decision_inputs import (
-        no_trade_band_from_market_impact_bps,
         volatility_scaled_market_impact_bps,
     )
 
     market_impact_bps = volatility_scaled_market_impact_bps(0.12)
 
     assert market_impact_bps == 12.0
-    assert no_trade_band_from_market_impact_bps(market_impact_bps) == 0.0012

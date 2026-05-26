@@ -44,7 +44,6 @@ def build_runtime_observed_inputs(
         components=model_uncertainty_components,
     )
     market_impact_bps = volatility_scaled_market_impact_bps(realized_volatility)
-    no_trade_band = no_trade_band_from_market_impact_bps(market_impact_bps)
     return ObservedPortfolioInputs(
         predictive_signals=(
             PredictiveSignalInput(
@@ -72,13 +71,6 @@ def build_runtime_observed_inputs(
                 value=market_impact_bps,
                 basis="per_notional",
                 unit="bps",
-            ),
-            CostInput(
-                name="no_trade_band",
-                subject_id=subject_id,
-                value=no_trade_band,
-                basis="per_delta_weight",
-                unit="weight",
             ),
         ),
         uncertainty_inputs=(
@@ -355,11 +347,6 @@ def model_error_std(
 def volatility_scaled_market_impact_bps(realized_volatility: float) -> float:
     level = max(realized_volatility, 0.0) * 100.0
     return float(min(max(level, 1.0), 100.0))
-
-
-def no_trade_band_from_market_impact_bps(market_impact_bps: float) -> float:
-    level = max(market_impact_bps, 0.0) / 10000.0
-    return float(min(max(level, 0.0), 1.0))
 
 
 def realized_observation_volatility(values: list[float]) -> float:

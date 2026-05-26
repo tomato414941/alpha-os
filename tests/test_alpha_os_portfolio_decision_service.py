@@ -56,10 +56,7 @@ def test_build_portfolio_decision_input_uses_latest_meta_prediction(tmp_path):
         assert decision_input.predictive_signals[0].confidence is not None
         assert 0.0 <= decision_input.predictive_signals[0].confidence <= 1.0
         assert decision_input.risk_inputs[0].name == "realized_vol_20"
-        assert {item.name for item in decision_input.cost_inputs} == {
-            "market_impact",
-            "no_trade_band",
-        }
+        assert {item.name for item in decision_input.cost_inputs} == {"market_impact"}
         assert len(decision_input.uncertainty_inputs) == 1
         assert decision_input.uncertainty_inputs[0].source_id == "corr_weighted_mean"
         assert decision_input.uncertainty_inputs[0].estimate_std > 0.0
@@ -225,10 +222,7 @@ def test_build_portfolio_decision_input_from_compressed_belief(tmp_path):
             "diversity_gap": 0.0,
         }
         assert len(decision_input.risk_inputs) == 2
-        assert {item.name for item in decision_input.cost_inputs} == {
-            "market_impact",
-            "no_trade_band",
-        }
+        assert {item.name for item in decision_input.cost_inputs} == {"market_impact"}
         assert len(decision_input.dependence_inputs) == 1
     finally:
         store.close()
@@ -507,7 +501,6 @@ def test_build_portfolio_decision_input_merges_explicit_assumptions(tmp_path):
         assert decision_input.risk_inputs[0].subject_id == "BTC_spot"
         assert {item.name for item in decision_input.cost_inputs} == {
             "market_impact",
-            "no_trade_band",
             "turnover_cost_rate",
         }
         assert decision_input.dependence_inputs[0].right_subject_id == "ETH"
@@ -726,7 +719,7 @@ def test_build_portfolio_decision_input_includes_multiple_subject_signals(tmp_pa
             "BTC_spot",
             "ETH_spot",
         }
-        assert len(decision_input.cost_inputs) == 4
+        assert len(decision_input.cost_inputs) == 2
         assert len(decision_input.uncertainty_inputs) == 2
         assert len(decision_input.model_uncertainty_inputs) == 2
         assert len(decision_input.dependence_inputs) == 1

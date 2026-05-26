@@ -891,13 +891,6 @@ def test_build_sizing_request_exposes_standardized_sizing_inputs():
                 unit="bps",
             ),
             CostInput(
-                name="no_trade_band",
-                subject_id="AAA",
-                value=0.03,
-                basis="per_delta_weight",
-                unit="weight",
-            ),
-            CostInput(
                 name="turnover_cost_rate",
                 subject_id=None,
                 value=0.02,
@@ -953,7 +946,6 @@ def test_build_sizing_request_exposes_standardized_sizing_inputs():
     )
     assert request.uncertainty_std == pytest.approx((0.12, 0.0))
     assert request.risk_values == pytest.approx((0.2, 0.0))
-    assert request.no_trade_bands == pytest.approx((0.03, 0.0))
     assert request.market_impact_levels[0] == pytest.approx(0.0025)
     assert request.transaction_cost_levels[0] == pytest.approx(0.0025)
     assert request.short_cost_levels == pytest.approx((0.0, 0.0))

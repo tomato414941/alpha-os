@@ -239,10 +239,6 @@ def build_sizing_request(decision_input: PortfolioDecisionInput) -> SizingReques
             tuple(float(value) for value in row)
             for row in dependence_matrix
         ),
-        no_trade_bands=tuple(
-            _subject_cost_value(decision_input.cost_inputs, "no_trade_band", subject_id)
-            for subject_id in subject_ids
-        ),
         market_impact_levels=tuple(
             _cost_level(
                 _subject_cost_value(
