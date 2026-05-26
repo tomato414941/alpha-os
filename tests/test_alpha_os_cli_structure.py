@@ -83,7 +83,6 @@ def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
         "run-diagnostic-evaluation",
         "inspect-runtime-resources",
         "debug-status",
-        "debug-apply-evaluation",
         "run-signal-discovery",
     }
 
@@ -104,7 +103,6 @@ def test_cli_entrypoint_keeps_public_help_surface(capsys):
     assert "run-walk-forward" in captured
     assert "run-walk-forward-evaluation" not in captured
     assert "run-diagnostic-evaluation" not in captured
-    assert "debug-apply-evaluation" not in captured
 
 
 def test_cli_public_aliases_parse_to_existing_arguments():
@@ -185,4 +183,3 @@ def test_cli_package_module_entrypoint_preserves_help():
     assert "run-walk-forward" in result.stdout
     assert "run-walk-forward-evaluation" not in result.stdout
     assert "run-diagnostic-evaluation" not in result.stdout
-    assert "debug-apply-evaluation" not in result.stdout

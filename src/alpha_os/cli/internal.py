@@ -258,17 +258,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     init = sub.add_parser("init", help="Initialize an alpha-os runtime database")
     init.add_argument("--db", type=str, default=None)
 
-    register = internal_parser("register-signal-candidate")
-    register.add_argument("--db", type=str, default=None)
-    register.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    register.add_argument("--target-id", type=str, default=None)
-
     if include_runtime_parsers:
         apply_manifest = sub.add_parser(
             "apply-manifest",
@@ -335,25 +324,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     inspect_resources.add_argument("--evaluation-spec-limit", type=int, default=50)
 
-    register_specification = internal_parser("debug-register-signal-candidate-spec")
-    register_specification.add_argument("--db", type=str, default=None)
-    register_specification.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    register_specification.add_argument(
-        "--base-signal-id",
-        "--base-signal-candidate-id",
-        dest="base_signal_id",
-        type=str,
-        default=None,
-    )
-    register_specification.add_argument("--target-id", type=str, default=None)
-    register_specification.add_argument("--observable-id", type=str, default=None)
-
     show_specifications = internal_parser("debug-show-signal-candidate-specs")
     show_specifications.add_argument("--db", type=str, default=None)
     show_specifications.add_argument("--limit", type=int, default=20)
@@ -369,21 +339,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     show_observables.add_argument("--db", type=str, default=None)
     show_observables.add_argument("--limit", type=int, default=50)
 
-    record = internal_parser("debug-record-prediction")
-    record.add_argument("--db", type=str, default=None)
-    record.add_argument("--date", type=str, required=True)
-    record.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    record.add_argument("--prediction", type=float, required=True)
-    record.add_argument("--evaluation-id", type=str, default=None)
-    record.add_argument("--target-id", type=str, default=None)
-    record.add_argument("--subject-id", type=str, default=None)
-
     finalize = internal_parser("debug-finalize-observation")
     finalize.add_argument("--db", type=str, default=None)
     finalize.add_argument("--date", type=str, required=True)
@@ -391,20 +346,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     finalize.add_argument("--evaluation-id", type=str, default=None)
     finalize.add_argument("--target-id", type=str, default=None)
     finalize.add_argument("--subject-id", type=str, default=None)
-
-    update = internal_parser("debug-update-state")
-    update.add_argument("--db", type=str, default=None)
-    update.add_argument("--date", type=str, required=True)
-    update.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        required=True,
-    )
-    update.add_argument("--evaluation-id", type=str, default=None)
-    update.add_argument("--target-id", type=str, default=None)
-    update.add_argument("--subject-id", type=str, default=None)
 
     generate_input = internal_parser("debug-generate-evaluation-input")
     generate_input.add_argument("--db", type=str, default=None)
@@ -432,37 +373,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     )
     generate_inputs.add_argument("--out", type=str, required=True)
     generate_inputs.add_argument("--base-url", type=str, default=DEFAULT_SIGNAL_NOISE_BASE_URL)
-
-    run = internal_parser("debug-apply-evaluation")
-    run.add_argument("--db", type=str, default=None)
-    run.add_argument("--date", type=str, default=None)
-    run.add_argument(
-        "--signal-id",
-        "--signal-candidate-id",
-        dest="signal_id",
-        type=str,
-        default=None,
-    )
-    run.add_argument("--prediction", type=float, default=None)
-    run.add_argument("--observation", type=float, default=None)
-    run.add_argument("--evaluation-id", type=str, default=None)
-    run.add_argument("--target-id", type=str, default=None)
-    run.add_argument("--subject-id", type=str, default=None)
-    run.add_argument(
-        "--input",
-        type=str,
-        default=None,
-        help="Path to a JSON object with date, signal_id, prediction, observation, target_id",
-    )
-
-    batch = internal_parser("debug-apply-evaluations")
-    batch.add_argument("--db", type=str, default=None)
-    batch.add_argument(
-        "--input",
-        type=str,
-        required=True,
-        help="Path to a JSON array of evaluation input objects",
-    )
 
     backfill = internal_parser("debug-apply-backfill")
     backfill.add_argument("--db", type=str, default=None)
@@ -548,16 +458,6 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
     status = internal_parser("debug-status")
     status.add_argument("--db", type=str, default=None)
     status.add_argument("--subject-set-id", type=str, default=None)
-
-    show = internal_parser("debug-show-evaluations")
-    show.add_argument("--db", type=str, default=None)
-    show.add_argument("--limit", type=int, default=10)
-    show.add_argument("--subject-set-id", type=str, default=None)
-
-    meta = internal_parser("debug-show-meta-predictions")
-    meta.add_argument("--db", type=str, default=None)
-    meta.add_argument("--limit", type=int, default=10)
-    meta.add_argument("--subject-set-id", type=str, default=None)
 
     compare_meta = internal_parser("debug-compare-meta-aggregations")
     compare_meta.add_argument("--db", type=str, default=None)
@@ -3939,8 +3839,6 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command in {"init-db", "init"}:
             return cmd_init_db(args)
-        if args.command == "register-signal-candidate":
-            return cmd_register_signal(args)
         if args.command == "apply-manifest":
             return cmd_apply_runtime_manifest(args)
         if args.command == "run-diagnostic-evaluation":
@@ -3953,28 +3851,18 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_run_evaluation(args)
         if args.command in {"run-walk-forward-evaluation", "run-walk-forward"}:
             return cmd_run_walk_forward_evaluation(args)
-        if args.command == "debug-register-signal-candidate-spec":
-            return cmd_register_signal_spec(args)
         if args.command == "debug-show-signal-candidate-specs":
             return cmd_show_signal_specs(args)
         if args.command == "debug-register-observable":
             return cmd_register_observable(args)
         if args.command == "debug-show-observables":
             return cmd_show_observables(args)
-        if args.command == "debug-record-prediction":
-            return cmd_record_prediction(args)
         if args.command == "debug-finalize-observation":
             return cmd_finalize_observation(args)
-        if args.command == "debug-update-state":
-            return cmd_update_state(args)
         if args.command == "debug-generate-evaluation-input":
             return cmd_generate_evaluation_input(args)
         if args.command == "debug-generate-evaluation-inputs":
             return cmd_generate_evaluation_inputs(args)
-        if args.command == "debug-apply-evaluation":
-            return cmd_apply_evaluation(args)
-        if args.command == "debug-apply-evaluations":
-            return cmd_apply_evaluations(args)
         if args.command == "debug-apply-backfill":
             return cmd_apply_backfill(args)
         if args.command == "debug-apply-signal-candidates-backfill":
@@ -3983,10 +3871,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_inspect_subject_set(args)
         if args.command == "debug-status":
             return cmd_status(args)
-        if args.command == "debug-show-evaluations":
-            return cmd_show_evaluations(args)
-        if args.command == "debug-show-meta-predictions":
-            return cmd_show_meta_predictions(args)
         if args.command == "debug-compare-meta-aggregations":
             return cmd_compare_meta_aggregations(args)
         if args.command == "debug-register-subject-set":
