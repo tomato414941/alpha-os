@@ -2,9 +2,9 @@
 
 ## Problem
 
-`signal_discovery_id` is no longer just provenance. It is still used as a
-routing key across portfolio decision input construction and some strategy
-resolution paths.
+`signal_discovery_id` has historically been used as more than provenance. It
+has acted as a routing key across portfolio decision input construction and
+some strategy resolution paths.
 
 This makes `SignalDiscovery` look like a primary domain axis even though it is
 closer to an internal strategy preparation/search step.
@@ -18,8 +18,8 @@ That creates misleading boundaries:
 
 - strategy overrides rebuild strategies from the referenced signal discovery
   spec
-- portfolio decision input construction recovers subject set through compressed
-  belief provenance
+- portfolio decision input construction used to recover subject set through
+  compressed belief provenance
 
 ML/RL-style boundaries would usually evaluate a strategy/policy or a checkpoint,
 not route through the feature-selection/search job that produced it.
@@ -34,17 +34,18 @@ introduced only after the checkpoint model is defined. Keep `signal_discovery_id
 as provenance unless a local workflow explicitly needs to load the signal search
 specification.
 
-## Current Suspects
+## Current Marker
 
-- `portfolio_decision_service.py` resolves subject set through compressed belief
-  `signal_discovery_id`
+`portfolio_decision_service.py` no longer resolves subject set through
+compressed belief `signal_discovery_id`. Callers pass the resolved `SubjectSet`
+explicitly.
 
 ## Desired Direction
 
 Evaluation task resolution no longer derives strategy variants from
 `signal_discovery_id`. Evaluation planning now prefers direct strategy
-evaluation when the strategy is directly executable. Revisit portfolio decision
-input construction next.
+evaluation when the strategy is directly executable. Portfolio decision input
+construction no longer uses compressed belief provenance to recover subject set.
 
 ## Close Condition
 

@@ -2133,6 +2133,7 @@ def cmd_decide_portfolio(args: argparse.Namespace) -> int:
             compressed_belief_id=str(args.compressed_belief_id),
             portfolio_id=str(args.portfolio_id),
             portfolio_state=portfolio_state,
+            subject_set=subject_set,
             assumptions=assumptions,
         )
         if decision_input is None:

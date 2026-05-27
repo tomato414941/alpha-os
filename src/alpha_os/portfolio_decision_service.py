@@ -31,7 +31,6 @@ from .portfolio_decision import (
 )
 from .trading_strategy import TradingStrategySpec
 from .store import EvaluationStore
-from .universe_contract import validate_subject_set_universe_contract
 
 
 def _trading_strategy_trace_document(
@@ -76,6 +75,7 @@ def build_portfolio_decision_input_from_compressed_belief(
     compressed_belief_id: str,
     portfolio_id: str | None = None,
     portfolio_state: PortfolioState,
+    subject_set: SubjectSet | None = None,
     assumptions: PortfolioDecisionAssumptions | None = None,
 ) -> PortfolioDecisionInput:
     assumptions = assumptions or PortfolioDecisionAssumptions()
@@ -89,7 +89,6 @@ def build_portfolio_decision_input_from_compressed_belief(
     uncertainty_inputs = []
     model_uncertainty_inputs = []
     observation_series_by_subject: dict[str, dict[str, float]] = {}
-    subject_set = _subject_set_for_compressed_belief(store, signal_discovery_id=belief.signal_discovery_id)
     target_id_by_subject = {
         component.subject_id: component.target_id
         for component in belief.components
@@ -310,21 +309,6 @@ def apply_decision_output_constraints(
         ),
         sizing_diagnostics=decision_output.sizing_diagnostics,
     )
-
-
-def _subject_set_for_compressed_belief(
-    store: EvaluationStore,
-    *,
-    signal_discovery_id: str,
-) -> SubjectSet | None:
-    discovery_state = store.get_signal_discovery_spec(signal_discovery_id)
-    if discovery_state is None:
-        return None
-    subject_set_state = store.get_subject_set(discovery_state.definition.subject_set_id)
-    if subject_set_state is None:
-        return None
-    validate_subject_set_universe_contract(subject_set_state.definition)
-    return subject_set_state.definition
 
 
 def build_runtime_portfolio_state(
