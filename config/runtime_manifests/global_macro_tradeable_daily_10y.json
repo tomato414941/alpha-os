@@ -701,7 +701,6 @@
         }
       ],
       "metric_group_names": [
-        "signed_belief_quality",
         "prediction_diagnostics",
         "portfolio_target_return_alignment",
         "sizing_policy_quality",

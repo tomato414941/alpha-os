@@ -181,7 +181,6 @@
         }
       ],
       "metric_group_names": [
-        "signed_belief_quality",
         "portfolio_target_return_alignment",
         "sizing_policy_quality",
         "rebalance_policy_quality",

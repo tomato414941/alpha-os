@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from typing import Callable
-import warnings
 from statistics import pstdev
 from math import sqrt
 
@@ -39,7 +38,6 @@ from .portfolio_sizing_policy import (
 )
 from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 from .scoring import numerai_corr
-from .evaluation_snapshot import EvaluationSnapshot
 
 
 @dataclass(frozen=True)
@@ -270,7 +268,6 @@ def build_direct_strategy_evaluation_metric_group_results(
         range_summaries=list(loop_result.range_summaries),
         all_step_net_returns=list(loop_result.all_step_net_returns),
         portfolio_construction=portfolio_construction,
-        include_signed_belief_failures=False,
     )
     return StrategyEvaluationResult(
         metric_group_results_by_name=metric_group_results_by_name,
@@ -284,35 +281,7 @@ def build_evaluation_metric_group_results_from_range_summaries(
     range_summaries: list[StrategyBacktestRangeSummary],
     all_step_net_returns: list[float],
     portfolio_construction: PortfolioConstructionSpec,
-    mean_survivor_corr: float = 0.0,
-    mean_survivor_stability_score: float = 0.0,
-    mean_component_confidence: float = 0.0,
-    include_signed_belief_failures: bool = True,
 ) -> tuple[dict[str, EvaluationMetricGroupResult], tuple[EvaluationFailureFindingGroup, ...]]:
-    signed_belief_metric_group_result = EvaluationMetricGroupResult(
-        metric_group_name="signed_belief_quality",
-        source=source,
-        metrics={
-            "mean_survivor_corr": round(float(mean_survivor_corr), 6),
-            "mean_survivor_stability_score": round(
-                float(mean_survivor_stability_score),
-                6,
-            ),
-            "mean_component_confidence": round(float(mean_component_confidence), 6),
-            "mean_range_signed_belief_corr": round(
-                _mean([item.predictive_corr for item in range_summaries]),
-                6,
-            ),
-            "best_range_signed_belief_corr": round(
-                max((item.predictive_corr for item in range_summaries), default=0.0),
-                6,
-            ),
-            "worst_range_signed_belief_corr": round(
-                min((item.predictive_corr for item in range_summaries), default=0.0),
-                6,
-            ),
-        },
-    )
     prediction_diagnostics_metric_group_result = (
         build_prediction_diagnostics_metric_group_result(
             source=source,
@@ -740,7 +709,7 @@ def build_evaluation_metric_group_results_from_range_summaries(
         source=source,
         metrics={
             "range_count": len(range_summaries),
-            "signed_belief_corr_std": round(
+            "predictive_corr_std": round(
                 _std([item.predictive_corr for item in range_summaries]),
                 6,
             ),
@@ -767,7 +736,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
     )
     return (
         {
-            signed_belief_metric_group_result.metric_group_name: signed_belief_metric_group_result,
             prediction_diagnostics_metric_group_result.metric_group_name: (
                 prediction_diagnostics_metric_group_result
             ),
@@ -790,7 +758,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             range_summaries,
             portfolio_construction=portfolio_construction,
             source=source,
-            include_signed_belief_failures=include_signed_belief_failures,
         ),
     )
 
@@ -833,10 +800,6 @@ def _max_drawdown_from_step_returns(values: list[float]) -> float:
         if peak > 0.0:
             drawdown = max(drawdown, 1.0 - (equity / peak))
     return float(drawdown)
-
-
-def _snapshot_date(snapshot: EvaluationSnapshot) -> str:
-    return str(snapshot.evaluation_id).rsplit(":", 1)[-1]
 
 
 def _uses_expensive_sizing_optimizer(
@@ -991,111 +954,6 @@ def _subject_metadata_by_subject(
             if value is not None
         }
     return metadata
-
-
-def build_range_backtest_dataset(
-    *,
-    date_range: EvaluationDateRange,
-    snapshots: list[EvaluationSnapshot],
-    all_bundles_by_subject: dict[str, dict[str, object]],
-    survivor_metrics: dict[str, object],
-    component_by_subject_id: dict[str, object],
-    metric_window: int,
-    funding_cost_bps_series_by_subject: dict[str, pd.Series],
-    borrow_fee_bps_series_by_subject: dict[str, pd.Series],
-    roll_cost_bps_series_by_subject: dict[str, pd.Series],
-    contract_multiplier_by_subject: dict[str, float],
-) -> RangeBacktestDataset | None:
-    range_snapshots = _snapshots_for_range(
-        snapshots,
-        start_date=date_range.start_date,
-        end_date=date_range.end_date,
-    )
-    bundles_by_subject = _bundles_by_subject(
-        range_snapshots,
-        survivor_metrics=survivor_metrics,
-    )
-    subject_series: list[SubjectBacktestSeries] = []
-    predictive_corrs: list[float] = []
-    for subject_id, bundle in sorted(bundles_by_subject.items()):
-        component = component_by_subject_id.get(subject_id)
-        full_bundle = all_bundles_by_subject.get(subject_id, bundle)
-        signal_series = _weighted_signal_series(
-            bundle["predictions_by_signal"],
-            survivor_metrics=survivor_metrics,
-        )
-        observations = bundle["observations"]
-        if signal_series.empty or observations.empty:
-            continue
-        aligned = pd.concat(
-            [signal_series, observations],
-            axis=1,
-            join="inner",
-        ).dropna()
-        if aligned.empty:
-            continue
-        predictive_corrs.append(
-            numerai_corr(
-                aligned.iloc[:, 0].astype(float),
-                aligned.iloc[:, 1].astype(float),
-            )
-        )
-        risk_series = (
-            observations.astype(float)
-            .rolling(window=max(int(metric_window), 1), min_periods=1)
-            .std(ddof=0)
-            .fillna(0.0)
-            .astype(float)
-        )
-        confidence_value = 1.0 if component is None else float(component.confidence)
-        confidence_series = pd.Series(
-            confidence_value,
-            index=aligned.index,
-            dtype=float,
-        )
-        uncertainty_series = pd.Series(
-            abs(float(signal_series.abs().mean())) * max(0.0, 1.0 - confidence_value),
-            index=aligned.index,
-            dtype=float,
-        )
-        subject_series.append(
-            SubjectBacktestSeries(
-                subject_id=subject_id,
-                signal_series=aligned.iloc[:, 0].astype(float),
-                realized_return_series=aligned.iloc[:, 1].astype(float),
-                historical_return_series=full_bundle["observations"].astype(float),
-                confidence_series=confidence_series,
-                risk_series=risk_series.reindex(aligned.index).fillna(0.0),
-                uncertainty_series=uncertainty_series,
-                funding_cost_bps_series=(
-                    funding_cost_bps_series_by_subject.get(subject_id)
-                ),
-                borrow_fee_bps_series=borrow_fee_bps_series_by_subject.get(subject_id),
-                roll_cost_bps_series=roll_cost_bps_series_by_subject.get(subject_id),
-                contract_multiplier=contract_multiplier_by_subject.get(subject_id),
-            )
-        )
-    if not subject_series:
-        return None
-    prediction_diagnostics = build_prediction_diagnostics(
-        signal_series_by_subject={
-            item.subject_id: item.signal_series for item in subject_series
-        },
-        forward_return_series_by_subject={
-            item.subject_id: item.realized_return_series for item in subject_series
-        },
-        group_by_subject=None,
-    )
-    return RangeBacktestDataset(
-        label=date_range.label,
-        predictive_corr=_mean(predictive_corrs),
-        prediction_diagnostics=prediction_diagnostics,
-        subject_series=tuple(subject_series),
-        dependence_series=_rolling_dependence_series(
-            bundles_by_subject,
-            window_size=metric_window,
-        ),
-    )
 
 
 def build_direct_range_backtest_dataset(
@@ -1573,172 +1431,15 @@ def _portfolio_concentration_from_backtest(
     }
 
 
-def _snapshots_for_range(
-    snapshots: list[EvaluationSnapshot],
-    *,
-    start_date: str,
-    end_date: str,
-) -> list[EvaluationSnapshot]:
-    return [
-        item
-        for item in snapshots
-        if start_date <= _snapshot_date(item) <= end_date
-    ]
-
-
-def _bundles_by_subject(
-    snapshots: list[EvaluationSnapshot],
-    *,
-    survivor_metrics: dict[str, object],
-) -> dict[str, dict[str, object]]:
-    bundles: dict[str, dict[str, object]] = {}
-    for snapshot in snapshots:
-        if snapshot.signal_id not in survivor_metrics:
-            continue
-        date = _snapshot_date(snapshot)
-        subject_bundle = bundles.setdefault(
-            snapshot.subject_id,
-            {
-                "observations": {},
-                "predictions_by_signal": {},
-            },
-        )
-        subject_bundle["observations"][date] = float(snapshot.observation_value)
-        subject_bundle["predictions_by_signal"].setdefault(
-            snapshot.signal_id,
-            {},
-        )[date] = float(snapshot.prediction_value)
-    normalized: dict[str, dict[str, object]] = {}
-    for subject_id, bundle in bundles.items():
-        normalized[subject_id] = {
-            "observations": pd.Series(bundle["observations"], dtype=float).sort_index(),
-            "predictions_by_signal": {
-                signal_id: pd.Series(values, dtype=float).sort_index()
-                for signal_id, values in bundle["predictions_by_signal"].items()
-            },
-        }
-    return normalized
-
-
-def _survivor_metric_weight(metric: object) -> float:
-    corr = getattr(metric, "corr", None)
-    if corr is not None:
-        return max(abs(float(corr)), 0.0)
-    return max(float(getattr(metric, "score", 0.0)), 0.0)
-
-
-def _survivor_metric_orientation(metric: object) -> float:
-    corr = getattr(metric, "corr", None)
-    if corr is not None and float(corr) < 0.0:
-        return -1.0
-    return 1.0
-
-
-def _weighted_signal_series(
-    predictions_by_signal: dict[str, pd.Series],
-    *,
-    survivor_metrics: dict[str, object],
-) -> pd.Series:
-    if not predictions_by_signal:
-        return pd.Series(dtype=float)
-    frame = pd.concat(
-        {
-            signal_id: series.astype(float)
-            for signal_id, series in predictions_by_signal.items()
-        },
-        axis=1,
-    ).sort_index()
-    if frame.empty:
-        return pd.Series(dtype=float)
-    weight_by_signal = {
-        signal_id: _survivor_metric_weight(metric)
-        for signal_id, metric in survivor_metrics.items()
-        if signal_id in frame.columns
-    }
-    orientation_by_signal = {
-        signal_id: _survivor_metric_orientation(metric)
-        for signal_id, metric in survivor_metrics.items()
-        if signal_id in frame.columns
-    }
-    values: dict[str, float] = {}
-    for evaluation_date, row in frame.iterrows():
-        contributors = row.dropna()
-        if contributors.empty:
-            continue
-        total_weight = sum(
-            weight_by_signal.get(str(signal_id), 0.0)
-            for signal_id in contributors.index
-        )
-        if total_weight <= 0.0:
-            total_weight = float(len(contributors))
-            normalized_weights = {
-                str(signal_id): 1.0 / total_weight
-                for signal_id in contributors.index
-            }
-        else:
-            normalized_weights = {
-                str(signal_id): weight_by_signal.get(
-                    str(signal_id), 0.0
-                )
-                / total_weight
-                for signal_id in contributors.index
-            }
-        values[str(evaluation_date)] = float(
-            sum(
-                float(contributors[signal_id])
-                * orientation_by_signal.get(str(signal_id), 1.0)
-                * normalized_weights[str(signal_id)]
-                for signal_id in contributors.index
-            )
-        )
-    return pd.Series(values, dtype=float).sort_index()
-
-
-def _rolling_dependence_series(
-    bundles_by_subject: dict[str, dict[str, object]],
-    *,
-    window_size: int,
-) -> tuple[DependenceBacktestSeries, ...]:
-    items: list[DependenceBacktestSeries] = []
-    subject_ids = tuple(sorted(bundles_by_subject))
-    for index, left_subject_id in enumerate(subject_ids):
-        left_observations = bundles_by_subject[left_subject_id]["observations"]
-        for right_subject_id in subject_ids[index + 1 :]:
-            right_observations = bundles_by_subject[right_subject_id]["observations"]
-            aligned = pd.concat(
-                [left_observations, right_observations],
-                axis=1,
-                join="inner",
-            ).dropna()
-            if aligned.empty:
-                continue
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                rolling = aligned.iloc[:, 0].rolling(
-                    window=max(int(window_size), 1),
-                    min_periods=2,
-                ).corr(aligned.iloc[:, 1]).fillna(0.0)
-            items.append(
-                DependenceBacktestSeries(
-                    left_subject_id=left_subject_id,
-                    right_subject_id=right_subject_id,
-                    series=rolling.astype(float),
-                )
-            )
-    return tuple(items)
-
-
 def _failure_finding_groups(
     range_summaries: list[StrategyBacktestRangeSummary],
     *,
     portfolio_construction: PortfolioConstructionSpec,
     source: str,
-    include_signed_belief_failures: bool,
 ) -> tuple[EvaluationFailureFindingGroup, ...]:
     decision_cases: list[EvaluationFailureFinding] = []
     sizing_policy_cases: list[EvaluationFailureFinding] = []
     rebalance_policy_cases: list[EvaluationFailureFinding] = []
-    signed_belief_cases: list[EvaluationFailureFinding] = []
     portfolio_target_return_alignment_cases: list[EvaluationFailureFinding] = []
     concentration_cases: list[EvaluationFailureFinding] = []
     for item in sorted(
@@ -1803,18 +1504,6 @@ def _failure_finding_groups(
                             item.daily_rebalance_net_return,
                             6,
                         ),
-                        "step_count": item.step_count,
-                    },
-                )
-            )
-        if include_signed_belief_failures and item.predictive_corr <= 0.0:
-            signed_belief_cases.append(
-                EvaluationFailureFinding(
-                    label=item.label,
-                    severity=abs(float(item.predictive_corr)),
-                    metrics={
-                        "signed_belief_corr": round(item.predictive_corr, 6),
-                        "decision_net_return": round(item.decision_net_return, 6),
                         "step_count": item.step_count,
                     },
                 )
@@ -1893,11 +1582,6 @@ def _failure_finding_groups(
             metric_group_name="rebalance_policy_quality",
             source=source,
             findings=tuple(rebalance_policy_cases),
-        ),
-        EvaluationFailureFindingGroup(
-            metric_group_name="signed_belief_quality",
-            source=source,
-            findings=tuple(signed_belief_cases),
         ),
         EvaluationFailureFindingGroup(
             metric_group_name="portfolio_target_return_alignment",

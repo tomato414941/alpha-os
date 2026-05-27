@@ -17,7 +17,11 @@ same internal shape.
 ## Direction
 
 Treat `TradingStrategy` as an input/output contract, not as a common data
-schema.
+schema. The strategy should be a black box from the evaluator, backtest runner,
+and market/world simulation perspective. Those callers may know the strategy
+input and output contract, but they should not interpret internal fields such
+as `position_rule_id`, `family_mix`, `selection_kind`, or portfolio construction
+settings as the strategy implementation.
 
 `TradingStrategySpec` should remain only where a persisted manifest-style record
 is still needed. It should not become the domain model for all strategy
@@ -37,6 +41,11 @@ the pre-existing `PortfolioDecisionInput` / `PortfolioDecisionOutput` types.
 
 `run_strategy_backtest()` no longer accepts `TradingStrategySpec`; it accepts
 the explicit behavior fields it needs.
+
+This is still not the desired architecture. The current direct strategy
+backtest path adapts persisted fields into a backtest recipe instead of running
+a `TradingStrategy` black-box contract. It is better described as a temporary
+strategy-spec interpreter backtest than as a true trading-strategy backtest.
 
 `evaluation_execution_strategy.py` no longer imports `TradingStrategySpec` or
 uses helper functions typed around it. It still reads the persisted strategy

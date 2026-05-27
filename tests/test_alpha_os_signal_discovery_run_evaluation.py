@@ -467,7 +467,6 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(tmp
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signed_belief_quality",
                             "portfolio_target_return_alignment",
                             "sizing_policy_quality",
                             "rebalance_policy_quality",
@@ -673,7 +672,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signed_belief_quality",
                             "portfolio_target_return_alignment",
                             "sizing_policy_quality",
                             "rebalance_policy_quality",
@@ -820,7 +818,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signed_belief_quality",
                             "portfolio_target_return_alignment",
                             "sizing_policy_quality",
                             "rebalance_policy_quality",
@@ -1836,7 +1833,6 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                         ],
                         "metric_windows": [2],
                         "metric_group_names": [
-                            "signed_belief_quality",
                             "portfolio_target_return_alignment",
                             "sizing_policy_quality",
                             "rebalance_policy_quality",

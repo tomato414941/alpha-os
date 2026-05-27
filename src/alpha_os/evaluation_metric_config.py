@@ -14,7 +14,6 @@ EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 
 
 DECISION_EVALUATION_METRIC_GROUP_NAMES = (
-    "signed_belief_quality",
     "prediction_diagnostics",
     "portfolio_target_return_alignment",
     "sizing_policy_quality",
