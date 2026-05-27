@@ -42,6 +42,10 @@ the explicit behavior fields it needs.
 uses helper functions typed around it. It still reads the persisted strategy
 record and adapts the fields needed by the current backtest path.
 
+Unused `strategy_variant.py` routes that derived a `TradingStrategySpec` from a
+signal discovery were removed. This removes an old path that treated signal
+discovery as a factory for a shared strategy schema.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`
