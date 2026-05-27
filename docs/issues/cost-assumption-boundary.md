@@ -50,13 +50,12 @@ Decision rule:
 - realized cost used to calculate net results belongs to evaluation
 - estimated cost used to decide whether or how to trade belongs to strategy
 
-## Current Suspects
+## Current State
 
-- `ExecutionCostAssumptionsSpec` carries fields such as `fee_bps`,
-  `market_impact_bps`, and spread assumptions. These look like world or
-  simulator assumptions, but they can also be used by policy-side trade utility.
-- `HoldingCostAssumptionsSpec` carries funding and borrow assumptions. These are
-  closer to realized environment costs.
+- `ExecutionCostAssumptionsSpec` has been removed.
+- `HoldingCostAssumptionsSpec` has been removed.
+- `TradingEnvironment` now carries the current execution and holding cost
+  assumptions used by backtests and evaluation.
 
 The code should not rely on a generic cost object to stand for both expected
 decision cost and realized environment cost.
