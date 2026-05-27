@@ -35,6 +35,11 @@ contract.
 now. They mark the contract boundary without making trading strategy depend on
 the pre-existing `PortfolioDecisionInput` / `PortfolioDecisionOutput` types.
 
+`run_strategy_backtest()` no longer accepts `TradingStrategySpec`; it accepts
+the explicit behavior fields it needs. This is only an intermediate step. The
+evaluation path still resolves `TradingStrategySpec` before adapting it into
+those fields.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

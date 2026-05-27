@@ -15,7 +15,6 @@ from .signal_discovery_strategy_evaluation import (
     build_direct_strategy_evaluation_metric_group_results,
 )
 from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_feature_planes
-from .trading_strategy import TradingStrategySpec
 from .universe_contract import validate_subject_set_universe_contract
 
 
@@ -119,32 +118,36 @@ def run_strategy_backtest_from_store(
     subject_set_state = store.get_subject_set(subject_set_id)
     if subject_set_state is None:
         raise ValueError(f"subject set does not exist: {subject_set_id}")
+    trading_strategy = strategy_state.trading_strategy
     return run_strategy_backtest(
-        trading_strategy=strategy_state.trading_strategy,
         subject_set=subject_set_state.definition,
         target_id=target_id,
         evaluation_date_ranges=evaluation_date_ranges,
         base_url=base_url,
         portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,
+        position_rule_id=trading_strategy.position_rule_id,
+        family_mix=trading_strategy.family_mix,
+        selection_kind=trading_strategy.selection_kind,
+        top_k=trading_strategy.top_k,
         feature_plane_repository=feature_plane_repository,
     )
 
 
 def run_strategy_backtest(
     *,
-    trading_strategy: TradingStrategySpec,
     subject_set: SubjectSet,
     target_id: str,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
+    position_rule_id: str,
+    family_mix: str | None,
+    selection_kind: str,
+    top_k: int | None,
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
-    selection_kind = trading_strategy.selection_kind
-    selection_top_k = trading_strategy.top_k
-    position_rule_id = trading_strategy.position_rule_id
     if position_rule_id not in {
         "constant_hold",
         "dual_momentum_hold",
@@ -159,10 +162,8 @@ def run_strategy_backtest(
         raise ValueError(
             "current strategy backtest only supports selection=all_assets or selection=top_k"
         )
-    if selection_kind == "top_k" and selection_top_k is None:
-        raise ValueError(
-            "top_k strategy backtest requires strategy portfolio top_k"
-        )
+    if selection_kind == "top_k" and top_k is None:
+        raise ValueError("top_k strategy backtest requires top_k")
     validate_subject_set_universe_contract(subject_set)
     subject_planes = build_subject_set_feature_planes(
         subject_set=subject_set,
@@ -186,7 +187,7 @@ def run_strategy_backtest(
     elif position_rule_id == "dual_momentum_hold":
         position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
-            family_mix=trading_strategy.family_mix,
+            family_mix=family_mix,
         )
     else:
         position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
@@ -206,7 +207,7 @@ def run_strategy_backtest(
         contract_multiplier_by_subject=contract_multiplier_by_subject,
         portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,
-        top_k=selection_top_k,
+        top_k=top_k,
     )
 
 

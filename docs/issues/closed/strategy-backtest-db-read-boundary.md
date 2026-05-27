@@ -65,7 +65,7 @@ The existing DB-backed function can remain as a thin wrapper.
 
 ## Closure Notes
 
-`run_strategy_backtest()` now accepts `TradingStrategySpec` and `SubjectSet`
-directly.
+`run_strategy_backtest()` now accepts explicit strategy behavior fields and
+`SubjectSet` directly. It no longer accepts `TradingStrategySpec`.
 
 `run_strategy_backtest_from_store()` remains as the DB-backed wrapper.
