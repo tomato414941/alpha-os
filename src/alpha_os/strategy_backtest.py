@@ -11,7 +11,7 @@ from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_decision import SubjectSet
-from .signal_discovery_strategy_evaluation import (
+from .strategy_backtest_evaluation import (
     build_direct_strategy_evaluation_metric_group_results,
 )
 from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_feature_planes

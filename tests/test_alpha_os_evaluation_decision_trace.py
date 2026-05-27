@@ -201,7 +201,7 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
     from alpha_os.evaluation_result import EvaluationMetricGroupResult
     from alpha_os.evaluation_runner import evaluate_evaluation_spec_state
-    from alpha_os.signal_discovery_strategy_evaluation import (
+    from alpha_os.strategy_backtest_evaluation import (
         EvaluationTraceRangeResult,
         StrategyEvaluationResult,
     )

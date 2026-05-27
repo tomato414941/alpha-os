@@ -43,7 +43,7 @@ from .evaluation_snapshot import EvaluationSnapshot
 
 
 @dataclass(frozen=True)
-class SignalDiscoveryStrategyEvaluationRangeSummary:
+class StrategyBacktestRangeSummary:
     label: str
     predictive_corr: float
     prediction_hit_rate: float
@@ -142,7 +142,7 @@ class StrategyEvaluationResult:
 
 @dataclass(frozen=True)
 class RangeBacktestEvaluationLoopResult:
-    range_summaries: tuple[SignalDiscoveryStrategyEvaluationRangeSummary, ...]
+    range_summaries: tuple[StrategyBacktestRangeSummary, ...]
     selected_trace_results: tuple[EvaluationTraceRangeResult, ...]
     all_step_net_returns: tuple[float, ...]
 
@@ -158,7 +158,7 @@ def evaluate_range_backtest_dataset_builder(
     trading_environment: TradingEnvironment,
     top_k: int | None,
 ) -> RangeBacktestEvaluationLoopResult:
-    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary] = []
+    range_summaries: list[StrategyBacktestRangeSummary] = []
     selected_trace_results: list[EvaluationTraceRangeResult] = []
     all_step_net_returns: list[float] = []
     for date_range in evaluation_date_ranges:
@@ -281,7 +281,7 @@ def build_direct_strategy_evaluation_metric_group_results(
 def build_evaluation_metric_group_results_from_range_summaries(
     *,
     source: str,
-    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary],
+    range_summaries: list[StrategyBacktestRangeSummary],
     all_step_net_returns: list[float],
     portfolio_construction: PortfolioConstructionSpec,
     mean_survivor_corr: float = 0.0,
@@ -1263,7 +1263,7 @@ def _range_summary_from_variant_results(
     *,
     portfolio_construction: PortfolioConstructionSpec,
     subject_set: SubjectSet | None,
-) -> SignalDiscoveryStrategyEvaluationRangeSummary:
+) -> StrategyBacktestRangeSummary:
     selected = variant_results.selected
     concentration = _portfolio_concentration_from_backtest(
         selected,
@@ -1276,7 +1276,7 @@ def _range_summary_from_variant_results(
     cost_drag = _cost_drag_from_backtest(selected, subject_set=subject_set)
     signal_churn = _signal_churn_from_backtest(selected)
     optimizer_diagnostics = _optimizer_diagnostics_from_backtest(selected)
-    return SignalDiscoveryStrategyEvaluationRangeSummary(
+    return StrategyBacktestRangeSummary(
         label=dataset.label,
         predictive_corr=dataset.predictive_corr,
         prediction_hit_rate=dataset.prediction_diagnostics.mean_signal_hit_rate,
@@ -1729,7 +1729,7 @@ def _rolling_dependence_series(
 
 
 def _failure_finding_groups(
-    range_summaries: list[SignalDiscoveryStrategyEvaluationRangeSummary],
+    range_summaries: list[StrategyBacktestRangeSummary],
     *,
     portfolio_construction: PortfolioConstructionSpec,
     source: str,

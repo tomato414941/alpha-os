@@ -8,7 +8,7 @@ def test_weighted_signal_series_orients_negative_corr_survivors():
 
     import pandas as pd
 
-    from alpha_os.signal_discovery_strategy_evaluation import _weighted_signal_series
+    from alpha_os.strategy_backtest_evaluation import _weighted_signal_series
 
     signal_series = _weighted_signal_series(
         {
@@ -35,7 +35,7 @@ def test_build_range_backtest_dataset_creates_subject_series():
     import pandas as pd
 
     from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.signal_discovery_strategy_evaluation import (
+    from alpha_os.strategy_backtest_evaluation import (
         _bundles_by_subject,
         build_range_backtest_dataset,
     )
@@ -122,7 +122,7 @@ def test_build_direct_range_backtest_dataset_fills_missing_signals_with_zero():
     import pandas as pd
 
     from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.signal_discovery_strategy_evaluation import (
+    from alpha_os.strategy_backtest_evaluation import (
         build_direct_range_backtest_dataset,
     )
 
