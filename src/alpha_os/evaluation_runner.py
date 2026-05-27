@@ -14,7 +14,7 @@ def evaluate_evaluation_spec_state(
     *,
     store: EvaluationStore,
     evaluation_spec_state: object,
-    evaluation_cases: tuple[tuple[str, str], ...],
+    evaluation_targets: tuple[tuple[str, str], ...],
     base_url: str,
     feature_plane_repository: FeaturePlaneRepository | None = None,
 ):
@@ -26,11 +26,9 @@ def evaluate_evaluation_spec_state(
         feature_plane_repository=feature_plane_repository,
     )
     folds = tuple(evaluation_spec.resolved_evaluation_folds)
-    for result_key, strategy_id in evaluation_cases:
+    for result_key, strategy_id in evaluation_targets:
         for fold in folds:
-            effective_result_key = (
-                result_key if len(folds) == 1 else f"{result_key}:{fold.label}"
-            )
+            effective_result_key = result_key if len(folds) == 1 else f"{result_key}:{fold.label}"
             results[effective_result_key] = run_strategy_evaluation(
                 strategy_id=strategy_id,
                 evaluation_date_ranges=fold.resolved_evaluation_date_ranges,

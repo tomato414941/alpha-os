@@ -684,14 +684,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:72ca3ef32a27"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "global_macro_futures_daily_trend_eval:strategy:72ca3ef32a27",
-      "evaluation_spec_id": "global_macro_futures_daily_trend_eval",
-      "strategy_id": "strategy:72ca3ef32a27"
     }
   ],
   "strategy_specs": [

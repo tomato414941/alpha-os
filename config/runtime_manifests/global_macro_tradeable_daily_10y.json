@@ -713,14 +713,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:4c7e5b0ef834"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "global_macro_tradeable_daily_10y_eval:strategy:4c7e5b0ef834",
-      "evaluation_spec_id": "global_macro_tradeable_daily_10y_eval",
-      "strategy_id": "strategy:4c7e5b0ef834"
     }
   ],
   "strategy_specs": [

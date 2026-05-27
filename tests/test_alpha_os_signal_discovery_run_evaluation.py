@@ -40,9 +40,7 @@ def _strategy_portfolio_document(
             "direction_mode": direction_mode,
             "gross_exposure_cap": gross_exposure_cap,
         },
-        "trading_environment": (
-            {} if trading_environment is None else trading_environment
-        ),
+        "trading_environment": ({} if trading_environment is None else trading_environment),
         "rebalance_interval_steps": rebalance_interval_steps,
         "selection_kind": selection_kind,
     }
@@ -107,14 +105,10 @@ def _build_trading_strategy(
                 gross_exposure_cap=gross_exposure_cap,
             ),
             trading_environment=TradingEnvironment(
-                turnover_cost_rate=(
-                    0.0 if turnover_cost_rate is None else turnover_cost_rate
-                ),
+                turnover_cost_rate=(0.0 if turnover_cost_rate is None else turnover_cost_rate),
                 market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
                 fee_bps=0.0 if fee_bps is None else fee_bps,
-                bid_ask_spread_bps=(
-                    0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps
-                ),
+                bid_ask_spread_bps=(0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps),
             ),
             rebalance_interval_steps=(
                 int(rebalance[len("every_") : -len("_steps")])
@@ -230,11 +224,7 @@ def test_crypto_regime_momentum_eligibility_matches_experiment_reference():
             frame["funding_rate"] > frame["funding_60d_median"]
         )
         expected_by_subject[subject_id] = (
-            (
-                (frame["return_7d"] > 0.0)
-                & (frame["return_30d"] > 0.0)
-                & ~funding_overheated
-            )
+            ((frame["return_7d"] > 0.0) & (frame["return_30d"] > 0.0) & ~funding_overheated)
             .fillna(False)
             .astype(float)
         )
@@ -279,7 +269,8 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     monkeypatch,
 ):
     import alpha_os.strategy_backtest as strategy_backtest
-    from alpha_os.evaluation_cost_config import (        TradingEnvironment,
+    from alpha_os.evaluation_cost_config import (
+        TradingEnvironment,
     )
     from alpha_os.evaluation_spec import EvaluationDateRange
     from alpha_os.portfolio_decision import (
@@ -341,12 +332,8 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
 
     strategy_backtest.run_strategy_backtest_from_store(
         store=SimpleNamespace(
-            get_trading_strategy=lambda strategy_id: SimpleNamespace(
-                trading_strategy=strategy
-            ),
-            get_subject_set=lambda subject_set_id: SimpleNamespace(
-                definition=subject_set
-            ),
+            get_trading_strategy=lambda strategy_id: SimpleNamespace(trading_strategy=strategy),
+            get_subject_set=lambda subject_set_id: SimpleNamespace(definition=subject_set),
         ),
         strategy_id="strategy:crypto_regime_momentum",
         subject_set_id="crypto",
@@ -367,14 +354,10 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
     signal_series_by_subject = captured["signal_series_by_subject"]
     assert signal_series_by_subject["BTC"].loc["2026-01-29"] == pytest.approx(0.0)
     assert signal_series_by_subject["BTC"].loc["2026-01-30"] == pytest.approx(1.0)
-    assert captured["funding_cost_bps_series_by_subject"]["BTC"].iloc[0] == (
-        pytest.approx(10.0)
-    )
+    assert captured["funding_cost_bps_series_by_subject"]["BTC"].iloc[0] == (pytest.approx(10.0))
 
 
-def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
-    tmp_path, capsys
-):
+def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(tmp_path, capsys):
     from alpha_os.cli import main
 
     db_path = tmp_path / "runtime.db"
@@ -503,6 +486,9 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
+                        "strategy_ids": [
+                            "strategy:core_crypto_rule",
+                        ],
                         "execution_range": {
                             "label": "exec_window",
                             "start_date": "2026-03-23",
@@ -550,12 +536,6 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(
                             ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "core_crypto_eval",
-                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },
@@ -681,9 +661,7 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                     {
                         "signal_discovery_id": "core_crypto_search",
                         "subject_set_id": "core_crypto",
-                        "signal_spec_ids": [
-                            "reversal_1d"
-                        ],
+                        "signal_spec_ids": ["reversal_1d"],
                         "selection_policy": {
                             "min_sample_count": 1,
                             "min_abs_corr": 0.0,
@@ -720,6 +698,9 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
+                        "strategy_ids": [
+                            "strategy:core_crypto_rule",
+                        ],
                         "execution_range": {
                             "label": "exec_window",
                             "start_date": "2026-03-23",
@@ -741,12 +722,6 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                             "decision_quality",
                             "robustness",
                         ],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "core_crypto_eval",
-                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },
@@ -838,9 +813,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                     {
                         "signal_discovery_id": "core_crypto_search",
                         "subject_set_id": "core_crypto",
-                        "signal_spec_ids": [
-                            "reversal_1d"
-                        ],
+                        "signal_spec_ids": ["reversal_1d"],
                         "selection_policy": {
                             "min_sample_count": 1,
                             "min_abs_corr": 0.0,
@@ -877,6 +850,9 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "core_crypto_eval",
+                        "strategy_ids": [
+                            "strategy:core_crypto_rule",
+                        ],
                         "execution_range": {
                             "label": "exec_window",
                             "start_date": "2026-03-23",
@@ -898,12 +874,6 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                             "decision_quality",
                             "robustness",
                         ],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "core_crypto_eval",
-                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },
@@ -934,10 +904,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
         trading_strategy = strategy_specs[0].trading_strategy
         assert trading_strategy.strategy_id == "strategy:core_crypto_rule"
         assert trading_strategy.scope.subject_set_id == "core_crypto"
-        assert (
-            trading_strategy.signal_discovery_id
-            == "core_crypto_search"
-        )
+        assert trading_strategy.signal_discovery_id == "core_crypto_search"
         assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
             "signal_weighted"
         )
@@ -983,6 +950,9 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "buy_and_hold_eval",
+                        "strategy_ids": [
+                            "strategy:buy_and_hold",
+                        ],
                         "execution_range": {
                             "label": "exec_window",
                             "start_date": "2026-03-23",
@@ -997,12 +967,6 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                         ],
                         "metric_windows": [2],
                         "metric_group_names": ["decision_quality"],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "buy_and_hold_eval",
-                        "strategy_id": "strategy:buy_and_hold",
                     }
                 ],
             },
@@ -1099,6 +1063,9 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "buy_and_hold_walk_forward",
+                        "strategy_ids": [
+                            "strategy:buy_and_hold",
+                        ],
                         "execution_range": {
                             "label": "compat_window",
                             "start_date": "2026-03-23",
@@ -1126,12 +1093,6 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                             "decision_quality",
                             "robustness",
                         ],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "buy_and_hold_walk_forward",
-                        "strategy_id": "strategy:buy_and_hold",
                     }
                 ],
             },
@@ -1308,6 +1269,9 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "top_k_hold_walk_forward",
+                        "strategy_ids": [
+                            "strategy:top_k_hold",
+                        ],
                         "execution_range": {
                             "label": "compat_window",
                             "start_date": "2026-03-23",
@@ -1335,12 +1299,6 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                             "decision_quality",
                             "robustness",
                         ],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "top_k_hold_walk_forward",
-                        "strategy_id": "strategy:top_k_hold",
                     }
                 ],
             },
@@ -1442,9 +1400,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
         store.close()
 
 
-def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
-    tmp_path, capsys
-):
+def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 
@@ -1526,6 +1482,9 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "dual_momentum_hold_walk_forward",
+                        "strategy_ids": [
+                            "strategy:dual_momentum_hold",
+                        ],
                         "execution_range": {
                             "label": "compat_window",
                             "start_date": "2026-03-23",
@@ -1553,12 +1512,6 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
                             "decision_quality",
                             "robustness",
                         ],
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "dual_momentum_hold_walk_forward",
-                        "strategy_id": "strategy:dual_momentum_hold",
                     }
                 ],
             },
@@ -1661,9 +1614,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(
         store.close()
 
 
-def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(
-    tmp_path, capsys
-):
+def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(tmp_path, capsys):
     from pathlib import Path
 
     import json
@@ -1797,9 +1748,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(
     assert "Results: 1" in output
 
 
-def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
-    tmp_path, capsys
-):
+def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(tmp_path, capsys):
     import numpy as np
     import pandas as pd
 
@@ -1900,6 +1849,9 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "diagnostic_eval",
+                        "strategy_ids": [
+                            "strategy:diagnostic_rule",
+                        ],
                         "execution_range": {
                             "label": "train",
                             "start_date": "2026-01-01",
@@ -1926,13 +1878,13 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                         "metric_group_names": [
                             "prediction_diagnostics",
                             "portfolio_target_return_alignment",
-                        "decision_quality",
-                        "portfolio_construction_trace",
-                        "execution_trace",
-                        "cost_drag",
-                        "signal_churn",
-                        "portfolio_concentration",
-                        "robustness",
+                            "decision_quality",
+                            "portfolio_construction_trace",
+                            "execution_trace",
+                            "cost_drag",
+                            "signal_churn",
+                            "portfolio_concentration",
+                            "robustness",
                         ],
                     }
                 ],
@@ -1960,13 +1912,6 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
                             ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_case_id": "diagnostic_case",
-                        "evaluation_spec_id": "diagnostic_eval",
-                        "strategy_id": "strategy:diagnostic_rule",
                     }
                 ],
             },
@@ -2026,9 +1971,7 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(
         store.close()
 
 
-def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
-    tmp_path, capsys
-):
+def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 
@@ -2048,7 +1991,7 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
 
     output = capsys.readouterr().out
     assert "alpha-os diagnostic dry run" in output
-    assert "Cases:    14" in output
+    assert "Targets:    14" in output
     assert "has_signal_discovery=false" in output
     assert "has_signal_discovery=true" in output
     assert "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case" in output
@@ -2057,14 +2000,8 @@ def test_run_diagnostic_evaluation_dry_run_validates_plan_without_report(
     assert "construction=hold_baseline" in output
     assert "global_macro_tradeable_daily_diagnostic_utility_looser_benefit_case" in output
     assert "global_macro_tradeable_daily_diagnostic_mean_reversion_case" in output
-    assert (
-        "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case"
-        in output
-    )
-    assert (
-        "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
-        in output
-    )
+    assert "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case" in output
+    assert "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case" in output
     assert "optimizer_backend=cvxpy_signed_mean_variance" in output
 
     store = EvaluationStore(db_path)
@@ -2122,7 +2059,7 @@ def test_run_fixture_diagnostic_evaluation_uses_local_csv_data(tmp_path, capsys)
 
     output = capsys.readouterr().out
     assert "fixture_daily_diagnostic.json" in output
-    assert "fixture_daily_equal_weight_hold_case" in output
+    assert "strategy:fixture_daily_equal_weight_hold" in output
     assert "alpha-os diagnostic focus" in output
     assert "decision_quality:" in output
 
@@ -2133,9 +2070,7 @@ def test_run_fixture_diagnostic_evaluation_uses_local_csv_data(tmp_path, capsys)
         assert run_result_state is not None
         assert run_result_state.run_result.evaluation_spec_id == "fixture_daily_diagnostic_eval"
         result = next(iter(run_result_state.run_result.results.values()))
-        metric_names = {
-            item.metric_group_name for item in result.metric_group_results
-        }
+        metric_names = {item.metric_group_name for item in result.metric_group_results}
         assert metric_names >= {
             "portfolio_target_return_alignment",
             "decision_quality",
@@ -2171,9 +2106,7 @@ def test_run_diagnostic_evaluation_dry_run_does_not_apply_manifest(
     )
 
 
-def test_run_diagnostic_evaluation_dry_run_check_passes_without_report(
-    tmp_path, capsys
-):
+def test_run_diagnostic_evaluation_dry_run_check_passes_without_report(tmp_path, capsys):
     from alpha_os.cli import main
     from alpha_os.store import EvaluationStore
 
@@ -2346,6 +2279,9 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                 "evaluation_specs": [
                     {
                         "evaluation_spec_id": "core_crypto_walk_forward",
+                        "strategy_ids": [
+                            "strategy:core_crypto_rule",
+                        ],
                         "execution_range": {
                             "label": "compat_window",
                             "start_date": "2026-03-23",
@@ -2418,12 +2354,6 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                             ),
                             "created_at": "2026-04-05T00:00:00+00:00",
                         }
-                    }
-                ],
-                "evaluation_cases": [
-                    {
-                        "evaluation_spec_id": "core_crypto_walk_forward",
-                        "strategy_id": "strategy:core_crypto_rule",
                     }
                 ],
             },

@@ -179,26 +179,6 @@ def print_evaluation_specs(evaluation_specs) -> None:
         )
 
 
-print_evaluation_specs = print_evaluation_specs
-
-
-def print_evaluation_cases(cases) -> None:
-    print("alpha-os evaluation cases")
-    print(f"  Count:    {len(cases)}")
-    for item in cases:
-        if isinstance(item, tuple):
-            result_key, strategy_id = item
-        else:
-            case = item.task if hasattr(item, "task") else item
-            result_key = case.evaluation_case_id
-            strategy_id = case.strategy_id
-        print(
-            f"  {result_key} "
-            f"strategy={strategy_id} "
-        )
-
-
-
 def print_subject_set_backend_checks(
     subject_set_id: str,
     checks,
@@ -223,6 +203,7 @@ def print_subject_set_backend_checks(
                 f"updated={item['last_updated'] or '-'}"
             )
         print(line)
+
 
 def _format_portfolio_decision_strategy(details: dict[str, object]) -> str | None:
     strategy = details.get("strategy")

@@ -18,7 +18,7 @@ related but not the same concern.
 
 If more behavior keeps accumulating on `EvaluationSpec`, it may become a broad
 evaluation settings bag. That would make it harder to tell whether a field is
-part of the measurement protocol, run result selection, or evaluation case
+part of the measurement protocol, run result selection, or evaluation target
 selection.
 
 ## Boundary
@@ -30,7 +30,7 @@ grouped as:
 
 - evaluation protocol
 - evaluation metric config
-- evaluation case or scope selection
+- evaluation target or scope selection
 
 ## Desired Direction
 

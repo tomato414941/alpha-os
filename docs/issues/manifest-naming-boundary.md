@@ -14,7 +14,7 @@ They can include:
 - observation bindings
 - strategy specs
 - evaluation specs
-- evaluation cases
+- evaluation target selection
 - portfolio settings
 - cost assumptions
 
@@ -48,4 +48,3 @@ multiple resources needed to reproduce an evaluation run.
 - The name does not make the manifest look like the full research hypothesis.
 - Any rename is done only when it reduces confusion more than it adds migration
   churn.
-

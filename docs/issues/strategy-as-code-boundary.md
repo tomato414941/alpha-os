@@ -11,8 +11,9 @@ before the real strategy shape is known.
 
 ## Current Signal
 
-Checked-in runtime manifests now keep `evaluation_cases` thin, so more
-responsibility is visible on `strategy_specs`.
+Checked-in runtime manifests now keep evaluation target selection as plain
+`evaluation_specs[].strategy_ids`, so more responsibility is visible on
+`strategy_specs`.
 
 Current strategy documents often include:
 

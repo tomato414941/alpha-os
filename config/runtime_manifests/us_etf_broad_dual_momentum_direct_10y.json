@@ -276,14 +276,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:us_etf_broad_dual_momentum_direct_10y"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_broad_dual_momentum_direct_eval_10y:strategy:us_etf_broad_dual_momentum_direct_10y",
-      "evaluation_spec_id": "us_etf_broad_dual_momentum_direct_eval_10y",
-      "strategy_id": "strategy:us_etf_broad_dual_momentum_direct_10y"
     }
   ]
 }

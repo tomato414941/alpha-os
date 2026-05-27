@@ -40,11 +40,10 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
 | **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, checkpoint replay, paper, live |
-| **evaluation spec** | The rules for how a strategy is evaluated. It defines the measurement recipe. | fold layout, costs, metric windows |
-| **evaluation case** | One executable evaluation defined by `strategy spec + evaluation spec`. It binds one strategy to one evaluation spec and carries only the case id plus those references. | one strategy under one strict OOS evaluation spec |
+| **evaluation spec** | The rules for how strategies are evaluated. It defines the measurement recipe and the strategy ids selected for that evaluation. | fold layout, costs, metric windows, strategy ids |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
-| **data source** | The runtime connection source used to read data inputs. Connection details are runtime configuration, not evaluation case metadata. | signal-noise service URL; local parquet root |
-| **evaluation result** | The recorded factual outcome of one evaluated strategy case. | OOS Sharpe, belief corr, turnover, drawdown |
+| **data source** | The runtime connection source used to read data inputs. | signal-noise service URL; local parquet root |
+| **evaluation result** | The recorded factual outcome of one evaluated strategy. | OOS Sharpe, belief corr, turnover, drawdown |
 | **evaluation run result** | A persisted record container for one or more evaluation results. It is not a comparison object or a human-facing report. | results from one evaluation run |
 | **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation run result. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
 | **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
@@ -64,17 +63,17 @@ confusing the metric group concept with the contract field name.
 
 ```text
 EvaluationSpec = evaluation settings
-evaluation case entry = transient result key + strategy id selected for an evaluation run
-EvaluationResult = recorded factual outcome of one evaluated strategy case
-EvaluationRunResult = persisted container of evaluation case results
-EvaluationMetricGroupResult = one metric group result block inside a case result
+evaluation target = transient result key + strategy id selected for an evaluation run
+EvaluationResult = recorded factual outcome of one evaluated strategy
+EvaluationRunResult = persisted container of evaluation results
+EvaluationMetricGroupResult = one metric group result block inside an evaluation result
 ```
 
 Reserve `Benchmark` for trading comparison references such as market indexes,
 benchmark portfolios, excess-return bases, and benchmark-relative risk
 measurement. Do not use `Benchmark` for evaluation settings.
 
-One evaluation case has exactly one strategy. A strategy may appear in many
+One evaluation target has exactly one strategy. A strategy may appear in many
 evaluation runs under different settings.
 
 Do not use `profile` to mean an evaluation configuration template. Use
@@ -84,8 +83,8 @@ Evaluation run results should record measured facts. Human-facing reports and
 relative comparisons are downstream views, not part of the core evaluation
 result terminology.
 
-The implementation name for an evaluation case result is `EvaluationResult`.
-Treat it as a case-level result record, not as a comparison row.
+The implementation name for one evaluated strategy result is `EvaluationResult`.
+Treat it as a strategy-level result record, not as a comparison row.
 `EvaluationRunResult.results` remains the runtime and persisted field for
 evaluation results.
 
@@ -110,20 +109,21 @@ If a future strategy searches for or re-selects signals during paper or live
 trading, model that as a strategy-internal runtime signal selection policy, not
 as the same thing as offline signal discovery.
 
-## Evaluation Case Semantics
+## Evaluation Target Semantics
 
-An evaluation case is runtime setup, not research taxonomy. It does not carry a
-case role, data-source URL, strategy construction override, or checkpoint
-artifact reference.
+An evaluation target is runtime setup, not research taxonomy. It is a transient
+`result_key + strategy_id` pair derived from the selected evaluation spec. It
+does not carry a role, data-source URL, strategy construction override, or
+checkpoint artifact reference.
 
 `base_url` is runtime data-source connection configuration. It may flow through
 execution requests and execution-plan entries, but it is not persisted on
-an evaluation case. The evaluation model should eventually refer to a `DataInput`
+an evaluation target. The evaluation model should eventually refer to a `DataInput`
 such as a fixed dataset or online stream, while the runtime maps that input to a
 connection source.
 
 Comparison anchors such as "baseline" are chosen by comparison views or
-research notes. They are not fields on evaluation cases or
+research notes. They are not fields on evaluation targets or
 `EvaluationResult`.
 
 Use candidate/diagnostic-style wording only in documents and research notes:
@@ -133,7 +133,7 @@ Use candidate/diagnostic-style wording only in documents and research notes:
   fails
 
 These labels are useful for human discussion, but they are not manifest schema,
-run result schema, evaluation case roles, or strategy kinds.
+run result schema, evaluation target roles, or strategy kinds.
 
 Trading strategy is the first-class trading concept. It should usually include:
 
@@ -188,7 +188,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition. |
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
-| evaluation case tuple | transient run input | It binds a result key to a trading strategy for one run. |
+| evaluation target tuple | transient run input | It binds a result key to a trading strategy for one run. |
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.

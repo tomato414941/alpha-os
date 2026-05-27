@@ -8,7 +8,6 @@ from typing import Iterator
 from pathlib import Path
 
 from ..cli_output import (
-    print_evaluation_cases,
     print_evaluation_specs,
     print_signal_discovery_specs,
     print_observables,
@@ -232,7 +231,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
             "apply-manifest",
             help=(
                 "Apply runtime manifest resources including observables, signal specs, "
-                "subject sets, strategy specs, evaluation specs, and evaluation cases"
+                "subject sets, strategy specs, and evaluation specs"
             ),
         )
         apply_manifest.add_argument("--db", type=str, default=None)
@@ -259,7 +258,7 @@ def build_cli_parser(*, include_runtime_parsers: bool = True) -> argparse.Argume
             "--dry-run",
             action="store_true",
             help=(
-                "Apply manifests and validate the diagnostic case plan without "
+                "Apply manifests and validate the diagnostic target plan without "
                 "running signal discovery, backtests, or run result generation"
             ),
         )
@@ -1081,21 +1080,6 @@ def _load_runtime_manifest(path: str | Path) -> dict[str, object]:
     return raw
 
 
-def _runtime_manifest_evaluation_case_ids(manifest_path: Path) -> tuple[str, ...]:
-    manifest = _load_runtime_manifest(manifest_path)
-    raw_cases = manifest.get("evaluation_cases", [])
-    if not isinstance(raw_cases, list):
-        raise ValueError("runtime manifest evaluation_cases must be a list")
-    case_ids: list[str] = []
-    for item in raw_cases:
-        if not isinstance(item, dict):
-            raise ValueError("runtime manifest evaluation_cases must contain objects")
-        case_id = item.get("evaluation_case_id")
-        if isinstance(case_id, str) and case_id:
-            case_ids.append(case_id)
-    return tuple(case_ids)
-
-
 def _build_evaluation_result_key(
     *,
     evaluation_spec_id: str,
@@ -1104,60 +1088,45 @@ def _build_evaluation_result_key(
     return f"{evaluation_spec_id}:{strategy_id}"
 
 
-def _case_key(case: tuple[str, str]) -> str:
-    return case[0]
+def _target_key(target: tuple[str, str]) -> str:
+    return target[0]
 
 
-def _case_strategy_id(case: tuple[str, str]) -> str:
-    return case[1]
+def _target_strategy_id(target: tuple[str, str]) -> str:
+    return target[1]
 
 
-def _select_evaluation_cases(
+def _select_evaluation_targets(
     read_port,
     *,
     evaluation_spec_id: str,
     strategy_ids: tuple[str, ...] | None,
-    evaluation_case_ids: tuple[str, ...] | None = None,
 ) -> tuple[tuple[str, str], ...]:
-    cases = tuple(
-        read_port.list_evaluation_cases(
+    targets = tuple(
+        read_port.list_evaluation_targets(
             evaluation_spec_id=evaluation_spec_id,
             limit=10_000,
         )
     )
-    if not cases:
+    if not targets:
         raise ValueError(
-            "evaluation spec requires at least one evaluation case: "
-            f"{evaluation_spec_id}"
+            f"evaluation spec requires at least one evaluation target: {evaluation_spec_id}"
         )
-    if evaluation_case_ids is not None:
-        allowed_case_ids = set(evaluation_case_ids)
-        cases = tuple(
-            case for case in cases if _case_key(case) in allowed_case_ids
-        )
-        if not cases:
-            raise ValueError(
-                "evaluation spec does not contain requested evaluation cases: "
-                f"{evaluation_spec_id}"
-            )
     if strategy_ids:
         allowed_strategy_ids = set(strategy_ids)
-        cases = tuple(
-            case
-            for case in cases
-            if _case_strategy_id(case) in allowed_strategy_ids
+        targets = tuple(
+            target for target in targets if _target_strategy_id(target) in allowed_strategy_ids
         )
-        if not cases:
+        if not targets:
             raise ValueError(
-                "evaluation spec does not contain requested strategies: "
-                f"{evaluation_spec_id}"
+                f"evaluation spec does not contain requested strategies: {evaluation_spec_id}"
             )
     return tuple(
         sorted(
-            cases,
-            key=lambda case: (
-                _case_strategy_id(case),
-                _case_key(case),
+            targets,
+            key=lambda target: (
+                _target_strategy_id(target),
+                _target_key(target),
             ),
         )
     )
@@ -1212,7 +1181,6 @@ class _RuntimeManifestReadPort:
         self.signal_discoveries: dict[str, SignalDiscoverySpec] = {}
         self.trading_strategies: dict[str, TradingStrategySpec] = {}
         self.evaluation_specs: dict[str, EvaluationSpec] = {}
-        self.evaluation_cases_by_spec: dict[str, dict[str, tuple[str, str]]] = {}
         for manifest_path in manifest_paths:
             self._apply_manifest_document(_load_runtime_manifest(manifest_path))
 
@@ -1227,7 +1195,6 @@ class _RuntimeManifestReadPort:
             [],
         )
         evaluation_spec_documents = manifest.get("evaluation_specs", [])
-        evaluation_case_documents = manifest.get("evaluation_cases", [])
         for name, documents in (
             ("observables", observable_documents),
             ("signal_specs", specification_documents),
@@ -1236,7 +1203,6 @@ class _RuntimeManifestReadPort:
             ("strategy_specs", strategy_spec_documents),
             ("generated_signal_discoveries", generated_signal_discovery_documents),
             ("evaluation_specs", evaluation_spec_documents),
-            ("evaluation_cases", evaluation_case_documents),
         ):
             if not isinstance(documents, list):
                 raise ValueError(f"runtime manifest {name} must be a list")
@@ -1271,9 +1237,7 @@ class _RuntimeManifestReadPort:
             if not isinstance(item, dict):
                 raise ValueError("runtime manifest signal_discoveries must contain objects")
             signal_discovery = _signal_discovery_from_document(item)
-            self.signal_discoveries[signal_discovery.signal_discovery_id] = (
-                signal_discovery
-            )
+            self.signal_discoveries[signal_discovery.signal_discovery_id] = signal_discovery
         for item in strategy_spec_documents:
             if not isinstance(item, dict):
                 raise ValueError("runtime manifest strategy_specs must contain objects")
@@ -1283,23 +1247,12 @@ class _RuntimeManifestReadPort:
             if not isinstance(item, dict):
                 raise ValueError("runtime manifest evaluation_specs must contain objects")
             evaluation_spec_id, evaluation_spec = _evaluation_spec_from_document(item)
+            for strategy_id in evaluation_spec.strategy_ids:
+                if strategy_id not in self.trading_strategies:
+                    raise ValueError(
+                        f"unknown strategy for evaluation spec strategy_ids: {strategy_id}"
+                    )
             self.evaluation_specs[evaluation_spec_id] = evaluation_spec
-        for item in evaluation_case_documents:
-            if not isinstance(item, dict):
-                raise ValueError("runtime manifest evaluation_cases must contain objects")
-            evaluation_spec_id = item.get("evaluation_spec_id")
-            if not isinstance(evaluation_spec_id, str) or not evaluation_spec_id:
-                raise ValueError("evaluation case manifest is missing evaluation_spec_id")
-            if self.get_evaluation_spec(evaluation_spec_id) is None:
-                raise ValueError(f"unknown evaluation spec for evaluation case: {evaluation_spec_id}")
-            evaluation_case = _evaluation_case_from_document(
-                self,
-                evaluation_spec_id=evaluation_spec_id,
-                document=item,
-            )
-            self.evaluation_cases_by_spec.setdefault(evaluation_spec_id, {})[
-                _case_key(evaluation_case)
-            ] = evaluation_case
 
     def _add_signal_spec_document(self, document: object) -> None:
         if not isinstance(document, dict):
@@ -1319,24 +1272,42 @@ class _RuntimeManifestReadPort:
             definition=evaluation_spec,
         )
 
-    def list_evaluation_cases(
+    def list_evaluation_targets(
         self,
         *,
         evaluation_spec_id: str | None = None,
         limit: int = 100,
     ):
         if evaluation_spec_id is None:
-            cases = [
-                case
-                for spec_cases in self.evaluation_cases_by_spec.values()
-                for case in spec_cases.values()
+            targets = [
+                (
+                    _build_evaluation_result_key(
+                        evaluation_spec_id=spec_id,
+                        strategy_id=strategy_id,
+                    ),
+                    strategy_id,
+                )
+                for spec_id, spec in self.evaluation_specs.items()
+                for strategy_id in spec.strategy_ids
             ]
         else:
-            cases = list(
-                self.evaluation_cases_by_spec.get(evaluation_spec_id, {}).values()
+            spec = self.evaluation_specs.get(evaluation_spec_id)
+            targets = (
+                []
+                if spec is None
+                else [
+                    (
+                        _build_evaluation_result_key(
+                            evaluation_spec_id=evaluation_spec_id,
+                            strategy_id=strategy_id,
+                        ),
+                        strategy_id,
+                    )
+                    for strategy_id in spec.strategy_ids
+                ]
             )
-        cases = sorted(cases, key=_case_key)
-        return tuple(cases[: max(int(limit), 0)])
+        targets = sorted(targets, key=_target_key)
+        return tuple(targets[: max(int(limit), 0)])
 
     def get_trading_strategy(self, strategy_id: str):
         strategy = self.trading_strategies.get(strategy_id)
@@ -1592,39 +1563,6 @@ def _trading_strategy_from_document(
     )
 
 
-def _evaluation_case_from_document(
-    store: EvaluationStore,
-    *,
-    evaluation_spec_id: str,
-    document: dict[str, object],
-) -> tuple[str, str]:
-    allowed_fields = {"evaluation_case_id", "evaluation_spec_id", "strategy_id"}
-    unsupported_fields = sorted(set(document) - allowed_fields)
-    if unsupported_fields:
-        raise ValueError(
-            "evaluation case manifest only supports evaluation_case_id, "
-            "evaluation_spec_id, and strategy_id: "
-            + ",".join(unsupported_fields)
-        )
-    strategy_id = document.get("strategy_id")
-    if not isinstance(strategy_id, str) or not strategy_id:
-        raise ValueError("evaluation case manifest is missing strategy_id")
-    if store.get_trading_strategy(strategy_id) is None:
-        raise ValueError(f"unknown strategy for evaluation case: {strategy_id}")
-    if document.get("evaluation_spec_id") != evaluation_spec_id:
-        raise ValueError(
-            "evaluation case manifest evaluation_spec_id does not match selected "
-            f"evaluation spec: {evaluation_spec_id}"
-        )
-    evaluation_case_id = document.get("evaluation_case_id")
-    if not isinstance(evaluation_case_id, str) or not evaluation_case_id:
-        evaluation_case_id = _build_evaluation_result_key(
-            evaluation_spec_id=evaluation_spec_id,
-            strategy_id=strategy_id,
-        )
-    return evaluation_case_id, strategy_id
-
-
 def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
     manifest = _load_runtime_manifest(args.manifest)
     observable_documents = manifest.get("observables", [])
@@ -1651,7 +1589,6 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         [],
     )
     evaluation_spec_documents = manifest.get("evaluation_specs", [])
-    evaluation_case_documents = manifest.get("evaluation_cases", [])
     if not isinstance(observable_documents, list):
         raise ValueError("runtime manifest observables must be a list")
     if not isinstance(specification_documents, list):
@@ -1666,8 +1603,6 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         raise ValueError("runtime manifest generated_signal_discoveries must be a list")
     if not isinstance(evaluation_spec_documents, list):
         raise ValueError("runtime manifest evaluation_specs must be a list")
-    if not isinstance(evaluation_case_documents, list):
-        raise ValueError("runtime manifest evaluation_cases must be a list")
     with _runtime_store(args.db) as (cfg, store):
         store.ensure_schema()
         created_observables = 0
@@ -1676,7 +1611,6 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         created_signal_discoveries = 0
         created_strategy_specs = 0
         created_evaluation_specs = 0
-        created_evaluation_cases = 0
         for item in observable_documents:
             if not isinstance(item, dict):
                 raise ValueError("runtime manifest observables must contain objects")
@@ -1800,28 +1734,17 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
             if not isinstance(item, dict):
                 raise ValueError("runtime manifest evaluation_specs must contain objects")
             evaluation_spec_id, evaluation_spec = _evaluation_spec_from_document(item)
+            for strategy_id in evaluation_spec.strategy_ids:
+                if store.get_trading_strategy(strategy_id) is None:
+                    raise ValueError(
+                        f"unknown strategy for evaluation spec strategy_ids: {strategy_id}"
+                    )
             state = store.upsert_evaluation_spec(
                 evaluation_spec_id,
                 definition=evaluation_spec,
             )
             registered_evaluation_specs.append(state)
             created_evaluation_specs += 1
-        registered_evaluation_cases = []
-        for item in evaluation_case_documents:
-            if not isinstance(item, dict):
-                raise ValueError("runtime manifest evaluation_cases must contain objects")
-            evaluation_spec_id = item.get("evaluation_spec_id")
-            if not isinstance(evaluation_spec_id, str) or not evaluation_spec_id:
-                raise ValueError("evaluation case manifest is missing evaluation_spec_id")
-            if store.get_evaluation_spec(evaluation_spec_id) is None:
-                raise ValueError(f"unknown evaluation spec for evaluation case: {evaluation_spec_id}")
-            evaluation_case = _evaluation_case_from_document(
-                store,
-                evaluation_spec_id=evaluation_spec_id,
-                document=item,
-            )
-            registered_evaluation_cases.append(evaluation_case)
-            created_evaluation_cases += 1
     print("Applied runtime manifest")
     print(f"  DB:             {cfg.db_path}")
     print(f"  Manifest:       {Path(args.manifest)}")
@@ -1845,18 +1768,12 @@ def cmd_apply_runtime_manifest(args: argparse.Namespace) -> int:
         "  EvalSpecs:      "
         f"total={len(evaluation_spec_documents)} upserted={created_evaluation_specs}"
     )
-    print(
-        "  EvalTargets:    "
-        f"total={len(evaluation_case_documents)} applied={created_evaluation_cases}"
-    )
     if registered_subject_sets:
         print_subject_sets(registered_subject_sets)
     if registered_signal_discoveries:
         print_signal_discovery_specs(registered_signal_discoveries)
     if registered_evaluation_specs:
         print_evaluation_specs(registered_evaluation_specs)
-    if registered_evaluation_cases:
-        print_evaluation_cases(registered_evaluation_cases)
     return 0
 
 
@@ -1869,9 +1786,7 @@ def cmd_inspect_runtime_resources(args: argparse.Namespace) -> int:
         signal_discoveries = store.list_signal_discovery_specs(
             limit=int(args.signal_discovery_limit)
         )
-        evaluation_specs = store.list_evaluation_specs(
-            limit=int(args.evaluation_spec_limit)
-        )
+        evaluation_specs = store.list_evaluation_specs(limit=int(args.evaluation_spec_limit))
     print("alpha-os runtime resources")
     print(f"  DB:       {cfg.db_path}")
     print_observables(observables)
@@ -2037,12 +1952,12 @@ def _mean(values: list[float]) -> float:
 class _SignalDiscoveryEvaluationGroup:
     signal_discovery_id: str | None
     base_url: str
-    evaluation_cases: tuple[tuple[str, str], ...]
+    evaluation_targets: tuple[tuple[str, str], ...]
 
 
-def _group_evaluation_cases_by_signal_discovery(
+def _group_evaluation_targets_by_signal_discovery(
     store: EvaluationStore,
-    evaluation_cases: tuple[tuple[str, str], ...],
+    evaluation_targets: tuple[tuple[str, str], ...],
     *,
     base_url: str,
 ) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
@@ -2052,24 +1967,26 @@ def _group_evaluation_cases_by_signal_discovery(
             return None
         return strategy_state.trading_strategy
 
-    return _group_evaluation_cases_by_signal_discovery_with_strategy_lookup(
-        evaluation_cases,
+    return _group_evaluation_targets_by_signal_discovery_with_strategy_lookup(
+        evaluation_targets,
         strategy_lookup=strategy_lookup,
         base_url=base_url,
     )
 
 
-def _group_evaluation_cases_by_signal_discovery_with_strategy_lookup(
-    evaluation_cases: tuple[tuple[str, str], ...],
+def _group_evaluation_targets_by_signal_discovery_with_strategy_lookup(
+    evaluation_targets: tuple[tuple[str, str], ...],
     *,
     strategy_lookup,
     base_url: str,
 ) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
     grouped: dict[str | None, list[tuple[str, str]]] = {}
-    for evaluation_case in evaluation_cases:
-        trading_strategy = strategy_lookup(_case_strategy_id(evaluation_case))
+    for evaluation_case in evaluation_targets:
+        trading_strategy = strategy_lookup(_target_strategy_id(evaluation_case))
         if trading_strategy is None:
-            raise ValueError(f"evaluation case strategy does not exist: {_case_strategy_id(evaluation_case)}")
+            raise ValueError(
+                f"evaluation target strategy does not exist: {_target_strategy_id(evaluation_case)}"
+            )
         signal_discovery_id = trading_strategy.signal_discovery_id
         grouped.setdefault(signal_discovery_id, []).append(evaluation_case)
     groups: list[_SignalDiscoveryEvaluationGroup] = []
@@ -2081,7 +1998,7 @@ def _group_evaluation_cases_by_signal_discovery_with_strategy_lookup(
             _SignalDiscoveryEvaluationGroup(
                 signal_discovery_id=signal_discovery_id,
                 base_url=base_url,
-                evaluation_cases=tuple(grouped_cases),
+                evaluation_targets=tuple(grouped_cases),
             )
         )
     return tuple(groups)
@@ -2093,9 +2010,7 @@ def cmd_run_evaluation(args: argparse.Namespace) -> int:
             store=store,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=(
-                None
-                if args.strategy_id is None
-                else tuple(str(item) for item in args.strategy_id)
+                None if args.strategy_id is None else tuple(str(item) for item in args.strategy_id)
             ),
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
         )
@@ -2109,12 +2024,10 @@ def cmd_run_walk_forward_evaluation(args: argparse.Namespace) -> int:
             store=store,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=(
-                None
-                if args.strategy_id is None
-                else tuple(str(item) for item in args.strategy_id)
+                None if args.strategy_id is None else tuple(str(item) for item in args.strategy_id)
             ),
             base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-            evaluation_cases=getattr(args, "evaluation_cases", None),
+            evaluation_targets=getattr(args, "evaluation_targets", None),
         )
     _print_evaluation_run_summary(run_result_state)
     return 0
@@ -2164,7 +2077,7 @@ _DIAGNOSTIC_PROFILE_METRIC_GROUPS = {
 
 
 _DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT = 14
-_DIAGNOSTIC_DRY_RUN_REQUIRED_CASE_IDS = {
+_DIAGNOSTIC_DRY_RUN_REQUIRED_TARGET_SUFFIXES = {
     "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case",
     "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case",
     "global_macro_tradeable_daily_diagnostic_mean_reversion_case",
@@ -2175,6 +2088,8 @@ _DIAGNOSTIC_DRY_RUN_REQUIRED_CASE_IDS = {
     "global_macro_tradeable_daily_diagnostic_utility_looser_budget_case",
     "global_macro_tradeable_daily_diagnostic_utility_no_budget_case",
 }
+
+
 def _diagnostic_optimizer_backend(
     sizing_method: str | None,
     sizing_engine: str | None,
@@ -2192,9 +2107,7 @@ def _diagnostic_optimizer_backend(
 
 def _print_diagnostic_evaluation_focus(run_result_state) -> None:
     run_result = (
-        run_result_state.run_result
-        if hasattr(run_result_state, "run_result")
-        else run_result_state
+        run_result_state.run_result if hasattr(run_result_state, "run_result") else run_result_state
     )
     print("alpha-os diagnostic focus")
     print(f"  RunResult:   {run_result.evaluation_run_result_id}")
@@ -2220,16 +2133,16 @@ def _print_diagnostic_evaluation_focus(run_result_state) -> None:
 def _print_diagnostic_evaluation_dry_run(
     *,
     evaluation_spec_state,
-    evaluation_cases: tuple[tuple[str, str], ...],
+    evaluation_targets: tuple[tuple[str, str], ...],
     signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
-    trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
-    strategies_by_case_id: dict[str, TradingStrategySpec],
+    trading_configs_by_target_id: dict[str, _StrategyVariantConfig],
+    strategies_by_target_id: dict[str, TradingStrategySpec],
 ) -> None:
     evaluation_spec = evaluation_spec_state.definition
     print("alpha-os diagnostic dry run")
     print(f"  Evaluation spec: {evaluation_spec_state.evaluation_spec_id}")
     print(f"  Folds:    {len(evaluation_spec.resolved_evaluation_folds)}")
-    print(f"  Cases:    {len(evaluation_cases)}")
+    print(f"  Targets:    {len(evaluation_targets)}")
     print(f"  Groups:   {len(signal_discovery_groups)}")
     print("  MetricGroups: " + ",".join(evaluation_spec.metric_group_names))
     for group in signal_discovery_groups:
@@ -2237,18 +2150,18 @@ def _print_diagnostic_evaluation_dry_run(
             "  SignalDiscoveryGroup: "
             f"{group.signal_discovery_id or '-'} "
             f"has_signal_discovery={str(group.signal_discovery_id is not None).lower()} "
-            f"cases={len(group.evaluation_cases)} "
+            f"targets={len(group.evaluation_targets)} "
             f"base_url={group.base_url}"
         )
-    for case in evaluation_cases:
-        trading_config = trading_configs_by_case_id[_case_key(case)]
+    for target in evaluation_targets:
+        trading_config = trading_configs_by_target_id[_target_key(target)]
         construction = trading_config.portfolio_construction
         trading_environment = trading_config.trading_environment
         print(
             "  Result: "
-            f"{_case_key(case)} "
-            f"strategy={_case_strategy_id(case)} "
-            f"signal_discovery={strategies_by_case_id[_case_key(case)].signal_discovery_id or '-'} "
+            f"{_target_key(target)} "
+            f"strategy={_target_strategy_id(target)} "
+            f"signal_discovery={strategies_by_target_id[_target_key(target)].signal_discovery_id or '-'} "
             f"construction={construction.construction_kind} "
             f"holding_style={'equal_weight_hold' if construction.construction_kind == 'hold_baseline' else '-'} "
             f"sizing={construction.sizing_method} "
@@ -2263,54 +2176,61 @@ def _check_diagnostic_evaluation_dry_run(
     *,
     manifest_path: Path,
     evaluation_spec_state,
-    evaluation_cases: tuple[tuple[str, str], ...],
+    evaluation_targets: tuple[tuple[str, str], ...],
     signal_discovery_groups: tuple[_SignalDiscoveryEvaluationGroup, ...],
-    trading_configs_by_case_id: dict[str, _StrategyVariantConfig],
-    strategies_by_case_id: dict[str, TradingStrategySpec],
+    trading_configs_by_target_id: dict[str, _StrategyVariantConfig],
+    strategies_by_target_id: dict[str, TradingStrategySpec],
 ) -> None:
     evaluation_spec = evaluation_spec_state.definition
     if not evaluation_spec.resolved_evaluation_folds:
         raise ValueError("diagnostic dry run check failed: evaluation_spec has no folds")
-    if not evaluation_cases:
-        raise ValueError("diagnostic dry run check failed: evaluation_spec has no cases")
+    if not evaluation_targets:
+        raise ValueError("diagnostic dry run check failed: evaluation_spec has no targets")
     if not signal_discovery_groups:
-        raise ValueError(
-            "diagnostic dry run check failed: no signal discovery groups resolved"
-        )
-    case_ids = {_case_key(case) for case in evaluation_cases}
+        raise ValueError("diagnostic dry run check failed: no signal discovery groups resolved")
+    target_ids = {_target_key(target) for target in evaluation_targets}
     for group in signal_discovery_groups:
-        if not group.evaluation_cases:
+        if not group.evaluation_targets:
             raise ValueError(
-                "diagnostic dry run check failed: signal discovery group has no cases: "
+                "diagnostic dry run check failed: signal discovery group has no targets: "
                 f"{group.signal_discovery_id or '-'}"
             )
-    for case in evaluation_cases:
-        if not _case_strategy_id(case):
+    for target in evaluation_targets:
+        if not _target_strategy_id(target):
             raise ValueError(
-                "diagnostic dry run check failed: case has no strategy: "
-                f"{_case_key(case)}"
+                f"diagnostic dry run check failed: target has no strategy: {_target_key(target)}"
             )
     if manifest_path.stem != "global_macro_tradeable_daily_diagnostic":
         return
-    if len(evaluation_cases) != _DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT:
+    if len(evaluation_targets) != _DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT:
         raise ValueError(
             "diagnostic dry run check failed: expected "
-            f"{_DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT} cases, got "
-            f"{len(evaluation_cases)}"
+            f"{_DIAGNOSTIC_DRY_RUN_EXPECTED_CASE_COUNT} targets, got "
+            f"{len(evaluation_targets)}"
         )
-    missing_case_ids = sorted(_DIAGNOSTIC_DRY_RUN_REQUIRED_CASE_IDS - case_ids)
-    if missing_case_ids:
+    missing_target_suffixes = sorted(
+        suffix
+        for suffix in _DIAGNOSTIC_DRY_RUN_REQUIRED_TARGET_SUFFIXES
+        if not any(target_id.endswith(suffix) for target_id in target_ids)
+    )
+    if missing_target_suffixes:
         raise ValueError(
-            "diagnostic dry run check failed: missing diagnostic cases: "
-            + ",".join(missing_case_ids)
+            "diagnostic dry run check failed: missing diagnostic targets: "
+            + ",".join(missing_target_suffixes)
         )
-    cases_by_id = {_case_key(case): case for case in evaluation_cases}
-    configs_by_id = trading_configs_by_case_id
-    equal_weight_hold_case = cases_by_id[
+
+    def target_by_suffix(suffix: str) -> tuple[str, str]:
+        for target in evaluation_targets:
+            if _target_key(target).endswith(suffix):
+                return target
+        raise ValueError(f"diagnostic dry run check failed: missing diagnostic target: {suffix}")
+
+    configs_by_target_id = trading_configs_by_target_id
+    equal_weight_hold_case = target_by_suffix(
         "global_macro_tradeable_daily_diagnostic_equal_weight_hold_case"
-    ]
-    equal_weight_hold_construction = configs_by_id[
-        _case_key(equal_weight_hold_case)
+    )
+    equal_weight_hold_construction = configs_by_target_id[
+        _target_key(equal_weight_hold_case)
     ].portfolio_construction
     if equal_weight_hold_construction.construction_kind != "hold_baseline":
         raise ValueError(
@@ -2322,12 +2242,12 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: equal-weight hold lane must use "
             "rebalance_interval_steps=252"
         )
-    equal_weight_monthly_hold_case = cases_by_id[
+    equal_weight_monthly_hold_case = target_by_suffix(
         "global_macro_tradeable_daily_diagnostic_equal_weight_monthly_hold_case"
-    ]
+    )
     if (
-        configs_by_id[
-            _case_key(equal_weight_monthly_hold_case)
+        configs_by_target_id[
+            _target_key(equal_weight_monthly_hold_case)
         ].portfolio_construction.construction_kind
         != "hold_baseline"
     ):
@@ -2336,8 +2256,8 @@ def _check_diagnostic_evaluation_dry_run(
             "construction_kind=hold_baseline"
         )
     if (
-        configs_by_id[
-            _case_key(equal_weight_monthly_hold_case)
+        configs_by_target_id[
+            _target_key(equal_weight_monthly_hold_case)
         ].portfolio_construction.rebalance_interval_steps
         != 21
     ):
@@ -2345,29 +2265,29 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: equal-weight monthly hold lane must use "
             "rebalance_interval_steps=21"
         )
-    orthogonal_case = cases_by_id[
+    orthogonal_case = target_by_suffix(
         "global_macro_tradeable_daily_diagnostic_mean_reversion_case"
-    ]
+    )
     if (
-        strategies_by_case_id[_case_key(orthogonal_case)].signal_discovery_id
+        strategies_by_target_id[_target_key(orthogonal_case)].signal_discovery_id
         != "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
     ):
         raise ValueError(
             "diagnostic dry run check failed: orthogonal lane must use "
             "mean-reversion signal discovery"
         )
-    constrained_case = cases_by_id[
+    constrained_case = target_by_suffix(
         "global_macro_tradeable_daily_diagnostic_mean_reversion_constrained_case"
-    ]
+    )
     if (
-        strategies_by_case_id[_case_key(constrained_case)].signal_discovery_id
+        strategies_by_target_id[_target_key(constrained_case)].signal_discovery_id
         != "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
     ):
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use mean-reversion signal discovery"
         )
-    constrained_config = configs_by_id[_case_key(constrained_case)]
+    constrained_config = configs_by_target_id[_target_key(constrained_case)]
     if constrained_config.portfolio_construction.rebalance_interval_steps != 10:
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "
@@ -2383,11 +2303,11 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use the moderate concentration constraints"
         )
-    optimizer_case = cases_by_id[
+    optimizer_case = target_by_suffix(
         "global_macro_tradeable_daily_diagnostic_mean_reversion_optimizer_case"
-    ]
+    )
     if (
-        strategies_by_case_id[_case_key(optimizer_case)].signal_discovery_id
+        strategies_by_target_id[_target_key(optimizer_case)].signal_discovery_id
         != "global_macro_tradeable_daily_diagnostic_mean_reversion_search"
     ):
         raise ValueError(
@@ -2395,31 +2315,35 @@ def _check_diagnostic_evaluation_dry_run(
             "must use mean-reversion signal discovery"
         )
     if (
-        configs_by_id[_case_key(optimizer_case)].portfolio_construction.sizing_method != "signed_mean_variance"
-        or configs_by_id[_case_key(optimizer_case)].portfolio_construction.sizing_engine != "optimizer"
+        configs_by_target_id[_target_key(optimizer_case)].portfolio_construction.sizing_method
+        != "signed_mean_variance"
+        or configs_by_target_id[_target_key(optimizer_case)].portfolio_construction.sizing_engine
+        != "optimizer"
     ):
         raise ValueError(
             "diagnostic dry run check failed: optimizer mean-reversion lane "
             "must use signed_mean_variance/optimizer sizing"
         )
-    optimizer_config = configs_by_id[_case_key(optimizer_case)]
+    optimizer_config = configs_by_target_id[_target_key(optimizer_case)]
     if optimizer_config.portfolio_construction.rebalance_interval_steps != 21:
         raise ValueError(
             "diagnostic dry run check failed: optimizer mean-reversion lane "
             "must use rebalance_interval_steps=21"
         )
-def _trading_strategies_for_evaluation_cases(
+
+
+def _trading_strategies_for_evaluation_targets(
     read_port,
-    evaluation_cases: tuple[tuple[str, str], ...],
+    evaluation_targets: tuple[tuple[str, str], ...],
 ) -> dict[str, TradingStrategySpec]:
     strategies: dict[str, TradingStrategySpec] = {}
-    for case in evaluation_cases:
-        state = read_port.get_trading_strategy(_case_strategy_id(case))
+    for target in evaluation_targets:
+        state = read_port.get_trading_strategy(_target_strategy_id(target))
         if state is None:
             raise ValueError(
-                f"evaluation case strategy does not exist: {_case_strategy_id(case)}"
+                f"evaluation target strategy does not exist: {_target_strategy_id(target)}"
             )
-        strategies[_case_strategy_id(case)] = state.trading_strategy
+        strategies[_target_strategy_id(target)] = state.trading_strategy
     return strategies
 
 
@@ -2427,7 +2351,6 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
     if bool(args.check) and not bool(args.dry_run):
         raise ValueError("run-diagnostic-evaluation --check requires --dry-run")
     manifest_path = _resolve_runtime_manifest_path(args.manifest)
-    manifest_evaluation_case_ids = _runtime_manifest_evaluation_case_ids(manifest_path)
     if bool(args.dry_run):
         timestamp = _utc_now()
         read_port = _RuntimeManifestReadPort(
@@ -2437,53 +2360,54 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         evaluation_spec_state = read_port.get_evaluation_spec(str(args.evaluation_spec_id))
         if evaluation_spec_state is None:
             raise ValueError(f"evaluation spec does not exist: {args.evaluation_spec_id}")
-        evaluation_cases = _select_evaluation_cases(
+        evaluation_targets = _select_evaluation_targets(
             read_port,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=None,
-            evaluation_case_ids=manifest_evaluation_case_ids,
         )
-        effective_strategies = _trading_strategies_for_evaluation_cases(
+        effective_strategies = _trading_strategies_for_evaluation_targets(
             read_port,
-            evaluation_cases,
+            evaluation_targets,
         )
-        signal_discovery_groups = _group_evaluation_cases_by_signal_discovery_with_strategy_lookup(
-            evaluation_cases,
-            strategy_lookup=lambda strategy_id: effective_strategies.get(strategy_id),
-            base_url=DEFAULT_SIGNAL_NOISE_BASE_URL if args.base_url is None else str(args.base_url),
-        )
-        trading_configs_by_case_id = {
-            _case_key(case): _strategy_variant_config_from_strategy(
-                effective_strategies[_case_strategy_id(case)]
+        signal_discovery_groups = (
+            _group_evaluation_targets_by_signal_discovery_with_strategy_lookup(
+                evaluation_targets,
+                strategy_lookup=lambda strategy_id: effective_strategies.get(strategy_id),
+                base_url=DEFAULT_SIGNAL_NOISE_BASE_URL
+                if args.base_url is None
+                else str(args.base_url),
             )
-            for case in evaluation_cases
+        )
+        trading_configs_by_target_id = {
+            _target_key(target): _strategy_variant_config_from_strategy(
+                effective_strategies[_target_strategy_id(target)]
+            )
+            for target in evaluation_targets
         }
-        strategies_by_case_id = {
-            _case_key(case): effective_strategies[_case_strategy_id(case)]
-            for case in evaluation_cases
+        strategies_by_target_id = {
+            _target_key(target): effective_strategies[_target_strategy_id(target)]
+            for target in evaluation_targets
         }
         _print_diagnostic_evaluation_dry_run(
             evaluation_spec_state=evaluation_spec_state,
-            evaluation_cases=evaluation_cases,
+            evaluation_targets=evaluation_targets,
             signal_discovery_groups=signal_discovery_groups,
-            trading_configs_by_case_id=trading_configs_by_case_id,
-            strategies_by_case_id=strategies_by_case_id,
+            trading_configs_by_target_id=trading_configs_by_target_id,
+            strategies_by_target_id=strategies_by_target_id,
         )
         if bool(args.check):
             _check_diagnostic_evaluation_dry_run(
                 manifest_path=manifest_path,
                 evaluation_spec_state=evaluation_spec_state,
-                evaluation_cases=evaluation_cases,
+                evaluation_targets=evaluation_targets,
                 signal_discovery_groups=signal_discovery_groups,
-                trading_configs_by_case_id=trading_configs_by_case_id,
-                strategies_by_case_id=strategies_by_case_id,
+                trading_configs_by_target_id=trading_configs_by_target_id,
+                strategies_by_target_id=strategies_by_target_id,
             )
             print("  DryRunCheck: passed")
         return 0
     for base_manifest_path in _extended_runtime_manifest_paths(manifest_path):
-        cmd_apply_runtime_manifest(
-            argparse.Namespace(db=args.db, manifest=str(base_manifest_path))
-        )
+        cmd_apply_runtime_manifest(argparse.Namespace(db=args.db, manifest=str(base_manifest_path)))
     cmd_apply_runtime_manifest(argparse.Namespace(db=args.db, manifest=str(manifest_path)))
     read_port = _RuntimeManifestReadPort(
         manifest_paths=_runtime_manifest_paths_with_extends(manifest_path),
@@ -2495,11 +2419,10 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
         strategy_id=None,
         base_url=args.base_url,
         details=args.details,
-        evaluation_cases=_select_evaluation_cases(
+        evaluation_targets=_select_evaluation_targets(
             read_port,
             evaluation_spec_id=str(args.evaluation_spec_id),
             strategy_ids=None,
-            evaluation_case_ids=manifest_evaluation_case_ids,
         ),
     )
     result = cmd_run_walk_forward_evaluation(run_args)
@@ -2515,9 +2438,7 @@ def cmd_run_diagnostic_evaluation(args: argparse.Namespace) -> int:
 
 def _print_evaluation_run_summary(run_result_state) -> None:
     run_result = (
-        run_result_state.run_result
-        if hasattr(run_result_state, "run_result")
-        else run_result_state
+        run_result_state.run_result if hasattr(run_result_state, "run_result") else run_result_state
     )
     print("alpha-os evaluation run")
     print(f"  RunResult:    {run_result.evaluation_run_result_id}")
@@ -2775,9 +2696,7 @@ def _evaluation_trading_config_from_args(
         ),
         trading_environment=TradingEnvironment(
             turnover_cost_rate=(
-                0.0
-                if args.turnover_cost_rate is None
-                else float(args.turnover_cost_rate)
+                0.0 if args.turnover_cost_rate is None else float(args.turnover_cost_rate)
             ),
             market_impact_bps=(
                 0.0 if args.market_impact_bps is None else float(args.market_impact_bps)

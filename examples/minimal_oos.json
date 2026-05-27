@@ -153,19 +153,11 @@
         "require_non_overlapping_ranges": true,
         "require_evaluation_after_execution": true,
         "require_strategy_checkpoint_for_trained_strategy": false
-      }
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "minimal_oos_candidate_equal_weight_hold_case",
-      "evaluation_spec_id": "minimal_oos_eval",
-      "strategy_id": "strategy:minimal_oos_candidate_equal_weight_hold"
-    },
-    {
-      "evaluation_case_id": "minimal_oos_baseline_equal_weight_hold_case",
-      "evaluation_spec_id": "minimal_oos_eval",
-      "strategy_id": "strategy:minimal_oos_baseline_equal_weight_hold"
+      },
+      "strategy_ids": [
+        "strategy:minimal_oos_candidate_equal_weight_hold",
+        "strategy:minimal_oos_baseline_equal_weight_hold"
+      ]
     }
   ]
 }

@@ -12,7 +12,7 @@ should evaluate an already prepared state.
 The removed walk-forward checkpoint path owned too much preparation
 orchestration:
 
-- resolve evaluation cases
+- resolve evaluation targets
 - decide whether a strategy requires prepared state
 - check whether fold checkpoints already exist
 - run the signal discovery workflow when checkpoints are missing

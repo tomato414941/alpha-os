@@ -193,14 +193,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:72ef372fc825"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_rotation_low_vol_trend_only_eval:strategy:72ef372fc825",
-      "evaluation_spec_id": "us_etf_rotation_low_vol_trend_only_eval",
-      "strategy_id": "strategy:72ef372fc825"
     }
   ],
   "strategy_specs": [

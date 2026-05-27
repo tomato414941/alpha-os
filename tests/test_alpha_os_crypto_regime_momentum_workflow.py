@@ -148,6 +148,10 @@ def _manifest_document(
         "evaluation_specs": [
             {
                 "evaluation_spec_id": evaluation_spec_id,
+                "strategy_ids": [
+                    "strategy:crypto_regime_momentum_candidate",
+                    "strategy:crypto_regime_momentum_baseline",
+                ],
                 "execution_range": {
                     "label": "crypto_regime_train",
                     "start_date": execution_start,
@@ -184,18 +188,6 @@ def _manifest_document(
                     "require_evaluation_after_execution": True,
                 },
             }
-        ],
-        "evaluation_cases": [
-            {
-                "evaluation_case_id": "crypto_regime_momentum_candidate_case",
-                "evaluation_spec_id": evaluation_spec_id,
-                "strategy_id": "strategy:crypto_regime_momentum_candidate",
-            },
-            {
-                "evaluation_case_id": "crypto_regime_momentum_baseline_case",
-                "evaluation_spec_id": evaluation_spec_id,
-                "strategy_id": "strategy:crypto_regime_momentum_baseline",
-            },
         ],
     }
 
@@ -253,10 +245,7 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
         baseline_strategy = store.get_trading_strategy(baseline.strategy_id)
         assert candidate_strategy is not None
         assert baseline_strategy is not None
-        assert (
-            candidate_strategy.trading_strategy.position_rule_id
-            == "crypto_regime_momentum_hold"
-        )
+        assert candidate_strategy.trading_strategy.position_rule_id == "crypto_regime_momentum_hold"
         assert baseline_strategy.trading_strategy.position_rule_id == "constant_hold"
         assert candidate_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
         assert baseline_strategy.trading_strategy.subject_set_id == "crypto_regime_pair"
@@ -325,10 +314,7 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
     manifest_path.write_text(
         json.dumps(
             _manifest_document(
-                source_id=(
-                    "experiments/datasets/"
-                    "ds_crypto_btc_eth_daily_2024_2025/{asset}.csv"
-                ),
+                source_id=("experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/{asset}.csv"),
                 subjects=(
                     ("BTCUSDT_fixture", "BTCUSDT"),
                     ("ETHUSDT_fixture", "ETHUSDT"),

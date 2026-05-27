@@ -190,14 +190,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:bcd7316c85a9"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_rotation_trend_only_eval:strategy:bcd7316c85a9",
-      "evaluation_spec_id": "us_etf_rotation_trend_only_eval",
-      "strategy_id": "strategy:bcd7316c85a9"
     }
   ],
   "strategy_specs": [

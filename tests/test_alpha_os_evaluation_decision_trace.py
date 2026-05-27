@@ -163,7 +163,8 @@ def _register_subject_set(store) -> None:
 
 def _register_direct_strategy(store) -> None:
     from alpha_os.evaluation_cost_config import TradingEnvironment
-    from alpha_os.trading_strategy import (        StrategyPortfolioSpec,
+    from alpha_os.trading_strategy import (
+        StrategyPortfolioSpec,
         TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
@@ -272,7 +273,7 @@ def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
     run_result_state = evaluate_evaluation_spec_state(
         store=store,
         evaluation_spec_state=evaluation_spec_state,
-        evaluation_cases=(_build_direct_evaluation_case(),),
+        evaluation_targets=(_build_direct_evaluation_case(),),
         base_url="http://example.com",
     )
 

@@ -45,9 +45,7 @@ class EvaluationOosContract:
         return {
             "enforcement": self.enforcement,
             "require_non_overlapping_ranges": self.require_non_overlapping_ranges,
-            "require_evaluation_after_execution": (
-                self.require_evaluation_after_execution
-            ),
+            "require_evaluation_after_execution": (self.require_evaluation_after_execution),
         }
 
     @classmethod
@@ -113,9 +111,7 @@ class EvaluationFold:
         return {
             "label": self.label,
             "execution_range": self.execution_range.to_document(),
-            "evaluation_date_ranges": [
-                item.to_document() for item in self.evaluation_date_ranges
-            ],
+            "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
         }
 
     @classmethod
@@ -128,9 +124,7 @@ class EvaluationFold:
         if not isinstance(execution_range, dict):
             raise ValueError(f"evaluation fold is missing execution_range: {label}")
         if not isinstance(evaluation_date_ranges, list):
-            raise ValueError(
-                f"evaluation fold evaluation_date_ranges must be a list: {label}"
-            )
+            raise ValueError(f"evaluation fold evaluation_date_ranges must be a list: {label}")
         return cls(
             label=label,
             execution_range=EvaluationDateRange.from_document(execution_range),
@@ -146,9 +140,7 @@ def _validate_date_range(range_: EvaluationDateRange) -> None:
     _parse_evaluation_date(range_.label, "start_date", range_.start_date)
     _parse_evaluation_date(range_.label, "end_date", range_.end_date)
     if range_.start_date > range_.end_date:
-        raise ValueError(
-            f"evaluation date range has start_date after end_date: {range_.label}"
-        )
+        raise ValueError(f"evaluation date range has start_date after end_date: {range_.label}")
 
 
 def _parse_evaluation_date(label: str, field_name: str, value: str) -> date:
@@ -159,9 +151,7 @@ def _parse_evaluation_date(label: str, field_name: str, value: str) -> date:
             f"evaluation date range {label} has invalid {field_name}: {value}"
         ) from exc
     if parsed.isoformat() != value:
-        raise ValueError(
-            f"evaluation date range {label} has non-normalized {field_name}: {value}"
-        )
+        raise ValueError(f"evaluation date range {label} has non-normalized {field_name}: {value}")
     return parsed
 
 
@@ -169,8 +159,7 @@ def _validate_unique_labels(label_kind: str, labels: tuple[str, ...]) -> None:
     duplicates = sorted({label for label in labels if labels.count(label) > 1})
     if duplicates:
         raise ValueError(
-            f"evaluation spec contains duplicate {label_kind} labels: "
-            + ", ".join(duplicates)
+            f"evaluation spec contains duplicate {label_kind} labels: " + ", ".join(duplicates)
         )
 
 
@@ -331,6 +320,7 @@ def _validate_target_ids(target_ids: tuple[str, ...]) -> None:
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
+    strategy_ids: tuple[str, ...] = ()
     metric_group_names: tuple[str, ...] = EVALUATION_METRIC_GROUP_NAMES
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
@@ -395,13 +385,10 @@ class EvaluationSpec:
     def to_document(self) -> dict[str, Any]:
         return {
             "execution_range": self.execution_range.to_document(),
+            "strategy_ids": list(self.strategy_ids),
             "metric_group_names": list(self.metric_group_names),
-            "evaluation_date_ranges": [
-                item.to_document() for item in self.evaluation_date_ranges
-            ],
-            "evaluation_folds": [
-                item.to_document() for item in self.evaluation_folds
-            ],
+            "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
+            "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
             "target_ids": list(self.target_ids),
             "metric_windows": list(self.metric_windows),
             "aggregation_kinds": list(self.aggregation_kinds),
@@ -413,12 +400,15 @@ class EvaluationSpec:
     def from_document(cls, document: dict[str, Any]) -> "EvaluationSpec":
         execution_range = document.get("execution_range")
         metric_config = EvaluationMetricConfig.from_document(document)
+        strategy_ids = document.get("strategy_ids", [])
         evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
         target_ids = document.get("target_ids", [])
         rigor_level = document.get("rigor_level", "exploratory")
         if not isinstance(execution_range, dict):
             raise ValueError("evaluation spec is missing execution_range")
+        if not isinstance(strategy_ids, list):
+            raise ValueError("evaluation spec strategy_ids must be a list")
         if not isinstance(evaluation_date_ranges, list):
             raise ValueError("evaluation spec evaluation_date_ranges must be a list")
         if not isinstance(evaluation_folds, list):
@@ -429,6 +419,7 @@ class EvaluationSpec:
             raise ValueError("evaluation spec rigor_level must be a string")
         return cls(
             execution_range=EvaluationDateRange.from_document(execution_range),
+            strategy_ids=tuple(str(item) for item in strategy_ids),
             metric_group_names=metric_config.metric_group_names,
             evaluation_date_ranges=tuple(
                 EvaluationDateRange.from_document(item)
@@ -444,7 +435,5 @@ class EvaluationSpec:
             metric_windows=metric_config.metric_windows,
             aggregation_kinds=metric_config.aggregation_kinds,
             rigor_level=rigor_level,
-            oos_contract=EvaluationOosContract.from_document(
-                document.get("oos_contract")
-            ),
+            oos_contract=EvaluationOosContract.from_document(document.get("oos_contract")),
         )

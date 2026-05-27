@@ -22,9 +22,7 @@ def _hide_subparser_help(
     name: str,
 ) -> None:
     sub._choices_actions = [
-        action
-        for action in sub._choices_actions
-        if getattr(action, "dest", None) != name
+        action for action in sub._choices_actions if getattr(action, "dest", None) != name
     ]
 
 
@@ -36,7 +34,7 @@ def _register_apply_manifest(
         name,
         help=(
             "Apply runtime manifest resources including observables, signal specs, "
-            "subject sets, strategy specs, evaluation specs, and evaluation cases"
+            "subject sets, strategy specs, and evaluation specs"
         ),
     )
     parser.add_argument("--db", type=str, default=None)
@@ -67,7 +65,7 @@ def _register_run_diagnostic_evaluation(
         "--dry-run",
         action="store_true",
         help=(
-            "Apply manifests and validate the diagnostic case plan without "
+            "Apply manifests and validate the diagnostic target plan without "
             "running signal discovery, backtests, or run result generation"
         ),
     )

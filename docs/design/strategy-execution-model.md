@@ -44,7 +44,7 @@ Examples of engines:
 names are acceptable when they stay scoped:
 
 - `evaluation spec`
-- `evaluation case`
+- `evaluation target`
 - `evaluation run result`
 
 These should be read as **trading-strategy evaluation** concepts, not as generic
@@ -145,15 +145,15 @@ The current codebase is still transitional. The practical mapping is:
 | `TradingStrategySpec` | `TradingStrategy` | First-class structured strategy definition used by current mainline. |
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
-| evaluation case tuple | partial `StrategyRunSpec` | It binds a result key to a strategy id for one evaluation run. |
+| evaluation target tuple | partial `StrategyRunSpec` | It binds a result key to a strategy id for one evaluation run. |
 | `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |
 
 ### Current Evaluation Job Shapes
 
 | Evaluation job shape | Purpose | Required inputs | Retraining during evaluation |
 |----------------------|---------|-----------------|------------------------------|
-| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation case`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
-| checkpoint-based evaluation | Compare downstream behavior while holding upstream state fixed. | `evaluation case`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
+| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation target`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
+| checkpoint-based evaluation | Compare downstream behavior while holding upstream state fixed. | `evaluation target`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
 
 This means:
 
@@ -212,7 +212,7 @@ Purpose:
 
 Inputs:
 
-- `evaluation case`
+- `evaluation target`
 - evaluation spec
 - explicit evaluation job inputs
 
@@ -235,7 +235,7 @@ Purpose:
 
 Inputs:
 
-- `evaluation case`
+- `evaluation target`
 - fixed strategy checkpoint
 - evaluation spec
 
@@ -318,7 +318,7 @@ The current codebase should converge on this split:
   - strategy semantics
 - `StrategyExecutionRequest`
   - current implementation name for one engine-specific run spec
-- evaluation case tuple
+- evaluation target tuple
   - transient result key and strategy id selected for one run
 - `EvaluationRunResult`
   - the recorded result of strategy evaluation

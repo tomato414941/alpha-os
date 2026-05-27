@@ -128,14 +128,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:74d0973a0339"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_equity_narrow_directional_context_eval:strategy:74d0973a0339",
-      "evaluation_spec_id": "us_equity_narrow_directional_context_eval",
-      "strategy_id": "strategy:74d0973a0339"
     }
   ],
   "strategy_specs": [

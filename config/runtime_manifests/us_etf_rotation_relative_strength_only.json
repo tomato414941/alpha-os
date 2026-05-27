@@ -190,14 +190,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:05506deb8d9f"
       ]
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_rotation_relative_strength_only_eval:strategy:05506deb8d9f",
-      "evaluation_spec_id": "us_etf_rotation_relative_strength_only_eval",
-      "strategy_id": "strategy:05506deb8d9f"
     }
   ],
   "strategy_specs": [

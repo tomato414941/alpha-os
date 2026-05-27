@@ -200,6 +200,9 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:us_etf_standard_rs_lowvol_equal_weight"
       ]
     }
   ],
@@ -234,13 +237,6 @@
           }
         }
       }
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_standard_rs_lowvol_eval:strategy:us_etf_standard_rs_lowvol_equal_weight",
-      "evaluation_spec_id": "us_etf_standard_rs_lowvol_eval",
-      "strategy_id": "strategy:us_etf_standard_rs_lowvol_equal_weight"
     }
   ]
 }

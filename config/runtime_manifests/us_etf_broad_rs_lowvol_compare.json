@@ -170,6 +170,10 @@
       ],
       "metric_windows": [
         20
+      ],
+      "strategy_ids": [
+        "strategy:c395ecfb8db4",
+        "strategy:cc621abf3c7a"
       ]
     }
   ],
@@ -235,18 +239,6 @@
           }
         }
       }
-    }
-  ],
-  "evaluation_cases": [
-    {
-      "evaluation_case_id": "us_etf_broad_rs_lowvol_compare_eval:strategy:c395ecfb8db4",
-      "evaluation_spec_id": "us_etf_broad_rs_lowvol_compare_eval",
-      "strategy_id": "strategy:c395ecfb8db4"
-    },
-    {
-      "evaluation_case_id": "us_etf_broad_rs_lowvol_compare_eval:strategy:cc621abf3c7a",
-      "evaluation_spec_id": "us_etf_broad_rs_lowvol_compare_eval",
-      "strategy_id": "strategy:cc621abf3c7a"
     }
   ]
 }
