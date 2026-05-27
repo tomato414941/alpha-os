@@ -126,7 +126,7 @@ Current classification:
 | `rebalance_interval_steps` | `StrategyPortfolioSpec` | strategy-owned | Strategy cadence is part of the trading hypothesis; `PortfolioConstructionSpec` is not an input source. |
 | `long_only` | `PortfolioConstructionSpec` | derived runtime field | Derivable from `direction_mode`; should not be a persisted source of truth. |
 | `direction_mode` | `PortfolioConstructionSpec` | portfolio allocation | Determines how long/short/flat candidates are treated before weights are finalized. |
-| `active_overlay` | `PortfolioConstructionSpec` | portfolio allocation / unclear | Appears to alter target weights, but the boundary is still broad. |
+| `active_weight_budget` | `PortfolioConstructionSpec` | portfolio allocation / unclear | Alters target weights through rank tilt, but the boundary is still broad. |
 | `gross_exposure_cap` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains total target weight after allocation. |
 | `target_vol` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Scales weights toward a volatility target. |
 | `gross_leverage_cap` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains leverage after weights are produced. |

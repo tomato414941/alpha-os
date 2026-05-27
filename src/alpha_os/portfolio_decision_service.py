@@ -285,7 +285,7 @@ def apply_decision_output_constraints(
         long_only=portfolio_construction.long_only,
         direction_mode=portfolio_construction.direction_mode,
         top_k=top_k,
-        active_overlay=portfolio_construction.active_overlay,
+        active_weight_budget=portfolio_construction.active_weight_budget,
         asset_class_by_subject=(
             {} if subject_set is None else subject_set.asset_class_by_subject
         ),

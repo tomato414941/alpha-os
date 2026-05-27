@@ -202,11 +202,8 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
-            "gross_exposure_cap": 0.85
+            "gross_exposure_cap": 0.85,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
@@ -241,11 +238,8 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
-            "gross_exposure_cap": 0.85
+            "gross_exposure_cap": 0.85,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
@@ -280,11 +274,8 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
-            "gross_exposure_cap": 0.85
+            "gross_exposure_cap": 0.85,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
@@ -319,11 +310,8 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
-            "gross_exposure_cap": 0.85
+            "gross_exposure_cap": 0.85,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {

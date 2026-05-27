@@ -320,14 +320,11 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
             "gross_exposure_cap": 1.0,
             "target_vol": 0.1,
             "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0
+            "net_exposure_target": 1.0,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 21,
           "selection_kind": "top_k",

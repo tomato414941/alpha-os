@@ -76,32 +76,23 @@ def test_portfolio_construction_exposes_canonical_constraint_boundary():
     assert construction.constraint_boundary == default_portfolio_constraint_boundary()
 
 
-def test_portfolio_construction_defaults_to_rank_tilt_overlay():
+def test_portfolio_construction_defaults_to_no_active_weight_budget():
     construction = PortfolioConstructionSpec()
     document = construction.to_document()
     restored = PortfolioConstructionSpec.from_document(document)
 
     assert "top_k_mode" not in document
     assert "top_k_tilt_fraction" not in document
-    assert construction.active_overlay is not None
-    assert construction.active_overlay.kind == "rank_tilt"
-    assert construction.active_overlay.active_weight_budget == pytest.approx(0.30)
-    assert restored.active_overlay is not None
-    assert restored.active_overlay.kind == "rank_tilt"
-    assert restored.active_overlay.active_weight_budget == pytest.approx(0.30)
+    assert "active_weight_budget" not in document
+    assert construction.active_weight_budget is None
+    assert restored.active_weight_budget is None
 
 
-def test_portfolio_construction_roundtrips_active_overlay():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
-    construction = PortfolioConstructionSpec(
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.2)
-    )
+def test_portfolio_construction_roundtrips_active_weight_budget():
+    construction = PortfolioConstructionSpec(active_weight_budget=0.2)
     restored = PortfolioConstructionSpec.from_document(construction.to_document())
 
-    assert restored.active_overlay is not None
-    assert restored.active_overlay.kind == "rank_tilt"
-    assert restored.active_overlay.active_weight_budget == pytest.approx(0.2)
+    assert restored.active_weight_budget == pytest.approx(0.2)
 
 
 def test_portfolio_construction_roundtrips_portfolio_intent():
@@ -125,4 +116,3 @@ def test_portfolio_construction_roundtrips_portfolio_intent():
     assert restored.portfolio_intent.effective_n_floor == pytest.approx(8.0)
     assert restored.portfolio_intent.top_gross_share_cap_n == 3
     assert restored.portfolio_intent.top_gross_share_cap == pytest.approx(0.55)
-

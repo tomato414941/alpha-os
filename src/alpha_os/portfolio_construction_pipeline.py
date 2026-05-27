@@ -11,7 +11,7 @@ from .contract_boundaries import (
 from .portfolio_concentration import portfolio_effective_n, top_n_gross_share
 from .portfolio_decision import PortfolioTarget
 from .portfolio_direction import normalize_portfolio_direction_mode
-from .portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+from .portfolio_overlay import apply_active_weight_budget
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class PortfolioConstructionRequest:
     long_only: bool
     direction_mode: str
     top_k: int | None
-    active_overlay: ActiveOverlaySpec | None
+    active_weight_budget: float | None
     asset_class_by_subject: dict[str, str]
     cluster_by_subject: dict[str, str]
     asset_class_weight_caps: dict[str, float]
@@ -106,7 +106,7 @@ def default_portfolio_construction_pipeline() -> PortfolioConstructionPipeline:
     return PortfolioConstructionPipeline(
         stages=(
             DirectionModeStage(),
-            ActiveOverlayStage(),
+            ActiveWeightBudgetStage(),
             TopKStage(),
             GroupWeightCapStage(
                 boundary_field="asset_class_weight_caps",
@@ -141,7 +141,7 @@ def build_portfolio_construction_request(
     cluster_by_subject: dict[str, str],
     asset_class_weight_caps: dict[str, float],
     cluster_weight_caps: dict[str, float],
-    active_overlay: ActiveOverlaySpec | None = None,
+    active_weight_budget: float | None = None,
     direction_mode: str | None = None,
 ) -> PortfolioConstructionRequest:
     normalized_direction_mode = normalize_portfolio_direction_mode(
@@ -161,7 +161,7 @@ def build_portfolio_construction_request(
         long_only=normalized_direction_mode == "long_only",
         direction_mode=normalized_direction_mode,
         top_k=top_k,
-        active_overlay=ActiveOverlaySpec() if active_overlay is None else active_overlay,
+        active_weight_budget=active_weight_budget,
         asset_class_by_subject=asset_class_by_subject,
         cluster_by_subject=cluster_by_subject,
         asset_class_weight_caps=asset_class_weight_caps,
@@ -198,15 +198,15 @@ class DirectionModeStage:
         ]
 
 
-class ActiveOverlayStage:
+class ActiveWeightBudgetStage:
     def apply(
         self,
         targets: list[PortfolioTarget],
         request: PortfolioConstructionRequest,
     ) -> list[PortfolioTarget]:
-        return apply_active_overlay(
+        return apply_active_weight_budget(
             targets,
-            spec=request.active_overlay,
+            active_weight_budget=request.active_weight_budget,
             direction_mode=request.direction_mode,
         )
 
@@ -453,8 +453,8 @@ def _stage_name(stage: PortfolioConstructionStage) -> str:
         return f"{stage.group_field}_weight_cap"
     if isinstance(stage, DirectionModeStage):
         return "direction_mode"
-    if isinstance(stage, ActiveOverlayStage):
-        return "active_overlay"
+    if isinstance(stage, ActiveWeightBudgetStage):
+        return "active_weight_budget"
     if isinstance(stage, TopKStage):
         return "top_k"
     if isinstance(stage, TargetVolCapStage):

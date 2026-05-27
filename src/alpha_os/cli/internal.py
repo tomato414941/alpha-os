@@ -713,7 +713,7 @@ def _portfolio_construction_for_decision_args(
         ),
         long_only=base_construction.long_only,
         direction_mode=base_construction.direction_mode,
-        active_overlay=base_construction.active_overlay,
+        active_weight_budget=base_construction.active_weight_budget,
         gross_exposure_cap=(
             base_construction.gross_exposure_cap
             if args.gross_exposure_cap is None
@@ -800,7 +800,7 @@ def _portfolio_construction_with_sizing_spec(
         rebalance_interval_steps=base.rebalance_interval_steps,
         long_only=base.long_only,
         direction_mode=base.direction_mode,
-        active_overlay=base.active_overlay,
+        active_weight_budget=base.active_weight_budget,
         gross_exposure_cap=base.gross_exposure_cap,
         asset_class_weight_caps=dict(base.asset_class_weight_caps),
         cluster_weight_caps=dict(base.cluster_weight_caps),
@@ -822,7 +822,7 @@ def _portfolio_construction_for_decision_strategy(
         rebalance_interval_steps=trading_strategy.portfolio.rebalance_interval_steps,
         long_only=construction.long_only,
         direction_mode=construction.direction_mode,
-        active_overlay=base_construction.active_overlay,
+        active_weight_budget=base_construction.active_weight_budget,
         gross_exposure_cap=(
             base_construction.gross_exposure_cap
             if construction.gross_exposure_cap is None

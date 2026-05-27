@@ -81,7 +81,7 @@ def overridden_strategy_variant_config(
                 if direction_mode is None
                 else direction_mode
             ),
-            active_overlay=portfolio_construction.active_overlay,
+            active_weight_budget=portfolio_construction.active_weight_budget,
             gross_exposure_cap=portfolio_construction.gross_exposure_cap,
             target_vol=portfolio_construction.target_vol,
             gross_leverage_cap=portfolio_construction.gross_leverage_cap,

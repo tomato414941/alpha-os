@@ -8,7 +8,6 @@ from .contract_boundaries import (
     default_portfolio_constraint_boundary,
 )
 from .portfolio_direction import normalize_portfolio_direction_mode
-from .portfolio_overlay import ActiveOverlaySpec
 
 
 SIZING_METHODS = (
@@ -90,6 +89,12 @@ def _normalized_weight_caps(
             )
         normalized[str(group_name)] = float(cap_value)
     return normalized
+
+
+def _active_weight_budget_from_document(document: dict[str, Any]) -> float | None:
+    if document.get("active_weight_budget") is not None:
+        return float(document.get("active_weight_budget"))
+    return None
 
 
 @dataclass(frozen=True)
@@ -305,7 +310,7 @@ class PortfolioConstructionSpec:
     rebalance_interval_steps: int = 1
     long_only: bool = False
     direction_mode: str | None = None
-    active_overlay: ActiveOverlaySpec | None = field(default_factory=ActiveOverlaySpec)
+    active_weight_budget: float | None = None
     gross_exposure_cap: float | None = None
     target_vol: float | None = None
     gross_leverage_cap: float | None = None
@@ -332,13 +337,15 @@ class PortfolioConstructionSpec:
         )
         object.__setattr__(self, "direction_mode", direction_mode)
         object.__setattr__(self, "long_only", direction_mode == "long_only")
-        if self.active_overlay is not None and not isinstance(
-            self.active_overlay,
-            ActiveOverlaySpec,
-        ):
-            raise ValueError(
-                "portfolio_construction.active_overlay must be ActiveOverlaySpec"
-            )
+        if self.active_weight_budget is not None:
+            if not isinstance(self.active_weight_budget, int | float):
+                raise ValueError(
+                    "portfolio_construction.active_weight_budget must be numeric"
+                )
+            if self.active_weight_budget < 0.0 or self.active_weight_budget > 1.0:
+                raise ValueError(
+                    "portfolio_construction.active_weight_budget must be in [0, 1]"
+                )
         if self.gross_exposure_cap is not None and not isinstance(
             self.gross_exposure_cap, int | float
         ):
@@ -389,9 +396,9 @@ class PortfolioConstructionSpec:
                         f"portfolio_construction.{field_name}[{group_name}] must be >= 0"
                     )
         if construction_kind == "hold_baseline":
-            if self.active_overlay is not None:
+            if self.active_weight_budget not in {None, 0.0}:
                 raise ValueError(
-                    "hold_baseline portfolio_construction must not define active_overlay"
+                    "hold_baseline portfolio_construction must not define active_weight_budget"
                 )
             if self.target_vol is not None:
                 raise ValueError(
@@ -428,8 +435,8 @@ class PortfolioConstructionSpec:
             "sizing_policy": self.sizing_policy.to_document(),
             "direction_mode": self.direction_mode,
         }
-        if self.active_overlay is not None:
-            document["active_overlay"] = self.active_overlay.to_document()
+        if self.active_weight_budget is not None:
+            document["active_weight_budget"] = float(self.active_weight_budget)
         if self.gross_exposure_cap is not None:
             document["gross_exposure_cap"] = self.gross_exposure_cap
         if self.target_vol is not None:
@@ -470,12 +477,7 @@ class PortfolioConstructionSpec:
                 if document.get("direction_mode") is None
                 else str(document.get("direction_mode"))
             ),
-            active_overlay=(
-                None
-                if construction_kind == "hold_baseline"
-                and document.get("active_overlay") is None
-                else ActiveOverlaySpec.from_document(document.get("active_overlay"))
-            ),
+            active_weight_budget=_active_weight_budget_from_document(document),
             gross_exposure_cap=(
                 None
                 if document.get("gross_exposure_cap") is None

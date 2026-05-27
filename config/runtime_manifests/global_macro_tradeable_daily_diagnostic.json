@@ -207,10 +207,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -233,7 +229,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -268,10 +265,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -294,7 +287,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -329,10 +323,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -355,7 +345,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -390,10 +381,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -416,7 +403,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -451,10 +439,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -477,7 +461,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -512,10 +497,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -538,7 +519,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -573,10 +555,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -599,7 +577,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -634,10 +613,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -660,7 +635,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {
@@ -695,10 +671,6 @@
               "sizing_family": "risk_budget_allocator"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -721,7 +693,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
@@ -756,10 +729,6 @@
               "sizing_family": "signed_optimizer"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -782,7 +751,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 5,
           "trading_environment": {
@@ -817,10 +787,6 @@
               "sizing_family": "signed_optimizer"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -843,7 +809,8 @@
               "effective_n_floor": 10.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.4
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 10,
           "trading_environment": {
@@ -878,10 +845,6 @@
               "sizing_family": "signed_optimizer"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.0
-            },
             "gross_exposure_cap": 1.5,
             "target_vol": 0.18,
             "gross_leverage_cap": 1.5,
@@ -904,7 +867,8 @@
               "effective_n_floor": 8.0,
               "top_gross_share_cap_n": 3,
               "top_gross_share_cap": 0.55
-            }
+            },
+            "active_weight_budget": 0.0
           },
           "rebalance_interval_steps": 21,
           "trading_environment": {

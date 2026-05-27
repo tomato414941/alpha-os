@@ -30,7 +30,6 @@ from .portfolio_construction_pipeline import (
     build_portfolio_construction_request,
     construct_portfolio_targets,
 )
-from .portfolio_overlay import ActiveOverlaySpec
 from .portfolio_sizing_policy import (
     PortfolioSizingPolicy,
     apply_portfolio_sizing_policy,
@@ -88,7 +87,7 @@ class DecisionBacktestInput:
     long_only: bool = False
     direction_mode: str | None = None
     top_k: int | None = None
-    active_overlay: ActiveOverlaySpec | None = field(default_factory=ActiveOverlaySpec)
+    active_weight_budget: float | None = None
     historical_return_lookback_steps: int | None = None
     subject_metadata_by_subject: dict[str, dict[str, str]] | None = None
 
@@ -120,7 +119,11 @@ class DecisionBacktestInput:
             )
             object.__setattr__(self, "long_only", construction.long_only)
             object.__setattr__(self, "direction_mode", construction.direction_mode)
-            object.__setattr__(self, "active_overlay", construction.active_overlay)
+            object.__setattr__(
+                self,
+                "active_weight_budget",
+                construction.active_weight_budget,
+            )
         direction_mode = normalize_portfolio_direction_mode(
             self.direction_mode,
             long_only=self.long_only,
@@ -551,7 +554,7 @@ def _build_rebalance_targets(
             long_only=backtest_input.long_only,
             direction_mode=backtest_input.direction_mode,
             top_k=backtest_input.top_k,
-            active_overlay=backtest_input.active_overlay,
+            active_weight_budget=backtest_input.active_weight_budget,
             asset_class_by_subject=(
                 {}
                 if backtest_input.asset_class_by_subject is None
@@ -1112,7 +1115,7 @@ def constrained_targets_by_subject(
     cluster_by_subject: dict[str, str],
     asset_class_weight_caps: dict[str, float],
     cluster_weight_caps: dict[str, float],
-    active_overlay: ActiveOverlaySpec | None = None,
+    active_weight_budget: float | None = None,
     direction_mode: str | None = None,
 ) -> dict[str, PortfolioTarget]:
     request = build_portfolio_construction_request(
@@ -1128,7 +1131,7 @@ def constrained_targets_by_subject(
         long_only=long_only,
         direction_mode=direction_mode,
         top_k=top_k,
-        active_overlay=active_overlay,
+        active_weight_budget=active_weight_budget,
         asset_class_by_subject=asset_class_by_subject,
         cluster_by_subject=cluster_by_subject,
         asset_class_weight_caps=asset_class_weight_caps,

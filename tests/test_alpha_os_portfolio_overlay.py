@@ -18,11 +18,11 @@ def _weights(targets):
 
 
 def test_rank_tilt_overlay_overweights_high_rank_long_only_without_zeroing():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+    from alpha_os.portfolio_overlay import apply_active_weight_budget
 
-    adjusted = apply_active_overlay(
+    adjusted = apply_active_weight_budget(
         [_target("A", 0.5), _target("B", 0.3), _target("C", 0.2)],
-        spec=ActiveOverlaySpec(active_weight_budget=0.3),
+        active_weight_budget=0.3,
         direction_mode="long_only",
     )
 
@@ -33,11 +33,11 @@ def test_rank_tilt_overlay_overweights_high_rank_long_only_without_zeroing():
 
 
 def test_rank_tilt_overlay_tilts_short_only_without_flipping_long():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+    from alpha_os.portfolio_overlay import apply_active_weight_budget
 
-    adjusted = apply_active_overlay(
+    adjusted = apply_active_weight_budget(
         [_target("A", -0.5), _target("B", -0.3), _target("C", -0.2)],
-        spec=ActiveOverlaySpec(active_weight_budget=0.3),
+        active_weight_budget=0.3,
         direction_mode="short_only",
     )
 
@@ -48,11 +48,11 @@ def test_rank_tilt_overlay_tilts_short_only_without_flipping_long():
 
 
 def test_rank_tilt_overlay_uses_absolute_conviction_for_long_short():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+    from alpha_os.portfolio_overlay import apply_active_weight_budget
 
-    adjusted = apply_active_overlay(
+    adjusted = apply_active_weight_budget(
         [_target("SMALL_LONG", 0.2), _target("BIG_SHORT", -0.8)],
-        spec=ActiveOverlaySpec(active_weight_budget=0.3),
+        active_weight_budget=0.3,
         direction_mode="long_short",
     )
 
@@ -62,7 +62,7 @@ def test_rank_tilt_overlay_uses_absolute_conviction_for_long_short():
 
 
 def test_rank_tilt_overlay_noops_when_no_cross_sectional_rank_exists():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+    from alpha_os.portfolio_overlay import apply_active_weight_budget
 
     cases = (
         ([_target("A", 0.5)], "long_only"),
@@ -71,30 +71,30 @@ def test_rank_tilt_overlay_noops_when_no_cross_sectional_rank_exists():
     )
 
     for targets, direction_mode in cases:
-        adjusted = apply_active_overlay(
+        adjusted = apply_active_weight_budget(
             targets,
-            spec=ActiveOverlaySpec(active_weight_budget=0.3),
+            active_weight_budget=0.3,
             direction_mode=direction_mode,
         )
         assert _weights(adjusted) == pytest.approx(_weights(targets))
 
 
 def test_rank_tilt_overlay_noops_when_disabled():
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec, apply_active_overlay
+    from alpha_os.portfolio_overlay import apply_active_weight_budget
 
     targets = [_target("A", 0.5), _target("B", 0.3), _target("C", 0.2)]
 
     assert _weights(
-        apply_active_overlay(
+        apply_active_weight_budget(
             targets,
-            spec=None,
+            active_weight_budget=None,
             direction_mode="long_only",
         )
     ) == pytest.approx(_weights(targets))
     assert _weights(
-        apply_active_overlay(
+        apply_active_weight_budget(
             targets,
-            spec=ActiveOverlaySpec(active_weight_budget=0.0),
+            active_weight_budget=0.0,
             direction_mode="long_only",
         )
     ) == pytest.approx(_weights(targets))

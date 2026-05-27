@@ -583,8 +583,7 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
 def test_constrained_targets_by_subject_respects_gross_leverage_cap():
     from alpha_os.decision_backtest import constrained_targets_by_subject
     from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
+    
     targets = (
         PortfolioTarget(
             subject_id="A",
@@ -613,7 +612,7 @@ def test_constrained_targets_by_subject_respects_gross_leverage_cap():
         net_exposure_target=None,
         long_only=False,
         top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
+        active_weight_budget=0.0,
         asset_class_by_subject={},
         cluster_by_subject={},
         asset_class_weight_caps={},
@@ -631,8 +630,7 @@ def test_portfolio_construction_pipeline_returns_stage_trace():
         construct_portfolio_targets,
     )
     from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
+    
     request = build_portfolio_construction_request(
         targets=(
             PortfolioTarget(subject_id="A", target_weight=0.10, position_delta=0.0),
@@ -645,7 +643,7 @@ def test_portfolio_construction_pipeline_returns_stage_trace():
         net_exposure_target=None,
         long_only=False,
         top_k=None,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
+        active_weight_budget=0.0,
         asset_class_by_subject={},
         cluster_by_subject={},
         asset_class_weight_caps={},
@@ -706,8 +704,7 @@ def test_constrained_targets_by_subject_can_shift_to_net_exposure_target():
 def test_constrained_targets_by_subject_can_filter_to_short_only_top_k():
     from alpha_os.decision_backtest import constrained_targets_by_subject
     from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
+    
     constrained = constrained_targets_by_subject(
         (
             PortfolioTarget(subject_id="LONG", target_weight=0.8, position_delta=0.0),
@@ -721,7 +718,7 @@ def test_constrained_targets_by_subject_can_filter_to_short_only_top_k():
         net_exposure_target=None,
         long_only=False,
         top_k=1,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
+        active_weight_budget=0.0,
         asset_class_by_subject={},
         cluster_by_subject={},
         asset_class_weight_caps={},
@@ -737,8 +734,7 @@ def test_constrained_targets_by_subject_can_filter_to_short_only_top_k():
 def test_constrained_targets_by_subject_long_short_top_k_uses_absolute_conviction():
     from alpha_os.decision_backtest import constrained_targets_by_subject
     from alpha_os.portfolio_decision import PortfolioTarget
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
-
+    
     constrained = constrained_targets_by_subject(
         (
             PortfolioTarget(subject_id="SMALL_LONG", target_weight=0.2, position_delta=0.0),
@@ -751,7 +747,7 @@ def test_constrained_targets_by_subject_long_short_top_k_uses_absolute_convictio
         net_exposure_target=None,
         long_only=False,
         top_k=1,
-        active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
+        active_weight_budget=0.0,
         asset_class_by_subject={},
         cluster_by_subject={},
         asset_class_weight_caps={},
@@ -1128,7 +1124,6 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
         SubjectBacktestSeries,
         run_decision_backtest,
     )
-    from alpha_os.portfolio_overlay import ActiveOverlaySpec
     from alpha_os.portfolio_sizing_policy import HistoricalModelSizingPolicy
 
     volatile_history = pd.Series(
@@ -1172,7 +1167,7 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
                 ),
             ),
             gross_exposure_cap=1.0,
-            active_overlay=ActiveOverlaySpec(active_weight_budget=0.0),
+            active_weight_budget=0.0,
         ),
         sizing_policy=HistoricalModelSizingPolicy(
             model_type="minimum_variance",

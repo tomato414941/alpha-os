@@ -228,10 +228,7 @@
               "sizing_family": "signed_optimizer"
             },
             "direction_mode": "long_short",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            }
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {

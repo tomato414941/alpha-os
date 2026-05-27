@@ -217,11 +217,8 @@
               "sizing_family": "signed_optimizer"
             },
             "direction_mode": "long_only",
-            "active_overlay": {
-              "kind": "rank_tilt",
-              "active_weight_budget": 0.3
-            },
-            "gross_exposure_cap": 1.0
+            "gross_exposure_cap": 1.0,
+            "active_weight_budget": 0.3
           },
           "rebalance_interval_steps": 5,
           "selection_kind": "top_k",

@@ -1122,7 +1122,7 @@ def _run_backtest_variant(
             long_only=portfolio_construction.long_only,
             direction_mode=portfolio_construction.direction_mode,
             top_k=top_k,
-            active_overlay=portfolio_construction.active_overlay,
+            active_weight_budget=portfolio_construction.active_weight_budget,
             historical_return_lookback_steps=_historical_return_lookback_steps(
                 portfolio_construction
             ),

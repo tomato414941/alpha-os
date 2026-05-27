@@ -1,88 +1,23 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Any, Protocol
 
 from .portfolio_decision import PortfolioTarget
 
 
-@dataclass(frozen=True)
-class ActiveOverlaySpec:
-    kind: str = "rank_tilt"
-    active_weight_budget: float = 0.30
-
-    def __post_init__(self) -> None:
-        if self.kind != "rank_tilt":
-            raise ValueError("portfolio_construction.active_overlay.kind must be rank_tilt")
-        if not isinstance(self.active_weight_budget, (int, float)):
-            raise ValueError(
-                "portfolio_construction.active_overlay.active_weight_budget must be numeric"
-            )
-        if self.active_weight_budget < 0.0 or self.active_weight_budget > 1.0:
-            raise ValueError(
-                "portfolio_construction.active_overlay.active_weight_budget must be in [0, 1]"
-            )
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "kind": self.kind,
-            "active_weight_budget": float(self.active_weight_budget),
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any] | None) -> "ActiveOverlaySpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("portfolio_construction.active_overlay must be an object")
-        return cls(
-            kind=str(document.get("kind", "rank_tilt")),
-            active_weight_budget=float(document.get("active_weight_budget", 0.30)),
-        )
-
-
-class PortfolioOverlayPolicy(Protocol):
-    def apply(
-        self,
-        targets: list[PortfolioTarget],
-        *,
-        direction_mode: str,
-    ) -> list[PortfolioTarget]:
-        ...
-
-
-@dataclass(frozen=True)
-class RankTiltOverlayPolicy:
-    active_weight_budget: float
-
-    def apply(
-        self,
-        targets: list[PortfolioTarget],
-        *,
-        direction_mode: str,
-    ) -> list[PortfolioTarget]:
-        return apply_rank_tilt_overlay(
-            targets,
-            direction_mode=direction_mode,
-            active_weight_budget=float(self.active_weight_budget),
-        )
-
-
-def apply_active_overlay(
+def apply_active_weight_budget(
     targets: list[PortfolioTarget],
     *,
-    spec: ActiveOverlaySpec | None,
+    active_weight_budget: float | None,
     direction_mode: str,
 ) -> list[PortfolioTarget]:
-    if spec is None or spec.active_weight_budget <= 0.0:
+    if active_weight_budget is None or active_weight_budget <= 0.0:
         return targets
-    if spec.kind == "rank_tilt":
-        policy: PortfolioOverlayPolicy = RankTiltOverlayPolicy(
-            active_weight_budget=float(spec.active_weight_budget)
-        )
-        return policy.apply(targets, direction_mode=direction_mode)
-    raise ValueError(f"unsupported active overlay kind: {spec.kind}")
+    return apply_rank_tilt_overlay(
+        targets,
+        direction_mode=direction_mode,
+        active_weight_budget=float(active_weight_budget),
+    )
 
 
 def apply_rank_tilt_overlay(
