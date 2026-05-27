@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def _plane():
-    from alpha_os.evaluation_generation import prepare_feature_plane_from_frame
+    from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 
     return prepare_feature_plane_from_frame(
         frame=pd.DataFrame(

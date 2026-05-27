@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def _plane():
-    from alpha_os.evaluation_generation import prepare_feature_plane_from_frame
+    from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 
     return prepare_feature_plane_from_frame(
         frame=pd.DataFrame(
@@ -84,7 +84,7 @@ def test_probe_screen_requires_dates_in_range():
 
 
 def test_probe_screen_handles_constant_signal_without_runtime_warning():
-    from alpha_os.evaluation_generation import prepare_feature_plane_from_frame
+    from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
     from alpha_os.probe_screening import ProbeScreenPolicy, probe_screen_on_feature_plane
     from alpha_os.signal_registry import get_signal_definition
 

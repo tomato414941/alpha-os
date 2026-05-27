@@ -108,7 +108,7 @@ def test_signal_family_library_exposes_non_price_families():
 
 
 def test_prepare_feature_plane_from_frame_collects_instrument_observables():
-    from alpha_os.evaluation_generation import prepare_feature_plane_from_frame
+    from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 
     frame = pd.DataFrame(
         [
@@ -144,7 +144,7 @@ def test_prepare_feature_plane_from_frame_collects_instrument_observables():
 
 
 def test_feature_plane_supports_new_signal_kinds():
-    from alpha_os.evaluation_generation import prepare_feature_plane_from_frame
+    from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 
     frame = pd.DataFrame(
         [
