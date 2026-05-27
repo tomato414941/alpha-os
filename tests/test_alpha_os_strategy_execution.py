@@ -215,3 +215,35 @@ def test_trading_strategy_spec_round_trips_through_document():
     assert "portfolio_policy" not in strategy.to_document()
     assert round_tripped.portfolio_construction == strategy.portfolio_construction
     assert round_tripped.trading_environment == strategy.trading_environment
+
+
+def test_trading_strategy_contract_accepts_black_box_decision_component():
+    from alpha_os.portfolio_decision import (
+        PortfolioDecisionInput,
+        PortfolioDecisionOutput,
+        PortfolioTarget,
+    )
+    from alpha_os.trading_strategy_contract import TradingStrategy
+
+    class FixedWeightStrategy:
+        def decide(self, decision_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
+            return PortfolioDecisionOutput(
+                portfolio_id=decision_input.portfolio_id,
+                as_of=decision_input.as_of,
+                targets=(
+                    PortfolioTarget(
+                        subject_id="BTC",
+                        target_weight=1.0,
+                        position_delta=1.0,
+                    ),
+                ),
+            )
+
+    strategy: TradingStrategy = FixedWeightStrategy()
+    decision = strategy.decide(
+        PortfolioDecisionInput(portfolio_id="portfolio:test", as_of="2026-04-08")
+    )
+
+    assert decision.portfolio_id == "portfolio:test"
+    assert decision.targets[0].subject_id == "BTC"
+    assert decision.targets[0].target_weight == 1.0
