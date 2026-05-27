@@ -44,6 +44,9 @@ explicitly.
 belief artifact. The store still keeps `signal_discovery_id` as compressed
 belief provenance metadata.
 
+Unused evaluation-target grouping by `TradingStrategySpec.signal_discovery_id`
+was removed after the diagnostic evaluation CLI was deleted.
+
 ## Desired Direction
 
 Evaluation task resolution no longer derives strategy variants from

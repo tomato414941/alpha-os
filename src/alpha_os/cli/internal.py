@@ -1900,62 +1900,6 @@ def _mean(values: list[float]) -> float:
     return float(sum(values) / len(values))
 
 
-@dataclass(frozen=True)
-class _SignalDiscoveryEvaluationGroup:
-    signal_discovery_id: str | None
-    base_url: str
-    evaluation_targets: tuple[tuple[str, str], ...]
-
-
-def _group_evaluation_targets_by_signal_discovery(
-    store: EvaluationStore,
-    evaluation_targets: tuple[tuple[str, str], ...],
-    *,
-    base_url: str,
-) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
-    def strategy_lookup(strategy_id: str) -> TradingStrategySpec | None:
-        strategy_state = store.get_trading_strategy(strategy_id)
-        if strategy_state is None:
-            return None
-        return strategy_state.trading_strategy
-
-    return _group_evaluation_targets_by_signal_discovery_with_strategy_lookup(
-        evaluation_targets,
-        strategy_lookup=strategy_lookup,
-        base_url=base_url,
-    )
-
-
-def _group_evaluation_targets_by_signal_discovery_with_strategy_lookup(
-    evaluation_targets: tuple[tuple[str, str], ...],
-    *,
-    strategy_lookup,
-    base_url: str,
-) -> tuple[_SignalDiscoveryEvaluationGroup, ...]:
-    grouped: dict[str | None, list[tuple[str, str]]] = {}
-    for evaluation_case in evaluation_targets:
-        trading_strategy = strategy_lookup(_target_strategy_id(evaluation_case))
-        if trading_strategy is None:
-            raise ValueError(
-                f"evaluation target strategy does not exist: {_target_strategy_id(evaluation_case)}"
-            )
-        signal_discovery_id = trading_strategy.signal_discovery_id
-        grouped.setdefault(signal_discovery_id, []).append(evaluation_case)
-    groups: list[_SignalDiscoveryEvaluationGroup] = []
-    for signal_discovery_id, grouped_cases in sorted(
-        grouped.items(),
-        key=lambda item: "" if item[0] is None else item[0],
-    ):
-        groups.append(
-            _SignalDiscoveryEvaluationGroup(
-                signal_discovery_id=signal_discovery_id,
-                base_url=base_url,
-                evaluation_targets=tuple(grouped_cases),
-            )
-        )
-    return tuple(groups)
-
-
 def cmd_run_evaluation(args: argparse.Namespace) -> int:
     with _runtime_store(args.db) as (cfg, store):
         run_result_state = run_evaluation_use_case(
