@@ -36,9 +36,11 @@ now. They mark the contract boundary without making trading strategy depend on
 the pre-existing `PortfolioDecisionInput` / `PortfolioDecisionOutput` types.
 
 `run_strategy_backtest()` no longer accepts `TradingStrategySpec`; it accepts
-the explicit behavior fields it needs. This is only an intermediate step. The
-evaluation path still resolves `TradingStrategySpec` before adapting it into
-those fields.
+the explicit behavior fields it needs.
+
+`evaluation_execution_strategy.py` no longer imports `TradingStrategySpec` or
+uses helper functions typed around it. It still reads the persisted strategy
+record and adapts the fields needed by the current backtest path.
 
 ## Close Condition
 
