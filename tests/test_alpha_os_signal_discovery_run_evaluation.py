@@ -1,6 +1,5 @@
 from __future__ import annotations
 from pathlib import Path
-from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -240,7 +239,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         SubjectObservationBinding,
         SubjectSet,
     )
-    from alpha_os.subject_set_feature_plane import SubjectPlaneKey
 
     strategy = _build_trading_strategy(
         strategy_id="strategy:crypto_regime_momentum",
@@ -267,19 +265,24 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         ),
     )
     index = pd.date_range("2026-01-01", periods=61, freq="D").strftime("%Y-%m-%d")
+    frame_index = pd.date_range("2025-12-31", periods=62, freq="D").strftime("%Y-%m-%d")
     returns = pd.Series(0.01, index=index, dtype=float)
     funding_rate = pd.Series(0.001, index=index, dtype=float)
+    close = pd.Series(index=frame_index, dtype=float)
+    close.iloc[0] = 100.0
+    close.iloc[1:] = (close.iloc[0] * (1.0 + returns).cumprod()).to_numpy()
     captured: dict[str, object] = {}
 
     monkeypatch.setattr(
         strategy_backtest,
-        "build_subject_set_feature_planes",
-        lambda **_: {
-            SubjectPlaneKey(asset="BTC", observation_spec_id="btc_daily"): SimpleNamespace(
-                daily_returns=returns,
-                extra_observables={"funding_rate": funding_rate},
-            )
-        },
+        "load_observation_frame",
+        lambda *_, **__: pd.DataFrame(
+            {
+                "timestamp": list(frame_index),
+                "close": close.tolist(),
+                "funding_rate": [0.001, *funding_rate.tolist()],
+            }
+        ),
     )
 
     def capture_metric_group_results(**kwargs):
@@ -309,7 +312,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         family_mix=strategy.family_mix,
         selection_kind=strategy.selection_kind,
         top_k=strategy.top_k,
-        feature_plane_repository=None,
     )
 
     signal_series_by_subject = captured["signal_series_by_subject"]

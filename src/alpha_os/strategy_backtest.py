@@ -5,22 +5,41 @@ import re
 import pandas as pd
 
 from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
-from .data_repositories import FeaturePlaneRepository
 from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
+from .feature_plane import PriceFeaturePlane
+from .feature_plane_builder import prepare_feature_plane_from_frame
+from .observation_adapters import load_observation_frame
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .portfolio_decision import SubjectSet
+from .portfolio_decision import ObservationSpec, SubjectObservationBinding, SubjectSet
 from .strategy_backtest_evaluation import (
     build_direct_strategy_evaluation_metric_group_results,
 )
-from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_feature_planes
 from .universe_contract import validate_subject_set_universe_contract
 
 
-def subject_backtest_inputs_from_subject_set_planes(
+def _observation_specs_by_id(subject_set: SubjectSet) -> dict[str, ObservationSpec]:
+    return {spec.observation_spec_id: spec for spec in subject_set.observation_specs}
+
+
+def _feature_plane_for_binding(
+    *,
+    binding: SubjectObservationBinding,
+    observation_spec: ObservationSpec,
+    base_url: str,
+) -> PriceFeaturePlane:
+    frame = load_observation_frame(
+        observation_spec,
+        asset=binding.asset,
+        base_url=base_url,
+    )
+    return prepare_feature_plane_from_frame(frame=frame)
+
+
+def subject_backtest_inputs_from_subject_set(
     *,
     subject_set: SubjectSet,
-    subject_planes: dict[SubjectPlaneKey, object],
+    base_url: str,
 ) -> tuple[
     dict[str, pd.Series],
     dict[str, pd.Series],
@@ -35,18 +54,18 @@ def subject_backtest_inputs_from_subject_set_planes(
     borrow_fee_bps_series_by_subject: dict[str, pd.Series] = {}
     roll_cost_bps_series_by_subject: dict[str, pd.Series] = {}
     contract_multiplier_by_subject: dict[str, float] = {}
+    observation_specs_by_id = _observation_specs_by_id(subject_set)
     for binding in subject_set.bindings:
-        plane = subject_planes.get(
-            SubjectPlaneKey(
-                asset=binding.asset,
-                observation_spec_id=binding.observation_spec_id,
-            )
-        )
-        if plane is None:
+        observation_spec = observation_specs_by_id.get(binding.observation_spec_id)
+        if observation_spec is None:
             raise ValueError(
-                "strategy feature plane is missing: "
-                f"{binding.asset}/{binding.observation_spec_id}"
+                f"subject binding is missing observation spec: {binding.subject_id}"
             )
+        plane = _feature_plane_for_binding(
+            binding=binding,
+            observation_spec=observation_spec,
+            base_url=base_url,
+        )
         subject_return_series_by_subject[binding.subject_id] = (
             plane.daily_returns.astype(float).dropna()
         )
@@ -95,7 +114,6 @@ def run_strategy_backtest(
     family_mix: str | None,
     selection_kind: str,
     top_k: int | None,
-    feature_plane_repository: FeaturePlaneRepository | None,
 ):
     if position_rule_id not in {
         "constant_hold",
@@ -114,12 +132,6 @@ def run_strategy_backtest(
     if selection_kind == "top_k" and top_k is None:
         raise ValueError("top_k strategy backtest requires top_k")
     validate_subject_set_universe_contract(subject_set)
-    subject_planes = build_subject_set_feature_planes(
-        subject_set=subject_set,
-        executable_definitions=[],
-        base_url=base_url,
-        feature_plane_repository=feature_plane_repository,
-    )
     (
         subject_return_series_by_subject,
         funding_rate_series_by_subject,
@@ -127,9 +139,9 @@ def run_strategy_backtest(
         borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject,
         contract_multiplier_by_subject,
-    ) = subject_backtest_inputs_from_subject_set_planes(
+    ) = subject_backtest_inputs_from_subject_set(
         subject_set=subject_set,
-        subject_planes=subject_planes,
+        base_url=base_url,
     )
     if position_rule_id == "constant_hold":
         position_signal_series_by_subject = None

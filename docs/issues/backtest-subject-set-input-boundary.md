@@ -42,13 +42,14 @@ For alpha-os, the analogous split should be:
 
 ## Current Marker
 
-`run_strategy_backtest()` accepts:
+`run_strategy_backtest()` still accepts:
 
 ```python
 subject_set: SubjectSet
 ```
 
-and calls `build_subject_set_feature_planes()` internally.
+The old `build_subject_set_feature_planes()` helper was removed, but subject
+binding and observation loading still happen inside `run_strategy_backtest()`.
 
 ## Desired Direction
 
