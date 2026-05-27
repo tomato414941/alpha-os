@@ -202,106 +202,6 @@ class PortfolioConstructionSizingSpec:
 
 
 @dataclass(frozen=True)
-class PortfolioIntentSpec:
-    effective_n_floor: float | None = None
-    top_gross_share_cap_n: int | None = None
-    top_gross_share_cap: float | None = None
-    concentration_min_abs_weight: float = 0.001
-
-    def __post_init__(self) -> None:
-        if self.effective_n_floor is not None:
-            if not isinstance(self.effective_n_floor, int | float):
-                raise ValueError(
-                    "portfolio_construction.portfolio_intent.effective_n_floor "
-                    "must be numeric"
-                )
-            if float(self.effective_n_floor) < 0.0:
-                raise ValueError(
-                    "portfolio_construction.portfolio_intent.effective_n_floor "
-                    "must be >= 0"
-                )
-        if self.top_gross_share_cap_n is not None:
-            if (
-                not isinstance(self.top_gross_share_cap_n, int)
-                or self.top_gross_share_cap_n < 1
-            ):
-                raise ValueError(
-                    "portfolio_construction.portfolio_intent.top_gross_share_cap_n "
-                    "must be >= 1"
-                )
-        if self.top_gross_share_cap is not None:
-            if not isinstance(self.top_gross_share_cap, int | float):
-                raise ValueError(
-                    "portfolio_construction.portfolio_intent.top_gross_share_cap "
-                    "must be numeric"
-                )
-            if not 0.0 <= float(self.top_gross_share_cap) <= 1.0:
-                raise ValueError(
-                    "portfolio_construction.portfolio_intent.top_gross_share_cap "
-                    "must be in [0, 1]"
-                )
-        if not isinstance(self.concentration_min_abs_weight, int | float):
-            raise ValueError(
-                "portfolio_construction.portfolio_intent.concentration_min_abs_weight "
-                "must be numeric"
-            )
-        if float(self.concentration_min_abs_weight) < 0.0:
-            raise ValueError(
-                "portfolio_construction.portfolio_intent.concentration_min_abs_weight "
-                "must be >= 0"
-            )
-
-    @property
-    def has_constraints(self) -> bool:
-        return (
-            self.effective_n_floor is not None
-            or (
-                self.top_gross_share_cap_n is not None
-                and self.top_gross_share_cap is not None
-            )
-        )
-
-    def to_document(self) -> dict[str, Any]:
-        document: dict[str, Any] = {}
-        if self.effective_n_floor is not None:
-            document["effective_n_floor"] = self.effective_n_floor
-        if self.top_gross_share_cap_n is not None:
-            document["top_gross_share_cap_n"] = self.top_gross_share_cap_n
-        if self.top_gross_share_cap is not None:
-            document["top_gross_share_cap"] = self.top_gross_share_cap
-        if self.concentration_min_abs_weight != 0.001:
-            document["concentration_min_abs_weight"] = self.concentration_min_abs_weight
-        return document
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any] | None) -> "PortfolioIntentSpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("portfolio_construction.portfolio_intent must be an object")
-        return cls(
-            effective_n_floor=(
-                None
-                if document.get("effective_n_floor") is None
-                else float(document.get("effective_n_floor"))
-            ),
-            top_gross_share_cap_n=(
-                None
-                if document.get("top_gross_share_cap_n") is None
-                else int(document.get("top_gross_share_cap_n"))
-            ),
-            top_gross_share_cap=(
-                None
-                if document.get("top_gross_share_cap") is None
-                else float(document.get("top_gross_share_cap"))
-            ),
-            concentration_min_abs_weight=float(
-                document.get("concentration_min_abs_weight", 0.001)
-            ),
-        )
-
-
-@dataclass(frozen=True)
 class PortfolioConstructionSpec:
     construction_kind: str = "active_portfolio"
     sizing_policy: PortfolioConstructionSizingSpec = field(
@@ -317,7 +217,10 @@ class PortfolioConstructionSpec:
     net_exposure_target: float | None = None
     asset_class_weight_caps: dict[str, float] = field(default_factory=dict)
     cluster_weight_caps: dict[str, float] = field(default_factory=dict)
-    portfolio_intent: PortfolioIntentSpec = field(default_factory=PortfolioIntentSpec)
+    effective_n_floor: float | None = None
+    top_gross_share_cap_n: int | None = None
+    top_gross_share_cap: float | None = None
+    concentration_min_abs_weight: float = 0.001
 
     def __post_init__(self) -> None:
         construction_kind = normalize_construction_kind(self.construction_kind)
@@ -364,17 +267,39 @@ class PortfolioConstructionSpec:
             int | float,
         ):
             raise ValueError("portfolio_construction.net_exposure_target must be numeric")
-        if not isinstance(self.portfolio_intent, PortfolioIntentSpec):
-            object.__setattr__(
-                self,
-                "portfolio_intent",
-                PortfolioIntentSpec.from_document(
-                    _document_from_compatible_spec(self.portfolio_intent)
-                ),
-            )
-        if not isinstance(self.portfolio_intent, PortfolioIntentSpec):
+        if self.effective_n_floor is not None:
+            if not isinstance(self.effective_n_floor, int | float):
+                raise ValueError(
+                    "portfolio_construction.effective_n_floor must be numeric"
+                )
+            if float(self.effective_n_floor) < 0.0:
+                raise ValueError(
+                    "portfolio_construction.effective_n_floor must be >= 0"
+                )
+        if self.top_gross_share_cap_n is not None:
+            if (
+                not isinstance(self.top_gross_share_cap_n, int)
+                or self.top_gross_share_cap_n < 1
+            ):
+                raise ValueError(
+                    "portfolio_construction.top_gross_share_cap_n must be >= 1"
+                )
+        if self.top_gross_share_cap is not None:
+            if not isinstance(self.top_gross_share_cap, int | float):
+                raise ValueError(
+                    "portfolio_construction.top_gross_share_cap must be numeric"
+                )
+            if not 0.0 <= float(self.top_gross_share_cap) <= 1.0:
+                raise ValueError(
+                    "portfolio_construction.top_gross_share_cap must be in [0, 1]"
+                )
+        if not isinstance(self.concentration_min_abs_weight, int | float):
             raise ValueError(
-                "portfolio_construction.portfolio_intent must be PortfolioIntentSpec"
+                "portfolio_construction.concentration_min_abs_weight must be numeric"
+            )
+        if float(self.concentration_min_abs_weight) < 0.0:
+            raise ValueError(
+                "portfolio_construction.concentration_min_abs_weight must be >= 0"
             )
         for field_name, caps in (
             ("asset_class_weight_caps", self.asset_class_weight_caps),
@@ -412,9 +337,9 @@ class PortfolioConstructionSpec:
                 raise ValueError(
                     "hold_baseline portfolio_construction must not define cluster_weight_caps"
                 )
-            if self.portfolio_intent.has_constraints:
+            if _has_concentration_constraints(self):
                 raise ValueError(
-                    "hold_baseline portfolio_construction must not define portfolio_intent constraints"
+                    "hold_baseline portfolio_construction must not define concentration constraints"
                 )
 
     @property
@@ -449,8 +374,14 @@ class PortfolioConstructionSpec:
             document["asset_class_weight_caps"] = dict(self.asset_class_weight_caps)
         if self.cluster_weight_caps:
             document["cluster_weight_caps"] = dict(self.cluster_weight_caps)
-        if self.portfolio_intent.to_document():
-            document["portfolio_intent"] = self.portfolio_intent.to_document()
+        if self.effective_n_floor is not None:
+            document["effective_n_floor"] = self.effective_n_floor
+        if self.top_gross_share_cap_n is not None:
+            document["top_gross_share_cap_n"] = self.top_gross_share_cap_n
+        if self.top_gross_share_cap is not None:
+            document["top_gross_share_cap"] = self.top_gross_share_cap
+        if self.concentration_min_abs_weight != 0.001:
+            document["concentration_min_abs_weight"] = self.concentration_min_abs_weight
         return document
 
     @classmethod
@@ -506,24 +437,32 @@ class PortfolioConstructionSpec:
                 document,
                 "cluster_weight_caps",
             ),
-            portfolio_intent=PortfolioIntentSpec.from_document(
-                document.get("portfolio_intent")
+            effective_n_floor=(
+                None
+                if document.get("effective_n_floor") is None
+                else float(document.get("effective_n_floor"))
+            ),
+            top_gross_share_cap_n=(
+                None
+                if document.get("top_gross_share_cap_n") is None
+                else int(document.get("top_gross_share_cap_n"))
+            ),
+            top_gross_share_cap=(
+                None
+                if document.get("top_gross_share_cap") is None
+                else float(document.get("top_gross_share_cap"))
+            ),
+            concentration_min_abs_weight=float(
+                document.get("concentration_min_abs_weight", 0.001)
             ),
         )
 
 
-def _document_from_compatible_spec(value: object) -> dict[str, Any] | None:
-    if value is None:
-        return None
-    to_document = getattr(value, "to_document", None)
-    if callable(to_document):
-        document = to_document()
-        if isinstance(document, dict):
-            return document
-    if hasattr(value, "__dict__"):
-        return {
-            key: item
-            for key, item in vars(value).items()
-            if not key.startswith("_")
-        }
-    return None
+def _has_concentration_constraints(config: PortfolioConstructionSpec) -> bool:
+    return (
+        config.effective_n_floor is not None
+        or (
+            config.top_gross_share_cap_n is not None
+            and config.top_gross_share_cap is not None
+        )
+    )

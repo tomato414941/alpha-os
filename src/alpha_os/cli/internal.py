@@ -721,6 +721,10 @@ def _portfolio_construction_for_decision_args(
         ),
         asset_class_weight_caps=dict(base_construction.asset_class_weight_caps),
         cluster_weight_caps=dict(base_construction.cluster_weight_caps),
+        effective_n_floor=base_construction.effective_n_floor,
+        top_gross_share_cap_n=base_construction.top_gross_share_cap_n,
+        top_gross_share_cap=base_construction.top_gross_share_cap,
+        concentration_min_abs_weight=base_construction.concentration_min_abs_weight,
     )
 
 
@@ -804,6 +808,10 @@ def _portfolio_construction_with_sizing_spec(
         gross_exposure_cap=base.gross_exposure_cap,
         asset_class_weight_caps=dict(base.asset_class_weight_caps),
         cluster_weight_caps=dict(base.cluster_weight_caps),
+        effective_n_floor=base.effective_n_floor,
+        top_gross_share_cap_n=base.top_gross_share_cap_n,
+        top_gross_share_cap=base.top_gross_share_cap,
+        concentration_min_abs_weight=base.concentration_min_abs_weight,
     )
 
 
@@ -838,6 +846,22 @@ def _portfolio_construction_for_decision_strategy(
             if not construction.cluster_weight_caps
             else dict(construction.cluster_weight_caps)
         ),
+        effective_n_floor=(
+            base_construction.effective_n_floor
+            if construction.effective_n_floor is None
+            else construction.effective_n_floor
+        ),
+        top_gross_share_cap_n=(
+            base_construction.top_gross_share_cap_n
+            if construction.top_gross_share_cap_n is None
+            else construction.top_gross_share_cap_n
+        ),
+        top_gross_share_cap=(
+            base_construction.top_gross_share_cap
+            if construction.top_gross_share_cap is None
+            else construction.top_gross_share_cap
+        ),
+        concentration_min_abs_weight=construction.concentration_min_abs_weight,
     )
 
 
@@ -2293,11 +2317,11 @@ def _check_diagnostic_evaluation_dry_run(
             "diagnostic dry run check failed: constrained mean-reversion lane "
             "must use rebalance_interval_steps=10"
         )
-    constrained_intent = constrained_config.portfolio_construction.portfolio_intent
+    constrained_construction = constrained_config.portfolio_construction
     if (
-        constrained_intent.effective_n_floor != 10.0
-        or constrained_intent.top_gross_share_cap_n != 3
-        or constrained_intent.top_gross_share_cap != 0.4
+        constrained_construction.effective_n_floor != 10.0
+        or constrained_construction.top_gross_share_cap_n != 3
+        or constrained_construction.top_gross_share_cap != 0.4
     ):
         raise ValueError(
             "diagnostic dry run check failed: constrained mean-reversion lane "

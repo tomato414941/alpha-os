@@ -95,24 +95,18 @@ def test_portfolio_construction_roundtrips_active_weight_budget():
     assert restored.active_weight_budget == pytest.approx(0.2)
 
 
-def test_portfolio_construction_roundtrips_portfolio_intent():
-    from alpha_os.portfolio_construction_config import PortfolioIntentSpec
-
+def test_portfolio_construction_roundtrips_concentration_constraints():
     construction = PortfolioConstructionSpec(
-        portfolio_intent=PortfolioIntentSpec(
-            effective_n_floor=8.0,
-            top_gross_share_cap_n=3,
-            top_gross_share_cap=0.55,
-        )
+        effective_n_floor=8.0,
+        top_gross_share_cap_n=3,
+        top_gross_share_cap=0.55,
     )
     document = construction.to_document()
     restored = PortfolioConstructionSpec.from_document(document)
 
-    assert document["portfolio_intent"] == {
-        "effective_n_floor": 8.0,
-        "top_gross_share_cap_n": 3,
-        "top_gross_share_cap": 0.55,
-    }
-    assert restored.portfolio_intent.effective_n_floor == pytest.approx(8.0)
-    assert restored.portfolio_intent.top_gross_share_cap_n == 3
-    assert restored.portfolio_intent.top_gross_share_cap == pytest.approx(0.55)
+    assert document["effective_n_floor"] == pytest.approx(8.0)
+    assert document["top_gross_share_cap_n"] == 3
+    assert document["top_gross_share_cap"] == pytest.approx(0.55)
+    assert restored.effective_n_floor == pytest.approx(8.0)
+    assert restored.top_gross_share_cap_n == 3
+    assert restored.top_gross_share_cap == pytest.approx(0.55)

@@ -898,18 +898,18 @@ def build_evaluation_metric_group_results_from_range_summaries(
             ),
             "effective_n_floor": (
                 "-"
-                if portfolio_construction.portfolio_intent.effective_n_floor is None
-                else portfolio_construction.portfolio_intent.effective_n_floor
+                if portfolio_construction.effective_n_floor is None
+                else portfolio_construction.effective_n_floor
             ),
             "top_gross_share_cap_n": (
                 "-"
-                if portfolio_construction.portfolio_intent.top_gross_share_cap_n is None
-                else portfolio_construction.portfolio_intent.top_gross_share_cap_n
+                if portfolio_construction.top_gross_share_cap_n is None
+                else portfolio_construction.top_gross_share_cap_n
             ),
             "top_gross_share_cap": (
                 "-"
-                if portfolio_construction.portfolio_intent.top_gross_share_cap is None
-                else portfolio_construction.portfolio_intent.top_gross_share_cap
+                if portfolio_construction.top_gross_share_cap is None
+                else portfolio_construction.top_gross_share_cap
             ),
         },
     )
@@ -1043,9 +1043,9 @@ def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
     }:
         return HistoricalModelSizingPolicy(
             model_type=config.sizing_method,
-            effective_n_floor=config.portfolio_intent.effective_n_floor,
-            top_gross_share_cap_n=config.portfolio_intent.top_gross_share_cap_n,
-            top_gross_share_cap=config.portfolio_intent.top_gross_share_cap,
+            effective_n_floor=config.effective_n_floor,
+            top_gross_share_cap_n=config.top_gross_share_cap_n,
+            top_gross_share_cap=config.top_gross_share_cap,
         )
     raise ValueError(
         "unsupported decision backtest config: "
@@ -1446,8 +1446,8 @@ def _range_summary_from_variant_results(
     concentration = _portfolio_concentration_from_backtest(
         selected,
         subject_set=subject_set,
-        min_abs_weight=portfolio_construction.portfolio_intent.concentration_min_abs_weight,
-        top_intent_n=portfolio_construction.portfolio_intent.top_gross_share_cap_n,
+        min_abs_weight=portfolio_construction.concentration_min_abs_weight,
+        top_intent_n=portfolio_construction.top_gross_share_cap_n,
     )
     construction_impact = _portfolio_construction_stage_impact_from_backtest(selected)
     execution_impact = _execution_trace_from_backtest(selected)
@@ -1919,7 +1919,6 @@ def _failure_finding_groups(
     signed_belief_cases: list[EvaluationFailureFinding] = []
     portfolio_target_return_alignment_cases: list[EvaluationFailureFinding] = []
     concentration_cases: list[EvaluationFailureFinding] = []
-    intent = portfolio_construction.portfolio_intent
     for item in sorted(
         range_summaries,
         key=lambda row: (
@@ -2014,18 +2013,19 @@ def _failure_finding_groups(
                 )
             )
         concentration_severity = 0.0
-        if intent.effective_n_floor is not None:
+        if portfolio_construction.effective_n_floor is not None:
             concentration_severity = max(
                 concentration_severity,
-                float(intent.effective_n_floor) - item.mean_effective_n,
+                float(portfolio_construction.effective_n_floor) - item.mean_effective_n,
             )
         if (
-            intent.top_gross_share_cap_n is not None
-            and intent.top_gross_share_cap is not None
+            portfolio_construction.top_gross_share_cap_n is not None
+            and portfolio_construction.top_gross_share_cap is not None
         ):
             concentration_severity = max(
                 concentration_severity,
-                item.mean_top_intent_gross_share - float(intent.top_gross_share_cap),
+                item.mean_top_intent_gross_share
+                - float(portfolio_construction.top_gross_share_cap),
             )
         if concentration_severity > 0.0:
             concentration_cases.append(
@@ -2044,13 +2044,13 @@ def _failure_finding_groups(
                         ),
                         "effective_n_floor": (
                             "-"
-                            if intent.effective_n_floor is None
-                            else intent.effective_n_floor
+                            if portfolio_construction.effective_n_floor is None
+                            else portfolio_construction.effective_n_floor
                         ),
                         "top_gross_share_cap": (
                             "-"
-                            if intent.top_gross_share_cap is None
-                            else intent.top_gross_share_cap
+                            if portfolio_construction.top_gross_share_cap is None
+                            else portfolio_construction.top_gross_share_cap
                         ),
                         "step_count": item.step_count,
                     },

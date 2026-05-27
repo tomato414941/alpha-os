@@ -133,7 +133,7 @@ Current classification:
 | `net_exposure_target` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Constrains net exposure after weights are produced. |
 | `asset_class_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
 | `cluster_weight_caps` | `PortfolioConstructionSpec` | portfolio allocation / constraint | Group cap on target weights. |
-| `portfolio_intent` | `PortfolioConstructionSpec` | legacy / unclear | Captures effective-N and concentration constraints, but the name is vague. |
+| `effective_n_floor` / `top_gross_share_cap_*` / `concentration_min_abs_weight` | `PortfolioConstructionSpec` | portfolio allocation / concentration constraint | Concrete concentration and diversification controls. |
 | `trading_environment` | `StrategyPortfolioSpec` | environment cost model | Charges execution and holding costs in evaluation / backtest. |
 
 ## Acceptance Criteria

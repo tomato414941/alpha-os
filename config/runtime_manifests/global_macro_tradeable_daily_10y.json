@@ -758,12 +758,10 @@
               "commodity_energy": 0.18,
               "crypto_perp": 0.2
             },
-            "portfolio_intent": {
-              "effective_n_floor": 8.0,
-              "top_gross_share_cap_n": 3,
-              "top_gross_share_cap": 0.55
-            },
-            "active_weight_budget": 0.0
+            "active_weight_budget": 0.0,
+            "effective_n_floor": 8.0,
+            "top_gross_share_cap_n": 3,
+            "top_gross_share_cap": 0.55
           },
           "rebalance_interval_steps": 1,
           "trading_environment": {

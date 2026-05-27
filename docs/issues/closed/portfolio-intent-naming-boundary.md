@@ -1,5 +1,8 @@
 # Portfolio intent naming boundary
 
+Status: Closed. `PortfolioIntentSpec` and persisted `portfolio_intent` were
+removed; concentration controls now live directly on `PortfolioConstructionSpec`.
+
 ## Problem
 
 `portfolio_intent` is too broad for its current behavior.
