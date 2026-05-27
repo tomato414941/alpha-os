@@ -1,0 +1,69 @@
+# Large Module Boundary
+
+## Problem
+
+Several modules have grown into broad containers for unrelated responsibilities.
+Large files are not automatically wrong, but these files are now hiding domain
+boundaries and making it harder to see which code is still needed.
+
+Current size markers:
+
+- `src/alpha_os/cli/internal.py`: 2236 lines
+- `src/alpha_os/strategy_backtest_evaluation.py`: 1942 lines
+- `src/alpha_os/portfolio_sizing_policy.py`: 1822 lines
+- `src/alpha_os/store.py`: 1737 lines
+- `src/alpha_os/decision_backtest.py`: 1379 lines
+
+Large test files also indicate mixed workflows:
+
+- `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 1950 lines
+- `tests/test_alpha_os_portfolio_decision.py`: 1565 lines
+- `tests/test_alpha_os_decision_backtest.py`: 1388 lines
+
+## Risk
+
+These modules make dead paths look alive and encourage new behavior to be added
+to the nearest large file instead of the right boundary.
+
+The main risk is preserving old abstractions by splitting files mechanically.
+Do not treat this as a formatting or folder-organization task. First remove
+unused behavior and stale concepts, then split only when the remaining
+responsibilities are clear.
+
+## Boundary
+
+Prefer deletion before extraction.
+
+When a large module is touched, identify whether its responsibilities are:
+
+- active domain behavior
+- adapter or persistence code
+- evaluation/reporting code
+- diagnostics or debugging support
+- legacy compatibility
+
+Only extract code after those categories are clear. If a responsibility is no
+longer needed, remove it instead of moving it.
+
+## Suggested Order
+
+Start with `strategy_backtest_evaluation.py` because it is already being
+cleaned up and still contains remnants of the old signal-discovery evaluation
+path.
+
+Next candidates:
+
+- `cli/internal.py`, because CLI orchestration tends to accumulate unrelated
+  workflows.
+- `portfolio_sizing_policy.py`, because the `policy` name may be hiding
+  allocator, optimizer, and fallback responsibilities.
+- `store.py`, because persistence schema, row mapping, and repository methods
+  may need different boundaries.
+- `decision_backtest.py`, but only after the strategy/world/execution boundary
+  is clearer.
+
+## Close Condition
+
+Close this when the largest modules have either been reduced to coherent
+responsibilities or have follow-up issues for the specific boundaries that need
+separate work.
