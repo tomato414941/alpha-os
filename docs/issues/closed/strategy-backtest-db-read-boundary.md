@@ -34,7 +34,7 @@ Current path:
 
 ```text
 strategy_id / subject_set_id
-  -> EvaluationStore
+  -> EvaluationStore (removed)
   -> TradingStrategySpec / SubjectSet
   -> strategy backtest
 ```

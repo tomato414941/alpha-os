@@ -9,7 +9,6 @@ boundaries and making it harder to see which code is still needed.
 Current size markers:
 
 - `src/alpha_os/portfolio_sizing_policy.py`: 1822 lines
-- `src/alpha_os/store.py`: 1737 lines
 - `src/alpha_os/strategy_backtest_evaluation.py`: 1626 lines
 - `src/alpha_os/decision_backtest.py`: 1379 lines
 
@@ -50,8 +49,6 @@ Start with these candidates:
 
 - `portfolio_sizing_policy.py`, because the `policy` name may be hiding
   allocator, optimizer, and fallback responsibilities.
-- `store.py`, because persistence schema, row mapping, and repository methods
-  may need different boundaries.
 - `decision_backtest.py`, but only after the strategy/world/execution boundary
   is clearer.
 

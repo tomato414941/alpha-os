@@ -3,12 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .config import (
-    DEFAULT_HORIZON_DAYS,
-    DEFAULT_SUBJECT_ID,
-    DEFAULT_TARGET_DEFINITION,
-    default_runtime_asset,
-)
 from .observables import find_observable_definition
 from .portfolio_decision import ObservationSpec
 from .targets import (
@@ -16,6 +10,16 @@ from .targets import (
     get_target_definition,
     residual_return_target_definition,
 )
+
+
+DEFAULT_SUBJECT_ID = "BTC"
+DEFAULT_HORIZON_DAYS = 3
+DEFAULT_TARGET_DEFINITION = residual_return_target_definition(DEFAULT_HORIZON_DAYS)
+
+
+def default_runtime_asset(subject_id: str | None = None) -> str:
+    del subject_id
+    return DEFAULT_SUBJECT_ID
 
 
 @dataclass(frozen=True, init=False)
