@@ -7,7 +7,6 @@ def _build_trading_strategy(
     label: str,
     subject_set_id: str | None = None,
     target_id: str | None = None,
-    signal_discovery_id: str | None = None,
     position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
     selection_kind: str = "all_assets",
@@ -38,7 +37,6 @@ def _build_trading_strategy(
         label=label,
         subject_set_id=subject_set_id,
         target_id=target_id,
-        signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
         portfolio_construction=PortfolioConstructionSpec(
@@ -95,7 +93,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         label="Strategy Test",
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
-        signal_discovery_id="discovery:core",
         family_mix="relative_strength",
         sizing_method="equal_weight",
         rebalance="every_5_steps",
@@ -115,10 +112,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.strategy_id == "strategy:test"
     assert trading_strategy.subject_set_id == "core_crypto"
     assert trading_strategy.target_id == "residual_return_3d"
-    assert (
-        trading_strategy.signal_discovery_id
-        == "discovery:core"
-    )
     assert (
         trading_strategy.family_mix
         == "relative_strength"
@@ -165,7 +158,6 @@ def test_trading_strategy_top_k_round_trips_from_document():
             "label": "Test",
             "subject_set_id": "core_crypto",
             "target_id": "residual_return_3d",
-            "signal_discovery_id": None,
             "position_rule_id": "constant_hold",
             "family_mix": None,
             "portfolio_construction": {},
@@ -189,7 +181,6 @@ def test_trading_strategy_spec_round_trips_through_document():
         label="Strategy Test",
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
-        signal_discovery_id="discovery:core",
         family_mix="relative_strength",
         sizing_method="equal_weight",
         rebalance="every_5_steps",

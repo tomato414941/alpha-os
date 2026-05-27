@@ -47,6 +47,9 @@ belief provenance metadata.
 Unused evaluation-target grouping by `TradingStrategySpec.signal_discovery_id`
 was removed after the diagnostic evaluation CLI was deleted.
 
+`TradingStrategySpec` no longer carries `signal_discovery_id`; a persisted
+strategy record should not encode the discovery/search job that produced it.
+
 ## Desired Direction
 
 Evaluation task resolution no longer derives strategy variants from

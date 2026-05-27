@@ -50,7 +50,6 @@ def _strategy_document(
             "label": strategy_id.removeprefix("strategy:"),
             "subject_set_id": subject_set_id,
             "target_id": "residual_return_1d",
-            "signal_discovery_id": None,
             "position_rule_id": position_rule_id,
             "family_mix": None,
             "portfolio_construction": {

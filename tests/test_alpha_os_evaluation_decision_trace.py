@@ -175,7 +175,6 @@ def _register_direct_strategy(store) -> None:
             label="Test Strategy",
             subject_set_id="core_crypto",
             target_id="residual_return_3d",
-            signal_discovery_id=None,
             position_rule_id="constant_hold",
             family_mix=None,
             portfolio_construction=PortfolioConstructionSpec(
