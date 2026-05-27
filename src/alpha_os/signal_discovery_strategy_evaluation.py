@@ -8,7 +8,6 @@ from math import sqrt
 
 import pandas as pd
 
-from .compression import CompressedBelief
 from .decision_backtest import (
     DependenceBacktestSeries,
     DecisionBacktestInput,
@@ -148,54 +147,6 @@ class RangeBacktestEvaluationLoopResult:
     all_step_net_returns: tuple[float, ...]
 
 
-def _snapshot_backtest_artifacts(
-    snapshots: list[EvaluationSnapshot],
-) -> tuple[
-    dict[str, pd.Series],
-    dict[str, pd.Series],
-    dict[str, pd.Series],
-    dict[str, float],
-]:
-    funding_values: dict[str, dict[str, float]] = {}
-    borrow_values: dict[str, dict[str, float]] = {}
-    roll_values: dict[str, dict[str, float]] = {}
-    contract_multiplier_by_subject: dict[str, float] = {}
-    for snapshot in snapshots:
-        date = _snapshot_date(snapshot)
-        if snapshot.funding_cost_bps is not None:
-            funding_values.setdefault(snapshot.subject_id, {})[date] = float(
-                snapshot.funding_cost_bps
-            )
-        if snapshot.borrow_fee_bps is not None:
-            borrow_values.setdefault(snapshot.subject_id, {})[date] = float(
-                snapshot.borrow_fee_bps
-            )
-        if snapshot.roll_cost_bps is not None:
-            roll_values.setdefault(snapshot.subject_id, {})[date] = float(
-                snapshot.roll_cost_bps
-            )
-        if snapshot.contract_multiplier is not None:
-            contract_multiplier_by_subject.setdefault(
-                snapshot.subject_id,
-                float(snapshot.contract_multiplier),
-            )
-    return (
-        {
-            subject_id: pd.Series(values, dtype=float).sort_index()
-            for subject_id, values in funding_values.items()
-        },
-        {
-            subject_id: pd.Series(values, dtype=float).sort_index()
-            for subject_id, values in borrow_values.items()
-        },
-        {
-            subject_id: pd.Series(values, dtype=float).sort_index()
-            for subject_id, values in roll_values.items()
-        },
-        contract_multiplier_by_subject,
-    )
-
-
 def evaluate_range_backtest_dataset_builder(
     *,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
@@ -247,33 +198,6 @@ def evaluate_range_backtest_dataset_builder(
     )
 
 
-def build_prepared_range_backtest_dataset_for_range(
-    *,
-    date_range: EvaluationDateRange,
-    snapshots: list[EvaluationSnapshot],
-    all_bundles_by_subject: dict[str, dict[str, object]],
-    survivor_metrics: dict[str, object],
-    component_by_subject_id: dict[str, object],
-    metric_window: int,
-    funding_cost_bps_series_by_subject: dict[str, pd.Series],
-    borrow_fee_bps_series_by_subject: dict[str, pd.Series],
-    roll_cost_bps_series_by_subject: dict[str, pd.Series],
-    contract_multiplier_by_subject: dict[str, float],
-) -> RangeBacktestDataset | None:
-    return build_range_backtest_dataset(
-        date_range=date_range,
-        snapshots=snapshots,
-        all_bundles_by_subject=all_bundles_by_subject,
-        survivor_metrics=survivor_metrics,
-        component_by_subject_id=component_by_subject_id,
-        metric_window=metric_window,
-        funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
-        borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
-        roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
-        contract_multiplier_by_subject=contract_multiplier_by_subject,
-    )
-
-
 def build_direct_range_backtest_dataset_for_range(
     *,
     date_range: EvaluationDateRange,
@@ -296,108 +220,6 @@ def build_direct_range_backtest_dataset_for_range(
         signal_value=signal_value,
     )
 
-
-def build_signal_discovery_strategy_evaluation_metric_group_results(
-    *,
-    screening_result,
-    compressed_belief: CompressedBelief,
-    subject_set_id: str | None,
-    subject_set: SubjectSet | None = None,
-    funding_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    borrow_fee_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    roll_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    contract_multiplier_by_subject: dict[str, float] | None = None,
-    target_id: str,
-    snapshots: list[EvaluationSnapshot],
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
-    metric_window: int,
-    portfolio_construction: PortfolioConstructionSpec = PortfolioConstructionSpec(),
-    trading_environment: TradingEnvironment = TradingEnvironment(),
-    top_k: int | None = None,
-) -> StrategyEvaluationResult:
-    survivors = list(screening_result.survivors)
-    survivor_metrics = {item.signal_id: item for item in survivors}
-    component_by_subject_id = {
-        item.subject_id: item
-        for item in compressed_belief.components
-    }
-    (
-        snapshot_funding_cost_bps_series_by_subject,
-        snapshot_borrow_fee_bps_series_by_subject,
-        snapshot_roll_cost_bps_series_by_subject,
-        snapshot_contract_multiplier_by_subject,
-    ) = _snapshot_backtest_artifacts(snapshots)
-    resolved_funding_cost_bps_series_by_subject = {
-        **snapshot_funding_cost_bps_series_by_subject,
-        **(funding_cost_bps_series_by_subject or {}),
-    }
-    resolved_borrow_fee_bps_series_by_subject = {
-        **snapshot_borrow_fee_bps_series_by_subject,
-        **(borrow_fee_bps_series_by_subject or {}),
-    }
-    resolved_roll_cost_bps_series_by_subject = {
-        **snapshot_roll_cost_bps_series_by_subject,
-        **(roll_cost_bps_series_by_subject or {}),
-    }
-    resolved_contract_multiplier_by_subject = {
-        **snapshot_contract_multiplier_by_subject,
-        **(contract_multiplier_by_subject or {}),
-    }
-    all_bundles_by_subject = _bundles_by_subject(
-        snapshots,
-        survivor_metrics=survivor_metrics,
-    )
-    def build_dataset_for_range(
-        date_range: EvaluationDateRange,
-    ) -> RangeBacktestDataset | None:
-        return build_prepared_range_backtest_dataset_for_range(
-            date_range=date_range,
-            snapshots=snapshots,
-            all_bundles_by_subject=all_bundles_by_subject,
-            survivor_metrics=survivor_metrics,
-            component_by_subject_id=component_by_subject_id,
-            metric_window=metric_window,
-            funding_cost_bps_series_by_subject=resolved_funding_cost_bps_series_by_subject,
-            borrow_fee_bps_series_by_subject=resolved_borrow_fee_bps_series_by_subject,
-            roll_cost_bps_series_by_subject=resolved_roll_cost_bps_series_by_subject,
-            contract_multiplier_by_subject=resolved_contract_multiplier_by_subject,
-        )
-
-    loop_result = evaluate_range_backtest_dataset_builder(
-        evaluation_date_ranges=evaluation_date_ranges,
-        build_dataset_for_range=build_dataset_for_range,
-        subject_set_id=subject_set_id,
-        subject_set=subject_set,
-        target_id=target_id,
-        portfolio_construction=portfolio_construction,
-        trading_environment=trading_environment,
-        top_k=top_k,
-    )
-
-    (
-        metric_group_results_by_name,
-        failure_finding_groups,
-    ) = build_evaluation_metric_group_results_from_range_summaries(
-        source="native_plan",
-        range_summaries=list(loop_result.range_summaries),
-        all_step_net_returns=list(loop_result.all_step_net_returns),
-        portfolio_construction=portfolio_construction,
-        mean_survivor_corr=_mean(
-            [float(item.corr) for item in survivors if item.corr is not None]
-        ),
-        mean_survivor_stability_score=_mean(
-            [float(item.stability_score) for item in survivors]
-        ),
-        mean_component_confidence=_mean(
-            [float(item.confidence) for item in compressed_belief.components]
-        ),
-        include_signed_belief_failures=True,
-    )
-    return StrategyEvaluationResult(
-        metric_group_results_by_name=metric_group_results_by_name,
-        failure_finding_groups=failure_finding_groups,
-        selected_trace_results=loop_result.selected_trace_results,
-    )
 
 def build_direct_strategy_evaluation_metric_group_results(
     *,
