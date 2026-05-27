@@ -31,6 +31,10 @@ hide their internal structure unless a specific caller needs it.
 `alpha_os.trading_strategy.TradingStrategy` is the intended black-box strategy
 contract.
 
+`TradingStrategyInput` and `TradingStrategyOutput` are intentionally empty for
+now. They mark the contract boundary without making trading strategy depend on
+the pre-existing `PortfolioDecisionInput` / `PortfolioDecisionOutput` types.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

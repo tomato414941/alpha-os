@@ -218,32 +218,17 @@ def test_trading_strategy_spec_round_trips_through_document():
 
 
 def test_trading_strategy_contract_accepts_black_box_decision_component():
-    from alpha_os.portfolio_decision import (
-        PortfolioDecisionInput,
-        PortfolioDecisionOutput,
-        PortfolioTarget,
+    from alpha_os.trading_strategy import (
+        TradingStrategy,
+        TradingStrategyInput,
+        TradingStrategyOutput,
     )
-    from alpha_os.trading_strategy import TradingStrategy
 
     class FixedWeightStrategy:
-        def decide(self, decision_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
-            return PortfolioDecisionOutput(
-                portfolio_id=decision_input.portfolio_id,
-                as_of=decision_input.as_of,
-                targets=(
-                    PortfolioTarget(
-                        subject_id="BTC",
-                        target_weight=1.0,
-                        position_delta=1.0,
-                    ),
-                ),
-            )
+        def decide(self, strategy_input: TradingStrategyInput) -> TradingStrategyOutput:
+            return TradingStrategyOutput()
 
     strategy: TradingStrategy = FixedWeightStrategy()
-    decision = strategy.decide(
-        PortfolioDecisionInput(portfolio_id="portfolio:test", as_of="2026-04-08")
-    )
+    decision = strategy.decide(TradingStrategyInput())
 
-    assert decision.portfolio_id == "portfolio:test"
-    assert decision.targets[0].subject_id == "BTC"
-    assert decision.targets[0].target_weight == 1.0
+    assert isinstance(decision, TradingStrategyOutput)

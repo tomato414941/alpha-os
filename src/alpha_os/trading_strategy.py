@@ -8,7 +8,6 @@ from .evaluation_cost_config import TradingEnvironment
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
-from .portfolio_decision import PortfolioDecisionInput, PortfolioDecisionOutput
 
 
 def _normalize_optional(value: str | None) -> str | None:
@@ -111,10 +110,20 @@ def _rebalance_label(rebalance_interval_steps: int) -> str:
     return f"every_{int(rebalance_interval_steps)}_steps"
 
 
+@dataclass(frozen=True)
+class TradingStrategyInput:
+    pass
+
+
+@dataclass(frozen=True)
+class TradingStrategyOutput:
+    pass
+
+
 class TradingStrategy(Protocol):
     """Black-box policy contract for trading decision components."""
 
-    def decide(self, decision_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
+    def decide(self, strategy_input: TradingStrategyInput) -> TradingStrategyOutput:
         ...
 
 
