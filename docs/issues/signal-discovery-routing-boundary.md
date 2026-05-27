@@ -36,9 +36,8 @@ specification.
 
 ## Current Marker
 
-`portfolio_decision_service.py` no longer resolves subject set through
-compressed belief `signal_discovery_id`. Callers pass the resolved `SubjectSet`
-explicitly.
+The old `portfolio_decision_service.py` module was removed after the DB-backed
+portfolio-decision workflow became unused.
 
 `CompressedBelief` no longer carries `signal_discovery_id` as part of the
 belief artifact. The store still keeps `signal_discovery_id` as compressed
@@ -53,10 +52,10 @@ strategy record should not encode the discovery/search job that produced it.
 ## Desired Direction
 
 Evaluation task resolution no longer derives strategy variants from
-`signal_discovery_id`. Evaluation planning now prefers direct strategy
-evaluation when the strategy is directly executable. Portfolio decision input
-construction no longer uses compressed belief provenance to recover subject set.
-Compressed belief provenance remains in the store, outside the belief artifact.
+`signal_discovery_id`. Portfolio decision input construction no longer uses
+compressed belief provenance to recover subject set because the old DB-backed
+portfolio-decision workflow has been removed. Compressed belief provenance
+remains in the store, outside the belief artifact.
 
 ## Close Condition
 
