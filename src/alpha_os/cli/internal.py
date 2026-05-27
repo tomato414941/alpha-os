@@ -20,15 +20,10 @@ from ..evaluation_application import (
     run_evaluation_use_case,
     run_walk_forward_evaluation_use_case,
 )
-from ..evaluation_cost_config import TradingEnvironment
 from ..evaluation_spec import EvaluationSpec
 from ..portfolio_construction_config import (
     PortfolioConstructionSizingSpec,
     PortfolioConstructionSpec,
-)
-from ..strategy_variant import (
-    StrategyVariantConfig as _StrategyVariantConfig,
-    strategy_variant_config_from_strategy as _strategy_variant_config_from_strategy,
 )
 from ..observables import ObservableDefinition
 from ..config import (
@@ -589,42 +584,6 @@ def _portfolio_state_from_args(
         holding_period_days=portfolio_state.holding_period_days,
         recent_turnover=portfolio_state.recent_turnover,
         current_drawdown=portfolio_state.current_drawdown,
-    )
-
-
-def _evaluation_trading_config_for_signal_discovery(
-    store: EvaluationStore,
-    *,
-    signal_discovery_id: str | None,
-) -> _StrategyVariantConfig | None:
-    if signal_discovery_id is None:
-        return None
-    matching = [
-        state.trading_strategy
-        for state in store.list_trading_strategies(limit=1000)
-        if state.trading_strategy.signal_discovery_id == signal_discovery_id
-    ]
-    if not matching:
-        return None
-    if len(matching) == 1:
-        return _strategy_variant_config_from_strategy(matching[0])
-    exact = [item for item in matching if item.strategy_id.startswith("strategy:")]
-    if len(exact) == 1:
-        return _strategy_variant_config_from_strategy(exact[0])
-    return None
-
-
-def _evaluation_trading_config_for_compressed_belief(
-    store: EvaluationStore,
-    *,
-    compressed_belief_id: str,
-) -> _StrategyVariantConfig | None:
-    belief_state = store.get_compressed_belief(compressed_belief_id)
-    if belief_state is None:
-        return None
-    return _evaluation_trading_config_for_signal_discovery(
-        store,
-        signal_discovery_id=belief_state.belief.signal_discovery_id,
     )
 
 
@@ -2178,15 +2137,11 @@ def cmd_decide_portfolio(args: argparse.Namespace) -> int:
         )
         if decision_input is None:
             raise ValueError("portfolio decision could not be built from compressed belief")
-        belief_config = _evaluation_trading_config_for_compressed_belief(
-            store,
-            compressed_belief_id=str(args.compressed_belief_id),
-        )
         portfolio_construction = _portfolio_construction_for_decision_strategy(
             trading_strategy=trading_strategy,
             base=_portfolio_construction_for_decision_args(
                 args=args,
-                base=(None if belief_config is None else belief_config.portfolio_construction),
+                base=None,
             ),
         )
         sizing_spec = _resolved_decision_sizing_spec(
@@ -2263,46 +2218,6 @@ def _direction_mode_from_args(args: argparse.Namespace) -> str | None:
     if getattr(args, "long_only", False):
         return "long_only"
     return None
-
-
-def _evaluation_trading_config_from_args(
-    args: argparse.Namespace,
-) -> _StrategyVariantConfig:
-    return _StrategyVariantConfig(
-        portfolio_construction=PortfolioConstructionSpec(
-            sizing_policy=PortfolioConstructionSizingSpec(
-                sizing_method=str(args.sizing_method),
-                sizing_engine=(None if args.sizing_engine is None else str(args.sizing_engine)),
-            ),
-            rebalance_interval_steps=(
-                1 if args.rebalance_step is None else int(args.rebalance_step)
-            ),
-            long_only=bool(getattr(args, "long_only", False)),
-            direction_mode=_direction_mode_from_args(args),
-            gross_exposure_cap=(
-                None if args.gross_exposure_cap is None else float(args.gross_exposure_cap)
-            ),
-        ),
-        trading_environment=TradingEnvironment(
-            turnover_cost_rate=(
-                0.0 if args.turnover_cost_rate is None else float(args.turnover_cost_rate)
-            ),
-            market_impact_bps=(
-                0.0 if args.market_impact_bps is None else float(args.market_impact_bps)
-            ),
-            fee_bps=0.0 if args.fee_bps is None else float(args.fee_bps),
-            bid_ask_spread_bps=0.0
-            if args.bid_ask_spread_bps is None
-            else float(args.bid_ask_spread_bps),
-            funding_bps_per_step=(
-                0.0 if args.funding_bps_per_step is None else float(args.funding_bps_per_step)
-            ),
-            borrow_fee_bps_per_step=(
-                0.0 if args.borrow_fee_bps_per_step is None else float(args.borrow_fee_bps_per_step)
-            ),
-        ),
-        top_k=None if getattr(args, "top_k", None) is None else int(args.top_k),
-    )
 
 
 def cmd_show_portfolio_decisions(args: argparse.Namespace) -> int:

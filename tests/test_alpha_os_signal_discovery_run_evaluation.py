@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -114,31 +113,6 @@ def _build_trading_strategy(
         selection_kind="all_assets",
         top_k=top_k,
     )
-
-
-def test_evaluation_trading_config_from_args_accepts_direction_mode():
-    from alpha_os.cli import _evaluation_trading_config_from_args
-
-    config = _evaluation_trading_config_from_args(
-        Namespace(
-            sizing_method="signal_weighted",
-            sizing_engine=None,
-            rebalance_step=None,
-            long_only=False,
-            direction_mode="short_only",
-            top_k=None,
-            gross_exposure_cap=None,
-            turnover_cost_rate=None,
-            market_impact_bps=None,
-            fee_bps=None,
-            bid_ask_spread_bps=None,
-            funding_bps_per_step=None,
-            borrow_fee_bps_per_step=None,
-        )
-    )
-
-    assert config.portfolio_construction.direction_mode == "short_only"
-    assert config.portfolio_construction.long_only is False
 
 
 def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
