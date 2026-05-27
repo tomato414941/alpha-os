@@ -223,7 +223,7 @@ def test_trading_strategy_contract_accepts_black_box_decision_component():
         PortfolioDecisionOutput,
         PortfolioTarget,
     )
-    from alpha_os.trading_strategy_contract import TradingStrategy
+    from alpha_os.trading_strategy import TradingStrategy
 
     class FixedWeightStrategy:
         def decide(self, decision_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:

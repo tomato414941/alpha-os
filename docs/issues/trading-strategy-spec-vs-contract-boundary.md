@@ -28,8 +28,8 @@ hide their internal structure unless a specific caller needs it.
 
 ## Current Marker
 
-`alpha_os.trading_strategy_contract.TradingStrategy` is the intended black-box
-strategy contract.
+`alpha_os.trading_strategy.TradingStrategy` is the intended black-box strategy
+contract.
 
 ## Close Condition
 

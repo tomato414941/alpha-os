@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import Any, Protocol
 
 from .evaluation_cost_config import TradingEnvironment
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
+from .portfolio_decision import PortfolioDecisionInput, PortfolioDecisionOutput
 
 
 def _normalize_optional(value: str | None) -> str | None:
@@ -110,6 +111,16 @@ def _rebalance_label(rebalance_interval_steps: int) -> str:
     return f"every_{int(rebalance_interval_steps)}_steps"
 
 
+class TradingStrategy(Protocol):
+    """Black-box policy contract for trading decision components."""
+
+    def decide(self, decision_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
+        ...
+
+
+# Persisted strategy records are not the trading strategy contract above.
+# Keep this class narrow and avoid turning it into a base schema for all strategy
+# implementations.
 @dataclass(frozen=True)
 class TradingStrategySpec:
     strategy_id: str
