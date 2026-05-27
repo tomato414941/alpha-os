@@ -24,7 +24,7 @@ def test_minimal_fixed_state_oos_training_eval_runs_without_checkpoint_preparati
     assert (
         main(
             [
-                "run-walk-forward-evaluation",
+                "run-walk-forward",
                 "--evaluation-spec-id",
                 "minimal_fixed_state_train_eval",
                 "--db",

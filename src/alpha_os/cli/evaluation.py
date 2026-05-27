@@ -9,6 +9,5 @@ CommandHandler = Callable[[argparse.Namespace], int]
 
 COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "run-evaluation": _legacy.cmd_run_evaluation,
-    "run-walk-forward-evaluation": _legacy.cmd_run_walk_forward_evaluation,
     "run-walk-forward": _legacy.cmd_run_walk_forward_evaluation,
 }

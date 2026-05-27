@@ -62,15 +62,6 @@ COMMANDS: tuple[CliCommand, ...] = (
         ),
     ),
     CliCommand(
-        name="list-runtime-manifests",
-        handler=_legacy.cmd_list_runtime_manifests,
-        visibility="internal",
-        register_parser=lambda sub: _register_list_manifests(
-            sub,
-            "list-runtime-manifests",
-        ),
-    ),
-    CliCommand(
         name="list-manifests",
         handler=_legacy.cmd_list_runtime_manifests,
         visibility="public",
@@ -84,11 +75,6 @@ COMMANDS: tuple[CliCommand, ...] = (
 COMMAND_HANDLERS: dict[str, CommandHandler] = {
     command.name: command.handler for command in COMMANDS
 }
-COMMAND_HANDLERS.update(
-    {
-        "inspect-runtime-resources": _legacy.cmd_inspect_runtime_resources,
-    }
-)
 
 
 def register_runtime_parsers(sub: argparse._SubParsersAction) -> None:

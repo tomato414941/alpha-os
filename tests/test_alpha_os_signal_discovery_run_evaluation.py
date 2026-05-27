@@ -1095,7 +1095,7 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
         assert (
             main(
                 [
-                    "run-walk-forward-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
@@ -1306,7 +1306,7 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
         assert (
             main(
                 [
-                    "run-walk-forward-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
@@ -1516,7 +1516,7 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(t
         assert (
             main(
                 [
-                    "run-walk-forward-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
@@ -1666,7 +1666,7 @@ def test_run_walk_forward_evaluation_supports_checked_in_global_macro_manifest(t
         assert (
             main(
                 [
-                    "run-walk-forward-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",
@@ -1927,7 +1927,7 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
         assert (
             main(
                 [
-                    "run-walk-forward-evaluation",
+                    "run-walk-forward",
                     "--db",
                     str(db_path),
                     "--evaluation-spec-id",

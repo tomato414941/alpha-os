@@ -3,15 +3,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 
-from . import internal as _legacy
 
 CommandHandler = Callable[[argparse.Namespace], int]
 
-COMMAND_HANDLERS: dict[str, CommandHandler] = {
-    "debug-show-signal-candidate-specs": _legacy.cmd_show_signal_specs,
-    "debug-register-observable": _legacy.cmd_register_observable,
-    "debug-show-observables": _legacy.cmd_show_observables,
-    "debug-register-subject-set": _legacy.cmd_register_subject_set,
-    "debug-show-subject-sets": _legacy.cmd_show_subject_sets,
-    "check-subject-set-backend": _legacy.cmd_check_subject_set_backend,
-}
+COMMAND_HANDLERS: dict[str, CommandHandler] = {}

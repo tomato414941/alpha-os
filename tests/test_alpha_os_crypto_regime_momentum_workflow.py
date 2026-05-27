@@ -212,7 +212,7 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
     assert (
         main(
             [
-                "run-walk-forward-evaluation",
+                "run-walk-forward",
                 "--evaluation-spec-id",
                 "crypto_regime_momentum_eval",
                 "--db",
@@ -340,7 +340,7 @@ def test_crypto_regime_momentum_real_dataset_backtest_reproduces_direction(
     assert (
         main(
             [
-                "run-walk-forward-evaluation",
+                "run-walk-forward",
                 "--evaluation-spec-id",
                 "crypto_regime_momentum_real_data_eval",
                 "--db",

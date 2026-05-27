@@ -121,34 +121,16 @@ def test_cli_public_aliases_parse_to_existing_arguments():
     assert run_args.evaluation_spec_id == "minimal_oos_eval"
     assert run_args.db == "runtime.db"
 
-def test_cli_legacy_public_commands_remain_parseable():
-    parser = build_cli_parser()
-
-    list_args = parser.parse_args(["list-runtime-manifests"])
-    assert list_args.command == "list-runtime-manifests"
-
-    run_args = parser.parse_args(
-        [
-            "run-walk-forward-evaluation",
-            "--evaluation-spec-id",
-            "minimal_oos_eval",
-            "--db",
-            "runtime.db",
-        ]
-    )
-    assert run_args.command == "run-walk-forward-evaluation"
-    assert run_args.evaluation_spec_id == "minimal_oos_eval"
-
 def test_cli_entrypoint_preserves_value_error_exit_contract(monkeypatch):
     import alpha_os.cli as cli
 
     def fail(_args):
         raise ValueError("bad command input")
 
-    monkeypatch.setattr(cli, "build_command_handlers", lambda: {"list-runtime-manifests": fail})
+    monkeypatch.setattr(cli, "build_command_handlers", lambda: {"list-manifests": fail})
 
     with pytest.raises(SystemExit) as exc_info:
-        cli.main(["list-runtime-manifests"])
+        cli.main(["list-manifests"])
 
     assert exc_info.value.code == 2
 
