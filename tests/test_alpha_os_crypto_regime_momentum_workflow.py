@@ -48,10 +48,8 @@ def _strategy_document(
         "trading_strategy": {
             "strategy_id": strategy_id,
             "label": strategy_id.removeprefix("strategy:"),
-            "scope": {
-                "subject_set_id": subject_set_id,
-                "target_id": "residual_return_1d",
-            },
+            "subject_set_id": subject_set_id,
+            "target_id": "residual_return_1d",
             "signal_discovery_id": None,
             "position_rule_id": position_rule_id,
             "family_mix": None,

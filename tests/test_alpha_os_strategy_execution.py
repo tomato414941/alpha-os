@@ -29,7 +29,6 @@ def _build_trading_strategy(
     from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
         StrategyPortfolioSpec,
-        TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
     from alpha_os.portfolio_construction_config import (
@@ -40,10 +39,8 @@ def _build_trading_strategy(
     return TradingStrategySpec(
         strategy_id=strategy_id,
         label=label,
-        scope=TradingStrategyScopeSpec(
-            subject_set_id=subject_set_id,
-            target_id=target_id,
-        ),
+        subject_set_id=subject_set_id,
+        target_id=target_id,
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
@@ -121,8 +118,8 @@ def test_trading_strategy_exposes_policy_hierarchy():
     )
 
     assert trading_strategy.strategy_id == "strategy:test"
-    assert trading_strategy.scope.subject_set_id == "core_crypto"
-    assert trading_strategy.scope.target_id == "residual_return_3d"
+    assert trading_strategy.subject_set_id == "core_crypto"
+    assert trading_strategy.target_id == "residual_return_3d"
     assert (
         trading_strategy.signal_discovery_id
         == "discovery:core"

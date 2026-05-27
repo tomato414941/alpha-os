@@ -76,10 +76,6 @@
       "trading_strategy": {
         "strategy_id": "strategy:us_etf_broad_dual_momentum_direct_10y",
         "label": "us_etf_broad_dual_momentum_direct_10y",
-        "scope": {
-          "subject_set_id": "us_etf_broad_multi_asset",
-          "target_id": "residual_return_5d"
-        },
         "created_at": "2026-04-18T00:00:00+00:00",
         "signal_discovery_id": null,
         "position_rule_id": "dual_momentum_hold",
@@ -104,7 +100,9 @@
             "fee_bps": 0.0,
             "bid_ask_spread_bps": 0.0
           }
-        }
+        },
+        "subject_set_id": "us_etf_broad_multi_asset",
+        "target_id": "residual_return_5d"
       }
     }
   ],

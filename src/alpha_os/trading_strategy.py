@@ -96,31 +96,6 @@ def build_trading_strategy_id(
     return f"strategy:{digest}"
 
 
-@dataclass(frozen=True)
-class TradingStrategyScopeSpec:
-    subject_set_id: str | None
-    target_id: str | None
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "subject_set_id": self.subject_set_id,
-            "target_id": self.target_id,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "TradingStrategyScopeSpec":
-        return cls(
-            subject_set_id=_normalize_optional(
-                None
-                if document.get("subject_set_id") is None
-                else str(document["subject_set_id"])
-            ),
-            target_id=_normalize_optional(
-                None if document.get("target_id") is None else str(document["target_id"])
-            ),
-        )
-
-
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
     if raw_steps is None:
@@ -202,7 +177,8 @@ class StrategyPortfolioSpec:
 class TradingStrategySpec:
     strategy_id: str
     label: str
-    scope: TradingStrategyScopeSpec
+    subject_set_id: str | None
+    target_id: str | None
     signal_discovery_id: str | None
     position_rule_id: str
     family_mix: str | None
@@ -213,7 +189,8 @@ class TradingStrategySpec:
         document = {
             "strategy_id": self.strategy_id,
             "label": self.label,
-            "scope": self.scope.to_document(),
+            "subject_set_id": self.subject_set_id,
+            "target_id": self.target_id,
             "signal_discovery_id": self.signal_discovery_id,
             "position_rule_id": self.position_rule_id,
             "family_mix": self.family_mix,
@@ -231,7 +208,14 @@ class TradingStrategySpec:
         return cls(
             strategy_id=str(document["strategy_id"]),
             label=str(document["label"]),
-            scope=TradingStrategyScopeSpec.from_document(dict(document.get("scope", {}))),
+            subject_set_id=_normalize_optional(
+                None
+                if document.get("subject_set_id") is None
+                else str(document["subject_set_id"])
+            ),
+            target_id=_normalize_optional(
+                None if document.get("target_id") is None else str(document["target_id"])
+            ),
             signal_discovery_id=_normalize_optional(
                 None
                 if document.get("signal_discovery_id") is None
@@ -244,14 +228,6 @@ class TradingStrategySpec:
             portfolio=portfolio,
             created_at=str(document["created_at"]),
         )
-
-    @property
-    def subject_set_id(self) -> str | None:
-        return self.scope.subject_set_id
-
-    @property
-    def target_id(self) -> str | None:
-        return self.scope.target_id
 
     @property
     def selection_kind(self) -> str:

@@ -64,8 +64,8 @@ def test_minimal_oos_golden_path_runs_without_external_services(tmp_path, capsys
             "strategy:minimal_oos_candidate_equal_weight_hold"
         )
         assert candidate_strategy is not None
-        assert candidate_strategy.trading_strategy.scope.subject_set_id == "minimal_oos_pair"
-        assert candidate_strategy.trading_strategy.scope.target_id == "residual_return_1d"
+        assert candidate_strategy.trading_strategy.subject_set_id == "minimal_oos_pair"
+        assert candidate_strategy.trading_strategy.target_id == "residual_return_1d"
 
         run_result_state = store.get_latest_evaluation_run_result()
         assert run_result_state is not None

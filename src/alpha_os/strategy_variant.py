@@ -9,7 +9,6 @@ from .portfolio_construction_config import (
 )
 from .trading_strategy import (
     StrategyPortfolioSpec,
-    TradingStrategyScopeSpec,
     TradingStrategySpec,
     build_trading_strategy_id,
 )
@@ -162,10 +161,8 @@ def derive_trading_strategy_from_signal_discovery(
             f"{signal_discovery.signal_discovery_id}:{sizing_method}:"
             f"{rebalance_value}"
         ),
-        scope=TradingStrategyScopeSpec(
-            subject_set_id=definition.subject_set_id,
-            target_id=definition.target_id,
-        ),
+        subject_set_id=definition.subject_set_id,
+        target_id=definition.target_id,
         signal_discovery_id=signal_discovery.signal_discovery_id,
         position_rule_id="constant_hold",
         family_mix=family_mix_value,

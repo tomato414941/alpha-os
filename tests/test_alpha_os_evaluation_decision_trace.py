@@ -165,7 +165,6 @@ def _register_direct_strategy(store) -> None:
     from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
         StrategyPortfolioSpec,
-        TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
     from alpha_os.portfolio_construction_config import (
@@ -177,10 +176,8 @@ def _register_direct_strategy(store) -> None:
         trading_strategy=TradingStrategySpec(
             strategy_id="strategy:test",
             label="Test Strategy",
-            scope=TradingStrategyScopeSpec(
-                subject_set_id="core_crypto",
-                target_id="residual_return_3d",
-            ),
+            subject_set_id="core_crypto",
+            target_id="residual_return_3d",
             signal_discovery_id=None,
             position_rule_id="constant_hold",
             family_mix=None,

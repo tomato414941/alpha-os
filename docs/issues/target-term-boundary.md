@@ -45,7 +45,6 @@ volatility, target exposure, or target position.
 
 - `TradingStrategySpec.target_id`
 - `EvaluationRunRequest.default_target_id`
-- `TradingStrategyScopeSpec.target_id`
 - `TargetDefinition`
 - documentation that says `target` without a qualifier
 

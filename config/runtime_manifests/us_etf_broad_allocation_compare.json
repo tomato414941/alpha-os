@@ -186,10 +186,6 @@
       "trading_strategy": {
         "strategy_id": "strategy:729f4ce8b629",
         "label": "us_etf_broad_allocation_compare_search:equal_weight:every_5_steps",
-        "scope": {
-          "subject_set_id": "us_etf_broad_multi_asset",
-          "target_id": "residual_return_5d"
-        },
         "signal_discovery_id": "us_etf_broad_allocation_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
@@ -215,17 +211,15 @@
             "borrow_fee_bps_per_step": 0.0
           }
         },
-        "created_at": "2026-04-21T00:00:00Z"
+        "created_at": "2026-04-21T00:00:00Z",
+        "subject_set_id": "us_etf_broad_multi_asset",
+        "target_id": "residual_return_5d"
       }
     },
     {
       "trading_strategy": {
         "strategy_id": "strategy:f7da91c34dd2",
         "label": "us_etf_broad_allocation_compare_search:minimum_variance:every_5_steps",
-        "scope": {
-          "subject_set_id": "us_etf_broad_multi_asset",
-          "target_id": "residual_return_5d"
-        },
         "signal_discovery_id": "us_etf_broad_allocation_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
@@ -251,17 +245,15 @@
             "borrow_fee_bps_per_step": 0.0
           }
         },
-        "created_at": "2026-04-21T00:00:00Z"
+        "created_at": "2026-04-21T00:00:00Z",
+        "subject_set_id": "us_etf_broad_multi_asset",
+        "target_id": "residual_return_5d"
       }
     },
     {
       "trading_strategy": {
         "strategy_id": "strategy:c83c6fcc7469",
         "label": "us_etf_broad_allocation_compare_search:risk_budgeting:every_5_steps",
-        "scope": {
-          "subject_set_id": "us_etf_broad_multi_asset",
-          "target_id": "residual_return_5d"
-        },
         "signal_discovery_id": "us_etf_broad_allocation_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
@@ -287,17 +279,15 @@
             "borrow_fee_bps_per_step": 0.0
           }
         },
-        "created_at": "2026-04-21T00:00:00Z"
+        "created_at": "2026-04-21T00:00:00Z",
+        "subject_set_id": "us_etf_broad_multi_asset",
+        "target_id": "residual_return_5d"
       }
     },
     {
       "trading_strategy": {
         "strategy_id": "strategy:a9fcff51f5ce",
         "label": "us_etf_broad_allocation_compare_search:hierarchical_risk_parity:every_5_steps",
-        "scope": {
-          "subject_set_id": "us_etf_broad_multi_asset",
-          "target_id": "residual_return_5d"
-        },
         "signal_discovery_id": "us_etf_broad_allocation_compare_search",
         "position_rule_id": "constant_hold",
         "family_mix": "low_vol_trend__daily_close__realized_vol_20d,relative_strength__cross_sectional_return_rank_20d,trend__daily_close",
@@ -323,7 +313,9 @@
             "borrow_fee_bps_per_step": 0.0
           }
         },
-        "created_at": "2026-04-21T00:00:00Z"
+        "created_at": "2026-04-21T00:00:00Z",
+        "subject_set_id": "us_etf_broad_multi_asset",
+        "target_id": "residual_return_5d"
       }
     }
   ]

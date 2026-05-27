@@ -72,7 +72,6 @@ def _build_trading_strategy(
     from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import (
         StrategyPortfolioSpec,
-        TradingStrategyScopeSpec,
         TradingStrategySpec,
     )
     from alpha_os.portfolio_construction_config import (
@@ -83,10 +82,8 @@ def _build_trading_strategy(
     return TradingStrategySpec(
         strategy_id=strategy_id,
         label=label,
-        scope=TradingStrategyScopeSpec(
-            subject_set_id=subject_set_id,
-            target_id=target_id,
-        ),
+        subject_set_id=subject_set_id,
+        target_id=target_id,
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
@@ -517,10 +514,8 @@ def test_run_walk_forward_evaluates_signal_discovery_derived_direct_strategy(tmp
                         "trading_strategy": {
                             "strategy_id": "strategy:core_crypto_rule",
                             "label": "Core Crypto Rule",
-                            "scope": {
-                                "subject_set_id": "core_crypto",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
@@ -674,10 +669,8 @@ def test_apply_runtime_manifest_accepts_explicit_strategy_specs(tmp_path, capsys
                         "trading_strategy": {
                             "strategy_id": "strategy:core_crypto_rule",
                             "label": "Core Crypto Rule",
-                            "scope": {
-                                "subject_set_id": "core_crypto",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
@@ -826,10 +819,8 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
                         "trading_strategy": {
                             "strategy_id": "strategy:core_crypto_rule",
                             "label": "Core Crypto Rule",
-                            "scope": {
-                                "subject_set_id": "core_crypto",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": "spec:-",
@@ -903,7 +894,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
         assert len(strategy_specs) == 1
         trading_strategy = strategy_specs[0].trading_strategy
         assert trading_strategy.strategy_id == "strategy:core_crypto_rule"
-        assert trading_strategy.scope.subject_set_id == "core_crypto"
+        assert trading_strategy.subject_set_id == "core_crypto"
         assert trading_strategy.signal_discovery_id == "core_crypto_search"
         assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
             "signal_weighted"
@@ -926,10 +917,8 @@ def test_apply_runtime_manifest_accepts_search_free_evaluation_case(tmp_path, ca
                         "trading_strategy": {
                             "strategy_id": "strategy:buy_and_hold",
                             "label": "Buy And Hold",
-                            "scope": {
-                                "subject_set_id": "broad_9_etf",
-                                "target_id": None,
-                            },
+                            "subject_set_id": "broad_9_etf",
+                            "target_id": None,
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
@@ -1039,10 +1028,8 @@ def test_run_walk_forward_evaluation_executes_search_free_strategy(tmp_path, cap
                         "trading_strategy": {
                             "strategy_id": "strategy:buy_and_hold",
                             "label": "Buy And Hold",
-                            "scope": {
-                                "subject_set_id": "core_crypto",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
@@ -1243,10 +1230,8 @@ def test_run_walk_forward_evaluation_executes_search_free_top_k_strategy(tmp_pat
                         "trading_strategy": {
                             "strategy_id": "strategy:top_k_hold",
                             "label": "Top K Hold",
-                            "scope": {
-                                "subject_set_id": "core_crypto_top_k",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto_top_k",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": None,
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
@@ -1456,10 +1441,8 @@ def test_run_walk_forward_evaluation_executes_trainless_dual_momentum_strategy(t
                         "trading_strategy": {
                             "strategy_id": "strategy:dual_momentum_hold",
                             "label": "Dual Momentum Hold",
-                            "scope": {
-                                "subject_set_id": "core_crypto_dual_momentum",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto_dual_momentum",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": None,
                             "position_rule_id": "dual_momentum_hold",
                             "family_mix": "lookback=2",
@@ -1893,10 +1876,8 @@ def test_run_diagnostic_evaluation_applies_extended_manifest_and_prints_focus(tm
                         "trading_strategy": {
                             "strategy_id": "strategy:diagnostic_rule",
                             "label": "Diagnostic Rule",
-                            "scope": {
-                                "subject_set_id": "diagnostic_subjects",
-                                "target_id": "residual_return_1d",
-                            },
+                            "subject_set_id": "diagnostic_subjects",
+                            "target_id": "residual_return_1d",
                             "signal_discovery_id": "diagnostic_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
@@ -2335,10 +2316,8 @@ def test_run_walk_forward_evaluation_executes_signal_discovery_derived_direct_st
                         "trading_strategy": {
                             "strategy_id": "strategy:core_crypto_rule",
                             "label": "Core Crypto Rule",
-                            "scope": {
-                                "subject_set_id": "core_crypto",
-                                "target_id": "residual_return_3d",
-                            },
+                            "subject_set_id": "core_crypto",
+                            "target_id": "residual_return_3d",
                             "signal_discovery_id": "core_crypto_search",
                             "position_rule_id": "constant_hold",
                             "family_mix": None,
