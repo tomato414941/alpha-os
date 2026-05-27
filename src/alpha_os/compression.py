@@ -143,14 +143,12 @@ class CompressedBeliefComponent:
 @dataclass(frozen=True)
 class CompressedBelief:
     compressed_belief_id: str
-    signal_discovery_id: str
     screening_result_id: str
     components: tuple[CompressedBeliefComponent, ...]
     created_at: str
 
     def to_document(self) -> dict[str, Any]:
         return {
-            "signal_discovery_id": self.signal_discovery_id,
             "screening_result_id": self.screening_result_id,
             "components": [item.to_document() for item in self.components],
             "created_at": self.created_at,
@@ -165,7 +163,6 @@ class CompressedBelief:
     ) -> "CompressedBelief":
         return cls(
             compressed_belief_id=compressed_belief_id,
-            signal_discovery_id=str(document["signal_discovery_id"]),
             screening_result_id=str(document["screening_result_id"]),
             components=tuple(
                 CompressedBeliefComponent.from_document(item)
@@ -196,7 +193,6 @@ def compress_screening_result(
     )
     return CompressedBelief(
         compressed_belief_id=f"{screening_result_id}:compressed",
-        signal_discovery_id=synthesis.signal_discovery_id,
         screening_result_id=synthesis.screening_result_id,
         components=tuple(
             CompressedBeliefComponent(

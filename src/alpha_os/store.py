@@ -1413,6 +1413,7 @@ class EvaluationStore:
     def upsert_compressed_belief(
         self,
         *,
+        signal_discovery_id: str,
         belief: CompressedBelief,
     ) -> CompressedBeliefState:
         self.ensure_schema()
@@ -1430,7 +1431,7 @@ class EvaluationStore:
                 """,
                 (
                     belief.compressed_belief_id,
-                    belief.signal_discovery_id,
+                    signal_discovery_id,
                     json.dumps(belief.to_document(), sort_keys=True),
                     belief.created_at,
                 ),

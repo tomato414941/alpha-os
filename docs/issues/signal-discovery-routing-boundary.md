@@ -40,12 +40,17 @@ specification.
 compressed belief `signal_discovery_id`. Callers pass the resolved `SubjectSet`
 explicitly.
 
+`CompressedBelief` no longer carries `signal_discovery_id` as part of the
+belief artifact. The store still keeps `signal_discovery_id` as compressed
+belief provenance metadata.
+
 ## Desired Direction
 
 Evaluation task resolution no longer derives strategy variants from
 `signal_discovery_id`. Evaluation planning now prefers direct strategy
 evaluation when the strategy is directly executable. Portfolio decision input
 construction no longer uses compressed belief provenance to recover subject set.
+Compressed belief provenance remains in the store, outside the belief artifact.
 
 ## Close Condition
 

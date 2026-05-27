@@ -224,7 +224,6 @@ def test_build_signal_discovery_strategy_evaluation_metric_group_results_uses_ex
     )
     compressed_belief = CompressedBelief(
         compressed_belief_id="belief-1",
-        signal_discovery_id="discovery-a",
         screening_result_id="screen-1",
         components=(
             CompressedBeliefComponent(
@@ -358,7 +357,6 @@ def test_build_signal_discovery_strategy_evaluation_metric_group_results_uses_sn
     )
     compressed_belief = CompressedBelief(
         compressed_belief_id="belief-1",
-        signal_discovery_id="discovery-a",
         screening_result_id="screen-1",
         components=(
             CompressedBeliefComponent(
