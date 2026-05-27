@@ -66,7 +66,6 @@ def _strategy_document(
                 "borrow_fee_bps_per_step": 0.0,
             },
             "rebalance_interval_steps": 1,
-            "selection_kind": "all_assets",
             "created_at": "2026-05-01T00:00:00+00:00",
         }
     }

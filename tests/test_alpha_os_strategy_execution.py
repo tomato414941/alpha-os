@@ -9,7 +9,6 @@ def _build_trading_strategy(
     target_id: str | None = None,
     position_rule_id: str = "constant_hold",
     family_mix: str | None = None,
-    selection_kind: str = "all_assets",
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -82,7 +81,6 @@ def _build_trading_strategy(
             and rebalance.endswith("_steps")
             else 1
         ),
-        selection_kind=selection_kind,
         top_k=top_k,
     )
 
@@ -116,7 +114,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         trading_strategy.family_mix
         == "relative_strength"
     )
-    assert trading_strategy.selection_kind == "all_assets"
     assert trading_strategy.top_k == 5
     assert trading_strategy.portfolio_construction.sizing_method == "equal_weight"
     assert trading_strategy.rebalance_interval_steps == 5
@@ -135,17 +132,16 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.trading_environment.funding_bps_per_step == 1.5
     assert trading_strategy.trading_environment.borrow_fee_bps_per_step == 2.5
 
-def test_trading_strategy_top_k_is_serialized_with_selection_policy():
+def test_trading_strategy_top_k_is_serialized():
     trading_strategy = _build_trading_strategy(
         strategy_id="strategy:test",
         label="Test",
-        selection_kind="top_k",
         top_k=3,
     )
 
     document = trading_strategy.to_document()
 
-    assert document["selection_kind"] == "top_k"
+    assert "selection_kind" not in document
     assert document["top_k"] == 3
 
 
@@ -170,7 +166,6 @@ def test_trading_strategy_top_k_round_trips_from_document():
     )
 
     assert strategy.top_k == 4
-    assert strategy.selection_kind == "top_k"
 
 
 def test_trading_strategy_spec_round_trips_through_document():

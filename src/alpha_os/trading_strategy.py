@@ -139,7 +139,6 @@ class TradingStrategySpec:
     portfolio_construction: PortfolioConstructionSpec
     trading_environment: TradingEnvironment
     created_at: str
-    selection_kind: str = "all_assets"
     top_k: int | None = None
     rebalance_interval_steps: int = 1
 
@@ -182,8 +181,6 @@ class TradingStrategySpec:
             "rebalance_interval_steps": self.rebalance_interval_steps,
             "created_at": self.created_at,
         }
-        if self.selection_kind != "all_assets":
-            document["selection_kind"] = self.selection_kind
         if self.top_k is not None:
             document["top_k"] = self.top_k
         return document
@@ -214,7 +211,6 @@ class TradingStrategySpec:
             trading_environment=TradingEnvironment.from_document(
                 document.get("trading_environment")
             ),
-            selection_kind=str(document.get("selection_kind", "all_assets")),
             top_k=None if top_k is None else int(top_k),
             rebalance_interval_steps=int(rebalance_interval_steps),
             created_at=str(document["created_at"]),

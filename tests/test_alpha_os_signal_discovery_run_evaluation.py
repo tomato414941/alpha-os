@@ -25,7 +25,6 @@ def _strategy_portfolio_document(
     sizing_method: str,
     direction_mode: str | None,
     gross_exposure_cap: float | None,
-    selection_kind: str = "all_assets",
     top_k: int | None = None,
     rebalance_interval_steps: int = 1,
     trading_environment: dict[str, object] | None = None,
@@ -38,7 +37,6 @@ def _strategy_portfolio_document(
         },
         "trading_environment": ({} if trading_environment is None else trading_environment),
         "rebalance_interval_steps": rebalance_interval_steps,
-        "selection_kind": selection_kind,
     }
     if top_k is not None:
         document["top_k"] = top_k
@@ -105,7 +103,6 @@ def _build_trading_strategy(
             and rebalance.endswith("_steps")
             else 1
         ),
-        selection_kind="all_assets",
         top_k=top_k,
     )
 
@@ -310,7 +307,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         trading_environment=TradingEnvironment(),
         position_rule_id=strategy.position_rule_id,
         family_mix=strategy.family_mix,
-        selection_kind=strategy.selection_kind,
         top_k=strategy.top_k,
     )
 

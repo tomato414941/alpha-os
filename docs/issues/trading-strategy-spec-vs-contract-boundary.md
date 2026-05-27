@@ -10,7 +10,7 @@ consumes observations and optional internal state, then produces trading actions
 and optional next strategy state.
 
 Keeping shared fields such as `position_rule_id`, `family_mix`,
-`portfolio_construction`, `selection_kind`, and `rebalance_interval_steps` on a
+`portfolio_construction`, and `rebalance_interval_steps` on a
 single spec can accidentally require every strategy implementation to share the
 same internal shape.
 
@@ -53,6 +53,9 @@ runner path.
 `strategy_variant.py` was removed after its remaining helper became unused.
 This removes the old path that treated signal discovery or compressed belief
 provenance as a source for strategy configuration.
+
+`TradingStrategySpec.selection_kind` was removed. Top-k selection now uses the
+presence of `top_k`; a separate selection mode was redundant.
 
 ## Close Condition
 

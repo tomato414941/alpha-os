@@ -112,7 +112,6 @@ def run_strategy_backtest(
     trading_environment: TradingEnvironment,
     position_rule_id: str,
     family_mix: str | None,
-    selection_kind: str,
     top_k: int | None,
 ):
     if position_rule_id not in {
@@ -125,12 +124,6 @@ def run_strategy_backtest(
             "position_rule=constant_hold, position_rule=dual_momentum_hold, or "
             "position_rule=crypto_regime_momentum_hold"
         )
-    if selection_kind not in {"all_assets", "top_k"}:
-        raise ValueError(
-            "current strategy backtest only supports selection=all_assets or selection=top_k"
-        )
-    if selection_kind == "top_k" and top_k is None:
-        raise ValueError("top_k strategy backtest requires top_k")
     validate_subject_set_universe_contract(subject_set)
     (
         subject_return_series_by_subject,
