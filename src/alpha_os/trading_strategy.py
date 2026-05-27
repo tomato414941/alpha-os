@@ -99,7 +99,7 @@ def build_trading_strategy_id(
 def _rebalance_interval_steps_from_document(document: dict[str, Any]) -> int:
     raw_steps = document.get("rebalance_interval_steps")
     if raw_steps is None:
-        raise ValueError("strategy portfolio rebalance_interval_steps is required")
+        raise ValueError("trading strategy rebalance_interval_steps is required")
     steps = int(raw_steps)
     if steps < 1:
         raise ValueError("rebalance_interval_steps must be >= 1")
@@ -111,9 +111,17 @@ def _rebalance_label(rebalance_interval_steps: int) -> str:
 
 
 @dataclass(frozen=True)
-class StrategyPortfolioSpec:
+class TradingStrategySpec:
+    strategy_id: str
+    label: str
+    subject_set_id: str | None
+    target_id: str | None
+    signal_discovery_id: str | None
+    position_rule_id: str
+    family_mix: str | None
     portfolio_construction: PortfolioConstructionSpec
     trading_environment: TradingEnvironment
+    created_at: str
     selection_kind: str = "all_assets"
     top_k: int | None = None
     rebalance_interval_steps: int = 1
@@ -124,13 +132,13 @@ class StrategyPortfolioSpec:
         if top_k is None and construction_top_k is not None:
             top_k = int(construction_top_k)
         if top_k is not None and (not isinstance(top_k, int) or top_k < 1):
-            raise ValueError("strategy portfolio top_k must be >= 1")
+            raise ValueError("trading strategy top_k must be >= 1")
         object.__setattr__(self, "top_k", top_k)
         if (
             not isinstance(self.rebalance_interval_steps, int)
             or self.rebalance_interval_steps < 1
         ):
-            raise ValueError("strategy portfolio rebalance_interval_steps must be >= 1")
+            raise ValueError("trading strategy rebalance_interval_steps must be >= 1")
         if (
             self.portfolio_construction.rebalance_interval_steps
             != self.rebalance_interval_steps
@@ -146,9 +154,17 @@ class StrategyPortfolioSpec:
 
     def to_document(self) -> dict[str, Any]:
         document = {
+            "strategy_id": self.strategy_id,
+            "label": self.label,
+            "subject_set_id": self.subject_set_id,
+            "target_id": self.target_id,
+            "signal_discovery_id": self.signal_discovery_id,
+            "position_rule_id": self.position_rule_id,
+            "family_mix": self.family_mix,
             "portfolio_construction": self.portfolio_construction.to_document(),
             "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
+            "created_at": self.created_at,
         }
         if self.selection_kind != "all_assets":
             document["selection_kind"] = self.selection_kind
@@ -157,54 +173,12 @@ class StrategyPortfolioSpec:
         return document
 
     @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "StrategyPortfolioSpec":
+    def from_document(cls, document: dict[str, Any]) -> "TradingStrategySpec":
         top_k = document.get("top_k")
         portfolio_construction = PortfolioConstructionSpec.from_document(
             document.get("portfolio_construction")
         )
         rebalance_interval_steps = _rebalance_interval_steps_from_document(document)
-        return cls(
-            portfolio_construction=portfolio_construction,
-            trading_environment=TradingEnvironment.from_document(
-                document.get("trading_environment")
-            ),
-            selection_kind=str(document.get("selection_kind", "all_assets")),
-            top_k=None if top_k is None else int(top_k),
-            rebalance_interval_steps=int(rebalance_interval_steps),
-        )
-
-@dataclass(frozen=True)
-class TradingStrategySpec:
-    strategy_id: str
-    label: str
-    subject_set_id: str | None
-    target_id: str | None
-    signal_discovery_id: str | None
-    position_rule_id: str
-    family_mix: str | None
-    portfolio: StrategyPortfolioSpec
-    created_at: str
-
-    def to_document(self) -> dict[str, Any]:
-        document = {
-            "strategy_id": self.strategy_id,
-            "label": self.label,
-            "subject_set_id": self.subject_set_id,
-            "target_id": self.target_id,
-            "signal_discovery_id": self.signal_discovery_id,
-            "position_rule_id": self.position_rule_id,
-            "family_mix": self.family_mix,
-            "portfolio": self.portfolio.to_document(),
-            "created_at": self.created_at,
-        }
-        return document
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "TradingStrategySpec":
-        portfolio_document = document.get("portfolio")
-        if not isinstance(portfolio_document, dict):
-            raise ValueError("trading strategy portfolio is required")
-        portfolio = StrategyPortfolioSpec.from_document(dict(portfolio_document))
         return cls(
             strategy_id=str(document["strategy_id"]),
             label=str(document["label"]),
@@ -225,18 +199,12 @@ class TradingStrategySpec:
             family_mix=_normalize_optional(
                 None if document.get("family_mix") is None else str(document["family_mix"])
             ),
-            portfolio=portfolio,
+            portfolio_construction=portfolio_construction,
+            trading_environment=TradingEnvironment.from_document(
+                document.get("trading_environment")
+            ),
+            selection_kind=str(document.get("selection_kind", "all_assets")),
+            top_k=None if top_k is None else int(top_k),
+            rebalance_interval_steps=int(rebalance_interval_steps),
             created_at=str(document["created_at"]),
         )
-
-    @property
-    def selection_kind(self) -> str:
-        return self.portfolio.selection_kind
-
-    @property
-    def trading_environment(self) -> TradingEnvironment:
-        return self.portfolio.trading_environment
-
-    @property
-    def portfolio_construction(self) -> PortfolioConstructionSpec:
-        return self.portfolio.portfolio_construction

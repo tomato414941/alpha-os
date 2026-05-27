@@ -30,13 +30,13 @@ class EvaluationExecutionContext:
 def _portfolio_construction_for_strategy(
     trading_strategy: TradingStrategySpec,
 ) -> PortfolioConstructionSpec:
-    return trading_strategy.portfolio.portfolio_construction
+    return trading_strategy.portfolio_construction
 
 
 def _trading_environment_for_strategy(
     trading_strategy: TradingStrategySpec,
 ) -> TradingEnvironment:
-    return trading_strategy.portfolio.trading_environment
+    return trading_strategy.trading_environment
 
 
 def _trading_strategy_for_id(

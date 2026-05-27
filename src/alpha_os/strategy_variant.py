@@ -8,7 +8,6 @@ from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
 from .trading_strategy import (
-    StrategyPortfolioSpec,
     TradingStrategySpec,
     build_trading_strategy_id,
 )
@@ -32,12 +31,10 @@ class StrategyVariantConfig:
 def strategy_variant_config_from_strategy(
     trading_strategy: TradingStrategySpec,
 ) -> StrategyVariantConfig:
-    portfolio = trading_strategy.portfolio
-    construction = portfolio.portfolio_construction
     return StrategyVariantConfig(
-        portfolio_construction=construction,
-        trading_environment=portfolio.trading_environment,
-        top_k=portfolio.top_k,
+        portfolio_construction=trading_strategy.portfolio_construction,
+        trading_environment=trading_strategy.trading_environment,
+        top_k=trading_strategy.top_k,
     )
 
 
@@ -166,12 +163,10 @@ def derive_trading_strategy_from_signal_discovery(
         signal_discovery_id=signal_discovery.signal_discovery_id,
         position_rule_id="constant_hold",
         family_mix=family_mix_value,
-        portfolio=StrategyPortfolioSpec(
-            portfolio_construction=portfolio_construction,
-            trading_environment=trading_environment,
-            selection_kind="all_assets" if top_k_value is None else "top_k",
-            top_k=top_k_value,
-            rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
-        ),
+        portfolio_construction=portfolio_construction,
+        trading_environment=trading_environment,
         created_at=created_at,
+        selection_kind="all_assets" if top_k_value is None else "top_k",
+        top_k=top_k_value,
+        rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
     )

@@ -53,26 +53,24 @@ def _strategy_document(
             "signal_discovery_id": None,
             "position_rule_id": position_rule_id,
             "family_mix": None,
-            "portfolio": {
-                "portfolio_construction": {
-                    "sizing_policy": {
-                        "sizing_method": "equal_weight",
-                    },
-                    "direction_mode": "long_only",
-                    "gross_exposure_cap": 1.0,
-                    "gross_leverage_cap": 1.0,
-                    "net_exposure_target": 1.0,
+            "portfolio_construction": {
+                "sizing_policy": {
+                    "sizing_method": "equal_weight",
                 },
-                "trading_environment": {
-                    "market_impact_bps": 0.0,
-                    "fee_bps": 5.0,
-                    "bid_ask_spread_bps": 0.0,
-                    "funding_bps_per_step": 0.0,
-                    "borrow_fee_bps_per_step": 0.0,
-                },
-                "rebalance_interval_steps": 1,
-                "selection_kind": "all_assets",
+                "direction_mode": "long_only",
+                "gross_exposure_cap": 1.0,
+                "gross_leverage_cap": 1.0,
+                "net_exposure_target": 1.0,
             },
+            "trading_environment": {
+                "market_impact_bps": 0.0,
+                "fee_bps": 5.0,
+                "bid_ask_spread_bps": 0.0,
+                "funding_bps_per_step": 0.0,
+                "borrow_fee_bps_per_step": 0.0,
+            },
+            "rebalance_interval_steps": 1,
+            "selection_kind": "all_assets",
             "created_at": "2026-05-01T00:00:00+00:00",
         }
     }
@@ -258,18 +256,18 @@ def test_crypto_regime_momentum_strategy_backtest_workflow(tmp_path, capsys):
             == "all_assets"
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.trading_environment.fee_bps
-            == baseline_strategy.trading_strategy.portfolio.trading_environment.fee_bps
+            candidate_strategy.trading_strategy.trading_environment.fee_bps
+            == baseline_strategy.trading_strategy.trading_environment.fee_bps
             == 5.0
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.trading_environment.funding_bps_per_step
-            == baseline_strategy.trading_strategy.portfolio.trading_environment.funding_bps_per_step
+            candidate_strategy.trading_strategy.trading_environment.funding_bps_per_step
+            == baseline_strategy.trading_strategy.trading_environment.funding_bps_per_step
             == 0.0
         )
         assert (
-            candidate_strategy.trading_strategy.portfolio.trading_environment.borrow_fee_bps_per_step
-            == baseline_strategy.trading_strategy.portfolio.trading_environment.borrow_fee_bps_per_step
+            candidate_strategy.trading_strategy.trading_environment.borrow_fee_bps_per_step
+            == baseline_strategy.trading_strategy.trading_environment.borrow_fee_bps_per_step
             == 0.0
         )
 

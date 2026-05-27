@@ -163,10 +163,7 @@ def _register_subject_set(store) -> None:
 
 def _register_direct_strategy(store) -> None:
     from alpha_os.evaluation_cost_config import TradingEnvironment
-    from alpha_os.trading_strategy import (
-        StrategyPortfolioSpec,
-        TradingStrategySpec,
-    )
+    from alpha_os.trading_strategy import TradingStrategySpec
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
         PortfolioConstructionSpec,
@@ -181,18 +178,14 @@ def _register_direct_strategy(store) -> None:
             signal_discovery_id=None,
             position_rule_id="constant_hold",
             family_mix=None,
-            portfolio=StrategyPortfolioSpec(
-                portfolio_construction=PortfolioConstructionSpec(
-                    sizing_policy=PortfolioConstructionSizingSpec(
-                        sizing_method="equal_weight",
-                    ),
-                    direction_mode="long_only",
-                    gross_exposure_cap=1.0,
+            portfolio_construction=PortfolioConstructionSpec(
+                sizing_policy=PortfolioConstructionSizingSpec(
+                    sizing_method="equal_weight",
                 ),
-                trading_environment=TradingEnvironment(),
-                selection_kind="all_assets",
-                top_k=None,
+                direction_mode="long_only",
+                gross_exposure_cap=1.0,
             ),
+            trading_environment=TradingEnvironment(),
             created_at="2026-04-20T00:00:00Z",
         )
     )

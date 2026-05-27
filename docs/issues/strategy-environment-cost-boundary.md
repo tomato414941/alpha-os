@@ -2,17 +2,16 @@
 
 ## Problem
 
-`TradingStrategySpec.portfolio` used to carry separate execution and holding
-cost fields.
+`TradingStrategySpec` carries `TradingEnvironment`.
 
 Those names make the fields look strategy-owned, but their current main use is
 to feed evaluation cost assumptions:
 
 ```text
-TradingStrategySpec.portfolio.trading_environment
+TradingStrategySpec.trading_environment
   -> backtest net-return / cost-drag calculation
 
-TradingStrategySpec.portfolio.trading_environment
+TradingStrategySpec.trading_environment
   -> backtest funding / borrow cost calculation
 ```
 

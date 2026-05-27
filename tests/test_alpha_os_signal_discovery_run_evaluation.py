@@ -34,7 +34,7 @@ def _strategy_portfolio_document(
     rebalance_interval_steps: int = 1,
     trading_environment: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    portfolio: dict[str, object] = {
+    document: dict[str, object] = {
         "portfolio_construction": {
             "sizing_policy": {"sizing_method": sizing_method},
             "direction_mode": direction_mode,
@@ -45,8 +45,8 @@ def _strategy_portfolio_document(
         "selection_kind": selection_kind,
     }
     if top_k is not None:
-        portfolio["top_k"] = top_k
-    return {"portfolio": portfolio}
+        document["top_k"] = top_k
+    return document
 
 
 def _build_trading_strategy(
@@ -70,10 +70,7 @@ def _build_trading_strategy(
     created_at: str = "2026-04-05T00:00:00Z",
 ):
     from alpha_os.evaluation_cost_config import TradingEnvironment
-    from alpha_os.trading_strategy import (
-        StrategyPortfolioSpec,
-        TradingStrategySpec,
-    )
+    from alpha_os.trading_strategy import TradingStrategySpec
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
         PortfolioConstructionSpec,
@@ -87,37 +84,35 @@ def _build_trading_strategy(
         signal_discovery_id=signal_discovery_id,
         position_rule_id=position_rule_id,
         family_mix=family_mix,
-        portfolio=StrategyPortfolioSpec(
-            portfolio_construction=PortfolioConstructionSpec(
-                sizing_policy=PortfolioConstructionSizingSpec(
-                    sizing_method=sizing_method or "equal_weight",
-                ),
-                direction_mode=(
-                    "long_only"
-                    if long_only is True
-                    else "long_short"
-                    if long_only is False
-                    else None
-                ),
-                gross_exposure_cap=gross_exposure_cap,
+        portfolio_construction=PortfolioConstructionSpec(
+            sizing_policy=PortfolioConstructionSizingSpec(
+                sizing_method=sizing_method or "equal_weight",
             ),
-            trading_environment=TradingEnvironment(
-                turnover_cost_rate=(0.0 if turnover_cost_rate is None else turnover_cost_rate),
-                market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
-                fee_bps=0.0 if fee_bps is None else fee_bps,
-                bid_ask_spread_bps=(0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps),
+            direction_mode=(
+                "long_only"
+                if long_only is True
+                else "long_short"
+                if long_only is False
+                else None
             ),
-            rebalance_interval_steps=(
-                int(rebalance[len("every_") : -len("_steps")])
-                if isinstance(rebalance, str)
-                and rebalance.startswith("every_")
-                and rebalance.endswith("_steps")
-                else 1
-            ),
-            selection_kind="all_assets",
-            top_k=top_k,
+            gross_exposure_cap=gross_exposure_cap,
+        ),
+        trading_environment=TradingEnvironment(
+            turnover_cost_rate=(0.0 if turnover_cost_rate is None else turnover_cost_rate),
+            market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
+            fee_bps=0.0 if fee_bps is None else fee_bps,
+            bid_ask_spread_bps=(0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps),
         ),
         created_at=created_at,
+        rebalance_interval_steps=(
+            int(rebalance[len("every_") : -len("_steps")])
+            if isinstance(rebalance, str)
+            and rebalance.startswith("every_")
+            and rebalance.endswith("_steps")
+            else 1
+        ),
+        selection_kind="all_assets",
+        top_k=top_k,
     )
 
 
@@ -896,7 +891,7 @@ def test_apply_runtime_manifest_accepts_trading_strategy_specs(tmp_path, capsys)
         assert trading_strategy.strategy_id == "strategy:core_crypto_rule"
         assert trading_strategy.subject_set_id == "core_crypto"
         assert trading_strategy.signal_discovery_id == "core_crypto_search"
-        assert trading_strategy.portfolio.portfolio_construction.sizing_method == (
+        assert trading_strategy.portfolio_construction.sizing_method == (
             "signal_weighted"
         )
     finally:

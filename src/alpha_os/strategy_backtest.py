@@ -143,7 +143,7 @@ def run_strategy_backtest(
     feature_plane_repository: FeaturePlaneRepository | None,
 ):
     selection_kind = trading_strategy.selection_kind
-    selection_top_k = trading_strategy.portfolio.top_k
+    selection_top_k = trading_strategy.top_k
     position_rule_id = trading_strategy.position_rule_id
     if position_rule_id not in {
         "constant_hold",

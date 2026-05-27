@@ -496,7 +496,7 @@ def _portfolio_decision_assumptions_from_args(
             )
         )
     trading_environment = (
-        None if trading_strategy is None else trading_strategy.portfolio.trading_environment
+        None if trading_strategy is None else trading_strategy.trading_environment
     )
     cost_inputs: list[CostInput] = []
     turnover_cost_rate = (
@@ -742,7 +742,7 @@ def _resolved_decision_sizing_spec(
     strategy_sizing_method = (
         None
         if trading_strategy is None
-        else trading_strategy.portfolio.portfolio_construction.sizing_method
+        else trading_strategy.portfolio_construction.sizing_method
     )
     if strategy_sizing_method is not None:
         return PortfolioConstructionSizingSpec(
@@ -822,12 +822,12 @@ def _portfolio_construction_for_decision_strategy(
 ) -> PortfolioConstructionSpec | None:
     if trading_strategy is None:
         return base
-    construction = trading_strategy.portfolio.portfolio_construction
+    construction = trading_strategy.portfolio_construction
     base_construction = PortfolioConstructionSpec() if base is None else base
     return PortfolioConstructionSpec(
         construction_kind=base_construction.construction_kind,
         sizing_policy=base_construction.sizing_policy,
-        rebalance_interval_steps=trading_strategy.portfolio.rebalance_interval_steps,
+        rebalance_interval_steps=trading_strategy.rebalance_interval_steps,
         long_only=construction.long_only,
         direction_mode=construction.direction_mode,
         active_weight_budget=base_construction.active_weight_budget,
@@ -2476,15 +2476,14 @@ def _format_runtime_strategy_summary(
     sizing_method: str,
     sizing_engine: str,
 ) -> str:
-    portfolio = trading_strategy.portfolio
-    construction = portfolio.portfolio_construction
+    construction = trading_strategy.portfolio_construction
     return (
         f"{trading_strategy.strategy_id} "
-        f"selection={portfolio.selection_kind} "
+        f"selection={trading_strategy.selection_kind} "
         f"sizing={sizing_method} "
         f"engine={sizing_engine} "
-        f"rebalance=every_{portfolio.rebalance_interval_steps}_steps "
-        f"top_k={'-' if portfolio.top_k is None else portfolio.top_k} "
+        f"rebalance=every_{trading_strategy.rebalance_interval_steps}_steps "
+        f"top_k={'-' if trading_strategy.top_k is None else trading_strategy.top_k} "
         f"long_only={str(construction.long_only).lower()} "
         "gross_exposure_cap="
         f"{'-' if construction.gross_exposure_cap is None else construction.gross_exposure_cap}"
@@ -2519,7 +2518,7 @@ def _run_portfolio_decision_from_input(
         portfolio_state=portfolio_state,
         subject_set=subject_set,
         portfolio_construction=portfolio_construction,
-        top_k=None if trading_strategy is None else trading_strategy.portfolio.top_k,
+        top_k=None if trading_strategy is None else trading_strategy.top_k,
         risk_by_subject={
             item.subject_id: max(float(item.value), 0.0)
             for item in decision_input.risk_inputs

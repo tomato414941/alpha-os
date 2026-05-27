@@ -80,29 +80,27 @@
         "signal_discovery_id": null,
         "position_rule_id": "dual_momentum_hold",
         "family_mix": "lookback=252",
-        "portfolio": {
-          "portfolio_construction": {
-            "sizing_policy": {
-              "sizing_method": "signal_weighted"
-            },
-            "direction_mode": "long_only",
-            "gross_exposure_cap": 1.0,
-            "target_vol": 0.1,
-            "gross_leverage_cap": 1.0,
-            "net_exposure_target": 1.0
-          },
-          "rebalance_interval_steps": 21,
-          "selection_kind": "top_k",
-          "top_k": 3,
-          "trading_environment": {
-            "turnover_cost_rate": 0.0,
-            "market_impact_bps": 5.0,
-            "fee_bps": 0.0,
-            "bid_ask_spread_bps": 0.0
-          }
-        },
         "subject_set_id": "us_etf_broad_multi_asset",
-        "target_id": "residual_return_5d"
+        "target_id": "residual_return_5d",
+        "portfolio_construction": {
+          "sizing_policy": {
+            "sizing_method": "signal_weighted"
+          },
+          "direction_mode": "long_only",
+          "gross_exposure_cap": 1.0,
+          "target_vol": 0.1,
+          "gross_leverage_cap": 1.0,
+          "net_exposure_target": 1.0
+        },
+        "trading_environment": {
+          "turnover_cost_rate": 0.0,
+          "market_impact_bps": 5.0,
+          "fee_bps": 0.0,
+          "bid_ask_spread_bps": 0.0
+        },
+        "rebalance_interval_steps": 21,
+        "selection_kind": "top_k",
+        "top_k": 3
       }
     }
   ],

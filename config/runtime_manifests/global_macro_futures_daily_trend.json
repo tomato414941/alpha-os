@@ -698,48 +698,46 @@
         "signal_discovery_id": "global_macro_futures_daily_trend_search",
         "position_rule_id": "constant_hold",
         "family_mix": "time_series_trend__daily_close",
-        "portfolio": {
-          "portfolio_construction": {
-            "construction_kind": "active_portfolio",
-            "sizing_policy": {
-              "sizing_method": "signal_weighted",
-              "sizing_engine": "rule_based",
-              "sizing_family": "signed_optimizer"
-            },
-            "direction_mode": "long_short",
-            "gross_exposure_cap": 1.5,
-            "target_vol": 0.18,
-            "gross_leverage_cap": 1.5,
-            "net_exposure_target": 0.0,
-            "asset_class_weight_caps": {
-              "equity_index": 0.55,
-              "rates": 0.55,
-              "fx": 0.35,
-              "commodity": 0.35,
-              "crypto": 0.2
-            },
-            "cluster_weight_caps": {
-              "eq_us": 0.2,
-              "rates_us": 0.3,
-              "fx_usd": 0.2,
-              "commodity_energy": 0.18,
-              "crypto_perp": 0.2
-            },
-            "active_weight_budget": 0.3
-          },
-          "rebalance_interval_steps": 1,
-          "trading_environment": {
-            "turnover_cost_rate": 0.001,
-            "market_impact_bps": 4.0,
-            "fee_bps": 0.5,
-            "bid_ask_spread_bps": 1.5,
-            "funding_bps_per_step": 0.5,
-            "borrow_fee_bps_per_step": 0.25
-          }
-        },
         "created_at": "2026-04-21T00:00:00Z",
         "subject_set_id": "global_macro_futures_26",
-        "target_id": "residual_return_5d"
+        "target_id": "residual_return_5d",
+        "portfolio_construction": {
+          "construction_kind": "active_portfolio",
+          "sizing_policy": {
+            "sizing_method": "signal_weighted",
+            "sizing_engine": "rule_based",
+            "sizing_family": "signed_optimizer"
+          },
+          "direction_mode": "long_short",
+          "gross_exposure_cap": 1.5,
+          "target_vol": 0.18,
+          "gross_leverage_cap": 1.5,
+          "net_exposure_target": 0.0,
+          "asset_class_weight_caps": {
+            "equity_index": 0.55,
+            "rates": 0.55,
+            "fx": 0.35,
+            "commodity": 0.35,
+            "crypto": 0.2
+          },
+          "cluster_weight_caps": {
+            "eq_us": 0.2,
+            "rates_us": 0.3,
+            "fx_usd": 0.2,
+            "commodity_energy": 0.18,
+            "crypto_perp": 0.2
+          },
+          "active_weight_budget": 0.3
+        },
+        "trading_environment": {
+          "turnover_cost_rate": 0.001,
+          "market_impact_bps": 4.0,
+          "fee_bps": 0.5,
+          "bid_ask_spread_bps": 1.5,
+          "funding_bps_per_step": 0.5,
+          "borrow_fee_bps_per_step": 0.25
+        },
+        "rebalance_interval_steps": 1
       }
     }
   ]

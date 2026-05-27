@@ -37,18 +37,17 @@ from .universe_contract import validate_subject_set_universe_contract
 def _trading_strategy_trace_document(
     trading_strategy: TradingStrategySpec,
 ) -> dict[str, object]:
-    portfolio = trading_strategy.portfolio
-    construction = portfolio.portfolio_construction
-    trading_environment = portfolio.trading_environment
+    construction = trading_strategy.portfolio_construction
+    trading_environment = trading_strategy.trading_environment
     return {
         "strategy_id": trading_strategy.strategy_id,
         "label": trading_strategy.label,
         "subject_set_id": trading_strategy.subject_set_id,
         "target_id": trading_strategy.target_id,
-        "selection_kind": portfolio.selection_kind,
+        "selection_kind": trading_strategy.selection_kind,
         "sizing_method": construction.sizing_method,
-        "rebalance": f"every_{portfolio.rebalance_interval_steps}_steps",
-        "top_k": portfolio.top_k,
+        "rebalance": f"every_{trading_strategy.rebalance_interval_steps}_steps",
+        "top_k": trading_strategy.top_k,
         "direction_mode": construction.direction_mode,
         "gross_exposure_cap": construction.gross_exposure_cap,
         "target_vol": construction.target_vol,

@@ -1,5 +1,8 @@
 # Strategy Portfolio Responsibility Boundary
 
+Status: Closed. `StrategyPortfolioSpec` and persisted `trading_strategy.portfolio`
+were removed; the fields now live directly on `TradingStrategySpec`.
+
 ## Problem
 
 In trading, a portfolio usually means the holdings or allocation at a point in

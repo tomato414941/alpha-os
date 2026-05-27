@@ -212,7 +212,7 @@ def test_derived_trading_strategy_uses_top_k_selection_when_top_k_is_set():
     )
 
     assert strategy.selection_kind == "top_k"
-    assert strategy.portfolio.top_k == 3
+    assert strategy.top_k == 3
 
 
 def test_derived_trading_strategy_preserves_risk_policy_constraints():
@@ -234,7 +234,7 @@ def test_derived_trading_strategy_preserves_risk_policy_constraints():
         created_at="2026-04-17T00:00:00Z",
     )
 
-    construction = strategy.portfolio.portfolio_construction
+    construction = strategy.portfolio_construction
     assert construction.long_only is False
     assert construction.gross_exposure_cap == 1.2
     assert construction.target_vol == 0.18

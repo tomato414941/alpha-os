@@ -1,5 +1,9 @@
 # Strategy portfolio construction double structure
 
+Status: Closed. `StrategyPortfolioSpec` and persisted `trading_strategy.portfolio`
+were removed; `portfolio_construction`, `trading_environment`, selection, and
+rebalance fields now live directly on `TradingStrategySpec`.
+
 ## Issue
 
 `TradingStrategySpec.portfolio` currently contains `StrategyPortfolioSpec`, and
