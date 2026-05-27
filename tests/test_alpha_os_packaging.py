@@ -13,7 +13,6 @@ def test_project_metadata_exposes_console_script_and_repository_urls():
     project = _project_metadata()
 
     assert project["readme"] == "README.md"
-    assert project["scripts"] == {"alpha-os": "alpha_os.cli:main"}
     assert project["urls"] == {
         "Repository": "https://github.com/tomato414941/alpha-os",
         "Issues": "https://github.com/tomato414941/alpha-os/issues",

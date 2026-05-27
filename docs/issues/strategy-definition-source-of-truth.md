@@ -2,10 +2,10 @@
 
 ## Problem
 
-Strategy definitions can exist in both checked-in JSON inputs and the runtime
-database.
+Strategy definitions previously existed in both checked-in JSON inputs and the
+runtime database.
 
-The intended flow is:
+The old flow was:
 
 ```text
 JSON input
@@ -13,9 +13,9 @@ JSON input
   -> DB runtime copy
 ```
 
-But this creates a source-of-truth risk. The JSON file can look like the
-canonical strategy definition, while the DB row is what the evaluation runtime
-actually reads.
+This created a source-of-truth risk. The JSON file could look like the
+canonical strategy definition, while the DB row was what the evaluation runtime
+actually read.
 
 If both are treated as authoritative, they can drift.
 
@@ -29,32 +29,30 @@ position_rule_id
 portfolio
 ```
 
-After applying the input, the DB stores the same strategy document in
+After applying the input, the DB stored the same strategy document in
 `strategy_specs.spec_json`.
 
-This is acceptable if the DB is clearly a runtime copy. It becomes dangerous if
-the DB is edited, reused, or inspected as though it were the research source of
-truth.
+This is acceptable only if the DB is clearly a runtime copy. It becomes
+dangerous if the DB is edited, reused, or inspected as though it were the
+research source of truth.
 
 ## Current Decision
 
 Treat checked-in JSON inputs as the reproducible input source.
 
-Treat DB `strategy_specs` rows as runtime artifacts derived from those inputs.
+Do not reintroduce a CLI workflow that copies strategy definitions into DB rows
+before evaluation unless the DB runtime boundary is explicitly redesigned.
 
 ## Risk
 
-- Updating JSON does not update an existing DB until the input is reapplied.
-- A stale DB can make an evaluation look reproducible when it no longer matches
-  the checked-in input.
+- Reintroducing a DB runtime copy can make checked-in inputs and runtime rows
+  drift again.
 - Lightweight hypothesis checks become heavier than necessary if every strategy
-  must be written to DB before evaluation.
+  must be persisted before evaluation.
 
 ## Acceptance Criteria
 
-- The project has a clear rule for when strategy definitions must be persisted
-  to DB.
+- The project has a clear rule for when strategy definitions must be persisted.
 - Lightweight candidate checks can avoid treating DB strategy rows as canonical.
-- Runtime reports can identify which checked-in input produced the DB strategy
-  copy, or otherwise make the derivation explicit.
-- No workflow treats both JSON and DB copies as independent sources of truth.
+- No workflow treats checked-in inputs and persisted copies as independent
+  sources of truth.

@@ -8,17 +8,16 @@ boundaries and making it harder to see which code is still needed.
 
 Current size markers:
 
-- `src/alpha_os/cli/internal.py`: 2236 lines
-- `src/alpha_os/strategy_backtest_evaluation.py`: 1942 lines
 - `src/alpha_os/portfolio_sizing_policy.py`: 1822 lines
 - `src/alpha_os/store.py`: 1737 lines
+- `src/alpha_os/strategy_backtest_evaluation.py`: 1626 lines
 - `src/alpha_os/decision_backtest.py`: 1379 lines
 
 Large test files also indicate mixed workflows:
 
-- `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 1950 lines
 - `tests/test_alpha_os_portfolio_decision.py`: 1565 lines
 - `tests/test_alpha_os_decision_backtest.py`: 1388 lines
+- `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 320 lines
 
 ## Risk
 
@@ -47,14 +46,8 @@ longer needed, remove it instead of moving it.
 
 ## Suggested Order
 
-Start with `strategy_backtest_evaluation.py` because it is already being
-cleaned up and still contains remnants of the old signal-discovery evaluation
-path.
+Start with these candidates:
 
-Next candidates:
-
-- `cli/internal.py`, because CLI orchestration tends to accumulate unrelated
-  workflows.
 - `portfolio_sizing_policy.py`, because the `policy` name may be hiding
   allocator, optimizer, and fallback responsibilities.
 - `store.py`, because persistence schema, row mapping, and repository methods

@@ -17,9 +17,6 @@ dependencies = [
 Repository = "https://github.com/tomato414941/alpha-os"
 Issues = "https://github.com/tomato414941/alpha-os/issues"
 
-[project.scripts]
-alpha-os = "alpha_os.cli:main"
-
 [project.optional-dependencies]
 data = [
     "signal-noise",
