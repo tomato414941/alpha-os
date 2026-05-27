@@ -41,42 +41,6 @@ def _register_apply_manifest(
     parser.add_argument("--manifest", type=str, required=True)
 
 
-def _register_run_diagnostic_evaluation(
-    sub: argparse._SubParsersAction,
-) -> None:
-    parser = sub.add_parser(
-        "run-diagnostic-evaluation",
-        help=argparse.SUPPRESS,
-    )
-    parser.add_argument("--db", type=str, default=None)
-    parser.add_argument(
-        "--manifest",
-        type=str,
-        default="global_macro_tradeable_daily_diagnostic",
-    )
-    parser.add_argument(
-        "--evaluation-spec-id",
-        type=str,
-        default="global_macro_tradeable_daily_diagnostic_eval",
-    )
-    parser.add_argument("--base-url", type=str, default=None)
-    parser.add_argument("--details", action="store_true")
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help=(
-            "Apply manifests and validate the diagnostic target plan without "
-            "running signal discovery, backtests, or run result generation"
-        ),
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Fail when the dry-run diagnostic plan violates lightweight contracts",
-    )
-    _hide_subparser_help(sub, "run-diagnostic-evaluation")
-
-
 def _register_list_manifests(
     sub: argparse._SubParsersAction,
     name: str,
@@ -96,12 +60,6 @@ COMMANDS: tuple[CliCommand, ...] = (
             sub,
             "apply-manifest",
         ),
-    ),
-    CliCommand(
-        name="run-diagnostic-evaluation",
-        handler=_legacy.cmd_run_diagnostic_evaluation,
-        visibility="internal",
-        register_parser=_register_run_diagnostic_evaluation,
     ),
     CliCommand(
         name="list-runtime-manifests",

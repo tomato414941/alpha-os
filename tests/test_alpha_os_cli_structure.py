@@ -43,24 +43,7 @@ def test_runtime_commands_own_public_parser_registration():
         "list-manifests",
     }
 
-    parser = build_cli_parser()
-    args = parser.parse_args(
-        [
-            "run-diagnostic-evaluation",
-            "--manifest",
-            "fixture_daily_diagnostic",
-            "--evaluation-spec-id",
-            "fixture_daily_diagnostic_eval",
-            "--dry-run",
-            "--check",
-        ]
-    )
-
-    assert args.command == "run-diagnostic-evaluation"
-    assert args.manifest == "fixture_daily_diagnostic"
-    assert args.evaluation_spec_id == "fixture_daily_diagnostic_eval"
-    assert args.dry_run is True
-    assert args.check is True
+    assert "run-diagnostic-evaluation" not in _parser_command_names()
 
 
 def test_cli_help_surface_is_fixed_to_golden_path_commands(capsys):
