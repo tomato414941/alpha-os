@@ -46,20 +46,17 @@ TradingStrategySpec / SubjectSet
   -> strategy backtest
 ```
 
-The existing DB-backed function can remain as a thin wrapper.
+The old DB-backed function should not remain on the critical path.
 
 ## Non-Goals
 
-- Do not remove `EvaluationStore`.
-- Do not remove `apply-manifest`.
-- Do not change report persistence.
 - Do not split data loading yet.
 - Do not introduce a new strategy framework.
 
 ## Acceptance Criteria
 
 - A spec-based strategy backtest function exists.
-- The DB-backed function only resolves `strategy_id` and `subject_set_id`, then delegates.
+- No DB-backed backtest wrapper remains.
 - Existing tests continue to pass.
 - No new DB dependency is introduced into the spec-based function.
 
@@ -68,4 +65,5 @@ The existing DB-backed function can remain as a thin wrapper.
 `run_strategy_backtest()` now accepts explicit strategy behavior fields and
 `SubjectSet` directly. It no longer accepts `TradingStrategySpec`.
 
-`run_strategy_backtest_from_store()` remains as the DB-backed wrapper.
+`run_strategy_backtest_from_store()` was later removed with the old DB-backed
+evaluation runner path.

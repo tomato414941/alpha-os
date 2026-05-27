@@ -7,7 +7,6 @@ def _build_trace_result():
         DecisionBacktestStep,
         DecisionBacktestSubjectStep,
     )
-
     subject_step = DecisionBacktestSubjectStep(
         subject_id="BTC_spot",
         signal_value=0.7,
@@ -188,86 +187,3 @@ def _register_direct_strategy(store) -> None:
             created_at="2026-04-20T00:00:00Z",
         )
     )
-
-
-def _build_direct_evaluation_case():
-    return ("case:test", "strategy:test")
-
-
-def test_evaluation_runner_persists_direct_report_without_portfolio_decisions(
-    tmp_path,
-    monkeypatch,
-):
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
-    from alpha_os.evaluation_result import EvaluationMetricGroupResult
-    from alpha_os.evaluation_runner import evaluate_evaluation_spec_state
-    from alpha_os.strategy_backtest_evaluation import (
-        EvaluationTraceRangeResult,
-        StrategyEvaluationResult,
-    )
-    from alpha_os.store import EvaluationStore
-
-    store = EvaluationStore(tmp_path / "runtime.db")
-    store.ensure_schema()
-    _register_subject_set(store)
-    _register_direct_strategy(store)
-    evaluation_spec_state = store.upsert_evaluation_spec(
-        "evaluation_spec:test",
-        definition=EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="fold:test",
-                start_date="2026-01-01",
-                end_date="2026-01-02",
-            ),
-            evaluation_date_ranges=(
-                EvaluationDateRange(
-                    label="range:test",
-                    start_date="2026-01-01",
-                    end_date="2026-01-02",
-                ),
-            ),
-            metric_group_names=("decision_quality",),
-            target_ids=("residual_return_3d",),
-            metric_windows=(2,),
-        ),
-        recorded_at="2026-04-20T00:00:00Z",
-    )
-
-    def _fake_direct_case(**kwargs):
-        return StrategyEvaluationResult(
-            metric_group_results_by_name={
-                "decision_quality": EvaluationMetricGroupResult(
-                    metric_group_name="decision_quality",
-                    source="native_plan",
-                    metrics={
-                        "mean_decision_net_return": 0.0087,
-                        "mean_decision_step_count": 1.0,
-                    },
-                )
-            },
-            failure_finding_groups=(),
-            selected_trace_results=(
-                EvaluationTraceRangeResult(
-                    range_label="range:test",
-                    result=_build_trace_result(),
-                ),
-            ),
-        )
-
-    monkeypatch.setattr(
-        "alpha_os.evaluation_execution_strategy.run_strategy_backtest_from_store",
-        _fake_direct_case,
-    )
-
-    run_result_state = evaluate_evaluation_spec_state(
-        store=store,
-        evaluation_spec_state=evaluation_spec_state,
-        evaluation_targets=(_build_direct_evaluation_case(),),
-        base_url="http://example.com",
-    )
-
-    assert run_result_state.evaluation_run_result_id.startswith("evaluation_spec:test:")
-    assert len(run_result_state.run_result.results) == 1
-    assert tuple(run_result_state.run_result.results) == ("case:test",)
-    assert store.list_portfolio_decisions(limit=10) == []
-    store.close()

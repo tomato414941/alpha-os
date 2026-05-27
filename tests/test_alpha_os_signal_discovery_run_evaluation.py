@@ -292,13 +292,8 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         capture_metric_group_results,
     )
 
-    strategy_backtest.run_strategy_backtest_from_store(
-        store=SimpleNamespace(
-            get_trading_strategy=lambda strategy_id: SimpleNamespace(trading_strategy=strategy),
-            get_subject_set=lambda subject_set_id: SimpleNamespace(definition=subject_set),
-        ),
-        strategy_id="strategy:crypto_regime_momentum",
-        subject_set_id="crypto",
+    strategy_backtest.run_strategy_backtest(
+        subject_set=subject_set,
         target_id="residual_return_1d",
         evaluation_date_ranges=(
             EvaluationDateRange(
@@ -310,6 +305,10 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         base_url="fixture://",
         portfolio_construction=strategy.portfolio_construction,
         trading_environment=TradingEnvironment(),
+        position_rule_id=strategy.position_rule_id,
+        family_mix=strategy.family_mix,
+        selection_kind=strategy.selection_kind,
+        top_k=strategy.top_k,
         feature_plane_repository=None,
     )
 

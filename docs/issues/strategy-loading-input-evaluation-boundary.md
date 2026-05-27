@@ -38,7 +38,7 @@ Trading strategy evaluation is closer to the RL shape:
 When these responsibilities are mixed, intermediate preparation details become
 global domain axes.
 
-Current symptoms include:
+Earlier symptoms included:
 
 - evaluation plans branch on `trading_strategy.signal_discovery_id`
 - checkpoint lookup and signal-search provenance leak into evaluation routing
@@ -59,11 +59,15 @@ Prefer this direction:
 - rollout evaluation runs the executable strategy against those inputs and
   computes metrics
 
+## Removed Suspects
+
+- `evaluation_runner.py`
+- `evaluation_execution_strategy.py`
+
+Both were removed with the old DB-backed evaluation runner path.
+
 ## Current Suspects
 
-- `evaluation_runner.py` must keep fold scheduling separate from strategy loading
-- `evaluation_execution_strategy.py` mixes input construction, strategy state
-  loading, rollout execution, and run result assembly
 - `signal_discovery_id` is used as a routing key instead of local provenance
 
 ## Desired Direction

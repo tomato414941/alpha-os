@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Protocol
 
 import pandas as pd
 
@@ -16,20 +15,6 @@ from .strategy_backtest_evaluation import (
 )
 from .subject_set_feature_plane import SubjectPlaneKey, build_subject_set_feature_planes
 from .universe_contract import validate_subject_set_universe_contract
-
-
-# This module is intended to become the common backtest entrypoint for strategy
-# candidates. Today it only supports trainless strategy candidates, so keep new
-# behavior narrow until trained candidates are routed through the same
-# boundary.
-
-
-class DirectStrategyEvaluationReadPort(Protocol):
-    def get_trading_strategy(self, strategy_id: str):
-        ...
-
-    def get_subject_set(self, subject_set_id: str):
-        ...
 
 
 def subject_backtest_inputs_from_subject_set_planes(
@@ -95,42 +80,6 @@ def subject_backtest_inputs_from_subject_set_planes(
         borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject,
         contract_multiplier_by_subject,
-    )
-
-
-def run_strategy_backtest_from_store(
-    *,
-    store: DirectStrategyEvaluationReadPort,
-    strategy_id: str,
-    subject_set_id: str,
-    target_id: str,
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
-    base_url: str,
-    portfolio_construction: PortfolioConstructionSpec,
-    trading_environment: TradingEnvironment,
-    feature_plane_repository: FeaturePlaneRepository | None,
-):
-    # Temporary DB adapter for legacy evaluation execution paths.
-    # Prefer run_strategy_backtest() once strategy and subject set are resolved.
-    strategy_state = store.get_trading_strategy(strategy_id)
-    if strategy_state is None:
-        raise ValueError(f"strategy does not exist: {strategy_id}")
-    subject_set_state = store.get_subject_set(subject_set_id)
-    if subject_set_state is None:
-        raise ValueError(f"subject set does not exist: {subject_set_id}")
-    trading_strategy = strategy_state.trading_strategy
-    return run_strategy_backtest(
-        subject_set=subject_set_state.definition,
-        target_id=target_id,
-        evaluation_date_ranges=evaluation_date_ranges,
-        base_url=base_url,
-        portfolio_construction=portfolio_construction,
-        trading_environment=trading_environment,
-        position_rule_id=trading_strategy.position_rule_id,
-        family_mix=trading_strategy.family_mix,
-        selection_kind=trading_strategy.selection_kind,
-        top_k=trading_strategy.top_k,
-        feature_plane_repository=feature_plane_repository,
     )
 
 

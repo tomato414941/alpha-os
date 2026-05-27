@@ -47,9 +47,8 @@ backtest path adapts persisted fields into a backtest recipe instead of running
 a `TradingStrategy` black-box contract. It is better described as a temporary
 strategy-spec interpreter backtest than as a true trading-strategy backtest.
 
-`evaluation_execution_strategy.py` no longer imports `TradingStrategySpec` or
-uses helper functions typed around it. It still reads the persisted strategy
-record and adapts the fields needed by the current backtest path.
+`evaluation_execution_strategy.py` was removed with the old DB-backed evaluation
+runner path.
 
 `strategy_variant.py` was removed after its remaining helper became unused.
 This removes the old path that treated signal discovery or compressed belief
