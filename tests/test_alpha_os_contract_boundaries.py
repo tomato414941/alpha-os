@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from alpha_os.contract_boundaries import (
     default_portfolio_constraint_boundary,
     default_subject_set_contract_boundary,
@@ -74,39 +72,3 @@ def test_portfolio_construction_exposes_canonical_constraint_boundary():
     )
 
     assert construction.constraint_boundary == default_portfolio_constraint_boundary()
-
-
-def test_portfolio_construction_defaults_to_no_active_weight_budget():
-    construction = PortfolioConstructionSpec()
-    document = construction.to_document()
-    restored = PortfolioConstructionSpec.from_document(document)
-
-    assert "top_k_mode" not in document
-    assert "top_k_tilt_fraction" not in document
-    assert "active_weight_budget" not in document
-    assert construction.active_weight_budget is None
-    assert restored.active_weight_budget is None
-
-
-def test_portfolio_construction_roundtrips_active_weight_budget():
-    construction = PortfolioConstructionSpec(active_weight_budget=0.2)
-    restored = PortfolioConstructionSpec.from_document(construction.to_document())
-
-    assert restored.active_weight_budget == pytest.approx(0.2)
-
-
-def test_portfolio_construction_roundtrips_concentration_constraints():
-    construction = PortfolioConstructionSpec(
-        effective_n_floor=8.0,
-        top_gross_share_cap_n=3,
-        top_gross_share_cap=0.55,
-    )
-    document = construction.to_document()
-    restored = PortfolioConstructionSpec.from_document(document)
-
-    assert document["effective_n_floor"] == pytest.approx(8.0)
-    assert document["top_gross_share_cap_n"] == 3
-    assert document["top_gross_share_cap"] == pytest.approx(0.55)
-    assert restored.effective_n_floor == pytest.approx(8.0)
-    assert restored.top_gross_share_cap_n == 3
-    assert restored.top_gross_share_cap == pytest.approx(0.55)

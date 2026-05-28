@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from .contract_boundaries import (
     PortfolioConstraintBoundary,
@@ -23,39 +22,6 @@ SIZING_METHODS = (
 )
 
 
-def _normalized_weight_caps(
-    document: dict[str, Any],
-    field_name: str,
-) -> dict[str, float]:
-    raw_value = document.get(field_name)
-    if raw_value is None:
-        return {}
-    if not isinstance(raw_value, dict):
-        raise ValueError(f"portfolio_construction.{field_name} must be an object")
-    normalized: dict[str, float] = {}
-    for group_name, cap_value in raw_value.items():
-        if not isinstance(group_name, str) or not group_name:
-            raise ValueError(
-                f"portfolio_construction.{field_name} keys must be non-empty strings"
-            )
-        if not isinstance(cap_value, int | float):
-            raise ValueError(
-                f"portfolio_construction.{field_name}[{group_name}] must be numeric"
-            )
-        if float(cap_value) < 0.0:
-            raise ValueError(
-                f"portfolio_construction.{field_name}[{group_name}] must be >= 0"
-            )
-        normalized[str(group_name)] = float(cap_value)
-    return normalized
-
-
-def _active_weight_budget_from_document(document: dict[str, Any]) -> float | None:
-    if document.get("active_weight_budget") is not None:
-        return float(document.get("active_weight_budget"))
-    return None
-
-
 @dataclass(frozen=True)
 class PortfolioConstructionSizingSpec:
     sizing_method: str = "signal_weighted"
@@ -73,25 +39,6 @@ class PortfolioConstructionSizingSpec:
                 "must be one of: "
                 + ", ".join(SIZING_METHODS)
             )
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "sizing_method": self.sizing_method,
-        }
-
-    @classmethod
-    def from_document(
-        cls,
-        document: dict[str, Any] | None,
-    ) -> "PortfolioConstructionSizingSpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("portfolio_construction.sizing_policy must be an object")
-        return cls(
-            sizing_method=str(document.get("sizing_method", "signal_weighted")),
-        )
-
 
 @dataclass(frozen=True)
 class PortfolioConstructionSpec:
@@ -217,102 +164,6 @@ class PortfolioConstructionSpec:
     @property
     def constraint_boundary(self) -> PortfolioConstraintBoundary:
         return default_portfolio_constraint_boundary()
-
-    def to_document(self) -> dict[str, Any]:
-        document: dict[str, Any] = {
-            "sizing_policy": self.sizing_policy.to_document(),
-            "direction_mode": self.direction_mode,
-        }
-        if self.active_weight_budget is not None:
-            document["active_weight_budget"] = float(self.active_weight_budget)
-        if self.gross_exposure_cap is not None:
-            document["gross_exposure_cap"] = self.gross_exposure_cap
-        if self.target_vol is not None:
-            document["target_vol"] = self.target_vol
-        if self.gross_leverage_cap is not None:
-            document["gross_leverage_cap"] = self.gross_leverage_cap
-        if self.net_exposure_target is not None:
-            document["net_exposure_target"] = self.net_exposure_target
-        if self.asset_class_weight_caps:
-            document["asset_class_weight_caps"] = dict(self.asset_class_weight_caps)
-        if self.cluster_weight_caps:
-            document["cluster_weight_caps"] = dict(self.cluster_weight_caps)
-        if self.effective_n_floor is not None:
-            document["effective_n_floor"] = self.effective_n_floor
-        if self.top_gross_share_cap_n is not None:
-            document["top_gross_share_cap_n"] = self.top_gross_share_cap_n
-        if self.top_gross_share_cap is not None:
-            document["top_gross_share_cap"] = self.top_gross_share_cap
-        if self.concentration_min_abs_weight != 0.001:
-            document["concentration_min_abs_weight"] = self.concentration_min_abs_weight
-        return document
-
-    @classmethod
-    def from_document(
-        cls, document: dict[str, Any] | None
-    ) -> "PortfolioConstructionSpec":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("portfolio_construction must be an object")
-        return cls(
-            sizing_policy=PortfolioConstructionSizingSpec.from_document(
-                document.get("sizing_policy")
-            ),
-            long_only=False,
-            direction_mode=(
-                None
-                if document.get("direction_mode") is None
-                else str(document.get("direction_mode"))
-            ),
-            active_weight_budget=_active_weight_budget_from_document(document),
-            gross_exposure_cap=(
-                None
-                if document.get("gross_exposure_cap") is None
-                else float(document.get("gross_exposure_cap"))
-            ),
-            target_vol=(
-                None
-                if document.get("target_vol") is None
-                else float(document.get("target_vol"))
-            ),
-            gross_leverage_cap=(
-                None
-                if document.get("gross_leverage_cap") is None
-                else float(document.get("gross_leverage_cap"))
-            ),
-            net_exposure_target=(
-                None
-                if document.get("net_exposure_target") is None
-                else float(document.get("net_exposure_target"))
-            ),
-            asset_class_weight_caps=_normalized_weight_caps(
-                document,
-                "asset_class_weight_caps",
-            ),
-            cluster_weight_caps=_normalized_weight_caps(
-                document,
-                "cluster_weight_caps",
-            ),
-            effective_n_floor=(
-                None
-                if document.get("effective_n_floor") is None
-                else float(document.get("effective_n_floor"))
-            ),
-            top_gross_share_cap_n=(
-                None
-                if document.get("top_gross_share_cap_n") is None
-                else int(document.get("top_gross_share_cap_n"))
-            ),
-            top_gross_share_cap=(
-                None
-                if document.get("top_gross_share_cap") is None
-                else float(document.get("top_gross_share_cap"))
-            ),
-            concentration_min_abs_weight=float(
-                document.get("concentration_min_abs_weight", 0.001)
-            ),
-        )
 
 
 def _has_concentration_constraints(config: PortfolioConstructionSpec) -> bool:
