@@ -105,32 +105,6 @@ def _build_trading_strategy(
     )
 
 
-def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
-    from alpha_os.strategy_backtest import dual_momentum_signal_series_by_subject
-
-    signals = dual_momentum_signal_series_by_subject(
-        subject_return_series_by_subject={
-            "AAA": pd.Series(
-                {
-                    "2026-01-01": 0.10,
-                    "2026-01-02": 0.10,
-                    "2026-01-03": -0.50,
-                    "2026-01-04": 0.10,
-                },
-                dtype=float,
-            )
-        },
-        lookback_steps=2,
-    )
-
-    signal = signals["AAA"]
-
-    assert signal.loc["2026-01-01"] == pytest.approx(0.0)
-    assert signal.loc["2026-01-02"] == pytest.approx(0.0)
-    assert signal.loc["2026-01-03"] == pytest.approx(0.21)
-    assert signal.loc["2026-01-04"] == pytest.approx(0.0)
-
-
 def test_crypto_regime_momentum_eligibility_requires_trend_confirmation_and_funding_filter():
     from alpha_os.position_rules import (
         crypto_regime_momentum_eligibility_series_by_subject,

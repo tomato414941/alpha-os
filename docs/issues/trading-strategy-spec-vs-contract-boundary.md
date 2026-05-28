@@ -60,6 +60,10 @@ presence of `top_k`; a separate selection mode was redundant.
 dual-momentum lookback encoded as a string, which now belongs to the
 dual-momentum signal builder as `lookback_steps`.
 
+The `dual_momentum_hold` position rule and its signal builder were removed.
+This leaves fewer string-selected strategy behaviors in the temporary backtest
+interpreter.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

@@ -113,13 +113,11 @@ def run_strategy_backtest(
 ):
     if position_rule_id not in {
         "constant_hold",
-        "dual_momentum_hold",
         "crypto_regime_momentum_hold",
     }:
         raise ValueError(
             "current strategy backtest only supports "
-            "position_rule=constant_hold, position_rule=dual_momentum_hold, or "
-            "position_rule=crypto_regime_momentum_hold"
+            "position_rule=constant_hold or position_rule=crypto_regime_momentum_hold"
         )
     validate_subject_set_universe_contract(subject_set)
     (
@@ -135,10 +133,6 @@ def run_strategy_backtest(
     )
     if position_rule_id == "constant_hold":
         position_signal_series_by_subject = None
-    elif position_rule_id == "dual_momentum_hold":
-        position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
-            subject_return_series_by_subject=subject_return_series_by_subject,
-        )
     else:
         position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
@@ -159,30 +153,3 @@ def run_strategy_backtest(
         trading_environment=trading_environment,
         top_k=top_k,
     )
-
-
-def dual_momentum_signal_series_by_subject(
-    *,
-    subject_return_series_by_subject: dict[str, pd.Series],
-    lookback_steps: int = 252,
-) -> dict[str, pd.Series]:
-    lookback = max(int(lookback_steps), 2)
-    trailing_returns_by_subject: dict[str, pd.Series] = {}
-    for subject_id, full_returns in subject_return_series_by_subject.items():
-        trailing_returns_by_subject[subject_id] = (
-            (1.0 + full_returns.astype(float))
-            .rolling(lookback, min_periods=lookback)
-            .apply(lambda values: float(values.prod() - 1.0), raw=True)
-            .shift(1)
-        )
-    if not trailing_returns_by_subject:
-        return {}
-    trailing_frame = pd.DataFrame(trailing_returns_by_subject, dtype=float)
-    signal_series_by_subject: dict[str, pd.Series] = {}
-    for subject_id in trailing_frame.columns:
-        series = trailing_frame[subject_id].where(
-            trailing_frame[subject_id] > 0.0,
-            0.0,
-        )
-        signal_series_by_subject[str(subject_id)] = series.fillna(0.0).astype(float)
-    return signal_series_by_subject
