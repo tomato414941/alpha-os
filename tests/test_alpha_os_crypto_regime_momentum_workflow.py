@@ -38,16 +38,15 @@ def _assert_common_strategy_comparison_contract(candidate, comparison_target) ->
 def _strategy_document(
     *,
     strategy_id: str,
-    position_rule_id: str,
+    position_rule_id: str | None = None,
     subject_set_id: str = "crypto_regime_pair",
 ) -> dict[str, object]:
-    return {
+    strategy_document: dict[str, object] = {
         "trading_strategy": {
             "strategy_id": strategy_id,
             "label": strategy_id.removeprefix("strategy:"),
             "subject_set_id": subject_set_id,
             "target_id": "residual_return_1d",
-            "position_rule_id": position_rule_id,
             "portfolio_construction": {
                 "sizing_policy": {
                     "sizing_method": "equal_weight",
@@ -68,6 +67,9 @@ def _strategy_document(
             "created_at": "2026-05-01T00:00:00+00:00",
         }
     }
+    if position_rule_id is not None:
+        strategy_document["trading_strategy"]["position_rule_id"] = position_rule_id
+    return strategy_document
 
 
 def _manifest_document(
@@ -131,7 +133,6 @@ def _manifest_document(
             ),
             _strategy_document(
                 strategy_id="strategy:crypto_regime_momentum_baseline",
-                position_rule_id="constant_hold",
                 subject_set_id=subject_set_id,
             ),
         ],

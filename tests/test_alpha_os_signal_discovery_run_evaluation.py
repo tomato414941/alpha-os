@@ -49,7 +49,7 @@ def _build_trading_strategy(
     label: str,
     subject_set_id: str | None = None,
     target_id: str | None = None,
-    position_rule_id: str = "constant_hold",
+    position_rule_id: str | None = None,
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,

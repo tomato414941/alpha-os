@@ -64,6 +64,10 @@ The `dual_momentum_hold` position rule and its signal builder were removed.
 This leaves fewer string-selected strategy behaviors in the temporary backtest
 interpreter.
 
+The `constant_hold` position rule was removed. Baseline runs now omit
+`position_rule_id` instead of pretending that a no-signal baseline is a strategy
+kind.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

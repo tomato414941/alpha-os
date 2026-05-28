@@ -108,16 +108,13 @@ def run_strategy_backtest(
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
-    position_rule_id: str,
+    position_rule_id: str | None,
     top_k: int | None,
 ):
-    if position_rule_id not in {
-        "constant_hold",
-        "crypto_regime_momentum_hold",
-    }:
+    if position_rule_id not in {None, "crypto_regime_momentum_hold"}:
         raise ValueError(
             "current strategy backtest only supports "
-            "position_rule=constant_hold or position_rule=crypto_regime_momentum_hold"
+            "position_rule=crypto_regime_momentum_hold or no position_rule baseline"
         )
     validate_subject_set_universe_contract(subject_set)
     (
@@ -131,7 +128,7 @@ def run_strategy_backtest(
         subject_set=subject_set,
         base_url=base_url,
     )
-    if position_rule_id == "constant_hold":
+    if position_rule_id is None:
         position_signal_series_by_subject = None
     else:
         position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
