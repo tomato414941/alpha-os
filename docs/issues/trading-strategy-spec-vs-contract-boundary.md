@@ -9,8 +9,8 @@ The glossary defines a trading strategy as a black-box decision component that
 consumes observations and optional internal state, then produces trading actions
 and optional next strategy state.
 
-Keeping shared fields such as `position_rule_id`, `portfolio_construction`,
-and `rebalance_interval_steps` on a single spec can accidentally require every
+Keeping shared fields such as `portfolio_construction` and
+`rebalance_interval_steps` on a single spec can accidentally require every
 strategy implementation to share the same internal shape.
 
 ## Direction
@@ -19,8 +19,7 @@ Treat `TradingStrategy` as an input/output contract, not as a common data
 schema. The strategy should be a black box from the evaluator, backtest runner,
 and market/world simulation perspective. Those callers may know the strategy
 input and output contract, but they should not interpret internal fields such
-as `position_rule_id` or portfolio construction settings as the strategy
-implementation.
+as portfolio construction settings as the strategy implementation.
 
 `TradingStrategySpec` should remain only where a persisted manifest-style record
 is still needed. It should not become the domain model for all strategy
@@ -67,6 +66,11 @@ interpreter.
 The `constant_hold` position rule was removed. Baseline runs now omit
 `position_rule_id` instead of pretending that a no-signal baseline is a strategy
 kind.
+
+`TradingStrategySpec.position_rule_id` and `run_strategy_backtest(position_rule_id=...)`
+were removed. Backtests now receive an optional precomputed
+`position_signal_series_by_subject` instead of selecting strategy behavior from
+a string field.
 
 ## Close Condition
 

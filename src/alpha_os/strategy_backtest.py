@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
 from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
 from .feature_plane import PriceFeaturePlane
@@ -108,14 +107,9 @@ def run_strategy_backtest(
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
-    position_rule_id: str | None,
     top_k: int | None,
+    position_signal_series_by_subject: dict[str, pd.Series] | None = None,
 ):
-    if position_rule_id not in {None, "crypto_regime_momentum_hold"}:
-        raise ValueError(
-            "current strategy backtest only supports "
-            "position_rule=crypto_regime_momentum_hold or no position_rule baseline"
-        )
     validate_subject_set_universe_contract(subject_set)
     (
         subject_return_series_by_subject,
@@ -128,13 +122,6 @@ def run_strategy_backtest(
         subject_set=subject_set,
         base_url=base_url,
     )
-    if position_rule_id is None:
-        position_signal_series_by_subject = None
-    else:
-        position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
-            subject_return_series_by_subject=subject_return_series_by_subject,
-            funding_rate_series_by_subject=funding_rate_series_by_subject,
-        )
     return build_direct_strategy_evaluation_metric_group_results(
         subject_return_series_by_subject=subject_return_series_by_subject,
         evaluation_date_ranges=evaluation_date_ranges,

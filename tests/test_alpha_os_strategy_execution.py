@@ -7,7 +7,6 @@ def _build_trading_strategy(
     label: str,
     subject_set_id: str | None = None,
     target_id: str | None = None,
-    position_rule_id: str | None = None,
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -35,7 +34,6 @@ def _build_trading_strategy(
         label=label,
         subject_set_id=subject_set_id,
         target_id=target_id,
-        position_rule_id=position_rule_id,
         portfolio_construction=PortfolioConstructionSpec(
             sizing_policy=PortfolioConstructionSizingSpec(
                 sizing_method=sizing_method or "equal_weight",

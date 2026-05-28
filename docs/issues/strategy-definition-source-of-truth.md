@@ -25,7 +25,6 @@ For a strategy such as `crypto_regime_momentum`, the checked-in JSON contains:
 
 ```text
 strategy_id
-position_rule_id
 portfolio
 ```
 

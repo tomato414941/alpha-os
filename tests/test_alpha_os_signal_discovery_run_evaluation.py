@@ -49,7 +49,6 @@ def _build_trading_strategy(
     label: str,
     subject_set_id: str | None = None,
     target_id: str | None = None,
-    position_rule_id: str | None = None,
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -73,7 +72,6 @@ def _build_trading_strategy(
         label=label,
         subject_set_id=subject_set_id,
         target_id=target_id,
-        position_rule_id=position_rule_id,
         portfolio_construction=PortfolioConstructionSpec(
             sizing_policy=PortfolioConstructionSizingSpec(
                 sizing_method=sizing_method or "equal_weight",
@@ -195,7 +193,7 @@ def test_crypto_regime_momentum_eligibility_requires_funding_rate():
         )
 
 
-def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
+def test_direct_strategy_backtest_accepts_position_signal_series(
     monkeypatch,
 ):
     import alpha_os.strategy_backtest as strategy_backtest
@@ -214,7 +212,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         label="Crypto regime momentum",
         subject_set_id="crypto",
         target_id="residual_return_1d",
-        position_rule_id="crypto_regime_momentum_hold",
         long_only=True,
     )
     subject_set = SubjectSet(
@@ -277,8 +274,16 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         base_url="fixture://",
         portfolio_construction=strategy.portfolio_construction,
         trading_environment=TradingEnvironment(),
-        position_rule_id=strategy.position_rule_id,
         top_k=strategy.top_k,
+        position_signal_series_by_subject={
+            "BTC": pd.Series(
+                {
+                    "2026-01-29": 0.0,
+                    "2026-01-30": 1.0,
+                },
+                dtype=float,
+            )
+        },
     )
 
     signal_series_by_subject = captured["signal_series_by_subject"]

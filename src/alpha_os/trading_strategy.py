@@ -132,7 +132,6 @@ class TradingStrategySpec:
     label: str
     subject_set_id: str | None
     target_id: str | None
-    position_rule_id: str | None
     portfolio_construction: PortfolioConstructionSpec
     trading_environment: TradingEnvironment
     created_at: str
@@ -176,8 +175,6 @@ class TradingStrategySpec:
             "rebalance_interval_steps": self.rebalance_interval_steps,
             "created_at": self.created_at,
         }
-        if self.position_rule_id is not None:
-            document["position_rule_id"] = self.position_rule_id
         if self.top_k is not None:
             document["top_k"] = self.top_k
         return document
@@ -199,11 +196,6 @@ class TradingStrategySpec:
             ),
             target_id=_normalize_optional(
                 None if document.get("target_id") is None else str(document["target_id"])
-            ),
-            position_rule_id=_normalize_optional(
-                None
-                if document.get("position_rule_id") is None
-                else str(document["position_rule_id"])
             ),
             portfolio_construction=portfolio_construction,
             trading_environment=TradingEnvironment.from_document(
