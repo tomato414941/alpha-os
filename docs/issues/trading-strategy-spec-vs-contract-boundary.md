@@ -9,9 +9,9 @@ The glossary defines a trading strategy as a black-box decision component that
 consumes observations and optional internal state, then produces trading actions
 and optional next strategy state.
 
-Keeping shared fields such as `portfolio_construction` and
-`rebalance_interval_steps` on a single spec can accidentally require every
-strategy implementation to share the same internal shape.
+Keeping shared fields such as `portfolio_construction` on a single spec can
+accidentally require every strategy implementation to share the same internal
+shape.
 
 ## Direction
 
@@ -52,8 +52,8 @@ runner path.
 This removes the old path that treated signal discovery or compressed belief
 provenance as a source for strategy configuration.
 
-`TradingStrategySpec.selection_kind` was removed. Top-k selection now uses the
-presence of `top_k`; a separate selection mode was redundant.
+`TradingStrategySpec.selection_kind` was removed because a separate selection
+mode was redundant.
 
 `TradingStrategySpec.family_mix` was removed. The only active use was a
 dual-momentum lookback encoded as a string, which now belongs to the
@@ -71,6 +71,11 @@ kind.
 were removed. Backtests now receive an optional precomputed
 `position_signal_series_by_subject` instead of selecting strategy behavior from
 a string field.
+
+`TradingStrategySpec.rebalance_interval_steps`, `TradingStrategySpec.top_k`,
+and the unused `build_trading_strategy_id()` helper were removed. Those values
+belong to explicit backtest/allocation inputs, not to the shared strategy
+record.
 
 ## Close Condition
 

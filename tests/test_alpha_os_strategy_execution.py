@@ -8,9 +8,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     sizing_method: str | None = None,
-    rebalance: str | None = None,
     long_only: bool | None = None,
-    top_k: int | None = None,
     gross_exposure_cap: float | None = None,
     asset_class_weight_caps: dict[str, float] | None = None,
     cluster_weight_caps: dict[str, float] | None = None,
@@ -47,14 +45,6 @@ def _build_trading_strategy(
             ),
         ),
         created_at=created_at,
-        rebalance_interval_steps=(
-            int(rebalance[len("every_") : -len("_steps")])
-            if isinstance(rebalance, str)
-            and rebalance.startswith("every_")
-            and rebalance.endswith("_steps")
-            else 1
-        ),
-        top_k=top_k,
     )
 
 
@@ -65,9 +55,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
         sizing_method="equal_weight",
-        rebalance="every_5_steps",
         long_only=True,
-        top_k=5,
         gross_exposure_cap=1.5,
         asset_class_weight_caps={"equity_index": 0.6},
         cluster_weight_caps={"eq_us": 0.25},
@@ -76,9 +64,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.strategy_id == "strategy:test"
     assert trading_strategy.subject_set_id == "core_crypto"
     assert trading_strategy.target_id == "residual_return_3d"
-    assert trading_strategy.top_k == 5
     assert trading_strategy.portfolio_construction.sizing_method == "equal_weight"
-    assert trading_strategy.rebalance_interval_steps == 5
     assert trading_strategy.portfolio_construction.long_only is True
     assert trading_strategy.portfolio_construction.gross_exposure_cap == 1.5
     assert trading_strategy.portfolio_construction.asset_class_weight_caps == {
@@ -87,20 +73,7 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.portfolio_construction.cluster_weight_caps == {
         "eq_us": 0.25
     }
-def test_trading_strategy_top_k_is_serialized():
-    trading_strategy = _build_trading_strategy(
-        strategy_id="strategy:test",
-        label="Test",
-        top_k=3,
-    )
-
-    document = trading_strategy.to_document()
-
-    assert "selection_kind" not in document
-    assert document["top_k"] == 3
-
-
-def test_trading_strategy_top_k_round_trips_from_document():
+def test_trading_strategy_ignores_removed_top_k_document_field():
     from alpha_os.trading_strategy import TradingStrategySpec
 
     strategy = TradingStrategySpec.from_document(
@@ -110,14 +83,13 @@ def test_trading_strategy_top_k_round_trips_from_document():
             "subject_set_id": "core_crypto",
             "target_id": "residual_return_3d",
             "portfolio_construction": {},
-            "rebalance_interval_steps": 1,
             "selection_kind": "top_k",
             "top_k": 4,
             "created_at": "2026-04-08T00:00:00Z",
         }
     )
 
-    assert strategy.top_k == 4
+    assert "top_k" not in strategy.to_document()
 
 
 def test_trading_strategy_spec_round_trips_through_document():
@@ -129,9 +101,7 @@ def test_trading_strategy_spec_round_trips_through_document():
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
         sizing_method="equal_weight",
-        rebalance="every_5_steps",
         long_only=True,
-        top_k=5,
         gross_exposure_cap=1.5,
         asset_class_weight_caps={"equity_index": 0.6},
         cluster_weight_caps={"eq_us": 0.25},

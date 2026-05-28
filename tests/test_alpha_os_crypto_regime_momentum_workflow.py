@@ -55,7 +55,6 @@ def _strategy_document(
                 "gross_leverage_cap": 1.0,
                 "net_exposure_target": 1.0,
             },
-            "rebalance_interval_steps": 1,
             "created_at": "2026-05-01T00:00:00+00:00",
         }
     }

@@ -5,21 +5,6 @@ import pandas as pd
 import pytest
 
 
-def _evaluation_policy_parts(
-    *,
-    sizing_method: str = "signal_weighted",
-    sizing_engine: str | None = None,
-    rebalance_interval_steps: int = 1,
-    long_only: bool = False,
-    top_k: int | None = None,
-    gross_exposure_cap: float | None = None,
-    target_vol: float | None = None,
-    gross_leverage_cap: float | None = None,
-    net_exposure_target: float | None = None,
-):
-    return {}
-
-
 def _build_trading_strategy(
     *,
     strategy_id: str,
@@ -27,9 +12,7 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     sizing_method: str | None = None,
-    rebalance: str | None = None,
     long_only: bool | None = None,
-    top_k: int | None = None,
     gross_exposure_cap: float | None = None,
     created_at: str = "2026-04-05T00:00:00Z",
 ):
@@ -58,14 +41,6 @@ def _build_trading_strategy(
             gross_exposure_cap=gross_exposure_cap,
         ),
         created_at=created_at,
-        rebalance_interval_steps=(
-            int(rebalance[len("every_") : -len("_steps")])
-            if isinstance(rebalance, str)
-            and rebalance.startswith("every_")
-            and rebalance.endswith("_steps")
-            else 1
-        ),
-        top_k=top_k,
     )
 
 
@@ -240,7 +215,7 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
         base_url="fixture://",
         portfolio_construction=strategy.portfolio_construction,
         trading_environment=TradingEnvironment(),
-        top_k=strategy.top_k,
+        top_k=None,
         position_signal_series_by_subject={
             "BTC": pd.Series(
                 {
