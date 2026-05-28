@@ -2,7 +2,7 @@
 
 ## Problem
 
-Strategy definitions previously existed in both checked-in JSON inputs and the
+Strategy definitions previously existed in checked-in JSON inputs and the
 runtime database.
 
 The old flow was:
@@ -21,15 +21,10 @@ If both are treated as authoritative, they can drift.
 
 ## Why It Matters
 
-For a strategy such as `crypto_regime_momentum`, the checked-in JSON contains:
+The old checked-in JSON contained strategy-shaped records. After applying the
+input, the DB stored the same strategy document in `strategy_specs.spec_json`.
 
-```text
-strategy_id
-portfolio
-```
-
-After applying the input, the DB stored the same strategy document in
-`strategy_specs.spec_json`.
+Those checked-in `strategy_specs` have now been removed.
 
 This is acceptable only if the DB is clearly a runtime copy. It becomes
 dangerous if the DB is edited, reused, or inspected as though it were the

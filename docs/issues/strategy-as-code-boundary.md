@@ -2,7 +2,7 @@
 
 ## Problem
 
-`strategy_specs` can become a JSON strategy DSL.
+`strategy_specs` could become a JSON strategy DSL.
 
 That is risky. A strategy can contain real behavior, state loading, model or
 policy code, allocation decisions, and environment assumptions. If all of that
@@ -11,17 +11,10 @@ before the real strategy shape is known.
 
 ## Current Signal
 
-Checked-in runtime manifests now keep evaluation target selection as plain
-`evaluation_specs[].strategy_ids`, so more responsibility is visible on
-`strategy_specs`.
+Checked-in runtime manifests no longer carry `strategy_specs`.
 
-Current strategy documents often include:
-
-- `portfolio_construction`
-- `signal_discovery_id`
-
-Some of these fields may be part of the strategy. Others look more like
-simulator, evaluation environment, cost, provenance, or runtime wiring.
+The old strategy documents mixed strategy identity, portfolio construction,
+environment assumptions, and provenance.
 
 ## ML / RL Analogy
 
@@ -36,8 +29,8 @@ unless the policy explicitly uses them to decide actions.
 
 ## Direction
 
-Do not treat JSON `strategy_specs` as the long-term primary expression of a
-strategy implementation.
+Do not reintroduce JSON `strategy_specs` as the primary expression of a strategy
+implementation.
 
 Prefer:
 
@@ -59,8 +52,8 @@ Keeping too much behavior in JSON encourages:
 
 ## Next Decision
 
-Before adding new fields to `strategy_specs`, decide whether the field belongs
-in:
+Before adding new strategy-shaped manifest fields, decide whether the field
+belongs in:
 
 - strategy code
 - a small strategy parameter object
@@ -72,5 +65,4 @@ in:
 ## Close Condition
 
 Close this when new strategies can be represented without growing a broad JSON
-strategy DSL, and existing `strategy_specs` have a documented path toward
-thinner references.
+strategy DSL.

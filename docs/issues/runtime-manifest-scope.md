@@ -11,7 +11,6 @@ They currently collect several run-time concerns in one file:
 - observation requirements
 - signal discovery configuration
 - evaluation specs
-- strategy specs
 - portfolio and cost assumptions
 
 This is useful for reproducible runs, but it makes the manifest easy to treat as
@@ -25,10 +24,10 @@ It is already connected to loaders, CLI commands, tests, README examples, and
 golden paths. Splitting it now would create a broad infrastructure change before
 a concrete evaluation requires it.
 
-Inside that structure, keep evaluation target selection thin. Runtime manifests
-now put selected `strategy_ids` on the relevant evaluation spec. Strategy
-construction, portfolio policy, costs, data-source connection details, and
-checkpoint artifacts belong outside that selection list.
+Inside that structure, keep evaluation inputs thin. Strategy construction,
+portfolio policy, costs, data-source connection details, and checkpoint
+artifacts should not be pushed into runtime manifests unless an executable path
+actually consumes them.
 
 ## Risk
 

@@ -320,7 +320,6 @@ def _validate_target_ids(target_ids: tuple[str, ...]) -> None:
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
-    strategy_ids: tuple[str, ...] = ()
     metric_group_names: tuple[str, ...] = EVALUATION_METRIC_GROUP_NAMES
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
@@ -385,7 +384,6 @@ class EvaluationSpec:
     def to_document(self) -> dict[str, Any]:
         return {
             "execution_range": self.execution_range.to_document(),
-            "strategy_ids": list(self.strategy_ids),
             "metric_group_names": list(self.metric_group_names),
             "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
@@ -400,15 +398,12 @@ class EvaluationSpec:
     def from_document(cls, document: dict[str, Any]) -> "EvaluationSpec":
         execution_range = document.get("execution_range")
         metric_config = EvaluationMetricConfig.from_document(document)
-        strategy_ids = document.get("strategy_ids", [])
         evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
         target_ids = document.get("target_ids", [])
         rigor_level = document.get("rigor_level", "exploratory")
         if not isinstance(execution_range, dict):
             raise ValueError("evaluation spec is missing execution_range")
-        if not isinstance(strategy_ids, list):
-            raise ValueError("evaluation spec strategy_ids must be a list")
         if not isinstance(evaluation_date_ranges, list):
             raise ValueError("evaluation spec evaluation_date_ranges must be a list")
         if not isinstance(evaluation_folds, list):
@@ -419,7 +414,6 @@ class EvaluationSpec:
             raise ValueError("evaluation spec rigor_level must be a string")
         return cls(
             execution_range=EvaluationDateRange.from_document(execution_range),
-            strategy_ids=tuple(str(item) for item in strategy_ids),
             metric_group_names=metric_config.metric_group_names,
             evaluation_date_ranges=tuple(
                 EvaluationDateRange.from_document(item)
