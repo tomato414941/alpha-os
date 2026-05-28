@@ -893,7 +893,6 @@ def _run_backtest_variant(
             funding_bps_per_step=trading_environment.funding_bps_per_step,
             borrow_fee_bps_per_step=trading_environment.borrow_fee_bps_per_step,
             rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
-            long_only=portfolio_construction.long_only,
             direction_mode=portfolio_construction.direction_mode,
             top_k=top_k,
             active_weight_budget=portfolio_construction.active_weight_budget,

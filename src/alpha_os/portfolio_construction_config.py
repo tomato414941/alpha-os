@@ -26,7 +26,6 @@ SIZING_METHODS = (
 class PortfolioConstructionSpec:
     sizing_method: str = "signal_weighted"
     rebalance_interval_steps: int = 1
-    long_only: bool = False
     direction_mode: str | None = None
     active_weight_budget: float | None = None
     gross_exposure_cap: float | None = None
@@ -56,14 +55,10 @@ class PortfolioConstructionSpec:
             raise ValueError(
                 "portfolio_construction.rebalance_interval_steps must be >= 1"
             )
-        if not isinstance(self.long_only, bool):
-            raise ValueError("portfolio_construction.long_only must be boolean")
         direction_mode = normalize_portfolio_direction_mode(
             self.direction_mode,
-            long_only=self.long_only,
         )
         object.__setattr__(self, "direction_mode", direction_mode)
-        object.__setattr__(self, "long_only", direction_mode == "long_only")
         if self.active_weight_budget is not None:
             if not isinstance(self.active_weight_budget, int | float):
                 raise ValueError(

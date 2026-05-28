@@ -15,7 +15,7 @@ PORTFOLIO_DIRECTION_MODES: tuple[PortfolioDirectionMode, ...] = (
 def normalize_portfolio_direction_mode(
     direction_mode: str | None,
     *,
-    long_only: bool,
+    long_only: bool = False,
 ) -> PortfolioDirectionMode:
     if direction_mode is None:
         return "long_only" if long_only else "long_short"
