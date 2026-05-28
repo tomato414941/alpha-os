@@ -109,13 +109,10 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
         SubjectSet,
     )
 
-    from alpha_os.portfolio_construction_config import (
-        PortfolioConstructionSizingSpec,
-        PortfolioConstructionSpec,
-    )
+    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
 
     portfolio_construction = PortfolioConstructionSpec(
-        sizing_policy=PortfolioConstructionSizingSpec(sizing_method="equal_weight"),
+        sizing_method="equal_weight",
         direction_mode="long_only",
     )
     subject_set = SubjectSet(

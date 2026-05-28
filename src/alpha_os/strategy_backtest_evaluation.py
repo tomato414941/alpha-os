@@ -16,10 +16,7 @@ from .decision_backtest import (
 )
 from .evaluation_cost_config import TradingEnvironment
 from .evaluation_spec import EvaluationDateRange
-from .portfolio_construction_config import (
-    PortfolioConstructionSizingSpec,
-    PortfolioConstructionSpec,
-)
+from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_metric_group_result_builders import (
     build_portfolio_construction_trace_metric_group_result,
     build_prediction_diagnostics_metric_group_result,
@@ -840,14 +837,13 @@ def _portfolio_construction_variant(
     sizing_method: str | None = None,
     rebalance_interval_steps: int | None = None,
 ) -> PortfolioConstructionSpec:
-    sizing_policy = portfolio_construction.sizing_policy
-    if sizing_method is not None:
-        sizing_policy = PortfolioConstructionSizingSpec(
-            sizing_method=sizing_method,
-        )
     return replace(
         portfolio_construction,
-        sizing_policy=sizing_policy,
+        sizing_method=(
+            portfolio_construction.sizing_method
+            if sizing_method is None
+            else sizing_method
+        ),
         rebalance_interval_steps=(
             portfolio_construction.rebalance_interval_steps
             if rebalance_interval_steps is None
@@ -910,7 +906,7 @@ def _run_backtest_variant(
 def _historical_return_lookback_steps(
     portfolio_construction: PortfolioConstructionSpec,
 ) -> int | None:
-    sizing_method = portfolio_construction.sizing_policy.sizing_method
+    sizing_method = portfolio_construction.sizing_method
     if sizing_method == "equal_weight":
         return 0
     if sizing_method in {

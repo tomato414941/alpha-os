@@ -23,28 +23,8 @@ SIZING_METHODS = (
 
 
 @dataclass(frozen=True)
-class PortfolioConstructionSizingSpec:
-    sizing_method: str = "signal_weighted"
-
-    def __post_init__(self) -> None:
-        sizing_method = self.sizing_method
-        if not isinstance(sizing_method, str) or not sizing_method:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_method "
-                "must be a string"
-            )
-        if sizing_method not in SIZING_METHODS:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_method "
-                "must be one of: "
-                + ", ".join(SIZING_METHODS)
-            )
-
-@dataclass(frozen=True)
 class PortfolioConstructionSpec:
-    sizing_policy: PortfolioConstructionSizingSpec = field(
-        default_factory=PortfolioConstructionSizingSpec
-    )
+    sizing_method: str = "signal_weighted"
     rebalance_interval_steps: int = 1
     long_only: bool = False
     direction_mode: str | None = None
@@ -61,6 +41,15 @@ class PortfolioConstructionSpec:
     concentration_min_abs_weight: float = 0.001
 
     def __post_init__(self) -> None:
+        if not isinstance(self.sizing_method, str) or not self.sizing_method:
+            raise ValueError(
+                "portfolio_construction.sizing_method must be a string"
+            )
+        if self.sizing_method not in SIZING_METHODS:
+            raise ValueError(
+                "portfolio_construction.sizing_method must be one of: "
+                + ", ".join(SIZING_METHODS)
+            )
         if (
             not isinstance(self.rebalance_interval_steps, int)
             or self.rebalance_interval_steps < 1
@@ -158,19 +147,5 @@ class PortfolioConstructionSpec:
                     )
 
     @property
-    def sizing_method(self) -> str:
-        return self.sizing_policy.sizing_method
-
-    @property
     def constraint_boundary(self) -> PortfolioConstraintBoundary:
         return default_portfolio_constraint_boundary()
-
-
-def _has_concentration_constraints(config: PortfolioConstructionSpec) -> bool:
-    return (
-        config.effective_n_floor is not None
-        or (
-            config.top_gross_share_cap_n is not None
-            and config.top_gross_share_cap is not None
-        )
-    )
