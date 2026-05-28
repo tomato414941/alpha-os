@@ -54,7 +54,6 @@ def build_trading_strategy_id(
     *,
     subject_set_id: str | None,
     target_id: str | None,
-    family_mix: str | None,
     sizing_method: str | None,
     sizing_engine: str | None,
     rebalance: str | None,
@@ -77,7 +76,6 @@ def build_trading_strategy_id(
 
     add("subject_set", subject_set_id)
     add("target", target_id)
-    add("family_mix", family_mix)
     add("sizing_method", sizing_method)
     add("sizing_engine", sizing_engine)
     add("rebalance", rebalance)
@@ -135,7 +133,6 @@ class TradingStrategySpec:
     subject_set_id: str | None
     target_id: str | None
     position_rule_id: str
-    family_mix: str | None
     portfolio_construction: PortfolioConstructionSpec
     trading_environment: TradingEnvironment
     created_at: str
@@ -175,7 +172,6 @@ class TradingStrategySpec:
             "subject_set_id": self.subject_set_id,
             "target_id": self.target_id,
             "position_rule_id": self.position_rule_id,
-            "family_mix": self.family_mix,
             "portfolio_construction": self.portfolio_construction.to_document(),
             "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
@@ -204,9 +200,6 @@ class TradingStrategySpec:
                 None if document.get("target_id") is None else str(document["target_id"])
             ),
             position_rule_id=str(document.get("position_rule_id", "constant_hold")),
-            family_mix=_normalize_optional(
-                None if document.get("family_mix") is None else str(document["family_mix"])
-            ),
             portfolio_construction=portfolio_construction,
             trading_environment=TradingEnvironment.from_document(
                 document.get("trading_environment")

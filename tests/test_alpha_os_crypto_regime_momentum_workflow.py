@@ -48,7 +48,6 @@ def _strategy_document(
             "subject_set_id": subject_set_id,
             "target_id": "residual_return_1d",
             "position_rule_id": position_rule_id,
-            "family_mix": None,
             "portfolio_construction": {
                 "sizing_policy": {
                     "sizing_method": "equal_weight",

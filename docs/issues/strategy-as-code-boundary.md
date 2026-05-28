@@ -18,7 +18,6 @@ Checked-in runtime manifests now keep evaluation target selection as plain
 Current strategy documents often include:
 
 - `position_rule_id`
-- `family_mix`
 - `portfolio_construction`
 - `trading_environment`
 - `signal_discovery_id`

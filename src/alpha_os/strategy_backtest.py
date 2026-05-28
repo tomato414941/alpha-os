@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 import pandas as pd
 
 from .position_rules import crypto_regime_momentum_eligibility_series_by_subject
@@ -111,7 +109,6 @@ def run_strategy_backtest(
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
     position_rule_id: str,
-    family_mix: str | None,
     top_k: int | None,
 ):
     if position_rule_id not in {
@@ -141,7 +138,6 @@ def run_strategy_backtest(
     elif position_rule_id == "dual_momentum_hold":
         position_signal_series_by_subject = dual_momentum_signal_series_by_subject(
             subject_return_series_by_subject=subject_return_series_by_subject,
-            family_mix=family_mix,
         )
     else:
         position_signal_series_by_subject = crypto_regime_momentum_eligibility_series_by_subject(
@@ -165,20 +161,12 @@ def run_strategy_backtest(
     )
 
 
-def _dual_momentum_lookback_from_family_mix(family_mix: str | None) -> int:
-    if family_mix:
-        match = re.search(r"lookback=(\d+)", family_mix)
-        if match is not None:
-            return max(int(match.group(1)), 2)
-    return 252
-
-
 def dual_momentum_signal_series_by_subject(
     *,
     subject_return_series_by_subject: dict[str, pd.Series],
-    family_mix: str | None,
+    lookback_steps: int = 252,
 ) -> dict[str, pd.Series]:
-    lookback = _dual_momentum_lookback_from_family_mix(family_mix)
+    lookback = max(int(lookback_steps), 2)
     trailing_returns_by_subject: dict[str, pd.Series] = {}
     for subject_id, full_returns in subject_return_series_by_subject.items():
         trailing_returns_by_subject[subject_id] = (

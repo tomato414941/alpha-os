@@ -8,7 +8,6 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     position_rule_id: str = "constant_hold",
-    family_mix: str | None = None,
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -37,7 +36,6 @@ def _build_trading_strategy(
         subject_set_id=subject_set_id,
         target_id=target_id,
         position_rule_id=position_rule_id,
-        family_mix=family_mix,
         portfolio_construction=PortfolioConstructionSpec(
             sizing_policy=PortfolioConstructionSizingSpec(
                 sizing_method=sizing_method or "equal_weight",
@@ -91,7 +89,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
         label="Strategy Test",
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
-        family_mix="relative_strength",
         sizing_method="equal_weight",
         rebalance="every_5_steps",
         long_only=True,
@@ -110,10 +107,6 @@ def test_trading_strategy_exposes_policy_hierarchy():
     assert trading_strategy.strategy_id == "strategy:test"
     assert trading_strategy.subject_set_id == "core_crypto"
     assert trading_strategy.target_id == "residual_return_3d"
-    assert (
-        trading_strategy.family_mix
-        == "relative_strength"
-    )
     assert trading_strategy.top_k == 5
     assert trading_strategy.portfolio_construction.sizing_method == "equal_weight"
     assert trading_strategy.rebalance_interval_steps == 5
@@ -155,7 +148,6 @@ def test_trading_strategy_top_k_round_trips_from_document():
             "subject_set_id": "core_crypto",
             "target_id": "residual_return_3d",
             "position_rule_id": "constant_hold",
-            "family_mix": None,
             "portfolio_construction": {},
             "trading_environment": {},
             "rebalance_interval_steps": 1,
@@ -176,7 +168,6 @@ def test_trading_strategy_spec_round_trips_through_document():
         label="Strategy Test",
         subject_set_id="core_crypto",
         target_id="residual_return_3d",
-        family_mix="relative_strength",
         sizing_method="equal_weight",
         rebalance="every_5_steps",
         long_only=True,

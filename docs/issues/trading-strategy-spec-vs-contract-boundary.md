@@ -9,10 +9,9 @@ The glossary defines a trading strategy as a black-box decision component that
 consumes observations and optional internal state, then produces trading actions
 and optional next strategy state.
 
-Keeping shared fields such as `position_rule_id`, `family_mix`,
-`portfolio_construction`, and `rebalance_interval_steps` on a
-single spec can accidentally require every strategy implementation to share the
-same internal shape.
+Keeping shared fields such as `position_rule_id`, `portfolio_construction`,
+and `rebalance_interval_steps` on a single spec can accidentally require every
+strategy implementation to share the same internal shape.
 
 ## Direction
 
@@ -20,8 +19,8 @@ Treat `TradingStrategy` as an input/output contract, not as a common data
 schema. The strategy should be a black box from the evaluator, backtest runner,
 and market/world simulation perspective. Those callers may know the strategy
 input and output contract, but they should not interpret internal fields such
-as `position_rule_id`, `family_mix`, `selection_kind`, or portfolio construction
-settings as the strategy implementation.
+as `position_rule_id` or portfolio construction settings as the strategy
+implementation.
 
 `TradingStrategySpec` should remain only where a persisted manifest-style record
 is still needed. It should not become the domain model for all strategy
@@ -56,6 +55,10 @@ provenance as a source for strategy configuration.
 
 `TradingStrategySpec.selection_kind` was removed. Top-k selection now uses the
 presence of `top_k`; a separate selection mode was redundant.
+
+`TradingStrategySpec.family_mix` was removed. The only active use was a
+dual-momentum lookback encoded as a string, which now belongs to the
+dual-momentum signal builder as `lookback_steps`.
 
 ## Close Condition
 

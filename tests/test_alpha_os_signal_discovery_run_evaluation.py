@@ -50,7 +50,6 @@ def _build_trading_strategy(
     subject_set_id: str | None = None,
     target_id: str | None = None,
     position_rule_id: str = "constant_hold",
-    family_mix: str | None = None,
     sizing_method: str | None = None,
     rebalance: str | None = None,
     long_only: bool | None = None,
@@ -75,7 +74,6 @@ def _build_trading_strategy(
         subject_set_id=subject_set_id,
         target_id=target_id,
         position_rule_id=position_rule_id,
-        family_mix=family_mix,
         portfolio_construction=PortfolioConstructionSpec(
             sizing_policy=PortfolioConstructionSizingSpec(
                 sizing_method=sizing_method or "equal_weight",
@@ -122,7 +120,7 @@ def test_dual_momentum_signal_lags_trailing_returns_to_avoid_lookahead():
                 dtype=float,
             )
         },
-        family_mix="lookback=2",
+        lookback_steps=2,
     )
 
     signal = signals["AAA"]
@@ -306,7 +304,6 @@ def test_direct_strategy_backtest_routes_crypto_regime_momentum_eligibility(
         portfolio_construction=strategy.portfolio_construction,
         trading_environment=TradingEnvironment(),
         position_rule_id=strategy.position_rule_id,
-        family_mix=strategy.family_mix,
         top_k=strategy.top_k,
     )
 
