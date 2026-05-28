@@ -38,7 +38,6 @@ class PortfolioConstructionSpec:
     effective_n_floor: float | None = None
     top_gross_share_cap_n: int | None = None
     top_gross_share_cap: float | None = None
-    concentration_min_abs_weight: float = 0.001
 
     def __post_init__(self) -> None:
         if not isinstance(self.sizing_method, str) or not self.sizing_method:
@@ -118,14 +117,6 @@ class PortfolioConstructionSpec:
                 raise ValueError(
                     "portfolio_construction.top_gross_share_cap must be in [0, 1]"
                 )
-        if not isinstance(self.concentration_min_abs_weight, int | float):
-            raise ValueError(
-                "portfolio_construction.concentration_min_abs_weight must be numeric"
-            )
-        if float(self.concentration_min_abs_weight) < 0.0:
-            raise ValueError(
-                "portfolio_construction.concentration_min_abs_weight must be >= 0"
-            )
         for field_name, caps in (
             ("asset_class_weight_caps", self.asset_class_weight_caps),
             ("cluster_weight_caps", self.cluster_weight_caps),

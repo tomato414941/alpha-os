@@ -37,6 +37,9 @@ from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFin
 from .scoring import numerai_corr
 
 
+_CONCENTRATION_MIN_ABS_WEIGHT = 0.001
+
+
 @dataclass(frozen=True)
 class StrategyBacktestRangeSummary:
     label: str
@@ -1110,7 +1113,7 @@ def _range_summary_from_variant_results(
     concentration = _portfolio_concentration_from_backtest(
         selected,
         subject_set=subject_set,
-        min_abs_weight=portfolio_construction.concentration_min_abs_weight,
+        min_abs_weight=_CONCENTRATION_MIN_ABS_WEIGHT,
         top_intent_n=portfolio_construction.top_gross_share_cap_n,
     )
     construction_impact = _portfolio_construction_stage_impact_from_backtest(selected)
