@@ -23,22 +23,6 @@ SIZING_METHODS = (
 )
 
 
-CONSTRUCTION_KINDS = (
-    "active_portfolio",
-    "hold_baseline",
-)
-
-
-def normalize_construction_kind(value: str | None) -> str:
-    construction_kind = "active_portfolio" if value in {None, "", "-"} else str(value)
-    if construction_kind not in CONSTRUCTION_KINDS:
-        raise ValueError(
-            "portfolio_construction.construction_kind must be one of: "
-            + ", ".join(CONSTRUCTION_KINDS)
-        )
-    return construction_kind
-
-
 def _normalized_weight_caps(
     document: dict[str, Any],
     field_name: str,
@@ -111,7 +95,6 @@ class PortfolioConstructionSizingSpec:
 
 @dataclass(frozen=True)
 class PortfolioConstructionSpec:
-    construction_kind: str = "active_portfolio"
     sizing_policy: PortfolioConstructionSizingSpec = field(
         default_factory=PortfolioConstructionSizingSpec
     )
@@ -131,8 +114,6 @@ class PortfolioConstructionSpec:
     concentration_min_abs_weight: float = 0.001
 
     def __post_init__(self) -> None:
-        construction_kind = normalize_construction_kind(self.construction_kind)
-        object.__setattr__(self, "construction_kind", construction_kind)
         if (
             not isinstance(self.rebalance_interval_steps, int)
             or self.rebalance_interval_steps < 1
@@ -228,27 +209,6 @@ class PortfolioConstructionSpec:
                     raise ValueError(
                         f"portfolio_construction.{field_name}[{group_name}] must be >= 0"
                     )
-        if construction_kind == "hold_baseline":
-            if self.active_weight_budget not in {None, 0.0}:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define active_weight_budget"
-                )
-            if self.target_vol is not None:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define target_vol"
-                )
-            if self.asset_class_weight_caps:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define asset_class_weight_caps"
-                )
-            if self.cluster_weight_caps:
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define cluster_weight_caps"
-                )
-            if _has_concentration_constraints(self):
-                raise ValueError(
-                    "hold_baseline portfolio_construction must not define concentration constraints"
-                )
 
     @property
     def sizing_method(self) -> str:
@@ -260,7 +220,6 @@ class PortfolioConstructionSpec:
 
     def to_document(self) -> dict[str, Any]:
         document: dict[str, Any] = {
-            "construction_kind": self.construction_kind,
             "sizing_policy": self.sizing_policy.to_document(),
             "direction_mode": self.direction_mode,
         }
@@ -296,13 +255,7 @@ class PortfolioConstructionSpec:
             return cls()
         if not isinstance(document, dict):
             raise ValueError("portfolio_construction must be an object")
-        construction_kind = normalize_construction_kind(
-            None
-            if document.get("construction_kind") is None
-            else str(document.get("construction_kind"))
-        )
         return cls(
-            construction_kind=construction_kind,
             sizing_policy=PortfolioConstructionSizingSpec.from_document(
                 document.get("sizing_policy")
             ),
