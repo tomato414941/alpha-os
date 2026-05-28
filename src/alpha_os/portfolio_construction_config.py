@@ -12,6 +12,7 @@ from .portfolio_direction import normalize_portfolio_direction_mode
 
 SIZING_METHODS = (
     "signal_weighted",
+    "constrained_signal_weighted",
     "signed_mean_variance",
     "equal_weight",
     "minimum_variance",
@@ -22,36 +23,10 @@ SIZING_METHODS = (
 )
 
 
-SIZING_ENGINES = (
-    "rule_based",
-    "optimizer",
-    "history_based",
-)
-
-
-SIZING_FAMILIES = (
-    "signed_optimizer",
-    "risk_budget_allocator",
-)
-
-
 CONSTRUCTION_KINDS = (
     "active_portfolio",
     "hold_baseline",
 )
-
-
-def inferred_sizing_family(sizing_method: str) -> str:
-    if sizing_method in {
-        "equal_weight",
-        "minimum_variance",
-        "risk_budgeting",
-        "hierarchical_risk_parity",
-        "conviction_adjusted_hierarchical_risk_parity",
-        "diversified_risk_budget",
-    }:
-        return "risk_budget_allocator"
-    return "signed_optimizer"
 
 
 def normalize_construction_kind(value: str | None) -> str:
@@ -100,33 +75,12 @@ def _active_weight_budget_from_document(document: dict[str, Any]) -> float | Non
 @dataclass(frozen=True)
 class PortfolioConstructionSizingSpec:
     sizing_method: str = "signal_weighted"
-    sizing_engine: str | None = None
-    sizing_family: str | None = None
 
     def __post_init__(self) -> None:
         sizing_method = self.sizing_method
-        sizing_engine = self.sizing_engine
-        sizing_family = self.sizing_family
-        if sizing_engine is None:
-            sizing_engine = (
-                "rule_based"
-                if sizing_method == "signal_weighted"
-                else "optimizer"
-                if sizing_method == "signed_mean_variance"
-                else "history_based"
-            )
-            object.__setattr__(self, "sizing_engine", sizing_engine)
-        if sizing_family is None:
-            sizing_family = inferred_sizing_family(sizing_method)
-            object.__setattr__(self, "sizing_family", sizing_family)
         if not isinstance(sizing_method, str) or not sizing_method:
             raise ValueError(
                 "portfolio_construction.sizing_policy.sizing_method "
-                "must be a string"
-            )
-        if not isinstance(sizing_engine, str) or not sizing_engine:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_engine "
                 "must be a string"
             )
         if sizing_method not in SIZING_METHODS:
@@ -135,46 +89,10 @@ class PortfolioConstructionSizingSpec:
                 "must be one of: "
                 + ", ".join(SIZING_METHODS)
             )
-        if sizing_engine not in SIZING_ENGINES:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_engine "
-                "must be one of: "
-                + ", ".join(SIZING_ENGINES)
-            )
-        if sizing_family not in SIZING_FAMILIES:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_family "
-                "must be one of: "
-                + ", ".join(SIZING_FAMILIES)
-            )
-        expected_sizing_family = inferred_sizing_family(sizing_method)
-        if sizing_family != expected_sizing_family:
-            raise ValueError(
-                "portfolio_construction.sizing_policy.sizing_family must match "
-                f"{sizing_method}: {expected_sizing_family}"
-            )
-        if sizing_method == "signal_weighted":
-            if sizing_engine not in {"rule_based", "optimizer"}:
-                raise ValueError(
-                    "signal_weighted sizing_method requires "
-                    "rule_based or optimizer sizing_engine"
-                )
-        elif sizing_method == "signed_mean_variance":
-            if sizing_engine != "optimizer":
-                raise ValueError(
-                    "signed_mean_variance sizing_method requires "
-                    "sizing_engine=optimizer"
-                )
-        elif sizing_engine != "history_based":
-            raise ValueError(
-                "history-based sizing methods require sizing_engine=history_based"
-            )
 
     def to_document(self) -> dict[str, Any]:
         return {
             "sizing_method": self.sizing_method,
-            "sizing_engine": self.sizing_engine,
-            "sizing_family": self.sizing_family,
         }
 
     @classmethod
@@ -188,16 +106,6 @@ class PortfolioConstructionSizingSpec:
             raise ValueError("portfolio_construction.sizing_policy must be an object")
         return cls(
             sizing_method=str(document.get("sizing_method", "signal_weighted")),
-            sizing_engine=(
-                None
-                if document.get("sizing_engine") is None
-                else str(document.get("sizing_engine"))
-            ),
-            sizing_family=(
-                None
-                if document.get("sizing_family") is None
-                else str(document.get("sizing_family"))
-            ),
         )
 
 
@@ -345,10 +253,6 @@ class PortfolioConstructionSpec:
     @property
     def sizing_method(self) -> str:
         return self.sizing_policy.sizing_method
-
-    @property
-    def sizing_engine(self) -> str:
-        return self.sizing_policy.sizing_engine
 
     @property
     def constraint_boundary(self) -> PortfolioConstraintBoundary:

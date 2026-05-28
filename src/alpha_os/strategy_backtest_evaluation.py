@@ -500,7 +500,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
         source=source,
         metrics={
             "selected_sizing_method": portfolio_construction.sizing_method,
-            "selected_sizing_engine": portfolio_construction.sizing_engine,
             "optimizer_backend": _ordered_unique_join(
                 [item.optimizer_backend for item in range_summaries]
             ),
@@ -805,17 +804,14 @@ def _max_drawdown_from_step_returns(values: list[float]) -> float:
 def _uses_expensive_sizing_optimizer(
     portfolio_construction: PortfolioConstructionSpec,
 ) -> bool:
-    return (
-        portfolio_construction.sizing_method == "signed_mean_variance"
-        and portfolio_construction.sizing_engine == "optimizer"
-    )
+    return portfolio_construction.sizing_method == "signed_mean_variance"
 
 
 def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
     if config.sizing_method == "signal_weighted":
-        if config.sizing_engine == "optimizer":
-            return ConstrainedOptimizerSizingPolicy()
         return SignalWeightedSizingPolicy()
+    if config.sizing_method == "constrained_signal_weighted":
+        return ConstrainedOptimizerSizingPolicy()
     if config.sizing_method == "signed_mean_variance":
         return SignedMeanVarianceSizingPolicy()
     if config.sizing_method in {
@@ -834,7 +830,7 @@ def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
         )
     raise ValueError(
         "unsupported decision backtest config: "
-        f"{config.sizing_method}/{config.sizing_engine}"
+        f"{config.sizing_method}"
     )
 
 
@@ -842,18 +838,12 @@ def _portfolio_construction_variant(
     portfolio_construction: PortfolioConstructionSpec,
     *,
     sizing_method: str | None = None,
-    sizing_engine: str | None = None,
     rebalance_interval_steps: int | None = None,
 ) -> PortfolioConstructionSpec:
     sizing_policy = portfolio_construction.sizing_policy
-    if sizing_method is not None or sizing_engine is not None:
+    if sizing_method is not None:
         sizing_policy = PortfolioConstructionSizingSpec(
-            sizing_method=(
-                sizing_policy.sizing_method if sizing_method is None else sizing_method
-            ),
-            sizing_engine=(
-                sizing_policy.sizing_engine if sizing_engine is None else sizing_engine
-            ),
+            sizing_method=sizing_method,
         )
     return replace(
         portfolio_construction,
@@ -1087,7 +1077,6 @@ def evaluate_range_backtest_variants(
         portfolio_construction=_portfolio_construction_variant(
             portfolio_construction,
             sizing_method="equal_weight",
-            sizing_engine="history_based",
         ),
         trading_environment=trading_environment,
         top_k=top_k,
@@ -1101,7 +1090,6 @@ def evaluate_range_backtest_variants(
         portfolio_construction=_portfolio_construction_variant(
             portfolio_construction,
             sizing_method="equal_weight",
-            sizing_engine="history_based",
             rebalance_interval_steps=1,
         ),
         trading_environment=trading_environment,
