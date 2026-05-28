@@ -4,7 +4,6 @@ import hashlib
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from .evaluation_cost_config import TradingEnvironment
 from .portfolio_construction_config import (
     PortfolioConstructionSpec,
 )
@@ -133,7 +132,6 @@ class TradingStrategySpec:
     subject_set_id: str | None
     target_id: str | None
     portfolio_construction: PortfolioConstructionSpec
-    trading_environment: TradingEnvironment
     created_at: str
     top_k: int | None = None
     rebalance_interval_steps: int = 1
@@ -171,7 +169,6 @@ class TradingStrategySpec:
             "subject_set_id": self.subject_set_id,
             "target_id": self.target_id,
             "portfolio_construction": self.portfolio_construction.to_document(),
-            "trading_environment": self.trading_environment.to_document(),
             "rebalance_interval_steps": self.rebalance_interval_steps,
             "created_at": self.created_at,
         }
@@ -198,9 +195,6 @@ class TradingStrategySpec:
                 None if document.get("target_id") is None else str(document["target_id"])
             ),
             portfolio_construction=portfolio_construction,
-            trading_environment=TradingEnvironment.from_document(
-                document.get("trading_environment")
-            ),
             top_k=None if top_k is None else int(top_k),
             rebalance_interval_steps=int(rebalance_interval_steps),
             created_at=str(document["created_at"]),

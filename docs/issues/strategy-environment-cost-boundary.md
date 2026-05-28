@@ -2,7 +2,7 @@
 
 ## Problem
 
-`TradingStrategySpec` carries `TradingEnvironment`.
+`TradingStrategySpec` used to carry `TradingEnvironment`.
 
 Those names make the fields look strategy-owned, but their current main use is
 to feed evaluation cost assumptions:
@@ -57,6 +57,9 @@ or because the environment cost assumptions changed.
 ## Direction
 
 Do not add more environment cost fields to `TradingStrategySpec`.
+
+`TradingStrategySpec.trading_environment` has been removed. `TradingEnvironment`
+remains as an explicit evaluation/backtest input.
 
 Before moving fields, classify each use as one of:
 

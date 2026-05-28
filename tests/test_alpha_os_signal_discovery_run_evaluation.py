@@ -20,29 +20,6 @@ def _evaluation_policy_parts(
     return {}
 
 
-def _strategy_portfolio_document(
-    *,
-    sizing_method: str,
-    direction_mode: str | None,
-    gross_exposure_cap: float | None,
-    top_k: int | None = None,
-    rebalance_interval_steps: int = 1,
-    trading_environment: dict[str, object] | None = None,
-) -> dict[str, object]:
-    document: dict[str, object] = {
-        "portfolio_construction": {
-            "sizing_policy": {"sizing_method": sizing_method},
-            "direction_mode": direction_mode,
-            "gross_exposure_cap": gross_exposure_cap,
-        },
-        "trading_environment": ({} if trading_environment is None else trading_environment),
-        "rebalance_interval_steps": rebalance_interval_steps,
-    }
-    if top_k is not None:
-        document["top_k"] = top_k
-    return document
-
-
 def _build_trading_strategy(
     *,
     strategy_id: str,
@@ -54,13 +31,8 @@ def _build_trading_strategy(
     long_only: bool | None = None,
     top_k: int | None = None,
     gross_exposure_cap: float | None = None,
-    market_impact_bps: float | None = None,
-    fee_bps: float | None = None,
-    bid_ask_spread_bps: float | None = None,
-    turnover_cost_rate: float | None = None,
     created_at: str = "2026-04-05T00:00:00Z",
 ):
-    from alpha_os.evaluation_cost_config import TradingEnvironment
     from alpha_os.trading_strategy import TradingStrategySpec
     from alpha_os.portfolio_construction_config import (
         PortfolioConstructionSizingSpec,
@@ -84,12 +56,6 @@ def _build_trading_strategy(
                 else None
             ),
             gross_exposure_cap=gross_exposure_cap,
-        ),
-        trading_environment=TradingEnvironment(
-            turnover_cost_rate=(0.0 if turnover_cost_rate is None else turnover_cost_rate),
-            market_impact_bps=0.0 if market_impact_bps is None else market_impact_bps,
-            fee_bps=0.0 if fee_bps is None else fee_bps,
-            bid_ask_spread_bps=(0.0 if bid_ask_spread_bps is None else bid_ask_spread_bps),
         ),
         created_at=created_at,
         rebalance_interval_steps=(

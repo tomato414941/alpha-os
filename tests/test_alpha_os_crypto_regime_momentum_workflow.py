@@ -55,13 +55,6 @@ def _strategy_document(
                 "gross_leverage_cap": 1.0,
                 "net_exposure_target": 1.0,
             },
-            "trading_environment": {
-                "market_impact_bps": 0.0,
-                "fee_bps": 5.0,
-                "bid_ask_spread_bps": 0.0,
-                "funding_bps_per_step": 0.0,
-                "borrow_fee_bps_per_step": 0.0,
-            },
             "rebalance_interval_steps": 1,
             "created_at": "2026-05-01T00:00:00+00:00",
         }

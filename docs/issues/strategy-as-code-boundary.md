@@ -18,7 +18,6 @@ Checked-in runtime manifests now keep evaluation target selection as plain
 Current strategy documents often include:
 
 - `portfolio_construction`
-- `trading_environment`
 - `signal_discovery_id`
 
 Some of these fields may be part of the strategy. Others look more like
