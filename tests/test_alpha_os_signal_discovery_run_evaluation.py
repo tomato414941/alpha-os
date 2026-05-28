@@ -5,45 +5,6 @@ import pandas as pd
 import pytest
 
 
-def _build_trading_strategy(
-    *,
-    strategy_id: str,
-    label: str,
-    subject_set_id: str | None = None,
-    target_id: str | None = None,
-    sizing_method: str | None = None,
-    long_only: bool | None = None,
-    gross_exposure_cap: float | None = None,
-    created_at: str = "2026-04-05T00:00:00Z",
-):
-    from alpha_os.trading_strategy import TradingStrategySpec
-    from alpha_os.portfolio_construction_config import (
-        PortfolioConstructionSizingSpec,
-        PortfolioConstructionSpec,
-    )
-
-    return TradingStrategySpec(
-        strategy_id=strategy_id,
-        label=label,
-        subject_set_id=subject_set_id,
-        target_id=target_id,
-        portfolio_construction=PortfolioConstructionSpec(
-            sizing_policy=PortfolioConstructionSizingSpec(
-                sizing_method=sizing_method or "equal_weight",
-            ),
-            direction_mode=(
-                "long_only"
-                if long_only is True
-                else "long_short"
-                if long_only is False
-                else None
-            ),
-            gross_exposure_cap=gross_exposure_cap,
-        ),
-        created_at=created_at,
-    )
-
-
 def test_crypto_regime_momentum_eligibility_requires_trend_confirmation_and_funding_filter():
     from alpha_os.position_rules import (
         crypto_regime_momentum_eligibility_series_by_subject,
@@ -148,12 +109,14 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
         SubjectSet,
     )
 
-    strategy = _build_trading_strategy(
-        strategy_id="strategy:crypto_regime_momentum",
-        label="Crypto regime momentum",
-        subject_set_id="crypto",
-        target_id="residual_return_1d",
-        long_only=True,
+    from alpha_os.portfolio_construction_config import (
+        PortfolioConstructionSizingSpec,
+        PortfolioConstructionSpec,
+    )
+
+    portfolio_construction = PortfolioConstructionSpec(
+        sizing_policy=PortfolioConstructionSizingSpec(sizing_method="equal_weight"),
+        direction_mode="long_only",
     )
     subject_set = SubjectSet(
         subject_set_id="crypto",
@@ -213,7 +176,7 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
             ),
         ),
         base_url="fixture://",
-        portfolio_construction=strategy.portfolio_construction,
+        portfolio_construction=portfolio_construction,
         trading_environment=TradingEnvironment(),
         top_k=None,
         position_signal_series_by_subject={
