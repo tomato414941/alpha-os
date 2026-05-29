@@ -33,9 +33,6 @@ def _build_trace_result():
         traded_contracts=0.5,
     )
     return DecisionBacktestResult(
-        portfolio_id="portfolio:test",
-        subject_set_id="core_crypto",
-        target_id="residual_return_3d",
         subject_ids=("BTC_spot",),
         steps=(
             DecisionBacktestStep(

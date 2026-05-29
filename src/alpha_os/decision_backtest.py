@@ -176,7 +176,6 @@ class DecisionBacktestStep:
 
 @dataclass(frozen=True)
 class DecisionBacktestResult:
-    target_id: str
     subject_ids: tuple[str, ...]
     steps: tuple[DecisionBacktestStep, ...]
     initial_capital_base: float = 1.0
@@ -436,7 +435,6 @@ def run_decision_backtest(
         )
 
     return DecisionBacktestResult(
-        target_id=backtest_input.target_id,
         subject_ids=subject_ids,
         steps=tuple(steps),
         initial_capital_base=max(float(backtest_input.initial_capital_base), 0.0),
