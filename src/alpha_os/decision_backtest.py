@@ -8,7 +8,6 @@ from .contract_boundaries import (
     PortfolioConstraintBoundary,
     default_portfolio_constraint_boundary,
 )
-from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_decision import (
     CostInput,
     DependenceInput,
@@ -64,7 +63,6 @@ class DecisionBacktestInput:
     subject_set_id: str | None
     target_id: str
     subject_series: tuple[SubjectBacktestSeries, ...]
-    portfolio_construction: PortfolioConstructionSpec | None = None
     initial_capital_base: float = 1.0
     initial_positions: tuple[PortfolioPositionState, ...] = ()
     initial_holding_period_days: int = 0
@@ -95,33 +93,6 @@ class DecisionBacktestInput:
         return tuple(item.subject_id for item in self.subject_series)
 
     def __post_init__(self) -> None:
-        construction = self.portfolio_construction
-        if construction is not None:
-            object.__setattr__(
-                self,
-                "asset_class_weight_caps",
-                dict(construction.asset_class_weight_caps),
-            )
-            object.__setattr__(
-                self,
-                "cluster_weight_caps",
-                dict(construction.cluster_weight_caps),
-            )
-            object.__setattr__(self, "gross_exposure_cap", construction.gross_exposure_cap)
-            object.__setattr__(self, "target_vol", construction.target_vol)
-            object.__setattr__(self, "gross_leverage_cap", construction.gross_leverage_cap)
-            object.__setattr__(self, "net_exposure_target", construction.net_exposure_target)
-            object.__setattr__(
-                self,
-                "rebalance_interval_steps",
-                construction.rebalance_interval_steps,
-            )
-            object.__setattr__(self, "direction_mode", construction.direction_mode)
-            object.__setattr__(
-                self,
-                "active_weight_budget",
-                construction.active_weight_budget,
-            )
         direction_mode = normalize_portfolio_direction_mode(self.direction_mode)
         object.__setattr__(self, "direction_mode", direction_mode)
 
