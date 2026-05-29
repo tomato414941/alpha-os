@@ -6,14 +6,11 @@ import pandas as pd
 
 from .decision_backtest import DependenceBacktestSeries, SubjectBacktestSeries
 from .evaluation_spec import EvaluationDateRange
-from .prediction_diagnostics import PredictionDiagnostics, build_prediction_diagnostics
 
 
 @dataclass(frozen=True)
 class RangeBacktestDataset:
     label: str
-    predictive_corr: float
-    prediction_diagnostics: PredictionDiagnostics
     subject_series: tuple[SubjectBacktestSeries, ...]
     dependence_series: tuple[DependenceBacktestSeries, ...] = ()
 
@@ -114,18 +111,7 @@ def build_direct_range_backtest_dataset(
         )
     if not subject_series:
         return None
-    prediction_diagnostics = build_prediction_diagnostics(
-        signal_series_by_subject={
-            item.subject_id: item.signal_series for item in subject_series
-        },
-        forward_return_series_by_subject={
-            item.subject_id: item.realized_return_series for item in subject_series
-        },
-        group_by_subject=None,
-    )
     return RangeBacktestDataset(
         label=date_range.label,
-        predictive_corr=prediction_diagnostics.mean_signal_forward_corr,
-        prediction_diagnostics=prediction_diagnostics,
         subject_series=tuple(subject_series),
     )

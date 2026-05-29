@@ -9,7 +9,7 @@ receives observations and state, then produces trading actions or portfolio
 decisions. Evaluating that component should mean evaluating what happens when it
 interacts with the market or backtest environment.
 
-Today this policy rollout concern is mixed with predictor diagnostics and
+This policy rollout concern used to be mixed with predictor diagnostics and
 signal-level metrics.
 
 ## Why This Matters
@@ -28,8 +28,9 @@ explicitly asking for both predictor quality and rollout behavior.
 Metrics such as `decision_quality`, `portfolio_concentration`, `execution_trace`,
 `cost_drag`, and `robustness` are closer to policy or actor rollout evaluation.
 
-They currently live alongside predictor-oriented metrics such as
-`prediction_diagnostics`.
+`prediction_diagnostics` has been removed from the ordinary strategy evaluation
+metric groups. Predictor-quality metrics still need an explicit owner and
+execution path.
 
 ## Desired Direction
 

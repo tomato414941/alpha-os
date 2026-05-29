@@ -19,7 +19,6 @@ from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_metric_group_result_builders import (
     build_portfolio_construction_trace_metric_group_result,
-    build_prediction_diagnostics_metric_group_result,
 )
 from .portfolio_decision import SubjectSet
 from .portfolio_concentration import concentration_snapshot, top_n_gross_share
@@ -44,13 +43,6 @@ _CONCENTRATION_MIN_ABS_WEIGHT = 0.001
 @dataclass(frozen=True)
 class StrategyBacktestRangeSummary:
     label: str
-    predictive_corr: float
-    prediction_hit_rate: float
-    prediction_long_short_spread: float
-    prediction_long_bucket_return: float
-    prediction_short_bucket_return: float
-    prediction_coverage: float
-    prediction_positive_group_fraction: float
     portfolio_target_return_corr: float
     decision_net_return: float
     decision_drawdown: float
@@ -241,13 +233,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
     all_step_net_returns: list[float],
     portfolio_construction: PortfolioConstructionSpec,
 ) -> tuple[dict[str, EvaluationMetricGroupResult], tuple[EvaluationFailureFindingGroup, ...]]:
-    prediction_diagnostics_metric_group_result = (
-        build_prediction_diagnostics_metric_group_result(
-            source=source,
-            range_summaries=range_summaries,
-            mean=_mean,
-        )
-    )
     portfolio_target_return_alignment_metric_group_result = EvaluationMetricGroupResult(
         metric_group_name="portfolio_target_return_alignment",
         source=source,
@@ -667,10 +652,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
         source=source,
         metrics={
             "range_count": len(range_summaries),
-            "predictive_corr_std": round(
-                _std([item.predictive_corr for item in range_summaries]),
-                6,
-            ),
             "portfolio_target_return_corr_std": round(
                 _std([item.portfolio_target_return_corr for item in range_summaries]),
                 6,
@@ -694,9 +675,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
     )
     return (
         {
-            prediction_diagnostics_metric_group_result.metric_group_name: (
-                prediction_diagnostics_metric_group_result
-            ),
             portfolio_target_return_alignment_metric_group_result.metric_group_name: (
                 portfolio_target_return_alignment_metric_group_result
             ),
@@ -935,17 +913,6 @@ def _range_summary_from_variant_results(
     optimizer_diagnostics = _optimizer_diagnostics_from_backtest(selected)
     return StrategyBacktestRangeSummary(
         label=dataset.label,
-        predictive_corr=dataset.predictive_corr,
-        prediction_hit_rate=dataset.prediction_diagnostics.mean_signal_hit_rate,
-        prediction_long_short_spread=(
-            dataset.prediction_diagnostics.mean_long_short_forward_spread
-        ),
-        prediction_long_bucket_return=dataset.prediction_diagnostics.long_bucket_return,
-        prediction_short_bucket_return=dataset.prediction_diagnostics.short_bucket_return,
-        prediction_coverage=dataset.prediction_diagnostics.coverage,
-        prediction_positive_group_fraction=(
-            dataset.prediction_diagnostics.positive_group_fraction
-        ),
         portfolio_target_return_corr=_portfolio_target_return_corr(selected),
         decision_net_return=selected.net_return_total,
         decision_drawdown=selected.max_drawdown,
@@ -1245,7 +1212,6 @@ def _failure_finding_groups(
         range_summaries,
         key=lambda row: (
             row.decision_net_return,
-            row.predictive_corr,
             row.portfolio_target_return_corr,
             row.label,
         ),

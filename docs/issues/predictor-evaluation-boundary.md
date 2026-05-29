@@ -8,8 +8,8 @@ Some existing metrics, such as `prediction_diagnostics`, check whether signal or
 model outputs explain a prediction target. That is closer to ML model
 validation than to trading strategy rollout evaluation.
 
-Today those metrics are built inside the strategy evaluation path, so predictor
-quality is coupled to decision backtest execution.
+Those metrics used to be built inside the strategy evaluation path, coupling
+predictor quality to decision backtest execution.
 
 ## Why This Matters
 
@@ -27,8 +27,9 @@ state unless those are explicitly part of the predictor being evaluated.
 `prediction_diagnostics` currently computes signal-vs-forward-return metrics,
 including correlation, hit rate, long/short bucket spread, and coverage.
 
-Those metrics are useful, but they are currently grouped with strategy
-evaluation metrics.
+`prediction_diagnostics` has now been removed from the ordinary strategy
+evaluation metric groups. The remaining gap is that predictor evaluation still
+does not have its own explicit execution path.
 
 ## Desired Direction
 

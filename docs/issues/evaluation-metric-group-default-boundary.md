@@ -23,9 +23,9 @@ At least two different jobs are currently mixed:
 - policy rollout evaluation: what happens when a trading strategy interacts
   with a market or backtest environment
 
-Using one default metric group list makes predictor metrics such as
-`prediction_diagnostics` run as part of ordinary strategy evaluation unless the
-caller opts out.
+The default list used to include predictor metrics such as
+`prediction_diagnostics`, causing them to run as part of ordinary strategy
+evaluation unless the caller opted out.
 
 ## Current Finding
 
@@ -34,9 +34,9 @@ caller opts out.
 `EvaluationMetricConfig.from_document()` also defaults missing
 `metric_group_names` to the full `EVALUATION_METRIC_GROUP_NAMES` list.
 
-`EVALUATION_METRIC_GROUP_NAMES` is currently the same tuple as
-`DECISION_EVALUATION_METRIC_GROUP_NAMES`, even though the list includes metrics
-that are closer to predictor evaluation.
+`prediction_diagnostics` has been removed from
+`DECISION_EVALUATION_METRIC_GROUP_NAMES`. The remaining concern is that missing
+metric groups still imply a broad default list for policy rollout evaluation.
 
 ## Desired Direction
 
