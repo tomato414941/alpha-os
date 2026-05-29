@@ -84,7 +84,6 @@ class DecisionBacktestInput:
     funding_bps_per_step: float = 0.0
     borrow_fee_bps_per_step: float = 0.0
     rebalance_interval_steps: int = 1
-    long_only: bool = False
     direction_mode: str | None = None
     top_k: int | None = None
     active_weight_budget: float | None = None
@@ -117,19 +116,14 @@ class DecisionBacktestInput:
                 "rebalance_interval_steps",
                 construction.rebalance_interval_steps,
             )
-            object.__setattr__(self, "long_only", construction.long_only)
             object.__setattr__(self, "direction_mode", construction.direction_mode)
             object.__setattr__(
                 self,
                 "active_weight_budget",
                 construction.active_weight_budget,
             )
-        direction_mode = normalize_portfolio_direction_mode(
-            self.direction_mode,
-            long_only=self.long_only,
-        )
+        direction_mode = normalize_portfolio_direction_mode(self.direction_mode)
         object.__setattr__(self, "direction_mode", direction_mode)
-        object.__setattr__(self, "long_only", direction_mode == "long_only")
 
 
 @dataclass(frozen=True)
@@ -551,7 +545,6 @@ def _build_rebalance_targets(
                 for subject_id in subject_ids
             },
             constraint_boundary=default_portfolio_constraint_boundary(),
-            long_only=backtest_input.long_only,
             direction_mode=backtest_input.direction_mode,
             top_k=backtest_input.top_k,
             active_weight_budget=backtest_input.active_weight_budget,
@@ -1109,7 +1102,6 @@ def constrained_targets_by_subject(
     target_vol: float | None = None,
     risk_by_subject: dict[str, float] | None = None,
     constraint_boundary: PortfolioConstraintBoundary | None = None,
-    long_only: bool,
     top_k: int | None,
     asset_class_by_subject: dict[str, str],
     cluster_by_subject: dict[str, str],
@@ -1128,7 +1120,6 @@ def constrained_targets_by_subject(
         target_vol=target_vol,
         risk_by_subject=risk_by_subject,
         constraint_boundary=constraint_boundary or default_portfolio_constraint_boundary(),
-        long_only=long_only,
         direction_mode=direction_mode,
         top_k=top_k,
         active_weight_budget=active_weight_budget,

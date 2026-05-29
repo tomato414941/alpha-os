@@ -25,7 +25,6 @@ class PortfolioConstructionRequest:
     target_vol: float | None
     risk_by_subject: dict[str, float]
     constraint_boundary: PortfolioConstraintBoundary
-    long_only: bool
     direction_mode: str
     top_k: int | None
     active_weight_budget: float | None
@@ -135,7 +134,6 @@ def build_portfolio_construction_request(
     target_vol: float | None = None,
     risk_by_subject: dict[str, float] | None = None,
     constraint_boundary: PortfolioConstraintBoundary | None = None,
-    long_only: bool,
     top_k: int | None,
     asset_class_by_subject: dict[str, str],
     cluster_by_subject: dict[str, str],
@@ -144,10 +142,7 @@ def build_portfolio_construction_request(
     active_weight_budget: float | None = None,
     direction_mode: str | None = None,
 ) -> PortfolioConstructionRequest:
-    normalized_direction_mode = normalize_portfolio_direction_mode(
-        direction_mode,
-        long_only=long_only,
-    )
+    normalized_direction_mode = normalize_portfolio_direction_mode(direction_mode)
     return PortfolioConstructionRequest(
         targets=targets,
         current_weights=current_weights,
@@ -158,7 +153,6 @@ def build_portfolio_construction_request(
         target_vol=target_vol,
         risk_by_subject=risk_by_subject or {},
         constraint_boundary=constraint_boundary or default_portfolio_constraint_boundary(),
-        long_only=normalized_direction_mode == "long_only",
         direction_mode=normalized_direction_mode,
         top_k=top_k,
         active_weight_budget=active_weight_budget,

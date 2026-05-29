@@ -55,9 +55,7 @@ class PortfolioConstructionSpec:
             raise ValueError(
                 "portfolio_construction.rebalance_interval_steps must be >= 1"
             )
-        direction_mode = normalize_portfolio_direction_mode(
-            self.direction_mode,
-        )
+        direction_mode = normalize_portfolio_direction_mode(self.direction_mode)
         object.__setattr__(self, "direction_mode", direction_mode)
         if self.active_weight_budget is not None:
             if not isinstance(self.active_weight_budget, int | float):
