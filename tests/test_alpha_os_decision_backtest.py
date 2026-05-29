@@ -1150,8 +1150,8 @@ def test_run_decision_backtest_can_rebalance_weekly_long_only_top_k():
                 gross_exposure_cap=1.0,
                 rebalance_interval_steps=2,
                 direction_mode="long_only",
+                top_k=2,
             ),
-            top_k=2,
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="EWJ_etf",

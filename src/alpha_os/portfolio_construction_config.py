@@ -32,6 +32,7 @@ class PortfolioConstructionSpec:
     target_vol: float | None = None
     gross_leverage_cap: float | None = None
     net_exposure_target: float | None = None
+    top_k: int | None = None
     asset_class_weight_caps: dict[str, float] = field(default_factory=dict)
     cluster_weight_caps: dict[str, float] = field(default_factory=dict)
     effective_n_floor: float | None = None
@@ -84,6 +85,10 @@ class PortfolioConstructionSpec:
             int | float,
         ):
             raise ValueError("portfolio_construction.net_exposure_target must be numeric")
+        if self.top_k is not None and (
+            not isinstance(self.top_k, int) or self.top_k < 1
+        ):
+            raise ValueError("portfolio_construction.top_k must be >= 1")
         if self.effective_n_floor is not None:
             if not isinstance(self.effective_n_floor, int | float):
                 raise ValueError(

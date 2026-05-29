@@ -72,7 +72,6 @@ class DecisionBacktestInput:
     asset_class_by_subject: dict[str, str] | None = None
     cluster_by_subject: dict[str, str] | None = None
     trading_environment: TradingEnvironment = field(default_factory=TradingEnvironment)
-    top_k: int | None = None
     historical_return_lookback_steps: int | None = None
 
     @property
@@ -494,7 +493,7 @@ def _build_rebalance_targets(
             },
             constraint_boundary=default_portfolio_constraint_boundary(),
             direction_mode=backtest_input.portfolio_construction.direction_mode,
-            top_k=backtest_input.top_k,
+            top_k=backtest_input.portfolio_construction.top_k,
             active_weight_budget=backtest_input.portfolio_construction.active_weight_budget,
             asset_class_by_subject=(
                 {}
