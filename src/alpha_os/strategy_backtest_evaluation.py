@@ -891,7 +891,6 @@ def _run_backtest_variant(
             historical_return_lookback_steps=_historical_return_lookback_steps(
                 portfolio_construction
             ),
-            subject_metadata_by_subject=_subject_metadata_by_subject(subject_set),
         ),
         sizing_policy=_portfolio_sizing_policy_from_config(portfolio_construction),
     )
@@ -909,31 +908,6 @@ def _historical_return_lookback_steps(
     }:
         return 756
     return None
-
-
-def _subject_metadata_by_subject(
-    subject_set: SubjectSet | None,
-) -> dict[str, dict[str, str]]:
-    if subject_set is None:
-        return {}
-    metadata: dict[str, dict[str, str]] = {}
-    for subject_id in subject_set.subject_ids:
-        instrument = subject_set.instrument_for_subject(subject_id)
-        if instrument is None:
-            metadata[subject_id] = {}
-            continue
-        values = {
-            "instrument_type": instrument.instrument_type,
-            "asset_class": instrument.asset_class,
-            "region": instrument.region,
-            "cluster": instrument.cluster,
-        }
-        metadata[subject_id] = {
-            key: value
-            for key, value in values.items()
-            if value is not None
-        }
-    return metadata
 
 
 def build_direct_range_backtest_dataset(

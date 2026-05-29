@@ -84,7 +84,6 @@ class DecisionBacktestInput:
     top_k: int | None = None
     active_weight_budget: float | None = None
     historical_return_lookback_steps: int | None = None
-    subject_metadata_by_subject: dict[str, dict[str, str]] | None = None
 
     @property
     def subject_ids(self) -> tuple[str, ...]:
@@ -665,11 +664,7 @@ def _portfolio_decision_input_for_backtest_row(
                 subject_ids=subject_ids,
             ),
         ),
-        subject_metadata_by_subject=(
-            {}
-            if backtest_input.subject_metadata_by_subject is None
-            else backtest_input.subject_metadata_by_subject
-        ),
+        subject_metadata_by_subject=_subject_metadata_by_subject(backtest_input),
     )
 
 
@@ -687,6 +682,25 @@ def build_hold_targets(
         )
         for subject_id in subject_ids
     }
+
+
+def _subject_metadata_by_subject(
+    backtest_input: DecisionBacktestInput,
+) -> dict[str, dict[str, str]]:
+    metadata: dict[str, dict[str, str]] = {}
+    asset_class_by_subject = backtest_input.asset_class_by_subject or {}
+    cluster_by_subject = backtest_input.cluster_by_subject or {}
+    for subject_id in sorted(set(asset_class_by_subject) | set(cluster_by_subject)):
+        values = {
+            "asset_class": asset_class_by_subject.get(subject_id),
+            "cluster": cluster_by_subject.get(subject_id),
+        }
+        metadata[subject_id] = {
+            key: value
+            for key, value in values.items()
+            if value is not None
+        }
+    return metadata
 
 
 def build_decision_backtest_subject_steps(
