@@ -60,7 +60,6 @@ class DependenceBacktestSeries:
 @dataclass(frozen=True)
 class DecisionBacktestInput:
     portfolio_id: str
-    subject_set_id: str | None
     target_id: str
     subject_series: tuple[SubjectBacktestSeries, ...]
     initial_capital_base: float = 1.0
@@ -180,7 +179,6 @@ class DecisionBacktestStep:
 @dataclass(frozen=True)
 class DecisionBacktestResult:
     portfolio_id: str
-    subject_set_id: str | None
     target_id: str
     subject_ids: tuple[str, ...]
     steps: tuple[DecisionBacktestStep, ...]
@@ -442,7 +440,6 @@ def run_decision_backtest(
 
     return DecisionBacktestResult(
         portfolio_id=backtest_input.portfolio_id,
-        subject_set_id=backtest_input.subject_set_id,
         target_id=backtest_input.target_id,
         subject_ids=subject_ids,
         steps=tuple(steps),

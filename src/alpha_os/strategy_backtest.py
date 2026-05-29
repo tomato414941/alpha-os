@@ -126,7 +126,6 @@ def run_strategy_backtest(
         subject_return_series_by_subject=subject_return_series_by_subject,
         evaluation_date_ranges=evaluation_date_ranges,
         target_id=target_id,
-        subject_set_id=str(subject_set.subject_set_id),
         subject_set=subject_set,
         signal_series_by_subject=position_signal_series_by_subject,
         funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,

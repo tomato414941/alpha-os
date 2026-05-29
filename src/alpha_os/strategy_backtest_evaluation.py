@@ -149,7 +149,6 @@ def evaluate_range_backtest_dataset_builder(
     *,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     build_dataset_for_range: Callable[[EvaluationDateRange], RangeBacktestDataset | None],
-    subject_set_id: str | None,
     subject_set: SubjectSet | None,
     target_id: str,
     portfolio_construction: PortfolioConstructionSpec,
@@ -164,7 +163,6 @@ def evaluate_range_backtest_dataset_builder(
         if dataset is None:
             continue
         variant_results = evaluate_range_backtest_variants(
-            subject_set_id=subject_set_id,
             subject_set=subject_set,
             target_id=target_id,
             dataset=dataset,
@@ -224,7 +222,6 @@ def build_direct_strategy_evaluation_metric_group_results(
     subject_return_series_by_subject: dict[str, pd.Series],
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     target_id: str,
-    subject_set_id: str | None,
     subject_set: SubjectSet | None = None,
     signal_series_by_subject: dict[str, pd.Series] | None = None,
     funding_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
@@ -253,7 +250,6 @@ def build_direct_strategy_evaluation_metric_group_results(
     loop_result = evaluate_range_backtest_dataset_builder(
         evaluation_date_ranges=evaluation_date_ranges,
         build_dataset_for_range=build_dataset_for_range,
-        subject_set_id=subject_set_id,
         subject_set=subject_set,
         target_id=target_id,
         portfolio_construction=portfolio_construction,
@@ -857,7 +853,6 @@ def _portfolio_construction_variant(
 
 def _run_backtest_variant(
     *,
-    subject_set_id: str | None,
     subject_set: SubjectSet | None = None,
     target_id: str,
     subject_series: tuple[SubjectBacktestSeries, ...],
@@ -869,7 +864,6 @@ def _run_backtest_variant(
     return run_decision_backtest(
         DecisionBacktestInput(
             portfolio_id="evaluation",
-            subject_set_id=subject_set_id,
             asset_class_by_subject=(
                 {} if subject_set is None else subject_set.asset_class_by_subject
             ),
@@ -1031,7 +1025,6 @@ def build_direct_range_backtest_dataset(
 
 def evaluate_range_backtest_variants(
     *,
-    subject_set_id: str | None,
     subject_set: SubjectSet | None,
     target_id: str,
     dataset: RangeBacktestDataset,
@@ -1040,7 +1033,6 @@ def evaluate_range_backtest_variants(
     top_k: int | None,
 ) -> RangeBacktestVariantResults:
     selected = _run_backtest_variant(
-        subject_set_id=subject_set_id,
         subject_set=subject_set,
         target_id=target_id,
         subject_series=dataset.subject_series,
@@ -1053,7 +1045,6 @@ def evaluate_range_backtest_variants(
         daily_rebalance = selected
     else:
         daily_rebalance = _run_backtest_variant(
-            subject_set_id=subject_set_id,
             subject_set=subject_set,
             target_id=target_id,
             subject_series=dataset.subject_series,
@@ -1066,7 +1057,6 @@ def evaluate_range_backtest_variants(
             top_k=top_k,
         )
     equal_weight = _run_backtest_variant(
-        subject_set_id=subject_set_id,
         subject_set=subject_set,
         target_id=target_id,
         subject_series=dataset.subject_series,
@@ -1079,7 +1069,6 @@ def evaluate_range_backtest_variants(
         top_k=top_k,
     )
     equal_weight_daily = _run_backtest_variant(
-        subject_set_id=subject_set_id,
         subject_set=subject_set,
         target_id=target_id,
         subject_series=dataset.subject_series,
