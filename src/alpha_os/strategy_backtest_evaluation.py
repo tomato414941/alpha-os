@@ -8,7 +8,6 @@ from math import sqrt
 import pandas as pd
 
 from .decision_backtest import (
-    DependenceBacktestSeries,
     DecisionBacktestInput,
     DecisionBacktestResult,
     SubjectBacktestSeries,
@@ -129,12 +128,25 @@ def evaluate_range_backtest_series_builder(
         subject_series = build_series_for_range(date_range)
         if subject_series is None:
             continue
-        backtest_result = run_range_decision_backtest(
-            subject_set=subject_set,
-            subject_series=subject_series,
-            dependence_series=(),
-            portfolio_construction=portfolio_construction,
-            trading_environment=trading_environment,
+        backtest_result = run_decision_backtest(
+            DecisionBacktestInput(
+                asset_class_by_subject=(
+                    {} if subject_set is None else subject_set.asset_class_by_subject
+                ),
+                cluster_by_subject=(
+                    {} if subject_set is None else subject_set.cluster_by_subject
+                ),
+                subject_series=subject_series,
+                dependence_series=(),
+                portfolio_construction=portfolio_construction,
+                trading_environment=trading_environment,
+                historical_return_lookback_steps=_historical_return_lookback_steps(
+                    portfolio_construction
+                ),
+            ),
+            strategy=PortfolioSizingTradingStrategy(
+                _portfolio_sizing_policy_from_config(portfolio_construction)
+            ),
         )
         all_step_net_returns.extend(
             float(step.net_return) for step in backtest_result.steps
@@ -591,36 +603,6 @@ def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
     raise ValueError(
         "unsupported decision backtest config: "
         f"{config.sizing_method}"
-    )
-
-
-def run_range_decision_backtest(
-    *,
-    subject_set: SubjectSet | None = None,
-    subject_series: tuple[SubjectBacktestSeries, ...],
-    dependence_series: tuple[DependenceBacktestSeries, ...],
-    portfolio_construction: PortfolioConstructionSpec,
-    trading_environment: TradingEnvironment,
-) -> DecisionBacktestResult:
-    return run_decision_backtest(
-        DecisionBacktestInput(
-            asset_class_by_subject=(
-                {} if subject_set is None else subject_set.asset_class_by_subject
-            ),
-            cluster_by_subject=(
-                {} if subject_set is None else subject_set.cluster_by_subject
-            ),
-            subject_series=subject_series,
-            dependence_series=dependence_series,
-            portfolio_construction=portfolio_construction,
-            trading_environment=trading_environment,
-            historical_return_lookback_steps=_historical_return_lookback_steps(
-                portfolio_construction
-            ),
-        ),
-        strategy=PortfolioSizingTradingStrategy(
-            _portfolio_sizing_policy_from_config(portfolio_construction)
-        ),
     )
 
 
