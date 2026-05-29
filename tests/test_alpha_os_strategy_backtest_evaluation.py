@@ -7,7 +7,7 @@ def test_build_direct_range_backtest_dataset_fills_missing_signals_with_zero():
     import pandas as pd
 
     from alpha_os.evaluation_spec import EvaluationDateRange
-    from alpha_os.strategy_backtest_evaluation import (
+    from alpha_os.range_backtest_dataset import (
         build_direct_range_backtest_dataset,
     )
 
