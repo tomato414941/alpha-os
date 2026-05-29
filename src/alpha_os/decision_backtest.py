@@ -24,7 +24,7 @@ from .portfolio_decision import (
     SizingDiagnostics,
     UncertaintyInput,
 )
-from .portfolio_direction import normalize_portfolio_direction_mode
+from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_construction_pipeline import (
     PortfolioConstructionStageTrace,
     build_portfolio_construction_request,
@@ -66,28 +66,18 @@ class DecisionBacktestInput:
     initial_positions: tuple[PortfolioPositionState, ...] = ()
     initial_holding_period_days: int = 0
     dependence_series: tuple[DependenceBacktestSeries, ...] = ()
+    portfolio_construction: PortfolioConstructionSpec = field(
+        default_factory=PortfolioConstructionSpec
+    )
     asset_class_by_subject: dict[str, str] | None = None
     cluster_by_subject: dict[str, str] | None = None
-    asset_class_weight_caps: dict[str, float] | None = None
-    cluster_weight_caps: dict[str, float] | None = None
-    gross_exposure_cap: float | None = None
-    target_vol: float | None = None
-    gross_leverage_cap: float | None = None
-    net_exposure_target: float | None = None
     trading_environment: TradingEnvironment = field(default_factory=TradingEnvironment)
-    rebalance_interval_steps: int = 1
-    direction_mode: str | None = None
     top_k: int | None = None
-    active_weight_budget: float | None = None
     historical_return_lookback_steps: int | None = None
 
     @property
     def subject_ids(self) -> tuple[str, ...]:
         return tuple(item.subject_id for item in self.subject_series)
-
-    def __post_init__(self) -> None:
-        direction_mode = normalize_portfolio_direction_mode(self.direction_mode)
-        object.__setattr__(self, "direction_mode", direction_mode)
 
 
 @dataclass(frozen=True)
@@ -459,7 +449,7 @@ def _is_rebalance_step(
     state: PortfolioBacktestState,
     backtest_input: DecisionBacktestInput,
 ) -> bool:
-    return state.rebalance_step % max(backtest_input.rebalance_interval_steps, 1) == 0
+    return state.rebalance_step % max(backtest_input.portfolio_construction.rebalance_interval_steps, 1) == 0
 
 
 def _build_rebalance_targets(
@@ -491,10 +481,10 @@ def _build_rebalance_targets(
             targets=decision_output.targets,
             current_weights=state.current_weights,
             capital_base=state.capital_base,
-            gross_exposure_cap=backtest_input.gross_exposure_cap,
-            gross_leverage_cap=backtest_input.gross_leverage_cap,
-            net_exposure_target=backtest_input.net_exposure_target,
-            target_vol=backtest_input.target_vol,
+            gross_exposure_cap=backtest_input.portfolio_construction.gross_exposure_cap,
+            gross_leverage_cap=backtest_input.portfolio_construction.gross_leverage_cap,
+            net_exposure_target=backtest_input.portfolio_construction.net_exposure_target,
+            target_vol=backtest_input.portfolio_construction.target_vol,
             risk_by_subject={
                 subject_id: max(
                     float(_optional_value(row, ("risk", subject_id)) or 0.0),
@@ -503,9 +493,9 @@ def _build_rebalance_targets(
                 for subject_id in subject_ids
             },
             constraint_boundary=default_portfolio_constraint_boundary(),
-            direction_mode=backtest_input.direction_mode,
+            direction_mode=backtest_input.portfolio_construction.direction_mode,
             top_k=backtest_input.top_k,
-            active_weight_budget=backtest_input.active_weight_budget,
+            active_weight_budget=backtest_input.portfolio_construction.active_weight_budget,
             asset_class_by_subject=(
                 {}
                 if backtest_input.asset_class_by_subject is None
@@ -518,13 +508,13 @@ def _build_rebalance_targets(
             ),
             asset_class_weight_caps=(
                 {}
-                if backtest_input.asset_class_weight_caps is None
-                else backtest_input.asset_class_weight_caps
+                if backtest_input.portfolio_construction.asset_class_weight_caps is None
+                else backtest_input.portfolio_construction.asset_class_weight_caps
             ),
             cluster_weight_caps=(
                 {}
-                if backtest_input.cluster_weight_caps is None
-                else backtest_input.cluster_weight_caps
+                if backtest_input.portfolio_construction.cluster_weight_caps is None
+                else backtest_input.portfolio_construction.cluster_weight_caps
             ),
         )
     )
@@ -621,7 +611,7 @@ def _portfolio_decision_input_for_backtest_row(
                 for subject_id in subject_ids
             ),
             capital_base=state.net_equity,
-            gross_limit=backtest_input.gross_exposure_cap,
+            gross_limit=backtest_input.portfolio_construction.gross_exposure_cap,
             rebalance_step=state.rebalance_step,
             holding_period_days=state.holding_period_days,
             recent_turnover=state.recent_turnover,
@@ -1152,12 +1142,12 @@ def _risk_inputs_for_row(
                 value=max(risk_value, 0.0),
             )
         )
-    if backtest_input.gross_exposure_cap is not None:
+    if backtest_input.portfolio_construction.gross_exposure_cap is not None:
         items.append(
             RiskInput(
                 name="gross_exposure_cap",
                 subject_id=None,
-                value=float(backtest_input.gross_exposure_cap),
+                value=float(backtest_input.portfolio_construction.gross_exposure_cap),
                 unit="weight",
             )
         )

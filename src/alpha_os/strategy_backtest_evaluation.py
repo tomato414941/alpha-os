@@ -868,19 +868,11 @@ def _run_backtest_variant(
             cluster_by_subject=(
                 {} if subject_set is None else subject_set.cluster_by_subject
             ),
-            asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
-            cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
             subject_series=subject_series,
             dependence_series=dependence_series,
+            portfolio_construction=portfolio_construction,
             trading_environment=trading_environment,
-            gross_exposure_cap=portfolio_construction.gross_exposure_cap,
-            target_vol=portfolio_construction.target_vol,
-            gross_leverage_cap=portfolio_construction.gross_leverage_cap,
-            net_exposure_target=portfolio_construction.net_exposure_target,
-            rebalance_interval_steps=portfolio_construction.rebalance_interval_steps,
-            direction_mode=portfolio_construction.direction_mode,
             top_k=top_k,
-            active_weight_budget=portfolio_construction.active_weight_budget,
             historical_return_lookback_steps=_historical_return_lookback_steps(
                 portfolio_construction
             ),

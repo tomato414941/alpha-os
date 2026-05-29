@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from alpha_os.evaluation_cost_config import TradingEnvironment
+from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
 
 
 def _subject_step(step, subject_id: str):
@@ -85,7 +86,7 @@ def test_run_decision_backtest_reports_leverage_separately_from_notional():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            gross_leverage_cap=1.0,
+            portfolio_construction=PortfolioConstructionSpec(gross_leverage_cap=1.0),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="ES",
@@ -119,7 +120,9 @@ def test_run_decision_backtest_can_run_short_only_direction_mode():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            direction_mode="short_only",
+            portfolio_construction=PortfolioConstructionSpec(
+                direction_mode="short_only"
+            ),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="LONG_SIGNAL",
@@ -154,9 +157,11 @@ def test_run_decision_backtest_drifts_current_weights_between_rebalances():
     index = ["2026-03-24", "2026-03-25", "2026-03-26"]
     result = run_decision_backtest(
         DecisionBacktestInput(
-            gross_exposure_cap=1.0,
-            rebalance_interval_steps=2,
-            direction_mode="long_only",
+            portfolio_construction=PortfolioConstructionSpec(
+                gross_exposure_cap=1.0,
+                rebalance_interval_steps=2,
+                direction_mode="long_only",
+            ),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="A",
@@ -534,7 +539,7 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
                     ),
                 ),
             ),
-            gross_exposure_cap=1.0,
+            portfolio_construction=PortfolioConstructionSpec(gross_exposure_cap=1.0),
         )
     )
 
@@ -878,7 +883,7 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
                     risk_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
                 ),
             ),
-            gross_exposure_cap=1.0,
+            portfolio_construction=PortfolioConstructionSpec(gross_exposure_cap=1.0),
         ),
         sizing_policy=ConstrainedOptimizerSizingPolicy(dependence_aversion=2.0),
     )
@@ -911,9 +916,9 @@ def test_run_decision_backtest_respects_asset_class_weight_caps():
                 "NQ_future": "equity_index",
                 "ZN_future": "rates",
             },
-            asset_class_weight_caps={
-                "equity_index": 0.25,
-            },
+            portfolio_construction=PortfolioConstructionSpec(
+                asset_class_weight_caps={"equity_index": 0.25}
+            ),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="ES_future",
@@ -957,9 +962,9 @@ def test_run_decision_backtest_respects_cluster_weight_caps():
                 "RTY_future": "eq_us",
                 "ZN_future": "rates_us",
             },
-            cluster_weight_caps={
-                "eq_us": 0.18,
-            },
+            portfolio_construction=PortfolioConstructionSpec(
+                cluster_weight_caps={"eq_us": 0.18}
+            ),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="ES_future",
@@ -1107,8 +1112,10 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
                     historical_return_series=stable_history,
                 ),
             ),
-            gross_exposure_cap=1.0,
-            active_weight_budget=0.0,
+            portfolio_construction=PortfolioConstructionSpec(
+                gross_exposure_cap=1.0,
+                active_weight_budget=0.0,
+            ),
         ),
         sizing_policy=HistoricalModelSizingPolicy(
             model_type="minimum_variance",
@@ -1139,9 +1146,11 @@ def test_run_decision_backtest_can_rebalance_weekly_long_only_top_k():
     ]
     result = run_decision_backtest(
         DecisionBacktestInput(
-            gross_exposure_cap=1.0,
-            rebalance_interval_steps=2,
-            direction_mode="long_only",
+            portfolio_construction=PortfolioConstructionSpec(
+                gross_exposure_cap=1.0,
+                rebalance_interval_steps=2,
+                direction_mode="long_only",
+            ),
             top_k=2,
             subject_series=(
                 SubjectBacktestSeries(
