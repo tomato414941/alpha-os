@@ -229,7 +229,6 @@ def build_direct_strategy_evaluation_metric_group_results(
     contract_multiplier_by_subject: dict[str, float] | None = None,
     portfolio_construction: PortfolioConstructionSpec = PortfolioConstructionSpec(),
     trading_environment: TradingEnvironment = TradingEnvironment(),
-    top_k: int | None = None,
     signal_value: float = 1.0,
 ) -> StrategyEvaluationResult:
     def build_dataset_for_range(
@@ -247,16 +246,11 @@ def build_direct_strategy_evaluation_metric_group_results(
             signal_value=signal_value,
         )
 
-    backtest_portfolio_construction = (
-        portfolio_construction
-        if top_k is None
-        else replace(portfolio_construction, top_k=top_k)
-    )
     loop_result = evaluate_range_backtest_dataset_builder(
         evaluation_date_ranges=evaluation_date_ranges,
         build_dataset_for_range=build_dataset_for_range,
         subject_set=subject_set,
-        portfolio_construction=backtest_portfolio_construction,
+        portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,
     )
     (

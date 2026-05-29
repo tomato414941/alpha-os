@@ -107,7 +107,6 @@ def run_strategy_backtest(
     base_url: str,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
-    top_k: int | None,
     position_signal_series_by_subject: dict[str, pd.Series] | None = None,
 ):
     validate_subject_set_universe_contract(subject_set)
@@ -134,5 +133,4 @@ def run_strategy_backtest(
         contract_multiplier_by_subject=contract_multiplier_by_subject,
         portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,
-        top_k=top_k,
     )

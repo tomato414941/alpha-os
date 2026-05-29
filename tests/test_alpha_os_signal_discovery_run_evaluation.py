@@ -175,7 +175,6 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
         base_url="fixture://",
         portfolio_construction=portfolio_construction,
         trading_environment=TradingEnvironment(),
-        top_k=None,
         position_signal_series_by_subject={
             "BTC": pd.Series(
                 {
