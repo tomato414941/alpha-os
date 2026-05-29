@@ -1,5 +1,7 @@
 # Backtest SubjectSet Input Boundary
 
+Status: Closed
+
 ## Problem
 
 `run_strategy_backtest()` currently accepts `SubjectSet` directly.
@@ -40,16 +42,26 @@ For alpha-os, the analogous split should be:
 - strategy/policy produces portfolio decisions
 - backtest/evaluation measures the resulting trajectory
 
-## Current Marker
+## Resolution
 
-`run_strategy_backtest()` still accepts:
+`run_strategy_backtest()` was removed.
+
+`SubjectSet` interpretation remains in
+`subject_backtest_inputs_from_subject_set()`, which is an input construction
+helper. Backtest/evaluation execution now receives already resolved market
+series through `build_direct_strategy_evaluation_metric_group_results()`.
+
+## Previous Marker
+
+`run_strategy_backtest()` accepted:
 
 ```python
 subject_set: SubjectSet
 ```
 
-The old `build_subject_set_feature_planes()` helper was removed, but subject
-binding and observation loading still happen inside `run_strategy_backtest()`.
+The old `build_subject_set_feature_planes()` helper had already been removed,
+but subject binding and observation loading still happened inside
+`run_strategy_backtest()`.
 
 ## Desired Direction
 

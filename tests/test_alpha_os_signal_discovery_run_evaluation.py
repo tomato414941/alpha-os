@@ -95,25 +95,14 @@ def test_crypto_regime_momentum_eligibility_requires_funding_rate():
         )
 
 
-def test_direct_strategy_backtest_accepts_position_signal_series(
+def test_subject_backtest_inputs_from_subject_set_resolves_market_series(
     monkeypatch,
 ):
     import alpha_os.strategy_backtest as strategy_backtest
-    from alpha_os.evaluation_cost_config import (
-        TradingEnvironment,
-    )
-    from alpha_os.evaluation_spec import EvaluationDateRange
     from alpha_os.portfolio_decision import (
         ObservationSpec,
         SubjectObservationBinding,
         SubjectSet,
-    )
-
-    from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
-
-    portfolio_construction = PortfolioConstructionSpec(
-        sizing_method="equal_weight",
-        direction_mode="long_only",
     )
     subject_set = SubjectSet(
         subject_set_id="crypto",
@@ -138,7 +127,6 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
     close = pd.Series(index=frame_index, dtype=float)
     close.iloc[0] = 100.0
     close.iloc[1:] = (close.iloc[0] * (1.0 + returns).cumprod()).to_numpy()
-    captured: dict[str, object] = {}
 
     monkeypatch.setattr(
         strategy_backtest,
@@ -152,41 +140,21 @@ def test_direct_strategy_backtest_accepts_position_signal_series(
         ),
     )
 
-    def capture_metric_group_results(**kwargs):
-        captured.update(kwargs)
-        return ((), ())
-
-    monkeypatch.setattr(
-        strategy_backtest,
-        "build_direct_strategy_evaluation_metric_group_results",
-        capture_metric_group_results,
-    )
-
-    strategy_backtest.run_strategy_backtest(
+    (
+        subject_return_series_by_subject,
+        funding_rate_series_by_subject,
+        funding_cost_bps_series_by_subject,
+        borrow_fee_bps_series_by_subject,
+        roll_cost_bps_series_by_subject,
+        contract_multiplier_by_subject,
+    ) = strategy_backtest.subject_backtest_inputs_from_subject_set(
         subject_set=subject_set,
-        target_id="residual_return_1d",
-        evaluation_date_ranges=(
-            EvaluationDateRange(
-                label="eval",
-                start_date="2026-01-01",
-                end_date="2026-03-02",
-            ),
-        ),
         base_url="fixture://",
-        portfolio_construction=portfolio_construction,
-        trading_environment=TradingEnvironment(),
-        position_signal_series_by_subject={
-            "BTC": pd.Series(
-                {
-                    "2026-01-29": 0.0,
-                    "2026-01-30": 1.0,
-                },
-                dtype=float,
-            )
-        },
     )
 
-    signal_series_by_subject = captured["signal_series_by_subject"]
-    assert signal_series_by_subject["BTC"].loc["2026-01-29"] == pytest.approx(0.0)
-    assert signal_series_by_subject["BTC"].loc["2026-01-30"] == pytest.approx(1.0)
-    assert captured["funding_cost_bps_series_by_subject"]["BTC"].iloc[0] == (pytest.approx(10.0))
+    assert subject_return_series_by_subject["BTC"].iloc[0] == pytest.approx(0.01)
+    assert funding_rate_series_by_subject["BTC"].iloc[0] == pytest.approx(0.001)
+    assert funding_cost_bps_series_by_subject["BTC"].iloc[0] == pytest.approx(10.0)
+    assert borrow_fee_bps_series_by_subject == {}
+    assert roll_cost_bps_series_by_subject == {}
+    assert contract_multiplier_by_subject == {}

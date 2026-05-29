@@ -40,13 +40,13 @@ strategies should expose the input and output types they actually use.
 `alpha_os.trading_strategy` is the black-box strategy protocol plus concrete
 strategy adapters that satisfy it.
 
-`run_strategy_backtest()` no longer accepts `TradingStrategySpec`; it accepts
-the explicit behavior fields it needs.
+`run_strategy_backtest()` was removed. The remaining direct backtest path
+accepts already resolved market series instead of interpreting `SubjectSet`
+bindings and observation sources inside a strategy-named runner.
 
-This is still not the desired architecture. The current direct strategy
-backtest path adapts persisted fields into a backtest recipe instead of running
-a `TradingStrategy` black-box contract. It is better described as a temporary
-strategy-spec interpreter backtest than as a true trading-strategy backtest.
+This is still not the desired architecture. The current direct backtest path
+adapts explicit recipe inputs into a `PortfolioSizingTradingStrategy` instead
+of receiving an arbitrary `TradingStrategy` black-box contract.
 
 `evaluation_execution_strategy.py` was removed with the old DB-backed evaluation
 runner path.
@@ -79,6 +79,10 @@ a string field.
 and the unused `build_trading_strategy_id()` helper were removed. Those values
 belong to explicit backtest/allocation inputs, not to the shared strategy
 record.
+
+`run_strategy_backtest(top_k=...)` and
+`build_direct_strategy_evaluation_metric_group_results(top_k=...)` were removed.
+`top_k` now belongs to `PortfolioConstructionSpec`.
 
 ## Close Condition
 
