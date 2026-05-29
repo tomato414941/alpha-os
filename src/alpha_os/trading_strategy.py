@@ -11,16 +11,6 @@ StrategyInputT = TypeVar("StrategyInputT", contravariant=True)
 StrategyOutputT = TypeVar("StrategyOutputT", covariant=True)
 
 
-@dataclass(frozen=True)
-class TradingStrategyInput:
-    pass
-
-
-@dataclass(frozen=True)
-class TradingStrategyOutput:
-    pass
-
-
 class TradingStrategy(Protocol[StrategyInputT, StrategyOutputT]):
     """Black-box policy contract for trading decision components."""
 

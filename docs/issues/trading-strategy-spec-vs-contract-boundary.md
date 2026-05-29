@@ -32,13 +32,13 @@ hide their internal structure unless a specific caller needs it.
 `alpha_os.trading_strategy.TradingStrategy` is the intended black-box strategy
 contract.
 
-`TradingStrategyInput` and `TradingStrategyOutput` are intentionally empty for
-now. They mark the contract boundary without making trading strategy depend on
-the pre-existing `PortfolioDecisionInput` / `PortfolioDecisionOutput` types.
+`TradingStrategy` is a generic protocol. It does not provide universal
+`TradingStrategyInput` / `TradingStrategyOutput` marker classes. Concrete
+strategies should expose the input and output types they actually use.
 
 `TradingStrategySpec` has been removed. The only remaining code artifact in
-`alpha_os.trading_strategy` is the black-box strategy protocol and its input /
-output marker types.
+`alpha_os.trading_strategy` is the black-box strategy protocol plus concrete
+strategy adapters that satisfy it.
 
 `run_strategy_backtest()` no longer accepts `TradingStrategySpec`; it accepts
 the explicit behavior fields it needs.

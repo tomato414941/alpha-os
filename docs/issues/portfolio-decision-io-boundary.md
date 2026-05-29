@@ -31,8 +31,12 @@ or future RL-style policies harder to model.
 
 ## Direction
 
-Keep `TradingStrategyInput` / `TradingStrategyOutput` separate from
-`PortfolioDecisionInput` / `PortfolioDecisionOutput`.
+Do not treat `PortfolioDecisionInput` / `PortfolioDecisionOutput` as the
+universal trading strategy I/O contract.
+
+`TradingStrategy` is now a generic protocol. Concrete strategies should choose
+the input and output types they actually need instead of inheriting placeholder
+strategy I/O marker types.
 
 Before deleting or renaming the portfolio decision I/O types, decide whether
 they are:
