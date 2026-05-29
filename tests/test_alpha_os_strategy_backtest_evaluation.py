@@ -11,7 +11,7 @@ def test_build_direct_range_backtest_dataset_fills_missing_signals_with_zero():
         build_direct_range_backtest_dataset,
     )
 
-    dataset = build_direct_range_backtest_dataset(
+    subject_series = build_direct_range_backtest_dataset(
         date_range=EvaluationDateRange(
             label="direct",
             start_date="2026-04-01",
@@ -38,8 +38,8 @@ def test_build_direct_range_backtest_dataset_fills_missing_signals_with_zero():
         signal_value=1.0,
     )
 
-    assert dataset is not None
-    series_by_subject = {item.subject_id: item.signal_series for item in dataset.subject_series}
+    assert subject_series is not None
+    series_by_subject = {item.subject_id: item.signal_series for item in subject_series}
     assert series_by_subject["A"].to_dict() == {
         "2026-04-01": pytest.approx(0.5),
         "2026-04-02": pytest.approx(0.0),

@@ -1,18 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import pandas as pd
 
-from .decision_backtest import DependenceBacktestSeries, SubjectBacktestSeries
+from .decision_backtest import SubjectBacktestSeries
 from .evaluation_spec import EvaluationDateRange
-
-
-@dataclass(frozen=True)
-class RangeBacktestDataset:
-    label: str
-    subject_series: tuple[SubjectBacktestSeries, ...]
-    dependence_series: tuple[DependenceBacktestSeries, ...] = ()
 
 
 def build_direct_range_backtest_dataset_for_range(
@@ -26,7 +17,7 @@ def build_direct_range_backtest_dataset_for_range(
     roll_cost_bps_series_by_subject: dict[str, pd.Series] | None,
     contract_multiplier_by_subject: dict[str, float] | None,
     signal_value: float,
-) -> RangeBacktestDataset | None:
+) -> tuple[SubjectBacktestSeries, ...] | None:
     return build_direct_range_backtest_dataset(
         date_range=date_range,
         target_id=target_id,
@@ -51,7 +42,7 @@ def build_direct_range_backtest_dataset(
     roll_cost_bps_series_by_subject: dict[str, pd.Series] | None,
     contract_multiplier_by_subject: dict[str, float] | None,
     signal_value: float,
-) -> RangeBacktestDataset | None:
+) -> tuple[SubjectBacktestSeries, ...] | None:
     subject_series: list[SubjectBacktestSeries] = []
     for subject_id, full_returns in sorted(subject_return_series_by_subject.items()):
         range_returns = full_returns.loc[
@@ -111,7 +102,4 @@ def build_direct_range_backtest_dataset(
         )
     if not subject_series:
         return None
-    return RangeBacktestDataset(
-        label=date_range.label,
-        subject_series=tuple(subject_series),
-    )
+    return tuple(subject_series)
