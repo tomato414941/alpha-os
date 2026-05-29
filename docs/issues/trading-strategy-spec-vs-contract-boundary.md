@@ -84,6 +84,11 @@ record.
 `build_direct_strategy_evaluation_metric_group_results(top_k=...)` were removed.
 `top_k` now belongs to `PortfolioConstructionSpec`.
 
+`build_direct_strategy_evaluation_metric_group_results()` was removed. That
+old direct evaluation entrypoint adapted explicit recipe inputs into a
+`PortfolioSizingTradingStrategy` instead of receiving a `TradingStrategy`
+black box.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

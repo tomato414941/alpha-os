@@ -1,36 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
 from statistics import pstdev
 from math import sqrt
 
 import pandas as pd
 
 from .decision_backtest import (
-    DecisionBacktestInput,
     DecisionBacktestResult,
-    SubjectBacktestSeries,
-    run_decision_backtest,
 )
-from .evaluation_cost_config import TradingEnvironment
-from .evaluation_spec import EvaluationDateRange
 from .portfolio_construction_config import PortfolioConstructionSpec
 from .evaluation_metric_group_result_builders import (
     build_portfolio_construction_trace_metric_group_result,
 )
 from .portfolio_decision import SubjectSet
 from .portfolio_concentration import concentration_snapshot, top_n_gross_share
-from .range_backtest_series import (
-    build_direct_range_backtest_series_for_range,
-)
-from .portfolio_sizing_policy import (
-    ConstrainedOptimizerSizingPolicy,
-    HistoricalModelSizingPolicy,
-    SignalWeightedSizingPolicy,
-    SignedMeanVarianceSizingPolicy,
-)
-from .trading_strategy import PortfolioSizingTradingStrategy
 from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 from .scoring import numerai_corr
 
@@ -85,144 +69,6 @@ class StrategyBacktestRangeSummary:
     max_cluster_gross_share: float
     step_count: int
 
-
-@dataclass(frozen=True)
-class EvaluationTraceRangeResult:
-    range_label: str
-    result: DecisionBacktestResult
-
-
-@dataclass(frozen=True)
-class StrategyEvaluationResult:
-    metric_group_results_by_name: dict[str, EvaluationMetricGroupResult]
-    failure_finding_groups: tuple[EvaluationFailureFindingGroup, ...]
-    selected_trace_results: tuple[EvaluationTraceRangeResult, ...] = ()
-
-    def __iter__(self):
-        yield self.metric_group_results_by_name
-        yield self.failure_finding_groups
-
-
-@dataclass(frozen=True)
-class RangeBacktestEvaluationLoopResult:
-    range_summaries: tuple[StrategyBacktestRangeSummary, ...]
-    selected_trace_results: tuple[EvaluationTraceRangeResult, ...]
-    all_step_net_returns: tuple[float, ...]
-
-
-def evaluate_range_backtest_series_builder(
-    *,
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
-    build_series_for_range: Callable[
-        [EvaluationDateRange],
-        tuple[SubjectBacktestSeries, ...] | None,
-    ],
-    subject_set: SubjectSet | None,
-    portfolio_construction: PortfolioConstructionSpec,
-    trading_environment: TradingEnvironment,
-) -> RangeBacktestEvaluationLoopResult:
-    range_summaries: list[StrategyBacktestRangeSummary] = []
-    selected_trace_results: list[EvaluationTraceRangeResult] = []
-    all_step_net_returns: list[float] = []
-    for date_range in evaluation_date_ranges:
-        subject_series = build_series_for_range(date_range)
-        if subject_series is None:
-            continue
-        backtest_result = run_decision_backtest(
-            DecisionBacktestInput(
-                asset_class_by_subject=(
-                    {} if subject_set is None else subject_set.asset_class_by_subject
-                ),
-                cluster_by_subject=(
-                    {} if subject_set is None else subject_set.cluster_by_subject
-                ),
-                subject_series=subject_series,
-                dependence_series=(),
-                portfolio_construction=portfolio_construction,
-                trading_environment=trading_environment,
-                historical_return_lookback_steps=_historical_return_lookback_steps(
-                    portfolio_construction
-                ),
-            ),
-            strategy=PortfolioSizingTradingStrategy(
-                _portfolio_sizing_policy_from_config(portfolio_construction)
-            ),
-        )
-        all_step_net_returns.extend(
-            float(step.net_return) for step in backtest_result.steps
-        )
-        selected_trace_results.append(
-            EvaluationTraceRangeResult(
-                range_label=date_range.label,
-                result=backtest_result,
-            )
-        )
-        range_summaries.append(
-            _range_summary_from_backtest_result(
-                range_label=date_range.label,
-                backtest_result=backtest_result,
-                portfolio_construction=portfolio_construction,
-                subject_set=subject_set,
-            )
-        )
-    return RangeBacktestEvaluationLoopResult(
-        range_summaries=tuple(range_summaries),
-        selected_trace_results=tuple(selected_trace_results),
-        all_step_net_returns=tuple(all_step_net_returns),
-    )
-
-
-def build_direct_strategy_evaluation_metric_group_results(
-    *,
-    subject_return_series_by_subject: dict[str, pd.Series],
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
-    target_id: str,
-    subject_set: SubjectSet | None = None,
-    signal_series_by_subject: dict[str, pd.Series] | None = None,
-    funding_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    borrow_fee_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    roll_cost_bps_series_by_subject: dict[str, pd.Series] | None = None,
-    contract_multiplier_by_subject: dict[str, float] | None = None,
-    portfolio_construction: PortfolioConstructionSpec = PortfolioConstructionSpec(),
-    trading_environment: TradingEnvironment = TradingEnvironment(),
-    signal_value: float = 1.0,
-) -> StrategyEvaluationResult:
-    def build_series_for_range(
-        date_range: EvaluationDateRange,
-    ) -> tuple[SubjectBacktestSeries, ...] | None:
-        return build_direct_range_backtest_series_for_range(
-            date_range=date_range,
-            target_id=target_id,
-            subject_return_series_by_subject=subject_return_series_by_subject,
-            signal_series_by_subject=signal_series_by_subject,
-            funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
-            borrow_fee_bps_series_by_subject=borrow_fee_bps_series_by_subject,
-            roll_cost_bps_series_by_subject=roll_cost_bps_series_by_subject,
-            contract_multiplier_by_subject=contract_multiplier_by_subject,
-            signal_value=signal_value,
-        )
-
-    loop_result = evaluate_range_backtest_series_builder(
-        evaluation_date_ranges=evaluation_date_ranges,
-        build_series_for_range=build_series_for_range,
-        subject_set=subject_set,
-        portfolio_construction=portfolio_construction,
-        trading_environment=trading_environment,
-    )
-    (
-        metric_group_results_by_name,
-        failure_finding_groups,
-    ) = build_evaluation_metric_group_results_from_range_summaries(
-        source="direct_plan",
-        range_summaries=list(loop_result.range_summaries),
-        all_step_net_returns=list(loop_result.all_step_net_returns),
-        portfolio_construction=portfolio_construction,
-    )
-    return StrategyEvaluationResult(
-        metric_group_results_by_name=metric_group_results_by_name,
-        failure_finding_groups=failure_finding_groups,
-        selected_trace_results=loop_result.selected_trace_results,
-    )
 
 def build_evaluation_metric_group_results_from_range_summaries(
     *,
@@ -577,47 +423,6 @@ def _max_drawdown_from_step_returns(values: list[float]) -> float:
         if peak > 0.0:
             drawdown = max(drawdown, 1.0 - (equity / peak))
     return float(drawdown)
-
-
-def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
-    if config.sizing_method == "signal_weighted":
-        return SignalWeightedSizingPolicy()
-    if config.sizing_method == "constrained_signal_weighted":
-        return ConstrainedOptimizerSizingPolicy()
-    if config.sizing_method == "signed_mean_variance":
-        return SignedMeanVarianceSizingPolicy()
-    if config.sizing_method in {
-        "equal_weight",
-        "minimum_variance",
-        "risk_budgeting",
-        "hierarchical_risk_parity",
-        "conviction_adjusted_hierarchical_risk_parity",
-        "diversified_risk_budget",
-    }:
-        return HistoricalModelSizingPolicy(
-            model_type=config.sizing_method,
-            effective_n_floor=config.effective_n_floor,
-            top_gross_share_cap_n=config.top_gross_share_cap_n,
-            top_gross_share_cap=config.top_gross_share_cap,
-        )
-    raise ValueError(
-        "unsupported decision backtest config: "
-        f"{config.sizing_method}"
-    )
-
-
-def _historical_return_lookback_steps(
-    portfolio_construction: PortfolioConstructionSpec,
-) -> int | None:
-    sizing_method = portfolio_construction.sizing_method
-    if sizing_method == "equal_weight":
-        return 0
-    if sizing_method in {
-        "signed_mean_variance",
-        "conviction_adjusted_hierarchical_risk_parity",
-    }:
-        return 756
-    return None
 
 
 def _range_summary_from_backtest_result(
