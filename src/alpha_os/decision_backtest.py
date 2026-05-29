@@ -31,11 +31,7 @@ from .portfolio_construction_pipeline import (
     build_portfolio_construction_request,
     construct_portfolio_targets,
 )
-from .portfolio_sizing_policy import (
-    PortfolioSizingPolicy,
-    apply_portfolio_sizing_policy,
-)
-from .trading_strategy import TradingStrategy
+from .trading_strategy import PortfolioSizingTradingStrategy, TradingStrategy
 
 
 @dataclass(frozen=True)
@@ -79,17 +75,6 @@ class DecisionBacktestInput:
     @property
     def subject_ids(self) -> tuple[str, ...]:
         return tuple(item.subject_id for item in self.subject_series)
-
-
-@dataclass(frozen=True)
-class PortfolioSizingTradingStrategy:
-    sizing_policy: PortfolioSizingPolicy | None = None
-
-    def decide(self, strategy_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
-        return apply_portfolio_sizing_policy(
-            strategy_input,
-            sizing_policy=self.sizing_policy,
-        )
 
 
 @dataclass(frozen=True)

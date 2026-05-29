@@ -11,7 +11,6 @@ from .decision_backtest import (
     DependenceBacktestSeries,
     DecisionBacktestInput,
     DecisionBacktestResult,
-    PortfolioSizingTradingStrategy,
     SubjectBacktestSeries,
     run_decision_backtest,
 )
@@ -34,6 +33,7 @@ from .portfolio_sizing_policy import (
     SignalWeightedSizingPolicy,
     SignedMeanVarianceSizingPolicy,
 )
+from .trading_strategy import PortfolioSizingTradingStrategy
 from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
 from .scoring import numerai_corr
 

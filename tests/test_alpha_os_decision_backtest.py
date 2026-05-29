@@ -3,9 +3,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from alpha_os.decision_backtest import PortfolioSizingTradingStrategy
 from alpha_os.evaluation_cost_config import TradingEnvironment
 from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
+from alpha_os.trading_strategy import PortfolioSizingTradingStrategy
 
 
 def _subject_step(step, subject_id: str):
