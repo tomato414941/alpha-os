@@ -17,6 +17,7 @@ def test_build_direct_range_backtest_dataset_fills_missing_signals_with_zero():
             start_date="2026-04-01",
             end_date="2026-04-02",
         ),
+        target_id="residual_return_3d",
         subject_return_series_by_subject={
             "A": pd.Series(
                 {"2026-04-01": 0.01, "2026-04-02": 0.02},

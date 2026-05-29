@@ -40,6 +40,7 @@ class SubjectBacktestSeries:
     subject_id: str
     signal_series: pd.Series
     realized_return_series: pd.Series
+    target_id: str = "residual_return_3d"
     historical_return_series: pd.Series | None = None
     confidence_series: pd.Series | None = None
     risk_series: pd.Series | None = None
@@ -59,7 +60,6 @@ class DependenceBacktestSeries:
 
 @dataclass(frozen=True)
 class DecisionBacktestInput:
-    target_id: str
     subject_series: tuple[SubjectBacktestSeries, ...]
     initial_capital_base: float = 1.0
     initial_positions: tuple[PortfolioPositionState, ...] = ()
@@ -1115,16 +1115,22 @@ def _predictive_signals_for_row(
     subject_ids: tuple[str, ...],
 ) -> tuple[PredictiveSignalInput, ...]:
     items: list[PredictiveSignalInput] = []
+    series_by_subject = {item.subject_id: item for item in backtest_input.subject_series}
     for subject_id in subject_ids:
         signal_value = _optional_value(row, ("signal", subject_id))
         if signal_value is None:
             continue
+        subject_series = series_by_subject.get(subject_id)
         items.append(
             PredictiveSignalInput(
                 source_id="backtest_signal",
                 source_kind="backtest_signal",
                 subject_id=subject_id,
-                target_id=backtest_input.target_id,
+                target_id=(
+                    "residual_return_3d"
+                    if subject_series is None
+                    else subject_series.target_id
+                ),
                 value=signal_value,
                 confidence=_optional_value(row, ("confidence", subject_id)),
             )

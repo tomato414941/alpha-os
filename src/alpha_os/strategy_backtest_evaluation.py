@@ -150,7 +150,6 @@ def evaluate_range_backtest_dataset_builder(
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     build_dataset_for_range: Callable[[EvaluationDateRange], RangeBacktestDataset | None],
     subject_set: SubjectSet | None,
-    target_id: str,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
     top_k: int | None,
@@ -164,7 +163,6 @@ def evaluate_range_backtest_dataset_builder(
             continue
         variant_results = evaluate_range_backtest_variants(
             subject_set=subject_set,
-            target_id=target_id,
             dataset=dataset,
             portfolio_construction=portfolio_construction,
             trading_environment=trading_environment,
@@ -197,6 +195,7 @@ def evaluate_range_backtest_dataset_builder(
 def build_direct_range_backtest_dataset_for_range(
     *,
     date_range: EvaluationDateRange,
+    target_id: str,
     subject_return_series_by_subject: dict[str, pd.Series],
     signal_series_by_subject: dict[str, pd.Series] | None,
     funding_cost_bps_series_by_subject: dict[str, pd.Series] | None,
@@ -207,6 +206,7 @@ def build_direct_range_backtest_dataset_for_range(
 ) -> RangeBacktestDataset | None:
     return build_direct_range_backtest_dataset(
         date_range=date_range,
+        target_id=target_id,
         subject_return_series_by_subject=subject_return_series_by_subject,
         signal_series_by_subject=signal_series_by_subject,
         funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
@@ -238,6 +238,7 @@ def build_direct_strategy_evaluation_metric_group_results(
     ) -> RangeBacktestDataset | None:
         return build_direct_range_backtest_dataset_for_range(
             date_range=date_range,
+            target_id=target_id,
             subject_return_series_by_subject=subject_return_series_by_subject,
             signal_series_by_subject=signal_series_by_subject,
             funding_cost_bps_series_by_subject=funding_cost_bps_series_by_subject,
@@ -251,7 +252,6 @@ def build_direct_strategy_evaluation_metric_group_results(
         evaluation_date_ranges=evaluation_date_ranges,
         build_dataset_for_range=build_dataset_for_range,
         subject_set=subject_set,
-        target_id=target_id,
         portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,
         top_k=top_k,
@@ -854,7 +854,6 @@ def _portfolio_construction_variant(
 def _run_backtest_variant(
     *,
     subject_set: SubjectSet | None = None,
-    target_id: str,
     subject_series: tuple[SubjectBacktestSeries, ...],
     dependence_series: tuple[DependenceBacktestSeries, ...],
     portfolio_construction: PortfolioConstructionSpec,
@@ -871,7 +870,6 @@ def _run_backtest_variant(
             ),
             asset_class_weight_caps=dict(portfolio_construction.asset_class_weight_caps),
             cluster_weight_caps=dict(portfolio_construction.cluster_weight_caps),
-            target_id=target_id,
             subject_series=subject_series,
             dependence_series=dependence_series,
             gross_exposure_cap=portfolio_construction.gross_exposure_cap,
@@ -913,6 +911,7 @@ def _historical_return_lookback_steps(
 def build_direct_range_backtest_dataset(
     *,
     date_range: EvaluationDateRange,
+    target_id: str,
     subject_return_series_by_subject: dict[str, pd.Series],
     signal_series_by_subject: dict[str, pd.Series] | None,
     funding_cost_bps_series_by_subject: dict[str, pd.Series] | None,
@@ -954,6 +953,7 @@ def build_direct_range_backtest_dataset(
                 subject_id=subject_id,
                 signal_series=signal_series,
                 realized_return_series=range_returns.astype(float),
+                target_id=target_id,
                 historical_return_series=full_returns.astype(float),
                 funding_cost_bps_series=(
                     None
@@ -999,7 +999,6 @@ def build_direct_range_backtest_dataset(
 def evaluate_range_backtest_variants(
     *,
     subject_set: SubjectSet | None,
-    target_id: str,
     dataset: RangeBacktestDataset,
     portfolio_construction: PortfolioConstructionSpec,
     trading_environment: TradingEnvironment,
@@ -1007,7 +1006,6 @@ def evaluate_range_backtest_variants(
 ) -> RangeBacktestVariantResults:
     selected = _run_backtest_variant(
         subject_set=subject_set,
-        target_id=target_id,
         subject_series=dataset.subject_series,
         dependence_series=dataset.dependence_series,
         portfolio_construction=portfolio_construction,
@@ -1019,7 +1017,6 @@ def evaluate_range_backtest_variants(
     else:
         daily_rebalance = _run_backtest_variant(
             subject_set=subject_set,
-            target_id=target_id,
             subject_series=dataset.subject_series,
             dependence_series=dataset.dependence_series,
             portfolio_construction=_portfolio_construction_variant(
@@ -1031,7 +1028,6 @@ def evaluate_range_backtest_variants(
         )
     equal_weight = _run_backtest_variant(
         subject_set=subject_set,
-        target_id=target_id,
         subject_series=dataset.subject_series,
         dependence_series=dataset.dependence_series,
         portfolio_construction=_portfolio_construction_variant(
@@ -1043,7 +1039,6 @@ def evaluate_range_backtest_variants(
     )
     equal_weight_daily = _run_backtest_variant(
         subject_set=subject_set,
-        target_id=target_id,
         subject_series=dataset.subject_series,
         dependence_series=dataset.dependence_series,
         portfolio_construction=_portfolio_construction_variant(
