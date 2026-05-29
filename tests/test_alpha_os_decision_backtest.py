@@ -17,7 +17,6 @@ def test_run_decision_backtest_replays_signal_into_equity_curve():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -85,7 +84,6 @@ def test_run_decision_backtest_reports_leverage_separately_from_notional():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="carry",
             gross_leverage_cap=1.0,
             subject_series=(
@@ -121,7 +119,6 @@ def test_run_decision_backtest_can_run_short_only_direction_mode():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_1d",
             direction_mode="short_only",
             subject_series=(
@@ -158,7 +155,6 @@ def test_run_decision_backtest_drifts_current_weights_between_rebalances():
     index = ["2026-03-24", "2026-03-25", "2026-03-26"]
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="carry",
             gross_exposure_cap=1.0,
             rebalance_interval_steps=2,
@@ -312,7 +308,6 @@ def test_build_backtest_step_accounting_splits_cost_components():
         ),
         capital_base=1.0,
         backtest_input=DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="carry",
             subject_series=(),
             turnover_cost_rate=0.01,
@@ -347,7 +342,6 @@ def test_run_decision_backtest_charges_turnover_cost():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -387,7 +381,6 @@ def test_run_decision_backtest_charges_execution_fee_bps():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -414,7 +407,6 @@ def test_run_decision_backtest_charges_bid_ask_spread_bps():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -441,7 +433,6 @@ def test_run_decision_backtest_charges_funding_on_gross_exposure():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -473,7 +464,6 @@ def test_run_decision_backtest_tracks_subject_specific_cost_breakdown():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -509,7 +499,6 @@ def test_run_decision_backtest_charges_borrow_fee_on_short_exposure():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -535,7 +524,6 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -850,7 +838,6 @@ def test_run_decision_backtest_feeds_state_into_next_decision():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -886,7 +873,6 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -930,7 +916,6 @@ def test_run_decision_backtest_respects_asset_class_weight_caps():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_macro",
             target_id="residual_return_5d",
             asset_class_by_subject={
                 "ES_future": "equity_index",
@@ -978,7 +963,6 @@ def test_run_decision_backtest_respects_cluster_weight_caps():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_macro",
             target_id="residual_return_5d",
             cluster_by_subject={
                 "ES_future": "eq_us",
@@ -1026,7 +1010,6 @@ def test_run_decision_backtest_applies_subject_specific_cost_series_and_contract
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_macro",
             target_id="residual_return_5d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -1070,7 +1053,6 @@ def test_run_decision_backtest_tracks_notional_with_initial_capital_base():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_3d",
             initial_capital_base=2.5,
             subject_series=(
@@ -1125,7 +1107,6 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
 
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_core",
             target_id="residual_return_5d",
             subject_series=(
                 SubjectBacktestSeries(
@@ -1173,7 +1154,6 @@ def test_run_decision_backtest_can_rebalance_weekly_long_only_top_k():
     ]
     result = run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="paper_rotation",
             target_id="residual_return_5d",
             gross_exposure_cap=1.0,
             rebalance_interval_steps=2,

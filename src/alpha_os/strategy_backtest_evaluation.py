@@ -863,7 +863,6 @@ def _run_backtest_variant(
 ) -> DecisionBacktestResult:
     return run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_id="evaluation",
             asset_class_by_subject=(
                 {} if subject_set is None else subject_set.asset_class_by_subject
             ),
