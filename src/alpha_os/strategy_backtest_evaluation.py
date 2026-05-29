@@ -22,8 +22,8 @@ from .evaluation_metric_group_result_builders import (
 )
 from .portfolio_decision import SubjectSet
 from .portfolio_concentration import concentration_snapshot, top_n_gross_share
-from .range_backtest_dataset import (
-    build_direct_range_backtest_dataset_for_range,
+from .range_backtest_series import (
+    build_direct_range_backtest_series_for_range,
 )
 from .portfolio_sizing_policy import (
     ConstrainedOptimizerSizingPolicy,
@@ -128,10 +128,10 @@ class RangeBacktestEvaluationLoopResult:
     all_step_net_returns: tuple[float, ...]
 
 
-def evaluate_range_backtest_dataset_builder(
+def evaluate_range_backtest_series_builder(
     *,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
-    build_dataset_for_range: Callable[
+    build_series_for_range: Callable[
         [EvaluationDateRange],
         tuple[SubjectBacktestSeries, ...] | None,
     ],
@@ -143,7 +143,7 @@ def evaluate_range_backtest_dataset_builder(
     selected_trace_results: list[EvaluationTraceRangeResult] = []
     all_step_net_returns: list[float] = []
     for date_range in evaluation_date_ranges:
-        subject_series = build_dataset_for_range(date_range)
+        subject_series = build_series_for_range(date_range)
         if subject_series is None:
             continue
         variant_results = evaluate_range_backtest_variants(
@@ -191,10 +191,10 @@ def build_direct_strategy_evaluation_metric_group_results(
     trading_environment: TradingEnvironment = TradingEnvironment(),
     signal_value: float = 1.0,
 ) -> StrategyEvaluationResult:
-    def build_dataset_for_range(
+    def build_series_for_range(
         date_range: EvaluationDateRange,
     ) -> tuple[SubjectBacktestSeries, ...] | None:
-        return build_direct_range_backtest_dataset_for_range(
+        return build_direct_range_backtest_series_for_range(
             date_range=date_range,
             target_id=target_id,
             subject_return_series_by_subject=subject_return_series_by_subject,
@@ -206,9 +206,9 @@ def build_direct_strategy_evaluation_metric_group_results(
             signal_value=signal_value,
         )
 
-    loop_result = evaluate_range_backtest_dataset_builder(
+    loop_result = evaluate_range_backtest_series_builder(
         evaluation_date_ranges=evaluation_date_ranges,
-        build_dataset_for_range=build_dataset_for_range,
+        build_series_for_range=build_series_for_range,
         subject_set=subject_set,
         portfolio_construction=portfolio_construction,
         trading_environment=trading_environment,

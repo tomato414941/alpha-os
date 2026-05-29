@@ -6,7 +6,7 @@ from .decision_backtest import SubjectBacktestSeries
 from .evaluation_spec import EvaluationDateRange
 
 
-def build_direct_range_backtest_dataset_for_range(
+def build_direct_range_backtest_series_for_range(
     *,
     date_range: EvaluationDateRange,
     target_id: str,
@@ -18,7 +18,7 @@ def build_direct_range_backtest_dataset_for_range(
     contract_multiplier_by_subject: dict[str, float] | None,
     signal_value: float,
 ) -> tuple[SubjectBacktestSeries, ...] | None:
-    return build_direct_range_backtest_dataset(
+    return build_direct_range_backtest_series(
         date_range=date_range,
         target_id=target_id,
         subject_return_series_by_subject=subject_return_series_by_subject,
@@ -31,7 +31,7 @@ def build_direct_range_backtest_dataset_for_range(
     )
 
 
-def build_direct_range_backtest_dataset(
+def build_direct_range_backtest_series(
     *,
     date_range: EvaluationDateRange,
     target_id: str,
