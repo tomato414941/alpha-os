@@ -7,7 +7,7 @@ on how the candidate was produced.
 
 Examples:
 
-- hand-written trainless rules use `strategy_backtest`
+- direct hand-written paths use resolved backtest input series
 - discovered signals use signal discovery execution
 - the removed strategy-checkpoint path used checkpoint-based evaluation
 

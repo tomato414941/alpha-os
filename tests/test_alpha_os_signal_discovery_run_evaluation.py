@@ -98,7 +98,7 @@ def test_crypto_regime_momentum_eligibility_requires_funding_rate():
 def test_subject_backtest_inputs_from_subject_set_resolves_market_series(
     monkeypatch,
 ):
-    import alpha_os.strategy_backtest as strategy_backtest
+    import alpha_os.subject_set_backtest_inputs as subject_set_backtest_inputs
     from alpha_os.portfolio_decision import (
         ObservationSpec,
         SubjectObservationBinding,
@@ -129,7 +129,7 @@ def test_subject_backtest_inputs_from_subject_set_resolves_market_series(
     close.iloc[1:] = (close.iloc[0] * (1.0 + returns).cumprod()).to_numpy()
 
     monkeypatch.setattr(
-        strategy_backtest,
+        subject_set_backtest_inputs,
         "load_observation_frame",
         lambda *_, **__: pd.DataFrame(
             {
@@ -147,7 +147,7 @@ def test_subject_backtest_inputs_from_subject_set_resolves_market_series(
         borrow_fee_bps_series_by_subject,
         roll_cost_bps_series_by_subject,
         contract_multiplier_by_subject,
-    ) = strategy_backtest.subject_backtest_inputs_from_subject_set(
+    ) = subject_set_backtest_inputs.subject_backtest_inputs_from_subject_set(
         subject_set=subject_set,
         base_url="fixture://",
     )
