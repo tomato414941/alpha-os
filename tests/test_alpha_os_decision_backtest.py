@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
+from alpha_os.decision_backtest import PortfolioSizingTradingStrategy
 from alpha_os.evaluation_cost_config import TradingEnvironment
 from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
 
@@ -885,7 +886,9 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
             ),
             portfolio_construction=PortfolioConstructionSpec(gross_exposure_cap=1.0),
         ),
-        sizing_policy=ConstrainedOptimizerSizingPolicy(dependence_aversion=2.0),
+        strategy=PortfolioSizingTradingStrategy(
+            ConstrainedOptimizerSizingPolicy(dependence_aversion=2.0)
+        ),
     )
 
     btc_step = _subject_step(result.steps[0], "BTC_spot")
@@ -1117,9 +1120,11 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
                 active_weight_budget=0.0,
             ),
         ),
-        sizing_policy=HistoricalModelSizingPolicy(
-            model_type="minimum_variance",
-            min_history_steps=5,
+        strategy=PortfolioSizingTradingStrategy(
+            HistoricalModelSizingPolicy(
+                model_type="minimum_variance",
+                min_history_steps=5,
+            )
         ),
     )
 

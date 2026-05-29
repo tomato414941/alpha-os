@@ -16,6 +16,7 @@ from .portfolio_decision import (
     ObservedPortfolioInputs,
     PortfolioDecisionInput,
     PortfolioDecisionAssumptions,
+    PortfolioDecisionOutput,
     PortfolioPositionState,
     PortfolioState,
     PortfolioTarget,
@@ -34,6 +35,7 @@ from .portfolio_sizing_policy import (
     PortfolioSizingPolicy,
     apply_portfolio_sizing_policy,
 )
+from .trading_strategy import TradingStrategy
 
 
 @dataclass(frozen=True)
@@ -77,6 +79,17 @@ class DecisionBacktestInput:
     @property
     def subject_ids(self) -> tuple[str, ...]:
         return tuple(item.subject_id for item in self.subject_series)
+
+
+@dataclass(frozen=True)
+class PortfolioSizingTradingStrategy:
+    sizing_policy: PortfolioSizingPolicy | None = None
+
+    def decide(self, strategy_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
+        return apply_portfolio_sizing_policy(
+            strategy_input,
+            sizing_policy=self.sizing_policy,
+        )
 
 
 @dataclass(frozen=True)
@@ -334,8 +347,13 @@ class BacktestStepAccounting:
 def run_decision_backtest(
     backtest_input: DecisionBacktestInput,
     *,
-    sizing_policy: PortfolioSizingPolicy | None = None,
+    strategy: TradingStrategy[
+        PortfolioDecisionInput,
+        PortfolioDecisionOutput,
+    ]
+    | None = None,
 ) -> DecisionBacktestResult:
+    trading_strategy = PortfolioSizingTradingStrategy() if strategy is None else strategy
     aligned = _aligned_frame(backtest_input)
     subject_ids = _subject_ids(backtest_input)
     state = _initial_backtest_state(backtest_input)
@@ -353,7 +371,7 @@ def run_decision_backtest(
                 row=row,
                 date=str(date),
                 subject_ids=subject_ids,
-                sizing_policy=sizing_policy,
+                strategy=trading_strategy,
             )
             targets_by_subject, execution_trace = _execute_rebalance_targets(
                 desired_targets=desired_targets_by_subject,
@@ -458,7 +476,7 @@ def _build_rebalance_targets(
     row: pd.Series,
     date: str,
     subject_ids: tuple[str, ...],
-    sizing_policy: PortfolioSizingPolicy | None,
+    strategy: TradingStrategy[PortfolioDecisionInput, PortfolioDecisionOutput],
 ) -> tuple[
     dict[str, PortfolioTarget],
     tuple[PortfolioConstructionStageTrace, ...],
@@ -471,10 +489,7 @@ def _build_rebalance_targets(
         date=date,
         subject_ids=subject_ids,
     )
-    decision_output = apply_portfolio_sizing_policy(
-        decision_input,
-        sizing_policy=sizing_policy,
-    )
+    decision_output = strategy.decide(decision_input)
     construction_result = construct_portfolio_targets(
         build_portfolio_construction_request(
             targets=decision_output.targets,

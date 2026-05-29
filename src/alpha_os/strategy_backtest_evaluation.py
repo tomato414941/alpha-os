@@ -11,6 +11,7 @@ from .decision_backtest import (
     DependenceBacktestSeries,
     DecisionBacktestInput,
     DecisionBacktestResult,
+    PortfolioSizingTradingStrategy,
     SubjectBacktestSeries,
     run_decision_backtest,
 )
@@ -877,7 +878,9 @@ def _run_backtest_variant(
                 portfolio_construction
             ),
         ),
-        sizing_policy=_portfolio_sizing_policy_from_config(portfolio_construction),
+        strategy=PortfolioSizingTradingStrategy(
+            _portfolio_sizing_policy_from_config(portfolio_construction)
+        ),
     )
 
 
