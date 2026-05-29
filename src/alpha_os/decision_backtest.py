@@ -8,6 +8,7 @@ from .contract_boundaries import (
     PortfolioConstraintBoundary,
     default_portfolio_constraint_boundary,
 )
+from .evaluation_cost_config import TradingEnvironment
 from .portfolio_decision import (
     CostInput,
     DependenceInput,
@@ -73,12 +74,7 @@ class DecisionBacktestInput:
     target_vol: float | None = None
     gross_leverage_cap: float | None = None
     net_exposure_target: float | None = None
-    turnover_cost_rate: float = 0.0
-    market_impact_bps: float = 0.0
-    fee_bps: float = 0.0
-    bid_ask_spread_bps: float = 0.0
-    funding_bps_per_step: float = 0.0
-    borrow_fee_bps_per_step: float = 0.0
+    trading_environment: TradingEnvironment = field(default_factory=TradingEnvironment)
     rebalance_interval_steps: int = 1
     direction_mode: str | None = None
     top_k: int | None = None
@@ -541,10 +537,10 @@ def _build_rebalance_targets(
 
 def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float:
     return (
-        max(backtest_input.turnover_cost_rate, 0.0)
-        + max(backtest_input.market_impact_bps, 0.0) / 10000.0
-        + max(backtest_input.fee_bps, 0.0) / 10000.0
-        + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0
+        max(backtest_input.trading_environment.turnover_cost_rate, 0.0)
+        + max(backtest_input.trading_environment.market_impact_bps, 0.0) / 10000.0
+        + max(backtest_input.trading_environment.fee_bps, 0.0) / 10000.0
+        + max(backtest_input.trading_environment.bid_ask_spread_bps, 0.0) / 10000.0
     )
 
 
@@ -756,20 +752,20 @@ def build_decision_backtest_subject_steps(
         traded_notional = abs(delta) * capital_base
         gross_pnl_notional = target_notional * realized_return
         execution_cost_notional = (
-            max(backtest_input.turnover_cost_rate, 0.0) * traded_notional
-            + max(backtest_input.market_impact_bps, 0.0) / 10000.0 * traded_notional
-            + max(backtest_input.fee_bps, 0.0) / 10000.0 * traded_notional
-            + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
+            max(backtest_input.trading_environment.turnover_cost_rate, 0.0) * traded_notional
+            + max(backtest_input.trading_environment.market_impact_bps, 0.0) / 10000.0 * traded_notional
+            + max(backtest_input.trading_environment.fee_bps, 0.0) / 10000.0 * traded_notional
+            + max(backtest_input.trading_environment.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
         )
         funding_cost_notional = (
-            max(backtest_input.funding_bps_per_step, 0.0)
+            max(backtest_input.trading_environment.funding_bps_per_step, 0.0)
             / 10000.0
             * abs(target_notional)
             + float(funding_cost_bps) / 10000.0 * target_notional
         )
         short_notional = abs(min(target_notional, 0.0))
         borrow_cost_notional = (
-            max(backtest_input.borrow_fee_bps_per_step, 0.0)
+            max(backtest_input.trading_environment.borrow_fee_bps_per_step, 0.0)
             / 10000.0
             * short_notional
             + max(float(borrow_fee_bps), 0.0) / 10000.0 * short_notional
@@ -879,26 +875,26 @@ def build_backtest_step_accounting(
         for step in subject_steps
     )
     funding_cost_notional = (
-        max(backtest_input.funding_bps_per_step, 0.0)
+        max(backtest_input.trading_environment.funding_bps_per_step, 0.0)
         / 10000.0
         * gross_notional_exposure
         + subject_funding_cost_notional
     )
     borrow_cost_notional = (
-        max(backtest_input.borrow_fee_bps_per_step, 0.0)
+        max(backtest_input.trading_environment.borrow_fee_bps_per_step, 0.0)
         / 10000.0
         * short_notional_exposure
         + subject_borrow_cost_notional
     )
     cost_notional = (
-        max(backtest_input.turnover_cost_rate, 0.0) * traded_notional
-        + max(backtest_input.market_impact_bps, 0.0) / 10000.0 * traded_notional
-        + max(backtest_input.fee_bps, 0.0) / 10000.0 * traded_notional
-        + max(backtest_input.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
-        + max(backtest_input.funding_bps_per_step, 0.0)
+        max(backtest_input.trading_environment.turnover_cost_rate, 0.0) * traded_notional
+        + max(backtest_input.trading_environment.market_impact_bps, 0.0) / 10000.0 * traded_notional
+        + max(backtest_input.trading_environment.fee_bps, 0.0) / 10000.0 * traded_notional
+        + max(backtest_input.trading_environment.bid_ask_spread_bps, 0.0) / 10000.0 * traded_notional
+        + max(backtest_input.trading_environment.funding_bps_per_step, 0.0)
         / 10000.0
         * gross_notional_exposure
-        + max(backtest_input.borrow_fee_bps_per_step, 0.0)
+        + max(backtest_input.trading_environment.borrow_fee_bps_per_step, 0.0)
         / 10000.0
         * short_notional_exposure
         + subject_funding_cost_notional
@@ -1174,63 +1170,63 @@ def _cost_inputs_for_backtest(
     subject_ids: tuple[str, ...],
 ) -> tuple[CostInput, ...]:
     items: list[CostInput] = []
-    if backtest_input.turnover_cost_rate > 0.0:
+    if backtest_input.trading_environment.turnover_cost_rate > 0.0:
         items.append(
             CostInput(
                 name="turnover_cost_rate",
                 subject_id=None,
-                value=float(backtest_input.turnover_cost_rate),
+                value=float(backtest_input.trading_environment.turnover_cost_rate),
                 basis="per_turnover",
                 unit="weight",
             )
         )
-    if backtest_input.fee_bps > 0.0:
+    if backtest_input.trading_environment.fee_bps > 0.0:
         items.append(
             CostInput(
                 name="fee_bps",
                 subject_id=None,
-                value=float(backtest_input.fee_bps),
+                value=float(backtest_input.trading_environment.fee_bps),
                 basis="per_notional",
                 unit="bps",
             )
         )
-    if backtest_input.bid_ask_spread_bps > 0.0:
+    if backtest_input.trading_environment.bid_ask_spread_bps > 0.0:
         items.append(
             CostInput(
                 name="bid_ask_spread_bps",
                 subject_id=None,
-                value=float(backtest_input.bid_ask_spread_bps),
+                value=float(backtest_input.trading_environment.bid_ask_spread_bps),
                 basis="per_notional",
                 unit="bps",
             )
         )
-    if backtest_input.funding_bps_per_step > 0.0:
+    if backtest_input.trading_environment.funding_bps_per_step > 0.0:
         items.append(
             CostInput(
                 name="funding_bps_per_step",
                 subject_id=None,
-                value=float(backtest_input.funding_bps_per_step),
+                value=float(backtest_input.trading_environment.funding_bps_per_step),
                 basis="per_notional_per_step",
                 unit="bps",
             )
         )
-    if backtest_input.borrow_fee_bps_per_step > 0.0:
+    if backtest_input.trading_environment.borrow_fee_bps_per_step > 0.0:
         items.append(
             CostInput(
                 name="borrow_fee_bps_per_step",
                 subject_id=None,
-                value=float(backtest_input.borrow_fee_bps_per_step),
+                value=float(backtest_input.trading_environment.borrow_fee_bps_per_step),
                 basis="per_short_notional_per_step",
                 unit="bps",
             )
         )
     for subject_id in subject_ids:
-        if backtest_input.market_impact_bps > 0.0:
+        if backtest_input.trading_environment.market_impact_bps > 0.0:
             items.append(
                 CostInput(
                     name="market_impact",
                     subject_id=subject_id,
-                    value=float(backtest_input.market_impact_bps),
+                    value=float(backtest_input.trading_environment.market_impact_bps),
                     basis="per_notional",
                     unit="bps",
                 )

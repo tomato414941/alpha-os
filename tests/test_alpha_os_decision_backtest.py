@@ -3,6 +3,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
+from alpha_os.evaluation_cost_config import TradingEnvironment
+
 
 def _subject_step(step, subject_id: str):
     return step.subject_step_by_subject[subject_id]
@@ -305,12 +307,14 @@ def test_build_backtest_step_accounting_splits_cost_components():
         capital_base=1.0,
         backtest_input=DecisionBacktestInput(
             subject_series=(),
-            turnover_cost_rate=0.01,
-            market_impact_bps=1.0,
-            fee_bps=2.0,
-            bid_ask_spread_bps=3.0,
-            funding_bps_per_step=4.0,
-            borrow_fee_bps_per_step=5.0,
+            trading_environment=TradingEnvironment(
+                turnover_cost_rate=0.01,
+                market_impact_bps=1.0,
+                fee_bps=2.0,
+                bid_ask_spread_bps=3.0,
+                funding_bps_per_step=4.0,
+                borrow_fee_bps_per_step=5.0,
+            ),
         ),
     )
 
@@ -350,7 +354,7 @@ def test_run_decision_backtest_charges_turnover_cost():
                     ),
                 ),
             ),
-            turnover_cost_rate=0.1,
+            trading_environment=TradingEnvironment(turnover_cost_rate=0.1),
         )
     )
 
@@ -382,7 +386,7 @@ def test_run_decision_backtest_charges_execution_fee_bps():
                     realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
                 ),
             ),
-            fee_bps=10.0,
+            trading_environment=TradingEnvironment(fee_bps=10.0),
         )
     )
 
@@ -407,7 +411,7 @@ def test_run_decision_backtest_charges_bid_ask_spread_bps():
                     realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
                 ),
             ),
-            bid_ask_spread_bps=20.0,
+            trading_environment=TradingEnvironment(bid_ask_spread_bps=20.0),
         )
     )
 
@@ -432,7 +436,7 @@ def test_run_decision_backtest_charges_funding_on_gross_exposure():
                     realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
                 ),
             ),
-            funding_bps_per_step=10.0,
+            trading_environment=TradingEnvironment(funding_bps_per_step=10.0),
         )
     )
 
@@ -496,7 +500,7 @@ def test_run_decision_backtest_charges_borrow_fee_on_short_exposure():
                     realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
                 ),
             ),
-            borrow_fee_bps_per_step=10.0,
+            trading_environment=TradingEnvironment(borrow_fee_bps_per_step=10.0),
         )
     )
 
