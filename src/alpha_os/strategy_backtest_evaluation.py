@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Callable
 from statistics import pstdev
 from math import sqrt
@@ -84,24 +84,7 @@ class StrategyBacktestRangeSummary:
     mean_top_intent_gross_share: float
     max_subject_gross_share: float
     max_cluster_gross_share: float
-    daily_rebalance_net_return: float
-    daily_rebalance_drawdown: float
-    daily_rebalance_turnover: float
-    equal_weight_net_return: float
-    equal_weight_drawdown: float
-    equal_weight_turnover: float
-    equal_weight_daily_net_return: float
-    equal_weight_daily_drawdown: float
-    equal_weight_daily_turnover: float
     step_count: int
-
-
-@dataclass(frozen=True)
-class RangeBacktestVariantResults:
-    selected: DecisionBacktestResult
-    daily_rebalance: DecisionBacktestResult
-    equal_weight: DecisionBacktestResult
-    equal_weight_daily: DecisionBacktestResult
 
 
 @dataclass(frozen=True)
@@ -146,25 +129,26 @@ def evaluate_range_backtest_series_builder(
         subject_series = build_series_for_range(date_range)
         if subject_series is None:
             continue
-        variant_results = evaluate_range_backtest_variants(
+        backtest_result = run_range_decision_backtest(
             subject_set=subject_set,
             subject_series=subject_series,
+            dependence_series=(),
             portfolio_construction=portfolio_construction,
             trading_environment=trading_environment,
         )
         all_step_net_returns.extend(
-            float(step.net_return) for step in variant_results.selected.steps
+            float(step.net_return) for step in backtest_result.steps
         )
         selected_trace_results.append(
             EvaluationTraceRangeResult(
                 range_label=date_range.label,
-                result=variant_results.selected,
+                result=backtest_result,
             )
         )
         range_summaries.append(
-            _range_summary_from_variant_results(
+            _range_summary_from_backtest_result(
                 range_label=date_range.label,
-                variant_results=variant_results,
+                backtest_result=backtest_result,
                 portfolio_construction=portfolio_construction,
                 subject_set=subject_set,
             )
@@ -441,161 +425,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             ),
         },
     )
-    sizing_policy_metric_group_result = EvaluationMetricGroupResult(
-        metric_group_name="sizing_policy_quality",
-        source=source,
-        metrics={
-            "selected_sizing_method": portfolio_construction.sizing_method,
-            "optimizer_backend": _ordered_unique_join(
-                [item.optimizer_backend for item in range_summaries]
-            ),
-            "optimizer_status": _ordered_unique_join(
-                [item.optimizer_status for item in range_summaries]
-            ),
-            "optimizer_fallback_reason": _ordered_unique_join(
-                [
-                    item.optimizer_fallback_reason
-                    for item in range_summaries
-                    if item.optimizer_fallback_reason != "-"
-                ]
-            ),
-            "mean_equal_weight_decision_net_return": round(
-                _mean([item.equal_weight_net_return for item in range_summaries]),
-                6,
-            ),
-            "mean_equal_weight_daily_decision_net_return": round(
-                _mean([item.equal_weight_daily_net_return for item in range_summaries]),
-                6,
-            ),
-            "mean_selected_vs_equal_weight_decision_net_return_edge": round(
-                _mean(
-                    [
-                        item.decision_net_return - item.equal_weight_net_return
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "best_selected_vs_equal_weight_decision_net_return_edge": round(
-                max(
-                    (
-                        item.decision_net_return - item.equal_weight_net_return
-                        for item in range_summaries
-                    ),
-                    default=0.0,
-                ),
-                6,
-            ),
-            "worst_selected_vs_equal_weight_decision_net_return_edge": round(
-                min(
-                    (
-                        item.decision_net_return - item.equal_weight_net_return
-                        for item in range_summaries
-                    ),
-                    default=0.0,
-                ),
-                6,
-            ),
-            "mean_daily_signal_weighted_vs_equal_weight_decision_net_return_edge": round(
-                _mean(
-                    [
-                        item.daily_rebalance_net_return
-                        - item.equal_weight_daily_net_return
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "mean_selected_vs_equal_weight_drawdown_edge": round(
-                _mean(
-                    [
-                        item.equal_weight_drawdown - item.decision_drawdown
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "mean_selected_vs_equal_weight_turnover_edge": round(
-                _mean(
-                    [
-                        item.equal_weight_turnover - item.decision_turnover
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-        },
-    )
-    rebalance_policy_metric_group_result = EvaluationMetricGroupResult(
-        metric_group_name="rebalance_policy_quality",
-        source=source,
-        metrics={
-            "selected_rebalance_interval_steps": int(
-                portfolio_construction.rebalance_interval_steps
-            ),
-            "daily_rebalance_reference": (
-                "selected_reused_for_expensive_optimizer"
-                if _uses_expensive_sizing_optimizer(portfolio_construction)
-                else "computed"
-            ),
-            "mean_selected_vs_daily_rebalance_net_return_edge": round(
-                _mean(
-                    [
-                        item.decision_net_return - item.daily_rebalance_net_return
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "best_selected_vs_daily_rebalance_net_return_edge": round(
-                max(
-                    (
-                        item.decision_net_return - item.daily_rebalance_net_return
-                        for item in range_summaries
-                    ),
-                    default=0.0,
-                ),
-                6,
-            ),
-            "worst_selected_vs_daily_rebalance_net_return_edge": round(
-                min(
-                    (
-                        item.decision_net_return - item.daily_rebalance_net_return
-                        for item in range_summaries
-                    ),
-                    default=0.0,
-                ),
-                6,
-            ),
-            "mean_selected_vs_daily_rebalance_turnover_savings": round(
-                _mean(
-                    [
-                        item.daily_rebalance_turnover - item.decision_turnover
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "mean_equal_weight_vs_daily_rebalance_net_return_edge": round(
-                _mean(
-                    [
-                        item.equal_weight_net_return - item.equal_weight_daily_net_return
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-            "mean_equal_weight_vs_daily_rebalance_turnover_savings": round(
-                _mean(
-                    [
-                        item.equal_weight_daily_turnover - item.equal_weight_turnover
-                        for item in range_summaries
-                    ]
-                ),
-                6,
-            ),
-        },
-    )
     concentration_metric_group_result = EvaluationMetricGroupResult(
         metric_group_name="portfolio_concentration",
         source=source,
@@ -687,8 +516,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             execution_trace_metric_group_result.metric_group_name: execution_trace_metric_group_result,
             cost_drag_metric_group_result.metric_group_name: cost_drag_metric_group_result,
             signal_churn_metric_group_result.metric_group_name: signal_churn_metric_group_result,
-            sizing_policy_metric_group_result.metric_group_name: sizing_policy_metric_group_result,
-            rebalance_policy_metric_group_result.metric_group_name: rebalance_policy_metric_group_result,
             concentration_metric_group_result.metric_group_name: concentration_metric_group_result,
             robustness_metric_group_result.metric_group_name: robustness_metric_group_result,
         },
@@ -740,12 +567,6 @@ def _max_drawdown_from_step_returns(values: list[float]) -> float:
     return float(drawdown)
 
 
-def _uses_expensive_sizing_optimizer(
-    portfolio_construction: PortfolioConstructionSpec,
-) -> bool:
-    return portfolio_construction.sizing_method == "signed_mean_variance"
-
-
 def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
     if config.sizing_method == "signal_weighted":
         return SignalWeightedSizingPolicy()
@@ -773,28 +594,7 @@ def _portfolio_sizing_policy_from_config(config: PortfolioConstructionSpec):
     )
 
 
-def _portfolio_construction_variant(
-    portfolio_construction: PortfolioConstructionSpec,
-    *,
-    sizing_method: str | None = None,
-    rebalance_interval_steps: int | None = None,
-) -> PortfolioConstructionSpec:
-    return replace(
-        portfolio_construction,
-        sizing_method=(
-            portfolio_construction.sizing_method
-            if sizing_method is None
-            else sizing_method
-        ),
-        rebalance_interval_steps=(
-            portfolio_construction.rebalance_interval_steps
-            if rebalance_interval_steps is None
-            else rebalance_interval_steps
-        ),
-    )
-
-
-def _run_backtest_variant(
+def run_range_decision_backtest(
     *,
     subject_set: SubjectSet | None = None,
     subject_series: tuple[SubjectBacktestSeries, ...],
@@ -838,100 +638,43 @@ def _historical_return_lookback_steps(
     return None
 
 
-def evaluate_range_backtest_variants(
-    *,
-    subject_set: SubjectSet | None,
-    subject_series: tuple[SubjectBacktestSeries, ...],
-    portfolio_construction: PortfolioConstructionSpec,
-    trading_environment: TradingEnvironment,
-) -> RangeBacktestVariantResults:
-    selected = _run_backtest_variant(
-        subject_set=subject_set,
-        subject_series=subject_series,
-        dependence_series=(),
-        portfolio_construction=portfolio_construction,
-        trading_environment=trading_environment,
-    )
-    if _uses_expensive_sizing_optimizer(portfolio_construction):
-        daily_rebalance = selected
-    else:
-        daily_rebalance = _run_backtest_variant(
-            subject_set=subject_set,
-            subject_series=subject_series,
-            dependence_series=(),
-            portfolio_construction=_portfolio_construction_variant(
-                portfolio_construction,
-                rebalance_interval_steps=1,
-            ),
-            trading_environment=trading_environment,
-        )
-    equal_weight = _run_backtest_variant(
-        subject_set=subject_set,
-        subject_series=subject_series,
-        dependence_series=(),
-        portfolio_construction=_portfolio_construction_variant(
-            portfolio_construction,
-            sizing_method="equal_weight",
-        ),
-        trading_environment=trading_environment,
-    )
-    equal_weight_daily = _run_backtest_variant(
-        subject_set=subject_set,
-        subject_series=subject_series,
-        dependence_series=(),
-        portfolio_construction=_portfolio_construction_variant(
-            portfolio_construction,
-            sizing_method="equal_weight",
-            rebalance_interval_steps=1,
-        ),
-        trading_environment=trading_environment,
-    )
-    return RangeBacktestVariantResults(
-        selected=selected,
-        daily_rebalance=daily_rebalance,
-        equal_weight=equal_weight,
-        equal_weight_daily=equal_weight_daily,
-    )
-
-
-def _range_summary_from_variant_results(
+def _range_summary_from_backtest_result(
     range_label: str,
-    variant_results: RangeBacktestVariantResults,
+    backtest_result: DecisionBacktestResult,
     *,
     portfolio_construction: PortfolioConstructionSpec,
     subject_set: SubjectSet | None,
 ) -> StrategyBacktestRangeSummary:
-    selected = variant_results.selected
     concentration = _portfolio_concentration_from_backtest(
-        selected,
+        backtest_result,
         subject_set=subject_set,
         min_abs_weight=_CONCENTRATION_MIN_ABS_WEIGHT,
         top_intent_n=portfolio_construction.top_gross_share_cap_n,
     )
-    construction_impact = _portfolio_construction_stage_impact_from_backtest(selected)
-    execution_impact = _execution_trace_from_backtest(selected)
-    cost_drag = _cost_drag_from_backtest(selected, subject_set=subject_set)
-    signal_churn = _signal_churn_from_backtest(selected)
-    optimizer_diagnostics = _optimizer_diagnostics_from_backtest(selected)
+    construction_impact = _portfolio_construction_stage_impact_from_backtest(backtest_result)
+    execution_impact = _execution_trace_from_backtest(backtest_result)
+    cost_drag = _cost_drag_from_backtest(backtest_result, subject_set=subject_set)
+    signal_churn = _signal_churn_from_backtest(backtest_result)
+    optimizer_diagnostics = _optimizer_diagnostics_from_backtest(backtest_result)
     return StrategyBacktestRangeSummary(
         label=range_label,
-        portfolio_target_return_corr=_portfolio_target_return_corr(selected),
-        decision_net_return=selected.net_return_total,
-        decision_drawdown=selected.max_drawdown,
-        decision_turnover=selected.mean_turnover,
-        decision_gross_leverage_exposure=selected.mean_gross_leverage_exposure,
-        decision_net_leverage_exposure=selected.mean_net_leverage_exposure,
-        decision_long_leverage_exposure=selected.mean_long_leverage_exposure,
-        decision_short_leverage_exposure=selected.mean_short_leverage_exposure,
-        decision_gross_notional_exposure=selected.mean_gross_notional_exposure,
-        decision_net_notional_exposure=selected.mean_net_notional_exposure,
-        decision_long_notional_exposure=selected.mean_long_notional_exposure,
-        decision_short_notional_exposure=selected.mean_short_notional_exposure,
-        decision_traded_notional=selected.mean_traded_notional,
-        decision_cost_notional=selected.cost_notional_total,
-        decision_funding_cost_notional=selected.funding_cost_notional_total,
-        decision_borrow_cost_notional=selected.borrow_cost_notional_total,
-        decision_roll_cost_notional=selected.roll_cost_notional_total,
+        portfolio_target_return_corr=_portfolio_target_return_corr(backtest_result),
+        decision_net_return=backtest_result.net_return_total,
+        decision_drawdown=backtest_result.max_drawdown,
+        decision_turnover=backtest_result.mean_turnover,
+        decision_gross_leverage_exposure=backtest_result.mean_gross_leverage_exposure,
+        decision_net_leverage_exposure=backtest_result.mean_net_leverage_exposure,
+        decision_long_leverage_exposure=backtest_result.mean_long_leverage_exposure,
+        decision_short_leverage_exposure=backtest_result.mean_short_leverage_exposure,
+        decision_gross_notional_exposure=backtest_result.mean_gross_notional_exposure,
+        decision_net_notional_exposure=backtest_result.mean_net_notional_exposure,
+        decision_long_notional_exposure=backtest_result.mean_long_notional_exposure,
+        decision_short_notional_exposure=backtest_result.mean_short_notional_exposure,
+        decision_traded_notional=backtest_result.mean_traded_notional,
+        decision_cost_notional=backtest_result.cost_notional_total,
+        decision_funding_cost_notional=backtest_result.funding_cost_notional_total,
+        decision_borrow_cost_notional=backtest_result.borrow_cost_notional_total,
+        decision_roll_cost_notional=backtest_result.roll_cost_notional_total,
         optimizer_backend=str(optimizer_diagnostics["optimizer_backend"]),
         optimizer_status=str(optimizer_diagnostics["optimizer_status"]),
         optimizer_fallback_reason=str(
@@ -967,16 +710,7 @@ def _range_summary_from_variant_results(
         mean_top_intent_gross_share=concentration["mean_top_intent_gross_share"],
         max_subject_gross_share=concentration["max_subject_gross_share"],
         max_cluster_gross_share=concentration["max_cluster_gross_share"],
-        daily_rebalance_net_return=variant_results.daily_rebalance.net_return_total,
-        daily_rebalance_drawdown=variant_results.daily_rebalance.max_drawdown,
-        daily_rebalance_turnover=variant_results.daily_rebalance.mean_turnover,
-        equal_weight_net_return=variant_results.equal_weight.net_return_total,
-        equal_weight_drawdown=variant_results.equal_weight.max_drawdown,
-        equal_weight_turnover=variant_results.equal_weight.mean_turnover,
-        equal_weight_daily_net_return=variant_results.equal_weight_daily.net_return_total,
-        equal_weight_daily_drawdown=variant_results.equal_weight_daily.max_drawdown,
-        equal_weight_daily_turnover=variant_results.equal_weight_daily.mean_turnover,
-        step_count=len(selected.steps),
+        step_count=len(backtest_result.steps),
     )
 
 
@@ -1206,8 +940,6 @@ def _failure_finding_groups(
     source: str,
 ) -> tuple[EvaluationFailureFindingGroup, ...]:
     decision_cases: list[EvaluationFailureFinding] = []
-    sizing_policy_cases: list[EvaluationFailureFinding] = []
-    rebalance_policy_cases: list[EvaluationFailureFinding] = []
     portfolio_target_return_alignment_cases: list[EvaluationFailureFinding] = []
     concentration_cases: list[EvaluationFailureFinding] = []
     for item in sorted(
@@ -1227,50 +959,6 @@ def _failure_finding_groups(
                         "decision_net_return": round(item.decision_net_return, 6),
                         "decision_drawdown": round(item.decision_drawdown, 6),
                         "decision_turnover": round(item.decision_turnover, 6),
-                        "step_count": item.step_count,
-                    },
-                )
-            )
-        if item.decision_net_return - item.equal_weight_net_return <= 0.0:
-            sizing_policy_cases.append(
-                EvaluationFailureFinding(
-                    label=item.label,
-                    severity=abs(
-                        float(item.decision_net_return - item.equal_weight_net_return)
-                    ),
-                    metrics={
-                        "selected_vs_equal_weight_decision_net_return_edge": round(
-                            item.decision_net_return - item.equal_weight_net_return,
-                            6,
-                        ),
-                        "decision_net_return": round(item.decision_net_return, 6),
-                        "equal_weight_decision_net_return": round(
-                            item.equal_weight_net_return,
-                            6,
-                        ),
-                        "step_count": item.step_count,
-                    },
-                )
-            )
-        if item.decision_net_return - item.daily_rebalance_net_return <= 0.0:
-            rebalance_policy_cases.append(
-                EvaluationFailureFinding(
-                    label=item.label,
-                    severity=abs(
-                        float(
-                            item.decision_net_return - item.daily_rebalance_net_return
-                        )
-                    ),
-                    metrics={
-                        "selected_vs_daily_rebalance_net_return_edge": round(
-                            item.decision_net_return - item.daily_rebalance_net_return,
-                            6,
-                        ),
-                        "decision_net_return": round(item.decision_net_return, 6),
-                        "daily_rebalance_net_return": round(
-                            item.daily_rebalance_net_return,
-                            6,
-                        ),
                         "step_count": item.step_count,
                     },
                 )
@@ -1339,16 +1027,6 @@ def _failure_finding_groups(
             metric_group_name="decision_quality",
             source=source,
             findings=tuple(decision_cases),
-        ),
-        EvaluationFailureFindingGroup(
-            metric_group_name="sizing_policy_quality",
-            source=source,
-            findings=tuple(sizing_policy_cases),
-        ),
-        EvaluationFailureFindingGroup(
-            metric_group_name="rebalance_policy_quality",
-            source=source,
-            findings=tuple(rebalance_policy_cases),
         ),
         EvaluationFailureFindingGroup(
             metric_group_name="portfolio_target_return_alignment",

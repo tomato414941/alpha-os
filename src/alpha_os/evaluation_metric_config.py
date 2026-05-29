@@ -15,8 +15,6 @@ EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 
 DECISION_EVALUATION_METRIC_GROUP_NAMES = (
     "portfolio_target_return_alignment",
-    "sizing_policy_quality",
-    "rebalance_policy_quality",
     "decision_quality",
     "portfolio_construction_trace",
     "execution_trace",
