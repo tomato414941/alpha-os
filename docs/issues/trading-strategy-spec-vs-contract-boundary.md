@@ -89,6 +89,11 @@ old direct evaluation entrypoint adapted explicit recipe inputs into a
 `PortfolioSizingTradingStrategy` instead of receiving a `TradingStrategy`
 black box.
 
+`DecisionBacktestInput.portfolio_construction` was removed. `run_decision_backtest()`
+now requires an explicit `TradingStrategy` and treats returned
+`PortfolioDecisionOutput.targets` as the final desired portfolio action instead
+of applying portfolio construction inside the backtest runner.
+
 ## Close Condition
 
 Close this when strategy execution paths depend on the `TradingStrategy`

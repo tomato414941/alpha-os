@@ -25,13 +25,11 @@ from .portfolio_decision import (
     SizingDiagnostics,
     UncertaintyInput,
 )
-from .portfolio_construction_config import PortfolioConstructionSpec
 from .portfolio_construction_pipeline import (
-    PortfolioConstructionStageTrace,
     build_portfolio_construction_request,
     construct_portfolio_targets,
 )
-from .trading_strategy import PortfolioSizingTradingStrategy, TradingStrategy
+from .trading_strategy import TradingStrategy
 
 
 @dataclass(frozen=True)
@@ -64,9 +62,6 @@ class DecisionBacktestInput:
     initial_positions: tuple[PortfolioPositionState, ...] = ()
     initial_holding_period_days: int = 0
     dependence_series: tuple[DependenceBacktestSeries, ...] = ()
-    portfolio_construction: PortfolioConstructionSpec = field(
-        default_factory=PortfolioConstructionSpec
-    )
     asset_class_by_subject: dict[str, str] | None = None
     cluster_by_subject: dict[str, str] | None = None
     trading_environment: TradingEnvironment = field(default_factory=TradingEnvironment)
@@ -148,7 +143,6 @@ class DecisionBacktestStep:
     roll_cost_notional: float
     gross_equity: float
     net_equity: float
-    construction_trace: tuple[PortfolioConstructionStageTrace, ...] = ()
     execution_trace: RebalanceTrace | None = None
     sizing_diagnostics: SizingDiagnostics = field(default_factory=SizingDiagnostics)
 
@@ -335,44 +329,28 @@ def run_decision_backtest(
     strategy: TradingStrategy[
         PortfolioDecisionInput,
         PortfolioDecisionOutput,
-    ]
-    | None = None,
+    ],
 ) -> DecisionBacktestResult:
-    trading_strategy = PortfolioSizingTradingStrategy() if strategy is None else strategy
     aligned = _aligned_frame(backtest_input)
     subject_ids = _subject_ids(backtest_input)
     state = _initial_backtest_state(backtest_input)
     steps: list[DecisionBacktestStep] = []
 
     for date, row in aligned.iterrows():
-        if _is_rebalance_step(state, backtest_input):
-            (
-                desired_targets_by_subject,
-                construction_trace,
-                sizing_diagnostics,
-            ) = _build_rebalance_targets(
-                backtest_input,
-                state=state,
-                row=row,
-                date=str(date),
-                subject_ids=subject_ids,
-                strategy=trading_strategy,
-            )
-            targets_by_subject, execution_trace = _execute_rebalance_targets(
-                desired_targets=desired_targets_by_subject,
-                current_weights=state.current_weights,
-                capital_base=state.capital_base,
-                per_turnover_cost=_per_turnover_execution_cost(backtest_input),
-            )
-        else:
-            targets_by_subject = build_hold_targets(
-                subject_ids=subject_ids,
-                current_weights=state.current_weights,
-                capital_base=state.capital_base,
-            )
-            construction_trace = ()
-            execution_trace = None
-            sizing_diagnostics = SizingDiagnostics()
+        desired_targets_by_subject, sizing_diagnostics = _build_rebalance_targets(
+            backtest_input,
+            state=state,
+            row=row,
+            date=str(date),
+            subject_ids=subject_ids,
+            strategy=strategy,
+        )
+        targets_by_subject, execution_trace = _execute_rebalance_targets(
+            desired_targets=desired_targets_by_subject,
+            current_weights=state.current_weights,
+            capital_base=state.capital_base,
+            per_turnover_cost=_per_turnover_execution_cost(backtest_input),
+        )
         subject_steps = build_decision_backtest_subject_steps(
             backtest_input,
             row=row,
@@ -416,7 +394,6 @@ def run_decision_backtest(
                 roll_cost_notional=accounting.roll_cost_notional,
                 gross_equity=state.gross_equity,
                 net_equity=state.net_equity,
-                construction_trace=construction_trace,
                 execution_trace=execution_trace,
                 sizing_diagnostics=sizing_diagnostics,
             )
@@ -447,13 +424,6 @@ def _initial_backtest_state(backtest_input: DecisionBacktestInput) -> PortfolioB
     )
 
 
-def _is_rebalance_step(
-    state: PortfolioBacktestState,
-    backtest_input: DecisionBacktestInput,
-) -> bool:
-    return state.rebalance_step % max(backtest_input.portfolio_construction.rebalance_interval_steps, 1) == 0
-
-
 def _build_rebalance_targets(
     backtest_input: DecisionBacktestInput,
     *,
@@ -464,7 +434,6 @@ def _build_rebalance_targets(
     strategy: TradingStrategy[PortfolioDecisionInput, PortfolioDecisionOutput],
 ) -> tuple[
     dict[str, PortfolioTarget],
-    tuple[PortfolioConstructionStageTrace, ...],
     SizingDiagnostics,
 ]:
     decision_input = _portfolio_decision_input_for_backtest_row(
@@ -475,51 +444,8 @@ def _build_rebalance_targets(
         subject_ids=subject_ids,
     )
     decision_output = strategy.decide(decision_input)
-    construction_result = construct_portfolio_targets(
-        build_portfolio_construction_request(
-            targets=decision_output.targets,
-            current_weights=state.current_weights,
-            capital_base=state.capital_base,
-            gross_exposure_cap=backtest_input.portfolio_construction.gross_exposure_cap,
-            gross_leverage_cap=backtest_input.portfolio_construction.gross_leverage_cap,
-            net_exposure_target=backtest_input.portfolio_construction.net_exposure_target,
-            target_vol=backtest_input.portfolio_construction.target_vol,
-            risk_by_subject={
-                subject_id: max(
-                    float(_optional_value(row, ("risk", subject_id)) or 0.0),
-                    0.0,
-                )
-                for subject_id in subject_ids
-            },
-            constraint_boundary=default_portfolio_constraint_boundary(),
-            direction_mode=backtest_input.portfolio_construction.direction_mode,
-            top_k=backtest_input.portfolio_construction.top_k,
-            active_weight_budget=backtest_input.portfolio_construction.active_weight_budget,
-            asset_class_by_subject=(
-                {}
-                if backtest_input.asset_class_by_subject is None
-                else backtest_input.asset_class_by_subject
-            ),
-            cluster_by_subject=(
-                {}
-                if backtest_input.cluster_by_subject is None
-                else backtest_input.cluster_by_subject
-            ),
-            asset_class_weight_caps=(
-                {}
-                if backtest_input.portfolio_construction.asset_class_weight_caps is None
-                else backtest_input.portfolio_construction.asset_class_weight_caps
-            ),
-            cluster_weight_caps=(
-                {}
-                if backtest_input.portfolio_construction.cluster_weight_caps is None
-                else backtest_input.portfolio_construction.cluster_weight_caps
-            ),
-        )
-    )
     return (
-        construction_result.targets,
-        construction_result.trace,
+        {target.subject_id: target for target in decision_output.targets},
         decision_output.sizing_diagnostics,
     )
 
@@ -610,7 +536,7 @@ def _portfolio_decision_input_for_backtest_row(
                 for subject_id in subject_ids
             ),
             capital_base=state.net_equity,
-            gross_limit=backtest_input.portfolio_construction.gross_exposure_cap,
+            gross_limit=None,
             rebalance_step=state.rebalance_step,
             holding_period_days=state.holding_period_days,
             recent_turnover=state.recent_turnover,
@@ -649,22 +575,6 @@ def _portfolio_decision_input_for_backtest_row(
         ),
         subject_metadata_by_subject=_subject_metadata_by_subject(backtest_input),
     )
-
-
-def build_hold_targets(
-    *,
-    subject_ids: tuple[str, ...],
-    current_weights: dict[str, float],
-    capital_base: float,
-) -> dict[str, PortfolioTarget]:
-    return {
-        subject_id: hold_position_target(
-            subject_id=subject_id,
-            current_weight=current_weights.get(subject_id, 0.0),
-            capital_base=capital_base,
-        )
-        for subject_id in subject_ids
-    }
 
 
 def _subject_metadata_by_subject(
@@ -1037,22 +947,6 @@ def _aligned_frame(backtest_input: DecisionBacktestInput) -> pd.DataFrame:
     return frame.dropna(subset=required_columns)
 
 
-def hold_position_target(
-    *,
-    subject_id: str,
-    current_weight: float,
-    capital_base: float,
-) -> PortfolioTarget:
-    return PortfolioTarget(
-        subject_id=subject_id,
-        target_weight=float(current_weight),
-        position_delta=0.0,
-        target_notional=float(current_weight * capital_base),
-        entry_allowed=abs(current_weight) > 0.0,
-        risk_scale=1.0,
-    )
-
-
 def constrained_targets_by_subject(
     targets: tuple[PortfolioTarget, ...],
     *,
@@ -1139,15 +1033,6 @@ def _risk_inputs_for_row(
                 name="backtest_risk",
                 subject_id=subject_id,
                 value=max(risk_value, 0.0),
-            )
-        )
-    if backtest_input.portfolio_construction.gross_exposure_cap is not None:
-        items.append(
-            RiskInput(
-                name="gross_exposure_cap",
-                subject_id=None,
-                value=float(backtest_input.portfolio_construction.gross_exposure_cap),
-                unit="weight",
             )
         )
     return tuple(items)

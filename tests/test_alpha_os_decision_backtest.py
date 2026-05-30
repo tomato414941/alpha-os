@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 from alpha_os.evaluation_cost_config import TradingEnvironment
-from alpha_os.portfolio_construction_config import PortfolioConstructionSpec
 from alpha_os.trading_strategy import PortfolioSizingTradingStrategy
 
 
@@ -12,14 +11,22 @@ def _subject_step(step, subject_id: str):
     return step.subject_step_by_subject[subject_id]
 
 
+def _run_decision_backtest(backtest_input, *, strategy=None):
+    from alpha_os.decision_backtest import run_decision_backtest
+
+    return run_decision_backtest(
+        backtest_input,
+        strategy=PortfolioSizingTradingStrategy() if strategy is None else strategy,
+    )
+
+
 def test_run_decision_backtest_replays_signal_into_equity_curve():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -82,12 +89,10 @@ def test_run_decision_backtest_reports_leverage_separately_from_notional():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
-            portfolio_construction=PortfolioConstructionSpec(gross_leverage_cap=1.0),
             subject_series=(
                 SubjectBacktestSeries(
                     subject_id="ES",
@@ -110,92 +115,6 @@ def test_run_decision_backtest_reports_leverage_separately_from_notional():
     assert result.steps[1].gross_notional_exposure == pytest.approx(2.0)
     assert result.mean_gross_leverage_exposure == pytest.approx(1.0)
     assert result.mean_gross_notional_exposure == pytest.approx(1.5)
-
-
-def test_run_decision_backtest_can_run_short_only_direction_mode():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-        run_decision_backtest,
-    )
-
-    result = run_decision_backtest(
-        DecisionBacktestInput(
-            portfolio_construction=PortfolioConstructionSpec(
-                direction_mode="short_only"
-            ),
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="LONG_SIGNAL",
-                    signal_series=pd.Series({"2026-03-24": 0.5}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="SHORT_SIGNAL",
-                    signal_series=pd.Series({"2026-03-24": -0.5}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
-                ),
-            ),
-        )
-    )
-
-    long_step = _subject_step(result.steps[0], "LONG_SIGNAL")
-    short_step = _subject_step(result.steps[0], "SHORT_SIGNAL")
-
-    assert long_step.target_weight == 0.0
-    assert short_step.target_weight == pytest.approx(-0.5)
-    assert result.steps[0].short_leverage_exposure == pytest.approx(0.5)
-    assert result.steps[0].gross_return == pytest.approx(-0.05)
-
-
-def test_run_decision_backtest_drifts_current_weights_between_rebalances():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-        run_decision_backtest,
-    )
-
-    index = ["2026-03-24", "2026-03-25", "2026-03-26"]
-    result = run_decision_backtest(
-        DecisionBacktestInput(
-            portfolio_construction=PortfolioConstructionSpec(
-                gross_exposure_cap=1.0,
-                rebalance_interval_steps=2,
-                direction_mode="long_only",
-            ),
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="A",
-                    signal_series=pd.Series([1.0, 1.0, 1.0], index=index, dtype=float),
-                    realized_return_series=pd.Series(
-                        [1.0, 0.0, 0.0],
-                        index=index,
-                        dtype=float,
-                    ),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="B",
-                    signal_series=pd.Series([1.0, 1.0, 1.0], index=index, dtype=float),
-                    realized_return_series=pd.Series(
-                        [0.0, 0.0, 0.0],
-                        index=index,
-                        dtype=float,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    second_a = _subject_step(result.steps[1], "A")
-    second_b = _subject_step(result.steps[1], "B")
-
-    assert result.steps[1].turnover == pytest.approx(0.0)
-    assert second_a.target_weight == pytest.approx(2.0 / 3.0)
-    assert second_a.target_notional == pytest.approx(1.0)
-    assert second_b.target_weight == pytest.approx(1.0 / 3.0)
-    assert second_b.target_notional == pytest.approx(0.5)
-    assert result.steps[2].turnover == pytest.approx(1.0 / 3.0)
-
 
 def test_advance_portfolio_state_drifts_weights_after_returns():
     from alpha_os.decision_backtest import (
@@ -342,10 +261,9 @@ def test_run_decision_backtest_charges_turnover_cost():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -380,10 +298,9 @@ def test_run_decision_backtest_charges_execution_fee_bps():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -405,10 +322,9 @@ def test_run_decision_backtest_charges_bid_ask_spread_bps():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -430,10 +346,9 @@ def test_run_decision_backtest_charges_funding_on_gross_exposure():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -460,10 +375,9 @@ def test_run_decision_backtest_tracks_subject_specific_cost_breakdown():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -494,10 +408,9 @@ def test_run_decision_backtest_charges_borrow_fee_on_short_exposure():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -518,10 +431,9 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -540,7 +452,6 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
                     ),
                 ),
             ),
-            portfolio_construction=PortfolioConstructionSpec(gross_exposure_cap=1.0),
         )
     )
 
@@ -831,10 +742,9 @@ def test_run_decision_backtest_feeds_state_into_next_decision():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -864,11 +774,10 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
     from alpha_os.portfolio_sizing_policy import ConstrainedOptimizerSizingPolicy
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -884,7 +793,6 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
                     risk_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
                 ),
             ),
-            portfolio_construction=PortfolioConstructionSpec(gross_exposure_cap=1.0),
         ),
         strategy=PortfolioSizingTradingStrategy(
             ConstrainedOptimizerSizingPolicy(dependence_aversion=2.0)
@@ -905,106 +813,13 @@ def test_run_decision_backtest_solves_multi_subject_portfolio():
     )
 
 
-def test_run_decision_backtest_respects_asset_class_weight_caps():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-        run_decision_backtest,
-    )
-
-    result = run_decision_backtest(
-        DecisionBacktestInput(
-            asset_class_by_subject={
-                "ES_future": "equity_index",
-                "NQ_future": "equity_index",
-                "ZN_future": "rates",
-            },
-            portfolio_construction=PortfolioConstructionSpec(
-                asset_class_weight_caps={"equity_index": 0.25}
-            ),
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="ES_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="NQ_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="ZN_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-            ),
-        )
-    )
-
-    first_step = result.steps[0]
-    equity_weight = (
-        _subject_step(first_step, "ES_future").target_weight
-        + _subject_step(first_step, "NQ_future").target_weight
-    )
-    assert equity_weight == pytest.approx(0.25)
-    assert _subject_step(first_step, "ZN_future").target_weight == pytest.approx(0.2)
-
-
-def test_run_decision_backtest_respects_cluster_weight_caps():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-        run_decision_backtest,
-    )
-
-    result = run_decision_backtest(
-        DecisionBacktestInput(
-            cluster_by_subject={
-                "ES_future": "eq_us",
-                "RTY_future": "eq_us",
-                "ZN_future": "rates_us",
-            },
-            portfolio_construction=PortfolioConstructionSpec(
-                cluster_weight_caps={"eq_us": 0.18}
-            ),
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="ES_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="RTY_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="ZN_future",
-                    signal_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                ),
-            ),
-        )
-    )
-
-    first_step = result.steps[0]
-    eq_us_weight = (
-        _subject_step(first_step, "ES_future").target_weight
-        + _subject_step(first_step, "RTY_future").target_weight
-    )
-    assert eq_us_weight == pytest.approx(0.18)
-    assert _subject_step(first_step, "ZN_future").target_weight == pytest.approx(0.2)
-
-
 def test_run_decision_backtest_applies_subject_specific_cost_series_and_contract_multiplier():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -1043,10 +858,9 @@ def test_run_decision_backtest_tracks_notional_with_initial_capital_base():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             initial_capital_base=2.5,
             subject_series=(
@@ -1074,7 +888,6 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
-        run_decision_backtest,
     )
     from alpha_os.portfolio_sizing_policy import HistoricalModelSizingPolicy
 
@@ -1099,7 +912,7 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
         dtype=float,
     )
 
-    result = run_decision_backtest(
+    result = _run_decision_backtest(
         DecisionBacktestInput(
             subject_series=(
                 SubjectBacktestSeries(
@@ -1114,10 +927,6 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
                     realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
                     historical_return_series=stable_history,
                 ),
-            ),
-            portfolio_construction=PortfolioConstructionSpec(
-                gross_exposure_cap=1.0,
-                active_weight_budget=0.0,
             ),
         ),
         strategy=PortfolioSizingTradingStrategy(
@@ -1135,89 +944,6 @@ def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
     assert stable_step.target_weight > volatile_step.target_weight
     assert stable_step.target_weight > 0.9
 
-
-def test_run_decision_backtest_can_rebalance_weekly_long_only_top_k():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-        run_decision_backtest,
-    )
-
-    index = [
-        "2026-03-24",
-        "2026-03-25",
-        "2026-03-26",
-        "2026-03-27",
-    ]
-    result = run_decision_backtest(
-        DecisionBacktestInput(
-            portfolio_construction=PortfolioConstructionSpec(
-                gross_exposure_cap=1.0,
-                rebalance_interval_steps=2,
-                direction_mode="long_only",
-                top_k=2,
-            ),
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="EWJ_etf",
-                    signal_series=pd.Series(
-                        [0.9, 0.1, 0.8, 0.2],
-                        index=index,
-                        dtype=float,
-                    ),
-                    realized_return_series=pd.Series(
-                        [0.01, 0.01, 0.01, 0.01],
-                        index=index,
-                        dtype=float,
-                    ),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="EWZ_etf",
-                    signal_series=pd.Series(
-                        [0.8, 0.2, 0.7, 0.1],
-                        index=index,
-                        dtype=float,
-                    ),
-                    realized_return_series=pd.Series(
-                        [0.02, 0.02, 0.02, 0.02],
-                        index=index,
-                        dtype=float,
-                    ),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="GDX_etf",
-                    signal_series=pd.Series(
-                        [-0.4, 0.9, -0.1, 0.8],
-                        index=index,
-                        dtype=float,
-                    ),
-                    realized_return_series=pd.Series(
-                        [-0.01, -0.01, -0.01, -0.01],
-                        index=index,
-                        dtype=float,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    first_step = result.steps[0]
-    second_step = result.steps[1]
-    third_step = result.steps[2]
-
-    assert len(result.steps) == 4
-    assert first_step.turnover > 0.0
-    assert second_step.turnover == pytest.approx(0.0)
-    assert third_step.turnover > 0.0
-
-    first_weights = {
-        step.subject_id: step.target_weight
-        for step in first_step.subject_steps
-    }
-    assert first_weights["EWJ_etf"] > 0.0
-    assert first_weights["EWZ_etf"] > 0.0
-    assert first_weights["GDX_etf"] == pytest.approx(0.0)
-    assert 0.0 < sum(first_weights.values()) <= 1.0
     assert result.gross_return_total > 0.0
 
 
