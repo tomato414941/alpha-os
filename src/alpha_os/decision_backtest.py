@@ -4,10 +4,6 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from .contract_boundaries import (
-    PortfolioConstraintBoundary,
-    default_portfolio_constraint_boundary,
-)
 from .evaluation_cost_config import TradingEnvironment
 from .portfolio_decision import (
     CostInput,
@@ -24,10 +20,6 @@ from .portfolio_decision import (
     RiskInput,
     SizingDiagnostics,
     UncertaintyInput,
-)
-from .portfolio_construction_pipeline import (
-    build_portfolio_construction_request,
-    construct_portfolio_targets,
 )
 from .trading_strategy import TradingStrategy
 
@@ -945,46 +937,6 @@ def _aligned_frame(backtest_input: DecisionBacktestInput) -> pd.DataFrame:
         for item in backtest_input.subject_series
     ]
     return frame.dropna(subset=required_columns)
-
-
-def constrained_targets_by_subject(
-    targets: tuple[PortfolioTarget, ...],
-    *,
-    current_weights: dict[str, float],
-    capital_base: float,
-    gross_exposure_cap: float | None,
-    gross_leverage_cap: float | None,
-    net_exposure_target: float | None,
-    target_vol: float | None = None,
-    risk_by_subject: dict[str, float] | None = None,
-    constraint_boundary: PortfolioConstraintBoundary | None = None,
-    top_k: int | None,
-    asset_class_by_subject: dict[str, str],
-    cluster_by_subject: dict[str, str],
-    asset_class_weight_caps: dict[str, float],
-    cluster_weight_caps: dict[str, float],
-    active_weight_budget: float | None = None,
-    direction_mode: str | None = None,
-) -> dict[str, PortfolioTarget]:
-    request = build_portfolio_construction_request(
-        targets=targets,
-        current_weights=current_weights,
-        capital_base=capital_base,
-        gross_exposure_cap=gross_exposure_cap,
-        gross_leverage_cap=gross_leverage_cap,
-        net_exposure_target=net_exposure_target,
-        target_vol=target_vol,
-        risk_by_subject=risk_by_subject,
-        constraint_boundary=constraint_boundary or default_portfolio_constraint_boundary(),
-        direction_mode=direction_mode,
-        top_k=top_k,
-        active_weight_budget=active_weight_budget,
-        asset_class_by_subject=asset_class_by_subject,
-        cluster_by_subject=cluster_by_subject,
-        asset_class_weight_caps=asset_class_weight_caps,
-        cluster_weight_caps=cluster_weight_caps,
-    )
-    return construct_portfolio_targets(request).targets
 
 
 def _predictive_signals_for_row(

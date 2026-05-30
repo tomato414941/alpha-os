@@ -82,7 +82,8 @@ record.
 
 `run_strategy_backtest(top_k=...)` and
 `build_direct_strategy_evaluation_metric_group_results(top_k=...)` were removed.
-`top_k` now belongs to `PortfolioConstructionSpec`.
+The later `PortfolioConstructionSpec` path was also removed; a strategy that
+needs top-k behavior must implement that internally.
 
 `build_direct_strategy_evaluation_metric_group_results()` was removed. That
 old direct evaluation entrypoint adapted explicit recipe inputs into a
@@ -93,6 +94,10 @@ black box.
 now requires an explicit `TradingStrategy` and treats returned
 `PortfolioDecisionOutput.targets` as the final desired portfolio action instead
 of applying portfolio construction inside the backtest runner.
+
+`constrained_targets_by_subject`, `portfolio_construction_pipeline.py`, and
+`PortfolioConstructionSpec` were removed. Portfolio construction is no longer a
+runner-level default abstraction.
 
 ## Close Condition
 
