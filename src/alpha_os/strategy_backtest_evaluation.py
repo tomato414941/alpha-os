@@ -10,9 +10,6 @@ from .decision_backtest import (
     DecisionBacktestResult,
 )
 from .portfolio_construction_config import PortfolioConstructionSpec
-from .evaluation_metric_group_result_builders import (
-    build_portfolio_construction_trace_metric_group_result,
-)
 from .portfolio_decision import SubjectSet
 from .portfolio_concentration import concentration_snapshot, top_n_gross_share
 from .evaluation_result import EvaluationMetricGroupResult, EvaluationFailureFinding, EvaluationFailureFindingGroup
@@ -45,9 +42,6 @@ class StrategyBacktestRangeSummary:
     optimizer_backend: str
     optimizer_status: str
     optimizer_fallback_reason: str
-    target_vol_stage_mean_gross_delta: float
-    net_target_stage_mean_net_delta: float
-    top_k_stage_mean_active_count_delta: float
     mean_desired_turnover: float
     mean_executed_turnover: float
     mean_expected_execution_cost: float
@@ -212,13 +206,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
             ),
         },
     )
-    construction_trace_metric_group_result = (
-        build_portfolio_construction_trace_metric_group_result(
-            source=source,
-            range_summaries=range_summaries,
-            mean=_mean,
-        )
-    )
     execution_trace_metric_group_result = EvaluationMetricGroupResult(
         metric_group_name="execution_trace",
         source=source,
@@ -368,9 +355,6 @@ def build_evaluation_metric_group_results_from_range_summaries(
                 portfolio_target_return_alignment_metric_group_result
             ),
             decision_metric_group_result.metric_group_name: decision_metric_group_result,
-            construction_trace_metric_group_result.metric_group_name: (
-                construction_trace_metric_group_result
-            ),
             execution_trace_metric_group_result.metric_group_name: execution_trace_metric_group_result,
             cost_drag_metric_group_result.metric_group_name: cost_drag_metric_group_result,
             signal_churn_metric_group_result.metric_group_name: signal_churn_metric_group_result,
@@ -438,7 +422,6 @@ def _range_summary_from_backtest_result(
         min_abs_weight=_CONCENTRATION_MIN_ABS_WEIGHT,
         top_intent_n=portfolio_construction.top_gross_share_cap_n,
     )
-    construction_impact = _portfolio_construction_stage_impact_from_backtest(backtest_result)
     execution_impact = _execution_trace_from_backtest(backtest_result)
     cost_drag = _cost_drag_from_backtest(backtest_result, subject_set=subject_set)
     signal_churn = _signal_churn_from_backtest(backtest_result)
@@ -467,15 +450,6 @@ def _range_summary_from_backtest_result(
         optimizer_fallback_reason=str(
             optimizer_diagnostics["optimizer_fallback_reason"]
         ),
-        target_vol_stage_mean_gross_delta=construction_impact[
-            "target_vol_stage_mean_gross_delta"
-        ],
-        net_target_stage_mean_net_delta=construction_impact[
-            "net_target_stage_mean_net_delta"
-        ],
-        top_k_stage_mean_active_count_delta=construction_impact[
-            "top_k_stage_mean_active_count_delta"
-        ],
         mean_desired_turnover=execution_impact["mean_desired_turnover"],
         mean_executed_turnover=execution_impact["mean_executed_turnover"],
         mean_expected_execution_cost=execution_impact[
@@ -535,39 +509,6 @@ def _ordered_unique_join(values: list[str]) -> str:
         seen.add(value)
         ordered.append(value)
     return ";".join(ordered) if ordered else "-"
-
-
-def _portfolio_construction_stage_impact_from_backtest(
-    result: DecisionBacktestResult,
-) -> dict[str, float]:
-    traces = [
-        trace
-        for step in result.steps
-        for trace in getattr(step, "construction_trace", ())
-    ]
-    return {
-        "target_vol_stage_mean_gross_delta": _mean(
-            [
-                item.gross_delta
-                for item in traces
-                if item.stage_name == "target_vol_cap"
-            ]
-        ),
-        "net_target_stage_mean_net_delta": _mean(
-            [
-                item.net_delta
-                for item in traces
-                if item.stage_name == "net_exposure_target"
-            ]
-        ),
-        "top_k_stage_mean_active_count_delta": _mean(
-            [
-                float(item.active_count_delta)
-                for item in traces
-                if item.stage_name == "top_k"
-            ]
-        ),
-    }
 
 
 def _execution_trace_from_backtest(result: DecisionBacktestResult) -> dict[str, float]:
