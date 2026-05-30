@@ -4,11 +4,38 @@ import pandas as pd
 import pytest
 
 from alpha_os.evaluation_cost_config import TradingEnvironment
-from alpha_os.trading_strategy import PortfolioSizingTradingStrategy
+from alpha_os.portfolio_decision import (
+    PortfolioDecisionInput,
+    PortfolioDecisionOutput,
+    PortfolioTarget,
+)
 
 
 def _subject_step(step, subject_id: str):
     return step.subject_step_by_subject[subject_id]
+
+
+class SignalTargetStrategy:
+    def decide(self, strategy_input: PortfolioDecisionInput) -> PortfolioDecisionOutput:
+        current_weights = strategy_input.portfolio_state.weights_by_subject
+        targets = tuple(
+            PortfolioTarget(
+                subject_id=signal.subject_id,
+                target_weight=float(signal.value),
+                position_delta=float(signal.value)
+                - current_weights.get(signal.subject_id, 0.0),
+                target_notional=float(signal.value)
+                * strategy_input.portfolio_state.capital_base,
+                entry_allowed=abs(float(signal.value)) > 0.0,
+                risk_scale=1.0,
+            )
+            for signal in strategy_input.predictive_signals
+        )
+        return PortfolioDecisionOutput(
+            portfolio_id=strategy_input.portfolio_id,
+            as_of=strategy_input.as_of,
+            targets=targets,
+        )
 
 
 def _run_decision_backtest(backtest_input, *, strategy=None):
@@ -16,7 +43,7 @@ def _run_decision_backtest(backtest_input, *, strategy=None):
 
     return run_decision_backtest(
         backtest_input,
-        strategy=PortfolioSizingTradingStrategy() if strategy is None else strategy,
+        strategy=SignalTargetStrategy() if strategy is None else strategy,
     )
 
 
@@ -427,7 +454,7 @@ def test_run_decision_backtest_charges_borrow_fee_on_short_exposure():
     assert result.steps[0].cost_notional == pytest.approx(0.0005)
 
 
-def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
+def test_run_decision_backtest_tracks_drawdown():
     from alpha_os.decision_backtest import (
         DecisionBacktestInput,
         SubjectBacktestSeries,
@@ -459,9 +486,9 @@ def test_run_decision_backtest_tracks_drawdown_and_risk_scaling():
     second_step = _subject_step(result.steps[1], "BTC")
 
     assert first_step.risk_scale == pytest.approx(1.0)
-    assert second_step.risk_scale == pytest.approx(0.5)
-    assert second_step.target_weight == pytest.approx(0.5)
-    assert result.max_drawdown == pytest.approx(0.1)
+    assert second_step.risk_scale == pytest.approx(1.0)
+    assert second_step.target_weight == pytest.approx(1.0)
+    assert result.max_drawdown == pytest.approx(0.2)
 
 
 def test_run_decision_backtest_feeds_state_into_next_decision():
@@ -492,51 +519,8 @@ def test_run_decision_backtest_feeds_state_into_next_decision():
     second_step = _subject_step(result.steps[1], "BTC")
 
     assert first_step.target_weight == pytest.approx(1.0)
-    assert second_step.risk_scale < 1.0
-    assert second_step.target_weight < first_step.target_weight
-
-
-def test_run_decision_backtest_solves_multi_subject_portfolio():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-    )
-    from alpha_os.portfolio_sizing_policy import ConstrainedOptimizerSizingPolicy
-
-    result = _run_decision_backtest(
-        DecisionBacktestInput(
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="BTC_spot",
-                    signal_series=pd.Series({"2026-03-24": 1.0}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
-                    risk_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                ),
-                SubjectBacktestSeries(
-                    subject_id="ETH_spot",
-                    signal_series=pd.Series({"2026-03-24": 1.0}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.1}, dtype=float),
-                    risk_series=pd.Series({"2026-03-24": 0.2}, dtype=float),
-                ),
-            ),
-        ),
-        strategy=PortfolioSizingTradingStrategy(
-            ConstrainedOptimizerSizingPolicy(dependence_aversion=2.0)
-        ),
-    )
-
-    btc_step = _subject_step(result.steps[0], "BTC_spot")
-    eth_step = _subject_step(result.steps[0], "ETH_spot")
-
-    assert result.subject_ids == ("BTC_spot", "ETH_spot")
-    assert btc_step.target_weight >= 0.0
-    assert eth_step.target_weight >= 0.0
-    assert result.steps[0].turnover == pytest.approx(
-        abs(btc_step.position_delta) + abs(eth_step.position_delta)
-    )
-    assert result.steps[0].traded_notional == pytest.approx(
-        btc_step.traded_notional + eth_step.traded_notional
-    )
+    assert second_step.risk_scale == pytest.approx(1.0)
+    assert second_step.target_weight == pytest.approx(1.0)
 
 
 def test_run_decision_backtest_applies_subject_specific_cost_series_and_contract_multiplier():
@@ -608,66 +592,3 @@ def test_run_decision_backtest_tracks_notional_with_initial_capital_base():
     assert step.gross_pnl_notional == pytest.approx(0.125)
     assert step.traded_notional == pytest.approx(1.25)
     assert step.gross_equity == pytest.approx(2.625)
-
-
-def test_run_decision_backtest_uses_prior_history_for_skfolio_policy():
-    from alpha_os.decision_backtest import (
-        DecisionBacktestInput,
-        SubjectBacktestSeries,
-    )
-    from alpha_os.portfolio_sizing_policy import HistoricalModelSizingPolicy
-
-    volatile_history = pd.Series(
-        {
-            "2026-03-17": 0.20,
-            "2026-03-18": -0.20,
-            "2026-03-19": 0.18,
-            "2026-03-20": -0.18,
-            "2026-03-23": 0.16,
-        },
-        dtype=float,
-    )
-    stable_history = pd.Series(
-        {
-            "2026-03-17": 0.01,
-            "2026-03-18": 0.01,
-            "2026-03-19": 0.011,
-            "2026-03-20": 0.009,
-            "2026-03-23": 0.01,
-        },
-        dtype=float,
-    )
-
-    result = _run_decision_backtest(
-        DecisionBacktestInput(
-            subject_series=(
-                SubjectBacktestSeries(
-                    subject_id="VOL",
-                    signal_series=pd.Series({"2026-03-24": 0.6}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.02}, dtype=float),
-                    historical_return_series=volatile_history,
-                ),
-                SubjectBacktestSeries(
-                    subject_id="STABLE",
-                    signal_series=pd.Series({"2026-03-24": 0.6}, dtype=float),
-                    realized_return_series=pd.Series({"2026-03-24": 0.01}, dtype=float),
-                    historical_return_series=stable_history,
-                ),
-            ),
-        ),
-        strategy=PortfolioSizingTradingStrategy(
-            HistoricalModelSizingPolicy(
-                model_type="minimum_variance",
-                min_history_steps=5,
-            )
-        ),
-    )
-
-    first_step = result.steps[0]
-    volatile_step = _subject_step(first_step, "VOL")
-    stable_step = _subject_step(first_step, "STABLE")
-
-    assert stable_step.target_weight > volatile_step.target_weight
-    assert stable_step.target_weight > 0.9
-
-    assert result.gross_return_total > 0.0

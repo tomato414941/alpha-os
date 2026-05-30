@@ -438,47 +438,12 @@ class PortfolioDecisionInput:
 
 
 @dataclass(frozen=True)
-class SizingRequest:
-    subject_ids: tuple[str, ...]
-    signal_values: tuple[float, ...]
-    current_weights: tuple[float, ...]
-    historical_return_matrix: tuple[tuple[float, ...], ...]
-    asset_classes: tuple[str | None, ...]
-    clusters: tuple[str | None, ...]
-    uncertainty_std: tuple[float, ...]
-    risk_values: tuple[float, ...]
-    model_uncertainty_values: tuple[float, ...]
-    structural_uncertainty_values: tuple[float, ...]
-    dependence_values: tuple[float, ...]
-    dependence_penalty_matrix: tuple[tuple[float, ...], ...]
-    market_impact_levels: tuple[float, ...]
-    transaction_cost_levels: tuple[float, ...]
-    short_cost_levels: tuple[float, ...]
-    signal_horizons: tuple[int | None, ...]
-    gross_exposure_cap: float | None
-    net_exposure_cap: float | None
-    capital_base: float
-    holding_period_days: int
-    current_drawdown: float
-    recent_turnover: float
-    turnover_cost_rate: float
-
-
-@dataclass(frozen=True)
 class SizingDiagnostics:
     backend_id: str = "-"
     solver: str = "-"
     status: str = "-"
     objective_value: float | None = None
     fallback_reason: str | None = None
-
-
-@dataclass(frozen=True)
-class SizingSolution:
-    subject_ids: tuple[str, ...]
-    target_weights: tuple[float, ...]
-    risk_scales: tuple[float, ...]
-    diagnostics: SizingDiagnostics = field(default_factory=SizingDiagnostics)
 
 
 @dataclass(frozen=True)

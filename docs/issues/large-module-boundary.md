@@ -8,19 +8,19 @@ boundaries and making it harder to see which code is still needed.
 
 Current size markers:
 
-- `src/alpha_os/portfolio_sizing_policy.py`: 1822 lines
-- `src/alpha_os/decision_backtest.py`: 1379 lines
+- `src/alpha_os/decision_backtest.py`: 1175 lines
 
 Removed:
 
 - `src/alpha_os/strategy_backtest_evaluation.py`: removed after the old direct
   strategy evaluation path became unused.
+- `src/alpha_os/portfolio_sizing_policy.py`: removed because it was a legacy
+  rich allocator path, not the black-box `TradingStrategy` contract.
 
 Large test files also indicate mixed workflows:
 
-- `tests/test_alpha_os_portfolio_decision.py`: 1565 lines
-- `tests/test_alpha_os_decision_backtest.py`: 1388 lines
-- `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 320 lines
+- `tests/test_alpha_os_decision_backtest.py`: 594 lines
+- `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 160 lines
 
 ## Risk
 
@@ -49,10 +49,8 @@ longer needed, remove it instead of moving it.
 
 ## Suggested Order
 
-Start with these candidates:
+Continue with these candidates:
 
-- `portfolio_sizing_policy.py`, because the `policy` name may be hiding
-  allocator, optimizer, and fallback responsibilities.
 - `decision_backtest.py`, but only after the strategy/world/execution boundary
   is clearer.
 

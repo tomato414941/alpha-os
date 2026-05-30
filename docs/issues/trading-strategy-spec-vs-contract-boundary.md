@@ -37,16 +37,11 @@ contract.
 strategies should expose the input and output types they actually use.
 
 `TradingStrategySpec` has been removed. The only remaining code artifact in
-`alpha_os.trading_strategy` is the black-box strategy protocol plus concrete
-strategy adapters that satisfy it.
+`alpha_os.trading_strategy` is the black-box strategy protocol.
 
 `run_strategy_backtest()` was removed. The remaining direct backtest path
 accepts already resolved market series instead of interpreting `SubjectSet`
 bindings and observation sources inside a strategy-named runner.
-
-This is still not the desired architecture. The current direct backtest path
-adapts explicit recipe inputs into a `PortfolioSizingTradingStrategy` instead
-of receiving an arbitrary `TradingStrategy` black-box contract.
 
 `evaluation_execution_strategy.py` was removed with the old DB-backed evaluation
 runner path.
@@ -98,6 +93,10 @@ of applying portfolio construction inside the backtest runner.
 `constrained_targets_by_subject`, `portfolio_construction_pipeline.py`, and
 `PortfolioConstructionSpec` were removed. Portfolio construction is no longer a
 runner-level default abstraction.
+
+`PortfolioSizingTradingStrategy` and `portfolio_sizing_policy.py` were removed.
+The old rich allocator path is no longer the default implementation behind the
+strategy contract.
 
 ## Close Condition
 
