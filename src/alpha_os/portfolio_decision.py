@@ -438,15 +438,6 @@ class PortfolioDecisionInput:
 
 
 @dataclass(frozen=True)
-class SizingDiagnostics:
-    backend_id: str = "-"
-    solver: str = "-"
-    status: str = "-"
-    objective_value: float | None = None
-    fallback_reason: str | None = None
-
-
-@dataclass(frozen=True)
 class PortfolioTarget:
     subject_id: str
     target_weight: float
@@ -462,7 +453,6 @@ class PortfolioDecisionOutput:
     portfolio_id: str | None = None
     as_of: str | None = None
     targets: tuple[PortfolioTarget, ...] = ()
-    sizing_diagnostics: SizingDiagnostics = field(default_factory=SizingDiagnostics)
 
     @property
     def gross_target_exposure(self) -> float:

@@ -18,7 +18,6 @@ from .portfolio_decision import (
     PortfolioTarget,
     PredictiveSignalInput,
     RiskInput,
-    SizingDiagnostics,
     UncertaintyInput,
 )
 from .trading_strategy import TradingStrategy
@@ -136,7 +135,6 @@ class DecisionBacktestStep:
     gross_equity: float
     net_equity: float
     execution_trace: RebalanceTrace | None = None
-    sizing_diagnostics: SizingDiagnostics = field(default_factory=SizingDiagnostics)
 
     @property
     def subject_step_by_subject(self) -> dict[str, DecisionBacktestSubjectStep]:
@@ -329,7 +327,7 @@ def run_decision_backtest(
     steps: list[DecisionBacktestStep] = []
 
     for date, row in aligned.iterrows():
-        desired_targets_by_subject, sizing_diagnostics = _build_rebalance_targets(
+        desired_targets_by_subject = _build_rebalance_targets(
             backtest_input,
             state=state,
             row=row,
@@ -387,7 +385,6 @@ def run_decision_backtest(
                 gross_equity=state.gross_equity,
                 net_equity=state.net_equity,
                 execution_trace=execution_trace,
-                sizing_diagnostics=sizing_diagnostics,
             )
         )
 
@@ -424,10 +421,7 @@ def _build_rebalance_targets(
     date: str,
     subject_ids: tuple[str, ...],
     strategy: TradingStrategy[PortfolioDecisionInput, PortfolioDecisionOutput],
-) -> tuple[
-    dict[str, PortfolioTarget],
-    SizingDiagnostics,
-]:
+) -> dict[str, PortfolioTarget]:
     decision_input = _portfolio_decision_input_for_backtest_row(
         backtest_input,
         state=state,
@@ -436,10 +430,7 @@ def _build_rebalance_targets(
         subject_ids=subject_ids,
     )
     decision_output = strategy.decide(decision_input)
-    return (
-        {target.subject_id: target for target in decision_output.targets},
-        decision_output.sizing_diagnostics,
-    )
+    return {target.subject_id: target for target in decision_output.targets}
 
 
 def _per_turnover_execution_cost(backtest_input: DecisionBacktestInput) -> float:
