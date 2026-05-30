@@ -9,8 +9,12 @@ boundaries and making it harder to see which code is still needed.
 Current size markers:
 
 - `src/alpha_os/portfolio_sizing_policy.py`: 1822 lines
-- `src/alpha_os/strategy_backtest_evaluation.py`: 1391 lines
 - `src/alpha_os/decision_backtest.py`: 1379 lines
+
+Removed:
+
+- `src/alpha_os/strategy_backtest_evaluation.py`: removed after the old direct
+  strategy evaluation path became unused.
 
 Large test files also indicate mixed workflows:
 
