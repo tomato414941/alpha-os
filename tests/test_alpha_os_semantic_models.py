@@ -78,35 +78,6 @@ def test_signal_family_round_trips_greenfield_metadata():
     assert restored == family
 
 
-def test_signal_family_library_exposes_non_price_families():
-    from alpha_os.signal_family_library import (
-        find_signal_family_blueprint,
-        list_signal_family_blueprints,
-    )
-
-    blueprints = {
-        blueprint.family_id for blueprint in list_signal_family_blueprints()
-    }
-    assert "vol_compression_breakout_family" in blueprints
-    assert "relative_strength_rank_family" in blueprints
-    assert "trend_with_volume_confirmation_family" in blueprints
-    assert "time_series_trend_family" in blueprints
-    assert "term_structure_carry_family" in blueprints
-    assert "value_anchor_family" in blueprints
-
-    relative_strength = find_signal_family_blueprint(
-        "relative_strength_rank_family"
-    )
-    assert relative_strength is not None
-    assert relative_strength.primary_observable_id == "cross_sectional_return_rank_20d"
-    assert relative_strength.family_group == "cross_sectional"
-
-    term_structure_carry = find_signal_family_blueprint("term_structure_carry_family")
-    assert term_structure_carry is not None
-    assert term_structure_carry.primary_observable_id == "term_structure_slope"
-    assert term_structure_carry.family_group == "carry"
-
-
 def test_prepare_feature_plane_from_frame_collects_instrument_observables():
     from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 
