@@ -47,11 +47,6 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
                     "mean_decision_turnover": 0.3,
                 },
             ),
-            EvaluationMetricGroupResult(
-                metric_group_name="robustness",
-                source="test",
-                metrics={"worst_decision_net_return": 0.1},
-            ),
         ),
     )
     comparison_target = EvaluationResult(
@@ -66,11 +61,6 @@ def test_common_strategy_comparison_contract_rejects_missing_required_metric():
                     "annualized_step_sharpe": 1.0,
                     "mean_decision_turnover": 0.3,
                 },
-            ),
-            EvaluationMetricGroupResult(
-                metric_group_name="robustness",
-                source="test",
-                metrics={"worst_decision_net_return": 0.1},
             ),
         ),
     )

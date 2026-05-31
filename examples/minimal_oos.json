@@ -67,10 +67,7 @@
         }
       ],
       "metric_group_names": [
-        "portfolio_target_return_alignment",
-        "decision_quality",
-        "portfolio_concentration",
-        "robustness"
+        "decision_quality"
       ],
       "metric_windows": [
         5

@@ -25,8 +25,8 @@ explicitly asking for both predictor quality and rollout behavior.
 
 ## Current Finding
 
-Metrics such as `decision_quality`, `portfolio_concentration`, `cost_drag`, and
-`robustness` are closer to policy or actor rollout evaluation.
+`decision_quality` is currently the only default metric group left for policy
+or actor rollout evaluation.
 
 `prediction_diagnostics` has been removed from the ordinary strategy evaluation
 metric groups. Predictor-quality metrics still need an explicit owner and

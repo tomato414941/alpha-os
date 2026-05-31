@@ -142,11 +142,7 @@
         }
       ],
       "metric_group_names": [
-        "portfolio_target_return_alignment",
-        "sizing_policy_quality",
-        "rebalance_policy_quality",
-        "decision_quality",
-        "robustness"
+        "decision_quality"
       ],
       "metric_windows": [
         2
@@ -184,11 +180,7 @@
         }
       ],
       "metric_group_names": [
-        "portfolio_target_return_alignment",
-        "sizing_policy_quality",
-        "rebalance_policy_quality",
-        "decision_quality",
-        "robustness"
+        "decision_quality"
       ],
       "metric_windows": [
         2
