@@ -65,7 +65,6 @@ confusing the metric group concept with the contract field name.
 EvaluationSpec = evaluation settings
 evaluation target = transient result key + strategy id selected for an evaluation run
 EvaluationResult = recorded factual outcome of one evaluated strategy
-EvaluationRunResult = persisted container of evaluation results
 EvaluationMetricGroupResult = one metric group result block inside an evaluation result
 ```
 
@@ -85,11 +84,6 @@ result terminology.
 
 The implementation name for one evaluated strategy result is `EvaluationResult`.
 Treat it as a strategy-level result record, not as a comparison row.
-`EvaluationRunResult.results` remains the runtime and persisted field for
-evaluation results.
-
-Use `EvaluationRunResult.results` in display, validation, diagnostics, and
-analysis code.
 
 Use `EvaluationResult.metric_group_results` in runtime readers and persisted
 documents.
