@@ -3,9 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .scoring import DEFAULT_METRIC_WINDOW
-
-
+DEFAULT_METRIC_WINDOW = 20
 DEFAULT_EVALUATION_AGGREGATION_KINDS = (
     "active_equal_mean",
     "corr_weighted_mean",
