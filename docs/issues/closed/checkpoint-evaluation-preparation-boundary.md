@@ -1,5 +1,11 @@
 # Checkpoint Evaluation Preparation Boundary
 
+Status: Closed
+
+Closed by: checkpoint-based evaluation preparation is no longer implemented in
+the active package. Future checkpoint work is tracked by the checkpoint concept
+issue instead of this removed evaluation path.
+
 ## Problem
 
 Checkpoint-based evaluation is conceptually different from strategy backtest

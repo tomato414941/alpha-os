@@ -1,5 +1,10 @@
 # Run Mode Removal
 
+Status: Closed
+
+Closed by: `run_mode` was removed from the active evaluation/request model, and
+the reserved paper/live/checkpoint run-mode path is no longer present.
+
 ## Problem
 
 `run_mode` was a persisted implementation field with values such as

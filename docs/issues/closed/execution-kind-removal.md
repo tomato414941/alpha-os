@@ -1,5 +1,10 @@
 # Execution Kind Removal
 
+Status: Closed
+
+Closed by: `execution_kind`, `StrategyExecutionKind`, and related strategy
+execution spec/routing fields were removed from the active code and payloads.
+
 ## Problem
 
 `execution_kind` was a persisted implementation field with values such as

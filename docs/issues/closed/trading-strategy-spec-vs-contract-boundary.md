@@ -1,5 +1,11 @@
 # Trading strategy spec vs contract boundary
 
+Status: Closed
+
+Closed by: `TradingStrategySpec` and the old strategy-spec-backed backtest
+interpreter were removed. The remaining active contract is
+`alpha_os.trading_strategy.TradingStrategy`.
+
 ## Problem
 
 `TradingStrategySpec` was a structured persisted configuration record. It was

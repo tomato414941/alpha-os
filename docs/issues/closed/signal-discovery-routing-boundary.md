@@ -1,5 +1,10 @@
 # Signal Discovery Routing Boundary
 
+Status: Closed
+
+Closed by: the signal discovery subsystem and its cross-cutting routing keys
+were removed from the active code path.
+
 ## Problem
 
 `signal_discovery_id` has historically been used as more than provenance. It

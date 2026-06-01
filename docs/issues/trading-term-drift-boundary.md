@@ -185,7 +185,7 @@ Do not keep either as a glossary term. These names imply a subtype of
 `execution`, but the old `execution_kind` field was not about order execution.
 
 `execution_kind` has been removed rather than renamed as a domain term.
-See [`execution-kind-removal.md`](./execution-kind-removal.md).
+See [`execution-kind-removal.md`](./closed/execution-kind-removal.md).
 
 ### `strategy execution`
 
@@ -203,4 +203,4 @@ implementation, and `strategy run mode` mostly duplicated the removed
 
 Treat concrete evaluation job shapes and their required inputs directly. Do not
 reintroduce `run_mode` as a domain term to rename. See
-[`run-mode-removal.md`](./run-mode-removal.md).
+[`run-mode-removal.md`](./closed/run-mode-removal.md).

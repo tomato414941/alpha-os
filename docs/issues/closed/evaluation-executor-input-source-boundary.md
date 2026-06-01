@@ -1,5 +1,10 @@
 # Evaluation Executor Input Source Boundary
 
+Status: Closed
+
+Closed by: the executor/input-source routing layer and the prepared/checkpoint
+evaluation input references were removed from the active package.
+
 ## Problem
 
 `evaluation_execution_strategy_for_request()` used to route evaluation requests

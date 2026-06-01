@@ -47,11 +47,11 @@ Prefer scoped terms:
 Do not introduce `execution kind` or `strategy execution kind` as target terms.
 The old `execution_kind` field was removed rather than renamed as a domain
 concept. See
-[`execution-kind-removal.md`](./execution-kind-removal.md).
+[`execution-kind-removal.md`](./closed/execution-kind-removal.md).
 
 Do not introduce `run policy` or `strategy run mode` as target terms. The
 old `run_mode` field was removed rather than renamed as a domain concept. See
-[`run-mode-removal.md`](./run-mode-removal.md).
+[`run-mode-removal.md`](./closed/run-mode-removal.md).
 
 ## Non-Goals
 

@@ -1,5 +1,10 @@
 # Signal Noise Ingestion Boundary
 
+Status: Closed
+
+Closed by: the signal-noise client helper, optional dependency, and ingestion
+entrypoint references were removed from the active package.
+
 ## Problem
 
 alpha-os has signal-noise backfill and evaluation input generation helpers, but
@@ -38,4 +43,3 @@ owner boundary.
 
 Do not add collector-name mappings or exchange-specific fetchers to alpha-os to
 work around missing signal-noise observation mappings.
-
