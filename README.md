@@ -16,8 +16,6 @@ backtesting, and out-of-sample evaluation.
 
 - `src/alpha_os/`
   - mainline strategy / evaluation runtime
-- `config/runtime_manifests/`
-  - evaluation manifest examples
 - `examples/minimal_oos.json`
   - fixture-backed golden path for strict OOS evaluation
 

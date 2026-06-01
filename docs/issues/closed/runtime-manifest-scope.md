@@ -1,5 +1,11 @@
 # Runtime Manifest Scope
 
+Status: Closed
+
+Closed by: checked-in runtime manifests were removed from the active repository.
+Future executable inputs should be introduced only after the new
+`TradingStrategy`-centered runtime shape is defined.
+
 ## Problem
 
 Runtime manifests are executable configuration bundles, but they can look like

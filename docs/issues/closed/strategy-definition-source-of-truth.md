@@ -1,5 +1,10 @@
 # Strategy definition source of truth
 
+Status: Closed
+
+Closed by: checked-in `strategy_specs`, the runtime manifest bundle, and the DB
+copy workflow were removed from the active package.
+
 ## Problem
 
 Strategy definitions previously existed in checked-in JSON inputs and the
