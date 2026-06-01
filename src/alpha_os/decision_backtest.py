@@ -12,7 +12,6 @@ from .portfolio_decision import (
     ObservedPortfolioInputs,
     PortfolioDecisionInput,
     PortfolioDecisionAssumptions,
-    PortfolioDecisionOutput,
     PortfolioPositionState,
     PortfolioState,
     PortfolioTarget,
@@ -20,18 +19,6 @@ from .portfolio_decision import (
     RiskInput,
     UncertaintyInput,
 )
-from .trading_strategy import TradingStrategy
-
-
-PortfolioDecisionStrategy = TradingStrategy[
-    PortfolioDecisionInput,
-    PortfolioDecisionOutput,
-]
-# Strategy shape accepted by this portfolio-decision backtest adapter.
-# This is not the universal TradingStrategy contract. Other engines may use
-# different input and output types.
-
-
 @dataclass(frozen=True)
 class SubjectBacktestSeries:
     subject_id: str
@@ -305,7 +292,7 @@ class BacktestStepAccounting:
 def run_decision_backtest(
     backtest_input: DecisionBacktestInput,
     *,
-    strategy: PortfolioDecisionStrategy,
+    strategy,
 ) -> DecisionBacktestResult:
     aligned = _aligned_frame(backtest_input)
     subject_ids = _subject_ids(backtest_input)
@@ -404,7 +391,7 @@ def _build_rebalance_targets(
     row: pd.Series,
     date: str,
     subject_ids: tuple[str, ...],
-    strategy: PortfolioDecisionStrategy,
+    strategy,
 ) -> dict[str, PortfolioTarget]:
     decision_input = _portfolio_decision_input_for_backtest_row(
         backtest_input,
