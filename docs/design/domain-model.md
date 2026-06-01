@@ -202,15 +202,8 @@ TradingStrategy
 The platform may eventually hold multiple trading sleeves, but the current
 mainline remains one predictive sleeve.
 
-`subject_set` and `target` should be read as trading-strategy scope, not as
-signal-policy fields. They define where the strategy is defined before any
-signal-generation rule is applied.
-
-Within `SignalPolicy`, the current clean split is:
-
-- `SignalDefinitionPolicy`: which signal logic is used, such as `discovery`, `signal`, and `family_mix`
-- `SignalUpdatePolicy`: how that signal logic is produced or reused; this is
-  not currently represented by a broad mode field
+`subject_set` and `target` should be read as trading-strategy scope. They define
+where the strategy is defined before any signal logic is applied.
 
 Within `PortfolioPolicy`, the current clean split is:
 
@@ -256,8 +249,8 @@ A signal is defined by two orthogonal axes:
 
 | Method | What it does | Status |
 |--------|-------------|--------|
-| **DSL / GP** | Compose features via S-expression operators, evolved by genetic programming | Active |
-| **Human-authored** | Fixed rules written by humans from domain knowledge | Active |
+| **DSL / GP** | Compose features via S-expression operators, evolved by genetic programming | Removed |
+| **Human-authored** | Fixed rules written by humans from domain knowledge | Current |
 | **ML** | Learn patterns from features statistically | Planned |
 | **LLM / NLP** | Extract predictions from unstructured text | Future |
 | **Meta / ensemble** | Combine other signals' predictions | Future |
