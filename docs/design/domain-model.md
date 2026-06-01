@@ -26,8 +26,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 |------|-----------|---------|
 | **research axis** | A dimension along which candidate strategies can differ. A strategy is not atomic; it is composed by assigning values on multiple axes. | universe, signal family mix, model method, rebalance policy, sizing method |
 | **strategy discovery** | A research object that defines which strategy candidates may be compared. It ranges over executable strategy specs rather than over signals alone. | compare `crypto + equal_weight + weekly` against `multi_asset + HRP + annual` |
-| **trading strategy** | The top-level trading object. It combines scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
-| **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | `constant_hold`, `dual_momentum_hold`, `crypto_regime_momentum_hold` |
+| **trading strategy** | The top-level trading object. It combines observations, optional state, portfolio logic, and execution intent into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
 | **execution kind** | Legacy/transitional implementation wording. Do not use as a domain term. | Use explicit strategy requirements and run state sourcing instead. |
 | **portfolio policy** | The strategy sub-policy that turns predictive inputs into desired portfolio state. | selection, sizing, rebalance, risk |
 | **rebalance friction policy** | The strategy sub-policy that defines how current portfolio state should move toward desired portfolio state under rebalance frictions. | turnover friction, no-trade band, execution-cost aversion |
@@ -77,8 +76,6 @@ result terminology.
 Use deliberately explicit names around signal behavior:
 
 - `signal` = a prediction-producing component.
-- `position rule` = the strategy-internal rule that turns inputs into
-  eligibility, direction, or timing decisions.
 - `portfolio_target_return_alignment` = an evaluation metric group that measures
   whether portfolio target weights align with subsequent realized returns.
 
@@ -125,14 +122,8 @@ Use candidate/diagnostic-style wording only in documents and research notes:
 These labels are useful for human discussion, but they are not manifest schema,
 run result schema, evaluation target roles, or strategy kinds.
 
-Trading strategy is the first-class trading concept. It should usually include:
-
-- strategy scope
-- inputs
-- position rule
-- portfolio policy
-- rebalance friction policy
-- execution policy
+Trading strategy is the first-class trading concept. It should define how
+observations and optional state become trading behavior.
 
 In clean long-horizon design, that hierarchy is:
 
@@ -140,10 +131,8 @@ In clean long-horizon design, that hierarchy is:
 TradingStrategy
 ├─ Scope
 ├─ Inputs
-├─ PositionRule
-├─ PortfolioPolicy
-├─ RebalanceFrictionPolicy
-└─ ExecutionPolicy
+├─ Portfolio Logic
+└─ Execution Intent
 ```
 
 Run context should be modeled separately:
