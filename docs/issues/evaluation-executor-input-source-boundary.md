@@ -36,8 +36,8 @@ mainly before the common backtest machinery:
   set inputs
 - signal discovery path builds datasets from screening, compressed belief, and
   snapshot artifacts
-- both paths eventually flow through range backtest variant evaluation and
-  `run_decision_backtest`
+- both paths eventually flowed through range backtest variant evaluation and the
+  now-removed decision backtest path
 
 The removed artifact/request shape mixed checkpoint-like references with
 training or discovery provenance:

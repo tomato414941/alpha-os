@@ -1,5 +1,13 @@
 # Decision Backtest Rollout Boundary
 
+## Resolution
+
+Closed by deleting `decision_backtest.py` and its signal-first test suite.
+
+The useful rollout accounting idea remains documented as a future requirement,
+but the old code was removed instead of being preserved through intermediate
+adapters.
+
 ## Problem
 
 `decision_backtest.py` currently behaves like a portfolio-decision rollout

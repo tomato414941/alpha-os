@@ -85,10 +85,9 @@ old direct evaluation entrypoint adapted explicit recipe inputs into a
 `PortfolioSizingTradingStrategy` instead of receiving a `TradingStrategy`
 black box.
 
-`DecisionBacktestInput.portfolio_construction` was removed. `run_decision_backtest()`
-now requires an explicit `TradingStrategy` and treats returned
-`PortfolioDecisionOutput.targets` as the final desired portfolio action instead
-of applying portfolio construction inside the backtest runner.
+`DecisionBacktestInput.portfolio_construction` was removed. The later
+`run_decision_backtest()` path was also removed because it still preserved the
+old signal-first portfolio-decision rollout shape.
 
 `constrained_targets_by_subject`, `portfolio_construction_pipeline.py`, and
 `PortfolioConstructionSpec` were removed. Portfolio construction is no longer a

@@ -8,10 +8,13 @@ boundaries and making it harder to see which code is still needed.
 
 Current size markers:
 
-- `src/alpha_os/decision_backtest.py`: 1175 lines
+- none currently blocking
 
 Removed:
 
+- `src/alpha_os/decision_backtest.py`: removed because it was a signal-first
+  portfolio-decision rollout adapter, not the desired TradingStrategy rollout
+  model.
 - `src/alpha_os/strategy_backtest_evaluation.py`: removed after the old direct
   strategy evaluation path became unused.
 - `src/alpha_os/portfolio_sizing_policy.py`: removed because it was a legacy
@@ -19,7 +22,6 @@ Removed:
 
 Large test files also indicate mixed workflows:
 
-- `tests/test_alpha_os_decision_backtest.py`: 594 lines
 - `tests/test_alpha_os_signal_discovery_run_evaluation.py`: 160 lines
 
 ## Risk
@@ -51,8 +53,7 @@ longer needed, remove it instead of moving it.
 
 Continue with these candidates:
 
-- `decision_backtest.py`, but only after the strategy/world/execution boundary
-  is clearer.
+- none currently selected
 
 ## Close Condition
 

@@ -12,7 +12,7 @@ The old flow was:
 
 ```text
 transition budget input
-  -> DecisionBacktestInput
+  -> removed decision backtest input
   -> portfolio trade transition layer
 ```
 

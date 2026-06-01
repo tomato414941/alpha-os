@@ -5,7 +5,7 @@
 `PortfolioDecisionInput` and `PortfolioDecisionOutput` existed before the
 `TradingStrategy` contract was introduced.
 
-They are currently used by the portfolio sizing / backtest implementation, but
+They were used by the removed portfolio-decision backtest implementation, but
 they should not define what a trading strategy is. A trading strategy should not
 be forced to depend on portfolio-decision-specific I/O just because those types
 already existed.
@@ -47,10 +47,9 @@ they are:
 
 ## Current Decision
 
-`PortfolioDecisionInput` and `PortfolioDecisionOutput` are accepted only as the
-I/O shape for the current portfolio-decision backtest adapter.
+The old portfolio-decision backtest adapter was removed.
 
-They do not define the universal `TradingStrategy` contract. The generic
+These types do not define the universal `TradingStrategy` contract. The generic
 `TradingStrategy` protocol remains the source of truth: each concrete engine may
 choose the input and output types it actually needs.
 
