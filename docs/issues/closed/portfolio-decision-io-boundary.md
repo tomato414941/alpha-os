@@ -1,5 +1,15 @@
 # Portfolio decision I/O boundary
 
+## Resolution
+
+Closed by deleting the unused `PortfolioDecisionInput`,
+`PortfolioDecisionOutput`, related portfolio-decision input helper types, and
+`portfolio_decision_inputs.py`.
+
+The remaining active code keeps `SubjectSet` and `PortfolioState` only. A
+future strategy rollout or portfolio allocator can introduce concrete I/O when
+there is an actual caller that needs it.
+
 ## Problem
 
 `PortfolioDecisionInput` and `PortfolioDecisionOutput` existed before the
