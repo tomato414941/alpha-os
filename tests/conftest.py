@@ -24,33 +24,3 @@ def synthetic_data():
         returns = rng.normal(drift, vol, n_days)
         data[feat] = 100.0 * np.cumprod(1.0 + returns)
     return FEATURES, data, data["f1"], n_days
-
-
-@pytest.fixture(autouse=True)
-def optional_signal_noise_client(monkeypatch):
-    import alpha_os.signal_client as signal_client
-
-    if signal_client.SignalClient is not None:
-        return
-
-    class FakeSignalClient:
-        def __init__(self, **kwargs):
-            self.base_url = str(kwargs.get("base_url", ""))
-
-        def health(self):
-            return False
-
-        def metadata(self, **_kwargs):
-            return None
-
-        def resolve_observation(self, **kwargs):
-            raise AssertionError(
-                f"unexpected resolve_observation call in unit test: {kwargs}"
-            )
-
-        def get_observation_data(self, **kwargs):
-            raise AssertionError(
-                f"unexpected get_observation_data call in unit test: {kwargs}"
-            )
-
-    monkeypatch.setattr(signal_client, "SignalClient", FakeSignalClient)

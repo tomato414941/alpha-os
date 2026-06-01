@@ -18,9 +18,6 @@ Repository = "https://github.com/tomato414941/alpha-os"
 Issues = "https://github.com/tomato414941/alpha-os/issues"
 
 [project.optional-dependencies]
-data = [
-    "signal-noise",
-]
 exchange = [
     "ccxt>=4.0",
 ]

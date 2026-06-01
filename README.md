@@ -27,13 +27,6 @@ backtesting, and out-of-sample evaluation.
 uv sync --extra dev
 ```
 
-Install the optional data-service integration only when a compatible
-`signal-noise` package is available:
-
-```bash
-uv sync --extra dev --extra data
-```
-
 ## Testing
 
 ```bash
