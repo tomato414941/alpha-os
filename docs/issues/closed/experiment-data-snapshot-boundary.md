@@ -1,5 +1,12 @@
 # Experiment Data Boundary
 
+Status: Closed
+
+Closed by: `crypto_regime_momentum` now points to the committed
+`experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/` dataset and its
+regeneration procedure. Local `data/` runtime artifacts were removed from the
+workspace and are no longer treated as research evidence.
+
 ## Problem
 
 Investment hypotheses need fixed evidence data, but `data/` contains local
