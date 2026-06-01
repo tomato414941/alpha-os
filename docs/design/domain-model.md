@@ -31,9 +31,6 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **trading strategy** | The top-level trading object. It combines scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
 | **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | `constant_hold`, `dual_momentum_hold`, `crypto_regime_momentum_hold` |
 | **execution kind** | Legacy/transitional implementation wording. Do not use as a domain term. | Use explicit strategy requirements and run state sourcing instead. |
-| **signal contribution** | A signal-level input to belief synthesis after screening and prediction orientation. It records prediction, confidence, and marginal signal contribution. | `SignalContribution(signal_id="trend@AAPL", ...)` |
-| **belief synthesis** | The process that combines signal contributions into target-level belief components. | cluster related signal families, compute belief confidence |
-| **compressed belief** | A compact belief artifact produced from belief synthesis for downstream portfolio decisions. | `CompressedBeliefComponent(signal_contribution_count=3, ...)` |
 | **portfolio policy** | The strategy sub-policy that turns predictive inputs into desired portfolio state. | selection, sizing, rebalance, risk |
 | **rebalance friction policy** | The strategy sub-policy that defines how current portfolio state should move toward desired portfolio state under rebalance frictions. | turnover friction, no-trade band, execution-cost aversion |
 | **execution policy** | The strategy sub-policy that defines how desired state should be realized. | urgency, order style, slicing, venue-facing limits |
@@ -48,7 +45,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation run result. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
 | **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
 | **evaluation metric group name** | The identifier for an evaluation metric group when a contract references expected metric fields. | `CrossInstrumentMetricContract.metric_group_name="decision_quality"` |
-| **train artifact** | A frozen output produced from the train period and later applied to the test period without re-selection. It is the evaluation-time analogue of a fitted model artifact. | survivor signal set, fitted belief synthesis settings, frozen allocation parameters |
+| **train artifact** | A frozen output produced from the train period and later applied to the test period without re-selection. It is the evaluation-time analogue of a fitted model artifact. | fitted model weights, frozen allocation parameters |
 
 ## Evaluation Result Terminology
 
