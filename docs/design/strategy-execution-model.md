@@ -320,7 +320,7 @@ The current codebase should converge on this split:
   - current implementation name for one engine-specific run spec
 - evaluation target tuple
   - transient result key and strategy id selected for one run
-- `EvaluationResult`
+- evaluation output data
   - the recorded result of one evaluated strategy
 
 In other words:

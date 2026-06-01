@@ -47,14 +47,11 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **evaluation run result** | A persisted record container for one or more evaluation results. It is not a comparison object or a human-facing report. | results from one evaluation run |
 | **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation run result. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
 | **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
-| **evaluation metric group result** | One result block for one evaluation metric group. It is `metric_group_name + source + metrics`. | `EvaluationMetricGroupResult(metric_group_name="decision_quality", metrics={...})` |
 | **evaluation metric group name** | The identifier for an evaluation metric group when a contract references expected metric fields. | `CrossInstrumentMetricContract.metric_group_name="decision_quality"` |
 | **train artifact** | A frozen output produced from the train period and later applied to the test period without re-selection. It is the evaluation-time analogue of a fitted model artifact. | survivor signal set, fitted belief synthesis settings, frozen allocation parameters |
 
 ## Evaluation Result Terminology
 
-`EvaluationMetricGroupResult` is one result block for one evaluation metric group.
-The old profile-oriented implementation name has been removed.
 Read `evaluation metric group` as `evaluation category` or `metric group`; it is
 the grouping key for related metrics such as decision quality, cost drag, or
 concentration.
@@ -64,8 +61,6 @@ confusing the metric group concept with the contract field name.
 ```text
 EvaluationSpec = evaluation settings
 evaluation target = transient result key + strategy id selected for an evaluation run
-EvaluationResult = recorded factual outcome of one evaluated strategy
-EvaluationMetricGroupResult = one metric group result block inside an evaluation result
 ```
 
 Reserve `Benchmark` for trading comparison references such as market indexes,
@@ -78,15 +73,9 @@ evaluation runs under different settings.
 Do not use `profile` to mean an evaluation configuration template. Use
 `EvaluationSpec` for evaluation settings.
 
-Evaluation run results should record measured facts. Human-facing reports and
+Evaluation outputs should record measured facts. Human-facing reports and
 relative comparisons are downstream views, not part of the core evaluation
 result terminology.
-
-The implementation name for one evaluated strategy result is `EvaluationResult`.
-Treat it as a strategy-level result record, not as a comparison row.
-
-Use `EvaluationResult.metric_group_results` in runtime readers and persisted
-documents.
 
 ## Signal And Strategy Boundary
 
@@ -118,7 +107,7 @@ connection source.
 
 Comparison anchors such as "baseline" are chosen by comparison views or
 research notes. They are not fields on evaluation targets or
-`EvaluationResult`.
+plain evaluation output data.
 
 Use candidate/diagnostic-style wording only in documents and research notes:
 
