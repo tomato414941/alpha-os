@@ -21,6 +21,9 @@ constructing portfolio logic, or creating checkpoints.
 Strategy construction is not an evaluation concern. Evaluation should consume
 the resulting trading strategy and measure its behavior.
 
+The construction path should not leak into the trading strategy contract or the
+evaluation runtime.
+
 Do not treat strategy construction as a required fixed framework. It may be a
 plain function, a script, a factory, a training job, or hand-written code,
 depending on the strategy.
