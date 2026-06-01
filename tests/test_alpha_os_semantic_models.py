@@ -51,33 +51,6 @@ def test_observable_definition_round_trips_semantic_metadata():
     assert restored == definition
 
 
-def test_signal_family_round_trips_greenfield_metadata():
-    from alpha_os.signal_discovery import (
-        SignalFamily,
-        SignalParameterSpace,
-    )
-
-    family = SignalFamily(
-        family_id="trend_with_volume_confirmation_family",
-        kind="momentum",
-        parameter_space=SignalParameterSpace.from_document(
-            {
-                "lookback": [20, 40],
-                "confirmation_window": [5],
-            }
-        ),
-        required_observable_id="daily_close",
-        family_group="interaction",
-        secondary_observable_ids=("dollar_volume_20d",),
-        conditioning_observable_ids=("market_vol_regime_20d",),
-        applicable_subject_kinds=("equity", "etf"),
-        thesis="Trend is stronger when liquidity expands in calm regimes.",
-    )
-
-    restored = SignalFamily.from_document(family.to_document())
-    assert restored == family
-
-
 def test_prepare_feature_plane_from_frame_collects_instrument_observables():
     from alpha_os.feature_plane_builder import prepare_feature_plane_from_frame
 

@@ -25,9 +25,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | Term | Definition | Examples |
 |------|-----------|---------|
 | **research axis** | A dimension along which candidate strategies can differ. A strategy is not atomic; it is composed by assigning values on multiple axes. | universe, signal family mix, model method, rebalance policy, sizing method |
-| **signal discovery** | Offline or research-time signal candidate search. It defines which signal candidates may be generated and evaluated, but it is not automatically the same thing as a strategy. | momentum/reversal families with admissible lookbacks and observables |
 | **strategy discovery** | A research object that defines which strategy candidates may be compared. It ranges over executable strategy specs rather than over signals alone. | compare `crypto + equal_weight + weekly` against `multi_asset + HRP + annual` |
-| **adaptive discovery policy** | A strategy-internal mechanism that re-generates or re-selects signals or sleeves over time. This is part of an adaptive strategy, not the same thing as signal discovery. | monthly family re-selection, rolling sleeve activation |
 | **trading strategy** | The top-level trading object. It combines scope, inputs, position rule, portfolio policy, rebalance friction, and execution policy into one portable trading definition. | `ETF rotation + relative strength + equal weight + simple execution` |
 | **position rule** | The strategy rule that turns inputs into subject-level eligibility, direction, or timing decisions. | `constant_hold`, `dual_momentum_hold`, `crypto_regime_momentum_hold` |
 | **execution kind** | Legacy/transitional implementation wording. Do not use as a domain term. | Use explicit strategy requirements and run state sourcing instead. |
@@ -76,18 +74,17 @@ result terminology.
 
 ## Signal And Strategy Boundary
 
-Use deliberately explicit names around signal selection:
+Use deliberately explicit names around signal behavior:
 
 - `signal` = a prediction-producing component.
-- `signal discovery` = offline or research-time signal candidate search.
 - `position rule` = the strategy-internal rule that turns inputs into
   eligibility, direction, or timing decisions.
 - `portfolio_target_return_alignment` = an evaluation metric group that measures
   whether portfolio target weights align with subsequent realized returns.
 
-If a future strategy searches for or re-selects signals during paper or live
-trading, model that as a strategy-internal runtime signal selection policy, not
-as the same thing as offline signal discovery.
+If a future strategy searches for or re-selects signals, model that as part of
+the concrete trading strategy rather than as a separate top-level discovery
+runtime.
 
 ## Evaluation Target Semantics
 
@@ -172,12 +169,6 @@ The current repo is still converging, but the practical mapping is now direct:
 | `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.
-
-New code and documentation should prefer one of:
-
-- `signal discovery`
-- `strategy discovery`
-- `adaptive discovery policy`
 
 ## Strategy Hierarchy
 

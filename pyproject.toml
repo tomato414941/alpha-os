@@ -1,7 +1,7 @@
 [project]
 name = "alpha-os"
 version = "0.1.0"
-description = "Strategy discovery and strict OOS evaluation engine for alpha-os"
+description = "Trading strategy backtest and strict OOS evaluation engine for alpha-os"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

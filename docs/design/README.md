@@ -20,39 +20,35 @@ Use these files by question:
    - north star
    - lifecycle stages
    - rigor levels and non-negotiables
-4. [`signal-discovery-system.md`](./signal-discovery-system.md)
-   - greenfield system boundary
-   - signal-discovery target shape
-   - current gap map
-5. [`domain-model.md`](./domain-model.md)
+4. [`domain-model.md`](./domain-model.md)
    - domain relationships
    - strategy hierarchy
-6. [`strategy-execution-model.md`](./strategy-execution-model.md)
+5. [`strategy-execution-model.md`](./strategy-execution-model.md)
    - strategy vs engine boundary
    - current mainline workflow
    - target execution workflow
-7. [`runtime-evaluation.md`](./runtime-evaluation.md)
+6. [`runtime-evaluation.md`](./runtime-evaluation.md)
    - evaluation principles
    - targets
    - horizons
    - pipeline stages
-8. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
+7. [`strategy-comparison-contract.md`](./strategy-comparison-contract.md)
    - minimum facts required to compare strategy results
    - required metrics
    - optional same-subject-set check
-9. [`portfolio-decision.md`](./portfolio-decision.md)
+8. [`portfolio-decision.md`](./portfolio-decision.md)
    - decision layer purpose
    - portfolio inputs and outputs
    - theory-driven requirements
-10. [`portfolio-allocation-boundary.md`](./portfolio-allocation-boundary.md)
+9. [`portfolio-allocation-boundary.md`](./portfolio-allocation-boundary.md)
    - narrow allocator contract
    - why allocator policy should live inside implementations
    - external optimizer libraries as implementation details
-11. [`architecture.md`](./architecture.md)
+10. [`architecture.md`](./architecture.md)
    - producer-consumer separation
    - prediction store
    - diversity and validation
-12. [`scaling-and-migration.md`](./scaling-and-migration.md)
+11. [`scaling-and-migration.md`](./scaling-and-migration.md)
    - greenfield vs current repo
    - multi-asset and large-scale scaling direction
 

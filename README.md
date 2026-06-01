@@ -1,22 +1,21 @@
 # alpha-os
 
-`alpha_os` is the current mainline package for signal discovery research,
-strategy definition, and out-of-sample evaluation.
+`alpha_os` is the current mainline package for trading strategy definition,
+backtesting, and out-of-sample evaluation.
 
 ## Current Mainline
 
 - package: `src/alpha_os/`
 - focus:
-  - signal discovery research
-  - screening and compressed-belief artifacts
-  - strategy specs and strategy checkpoints
+  - trading strategy contracts
+  - strategy backtests
   - OOS evaluation
-  - portfolio decision and evaluation flows
+  - portfolio decision flows
 
 ## Repository Layout
 
 - `src/alpha_os/`
-  - mainline discovery / strategy / evaluation runtime
+  - mainline strategy / evaluation runtime
 - `config/runtime_manifests/`
   - evaluation manifest examples
 - `examples/minimal_oos.json`

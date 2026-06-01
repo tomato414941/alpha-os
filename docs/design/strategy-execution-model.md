@@ -175,35 +175,9 @@ The current mainline treats these inputs as separate contract objects.
 
 ## Current Mainline Workflow
 
-The current mainline has three distinct workflows.
+The current mainline has two distinct workflows.
 
-### 1. Signal Discovery Run
-
-Purpose:
-
-- generate and screen signals
-- produce train-period outputs
-- create `strategy checkpoint` when needed
-
-Inputs:
-
-- `signal discovery`
-- subject set
-- target
-- train-period data
-
-Outputs:
-
-- screening result
-- compressed belief
-- strategy checkpoint
-
-Use this when:
-
-- the strategy needs upstream discovery or fitting
-- a new trained strategy checkpoint must be produced
-
-### 2. Evaluation Run
+### 1. Evaluation Run
 
 Purpose:
 
@@ -227,7 +201,7 @@ Use this when:
 - the question is whether a strategy performs well under strict OOS
 - retraining during evaluation is part of the allowed evaluation procedure
 
-### 3. Fixed-State Replay
+### 2. Fixed-State Replay
 
 Purpose:
 
@@ -251,39 +225,20 @@ Use this when:
 - re-running discovery would add cost without adding insight
 - retraining during evaluation would blur the comparison question
 
-## Current Mainline Boundary
-
-The current mainline should be understood like this:
-
-- discovery finds or fits signal-related state
-- evaluation compares strategies
-- checkpoint-based evaluation compares strategies without re-running discovery
-
-So:
-
-- discovery does **not** directly decide portfolio outcomes
-- evaluation does **not** invent new signals during replay
-- checkpoint-based evaluation does **not** retrain
-
 ## Target Workflow
 
 The target long-horizon workflow is slightly broader than the current mainline.
 
-### 1. Signal Discovery
-
-- find useful signals
-- evaluate and screen them
-
-### 2. Strategy Construction
+### 1. Strategy Construction
 
 - build executable strategies from signals, selection, allocation, rebalance,
   and risk rules
 
-### 3. Backtest OOS Evaluation
+### 2. Backtest OOS Evaluation
 
 - compare strategies under shared evaluation specs
 
-### 4. Promotion
+### 3. Promotion
 
 - promote strong strategies into standard or production-ready candidates
 
@@ -304,8 +259,8 @@ When changing execution behavior, ask:
 
 1. does this preserve strategy semantics across engines
 2. does this change only mechanics, not meaning
-3. does this make discovery, evaluation, and replay easier to reason about as
-   separate workflows
+3. does this make strategy construction, evaluation, and replay easier to reason
+   about as separate concerns
 
 If the answer is no, the change is probably mixing engine mechanics back into
 strategy semantics.
