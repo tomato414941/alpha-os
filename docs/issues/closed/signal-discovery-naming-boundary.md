@@ -1,5 +1,11 @@
 # Signal Discovery Naming Boundary
 
+Status: Closed
+
+Closed by: the `SignalDiscovery` implementation was removed from the active
+package. The remaining useful idea is tracked as strategy construction, not as
+a `SignalDiscovery` naming problem.
+
 ## Problem
 
 `SignalDiscovery` is easy to misread.

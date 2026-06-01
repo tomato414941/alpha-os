@@ -1,5 +1,11 @@
 # Strategy Evaluation Path Boundary
 
+Status: Closed
+
+Closed by: the old direct, signal-discovery, decision-backtest, and checkpoint
+evaluation paths were removed. Future evaluation paths should be designed from
+the `TradingStrategy` contract rather than from candidate origin.
+
 ## Problem
 
 alpha-os currently runs candidates through different evaluation paths depending

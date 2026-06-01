@@ -1,5 +1,11 @@
 # Signal Screening Vs Strategy Evaluation Boundary
 
+Status: Closed
+
+Closed by: the signal discovery/screening evaluation path was removed from the
+active package. Future predictor or signal-screening work should be introduced
+as a separate strategy-construction concern.
+
 ## Problem
 
 The current name `signal discovery evaluation` makes a discovery-stage scoring

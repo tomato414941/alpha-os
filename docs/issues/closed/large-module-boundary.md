@@ -1,5 +1,10 @@
 # Large Module Boundary
 
+Status: Closed
+
+Closed by: the previously blocking large modules were removed or reduced. No
+current source module is large enough to justify a generic large-module issue.
+
 ## Problem
 
 Several modules have grown into broad containers for unrelated responsibilities.

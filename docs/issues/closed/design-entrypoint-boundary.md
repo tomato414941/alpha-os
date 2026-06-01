@@ -1,5 +1,11 @@
 # Design Entrypoint Boundary
 
+Status: Closed
+
+Closed by: root-level `DESIGN.md` has been removed as an active documentation
+entrypoint. Remaining design work should be handled in focused design docs,
+glossary entries, or active boundary issues.
+
 ## Problem
 
 Root-level `DESIGN.md`, `docs/README.md`, and `docs/design/README.md`
