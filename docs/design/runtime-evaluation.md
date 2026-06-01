@@ -23,7 +23,7 @@ Use this for comparison when upstream state should stay fixed.
 Properties:
 
 - a `strategy_checkpoint_id` is required
-- discovery and retraining are not rerun during evaluation
+- strategy construction and retraining are not rerun during evaluation
 - the goal is to isolate downstream strategy behavior
 
 So:
@@ -222,7 +222,8 @@ Evaluation asset count is a tradeoff between breadth and depth.
 - admission stage: broader universe, precision priority
 
 The point is not to evaluate every candidate everywhere at the earliest stage,
-but to preserve enough breadth to avoid local discovery collapse.
+but to preserve enough breadth to avoid prematurely collapsing the candidate
+space.
 
 ## Portfolio Decision
 
@@ -320,7 +321,7 @@ The thing that matters is effective breadth rather than raw count.
 
 So the intended design is:
 
-- broad discovery upstream
+- broad strategy construction upstream
 - constrained active set downstream
 - capital concentrated on the most useful independent bets
 

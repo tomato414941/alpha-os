@@ -112,7 +112,7 @@ than retraining during evaluation.
 Properties:
 
 - a fixed strategy checkpoint is required
-- replay can compare downstream behavior without re-running discovery
+- replay can compare downstream behavior without rebuilding strategy state
 - this is the preferred benchmark shape when the upstream state should stay fixed
 
 ## Current Evaluation Job Shapes
@@ -222,7 +222,7 @@ Use this when:
 
 - the upstream signal state is already known
 - the comparison question is about downstream strategy behavior
-- re-running discovery would add cost without adding insight
+- rebuilding strategy state would add cost without adding insight
 - retraining during evaluation would blur the comparison question
 
 ## Target Workflow

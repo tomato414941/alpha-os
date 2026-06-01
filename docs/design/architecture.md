@@ -37,7 +37,7 @@ internals.
 
 Diversity should come from two places:
 
-- upstream discovery breadth
+- upstream candidate breadth
 - downstream marginal usefulness
 
 Structural diversity may come from:

@@ -86,6 +86,19 @@ If a future strategy searches for or re-selects signals, model that as part of
 the concrete trading strategy rather than as a separate top-level discovery
 runtime.
 
+The useful idea from the removed signal-search subsystem should remain, but only
+as a strategy-construction pattern:
+
+```text
+many candidate signals -> selection -> reduction -> executable trading strategy
+```
+
+This pattern is useful when a strategy is built from many weak predictive
+views. It is not an evaluation concern. Evaluation should consume an executable
+trading strategy and measure its behavior, without depending on whether that
+strategy was hand-written, fitted, generated, or reduced from many signal
+candidates.
+
 ## Evaluation Target Semantics
 
 An evaluation target is runtime setup, not research taxonomy. It is a transient
