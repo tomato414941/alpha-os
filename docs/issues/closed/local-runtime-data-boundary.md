@@ -1,5 +1,11 @@
 # Local Runtime Data Boundary
 
+Status: Closed
+
+Closed by: local `data/` runtime artifacts were removed from the workspace.
+The project no longer treats local runtime databases, logs, or generated
+reports as part of the active workflow.
+
 ## Problem
 
 The local `data/` directory mixes runtime state, caches, logs, evaluation
