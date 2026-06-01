@@ -45,6 +45,15 @@ they are:
 - only an adapter around the current sizing implementation
 - replaceable by narrower allocation request/result types
 
+## Current Decision
+
+`PortfolioDecisionInput` and `PortfolioDecisionOutput` are accepted only as the
+I/O shape for the current portfolio-decision backtest adapter.
+
+They do not define the universal `TradingStrategy` contract. The generic
+`TradingStrategy` protocol remains the source of truth: each concrete engine may
+choose the input and output types it actually needs.
+
 ## Close Condition
 
 Close this when `PortfolioDecisionInput` and `PortfolioDecisionOutput` are
