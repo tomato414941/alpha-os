@@ -117,12 +117,11 @@ def test_evaluation_spec_rejects_overlapping_train_test_in_strict_oos_contract()
                     end_date="2025-02-15",
                 ),
             ),
-            rigor_level="backtest_oos",
             oos_contract=EvaluationOosContract(enforcement="strict"),
         )
 
 
-def test_evaluation_spec_warns_on_overlapping_train_test_in_diagnostic_contract():
+def test_evaluation_spec_warns_on_overlapping_train_test_with_warn_contract():
     from alpha_os.evaluation_spec import (
         EvaluationDateRange,
         EvaluationOosContract,
@@ -146,7 +145,6 @@ def test_evaluation_spec_warns_on_overlapping_train_test_in_diagnostic_contract(
                     end_date="2025-02-15",
                 ),
             ),
-            rigor_level="diagnostic",
             oos_contract=EvaluationOosContract(
                 enforcement="warn",
                 require_evaluation_after_execution=False,
@@ -154,7 +152,7 @@ def test_evaluation_spec_warns_on_overlapping_train_test_in_diagnostic_contract(
         )
 
 
-def test_evaluation_spec_does_not_warn_on_exploratory_overlap_by_default():
+def test_evaluation_spec_does_not_warn_on_overlap_by_default():
     import warnings
 
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
@@ -206,7 +204,6 @@ def test_evaluation_spec_rejects_evaluation_before_execution_in_strict_contract(
                     end_date="2025-01-31",
                 ),
             ),
-            rigor_level="backtest_oos",
             oos_contract=EvaluationOosContract(enforcement="strict"),
         )
 
@@ -231,17 +228,15 @@ def test_evaluation_spec_roundtrips_oos_contract_document():
                 end_date="2025-02-28",
             ),
         ),
-        rigor_level="backtest_oos",
         oos_contract=EvaluationOosContract(enforcement="strict"),
     )
 
     roundtripped = EvaluationSpec.from_document(evaluation_spec.to_document())
 
-    assert roundtripped.rigor_level == "backtest_oos"
     assert roundtripped.oos_contract == EvaluationOosContract(enforcement="strict")
 
 
-def test_minimal_oos_manifest_remains_valid_as_diagnostic_warn():
+def test_minimal_oos_manifest_remains_valid_with_warn_contract():
     import json
     from pathlib import Path
 
@@ -249,12 +244,10 @@ def test_minimal_oos_manifest_remains_valid_as_diagnostic_warn():
 
     manifest = json.loads(Path("examples/minimal_oos.json").read_text())
     document = dict(manifest["evaluation_specs"][0])
-    document["rigor_level"] = "diagnostic"
     document["oos_contract"] = {"enforcement": "warn"}
 
     evaluation_spec = EvaluationSpec.from_document(document)
 
-    assert evaluation_spec.rigor_level == "diagnostic"
     assert evaluation_spec.oos_contract.enforcement == "warn"
 
 

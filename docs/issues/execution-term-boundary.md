@@ -27,7 +27,7 @@ Examples:
 - transition utility may belong to portfolio transition or rebalance friction
 - `trainless` / `trained` were implementation values and
   should not be promoted into a target glossary term
-- `backtest_oos` is a current evaluation-spec rigor level, not a run mode
+- `backtest_oos` was removed as an evaluation-spec rigor level
 - `execution_range` is an evaluation/run contract field, not an order-execution
   field
 

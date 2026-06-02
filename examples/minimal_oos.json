@@ -69,7 +69,6 @@
       "metric_windows": [
         5
       ],
-      "rigor_level": "diagnostic",
       "oos_contract": {
         "enforcement": "warn",
         "require_non_overlapping_ranges": true,

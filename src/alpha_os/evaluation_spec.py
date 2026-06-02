@@ -5,13 +5,6 @@ from datetime import date
 from typing import Any, Literal
 import warnings
 
-EvaluationRigorLevel = Literal[
-    "exploratory",
-    "diagnostic",
-    "backtest_oos",
-    "fixed_state_oos",
-    "operational",
-]
 OosContractEnforcement = Literal["off", "warn", "strict"]
 
 DEFAULT_METRIC_WINDOW = 20
@@ -20,19 +13,12 @@ DEFAULT_EVALUATION_AGGREGATION_KINDS = (
     "corr_weighted_mean",
 )
 EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
-EVALUATION_RIGOR_LEVELS = (
-    "exploratory",
-    "diagnostic",
-    "backtest_oos",
-    "fixed_state_oos",
-    "operational",
-)
 OOS_CONTRACT_ENFORCEMENTS = ("off", "warn", "strict")
 
 
 @dataclass(frozen=True)
 class EvaluationOosContract:
-    enforcement: OosContractEnforcement = "warn"
+    enforcement: OosContractEnforcement = "off"
     require_non_overlapping_ranges: bool = True
     require_evaluation_after_execution: bool = True
 
@@ -216,7 +202,7 @@ def _aggregation_kinds_from_document(document: dict[str, Any]) -> tuple[str, ...
     return normalized_aggregation_kinds
 
 
-def _validate_backtest_oos_like_folds(folds: tuple[EvaluationFold, ...]) -> None:
+def _validate_evaluation_folds(folds: tuple[EvaluationFold, ...]) -> None:
     _validate_unique_labels("fold", tuple(fold.label for fold in folds))
     for fold in folds:
         _validate_date_range(fold.execution_range)
@@ -277,15 +263,12 @@ def _validate_oos_contract_for_ranges(
 
 def _validate_oos_contract(
     *,
-    rigor_level: EvaluationRigorLevel,
     contract: EvaluationOosContract,
     execution_range: EvaluationDateRange,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     evaluation_folds: tuple[EvaluationFold, ...],
 ) -> None:
     if contract.enforcement == "off":
-        return
-    if rigor_level == "exploratory" and contract.enforcement != "strict":
         return
     if evaluation_date_ranges:
         _validate_oos_contract_for_ranges(
@@ -351,7 +334,6 @@ def build_oos_contract_summary(spec: "EvaluationSpec") -> dict[str, str]:
         for fold in ranges
     )
     return {
-        "rigor_level": spec.rigor_level,
         "enforcement": spec.oos_contract.enforcement,
         "date_parse": "pass",
         "range_non_overlap": _contract_result_status(
@@ -372,14 +354,11 @@ class EvaluationSpec:
     evaluation_folds: tuple[EvaluationFold, ...] = ()
     metric_windows: tuple[int, ...] = (DEFAULT_METRIC_WINDOW,)
     aggregation_kinds: tuple[str, ...] = DEFAULT_EVALUATION_AGGREGATION_KINDS
-    rigor_level: EvaluationRigorLevel = "exploratory"
     oos_contract: EvaluationOosContract = EvaluationOosContract()
 
     def __post_init__(self) -> None:
         _validate_metric_windows(self.metric_windows)
         _validate_aggregation_kinds(self.aggregation_kinds)
-        if self.rigor_level not in EVALUATION_RIGOR_LEVELS:
-            raise ValueError(f"unknown evaluation rigor_level: {self.rigor_level}")
         if self.evaluation_folds and self.evaluation_date_ranges:
             raise ValueError(
                 "evaluation spec cannot define both evaluation_folds and "
@@ -392,9 +371,8 @@ class EvaluationSpec:
         )
         for item in self.evaluation_date_ranges:
             _validate_date_range(item)
-        _validate_backtest_oos_like_folds(self.evaluation_folds)
+        _validate_evaluation_folds(self.evaluation_folds)
         _validate_oos_contract(
-            rigor_level=self.rigor_level,
             contract=self.oos_contract,
             execution_range=self.execution_range,
             evaluation_date_ranges=self.evaluation_date_ranges,
@@ -426,7 +404,6 @@ class EvaluationSpec:
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
             "metric_windows": list(self.metric_windows),
             "aggregation_kinds": list(self.aggregation_kinds),
-            "rigor_level": self.rigor_level,
             "oos_contract": self.oos_contract.to_document(),
         }
 
@@ -435,15 +412,12 @@ class EvaluationSpec:
         execution_range = document.get("execution_range")
         evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
-        rigor_level = document.get("rigor_level", "exploratory")
         if not isinstance(execution_range, dict):
             raise ValueError("evaluation spec is missing execution_range")
         if not isinstance(evaluation_date_ranges, list):
             raise ValueError("evaluation spec evaluation_date_ranges must be a list")
         if not isinstance(evaluation_folds, list):
             raise ValueError("evaluation spec evaluation_folds must be a list")
-        if not isinstance(rigor_level, str):
-            raise ValueError("evaluation spec rigor_level must be a string")
         return cls(
             execution_range=EvaluationDateRange.from_document(execution_range),
             evaluation_date_ranges=tuple(
@@ -458,6 +432,5 @@ class EvaluationSpec:
             ),
             metric_windows=_metric_windows_from_document(document),
             aggregation_kinds=_aggregation_kinds_from_document(document),
-            rigor_level=rigor_level,
             oos_contract=EvaluationOosContract.from_document(document.get("oos_contract")),
         )

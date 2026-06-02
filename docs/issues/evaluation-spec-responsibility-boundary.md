@@ -4,8 +4,7 @@
 
 `EvaluationSpec` currently combines multiple concerns:
 
-- evaluation protocol: execution range, evaluation folds, rigor level, and OOS
-  contract
+- evaluation protocol: execution range, evaluation folds, and OOS contract
 - metric/run result configuration: `metric_windows` and `aggregation_kinds`
 
 This is still workable, but the name can hide which part of the object owns a
@@ -37,6 +36,9 @@ internal responsibility boundary explicit.
 `EvaluationMetricConfig` was removed because it only wrapped fields already
 owned by `EvaluationSpec`. The remaining question is whether `metric_windows`
 and `aggregation_kinds` should stay on `EvaluationSpec` at all.
+
+`rigor_level` was also removed because OOS behavior is now controlled directly
+by `oos_contract.enforcement`.
 
 ## Non-Goals
 
