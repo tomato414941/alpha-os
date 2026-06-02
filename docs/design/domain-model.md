@@ -34,7 +34,7 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **strategy spec** | A concrete structured strategy definition used by the runtime. It defines trading behavior. | current mainline `TradingStrategySpec` |
 | **strategy** | A complete executable trading specification. In clean long-horizon terminology this is a trading strategy. | `multi_asset_full_universe + weekly rebalance + HRP`; `ETF rotation + relative strength + equal weight` |
 | **strategy run** | Running a strategy through a specific engine context. | strict OOS evaluation, checkpoint replay, paper, live |
-| **evaluation spec** | The rules for how strategies are evaluated. It defines the measurement recipe and the strategy ids selected for that evaluation. | fold layout, costs, metric windows, strategy ids |
+| **evaluation settings** | Explicit run inputs that define how strategies are evaluated. There is no current source-of-truth `EvaluationSpec` object. | fold layout, costs, selected strategy ids |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. | signal-noise service URL; local parquet root |
 | **evaluation result** | The recorded factual outcome of one evaluated strategy. | OOS Sharpe, turnover, drawdown |
@@ -45,10 +45,10 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 ## Evaluation Result Terminology
 
 Read `evaluation metric` as a scalar measurement. The old metric-group switch
-has been removed from the active evaluation spec.
+has been removed.
 
 ```text
-EvaluationSpec = evaluation settings
+evaluation settings = explicit run input, not a current source-of-truth object
 evaluation target = transient result key + strategy id selected for an evaluation run
 ```
 
@@ -59,8 +59,8 @@ measurement. Do not use `Benchmark` for evaluation settings.
 One evaluation target has exactly one strategy. A strategy may appear in many
 evaluation runs under different settings.
 
-Do not use `profile` to mean an evaluation configuration template. Use
-`EvaluationSpec` for evaluation settings.
+Do not use `profile` to mean an evaluation configuration template. Evaluation
+settings should be explicit run inputs until a concrete object is needed again.
 
 Evaluation outputs should record measured facts. Human-facing reports and
 relative comparisons are downstream views, not part of the core evaluation
@@ -92,7 +92,7 @@ candidates.
 ## Evaluation Target Semantics
 
 An evaluation target is runtime setup, not research taxonomy. It is a transient
-`result_key + strategy_id` pair derived from the selected evaluation spec. It
+`result_key + strategy_id` pair derived from selected evaluation settings. It
 does not carry a role, data-source URL, strategy construction override, or
 checkpoint artifact reference.
 
@@ -143,7 +143,7 @@ So:
 A strategy run is broader than a trading strategy. It additionally includes the
 engine context in which the strategy is run, such as:
 
-- evaluation spec
+- evaluation settings
 - paper or live runtime
 - checkpoint-based evaluation versus retraining
 - runtime-specific batching or caching
@@ -161,7 +161,7 @@ The current repo is still converging, but the practical mapping is now direct:
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | evaluation target tuple | transient run input | It binds a result key to a trading strategy for one run. |
-| `EvaluationSpec` | evaluation measurement recipe | This is not a generic run-policy object. |
+| `EvaluationSpec` | removed settings container | Evaluation settings should be explicit run inputs until a concrete object is needed again. |
 
 Bare `discovery` is too ambiguous for source-of-truth terminology.
 

@@ -150,9 +150,9 @@ The glossary definition is acceptable: an evaluation universe is the set of
 instruments included in a specific evaluation run.
 
 Code review found that evaluation runs do not have a first-class
-`EvaluationUniverse` model or an evaluation-universe field on `EvaluationSpec`.
-The current effective subject set is derived from strategy state. The removed
-checkpoint path used checkpoint-owned subject-set metadata. See
+`EvaluationUniverse` model or dedicated evaluation-universe input. The current
+effective subject set is derived from strategy state. The removed checkpoint
+path used checkpoint-owned subject-set metadata. See
 [`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
 
 ### `subject`

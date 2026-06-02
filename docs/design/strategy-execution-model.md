@@ -146,14 +146,14 @@ The current codebase is still transitional. The practical mapping is:
 | `execution_kind` | removed implementation field | Strategy specs and evaluation planning no longer use it. |
 | `run_mode` | removed implementation field | Evaluation job specs now express required inputs directly. |
 | evaluation target tuple | partial `StrategyRunSpec` | It binds a result key to a strategy id for one evaluation run. |
-| `EvaluationSpec` | evaluation measurement recipe | It is not a generic run-policy object. |
+| `EvaluationSpec` | removed settings container | Evaluation settings should be explicit run inputs until a concrete object is needed again. |
 
 ### Current Evaluation Job Shapes
 
 | Evaluation job shape | Purpose | Required inputs | Retraining during evaluation |
 |----------------------|---------|-----------------|------------------------------|
-| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation target`, `evaluation spec`, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
-| checkpoint-based evaluation | Compare downstream behavior while holding upstream state fixed. | `evaluation target`, `evaluation spec`, `strategy_checkpoint_id`. | Never. |
+| `backtest_oos` | Evaluate the strategy under train/test separation. | `evaluation target`, explicit evaluation settings, and any strategy-side train artifacts needed by the strategy. | Allowed when the strategy requires train-period state. |
+| checkpoint-based evaluation | Compare downstream behavior while holding upstream state fixed. | `evaluation target`, explicit evaluation settings, `strategy_checkpoint_id`. | Never. |
 
 This means:
 
@@ -170,8 +170,8 @@ The current mainline treats these inputs as separate contract objects.
 
 | Evaluation job shape | Contract object | Required fields |
 |----------------------|-----------------|-----------------|
-| `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `evaluation_folds` |
-| checkpoint-based evaluation | checkpoint evaluation inputs | `evaluation_spec_id`, `strategy_checkpoint_id`, `evaluation_folds` |
+| `backtest_oos` | `BacktestOosRunInputs` | explicit evaluation settings |
+| checkpoint-based evaluation | checkpoint evaluation inputs | `strategy_checkpoint_id`, explicit evaluation settings |
 
 ## Current Mainline Workflow
 

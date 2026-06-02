@@ -25,7 +25,7 @@ explicitly asking for both predictor quality and rollout behavior.
 
 ## Current Finding
 
-The old metric-group switch has been removed from `EvaluationSpec`.
+The old metric-group switch and `EvaluationSpec` container have been removed.
 
 `prediction_diagnostics` has been removed from the ordinary strategy evaluation
 path. Predictor-quality metrics still need an explicit owner and execution

@@ -5,9 +5,9 @@
 The glossary defines `evaluation universe` as the set of instruments included
 in a specific evaluation run.
 
-The code does not have a first-class `EvaluationUniverse` model or an
-evaluation-universe field on `EvaluationSpec`. Current direct evaluation runs
-derive the effective subject set from the task's strategy:
+The code does not have a first-class `EvaluationUniverse` model or dedicated
+evaluation-universe input. Current direct evaluation runs derive the effective
+subject set from the task's strategy:
 
 - direct strategy runs use `TradingStrategySpec.subject_set_id`
 - the removed checkpoint path used checkpoint-owned subject-set metadata
@@ -39,7 +39,8 @@ subject set comes from for each current evaluation input shape.
 
 ## Non-Goals
 
-- Do not move universe ownership into `EvaluationSpec` immediately.
+- Do not reintroduce a generic evaluation settings object just to hold universe
+  ownership.
 - Do not rename `subject_set_id` fields as part of terminology cleanup.
 - Do not reintroduce checkpoint-owned universe behavior without a separate
   checkpoint design.

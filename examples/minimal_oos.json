@@ -40,32 +40,5 @@
         }
       ]
     }
-  ],
-  "evaluation_specs": [
-    {
-      "evaluation_spec_id": "minimal_oos_eval",
-      "execution_range": {
-        "label": "minimal_train",
-        "start_date": "2026-01-01",
-        "end_date": "2026-01-15"
-      },
-      "evaluation_folds": [
-        {
-          "label": "minimal_train_to_test",
-          "execution_range": {
-            "label": "minimal_train",
-            "start_date": "2026-01-01",
-            "end_date": "2026-01-15"
-          },
-          "evaluation_date_ranges": [
-            {
-              "label": "minimal_test",
-              "start_date": "2026-01-16",
-              "end_date": "2026-01-31"
-            }
-          ]
-        }
-      ]
-    }
   ]
 }
