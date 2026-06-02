@@ -2,14 +2,15 @@
 
 ## Problem
 
-`EvaluationSpec` currently combines multiple concerns:
+`EvaluationSpec` used to combine multiple concerns:
 
 - evaluation protocol: execution range, evaluation folds, and OOS contract
-- metric/run result configuration: `metric_windows` and `aggregation_kinds`
+- removed metric/run result configuration: `metric_windows` and
+  `aggregation_kinds`
 
-This is still workable, but the name can hide which part of the object owns a
-decision. In ML/RL terms, evaluation protocol and metrics/logging config are
-related but not the same concern.
+This was workable, but the name hid which part of the object owned a decision.
+In ML/RL terms, evaluation protocol and metrics/logging config are related but
+not the same concern.
 
 ## Risk
 
@@ -22,11 +23,7 @@ selection.
 
 Do not rename `EvaluationSpec` yet.
 
-Do not split it mechanically. First clarify whether current fields should be
-grouped as:
-
-- evaluation protocol
-- evaluation metric config
+Do not split it mechanically.
 
 ## Desired Direction
 
@@ -34,8 +31,10 @@ Keep `EvaluationSpec` acceptable as the current persisted object, but make the
 internal responsibility boundary explicit.
 
 `EvaluationMetricConfig` was removed because it only wrapped fields already
-owned by `EvaluationSpec`. The remaining question is whether `metric_windows`
-and `aggregation_kinds` should stay on `EvaluationSpec` at all.
+owned by `EvaluationSpec`.
+
+`metric_windows` and `aggregation_kinds` were removed because they were only
+serialized and validated; they did not drive current evaluation behavior.
 
 `rigor_level` was also removed because OOS behavior is now controlled directly
 by `oos_contract.enforcement`.
@@ -49,4 +48,5 @@ by `oos_contract.enforcement`.
 ## Acceptance Criteria
 
 - It is clear which fields are evaluation protocol fields.
-- It is clear which fields are metric/run result configuration fields.
+- Metric/run result configuration is not kept on `EvaluationSpec` unless a real
+  evaluation implementation uses it.

@@ -17,40 +17,6 @@ def test_evaluation_spec_rejects_invalid_date():
         )
 
 
-def test_evaluation_spec_rejects_non_positive_metric_windows():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
-
-    with pytest.raises(
-        ValueError,
-        match="evaluation spec metric_windows must be positive integers: 0",
-    ):
-        EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            metric_windows=(0,),
-        )
-
-
-def test_evaluation_spec_rejects_unknown_aggregation_kinds():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
-
-    with pytest.raises(
-        ValueError,
-        match="evaluation spec has unknown aggregation kinds: mystery",
-    ):
-        EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            aggregation_kinds=("mystery",),
-        )
-
-
 def test_evaluation_spec_rejects_reversed_date_ranges():
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
