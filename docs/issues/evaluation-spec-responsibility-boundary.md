@@ -7,7 +7,6 @@
 - evaluation protocol: execution range, evaluation folds, rigor level, and OOS
   contract
 - metric/run result configuration: `metric_windows` and `aggregation_kinds`
-- target scoping helpers such as `target_ids`
 
 This is still workable, but the name can hide which part of the object owns a
 decision. In ML/RL terms, evaluation protocol and metrics/logging config are
@@ -29,7 +28,6 @@ grouped as:
 
 - evaluation protocol
 - evaluation metric config
-- evaluation target or scope selection
 
 ## Desired Direction
 
@@ -50,5 +48,3 @@ metric configuration object.
 
 - It is clear which fields are evaluation protocol fields.
 - It is clear which fields are metric/run result configuration fields.
-- `target_ids` ownership is either justified on `EvaluationSpec` or moved to a
-  more specific boundary issue.

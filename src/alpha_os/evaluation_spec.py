@@ -311,17 +311,11 @@ def build_oos_contract_summary(spec: "EvaluationSpec") -> dict[str, str]:
     }
 
 
-def _validate_target_ids(target_ids: tuple[str, ...]) -> None:
-    if any(not isinstance(item, str) or not item for item in target_ids):
-        raise ValueError("evaluation spec target_ids must be non-empty strings")
-
-
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
-    target_ids: tuple[str, ...] = ()
     metric_windows: tuple[int, ...] = (DEFAULT_METRIC_WINDOW,)
     aggregation_kinds: tuple[str, ...] = DEFAULT_EVALUATION_AGGREGATION_KINDS
     rigor_level: EvaluationRigorLevel = "exploratory"
@@ -344,7 +338,6 @@ class EvaluationSpec:
         for item in self.evaluation_date_ranges:
             _validate_date_range(item)
         _validate_backtest_oos_like_folds(self.evaluation_folds)
-        _validate_target_ids(self.target_ids)
         _validate_oos_contract(
             rigor_level=self.rigor_level,
             contract=self.oos_contract,
@@ -383,7 +376,6 @@ class EvaluationSpec:
             "execution_range": self.execution_range.to_document(),
             "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
-            "target_ids": list(self.target_ids),
             "metric_windows": list(self.metric_windows),
             "aggregation_kinds": list(self.aggregation_kinds),
             "rigor_level": self.rigor_level,
@@ -396,7 +388,6 @@ class EvaluationSpec:
         metric_config = EvaluationMetricConfig.from_document(document)
         evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
-        target_ids = document.get("target_ids", [])
         rigor_level = document.get("rigor_level", "exploratory")
         if not isinstance(execution_range, dict):
             raise ValueError("evaluation spec is missing execution_range")
@@ -404,8 +395,6 @@ class EvaluationSpec:
             raise ValueError("evaluation spec evaluation_date_ranges must be a list")
         if not isinstance(evaluation_folds, list):
             raise ValueError("evaluation spec evaluation_folds must be a list")
-        if not isinstance(target_ids, list):
-            raise ValueError("evaluation spec target_ids must be a list")
         if not isinstance(rigor_level, str):
             raise ValueError("evaluation spec rigor_level must be a string")
         return cls(
@@ -420,7 +409,6 @@ class EvaluationSpec:
                 for item in evaluation_folds
                 if isinstance(item, dict)
             ),
-            target_ids=tuple(str(item) for item in target_ids),
             metric_windows=metric_config.metric_windows,
             aggregation_kinds=metric_config.aggregation_kinds,
             rigor_level=rigor_level,

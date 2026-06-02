@@ -1,5 +1,11 @@
 # Target Term Boundary
 
+Status: Closed
+
+Closed by: `EvaluationSpec.target_ids` and the unused `TargetDefinition`
+registry were removed from the active package. Predictor evaluation can
+introduce prediction-target terminology later in its own boundary.
+
 ## Problem
 
 `target` is too broad in a project that mixes ML, trading, portfolio

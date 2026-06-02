@@ -51,23 +51,6 @@ def test_evaluation_spec_rejects_unknown_aggregation_kinds():
         )
 
 
-def test_evaluation_spec_rejects_empty_target_ids():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
-
-    with pytest.raises(
-        ValueError,
-        match="evaluation spec target_ids must be non-empty strings",
-    ):
-        EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            target_ids=("",),
-        )
-
-
 def test_evaluation_spec_rejects_reversed_date_ranges():
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
