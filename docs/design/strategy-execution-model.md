@@ -170,8 +170,8 @@ The current mainline treats these inputs as separate contract objects.
 
 | Evaluation job shape | Contract object | Required fields |
 |----------------------|-----------------|-----------------|
-| `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `execution_range`, `evaluation_date_ranges` |
-| checkpoint-based evaluation | checkpoint evaluation inputs | `evaluation_spec_id`, `strategy_checkpoint_id`, `execution_range`, `evaluation_date_ranges` |
+| `backtest_oos` | `BacktestOosRunInputs` | `evaluation_spec_id`, `evaluation_folds` |
+| checkpoint-based evaluation | checkpoint evaluation inputs | `evaluation_spec_id`, `strategy_checkpoint_id`, `evaluation_folds` |
 
 ## Current Mainline Workflow
 

@@ -38,12 +38,6 @@ class EvaluationFold:
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
 
-    @property
-    def resolved_evaluation_date_ranges(self) -> tuple[EvaluationDateRange, ...]:
-        if self.evaluation_date_ranges:
-            return self.evaluation_date_ranges
-        return (self.execution_range,)
-
     def to_document(self) -> dict[str, Any]:
         return {
             "label": self.label,
@@ -137,15 +131,8 @@ def _validate_oos_ranges(
 
 def _validate_oos_ranges_for_spec(
     *,
-    execution_range: EvaluationDateRange,
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     evaluation_folds: tuple[EvaluationFold, ...],
 ) -> None:
-    if evaluation_date_ranges:
-        _validate_oos_ranges(
-            execution_range=execution_range,
-            evaluation_date_ranges=evaluation_date_ranges,
-        )
     for fold in evaluation_folds:
         if fold.evaluation_date_ranges:
             _validate_oos_ranges(
@@ -157,72 +144,31 @@ def _validate_oos_ranges_for_spec(
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
-    evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
 
     def __post_init__(self) -> None:
-        if self.evaluation_folds and self.evaluation_date_ranges:
-            raise ValueError(
-                "evaluation spec cannot define both evaluation_folds and "
-                "top-level evaluation_date_ranges"
-            )
         _validate_date_range(self.execution_range)
-        _validate_unique_labels(
-            "top-level evaluation range",
-            tuple(item.label for item in self.evaluation_date_ranges),
-        )
-        for item in self.evaluation_date_ranges:
-            _validate_date_range(item)
         _validate_evaluation_folds(self.evaluation_folds)
         _validate_oos_ranges_for_spec(
-            execution_range=self.execution_range,
-            evaluation_date_ranges=self.evaluation_date_ranges,
             evaluation_folds=self.evaluation_folds,
-        )
-
-    @property
-    def resolved_evaluation_date_ranges(self) -> tuple[EvaluationDateRange, ...]:
-        if self.evaluation_date_ranges:
-            return self.evaluation_date_ranges
-        return (self.execution_range,)
-
-    @property
-    def resolved_evaluation_folds(self) -> tuple[EvaluationFold, ...]:
-        if self.evaluation_folds:
-            return self.evaluation_folds
-        return (
-            EvaluationFold(
-                label=self.execution_range.label,
-                execution_range=self.execution_range,
-                evaluation_date_ranges=self.resolved_evaluation_date_ranges,
-            ),
         )
 
     def to_document(self) -> dict[str, Any]:
         return {
             "execution_range": self.execution_range.to_document(),
-            "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
         }
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "EvaluationSpec":
         execution_range = document.get("execution_range")
-        evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
         if not isinstance(execution_range, dict):
             raise ValueError("evaluation spec is missing execution_range")
-        if not isinstance(evaluation_date_ranges, list):
-            raise ValueError("evaluation spec evaluation_date_ranges must be a list")
         if not isinstance(evaluation_folds, list):
             raise ValueError("evaluation spec evaluation_folds must be a list")
         return cls(
             execution_range=EvaluationDateRange.from_document(execution_range),
-            evaluation_date_ranges=tuple(
-                EvaluationDateRange.from_document(item)
-                for item in evaluation_date_ranges
-                if isinstance(item, dict)
-            ),
             evaluation_folds=tuple(
                 EvaluationFold.from_document(item)
                 for item in evaluation_folds

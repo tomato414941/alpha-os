@@ -60,29 +60,40 @@ def test_evaluation_spec_rejects_duplicate_fold_labels():
 
 
 def test_evaluation_spec_rejects_overlapping_execution_and_evaluation_ranges():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
+    from alpha_os.evaluation_spec import (
+        EvaluationDateRange,
+        EvaluationFold,
+        EvaluationSpec,
+    )
 
     with pytest.raises(
         ValueError,
         match="evaluation OOS violation: execution and evaluation ranges overlap",
     ):
+        execution_range = EvaluationDateRange(
+            label="train",
+            start_date="2025-01-01",
+            end_date="2025-01-31",
+        )
         EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            evaluation_date_ranges=(
-                EvaluationDateRange(
-                    label="test",
-                    start_date="2025-01-15",
-                    end_date="2025-02-15",
+            execution_range=execution_range,
+            evaluation_folds=(
+                EvaluationFold(
+                    label="fold_a",
+                    execution_range=execution_range,
+                    evaluation_date_ranges=(
+                        EvaluationDateRange(
+                            label="test",
+                            start_date="2025-01-15",
+                            end_date="2025-02-15",
+                        ),
+                    ),
                 ),
             ),
         )
 
 
-def test_evaluation_spec_allows_missing_evaluation_ranges():
+def test_evaluation_spec_allows_missing_folds():
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
     evaluation_spec = EvaluationSpec(
@@ -93,13 +104,15 @@ def test_evaluation_spec_allows_missing_evaluation_ranges():
         )
     )
 
-    assert evaluation_spec.resolved_evaluation_date_ranges == (
-        evaluation_spec.execution_range,
-    )
+    assert evaluation_spec.evaluation_folds == ()
 
 
 def test_evaluation_spec_rejects_evaluation_before_execution():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
+    from alpha_os.evaluation_spec import (
+        EvaluationDateRange,
+        EvaluationFold,
+        EvaluationSpec,
+    )
 
     with pytest.raises(
         ValueError,
@@ -108,36 +121,54 @@ def test_evaluation_spec_rejects_evaluation_before_execution():
             "execution range"
         ),
     ):
+        execution_range = EvaluationDateRange(
+            label="train",
+            start_date="2025-02-01",
+            end_date="2025-02-28",
+        )
         EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-02-01",
-                end_date="2025-02-28",
-            ),
-            evaluation_date_ranges=(
-                EvaluationDateRange(
-                    label="test",
-                    start_date="2025-01-01",
-                    end_date="2025-01-31",
+            execution_range=execution_range,
+            evaluation_folds=(
+                EvaluationFold(
+                    label="fold_a",
+                    execution_range=execution_range,
+                    evaluation_date_ranges=(
+                        EvaluationDateRange(
+                            label="test",
+                            start_date="2025-01-01",
+                            end_date="2025-01-31",
+                        ),
+                    ),
                 ),
             ),
         )
 
 
 def test_evaluation_spec_roundtrips_document():
-    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
+    from alpha_os.evaluation_spec import (
+        EvaluationDateRange,
+        EvaluationFold,
+        EvaluationSpec,
+    )
 
+    execution_range = EvaluationDateRange(
+        label="train",
+        start_date="2025-01-01",
+        end_date="2025-01-31",
+    )
     evaluation_spec = EvaluationSpec(
-        execution_range=EvaluationDateRange(
-            label="train",
-            start_date="2025-01-01",
-            end_date="2025-01-31",
-        ),
-        evaluation_date_ranges=(
-            EvaluationDateRange(
-                label="test",
-                start_date="2025-02-01",
-                end_date="2025-02-28",
+        execution_range=execution_range,
+        evaluation_folds=(
+            EvaluationFold(
+                label="fold_a",
+                execution_range=execution_range,
+                evaluation_date_ranges=(
+                    EvaluationDateRange(
+                        label="test",
+                        start_date="2025-02-01",
+                        end_date="2025-02-28",
+                    ),
+                ),
             ),
         ),
     )
