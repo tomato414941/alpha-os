@@ -24,12 +24,9 @@ state unless those are explicitly part of the predictor being evaluated.
 
 ## Current Finding
 
-`prediction_diagnostics` currently computes signal-vs-forward-return metrics,
-including correlation, hit rate, long/short bucket spread, and coverage.
-
-`prediction_diagnostics` has now been removed from the ordinary strategy
-evaluation metric groups. The remaining gap is that predictor evaluation still
-does not have its own explicit execution path.
+`prediction_diagnostics` was removed from the ordinary strategy evaluation
+path. The remaining gap is that predictor evaluation still does not have its
+own explicit execution path.
 
 ## Desired Direction
 

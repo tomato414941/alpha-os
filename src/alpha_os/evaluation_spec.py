@@ -8,7 +8,6 @@ import warnings
 from .evaluation_metric_config import (
     DEFAULT_EVALUATION_AGGREGATION_KINDS,
     DEFAULT_METRIC_WINDOW,
-    EVALUATION_METRIC_GROUP_NAMES,
     EvaluationMetricConfig,
 )
 
@@ -320,7 +319,6 @@ def _validate_target_ids(target_ids: tuple[str, ...]) -> None:
 @dataclass(frozen=True)
 class EvaluationSpec:
     execution_range: EvaluationDateRange
-    metric_group_names: tuple[str, ...] = EVALUATION_METRIC_GROUP_NAMES
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
     target_ids: tuple[str, ...] = ()
@@ -358,7 +356,6 @@ class EvaluationSpec:
     @property
     def metric_config(self) -> EvaluationMetricConfig:
         return EvaluationMetricConfig(
-            metric_group_names=self.metric_group_names,
             metric_windows=self.metric_windows,
             aggregation_kinds=self.aggregation_kinds,
         )
@@ -384,7 +381,6 @@ class EvaluationSpec:
     def to_document(self) -> dict[str, Any]:
         return {
             "execution_range": self.execution_range.to_document(),
-            "metric_group_names": list(self.metric_group_names),
             "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
             "target_ids": list(self.target_ids),
@@ -414,7 +410,6 @@ class EvaluationSpec:
             raise ValueError("evaluation spec rigor_level must be a string")
         return cls(
             execution_range=EvaluationDateRange.from_document(execution_range),
-            metric_group_names=metric_config.metric_group_names,
             evaluation_date_ranges=tuple(
                 EvaluationDateRange.from_document(item)
                 for item in evaluation_date_ranges

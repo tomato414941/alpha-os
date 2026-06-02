@@ -25,12 +25,11 @@ explicitly asking for both predictor quality and rollout behavior.
 
 ## Current Finding
 
-`decision_quality` is currently the only default metric group left for policy
-or actor rollout evaluation.
+The old metric-group switch has been removed from `EvaluationSpec`.
 
 `prediction_diagnostics` has been removed from the ordinary strategy evaluation
-metric groups. Predictor-quality metrics still need an explicit owner and
-execution path.
+path. Predictor-quality metrics still need an explicit owner and execution
+path.
 
 ## Desired Direction
 

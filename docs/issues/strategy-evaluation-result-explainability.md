@@ -22,8 +22,9 @@ It is separate from:
 
 ## Current Finding
 
-Reports already expose strategy ids, artifact refs, strategy contract fields,
-metric groups, and decision traces.
+The old report path has been removed. Future evaluation results should expose
+the facts needed to identify the evaluated strategy, inputs, environment, and
+metrics without depending on human-facing report text.
 
 Do not add new explanatory fields until there is a concrete run result question
 that cannot be answered from those facts.

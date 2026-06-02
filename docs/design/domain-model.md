@@ -37,20 +37,15 @@ input into portfolio, rebalance, execution, and adaptation decisions.
 | **evaluation spec** | The rules for how strategies are evaluated. It defines the measurement recipe and the strategy ids selected for that evaluation. | fold layout, costs, metric windows, strategy ids |
 | **data input** | The logical data input used by an evaluation or research run. It may be a bounded dataset or an online stream. | fixed global macro dataset; broker paper feed |
 | **data source** | The runtime connection source used to read data inputs. | signal-noise service URL; local parquet root |
-| **evaluation result** | The recorded factual outcome of one evaluated strategy. | OOS Sharpe, belief corr, turnover, drawdown |
+| **evaluation result** | The recorded factual outcome of one evaluated strategy. | OOS Sharpe, turnover, drawdown |
 | **evaluation run result** | A persisted record container for one or more evaluation results. It is not a comparison object or a human-facing report. | results from one evaluation run |
-| **evaluation metric group** | An evaluation category / metric group requested by an evaluation spec and recorded in an evaluation run result. | `decision_quality`, `cost_drag`, `portfolio_target_return_alignment` |
-| **evaluation metric** | One concrete scalar measurement inside an evaluation metric group. | `mean_decision_net_return`, `portfolio_target_return_corr` |
-| **evaluation metric group name** | The identifier for an evaluation metric group when a contract references expected metric fields. | `CrossInstrumentMetricContract.metric_group_name="decision_quality"` |
+| **evaluation metric** | One concrete scalar measurement inside an evaluation result. | mean net return, turnover, drawdown |
 | **train artifact** | A frozen output produced from the train period and later applied to the test period without re-selection. It is the evaluation-time analogue of a fitted model artifact. | fitted model weights, frozen allocation parameters |
 
 ## Evaluation Result Terminology
 
-Read `evaluation metric group` as `evaluation category` or `metric group`; it is
-the grouping key for related metrics such as decision quality, cost drag, or
-concentration.
-In run result contracts, use `metric_group_name` for this identifier to avoid
-confusing the metric group concept with the contract field name.
+Read `evaluation metric` as a scalar measurement. The old metric-group switch
+has been removed from the active evaluation spec.
 
 ```text
 EvaluationSpec = evaluation settings
@@ -76,8 +71,6 @@ result terminology.
 Use deliberately explicit names around signal behavior:
 
 - `signal` = a prediction-producing component.
-- `portfolio_target_return_alignment` = an evaluation metric group that measures
-  whether portfolio target weights align with subsequent realized returns.
 
 If a future strategy searches for or re-selects signals, model that as part of
 the concrete trading strategy rather than as a separate top-level discovery

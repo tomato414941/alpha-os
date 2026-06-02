@@ -6,8 +6,7 @@
 
 - evaluation protocol: execution range, evaluation folds, rigor level, and OOS
   contract
-- metric/run result configuration: `metric_group_names`, `metric_windows`, and
-  `aggregation_kinds`
+- metric/run result configuration: `metric_windows` and `aggregation_kinds`
 - target scoping helpers such as `target_ids`
 
 This is still workable, but the name can hide which part of the object owns a
@@ -37,9 +36,9 @@ grouped as:
 Keep `EvaluationSpec` acceptable as the current persisted object, but make the
 internal responsibility boundary explicit.
 
-The smallest likely next step is to make `EvaluationMetricConfig` a first-class
-field or subdocument instead of spreading metric config fields directly across
-`EvaluationSpec`.
+The smallest likely next step is to decide whether `metric_windows` and
+`aggregation_kinds` belong on `EvaluationSpec` or should move behind a smaller
+metric configuration object.
 
 ## Non-Goals
 

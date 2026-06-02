@@ -1,5 +1,12 @@
 # Evaluation Metric Group Default Boundary
 
+Status: Closed
+
+Closed by: `metric_group_names`, legacy `dimensions`, and the
+`requires_decision_evaluation()` metric-group switch were removed from the
+active evaluation spec. Missing metric groups no longer mean "run every metric
+group".
+
 ## Problem
 
 Alpha OS currently uses `metric_group_names` as the main way to describe what an
