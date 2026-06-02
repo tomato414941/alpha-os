@@ -34,9 +34,9 @@ grouped as:
 Keep `EvaluationSpec` acceptable as the current persisted object, but make the
 internal responsibility boundary explicit.
 
-The smallest likely next step is to decide whether `metric_windows` and
-`aggregation_kinds` belong on `EvaluationSpec` or should move behind a smaller
-metric configuration object.
+`EvaluationMetricConfig` was removed because it only wrapped fields already
+owned by `EvaluationSpec`. The remaining question is whether `metric_windows`
+and `aggregation_kinds` should stay on `EvaluationSpec` at all.
 
 ## Non-Goals
 

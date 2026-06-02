@@ -5,12 +5,6 @@ from datetime import date
 from typing import Any, Literal
 import warnings
 
-from .evaluation_metric_config import (
-    DEFAULT_EVALUATION_AGGREGATION_KINDS,
-    DEFAULT_METRIC_WINDOW,
-    EvaluationMetricConfig,
-)
-
 EvaluationRigorLevel = Literal[
     "exploratory",
     "diagnostic",
@@ -20,6 +14,12 @@ EvaluationRigorLevel = Literal[
 ]
 OosContractEnforcement = Literal["off", "warn", "strict"]
 
+DEFAULT_METRIC_WINDOW = 20
+DEFAULT_EVALUATION_AGGREGATION_KINDS = (
+    "active_equal_mean",
+    "corr_weighted_mean",
+)
+EVALUATION_AGGREGATION_KINDS = DEFAULT_EVALUATION_AGGREGATION_KINDS
 EVALUATION_RIGOR_LEVELS = (
     "exploratory",
     "diagnostic",
@@ -160,6 +160,60 @@ def _validate_unique_labels(label_kind: str, labels: tuple[str, ...]) -> None:
         raise ValueError(
             f"evaluation spec contains duplicate {label_kind} labels: " + ", ".join(duplicates)
         )
+
+
+def _validate_metric_windows(metric_windows: tuple[int, ...]) -> None:
+    if not metric_windows:
+        raise ValueError("evaluation spec is missing metric_windows")
+    invalid_metric_windows = [
+        item
+        for item in metric_windows
+        if not isinstance(item, int) or isinstance(item, bool) or item <= 0
+    ]
+    if invalid_metric_windows:
+        joined = ", ".join(str(item) for item in invalid_metric_windows)
+        raise ValueError(
+            f"evaluation spec metric_windows must be positive integers: {joined}"
+        )
+
+
+def _validate_aggregation_kinds(aggregation_kinds: tuple[str, ...]) -> None:
+    if not aggregation_kinds:
+        raise ValueError("evaluation spec is missing aggregation_kinds")
+    invalid_aggregation_kinds = [
+        item
+        for item in aggregation_kinds
+        if item not in EVALUATION_AGGREGATION_KINDS
+    ]
+    if invalid_aggregation_kinds:
+        joined = ", ".join(sorted(invalid_aggregation_kinds))
+        raise ValueError(f"evaluation spec has unknown aggregation kinds: {joined}")
+
+
+def _metric_windows_from_document(document: dict[str, Any]) -> tuple[int, ...]:
+    metric_windows = document.get("metric_windows", [DEFAULT_METRIC_WINDOW])
+    if not isinstance(metric_windows, list) or not metric_windows:
+        raise ValueError("evaluation spec is missing metric_windows")
+    try:
+        normalized_metric_windows = tuple(int(item) for item in metric_windows)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "evaluation spec metric_windows must be positive integers"
+        ) from exc
+    _validate_metric_windows(normalized_metric_windows)
+    return normalized_metric_windows
+
+
+def _aggregation_kinds_from_document(document: dict[str, Any]) -> tuple[str, ...]:
+    aggregation_kinds = document.get(
+        "aggregation_kinds",
+        list(DEFAULT_EVALUATION_AGGREGATION_KINDS),
+    )
+    if not isinstance(aggregation_kinds, list) or not aggregation_kinds:
+        raise ValueError("evaluation spec is missing aggregation_kinds")
+    normalized_aggregation_kinds = tuple(str(item) for item in aggregation_kinds)
+    _validate_aggregation_kinds(normalized_aggregation_kinds)
+    return normalized_aggregation_kinds
 
 
 def _validate_backtest_oos_like_folds(folds: tuple[EvaluationFold, ...]) -> None:
@@ -322,7 +376,8 @@ class EvaluationSpec:
     oos_contract: EvaluationOosContract = EvaluationOosContract()
 
     def __post_init__(self) -> None:
-        self.metric_config
+        _validate_metric_windows(self.metric_windows)
+        _validate_aggregation_kinds(self.aggregation_kinds)
         if self.rigor_level not in EVALUATION_RIGOR_LEVELS:
             raise ValueError(f"unknown evaluation rigor_level: {self.rigor_level}")
         if self.evaluation_folds and self.evaluation_date_ranges:
@@ -344,13 +399,6 @@ class EvaluationSpec:
             execution_range=self.execution_range,
             evaluation_date_ranges=self.evaluation_date_ranges,
             evaluation_folds=self.evaluation_folds,
-        )
-
-    @property
-    def metric_config(self) -> EvaluationMetricConfig:
-        return EvaluationMetricConfig(
-            metric_windows=self.metric_windows,
-            aggregation_kinds=self.aggregation_kinds,
         )
 
     @property
@@ -385,7 +433,6 @@ class EvaluationSpec:
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "EvaluationSpec":
         execution_range = document.get("execution_range")
-        metric_config = EvaluationMetricConfig.from_document(document)
         evaluation_date_ranges = document.get("evaluation_date_ranges", [])
         evaluation_folds = document.get("evaluation_folds", [])
         rigor_level = document.get("rigor_level", "exploratory")
@@ -409,8 +456,8 @@ class EvaluationSpec:
                 for item in evaluation_folds
                 if isinstance(item, dict)
             ),
-            metric_windows=metric_config.metric_windows,
-            aggregation_kinds=metric_config.aggregation_kinds,
+            metric_windows=_metric_windows_from_document(document),
+            aggregation_kinds=_aggregation_kinds_from_document(document),
             rigor_level=rigor_level,
             oos_contract=EvaluationOosContract.from_document(document.get("oos_contract")),
         )
