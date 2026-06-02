@@ -4,7 +4,7 @@
 
 `EvaluationSpec` used to combine multiple concerns:
 
-- evaluation protocol: execution range, evaluation folds, and OOS contract
+- evaluation protocol: execution range and evaluation folds
 - removed metric/run result configuration: `metric_windows` and
   `aggregation_kinds`
 
@@ -36,8 +36,8 @@ owned by `EvaluationSpec`.
 `metric_windows` and `aggregation_kinds` were removed because they were only
 serialized and validated; they did not drive current evaluation behavior.
 
-`rigor_level` was also removed because OOS behavior is now controlled directly
-by `oos_contract.enforcement`.
+`rigor_level` and `oos_contract` were also removed. OOS range validation is now
+direct behavior of `EvaluationSpec`, not a separately configurable contract.
 
 ## Non-Goals
 

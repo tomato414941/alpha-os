@@ -65,13 +65,7 @@
             }
           ]
         }
-      ],
-      "oos_contract": {
-        "enforcement": "warn",
-        "require_non_overlapping_ranges": true,
-        "require_evaluation_after_execution": true,
-        "require_strategy_checkpoint_for_trained_strategy": false
-      }
+      ]
     }
   ]
 }

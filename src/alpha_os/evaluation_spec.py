@@ -2,49 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Literal
-import warnings
-
-OosContractEnforcement = Literal["off", "warn", "strict"]
-
-OOS_CONTRACT_ENFORCEMENTS = ("off", "warn", "strict")
-
-
-@dataclass(frozen=True)
-class EvaluationOosContract:
-    enforcement: OosContractEnforcement = "off"
-    require_non_overlapping_ranges: bool = True
-    require_evaluation_after_execution: bool = True
-
-    def __post_init__(self) -> None:
-        if self.enforcement not in OOS_CONTRACT_ENFORCEMENTS:
-            raise ValueError(f"unknown OOS contract enforcement: {self.enforcement}")
-
-    def to_document(self) -> dict[str, Any]:
-        return {
-            "enforcement": self.enforcement,
-            "require_non_overlapping_ranges": self.require_non_overlapping_ranges,
-            "require_evaluation_after_execution": (self.require_evaluation_after_execution),
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any] | None) -> "EvaluationOosContract":
-        if document is None:
-            return cls()
-        if not isinstance(document, dict):
-            raise ValueError("evaluation spec oos_contract must be an object")
-        enforcement = document.get("enforcement", "warn")
-        if not isinstance(enforcement, str):
-            raise ValueError("evaluation spec oos_contract enforcement must be a string")
-        return cls(
-            enforcement=enforcement,
-            require_non_overlapping_ranges=bool(
-                document.get("require_non_overlapping_ranges", True)
-            ),
-            require_evaluation_after_execution=bool(
-                document.get("require_evaluation_after_execution", True)
-            ),
-        )
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -158,68 +116,39 @@ def _date_ranges_overlap(left: EvaluationDateRange, right: EvaluationDateRange) 
     return left.start_date <= right.end_date and right.start_date <= left.end_date
 
 
-def _handle_oos_contract_violation(
+def _validate_oos_ranges(
     *,
-    contract: EvaluationOosContract,
-    message: str,
-) -> None:
-    if contract.enforcement == "strict":
-        raise ValueError(message)
-    if contract.enforcement == "warn":
-        warnings.warn(message, UserWarning, stacklevel=3)
-
-
-def _validate_oos_contract_for_ranges(
-    *,
-    contract: EvaluationOosContract,
     execution_range: EvaluationDateRange,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
 ) -> None:
     for evaluation_range in evaluation_date_ranges:
-        if contract.require_non_overlapping_ranges and _date_ranges_overlap(
-            execution_range, evaluation_range
-        ):
-            _handle_oos_contract_violation(
-                contract=contract,
-                message=(
-                    "evaluation OOS contract violation: execution and evaluation "
-                    f"ranges overlap: {execution_range.label} vs "
-                    f"{evaluation_range.label}"
-                ),
+        if _date_ranges_overlap(execution_range, evaluation_range):
+            raise ValueError(
+                "evaluation OOS violation: execution and evaluation ranges "
+                f"overlap: {execution_range.label} vs {evaluation_range.label}"
             )
-        if (
-            contract.require_evaluation_after_execution
-            and evaluation_range.start_date <= execution_range.end_date
-        ):
-            _handle_oos_contract_violation(
-                contract=contract,
-                message=(
-                    "evaluation OOS contract violation: evaluation range does not "
-                    f"start after execution range: {execution_range.label} vs "
-                    f"{evaluation_range.label}"
-                ),
+        if evaluation_range.start_date <= execution_range.end_date:
+            raise ValueError(
+                "evaluation OOS violation: evaluation range does not start after "
+                f"execution range: {execution_range.label} vs "
+                f"{evaluation_range.label}"
             )
 
 
-def _validate_oos_contract(
+def _validate_oos_ranges_for_spec(
     *,
-    contract: EvaluationOosContract,
     execution_range: EvaluationDateRange,
     evaluation_date_ranges: tuple[EvaluationDateRange, ...],
     evaluation_folds: tuple[EvaluationFold, ...],
 ) -> None:
-    if contract.enforcement == "off":
-        return
     if evaluation_date_ranges:
-        _validate_oos_contract_for_ranges(
-            contract=contract,
+        _validate_oos_ranges(
             execution_range=execution_range,
             evaluation_date_ranges=evaluation_date_ranges,
         )
     for fold in evaluation_folds:
         if fold.evaluation_date_ranges:
-            _validate_oos_contract_for_ranges(
-                contract=contract,
+            _validate_oos_ranges(
                 execution_range=fold.execution_range,
                 evaluation_date_ranges=fold.evaluation_date_ranges,
             )
@@ -230,7 +159,6 @@ class EvaluationSpec:
     execution_range: EvaluationDateRange
     evaluation_date_ranges: tuple[EvaluationDateRange, ...] = ()
     evaluation_folds: tuple[EvaluationFold, ...] = ()
-    oos_contract: EvaluationOosContract = EvaluationOosContract()
 
     def __post_init__(self) -> None:
         if self.evaluation_folds and self.evaluation_date_ranges:
@@ -246,8 +174,7 @@ class EvaluationSpec:
         for item in self.evaluation_date_ranges:
             _validate_date_range(item)
         _validate_evaluation_folds(self.evaluation_folds)
-        _validate_oos_contract(
-            contract=self.oos_contract,
+        _validate_oos_ranges_for_spec(
             execution_range=self.execution_range,
             evaluation_date_ranges=self.evaluation_date_ranges,
             evaluation_folds=self.evaluation_folds,
@@ -276,7 +203,6 @@ class EvaluationSpec:
             "execution_range": self.execution_range.to_document(),
             "evaluation_date_ranges": [item.to_document() for item in self.evaluation_date_ranges],
             "evaluation_folds": [item.to_document() for item in self.evaluation_folds],
-            "oos_contract": self.oos_contract.to_document(),
         }
 
     @classmethod
@@ -302,5 +228,4 @@ class EvaluationSpec:
                 for item in evaluation_folds
                 if isinstance(item, dict)
             ),
-            oos_contract=EvaluationOosContract.from_document(document.get("oos_contract")),
         )

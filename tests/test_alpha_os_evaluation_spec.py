@@ -59,16 +59,12 @@ def test_evaluation_spec_rejects_duplicate_fold_labels():
         )
 
 
-def test_evaluation_spec_rejects_overlapping_train_test_in_strict_oos_contract():
-    from alpha_os.evaluation_spec import (
-        EvaluationDateRange,
-        EvaluationOosContract,
-        EvaluationSpec,
-    )
+def test_evaluation_spec_rejects_overlapping_execution_and_evaluation_ranges():
+    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
     with pytest.raises(
         ValueError,
-        match="evaluation OOS contract violation: execution and evaluation ranges overlap",
+        match="evaluation OOS violation: execution and evaluation ranges overlap",
     ):
         EvaluationSpec(
             execution_range=EvaluationDateRange(
@@ -83,78 +79,33 @@ def test_evaluation_spec_rejects_overlapping_train_test_in_strict_oos_contract()
                     end_date="2025-02-15",
                 ),
             ),
-            oos_contract=EvaluationOosContract(enforcement="strict"),
         )
 
 
-def test_evaluation_spec_warns_on_overlapping_train_test_with_warn_contract():
-    from alpha_os.evaluation_spec import (
-        EvaluationDateRange,
-        EvaluationOosContract,
-        EvaluationSpec,
-    )
-
-    with pytest.warns(
-        UserWarning,
-        match="evaluation OOS contract violation: execution and evaluation ranges overlap",
-    ):
-        EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            evaluation_date_ranges=(
-                EvaluationDateRange(
-                    label="test",
-                    start_date="2025-01-15",
-                    end_date="2025-02-15",
-                ),
-            ),
-            oos_contract=EvaluationOosContract(
-                enforcement="warn",
-                require_evaluation_after_execution=False,
-            ),
-        )
-
-
-def test_evaluation_spec_does_not_warn_on_overlap_by_default():
-    import warnings
-
+def test_evaluation_spec_allows_missing_evaluation_ranges():
     from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
-    with warnings.catch_warnings(record=True) as warning_records:
-        warnings.simplefilter("always")
-        EvaluationSpec(
-            execution_range=EvaluationDateRange(
-                label="train",
-                start_date="2025-01-01",
-                end_date="2025-01-31",
-            ),
-            evaluation_date_ranges=(
-                EvaluationDateRange(
-                    label="test",
-                    start_date="2025-01-15",
-                    end_date="2025-02-15",
-                ),
-            ),
+    evaluation_spec = EvaluationSpec(
+        execution_range=EvaluationDateRange(
+            label="train",
+            start_date="2025-01-01",
+            end_date="2025-01-31",
         )
-
-    assert not warning_records
-
-
-def test_evaluation_spec_rejects_evaluation_before_execution_in_strict_contract():
-    from alpha_os.evaluation_spec import (
-        EvaluationDateRange,
-        EvaluationOosContract,
-        EvaluationSpec,
     )
+
+    assert evaluation_spec.resolved_evaluation_date_ranges == (
+        evaluation_spec.execution_range,
+    )
+
+
+def test_evaluation_spec_rejects_evaluation_before_execution():
+    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
     with pytest.raises(
         ValueError,
         match=(
-            "evaluation OOS contract violation: evaluation range does not start "
-            "after execution range"
+            "evaluation OOS violation: evaluation range does not start after "
+            "execution range"
         ),
     ):
         EvaluationSpec(
@@ -170,16 +121,11 @@ def test_evaluation_spec_rejects_evaluation_before_execution_in_strict_contract(
                     end_date="2025-01-31",
                 ),
             ),
-            oos_contract=EvaluationOosContract(enforcement="strict"),
         )
 
 
-def test_evaluation_spec_roundtrips_oos_contract_document():
-    from alpha_os.evaluation_spec import (
-        EvaluationDateRange,
-        EvaluationOosContract,
-        EvaluationSpec,
-    )
+def test_evaluation_spec_roundtrips_document():
+    from alpha_os.evaluation_spec import EvaluationDateRange, EvaluationSpec
 
     evaluation_spec = EvaluationSpec(
         execution_range=EvaluationDateRange(
@@ -194,15 +140,14 @@ def test_evaluation_spec_roundtrips_oos_contract_document():
                 end_date="2025-02-28",
             ),
         ),
-        oos_contract=EvaluationOosContract(enforcement="strict"),
     )
 
     roundtripped = EvaluationSpec.from_document(evaluation_spec.to_document())
 
-    assert roundtripped.oos_contract == EvaluationOosContract(enforcement="strict")
+    assert roundtripped == evaluation_spec
 
 
-def test_minimal_oos_manifest_remains_valid_with_warn_contract():
+def test_minimal_oos_manifest_remains_valid():
     import json
     from pathlib import Path
 
@@ -210,11 +155,10 @@ def test_minimal_oos_manifest_remains_valid_with_warn_contract():
 
     manifest = json.loads(Path("examples/minimal_oos.json").read_text())
     document = dict(manifest["evaluation_specs"][0])
-    document["oos_contract"] = {"enforcement": "warn"}
 
     evaluation_spec = EvaluationSpec.from_document(document)
 
-    assert evaluation_spec.oos_contract.enforcement == "warn"
+    assert evaluation_spec.evaluation_folds
 
 
 def test_evaluation_spec_rejects_duplicate_fold_evaluation_range_labels():
