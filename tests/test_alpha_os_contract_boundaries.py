@@ -15,7 +15,6 @@ def test_subject_set_contract_boundary_names_field_owners():
     assert boundary.group_for_field("instrument.instrument_type") == "instrument"
     assert boundary.group_for_field("observation_spec.observable_id") == "observation_spec"
     assert boundary.group_for_field("binding.instrument_id") == "binding"
-    assert boundary.group_for_field("universe_policy.base_currency") == "universe_policy"
     assert boundary.group_for_field("binding.unknown") is None
 
 
@@ -24,7 +23,7 @@ def test_subject_set_exposes_canonical_contract_boundary():
 
     assert subject_set.contract_boundary == default_subject_set_contract_boundary()
     assert format_subject_set_contract_groups(subject_set.contract_boundary) == (
-        "instrument,observation_spec,binding,universe_policy"
+        "instrument,observation_spec,binding"
     )
 
 

@@ -85,14 +85,6 @@ def default_subject_set_contract_boundary() -> SubjectSetContractBoundary:
                     "binding.instrument_id",
                 ),
             ),
-            ContractFieldGroup(
-                group_name="universe_policy",
-                field_paths=(
-                    "universe_policy.base_currency",
-                    "universe_policy.trading_calendar",
-                    "universe_policy.benchmark_id",
-                ),
-            ),
         )
     )
 

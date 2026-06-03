@@ -11,11 +11,6 @@
   "subject_sets": [
     {
       "subject_set_id": "minimal_oos_pair",
-      "universe_policy": {
-        "base_currency": "USD",
-        "trading_calendar": "fixture_daily",
-        "benchmark_id": "minimal_oos_pair"
-      },
       "observation_specs": [
         {
           "observation_spec_id": "minimal_oos_close",

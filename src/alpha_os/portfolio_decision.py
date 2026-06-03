@@ -1,46 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from .contract_boundaries import (
     SubjectSetContractBoundary,
     default_subject_set_contract_boundary,
 )
-
-
-@dataclass(frozen=True)
-class UniversePolicySpec:
-    base_currency: str | None = None
-    trading_calendar: str | None = None
-    benchmark_id: str | None = None
-
-    def to_document(self) -> dict[str, str | None]:
-        return {
-            "base_currency": self.base_currency,
-            "trading_calendar": self.trading_calendar,
-            "benchmark_id": self.benchmark_id,
-        }
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> "UniversePolicySpec":
-        return cls(
-            base_currency=(
-                None
-                if document.get("base_currency") is None
-                else str(document.get("base_currency"))
-            ),
-            trading_calendar=(
-                None
-                if document.get("trading_calendar") is None
-                else str(document.get("trading_calendar"))
-            ),
-            benchmark_id=(
-                None
-                if document.get("benchmark_id") is None
-                else str(document.get("benchmark_id"))
-            ),
-        )
 
 
 @dataclass(frozen=True)
@@ -91,7 +56,6 @@ class SubjectSet:
     instruments: tuple[InstrumentSpec, ...] = ()
     observation_specs: tuple[ObservationSpec, ...] = ()
     bindings: tuple[SubjectObservationBinding, ...] = ()
-    universe_policy: UniversePolicySpec = field(default_factory=UniversePolicySpec)
 
     def __post_init__(self) -> None:
         instrument_ids = [item.instrument_id for item in self.instruments]

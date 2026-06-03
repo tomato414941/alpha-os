@@ -126,11 +126,9 @@ Code review found one overly broad message, `strategy subject_set or universe
 axis`, where the implementation only requires `strategy subject_set`. Fix that
 in place instead of creating a separate issue.
 
-`universe_policy` is different: it is a widely used persisted/manifest field for
-cross-instrument subject-set assumptions such as base currency, trading
-calendar, and benchmark. Renaming or reshaping it should be handled as a
-separate boundary task if it becomes painful. See
-[`universe-policy-naming-boundary.md`](./universe-policy-naming-boundary.md).
+`universe_policy` was removed from `SubjectSet`; it should not be reintroduced
+as a generic policy/spec object. See
+[`universe-policy-naming-boundary.md`](./closed/universe-policy-naming-boundary.md).
 
 ### `tradable universe`
 

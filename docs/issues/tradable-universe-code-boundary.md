@@ -7,8 +7,8 @@ may hold or trade.
 
 The code does not have a first-class `TradableUniverse` model. Most current
 flows represent the relevant set through `SubjectSet`, but `SubjectSet` also
-carries observation specs, subject-observation bindings, instrument metadata,
-and `universe_policy`.
+carries observation specs, subject-observation bindings, and instrument
+metadata.
 
 That makes it easy to treat `SubjectSet` as identical to `tradable universe`
 even when a flow only needs observation context, evaluation context, or subject
