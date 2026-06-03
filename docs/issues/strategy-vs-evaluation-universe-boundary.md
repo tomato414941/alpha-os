@@ -18,13 +18,14 @@ Evaluation universe:
   evaluate ETFs only
 ```
 
-If both are modeled through the same `SubjectSet`-shaped input, the boundary
-between strategy capability and evaluation condition becomes hard to see.
+The previous `SubjectSet`-shaped input has been removed. If universe fields
+return, the boundary between strategy capability and evaluation condition must
+stay explicit.
 
 ## Boundary
 
-`TradingStrategySpec` should describe what the strategy can operate on and what
-inputs it needs.
+Trading strategy implementations should describe what the strategy can operate
+on and what inputs it needs.
 
 Evaluation inputs should describe what is evaluated in a specific run.
 
@@ -49,8 +50,7 @@ of the strategy.
 
 ## Non-Goals
 
-- Do not rename `SubjectSet` immediately.
-- Do not split the schema immediately.
+- Do not reintroduce `SubjectSet` as the default universe schema.
 - Do not introduce a new universe hierarchy until the current usage is mapped.
 - Do not promote `input universe` as a term unless the project later proves
   that strategy inputs should be modeled as an instrument-set concept.
@@ -59,8 +59,8 @@ of the strategy.
 
 - The project has glossary entries for the universe terms that should become
   source-of-truth names.
-- `TradingStrategySpec` and evaluation inputs have a documented ownership
-  boundary for universe-related fields.
+- Trading strategy implementations and evaluation inputs have a documented
+  ownership boundary for universe-related fields.
 - A future schema change can tell whether a universe field belongs to strategy
   capability, observed/reference instruments, tradable scope, or evaluation
   conditions.

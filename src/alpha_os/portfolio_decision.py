@@ -2,51 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .contract_boundaries import (
-    SubjectSetContractBoundary,
-    default_subject_set_contract_boundary,
-)
-
-
-@dataclass(frozen=True)
-class Subject:
-    subject_id: str
-    asset: str
-    subject_kind: str = "asset"
-
-
-@dataclass(frozen=True)
-class SubjectSet:
-    subject_set_id: str | None = None
-    subjects: tuple[Subject, ...] = ()
-
-    def __post_init__(self) -> None:
-        subject_ids = [item.subject_id for item in self.subjects]
-        if len(subject_ids) != len(set(subject_ids)):
-            raise ValueError("subject set contains duplicate subject_id values")
-
-    @property
-    def subject_ids(self) -> tuple[str, ...]:
-        return tuple(item.subject_id for item in self.subjects)
-
-    @property
-    def contract_boundary(self) -> SubjectSetContractBoundary:
-        return default_subject_set_contract_boundary()
-
-    @property
-    def asset_by_subject(self) -> dict[str, str]:
-        return {
-            item.subject_id: item.asset
-            for item in self.subjects
-        }
-
-    @property
-    def subject_kind_by_subject(self) -> dict[str, str]:
-        return {
-            item.subject_id: item.subject_kind
-            for item in self.subjects
-        }
-
 
 @dataclass(frozen=True)
 class PortfolioPositionState:

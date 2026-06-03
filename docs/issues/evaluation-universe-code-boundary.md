@@ -6,21 +6,15 @@ The glossary defines `evaluation universe` as the set of instruments included
 in a specific evaluation run.
 
 The code does not have a first-class `EvaluationUniverse` model or dedicated
-evaluation-universe input. Current direct evaluation runs derive the effective
-subject set from the task's strategy:
-
-- direct strategy runs use `TradingStrategySpec.subject_set_id`
-- the removed checkpoint path used checkpoint-owned subject-set metadata
-
-The resulting `subject_set_id` is then recorded in execution requests and
-evaluation reports as subject-set context.
+evaluation-universe input. `SubjectSet`, `TradingStrategySpec.subject_set_id`,
+and checkpoint-owned subject-set metadata have been removed from active code.
 
 ## Why It Matters
 
-The glossary treats evaluation universe as an evaluation condition, but the
-implementation currently derives it from strategy or provenance state.
+The glossary treats evaluation universe as an evaluation condition, but active
+code does not currently model it.
 
-That can make it hard to tell whether a subject set belongs to:
+If evaluation universe returns, it must be clear whether the field belongs to:
 
 - the strategy definition
 - the training/preparation provenance
@@ -41,14 +35,14 @@ subject set comes from for each current evaluation input shape.
 
 - Do not reintroduce a generic evaluation settings object just to hold universe
   ownership.
-- Do not rename `subject_set_id` fields as part of terminology cleanup.
+- Do not reintroduce `subject_set_id` fields as part of terminology cleanup.
 - Do not reintroduce checkpoint-owned universe behavior without a separate
   checkpoint design.
 
 ## Acceptance Criteria
 
-- Evaluation paths document how the effective evaluation subject set is chosen.
-- Reports make clear which subject set was actually evaluated.
-- A future schema or API change can tell whether a subject-set field is owned by
+- Future evaluation paths document how the effective evaluation universe is
+  chosen.
+- A future schema or API change can tell whether a universe field is owned by
   strategy definition, training/preparation provenance, or evaluation
   conditions.

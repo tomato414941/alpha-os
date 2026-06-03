@@ -2,27 +2,8 @@ from __future__ import annotations
 
 from alpha_os.contract_boundaries import (
     default_portfolio_constraint_boundary,
-    default_subject_set_contract_boundary,
     format_active_constraint_stages,
-    format_subject_set_contract_groups,
 )
-from alpha_os.portfolio_decision import SubjectSet
-
-
-def test_subject_set_contract_boundary_names_field_owners():
-    boundary = default_subject_set_contract_boundary()
-
-    assert boundary.group_for_field("subject.subject_id") == "subject"
-    assert boundary.group_for_field("subject.unknown") is None
-
-
-def test_subject_set_exposes_canonical_contract_boundary():
-    subject_set = SubjectSet(subject_set_id="macro_core")
-
-    assert subject_set.contract_boundary == default_subject_set_contract_boundary()
-    assert format_subject_set_contract_groups(subject_set.contract_boundary) == (
-        "subject"
-    )
 
 
 def test_portfolio_constraint_boundary_marks_enforcement_stages():

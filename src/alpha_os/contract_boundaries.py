@@ -4,26 +4,6 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ContractFieldGroup:
-    group_name: str
-    field_paths: tuple[str, ...]
-
-    def contains(self, field_path: str) -> bool:
-        return field_path in self.field_paths
-
-
-@dataclass(frozen=True)
-class SubjectSetContractBoundary:
-    field_groups: tuple[ContractFieldGroup, ...]
-
-    def group_for_field(self, field_path: str) -> str | None:
-        for group in self.field_groups:
-            if group.contains(field_path):
-                return group.group_name
-        return None
-
-
-@dataclass(frozen=True)
 class PortfolioConstraintBoundary:
     sizing_time_fields: tuple[str, ...]
     post_sizing_normalization_fields: tuple[str, ...]
@@ -42,21 +22,6 @@ class PortfolioConstraintBoundary:
         return None
 
 
-def default_subject_set_contract_boundary() -> SubjectSetContractBoundary:
-    return SubjectSetContractBoundary(
-        field_groups=(
-            ContractFieldGroup(
-                group_name="subject",
-                field_paths=(
-                    "subject.subject_id",
-                    "subject.asset",
-                    "subject.subject_kind",
-                ),
-            ),
-        )
-    )
-
-
 def default_portfolio_constraint_boundary() -> PortfolioConstraintBoundary:
     return PortfolioConstraintBoundary(
         sizing_time_fields=("target_vol",),
@@ -69,18 +34,6 @@ def default_portfolio_constraint_boundary() -> PortfolioConstraintBoundary:
             "cluster_weight_caps",
         ),
     )
-
-
-def subject_set_contract_groups(
-    boundary: SubjectSetContractBoundary,
-) -> tuple[str, ...]:
-    return tuple(group.group_name for group in boundary.field_groups)
-
-
-def format_subject_set_contract_groups(
-    boundary: SubjectSetContractBoundary,
-) -> str:
-    return ",".join(subject_set_contract_groups(boundary))
 
 
 def active_constraint_stages(

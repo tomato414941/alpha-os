@@ -137,10 +137,10 @@ or trade. Avoid broad notes about all strategy-observed data because strategy
 inputs can include features, macro context, benchmarks, metadata, and other
 non-instrument inputs.
 
-Code review found that `tradable universe` is not first-class in code and is
-usually represented through `SubjectSet`, which also carries subject metadata.
-See
-[`tradable-universe-code-boundary.md`](./tradable-universe-code-boundary.md).
+Code review found that `tradable universe` is not first-class in code.
+`SubjectSet` has been removed from active code, so it should not stand in for
+tradable universe. See
+[`tradable-universe-code-boundary.md`](./closed/tradable-universe-code-boundary.md).
 
 ### `evaluation universe`
 
