@@ -31,18 +31,18 @@ def test_portfolio_state_exposure_properties():
 
 def test_subject_set_exposes_subject_ids_assets_and_signals():
     from alpha_os.portfolio_decision import (
-        SubjectObservationBinding,
+        Subject,
         SubjectSet,
     )
 
     subject_set = SubjectSet(
         subject_set_id="core_crypto",
-        bindings=(
-            SubjectObservationBinding(
+        subjects=(
+            Subject(
                 subject_id="BTC_spot",
                 asset="BTC",
             ),
-            SubjectObservationBinding(
+            Subject(
                 subject_id="ETH_spot",
                 asset="ETH",
             ),
@@ -63,19 +63,19 @@ def test_subject_set_exposes_subject_ids_assets_and_signals():
 
 def test_subject_set_supports_multiple_subject_kinds_without_backend_names():
     from alpha_os.portfolio_decision import (
-        SubjectObservationBinding,
+        Subject,
         SubjectSet,
     )
 
     subject_set = SubjectSet(
         subject_set_id="macro_mix",
-        bindings=(
-            SubjectObservationBinding(
+        subjects=(
+            Subject(
                 subject_id="SPY_spot",
                 asset="SPY",
                 subject_kind="equity",
             ),
-            SubjectObservationBinding(
+            Subject(
                 subject_id="VIX_index",
                 asset="VIX",
                 subject_kind="index",

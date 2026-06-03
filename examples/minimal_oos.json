@@ -2,7 +2,7 @@
   "subject_sets": [
     {
       "subject_set_id": "minimal_oos_pair",
-      "bindings": [
+      "subjects": [
         {
           "subject_id": "AAA_fixture",
           "subject_kind": "equity",

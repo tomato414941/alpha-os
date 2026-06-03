@@ -9,7 +9,7 @@ from .contract_boundaries import (
 
 
 @dataclass(frozen=True)
-class SubjectObservationBinding:
+class Subject:
     subject_id: str
     asset: str
     subject_kind: str = "asset"
@@ -18,16 +18,16 @@ class SubjectObservationBinding:
 @dataclass(frozen=True)
 class SubjectSet:
     subject_set_id: str | None = None
-    bindings: tuple[SubjectObservationBinding, ...] = ()
+    subjects: tuple[Subject, ...] = ()
 
     def __post_init__(self) -> None:
-        subject_ids = [item.subject_id for item in self.bindings]
+        subject_ids = [item.subject_id for item in self.subjects]
         if len(subject_ids) != len(set(subject_ids)):
             raise ValueError("subject set contains duplicate subject_id values")
 
     @property
     def subject_ids(self) -> tuple[str, ...]:
-        return tuple(item.subject_id for item in self.bindings)
+        return tuple(item.subject_id for item in self.subjects)
 
     @property
     def contract_boundary(self) -> SubjectSetContractBoundary:
@@ -37,14 +37,14 @@ class SubjectSet:
     def asset_by_subject(self) -> dict[str, str]:
         return {
             item.subject_id: item.asset
-            for item in self.bindings
+            for item in self.subjects
         }
 
     @property
     def subject_kind_by_subject(self) -> dict[str, str]:
         return {
             item.subject_id: item.subject_kind
-            for item in self.bindings
+            for item in self.subjects
         }
 
 

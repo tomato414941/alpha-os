@@ -12,8 +12,8 @@ from alpha_os.portfolio_decision import SubjectSet
 def test_subject_set_contract_boundary_names_field_owners():
     boundary = default_subject_set_contract_boundary()
 
-    assert boundary.group_for_field("binding.subject_id") == "binding"
-    assert boundary.group_for_field("binding.unknown") is None
+    assert boundary.group_for_field("subject.subject_id") == "subject"
+    assert boundary.group_for_field("subject.unknown") is None
 
 
 def test_subject_set_exposes_canonical_contract_boundary():
@@ -21,7 +21,7 @@ def test_subject_set_exposes_canonical_contract_boundary():
 
     assert subject_set.contract_boundary == default_subject_set_contract_boundary()
     assert format_subject_set_contract_groups(subject_set.contract_boundary) == (
-        "binding"
+        "subject"
     )
 
 

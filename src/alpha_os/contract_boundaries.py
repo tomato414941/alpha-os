@@ -46,11 +46,11 @@ def default_subject_set_contract_boundary() -> SubjectSetContractBoundary:
     return SubjectSetContractBoundary(
         field_groups=(
             ContractFieldGroup(
-                group_name="binding",
+                group_name="subject",
                 field_paths=(
-                    "binding.subject_id",
-                    "binding.asset",
-                    "binding.subject_kind",
+                    "subject.subject_id",
+                    "subject.asset",
+                    "subject.subject_kind",
                 ),
             ),
         )

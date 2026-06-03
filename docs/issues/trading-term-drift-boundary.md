@@ -138,8 +138,8 @@ inputs can include features, macro context, benchmarks, metadata, and other
 non-instrument inputs.
 
 Code review found that `tradable universe` is not first-class in code and is
-usually represented through `SubjectSet`, which also carries observation and
-metadata context. See
+usually represented through `SubjectSet`, which also carries subject metadata.
+See
 [`tradable-universe-code-boundary.md`](./tradable-universe-code-boundary.md).
 
 ### `evaluation universe`

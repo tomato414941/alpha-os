@@ -7,7 +7,7 @@ may hold or trade.
 
 The code does not have a first-class `TradableUniverse` model. Most current
 flows represent the relevant set through `SubjectSet`, but `SubjectSet` also
-carries subject bindings and instrument metadata.
+carries subject metadata.
 
 That makes it easy to treat `SubjectSet` as identical to `tradable universe`
 even when a flow only needs evaluation context or subject metadata.
@@ -34,7 +34,7 @@ Map current `SubjectSet` usage first and document when it represents:
 - tradable scope
 - observed/reference instruments
 - evaluation set
-- subject metadata and bindings
+- subject metadata
 
 ## Non-Goals
 
