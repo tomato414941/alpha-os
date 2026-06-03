@@ -61,55 +61,6 @@ def test_subject_set_exposes_subject_ids_assets_and_signals():
     }
 
 
-def test_subject_set_exposes_instrument_metadata_by_subject():
-    from alpha_os.portfolio_decision import (
-        InstrumentSpec,
-        SubjectObservationBinding,
-        SubjectSet,
-    )
-
-    subject_set = SubjectSet(
-        subject_set_id="macro_futures",
-        instruments=(
-            InstrumentSpec(
-                instrument_id="es_front",
-                instrument_type="future",
-                asset="ES",
-                venue="CME",
-                quote_ccy="USD",
-                contract_family="ES",
-                asset_class="equity_index",
-                region="us",
-                liquidity_tier="tier1",
-                cluster="eq_index_dm",
-                roll_rule="volume_switch",
-                multiplier=50.0,
-            ),
-        ),
-        bindings=(
-            SubjectObservationBinding(
-                subject_id="ES_front",
-                subject_kind="future",
-                asset="ES",
-                instrument_id="es_front",
-            ),
-        ),
-    )
-
-    assert subject_set.instrument_id_by_subject == {"ES_front": "es_front"}
-    instrument = subject_set.instrument_for_subject("ES_front")
-    assert instrument is not None
-    assert instrument.instrument_type == "future"
-    assert instrument.venue == "CME"
-    assert subject_set.asset_class_by_subject == {"ES_front": "equity_index"}
-    assert subject_set.region_by_subject == {"ES_front": "us"}
-    assert subject_set.liquidity_tier_by_subject == {"ES_front": "tier1"}
-    assert subject_set.cluster_by_subject == {"ES_front": "eq_index_dm"}
-    assert subject_set.subjects_grouped_by_instrument_field("asset_class") == {
-        "equity_index": ("ES_front",)
-    }
-
-
 def test_subject_set_supports_multiple_subject_kinds_without_backend_names():
     from alpha_os.portfolio_decision import (
         SubjectObservationBinding,
@@ -136,4 +87,3 @@ def test_subject_set_supports_multiple_subject_kinds_without_backend_names():
         "SPY_spot": "equity",
         "VIX_index": "index",
     }
-

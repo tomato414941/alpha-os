@@ -46,31 +46,11 @@ def default_subject_set_contract_boundary() -> SubjectSetContractBoundary:
     return SubjectSetContractBoundary(
         field_groups=(
             ContractFieldGroup(
-                group_name="instrument",
-                field_paths=(
-                    "instrument.instrument_id",
-                    "instrument.instrument_type",
-                    "instrument.asset",
-                    "instrument.venue",
-                    "instrument.quote_ccy",
-                    "instrument.contract_family",
-                    "instrument.asset_class",
-                    "instrument.region",
-                    "instrument.liquidity_tier",
-                    "instrument.cluster",
-                    "instrument.expiry",
-                    "instrument.roll_rule",
-                    "instrument.multiplier",
-                    "instrument.margin_model",
-                ),
-            ),
-            ContractFieldGroup(
                 group_name="binding",
                 field_paths=(
                     "binding.subject_id",
                     "binding.asset",
                     "binding.subject_kind",
-                    "binding.instrument_id",
                 ),
             ),
         )

@@ -9,57 +9,21 @@ from .contract_boundaries import (
 
 
 @dataclass(frozen=True)
-class InstrumentSpec:
-    instrument_id: str
-    instrument_type: str
-    asset: str
-    venue: str | None = None
-    quote_ccy: str | None = None
-    collateral_ccy: str | None = None
-    contract_family: str | None = None
-    underlying_id: str | None = None
-    asset_class: str | None = None
-    region: str | None = None
-    liquidity_tier: str | None = None
-    cluster: str | None = None
-    expiry: str | None = None
-    roll_rule: str | None = None
-    multiplier: float | None = None
-    margin_model: str | None = None
-
-
-@dataclass(frozen=True)
 class SubjectObservationBinding:
     subject_id: str
     asset: str
     subject_kind: str = "asset"
-    instrument_id: str | None = None
 
 
 @dataclass(frozen=True)
 class SubjectSet:
     subject_set_id: str | None = None
-    instruments: tuple[InstrumentSpec, ...] = ()
     bindings: tuple[SubjectObservationBinding, ...] = ()
 
     def __post_init__(self) -> None:
-        instrument_ids = [item.instrument_id for item in self.instruments]
-        if len(instrument_ids) != len(set(instrument_ids)):
-            raise ValueError("subject set contains duplicate instrument_id values")
         subject_ids = [item.subject_id for item in self.bindings]
         if len(subject_ids) != len(set(subject_ids)):
             raise ValueError("subject set contains duplicate subject_id values")
-        missing_instruments = [
-            item.instrument_id
-            for item in self.bindings
-            if item.instrument_id is not None
-            and item.instrument_id not in self.instrument_by_id
-        ]
-        if missing_instruments:
-            raise ValueError(
-                "subject set binding references unknown instrument_id: "
-                + ", ".join(sorted(set(missing_instruments)))
-            )
 
     @property
     def subject_ids(self) -> tuple[str, ...]:
@@ -68,13 +32,6 @@ class SubjectSet:
     @property
     def contract_boundary(self) -> SubjectSetContractBoundary:
         return default_subject_set_contract_boundary()
-
-    @property
-    def instrument_by_id(self) -> dict[str, InstrumentSpec]:
-        return {
-            item.instrument_id: item
-            for item in self.instruments
-        }
 
     @property
     def asset_by_subject(self) -> dict[str, str]:
@@ -89,75 +46,6 @@ class SubjectSet:
             item.subject_id: item.subject_kind
             for item in self.bindings
         }
-
-    @property
-    def instrument_id_by_subject(self) -> dict[str, str]:
-        return {
-            item.subject_id: item.instrument_id
-            for item in self.bindings
-            if item.instrument_id is not None
-        }
-
-    def instrument_for_subject(self, subject_id: str) -> InstrumentSpec | None:
-        instrument_id = self.instrument_id_by_subject.get(subject_id)
-        if instrument_id is None:
-            return None
-        return self.instrument_by_id[instrument_id]
-
-    @property
-    def asset_class_by_subject(self) -> dict[str, str]:
-        return {
-            binding.subject_id: instrument.asset_class
-            for binding in self.bindings
-            if (instrument := self.instrument_for_subject(binding.subject_id)) is not None
-            and instrument.asset_class is not None
-        }
-
-    @property
-    def region_by_subject(self) -> dict[str, str]:
-        return {
-            binding.subject_id: instrument.region
-            for binding in self.bindings
-            if (instrument := self.instrument_for_subject(binding.subject_id)) is not None
-            and instrument.region is not None
-        }
-
-    @property
-    def liquidity_tier_by_subject(self) -> dict[str, str]:
-        return {
-            binding.subject_id: instrument.liquidity_tier
-            for binding in self.bindings
-            if (instrument := self.instrument_for_subject(binding.subject_id)) is not None
-            and instrument.liquidity_tier is not None
-        }
-
-    @property
-    def cluster_by_subject(self) -> dict[str, str]:
-        return {
-            binding.subject_id: instrument.cluster
-            for binding in self.bindings
-            if (instrument := self.instrument_for_subject(binding.subject_id)) is not None
-            and instrument.cluster is not None
-        }
-
-    def subjects_grouped_by_instrument_field(
-        self,
-        field_name: str,
-    ) -> dict[str, tuple[str, ...]]:
-        grouped: dict[str, list[str]] = {}
-        for binding in self.bindings:
-            instrument = self.instrument_for_subject(binding.subject_id)
-            if instrument is None:
-                continue
-            value = getattr(instrument, field_name, None)
-            if value is None:
-                continue
-            grouped.setdefault(str(value), []).append(binding.subject_id)
-        return {
-            key: tuple(values)
-            for key, values in grouped.items()
-        }
-
 
 
 @dataclass(frozen=True)
