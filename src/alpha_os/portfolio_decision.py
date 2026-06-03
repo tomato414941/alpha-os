@@ -9,19 +9,6 @@ from .contract_boundaries import (
 
 
 @dataclass(frozen=True)
-class ObservationSpec:
-    observation_spec_id: str
-    observable_id: str
-    adapter_kind: str = "signal_noise_asset_observable"
-    source_id: str = "signal_noise"
-    resolution: str = "1d"
-    provided_observable_ids: tuple[str, ...] = ()
-    research_price_observable_id: str | None = None
-    tradable_price_observable_id: str | None = None
-    metadata_observable_ids: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True)
 class InstrumentSpec:
     instrument_id: str
     instrument_type: str
@@ -45,7 +32,6 @@ class InstrumentSpec:
 class SubjectObservationBinding:
     subject_id: str
     asset: str
-    observation_spec_id: str
     subject_kind: str = "asset"
     instrument_id: str | None = None
 
@@ -54,29 +40,15 @@ class SubjectObservationBinding:
 class SubjectSet:
     subject_set_id: str | None = None
     instruments: tuple[InstrumentSpec, ...] = ()
-    observation_specs: tuple[ObservationSpec, ...] = ()
     bindings: tuple[SubjectObservationBinding, ...] = ()
 
     def __post_init__(self) -> None:
         instrument_ids = [item.instrument_id for item in self.instruments]
         if len(instrument_ids) != len(set(instrument_ids)):
             raise ValueError("subject set contains duplicate instrument_id values")
-        spec_ids = [item.observation_spec_id for item in self.observation_specs]
-        if len(spec_ids) != len(set(spec_ids)):
-            raise ValueError("subject set contains duplicate observation_spec_id values")
         subject_ids = [item.subject_id for item in self.bindings]
         if len(subject_ids) != len(set(subject_ids)):
             raise ValueError("subject set contains duplicate subject_id values")
-        missing = [
-            item.observation_spec_id
-            for item in self.bindings
-            if item.observation_spec_id not in self.observation_spec_by_id
-        ]
-        if missing:
-            raise ValueError(
-                "subject set binding references unknown observation_spec_id: "
-                + ", ".join(sorted(set(missing)))
-            )
         missing_instruments = [
             item.instrument_id
             for item in self.bindings
@@ -105,13 +77,6 @@ class SubjectSet:
         }
 
     @property
-    def observation_spec_by_id(self) -> dict[str, ObservationSpec]:
-        return {
-            item.observation_spec_id: item
-            for item in self.observation_specs
-        }
-
-    @property
     def asset_by_subject(self) -> dict[str, str]:
         return {
             item.subject_id: item.asset
@@ -126,23 +91,12 @@ class SubjectSet:
         }
 
     @property
-    def observation_spec_id_by_subject(self) -> dict[str, str]:
-        return {
-            item.subject_id: item.observation_spec_id
-            for item in self.bindings
-        }
-
-    @property
     def instrument_id_by_subject(self) -> dict[str, str]:
         return {
             item.subject_id: item.instrument_id
             for item in self.bindings
             if item.instrument_id is not None
         }
-
-    def observation_spec_for_subject(self, subject_id: str) -> ObservationSpec:
-        observation_spec_id = self.observation_spec_id_by_subject[subject_id]
-        return self.observation_spec_by_id[observation_spec_id]
 
     def instrument_for_subject(self, subject_id: str) -> InstrumentSpec | None:
         instrument_id = self.instrument_id_by_subject.get(subject_id)

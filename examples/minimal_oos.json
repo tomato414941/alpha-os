@@ -1,37 +1,17 @@
 {
-  "observables": [
-    {
-      "observable_id": "daily_close",
-      "family": "price",
-      "value_kind": "real_value",
-      "default_resolution": "1d",
-      "params": {}
-    }
-  ],
   "subject_sets": [
     {
       "subject_set_id": "minimal_oos_pair",
-      "observation_specs": [
-        {
-          "observation_spec_id": "minimal_oos_close",
-          "observable_id": "daily_close",
-          "adapter_kind": "fixture_csv",
-          "source_id": "tests/fixtures/diagnostic_prices/{asset}.csv",
-          "resolution": "1d"
-        }
-      ],
       "bindings": [
         {
           "subject_id": "AAA_fixture",
           "subject_kind": "equity",
-          "asset": "AAA",
-          "observation_spec_id": "minimal_oos_close"
+          "asset": "AAA"
         },
         {
           "subject_id": "BBB_fixture",
           "subject_kind": "equity",
-          "asset": "BBB",
-          "observation_spec_id": "minimal_oos_close"
+          "asset": "BBB"
         }
       ]
     }

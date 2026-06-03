@@ -65,22 +65,10 @@ def default_subject_set_contract_boundary() -> SubjectSetContractBoundary:
                 ),
             ),
             ContractFieldGroup(
-                group_name="observation_spec",
-                field_paths=(
-                    "observation_spec.observation_spec_id",
-                    "observation_spec.observable_id",
-                    "observation_spec.adapter_kind",
-                    "observation_spec.source_id",
-                    "observation_spec.resolution",
-                    "observation_spec.provided_observable_ids",
-                ),
-            ),
-            ContractFieldGroup(
                 group_name="binding",
                 field_paths=(
                     "binding.subject_id",
                     "binding.asset",
-                    "binding.observation_spec_id",
                     "binding.subject_kind",
                     "binding.instrument_id",
                 ),

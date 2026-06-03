@@ -31,33 +31,20 @@ def test_portfolio_state_exposure_properties():
 
 def test_subject_set_exposes_subject_ids_assets_and_signals():
     from alpha_os.portfolio_decision import (
-        ObservationSpec,
         SubjectObservationBinding,
         SubjectSet,
     )
 
     subject_set = SubjectSet(
         subject_set_id="core_crypto",
-        observation_specs=(
-            ObservationSpec(
-                observation_spec_id="btc_close",
-                observable_id="daily_close",
-            ),
-            ObservationSpec(
-                observation_spec_id="eth_close",
-                observable_id="daily_close",
-            ),
-        ),
         bindings=(
             SubjectObservationBinding(
                 subject_id="BTC_spot",
                 asset="BTC",
-                observation_spec_id="btc_close",
             ),
             SubjectObservationBinding(
                 subject_id="ETH_spot",
                 asset="ETH",
-                observation_spec_id="eth_close",
             ),
         ),
     )
@@ -72,16 +59,11 @@ def test_subject_set_exposes_subject_ids_assets_and_signals():
         "BTC_spot": "asset",
         "ETH_spot": "asset",
     }
-    assert subject_set.observation_spec_id_by_subject == {
-        "BTC_spot": "btc_close",
-        "ETH_spot": "eth_close",
-    }
 
 
 def test_subject_set_exposes_instrument_metadata_by_subject():
     from alpha_os.portfolio_decision import (
         InstrumentSpec,
-        ObservationSpec,
         SubjectObservationBinding,
         SubjectSet,
     )
@@ -104,23 +86,11 @@ def test_subject_set_exposes_instrument_metadata_by_subject():
                 multiplier=50.0,
             ),
         ),
-        observation_specs=(
-            ObservationSpec(
-                observation_spec_id="es_close",
-                observable_id="daily_close",
-                provided_observable_ids=(
-                    "front_price",
-                    "next_price",
-                    "basis",
-                ),
-            ),
-        ),
         bindings=(
             SubjectObservationBinding(
                 subject_id="ES_front",
                 subject_kind="future",
                 asset="ES",
-                observation_spec_id="es_close",
                 instrument_id="es_front",
             ),
         ),
@@ -138,42 +108,25 @@ def test_subject_set_exposes_instrument_metadata_by_subject():
     assert subject_set.subjects_grouped_by_instrument_field("asset_class") == {
         "equity_index": ("ES_front",)
     }
-    assert (
-        subject_set.observation_spec_for_subject("ES_front").provided_observable_ids
-        == ("front_price", "next_price", "basis")
-    )
 
 
 def test_subject_set_supports_multiple_subject_kinds_without_backend_names():
     from alpha_os.portfolio_decision import (
-        ObservationSpec,
         SubjectObservationBinding,
         SubjectSet,
     )
 
     subject_set = SubjectSet(
         subject_set_id="macro_mix",
-        observation_specs=(
-            ObservationSpec(
-                observation_spec_id="spy_close",
-                observable_id="daily_close",
-            ),
-            ObservationSpec(
-                observation_spec_id="vix_close",
-                observable_id="daily_close",
-            ),
-        ),
         bindings=(
             SubjectObservationBinding(
                 subject_id="SPY_spot",
                 asset="SPY",
-                observation_spec_id="spy_close",
                 subject_kind="equity",
             ),
             SubjectObservationBinding(
                 subject_id="VIX_index",
                 asset="VIX",
-                observation_spec_id="vix_close",
                 subject_kind="index",
             ),
         ),
@@ -183,9 +136,4 @@ def test_subject_set_supports_multiple_subject_kinds_without_backend_names():
         "SPY_spot": "equity",
         "VIX_index": "index",
     }
-    assert subject_set.observation_spec_id_by_subject == {
-        "SPY_spot": "spy_close",
-        "VIX_index": "vix_close",
-    }
-
 
