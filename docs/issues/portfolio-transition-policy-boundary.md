@@ -32,8 +32,10 @@ Initial classification:
 |---|---|
 | direct action suppression | policy / transition constraint |
 
-`turnover_cost_rate` is represented on `TradingEnvironment`, not on the
-transition controls.
+The old `turnover_cost_rate` field is no longer represented in current code.
+If turnover cost becomes necessary again, it should belong to the environment
+or rollout path that actually charges realized costs, not to transition
+controls.
 
 ## RL Analogy
 
@@ -63,5 +65,4 @@ when a real execution or action-suppression rule needs one.
 
 ## Close Condition
 
-Closed when the persisted wrapper was removed and environment cost assumptions
-were represented separately.
+Closed when the persisted wrapper was removed.

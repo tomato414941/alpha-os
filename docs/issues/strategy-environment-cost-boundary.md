@@ -36,15 +36,12 @@ by the environment after the action.
 
 ## Current Signal
 
-`TradingEnvironment` now contains:
+The previous `TradingEnvironment` value object has been removed from the
+current code because it was not connected to an actual backtest, rollout, or
+market simulation path.
 
-- `market_impact_bps`
-- `fee_bps`
-- `bid_ask_spread_bps`
-- `funding_bps_per_step`
-- `borrow_fee_bps_per_step`
-
-These are environment-side trading costs, not strategy behavior.
+The underlying boundary is still valid: market impact, fees, spread, funding,
+and borrow costs are environment-side trading costs, not strategy behavior.
 
 ## Risk
 
@@ -58,8 +55,8 @@ or because the environment cost assumptions changed.
 
 Do not add more environment cost fields to `TradingStrategySpec`.
 
-`TradingStrategySpec.trading_environment` has been removed. `TradingEnvironment`
-remains as an explicit evaluation/backtest input.
+`TradingStrategySpec.trading_environment` has been removed. Do not reintroduce
+a standalone cost DTO just to preserve this concept.
 
 Before moving fields, classify each use as one of:
 
@@ -68,12 +65,10 @@ Before moving fields, classify each use as one of:
 - environment cost charged after an action
 - evaluation metric or diagnostic assumption
 
-Long term, prefer an environment-owned representation for backtest net-return
-calculation. Keep strategy-owned cost fields only when the strategy actually
-uses the value to decide actions.
-
-`TradingEnvironment` now represents the trading world boundary used by the
-evaluation / backtest path to charge execution and holding costs.
+Long term, introduce an environment-owned representation only together with the
+evaluation or market interaction code that actually applies fills, costs, and
+rewards. Keep strategy-owned cost fields only when the strategy actually uses
+the value to decide actions.
 
 ## Close Condition
 

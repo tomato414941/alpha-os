@@ -54,8 +54,9 @@ Decision rule:
 
 - `ExecutionCostAssumptionsSpec` has been removed.
 - `HoldingCostAssumptionsSpec` has been removed.
-- `TradingEnvironment` now carries the current execution and holding cost
-  assumptions used by backtests and evaluation.
+- The unused `TradingEnvironment` DTO has been removed. Reintroduce an
+  environment object only with code that actually applies costs during
+  evaluation or market interaction.
 
 The code should not rely on a generic cost object to stand for both expected
 decision cost and realized environment cost.
