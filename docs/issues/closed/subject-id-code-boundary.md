@@ -1,5 +1,17 @@
 # Subject ID Code Boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because active code no longer uses `subject_id`.
+
+The previous issue was about broad `subject_id` usage across prediction,
+evaluation, screening, belief synthesis, portfolio construction, and execution
+paths. Those paths have been removed from the maintained package. Future
+non-allocatable targets should still avoid being represented as subjects unless
+they become allocation targets.
+
 ## Problem
 
 The glossary defines `subject` as an alpha-os internal term for one thing that

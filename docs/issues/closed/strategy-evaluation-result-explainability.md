@@ -1,5 +1,17 @@
 # Strategy Evaluation Result Explainability
 
+Status: Closed
+
+## Resolution
+
+Closed because the old evaluation report and run-result implementation has
+been removed from active code.
+
+There is currently no evaluation result object whose facts need to be repaired.
+When evaluation results return, they should expose machine-readable facts about
+the evaluated strategy, inputs, environment, and metrics instead of depending on
+human-facing report text.
+
 ## Problem
 
 An evaluation run result should make it possible to tell what was evaluated without

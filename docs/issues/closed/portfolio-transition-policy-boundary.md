@@ -1,5 +1,16 @@
 # Portfolio transition policy boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the persisted wrapper and transition-budget path described here
+have been removed from active code.
+
+No current package module represents `rebalance_friction_policy`, direct
+transition budget input, or the old standalone portfolio trade transition
+layer.
+
 ## Problem
 
 Resolved: the persisted `rebalance_friction_policy` object and direct

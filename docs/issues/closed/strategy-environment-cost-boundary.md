@@ -1,5 +1,17 @@
 # Strategy environment cost boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the strategy/environment cost coupling described here no longer
+exists in active code.
+
+`TradingStrategySpec.trading_environment` had already been removed, and the
+unused `TradingEnvironment` DTO has now also been removed. Future environment
+cost handling should be introduced only with actual rollout, market
+interaction, or evaluation code that applies those costs.
+
 ## Problem
 
 `TradingStrategySpec` used to carry `TradingEnvironment`.

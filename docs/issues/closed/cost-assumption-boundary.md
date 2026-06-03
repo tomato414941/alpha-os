@@ -1,5 +1,17 @@
 # Cost Assumption Boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the old cost assumption objects have been removed from active
+code.
+
+`ExecutionCostAssumptionsSpec`, `HoldingCostAssumptionsSpec`, and the unused
+`TradingEnvironment` DTO are gone. The maintained package no longer has a
+generic cost object that mixes realized execution cost, evaluation assumptions,
+and strategy-estimated cost.
+
 ## Problem
 
 Cost can mean different things in a trading system:

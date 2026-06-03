@@ -1,5 +1,16 @@
 # Evaluation Universe Code Boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the active package no longer has an evaluation path,
+`SubjectSet`, checkpoint-owned subject-set metadata, or a first-class
+evaluation-universe model.
+
+The remaining concern is a future design topic: if evaluation universe returns,
+its owner must be explicit. There is no current code boundary left to fix.
+
 ## Problem
 
 The glossary defines `evaluation universe` as the set of instruments included

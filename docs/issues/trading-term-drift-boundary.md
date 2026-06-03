@@ -151,7 +151,7 @@ Code review found that evaluation runs do not have a first-class
 `EvaluationUniverse` model or dedicated evaluation-universe input. The current
 effective subject set is derived from strategy state. The removed checkpoint
 path used checkpoint-owned subject-set metadata. See
-[`evaluation-universe-code-boundary.md`](./evaluation-universe-code-boundary.md).
+[`evaluation-universe-code-boundary.md`](./closed/evaluation-universe-code-boundary.md).
 
 ### `subject`
 
@@ -163,7 +163,7 @@ they become allocation targets.
 
 Code review found that `subject_id` appears across prediction, evaluation,
 screening, belief synthesis, portfolio construction, and execution paths. See
-[`subject-id-code-boundary.md`](./subject-id-code-boundary.md).
+[`subject-id-code-boundary.md`](./closed/subject-id-code-boundary.md).
 
 ### `execution`
 

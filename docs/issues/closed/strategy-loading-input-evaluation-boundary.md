@@ -1,5 +1,18 @@
 # Strategy Loading Input Evaluation Boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the evaluation loading/routing code described here has been
+removed from active code.
+
+The old DB-backed evaluation runner, execution strategy routing,
+checkpoint-resolution path, and `signal_discovery_id` evaluation routing are no
+longer present in the maintained package. Future evaluation should consume an
+executable strategy and explicit inputs without reintroducing these routing
+concerns.
+
 ## Problem
 
 Strategy evaluation currently mixes three responsibilities:
