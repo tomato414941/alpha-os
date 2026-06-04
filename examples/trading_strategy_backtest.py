@@ -20,6 +20,16 @@ class PortfolioAction:
 class BacktestStep:
     equity: float
     action: PortfolioAction
+    reward: float
+    observation: MarketObservation
+
+
+@dataclass(frozen=True)
+class WorldStep:
+    observation: MarketObservation
+    reward: float
+    done: bool
+    equity: float
 
 
 class EqualWeightLongOnlyStrategy:
@@ -51,31 +61,80 @@ def _portfolio_return(
     return portfolio_return
 
 
+class MarketBacktestWorld:
+    def __init__(
+        self,
+        observations: Iterable[MarketObservation],
+        *,
+        initial_equity: float = 1.0,
+    ) -> None:
+        self._observations = list(observations)
+        self._initial_equity = initial_equity
+        self._index = 0
+        self._equity = initial_equity
+
+    def reset(self) -> MarketObservation | None:
+        self._index = 0
+        self._equity = self._initial_equity
+        if not self._observations:
+            return None
+        return self._observations[0]
+
+    def can_step(self) -> bool:
+        return self._index < len(self._observations) - 1
+
+    def step(self, action: PortfolioAction) -> WorldStep:
+        if self._index >= len(self._observations) - 1:
+            return WorldStep(
+                observation=self._observations[-1],
+                reward=0.0,
+                done=True,
+                equity=self._equity,
+            )
+
+        current_observation = self._observations[self._index]
+        next_observation = self._observations[self._index + 1]
+        reward = _portfolio_return(
+            action.target_weights,
+            current_observation.prices,
+            next_observation.prices,
+        )
+        self._equity *= 1.0 + reward
+        self._index += 1
+
+        return WorldStep(
+            observation=next_observation,
+            reward=reward,
+            done=self._index >= len(self._observations) - 1,
+            equity=self._equity,
+        )
+
+
 def backtest_strategy(
     strategy: TradingStrategy[MarketObservation, PortfolioAction],
     observations: Iterable[MarketObservation],
     *,
     initial_equity: float = 1.0,
 ) -> list[BacktestStep]:
-    observation_list = list(observations)
-    if len(observation_list) < 2:
+    world = MarketBacktestWorld(observations, initial_equity=initial_equity)
+    observation = world.reset()
+    if observation is None or not world.can_step():
         return []
 
-    equity = initial_equity
     steps: list[BacktestStep] = []
 
-    for current_observation, next_observation in zip(
-        observation_list,
-        observation_list[1:],
-    ):
-        action = strategy.decide(current_observation)
-        realized_return = _portfolio_return(
-            action.target_weights,
-            current_observation.prices,
-            next_observation.prices,
+    while world.can_step():
+        action = strategy.decide(observation)
+        world_step = world.step(action)
+        steps.append(
+            BacktestStep(
+                equity=world_step.equity,
+                action=action,
+                reward=world_step.reward,
+                observation=observation,
+            )
         )
-        equity *= 1.0 + realized_return
-        steps.append(BacktestStep(equity=equity, action=action))
+        observation = world_step.observation
 
     return steps
 
