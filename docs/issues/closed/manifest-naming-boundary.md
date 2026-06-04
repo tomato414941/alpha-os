@@ -3,8 +3,7 @@
 Status: Closed
 
 Closed by: the checked-in runtime manifest bundle directory was removed. The
-remaining `examples/minimal_oos.json` is a narrow evaluation fixture, not the
-primary strategy/runtime source of truth.
+old `examples/minimal_oos.json` fixture was later removed as well.
 
 ## Problem
 
