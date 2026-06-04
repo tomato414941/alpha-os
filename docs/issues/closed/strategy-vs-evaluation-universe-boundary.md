@@ -1,5 +1,18 @@
 # Strategy vs Evaluation Universe Boundary
 
+Status: Closed
+
+## Resolution
+
+Closed because the active package no longer has `SubjectSet`, first-class
+evaluation inputs, or an `EvaluationUniverse` model.
+
+The remaining universe concern is terminology and future design guidance:
+strategy-supported universe, observed/reference instruments, tradable universe,
+and evaluation universe should stay distinguishable if those fields return.
+That concern is tracked through the glossary review issue rather than an active
+code-boundary issue.
+
 ## Problem
 
 The project does not clearly separate universe concepts owned by a strategy from
