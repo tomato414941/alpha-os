@@ -1,21 +1,23 @@
 # alpha-os
 
-`alpha_os` is the current mainline package for trading strategy definition,
-backtesting, and out-of-sample evaluation.
+`alpha_os` is a small package for defining trading strategy contracts.
 
 ## Current Mainline
 
 - package: `src/alpha_os/`
 - focus:
-  - trading strategy contracts
-  - strategy backtests
-  - OOS evaluation
-  - portfolio decision flows
+  - `TradingStrategy` as the black-box decision contract
+  - concrete examples under `examples/`
+  - minimal tests for the maintained contract and examples
 
 ## Repository Layout
 
 - `src/alpha_os/`
-  - mainline strategy / evaluation runtime
+  - maintained package code
+- `examples/`
+  - concrete trading strategy sketches; not package API
+- `experiments/`
+  - frozen historical research snapshot; do not add new experiments
 
 ## Development
 
@@ -26,7 +28,7 @@ uv sync --extra dev
 ## Testing
 
 ```bash
-uv run ruff check src tests
+uv run ruff check .
 uv run pytest -q
 ```
 
