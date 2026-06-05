@@ -1,4 +1,4 @@
-"""Shared fixtures for alpha-os tests."""
+"""Shared test helpers for alpha-os."""
 from __future__ import annotations
 
 import importlib.util
