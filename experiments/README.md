@@ -1,15 +1,13 @@
 # Experiments
 
-This directory holds human-readable investment hypotheses and any later
-artifacts needed to evaluate them.
+This directory is a historical research snapshot.
 
-Use one directory per hypothesis once it has more than a single note:
+Do not add new experiments here. The current contents are kept only as a record
+of earlier hypothesis work and are not part of the alpha-os package API.
 
-```text
-hypotheses/<hypothesis>/README.md
-hypotheses/<hypothesis>/evaluate.py
-```
+The files in this directory should not be imported by `src/alpha_os`. Future
+strategy examples should live under `examples/`, or as concrete
+`TradingStrategy` implementations when the package has a clear place for them.
 
-Keep hypothesis-specific scripts and result notes in that hypothesis directory.
-Keep reusable evidence data under `datasets/` and reference it from the
-hypothesis.
+The existing snapshot contains one hypothesis, its local evaluation scripts, and
+the fixed data used by that hypothesis.
