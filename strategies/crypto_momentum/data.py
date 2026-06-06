@@ -14,6 +14,19 @@ DATASET_DIR = (
 LOCAL_DATASET_DIR = (
     Path(__file__).resolve().parent / "market_data" / "binance_spot_daily"
 )
+DEFAULT_SYMBOLS = ("BTCUSDT", "ETHUSDT")
+EXPANDED_SYMBOLS = (
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "ADAUSDT",
+    "DOGEUSDT",
+    "LINKUSDT",
+    "AVAXUSDT",
+    "TONUSDT",
+)
 
 
 @dataclass(frozen=True)
@@ -31,7 +44,7 @@ class DailyMarketBar:
 def load_daily_market_bars(
     *,
     dataset_dir: Path = DATASET_DIR,
-    symbols: tuple[str, ...] = ("BTCUSDT", "ETHUSDT"),
+    symbols: tuple[str, ...] = DEFAULT_SYMBOLS,
 ) -> tuple[DailyMarketBar, ...]:
     closes_by_symbol: dict[str, list[DailyClose]] = {}
     for symbol in symbols:

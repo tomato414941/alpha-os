@@ -9,6 +9,7 @@ from alpha_os.trading_strategy import TradingStrategy
 from strategies.crypto_momentum.accounting import PortfolioAccounting
 from strategies.crypto_momentum.data import (
     DATASET_DIR,
+    DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
@@ -163,9 +164,13 @@ def _summarize(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
     args = parser.parse_args()
 
-    market_bars = load_daily_market_bars(dataset_dir=args.dataset_dir)
+    market_bars = load_daily_market_bars(
+        dataset_dir=args.dataset_dir,
+        symbols=tuple(args.symbols),
+    )
     for name, variant in VARIANTS.items():
         result = run_backtest(
             variant.factory(),

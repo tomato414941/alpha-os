@@ -23,6 +23,12 @@ To fetch fresh local Binance spot daily data:
 uv run python -m strategies.crypto_momentum.fetch_market_data
 ```
 
+The default fresh-data universe is:
+
+```text
+BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
 That writes uncommitted local CSV files under:
 
 ```text
@@ -35,16 +41,34 @@ To use those files for the current manual target:
 uv run python -m strategies.crypto_momentum.latest_target --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
 ```
 
+For the expanded universe:
+
+```text
+uv run python -m strategies.crypto_momentum.latest_target --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
 To backtest those files:
 
 ```text
 uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
 ```
 
+For the expanded universe:
+
+```text
+uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
 To run the local robustness check on those files:
 
 ```text
 uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+```
+
+For the expanded universe:
+
+```text
+uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
 ```
 
 ## Current Variant

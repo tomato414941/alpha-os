@@ -233,3 +233,123 @@ volatility slightly, but it does not improve return, Sharpe, or drawdown. If
 universe or a different allocation objective, not this two-asset BTC/ETH setup.
 The next useful check is to expand the universe before judging whether
 optimizer-backed allocation is useful.
+
+## Expanded Universe Check
+
+Fresh data was expanded to:
+
+```text
+BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
+`TONUSDT` starts on 2024-08-08, so the full 10-symbol intersection starts there.
+For a cleaner 2024-01-01 start, a 9-symbol run without `TONUSDT` was also
+checked.
+
+### 10 Symbols
+
+Data intersection:
+
+```text
+2024-08-08 through 2026-06-05
+```
+
+Command:
+
+```text
+uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
+Result:
+
+```text
+variant=7d_momentum
+steps=659
+total_return=-0.647401
+sharpe=-0.709777
+max_drawdown=-0.829088
+mean_daily_turnover=0.543328
+
+variant=7d_momentum_30d_trend
+steps=636
+total_return=-0.354874
+sharpe=-0.161451
+max_drawdown=-0.712941
+mean_daily_turnover=0.472152
+
+variant=7d_momentum_30d_trend_skfolio_max_ratio
+steps=636
+total_return=-0.068746
+sharpe=0.258150
+max_drawdown=-0.704475
+mean_daily_turnover=0.405756
+```
+
+### 9 Symbols Without TON
+
+Data intersection:
+
+```text
+2024-01-01 through 2026-06-05
+```
+
+Command:
+
+```text
+uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT
+```
+
+Result:
+
+```text
+variant=7d_momentum
+steps=879
+total_return=-0.671292
+sharpe=-0.540383
+max_drawdown=-0.758650
+mean_daily_turnover=0.522231
+
+variant=7d_momentum_30d_trend
+steps=856
+total_return=-0.116927
+sharpe=0.167221
+max_drawdown=-0.645458
+mean_daily_turnover=0.441408
+
+variant=7d_momentum_30d_trend_skfolio_max_ratio
+steps=856
+total_return=0.665477
+sharpe=0.660981
+max_drawdown=-0.608666
+mean_daily_turnover=0.374399
+```
+
+Robustness summary for the 9-symbol equal-weight variants with transaction cost
+rate 0.001:
+
+```text
+sample  lookbacks  total_return  sharpe    max_drawdown  turnover
+all     3/20      -0.240452      0.050125 -0.721345     0.577658
+all     7/20      -0.470447     -0.221518 -0.746398     0.467946
+all     7/30      -0.116927      0.167221 -0.645458     0.441408
+all     14/30      0.224125      0.435924 -0.654288     0.360516
+all     14/60     -0.499645     -0.316549 -0.642135     0.354881
+
+2026    3/20      -0.201418     -1.539009 -0.201418     0.462557
+2026    7/20      -0.238486     -1.949839 -0.238486     0.477672
+2026    7/30      -0.089745     -0.644343 -0.187924     0.458089
+2026    14/30     -0.130542     -1.019757 -0.231053     0.385289
+2026    14/60     -0.121391     -1.473702 -0.219742     0.297536
+```
+
+Interpretation:
+
+The wider universe exposes a weak point in the current equal-weight momentum
+rule. It performs well in 2024 but fails badly in 2025 and 2026. This also
+explains why `skfolio` may have looked useful before: once the universe has more
+than BTC/ETH, allocation matters. The 9-symbol `skfolio` variant is the only
+expanded-universe variant above that remains positive over the full fresh-data
+sample, but drawdown is still large. The next useful work is not more lookback
+tuning; it is understanding which symbols drive the losses and whether the
+strategy needs symbol selection, volatility control, or a smaller eligible
+universe.

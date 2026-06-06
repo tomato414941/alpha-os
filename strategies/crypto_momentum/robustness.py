@@ -4,9 +4,11 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
+from strategies.crypto_momentum.allocation import EqualWeightAllocator
 from strategies.crypto_momentum.backtest import run_backtest
 from strategies.crypto_momentum.data import (
     DATASET_DIR,
+    DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
@@ -27,9 +29,13 @@ class RobustnessRow:
 def run_robustness_check(
     *,
     dataset_dir: Path = DATASET_DIR,
+    symbols: tuple[str, ...] = DEFAULT_SYMBOLS,
     market_bars: tuple[DailyMarketBar, ...] | None = None,
 ) -> tuple[RobustnessRow, ...]:
-    bars = market_bars or load_daily_market_bars(dataset_dir=dataset_dir)
+    bars = market_bars or load_daily_market_bars(
+        dataset_dir=dataset_dir,
+        symbols=symbols,
+    )
     rows: list[RobustnessRow] = []
     for sample_name, sample_bars in _samples(bars).items():
         for momentum_lookback_days, trend_lookback_days in (
@@ -43,6 +49,7 @@ def run_robustness_check(
                 strategy = TrendFilteredMomentumStrategy(
                     momentum_lookback_days=momentum_lookback_days,
                     trend_lookback_days=trend_lookback_days,
+                    allocator=EqualWeightAllocator(),
                 )
                 result = run_backtest(
                     strategy,
@@ -83,6 +90,7 @@ def _samples(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
     args = parser.parse_args()
 
     print(
@@ -90,7 +98,10 @@ def main() -> None:
         "transaction_cost_rate,steps,total_return,sharpe,max_drawdown,"
         "mean_daily_turnover"
     )
-    for row in run_robustness_check(dataset_dir=args.dataset_dir):
+    for row in run_robustness_check(
+        dataset_dir=args.dataset_dir,
+        symbols=tuple(args.symbols),
+    ):
         print(
             f"{row.sample},"
             f"{row.momentum_lookback_days},"

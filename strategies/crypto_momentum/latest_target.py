@@ -6,6 +6,7 @@ from pathlib import Path
 
 from strategies.crypto_momentum.data import (
     DATASET_DIR,
+    DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
@@ -28,13 +29,14 @@ class LatestTargetSnapshot:
 def latest_target_snapshot(
     *,
     dataset_dir: Path = DATASET_DIR,
+    symbols: tuple[str, ...] = DEFAULT_SYMBOLS,
     market_bars: tuple[DailyMarketBar, ...] | None = None,
     variant: str = CURRENT_VARIANT,
 ) -> LatestTargetSnapshot:
     bars = (
         market_bars
         if market_bars is not None
-        else load_daily_market_bars(dataset_dir=dataset_dir)
+        else load_daily_market_bars(dataset_dir=dataset_dir, symbols=symbols)
     )
     strategy_variant = VARIANTS[variant]
     latest_bar = bars[-1]
@@ -61,9 +63,13 @@ def latest_target_snapshot(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
     args = parser.parse_args()
 
-    snapshot = latest_target_snapshot(dataset_dir=args.dataset_dir)
+    snapshot = latest_target_snapshot(
+        dataset_dir=args.dataset_dir,
+        symbols=tuple(args.symbols),
+    )
     print(f"date={snapshot.timestamp}")
     print(f"strategy={snapshot.strategy}")
     print(f"variant={snapshot.variant}")

@@ -9,6 +9,7 @@ def test_crypto_momentum_runs_on_checked_in_data():
     sys.path.insert(0, str(root))
     from strategies.crypto_momentum.backtest import run_backtest
     from strategies.crypto_momentum.data import load_daily_market_bars
+    from strategies.crypto_momentum.robustness import run_robustness_check
     from strategies.crypto_momentum.strategy import (
         SevenDayMomentumStrategy,
         SevenDayMomentumWithThirtyDayTrendStrategy,
@@ -35,3 +36,6 @@ def test_crypto_momentum_runs_on_checked_in_data():
     assert candidate.summary.max_drawdown < 0.0
     assert len(skfolio_candidate.steps) == 700
     assert skfolio_candidate.summary.max_drawdown < 0.0
+
+    robustness_rows = run_robustness_check(market_bars=market_bars)
+    assert robustness_rows

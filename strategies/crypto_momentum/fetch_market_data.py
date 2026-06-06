@@ -8,7 +8,7 @@ from pathlib import Path
 
 import requests
 
-from strategies.crypto_momentum.data import LOCAL_DATASET_DIR
+from strategies.crypto_momentum.data import EXPANDED_SYMBOLS, LOCAL_DATASET_DIR
 
 
 BINANCE_KLINES_URL = "https://data-api.binance.vision/api/v3/klines"
@@ -122,7 +122,7 @@ def _parse_date(value: str) -> date:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--symbols", nargs="+", default=["BTCUSDT", "ETHUSDT"])
+    parser.add_argument("--symbols", nargs="+", default=list(EXPANDED_SYMBOLS))
     parser.add_argument("--start-date", type=_parse_date, default=date(2024, 1, 1))
     parser.add_argument(
         "--end-date",
