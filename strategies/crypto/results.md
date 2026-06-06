@@ -628,3 +628,36 @@ not clean: drawdown remains large, and the 2025/2026 equal-weight robustness
 rows are weak. The pullback variants remain poor. This suggests the next useful
 work is to turn manual universe selection into an explicit eligibility rule, or
 to add a concentration limit before considering paper trading.
+
+## Universe Eligibility Diagnostics
+
+Command:
+
+```text
+uv run python -m strategies.crypto.eligibility --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT --variant 7d_momentum_30d_trend_skfolio_max_ratio
+```
+
+Result:
+
+```text
+symbol,history_days,total_return,realized_volatility,max_drawdown,total_gross_contribution
+ADAUSDT,887,-0.748556,0.050046,-0.872373,-0.391299
+BNBUSDT,887,0.825263,0.028467,-0.562322,-0.329539
+TONUSDT,667,-0.755870,0.040729,-0.825841,-0.312187
+LINKUSDT,887,-0.526241,0.045713,-0.748257,-0.016474
+AVAXUSDT,887,-0.839557,0.046769,-0.889052,0.077377
+SOLUSDT,887,-0.420981,0.042651,-0.757071,0.190347
+BTCUSDT,887,0.382008,0.025267,-0.510210,0.212163
+ETHUSDT,887,-0.326797,0.036445,-0.672314,0.226535
+DOGEUSDT,887,-0.114252,0.049200,-0.825281,0.556496
+XRPUSDT,887,0.744201,0.042618,-0.690795,0.767777
+```
+
+Interpretation:
+
+`ADAUSDT` and `TONUSDT` are weak by both close-derived diagnostics and strategy
+contribution. `BNBUSDT` is different: its standalone price history is not weak,
+but it is a negative contributor for this strategy. That means a simple asset
+quality rule does not fully explain the manual smaller universe. The next
+eligibility work should separate asset-level tradability filters from
+strategy-specific fit diagnostics.
