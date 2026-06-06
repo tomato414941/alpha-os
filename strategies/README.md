@@ -32,6 +32,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - risk-on/risk-off rotation candidate
 - `cross_asset_rotation/`
   - mixed ETF and crypto daily close rotation candidates
+- `crypto_market_structure/`
+  - crypto futures funding, premium, taker-flow, and volume diagnostics
+- `research_map.md`
+  - broad research lanes and current priority
 - `leaderboard.py`
   - cross-strategy comparison against same-window buy-and-hold benchmarks
 - `leaderboard.md`
