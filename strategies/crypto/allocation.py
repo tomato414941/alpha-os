@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
-from skfolio.optimization import HierarchicalRiskParity, MeanRisk, ObjectiveFunction
+from skfolio.optimization import (
+    HierarchicalRiskParity,
+    MeanRisk,
+    ObjectiveFunction,
+    RiskBudgeting,
+)
 
 from strategies.crypto.momentum import MomentumDecisionInput, TargetWeights
 
@@ -122,6 +129,47 @@ class SkfolioMinimumVarianceAllocator:
         try:
             optimizer = MeanRisk()
             optimizer.fit(returns)
+            weights = tuple(float(value) for value in optimizer.weights_)
+        except Exception:
+            return EqualWeightAllocator().allocate(
+                active_symbols=active_symbols,
+                strategy_input=strategy_input,
+            )
+
+        return TargetWeights(
+            target_weights=_normalize_weights(
+                dict(zip(active_symbols, weights, strict=True))
+            )
+        )
+
+
+class SkfolioRiskBudgetingAllocator:
+    def allocate(
+        self,
+        *,
+        active_symbols: tuple[str, ...],
+        strategy_input: MomentumDecisionInput,
+    ) -> TargetWeights:
+        if not active_symbols:
+            return TargetWeights(target_weights={})
+        if len(active_symbols) == 1:
+            return TargetWeights(target_weights={active_symbols[0]: 1.0})
+
+        returns = _returns_matrix(
+            symbols=active_symbols,
+            closes_by_symbol=strategy_input.closes_by_symbol,
+        )
+        if returns.shape[0] < 2:
+            return EqualWeightAllocator().allocate(
+                active_symbols=active_symbols,
+                strategy_input=strategy_input,
+            )
+
+        try:
+            optimizer = RiskBudgeting()
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", UserWarning)
+                optimizer.fit(returns)
             weights = tuple(float(value) for value in optimizer.weights_)
         except Exception:
             return EqualWeightAllocator().allocate(
