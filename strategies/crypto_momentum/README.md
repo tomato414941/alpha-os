@@ -1,10 +1,11 @@
-# Crypto Momentum Baseline
+# Crypto Momentum
 
 This is the first concrete profit-seeking strategy candidate in this repository.
 
 ## Hypothesis
 
-BTC/ETH daily close-to-close momentum can produce a useful long-or-cash baseline.
+BTC/ETH daily close-to-close momentum can produce useful long-or-cash strategy
+variants.
 
 ## Data
 
@@ -16,11 +17,11 @@ experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/
 
 The current strategy uses only `timestamp` and `close`.
 
-## Strategy
+## Current Variant
 
-- Compute each symbol's 7 day close-to-close return.
-- Hold long if the 7 day return is positive.
-- Hold cash for symbols whose 7 day return is not positive.
+- Compute each symbol's 7 day and 30 day close-to-close returns.
+- Hold long if both returns are positive.
+- Hold cash for symbols that do not pass both filters.
 - Equal weight across active symbols.
 - Rebalance daily.
 

@@ -4,21 +4,20 @@ from dataclasses import dataclass
 
 from alpha_os.trading_strategy import TradingStrategy
 
-from strategies.crypto_momentum_baseline.accounting import PortfolioAccounting
-from strategies.crypto_momentum_baseline.data import (
+from strategies.crypto_momentum.accounting import PortfolioAccounting
+from strategies.crypto_momentum.data import (
     DailyMarketBar,
     load_daily_market_bars,
 )
-from strategies.crypto_momentum_baseline.metrics import (
+from strategies.crypto_momentum.metrics import (
     BacktestSummary,
     summarize_backtest,
 )
-from strategies.crypto_momentum_baseline.strategy import (
+from strategies.crypto_momentum.strategy import (
     MomentumDecisionInput,
-    SevenDayMomentumStrategy,
-    SevenDayMomentumWithThirtyDayTrendStrategy,
     TargetWeights,
 )
+from strategies.crypto_momentum.variants import VARIANTS
 
 
 @dataclass(frozen=True)
@@ -160,28 +159,21 @@ def _summarize(
 
 def main() -> None:
     market_bars = load_daily_market_bars()
-    result = run_backtest(SevenDayMomentumStrategy(), market_bars)
-    candidate = run_backtest(
-        SevenDayMomentumWithThirtyDayTrendStrategy(),
-        market_bars,
-        lookback_days=30,
-    )
-    print(f"steps={len(result.steps)}")
-    print(f"total_return={result.summary.total_return:.6f}")
-    print(f"annualized_return={result.summary.annualized_return:.6f}")
-    print(f"annualized_volatility={result.summary.annualized_volatility:.6f}")
-    print(f"sharpe={result.summary.sharpe:.6f}")
-    print(f"max_drawdown={result.summary.max_drawdown:.6f}")
-    print(f"mean_daily_turnover={result.summary.mean_daily_turnover:.6f}")
-    print("")
-    print("candidate=7d_momentum_30d_trend")
-    print(f"steps={len(candidate.steps)}")
-    print(f"total_return={candidate.summary.total_return:.6f}")
-    print(f"annualized_return={candidate.summary.annualized_return:.6f}")
-    print(f"annualized_volatility={candidate.summary.annualized_volatility:.6f}")
-    print(f"sharpe={candidate.summary.sharpe:.6f}")
-    print(f"max_drawdown={candidate.summary.max_drawdown:.6f}")
-    print(f"mean_daily_turnover={candidate.summary.mean_daily_turnover:.6f}")
+    for name, variant in VARIANTS.items():
+        result = run_backtest(
+            variant.factory(),
+            market_bars,
+            lookback_days=variant.lookback_days,
+        )
+        print(f"variant={name}")
+        print(f"steps={len(result.steps)}")
+        print(f"total_return={result.summary.total_return:.6f}")
+        print(f"annualized_return={result.summary.annualized_return:.6f}")
+        print(f"annualized_volatility={result.summary.annualized_volatility:.6f}")
+        print(f"sharpe={result.summary.sharpe:.6f}")
+        print(f"max_drawdown={result.summary.max_drawdown:.6f}")
+        print(f"mean_daily_turnover={result.summary.mean_daily_turnover:.6f}")
+        print("")
 
 
 if __name__ == "__main__":
