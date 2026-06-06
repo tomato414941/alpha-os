@@ -16,6 +16,7 @@ from strategies.crypto_momentum_baseline.metrics import (
 from strategies.crypto_momentum_baseline.strategy import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
+    SevenDayMomentumWithThirtyDayTrendStrategy,
     TargetWeights,
 )
 
@@ -158,7 +159,13 @@ def _summarize(
 
 
 def main() -> None:
-    result = run_backtest(SevenDayMomentumStrategy(), load_daily_market_bars())
+    market_bars = load_daily_market_bars()
+    result = run_backtest(SevenDayMomentumStrategy(), market_bars)
+    candidate = run_backtest(
+        SevenDayMomentumWithThirtyDayTrendStrategy(),
+        market_bars,
+        lookback_days=30,
+    )
     print(f"steps={len(result.steps)}")
     print(f"total_return={result.summary.total_return:.6f}")
     print(f"annualized_return={result.summary.annualized_return:.6f}")
@@ -166,6 +173,15 @@ def main() -> None:
     print(f"sharpe={result.summary.sharpe:.6f}")
     print(f"max_drawdown={result.summary.max_drawdown:.6f}")
     print(f"mean_daily_turnover={result.summary.mean_daily_turnover:.6f}")
+    print("")
+    print("candidate=7d_momentum_30d_trend")
+    print(f"steps={len(candidate.steps)}")
+    print(f"total_return={candidate.summary.total_return:.6f}")
+    print(f"annualized_return={candidate.summary.annualized_return:.6f}")
+    print(f"annualized_volatility={candidate.summary.annualized_volatility:.6f}")
+    print(f"sharpe={candidate.summary.sharpe:.6f}")
+    print(f"max_drawdown={candidate.summary.max_drawdown:.6f}")
+    print(f"mean_daily_turnover={candidate.summary.mean_daily_turnover:.6f}")
 
 
 if __name__ == "__main__":

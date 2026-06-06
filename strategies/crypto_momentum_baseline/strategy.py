@@ -35,3 +35,28 @@ class SevenDayMomentumStrategy:
         return TargetWeights(
             target_weights={symbol: weight for symbol in active_symbols}
         )
+
+
+class SevenDayMomentumWithThirtyDayTrendStrategy:
+    def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
+        active_symbols = []
+        for symbol, closes in strategy_input.closes_by_symbol.items():
+            if len(closes) < 31:
+                continue
+            current_close = closes[-1]
+            previous_7d_close = closes[-8]
+            previous_30d_close = closes[-31]
+            if previous_7d_close <= 0.0 or previous_30d_close <= 0.0:
+                continue
+            seven_day_return = (current_close / previous_7d_close) - 1.0
+            thirty_day_return = (current_close / previous_30d_close) - 1.0
+            if seven_day_return > 0.0 and thirty_day_return > 0.0:
+                active_symbols.append(symbol)
+
+        if not active_symbols:
+            return TargetWeights(target_weights={})
+
+        weight = 1.0 / len(active_symbols)
+        return TargetWeights(
+            target_weights={symbol: weight for symbol in active_symbols}
+        )
