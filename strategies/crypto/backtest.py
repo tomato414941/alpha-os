@@ -6,22 +6,22 @@ from pathlib import Path
 
 from alpha_os.trading_strategy import TradingStrategy
 
-from strategies.crypto_momentum.accounting import PortfolioAccounting
-from strategies.crypto_momentum.data import (
+from strategies.crypto.accounting import PortfolioAccounting
+from strategies.crypto.data import (
     DATASET_DIR,
     DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
-from strategies.crypto_momentum.metrics import (
+from strategies.crypto.metrics import (
     BacktestSummary,
     summarize_backtest,
 )
-from strategies.crypto_momentum.strategy import (
+from strategies.crypto.momentum import (
     MomentumDecisionInput,
     TargetWeights,
 )
-from strategies.crypto_momentum.variants import VARIANTS
+from strategies.crypto.variants import VARIANTS
 
 
 @dataclass(frozen=True)

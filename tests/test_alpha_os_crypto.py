@@ -4,14 +4,14 @@ import sys
 from pathlib import Path
 
 
-def test_crypto_momentum_runs_on_checked_in_data():
+def test_crypto_runs_on_checked_in_data():
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
-    from strategies.crypto_momentum.backtest import run_backtest
-    from strategies.crypto_momentum.contribution import run_symbol_contribution
-    from strategies.crypto_momentum.data import load_daily_market_bars
-    from strategies.crypto_momentum.robustness import run_robustness_check
-    from strategies.crypto_momentum.strategy import (
+    from strategies.crypto.backtest import run_backtest
+    from strategies.crypto.contribution import run_symbol_contribution
+    from strategies.crypto.data import load_daily_market_bars
+    from strategies.crypto.robustness import run_robustness_check
+    from strategies.crypto.momentum import (
         SevenDayMomentumStrategy,
         SevenDayMomentumWithThirtyDayTrendStrategy,
         SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,

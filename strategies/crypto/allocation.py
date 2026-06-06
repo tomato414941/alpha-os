@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from skfolio.optimization import MeanRisk, ObjectiveFunction
 
-from strategies.crypto_momentum.strategy import MomentumDecisionInput, TargetWeights
+from strategies.crypto.momentum import MomentumDecisionInput, TargetWeights
 
 
 class EqualWeightAllocator:

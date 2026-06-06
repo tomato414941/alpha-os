@@ -8,7 +8,7 @@ from pathlib import Path
 def test_fetch_binance_spot_daily_rows_parses_klines(monkeypatch):
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
-    from strategies.crypto_momentum import fetch_market_data
+    from strategies.crypto import fetch_market_data
 
     class Response:
         def raise_for_status(self) -> None:
@@ -42,10 +42,10 @@ def test_fetch_binance_spot_daily_rows_parses_klines(monkeypatch):
     assert rows[0].volume == 18426978443.0
 
 
-def test_write_daily_rows_uses_existing_crypto_momentum_csv_shape(tmp_path):
+def test_write_daily_rows_uses_existing_crypto_csv_shape(tmp_path):
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
-    from strategies.crypto_momentum.fetch_market_data import (
+    from strategies.crypto.fetch_market_data import (
         BinanceDailyRow,
         write_daily_rows,
     )

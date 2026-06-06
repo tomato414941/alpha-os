@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from strategies.crypto_momentum.strategy import TargetWeights
+from strategies.crypto.momentum import TargetWeights
 
 
 @dataclass(frozen=True)

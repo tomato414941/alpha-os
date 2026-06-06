@@ -4,17 +4,17 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from strategies.crypto_momentum.data import (
+from strategies.crypto.data import (
     DATASET_DIR,
     DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
-from strategies.crypto_momentum.strategy import (
+from strategies.crypto.momentum import (
     MomentumDecisionInput,
     TargetWeights,
 )
-from strategies.crypto_momentum.variants import CURRENT_VARIANT, VARIANTS
+from strategies.crypto.variants import CURRENT_VARIANT, VARIANTS
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ def latest_target_snapshot(
     )
     target = strategy_variant.factory().decide(decision_input)
     return LatestTargetSnapshot(
-        strategy="crypto_momentum",
+        strategy="crypto",
         variant=variant,
         mode="manual_paper",
         timestamp=latest_bar.timestamp,

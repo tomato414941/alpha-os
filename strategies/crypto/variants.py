@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from alpha_os.trading_strategy import TradingStrategy
 
-from strategies.crypto_momentum.strategy import (
+from strategies.crypto.momentum import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
     SevenDayMomentumWithThirtyDayTrendStrategy,

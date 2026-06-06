@@ -4,16 +4,16 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from strategies.crypto_momentum.allocation import EqualWeightAllocator
-from strategies.crypto_momentum.backtest import run_backtest
-from strategies.crypto_momentum.data import (
+from strategies.crypto.allocation import EqualWeightAllocator
+from strategies.crypto.backtest import run_backtest
+from strategies.crypto.data import (
     DATASET_DIR,
     DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
-from strategies.crypto_momentum.metrics import BacktestSummary
-from strategies.crypto_momentum.strategy import TrendFilteredMomentumStrategy
+from strategies.crypto.metrics import BacktestSummary
+from strategies.crypto.momentum import TrendFilteredMomentumStrategy
 
 
 @dataclass(frozen=True)

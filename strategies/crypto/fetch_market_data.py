@@ -8,7 +8,7 @@ from pathlib import Path
 
 import requests
 
-from strategies.crypto_momentum.data import EXPANDED_SYMBOLS, LOCAL_DATASET_DIR
+from strategies.crypto.data import EXPANDED_SYMBOLS, LOCAL_DATASET_DIR
 
 
 BINANCE_KLINES_URL = "https://data-api.binance.vision/api/v3/klines"

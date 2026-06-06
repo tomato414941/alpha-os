@@ -4,14 +4,14 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from strategies.crypto_momentum.backtest import BacktestStep, run_backtest
-from strategies.crypto_momentum.data import (
+from strategies.crypto.backtest import BacktestStep, run_backtest
+from strategies.crypto.data import (
     DATASET_DIR,
     DEFAULT_SYMBOLS,
     DailyMarketBar,
     load_daily_market_bars,
 )
-from strategies.crypto_momentum.variants import CURRENT_VARIANT, VARIANTS
+from strategies.crypto.variants import CURRENT_VARIANT, VARIANTS
 
 
 @dataclass(frozen=True)

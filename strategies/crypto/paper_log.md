@@ -9,7 +9,7 @@ system and does not imply that trades were placed.
 
 ```text
 date=
-strategy=crypto_momentum
+strategy=crypto
 variant=
 mode=manual_paper
 target_weights:
@@ -20,7 +20,7 @@ notes:
 
 ```text
 date=2025-12-31T00:00:00+00:00
-strategy=crypto_momentum
+strategy=crypto
 variant=7d_momentum
 mode=manual_paper
 target_weights:
@@ -34,7 +34,7 @@ notes:
 
 ```text
 date=2025-12-31T00:00:00+00:00
-strategy=crypto_momentum
+strategy=crypto
 variant=7d_momentum_30d_trend
 mode=manual_paper
 target_weights:

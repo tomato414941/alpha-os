@@ -69,7 +69,7 @@ live or paper candidate.
 Command:
 
 ```text
-uv run python -m strategies.crypto_momentum.robustness
+uv run python -m strategies.crypto.robustness
 ```
 
 Summary with transaction cost rate 0.001:
@@ -108,14 +108,14 @@ source.
 
 Data:
 
-- `strategies/crypto_momentum/market_data/binance_spot_daily/`
+- `strategies/crypto/market_data/binance_spot_daily/`
 - BTCUSDT and ETHUSDT daily closes fetched from Binance public market data
 - 2024-01-01 through 2026-06-05
 
 Command:
 
 ```text
-uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+uv run python -m strategies.crypto.backtest --dataset-dir strategies/crypto/market_data/binance_spot_daily
 ```
 
 Result:
@@ -257,7 +257,7 @@ Data range:
 Command:
 
 ```text
-uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+uv run python -m strategies.crypto.backtest --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
 ```
 
 Result:
@@ -296,7 +296,7 @@ Data intersection:
 Command:
 
 ```text
-uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT
+uv run python -m strategies.crypto.backtest --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT
 ```
 
 Result:
@@ -359,7 +359,7 @@ smaller eligible universe.
 Command:
 
 ```text
-uv run python -m strategies.crypto_momentum.contribution --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT --variant 7d_momentum_30d_trend
+uv run python -m strategies.crypto.contribution --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT --variant 7d_momentum_30d_trend
 ```
 
 Equal-weight 7/30 gross contribution:

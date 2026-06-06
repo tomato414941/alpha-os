@@ -50,7 +50,7 @@ class SevenDayMomentumStrategy:
 
 class SevenDayMomentumWithThirtyDayTrendStrategy:
     def __init__(self) -> None:
-        from strategies.crypto_momentum.allocation import EqualWeightAllocator
+        from strategies.crypto.allocation import EqualWeightAllocator
 
         self._strategy = TrendFilteredMomentumStrategy(
             momentum_lookback_days=7,
@@ -101,7 +101,7 @@ class TrendFilteredMomentumStrategy:
 
 class SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy:
     def __init__(self) -> None:
-        from strategies.crypto_momentum.allocation import SkfolioMaxRatioAllocator
+        from strategies.crypto.allocation import SkfolioMaxRatioAllocator
 
         self._strategy = TrendFilteredMomentumStrategy(
             momentum_lookback_days=7,
