@@ -22,6 +22,10 @@ Read them in this order:
 2. `trading_strategy_execution_intent.py`
    - a strategy output can include execution intent, not only portfolio targets
    - input/output shape: `RiskObservation -> TradingIntent`
+3. `trading_strategy_composed.py`
+   - a strategy can use internal parts while exposing one black-box decision
+     contract
+   - input/output shape: `MarketObservation -> PortfolioTarget`
 
 Other concrete TradingStrategy input/output shapes:
 
