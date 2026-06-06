@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from strategies.cash_rotation.data import DEFAULT_SYMBOLS as CASH_SYMBOLS
 from strategies.cash_rotation.data import LOCAL_DATASET_DIR as CASH_DATASET_DIR
 from strategies.cash_rotation.strategy import RiskOnOffRotationStrategy
+from strategies.cross_asset_rotation.backtest import VARIANTS as CROSS_ASSET_VARIANTS
+from strategies.cross_asset_rotation.data import DEFAULT_SYMBOLS as CROSS_ASSET_SYMBOLS
+from strategies.cross_asset_rotation.data import LOCAL_DATASET_DIR as CROSS_ASSET_DATASET_DIR
 from strategies.crypto.backtest import run_backtest as run_crypto_backtest
 from strategies.crypto.data import EXPANDED_SYMBOLS as CRYPTO_SYMBOLS
 from strategies.crypto.data import LOCAL_DATASET_DIR as CRYPTO_DATASET_DIR
@@ -66,6 +69,7 @@ def leaderboard_rows() -> tuple[LeaderboardRow, ...]:
     rows.extend(_crypto_pair_spread_rows())
     rows.extend(_equity_index_rows())
     rows.extend(_cash_rotation_rows())
+    rows.extend(_cross_asset_rows())
     return tuple(sorted(rows, key=lambda row: row.sharpe, reverse=True))
 
 
@@ -232,6 +236,36 @@ def _cash_rotation_rows() -> tuple[LeaderboardRow, ...]:
                     bars,
                     symbols=CASH_SYMBOLS,
                     lookback_days=lookback_days,
+                ),
+            )
+        )
+    return tuple(rows)
+
+
+def _cross_asset_rows() -> tuple[LeaderboardRow, ...]:
+    bars = load_daily_market_bars(
+        dataset_dir=CROSS_ASSET_DATASET_DIR,
+        symbols=CROSS_ASSET_SYMBOLS,
+    )
+    rows: list[LeaderboardRow] = []
+    for name, variant in CROSS_ASSET_VARIANTS.items():
+        result = run_daily_close_backtest(
+            variant.factory(),
+            bars,
+            lookback_days=variant.lookback_days,
+        )
+        rows.append(
+            _row(
+                group="cross_asset_rotation",
+                candidate=name,
+                selection_basis="fixed_mixed_universe",
+                symbols=CROSS_ASSET_SYMBOLS,
+                steps=len(result.steps),
+                summary=result.summary,
+                benchmarks=_benchmarks(
+                    bars,
+                    symbols=CROSS_ASSET_SYMBOLS,
+                    lookback_days=variant.lookback_days,
                 ),
             )
         )

@@ -30,6 +30,8 @@ Promote code to the library only after multiple strategies need the same shape.
   - ETF momentum rotation candidate
 - `cash_rotation/`
   - risk-on/risk-off rotation candidate
+- `cross_asset_rotation/`
+  - mixed ETF and crypto daily close rotation candidates
 - `leaderboard.py`
   - cross-strategy comparison against same-window buy-and-hold benchmarks
 - `leaderboard.md`

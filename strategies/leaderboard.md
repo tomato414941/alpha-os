@@ -17,7 +17,10 @@ Result:
 | crypto | 7d_momentum_30d_trend_skfolio_max_ratio | manual_same_period_exclusion | 1.928955 | 1.069576 | -0.550211 | 0.327607 | XRPUSDT 1.181204 | 0.747751 | XRPUSDT 0.803036 | 0.266540 |
 | equity_index | top_momentum_21_63 | fixed_etf_universe | 0.293484 | 0.801077 | -0.202137 | 0.284404 | GLD 0.862555 | -0.569071 | GLD 1.678484 | -0.877408 |
 | equity_index | top_momentum_63_126 | fixed_etf_universe | 0.243337 | 0.727686 | -0.200477 | 0.155602 | GLD 0.817698 | -0.574361 | GLD 1.773026 | -1.045339 |
+| cross_asset_rotation | vol_adjusted_momentum_126_252 | fixed_mixed_universe | 0.125395 | 0.509279 | -0.257912 | 0.171348 | GLD 0.614538 | -0.489144 | GLD 1.775926 | -1.266647 |
 | crypto | 7d_momentum_30d_trend_skfolio_max_ratio | fixed_expanded_universe | 0.217615 | 0.444806 | -0.704457 | 0.389673 | XRPUSDT 1.181204 | -0.963589 | XRPUSDT 0.803036 | -0.358230 |
+| cross_asset_rotation | top_momentum_126_252 | fixed_mixed_universe | 0.057098 | 0.375915 | -0.341379 | 0.058989 | GLD 0.614538 | -0.557440 | GLD 1.775926 | -1.400011 |
+| cross_asset_rotation | risk_on_off_126 | fixed_mixed_universe | -0.045339 | 0.212353 | -0.521129 | 0.118257 | GLD 0.817698 | -0.863037 | GLD 1.773026 | -1.560673 |
 | cash_rotation | risk_on_off_63 | fixed_etf_universe | 0.023247 | 0.188761 | -0.304261 | 0.122936 | GLD 0.862555 | -0.839308 | GLD 1.678484 | -1.489723 |
 | crypto | 7d_momentum_30d_trend_skfolio_max_ratio_eligible | rolling_asset_quality | -0.160001 | 0.145100 | -0.713836 | 0.297712 | XRPUSDT 1.322403 | -1.482405 | XRPUSDT 0.922692 | -0.777592 |
 | crypto | 7d_momentum_30d_trend | fixed_expanded_universe | -0.322751 | -0.024984 | -0.712941 | 0.458219 | XRPUSDT 1.181204 | -1.503955 | XRPUSDT 0.803036 | -0.828020 |
@@ -33,13 +36,18 @@ The only row that beats the best same-window buy-and-hold benchmark is the
 manual crypto smaller-universe result, and that row is marked
 `manual_same_period_exclusion` because it is selection-biased.
 
-The best non-leaky candidate is `equity_index/top_momentum_126_252`. It nearly
-matches `GLD` buy-and-hold on total return and Sharpe, but does not beat it.
+The best non-leaky candidate is still `equity_index/top_momentum_126_252`. It
+nearly matches `GLD` buy-and-hold on total return and Sharpe, but does not beat
+it.
+
+The new cross-asset rotation candidates are weak. Mixing ETF and crypto daily
+close assets did not improve the broad leaderboard.
 
 Current broad conclusion:
 
 - no non-leaky candidate clearly beats its best buy-and-hold benchmark yet
 - ETF momentum is the closest non-leaky candidate
+- cross-asset daily-close rotation is not currently promising
 - cash rotation has attractive drawdown, but gives up too much return versus
   `GLD`
 - crypto pair spread is not currently promising
