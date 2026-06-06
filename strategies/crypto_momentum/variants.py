@@ -9,6 +9,7 @@ from strategies.crypto_momentum.strategy import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
     SevenDayMomentumWithThirtyDayTrendStrategy,
+    SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
     TargetWeights,
 )
 
@@ -29,6 +30,10 @@ VARIANTS = {
     ),
     "7d_momentum_30d_trend": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendStrategy,
+        lookback_days=30,
+    ),
+    "7d_momentum_30d_trend_skfolio_max_ratio": StrategyVariant(
+        factory=SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
         lookback_days=30,
     ),
 }

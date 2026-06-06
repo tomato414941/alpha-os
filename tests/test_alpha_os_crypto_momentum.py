@@ -12,6 +12,7 @@ def test_crypto_momentum_runs_on_checked_in_data():
     from strategies.crypto_momentum.strategy import (
         SevenDayMomentumStrategy,
         SevenDayMomentumWithThirtyDayTrendStrategy,
+        SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
     )
 
     market_bars = load_daily_market_bars()
@@ -21,9 +22,16 @@ def test_crypto_momentum_runs_on_checked_in_data():
         market_bars,
         lookback_days=30,
     )
+    skfolio_candidate = run_backtest(
+        SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy(),
+        market_bars,
+        lookback_days=30,
+    )
 
     assert len(result.steps) == 723
     assert result.summary.total_return > 0.0
     assert result.summary.max_drawdown < 0.0
     assert len(candidate.steps) == 700
     assert candidate.summary.max_drawdown < 0.0
+    assert len(skfolio_candidate.steps) == 700
+    assert skfolio_candidate.summary.max_drawdown < 0.0

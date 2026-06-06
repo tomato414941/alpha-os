@@ -166,3 +166,70 @@ sample, but its 2026-only result is close to flat after turnover cost. This
 suggests the family is still worth investigating, but not yet strong enough for
 serious live capital. The next question should be universe breadth, not more
 fine-tuning on BTC/ETH.
+
+## Skfolio Allocator Check
+
+The `skfolio` allocator is used inside the trading strategy as a portfolio
+allocator. It does not change the external `TradingStrategy` boundary.
+
+Compared variants:
+
+- `7d_momentum_30d_trend`
+  - active symbols get equal weights
+- `7d_momentum_30d_trend_skfolio_max_ratio`
+  - the same active symbols are passed to `skfolio.optimization.MeanRisk`
+  - objective: maximize ratio
+  - long-only, fully invested among active symbols
+
+Checked-in dataset result:
+
+```text
+variant=7d_momentum_30d_trend
+steps=700
+total_return=0.855439
+annualized_return=0.380307
+annualized_volatility=0.341363
+sharpe=1.112134
+max_drawdown=-0.295274
+mean_daily_turnover=0.215714
+
+variant=7d_momentum_30d_trend_skfolio_max_ratio
+steps=700
+total_return=0.669436
+annualized_return=0.306334
+annualized_volatility=0.321048
+sharpe=0.991404
+max_drawdown=-0.298318
+mean_daily_turnover=0.193678
+```
+
+Fresh Binance spot data result:
+
+```text
+variant=7d_momentum_30d_trend
+steps=856
+total_return=0.579415
+annualized_return=0.215176
+annualized_volatility=0.335170
+sharpe=0.746537
+max_drawdown=-0.434133
+mean_daily_turnover=0.216121
+
+variant=7d_momentum_30d_trend_skfolio_max_ratio
+steps=856
+total_return=0.387392
+annualized_return=0.149831
+annualized_volatility=0.318201
+sharpe=0.596450
+max_drawdown=-0.478032
+mean_daily_turnover=0.194265
+```
+
+Interpretation:
+
+On the current BTC/ETH universe, this `skfolio` allocator reduces turnover and
+volatility slightly, but it does not improve return, Sharpe, or drawdown. If
+`skfolio` helped in earlier experiments, the likely reason was a broader
+universe or a different allocation objective, not this two-asset BTC/ETH setup.
+The next useful check is to expand the universe before judging whether
+optimizer-backed allocation is useful.

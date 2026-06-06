@@ -59,7 +59,9 @@ uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/
 
 - `data.py`: local CSV loading
 - `fetch_market_data.py`: local Binance spot daily data fetch
+- `allocation.py`: local portfolio allocators used inside strategy variants
 - `strategy.py`: concrete strategy and strategy-specific input/output shapes
+- `variants.py`: maintained local variant registry
 - `backtest.py`: local historical backtest path
 - `latest_target.py`: latest target weights from the available data
 - `results.md`: latest result notes

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,16 @@ class MomentumDecisionInput:
 @dataclass(frozen=True)
 class TargetWeights:
     target_weights: dict[str, float]
+
+
+class PortfolioAllocator(Protocol):
+    def allocate(
+        self,
+        *,
+        active_symbols: tuple[str, ...],
+        strategy_input: MomentumDecisionInput,
+    ) -> TargetWeights:
+        ...
 
 
 class SevenDayMomentumStrategy:
@@ -39,9 +50,12 @@ class SevenDayMomentumStrategy:
 
 class SevenDayMomentumWithThirtyDayTrendStrategy:
     def __init__(self) -> None:
+        from strategies.crypto_momentum.allocation import EqualWeightAllocator
+
         self._strategy = TrendFilteredMomentumStrategy(
             momentum_lookback_days=7,
             trend_lookback_days=30,
+            allocator=EqualWeightAllocator(),
         )
 
     def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
@@ -54,16 +68,18 @@ class TrendFilteredMomentumStrategy:
         *,
         momentum_lookback_days: int,
         trend_lookback_days: int,
+        allocator: PortfolioAllocator,
     ) -> None:
         self._momentum_lookback_days = momentum_lookback_days
         self._trend_lookback_days = trend_lookback_days
+        self._allocator = allocator
 
     def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
         required_closes = max(
             self._momentum_lookback_days,
             self._trend_lookback_days,
         ) + 1
-        active_symbols = []
+        active_symbols: list[str] = []
         for symbol, closes in strategy_input.closes_by_symbol.items():
             if len(closes) < required_closes:
                 continue
@@ -77,10 +93,21 @@ class TrendFilteredMomentumStrategy:
             if momentum_return > 0.0 and trend_return > 0.0:
                 active_symbols.append(symbol)
 
-        if not active_symbols:
-            return TargetWeights(target_weights={})
-
-        weight = 1.0 / len(active_symbols)
-        return TargetWeights(
-            target_weights={symbol: weight for symbol in active_symbols}
+        return self._allocator.allocate(
+            active_symbols=tuple(active_symbols),
+            strategy_input=strategy_input,
         )
+
+
+class SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy:
+    def __init__(self) -> None:
+        from strategies.crypto_momentum.allocation import SkfolioMaxRatioAllocator
+
+        self._strategy = TrendFilteredMomentumStrategy(
+            momentum_lookback_days=7,
+            trend_lookback_days=30,
+            allocator=SkfolioMaxRatioAllocator(),
+        )
+
+    def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
+        return self._strategy.decide(strategy_input)
