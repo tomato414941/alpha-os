@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
+from pathlib import Path
 
 from strategies.crypto_momentum.backtest import run_backtest
-from strategies.crypto_momentum.data import DailyMarketBar, load_daily_market_bars
+from strategies.crypto_momentum.data import (
+    DATASET_DIR,
+    DailyMarketBar,
+    load_daily_market_bars,
+)
 from strategies.crypto_momentum.metrics import BacktestSummary
 from strategies.crypto_momentum.strategy import TrendFilteredMomentumStrategy
 
@@ -20,9 +26,10 @@ class RobustnessRow:
 
 def run_robustness_check(
     *,
+    dataset_dir: Path = DATASET_DIR,
     market_bars: tuple[DailyMarketBar, ...] | None = None,
 ) -> tuple[RobustnessRow, ...]:
-    bars = market_bars or load_daily_market_bars()
+    bars = market_bars or load_daily_market_bars(dataset_dir=dataset_dir)
     rows: list[RobustnessRow] = []
     for sample_name, sample_bars in _samples(bars).items():
         for momentum_lookback_days, trend_lookback_days in (
@@ -67,16 +74,23 @@ def _samples(
         "2025": tuple(
             bar for bar in market_bars if bar.timestamp.startswith("2025-")
         ),
+        "2026": tuple(
+            bar for bar in market_bars if bar.timestamp.startswith("2026-")
+        ),
     }
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    args = parser.parse_args()
+
     print(
         "sample,momentum_lookback_days,trend_lookback_days,"
         "transaction_cost_rate,steps,total_return,sharpe,max_drawdown,"
         "mean_daily_turnover"
     )
-    for row in run_robustness_check():
+    for row in run_robustness_check(dataset_dir=args.dataset_dir):
         print(
             f"{row.sample},"
             f"{row.momentum_lookback_days},"

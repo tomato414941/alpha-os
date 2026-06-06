@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
+from pathlib import Path
 
 from alpha_os.trading_strategy import TradingStrategy
 
 from strategies.crypto_momentum.accounting import PortfolioAccounting
 from strategies.crypto_momentum.data import (
+    DATASET_DIR,
     DailyMarketBar,
     load_daily_market_bars,
 )
@@ -158,7 +161,11 @@ def _summarize(
 
 
 def main() -> None:
-    market_bars = load_daily_market_bars()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    args = parser.parse_args()
+
+    market_bars = load_daily_market_bars(dataset_dir=args.dataset_dir)
     for name, variant in VARIANTS.items():
         result = run_backtest(
             variant.factory(),

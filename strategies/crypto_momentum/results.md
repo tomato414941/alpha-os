@@ -103,3 +103,66 @@ cost. The result is still stronger in 2024 than 2025, so this should be treated
 as a useful candidate family rather than a proven live strategy. The next useful
 question is whether the same idea survives a wider universe or a newer data
 source.
+
+## Fresh Binance Spot Data Check
+
+Data:
+
+- `strategies/crypto_momentum/market_data/binance_spot_daily/`
+- BTCUSDT and ETHUSDT daily closes fetched from Binance public market data
+- 2024-01-01 through 2026-06-05
+
+Command:
+
+```text
+uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+```
+
+Result:
+
+```text
+variant=7d_momentum
+steps=879
+total_return=-0.154176
+annualized_return=-0.067168
+annualized_volatility=0.395246
+sharpe=0.020135
+max_drawdown=-0.502731
+mean_daily_turnover=0.296928
+
+variant=7d_momentum_30d_trend
+steps=856
+total_return=0.579415
+annualized_return=0.215176
+annualized_volatility=0.335170
+sharpe=0.746537
+max_drawdown=-0.434133
+mean_daily_turnover=0.216121
+```
+
+Robustness summary with transaction cost rate 0.001:
+
+```text
+sample  lookbacks  total_return  sharpe   max_drawdown  turnover
+all     3/20       0.603932      0.770875 -0.361147     0.288684
+all     7/20       0.196199      0.389398 -0.470330     0.229792
+all     7/30       0.579415      0.746537 -0.434133     0.216121
+all     14/30      1.281776      1.153371 -0.339487     0.161215
+all     14/60      0.284077      0.498102 -0.372864     0.150121
+
+2026    3/20      -0.082531     -0.644363 -0.163481     0.266667
+2026    7/20      -0.111941     -0.946391 -0.154052     0.244444
+2026    7/30      -0.033113     -0.208130 -0.139447     0.208000
+2026    14/30      0.001914      0.163385 -0.140391     0.176000
+2026    14/60      0.016661      0.383470 -0.068731     0.115789
+```
+
+Interpretation:
+
+The current variant remains profitable when the sample is extended into 2026,
+but the result weakens materially. The simple 7 day momentum variant turns
+negative on the fresh spot data. The 14/30 pair is strongest over the full
+sample, but its 2026-only result is close to flat after turnover cost. This
+suggests the family is still worth investigating, but not yet strong enough for
+serious live capital. The next question should be universe breadth, not more
+fine-tuning on BTC/ETH.

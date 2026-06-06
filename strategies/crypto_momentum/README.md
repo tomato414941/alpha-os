@@ -35,6 +35,18 @@ To use those files for the current manual target:
 uv run python -m strategies.crypto_momentum.latest_target --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
 ```
 
+To backtest those files:
+
+```text
+uv run python -m strategies.crypto_momentum.backtest --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+```
+
+To run the local robustness check on those files:
+
+```text
+uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+```
+
 ## Current Variant
 
 - Compute each symbol's 7 day and 30 day close-to-close returns.
