@@ -290,6 +290,13 @@ total_return=-0.393749
 sharpe=-0.158911
 max_drawdown=-0.685957
 mean_daily_turnover=0.485561
+
+variant=7d_momentum_30d_trend_skfolio_min_variance
+steps=856
+total_return=-0.277097
+sharpe=-0.043475
+max_drawdown=-0.583201
+mean_daily_turnover=0.485245
 ```
 
 ### 9 Symbols Without TON
@@ -535,6 +542,15 @@ sharpe=0.605613
 max_drawdown=-0.432220
 mean_daily_turnover=0.411131
 
+variant=7d_momentum_30d_trend_skfolio_min_variance
+steps=856
+total_return=0.597901
+annualized_return=0.221220
+annualized_volatility=0.455648
+sharpe=0.665000
+max_drawdown=-0.440830
+mean_daily_turnover=0.377942
+
 variant=3d_pullback_30d_trend
 steps=856
 total_return=-0.418373
@@ -587,8 +603,11 @@ Interpretation:
 Removing the worst contributors materially improves the momentum family. The
 `7d_momentum_30d_trend_skfolio_max_ratio` variant is the strongest result so
 far on fresh data. HRP is not stronger on return or Sharpe, but it has the
-shallowest max drawdown in the smaller eligible universe. The result is still
-not clean: drawdown remains large, and the 2025/2026 equal-weight robustness
-rows are weak. The pullback variants remain poor. This suggests the next useful
-work is to turn manual universe selection into an explicit eligibility rule, or
-to add a concentration limit before considering paper trading.
+shallowest max drawdown in the smaller eligible universe. Minimum variance is
+less aggressive than max-ratio and slightly stronger than equal-weight and HRP
+on the smaller eligible universe, while reducing drawdown materially in the
+10-symbol universe. The result is still not clean: drawdown remains large, and
+the 2025/2026 equal-weight robustness rows are weak. The pullback variants
+remain poor. This suggests the next useful work is to turn manual universe
+selection into an explicit eligibility rule, or to add a concentration limit
+before considering paper trading.

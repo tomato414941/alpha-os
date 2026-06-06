@@ -10,6 +10,7 @@ from strategies.crypto.momentum import (
     SevenDayMomentumStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
+    SevenDayMomentumWithThirtyDayTrendSkfolioMinimumVarianceStrategy,
     SevenDayMomentumWithThirtyDayTrendStrategy,
     TargetWeights,
 )
@@ -43,6 +44,10 @@ VARIANTS = {
     ),
     "7d_momentum_30d_trend_skfolio_hrp": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
+        lookback_days=30,
+    ),
+    "7d_momentum_30d_trend_skfolio_min_variance": StrategyVariant(
+        factory=SevenDayMomentumWithThirtyDayTrendSkfolioMinimumVarianceStrategy,
         lookback_days=30,
     ),
     "3d_pullback_30d_trend": StrategyVariant(

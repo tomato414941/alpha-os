@@ -125,3 +125,17 @@ class SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy:
 
     def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
         return self._strategy.decide(strategy_input)
+
+
+class SevenDayMomentumWithThirtyDayTrendSkfolioMinimumVarianceStrategy:
+    def __init__(self) -> None:
+        from strategies.crypto.allocation import SkfolioMinimumVarianceAllocator
+
+        self._strategy = TrendFilteredMomentumStrategy(
+            momentum_lookback_days=7,
+            trend_lookback_days=30,
+            allocator=SkfolioMinimumVarianceAllocator(),
+        )
+
+    def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
+        return self._strategy.decide(strategy_input)
