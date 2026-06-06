@@ -71,22 +71,6 @@ def test_trading_strategy_can_return_spread_trade_intent():
     )
 
 
-def test_trading_strategy_component_can_return_alpha_score():
-    example = load_example_module("examples/trading_strategy_alpha_score_component.py")
-
-    score = example.score_alpha(
-        example.MomentumAlphaModel(),
-        example.FeatureBatch(
-            features_by_symbol={
-                "BTC": {"return_7d": 0.04},
-                "ETH": {"return_7d": -0.02},
-            }
-        ),
-    )
-
-    assert score == example.AlphaScore(scores={"BTC": 0.04, "ETH": -0.02})
-
-
 def test_trading_strategy_can_keep_internal_state():
     example = load_example_module("examples/trading_strategy_stateful.py")
 

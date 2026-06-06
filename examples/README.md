@@ -23,7 +23,7 @@ Read them in this order:
    - a strategy output can include execution intent, not only portfolio targets
    - input/output shape: `RiskObservation -> TradingIntent`
 
-Other concrete input/output shapes:
+Other concrete TradingStrategy input/output shapes:
 
 - `trading_strategy_orders.py`
   - input/output shape: `MarketObservation -> list[Order]`
@@ -33,14 +33,23 @@ Other concrete input/output shapes:
   - input/output shape: `PortfolioRiskObservation -> HedgeAction | None`
 - `trading_strategy_spread_trade.py`
   - input/output shape: `SpreadObservation -> SpreadTradeIntent | None`
-- `trading_strategy_alpha_score_component.py`
-  - input/output shape: `FeatureBatch -> AlphaScore`
-  - this is a strategy component shape, not necessarily a full trading strategy
 - `trading_strategy_stateful.py`
   - input/output shape: `PriceObservation -> PositionAction`
   - the strategy keeps internal state between calls
 - `trading_strategy_execution_orders.py`
   - input/output shape: `BrokerObservation -> list[ExecutionOrder]`
+
+Strategy internals can have their own shapes. These are not TradingStrategy
+examples:
+
+- `alpha_model_score.py`
+  - shape: `FeatureBatch -> AlphaScore`
+- `risk_model_exposure.py`
+  - shape: `PortfolioSnapshot -> RiskEstimate`
+- `portfolio_allocator_from_scores.py`
+  - shape: `AlphaScore -> PortfolioTarget`
+- `execution_order_slicer.py`
+  - shape: `ParentOrder -> tuple[ChildOrder, ...]`
 
 In ML/RL terms, `TradingStrategy` is policy-like. The concrete observation,
 action, world, and backtest shapes remain strategy- or example-specific until

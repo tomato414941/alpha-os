@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpha_os.trading_strategy import TradingStrategy
-
 
 @dataclass(frozen=True)
 class FeatureBatch:
@@ -16,20 +14,17 @@ class AlphaScore:
 
 
 class MomentumAlphaModel:
-    def decide(self, strategy_input: FeatureBatch) -> AlphaScore:
+    def score(self, features: FeatureBatch) -> AlphaScore:
         return AlphaScore(
             scores={
-                symbol: features.get("return_7d", 0.0)
-                for symbol, features in strategy_input.features_by_symbol.items()
+                symbol: symbol_features.get("return_7d", 0.0)
+                for symbol, symbol_features in features.features_by_symbol.items()
             }
         )
 
 
-def score_alpha(
-    model: TradingStrategy[FeatureBatch, AlphaScore],
-    features: FeatureBatch,
-) -> AlphaScore:
-    return model.decide(features)
+def score_alpha(model: MomentumAlphaModel, features: FeatureBatch) -> AlphaScore:
+    return model.score(features)
 
 
 def main() -> None:
