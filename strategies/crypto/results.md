@@ -467,3 +467,111 @@ The simple pullback candidate is weaker than the momentum candidate. It is not a
 good next live or paper candidate in this form. The result suggests that
 short-term dip buying in this universe needs more structure, such as a stronger
 trend filter, a volatility filter, or symbol eligibility rules.
+
+## Smaller Eligible Universe Check
+
+Manual eligible universe:
+
+```text
+BTCUSDT ETHUSDT SOLUSDT XRPUSDT DOGEUSDT AVAXUSDT LINKUSDT
+```
+
+This removes the clearest negative contributors from the first expanded
+universe check:
+
+```text
+ADAUSDT BNBUSDT TONUSDT
+```
+
+Command:
+
+```text
+uv run python -m strategies.crypto.backtest --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT XRPUSDT DOGEUSDT AVAXUSDT LINKUSDT
+```
+
+Result:
+
+```text
+variant=7d_momentum
+steps=879
+total_return=-0.616537
+annualized_return=-0.328350
+annualized_volatility=0.572648
+sharpe=-0.406631
+max_drawdown=-0.738023
+mean_daily_turnover=0.493228
+
+variant=7d_momentum_30d_trend
+steps=856
+total_return=0.551830
+annualized_return=0.206081
+annualized_volatility=0.515689
+sharpe=0.619942
+max_drawdown=-0.466048
+mean_daily_turnover=0.395110
+
+variant=7d_momentum_30d_trend_skfolio_max_ratio
+steps=856
+total_return=1.928955
+annualized_return=0.581274
+annualized_volatility=0.585786
+sharpe=1.069576
+max_drawdown=-0.550211
+mean_daily_turnover=0.327607
+
+variant=3d_pullback_30d_trend
+steps=856
+total_return=-0.418373
+annualized_return=-0.206323
+annualized_volatility=0.470323
+sharpe=-0.255628
+max_drawdown=-0.646598
+mean_daily_turnover=0.513257
+
+variant=3d_pullback_30d_trend_skfolio_max_ratio
+steps=856
+total_return=-0.297884
+annualized_return=-0.139980
+annualized_volatility=0.492057
+sharpe=-0.062793
+max_drawdown=-0.599741
+mean_daily_turnover=0.522971
+```
+
+Robustness summary for equal-weight momentum variants with transaction cost
+rate 0.001:
+
+```text
+sample  lookbacks  total_return  sharpe    max_drawdown  turnover
+all     3/20        0.688544      0.681497 -0.550203     0.490317
+all     7/20        0.176351      0.396046 -0.551893     0.411047
+all     7/30        0.551830      0.619942 -0.466048     0.395110
+all     14/30       1.697555      1.071502 -0.396063     0.305936
+all     14/60      -0.307552     -0.054813 -0.568627     0.325130
+
+2025    7/30       -0.105595     -0.024062 -0.313825     0.348717
+2026    7/30        0.002737      0.184441 -0.170437     0.403390
+```
+
+Skfolio max-ratio 7/30 contribution:
+
+```text
+symbol,total_gross_contribution,mean_weight,active_days,max_weight
+LINKUSDT,-0.158939,0.040259,230,1.000000
+BTCUSDT,0.068385,0.141096,323,1.000000
+AVAXUSDT,0.078558,0.057302,240,1.000000
+ETHUSDT,0.224569,0.097864,260,1.000000
+SOLUSDT,0.338456,0.075853,263,1.000000
+XRPUSDT,0.551195,0.085754,224,1.000000
+DOGEUSDT,0.647580,0.061451,241,1.000000
+```
+
+Interpretation:
+
+Removing the worst contributors materially improves the momentum family. The
+`7d_momentum_30d_trend_skfolio_max_ratio` variant is the strongest result so
+far on fresh data. The result is still not clean: drawdown remains large, and
+the 2025/2026 equal-weight robustness rows are weak. The pullback variants
+remain poor. This suggests the next useful work is to turn manual universe
+selection into an explicit eligibility rule, or to add a concentration limit
+before considering paper trading.
