@@ -30,6 +30,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - ETF momentum rotation candidate
 - `cash_rotation/`
   - risk-on/risk-off rotation candidate
+- `leaderboard.py`
+  - cross-strategy comparison against same-window buy-and-hold benchmarks
+- `leaderboard.md`
+  - latest broad comparison result
 
 ## Local Shared Strategy Code
 
