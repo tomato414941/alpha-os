@@ -12,6 +12,10 @@ from strategies.crypto.momentum import (
     SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
     TargetWeights,
 )
+from strategies.crypto.pullback import (
+    ThreeDayPullbackWithThirtyDayTrendSkfolioMaxRatioStrategy,
+    ThreeDayPullbackWithThirtyDayTrendStrategy,
+)
 
 
 CURRENT_VARIANT = "7d_momentum_30d_trend"
@@ -34,6 +38,14 @@ VARIANTS = {
     ),
     "7d_momentum_30d_trend_skfolio_max_ratio": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
+        lookback_days=30,
+    ),
+    "3d_pullback_30d_trend": StrategyVariant(
+        factory=ThreeDayPullbackWithThirtyDayTrendStrategy,
+        lookback_days=30,
+    ),
+    "3d_pullback_30d_trend_skfolio_max_ratio": StrategyVariant(
+        factory=ThreeDayPullbackWithThirtyDayTrendSkfolioMaxRatioStrategy,
         lookback_days=30,
     ),
 }

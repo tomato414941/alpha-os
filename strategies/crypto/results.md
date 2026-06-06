@@ -402,3 +402,68 @@ and `TONUSDT` are the clearest negative contributors in both allocator variants.
 on the allocator. The `max_weight=1.0` values also show that the strategy can
 become fully concentrated in one active symbol on some days. The next useful
 change is to test a smaller eligible universe and/or add a concentration limit.
+
+## Pullback Candidate Check
+
+Candidate:
+
+```text
+3 day return < 0
+30 day return > 0
+```
+
+Interpretation:
+
+This is a trend pullback rule: only buy symbols that are still in a longer
+uptrend but have pulled back over the short window.
+
+Checked-in BTC/ETH result:
+
+```text
+variant=3d_pullback_30d_trend
+steps=700
+total_return=-0.019583
+annualized_return=-0.010259
+annualized_volatility=0.286456
+sharpe=0.106046
+max_drawdown=-0.322667
+mean_daily_turnover=0.277143
+
+variant=3d_pullback_30d_trend_skfolio_max_ratio
+steps=700
+total_return=0.061262
+annualized_return=0.031489
+annualized_volatility=0.284309
+sharpe=0.249835
+max_drawdown=-0.313487
+mean_daily_turnover=0.283410
+```
+
+Fresh 10-symbol result:
+
+```text
+variant=3d_pullback_30d_trend
+steps=856
+total_return=-0.646806
+annualized_return=-0.358389
+annualized_volatility=0.499052
+sharpe=-0.636768
+max_drawdown=-0.780534
+mean_daily_turnover=0.605721
+
+variant=3d_pullback_30d_trend_skfolio_max_ratio
+steps=856
+total_return=-0.502391
+annualized_return=-0.257404
+annualized_volatility=0.519849
+sharpe=-0.312923
+max_drawdown=-0.710213
+mean_daily_turnover=0.633496
+```
+
+Interpretation:
+
+The simple pullback candidate is weaker than the momentum candidate. It is not a
+good next live or paper candidate in this form. The result suggests that
+short-term dip buying in this universe needs more structure, such as a stronger
+trend filter, a volatility filter, or symbol eligibility rules.

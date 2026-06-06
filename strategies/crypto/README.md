@@ -86,12 +86,18 @@ uv run python -m strategies.crypto.contribution --dataset-dir strategies/crypto/
 - Equal weight across active symbols.
 - Rebalance daily.
 
+## Candidate Files
+
+- `momentum.py`: long recent strength with longer trend confirmation
+- `pullback.py`: long short-term pullbacks inside a longer uptrend
+
 ## Local Files
 
 - `data.py`: local CSV loading
 - `fetch_market_data.py`: local Binance spot daily data fetch
 - `allocation.py`: local portfolio allocators used inside strategy variants
-- `momentum.py`: momentum strategy and strategy-specific input/output shapes
+- `momentum.py`: momentum strategy candidates
+- `pullback.py`: trend pullback strategy candidates
 - `variants.py`: maintained local variant registry
 - `backtest.py`: local historical backtest path
 - `contribution.py`: symbol-level gross contribution analysis

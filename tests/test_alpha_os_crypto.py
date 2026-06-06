@@ -16,6 +16,7 @@ def test_crypto_runs_on_checked_in_data():
         SevenDayMomentumWithThirtyDayTrendStrategy,
         SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
     )
+    from strategies.crypto.pullback import ThreeDayPullbackWithThirtyDayTrendStrategy
 
     market_bars = load_daily_market_bars()
     result = run_backtest(SevenDayMomentumStrategy(), market_bars)
@@ -29,6 +30,11 @@ def test_crypto_runs_on_checked_in_data():
         market_bars,
         lookback_days=30,
     )
+    pullback_candidate = run_backtest(
+        ThreeDayPullbackWithThirtyDayTrendStrategy(),
+        market_bars,
+        lookback_days=30,
+    )
 
     assert len(result.steps) == 723
     assert result.summary.total_return > 0.0
@@ -37,6 +43,7 @@ def test_crypto_runs_on_checked_in_data():
     assert candidate.summary.max_drawdown < 0.0
     assert len(skfolio_candidate.steps) == 700
     assert skfolio_candidate.summary.max_drawdown < 0.0
+    assert len(pullback_candidate.steps) == 700
 
     robustness_rows = run_robustness_check(market_bars=market_bars)
     assert robustness_rows
