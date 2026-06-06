@@ -19,3 +19,21 @@ A maintained strategy should eventually include:
 
 Do not move shared code into `src/alpha_os/` just because one strategy uses it.
 Promote code to the library only after multiple strategies need the same shape.
+
+## Current Candidates
+
+- `crypto/`
+  - crypto long-or-cash momentum and allocation variants
+- `crypto_pair_spread/`
+  - crypto relative-value spread candidate
+- `equity_index/`
+  - ETF momentum rotation candidate
+- `cash_rotation/`
+  - risk-on/risk-off rotation candidate
+
+## Local Shared Strategy Code
+
+- `daily_close/`
+  - daily close data, backtest, metrics, and Yahoo fetch utilities used by
+    concrete strategies
+  - this is strategy implementation support, not `alpha_os` package API

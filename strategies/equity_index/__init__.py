@@ -1,0 +1,1 @@
+"""Equity index strategy candidates."""
