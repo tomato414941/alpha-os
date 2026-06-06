@@ -13,22 +13,21 @@ The example-local names such as `MarketObservation`, `PortfolioTarget`,
 defined in the package. They show possible shapes a concrete strategy may
 choose.
 
-Read them in this order:
+## Core Examples
 
-1. `trading_strategy_backtest.py`
-   - a strategy interacts with a market world through
-     `strategy.decide(...)` and `world.step(action)`
-   - input/output shape: `MarketObservation -> PortfolioTarget`
-2. `trading_strategy_execution_intent.py`
-   - a strategy output can include execution intent, not only portfolio targets
-   - input/output shape: `RiskObservation -> TradingIntent`
-3. `trading_strategy_composed.py`
-   - a strategy can use internal parts while exposing one black-box decision
-     contract
-   - input/output shape: `MarketObservation -> PortfolioTarget`
+- `trading_strategy_backtest.py`
+  - a strategy interacts with a market world through
+    `strategy.decide(...)` and `world.step(target)`
+  - input/output shape: `MarketObservation -> PortfolioTarget`
+- `trading_strategy_composed.py`
+  - a strategy can use internal parts while exposing one black-box decision
+    contract
+  - input/output shape: `MarketObservation -> PortfolioTarget`
 
-Other concrete TradingStrategy input/output shapes:
+## Alternative TradingStrategy Shapes
 
+- `trading_strategy_execution_intent.py`
+  - input/output shape: `RiskObservation -> TradingIntent`
 - `trading_strategy_orders.py`
   - input/output shape: `MarketObservation -> list[Order]`
 - `trading_strategy_hold_rebalance.py`
@@ -42,6 +41,8 @@ Other concrete TradingStrategy input/output shapes:
   - the strategy keeps internal state between calls
 - `trading_strategy_execution_orders.py`
   - input/output shape: `BrokerObservation -> list[ExecutionOrder]`
+
+## Internal Shapes
 
 Strategy internals can have their own shapes. These are not TradingStrategy
 examples:
