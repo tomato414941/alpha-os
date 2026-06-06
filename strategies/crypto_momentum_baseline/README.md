@@ -29,6 +29,8 @@ The current strategy uses only `timestamp` and `close`.
 - `data.py`: local CSV loading
 - `strategy.py`: concrete strategy and strategy-specific input/output shapes
 - `backtest.py`: local historical backtest path
+- `decision.py`: latest manual paper decision from the available data
 - `results.md`: latest result notes
+- `paper_log.md`: manual paper decision notes
 
 Shared code should stay local until another strategy needs the same shape.
