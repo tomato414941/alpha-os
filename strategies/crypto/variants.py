@@ -8,8 +8,9 @@ from alpha_os.trading_strategy import TradingStrategy
 from strategies.crypto.momentum import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
-    SevenDayMomentumWithThirtyDayTrendStrategy,
+    SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
+    SevenDayMomentumWithThirtyDayTrendStrategy,
     TargetWeights,
 )
 from strategies.crypto.pullback import (
@@ -38,6 +39,10 @@ VARIANTS = {
     ),
     "7d_momentum_30d_trend_skfolio_max_ratio": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
+        lookback_days=30,
+    ),
+    "7d_momentum_30d_trend_skfolio_hrp": StrategyVariant(
+        factory=SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
         lookback_days=30,
     ),
     "3d_pullback_30d_trend": StrategyVariant(
