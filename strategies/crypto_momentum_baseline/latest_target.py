@@ -14,17 +14,17 @@ from strategies.crypto_momentum_baseline.strategy import (
 
 
 @dataclass(frozen=True)
-class ManualPaperDecision:
+class LatestTargetSnapshot:
     strategy: str
     mode: str
     timestamp: str
     target: TargetWeights
 
 
-def latest_manual_paper_decision(
+def latest_target_snapshot(
     *,
     market_bars: tuple[DailyMarketBar, ...] | None = None,
-) -> ManualPaperDecision:
+) -> LatestTargetSnapshot:
     bars = market_bars if market_bars is not None else load_daily_market_bars()
     latest_bar = bars[-1]
     decision_input = MomentumDecisionInput(
@@ -36,7 +36,7 @@ def latest_manual_paper_decision(
         equity=1.0,
     )
     target = SevenDayMomentumStrategy().decide(decision_input)
-    return ManualPaperDecision(
+    return LatestTargetSnapshot(
         strategy="crypto_momentum_baseline",
         mode="manual_paper",
         timestamp=latest_bar.timestamp,
@@ -45,15 +45,15 @@ def latest_manual_paper_decision(
 
 
 def main() -> None:
-    decision = latest_manual_paper_decision()
-    print(f"date={decision.timestamp}")
-    print(f"strategy={decision.strategy}")
-    print(f"mode={decision.mode}")
+    snapshot = latest_target_snapshot()
+    print(f"date={snapshot.timestamp}")
+    print(f"strategy={snapshot.strategy}")
+    print(f"mode={snapshot.mode}")
     print("target_weights:")
-    if not decision.target.target_weights:
+    if not snapshot.target.target_weights:
         print("  cash: 1.0")
         return
-    for symbol, weight in sorted(decision.target.target_weights.items()):
+    for symbol, weight in sorted(snapshot.target.target_weights.items()):
         print(f"  {symbol}: {weight:.6f}")
 
 
