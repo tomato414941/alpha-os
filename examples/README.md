@@ -14,13 +14,13 @@ package. They show possible shapes a concrete strategy may choose.
 
 Read them in this order:
 
-1. `trading_strategy_rollout.py`
-   - minimal `observation -> strategy -> action` flow
+1. `trading_strategy_backtest.py`
+   - a strategy interacts with a market world through
+     `strategy.decide(...)` and `world.step(action)`
+   - input/output shape: `MarketObservation -> PortfolioAction`
 2. `trading_strategy_execution_intent.py`
    - a strategy output can include execution intent, not only portfolio targets
-3. `trading_strategy_backtest.py`
-   - a small RL-shaped rollout with `strategy.decide(...)` and
-     `world.step(action)`
+   - input/output shape: `RiskObservation -> TradingIntent`
 
 In ML/RL terms, `TradingStrategy` is policy-like. The concrete observation,
 action, world, and backtest shapes remain strategy- or example-specific until
