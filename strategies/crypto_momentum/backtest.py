@@ -70,15 +70,17 @@ class DailyMarketBacktest:
         return self._market_bars[self._index].timestamp
 
     def _decision_input(self) -> MomentumDecisionInput:
+        lookback_window = self._market_bars[
+            self._index - self._lookback_days : self._index + 1
+        ]
+        symbols = set.intersection(*(set(bar.closes) for bar in lookback_window))
         return MomentumDecisionInput(
             closes_by_symbol={
                 symbol: tuple(
                     bar.closes[symbol]
-                    for bar in self._market_bars[
-                        self._index - self._lookback_days : self._index + 1
-                    ]
+                    for bar in lookback_window
                 )
-                for symbol in self._market_bars[self._index].closes
+                for symbol in symbols
             },
             current_weights=self._accounting.current_weights,
             equity=self._accounting.equity,
@@ -104,7 +106,9 @@ class DailyMarketBacktest:
         returns_by_symbol: dict[str, float] = {}
         current_bar = self._market_bars[self._index]
         next_bar = self._market_bars[self._index + 1]
-        for symbol, current_close in current_bar.closes.items():
+        symbols = set(current_bar.closes) & set(next_bar.closes)
+        for symbol in symbols:
+            current_close = current_bar.closes[symbol]
             next_close = next_bar.closes[symbol]
             returns_by_symbol[symbol] = (
                 (next_close / current_close) - 1.0

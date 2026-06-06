@@ -68,11 +68,12 @@ def align_daily_closes(
         symbol: {row.timestamp: row.close for row in closes}
         for symbol, closes in closes_by_symbol.items()
     }
-    shared_timestamps = set.intersection(
-        *(
-            set(closes_by_timestamp)
+    timestamps = sorted(
+        {
+            timestamp
             for closes_by_timestamp in symbol_closes_by_timestamp.values()
-        )
+            for timestamp in closes_by_timestamp
+        }
     )
     return tuple(
         DailyMarketBar(
@@ -80,7 +81,8 @@ def align_daily_closes(
             closes={
                 symbol: closes_by_timestamp[timestamp]
                 for symbol, closes_by_timestamp in symbol_closes_by_timestamp.items()
+                if timestamp in closes_by_timestamp
             },
         )
-        for timestamp in sorted(shared_timestamps)
+        for timestamp in timestamps
     )

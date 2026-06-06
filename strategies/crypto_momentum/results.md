@@ -242,16 +242,16 @@ Fresh data was expanded to:
 BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
 ```
 
-`TONUSDT` starts on 2024-08-08, so the full 10-symbol intersection starts there.
-For a cleaner 2024-01-01 start, a 9-symbol run without `TONUSDT` was also
-checked.
+The data loader is availability-aware: each date uses the symbols available on
+that date. `TONUSDT` starts on 2024-08-08, so it joins the universe from that
+date rather than truncating the whole sample.
 
 ### 10 Symbols
 
-Data intersection:
+Data range:
 
 ```text
-2024-08-08 through 2026-06-05
+2024-01-01 through 2026-06-05
 ```
 
 Command:
@@ -264,25 +264,25 @@ Result:
 
 ```text
 variant=7d_momentum
-steps=659
-total_return=-0.647401
-sharpe=-0.709777
-max_drawdown=-0.829088
-mean_daily_turnover=0.543328
+steps=879
+total_return=-0.821665
+sharpe=-0.938240
+max_drawdown=-0.869059
+mean_daily_turnover=0.543858
 
 variant=7d_momentum_30d_trend
-steps=636
-total_return=-0.354874
-sharpe=-0.161451
+steps=856
+total_return=-0.322751
+sharpe=-0.024984
 max_drawdown=-0.712941
-mean_daily_turnover=0.472152
+mean_daily_turnover=0.458219
 
 variant=7d_momentum_30d_trend_skfolio_max_ratio
-steps=636
-total_return=-0.068746
-sharpe=0.258150
-max_drawdown=-0.704475
-mean_daily_turnover=0.405756
+steps=856
+total_return=0.217369
+sharpe=0.444666
+max_drawdown=-0.704496
+mean_daily_turnover=0.389676
 ```
 
 ### 9 Symbols Without TON
@@ -345,11 +345,11 @@ all     14/60     -0.499645     -0.316549 -0.642135     0.354881
 Interpretation:
 
 The wider universe exposes a weak point in the current equal-weight momentum
-rule. It performs well in 2024 but fails badly in 2025 and 2026. This also
-explains why `skfolio` may have looked useful before: once the universe has more
-than BTC/ETH, allocation matters. The 9-symbol `skfolio` variant is the only
-expanded-universe variant above that remains positive over the full fresh-data
-sample, but drawdown is still large. The next useful work is not more lookback
-tuning; it is understanding which symbols drive the losses and whether the
-strategy needs symbol selection, volatility control, or a smaller eligible
-universe.
+rule. It performs well in 2024 but fails badly in 2025 and 2026. The
+availability-aware 10-symbol run no longer truncates the sample just because
+`TONUSDT` starts late, but the conclusion is still similar: allocation matters
+once the universe has more than BTC/ETH. The `skfolio` variant remains positive
+over the full 10-symbol sample, but drawdown is still large. The next useful
+work is not more lookback tuning; it is understanding which symbols drive the
+losses and whether the strategy needs symbol selection, volatility control, or a
+smaller eligible universe.
