@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
+from pathlib import Path
 
 from strategies.crypto_momentum.data import (
+    DATASET_DIR,
     DailyMarketBar,
     load_daily_market_bars,
 )
@@ -24,10 +27,15 @@ class LatestTargetSnapshot:
 
 def latest_target_snapshot(
     *,
+    dataset_dir: Path = DATASET_DIR,
     market_bars: tuple[DailyMarketBar, ...] | None = None,
     variant: str = CURRENT_VARIANT,
 ) -> LatestTargetSnapshot:
-    bars = market_bars if market_bars is not None else load_daily_market_bars()
+    bars = (
+        market_bars
+        if market_bars is not None
+        else load_daily_market_bars(dataset_dir=dataset_dir)
+    )
     strategy_variant = VARIANTS[variant]
     latest_bar = bars[-1]
     decision_input = MomentumDecisionInput(
@@ -51,7 +59,11 @@ def latest_target_snapshot(
 
 
 def main() -> None:
-    snapshot = latest_target_snapshot()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset-dir", type=Path, default=DATASET_DIR)
+    args = parser.parse_args()
+
+    snapshot = latest_target_snapshot(dataset_dir=args.dataset_dir)
     print(f"date={snapshot.timestamp}")
     print(f"strategy={snapshot.strategy}")
     print(f"variant={snapshot.variant}")

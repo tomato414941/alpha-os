@@ -11,6 +11,9 @@ DATASET_DIR = (
     / "datasets"
     / "ds_crypto_btc_eth_daily_2024_2025"
 )
+LOCAL_DATASET_DIR = (
+    Path(__file__).resolve().parent / "market_data" / "binance_spot_daily"
+)
 
 
 @dataclass(frozen=True)

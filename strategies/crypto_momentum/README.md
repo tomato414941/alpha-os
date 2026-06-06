@@ -17,6 +17,24 @@ experiments/datasets/ds_crypto_btc_eth_daily_2024_2025/
 
 The current strategy uses only `timestamp` and `close`.
 
+To fetch fresh local Binance spot daily data:
+
+```text
+uv run python -m strategies.crypto_momentum.fetch_market_data
+```
+
+That writes uncommitted local CSV files under:
+
+```text
+strategies/crypto_momentum/market_data/binance_spot_daily/
+```
+
+To use those files for the current manual target:
+
+```text
+uv run python -m strategies.crypto_momentum.latest_target --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily
+```
+
 ## Current Variant
 
 - Compute each symbol's 7 day and 30 day close-to-close returns.
@@ -28,6 +46,7 @@ The current strategy uses only `timestamp` and `close`.
 ## Local Files
 
 - `data.py`: local CSV loading
+- `fetch_market_data.py`: local Binance spot daily data fetch
 - `strategy.py`: concrete strategy and strategy-specific input/output shapes
 - `backtest.py`: local historical backtest path
 - `latest_target.py`: latest target weights from the available data
