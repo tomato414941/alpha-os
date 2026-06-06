@@ -99,6 +99,45 @@ class TrendFilteredMomentumStrategy:
         )
 
 
+class RollingEligibleTrendFilteredMomentumStrategy:
+    def __init__(
+        self,
+        *,
+        momentum_lookback_days: int,
+        trend_lookback_days: int,
+        eligibility_lookback_days: int,
+        min_eligibility_return: float,
+        max_eligibility_drawdown: float,
+        allocator: PortfolioAllocator,
+    ) -> None:
+        self._eligibility_lookback_days = eligibility_lookback_days
+        self._min_eligibility_return = min_eligibility_return
+        self._max_eligibility_drawdown = max_eligibility_drawdown
+        self._strategy = TrendFilteredMomentumStrategy(
+            momentum_lookback_days=momentum_lookback_days,
+            trend_lookback_days=trend_lookback_days,
+            allocator=allocator,
+        )
+
+    def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
+        return self._strategy.decide(
+            MomentumDecisionInput(
+                closes_by_symbol={
+                    symbol: closes
+                    for symbol, closes in strategy_input.closes_by_symbol.items()
+                    if _passes_rolling_asset_quality(
+                        closes,
+                        lookback_days=self._eligibility_lookback_days,
+                        min_return=self._min_eligibility_return,
+                        max_drawdown=self._max_eligibility_drawdown,
+                    )
+                },
+                current_weights=strategy_input.current_weights,
+                equity=strategy_input.equity,
+            )
+        )
+
+
 class SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy:
     def __init__(self) -> None:
         from strategies.crypto.allocation import SkfolioMaxRatioAllocator
@@ -106,6 +145,23 @@ class SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy:
         self._strategy = TrendFilteredMomentumStrategy(
             momentum_lookback_days=7,
             trend_lookback_days=30,
+            allocator=SkfolioMaxRatioAllocator(),
+        )
+
+    def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
+        return self._strategy.decide(strategy_input)
+
+
+class SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioEligibleStrategy:
+    def __init__(self) -> None:
+        from strategies.crypto.allocation import SkfolioMaxRatioAllocator
+
+        self._strategy = RollingEligibleTrendFilteredMomentumStrategy(
+            momentum_lookback_days=7,
+            trend_lookback_days=30,
+            eligibility_lookback_days=180,
+            min_eligibility_return=0.0,
+            max_eligibility_drawdown=-0.80,
             allocator=SkfolioMaxRatioAllocator(),
         )
 
@@ -125,6 +181,33 @@ class SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy:
 
     def decide(self, strategy_input: MomentumDecisionInput) -> TargetWeights:
         return self._strategy.decide(strategy_input)
+
+
+def _passes_rolling_asset_quality(
+    closes: tuple[float, ...],
+    *,
+    lookback_days: int,
+    min_return: float,
+    max_drawdown: float,
+) -> bool:
+    if len(closes) < lookback_days + 1:
+        return False
+    window = closes[-lookback_days - 1 :]
+    first_close = window[0]
+    last_close = window[-1]
+    if first_close <= 0.0:
+        return False
+    total_return = (last_close / first_close) - 1.0
+    if total_return < min_return:
+        return False
+
+    peak = 0.0
+    worst_drawdown = 0.0
+    for close in window:
+        peak = max(peak, close)
+        if peak > 0.0:
+            worst_drawdown = min(worst_drawdown, (close / peak) - 1.0)
+    return worst_drawdown >= max_drawdown
 
 
 class SevenDayMomentumWithThirtyDayTrendSkfolioMinimumVarianceStrategy:

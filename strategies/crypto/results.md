@@ -661,3 +661,67 @@ but it is a negative contributor for this strategy. That means a simple asset
 quality rule does not fully explain the manual smaller universe. The next
 eligibility work should separate asset-level tradability filters from
 strategy-specific fit diagnostics.
+
+## Leak-Free Rolling Eligibility Check
+
+Manual removal of `ADAUSDT`, `BNBUSDT`, and `TONUSDT` is selection-biased
+because it uses same-period contribution results. A first leak-free rolling
+eligibility variant was tested:
+
+- base strategy: `7d_momentum_30d_trend_skfolio_max_ratio`
+- universe: expanded 10-symbol universe
+- rolling eligibility lookback: 180 days
+- symbol passes when:
+  - trailing 180 day return is positive
+  - trailing 180 day max drawdown is not worse than -80%
+
+Command:
+
+```text
+uv run python -m strategies.crypto.backtest --dataset-dir strategies/crypto/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
+```
+
+Result:
+
+```text
+variant=7d_momentum_30d_trend_skfolio_max_ratio_eligible
+steps=706
+total_return=-0.160001
+annualized_return=-0.086198
+annualized_volatility=0.597113
+sharpe=0.145100
+max_drawdown=-0.713836
+mean_daily_turnover=0.297712
+```
+
+Same-window buy-and-hold benchmark:
+
+```text
+BTCUSDT total=0.001144 sharpe=0.233494 max_drawdown=-0.510210
+BNBUSDT total=0.003895 sharpe=0.265180 max_drawdown=-0.562322
+XRPUSDT total=1.322403 sharpe=0.922692 max_drawdown=-0.690795
+```
+
+Symbol gross contribution:
+
+```text
+BNBUSDT -0.340414
+ADAUSDT -0.300620
+TONUSDT -0.256369
+LINKUSDT -0.018530
+AVAXUSDT 0.008971
+ETHUSDT 0.059594
+XRPUSDT 0.213837
+SOLUSDT 0.228191
+BTCUSDT 0.306069
+DOGEUSDT 0.477042
+```
+
+Interpretation:
+
+The leak-free asset-quality filter does not preserve the strong manual smaller
+universe result. It still allows `BNBUSDT`, whose standalone asset history is
+not weak but whose contribution is negative for this strategy. This supports
+the concern that the manual smaller universe result was largely selection
+bias. The next credible path is train/test or walk-forward strategy-specific
+selection, not more same-period manual exclusions.

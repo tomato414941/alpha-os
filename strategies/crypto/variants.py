@@ -9,6 +9,7 @@ from strategies.crypto.momentum import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
+    SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioEligibleStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioMinimumVarianceStrategy,
     SevenDayMomentumWithThirtyDayTrendSkfolioRiskBudgetingStrategy,
@@ -42,6 +43,10 @@ VARIANTS = {
     "7d_momentum_30d_trend_skfolio_max_ratio": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioStrategy,
         lookback_days=30,
+    ),
+    "7d_momentum_30d_trend_skfolio_max_ratio_eligible": StrategyVariant(
+        factory=SevenDayMomentumWithThirtyDayTrendSkfolioMaxRatioEligibleStrategy,
+        lookback_days=180,
     ),
     "7d_momentum_30d_trend_skfolio_hrp": StrategyVariant(
         factory=SevenDayMomentumWithThirtyDayTrendSkfolioHrpStrategy,
