@@ -19,14 +19,14 @@ class MarketObservation:
 
 
 @dataclass(frozen=True)
-class PortfolioAction:
+class PortfolioTarget:
     target_weights: dict[str, float]
 
 
 @dataclass(frozen=True)
 class BacktestStep:
     equity: float
-    action: PortfolioAction
+    target: PortfolioTarget
     reward: float
     transaction_cost: float
     observation: MarketObservation
@@ -42,15 +42,15 @@ class WorldStep:
 
 
 class EqualWeightLongOnlyStrategy:
-    def decide(self, strategy_input: MarketObservation) -> PortfolioAction:
+    def decide(self, strategy_input: MarketObservation) -> PortfolioTarget:
         tradable_symbols = tuple(
             symbol for symbol, price in strategy_input.prices.items() if price > 0.0
         )
         if not tradable_symbols:
-            return PortfolioAction(target_weights={})
+            return PortfolioTarget(target_weights={})
 
         weight = 1.0 / len(tradable_symbols)
-        return PortfolioAction(
+        return PortfolioTarget(
             target_weights={symbol: weight for symbol in tradable_symbols}
         )
 
@@ -114,7 +114,7 @@ class MarketBacktestWorld:
     def can_step(self) -> bool:
         return self._index < len(self._price_frames) - 1
 
-    def step(self, action: PortfolioAction) -> WorldStep:
+    def step(self, target: PortfolioTarget) -> WorldStep:
         if self._index >= len(self._price_frames) - 1:
             return WorldStep(
                 observation=self._observation(),
@@ -127,17 +127,17 @@ class MarketBacktestWorld:
         current_prices = self._price_frames[self._index].prices
         next_prices = self._price_frames[self._index + 1].prices
         gross_reward = _portfolio_return(
-            action.target_weights,
+            target.target_weights,
             current_prices,
             next_prices,
         )
         transaction_cost = (
-            _turnover(self._current_weights, action.target_weights)
+            _turnover(self._current_weights, target.target_weights)
             * self._transaction_cost_rate
         )
         reward = gross_reward - transaction_cost
         self._equity *= 1.0 + reward
-        self._current_weights = dict(action.target_weights)
+        self._current_weights = dict(target.target_weights)
         self._index += 1
 
         return WorldStep(
@@ -150,7 +150,7 @@ class MarketBacktestWorld:
 
 
 def backtest_strategy(
-    strategy: TradingStrategy[MarketObservation, PortfolioAction],
+    strategy: TradingStrategy[MarketObservation, PortfolioTarget],
     price_frames: Iterable[MarketPriceFrame],
     *,
     initial_equity: float = 1.0,
@@ -168,12 +168,12 @@ def backtest_strategy(
     steps: list[BacktestStep] = []
 
     while world.can_step():
-        action = strategy.decide(observation)
-        world_step = world.step(action)
+        target = strategy.decide(observation)
+        world_step = world.step(target)
         steps.append(
             BacktestStep(
                 equity=world_step.equity,
-                action=action,
+                target=target,
                 reward=world_step.reward,
                 transaction_cost=world_step.transaction_cost,
                 observation=observation,
