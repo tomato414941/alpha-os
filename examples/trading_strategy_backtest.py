@@ -7,8 +7,15 @@ from alpha_os.trading_strategy import TradingStrategy
 
 
 @dataclass(frozen=True)
+class MarketPriceFrame:
+    prices: dict[str, float]
+
+
+@dataclass(frozen=True)
 class MarketObservation:
     prices: dict[str, float]
+    current_weights: dict[str, float]
+    equity: float
 
 
 @dataclass(frozen=True)
@@ -21,6 +28,7 @@ class BacktestStep:
     equity: float
     action: PortfolioAction
     reward: float
+    transaction_cost: float
     observation: MarketObservation
 
 
@@ -28,6 +36,7 @@ class BacktestStep:
 class WorldStep:
     observation: MarketObservation
     reward: float
+    transaction_cost: float
     done: bool
     equity: float
 
@@ -61,62 +70,97 @@ def _portfolio_return(
     return portfolio_return
 
 
+def _turnover(
+    current_weights: dict[str, float],
+    target_weights: dict[str, float],
+) -> float:
+    symbols = current_weights.keys() | target_weights.keys()
+    return sum(
+        abs(target_weights.get(symbol, 0.0) - current_weights.get(symbol, 0.0))
+        for symbol in symbols
+    )
+
+
 class MarketBacktestWorld:
     def __init__(
         self,
-        observations: Iterable[MarketObservation],
+        price_frames: Iterable[MarketPriceFrame],
         *,
         initial_equity: float = 1.0,
+        transaction_cost_rate: float = 0.001,
     ) -> None:
-        self._observations = list(observations)
+        self._price_frames = list(price_frames)
         self._initial_equity = initial_equity
+        self._transaction_cost_rate = transaction_cost_rate
         self._index = 0
         self._equity = initial_equity
+        self._current_weights: dict[str, float] = {}
+
+    def _observation(self) -> MarketObservation:
+        return MarketObservation(
+            prices=self._price_frames[self._index].prices,
+            current_weights=dict(self._current_weights),
+            equity=self._equity,
+        )
 
     def reset(self) -> MarketObservation | None:
         self._index = 0
         self._equity = self._initial_equity
-        if not self._observations:
+        self._current_weights = {}
+        if not self._price_frames:
             return None
-        return self._observations[0]
+        return self._observation()
 
     def can_step(self) -> bool:
-        return self._index < len(self._observations) - 1
+        return self._index < len(self._price_frames) - 1
 
     def step(self, action: PortfolioAction) -> WorldStep:
-        if self._index >= len(self._observations) - 1:
+        if self._index >= len(self._price_frames) - 1:
             return WorldStep(
-                observation=self._observations[-1],
+                observation=self._observation(),
                 reward=0.0,
+                transaction_cost=0.0,
                 done=True,
                 equity=self._equity,
             )
 
-        current_observation = self._observations[self._index]
-        next_observation = self._observations[self._index + 1]
-        reward = _portfolio_return(
+        current_prices = self._price_frames[self._index].prices
+        next_prices = self._price_frames[self._index + 1].prices
+        gross_reward = _portfolio_return(
             action.target_weights,
-            current_observation.prices,
-            next_observation.prices,
+            current_prices,
+            next_prices,
         )
+        transaction_cost = (
+            _turnover(self._current_weights, action.target_weights)
+            * self._transaction_cost_rate
+        )
+        reward = gross_reward - transaction_cost
         self._equity *= 1.0 + reward
+        self._current_weights = dict(action.target_weights)
         self._index += 1
 
         return WorldStep(
-            observation=next_observation,
+            observation=self._observation(),
             reward=reward,
-            done=self._index >= len(self._observations) - 1,
+            transaction_cost=transaction_cost,
+            done=self._index >= len(self._price_frames) - 1,
             equity=self._equity,
         )
 
 
 def backtest_strategy(
     strategy: TradingStrategy[MarketObservation, PortfolioAction],
-    observations: Iterable[MarketObservation],
+    price_frames: Iterable[MarketPriceFrame],
     *,
     initial_equity: float = 1.0,
+    transaction_cost_rate: float = 0.001,
 ) -> list[BacktestStep]:
-    world = MarketBacktestWorld(observations, initial_equity=initial_equity)
+    world = MarketBacktestWorld(
+        price_frames,
+        initial_equity=initial_equity,
+        transaction_cost_rate=transaction_cost_rate,
+    )
     observation = world.reset()
     if observation is None or not world.can_step():
         return []
@@ -131,6 +175,7 @@ def backtest_strategy(
                 equity=world_step.equity,
                 action=action,
                 reward=world_step.reward,
+                transaction_cost=world_step.transaction_cost,
                 observation=observation,
             )
         )
@@ -140,13 +185,13 @@ def backtest_strategy(
 
 
 def main() -> None:
-    observations = [
-        MarketObservation(prices={"BTC": 100.0, "ETH": 50.0}),
-        MarketObservation(prices={"BTC": 110.0, "ETH": 55.0}),
-        MarketObservation(prices={"BTC": 99.0, "ETH": 60.5}),
+    price_frames = [
+        MarketPriceFrame(prices={"BTC": 100.0, "ETH": 50.0}),
+        MarketPriceFrame(prices={"BTC": 110.0, "ETH": 55.0}),
+        MarketPriceFrame(prices={"BTC": 99.0, "ETH": 60.5}),
     ]
 
-    steps = backtest_strategy(EqualWeightLongOnlyStrategy(), observations)
+    steps = backtest_strategy(EqualWeightLongOnlyStrategy(), price_frames)
     for step in steps:
         print(step)
 
