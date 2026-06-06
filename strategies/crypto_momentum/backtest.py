@@ -29,7 +29,10 @@ class BacktestStep:
     timestamp: str
     target: TargetWeights
     reward: float
+    gross_reward: float
     transaction_cost: float
+    returns_by_symbol: dict[str, float]
+    gross_contribution_by_symbol: dict[str, float]
     equity: float
 
 
@@ -73,7 +76,7 @@ class DailyMarketBacktest:
         lookback_window = self._market_bars[
             self._index - self._lookback_days : self._index + 1
         ]
-        symbols = set.intersection(*(set(bar.closes) for bar in lookback_window))
+        symbols = sorted(set.intersection(*(set(bar.closes) for bar in lookback_window)))
         return MomentumDecisionInput(
             closes_by_symbol={
                 symbol: tuple(
@@ -87,16 +90,20 @@ class DailyMarketBacktest:
         )
 
     def step(self, target: TargetWeights) -> BacktestStep:
+        returns_by_symbol = self._returns_by_symbol()
         accounting_result = self._accounting.apply(
             target,
-            returns_by_symbol=self._returns_by_symbol(),
+            returns_by_symbol=returns_by_symbol,
         )
 
         step = BacktestStep(
             timestamp=self.timestamp(),
             target=target,
             reward=accounting_result.reward,
+            gross_reward=accounting_result.gross_reward,
             transaction_cost=accounting_result.transaction_cost,
+            returns_by_symbol=returns_by_symbol,
+            gross_contribution_by_symbol=accounting_result.gross_contribution_by_symbol,
             equity=accounting_result.equity,
         )
         self._index += 1
@@ -106,7 +113,7 @@ class DailyMarketBacktest:
         returns_by_symbol: dict[str, float] = {}
         current_bar = self._market_bars[self._index]
         next_bar = self._market_bars[self._index + 1]
-        symbols = set(current_bar.closes) & set(next_bar.closes)
+        symbols = sorted(set(current_bar.closes) & set(next_bar.closes))
         for symbol in symbols:
             current_close = current_bar.closes[symbol]
             next_close = next_bar.closes[symbol]

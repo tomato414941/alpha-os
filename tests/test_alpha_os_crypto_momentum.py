@@ -8,6 +8,7 @@ def test_crypto_momentum_runs_on_checked_in_data():
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
     from strategies.crypto_momentum.backtest import run_backtest
+    from strategies.crypto_momentum.contribution import run_symbol_contribution
     from strategies.crypto_momentum.data import load_daily_market_bars
     from strategies.crypto_momentum.robustness import run_robustness_check
     from strategies.crypto_momentum.strategy import (
@@ -39,3 +40,6 @@ def test_crypto_momentum_runs_on_checked_in_data():
 
     robustness_rows = run_robustness_check(market_bars=market_bars)
     assert robustness_rows
+
+    contribution_rows = run_symbol_contribution(market_bars=market_bars)
+    assert {row.symbol for row in contribution_rows} == {"BTCUSDT", "ETHUSDT"}

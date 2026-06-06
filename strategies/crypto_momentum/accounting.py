@@ -8,7 +8,9 @@ from strategies.crypto_momentum.strategy import TargetWeights
 @dataclass(frozen=True)
 class AccountingResult:
     reward: float
+    gross_reward: float
     transaction_cost: float
+    gross_contribution_by_symbol: dict[str, float]
     equity: float
 
 
@@ -41,6 +43,10 @@ class PortfolioAccounting:
             target.target_weights.get(symbol, 0.0) * symbol_return
             for symbol, symbol_return in returns_by_symbol.items()
         )
+        gross_contribution_by_symbol = {
+            symbol: target.target_weights.get(symbol, 0.0) * symbol_return
+            for symbol, symbol_return in returns_by_symbol.items()
+        }
         transaction_cost = (
             _turnover(self._current_weights, target.target_weights)
             * self._transaction_cost_rate
@@ -50,7 +56,9 @@ class PortfolioAccounting:
         self._current_weights = dict(target.target_weights)
         return AccountingResult(
             reward=reward,
+            gross_reward=gross_reward,
             transaction_cost=transaction_cost,
+            gross_contribution_by_symbol=gross_contribution_by_symbol,
             equity=self._equity,
         )
 

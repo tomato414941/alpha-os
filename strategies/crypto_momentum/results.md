@@ -279,10 +279,10 @@ mean_daily_turnover=0.458219
 
 variant=7d_momentum_30d_trend_skfolio_max_ratio
 steps=856
-total_return=0.217369
-sharpe=0.444666
-max_drawdown=-0.704496
-mean_daily_turnover=0.389676
+total_return=0.217615
+sharpe=0.444806
+max_drawdown=-0.704457
+mean_daily_turnover=0.389673
 ```
 
 ### 9 Symbols Without TON
@@ -353,3 +353,52 @@ over the full 10-symbol sample, but drawdown is still large. The next useful
 work is not more lookback tuning; it is understanding which symbols drive the
 losses and whether the strategy needs symbol selection, volatility control, or a
 smaller eligible universe.
+
+## Symbol Contribution Check
+
+Command:
+
+```text
+uv run python -m strategies.crypto_momentum.contribution --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT --variant 7d_momentum_30d_trend
+```
+
+Equal-weight 7/30 gross contribution:
+
+```text
+symbol,total_gross_contribution,mean_weight,active_days,max_weight
+ADAUSDT,-0.370563,0.035763,189,1.000000
+BNBUSDT,-0.231841,0.101788,313,1.000000
+TONUSDT,-0.181141,0.047334,123,1.000000
+LINKUSDT,-0.041047,0.050095,230,1.000000
+XRPUSDT,0.072666,0.062093,224,1.000000
+BTCUSDT,0.131538,0.094039,323,1.000000
+DOGEUSDT,0.154829,0.050683,241,1.000000
+AVAXUSDT,0.194583,0.056630,240,1.000000
+ETHUSDT,0.249768,0.061955,260,1.000000
+SOLUSDT,0.381354,0.064620,263,1.000000
+```
+
+Skfolio max-ratio 7/30 gross contribution:
+
+```text
+symbol,total_gross_contribution,mean_weight,active_days,max_weight
+ADAUSDT,-0.391299,0.012265,189,1.000000
+BNBUSDT,-0.329539,0.116156,313,1.000000
+TONUSDT,-0.312187,0.047678,123,1.000000
+LINKUSDT,-0.016474,0.035028,230,1.000000
+AVAXUSDT,0.077377,0.041496,240,1.000000
+SOLUSDT,0.190347,0.065136,263,1.000000
+BTCUSDT,0.212163,0.111722,323,1.000000
+ETHUSDT,0.226535,0.069873,260,1.000000
+DOGEUSDT,0.556496,0.052074,241,1.000000
+XRPUSDT,0.767777,0.073572,224,1.000000
+```
+
+Interpretation:
+
+The expanded-universe losses are not evenly distributed. `ADAUSDT`, `BNBUSDT`,
+and `TONUSDT` are the clearest negative contributors in both allocator variants.
+`SOLUSDT`, `ETHUSDT`, `DOGEUSDT`, and `XRPUSDT` contribute positively depending
+on the allocator. The `max_weight=1.0` values also show that the strategy can
+become fully concentrated in one active symbol on some days. The next useful
+change is to test a smaller eligible universe and/or add a concentration limit.

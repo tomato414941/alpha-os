@@ -71,6 +71,12 @@ For the expanded universe:
 uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT
 ```
 
+To inspect symbol-level gross contribution:
+
+```text
+uv run python -m strategies.crypto_momentum.contribution --dataset-dir strategies/crypto_momentum/market_data/binance_spot_daily --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT LINKUSDT AVAXUSDT TONUSDT --variant 7d_momentum_30d_trend
+```
+
 ## Current Variant
 
 - Compute each symbol's 7 day and 30 day close-to-close returns.
@@ -87,6 +93,7 @@ uv run python -m strategies.crypto_momentum.robustness --dataset-dir strategies/
 - `strategy.py`: concrete strategy and strategy-specific input/output shapes
 - `variants.py`: maintained local variant registry
 - `backtest.py`: local historical backtest path
+- `contribution.py`: symbol-level gross contribution analysis
 - `latest_target.py`: latest target weights from the available data
 - `results.md`: latest result notes
 - `paper_log.md`: manual paper decision notes
