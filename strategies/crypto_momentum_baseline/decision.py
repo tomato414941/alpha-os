@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from strategies.crypto_momentum_baseline.data import DailyClose, load_daily_closes
+from strategies.crypto_momentum_baseline.data import (
+    DailyMarketBar,
+    load_daily_market_bars,
+)
 from strategies.crypto_momentum_baseline.strategy import (
     MomentumDecisionInput,
     SevenDayMomentumStrategy,
@@ -20,14 +23,14 @@ class ManualPaperDecision:
 
 def latest_manual_paper_decision(
     *,
-    closes_by_symbol: dict[str, list[DailyClose]] | None = None,
+    market_bars: tuple[DailyMarketBar, ...] | None = None,
 ) -> ManualPaperDecision:
-    closes = closes_by_symbol if closes_by_symbol is not None else load_daily_closes()
-    timestamp = _latest_shared_timestamp(closes)
+    bars = market_bars if market_bars is not None else load_daily_market_bars()
+    latest_bar = bars[-1]
     decision_input = MomentumDecisionInput(
         closes_by_symbol={
-            symbol: tuple(row.close for row in symbol_closes[-8:])
-            for symbol, symbol_closes in closes.items()
+            symbol: tuple(bar.closes[symbol] for bar in bars[-8:])
+            for symbol in latest_bar.closes
         },
         current_weights={},
         equity=1.0,
@@ -36,16 +39,9 @@ def latest_manual_paper_decision(
     return ManualPaperDecision(
         strategy="crypto_momentum_baseline",
         mode="manual_paper",
-        timestamp=timestamp,
+        timestamp=latest_bar.timestamp,
         target=target,
     )
-
-
-def _latest_shared_timestamp(closes_by_symbol: dict[str, list[DailyClose]]) -> str:
-    timestamps = {symbol_closes[-1].timestamp for symbol_closes in closes_by_symbol.values()}
-    if len(timestamps) != 1:
-        raise ValueError("latest timestamps are not aligned")
-    return timestamps.pop()
 
 
 def main() -> None:

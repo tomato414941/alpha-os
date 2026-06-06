@@ -5,7 +5,10 @@ from dataclasses import dataclass
 from alpha_os.trading_strategy import TradingStrategy
 
 from strategies.crypto_momentum_baseline.accounting import PortfolioAccounting
-from strategies.crypto_momentum_baseline.data import DailyClose, load_daily_closes
+from strategies.crypto_momentum_baseline.data import (
+    DailyMarketBar,
+    load_daily_market_bars,
+)
 from strategies.crypto_momentum_baseline.metrics import (
     BacktestSummary,
     summarize_backtest,
@@ -32,17 +35,16 @@ class BacktestResult:
     summary: BacktestSummary
 
 
-class DailyCloseBacktest:
+class DailyMarketBacktest:
     def __init__(
         self,
-        closes_by_symbol: dict[str, list[DailyClose]],
+        market_bars: tuple[DailyMarketBar, ...],
         *,
         lookback_days: int = 7,
         initial_equity: float = 1.0,
         transaction_cost_rate: float = 0.001,
     ) -> None:
-        self._closes_by_symbol = closes_by_symbol
-        self._symbols = tuple(closes_by_symbol)
+        self._market_bars = market_bars
         self._lookback_days = lookback_days
         self._transaction_cost_rate = transaction_cost_rate
         self._index = lookback_days
@@ -58,21 +60,21 @@ class DailyCloseBacktest:
         return self._decision_input()
 
     def can_step(self) -> bool:
-        min_length = min(len(closes) for closes in self._closes_by_symbol.values())
-        return self._index < min_length - 1
+        return self._index < len(self._market_bars) - 1
 
     def timestamp(self) -> str:
-        first_symbol = self._symbols[0]
-        return self._closes_by_symbol[first_symbol][self._index].timestamp
+        return self._market_bars[self._index].timestamp
 
     def _decision_input(self) -> MomentumDecisionInput:
         return MomentumDecisionInput(
             closes_by_symbol={
                 symbol: tuple(
-                    row.close
-                    for row in closes[self._index - self._lookback_days : self._index + 1]
+                    bar.closes[symbol]
+                    for bar in self._market_bars[
+                        self._index - self._lookback_days : self._index + 1
+                    ]
                 )
-                for symbol, closes in self._closes_by_symbol.items()
+                for symbol in self._market_bars[self._index].closes
             },
             current_weights=self._accounting.current_weights,
             equity=self._accounting.equity,
@@ -96,9 +98,10 @@ class DailyCloseBacktest:
 
     def _returns_by_symbol(self) -> dict[str, float]:
         returns_by_symbol: dict[str, float] = {}
-        for symbol, closes in self._closes_by_symbol.items():
-            current_close = closes[self._index].close
-            next_close = closes[self._index + 1].close
+        current_bar = self._market_bars[self._index]
+        next_bar = self._market_bars[self._index + 1]
+        for symbol, current_close in current_bar.closes.items():
+            next_close = next_bar.closes[symbol]
             returns_by_symbol[symbol] = (
                 (next_close / current_close) - 1.0
                 if current_close > 0.0
@@ -109,14 +112,14 @@ class DailyCloseBacktest:
 
 def run_backtest(
     strategy: TradingStrategy[MomentumDecisionInput, TargetWeights],
-    closes_by_symbol: dict[str, list[DailyClose]],
+    market_bars: tuple[DailyMarketBar, ...],
     *,
     lookback_days: int = 7,
     initial_equity: float = 1.0,
     transaction_cost_rate: float = 0.001,
 ) -> BacktestResult:
-    backtest = DailyCloseBacktest(
-        closes_by_symbol,
+    backtest = DailyMarketBacktest(
+        market_bars,
         lookback_days=lookback_days,
         initial_equity=initial_equity,
         transaction_cost_rate=transaction_cost_rate,
@@ -155,7 +158,7 @@ def _summarize(
 
 
 def main() -> None:
-    result = run_backtest(SevenDayMomentumStrategy(), load_daily_closes())
+    result = run_backtest(SevenDayMomentumStrategy(), load_daily_market_bars())
     print(f"steps={len(result.steps)}")
     print(f"total_return={result.summary.total_return:.6f}")
     print(f"annualized_return={result.summary.annualized_return:.6f}")

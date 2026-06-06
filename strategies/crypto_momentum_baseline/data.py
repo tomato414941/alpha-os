@@ -19,11 +19,17 @@ class DailyClose:
     close: float
 
 
-def load_daily_closes(
+@dataclass(frozen=True)
+class DailyMarketBar:
+    timestamp: str
+    closes: dict[str, float]
+
+
+def load_daily_market_bars(
     *,
     dataset_dir: Path = DATASET_DIR,
     symbols: tuple[str, ...] = ("BTCUSDT", "ETHUSDT"),
-) -> dict[str, list[DailyClose]]:
+) -> tuple[DailyMarketBar, ...]:
     closes_by_symbol: dict[str, list[DailyClose]] = {}
     for symbol in symbols:
         path = dataset_dir / f"{symbol}.csv"
@@ -36,4 +42,29 @@ def load_daily_closes(
                 )
                 for row in reader
             ]
-    return closes_by_symbol
+    return align_daily_closes(closes_by_symbol)
+
+
+def align_daily_closes(
+    closes_by_symbol: dict[str, list[DailyClose]],
+) -> tuple[DailyMarketBar, ...]:
+    symbol_closes_by_timestamp = {
+        symbol: {row.timestamp: row.close for row in closes}
+        for symbol, closes in closes_by_symbol.items()
+    }
+    shared_timestamps = set.intersection(
+        *(
+            set(closes_by_timestamp)
+            for closes_by_timestamp in symbol_closes_by_timestamp.values()
+        )
+    )
+    return tuple(
+        DailyMarketBar(
+            timestamp=timestamp,
+            closes={
+                symbol: closes_by_timestamp[timestamp]
+                for symbol, closes_by_timestamp in symbol_closes_by_timestamp.items()
+            },
+        )
+        for timestamp in sorted(shared_timestamps)
+    )
