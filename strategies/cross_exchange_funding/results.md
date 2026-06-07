@@ -531,15 +531,14 @@ candidates deserve monitoring.
 
 | asset | action | scenario | long | short | OKX 8h | HL 8h | OKX 24h | HL 24h | gross 8h | gross 24h | cost | net 8h | net 24h | capacity |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| BABY | thin_or_unstable_watch | very_low_fee | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00266999 | -0.00168952 | 0.00027142 | 18182.63949194 |
-| BTC | paper_8h_candidate | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00009777 | 0.00001276 | 0.00023382 | 422448.80855333 |
-| BABY | thin_or_unstable_watch | low_fee | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00278999 | -0.00180952 | 0.00015142 | 18182.63949194 |
-| ZEC | fee_dependent_24h_monitor | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00027519 | 0.00082556 | 0.00070886 | -0.00043367 | 0.00011670 | 106210.05564167 |
-| BTC | paper_8h_candidate | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00021777 | -0.00010724 | 0.00011382 | 422448.80855333 |
-| ZEC | fee_dependent_24h_monitor | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00027519 | 0.00082556 | 0.00082886 | -0.00055367 | -0.00000330 | 106210.05564167 |
-| BABY | thin_or_unstable_watch | one_bps_each | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00298999 | -0.00200952 | -0.00004858 | 18182.63949194 |
-| BTC | paper_8h_candidate | one_bps_each | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00041777 | -0.00030724 | -0.00008618 | 422448.80855333 |
-| JTO | active_24h_monitor | very_low_fee | OkxSwap | HlPerp | 2 | 8 | 6 | 24 | 0.00023813 | 0.00071440 | 0.00158570 | -0.00134757 | -0.00087130 | 54543.56750198 |
+| BTC | paper_8h_candidate | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00010582 | 0.00031747 | 0.00009777 | 0.00000805 | 0.00021970 | 422448.80855333 |
+| BTC | paper_8h_candidate | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00010582 | 0.00031747 | 0.00021777 | -0.00011195 | 0.00009970 | 422448.80855333 |
+| ZEC | fee_dependent_24h_monitor | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00024083 | 0.00072249 | 0.00070886 | -0.00046803 | 0.00001363 | 106210.05564167 |
+| BTC | paper_8h_candidate | one_bps_each | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00010582 | 0.00031747 | 0.00041777 | -0.00031195 | -0.00010030 | 422448.80855333 |
+| ZEC | fee_dependent_24h_monitor | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00024083 | 0.00072249 | 0.00082886 | -0.00058803 | -0.00010637 | 106210.05564167 |
+| ZEC | fee_dependent_24h_monitor | one_bps_each | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00024083 | 0.00072249 | 0.00102886 | -0.00078803 | -0.00030637 | 106210.05564167 |
+| JTO | active_24h_monitor | very_low_fee | OkxSwap | HlPerp | 2 | 8 | 6 | 24 | 0.00005877 | 0.00017631 | 0.00158570 | -0.00152693 | -0.00140939 | 54543.56750198 |
+| BABY | thin_or_unstable_watch | very_low_fee | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00036862 | 0.00110587 | 0.00266999 | -0.00230137 | -0.00156412 | 18182.63949194 |
 
 Interpretation:
 
@@ -547,9 +546,8 @@ Interpretation:
   assumptions.
 - JTO should be downgraded despite the earlier smooth proxy. Once actual event
   counts are used, it is negative even under very-low-fee assumptions.
-- ZEC is barely positive only under very-low fees and 24h event counting.
-- BABY has positive 24h event-window score under low fees, but it remains a
-  thin watch item because capacity and slippage are weak.
+- ZEC is barely positive only under very-low fees in this event-window snapshot.
+- BABY is negative after event-window cost in this refreshed snapshot.
 - The practical next step is no longer broad ranking. It is fee/maker-fill
   evidence for BTC and longer event-window monitoring for BTC/ZEC/BABY.
 
@@ -566,17 +564,16 @@ smooth execution-cost triage when the two disagree.
 
 | asset | event action | previous action | long | short | capacity | very-low 8h | very-low 24h | low-fee 24h | one-bps 24h | max slippage bps |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| BTC | paper_8h_candidate | paper_8h_candidate | OkxSwap | HlPerp | 422448.80855333 | 0.00001276 | 0.00023382 | 0.00011382 | -0.00008618 | 0.08887218 |
-| ZEC | very_low_fee_24h_watch | fee_dependent_24h_monitor | OkxSwap | HlPerp | 106210.05564167 | -0.00043367 | 0.00011670 | -0.00000330 | -0.00020330 | 3.14430447 |
-| BABY | thin_or_unstable_watch | thin_or_unstable_watch | HlPerp | OkxSwap | 18182.63949194 | -0.00168952 | 0.00027142 | 0.00015142 | -0.00004858 | 12.94997144 |
-| JTO | drop_for_now | active_24h_monitor | OkxSwap | HlPerp | 54543.56750198 | -0.00134757 | -0.00087130 | -0.00099130 | -0.00119130 | 7.52849755 |
+| BTC | paper_8h_candidate | paper_8h_candidate | OkxSwap | HlPerp | 422448.80855333 | 0.00000805 | 0.00021970 | 0.00009970 | -0.00010030 | 0.08887218 |
+| ZEC | very_low_fee_24h_watch | fee_dependent_24h_monitor | OkxSwap | HlPerp | 106210.05564167 | -0.00046803 | 0.00001363 | -0.00010637 | -0.00030637 | 3.14430447 |
+| JTO | drop_for_now | active_24h_monitor | OkxSwap | HlPerp | 54543.56750198 | -0.00152693 | -0.00140939 | -0.00152939 | -0.00172939 | 7.52849755 |
+| BABY | drop_for_now | thin_or_unstable_watch | HlPerp | OkxSwap | 18182.63949194 | -0.00230137 | -0.00156412 | -0.00168412 | -0.00188412 | 12.94997144 |
 
 Interpretation:
 
 - BTC is still the only 8h paper candidate, but it remains fee-sensitive.
 - ZEC is downgraded from fee-dependent 24h monitor to very-low-fee watch.
-- BABY stays watch-only because the edge is paired with weak capacity and high
-  slippage.
+- BABY is dropped in the refreshed event-window snapshot.
 - JTO is dropped for now. The smooth proxy promoted it, but actual funding
   events make the current window negative.
 
@@ -655,3 +652,37 @@ Interpretation:
   fee-dependent.
 - The next execution proof should test longer windows and one-leg-cross /
   one-leg-maker variants, not only pure maker-maker entry.
+
+## OKX-Hyperliquid Execution Mode Score
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score --assets BTC ZEC
+```
+
+This compares maker/cross execution modes against the event-window funding edge.
+Maker rebates and real queue position are not modeled.
+
+| asset | scenario | mode | gross 8h | gross 24h | entry slippage bps | cost | net 8h | net 24h | both touch | OKX only | HL only | capacity |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ZEC | very_low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.00008000 | 0.00016083 | 0.00064249 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
+| ZEC | very_low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12340956 | 0.00010468 | 0.00013615 | 0.00061781 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
+| ZEC | low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.00020000 | 0.00004083 | 0.00052249 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
+| ZEC | low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12340956 | 0.00022468 | 0.00001615 | 0.00049781 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
+| BTC | very_low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.00008000 | 0.00002582 | 0.00023747 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
+| BTC | very_low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00809646 | 0.00008162 | 0.00002420 | 0.00023585 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
+| BTC | low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.00020000 | -0.00009418 | 0.00011747 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
+| BTC | low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00809646 | 0.00020162 | -0.00009580 | 0.00011585 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
+
+Interpretation:
+
+- BTC still has the cleanest capacity, but its 8h edge survives only under
+  very-low fees. `okx_cross_hl_maker` barely changes the score because OKX
+  taker slippage is tiny in this sample.
+- BTC pure maker-maker remains execution-fragile: pair both-touch was 0% in the
+  recent maker-touch probe.
+- ZEC has stronger 24h room and, in this refreshed current-book score, can
+  tolerate `okx_cross_hl_maker` much better than `okx_maker_hl_cross`.
+- For both BTC and ZEC, crossing the OKX leg while waiting as maker on
+  Hyperliquid is the least damaging one-leg-cross mode in this sample.
