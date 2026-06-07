@@ -292,6 +292,24 @@ def _news_social_row(root: Path) -> ExplorationRow:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    monitor_path = (
+        root / "prediction_markets" / "current_polymarket_microstructure_monitor_summary.csv"
+    )
+    best_monitor = _best_polymarket_monitor_row(monitor_path)
+    if best_monitor:
+        signal = (
+            f"{best_monitor.get('action', '')}: {best_monitor.get('question', '')}, "
+            f"obs={best_monitor.get('observations', '')}, "
+            f"score={best_monitor.get('mean_score', '')}, "
+            f"spread={best_monitor.get('mean_spread', '')}"
+        )
+        return ExplorationRow(
+            lane="prediction_markets",
+            status="short_window_microstructure_monitor",
+            strongest_current_signal=signal,
+            main_gap="event probability and adverse selection are not modeled",
+            next_step="join top markets to external event models and CLOB depth checks",
+        )
     path = root / "prediction_markets" / "current_polymarket_microstructure.csv"
     best = _best_numeric_row(path, key="score")
     signal = "not run yet"
@@ -432,6 +450,24 @@ def _best_crowding_monitor_row(path: Path) -> dict[str, str] | None:
             float(row.get("mean_score") or "0"),
             float(row.get("min_score") or "0"),
             abs(float(row.get("mean_annualized_funding") or "0")),
+        ),
+    )
+
+
+def _best_polymarket_monitor_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            int(row.get("observations") or "0"),
+            float(row.get("mean_score") or "0"),
+            float(row.get("mean_volume_24h") or "0"),
+            float(row.get("mean_liquidity") or "0"),
         ),
     )
 

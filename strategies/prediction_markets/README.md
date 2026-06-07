@@ -9,6 +9,7 @@ orders and does not require authentication.
 
 ```bash
 uv run python -m strategies.prediction_markets.current_polymarket_microstructure
+uv run python -m strategies.prediction_markets.current_polymarket_microstructure_monitor
 ```
 
 ## Current Status

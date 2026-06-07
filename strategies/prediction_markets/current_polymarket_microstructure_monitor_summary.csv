@@ -1,0 +1,23 @@
+market_id,question,action,observations,mean_score,min_score,mean_spread,mean_midpoint,mean_one_day_price_change,mean_volume_24h,mean_liquidity
+2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,5,22.61383334,22.61383334,0.010000,0.995000,0.675000,238892.477685,62744.528300
+2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,5,20.58410964,20.58410964,0.001000,0.999500,0.484500,3735928.578737,228390.787230
+2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,5,20.27252916,20.27252916,0.040000,0.850000,0.570000,241579.381850,20713.708400
+2445210,Bitcoin Up or Down on June 7?,information_flow_watch,5,19.11914834,19.11914834,0.001000,0.989500,0.494500,285041.076808,66470.114430
+2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,5,15.42662318,15.42662318,0.010000,0.995000,0.315000,216577.211981,85705.902100
+2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,5,14.12767796,14.12767796,0.001000,0.996500,0.261500,208737.363965,27637.077670
+2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,5,11.86473286,11.86473286,0.180000,0.150000,-0.200000,507074.899139,12161.452800
+1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,5,11.42701683,11.42701683,0.010000,0.145000,-0.060000,661716.044182,399051.345600
+2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,5,11.28209491,11.28209491,0.040000,0.660000,0.000000,1259623.340902,36602.443300
+2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,5,11.10195529,11.10195529,0.010000,0.055000,-0.020000,1009925.844027,859941.268900
+629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,5,11.07055890,11.07055890,0.002000,0.007000,-0.023500,521769.998228,3440679.232240
+947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,5,10.96951775,10.96951775,0.002000,0.331000,-0.052500,568574.048330,150283.297940
+947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,5,10.92238460,10.92238460,0.010000,0.665000,0.050000,552363.160444,181508.817400
+2296152,Israel closes its airspace by June 15?,information_flow_watch,5,10.81234249,10.81234249,0.020000,0.150000,0.085000,207331.839355,51859.868200
+2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,5,10.80902633,10.80902633,0.010000,0.295000,-0.050000,333009.980716,301245.612600
+2402159,Boston Red Sox vs. New York Yankees,market_making_watch,5,10.78594917,10.78594917,0.070000,0.395000,-0.080000,551181.713956,6335.162200
+2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,5,10.75289745,10.75289745,0.065000,0.886500,0.381500,402061.750917,27875.303710
+1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,5,10.62756156,10.62756156,0.037000,0.780500,0.000000,399817.477018,26916.425230
+1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,5,10.46961242,10.46961242,0.010000,0.125000,-0.030000,247513.048579,577027.642900
+2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,5,10.38308699,10.38308699,0.001000,0.999500,0.059000,215235.028746,105431.243470
+1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,5,9.50291122,9.50291122,0.008000,0.035000,0.029500,840870.762991,1071.241090
+1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,5,9.35439951,9.35439951,0.025000,0.029500,0.022500,500710.105970,2635.177490
