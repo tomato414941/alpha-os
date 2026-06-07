@@ -79,6 +79,13 @@ PROBE_TARGETS = (
         url="https://api.hyperliquid.xyz/info",
         json_body={"type": "meta"},
     ),
+    ProbeTarget(
+        category="cross_exchange",
+        name="hyperliquid_predicted_fundings",
+        method="POST",
+        url="https://api.hyperliquid.xyz/info",
+        json_body={"type": "predictedFundings"},
+    ),
 )
 
 
@@ -158,6 +165,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current DeFi yield pool data path is available"
     if target.category == "perp_dex":
         return "perp DEX market metadata path is available"
+    if target.category == "cross_exchange":
+        return "cross-exchange predicted funding path is available"
     if target.category == "exchange":
         return "exchange product discovery path is available"
     return f"available with status {status_code}"

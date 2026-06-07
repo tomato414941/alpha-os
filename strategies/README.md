@@ -34,6 +34,8 @@ Promote code to the library only after multiple strategies need the same shape.
   - mixed ETF and crypto daily close rotation candidates
 - `crypto_market_structure/`
   - crypto futures funding, premium, taker-flow, and volume diagnostics
+- `cross_exchange_funding/`
+  - current predicted funding spread screens across venues
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
 - `opportunity_map.md`
