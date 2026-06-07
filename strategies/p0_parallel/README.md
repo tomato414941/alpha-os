@@ -19,7 +19,7 @@ uv run python -m strategies.p0_parallel.paper_trade_ticket
 
 - liquidation/OI/funding data reachability
 - multi-venue funding/basis data reachability
-- Binance USD-M metrics and premium-index history first label
+- Binance USD-M metrics, premium-index, and funding-rate history first label
 - L2 fill/adverse-selection first burst
 - paper/manual trade-ticket feasibility
 - attention/liquidity inputs through existing stablecoin and sentiment probes

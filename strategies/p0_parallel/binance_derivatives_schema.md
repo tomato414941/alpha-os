@@ -15,3 +15,9 @@ Date: `2024-01-01`
 - URL: `https://data.binance.vision/data/futures/um/daily/premiumIndexKlines/BTCUSDT/1m/BTCUSDT-1m-2024-01-01.zip`
 - Header: `['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_volume', 'count', 'taker_buy_volume', 'taker_buy_quote_volume', 'ignore']`
 - First row: `['1704067200000', '0.00075030', '0.00090957', '0.00059476', '0.00089825', '0', '1704067259999', '0', '12', '0', '0', '0']`
+
+## Funding Rate
+
+- URL: `https://data.binance.vision/data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2024-01.zip`
+- Header: `['calc_time', 'funding_interval_hours', 'last_funding_rate']`
+- First row: `['1704067200000', '8', '0.00037409']`

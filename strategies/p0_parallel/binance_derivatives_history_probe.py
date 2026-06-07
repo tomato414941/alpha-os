@@ -14,6 +14,7 @@ import requests
 
 
 BINANCE_UM_DAILY_URL = "https://data.binance.vision/data/futures/um/daily"
+BINANCE_UM_MONTHLY_URL = "https://data.binance.vision/data/futures/um/monthly"
 DEFAULT_SYMBOLS = (
     "BTCUSDT",
     "ETHUSDT",
@@ -48,15 +49,26 @@ class PremiumMinuteRow:
 
 
 @dataclass(frozen=True)
+class FundingRateRow:
+    timestamp: str
+    symbol: str
+    funding_interval_hours: float
+    last_funding_rate: float
+
+
+@dataclass(frozen=True)
 class DerivativesDaySummary:
     date: str
     symbol: str
     metrics_rows: int
     premium_rows: int
+    funding_rate_rows: int
     close: float
     oi_value_change: float
     next_return: float
     mean_open_interest_value: float
+    mean_funding_rate: float
+    sum_funding_rate: float
     mean_count_top_long_short_ratio: float
     mean_sum_top_long_short_ratio: float
     mean_count_long_short_ratio: float
@@ -90,7 +102,26 @@ def inspect_binance_derivatives_history(
     )
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         partial_rows = tuple(executor.map(lambda task: _fetch_partial_row(*task), tasks))
-    return _build_labeled_summaries(tuple(partial_rows))
+    funding_rows = _fetch_daily_funding_features(
+        symbols=symbols,
+        start_date=start_date,
+        days=days,
+    )
+    enriched_rows = tuple(
+        {
+            **row,
+            **funding_rows.get(
+                (str(row["symbol"]), str(row["date"])),
+                {
+                    "funding_rate_rows": 0,
+                    "mean_funding_rate": 0.0,
+                    "sum_funding_rate": 0.0,
+                },
+            ),
+        }
+        for row in partial_rows
+    )
+    return _build_labeled_summaries(enriched_rows)
 
 
 def write_derivatives_history_summaries(
@@ -107,10 +138,13 @@ def write_derivatives_history_summaries(
                 "symbol",
                 "metrics_rows",
                 "premium_rows",
+                "funding_rate_rows",
                 "close",
                 "oi_value_change",
                 "next_return",
                 "mean_open_interest_value",
+                "mean_funding_rate",
+                "sum_funding_rate",
                 "mean_count_top_long_short_ratio",
                 "mean_sum_top_long_short_ratio",
                 "mean_count_long_short_ratio",
@@ -126,10 +160,13 @@ def write_derivatives_history_summaries(
                     summary.symbol,
                     summary.metrics_rows,
                     summary.premium_rows,
+                    summary.funding_rate_rows,
                     f"{summary.close:.8f}",
                     f"{summary.oi_value_change:.8f}",
                     f"{summary.next_return:.12f}",
                     f"{summary.mean_open_interest_value:.8f}",
+                    f"{summary.mean_funding_rate:.12f}",
+                    f"{summary.sum_funding_rate:.12f}",
                     f"{summary.mean_count_top_long_short_ratio:.8f}",
                     f"{summary.mean_sum_top_long_short_ratio:.8f}",
                     f"{summary.mean_count_long_short_ratio:.8f}",
@@ -150,6 +187,8 @@ def summarize_derivatives_signals(
         for feature in (
             "mean_premium_close",
             "max_abs_premium_close",
+            "mean_funding_rate",
+            "sum_funding_rate",
             "oi_value_change",
             "mean_count_top_long_short_ratio",
             "mean_sum_top_long_short_ratio",
@@ -202,6 +241,7 @@ def write_schema_sample(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_payload = _download_zip_csv(_metrics_url(symbol, day))
     premium_payload = _download_zip_csv(_premium_url(symbol, day))
+    funding_payload = _download_zip_csv(_funding_rate_monthly_url(symbol, day))
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# Binance Derivatives History Schema\n\n")
         handle.write(f"Symbol: `{symbol}`\n\n")
@@ -214,6 +254,10 @@ def write_schema_sample(
         handle.write(f"- URL: `{_premium_url(symbol, day)}`\n")
         handle.write(f"- Header: `{premium_payload[0] if premium_payload else ()}`\n")
         handle.write(f"- First row: `{premium_payload[1] if len(premium_payload) > 1 else ()}`\n")
+        handle.write("\n## Funding Rate\n\n")
+        handle.write(f"- URL: `{_funding_rate_monthly_url(symbol, day)}`\n")
+        handle.write(f"- Header: `{funding_payload[0] if funding_payload else ()}`\n")
+        handle.write(f"- First row: `{funding_payload[1] if len(funding_payload) > 1 else ()}`\n")
     return output_path
 
 
@@ -250,6 +294,22 @@ def _fetch_premium_rows(symbol: str, day: date) -> tuple[PremiumMinuteRow, ...]:
                 high=float(item[2]),
                 low=float(item[3]),
                 close=float(item[4]),
+            )
+        )
+    return tuple(rows)
+
+
+def _fetch_funding_rate_rows(symbol: str, month: date) -> tuple[FundingRateRow, ...]:
+    rows = []
+    for item in _download_zip_csv(_funding_rate_monthly_url(symbol, month)):
+        if not item or item[0] == "calc_time":
+            continue
+        rows.append(
+            FundingRateRow(
+                timestamp=_ms_to_timestamp(int(item[0])),
+                symbol=symbol,
+                funding_interval_hours=float(item[1]),
+                last_funding_rate=float(item[2]),
             )
         )
     return tuple(rows)
@@ -296,6 +356,30 @@ def _fetch_partial_row(symbol: str, day: date) -> dict[str, object]:
     }
 
 
+def _fetch_daily_funding_features(
+    *,
+    symbols: tuple[str, ...],
+    start_date: date,
+    days: int,
+) -> dict[tuple[str, str], dict[str, float | int]]:
+    needed_days = tuple(start_date + timedelta(days=offset) for offset in range(days))
+    months = tuple(sorted({date(day.year, day.month, 1) for day in needed_days}))
+    by_day: dict[tuple[str, str], list[FundingRateRow]] = {}
+    for symbol in symbols:
+        for month in months:
+            for row in _fetch_funding_rate_rows(symbol, month):
+                row_day = datetime.fromisoformat(row.timestamp).date().isoformat()
+                by_day.setdefault((symbol, row_day), []).append(row)
+    return {
+        key: {
+            "funding_rate_rows": len(rows),
+            "mean_funding_rate": _mean(row.last_funding_rate for row in rows),
+            "sum_funding_rate": sum(row.last_funding_rate for row in rows),
+        }
+        for key, rows in by_day.items()
+    }
+
+
 def _build_labeled_summaries(
     partial_rows: tuple[dict[str, object], ...],
 ) -> tuple[DerivativesDaySummary, ...]:
@@ -321,6 +405,7 @@ def _build_labeled_summaries(
                     symbol=str(row["symbol"]),
                     metrics_rows=int(row["metrics_rows"]),
                     premium_rows=int(row["premium_rows"]),
+                    funding_rate_rows=int(row["funding_rate_rows"]),
                     close=close,
                     oi_value_change=(
                         (mean_oi_value / previous_oi_value) - 1.0
@@ -333,6 +418,8 @@ def _build_labeled_summaries(
                         else 0.0
                     ),
                     mean_open_interest_value=mean_oi_value,
+                    mean_funding_rate=float(row["mean_funding_rate"]),
+                    sum_funding_rate=float(row["sum_funding_rate"]),
                     mean_count_top_long_short_ratio=float(
                         row["mean_count_top_long_short_ratio"]
                     ),
@@ -432,6 +519,13 @@ def _daily_kline_url(symbol: str, day: date) -> str:
     return f"{BINANCE_UM_DAILY_URL}/klines/{symbol}/1d/{symbol}-1d-{day:%Y-%m-%d}.zip"
 
 
+def _funding_rate_monthly_url(symbol: str, month: date) -> str:
+    return (
+        f"{BINANCE_UM_MONTHLY_URL}/fundingRate/{symbol}/"
+        f"{symbol}-fundingRate-{month:%Y-%m}.zip"
+    )
+
+
 def _mean(values: object) -> float:
     items = tuple(values)
     return mean(items) if items else 0.0
@@ -495,9 +589,11 @@ def main() -> None:
             summary.symbol,
             f"metrics={summary.metrics_rows}",
             f"premium={summary.premium_rows}",
+            f"funding={summary.funding_rate_rows}",
             f"next={summary.next_return:.6f}",
             f"oi_change={summary.oi_value_change:.6f}",
             f"oi_value={summary.mean_open_interest_value:.2f}",
+            f"funding_sum={summary.sum_funding_rate:.8f}",
             f"premium={summary.mean_premium_close:.8f}",
         )
     for signal_summary in signal_summaries:

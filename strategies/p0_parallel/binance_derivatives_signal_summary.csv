@@ -1,6 +1,8 @@
 feature,observations,correlation_to_next_return,low_bucket_mean_next_return,low_bucket_hit_rate,high_bucket_mean_next_return,high_bucket_hit_rate
 mean_premium_close,203,-0.30742991,0.01053939,0.58823529,-0.01329606,0.49019608
 max_abs_premium_close,203,0.15755108,-0.00570738,0.39215686,-0.00163984,0.50980392
+mean_funding_rate,203,-0.29359286,-0.00068842,0.47802198,-0.00361763,0.46524064
+sum_funding_rate,203,-0.29359286,-0.00068842,0.47802198,-0.00361763,0.46524064
 oi_value_change,203,-0.15077742,-0.00133433,0.43137255,-0.01287688,0.45098039
 mean_count_top_long_short_ratio,203,-0.08770554,-0.00109412,0.49019608,-0.00443096,0.43137255
 mean_sum_top_long_short_ratio,203,-0.10089121,0.00164725,0.54901961,-0.00657459,0.43137255

@@ -9,6 +9,7 @@ first derivatives-history screen:
 
 - data reachability checks across derivatives, funding, L2, and attention/liquidity
 - 30-day, seven-symbol Binance derivatives history screen
+- funding-rate history added to the same labeled derivatives table
 - short Hyperliquid L2 burst for a first adverse-selection label
 - paper/manual ticket for the most feasible current funding-spread candidate
 
@@ -61,6 +62,7 @@ Sample:
 - window: 2024-01-01 through 2024-01-30
 - metrics rows: 288 per symbol/day
 - premium rows: 1440 per symbol/day
+- funding rows: 3 per symbol/day
 - labeled observations: 203, excluding the final day per symbol with no
   next-day return
 
@@ -72,6 +74,7 @@ Schema confirmed:
   `sum_taker_long_short_vol_ratio`
 - premium index klines: standard 1m kline fields where `close` is the premium
   index close
+- funding rate: `calc_time`, `funding_interval_hours`, `last_funding_rate`
 
 First signal summary:
 
@@ -79,6 +82,8 @@ First signal summary:
 | --- | ---: | ---: | ---: | ---: | ---: |
 | mean_premium_close | 203 | -0.30742991 | 0.01053939 | -0.01329606 | 0.49019608 |
 | max_abs_premium_close | 203 | 0.15755108 | -0.00570738 | -0.00163984 | 0.50980392 |
+| mean_funding_rate | 203 | -0.29359286 | -0.00068842 | -0.00361763 | 0.46524064 |
+| sum_funding_rate | 203 | -0.29359286 | -0.00068842 | -0.00361763 | 0.46524064 |
 | oi_value_change | 203 | -0.15077742 | -0.00133433 | -0.01287688 | 0.45098039 |
 | mean_count_top_long_short_ratio | 203 | -0.08770554 | -0.00109412 | -0.00443096 | 0.43137255 |
 | mean_sum_top_long_short_ratio | 203 | -0.10089121 | 0.00164725 | -0.00657459 | 0.43137255 |
@@ -88,8 +93,10 @@ First signal summary:
 This is still weak evidence because the window is only one month and the label
 is only next-day return. It is more useful than the first 14-day pass because it
 starts ranking candidates across more symbols: mean premium remains negatively
-associated with next-day return, OI value change is also weakly negative, and
-the initial taker long/short signal mostly disappears.
+associated with next-day return, daily funding is similarly negative, OI value
+change is also weakly negative, and the initial taker long/short signal mostly
+disappears. Funding here is a crowding/reversal feature against next-day return,
+not yet a venue-specific carry PnL test.
 
 ## Paper Ticket
 
@@ -108,8 +115,9 @@ margin, and risk limits, then the lane is not operational yet.
 
 ## Next Parallel Step
 
-- Add funding rate history to the same labeled table.
 - Extend the Binance derivatives screen beyond one month and add more symbols.
+- Convert funding into a venue-specific carry PnL test instead of only a
+  next-day return feature.
 - Extend L2 burst from seconds to repeated scheduled snapshots.
 - Pair Hyperliquid recent trades with each L2 snapshot.
 - Convert the MANTA ticket into explicit fee and notional assumptions, then
