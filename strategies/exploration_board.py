@@ -99,6 +99,21 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
 
 
 def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
+    monitor_path = root / "cross_exchange_funding" / "current_dislocation_monitor_summary.csv"
+    best_monitor = _best_monitor_row(monitor_path)
+    if best_monitor:
+        return ExplorationRow(
+            lane="cross_exchange_funding",
+            status="short_window_monitor",
+            strongest_current_signal=(
+                f"{best_monitor.get('asset', '')}: {best_monitor.get('action', '')} "
+                f"{best_monitor.get('long_venue', '')}->{best_monitor.get('short_venue', '')}, "
+                f"obs={best_monitor.get('observations', '')}, "
+                f"mean_net24={best_monitor.get('mean_net_24h_proxy', '')}"
+            ),
+            main_gap="short-window persistence exists, but real fees, fills, and margin are unvalidated",
+            next_step="validate STABLE fee/fill/margin assumptions and run longer scheduled monitoring",
+        )
     watchlist_path = root / "cross_exchange_funding" / "current_dislocation_watchlist.csv"
     best_watch = _best_watchlist_row(watchlist_path)
     if best_watch:
@@ -303,6 +318,30 @@ def _best_watchlist_row(path: Path) -> dict[str, str] | None:
             float(row.get("net_24h_proxy") or "0"),
             float(row.get("annualized_edge") or "0"),
             float(row.get("liquidity_proxy") or "0"),
+        ),
+    )
+
+
+def _best_monitor_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    priority = {
+        "paper_8h_monitor": 4,
+        "paper_24h_monitor": 3,
+        "current_funding_monitor": 2,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            priority.get(row.get("action", ""), -1),
+            int(row.get("observations") or "0"),
+            float(row.get("positive_net_24h_rate") or "0"),
+            float(row.get("mean_net_24h_proxy") or "0"),
+            float(row.get("mean_annualized_edge") or "0"),
         ),
     )
 

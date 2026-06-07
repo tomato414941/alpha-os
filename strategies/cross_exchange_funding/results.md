@@ -47,6 +47,45 @@ Interpretation:
 - The next useful test is repeated monitoring for `STABLE/SAGA/kNEIRO/SNX/AIXBT`
   instead of continuing to rely on stale BTC/ZEC promotion snapshots.
 
+## Current Dislocation Monitor
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.current_dislocation_monitor --samples 3 --delay-seconds 5
+```
+
+This repeats the current dislocation watchlist over a short window. It is a
+persistence check, not a trade instruction.
+
+Top summary rows:
+
+| source | action | asset | long | short | obs | mean edge | min edge | mean net 8h | mean net 24h | positive net24 | liquidity | friction |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| okx_hl_current | paper_24h_monitor | STABLE | OkxSwap | HlPerp | 3 | 2.008195 | 1.997650 | -0.001565 | 0.002103 | 1.000000 | 11833.20 | 0.003399 |
+| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 3 | 2.475677 | 2.471074 |  |  |  | 1183314.74 | 0.003300 |
+| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BybitPerp | 3 | 1.454044 | 1.447843 |  |  |  | 186344.40 | 0.002428 |
+| hl_single_venue | current_funding_monitor | SAGA | HlPerp | cash_or_spot_proxy | 3 | 1.331077 | 1.326578 |  |  |  | 186355.19 | 0.002914 |
+| predicted_cross_venue | current_funding_monitor | kNEIRO | HlPerp | BybitPerp | 3 | 1.235593 | 1.235062 |  |  |  | 294160.90 | 0.001451 |
+| hl_single_venue | current_funding_monitor | kNEIRO | HlPerp | cash_or_spot_proxy | 3 | 1.116639 | 1.114401 |  |  |  | 294160.90 | 0.001243 |
+| hl_single_venue | current_funding_monitor | SNX | HlPerp | cash_or_spot_proxy | 3 | 1.111456 | 1.104971 |  |  |  | 249083.18 | 0.002233 |
+| predicted_cross_venue | current_funding_monitor | SNX | HlPerp | BinPerp | 3 | 1.101985 | 1.097773 |  |  |  | 249031.52 | 0.002385 |
+| predicted_cross_venue | current_funding_monitor | AIXBT | HlPerp | BinPerp | 3 | 1.098454 | 1.093315 |  |  |  | 249251.65 | 0.002281 |
+| okx_hl_current | paper_24h_monitor | WLD | OkxSwap | HlPerp | 2 | 0.872362 | 0.870058 | -0.000313 | 0.001280 | 1.000000 | 486669.83 | 0.001110 |
+
+Interpretation:
+
+- `STABLE` persists across all three samples and remains the strongest current
+  executable monitor candidate.
+- OKX-Hyperliquid `STABLE` still fails the 8h proxy, but the 24h proxy stays
+  positive in all samples.
+- `WLD` appears as a secondary OKX-Hyperliquid 24h monitor, but only in two of
+  three top-watchlist samples.
+- `SAGA/kNEIRO/SNX/AIXBT` remain strong funding alerts, but their executable
+  hedge path is not proven from this environment.
+- The next gate is not another ranking screen. It is fee/fill/margin validation
+  for `STABLE`, plus longer scheduled monitoring.
+
 ## Current Funding Spread Snapshot
 
 The spread is normalized to an hourly rate before annualization. The intended

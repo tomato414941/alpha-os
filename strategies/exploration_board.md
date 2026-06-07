@@ -5,7 +5,7 @@ This board tracks broad profit-source exploration. It is not a ranking of deploy
 | lane | status | strongest current signal | main gap | next step |
 | --- | --- | --- | --- | --- |
 | crypto_market_structure | historical_dislocation | 2024 spot_perp_positive_funding_top_3_14d sharpe=9.1726039299; 2026_to_date best_total=-0.0052691774 | spot/perp carry did not persist after 2024 under the current rule | search current funding dislocations or regime filters before paper trading |
-| cross_exchange_funding | current_dislocation_monitor | STABLE: paper_24h_monitor OkxSwap->HlPerp, edge=1.98659907, net24=0.00177225 | current dislocation has not been persistence-tested with real fees and fills | monitor STABLE/SAGA/kNEIRO/SNX/AIXBT repeatedly before paper trading |
+| cross_exchange_funding | short_window_monitor | STABLE: paper_24h_monitor OkxSwap->HlPerp, obs=3, mean_net24=0.00210312 | short-window persistence exists, but real fees, fills, and margin are unvalidated | validate STABLE fee/fill/margin assumptions and run longer scheduled monitoring |
 | perp_market_map | current_snapshot | ZEC: ann_funding=-0.92283271, volume=328501311.63939953 | no history yet, so no persistence or PnL evidence | collect snapshots over time and test carry/crowding persistence |
 | event_flow | implemented_probe | top_20 imbalance mean_next_return=-0.0000414307, hit_rate=0.500000 | tiny sample and naive label; no order book or liquidation context | extend sample window and add liquidation/funding-time labels |
 | defi_yield | current_snapshot | Flare/mystic-finance-lending COREUSDT0: apy=13.660140, tvl=19655935.00 | risk, custody, exit liquidity, and APY decay not modeled | separate real yield from incentive yield and add operational risk checklist |
