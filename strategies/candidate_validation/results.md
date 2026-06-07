@@ -6,6 +6,8 @@ Data:
 - market data: Hyperliquid public candle snapshots
 - output: recent return and volume context for active candidates
 - forward label: elapsed monitor samples joined to subsequent Hyperliquid candle returns
+- L2 monitor: persistent visible-book imbalance candidates are included as
+  pending cross-lane candidates until their forward labels mature
 
 Run:
 
@@ -23,19 +25,25 @@ realized market behavior so screens do not stay detached from price and volume.
 
 | symbol | sources | close | 1h | 4h | 24h | vol24h | action | score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| WLD | cross_exchange_funding | 0.49185000 | 0.105355 | 0.171267 | 0.177943 | 121923655.90 | single_source_momentum_context | 34.098874 |
-| MEGA | perp_carry_reversion | 0.04627600 | 0.035118 | 0.040261 | 0.063792 | 24245736.00 | single_source_momentum_context | 20.524871 |
-| STABLE | cross_exchange_funding;perp_carry_reversion | 0.03366900 | -0.003463 | 0.001845 | 0.036256 | 35488188.00 | multi_source_watch | 20.438540 |
-| MON | perp_carry_reversion | 0.02226100 | -0.002822 | -0.023426 | 0.061817 | 111443620.00 | single_source_context | 16.453517 |
-| BABY | perp_carry_reversion | 0.01556600 | 0.011699 | -0.001668 | 0.045259 | 107875950.00 | single_source_context | 16.253271 |
-| AERO | attention_market_join;perp_carry_reversion | 0.32953000 | 0.006844 | -0.000879 | 0.040544 | 1217829.00 | multi_source_watch | 11.946201 |
+| WLD | cross_exchange_funding | 0.48702000 | -0.045714 | 0.144099 | 0.214695 | 143488865.00 | single_source_momentum_context | 26.776315 |
+| STABLE | cross_exchange_funding;perp_carry_reversion | 0.03440400 | 0.020981 | 0.032750 | 0.050568 | 36791971.00 | multi_source_momentum_context | 23.735608 |
+| MEGA | perp_carry_reversion | 0.04846500 | 0.032356 | 0.101552 | 0.101027 | 28396102.00 | single_source_momentum_context | 23.313251 |
+| ONDO | l2_imbalance_monitor | 0.34891000 | -0.008412 | 0.042487 | 0.068016 | 42801976.00 | single_source_momentum_context | 17.965574 |
+| XPL | l2_imbalance_monitor | 0.06878500 | -0.015247 | 0.022430 | 0.054225 | 105906498.00 | single_source_context | 17.646195 |
+| XLM | l2_imbalance_monitor | 0.20475000 | 0.008372 | 0.014216 | -0.033286 | 35764464.00 | single_source_context | 16.548051 |
+| BABY | perp_carry_reversion | 0.01563200 | 0.003982 | 0.018239 | 0.024579 | 104070325.00 | single_source_context | 16.310135 |
+| LIT | l2_imbalance_monitor | 1.39920000 | -0.003064 | 0.019825 | -0.047126 | 11228074.00 | single_source_context | 16.297631 |
+| SUI | l2_imbalance_monitor | 0.74630000 | -0.003804 | 0.015982 | 0.043338 | 44146290.20 | single_source_context | 16.179549 |
+| AERO | attention_market_join;perp_carry_reversion | 0.33075000 | -0.000332 | 0.014415 | 0.038364 | 1093933.00 | multi_source_watch | 11.847928 |
 
 Interpretation:
 
-- `WLD` has the strongest recent realized move among active Hyperliquid
-  candidates, but it is still single-source.
-- `STABLE` and `AERO` are more structurally interesting because they appear in
-  multiple research lanes.
+- `WLD`, `STABLE`, and `MEGA` still have the strongest current realized move
+  context among active candidates.
+- `ONDO`, `XPL`, `XLM`, `LIT`, and `SUI` are now visible because the L2
+  imbalance monitor showed persistent visible-book pressure.
+- `AERO` remains structurally interesting because attention and perp carry
+  reversion overlap, but its latest short price label is weak.
 - The next stronger test is forward labeling from signal timestamps, not only
   recent return context.
 
@@ -76,20 +84,23 @@ is a triage board, not a deployable strategy ranking.
 | WLD | 7.0571 | hl_candidate_label; okx_pressure; okx_liquidation | hl15=0.0197; okx_pressure15=0.0247; liq_cont15=0.0273 |  |  | first labels support follow-up |
 | MEGA | 2.8916 | hl_candidate_label | hl15=0.0178 |  |  | first labels support follow-up |
 | IP | 2.8166 | hl_candidate_label; okx_pressure | hl15=0.0160 | okx_pressure15=-0.0009 |  | mixed evidence; isolate which source is real |
+| BTC | 2.6072 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020 | okx_pressure15=-0.0021 | l2_imbalance15 | mixed evidence; isolate which source is real |
 | ALLO | 2.5965 | okx_pressure; okx_liquidation | liq_cont15=0.0198 | okx_pressure15=-0.0078 |  | mixed evidence; isolate which source is real |
 | XMR | 2.5530 | hl_candidate_label | hl15=0.0111 |  |  | first labels support follow-up |
 | HOME | 2.3356 | okx_pressure; okx_liquidation | okx_pressure15=0.0070 | liq_cont15=-0.0074 |  | mixed evidence; isolate which source is real |
 | H | 2.2846 | okx_pressure; okx_liquidation | liq_cont15=0.0131 | okx_pressure15=-0.0005 |  | mixed evidence; isolate which source is real |
+| SOL | 2.2834 | okx_pressure; okx_liquidation; l2_imbalance_monitor | okx_pressure15=0.0031; liq_cont15=0.0017 |  | l2_imbalance15 | first labels support follow-up |
 | ZORA | 2.2743 | hl_candidate_label | hl15=0.0055 |  |  | first labels support follow-up |
-| ZRO | 2.0173 | hl_candidate_label; okx_pressure | hl15=0.0013 | okx_pressure15=-0.0011 |  | mixed evidence; isolate which source is real |
+| ONDO | 2.0986 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020 | okx_pressure15=-0.0029 | l2_imbalance15 | mixed evidence; isolate which source is real |
 
 Interpretation:
 
 - `WLD` is now the cleanest current follow-up because HL forward label, OKX
   pressure label, and OKX liquidation continuation label all support it.
-- `IP` is still important, but the latest OKX pressure label is now negative.
-- `HOME`, `EDEN`, and `ALLO` remain interesting, but they are source-specific
-  and currently mixed.
+- `SOL` is the cleanest L2-added follow-up because existing OKX pressure and
+  liquidation labels are positive while the L2 label is still pending.
+- `BTC` and `ONDO` are important but mixed: L2 monitor is pending, while one of
+  the existing short labels is negative.
 
 ## Current Signal Family Review
 
@@ -105,6 +116,7 @@ signal is currently showing support, not only which asset is on top.
 | hl_candidate:perp_carry_reversion:short_carry_reversion_watch | 30 | 30 | 0.000858 | 0.433333 | 0.011059 | -0.005924 | 0.000000 | positive mean but weak hit rate |
 | okx_pressure:short_carry_watch | 45 | 45 | -0.001622 | 0.200000 | 0.008225 | -0.010693 | 0.000000 | not supported by first labels |
 | okx_pressure:short_carry_premium_watch | 13 | 13 | -0.002705 | 0.230769 | 0.009967 | -0.013383 | 0.000000 | not supported by first labels |
+| l2_imbalance:visible_book_imbalance | 23 | 0 |  |  |  |  | 0.000000 | waiting for elapsed labels |
 | okx_liquidation:long_liquidation_cascade_watch | 8 | 8 | -0.001233 | 0.375000 | 0.002599 | -0.007351 | 0.000000 | not supported by first labels |
 
 Interpretation:
@@ -113,4 +125,6 @@ Interpretation:
   17 covered labels, 0.88 hit rate, and positive mean 15m continuation.
 - `long_carry_discount_watch` also has initial support, but the average label
   is much smaller.
+- `visible_book_imbalance` is now tracked as a signal family, but all current
+  labels are still pending.
 - The current short-side carry families are not supported by first labels.

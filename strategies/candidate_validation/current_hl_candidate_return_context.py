@@ -51,6 +51,7 @@ def collect_candidates() -> tuple[Candidate, ...]:
     _add_stable_candidate_sources(sources_by_symbol)
     _add_crowding_candidate_sources(sources_by_symbol)
     _add_attention_candidate_sources(sources_by_symbol)
+    _add_l2_imbalance_candidate_sources(sources_by_symbol)
     return tuple(
         Candidate(symbol=symbol, sources=tuple(sorted(sources)))
         for symbol, sources in sorted(sources_by_symbol.items())
@@ -167,6 +168,22 @@ def _add_attention_candidate_sources(sources_by_symbol: dict[str, set[str]]) -> 
     with path.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             sources_by_symbol.setdefault(row["symbol"], set()).add("attention_market_join")
+
+
+def _add_l2_imbalance_candidate_sources(sources_by_symbol: dict[str, set[str]]) -> None:
+    path = STRATEGIES_ROOT / "market_making" / "current_l2_imbalance_monitor_summary.csv"
+    if not path.exists():
+        return
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    eligible_rows = tuple(
+        row
+        for row in rows
+        if int(row.get("observations") or "0") >= 3
+        and float(row.get("direction_persistence_rate") or "0") >= 1.0
+    )
+    for row in eligible_rows[:10]:
+        sources_by_symbol.setdefault(row["asset"], set()).add("l2_imbalance_monitor")
 
 
 def _build_return_context_row(candidate: Candidate) -> ReturnContextRow:

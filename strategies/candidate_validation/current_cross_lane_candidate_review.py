@@ -28,6 +28,7 @@ def build_cross_lane_candidates() -> tuple[CrossLaneCandidate, ...]:
     _add_hl_candidate_labels(assets, scores)
     _add_okx_pressure_labels(assets, scores)
     _add_okx_liquidation_labels(assets, scores)
+    _add_l2_imbalance_monitor_labels(assets, scores)
 
     candidates = tuple(
         _build_candidate(asset=asset, fields=fields, lead_score=scores.get(asset, 0.0))
@@ -178,6 +179,44 @@ def _add_okx_liquidation_labels(
         else:
             _add_negative(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) - min(abs(continuation15) * 50.0, 1.0)
+
+
+def _add_l2_imbalance_monitor_labels(
+    assets: dict[str, dict[str, list[str]]],
+    scores: dict[str, float],
+) -> None:
+    monitor_path = STRATEGIES_ROOT / "market_making" / "current_l2_imbalance_monitor_summary.csv"
+    labels_by_asset = _l2_forward_labels_by_asset()
+    for row in _read_rows(monitor_path):
+        observations = int(row.get("observations") or "0")
+        persistence = float(row.get("direction_persistence_rate") or "0")
+        mean_abs_imbalance = float(row.get("mean_abs_imbalance_10_bps") or "0")
+        if observations < 3 or persistence < 1.0:
+            continue
+        asset = row["asset"]
+        _add_lane(assets, asset, "l2_imbalance_monitor")
+        scores[asset] = scores.get(asset, 0.0) + min(
+            persistence * mean_abs_imbalance * 2.0,
+            1.5,
+        )
+        label = labels_by_asset.get(asset)
+        direction15 = None if label is None else _float_or_none(
+            label.get("directional_return_15m", "")
+        )
+        label_name = f"l2_imbalance15={'' if direction15 is None else f'{direction15:.4f}'}"
+        if direction15 is None:
+            _add_pending(assets, asset, "l2_imbalance15")
+        elif direction15 > 0.0:
+            _add_positive(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.5)
+        else:
+            _add_negative(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)
+
+
+def _l2_forward_labels_by_asset() -> dict[str, dict[str, str]]:
+    path = STRATEGIES_ROOT / "market_making" / "current_l2_imbalance_forward_labels.csv"
+    return {row["asset"]: row for row in _read_rows(path)}
 
 
 def _build_candidate(

@@ -15,6 +15,7 @@ This aggregates short-horizon labels by signal family. It asks which kind of sig
 | okx_pressure:flat_watch | 4 | 0 |  |  |  |  | 0.000000 | waiting for elapsed labels |
 | okx_liquidation:long_liquidation_cascade_watch | 8 | 8 | -0.001233 | 0.375000 | 0.002599 | -0.007351 | 0.000000 | not supported by first labels |
 | okx_liquidation:mixed_liquidation_flow_watch | 1 | 0 |  |  |  |  | 0.000000 | waiting for elapsed labels |
+| l2_imbalance:visible_book_imbalance | 23 | 0 |  |  |  |  | 0.000000 | waiting for elapsed labels |
 
 ## Interpretation
 
