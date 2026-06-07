@@ -14,6 +14,7 @@ uv run python -m strategies.candidate_validation.current_hl_candidate_return_con
 uv run python -m strategies.candidate_validation.current_hl_signal_forward_labels
 uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
 uv run python -m strategies.candidate_validation.current_signal_family_review
+uv run python -m strategies.candidate_validation.current_source_conflict_review
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -93,3 +94,23 @@ Interpretation:
   sample: 13 covered labels, 0.69 hit rate, positive mean 15m.
 - `visible_book_imbalance` is still not supported as a broad family despite
   some strong individual names.
+
+## Current Source Conflict Review
+
+| asset | score | positives | negatives | action | next test |
+| --- | ---: | --- | --- | --- | --- |
+| XMR | 3.1004 | hl_candidate | sector_rotation | separate_carry_from_sector | repeat the original candidate family and keep unrelated negative sources out of the decision |
+| IP | 2.8166 | hl_candidate | okx_pressure | isolate_positive_source | repeat the original candidate family and keep unrelated negative sources out of the decision |
+| BTC | 2.6217 | liquidation;l2_imbalance | okx_pressure | repeat_liquidation_not_pressure | repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test |
+| ONDO | 2.6106 | liquidation;sector_rotation | okx_pressure;l2_imbalance | separate_sector_from_l2 | repeat sector labels with category membership and costs before mixing with other sources |
+| JTO | 2.4579 | liquidation;l2_imbalance | okx_pressure | repeat_liquidation_not_pressure | repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test |
+| XPL | 2.4493 | l2_imbalance;sector_rotation | okx_pressure | repeat_l2_not_pressure | repeat sector labels with category membership and costs before mixing with other sources |
+| PUMP | 1.9792 | liquidation;sector_rotation | okx_pressure | repeat_liquidation_not_pressure | repeat sector labels with category membership and costs before mixing with other sources |
+
+Interpretation:
+
+- Mixed evidence is not a reason to average everything together.
+- `ONDO`, `XPL`, and `PUMP` should be retested as sector/liquidation/L2
+  candidates separately from OKX pressure.
+- `XMR` should be treated as carry/reversion evidence, not as a sector
+  momentum continuation candidate.
