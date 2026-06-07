@@ -99,8 +99,11 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
 
 
 def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
-    execution_check_path = root / "cross_exchange_funding" / "current_dislocation_execution_check.csv"
-    best_execution_check = _best_execution_check_row(execution_check_path)
+    best_execution_check = _best_execution_check_row(
+        root / "cross_exchange_funding" / "stable_12_sample_execution_check.csv"
+    ) or _best_execution_check_row(
+        root / "cross_exchange_funding" / "current_dislocation_execution_check.csv"
+    )
     if best_execution_check:
         return ExplorationRow(
             lane="cross_exchange_funding",

@@ -228,6 +228,21 @@ def main() -> None:
         default=list(DEFAULT_FEE_BPS_PER_FILL_PER_VENUE),
     )
     parser.add_argument(
+        "--monitor-summary-path",
+        type=Path,
+        default=ROOT / "current_dislocation_monitor_summary.csv",
+    )
+    parser.add_argument(
+        "--order-constraints-path",
+        type=Path,
+        default=ROOT / "okx_hl_order_constraints.csv",
+    )
+    parser.add_argument(
+        "--book-depth-path",
+        type=Path,
+        default=ROOT / "okx_hl_book_depth.csv",
+    )
+    parser.add_argument(
         "--csv-output-path",
         type=Path,
         default=ROOT / "current_dislocation_execution_check.csv",
@@ -241,6 +256,9 @@ def main() -> None:
 
     checks = build_execution_checks(
         asset=args.asset,
+        monitor_summary_path=args.monitor_summary_path,
+        order_constraints_path=args.order_constraints_path,
+        book_depth_path=args.book_depth_path,
         fee_bps_per_fill_per_venue_values=tuple(args.fee_bps_per_fill_per_venue),
     )
     write_execution_checks_csv(checks, output_path=args.csv_output_path)

@@ -1,0 +1,301 @@
+sample_index,timestamp,source,action,asset,long_venue,short_venue,annualized_edge,net_8h_proxy,net_24h_proxy,liquidity_proxy,friction_proxy,reason
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16590562,,,1183747.64033700,0.00256509,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92231049,-0.00110484,0.00240623,11837.47640337,0.00286038,OKX and Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36926421,,,187457.89386300,0.00290276,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.26332340,,,187498.37165000,0.00217865,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23005730,,,297002.23021000,0.00124243,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.12124058,,,297002.23021000,0.00108713,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.99508125,,,49579077.57573495,0.00121983,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97012795,,,269926.59797500,0.00341126,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,0.96446549,,,342011993.56739849,0.00093027,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.92488606,,,250827.12278200,0.00189339,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.92151039,,,250806.91663000,0.00156443,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.85748924,,,269953.72822300,0.00336517,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83739599,-0.00043376,0.00109573,495792.59041079,0.00119851,OKX and Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.79992203,,,1741213.04075200,0.00199306,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.75494030,,,808453.29574000,0.00259778,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.74902380,,,2419642.69781300,0.00164364,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70699332,,,634772.68939300,0.00127687,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.66134408,,,204320.44029000,0.00378672,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.65392174,,,342195718.16579849,0.00128465,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.61647712,,,808196.35019000,0.00266418,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.61608554,,,163586.54330000,0.00135042,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.61455955,,,462955.73874400,0.00175588,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.60766631,,,462955.73874400,0.00187718,long_perp_receives_funding
+0,2026-06-07T14:34:36.673777+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59951688,,,136499.07189000,0.00228873,Hyperliquid context available
+0,2026-06-07T14:34:36.673777+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.59885988,,,1183747.64033700,0.00256509,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.21101349,,,1183747.64033700,0.00274175,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92611145,-0.00133682,0.00218119,11837.47640337,0.00309582,OKX and Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36088615,,,187516.65719000,0.00217865,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.26682740,,,186205.96277000,0.00217865,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22673814,,,297002.23021000,0.00093153,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.12311172,,,290671.74888400,0.00139817,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.99508125,,,49606978.05679094,0.00104986,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97002984,,,269953.72822300,0.00331863,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,0.95375726,,,342596348.67299867,0.00048625,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.92350110,,,248733.62726500,0.00201688,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.92304952,,,250827.12278200,0.00209816,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.85782212,,,269238.29715500,0.00282164,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83739599,-0.00069256,0.00083693,496069.78056791,0.00145730,OKX and Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.80744424,,,1735950.30579400,0.00180018,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.74800501,,,2406279.67064700,0.00186526,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.74734451,,,799996.77106000,0.00327286,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.71026255,,,627889.00536100,0.00173950,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.67265324,,,204320.44029000,0.00416788,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.63895090,,,333772367.18009990,0.00149075,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.62435498,,,808453.29574000,0.00289425,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.61847878,,,163603.07432000,0.00155257,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.61097321,,,462955.73874400,0.00165740,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.60530636,,,460198.95318100,0.00180404,long_perp_receives_funding
+1,2026-06-07T14:34:57.607050+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.60434364,,,136499.07189000,0.00217093,Hyperliquid context available
+1,2026-06-07T14:34:57.607050+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.59524375,,,1177481.22968700,0.00291863,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16590562,,,1177481.22968700,0.00262638,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92279893,-0.00175679,0.00175517,11774.81229687,0.00351277,OKX and Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36926421,,,186205.96277000,0.00217865,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.26655058,,,186205.96277000,0.00217865,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23005730,,,290671.74888400,0.00124243,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.12416116,,,290671.74888400,0.00108763,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.99508125,,,48494948.63449600,0.00154361,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97012795,,,269238.29715500,0.00364116,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,0.96446549,,,333909505.18530005,0.00082205,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.92161682,,,248760.98067700,0.00218125,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.92151039,,,248733.62726500,0.00214036,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86211890,,,269238.29715500,0.00304739,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83420387,-0.00063095,0.00089271,484952.74912504,0.00139278,OKX and Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.81103934,,,1735950.30579400,0.00186447,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.74279106,,,2407127.83669100,0.00190730,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.74155064,,,800009.01466000,0.00272576,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.71092656,,,627889.00536100,0.00127768,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.66134408,,,203264.95953000,0.00384472,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.62606406,,,333975500.42369998,0.00077299,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.61647712,,,799996.77106000,0.00277260,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.61608554,,,163257.68432000,0.00159516,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.61455955,,,460213.11370600,0.00197595,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.60468528,,,460229.49066100,0.00170861,long_perp_receives_funding
+2,2026-06-07T14:35:17.250748+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59951688,,,135726.64036000,0.00311974,Hyperliquid context available
+2,2026-06-07T14:35:17.250748+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.59245720,,,1177481.22968700,0.00283152,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16994398,,,1177499.19138700,0.00280211,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92662618,-0.00189953,0.00161942,11774.99191387,0.00365901,OKX and Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.37336302,,,186205.96277000,0.00217865,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.26259282,,,186205.96277000,0.00217865,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23067313,,,290671.74888400,0.00124301,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.12558817,,,290671.74888400,0.00093240,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.99508125,,,48502140.48966401,0.00130599,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,0.97319220,,,334078521.96329987,0.00074283,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.96869131,,,269238.29715500,0.00368182,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.91877026,,,248760.98067700,0.00209920,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.91673750,,,248760.98067700,0.00209920,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86204444,,,269238.29715500,0.00299823,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83420387,-0.00037264,0.00115102,485021.51969560,0.00113447,OKX and Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.81505756,,,1735950.30579400,0.00180006,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.74082356,,,2407926.33819100,0.00150843,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.73647072,,,800194.36916000,0.00280640,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70950832,,,627936.85172100,0.00149111,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.65643060,,,203264.95953000,0.00378672,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.61861981,,,163345.84976000,0.00168669,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.61275149,,,460229.49066100,0.00165975,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.61255176,,,334174938.96929973,0.00070758,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.61199200,,,800009.01466000,0.00269082,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.60352370,,,460229.49066100,0.00165955,long_perp_receives_funding
+3,2026-06-07T14:35:37.180923+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59778678,,,135726.64036000,0.00203057,Hyperliquid context available
+3,2026-06-07T14:35:37.180923+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.59008499,,,914309.35090200,0.00136396,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16411683,,,1177499.19138700,0.00294959,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.93079156,-0.00174731,0.00177925,11774.99191387,0.00351059,OKX and Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.37261316,,,186221.66268500,0.00217865,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.25870688,,,186221.66268500,0.00217865,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23502948,,,291316.24888400,0.00124224,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.12229178,,,291316.24888400,0.00108729,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.00727517,,,335598950.72489953,0.00029341,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98816085,,,48574410.58434400,0.00174851,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97170738,,,269238.29715500,0.00299823,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.91437844,,,248782.76164900,0.00205727,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.91163393,,,248782.76164900,0.00205719,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86926969,,,269254.22143100,0.00349889,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83420387,-0.00094449,0.00057917,485744.59731208,0.00170632,OKX and Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.81867544,,,1735950.30579400,0.00225023,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.73564290,,,2410095.20322300,0.00181248,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.73058750,,,801456.48026000,0.00312618,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70632668,,,627946.82916100,0.00166880,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.63753528,,,163345.84976000,0.00154894,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.63556253,,,203283.06753000,0.00348057,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.60384344,,,460229.49066100,0.00173167,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.59955104,,,460229.49066100,0.00163443,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59593229,,,135726.64036000,0.00221998,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.59317376,,,337142374.28489959,0.00160042,long_perp_receives_funding
+4,2026-06-07T14:35:57.323432+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.58860017,,,801456.48026000,0.00284476,Hyperliquid context available
+4,2026-06-07T14:35:57.323432+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58808683,,,914445.94928600,0.00134339,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16411683,,,1177499.19138700,0.00271338,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.93245508,-0.00124388,0.00228572,11774.99191387,0.00300867,OKX and Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.37261316,,,186221.66268500,0.00217865,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.25670434,,,186221.66268500,0.00217865,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23502948,,,291316.24888400,0.00093139,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11750532,,,291316.24888400,0.00108611,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.00727517,,,339984068.79929966,0.00154259,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98816085,,,48579979.99364801,0.00110881,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97170738,,,269306.21015100,0.00368031,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.91437844,,,248782.76164900,0.00205727,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.90477660,,,248782.76164900,0.00217901,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.87138260,,,269558.39913100,0.00363224,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.83420387,-0.00043336,0.00109030,485799.79993648,0.00119519,OKX and Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.82029866,,,1736260.65285900,0.00160534,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.72988145,,,2410144.89026000,0.00154628,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.72349015,,,801468.72386000,0.00291002,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70311614,,,627946.82916100,0.00038995,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.63753528,,,163345.84976000,0.00169325,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.63556253,,,203329.42401000,0.00333320,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.60384344,,,460229.49066100,0.00182927,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59593229,,,135726.64036000,0.00221967,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.59589462,,,460229.49066100,0.00192612,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.58860017,,,801456.48026000,0.00302722,Hyperliquid context available
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58657486,,,914452.09522200,0.00122286,long_perp_receives_funding
+5,2026-06-07T14:36:17.871143+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.58594501,,,1177499.19138700,0.00265416,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.16607294,,,1177499.19138700,0.00221579,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.91604964,-0.00076205,0.00273759,11774.99191387,0.00251187,OKX and Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36871321,,,186221.66268500,0.00145243,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.25473860,,,186221.66268500,0.00217865,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.23251273,,,291316.24888400,0.00108679,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11586895,,,291316.24888400,0.00093124,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.02580958,,,341291077.61009973,0.00109351,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98816085,,,48584040.60344801,0.00104732,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97791997,,,269600.07748300,0.00353982,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.90873437,,,248782.76164900,0.00234308,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.90138998,,,248839.50362500,0.00226049,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86863109,,,269600.07748300,0.00363059,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.82951238,-0.00093181,0.00058328,485860.00622800,0.00168936,OKX and Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.81998593,,,1736260.65285900,0.00173377,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.72640110,,,2410518.56646900,0.00189812,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.71531269,,,801468.72386000,0.00298699,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70215167,,,627946.82916100,0.00166702,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.64262396,,,163345.84976000,0.00131330,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.63166608,,,203361.29409000,0.00374513,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.60016775,,,460229.49066100,0.00195008,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.59338663,,,135726.64036000,0.00218055,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.59242216,,,460229.49066100,0.00192570,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58379443,,,914547.45635800,0.00110198,long_perp_receives_funding
+6,2026-06-07T14:36:37.879053+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.58334154,,,801468.72386000,0.00297543,Hyperliquid context available
+6,2026-06-07T14:36:37.879053+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.58167451,,,1177499.19138700,0.00236323,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.14136798,,,1177526.98118700,0.00254077,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.91800574,-0.00138194,0.00212127,11775.26981187,0.00313354,OKX and Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36472653,,,186240.30400700,0.00218023,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.25459231,,,186240.30400700,0.00218023,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22529361,,,291978.86577900,0.00170754,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11540379,,,291978.86577900,0.00139730,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.07695966,,,346094088.98969966,0.00076609,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98373705,,,48595055.03346401,0.00117328,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97965620,,,269600.07748300,0.00367597,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.90132779,,,248939.08070500,0.00213781,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.89715803,,,248939.08070500,0.00254955,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86493349,,,269897.41801100,0.00318081,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.82951238,-0.00030943,0.00120566,485950.55033464,0.00106698,OKX and Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.82376062,,,1736586.00093800,0.00064156,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.72320107,,,2411316.16824900,0.00137023,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.70840894,,,801480.96746000,0.00311017,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70015964,,,627946.82916100,0.00156111,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.65234669,,,164227.81029000,0.00153864,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.62740609,,,203361.29409000,0.00371199,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.59343481,,,460229.49066100,0.00160905,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.58996760,,,460245.58030100,0.00231594,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.58554205,,,135742.44320000,0.00224196,Hyperliquid context available
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58317685,,,915013.20926600,0.00132336,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.57371956,,,1177526.98118700,0.00171481,long_perp_receives_funding
+7,2026-06-07T14:36:58.078965+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.57026636,,,801480.96746000,0.00295214,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.14136798,,,1177526.98118700,0.00245402,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92814744,-0.00116773,0.00235400,11775.26981187,0.00292860,OKX and Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36472653,,,186240.30400700,0.00290698,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.25092537,,,186240.30400700,0.00218182,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22529361,,,291978.86577900,0.00108679,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11457510,,,291978.86577900,0.00124301,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.07695966,,,350213293.17809939,0.00490721,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98373705,,,48616632.58144001,0.00079239,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97965620,,,269897.41801100,0.00367898,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.90132779,,,249082.31664100,0.00226291,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.89430490,,,249082.31664100,0.00238683,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86869241,,,270195.19541900,0.00359124,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.83384338,,,1736598.81236300,0.00064156,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.71899189,,,2411336.05206100,0.00159172,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.70377928,,,801493.21106000,0.00283110,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.70044872,,,627946.82916100,0.00184364,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.65234669,,,164237.91258000,0.00160434,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.62740609,,,203361.29409000,0.00362913,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.59343481,,,460245.58030100,0.00197344,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.58666596,,,460245.58030100,0.00192566,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.58554205,,,135742.44320000,0.00218616,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58350448,,,915025.99677800,0.00112351,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,NIL,HlPerp,cash_or_spot_proxy,0.57238453,,,505671.21787100,0.00277406,long_perp_receives_funding
+8,2026-06-07T14:37:17.166424+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.57026636,,,801480.96746000,0.00290649,Hyperliquid context available
+8,2026-06-07T14:37:17.166424+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.56504628,,,1177526.98118700,0.00233583,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.14136798,,,1177526.98118700,0.00227669,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.94115604,-0.00115567,0.00238982,11775.26981187,0.00292842,OKX and Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36472653,,,186296.08593600,0.00145455,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.24558177,,,186604.84817300,0.00290276,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22529361,,,291978.86577900,0.00124301,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11264790,,,291978.86577900,0.00139773,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.07695966,,,352408899.81929928,0.00046753,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98373705,,,48637063.70735203,0.00090078,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97965620,,,270195.19541900,0.00313765,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.90132779,,,249179.32555300,0.00218224,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.89220250,,,249201.46994500,0.00230453,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.86944664,,,270195.19541900,0.00363653,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.84189907,,,1737978.08261400,0.00134728,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.71730647,,,2411336.05206100,0.00137023,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.70017278,,,801700.50201000,0.00265113,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.69875016,,,627979.68101600,0.00113282,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.65234669,,,164881.70397000,0.00173899,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.62740609,,,203361.29409000,0.00359659,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.59343481,,,460273.90135100,0.00197431,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.58554205,,,135742.44320000,0.00213715,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.58148792,,,460273.90135100,0.00216920,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58146340,,,915039.77557000,0.00112351,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.57026636,,,801700.50201000,0.00251770,Hyperliquid context available
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,NIL,HlPerp,cash_or_spot_proxy,0.56669141,,,505671.21787100,0.00312020,long_perp_receives_funding
+9,2026-06-07T14:37:37.269894+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.55702387,,,1177573.37659700,0.00274920,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.14928527,,,1177573.37659700,0.00227595,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.92814744,-0.00101965,0.00250208,11775.73376597,0.00278052,OKX and Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.36457323,,,186604.84817300,0.00217865,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.24551695,,,187896.32304300,0.00218023,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22482846,,,292303.73244900,0.00155376,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11223618,,,292303.73244900,0.00155424,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.10177236,,,354519520.05689949,0.00102143,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98373705,,,48641831.46030403,0.00012836,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97470943,,,270195.19541900,0.00304642,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.89758639,,,249201.46994500,0.00218224,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.89200014,,,249201.46994500,0.00226459,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.87008087,,,270195.19541900,0.00359222,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.84935646,,,1738057.99484800,0.00179637,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.82831309,-0.00088944,0.00062346,486519.55714288,0.00164589,OKX and Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.71691752,,,2412130.05496100,0.00150349,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.69733454,,,627995.01566100,0.00148704,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.69223447,,,801700.50201000,0.00298099,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.65471364,,,164881.70397000,0.00150386,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.62833465,,,203361.29409000,0.00365460,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.59048795,,,460273.90135100,0.00187745,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.58033160,,,915197.93429400,0.00120547,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.58029306,,,135780.61860000,0.00194044,Hyperliquid context available
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.57849463,,,460273.90135100,0.00170628,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,hl_single_venue,current_funding_monitor,NIL,HlPerp,cash_or_spot_proxy,0.56379886,,,505767.52801700,0.00324257,long_perp_receives_funding
+10,2026-06-07T14:37:57.589535+00:00,predicted_cross_venue,current_funding_monitor,MORPHO,HlPerp,BinPerp,0.56230002,,,801700.50201000,0.00289931,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,STABLE,BybitPerp,HlPerp,2.17498448,,,1177573.37659700,0.00230619,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,okx_hl_current,paper_24h_monitor,STABLE,OkxSwap,HlPerp,1.94541515,-0.00112215,0.00243112,11775.73376597,0.00289878,OKX and Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,SAGA,HlPerp,BybitPerp,1.35904042,,,187896.32304300,0.00218023,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,SAGA,HlPerp,cash_or_spot_proxy,1.24202521,,,187896.32304300,0.00218023,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,kNEIRO,HlPerp,BybitPerp,1.22243960,,,292303.73244900,0.00124417,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,ZEC,BybitPerp,HlPerp,1.14324789,,,355483518.95009917,0.00005092,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,1.11257869,,,292303.73244900,0.00155545,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,WLD,BinPerp,HlPerp,0.98373705,,,48654936.33788803,0.00085549,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,AIXBT,HlPerp,BinPerp,0.97944334,,,270195.19541900,0.00322977,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,SNX,HlPerp,BinPerp,0.89250472,,,249201.46994500,0.00218269,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,SNX,HlPerp,cash_or_spot_proxy,0.89024814,,,249201.46994500,0.00214150,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.87006510,,,270195.19541900,0.00318428,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,BABY,HlPerp,cash_or_spot_proxy,0.85320035,,,1740458.88695100,0.00224676,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,okx_hl_current,paper_24h_monitor,WLD,OkxSwap,HlPerp,0.82831309,-0.00050382,0.00100908,486549.48509344,0.00126027,OKX and Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,MON,HlPerp,cash_or_spot_proxy,0.71726880,,,2412130.05496100,0.00137107,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,BIO,HlPerp,cash_or_spot_proxy,0.69518572,,,627995.01566100,0.00113306,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,MORPHO,HlPerp,cash_or_spot_proxy,0.69038524,,,801785.52701000,0.00275010,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,0G,HlPerp,BybitPerp,0.64617877,,,165763.66450000,0.00182871,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,BSV,HlPerp,BybitPerp,0.63120793,,,203361.29409000,0.00413559,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,POPCAT,HlPerp,BybitPerp,0.59635715,,,460292.69996100,0.00180444,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,SEI,HlPerp,cash_or_spot_proxy,0.57898344,,,915197.93429400,0.00118557,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,POPCAT,HlPerp,cash_or_spot_proxy,0.57578516,,,460292.69996100,0.00177997,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,predicted_cross_venue,current_funding_monitor,PROVE,HlPerp,BinPerp,0.57511940,,,135780.61860000,0.00263224,Hyperliquid context available
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,NIL,HlPerp,cash_or_spot_proxy,0.56208190,,,505813.04252300,0.00274943,long_perp_receives_funding
+11,2026-06-07T14:38:17.704775+00:00,hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,0.55837992,,,1177573.37659700,0.00218793,long_perp_receives_funding

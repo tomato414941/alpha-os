@@ -125,7 +125,7 @@ def write_monitor_samples_csv(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "sample_index",
@@ -172,7 +172,7 @@ def write_monitor_summary_csv(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "source",

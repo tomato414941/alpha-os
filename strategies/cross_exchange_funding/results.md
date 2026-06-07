@@ -86,6 +86,35 @@ Interpretation:
 - The next gate is not another ranking screen. It is fee/fill/margin validation
   for `STABLE`, plus longer scheduled monitoring.
 
+## STABLE 12-Sample Monitor
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.current_dislocation_monitor --samples 12 --delay-seconds 10 --samples-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_samples.csv --summary-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.csv --md-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.md
+```
+
+This extends the short-window check without changing the trading assumption.
+
+Top summary rows:
+
+| source | action | asset | long | short | obs | mean edge | min edge | mean net 8h | mean net 24h | positive net24 | liquidity | friction |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| okx_hl_current | paper_24h_monitor | STABLE | OkxSwap | HlPerp | 12 | 1.928168 | 1.916050 | -0.001308 | 0.002214 | 1.000000 | 11785.58 | 0.003069 |
+| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 12 | 2.162954 | 2.141368 |  |  |  | 1178558.41 | 0.002539 |
+| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BybitPerp | 12 | 1.367043 | 1.359040 |  |  |  | 186610.78 | 0.002179 |
+| hl_single_venue | current_funding_monitor | SAGA | HlPerp | cash_or_spot_proxy | 12 | 1.255674 | 1.242025 |  |  |  | 186638.28 | 0.002240 |
+| predicted_cross_venue | current_funding_monitor | kNEIRO | HlPerp | BybitPerp | 12 | 1.228604 | 1.222440 |  |  |  | 292486.73 | 0.001230 |
+
+Interpretation:
+
+- OKX-Hyperliquid `STABLE` persisted in all 12 samples.
+- The mean 24h proxy increased from the three-sample check, while the 8h proxy
+  still stayed negative.
+- `SAGA/kNEIRO/ZEC/WLD/AIXBT/SNX` remain broad funding alerts, but only
+  `STABLE` currently has the OKX-Hyperliquid executable path validated by this
+  lane.
+
 ## Current Dislocation Execution Check
 
 Run:
@@ -94,6 +123,7 @@ Run:
 uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints --asset STABLE --paper-notional 1000
 uv run python -m strategies.cross_exchange_funding.okx_hl_book_depth --asset STABLE --okx-target-notional 1000 --hl-target-notional 1000 --okx-side buy --hl-side sell
 uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check
+uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check --monitor-summary-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.csv --csv-output-path strategies/cross_exchange_funding/stable_12_sample_execution_check.csv --md-output-path strategies/cross_exchange_funding/stable_12_sample_execution_check.md
 ```
 
 This is an execution-assumption gate for the current `STABLE` monitor candidate.
@@ -103,11 +133,11 @@ Latest check:
 
 | asset | fee bps/fill/venue | mean net24 | taker slippage bps | fee-only net24 | conservative taker net24 | action |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| STABLE | 0.000000 | 0.002103 | 11.294032 | 0.002103 | 0.000974 | conservative_taker_monitor |
-| STABLE | 0.250000 | 0.002103 | 11.294032 | 0.002003 | 0.000874 | conservative_taker_monitor |
-| STABLE | 0.500000 | 0.002103 | 11.294032 | 0.001903 | 0.000774 | conservative_taker_monitor |
-| STABLE | 1.000000 | 0.002103 | 11.294032 | 0.001703 | 0.000574 | conservative_taker_monitor |
-| STABLE | 2.000000 | 0.002103 | 11.294032 | 0.001303 | 0.000174 | conservative_taker_monitor |
+| STABLE | 0.000000 | 0.002214 | 11.294032 | 0.002214 | 0.001084 | conservative_taker_monitor |
+| STABLE | 0.250000 | 0.002214 | 11.294032 | 0.002114 | 0.000984 | conservative_taker_monitor |
+| STABLE | 0.500000 | 0.002214 | 11.294032 | 0.002014 | 0.000884 | conservative_taker_monitor |
+| STABLE | 1.000000 | 0.002214 | 11.294032 | 0.001814 | 0.000684 | conservative_taker_monitor |
+| STABLE | 2.000000 | 0.002214 | 11.294032 | 0.001414 | 0.000284 | conservative_taker_monitor |
 
 Interpretation:
 

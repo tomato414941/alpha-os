@@ -47,6 +47,8 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate_sensiti
 uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints --asset STABLE --paper-notional 1000
 uv run python -m strategies.cross_exchange_funding.okx_hl_book_depth --asset STABLE --okx-target-notional 1000 --hl-target-notional 1000 --okx-side buy --hl-side sell
 uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check
+uv run python -m strategies.cross_exchange_funding.current_dislocation_monitor --samples 12 --delay-seconds 10 --samples-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_samples.csv --summary-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.csv --md-output-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.md
+uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check --monitor-summary-path strategies/cross_exchange_funding/stable_12_sample_monitor_summary.csv --csv-output-path strategies/cross_exchange_funding/stable_12_sample_execution_check.csv --md-output-path strategies/cross_exchange_funding/stable_12_sample_execution_check.md
 ```
 
 Focused OKX-Hyperliquid monitor:

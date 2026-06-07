@@ -1,0 +1,6 @@
+asset,fee_bps_per_fill_per_venue,mean_net_24h_proxy,fee_round_trip_rate,combined_taker_slippage_bps,fee_only_net_24h,conservative_taker_net_24h,okx_size_valid,hl_size_valid,book_fully_filled,action,reason
+STABLE,0.000000,0.0022135700,0.0000000000,11.294032,0.0022135700,0.0010841668,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+STABLE,0.250000,0.0022135700,0.0001000000,11.294032,0.0021135700,0.0009841668,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+STABLE,0.500000,0.0022135700,0.0002000000,11.294032,0.0020135700,0.0008841668,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+STABLE,1.000000,0.0022135700,0.0004000000,11.294032,0.0018135700,0.0006841668,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+STABLE,2.000000,0.0022135700,0.0008000000,11.294032,0.0014135700,0.0002841668,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
