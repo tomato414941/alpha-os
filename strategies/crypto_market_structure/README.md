@@ -27,4 +27,6 @@ uv run python -m strategies.crypto_market_structure.diagnostics
 uv run python -m strategies.crypto_market_structure.predictive_screen
 uv run python -m strategies.crypto_market_structure.predictive_exposure_audit
 uv run python -m strategies.crypto_market_structure.broad_model_screen
+uv run python -m strategies.crypto_market_structure.funding_carry
+uv run python -m strategies.crypto_market_structure.funding_carry_cost_stress
 ```

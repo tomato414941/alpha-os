@@ -163,10 +163,39 @@ ML"; it is a slower rebalance around funding/premium contrarian behavior and
 flow-based selection. The next step should stress-test this cluster across
 start dates, costs, refit cadence, and symbol subsets.
 
-Next useful work is not another small parameter tweak. It should move to a
-different model shape:
+## Funding Carry
 
-- learn feature interactions instead of hand-summing z-scores
-- separate prediction quality from policy/backtest quality
-- test intraday order-flow features where data volume is enough
-- add benchmark-aware candidate rejection early
+This lane is closer to a real profit source than directional prediction:
+
+- decision: hold symbols with positive funding
+- intended trade approximation: long spot / short perpetual
+- reward approximation: funding received minus premium change and turnover cost
+- default one-way turnover cost: 0.04%
+
+Top default candidates:
+
+| candidate | steps | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| positive_funding_carry_top_3_14d | 881 | 0.159194 | 7.277638 | -0.002795 | 0.077563 |
+| positive_funding_carry_top_2_14d | 881 | 0.156255 | 6.906684 | -0.002388 | 0.085131 |
+| positive_funding_carry_top_3_7d | 881 | 0.136744 | 6.225933 | -0.006029 | 0.139992 |
+| positive_funding_carry_top_1_14d | 881 | 0.153267 | 5.805652 | -0.006250 | 0.088536 |
+| positive_funding_carry_top_2_7d | 881 | 0.128435 | 5.620573 | -0.005422 | 0.156640 |
+
+Cost stress, best candidate by Sharpe:
+
+| one-way turnover cost | candidate | total return | sharpe | max drawdown |
+| ---: | --- | ---: | ---: | ---: |
+| 0.04% | positive_funding_carry_top_3_14d | 0.159194 | 7.277638 | -0.002795 |
+| 0.10% | positive_funding_carry_top_3_14d | 0.112597 | 4.435114 | -0.008086 |
+| 0.20% | positive_funding_carry_top_3_14d | 0.038980 | 1.110018 | -0.036655 |
+| 0.50% | positive_funding_carry_top_3_14d | -0.154393 | -2.216909 | -0.188430 |
+
+This is not a finished live strategy. The approximation still omits spot/perp
+venue separation, borrow and margin treatment, liquidation constraints, order
+book depth, failed execution, and exchange-specific fee schedules. Still, it is
+more profit-adjacent than another directional predictor because it tests a
+specific trade construction rather than only predicting price direction.
+
+Next useful work should validate whether this carry survives real execution
+assumptions and richer basis data, not add more generic predictors.

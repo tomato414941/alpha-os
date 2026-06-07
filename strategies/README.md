@@ -35,7 +35,7 @@ Promote code to the library only after multiple strategies need the same shape.
 - `crypto_market_structure/`
   - crypto futures funding, premium, taker-flow, and volume diagnostics
 - `research_map.md`
-  - broad research lanes and current priority
+  - broad research lanes, profit-source priorities, and anti-constraints
 - `leaderboard.py`
   - cross-strategy comparison against same-window buy-and-hold benchmarks
 - `leaderboard.md`
