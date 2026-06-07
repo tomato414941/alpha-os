@@ -217,6 +217,46 @@ Interpretation:
 - This pushes the lane toward longer scheduled monitoring and fee/maker
   validation, not immediate execution.
 
+## OKX-Hyperliquid Candidate Score
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_score
+```
+
+This ranks all assets from the 1m persistence summary after simple fee
+assumptions.
+
+Top fee-adjusted rows:
+
+| asset | scenario | long venue | short venue | observations | net 8h after fee | net 24h after fee | capacity proxy | survives 8h | survives 24h |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| JTO | very_low_fee | OkxSwap | HlPerp | 6 | -0.00146767 | 0.0004448 | 51289 | False | True |
+| BABY | very_low_fee | HlPerp | OkxSwap | 6 | -0.00212432 | 0.00038917 | 18227 | False | True |
+| JTO | low_fee | OkxSwap | HlPerp | 6 | -0.00158767 | 0.0003248 | 51289 | False | True |
+| ZEC | very_low_fee | OkxSwap | HlPerp | 6 | -0.00031688 | 0.00031437 | 112828 | False | True |
+| BABY | low_fee | HlPerp | OkxSwap | 6 | -0.00224432 | 0.00026917 | 18227 | False | True |
+| ZEC | low_fee | OkxSwap | HlPerp | 6 | -0.00043688 | 0.00019437 | 112828 | False | True |
+| BTC | very_low_fee | OkxSwap | HlPerp | 6 | -0.00007567 | 0.00015519 | 493421 | False | True |
+| JTO | one_bps_each | OkxSwap | HlPerp | 6 | -0.00178767 | 0.0001248 | 51289 | False | True |
+| BABY | one_bps_each | HlPerp | OkxSwap | 6 | -0.00244432 | 0.00006917 | 18227 | False | True |
+| TIA | very_low_fee | OkxSwap | HlPerp | 6 | -0.00107793 | 0.00003533 | 7006 | False | True |
+| BTC | low_fee | OkxSwap | HlPerp | 6 | -0.00019567 | 0.00003519 | 493421 | False | True |
+
+Interpretation:
+
+- No asset survives the 8h version after the tested fee assumptions in the 1m
+  sample.
+- The 24h monitor list broadens beyond BTC. `JTO`, `BABY`, and `ZEC` rise above
+  BTC on fee-adjusted 24h proxy, but they have lower capacity and still depend
+  on very favorable execution.
+- Under one bps per fill on both venues, only `JTO` and `BABY` remain positive
+  in this short sample, and both are too thin to promote without longer
+  monitoring.
+- The lane now has two classes: BTC as the deepest operational candidate, and
+  JTO/BABY/ZEC as higher-spread monitoring candidates.
+
 ## OKX-Hyperliquid Paper Ticket
 
 Run:
