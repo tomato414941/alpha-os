@@ -31,6 +31,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _options_volatility_row(root),
         _sector_rotation_row(root),
         _exchange_catalyst_row(root),
+        _token_unlocks_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
         _protocol_activity_row(root),
@@ -656,6 +657,47 @@ def _exchange_catalyst_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="exchange announcements are not joined to tradable venues or labels",
         next_step="join exchange catalysts to perp venue state and label event reactions",
+    )
+
+
+def _token_unlocks_row(root: Path) -> ExplorationRow:
+    join_path = root / "token_unlocks" / "current_token_unlock_market_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        return ExplorationRow(
+            lane="token_unlocks",
+            status="supply_event_market_join",
+            strongest_current_signal=(
+                f"{best_join.get('symbol', '')}: {best_join.get('action', '')}, "
+                f"value={best_join.get('unlock_value_usd', '')}, "
+                f"supply={best_join.get('percent_supply', '')}, "
+                f"funding={best_join.get('annualized_funding', '')}, "
+                f"score={best_join.get('score', '')}"
+            ),
+            main_gap="unlock events are joined to tradable venues but not labeled around the unlock window",
+            next_step="label ME/ZRO/KAITO/HYPE unlock windows against returns, funding PnL, and venue depth",
+        )
+    path = root / "token_unlocks" / "current_token_unlock_snapshot.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="token_unlocks",
+            status="supply_event_snapshot",
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: {best.get('action', '')}, "
+                f"value={best.get('unlock_value_usd', '')}, "
+                f"supply={best.get('percent_supply', '')}, "
+                f"days={best.get('days_until', '')}"
+            ),
+            main_gap="unlock events are not joined to tradable venues or forward labels",
+            next_step="join current unlocks to perp venue state and label event windows",
+        )
+    return ExplorationRow(
+        lane="token_unlocks",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="scheduled supply events are not connected",
+        next_step="fetch token unlock calendar and join tradable tokens to venue state",
     )
 
 
