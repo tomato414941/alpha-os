@@ -24,6 +24,7 @@ uv run python -m strategies.cross_exchange_funding.venue_access_probe
 uv run python -m strategies.cross_exchange_funding.current_funding_spread
 uv run python -m strategies.cross_exchange_funding.current_funding_feasibility
 uv run python -m strategies.cross_exchange_funding.current_okx_hl_funding_spread
+uv run python -m strategies.cross_exchange_funding.current_dislocation_watchlist
 uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_probe
 uv run python -m strategies.cross_exchange_funding.okx_hl_paper_ticket
 uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints

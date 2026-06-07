@@ -99,6 +99,21 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
 
 
 def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
+    watchlist_path = root / "cross_exchange_funding" / "current_dislocation_watchlist.csv"
+    best_watch = _best_watchlist_row(watchlist_path)
+    if best_watch:
+        return ExplorationRow(
+            lane="cross_exchange_funding",
+            status="current_dislocation_monitor",
+            strongest_current_signal=(
+                f"{best_watch.get('asset', '')}: {best_watch.get('action', '')} "
+                f"{best_watch.get('long_venue', '')}->{best_watch.get('short_venue', '')}, "
+                f"edge={best_watch.get('annualized_edge', '')}, "
+                f"net24={best_watch.get('net_24h_proxy', '')}"
+            ),
+            main_gap="current dislocation has not been persistence-tested with real fees and fills",
+            next_step="monitor STABLE/SAGA/kNEIRO/SNX/AIXBT repeatedly before paper trading",
+        )
     sensitivity_path = root / "cross_exchange_funding" / "okx_hl_promotion_gate_sensitivity.csv"
     best = _best_promotion_gate_row(sensitivity_path)
     signal = "current funding spread screen exists"
@@ -265,6 +280,31 @@ def _best_period_row(path: Path, *, period: str) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("sharpe") or "-inf"))
+
+
+def _best_watchlist_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    priority = {
+        "paper_8h_monitor": 4,
+        "paper_24h_monitor": 3,
+        "current_funding_monitor": 2,
+        "thin_or_wide_watch": 1,
+        "blocked_by_cost_or_capacity": 0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            priority.get(row.get("action", ""), -1),
+            float(row.get("net_24h_proxy") or "0"),
+            float(row.get("annualized_edge") or "0"),
+            float(row.get("liquidity_proxy") or "0"),
+        ),
+    )
 
 
 def _best_promotion_gate_row(path: Path) -> dict[str, str] | None:

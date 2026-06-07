@@ -6,6 +6,47 @@ Data:
 - request: `predictedFundings`
 - output: current predicted funding rates across venues
 
+## Current Dislocation Watchlist
+
+Run:
+
+```bash
+uv run python -m strategies.perp_market_map.current_hyperliquid_snapshot
+uv run python -m strategies.cross_exchange_funding.current_funding_spread
+uv run python -m strategies.cross_exchange_funding.current_funding_feasibility
+uv run python -m strategies.cross_exchange_funding.current_okx_hl_funding_spread
+uv run python -m strategies.cross_exchange_funding.current_dislocation_watchlist
+```
+
+This is a current-state watchlist, not a backtest and not a trade instruction.
+It combines current Hyperliquid funding, predicted cross-venue funding spreads,
+and OKX-Hyperliquid rough execution proxies.
+
+Top current rows:
+
+| source | action | asset | long | short | annualized edge | net 8h | net 24h | liquidity | friction | reason |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 2.514005 |  |  | 1176450.45 | 0.002986 | Hyperliquid context available |
+| okx_hl_current | paper_24h_monitor | STABLE | OkxSwap | HlPerp | 1.986599 | -0.001856 | 0.001772 | 11763.49 | 0.003670 | OKX and Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BybitPerp | 1.535372 |  |  | 186383.69 | 0.002198 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | SAGA | HlPerp | cash_or_spot_proxy | 1.432997 |  |  | 186295.31 | 0.002204 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | kNEIRO | HlPerp | BybitPerp | 1.232342 |  |  | 298296.38 | 0.001407 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | SNX | HlPerp | cash_or_spot_proxy | 1.185155 |  |  | 250853.53 | 0.002377 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | AIXBT | HlPerp | BinPerp | 1.161803 |  |  | 248936.78 | 0.002410 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | SNX | HlPerp | BinPerp | 1.140710 |  |  | 250897.16 | 0.002371 | Hyperliquid context available |
+
+Interpretation:
+
+- `STABLE` is the top current dislocation. It appears both in the venue-agnostic
+  predicted funding spread and in the OKX-Hyperliquid current proxy.
+- OKX-Hyperliquid does not currently pass an 8h net proxy, but `STABLE` passes
+  the rough 24h proxy.
+- This should be treated as a monitor candidate, not a deployable trade:
+  real fee tier, fill quality, margin, collateral, borrow, and holding-period
+  risk still need validation.
+- The next useful test is repeated monitoring for `STABLE/SAGA/kNEIRO/SNX/AIXBT`
+  instead of continuing to rely on stale BTC/ZEC promotion snapshots.
+
 ## Current Funding Spread Snapshot
 
 The spread is normalized to an hourly rate before annualization. The intended
