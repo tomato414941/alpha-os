@@ -1,0 +1,7 @@
+timestamp,symbol,action,direction_hint,score,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status
+2026-06-07T18:28:52.395358+00:00,ZEC,protocol_activity_funding_overlap,1,39.54946844,-0.00708507,,-0.00708507,,labeled_15m_pending_1h
+2026-06-07T18:28:52.585752+00:00,SUI,protocol_activity_watch,1,33.06542021,-0.00198948,,-0.00198948,,labeled_15m_pending_1h
+2026-06-07T18:28:52.585752+00:00,BTC,protocol_activity_watch,1,32.15170986,-0.00056259,,-0.00056259,,labeled_15m_pending_1h
+2026-06-07T18:28:52.585752+00:00,APT,protocol_activity_watch,1,28.52968898,-0.00254187,,-0.00254187,,labeled_15m_pending_1h
+2026-06-07T18:28:52.585752+00:00,NEAR,protocol_activity_watch,1,26.43677106,-0.01038180,,-0.01038180,,labeled_15m_pending_1h
+2026-06-07T18:28:52.585752+00:00,TON,protocol_activity_watch,1,26.15077354,-0.01234710,,-0.01234710,,labeled_15m_pending_1h

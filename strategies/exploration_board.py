@@ -32,6 +32,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _exchange_catalyst_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
+        _protocol_activity_row(root),
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
         _on_chain_flow_row(root),
@@ -634,9 +635,9 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
             f"bid_depth_5c={best_depth.get('bid_depth_to_5c', '')}, "
             f"ask_depth_5c={best_depth.get('ask_depth_to_5c', '')}"
         )
-        return ExplorationRow(
-            lane="prediction_markets",
-            status="clob_depth_check",
+    return ExplorationRow(
+        lane="prediction_markets",
+        status="clob_depth_check",
             strongest_current_signal=signal,
             main_gap="event probability, news flow, and adverse selection are not modeled",
             next_step="build external event model for depth-positive markets before paper trading",
@@ -675,6 +676,55 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="event probability is not modeled; this only ranks active public market structure",
         next_step="join top markets to external event models, order books, and adverse-selection checks",
+    )
+
+
+def _protocol_activity_row(root: Path) -> ExplorationRow:
+    label_path = root / "protocol_activity" / "current_protocol_activity_forward_labels.csv"
+    best_label = _best_protocol_activity_forward_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="protocol_activity",
+            status="protocol_activity_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('symbol', '')}: {best_label.get('action', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_label.get('directional_return_1h', '')}, "
+                f"score={best_label.get('score', '')}"
+            ),
+            main_gap="developer/community activity is slow context and the current short labels are weak",
+            next_step="keep protocol activity as context and test longer horizons plus funding/event overlaps",
+        )
+    join_path = root / "protocol_activity" / "current_protocol_activity_market_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        return ExplorationRow(
+            lane="protocol_activity",
+            status="protocol_activity_market_join",
+            strongest_current_signal=(
+                f"{best_join.get('symbol', '')}: {best_join.get('action', '')}, "
+                f"commits4w={best_join.get('commit_count_4_weeks', '')}, "
+                f"funding={best_join.get('annualized_funding', '')}, "
+                f"score={best_join.get('score', '')}"
+            ),
+            main_gap="protocol activity is not yet labeled against future returns",
+            next_step="label protocol-activity/perp overlaps and compare short vs longer horizons",
+        )
+    path = root / "protocol_activity" / "current_coingecko_protocol_activity.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "protocol activity snapshot is missing"
+    if best:
+        signal = (
+            f"{best.get('symbol', '')}: {best.get('action', '')}, "
+            f"commits4w={best.get('commit_count_4_weeks', '')}, "
+            f"score={best.get('score', '')}"
+        )
+    return ExplorationRow(
+        lane="protocol_activity",
+        status="protocol_activity_snapshot",
+        strongest_current_signal=signal,
+        main_gap="protocol activity is not joined to tradable venues or labels",
+        next_step="join protocol activity to perp state and label forward returns",
     )
 
 
@@ -1223,6 +1273,27 @@ def _best_attention_forward_label_row(path: Path) -> dict[str, str] | None:
 
 
 def _best_exchange_catalyst_forward_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("score") or "0"),
+            float(row.get("directional_return_1h") or "-inf"),
+        ),
+    )
+
+
+def _best_protocol_activity_forward_label_row(path: Path) -> dict[str, str] | None:
     if not path.exists():
         return None
     with path.open(newline="", encoding="utf-8") as handle:
