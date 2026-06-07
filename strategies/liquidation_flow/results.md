@@ -9,6 +9,7 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_gate
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
@@ -168,3 +169,30 @@ Interpretation:
   `JTO` is still visibly thin near touch.
 - `WLD` remains cross-lane interesting, but this monitor-label run did not yet
   cover its latest event timestamp.
+
+## Current OKX Liquidation Paper Gate
+
+This subtracts assumed round-trip taker fees, current spread, and a simple
+visible-depth impact proxy from the 15m monitor-sample continuation label. It
+is a sizing gate, not a trade instruction.
+
+| asset | action | size USD | gross bps | cost bps | net bps | near depth 5bps | depth usage | gate | reason |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| JTO | long_liquidation_cascade_watch | 100 | 105.62 | 12.07 | 93.55 | 2208 | 0.0453 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | long_liquidation_cascade_watch | 250 | 105.62 | 12.75 | 92.87 | 2208 | 0.1132 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | long_liquidation_cascade_watch | 500 | 105.62 | 13.88 | 91.74 | 2208 | 0.2265 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| ONDO | short_liquidation_squeeze_watch | 100 | 74.52 | 12.95 | 61.57 | 13968 | 0.0072 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| ONDO | short_liquidation_squeeze_watch | 250 | 74.52 | 13.06 | 61.46 | 13968 | 0.0179 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| ONDO | short_liquidation_squeeze_watch | 500 | 74.52 | 13.24 | 61.28 | 13968 | 0.0358 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| ONDO | short_liquidation_squeeze_watch | 1000 | 74.52 | 13.60 | 60.92 | 13968 | 0.0716 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| ONDO | short_liquidation_squeeze_watch | 2500 | 74.52 | 14.67 | 59.85 | 13968 | 0.1790 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| H | short_liquidation_squeeze_watch | 100 | 61.16 | 13.07 | 48.09 | 767 | 0.1304 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| LTC | long_liquidation_cascade_watch | 100 | 25.99 | 12.42 | 13.57 | 26234 | 0.0038 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+
+Interpretation:
+
+- `JTO` has the largest short-window net after rough costs, but only at small
+  size because visible near-touch depth is thin.
+- `ONDO` has cleaner size headroom than `JTO` under the same rough assumptions.
+- `LTC` has the best visible depth profile, but the short-window edge is much
+  smaller after fees and spread.

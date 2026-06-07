@@ -248,6 +248,22 @@ def _event_flow_row(root: Path) -> ExplorationRow:
 def _liquidation_flow_row(root: Path) -> ExplorationRow:
     monitor_path = root / "liquidation_flow" / "current_okx_liquidation_monitor_summary.csv"
     actionability_path = root / "liquidation_flow" / "current_okx_liquidation_actionability_review.csv"
+    paper_gate_path = root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv"
+    best_paper = _best_paper_gate_row(paper_gate_path)
+    if best_paper:
+        return ExplorationRow(
+            lane="liquidation_flow",
+            status="current_okx_paper_gate",
+            strongest_current_signal=(
+                f"{best_paper.get('asset', '')}: {best_paper.get('action', '')}, "
+                f"size={best_paper.get('candidate_size_usd', '')}, "
+                f"net_bps={best_paper.get('conservative_net_bps', '')}, "
+                f"depth_usage={best_paper.get('visible_depth_usage', '')}, "
+                f"gate={best_paper.get('gate_action', '')}"
+            ),
+            main_gap="paper gate still uses assumed fees, public visible depth, and short-window labels only",
+            next_step="repeat JTO/ONDO/LTC gate over fresh events and compare with actual paper fills",
+        )
     best_actionable = _best_numeric_row(actionability_path, key="actionability_score")
     if best_actionable:
         return ExplorationRow(
@@ -706,6 +722,27 @@ def _best_forward_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("mean_return_15m") or "-inf"),
             float(row.get("positive_15m_rate") or "0"),
             int(row.get("coverage_15m") or "0"),
+        ),
+    )
+
+
+def _best_paper_gate_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("gate_action") == "small_paper_probe"
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("conservative_net_bps") or "-inf"),
+            -float(row.get("visible_depth_usage") or "inf"),
+            float(row.get("candidate_size_usd") or "0"),
         ),
     )
 
