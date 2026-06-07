@@ -26,6 +26,20 @@ current local data, daily bars, linear models, or low compute.
 | on-chain flow | wallet, exchange inflow/outflow, liquidation flows | on-chain, CEX deposit/withdraw proxies | not implemented |
 | news/SNS | event or sentiment driven moves | news, social, timestamped labels | first Fear & Greed and trending snapshot exists |
 | directional ML/RL | price movement or direct policy learning | market state, reward, simulator | only basic screens exist |
+| liquidation cascade | forced liquidations create continuation or reversal pressure | liquidation events, OI, perp price, book depth | not implemented |
+| options volatility | implied/realized volatility spread, skew, term structure | options chain, IV, Greeks, realized vol | not implemented |
+| borrow/lending arbitrage | borrow/lend spread, collateral return, utilization stress | borrow rates, lending rates, collateral rules | not implemented |
+| stablecoin depeg/repeg | peg stress and redemption/liquidity dislocation | stablecoin price, liquidity, issuer/redemption data | not implemented |
+| bridge/liquidity migration | cross-chain capital movement precedes market repricing | bridge flows, chain stablecoin supply, TVL | not implemented |
+| protocol fundamentals | revenue, fees, active users, TVL quality | protocol metrics, revenue, fees, users | not implemented |
+| token unlock pressure | unlocks/emissions cause supply pressure or hedging flow | unlock calendar, float, volume, derivatives | not implemented |
+| listing event | exchange listings/delistings and perp launches move attention/liquidity | listing timestamps, venue data, returns | not implemented |
+| ETF/institutional flow | ETF creations/redemptions and AUM drive BTC/ETH flow | ETF flows, AUM, premium/discount | not implemented |
+| macro liquidity | rates, DXY, yields, liquidity regime affect crypto beta | macro data, cross-asset prices, regime labels | not implemented |
+| sector rotation | capital rotates across token sectors | sector taxonomy, returns, volume, attention | not implemented |
+| prediction market signal | event odds can inform crypto/macro positioning | Polymarket/Kalshi odds, event labels | not implemented |
+| latency/feed edge | faster or cleaner data creates short-horizon execution edge | timestamped feeds, venue latency, order path | not implemented |
+| anomaly/stress detection | abnormal funding, spread, flow, APY, peg, or OI can signal stress | multi-source anomaly features | not implemented |
 
 ## Current Probe
 

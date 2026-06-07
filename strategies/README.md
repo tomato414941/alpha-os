@@ -52,6 +52,9 @@ Promote code to the library only after multiple strategies need the same shape.
   - DeFiLlama stablecoin supply, peg, and supply-change snapshot
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
+- `missing_work_inventory.md`
+  - broad inventory of missing profit sources, data, evaluation, operations,
+    and external tools
 - `opportunity_map.md`
   - profit-source candidates and reachable public data routes
 - `data_source_probe.py`
