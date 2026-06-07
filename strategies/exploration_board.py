@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
         _event_flow_row(root),
+        _liquidation_flow_row(root),
         _defi_yield_row(root),
         _market_making_row(root),
         _news_social_row(root),
@@ -240,6 +241,26 @@ def _event_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="tiny sample and naive label; no order book or liquidation context",
         next_step="extend sample window and add liquidation/funding-time labels",
+    )
+
+
+def _liquidation_flow_row(root: Path) -> ExplorationRow:
+    path = root / "liquidation_flow" / "current_okx_liquidation_flow.csv"
+    best = _best_numeric_row(path, key="cascade_score")
+    signal = "not run yet"
+    if best:
+        signal = (
+            f"{best.get('asset', '')}: {best.get('action', '')}, "
+            f"obs={best.get('observations', '')}, "
+            f"total_liq={best.get('total_liquidation_notional', '')}, "
+            f"imbalance={best.get('forced_buy_sell_imbalance', '')}"
+        )
+    return ExplorationRow(
+        lane="liquidation_flow",
+        status="current_okx_event_flow",
+        strongest_current_signal=signal,
+        main_gap="forced-flow screen is not yet joined to post-event returns, funding, OI, or book depth",
+        next_step="label ZEC/WLD/JTO liquidation events for continuation versus reversal",
     )
 
 
