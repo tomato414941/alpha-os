@@ -10,6 +10,7 @@ falsification tests are visible across the highest-priority lanes.
 
 ```bash
 uv run python -m strategies.p0_parallel.data_reachability_probe
+uv run python -m strategies.p0_parallel.binance_derivatives_history_probe
 uv run python -m strategies.p0_parallel.l2_burst_probe
 uv run python -m strategies.p0_parallel.paper_trade_ticket
 ```
@@ -18,7 +19,7 @@ uv run python -m strategies.p0_parallel.paper_trade_ticket
 
 - liquidation/OI/funding data reachability
 - multi-venue funding/basis data reachability
+- Binance USD-M metrics and premium-index history first label
 - L2 fill/adverse-selection first burst
 - paper/manual trade-ticket feasibility
 - attention/liquidity inputs through existing stablecoin and sentiment probes
-

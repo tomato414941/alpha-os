@@ -45,6 +45,45 @@ This is far too small to conclude anything. Its value is that the project now
 has a first fill/adverse-selection label shape instead of only a static book
 snapshot.
 
+## Binance Derivatives History
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_history_probe
+```
+
+Sample:
+
+- symbols: BTCUSDT, ETHUSDT, SOLUSDT
+- window: 2024-01-01 through 2024-01-14
+- metrics rows: 288 per symbol/day
+- premium rows: 1440 per symbol/day
+- labeled observations: 39, excluding the final day with no next-day return
+
+Schema confirmed:
+
+- metrics: `create_time`, `symbol`, `sum_open_interest`,
+  `sum_open_interest_value`, `count_toptrader_long_short_ratio`,
+  `sum_toptrader_long_short_ratio`, `count_long_short_ratio`,
+  `sum_taker_long_short_vol_ratio`
+- premium index klines: standard 1m kline fields where `close` is the premium
+  index close
+
+First signal summary:
+
+| feature | observations | corr to next return | low bucket mean next return | high bucket mean next return | high bucket hit rate |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mean_premium_close | 39 | -0.32859219 | 0.01035896 | -0.01200826 | 0.60000000 |
+| max_abs_premium_close | 39 | 0.28466942 | 0.00285845 | 0.00553948 | 0.50000000 |
+| oi_value_change | 39 | -0.13943199 | -0.00269374 | -0.02263932 | 0.50000000 |
+| mean_sum_taker_long_short_vol_ratio | 39 | 0.17247668 | -0.01218483 | 0.01352301 | 0.60000000 |
+
+This is weak evidence because the window is tiny. Still, it converts Binance
+historical derivatives files from a reachable route into a labeled first test:
+premium, OI change, and taker long/short ratio can now be evaluated against
+next-day returns.
+
 ## Paper Ticket
 
 The current ticket candidate is:
@@ -62,8 +101,8 @@ margin, and risk limits, then the lane is not operational yet.
 
 ## Next Parallel Step
 
-- Download and inspect Binance USD-M daily metrics schema.
-- Download and inspect Binance premium index kline schema.
+- Extend Binance derivatives history beyond 14 days and more symbols.
+- Add funding rate history to the same labeled table.
 - Extend L2 burst from seconds to repeated scheduled snapshots.
 - Pair Hyperliquid recent trades with each L2 snapshot.
 - Convert the MANTA ticket into explicit fee and notional assumptions, then
