@@ -40,3 +40,7 @@ Crypto daily-close variants have not beaten clean buy-and-hold benchmarks except
 for manual universe exclusions. Directional market-structure screens improved
 results, but the more profit-adjacent next lane is funding carry / basis and
 other market-neutral or near-market-neutral opportunities.
+
+See `opportunity_map.md` for the broader candidate set. Do not infer from the
+current implementation that event flow, order books, cross-exchange, DeFi,
+on-chain, news, RL, sequence models, or heavier compute are off limits.

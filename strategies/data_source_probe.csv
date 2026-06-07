@@ -1,0 +1,11 @@
+category,name,method,url,status_code,available,content_length,notes
+event_flow,binance_spot_aggtrades_monthly,HEAD,https://data.binance.vision/data/spot/monthly/aggTrades/BTCUSDT/BTCUSDT-aggTrades-2024-01.zip,200,True,566954365,historical event-flow data path is available
+event_flow,binance_spot_trades_monthly,HEAD,https://data.binance.vision/data/spot/monthly/trades/BTCUSDT/BTCUSDT-trades-2024-01.zip,200,True,678484620,historical event-flow data path is available
+event_flow,binance_spot_1m_klines_monthly,HEAD,https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2024-01.zip,200,True,2169570,historical event-flow data path is available
+event_flow,binance_um_aggtrades_monthly,HEAD,https://data.binance.vision/data/futures/um/monthly/aggTrades/BTCUSDT/BTCUSDT-aggTrades-2024-01.zip,200,True,522743749,historical event-flow data path is available
+event_flow,binance_um_trades_monthly,HEAD,https://data.binance.vision/data/futures/um/monthly/trades/BTCUSDT/BTCUSDT-trades-2024-01.zip,200,True,1021286908,historical event-flow data path is available
+event_flow,binance_um_1m_klines_monthly,HEAD,https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2024-01.zip,200,True,1898532,historical event-flow data path is available
+lob,binance_um_book_depth_monthly_probe,HEAD,https://data.binance.vision/data/futures/um/monthly/bookDepth/BTCUSDT/BTCUSDT-bookDepth-2024-01.zip,404,False,,not available from this probe
+defi,defillama_yield_pools,GET,https://yields.llama.fi/pools,200,True,,current DeFi yield pool data path is available
+exchange,coinbase_products,GET,https://api.exchange.coinbase.com/products,200,True,,exchange product discovery path is available
+perp_dex,hyperliquid_meta,POST,https://api.hyperliquid.xyz/info,200,True,17272,perp DEX market metadata path is available

@@ -36,6 +36,12 @@ Promote code to the library only after multiple strategies need the same shape.
   - crypto futures funding, premium, taker-flow, and volume diagnostics
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
+- `opportunity_map.md`
+  - profit-source candidates and reachable public data routes
+- `data_source_probe.py`
+  - public data route probe for event flow, DeFi, exchange, and perp DEX data
+- `data_source_probe.csv`
+  - latest probe result
 - `leaderboard.py`
   - cross-strategy comparison against same-window buy-and-hold benchmarks
 - `leaderboard.md`
