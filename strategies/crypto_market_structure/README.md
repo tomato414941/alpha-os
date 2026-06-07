@@ -32,4 +32,5 @@ uv run python -m strategies.crypto_market_structure.funding_carry_cost_stress
 uv run python -m strategies.crypto_market_structure.spot_perp_carry
 uv run python -m strategies.crypto_market_structure.spot_perp_carry_cost_stress
 uv run python -m strategies.crypto_market_structure.spot_perp_carry_fee_ceiling
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_execution_gate
 ```

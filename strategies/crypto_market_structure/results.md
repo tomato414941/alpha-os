@@ -266,3 +266,36 @@ Interpretation:
   because turnover consumes the edge.
 - The next hard gate is exchange-specific execution: actual spot/perp fees,
   maker/taker routing, margin requirements, borrow constraints, and book depth.
+
+## Spot/Perp Carry Execution Gate
+
+Run:
+
+```bash
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_execution_gate
+```
+
+This compares each candidate's fee ceiling with simple execution scenarios.
+The scenarios are assumptions, not exchange fee schedules.
+
+| candidate | scenario | ceiling bps | scenario bps | headroom bps | pass | default sharpe | turnover |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: |
+| spot_perp_positive_funding_top_3_14d | low_slippage_maker_like | 12.475663 | 6.000000 | 6.475663 | True | 4.967699 | 0.077563 |
+| spot_perp_positive_funding_top_2_14d | low_slippage_maker_like | 11.377382 | 6.000000 | 5.377382 | True | 4.481852 | 0.085131 |
+| spot_perp_positive_funding_top_3_14d | low_slippage_taker_like | 12.475663 | 7.500000 | 4.975663 | True | 4.967699 | 0.077563 |
+| spot_perp_positive_funding_top_1_14d | low_slippage_maker_like | 10.146755 | 6.000000 | 4.146755 | True | 3.406656 | 0.093076 |
+| spot_perp_positive_funding_top_2_14d | low_slippage_taker_like | 11.377382 | 7.500000 | 3.877382 | True | 4.481852 | 0.085131 |
+| spot_perp_positive_funding_top_1_14d | low_slippage_taker_like | 10.146755 | 7.500000 | 2.646755 | True | 3.406656 | 0.093076 |
+| spot_perp_positive_funding_top_3_14d | retail_taker_with_slippage | 12.475663 | 11.250000 | 1.225663 | True | 4.967699 | 0.077563 |
+| spot_perp_positive_funding_top_3_7d | low_slippage_maker_like | 7.097393 | 6.000000 | 1.097393 | True | 3.095506 | 0.139236 |
+
+Interpretation:
+
+- `top_3_14d` is the strongest current spot/perp carry candidate because it
+  passes maker-like, taker-like, and moderate slippage scenarios.
+- The remaining headroom is still small under retail taker plus slippage, so this
+  is not yet a deployable strategy.
+- 7-day variants only pass under low-cost execution. 3-day and 1-day variants do
+  not deserve promotion.
+- The next hard evidence should be venue-specific: actual account fees, symbol
+  availability, margin requirements, and book depth at the intended order size.
