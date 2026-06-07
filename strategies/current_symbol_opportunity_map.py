@@ -63,6 +63,7 @@ STOP_TOKENS = {
     "DOLLAR",
     "EDGE",
     "EVENT",
+    "EXECUTION",
     "EXCHANGE",
     "EXPOSURE",
     "FEE",

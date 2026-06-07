@@ -434,7 +434,8 @@ def _cross_exchange_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     validated_rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv")
     if validated_rows:
-        return _perp_crowding_validated_stacks(validated_rows)
+        execution_rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_execution_check.csv")
+        return _perp_crowding_validated_stacks(validated_rows, execution_rows)
     rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_screen.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("carry_reversion_score")), reverse=True)
     output: list[AlphaStackRow] = []
@@ -464,7 +465,10 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
-def _perp_crowding_validated_stacks(rows: tuple[dict[str, str], ...]) -> tuple[AlphaStackRow, ...]:
+def _perp_crowding_validated_stacks(
+    rows: tuple[dict[str, str], ...],
+    execution_rows: tuple[dict[str, str], ...],
+) -> tuple[AlphaStackRow, ...]:
     tickets = sorted(
         (
             row
@@ -479,19 +483,34 @@ def _perp_crowding_validated_stacks(rows: tuple[dict[str, str], ...]) -> tuple[A
         key=lambda row: _float(row.get("validation_score")),
         reverse=True,
     )
+    best_execution = _best_crowding_execution_by_candidate(execution_rows)
     output: list[AlphaStackRow] = []
     for ticket in tickets[:8]:
         asset = ticket.get("asset", "")
         status = ticket.get("status", "")
+        execution = best_execution.get((asset, ticket.get("action", "")), {})
+        stack_status = _perp_crowding_stack_status(status, execution)
+        execution_note = ""
+        if execution:
+            execution_note = (
+                f", gate={execution.get('gate_action', '')}, "
+                f"size={execution.get('candidate_size_usd', '')}, "
+                f"conservative_net1h_bps={execution.get('conservative_net_1h_bps', '')}, "
+                f"spread_bps={execution.get('spread_bps', '')}, "
+                f"depth_usage={execution.get('visible_depth_usage_10bps', '')}"
+            )
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_validated_perp_crowding_reversion",
-                status=status,
+                status=stack_status,
                 side=ticket.get("action", ""),
-                priority_score=_priority_score(
-                    status,
-                    source_count=2,
-                    raw_score=_float(ticket.get("validation_score")),
+                priority_score=(
+                    _priority_score(
+                        stack_status,
+                        source_count=3 if execution else 2,
+                        raw_score=_float(ticket.get("validation_score")),
+                    )
+                    + (_float(execution.get("conservative_net_1h_bps")) / 1_000.0 if execution else 0.0)
                 ),
                 sources="perp_market_map + candidate_validation",
                 evidence=(
@@ -504,18 +523,56 @@ def _perp_crowding_validated_stacks(rows: tuple[dict[str, str], ...]) -> tuple[A
                     f"hit1h={ticket.get('positive_directional_1h_rate', '')}, "
                     f"funding={ticket.get('mean_annualized_funding', '')}, "
                     f"impact={ticket.get('mean_impact_spread', '')}"
+                    f"{execution_note}"
                 ),
                 conflict=(
-                    "validated label sample is still tiny; funding PnL, fees, spread, "
-                    "adverse selection, and stop behavior are not yet included"
+                    "validated label sample is still tiny; public-book gate excludes queue position, "
+                    "repeated adverse selection, stop behavior, and live fill evidence"
                 ),
                 next_step=ticket.get(
                     "next_step",
-                    f"repeat {asset} carry-reversion labels and add execution costs",
+                    f"paper probe {asset} at the gated size and repeat labels with live fill evidence",
                 ),
             )
         )
     return tuple(output)
+
+
+def _perp_crowding_stack_status(status: str, execution: dict[str, str]) -> str:
+    gate_action = execution.get("gate_action")
+    if status == "paper_validated_carry_reversion_candidate" and gate_action == "paper_execution_probe":
+        return "paper_executable_carry_reversion_probe"
+    if gate_action in {"wide_spread_watch", "too_large_for_visible_depth", "no_edge_after_rough_cost"}:
+        return gate_action
+    return status
+
+
+def _best_crowding_execution_by_candidate(
+    rows: tuple[dict[str, str], ...],
+) -> dict[tuple[str, str], dict[str, str]]:
+    output: dict[tuple[str, str], dict[str, str]] = {}
+    sorted_rows = sorted(rows, key=_crowding_execution_sort_key, reverse=True)
+    for row in sorted_rows:
+        key = (row.get("asset", ""), row.get("action", ""))
+        if not key[0] or not key[1] or key in output:
+            continue
+        output[key] = row
+    return output
+
+
+def _crowding_execution_sort_key(row: dict[str, str]) -> tuple[int, float, float]:
+    gate_rank = {
+        "paper_execution_probe": 4,
+        "wide_spread_watch": 3,
+        "no_edge_after_rough_cost": 2,
+        "too_large_for_visible_depth": 1,
+        "no_visible_depth": 0,
+    }.get(row.get("gate_action", ""), 0)
+    return (
+        gate_rank,
+        _float(row.get("conservative_net_1h_bps")),
+        -_float(row.get("candidate_size_usd")),
+    )
 
 
 def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -1330,7 +1387,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "paper_funding_dislocation_watch": 63.0,
+        "paper_executable_carry_reversion_probe": 70.0,
         "paper_validated_carry_reversion_candidate": 66.0,
+        "wide_spread_watch": 55.0,
+        "too_large_for_visible_depth": 52.0,
+        "no_edge_after_rough_cost": 45.0,
         "paper_delayed_carry_reversion_watch": 58.0,
         "paper_carry_reversion_needs_more_labels": 48.0,
         "paper_crowding_reversion_watch": 59.0,

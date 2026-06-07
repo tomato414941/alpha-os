@@ -308,6 +308,28 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         root / "perp_market_map" / "current_okx_perp_pressure.csv",
         root / "perp_market_map" / "current_okx_perp_pressure_forward_labels.csv",
     )
+    execution_path = root / "perp_market_map" / "current_crowding_reversion_execution_check.csv"
+    best_execution = _best_crowding_execution_row(execution_path)
+    if best_execution:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status=best_execution.get("gate_action", "crowding_execution_check"),
+            strongest_current_signal=(
+                f"{best_execution.get('asset', '')}: "
+                f"{best_execution.get('action', '')}, "
+                f"size={best_execution.get('candidate_size_usd', '')}, "
+                f"net1h_bps={best_execution.get('net_1h_proxy_bps', '')}, "
+                f"conservative_net1h_bps={best_execution.get('conservative_net_1h_bps', '')}, "
+                f"spread_bps={best_execution.get('spread_bps', '')}, "
+                f"depth_usage={best_execution.get('visible_depth_usage_10bps', '')}"
+                f"{okx_signal}"
+            ),
+            main_gap=(
+                "public-book gate is not a fill model; queue position, repeated adverse selection, "
+                "stop behavior, and live paper fills are still missing"
+            ),
+            next_step="paper probe top gated HL carry-reversion candidates and record live fill/outcome evidence",
+        )
     validated_path = root / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv"
     best_validated = _best_crowding_validated_row(validated_path)
     if best_validated:
@@ -2166,6 +2188,23 @@ def _best_crowding_validated_row(path: Path) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("validation_score") or "0"))
+
+
+def _best_crowding_execution_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            1 if row.get("gate_action") == "paper_execution_probe" else 0,
+            float(row.get("conservative_net_1h_bps") or "0"),
+            -float(row.get("candidate_size_usd") or "0"),
+        ),
+    )
 
 
 def _best_polymarket_monitor_row(path: Path) -> dict[str, str] | None:
