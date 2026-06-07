@@ -6,6 +6,7 @@ This aggregates short-horizon labels by signal family. It asks which kind of sig
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | okx_liquidation:short_liquidation_squeeze_watch | 17 | 17 | 0.004270 | 0.882353 | 0.027309 | -0.009277 | 1.387726 | supported by first labels |
 | okx_pressure:long_carry_discount_watch | 32 | 32 | 0.001608 | 0.750000 | 0.024699 | -0.008581 | 0.401907 | supported by first labels |
+| sector_rotation:sector_momentum_watch | 13 | 13 | 0.001082 | 0.692308 | 0.003547 | -0.002919 | 0.135227 | supported by first labels |
 | hl_candidate:okx_hl_current:paper_24h_monitor | 22 | 22 | 0.008023 | 0.454545 | 0.019682 | -0.001692 | 0.000000 | positive mean but weak hit rate |
 | hl_candidate:perp_carry_reversion:long_carry_reversion_watch | 120 | 120 | 0.000472 | 0.266667 | 0.017831 | -0.007837 | 0.000000 | positive mean but weak hit rate |
 | hl_candidate:perp_carry_reversion:short_carry_reversion_watch | 30 | 30 | 0.000858 | 0.433333 | 0.011059 | -0.005924 | 0.000000 | positive mean but weak hit rate |

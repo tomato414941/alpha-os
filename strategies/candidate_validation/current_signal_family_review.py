@@ -29,6 +29,7 @@ def build_signal_family_rows() -> tuple[SignalFamilyRow, ...]:
     _add_okx_pressure_groups(groups)
     _add_liquidation_groups(groups)
     _add_l2_imbalance_groups(groups)
+    _add_sector_rotation_groups(groups)
     rows = tuple(_summarize_family(family=family, labels=tuple(labels)) for family, labels in groups.items())
     return tuple(sorted(rows, key=lambda row: row.support_score, reverse=True))
 
@@ -145,6 +146,17 @@ def _add_l2_imbalance_groups(groups: dict[str, list[float | None]]) -> None:
     path = STRATEGIES_ROOT / "market_making" / "current_l2_imbalance_forward_labels.csv"
     for row in _read_rows(path):
         groups.setdefault("l2_imbalance:visible_book_imbalance", []).append(
+            _float_or_none(row.get("directional_return_15m", ""))
+        )
+
+
+def _add_sector_rotation_groups(groups: dict[str, list[float | None]]) -> None:
+    path = STRATEGIES_ROOT / "sector_rotation" / "current_category_tradable_forward_labels.csv"
+    for row in _read_rows(path):
+        if row.get("label_status") != "tradable_labeled":
+            continue
+        family = f"sector_rotation:{row['category_action']}"
+        groups.setdefault(family, []).append(
             _float_or_none(row.get("directional_return_15m", ""))
         )
 

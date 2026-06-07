@@ -52,6 +52,7 @@ def collect_candidates() -> tuple[Candidate, ...]:
     _add_crowding_candidate_sources(sources_by_symbol)
     _add_attention_candidate_sources(sources_by_symbol)
     _add_l2_imbalance_candidate_sources(sources_by_symbol)
+    _add_sector_rotation_candidate_sources(sources_by_symbol)
     return tuple(
         Candidate(symbol=symbol, sources=tuple(sorted(sources)))
         for symbol, sources in sorted(sources_by_symbol.items())
@@ -184,6 +185,21 @@ def _add_l2_imbalance_candidate_sources(sources_by_symbol: dict[str, set[str]]) 
     )
     for row in eligible_rows[:10]:
         sources_by_symbol.setdefault(row["asset"], set()).add("l2_imbalance_monitor")
+
+
+def _add_sector_rotation_candidate_sources(sources_by_symbol: dict[str, set[str]]) -> None:
+    path = STRATEGIES_ROOT / "sector_rotation" / "current_category_tradable_forward_labels.csv"
+    if not path.exists():
+        return
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("label_status") == "tradable_labeled"
+            and row.get("directional_return_15m", "") != ""
+        )
+    for row in rows[:15]:
+        sources_by_symbol.setdefault(row["symbol"], set()).add("sector_rotation")
 
 
 def _build_return_context_row(candidate: Candidate) -> ReturnContextRow:

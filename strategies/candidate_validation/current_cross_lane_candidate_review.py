@@ -29,6 +29,7 @@ def build_cross_lane_candidates() -> tuple[CrossLaneCandidate, ...]:
     _add_okx_pressure_labels(assets, scores)
     _add_okx_liquidation_labels(assets, scores)
     _add_l2_imbalance_monitor_labels(assets, scores)
+    _add_sector_rotation_labels(assets, scores)
 
     candidates = tuple(
         _build_candidate(asset=asset, fields=fields, lead_score=scores.get(asset, 0.0))
@@ -209,6 +210,33 @@ def _add_l2_imbalance_monitor_labels(
         elif direction15 > 0.0:
             _add_positive(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.5)
+        else:
+            _add_negative(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)
+
+
+def _add_sector_rotation_labels(
+    assets: dict[str, dict[str, list[str]]],
+    scores: dict[str, float],
+) -> None:
+    path = STRATEGIES_ROOT / "sector_rotation" / "current_category_tradable_forward_labels.csv"
+    for row in _read_rows(path):
+        asset = row["symbol"]
+        if not asset or row.get("label_status") != "tradable_labeled":
+            continue
+        _add_lane(assets, asset, "sector_rotation")
+        direction15 = _float_or_none(row.get("directional_return_15m", ""))
+        category_score = float(row.get("score") or "0")
+        scores[asset] = scores.get(asset, 0.0) + min(category_score / 50.0, 1.0)
+        label_name = (
+            f"sector15={'' if direction15 is None else f'{direction15:.4f}'}"
+            f":{row.get('category_name', '')}"
+        )
+        if direction15 is None:
+            _add_pending(assets, asset, "sector15")
+        elif direction15 > 0.0:
+            _add_positive(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)
         else:
             _add_negative(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)

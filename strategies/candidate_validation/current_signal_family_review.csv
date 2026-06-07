@@ -1,6 +1,7 @@
 family,observations,coverage_15m,mean_label_15m,hit_rate_15m,max_label_15m,min_label_15m,support_score,note
 okx_liquidation:short_liquidation_squeeze_watch,17,17,0.00426992,0.88235294,0.02730924,-0.00927734,1.38772553,supported by first labels
 okx_pressure:long_carry_discount_watch,32,32,0.00160763,0.75000000,0.02469880,-0.00858139,0.40190742,supported by first labels
+sector_rotation:sector_momentum_watch,13,13,0.00108181,0.69230769,0.00354672,-0.00291901,0.13522663,supported by first labels
 hl_candidate:okx_hl_current:paper_24h_monitor,22,22,0.00802331,0.45454545,0.01968198,-0.00169225,0.00000000,positive mean but weak hit rate
 hl_candidate:perp_carry_reversion:long_carry_reversion_watch,120,120,0.00047189,0.26666667,0.01783133,-0.00783716,0.00000000,positive mean but weak hit rate
 hl_candidate:perp_carry_reversion:short_carry_reversion_watch,30,30,0.00085843,0.43333333,0.01105937,-0.00592408,0.00000000,positive mean but weak hit rate
