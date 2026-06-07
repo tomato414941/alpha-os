@@ -20,6 +20,7 @@ uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_cand
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_monitor
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_forward_labels
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_execution_check
+uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_repeat_label_queue
 uv run python -m strategies.perp_market_map.current_crowding_reversion_screen
 uv run python -m strategies.perp_market_map.current_crowding_reversion_monitor
 uv run python -m strategies.candidate_validation.current_hl_signal_forward_labels
