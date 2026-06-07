@@ -1922,6 +1922,29 @@ def _on_chain_flow_row(root: Path) -> ExplorationRow:
 
 
 def _protocol_fundamentals_row(root: Path) -> ExplorationRow:
+    price_context_path = root / "protocol_fundamentals" / "current_protocol_fee_price_context.csv"
+    best_price_context = _best_numeric_row(price_context_path, key="score")
+    if best_price_context:
+        return ExplorationRow(
+            lane="protocol_fundamentals",
+            status=best_price_context.get("status", "fee_price_context"),
+            strongest_current_signal=(
+                f"{best_price_context.get('token_symbol', '')}/{best_price_context.get('protocol', '')}: "
+                f"{best_price_context.get('side', '')}, "
+                f"fee_growth7d={best_price_context.get('fee_growth_7d', '')}, "
+                f"price7d={best_price_context.get('price_change_7d', '')}, "
+                f"fee_mcap={best_price_context.get('fee_to_market_cap', '')}, "
+                f"score={best_price_context.get('score', '')}"
+            ),
+            main_gap=(
+                "protocol fee-growth price context is still a current snapshot; it needs forward labels, "
+                "funding PnL, unlock context, and execution checks"
+            ),
+            next_step=best_price_context.get(
+                "next_step",
+                "paper-label protocol fee-growth price-context candidates",
+            ),
+        )
     path = root / "protocol_fundamentals" / "current_protocol_fee_screen.csv"
     best = _best_protocol_fee_row(path)
     if best:
