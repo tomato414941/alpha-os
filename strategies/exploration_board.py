@@ -662,6 +662,22 @@ def _exchange_catalyst_row(root: Path) -> ExplorationRow:
 
 
 def _token_unlocks_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "token_unlocks" / "current_token_unlock_paper_tickets.csv"
+    best_ticket = _best_token_unlock_paper_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="token_unlocks",
+            status=best_ticket.get("status", "paper_short_candidate"),
+            strongest_current_signal=(
+                f"{best_ticket.get('symbol', '')}: side={best_ticket.get('side', '')}, "
+                f"value={best_ticket.get('unlock_value_usd', '')}, "
+                f"supply={best_ticket.get('percent_supply', '')}, "
+                f"funding={best_ticket.get('annualized_funding', '')}, "
+                f"impact={best_ticket.get('impact_spread', '')}"
+            ),
+            main_gap="unlock paper tickets still lack event-window labels, depth decay, stop logic, and funding persistence",
+            next_step="paper-track HYPE/ZRO/KAITO/EIGEN unlock windows and ME crowded-short squeeze risk against returns, funding, and depth",
+        )
     join_path = root / "token_unlocks" / "current_token_unlock_market_join.csv"
     best_join = _best_numeric_row(join_path, key="score")
     if best_join:
@@ -699,6 +715,27 @@ def _token_unlocks_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="scheduled supply events are not connected",
         next_step="fetch token unlock calendar and join tradable tokens to venue state",
+    )
+
+
+def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(
+        row
+        for row in rows
+        if row.get("status") in {"paper_short_candidate", "crowded_short_risk"}
+    )
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda row: (
+            1.0 if row.get("status") == "paper_short_candidate" else 0.5,
+            float(row.get("score") or "0"),
+        ),
     )
 
 
