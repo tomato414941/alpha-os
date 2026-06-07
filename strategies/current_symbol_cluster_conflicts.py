@@ -191,6 +191,10 @@ def _bias_for_row(row: dict[str, str]) -> str:
         return "long"
     if any(token in side for token in ("long_mstr_short", "short_future_long", "long_future_short")):
         return "relative_value"
+    if side.startswith("short_") or side == "short":
+        return "short"
+    if side.startswith("long_") or side == "long":
+        return "long"
     value = " ".join(
         (
             side,

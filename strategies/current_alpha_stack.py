@@ -432,6 +432,9 @@ def _cross_exchange_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    validated_rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv")
+    if validated_rows:
+        return _perp_crowding_validated_stacks(validated_rows)
     rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_screen.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("carry_reversion_score")), reverse=True)
     output: list[AlphaStackRow] = []
@@ -456,6 +459,59 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
                 conflict="crowding can persist or squeeze; this needs forward labels, funding PnL, and stop logic before paper promotion",
                 next_step=f"label {asset} crowding-reversion returns against funding decay, OI/volume, and spread costs",
+            )
+        )
+    return tuple(output)
+
+
+def _perp_crowding_validated_stacks(rows: tuple[dict[str, str], ...]) -> tuple[AlphaStackRow, ...]:
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_validated_carry_reversion_candidate",
+                "paper_delayed_carry_reversion_watch",
+                "paper_carry_reversion_needs_more_labels",
+            }
+        ),
+        key=lambda row: _float(row.get("validation_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:8]:
+        asset = ticket.get("asset", "")
+        status = ticket.get("status", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_validated_perp_crowding_reversion",
+                status=status,
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(ticket.get("validation_score")),
+                ),
+                sources="perp_market_map + candidate_validation",
+                evidence=(
+                    f"{asset}: action={ticket.get('action', '')}, "
+                    f"monitor_obs={ticket.get('monitor_observations', '')}, "
+                    f"label_obs={ticket.get('label_observations', '')}, "
+                    f"dir15={ticket.get('mean_directional_return_15m', '')}, "
+                    f"dir1h={ticket.get('mean_directional_return_1h', '')}, "
+                    f"hit1h={ticket.get('positive_directional_1h_rate', '')}, "
+                    f"funding={ticket.get('mean_annualized_funding', '')}, "
+                    f"impact={ticket.get('mean_impact_spread', '')}"
+                ),
+                conflict=(
+                    "validated label sample is still tiny; funding PnL, fees, spread, "
+                    "adverse selection, and stop behavior are not yet included"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"repeat {asset} carry-reversion labels and add execution costs",
+                ),
             )
         )
     return tuple(output)
@@ -1273,6 +1329,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "paper_funding_dislocation_watch": 63.0,
+        "paper_validated_carry_reversion_candidate": 66.0,
+        "paper_delayed_carry_reversion_watch": 58.0,
+        "paper_carry_reversion_needs_more_labels": 48.0,
         "paper_crowding_reversion_watch": 59.0,
         "paper_attention_funding_watch": 57.0,
         "attention_price_lag_candidate": 61.0,

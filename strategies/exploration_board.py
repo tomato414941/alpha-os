@@ -308,6 +308,27 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         root / "perp_market_map" / "current_okx_perp_pressure.csv",
         root / "perp_market_map" / "current_okx_perp_pressure_forward_labels.csv",
     )
+    validated_path = root / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv"
+    best_validated = _best_crowding_validated_row(validated_path)
+    if best_validated:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status=best_validated.get("status", "validated_carry_reversion_candidate"),
+            strongest_current_signal=(
+                f"{best_validated.get('asset', '')}: "
+                f"{best_validated.get('action', '')}, "
+                f"score={best_validated.get('validation_score', '')}, "
+                f"dir15={best_validated.get('mean_directional_return_15m', '')}, "
+                f"dir1h={best_validated.get('mean_directional_return_1h', '')}, "
+                f"hit1h={best_validated.get('positive_directional_1h_rate', '')}"
+                f"{okx_signal}"
+            ),
+            main_gap="validated carry-reversion labels are still tiny and do not include funding PnL, fees, spread, or stop behavior",
+            next_step=best_validated.get(
+                "next_step",
+                "repeat top HL carry-reversion labels and add execution costs",
+            ),
+        )
     crowding_monitor_path = (
         root / "perp_market_map" / "current_crowding_reversion_monitor_summary.csv"
     )
@@ -2130,6 +2151,20 @@ def _best_crowding_monitor_row(path: Path) -> dict[str, str] | None:
             abs(float(row.get("mean_annualized_funding") or "0")),
         ),
     )
+
+
+def _best_crowding_validated_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status") == "paper_validated_carry_reversion_candidate"
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("validation_score") or "0"))
 
 
 def _best_polymarket_monitor_row(path: Path) -> dict[str, str] | None:
