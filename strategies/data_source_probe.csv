@@ -9,6 +9,9 @@ lob,binance_um_book_depth_monthly_probe,HEAD,https://data.binance.vision/data/fu
 defi,defillama_yield_pools,GET,https://yields.llama.fi/pools,200,True,,current DeFi yield pool data path is available
 dex_pool_flow,geckoterminal_trending_pools,GET,https://api.geckoterminal.com/api/v2/networks/trending_pools,200,True,,current DEX pool-flow data path is available
 derivatives_positioning,coingecko_derivatives,GET,https://api.coingecko.com/api/v3/derivatives,200,True,,current derivatives positioning data path is available
+news,cointelegraph_rss,GET,https://cointelegraph.com/rss,200,True,,current crypto RSS news data path is available
+news,coindesk_rss,GET,https://www.coindesk.com/arc/outboundfeeds/rss,200,True,,current crypto RSS news data path is available
+news,decrypt_rss,GET,https://decrypt.co/feed,200,True,7292,current crypto RSS news data path is available
 exchange,coinbase_products,GET,https://api.exchange.coinbase.com/products,200,True,,exchange product discovery path is available
 perp_dex,hyperliquid_meta,POST,https://api.hyperliquid.xyz/info,200,True,17272,perp DEX market metadata path is available
-cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63951,cross-exchange predicted funding path is available
+cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63959,cross-exchange predicted funding path is available

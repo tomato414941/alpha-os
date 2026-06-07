@@ -888,6 +888,26 @@ def _sector_rotation_row(root: Path) -> ExplorationRow:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    news_path = root / "news_social" / "current_news_event_screen.csv"
+    news_rows = tuple(row for row in _csv_rows(news_path) if row.get("status") != "paper_news_context_watch")
+    best_news = max(news_rows, key=lambda row: float(row.get("score") or "-inf")) if news_rows else None
+    if best_news:
+        return ExplorationRow(
+            lane="news_social",
+            status=best_news.get("status", "news_event_screen"),
+            strongest_current_signal=(
+                f"{best_news.get('symbol', '')}: {best_news.get('event_kind', '')}, "
+                f"source={best_news.get('source', '')}, "
+                f"age_h={best_news.get('age_hours', '')}, "
+                f"funding={best_news.get('annualized_funding', '')}, "
+                f"score={best_news.get('score', '')}"
+            ),
+            main_gap="news headlines are not leakage-safe labels and can be duplicated, stale, or already priced",
+            next_step=best_news.get(
+                "next_step",
+                "label news-event reactions against forward returns and execution costs",
+            ),
+        )
     label_path = root / "news_social" / "current_attention_forward_labels.csv"
     best_label = _best_attention_forward_label_row(label_path)
     if best_label:

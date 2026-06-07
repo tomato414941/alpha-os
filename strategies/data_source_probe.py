@@ -79,6 +79,24 @@ PROBE_TARGETS = (
         url="https://api.coingecko.com/api/v3/derivatives",
     ),
     ProbeTarget(
+        category="news",
+        name="cointelegraph_rss",
+        method="GET",
+        url="https://cointelegraph.com/rss",
+    ),
+    ProbeTarget(
+        category="news",
+        name="coindesk_rss",
+        method="GET",
+        url="https://www.coindesk.com/arc/outboundfeeds/rss",
+    ),
+    ProbeTarget(
+        category="news",
+        name="decrypt_rss",
+        method="GET",
+        url="https://decrypt.co/feed",
+    ),
+    ProbeTarget(
         category="exchange",
         name="coinbase_products",
         method="GET",
@@ -180,6 +198,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current DEX pool-flow data path is available"
     if target.category == "derivatives_positioning":
         return "current derivatives positioning data path is available"
+    if target.category == "news":
+        return "current crypto RSS news data path is available"
     if target.category == "perp_dex":
         return "perp DEX market metadata path is available"
     if target.category == "cross_exchange":

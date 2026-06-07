@@ -62,7 +62,8 @@ Promote code to the library only after multiple strategies need the same shape.
 - `protocol_fundamentals/`
   - DeFiLlama protocol fee-growth screen mapped to tradable token candidates
 - `news_social/`
-  - Fear & Greed and CoinGecko trending attention snapshot
+  - crypto RSS news-event, Fear & Greed, and CoinGecko trending attention
+    screens
 - `stablecoin_liquidity/`
   - DeFiLlama stablecoin supply, peg, and supply-change snapshot
 - `candidate_validation/`

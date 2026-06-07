@@ -36,6 +36,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_yield_peg_risk_stacks(root),
         *_defi_yield_stacks(root),
         *_dex_pool_flow_stacks(root),
+        *_news_event_stacks(root),
         *_attention_funding_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
@@ -653,6 +654,60 @@ def _attention_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "news_social" / "current_news_event_screen.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_news_event_reaction_watch",
+                "paper_news_security_risk_watch",
+                "paper_news_regulatory_risk_watch",
+                "paper_news_macro_crypto_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[tuple[str, str]] = set()
+    for ticket in tickets:
+        symbol = ticket.get("symbol", "")
+        event_kind = ticket.get("event_kind", "")
+        key = (symbol, event_kind)
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_{event_kind}_news_event",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="news_social",
+                evidence=(
+                    f"{ticket.get('source', '')} {symbol}: kind={event_kind}, "
+                    f"age_h={ticket.get('age_hours', '')}, funding={ticket.get('annualized_funding', '')}, "
+                    f"perp={ticket.get('perp_action', '')}, title={ticket.get('title', '')}"
+                ),
+                conflict="news headlines can be stale, duplicated, already priced, or non-causal; timestamp and source-leakage checks are required",
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {symbol} returns after current {event_kind} headlines",
+                ),
+            )
+        )
+        if len(output) >= 5:
+            break
+    return tuple(output)
+
+
 def _protocol_activity_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "protocol_activity" / "current_protocol_activity_market_join.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
@@ -904,6 +959,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_funding_dislocation_watch": 63.0,
         "paper_crowding_reversion_watch": 59.0,
         "paper_attention_funding_watch": 57.0,
+        "paper_news_event_reaction_watch": 58.0,
+        "paper_news_security_risk_watch": 56.0,
+        "paper_news_regulatory_risk_watch": 55.0,
+        "paper_news_macro_crypto_watch": 54.0,
         "paper_protocol_activity_watch": 47.0,
         "paper_chain_flow_watch": 55.0,
         "paper_depeg_repeg_watch": 62.0,
