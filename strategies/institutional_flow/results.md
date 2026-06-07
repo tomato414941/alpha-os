@@ -92,6 +92,17 @@ Intraday entry stress:
 - The candidate is not just a daily-close artifact, but drawdown worsens when
   entry is delayed.
 
+Intraday risk stress:
+
+- Measured 1h max adverse excursion during each 120-hour short hold.
+- Most entry offsets stayed under a rough 5x adverse-move buffer.
+- The exception is 32h entry offset: max adverse excursion 0.20283906, which
+  creates one rough 5x liquidation-risk flag.
+- No offset produced a rough 3x or 2x liquidation-risk flag.
+- This argues against high leverage. The candidate should be treated as a
+  low-leverage paper watch until stop logic and exchange liquidation rules are
+  modeled.
+
 Current watch:
 
 - Latest ETF flow row: 2026-06-05, rolling 5d flow -37984 BTC.
