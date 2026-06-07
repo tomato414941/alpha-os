@@ -67,7 +67,8 @@ Promote code to the library only after multiple strategies need the same shape.
   - crypto RSS news-event, Fear & Greed, and CoinGecko trending attention
     screens
 - `stablecoin_liquidity/`
-  - DeFiLlama stablecoin supply, peg, and supply-change snapshot
+  - DeFiLlama stablecoin supply, peg, supply-change, and chain migration
+    snapshots
 - `candidate_validation/`
   - current candidate aggregation and Hyperliquid return/volume context
 - `research_map.md`

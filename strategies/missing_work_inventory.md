@@ -38,7 +38,7 @@ These are convenience constraints, not trading constraints.
 | borrow/lending arb | Morpho current rates are connected; history, collateral risk, and execution checks are still missing | funding-like edge can exist outside perps |
 | stablecoin depeg/repeg | peg deviation, liquidity, redemption route, issuer risk | depeg stress can be a distinct trade |
 | DeFi yield decay | APY persistence, reward emissions, TVL inflow, exit liquidity | high APY alone is not edge |
-| bridge/liquidity migration | bridge flows, chain TVL, stablecoin distribution | capital movement can precede price movement |
+| bridge/liquidity migration | chain TVL and stablecoin distribution proxies are connected; bridge-fill data is still missing | capital movement can precede price movement |
 | protocol revenue | fees, revenue, active users, TVL quality | fundamental on-chain context is absent |
 | token unlocks/emissions | unlock calendars, vesting, staking emissions | supply events can drive tradable pressure |
 | listing/delisting events | CEX listing, perp listing, delisting, margin changes | event-driven moves are missing |
@@ -47,7 +47,7 @@ These are convenience constraints, not trading constraints.
 | sector rotation | L1, meme, AI, DeFi, RWA, exchange tokens | current universe grouping is primitive |
 | prediction markets | crypto-related Polymarket/Kalshi odds | event probabilities can become features |
 | social reflexivity | X/Reddit/Telegram attention, influencer events | crypto often moves on attention flows |
-| news NLP | timestamped headlines, event extraction, sentiment | current `news_social` has no news |
+| news NLP | RSS headline event extraction is connected | no full-text NLP, social firehose, source deduplication, historical attention, or leakage-safe labels |
 | RL sizing | direct reward optimization, drawdown-aware policy learning | current sizing is mostly hand-coded |
 | RL execution | order slicing, maker/taker choice, inventory control | execution strategy is not learned or simulated |
 | sequence models | transformers/RNNs over trades, LOB, funding, OI | current models are shallow ridge-style screens |
@@ -72,11 +72,11 @@ These are convenience constraints, not trading constraints.
 | exchange outage/status | absent | operational risk invisible |
 | on-chain exchange inflow/outflow | absent | stablecoin supply is only a proxy |
 | wallet/entity flows | absent | no whale/entity signal |
-| bridge flows | absent | no cross-chain capital migration signal |
+| bridge flows | stablecoin chain migration proxy connected | no bridge-fill route, wallet/entity flow, or forward labels |
 | chain TVL/revenue/users | absent | DeFi fundamental context missing |
 | token unlock calendar | absent | supply overhang unmodeled |
 | ETF flows | absent | institutional flow missing |
-| news feed | absent | event-driven strategy impossible |
+| news feed | current RSS headline metadata connected | no full-text feed, source deduplication, social firehose, historical attention, or leakage-safe labels |
 | social feed | absent | attention data is only shallow trending proxy |
 | historical attention | absent | cannot test lead/lag |
 | realized volatility | partial via prices only | no vol-target or vol edge lane |

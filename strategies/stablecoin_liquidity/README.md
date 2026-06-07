@@ -18,6 +18,7 @@ action.
 
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
+uv run python -m strategies.stablecoin_liquidity.current_chain_stablecoin_migration
 uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
 uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ```
@@ -25,5 +26,6 @@ uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ## Current Status
 
 This is not a direct trading strategy. It is a liquidity and stress context
-probe. The next useful step is joining stablecoin supply changes to crypto
-returns, DeFi yield, funding, and risk-off regimes.
+probe. The chain migration screen is a stablecoin distribution proxy, not a
+bridge-fill feed. The next useful step is joining stablecoin supply and chain
+migration changes to crypto returns, DeFi yield, funding, and risk-off regimes.

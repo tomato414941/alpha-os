@@ -1697,6 +1697,26 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
 
 
 def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
+    migration_path = root / "stablecoin_liquidity" / "current_chain_stablecoin_migration.csv"
+    migration_rows = tuple(row for row in _csv_rows(migration_path) if row.get("status") != "chain_stablecoin_context")
+    best_migration = max(migration_rows, key=lambda row: float(row.get("score") or "-inf")) if migration_rows else None
+    if best_migration:
+        return ExplorationRow(
+            lane="stablecoin_liquidity",
+            status=best_migration.get("status", "chain_stablecoin_migration"),
+            strongest_current_signal=(
+                f"{best_migration.get('chain', '')}/{best_migration.get('token_symbol', '') or '-'}: "
+                f"week_change={best_migration.get('week_change_usd', '')}, "
+                f"week_pct={best_migration.get('week_change_pct', '')}, "
+                f"top_asset={best_migration.get('top_asset', '')}, "
+                f"score={best_migration.get('score', '')}"
+            ),
+            main_gap="stablecoin chain migration still needs bridge route checks, chain-token mapping, venue coverage, and forward labels",
+            next_step=best_migration.get(
+                "next_step",
+                "label chain-token returns after stablecoin migration and check venue coverage",
+            ),
+        )
     peg_path = root / "stablecoin_liquidity" / "current_peg_stress_screen.csv"
     best_peg = _best_numeric_row(peg_path, key="score")
     if best_peg:

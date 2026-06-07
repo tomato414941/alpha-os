@@ -67,6 +67,12 @@ PROBE_TARGETS = (
         url="https://yields.llama.fi/pools",
     ),
     ProbeTarget(
+        category="stablecoin_liquidity",
+        name="defillama_stablecoins",
+        method="GET",
+        url="https://stablecoins.llama.fi/stablecoins?includePrices=true",
+    ),
+    ProbeTarget(
         category="defi_lending",
         name="morpho_graphql",
         method="POST",
@@ -206,6 +212,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "historical event-flow data path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
+    if target.category == "stablecoin_liquidity":
+        return "current stablecoin supply and chain-circulating data path is available"
     if target.category == "defi_lending":
         return "current DeFi lending market data path is available"
     if target.category == "dex_pool_flow":

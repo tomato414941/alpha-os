@@ -41,6 +41,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_attention_funding_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
+        *_chain_stablecoin_migration_stacks(root),
         *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_stacks(root),
         _liquidation_flow_stack(root),
@@ -876,6 +877,55 @@ def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _chain_stablecoin_migration_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "stablecoin_liquidity" / "current_chain_stablecoin_migration.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_chain_stablecoin_inflow_watch",
+                "paper_chain_stablecoin_outflow_watch",
+                "chain_stablecoin_flow_reversal_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        chain = ticket.get("chain", "")
+        token = ticket.get("token_symbol", "") or chain
+        display_token = ticket.get("token_symbol", "") or "-"
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{chain.lower().replace(' ', '_')}_stablecoin_migration",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="stablecoin_liquidity",
+                evidence=(
+                    f"{chain}/{display_token}: supply={ticket.get('current_supply_usd', '')}, "
+                    f"day_change={ticket.get('day_change_usd', '')}, "
+                    f"week_change={ticket.get('week_change_usd', '')}, "
+                    f"week_pct={ticket.get('week_change_pct', '')}, "
+                    f"top_asset={ticket.get('top_asset', '')}"
+                ),
+                conflict="stablecoin migration is a capital-flow proxy, not a bridge-fill; chain-token mapping, venues, and forward labels are still required",
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {token} returns after {chain} stablecoin migration",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")
     tickets = sorted(
@@ -1025,6 +1075,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_depeg_repeg_watch": 62.0,
         "paper_premium_mean_reversion_watch": 62.0,
         "peg_supply_stress_watch": 50.0,
+        "paper_chain_stablecoin_inflow_watch": 58.0,
+        "paper_chain_stablecoin_outflow_watch": 56.0,
+        "chain_stablecoin_flow_reversal_watch": 50.0,
         "paper_short_basis_watch": 62.0,
         "paper_long_basis_watch": 62.0,
         "basis_term_structure_watch": 52.0,

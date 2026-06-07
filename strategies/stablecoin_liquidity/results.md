@@ -1,5 +1,19 @@
 # Stablecoin Liquidity Results
 
+## Chain Stablecoin Migration
+
+The chain migration screen aggregates DeFiLlama stablecoin chain-circulating
+data into chain-level capital-flow proxies.
+
+Current notable rows:
+
+- `Solana`: stablecoin inflow watch.
+- `Base`: stablecoin inflow watch.
+- `Polygon`: stablecoin outflow watch.
+
+This is not a bridge-fill feed. It still needs bridge route checks, chain-token
+mapping, venue coverage, DEX liquidity, and forward labels.
+
 Generated on 2026-06-07 UTC.
 
 Run:
