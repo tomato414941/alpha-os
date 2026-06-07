@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
+        _macro_regime_row(root),
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
@@ -258,6 +259,41 @@ def _derivatives_positioning_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="OI, funding, premium, and long-short history are not summarized",
         next_step="run Binance derivatives history over a broad symbol and date panel",
+    )
+
+
+def _macro_regime_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "macro_regime" / "current_macro_crypto_paper_tickets.csv"
+    best_ticket = _best_macro_regime_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="macro_regime",
+            status=best_ticket.get("status", "watch"),
+            strongest_current_signal=(
+                f"{best_ticket.get('name', '')}: "
+                f"{best_ticket.get('side', '')}, "
+                f"score={best_ticket.get('score', '')}, "
+                f"{best_ticket.get('reason', '')}"
+            ),
+            main_gap="macro regime screen is current-context only and lacks repeated forward labels, costs, and crypto venue mapping",
+            next_step="repeat macro/crypto regime labels and join them to funding, liquidation, and BTC ETF flow candidates",
+        )
+    snapshot_path = root / "macro_regime" / "current_macro_crypto_context.csv"
+    best_snapshot = _best_abs_numeric_row(snapshot_path, key="risk_score")
+    signal = "not run yet"
+    if best_snapshot:
+        signal = (
+            f"{best_snapshot.get('symbol', '')}: "
+            f"group={best_snapshot.get('group', '')}, "
+            f"risk_score={best_snapshot.get('risk_score', '')}, "
+            f"ret5d={best_snapshot.get('return_5d', '')}"
+        )
+    return ExplorationRow(
+        lane="macro_regime",
+        status="current_context",
+        strongest_current_signal=signal,
+        main_gap="macro/crypto context has not been turned into repeated labels",
+        next_step="build forward labels for risk-on catch-up, risk-off lagged short, and ETH/BTC beta rotation",
     )
 
 
@@ -870,6 +906,22 @@ def _best_prediction_market_paper_ticket(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             1.0 if row.get("status") == "paper_event_model_candidate" else 0.5,
             float(row.get("score") or "0"),
+        ),
+    )
+
+
+def _best_macro_regime_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            1.0 if row.get("status", "").endswith("_candidate") else 0.0,
+            abs(float(row.get("score") or "0")),
         ),
     )
 
