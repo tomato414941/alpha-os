@@ -15,6 +15,7 @@ uv run python -m strategies.candidate_validation.current_hl_signal_forward_label
 uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
 uv run python -m strategies.candidate_validation.current_signal_family_review
 uv run python -m strategies.candidate_validation.current_source_conflict_review
+uv run python -m strategies.candidate_validation.current_followup_queue
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -114,3 +115,25 @@ Interpretation:
   candidates separately from OKX pressure.
 - `XMR` should be treated as carry/reversion evidence, not as a sector
   momentum continuation candidate.
+
+## Current Follow-Up Queue
+
+| priority | asset | source | type | action | evidence | next test |
+| ---: | --- | --- | --- | --- | --- | --- |
+| 10.0571 | WLD | hl_candidate;okx_pressure;liquidation | clean_candidate_repeat | repeat_supported_candidate | hl15=0.0197;okx_pressure15=0.0247;liq_cont15=0.0273 | repeat the same labels on fresh samples and add rough costs |
+| 4.5510 | ETH | okx_pressure;liquidation;l2_imbalance | clean_candidate_repeat | repeat_supported_candidate | okx_pressure15=0.0007;liq_cont15=0.0011;l2_imbalance15=0.0010 | repeat the same labels on fresh samples and add rough costs |
+| 3.8916 | MEGA | hl_candidate | clean_candidate_repeat | repeat_supported_candidate | hl15=0.0178 | repeat the same labels on fresh samples and add rough costs |
+| 3.7269 | PEPE | okx_pressure;liquidation | clean_candidate_repeat | repeat_supported_candidate | okx_pressure15=0.0040;liq_cont15=0.0033 | repeat the same labels on fresh samples and add rough costs |
+| 3.6217 | BTC | liquidation;l2_imbalance | source_isolation | repeat_liquidation_not_pressure | positive=liquidation;l2_imbalance;negative=okx_pressure | repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test |
+| 3.6106 | ONDO | liquidation;sector_rotation | source_isolation | separate_sector_from_l2 | positive=liquidation;sector_rotation;negative=okx_pressure;l2_imbalance | repeat sector labels with category membership and costs before mixing with other sources |
+| 3.6004 | XMR | hl_candidate | source_isolation | separate_carry_from_sector | positive=hl_candidate;negative=sector_rotation | repeat the original candidate family and keep unrelated negative sources out of the decision |
+| 3.4579 | JTO | liquidation;l2_imbalance | source_isolation | repeat_liquidation_not_pressure | positive=liquidation;l2_imbalance;negative=okx_pressure | repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test |
+| 3.4493 | XPL | l2_imbalance;sector_rotation | source_isolation | repeat_l2_not_pressure | positive=l2_imbalance;sector_rotation;negative=okx_pressure | repeat sector labels with category membership and costs before mixing with other sources |
+
+Interpretation:
+
+- The project now has a concrete repeat queue instead of a pile of unrelated
+  screens.
+- `WLD` is the highest-priority clean repeat.
+- `ONDO`, `XPL`, and `PUMP` should be tested source-by-source instead of being
+  averaged into one generic candidate.

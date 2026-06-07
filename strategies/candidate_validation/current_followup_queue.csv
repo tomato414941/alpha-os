@@ -1,0 +1,72 @@
+priority,asset,source,followup_type,action,evidence,next_test
+10.0571,WLD,hl_candidate;okx_pressure;liquidation,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0197;okx_pressure15=0.0247;liq_cont15=0.0273,repeat the same labels on fresh samples and add rough costs
+4.5510,ETH,okx_pressure;liquidation;l2_imbalance,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0007;liq_cont15=0.0011;l2_imbalance15=0.0010,repeat the same labels on fresh samples and add rough costs
+3.8916,MEGA,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0178,repeat the same labels on fresh samples and add rough costs
+3.7269,PEPE,okx_pressure;liquidation,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0040;liq_cont15=0.0033,repeat the same labels on fresh samples and add rough costs
+3.6217,BTC,liquidation;l2_imbalance,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;l2_imbalance;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+3.6106,ONDO,liquidation;sector_rotation,source_isolation,separate_sector_from_l2,positive=liquidation;sector_rotation;negative=okx_pressure;l2_imbalance,repeat sector labels with category membership and costs before mixing with other sources
+3.6004,XMR,hl_candidate,source_isolation,separate_carry_from_sector,positive=hl_candidate;negative=sector_rotation,repeat the original candidate family and keep unrelated negative sources out of the decision
+3.4627,XRP,okx_pressure;liquidation,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0026;liq_cont15=0.0018,repeat the same labels on fresh samples and add rough costs
+3.4579,JTO,liquidation;l2_imbalance,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;l2_imbalance;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+3.4493,XPL,l2_imbalance;sector_rotation,source_isolation,repeat_l2_not_pressure,positive=l2_imbalance;sector_rotation;negative=okx_pressure,repeat sector labels with category membership and costs before mixing with other sources
+3.3166,IP,hl_candidate,source_isolation,isolate_positive_source,positive=hl_candidate;negative=okx_pressure,repeat the original candidate family and keep unrelated negative sources out of the decision
+3.2959,LTC,okx_pressure;liquidation,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0002;liq_cont15=0.0026,repeat the same labels on fresh samples and add rough costs
+3.2743,ZORA,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0055,repeat the same labels on fresh samples and add rough costs
+3.1882,KAITO,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0038,repeat the same labels on fresh samples and add rough costs
+3.1603,AIXBT,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0032,repeat the same labels on fresh samples and add rough costs
+3.1524,APEX,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0030,repeat the same labels on fresh samples and add rough costs
+3.1187,SOL,okx_pressure;liquidation,source_isolation,isolate_positive_source,positive=okx_pressure;liquidation;negative=l2_imbalance,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+3.0965,ALLO,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+3.0874,BSV,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0017,repeat the same labels on fresh samples and add rough costs
+3.0365,SAGA,hl_candidate,clean_candidate_repeat,repeat_supported_candidate,hl15=0.0007,repeat the same labels on fresh samples and add rough costs
+2.9792,PUMP,liquidation;sector_rotation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;sector_rotation;negative=okx_pressure,repeat sector labels with category membership and costs before mixing with other sources
+2.9178,XLM,okx_pressure;l2_imbalance,source_isolation,isolate_positive_source,positive=okx_pressure;l2_imbalance;negative=liquidation,repeat L2 labels with fill/adverse-selection assumptions before using as directional alpha
+2.8356,HOME,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=liquidation,repeat the positive label source separately
+2.7846,H,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+2.5173,ZRO,hl_candidate,source_isolation,isolate_positive_source,positive=hl_candidate;negative=okx_pressure,repeat the original candidate family and keep unrelated negative sources out of the decision
+2.2701,*,okx_liquidation:short_liquidation_squeeze_watch,family_repeat,repeat_supported_family,cov15=17;mean15=0.00426992;hit15=0.88235294,collect more labels from this family and compare against neutral/cost baselines
+2.1872,TON,okx_pressure;liquidation,source_isolation,isolate_positive_source,positive=okx_pressure;liquidation;negative=l2_imbalance,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+2.0283,BILL,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0100,repeat the same labels on fresh samples and add rough costs
+1.9688,EDEN,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=liquidation,repeat the positive label source separately
+1.9270,PYTH,sector_rotation,clean_candidate_repeat,repeat_supported_candidate,sector15=0.0020:Analytics,repeat the same labels on fresh samples and add rough costs
+1.8363,LAB,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+1.8310,AI,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0082,repeat the same labels on fresh samples and add rough costs
+1.8179,DOGE,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure;l2_imbalance,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+1.7502,BEAT,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+1.7045,HYPE,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+1.6661,TURBO,sector_rotation,clean_candidate_repeat,repeat_supported_candidate,sector15=0.0035:AI Meme,repeat the same labels on fresh samples and add rough costs
+1.4957,FIL,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0048,repeat the same labels on fresh samples and add rough costs
+1.4836,ENA,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0048,repeat the same labels on fresh samples and add rough costs
+1.4202,POL,sector_rotation,clean_candidate_repeat,repeat_supported_candidate,sector15=0.0016:Zero Knowledge (ZK),repeat the same labels on fresh samples and add rough costs
+1.3932,BNB,liquidation,source_isolation,repeat_liquidation_not_pressure,positive=liquidation;negative=okx_pressure,repeat fresh liquidation labels and ignore conflicting carry-pressure rows for this test
+1.3465,ICP,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0034,repeat the same labels on fresh samples and add rough costs
+1.2914,AAVE,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0029,repeat the same labels on fresh samples and add rough costs
+1.2713,USELESS,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0027,repeat the same labels on fresh samples and add rough costs
+1.2711,UP,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0026,repeat the same labels on fresh samples and add rough costs
+1.2596,BASED,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0025,repeat the same labels on fresh samples and add rough costs
+1.2570,LINK,sector_rotation,source_isolation,isolate_positive_source,positive=sector_rotation;negative=okx_pressure,repeat sector labels with category membership and costs before mixing with other sources
+1.2532,BABY,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=hl_candidate,repeat the positive label source separately
+1.2442,CHZ,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0024,repeat the same labels on fresh samples and add rough costs
+1.2400,RENDER,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0024,repeat the same labels on fresh samples and add rough costs
+1.2318,JUP,sector_rotation,source_isolation,isolate_positive_source,positive=sector_rotation;negative=hl_candidate,repeat sector labels with category membership and costs before mixing with other sources
+1.2204,AVAX,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0019,repeat the same labels on fresh samples and add rough costs
+1.1850,WLFI,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0018,repeat the same labels on fresh samples and add rough costs
+1.1721,CL,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0013,repeat the same labels on fresh samples and add rough costs
+1.1613,TIA,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0016,repeat the same labels on fresh samples and add rough costs
+1.1519,*,okx_pressure:long_carry_discount_watch,family_repeat,repeat_supported_family,cov15=32;mean15=0.00160763;hit15=0.75000000,collect more labels from this family and compare against neutral/cost baselines
+1.1249,PENGU,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0012,repeat the same labels on fresh samples and add rough costs
+1.1226,DOT,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0010,repeat the same labels on fresh samples and add rough costs
+1.1195,RESOLV,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0011,repeat the same labels on fresh samples and add rough costs
+1.0874,SHIB,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0009,repeat the same labels on fresh samples and add rough costs
+1.0809,TRX,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0003,repeat the same labels on fresh samples and add rough costs
+1.0749,ETC,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0007,repeat the same labels on fresh samples and add rough costs
+1.0668,OPG,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0006,repeat the same labels on fresh samples and add rough costs
+1.0454,GALA,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0004,repeat the same labels on fresh samples and add rough costs
+1.0443,VIRTUAL,okx_pressure,clean_candidate_repeat,repeat_supported_candidate,okx_pressure15=0.0002,repeat the same labels on fresh samples and add rough costs
+0.9426,FARTCOIN,sector_rotation,source_isolation,isolate_positive_source,positive=sector_rotation;negative=okx_pressure,repeat sector labels with category membership and costs before mixing with other sources
+0.8275,*,sector_rotation:sector_momentum_watch,family_repeat,repeat_supported_family,cov15=13;mean15=0.00108181;hit15=0.69230769,collect more labels from this family and compare against neutral/cost baselines
+0.8222,OPN,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=liquidation,repeat the positive label source separately
+0.7889,ADA,l2_imbalance,source_isolation,repeat_l2_not_pressure,positive=l2_imbalance;negative=okx_pressure,repeat L2 labels with fill/adverse-selection assumptions before using as directional alpha
+0.7269,MON,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=hl_candidate,repeat the positive label source separately
+0.6101,OP,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=hl_candidate,repeat the positive label source separately
+0.5890,TRUMP,okx_pressure,source_isolation,isolate_positive_source,positive=okx_pressure;negative=hl_candidate,repeat the positive label source separately

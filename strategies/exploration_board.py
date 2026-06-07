@@ -621,6 +621,21 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    queue_path = root / "candidate_validation" / "current_followup_queue.csv"
+    best_queue = _best_followup_queue_row(queue_path)
+    if best_queue:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_queue",
+            strongest_current_signal=(
+                f"{best_queue.get('asset', '')}: "
+                f"{best_queue.get('followup_type', '')}, "
+                f"source={best_queue.get('source', '')}, "
+                f"priority={best_queue.get('priority', '')}"
+            ),
+            main_gap="queue prioritizes fresh observations but still lacks repeated live fills, costs, and neutral baselines",
+            next_step="execute top follow-up queue items and update source-specific labels",
+        )
     review_path = root / "candidate_validation" / "current_cross_lane_candidate_review.csv"
     family_path = root / "candidate_validation" / "current_signal_family_review.csv"
     best_review = _best_numeric_row(review_path, key="lead_score")
@@ -1031,6 +1046,16 @@ def _best_l2_imbalance_monitor_row(path: Path) -> dict[str, str] | None:
             float(row.get("mean_near_depth_10bps_notional") or "0"),
         ),
     )
+
+
+def _best_followup_queue_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("priority") or "-inf"))
 
 
 def _okx_perp_pressure_signal(path: Path, label_path: Path) -> str:

@@ -14,4 +14,5 @@ uv run python -m strategies.candidate_validation.current_hl_signal_forward_label
 uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
 uv run python -m strategies.candidate_validation.current_signal_family_review
 uv run python -m strategies.candidate_validation.current_source_conflict_review
+uv run python -m strategies.candidate_validation.current_followup_queue
 ```
