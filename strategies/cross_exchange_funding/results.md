@@ -198,3 +198,34 @@ to a venue-specific paper workflow. It is still not a trade instruction. The
 next falsification is order-level: exact instrument IDs, lot sizes, fee tier,
 funding timestamp alignment, taker-vs-maker assumption, collateral path, and
 kill switch.
+
+## OKX-Hyperliquid Order Constraints
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints
+```
+
+Paper size:
+
+- asset: `BTC`
+- paper notional: `1000` USDT
+- long venue: `OkxSwap`
+- short venue: `HlPerp`
+
+Public instrument constraints:
+
+| venue | instrument | rounded size | rounded notional | min / lot / decimals | max leverage | valid |
+| --- | --- | ---: | ---: | --- | ---: | --- |
+| OKX | BTC-USDT-SWAP | 1.59 contracts | 995.58645 USDT | min 0.01, lot 0.01, tick 0.1 | 100 | True |
+| Hyperliquid | BTC | 0.01597 BTC | 999.969535 USDT | size decimals 5 | 40 | True |
+
+Interpretation:
+
+- Public constraints allow the 1000 USDT paper order shape on both venues.
+- The two rounded notionals are not exactly equal, so a paper workflow should
+  track residual delta from rounding.
+- Fee tier, actual account access, margin mode, collateral movement, maker/taker
+  feasibility, and funding timestamp alignment remain unresolved. These are now
+  the main blockers before any real order workflow.
