@@ -806,6 +806,22 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    funding_regime_path = root / "institutional_flow" / "btc_etf_flow_funding_regime_summary.csv"
+    best_funding_regime = _best_btc_etf_flow_funding_regime_row(funding_regime_path)
+    if best_funding_regime:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status="btc_etf_flow_funding_regime_candidate",
+            strongest_current_signal=(
+                f"{best_funding_regime.get('group_key', '')}: "
+                f"obs={best_funding_regime.get('observations', '')}, "
+                f"dir5+funding={best_funding_regime.get('mean_directional_5d_with_funding', '')}, "
+                f"funding_support={best_funding_regime.get('mean_funding_support_5d', '')}, "
+                f"hit={best_funding_regime.get('hit_rate_5d_with_funding', '')}"
+            ),
+            main_gap="ETF flow plus funding still excludes intraday timing, drawdown filters, liquidity, and OOS market-regime splits",
+            next_step="convert the best ETF-flow/funding regime into a paper BTC perp rule with drawdown and execution-cost checks",
+        )
     regime_path = root / "institutional_flow" / "btc_etf_flow_regime_summary.csv"
     best_regime = _best_btc_etf_flow_regime_row(regime_path)
     if best_regime:
@@ -906,6 +922,23 @@ def _best_btc_etf_flow_regime_row(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             float(row.get("mean_directional_5d") or "0"),
             float(row.get("hit_rate_5d") or "0"),
+        ),
+    )
+
+
+def _best_btc_etf_flow_funding_regime_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(row for row in rows if row.get("action") == "funding_regime_candidate")
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda row: (
+            float(row.get("mean_directional_5d_with_funding") or "0"),
+            float(row.get("hit_rate_5d_with_funding") or "0"),
         ),
     )
 

@@ -39,3 +39,15 @@ Regime split:
 Current best candidate is not "ETF flow always works". It is that large
 rolling ETF outflow, treated as short BTC regime context, has the strongest
 5-day directional label in this first pass.
+
+Funding split:
+
+- `large_5d_outflow__funding_aligned`: observations 45, mean directional 5d
+  plus funding 0.03164254, mean funding support 0.00057130, hit rate 0.6889.
+- `large_5d_outflow`: observations 51, mean directional 5d plus funding
+  0.03102419, mean funding support 0.00044689, hit rate 0.6863.
+- The useful current hypothesis is narrower: large rolling ETF outflow as a
+  BTC short context is more interesting when BTCUSDT perp funding is positive,
+  because the short direction also receives funding.
+- This still is not deployable PnL. It excludes intraday entry timing,
+  drawdown behavior, liquidity, fee tier, and execution assumptions.
