@@ -33,13 +33,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _prediction_markets_row(root),
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
-        ExplorationRow(
-            lane="on_chain_flow",
-            status="partial_proxy",
-            strongest_current_signal="stablecoin supply proxy exists",
-            main_gap="wallet, bridge, and exchange inflow/outflow data not connected",
-            next_step="add direct flow source instead of only stablecoin supply proxy",
-        ),
+        _on_chain_flow_row(root),
     )
 
 
@@ -637,7 +631,7 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
                 f"action={best_repeat_summary.get('action', '')}"
             ),
             main_gap="repeat summary is still short-horizon and excludes costs, funding PnL, slippage, and neutral baselines",
-            next_step="rerun labels after pending observations mature and promote only repeated source-specific winners",
+            next_step="collect another liquidation-specific repeat batch for JTO/LTC and add rough costs, funding PnL, and slippage",
         )
     repeat_history_label_path = (
         root / "candidate_validation" / "current_followup_repeat_history_labels.csv"
@@ -817,6 +811,34 @@ def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="supply changes are not yet joined to returns, funding, or regimes",
         next_step="test stablecoin supply change as market liquidity context",
+    )
+
+
+def _on_chain_flow_row(root: Path) -> ExplorationRow:
+    path = root / "on_chain_flow" / "current_chain_tvl_flow.csv"
+    best = _best_chain_tvl_flow_row(path)
+    if best:
+        return ExplorationRow(
+            lane="on_chain_flow",
+            status=best.get("action", "chain_tvl_flow"),
+            strongest_current_signal=(
+                f"{best.get('chain', '')}/{best.get('token_symbol', '')}: "
+                f"week={best.get('week_change_pct', '')}, "
+                f"day={best.get('day_change_pct', '')}, "
+                f"tvl={best.get('current_tvl_usd', '')}"
+            ),
+            main_gap="chain TVL flow is not yet joined to token forward returns, funding, liquidations, or stale-accounting checks",
+            next_step=best.get(
+                "followup",
+                "label chain-token behavior against market structure sources",
+            ),
+        )
+    return ExplorationRow(
+        lane="on_chain_flow",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="wallet, bridge, exchange, and chain TVL flows are not connected",
+        next_step="run chain TVL flow and label token follow-ups",
     )
 
 
@@ -1213,6 +1235,29 @@ def _best_followup_repeat_summary_row(path: Path) -> dict[str, str] | None:
             float(row.get("mean_dir15") or "-inf"),
             float(row.get("hit_rate_15m") or "0"),
             int(row.get("labeled_rows") or "0"),
+        ),
+    )
+
+
+def _best_chain_tvl_flow_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    priority = {
+        "chain_inflow_momentum_watch": 3,
+        "chain_outflow_stress_watch": 2,
+        "chain_flow_reversal_watch": 1,
+        "chain_flow_context": 0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            priority.get(row.get("action", ""), 0),
+            abs(float(row.get("week_change_pct") or "0")),
+            float(row.get("current_tvl_usd") or "0"),
         ),
     )
 
