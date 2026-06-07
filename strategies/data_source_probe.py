@@ -97,6 +97,12 @@ PROBE_TARGETS = (
         url="https://api.coingecko.com/api/v3/derivatives",
     ),
     ProbeTarget(
+        category="options_volatility",
+        name="deribit_btc_options_summary",
+        method="GET",
+        url="https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option",
+    ),
+    ProbeTarget(
         category="news",
         name="cointelegraph_rss",
         method="GET",
@@ -220,6 +226,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current DEX pool-flow data path is available"
     if target.category == "derivatives_positioning":
         return "current derivatives positioning data path is available"
+    if target.category == "options_volatility":
+        return "current crypto options surface data path is available"
     if target.category == "news":
         return "current crypto RSS news data path is available"
     if target.category == "perp_dex":

@@ -11,4 +11,5 @@ simple 5% OTM skew, and term structure candidates.
 ```bash
 uv run python -m strategies.options_volatility.current_deribit_options_surface
 uv run python -m strategies.options_volatility.current_deribit_options_realized_vol_labels
+uv run python -m strategies.options_volatility.current_options_volatility_paper_tickets
 ```

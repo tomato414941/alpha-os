@@ -25,7 +25,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
         _btc_risk_off_short_stack(root),
         _mstr_btc_relative_value_stack(root),
-        _btc_options_volatility_stack(root),
+        *_options_volatility_stacks(root),
         _prediction_market_event_model_stack(root),
         *_futures_basis_stacks(root),
         *_derivatives_positioning_stacks(root),
@@ -157,28 +157,61 @@ def _mstr_btc_relative_value_stack(root: Path) -> AlphaStackRow | None:
     )
 
 
-def _btc_options_volatility_stack(root: Path) -> AlphaStackRow | None:
-    ticket = _best_by_score(
-        root / "options_volatility" / "current_options_volatility_paper_tickets.csv",
-        score_key="score",
-        status_values={"paper_short_put_spread_candidate"},
-    )
-    if not ticket:
-        return None
-    return AlphaStackRow(
-        opportunity="btc_options_short_put_spread",
-        status=ticket.get("status", "paper_short_put_spread_candidate"),
-        side=f"{ticket.get('currency', 'BTC')}_{ticket.get('structure', 'short_put_spread')}",
-        priority_score=_priority_score(ticket.get("status", ""), source_count=1, raw_score=_float(ticket.get("score"))),
-        sources="options_volatility",
-        evidence=(
-            f"{ticket.get('currency', '')} {ticket.get('expiry', '')}: "
-            f"iv_premium_24h={ticket.get('iv_premium_24h', '')}, "
-            f"skew={ticket.get('skew_iv', '')}, volume_usd={ticket.get('volume_usd', '')}"
+def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "options_volatility" / "current_options_volatility_paper_tickets.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_short_put_spread_candidate",
+                "paper_calendar_spread_watch",
+            }
         ),
-        conflict="macro/speculative-beta risk-off pressure can turn rich put premium into real tail loss",
-        next_step="paper-check bid/ask spread, margin, max loss, delta hedge cost, and behavior during the current VIX shock",
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
     )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        currency = ticket.get("currency", "")
+        structure = ticket.get("structure", "")
+        expiry = ticket.get("expiry", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{currency.lower()}_{structure}_{expiry.replace('-', '')}",
+                status=ticket.get("status", ""),
+                side=f"{currency}_{structure}",
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="options_volatility",
+                evidence=(
+                    f"{currency} {expiry}: "
+                    f"iv_premium_24h={ticket.get('iv_premium_24h', '')}, "
+                    f"skew={ticket.get('skew_iv', '')}, "
+                    f"term={ticket.get('term_iv_spread_to_next', '')}, "
+                    f"volume_usd={ticket.get('volume_usd', '')}"
+                ),
+                conflict=_options_volatility_conflict(ticket),
+                next_step=_options_volatility_next_step(ticket),
+            )
+        )
+    return tuple(output)
+
+
+def _options_volatility_conflict(ticket: dict[str, str]) -> str:
+    if ticket.get("status") == "paper_short_put_spread_candidate":
+        return "macro/speculative-beta risk-off pressure can turn rich put premium into real tail loss"
+    return "calendar spread depends on expiry curve, event timing, bid/ask, margin, and hedge PnL rather than direction alone"
+
+
+def _options_volatility_next_step(ticket: dict[str, str]) -> str:
+    if ticket.get("status") == "paper_short_put_spread_candidate":
+        return "paper-check bid/ask spread, margin, max loss, delta hedge cost, and behavior during the current risk-off shock"
+    return "paper-check calendar spread quotes, event timing, vega/theta exposure, margin, and delta hedge cost"
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
@@ -1061,6 +1094,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,
+        "paper_calendar_spread_watch": 58.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "paper_funding_dislocation_watch": 63.0,

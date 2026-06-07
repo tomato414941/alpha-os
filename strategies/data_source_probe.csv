@@ -11,9 +11,10 @@ stablecoin_liquidity,defillama_stablecoins,GET,https://stablecoins.llama.fi/stab
 defi_lending,morpho_graphql,POST,https://api.morpho.org/graphql,200,True,272,current DeFi lending market data path is available
 dex_pool_flow,geckoterminal_trending_pools,GET,https://api.geckoterminal.com/api/v2/networks/trending_pools,200,True,,current DEX pool-flow data path is available
 derivatives_positioning,coingecko_derivatives,GET,https://api.coingecko.com/api/v3/derivatives,200,True,,current derivatives positioning data path is available
+options_volatility,deribit_btc_options_summary,GET,https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option,200,True,44600,current crypto options surface data path is available
 news,cointelegraph_rss,GET,https://cointelegraph.com/rss,200,True,,current crypto RSS news data path is available
 news,coindesk_rss,GET,https://www.coindesk.com/arc/outboundfeeds/rss,200,True,,current crypto RSS news data path is available
 news,decrypt_rss,GET,https://decrypt.co/feed,200,True,16640,current crypto RSS news data path is available
 exchange,coinbase_products,GET,https://api.exchange.coinbase.com/products,200,True,,exchange product discovery path is available
 perp_dex,hyperliquid_meta,POST,https://api.hyperliquid.xyz/info,200,True,17272,perp DEX market metadata path is available
-cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63885,cross-exchange predicted funding path is available
+cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63911,cross-exchange predicted funding path is available
