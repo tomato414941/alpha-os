@@ -128,17 +128,21 @@ def write_fee_ceilings_md(
             "not be promoted even if the raw funding spread looks positive.\n\n"
         )
         handle.write(
-            "- BTC 8h is extremely fee-sensitive: it needs roughly 0.26 bps or less "
-            "per fill per venue even before queue-position and adverse-selection risk.\n"
+            "- BABY has the largest maker-only ceiling in this snapshot, but it has "
+            "no maker-touch evidence here, low capacity, and loses most of the edge "
+            "when one leg crosses.\n"
         )
         handle.write(
-            "- BTC 24h has more room at roughly 0.79 bps per fill per venue, but its "
-            "funding event cadence is slower.\n"
+            "- ZEC has the best current one-leg-cross 24h headroom, especially "
+            "`okx_cross_hl_maker`, but it is still capacity and stability constrained.\n"
         )
         handle.write(
-            "- ZEC 24h has the largest fee headroom in this snapshot, including "
-            "`okx_cross_hl_maker`, but its capacity and event stability are weaker "
-            "than BTC.\n"
+            "- BTC has the cleanest capacity and survives all execution modes under "
+            "very-low fees, but its 8h edge is extremely fee-sensitive.\n"
+        )
+        handle.write(
+            "- JTO is weak in this event-window snapshot: even maker-only 24h has only "
+            "a small fee ceiling, and one-leg-cross modes are already negative.\n"
         )
         handle.write(
             "- The next hard gate is the real account fee tier. Without that, raw "

@@ -658,7 +658,7 @@ Interpretation:
 Run:
 
 ```bash
-uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score --assets BTC ZEC
+uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 ```
 
 This compares maker/cross execution modes against the event-window funding edge.
@@ -666,26 +666,37 @@ Maker rebates and real queue position are not modeled.
 
 | asset | scenario | mode | gross 8h | gross 24h | entry slippage bps | cost | net 8h | net 24h | both touch | OKX only | HL only | capacity |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ZEC | very_low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.00008000 | 0.00016083 | 0.00064249 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
-| ZEC | very_low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12340956 | 0.00010468 | 0.00013615 | 0.00061781 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
-| ZEC | low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.00020000 | 0.00004083 | 0.00052249 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
-| ZEC | low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12340956 | 0.00022468 | 0.00001615 | 0.00049781 | 0.20000000 | 0.60000000 | 0.20000000 | 106210.05564167 |
-| BTC | very_low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.00008000 | 0.00002582 | 0.00023747 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
-| BTC | very_low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00809646 | 0.00008162 | 0.00002420 | 0.00023585 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
-| BTC | low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.00020000 | -0.00009418 | 0.00011747 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
-| BTC | low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00809646 | 0.00020162 | -0.00009580 | 0.00011585 | 0 | 0.60000000 | 0.20000000 | 422448.80855333 |
+| BABY | very_low_fee | both_maker | 0.00036862 | 0.00110587 | 0 | 0.00008 | 0.00028862 | 0.00102587 |  |  |  | 18182.63949194 |
+| BABY | low_fee | both_maker | 0.00036862 | 0.00110587 | 0 | 0.0002 | 0.00016862 | 0.00090587 |  |  |  | 18182.63949194 |
+| BABY | one_bps_each | both_maker | 0.00036862 | 0.00110587 | 0 | 0.0004 | -0.00003138 | 0.00070587 |  |  |  | 18182.63949194 |
+| ZEC | very_low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.00008 | 0.00016083 | 0.00064249 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | very_low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12385895 | 0.00010477 | 0.00013606 | 0.00061772 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | low_fee | both_maker | 0.00024083 | 0.00072249 | 0 | 0.0002 | 0.00004083 | 0.00052249 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | low_fee | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12385895 | 0.00022477 | 0.00001606 | 0.00049772 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| BABY | very_low_fee | okx_maker_hl_cross | 0.00036862 | 0.00110587 | 2.90744629 | 0.00066149 | -0.00029287 | 0.00044438 |  |  |  | 18182.63949194 |
+| ZEC | very_low_fee | okx_maker_hl_cross | 0.00024083 | 0.00072249 | 0.9912522 | 0.00027825 | -0.00003742 | 0.00044424 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | very_low_fee | both_cross | 0.00024083 | 0.00072249 | 1.11511115 | 0.00030302 | -0.00006219 | 0.00041947 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| BABY | low_fee | okx_maker_hl_cross | 0.00036862 | 0.00110587 | 2.90744629 | 0.00078149 | -0.00041287 | 0.00032438 |  |  |  | 18182.63949194 |
+| ZEC | low_fee | okx_maker_hl_cross | 0.00024083 | 0.00072249 | 0.9912522 | 0.00039825 | -0.00015742 | 0.00032424 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | one_bps_each | both_maker | 0.00024083 | 0.00072249 | 0 | 0.0004 | -0.00015917 | 0.00032249 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | low_fee | both_cross | 0.00024083 | 0.00072249 | 1.11511115 | 0.00042302 | -0.00018219 | 0.00029947 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | one_bps_each | okx_cross_hl_maker | 0.00024083 | 0.00072249 | 0.12385895 | 0.00042477 | -0.00018394 | 0.00029772 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| BTC | very_low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.00008 | 0.00002582 | 0.00023747 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | very_low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00811186 | 0.00008162 | 0.0000242 | 0.00023585 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | very_low_fee | okx_maker_hl_cross | 0.00010582 | 0.00031747 | 0.08109511 | 0.00009622 | 0.0000096 | 0.00022125 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | very_low_fee | both_cross | 0.00010582 | 0.00031747 | 0.08920697 | 0.00009784 | 0.00000798 | 0.00021963 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BABY | one_bps_each | okx_maker_hl_cross | 0.00036862 | 0.00110587 | 2.90744629 | 0.00098149 | -0.00061287 | 0.00012438 |  |  |  | 18182.63949194 |
+| ZEC | one_bps_each | okx_maker_hl_cross | 0.00024083 | 0.00072249 | 0.9912522 | 0.00059825 | -0.00035742 | 0.00012424 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| BTC | low_fee | both_maker | 0.00010582 | 0.00031747 | 0 | 0.0002 | -0.00009418 | 0.00011747 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | low_fee | okx_cross_hl_maker | 0.00010582 | 0.00031747 | 0.00811186 | 0.00020162 | -0.0000958 | 0.00011585 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | low_fee | okx_maker_hl_cross | 0.00010582 | 0.00031747 | 0.08109511 | 0.00021622 | -0.0001104 | 0.00010125 | 0 | 0.6 | 0.2 | 422448.80855333 |
 
 Interpretation:
 
-- BTC still has the cleanest capacity, but its 8h edge survives only under
-  very-low fees. `okx_cross_hl_maker` barely changes the score because OKX
-  taker slippage is tiny in this sample.
-- BTC pure maker-maker remains execution-fragile: pair both-touch was 0% in the
-  recent maker-touch probe.
-- ZEC has stronger 24h room and, in this refreshed current-book score, can
-  tolerate `okx_cross_hl_maker` much better than `okx_maker_hl_cross`.
-- For both BTC and ZEC, crossing the OKX leg while waiting as maker on
-  Hyperliquid is the least damaging one-leg-cross mode in this sample.
+If only both_maker survives, the candidate depends on maker availability. If a
+one-leg-cross mode survives, execution may be easier, but real fees and adverse
+selection still need account-level validation. Missing touch rates mean the
+maker-touch probe has not been run for that asset yet.
 
 ## OKX-Hyperliquid Fee Ceiling
 
@@ -701,23 +712,33 @@ measured from the public book.
 
 | asset | mode | max fee 8h bps/fill/venue | max fee 24h bps/fill/venue | both touch | OKX only | HL only | capacity |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BABY | both_maker | 0.92155 | 2.764675 |  |  |  | 18182.63949194 |
 | ZEC | both_maker | 0.602075 | 1.806225 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
-| ZEC | okx_cross_hl_maker | 0.540375 | 1.744525 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
-| ZEC | okx_maker_hl_cross | 0.108525 | 1.312675 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
-| ZEC | both_cross | 0.0468 | 1.25095 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | okx_cross_hl_maker | 0.54015 | 1.7443 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| BABY | okx_maker_hl_cross | -0.532175 | 1.31095 |  |  |  | 18182.63949194 |
+| ZEC | okx_maker_hl_cross | 0.10645 | 1.3106 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
+| ZEC | both_cross | 0.044525 | 1.248675 | 0.2 | 0.6 | 0.2 | 106210.05564167 |
 | BTC | both_maker | 0.26455 | 0.793675 | 0 | 0.6 | 0.2 | 422448.80855333 |
 | BTC | okx_cross_hl_maker | 0.2605 | 0.789625 | 0 | 0.6 | 0.2 | 422448.80855333 |
-| BTC | okx_maker_hl_cross | 0.224075 | 0.7532 | 0 | 0.6 | 0.2 | 422448.80855333 |
-| BTC | both_cross | 0.220025 | 0.74915 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | okx_maker_hl_cross | 0.224 | 0.753125 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| BTC | both_cross | 0.21995 | 0.749075 | 0 | 0.6 | 0.2 | 422448.80855333 |
+| JTO | both_maker | 0.146925 | 0.440775 |  |  |  | 54543.56750198 |
+| BABY | okx_cross_hl_maker | -2.360525 | -0.5174 |  |  |  | 18182.63949194 |
+| JTO | okx_cross_hl_maker | -1.353075 | -1.059225 |  |  |  | 54543.56750198 |
+| BABY | both_cross | -3.81425 | -1.971125 |  |  |  | 18182.63949194 |
+| JTO | okx_maker_hl_cross | -3.4315 | -3.13765 |  |  |  | 54543.56750198 |
+| JTO | both_cross | -4.9315 | -4.63765 |  |  |  | 54543.56750198 |
 
 Interpretation:
 
-- BTC 8h is extremely fee-sensitive: it needs roughly 0.26 bps or less per
-  fill per venue even before queue-position and adverse-selection risk.
-- BTC 24h has more room at roughly 0.79 bps per fill per venue, but its funding
-  event cadence is slower.
-- ZEC 24h has the largest fee headroom in this snapshot, including
-  `okx_cross_hl_maker`, but its capacity and event stability are weaker than
-  BTC.
+- BABY has the largest maker-only ceiling in this snapshot, but it has no
+  maker-touch evidence here, low capacity, and loses most of the edge when one
+  leg crosses.
+- ZEC has the best current one-leg-cross 24h headroom, especially
+  `okx_cross_hl_maker`, but it is still capacity and stability constrained.
+- BTC has the cleanest capacity and survives all execution modes under very-low
+  fees, but its 8h edge is extremely fee-sensitive.
+- JTO is weak in this event-window snapshot: even maker-only 24h has only a
+  small fee ceiling, and one-leg-cross modes are already negative.
 - The next hard gate is the real account fee tier. Without that, raw funding
   spread is not enough to promote a mode.

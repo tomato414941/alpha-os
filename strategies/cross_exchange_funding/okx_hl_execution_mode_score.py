@@ -203,7 +203,8 @@ def write_execution_mode_scores_md(
         handle.write(
             "If only both_maker survives, the candidate depends on maker availability. "
             "If a one-leg-cross mode survives, execution may be easier, but real fees "
-            "and adverse selection still need account-level validation.\n"
+            "and adverse selection still need account-level validation. Missing touch "
+            "rates mean the maker-touch probe has not been run for that asset yet.\n"
         )
     return output_path
 
@@ -302,7 +303,7 @@ def main() -> None:
         type=Path,
         default=ROOT / "okx_hl_maker_touch_pair_summary.csv",
     )
-    parser.add_argument("--assets", nargs="+", default=("BTC", "ZEC"))
+    parser.add_argument("--assets", nargs="+")
     parser.add_argument("--target-notional", type=Decimal, default=Decimal("1000"))
     parser.add_argument(
         "--csv-output-path",
@@ -320,7 +321,7 @@ def main() -> None:
     scores = build_execution_mode_scores(
         event_score_path=args.event_score_path,
         pair_summary_path=args.pair_summary_path,
-        assets=tuple(asset.upper() for asset in args.assets),
+        assets=tuple(asset.upper() for asset in args.assets) if args.assets else None,
         target_notional=args.target_notional,
     )
     write_execution_mode_scores_csv(scores, output_path=args.csv_output_path)
