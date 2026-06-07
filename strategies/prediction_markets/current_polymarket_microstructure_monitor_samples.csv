@@ -1,111 +1,126 @@
 sample_index,market_id,question,action,spread,midpoint,one_day_price_change,volume_24h,liquidity,score
-0,2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,0.010000,0.995000,0.675000,238892.477685,62744.528300,22.61383334
-0,2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,0.001000,0.999500,0.484500,3735928.578737,228390.787230,20.58410964
-0,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.040000,0.850000,0.570000,241579.381850,20713.708400,20.27252916
-0,2445210,Bitcoin Up or Down on June 7?,information_flow_watch,0.001000,0.989500,0.494500,285041.076808,66470.114430,19.11914834
-0,2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,0.010000,0.995000,0.315000,216577.211981,85705.902100,15.42662318
-0,2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,0.001000,0.996500,0.261500,208737.363965,27637.077670,14.12767796
-0,2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,0.180000,0.150000,-0.200000,507074.899139,12161.452800,11.86473286
-0,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.060000,661716.044182,399051.345600,11.42701683
-0,2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,0.040000,0.660000,0.000000,1259623.340902,36602.443300,11.28209491
-0,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.055000,-0.020000,1009925.844027,859941.268900,11.10195529
-0,629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,0.002000,0.007000,-0.023500,521769.998228,3440679.232240,11.07055890
-0,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.002000,0.331000,-0.052500,568574.048330,150283.297940,10.96951775
-0,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.665000,0.050000,552363.160444,181508.817400,10.92238460
-0,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.150000,0.085000,207331.839355,51859.868200,10.81234249
-0,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,-0.050000,333009.980716,301245.612600,10.80902633
-0,2402159,Boston Red Sox vs. New York Yankees,market_making_watch,0.070000,0.395000,-0.080000,551181.713956,6335.162200,10.78594917
-0,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,0.065000,0.886500,0.381500,402061.750917,27875.303710,10.75289745
-0,1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,0.037000,0.780500,0.000000,399817.477018,26916.425230,10.62756156
-0,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.125000,-0.030000,247513.048579,577027.642900,10.46961242
-0,2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,0.001000,0.999500,0.059000,215235.028746,105431.243470,10.38308699
-0,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.035000,0.029500,840870.762991,1071.241090,9.50291122
-0,1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,0.025000,0.029500,0.022500,500710.105970,2635.177490,9.35439951
-1,2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,0.010000,0.995000,0.675000,238892.477685,62744.528300,22.61383334
-1,2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,0.001000,0.999500,0.484500,3735928.578737,228390.787230,20.58410964
-1,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.040000,0.850000,0.570000,241579.381850,20713.708400,20.27252916
-1,2445210,Bitcoin Up or Down on June 7?,information_flow_watch,0.001000,0.989500,0.494500,285041.076808,66470.114430,19.11914834
-1,2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,0.010000,0.995000,0.315000,216577.211981,85705.902100,15.42662318
-1,2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,0.001000,0.996500,0.261500,208737.363965,27637.077670,14.12767796
-1,2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,0.180000,0.150000,-0.200000,507074.899139,12161.452800,11.86473286
-1,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.060000,661716.044182,399051.345600,11.42701683
-1,2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,0.040000,0.660000,0.000000,1259623.340902,36602.443300,11.28209491
-1,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.055000,-0.020000,1009925.844027,859941.268900,11.10195529
-1,629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,0.002000,0.007000,-0.023500,521769.998228,3440679.232240,11.07055890
-1,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.002000,0.331000,-0.052500,568574.048330,150283.297940,10.96951775
-1,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.665000,0.050000,552363.160444,181508.817400,10.92238460
-1,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.150000,0.085000,207331.839355,51859.868200,10.81234249
-1,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,-0.050000,333009.980716,301245.612600,10.80902633
-1,2402159,Boston Red Sox vs. New York Yankees,market_making_watch,0.070000,0.395000,-0.080000,551181.713956,6335.162200,10.78594917
-1,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,0.065000,0.886500,0.381500,402061.750917,27875.303710,10.75289745
-1,1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,0.037000,0.780500,0.000000,399817.477018,26916.425230,10.62756156
-1,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.125000,-0.030000,247513.048579,577027.642900,10.46961242
-1,2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,0.001000,0.999500,0.059000,215235.028746,105431.243470,10.38308699
-1,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.035000,0.029500,840870.762991,1071.241090,9.50291122
-1,1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,0.025000,0.029500,0.022500,500710.105970,2635.177490,9.35439951
-2,2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,0.010000,0.995000,0.675000,238892.477685,62744.528300,22.61383334
-2,2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,0.001000,0.999500,0.484500,3735928.578737,228390.787230,20.58410964
-2,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.040000,0.850000,0.570000,241579.381850,20713.708400,20.27252916
-2,2445210,Bitcoin Up or Down on June 7?,information_flow_watch,0.001000,0.989500,0.494500,285041.076808,66470.114430,19.11914834
-2,2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,0.010000,0.995000,0.315000,216577.211981,85705.902100,15.42662318
-2,2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,0.001000,0.996500,0.261500,208737.363965,27637.077670,14.12767796
-2,2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,0.180000,0.150000,-0.200000,507074.899139,12161.452800,11.86473286
-2,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.060000,661716.044182,399051.345600,11.42701683
-2,2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,0.040000,0.660000,0.000000,1259623.340902,36602.443300,11.28209491
-2,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.055000,-0.020000,1009925.844027,859941.268900,11.10195529
-2,629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,0.002000,0.007000,-0.023500,521769.998228,3440679.232240,11.07055890
-2,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.002000,0.331000,-0.052500,568574.048330,150283.297940,10.96951775
-2,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.665000,0.050000,552363.160444,181508.817400,10.92238460
-2,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.150000,0.085000,207331.839355,51859.868200,10.81234249
-2,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,-0.050000,333009.980716,301245.612600,10.80902633
-2,2402159,Boston Red Sox vs. New York Yankees,market_making_watch,0.070000,0.395000,-0.080000,551181.713956,6335.162200,10.78594917
-2,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,0.065000,0.886500,0.381500,402061.750917,27875.303710,10.75289745
-2,1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,0.037000,0.780500,0.000000,399817.477018,26916.425230,10.62756156
-2,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.125000,-0.030000,247513.048579,577027.642900,10.46961242
-2,2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,0.001000,0.999500,0.059000,215235.028746,105431.243470,10.38308699
-2,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.035000,0.029500,840870.762991,1071.241090,9.50291122
-2,1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,0.025000,0.029500,0.022500,500710.105970,2635.177490,9.35439951
-3,2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,0.010000,0.995000,0.675000,238892.477685,62744.528300,22.61383334
-3,2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,0.001000,0.999500,0.484500,3735928.578737,228390.787230,20.58410964
-3,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.040000,0.850000,0.570000,241579.381850,20713.708400,20.27252916
-3,2445210,Bitcoin Up or Down on June 7?,information_flow_watch,0.001000,0.989500,0.494500,285041.076808,66470.114430,19.11914834
-3,2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,0.010000,0.995000,0.315000,216577.211981,85705.902100,15.42662318
-3,2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,0.001000,0.996500,0.261500,208737.363965,27637.077670,14.12767796
-3,2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,0.180000,0.150000,-0.200000,507074.899139,12161.452800,11.86473286
-3,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.060000,661716.044182,399051.345600,11.42701683
-3,2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,0.040000,0.660000,0.000000,1259623.340902,36602.443300,11.28209491
-3,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.055000,-0.020000,1009925.844027,859941.268900,11.10195529
-3,629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,0.002000,0.007000,-0.023500,521769.998228,3440679.232240,11.07055890
-3,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.002000,0.331000,-0.052500,568574.048330,150283.297940,10.96951775
-3,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.665000,0.050000,552363.160444,181508.817400,10.92238460
-3,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.150000,0.085000,207331.839355,51859.868200,10.81234249
-3,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,-0.050000,333009.980716,301245.612600,10.80902633
-3,2402159,Boston Red Sox vs. New York Yankees,market_making_watch,0.070000,0.395000,-0.080000,551181.713956,6335.162200,10.78594917
-3,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,0.065000,0.886500,0.381500,402061.750917,27875.303710,10.75289745
-3,1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,0.037000,0.780500,0.000000,399817.477018,26916.425230,10.62756156
-3,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.125000,-0.030000,247513.048579,577027.642900,10.46961242
-3,2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,0.001000,0.999500,0.059000,215235.028746,105431.243470,10.38308699
-3,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.035000,0.029500,840870.762991,1071.241090,9.50291122
-3,1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,0.025000,0.029500,0.022500,500710.105970,2635.177490,9.35439951
-4,2452687,"HSBC Championships, Qualification: Storm Hunter vs Aliaksandra Sasnovich",information_flow_watch,0.010000,0.995000,0.675000,238892.477685,62744.528300,22.61383334
-4,2453468,LoL: KT Rolster vs Dplus KIA (BO5) - LCK Road to MSI,information_flow_watch,0.001000,0.999500,0.484500,3735928.578737,228390.787230,20.58410964
-4,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.040000,0.850000,0.570000,241579.381850,20713.708400,20.27252916
-4,2445210,Bitcoin Up or Down on June 7?,information_flow_watch,0.001000,0.989500,0.494500,285041.076808,66470.114430,19.11914834
-4,2433660,Counter-Strike: Virtus.pro vs GenOne (BO3) - European Pro League Series 7 Group D,information_flow_watch,0.010000,0.995000,0.315000,216577.211981,85705.902100,15.42662318
-4,2437762,"Will the price of Bitcoin be above $60,000 on June 7?",information_flow_watch,0.001000,0.996500,0.261500,208737.363965,27637.077670,14.12767796
-4,2448520,Set Handicap: Zverev (-2.5) vs Cobolli (+2.5),market_making_watch,0.180000,0.150000,-0.200000,507074.899139,12161.452800,11.86473286
-4,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.060000,661716.044182,399051.345600,11.42701683
-4,2461999,Dota 2: Team Yandex vs LGD Gaming - Game 1 Winner,market_making_watch,0.040000,0.660000,0.000000,1259623.340902,36602.443300,11.28209491
-4,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.055000,-0.020000,1009925.844027,859941.268900,11.10195529
-4,629035,Will Spencer Pratt win the 2026 Los Angeles mayoral election?,information_flow_watch,0.002000,0.007000,-0.023500,521769.998228,3440679.232240,11.07055890
-4,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.002000,0.331000,-0.052500,568574.048330,150283.297940,10.96951775
-4,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.665000,0.050000,552363.160444,181508.817400,10.92238460
-4,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.150000,0.085000,207331.839355,51859.868200,10.81234249
-4,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,-0.050000,333009.980716,301245.612600,10.80902633
-4,2402159,Boston Red Sox vs. New York Yankees,market_making_watch,0.070000,0.395000,-0.080000,551181.713956,6335.162200,10.78594917
-4,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,market_making_watch,0.065000,0.886500,0.381500,402061.750917,27875.303710,10.75289745
-4,1087514,Will Alexander Zverev win the 2026 Men's French Open?,market_making_watch,0.037000,0.780500,0.000000,399817.477018,26916.425230,10.62756156
-4,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.125000,-0.030000,247513.048579,577027.642900,10.46961242
-4,2437761,"Will the price of Bitcoin be above $58,000 on June 7?",information_flow_watch,0.001000,0.999500,0.059000,215235.028746,105431.243470,10.38308699
-4,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.035000,0.029500,840870.762991,1071.241090,9.50291122
-4,1361034,Will Maxx Crosby play for New York Jets next?,information_flow_watch,0.025000,0.029500,0.022500,500710.105970,2635.177490,9.35439951
+0,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.009000,0.645500,0.620000,1166235.885221,57294.927460,22.37189130
+0,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.040000,0.757000,0.570500,431874.148411,28618.631760,20.80471454
+0,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.013000,0.638500,0.545500,491191.129339,43871.390440,20.42075470
+0,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.009000,0.967500,0.447500,599550.879342,114049.858290,18.69567916
+0,2410056,Tampa Bay Rays vs. Miami Marlins,information_flow_watch,0.007000,0.056500,-0.473500,324759.915302,23915.097240,18.54217961
+0,2410061,Kansas City Royals vs. Minnesota Twins,information_flow_watch,0.010000,0.955000,0.455000,463043.862293,21978.209500,18.34311450
+0,2359708,Valorant: Leviatán Esports vs Global Esports (BO3) - VCT Masters London Group Stage,information_flow_watch,0.001000,0.999500,0.434500,394133.672444,109866.275320,18.22425963
+0,2455925,LoL: G2 Esports vs Karmine Corp - Game 4 Winner,information_flow_watch,0.001000,0.999500,0.409500,746312.404766,113820.947390,18.05826192
+0,2410065,Cleveland Guardians vs. Texas Rangers,information_flow_watch,0.015000,0.018500,-0.436500,359416.407855,39514.678470,17.95866310
+0,2350252,Chicago Sky vs. Toronto Tempo,information_flow_watch,0.010000,0.035000,-0.420000,462560.978408,31096.585000,17.71793286
+0,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.520000,0.405000,429572.837873,42755.782800,17.48815482
+0,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.001000,0.998500,0.413500,296758.886034,45548.943250,17.46746172
+0,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.425000,0.350000,1091579.665975,53722.524900,16.92249891
+0,2455923,LoL: G2 Esports vs Karmine Corp - Game 2 Winner,information_flow_watch,0.001000,0.999500,0.349500,429912.704729,199917.086530,16.68115031
+0,2455936,LoL: G2 Esports vs Karmine Corp (BO5) - LEC Playoffs,information_flow_watch,0.001000,0.999500,0.274500,2025447.993280,239060.125180,16.06141861
+0,2410052,Baltimore Orioles vs. Toronto Blue Jays,information_flow_watch,0.010000,0.145000,-0.310000,394454.638367,50541.359200,15.53688885
+0,2410050,Chicago White Sox vs. Philadelphia Phillies,information_flow_watch,0.030000,0.115000,-0.280000,671486.375430,29772.215000,15.09077240
+0,2230350,Will Morocco win on 2026-06-07?,information_flow_watch,0.010000,0.595000,0.280000,350869.139539,66320.172100,14.93528054
+0,1087514,Will Alexander Zverev win the 2026 Men's French Open?,information_flow_watch,0.001000,0.999500,0.219000,673514.312285,1884416.835350,14.88198819
+0,2233724,Spread: Ukraine (-1.5),market_making_watch,0.428000,0.264000,0.209000,508754.330603,11644.204820,13.98803405
+0,2230257,Will Ukraine win on 2026-06-07?,information_flow_watch,0.014000,0.013000,-0.167000,299945.945329,72174.550300,12.60224272
+0,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.525000,-0.090000,793174.528364,79100.263800,11.71509158
+0,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.014000,0.461000,0.080500,698864.359843,82474.848720,11.48484626
+0,2410054,Seattle Mariners vs. Detroit Tigers,information_flow_watch,0.030000,0.625000,0.100000,728356.475983,20993.139000,11.45905270
+0,2410048,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.495000,0.090000,406892.709464,103575.268100,11.30996865
+1,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.009000,0.645500,0.620000,1166235.885221,57294.927460,22.37189130
+1,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.040000,0.757000,0.570500,431874.148411,28618.631760,20.80471454
+1,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.013000,0.638500,0.545500,491191.129339,43871.390440,20.42075470
+1,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.009000,0.967500,0.447500,599550.879342,114049.858290,18.69567916
+1,2410056,Tampa Bay Rays vs. Miami Marlins,information_flow_watch,0.007000,0.056500,-0.473500,324759.915302,23915.097240,18.54217961
+1,2410061,Kansas City Royals vs. Minnesota Twins,information_flow_watch,0.010000,0.955000,0.455000,463043.862293,21978.209500,18.34311450
+1,2359708,Valorant: Leviatán Esports vs Global Esports (BO3) - VCT Masters London Group Stage,information_flow_watch,0.001000,0.999500,0.434500,394133.672444,109866.275320,18.22425963
+1,2455925,LoL: G2 Esports vs Karmine Corp - Game 4 Winner,information_flow_watch,0.001000,0.999500,0.409500,746312.404766,113820.947390,18.05826192
+1,2410065,Cleveland Guardians vs. Texas Rangers,information_flow_watch,0.015000,0.018500,-0.436500,359416.407855,39514.678470,17.95866310
+1,2350252,Chicago Sky vs. Toronto Tempo,information_flow_watch,0.010000,0.035000,-0.420000,462560.978408,31096.585000,17.71793286
+1,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.520000,0.405000,429572.837873,42755.782800,17.48815482
+1,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.001000,0.998500,0.413500,296758.886034,45548.943250,17.46746172
+1,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.425000,0.350000,1091579.665975,53722.524900,16.92249891
+1,2455923,LoL: G2 Esports vs Karmine Corp - Game 2 Winner,information_flow_watch,0.001000,0.999500,0.349500,429912.704729,199917.086530,16.68115031
+1,2455936,LoL: G2 Esports vs Karmine Corp (BO5) - LEC Playoffs,information_flow_watch,0.001000,0.999500,0.274500,2025447.993280,239060.125180,16.06141861
+1,2410052,Baltimore Orioles vs. Toronto Blue Jays,information_flow_watch,0.010000,0.145000,-0.310000,394454.638367,50541.359200,15.53688885
+1,2410050,Chicago White Sox vs. Philadelphia Phillies,information_flow_watch,0.030000,0.115000,-0.280000,671486.375430,29772.215000,15.09077240
+1,2230350,Will Morocco win on 2026-06-07?,information_flow_watch,0.010000,0.595000,0.280000,350869.139539,66320.172100,14.93528054
+1,1087514,Will Alexander Zverev win the 2026 Men's French Open?,information_flow_watch,0.001000,0.999500,0.219000,673514.312285,1884416.835350,14.88198819
+1,2233724,Spread: Ukraine (-1.5),market_making_watch,0.428000,0.264000,0.209000,508754.330603,11644.204820,13.98803405
+1,2230257,Will Ukraine win on 2026-06-07?,information_flow_watch,0.014000,0.013000,-0.167000,299945.945329,72174.550300,12.60224272
+1,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.525000,-0.090000,793174.528364,79100.263800,11.71509158
+1,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.014000,0.461000,0.080500,698864.359843,82474.848720,11.48484626
+1,2410054,Seattle Mariners vs. Detroit Tigers,information_flow_watch,0.030000,0.625000,0.100000,728356.475983,20993.139000,11.45905270
+1,2410048,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.495000,0.090000,406892.709464,103575.268100,11.30996865
+2,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.009000,0.645500,0.620000,1166235.885221,57294.927460,22.37189130
+2,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.040000,0.757000,0.570500,431874.148411,28618.631760,20.80471454
+2,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.013000,0.638500,0.545500,491191.129339,43871.390440,20.42075470
+2,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.009000,0.967500,0.447500,599550.879342,114049.858290,18.69567916
+2,2410056,Tampa Bay Rays vs. Miami Marlins,information_flow_watch,0.007000,0.056500,-0.473500,324759.915302,23915.097240,18.54217961
+2,2410061,Kansas City Royals vs. Minnesota Twins,information_flow_watch,0.010000,0.955000,0.455000,463043.862293,21978.209500,18.34311450
+2,2359708,Valorant: Leviatán Esports vs Global Esports (BO3) - VCT Masters London Group Stage,information_flow_watch,0.001000,0.999500,0.434500,394133.672444,109866.275320,18.22425963
+2,2455925,LoL: G2 Esports vs Karmine Corp - Game 4 Winner,information_flow_watch,0.001000,0.999500,0.409500,746312.404766,113820.947390,18.05826192
+2,2410065,Cleveland Guardians vs. Texas Rangers,information_flow_watch,0.015000,0.018500,-0.436500,359416.407855,39514.678470,17.95866310
+2,2350252,Chicago Sky vs. Toronto Tempo,information_flow_watch,0.010000,0.035000,-0.420000,462560.978408,31096.585000,17.71793286
+2,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.520000,0.405000,429572.837873,42755.782800,17.48815482
+2,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.001000,0.998500,0.413500,296758.886034,45548.943250,17.46746172
+2,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.425000,0.350000,1091579.665975,53722.524900,16.92249891
+2,2455923,LoL: G2 Esports vs Karmine Corp - Game 2 Winner,information_flow_watch,0.001000,0.999500,0.349500,429912.704729,199917.086530,16.68115031
+2,2455936,LoL: G2 Esports vs Karmine Corp (BO5) - LEC Playoffs,information_flow_watch,0.001000,0.999500,0.274500,2025447.993280,239060.125180,16.06141861
+2,2410052,Baltimore Orioles vs. Toronto Blue Jays,information_flow_watch,0.010000,0.145000,-0.310000,394454.638367,50541.359200,15.53688885
+2,2410050,Chicago White Sox vs. Philadelphia Phillies,information_flow_watch,0.030000,0.115000,-0.280000,671486.375430,29772.215000,15.09077240
+2,2230350,Will Morocco win on 2026-06-07?,information_flow_watch,0.010000,0.595000,0.280000,350869.139539,66320.172100,14.93528054
+2,1087514,Will Alexander Zverev win the 2026 Men's French Open?,information_flow_watch,0.001000,0.999500,0.219000,673514.312285,1884416.835350,14.88198819
+2,2233724,Spread: Ukraine (-1.5),market_making_watch,0.428000,0.264000,0.209000,508754.330603,11644.204820,13.98803405
+2,2230257,Will Ukraine win on 2026-06-07?,information_flow_watch,0.014000,0.013000,-0.167000,299945.945329,72174.550300,12.60224272
+2,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.525000,-0.090000,793174.528364,79100.263800,11.71509158
+2,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.014000,0.461000,0.080500,698864.359843,82474.848720,11.48484626
+2,2410054,Seattle Mariners vs. Detroit Tigers,information_flow_watch,0.030000,0.625000,0.100000,728356.475983,20993.139000,11.45905270
+2,2410048,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.495000,0.090000,406892.709464,103575.268100,11.30996865
+3,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.009000,0.645500,0.620000,1166235.885221,57294.927460,22.37189130
+3,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.040000,0.757000,0.570500,431874.148411,28618.631760,20.80471454
+3,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.013000,0.638500,0.545500,491191.129339,43871.390440,20.42075470
+3,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.009000,0.967500,0.447500,599550.879342,114049.858290,18.69567916
+3,2410056,Tampa Bay Rays vs. Miami Marlins,information_flow_watch,0.007000,0.056500,-0.473500,324759.915302,23915.097240,18.54217961
+3,2410061,Kansas City Royals vs. Minnesota Twins,information_flow_watch,0.010000,0.955000,0.455000,463043.862293,21978.209500,18.34311450
+3,2359708,Valorant: Leviatán Esports vs Global Esports (BO3) - VCT Masters London Group Stage,information_flow_watch,0.001000,0.999500,0.434500,394133.672444,109866.275320,18.22425963
+3,2455925,LoL: G2 Esports vs Karmine Corp - Game 4 Winner,information_flow_watch,0.001000,0.999500,0.409500,746312.404766,113820.947390,18.05826192
+3,2410065,Cleveland Guardians vs. Texas Rangers,information_flow_watch,0.015000,0.018500,-0.436500,359416.407855,39514.678470,17.95866310
+3,2350252,Chicago Sky vs. Toronto Tempo,information_flow_watch,0.010000,0.035000,-0.420000,462560.978408,31096.585000,17.71793286
+3,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.520000,0.405000,429572.837873,42755.782800,17.48815482
+3,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.001000,0.998500,0.413500,296758.886034,45548.943250,17.46746172
+3,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.425000,0.350000,1091579.665975,53722.524900,16.92249891
+3,2455923,LoL: G2 Esports vs Karmine Corp - Game 2 Winner,information_flow_watch,0.001000,0.999500,0.349500,429912.704729,199917.086530,16.68115031
+3,2455936,LoL: G2 Esports vs Karmine Corp (BO5) - LEC Playoffs,information_flow_watch,0.001000,0.999500,0.274500,2025447.993280,239060.125180,16.06141861
+3,2410052,Baltimore Orioles vs. Toronto Blue Jays,information_flow_watch,0.010000,0.145000,-0.310000,394454.638367,50541.359200,15.53688885
+3,2410050,Chicago White Sox vs. Philadelphia Phillies,information_flow_watch,0.030000,0.115000,-0.280000,671486.375430,29772.215000,15.09077240
+3,2230350,Will Morocco win on 2026-06-07?,information_flow_watch,0.010000,0.595000,0.280000,350869.139539,66320.172100,14.93528054
+3,1087514,Will Alexander Zverev win the 2026 Men's French Open?,information_flow_watch,0.001000,0.999500,0.219000,673514.312285,1884416.835350,14.88198819
+3,2233724,Spread: Ukraine (-1.5),market_making_watch,0.428000,0.264000,0.209000,508754.330603,11644.204820,13.98803405
+3,2230257,Will Ukraine win on 2026-06-07?,information_flow_watch,0.014000,0.013000,-0.167000,299945.945329,72174.550300,12.60224272
+3,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.525000,-0.090000,793174.528364,79100.263800,11.71509158
+3,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.014000,0.461000,0.080500,698864.359843,82474.848720,11.48484626
+3,2410054,Seattle Mariners vs. Detroit Tigers,information_flow_watch,0.030000,0.625000,0.100000,728356.475983,20993.139000,11.45905270
+3,2410048,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.495000,0.090000,406892.709464,103575.268100,11.30996865
+4,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.009000,0.645500,0.620000,1166235.885221,57294.927460,22.37189130
+4,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.040000,0.757000,0.570500,431874.148411,28618.631760,20.80471454
+4,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.013000,0.638500,0.545500,491191.129339,43871.390440,20.42075470
+4,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.009000,0.967500,0.447500,599550.879342,114049.858290,18.69567916
+4,2410056,Tampa Bay Rays vs. Miami Marlins,information_flow_watch,0.007000,0.056500,-0.473500,324759.915302,23915.097240,18.54217961
+4,2410061,Kansas City Royals vs. Minnesota Twins,information_flow_watch,0.010000,0.955000,0.455000,463043.862293,21978.209500,18.34311450
+4,2359708,Valorant: Leviatán Esports vs Global Esports (BO3) - VCT Masters London Group Stage,information_flow_watch,0.001000,0.999500,0.434500,394133.672444,109866.275320,18.22425963
+4,2455925,LoL: G2 Esports vs Karmine Corp - Game 4 Winner,information_flow_watch,0.001000,0.999500,0.409500,746312.404766,113820.947390,18.05826192
+4,2410065,Cleveland Guardians vs. Texas Rangers,information_flow_watch,0.015000,0.018500,-0.436500,359416.407855,39514.678470,17.95866310
+4,2350252,Chicago Sky vs. Toronto Tempo,information_flow_watch,0.010000,0.035000,-0.420000,462560.978408,31096.585000,17.71793286
+4,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.520000,0.405000,429572.837873,42755.782800,17.48815482
+4,2209897,Will Kimi Antonelli win the 2026 F1 Monaco Grand Prix?,information_flow_watch,0.001000,0.998500,0.413500,296758.886034,45548.943250,17.46746172
+4,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.425000,0.350000,1091579.665975,53722.524900,16.92249891
+4,2455923,LoL: G2 Esports vs Karmine Corp - Game 2 Winner,information_flow_watch,0.001000,0.999500,0.349500,429912.704729,199917.086530,16.68115031
+4,2455936,LoL: G2 Esports vs Karmine Corp (BO5) - LEC Playoffs,information_flow_watch,0.001000,0.999500,0.274500,2025447.993280,239060.125180,16.06141861
+4,2410052,Baltimore Orioles vs. Toronto Blue Jays,information_flow_watch,0.010000,0.145000,-0.310000,394454.638367,50541.359200,15.53688885
+4,2410050,Chicago White Sox vs. Philadelphia Phillies,information_flow_watch,0.030000,0.115000,-0.280000,671486.375430,29772.215000,15.09077240
+4,2230350,Will Morocco win on 2026-06-07?,information_flow_watch,0.010000,0.595000,0.280000,350869.139539,66320.172100,14.93528054
+4,1087514,Will Alexander Zverev win the 2026 Men's French Open?,information_flow_watch,0.001000,0.999500,0.219000,673514.312285,1884416.835350,14.88198819
+4,2233724,Spread: Ukraine (-1.5),market_making_watch,0.428000,0.264000,0.209000,508754.330603,11644.204820,13.98803405
+4,2230257,Will Ukraine win on 2026-06-07?,information_flow_watch,0.014000,0.013000,-0.167000,299945.945329,72174.550300,12.60224272
+4,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.525000,-0.090000,793174.528364,79100.263800,11.71509158
+4,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.014000,0.461000,0.080500,698864.359843,82474.848720,11.48484626
+4,2410054,Seattle Mariners vs. Detroit Tigers,information_flow_watch,0.030000,0.625000,0.100000,728356.475983,20993.139000,11.45905270
+4,2410048,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.495000,0.090000,406892.709464,103575.268100,11.30996865

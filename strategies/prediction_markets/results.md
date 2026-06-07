@@ -85,3 +85,19 @@ Interpretation:
   permanent peace deal`, where public visible depth exists near both sides.
 - This still does not prove edge. The next step is an event probability model
   or news-flow model for the same market.
+
+## Current Prediction Market Paper Tickets
+
+- MicroStrategy BTC purchase June 2-8: paper event-model candidate. The market
+  has strong visible depth, tight spread, and high 24h volume. This needs an
+  external information model based on filings, company announcements, and
+  Bitcoin purchase reporting before any trade.
+- Israel closes its airspace by June 30: paper geopolitical event-model
+  candidate. Depth exists, but the market needs a news-flow model and latency
+  checks.
+- Iran airspace markets are active but currently too thin near top of book for
+  paper priority.
+- Sports rows with depth are treated as market-making research only until a
+  dedicated sports model exists.
+- Prediction-market tickets are not probability estimates. They only identify
+  markets where an external model might be worth building.

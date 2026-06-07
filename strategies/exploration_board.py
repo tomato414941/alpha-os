@@ -780,19 +780,34 @@ def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "prediction_markets" / "current_prediction_market_paper_tickets.csv"
+    best_ticket = _best_prediction_market_paper_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="prediction_markets",
+            status=best_ticket.get("status", "paper_event_model_candidate"),
+            strongest_current_signal=(
+                f"{best_ticket.get('question', '')} {best_ticket.get('outcome', '')}: "
+                f"{best_ticket.get('structure', '')}, "
+                f"spread={best_ticket.get('spread', '')}, "
+                f"depth={best_ticket.get('visible_depth_score', '')}, "
+                f"vol24={best_ticket.get('volume_24h', '')}"
+            ),
+            main_gap="prediction-market paper ticket still lacks true-probability model, news feed, latency, and adverse-selection checks",
+            next_step="build event-model checks for MicroStrategy BTC purchase and Israel/Iran airspace markets before any live action",
+        )
     depth_path = root / "prediction_markets" / "current_polymarket_clob_depth.csv"
     best_depth = _best_numeric_row(depth_path, key="visible_depth_score")
     if best_depth:
-        signal = (
-            f"{best_depth.get('question', '')} {best_depth.get('outcome', '')}: "
-            f"spread={best_depth.get('spread', '')}, "
-            f"bid_depth_5c={best_depth.get('bid_depth_to_5c', '')}, "
-            f"ask_depth_5c={best_depth.get('ask_depth_to_5c', '')}"
-        )
-    return ExplorationRow(
-        lane="prediction_markets",
-        status="clob_depth_check",
-            strongest_current_signal=signal,
+        return ExplorationRow(
+            lane="prediction_markets",
+            status="clob_depth_check",
+            strongest_current_signal=(
+                f"{best_depth.get('question', '')} {best_depth.get('outcome', '')}: "
+                f"spread={best_depth.get('spread', '')}, "
+                f"bid_depth_5c={best_depth.get('bid_depth_to_5c', '')}, "
+                f"ask_depth_5c={best_depth.get('ask_depth_to_5c', '')}"
+            ),
             main_gap="event probability, news flow, and adverse selection are not modeled",
             next_step="build external event model for depth-positive markets before paper trading",
         )
@@ -830,6 +845,32 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="event probability is not modeled; this only ranks active public market structure",
         next_step="join top markets to external event models, order books, and adverse-selection checks",
+    )
+
+
+def _best_prediction_market_paper_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(
+        row
+        for row in rows
+        if row.get("status") in {
+            "paper_event_model_candidate",
+            "paper_event_model_watch",
+            "market_making_watch",
+            "sports_market_making_watch",
+        }
+    )
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda row: (
+            1.0 if row.get("status") == "paper_event_model_candidate" else 0.5,
+            float(row.get("score") or "0"),
+        ),
     )
 
 
