@@ -128,3 +128,45 @@ Interpretation:
 - The next test should measure persistence across repeated snapshots. A
   one-shot spread is not enough; the edge must survive time, fees, and actual
   order placement constraints.
+
+## OKX-Hyperliquid Short Persistence Probe
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_probe
+```
+
+Sample:
+
+- snapshots: 3
+- delay: 5 seconds
+- raw rows: 360
+- summarized assets: 124
+- ranking: positive 8h net rate, then mean 8h net proxy
+
+Top summary rows:
+
+| asset | long venue | short venue | observations | positive 8h rate | mean net 8h | mean net 24h | breakeven hours | capacity proxy |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | OkxSwap | HlPerp | 3 | 1.0000 | 0.00009284 | 0.00033603 | 1.89 | 764337 |
+| SOL | HlPerp | OkxSwap | 3 | 0.0000 | -0.00004338 | 0.00020844 | 10.76 | 3010720 |
+| DOGE | OkxSwap | HlPerp | 3 | 0.0000 | -0.00016393 | -0.00005786 | 32.71 | 93433 |
+| HYPE | OkxSwap | HlPerp | 3 | 0.0000 | -0.00018692 | 0.00015572 | 16.73 | 3282504 |
+| TRX | OkxSwap | HlPerp | 3 | 0.0000 | -0.00022865 | 0.00000397 | 23.73 | 47164 |
+| BNB | HlPerp | OkxSwap | 3 | 0.0000 | -0.00030628 | -0.00023572 | 77.60 | 65972 |
+| AI | HlPerp | OkxSwap | 3 | 0.0000 | -0.00032977 | -0.00012977 | 34.38 | 0 |
+| SUI | OkxSwap | HlPerp | 3 | 0.0000 | -0.00037528 | -0.00030927 | 98.99 | 315611 |
+| LINK | OkxSwap | HlPerp | 3 | 0.0000 | -0.00037828 | -0.00019732 | 41.45 | 36484 |
+| ZEC | OkxSwap | HlPerp | 3 | 0.0000 | -0.00040808 | -0.00017645 | 36.13 | 83556 |
+
+Interpretation:
+
+- The short persistence check keeps `BTC` as the only clearly positive 8h
+  candidate in this snapshot window.
+- `SOL` and `HYPE` still matter because their 24h proxy remains positive, but
+  they require holding through cost amortization rather than a quick funding
+  capture.
+- The next real test should either collect this probe over a longer schedule or
+  make a tiny paper-ticket with explicit OKX and Hyperliquid order assumptions
+  for `BTC`.
