@@ -248,6 +248,23 @@ def _event_flow_row(root: Path) -> ExplorationRow:
 def _liquidation_flow_row(root: Path) -> ExplorationRow:
     monitor_path = root / "liquidation_flow" / "current_okx_liquidation_monitor_summary.csv"
     actionability_path = root / "liquidation_flow" / "current_okx_liquidation_actionability_review.csv"
+    paper_outcome_path = root / "liquidation_flow" / "current_okx_liquidation_paper_outcome.csv"
+    best_outcome = _best_paper_outcome_row(paper_outcome_path)
+    if best_outcome:
+        return ExplorationRow(
+            lane="liquidation_flow",
+            status="current_okx_paper_outcome",
+            strongest_current_signal=(
+                f"{best_outcome.get('asset', '')}: {best_outcome.get('action', '')}, "
+                f"dir={best_outcome.get('paper_direction', '')}, "
+                f"size={best_outcome.get('candidate_size_usd', '')}, "
+                f"net15={best_outcome.get('net_15m_bps', '')}bps, "
+                f"out15={best_outcome.get('outcome_15m', '')}, "
+                f"out1h={best_outcome.get('outcome_1h', '')}"
+            ),
+            main_gap="paper outcome is retrospective and has no live fill or repeated fresh-event sample yet",
+            next_step="wait for 1h outcome and repeat JTO/ONDO/LTC gate on fresh liquidation events",
+        )
     paper_gate_path = root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv"
     best_paper = _best_paper_gate_row(paper_gate_path)
     if best_paper:
@@ -743,6 +760,24 @@ def _best_paper_gate_row(path: Path) -> dict[str, str] | None:
             float(row.get("conservative_net_bps") or "-inf"),
             -float(row.get("visible_depth_usage") or "inf"),
             float(row.get("candidate_size_usd") or "0"),
+        ),
+    )
+
+
+def _best_paper_outcome_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            row.get("outcome_15m") == "paper_15m_win",
+            float(row.get("net_15m_bps") or "-inf"),
+            row.get("outcome_1h") == "paper_1h_win",
+            float(row.get("net_1h_bps") or "-inf"),
         ),
     )
 

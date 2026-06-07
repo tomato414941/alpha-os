@@ -11,6 +11,7 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_gate
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_ticket
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_outcome
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
@@ -219,3 +220,18 @@ Interpretation:
 - It is still not deployable alpha: the next fresh event must reproduce the
   action family, live spread/depth must remain usable, and the paper result must
   be positive after the same conservative cost proxy.
+
+## Current OKX Liquidation Paper Outcome
+
+This joins paper-gate rows to monitor forward labels. It measures the paper
+result after the same conservative cost proxy used by the gate.
+
+| event | asset | action | dir | size USD | cost bps | net15 bps | out15 | net1h bps | out1h |
+| --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
+| 2026-06-07T15:44:30.934000+00:00 | JTO | long_liquidation_cascade_watch | short | 100 | 12.07 | 93.55 | paper_15m_win |  | pending_1h |
+
+Interpretation:
+
+- The first JTO paper observation is a 15m win after the rough cost proxy.
+- This is still only one retrospective event. The 1h outcome is pending, and
+  the lane needs repeated fresh-event paper observations before promotion.
