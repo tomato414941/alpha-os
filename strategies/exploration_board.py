@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
+        _symbol_lane_split_review_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -162,6 +163,33 @@ def _symbol_cluster_label_queue_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="symbol conflict output has not been turned into label tasks",
         next_step="run current symbol cluster label queue after conflict review",
+    )
+
+
+def _symbol_lane_split_review_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_lane_split_review.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="symbol_lane_split_review",
+            status=best.get("lane_action", "lane_split_review"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"{best.get('opportunity', '')}, "
+                f"bias={best.get('lane_bias', '')}, "
+                f"support={best.get('support_state', '')}, "
+                f"role={best.get('conflict_role', '')}, "
+                f"priority={best.get('priority_score', '')}"
+            ),
+            main_gap="the same symbol can contain different alpha hypotheses with different labels and execution paths",
+            next_step=best.get("next_step", "label this lane separately before combining symbol-level views"),
+        )
+    return ExplorationRow(
+        lane="symbol_lane_split_review",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="top symbol queue has not been split into lane-level label tasks",
+        next_step="run current symbol lane split review after the symbol label queue",
     )
 
 

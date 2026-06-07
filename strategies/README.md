@@ -112,6 +112,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - symbol-level label-work queue from the current conflict screen
 - `current_symbol_cluster_label_queue.md`
   - latest symbol-level split-label and confirmed-direction label queue
+- `current_symbol_lane_split_review.py`
+  - lane-level review for the top symbol-label queue
+- `current_symbol_lane_split_review.md`
+  - latest lane-level split of conflicting symbol alpha ideas
 - `p0_parallel/`
   - parallel P0 data reachability, L2 burst, and operational paper-ticket
     probes
