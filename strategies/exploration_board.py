@@ -366,6 +366,22 @@ def _defi_yield_row(root: Path) -> ExplorationRow:
 
 
 def _market_making_row(root: Path) -> ExplorationRow:
+    label_path = root / "market_making" / "current_l2_imbalance_forward_labels.csv"
+    best_label = _best_l2_imbalance_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="market_making",
+            status="l2_imbalance_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('asset', '')}: "
+                f"imbalance10={best_label.get('imbalance_10_bps', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_label.get('directional_return_1h', '')}, "
+                f"spread={best_label.get('spread_bps', '')}"
+            ),
+            main_gap="one L2 snapshot label excludes queue position, fill probability, fees, and repeated adverse-selection samples",
+            next_step="collect repeated L2 imbalance labels and estimate maker fill/adverse-selection risk",
+        )
     path = root / "market_making" / "current_l2_snapshot.csv"
     best = _best_abs_numeric_row(path, key="imbalance_10_bps")
     signal = "Hyperliquid L2 snapshot exists"
@@ -814,6 +830,27 @@ def _best_attention_forward_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("score") or "0"),
             float(row.get("directional_return_1h") or "-inf"),
+        ),
+    )
+
+
+def _best_l2_imbalance_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("directional_return_1h") or "-inf"),
+            abs(float(row.get("imbalance_10_bps") or "0")),
         ),
     )
 

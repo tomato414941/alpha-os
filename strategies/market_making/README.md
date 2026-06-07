@@ -14,6 +14,7 @@ records:
 
 ```bash
 uv run python -m strategies.market_making.hyperliquid_l2_snapshot
+uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
 ```
 
 ## Current Status
@@ -21,4 +22,3 @@ uv run python -m strategies.market_making.hyperliquid_l2_snapshot
 This is not yet a market-making strategy. It only confirms that order-book
 snapshots are reachable and starts measuring whether there is enough spread and
 depth to justify a fill model.
-
