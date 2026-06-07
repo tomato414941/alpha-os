@@ -38,17 +38,9 @@ def build_funding_regime_summaries(
     labels_path: Path,
     max_workers: int = 12,
 ) -> tuple[BtcEtfFlowFundingRegimeSummary, ...]:
-    rows = tuple(row for row in _read_rows(labels_path) if row.get("directional_return_5d"))
-    if not rows:
-        return ()
-    start = min(date.fromisoformat(row["label_start_date"]) for row in rows)
-    end = max(date.fromisoformat(row["label_start_date"]) + timedelta(days=4) for row in rows)
-    funding_by_day = _fetch_btc_funding_by_day(start=start, end=end, max_workers=max_workers)
-
-    enriched_rows = tuple(
-        row
-        for row in (_enrich_row_with_funding(row, funding_by_day=funding_by_day) for row in rows)
-        if row is not None
+    enriched_rows = build_funding_enriched_label_rows(
+        labels_path=labels_path,
+        max_workers=max_workers,
     )
     grouped: dict[str, list[dict[str, str]]] = {}
     for row in enriched_rows:
@@ -71,6 +63,24 @@ def build_funding_regime_summaries(
             ),
             reverse=True,
         )
+    )
+
+
+def build_funding_enriched_label_rows(
+    *,
+    labels_path: Path,
+    max_workers: int = 12,
+) -> tuple[dict[str, str], ...]:
+    rows = tuple(row for row in _read_rows(labels_path) if row.get("directional_return_5d"))
+    if not rows:
+        return ()
+    start = min(date.fromisoformat(row["label_start_date"]) for row in rows)
+    end = max(date.fromisoformat(row["label_start_date"]) + timedelta(days=4) for row in rows)
+    funding_by_day = _fetch_btc_funding_by_day(start=start, end=end, max_workers=max_workers)
+    return tuple(
+        row
+        for row in (_enrich_row_with_funding(row, funding_by_day=funding_by_day) for row in rows)
+        if row is not None
     )
 
 

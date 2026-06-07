@@ -806,6 +806,22 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    paper_rule_path = root / "institutional_flow" / "btc_etf_flow_funding_candidate_summary.csv"
+    best_paper_rule = _btc_etf_flow_funding_candidate_summary(paper_rule_path)
+    if best_paper_rule:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status=best_paper_rule.get("action", "paper_rule_candidate"),
+            strongest_current_signal=(
+                f"{best_paper_rule.get('rule_key', '')}: "
+                f"trades={best_paper_rule.get('trades', '')}, "
+                f"total={best_paper_rule.get('total_return', '')}, "
+                f"hit={best_paper_rule.get('hit_rate_5d', '')}, "
+                f"mdd={best_paper_rule.get('max_drawdown', '')}"
+            ),
+            main_gap="paper rule is non-overlapping but still daily, fee-assumption based, and missing intraday execution/liquidation checks",
+            next_step="test the BTC ETF-flow/funding rule with intraday entries, account fees, liquidation buffer, and BTC regime filters",
+        )
     funding_regime_path = root / "institutional_flow" / "btc_etf_flow_funding_regime_summary.csv"
     best_funding_regime = _best_btc_etf_flow_funding_regime_row(funding_regime_path)
     if best_funding_regime:
@@ -941,6 +957,19 @@ def _best_btc_etf_flow_funding_regime_row(path: Path) -> dict[str, str] | None:
             float(row.get("hit_rate_5d_with_funding") or "0"),
         ),
     )
+
+
+def _btc_etf_flow_funding_candidate_summary(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    row = rows[0]
+    if row.get("action") not in {"paper_rule_candidate", "paper_rule_watch"}:
+        return None
+    return row
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:

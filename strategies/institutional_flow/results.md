@@ -54,3 +54,17 @@ Funding split:
   because the short direction also receives funding.
 - This still is not deployable PnL. It excludes intraday entry timing,
   drawdown behavior, liquidity, fee tier, and execution assumptions.
+
+Paper rule pass:
+
+- Rule: enter BTC short after large rolling ETF outflow when label-start
+  BTCUSDT funding support is positive; hold 5 days; skip overlapping signals.
+- Fee assumption: 5 bps per side.
+- Trades: 21, skipped overlap signals: 22.
+- Total return: 0.78885853.
+- Mean net 5d return: 0.02961324.
+- Hit rate: 0.6190.
+- Max drawdown: -0.07880819.
+- This is the first institutional-flow candidate that survived non-overlap and
+  a simple fee haircut. The next risk is whether intraday timing, mark/index
+  basis, liquidation buffer, and actual account fees erase it.
