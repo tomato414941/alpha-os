@@ -21,4 +21,5 @@ The screen is not a trade recommendation. It does not yet verify:
 
 ```bash
 uv run python -m strategies.cross_exchange_funding.current_funding_spread
+uv run python -m strategies.cross_exchange_funding.current_funding_feasibility
 ```
