@@ -6,12 +6,14 @@ Run:
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_flow
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
-alpha test because it has no post-event return labels.
+alpha test because the labels are still short-window event labels without fees,
+slippage, funding, or venue routing.
 
 ## Current OKX Liquidation Flow
 
@@ -88,7 +90,35 @@ Interpretation:
 - `WLD` is the stronger cross-lane candidate because it also has positive
   pressure and candidate-validation labels.
 - `BEAT` is a cleaner liquidation-flow follow-up candidate, but it needs
-  depth/fee checks and forward labels from the monitor timestamps.
+  depth/fee checks and stronger follow-through from the monitor timestamps.
+
+## Current OKX Liquidation Monitor Forward Label Summary
+
+This labels repeated liquidation-monitor samples from each event timestamp.
+Positive continuation means price moved in the forced-flow direction over the
+horizon.
+
+| asset | action | obs | cov15 | hit15 | mean cont15 | cov1h | hit1h | mean cont1h |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| JTO | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.010562 | 0 |  |  |
+| ONDO | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.007452 | 0 |  |  |
+| H | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.006116 | 0 |  |  |
+| DOGE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.003185 | 0 |  |  |
+| LAB | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.002773 | 0 |  |  |
+| LTC | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002599 | 0 |  |  |
+| HYPE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002376 | 3 | 1.0000 | 0.012218 |
+| BEAT | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.000968 | 0 |  |  |
+| XLM | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.001476 | 0 |  |  |
+| EDEN | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.008764 | 0 |  |  |
+
+Interpretation:
+
+- `JTO` and `ONDO` now have the cleanest monitor-sample 15m continuation labels.
+- `LTC` remains executable-looking because its depth is better, even though its
+  monitor-sample continuation is smaller than `JTO`/`ONDO`.
+- `WLD` remains cross-lane interesting, but the latest monitor event is still
+  unlabeled in this run, so it should not be promoted from monitor evidence
+  alone.
 
 ## Current OKX Liquidation Depth Check
 
@@ -116,24 +146,25 @@ Interpretation:
 
 ## Current OKX Liquidation Actionability Review
 
-This joins liquidation persistence, first continuation labels, and visible
-near-touch depth. It is a triage view, not an order plan.
+This joins liquidation persistence, monitor-sample continuation labels, and
+visible near-touch depth. It is a triage view, not an order plan.
 
 | asset | action | obs | monitor score | cont15 | spread bps | near depth 5bps | score | note |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | LTC | long_liquidation_cascade_watch | 3 | 0.035068 | 0.002599 | 2.3824 | 26234 | 0.926541 | first checks support follow-up |
-| WLD | short_liquidation_squeeze_watch | 3 | 0.117841 | 0.027309 | 2.0728 | 2430 | 0.781267 | signal ok but visible depth thin |
-| ONDO | short_liquidation_squeeze_watch | 3 | 0.016723 | 0.002006 | 2.8806 | 13968 | 0.541753 | first checks support follow-up |
-| H | short_liquidation_squeeze_watch | 3 | 0.021281 | 0.013053 | 1.7710 | 767 | 0.325660 | signal ok but visible depth thin |
-| BEAT | short_liquidation_squeeze_watch | 3 | 0.127525 | 0.004041 | 2.1265 | 846 | 0.248129 | signal ok but visible depth thin |
-| JTO | long_liquidation_cascade_watch | 3 | 0.094599 | 0.000323 | 1.6149 | 2208 | 0.237773 | signal ok but visible depth thin |
+| ONDO | short_liquidation_squeeze_watch | 3 | 0.016723 | 0.007452 | 2.8806 | 13968 | 0.650667 | first checks support follow-up |
+| JTO | long_liquidation_cascade_watch | 3 | 0.094599 | 0.010562 | 1.6149 | 2208 | 0.442550 | signal ok but visible depth thin |
+| H | short_liquidation_squeeze_watch | 3 | 0.021281 | 0.006116 | 1.7710 | 767 | 0.186923 | signal ok but visible depth thin |
+| BEAT | short_liquidation_squeeze_watch | 3 | 0.127525 | 0.000968 | 2.1265 | 846 | 0.186678 | signal ok but visible depth thin |
+| DOGE | long_liquidation_cascade_watch | 3 | 0.015966 | 0.003185 |  |  | 0.079676 | first checks support follow-up |
 | ZEC | mixed_liquidation_flow_watch | 3 | 0.050522 |  | 0.2362 | 16507 | 0.075261 | waiting for matching forward label |
+| WLD | short_liquidation_squeeze_watch | 3 | 0.117841 |  | 2.0728 | 2430 | 0.071071 | waiting for matching forward label |
 
 Interpretation:
 
-- `LTC` and `ONDO` are more executable-looking liquidation follow-ups because
-  first labels are positive and visible near-touch depth is stronger.
-- `WLD` remains the strongest cross-lane alpha candidate, but OKX near-touch
-  depth is thin enough that it should be treated as a small-size or alternate
-  venue probe.
-- `BEAT` has persistent squeeze flow but weak visible near-touch depth.
+- `LTC` remains the most actionable follow-up because it combines a positive
+  monitor-sample label with stronger visible near-touch depth.
+- `ONDO` and `JTO` have stronger monitor-sample continuation than `LTC`, but
+  `JTO` is still visibly thin near touch.
+- `WLD` remains cross-lane interesting, but this monitor-label run did not yet
+  cover its latest event timestamp.

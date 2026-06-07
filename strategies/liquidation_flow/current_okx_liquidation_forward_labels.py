@@ -31,8 +31,8 @@ def build_liquidation_forward_labels(
 ) -> tuple[LiquidationForwardLabel, ...]:
     rows = _read_rows(input_path)
     candles_by_asset = {
-        row["asset"]: _fetch_okx_candles(f"{row['asset']}-USDT-SWAP")
-        for row in rows
+        asset: _fetch_okx_candles(f"{asset}-USDT-SWAP")
+        for asset in sorted({row["asset"] for row in rows})
     }
     return tuple(
         _build_label(row=row, candles=candles_by_asset.get(row["asset"], ()))

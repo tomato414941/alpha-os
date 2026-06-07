@@ -260,8 +260,8 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
                 f"near_depth5={best_actionable.get('near_touch_depth_5bps', '')}, "
                 f"note={best_actionable.get('note', '')}"
             ),
-            main_gap="actionability is still based on visible depth and first labels only",
-            next_step="repeat LTC/WLD/ONDO labels and add real fee/slippage assumptions before paper sizing",
+            main_gap="actionability is still based on visible depth and short monitor labels only",
+            next_step="repeat JTO/ONDO/LTC labels and add real fee/slippage assumptions before paper sizing",
         )
     best_monitor = _best_numeric_row(monitor_path, key="mean_cascade_score")
     if best_monitor:

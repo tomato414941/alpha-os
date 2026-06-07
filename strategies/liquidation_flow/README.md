@@ -11,6 +11,7 @@ imbalance that may point to cascade continuation or squeeze/reversal setups.
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_flow
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 ```

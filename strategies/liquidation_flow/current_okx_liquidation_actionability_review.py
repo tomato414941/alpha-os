@@ -27,7 +27,7 @@ class LiquidationActionabilityRow:
 def build_actionability_rows(
     *,
     monitor_summary_path: Path = ROOT / "current_okx_liquidation_monitor_summary.csv",
-    forward_label_path: Path = ROOT / "current_okx_liquidation_forward_labels.csv",
+    forward_label_path: Path = ROOT / "current_okx_liquidation_monitor_forward_label_summary.csv",
     depth_check_path: Path = ROOT / "current_okx_liquidation_depth_check.csv",
 ) -> tuple[LiquidationActionabilityRow, ...]:
     labels = {
@@ -98,8 +98,9 @@ def write_actionability_md(
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# Current OKX Liquidation Actionability Review\n\n")
         handle.write(
-            "This joins liquidation persistence, first continuation labels, and "
-            "visible near-touch depth. It is a triage view, not an order plan.\n\n"
+            "This joins liquidation persistence, monitor-sample continuation "
+            "labels, and visible near-touch depth. It is a triage view, not "
+            "an order plan.\n\n"
         )
         handle.write(
             "| asset | action | obs | monitor score | cont15 | spread bps | near depth 5bps | score | note |\n"
@@ -121,9 +122,9 @@ def write_actionability_md(
         handle.write("\n## Interpretation\n\n")
         handle.write(
             "A high score means the candidate has some combination of persistent "
-            "liquidation flow, positive first continuation, and visible depth. "
-            "Thin-depth high-signal names should be treated as small-size probes "
-            "until better venue depth is found.\n"
+            "liquidation flow, positive monitor-sample continuation, and visible "
+            "depth. Thin-depth high-signal names should be treated as small-size "
+            "probes until better venue depth is found.\n"
         )
     return output_path
 
@@ -134,9 +135,7 @@ def _build_row(
     label: dict[str, str] | None,
     depth: dict[str, str] | None,
 ) -> LiquidationActionabilityRow:
-    continuation_return_15m = _float_or_none(
-        "" if label is None else label.get("continuation_return_15m", "")
-    )
+    continuation_return_15m = _continuation_return_15m(label)
     bid_depth_5bps = _float_or_none("" if depth is None else depth.get("bid_depth_5bps", ""))
     ask_depth_5bps = _float_or_none("" if depth is None else depth.get("ask_depth_5bps", ""))
     near_depth = (
@@ -216,6 +215,15 @@ def _float_or_none(value: str) -> float | None:
     return None if value == "" else float(value)
 
 
+def _continuation_return_15m(label: dict[str, str] | None) -> float | None:
+    if label is None:
+        return None
+    return _float_or_none(
+        label.get("mean_continuation_return_15m", "")
+        or label.get("continuation_return_15m", "")
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -226,7 +234,7 @@ def main() -> None:
     parser.add_argument(
         "--forward-label-path",
         type=Path,
-        default=ROOT / "current_okx_liquidation_forward_labels.csv",
+        default=ROOT / "current_okx_liquidation_monitor_forward_label_summary.csv",
     )
     parser.add_argument(
         "--depth-check-path",
