@@ -19,8 +19,8 @@ current local data, daily bars, linear models, or low compute.
 | cross-exchange basis | basis or funding spread between venues | multi-exchange spot/perp, fees, transfer, borrow, margin | current predicted funding spread screen exists |
 | market making | spread capture and inventory control | L2 book, trades, fees, queue/fill model | not implemented |
 | execution edge | better routing, maker/taker choice, order slicing | L2 book, trades, latency, fee tier | not implemented |
-| event-flow prediction | short-horizon flow imbalance or liquidation behavior | trades, aggTrades, order book, funding schedule | data path probed |
-| DeFi yield | stablecoin or delta-neutral yield | pool APY, TVL, smart-contract and depeg risk | data path probed |
+| event-flow prediction | short-horizon flow imbalance or liquidation behavior | trades, aggTrades, order book, funding schedule | first Binance USD-M aggTrades 5m diagnostic exists |
+| DeFi yield | stablecoin or delta-neutral yield | pool APY, TVL, smart-contract and depeg risk | first DeFiLlama stable-yield screen exists |
 | on-chain flow | wallet, exchange inflow/outflow, liquidation flows | on-chain, CEX deposit/withdraw proxies | not implemented |
 | news/SNS | event or sentiment driven moves | news, social, timestamped labels | not implemented |
 | directional ML/RL | price movement or direct policy learning | market state, reward, simulator | only basic screens exist |

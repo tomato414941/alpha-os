@@ -36,6 +36,11 @@ Promote code to the library only after multiple strategies need the same shape.
   - crypto futures funding, premium, taker-flow, and volume diagnostics
 - `cross_exchange_funding/`
   - current predicted funding spread screens across venues
+- `event_flow/`
+  - Binance USD-M futures taker-flow data path and first 5-minute imbalance
+    diagnostic
+- `defi_yield/`
+  - DeFiLlama stable-yield pool screen
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
 - `opportunity_map.md`
