@@ -621,6 +621,25 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    repeat_history_label_path = (
+        root / "candidate_validation" / "current_followup_repeat_history_labels.csv"
+    )
+    best_repeat_history_label = _best_followup_repeat_label_row(repeat_history_label_path)
+    if best_repeat_history_label:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_history_label",
+            strongest_current_signal=(
+                f"{best_repeat_history_label.get('venue', '')}/"
+                f"{best_repeat_history_label.get('asset', '')}/"
+                f"{best_repeat_history_label.get('source', '')}: "
+                f"{best_repeat_history_label.get('source_action', '')}, "
+                f"dir15={best_repeat_history_label.get('directional_return_15m', '')}, "
+                f"status={best_repeat_history_label.get('label_status', '')}"
+            ),
+            main_gap="history label is still one repeat batch and excludes costs, funding PnL, slippage, and neutral baseline",
+            next_step="collect more source-specific repeat batches and compare 15m/1h by source and venue",
+        )
     repeat_label_path = root / "candidate_validation" / "current_followup_repeat_forward_labels.csv"
     best_repeat_label = _best_followup_repeat_label_row(repeat_label_path)
     if best_repeat_label:

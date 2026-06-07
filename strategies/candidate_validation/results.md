@@ -23,6 +23,8 @@ uv run python -m strategies.candidate_validation.current_followup_venue_coverage
 uv run python -m strategies.candidate_validation.current_followup_okx_execution_context
 uv run python -m strategies.candidate_validation.current_followup_okx_repeat_observations
 uv run python -m strategies.candidate_validation.current_followup_okx_repeat_forward_labels
+uv run python -m strategies.candidate_validation.current_followup_repeat_history
+uv run python -m strategies.candidate_validation.current_followup_repeat_history_labels
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -264,3 +266,48 @@ Interpretation:
 - 28 OKX source-specific rows are ready for 15m/1h labels.
 - The OKX repeat labels are currently `pending_15m`; rerun
   `current_followup_okx_repeat_forward_labels` after maturity.
+
+## Current Follow-Up Repeat History
+
+The repeat history preserves source-specific observations across runs.
+
+- total rows: `53`
+- ready rows: `51`
+- by venue: `HL=23; OKX=28`
+- by source: `hl_candidate=1; l2_imbalance=8; liquidation=21; okx_pressure=15; sector_rotation=6`
+
+Interpretation:
+
+- Current observation files can be regenerated, so they are not enough for
+  repeated alpha checks.
+- This history keeps HL and OKX repeat samples in one place without blending
+  source meanings.
+
+## Current Follow-Up Repeat History Labels
+
+| venue | asset | source | action | dir | priority | raw 15m | dir 15m | raw 1h | dir 1h | status |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| OKX | JTO | liquidation | long_liquidation_cascade_watch | -1 | 3.4579 | -0.015546 | 0.015546 |  |  | labeled_15m_pending_1h |
+| OKX | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
+| OKX | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
+| HL | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
+| HL | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
+| OKX | H | liquidation | short_liquidation_squeeze_watch | 1 | 2.7846 | 0.005002 | 0.005002 |  |  | labeled_15m_pending_1h |
+| OKX | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.002658 | 0.002658 |  |  | labeled_15m_pending_1h |
+| OKX | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.002658 | 0.002658 |  |  | labeled_15m_pending_1h |
+| HL | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.002656 | 0.002656 |  |  | labeled_15m_pending_1h |
+| HL | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.002656 | 0.002656 |  |  | labeled_15m_pending_1h |
+| OKX | XPL | l2_imbalance | visible_book_imbalance | 1 | 3.4493 | 0.002474 | 0.002474 |  |  | labeled_15m_pending_1h |
+| OKX | XPL | sector_rotation | sector_momentum_watch | 1 | 3.4493 | 0.002474 | 0.002474 |  |  | labeled_15m_pending_1h |
+
+Interpretation:
+
+- The first repeat batch is now labeled at 15m for 51 source-specific rows.
+- `JTO/liquidation` is the strongest current repeat label.
+- `XLM` is positive on both HL and OKX for pressure and L2 sources in this
+  fresh 15m window.
+- `XPL` and `PUMP` show positive 15m labels on both HL and OKX for the same
+  source directions, which is more interesting than a single-venue blip.
+- `WLD` was the highest-priority clean candidate, but this fresh 15m repeat is
+  negative on both HL and OKX. It should not be promoted without more repeats or
+  a different horizon.

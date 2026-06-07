@@ -22,4 +22,6 @@ uv run python -m strategies.candidate_validation.current_followup_venue_coverage
 uv run python -m strategies.candidate_validation.current_followup_okx_execution_context
 uv run python -m strategies.candidate_validation.current_followup_okx_repeat_observations
 uv run python -m strategies.candidate_validation.current_followup_okx_repeat_forward_labels
+uv run python -m strategies.candidate_validation.current_followup_repeat_history
+uv run python -m strategies.candidate_validation.current_followup_repeat_history_labels
 ```
