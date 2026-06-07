@@ -786,6 +786,23 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
 
 
 def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
+    forward_label_path = (
+        root / "stablecoin_liquidity" / "current_supply_market_forward_labels.csv"
+    )
+    basket = _row_by_value(forward_label_path, field="asset", value="BASKET")
+    if basket:
+        return ExplorationRow(
+            lane="stablecoin_liquidity",
+            status="market_forward_label",
+            strongest_current_signal=(
+                f"BASKET: week_change={basket.get('week_change_usd', '')}, "
+                f"dir4h={basket.get('directional_return_4h', '')}, "
+                f"dir12h={basket.get('directional_return_12h', '')}, "
+                f"action={basket.get('action', '')}"
+            ),
+            main_gap="stablecoin supply contraction contradicted the naive short-term risk-off direction in this window",
+            next_step="treat supply change as a regime/divergence feature and combine it with funding, liquidation, and breadth sources",
+        )
     path = root / "stablecoin_liquidity" / "current_supply_snapshot.csv"
     best = _best_abs_numeric_row(path, key="week_change_usd")
     signal = "stablecoin supply snapshot exists"

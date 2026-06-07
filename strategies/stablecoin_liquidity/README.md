@@ -13,6 +13,7 @@ The first probe uses DeFiLlama stablecoin data and records:
 
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
+uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
 ```
 
 ## Current Status
@@ -20,4 +21,3 @@ uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
 This is not a direct trading strategy. It is a liquidity and stress context
 probe. The next useful step is joining stablecoin supply changes to crypto
 returns, DeFi yield, funding, and risk-off regimes.
-
