@@ -102,7 +102,7 @@ def summarize_l2_burst(rows: tuple[L2BurstRow, ...]) -> tuple[L2BurstSummary, ..
 def write_l2_burst_rows(rows: tuple[L2BurstRow, ...], *, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "timestamp",
@@ -138,7 +138,7 @@ def write_l2_burst_summaries(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "asset",
@@ -201,4 +201,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

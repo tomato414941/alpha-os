@@ -23,6 +23,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _crypto_market_structure_row(root),
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
+        _derivatives_positioning_row(root),
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
@@ -222,6 +223,39 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="no history yet, so no persistence or PnL evidence",
         next_step="collect snapshots over time and test carry/crowding persistence",
+    )
+
+
+def _derivatives_positioning_row(root: Path) -> ExplorationRow:
+    path = root / "p0_parallel" / "binance_derivatives_signal_summary.csv"
+    best_corr = _best_abs_numeric_row(path, key="correlation_to_next_return")
+    best_hit = _best_numeric_row(path, key="high_bucket_hit_rate")
+    if best_corr:
+        hit_note = ""
+        if best_hit:
+            hit_note = (
+                f"; high_hit {best_hit.get('feature', '')}="
+                f"{best_hit.get('high_bucket_hit_rate', '')}"
+            )
+        return ExplorationRow(
+            lane="derivatives_positioning",
+            status="broad_history_screen",
+            strongest_current_signal=(
+                f"{best_corr.get('feature', '')}: "
+                f"obs={best_corr.get('observations', '')}, "
+                f"corr={best_corr.get('correlation_to_next_return', '')}, "
+                f"high_mean={best_corr.get('high_bucket_mean_next_return', '')}"
+                f"{hit_note}"
+            ),
+            main_gap="daily Binance positioning labels exclude regime splits, execution costs, and venue-specific carry PnL",
+            next_step="split OI/funding/premium/long-short effects by regime and test cost-aware carry plus reversal labels",
+        )
+    return ExplorationRow(
+        lane="derivatives_positioning",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="OI, funding, premium, and long-short history are not summarized",
+        next_step="run Binance derivatives history over a broad symbol and date panel",
     )
 
 

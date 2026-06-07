@@ -8,7 +8,7 @@ This pass moves P0 from planning into parallel execution and broadens the
 first derivatives-history screen:
 
 - data reachability checks across derivatives, funding, L2, and attention/liquidity
-- 30-day, seven-symbol Binance derivatives history screen
+- 90-day, 20-symbol Binance derivatives history screen
 - funding-rate history added to the same labeled derivatives table
 - funding carry proxy with premium-change and rough round-trip cost
 - short Hyperliquid L2 burst for a first adverse-selection label
@@ -59,12 +59,14 @@ uv run python -m strategies.p0_parallel.binance_derivatives_history_probe
 
 Sample:
 
-- symbols: BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, AVAXUSDT, LINKUSDT
-- window: 2024-01-01 through 2024-01-30
+- symbols: BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, BNBUSDT, DOGEUSDT,
+  ADAUSDT, AVAXUSDT, LINKUSDT, LTCUSDT, BCHUSDT, DOTUSDT, UNIUSDT,
+  ETCUSDT, FILUSDT, NEARUSDT, APTUSDT, OPUSDT, ARBUSDT, INJUSDT
+- window: 2024-01-01 through 2024-03-30
 - metrics rows: 288 per symbol/day
 - premium rows: 1440 per symbol/day
 - funding rows: 3 per symbol/day
-- labeled observations: 203, excluding the final day per symbol with no
+- labeled observations: 1779, excluding the final day per symbol with no
   next-day return
 
 Schema confirmed:
@@ -81,23 +83,22 @@ First signal summary:
 
 | feature | observations | corr to next return | low bucket mean next return | high bucket mean next return | high bucket hit rate |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| mean_premium_close | 203 | -0.30742991 | 0.01053939 | -0.01329606 | 0.49019608 |
-| max_abs_premium_close | 203 | 0.15755108 | -0.00570738 | -0.00163984 | 0.50980392 |
-| mean_funding_rate | 203 | -0.29359286 | -0.00068842 | -0.00361763 | 0.46524064 |
-| sum_funding_rate | 203 | -0.29359286 | -0.00068842 | -0.00361763 | 0.46524064 |
-| oi_value_change | 203 | -0.15077742 | -0.00133433 | -0.01287688 | 0.45098039 |
-| mean_count_top_long_short_ratio | 203 | -0.08770554 | -0.00109412 | -0.00443096 | 0.43137255 |
-| mean_sum_top_long_short_ratio | 203 | -0.10089121 | 0.00164725 | -0.00657459 | 0.43137255 |
-| mean_count_long_short_ratio | 203 | -0.07763223 | -0.00023285 | -0.00235282 | 0.45098039 |
-| mean_sum_taker_long_short_vol_ratio | 203 | 0.04184218 | -0.00839355 | -0.00024976 | 0.41176471 |
+| mean_premium_close | 1779 | 0.03747237 | 0.00687146 | 0.00779112 | 0.50561798 |
+| max_abs_premium_close | 1779 | 0.10633370 | 0.00274931 | 0.01035695 | 0.50561798 |
+| mean_funding_rate | 1779 | 0.05850243 | 0.00203549 | 0.00830219 | 0.50561798 |
+| sum_funding_rate | 1779 | 0.05850243 | 0.00203549 | 0.00830219 | 0.50561798 |
+| oi_value_change | 1779 | -0.02697215 | 0.00438935 | 0.00255583 | 0.46067416 |
+| mean_count_top_long_short_ratio | 1779 | -0.03189207 | 0.00619534 | 0.00485732 | 0.51910112 |
+| mean_sum_top_long_short_ratio | 1779 | 0.01120125 | 0.00289859 | 0.00506707 | 0.48764045 |
+| mean_count_long_short_ratio | 1779 | -0.03784357 | 0.00619916 | 0.00292366 | 0.50337079 |
+| mean_sum_taker_long_short_vol_ratio | 1779 | 0.02735735 | 0.00634883 | 0.00980937 | 0.57752809 |
 
-This is still weak evidence because the window is only one month and the label
-is only next-day return. It is more useful than the first 14-day pass because it
-starts ranking candidates across more symbols: mean premium remains negatively
-associated with next-day return, daily funding is similarly negative, OI value
-change is also weakly negative, and the initial taker long/short signal mostly
-disappears. Funding here is a crowding/reversal feature against next-day return,
-not yet a venue-specific carry PnL test.
+The broader pass weakens the earlier 30-day reversal story. Premium and funding
+are mildly positive in this 2024Q1 panel, OI value change is weakly negative,
+and taker long/short volume has the best high-bucket hit rate. This is still a
+coarse daily label, not a deployable signal. The next useful step is regime
+splitting and cost-aware carry/reversal labels rather than treating any one
+feature as standalone alpha.
 
 ## Funding Carry Proxy
 
@@ -117,21 +118,21 @@ Assumption:
 
 Summary:
 
-- observations: 203
-- mean net proxy PnL: -0.00058363
-- hit rate: 0.0542
-- best net proxy PnL: 0.00187816
-- worst net proxy PnL: -0.00108804
+- observations: 1765
+- mean net proxy PnL: -0.00023486
+- hit rate: 0.2771
+- best net proxy PnL: 0.00376912
+- worst net proxy PnL: -0.00158772
 
 Top candidates:
 
 | date | symbol | perp direction | funding pnl | basis pnl | net proxy pnl |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 2024-01-02 | SOLUSDT | -1 | 0.00201112 | 0.00086704 | 0.00187816 |
-| 2024-01-02 | AVAXUSDT | -1 | 0.00182860 | 0.00085159 | 0.00168019 |
-| 2024-01-02 | DOGEUSDT | -1 | 0.00177105 | 0.00088015 | 0.00165120 |
-| 2024-01-02 | XRPUSDT | -1 | 0.00180261 | 0.00075676 | 0.00155937 |
-| 2024-01-02 | ETHUSDT | -1 | 0.00168546 | 0.00057824 | 0.00126370 |
+| 2024-03-05 | OPUSDT | -1 | 0.00397320 | 0.00079592 | 0.00376912 |
+| 2024-03-05 | AVAXUSDT | -1 | 0.00304341 | 0.00060052 | 0.00264393 |
+| 2024-03-05 | SOLUSDT | -1 | 0.00305449 | 0.00054567 | 0.00260016 |
+| 2024-03-02 | ARBUSDT | -1 | 0.00317285 | 0.00040789 | 0.00258074 |
+| 2024-03-05 | NEARUSDT | -1 | 0.00308739 | 0.00041663 | 0.00250402 |
 
 This does not yet prove a tradable carry edge. It shows the current one-month
 funding carry proxy is mostly cost-sensitive: with a conservative 10 bps rough
