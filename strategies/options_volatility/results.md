@@ -59,3 +59,18 @@ Interpretation:
   structure.
 - This still needs a realized-vol forecast, delta-hedge PnL, option spread
   costs, margin, and tail-risk controls before it can become a trade candidate.
+
+## Current Options Paper Tickets
+
+- BTC 2026-06-09: short put spread paper candidate. ATM IV 83.30, 24h
+  realized 47.87, IV premium 35.43, skew 23.22, volume USD 981392.
+- BTC 2026-06-10: short put spread paper candidate. ATM IV 77.81, IV premium
+  29.94, skew 21.50, volume USD 557453.
+- BTC 2026-06-12: short put spread paper candidate. ATM IV 68.36, IV premium
+  20.49, skew 18.74, volume USD 1189878.
+- BTC 2026-06-08 remains a gamma/expiry watch, not a clean ticket, despite
+  strong skew and IV premium.
+- ETH 2026-06-12 is a calendar-spread watch rather than a primary short put
+  spread candidate.
+- These are capped-risk paper structures. They still need actual option spread
+  quotes, delta hedge PnL, margin, expiry handling, and realized-vol forecasts.

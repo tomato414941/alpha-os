@@ -474,6 +474,22 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _options_volatility_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "options_volatility" / "current_options_volatility_paper_tickets.csv"
+    best_ticket = _best_options_volatility_paper_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="options_volatility",
+            status=best_ticket.get("status", "paper_options_watch"),
+            strongest_current_signal=(
+                f"{best_ticket.get('currency', '')} {best_ticket.get('expiry', '')}: "
+                f"{best_ticket.get('structure', '')}, "
+                f"prem24={best_ticket.get('iv_premium_24h', '')}, "
+                f"skew={best_ticket.get('skew_iv', '')}, "
+                f"volume={best_ticket.get('volume_usd', '')}"
+            ),
+            main_gap="options paper ticket still lacks spread quotes, delta hedge PnL, margin, and realized-vol forecast",
+            next_step="paper-check BTC short put spread quotes, delta hedge cost, tail loss, and expiry handling before any live action",
+        )
     label_path = root / "options_volatility" / "current_deribit_options_realized_vol_labels.csv"
     best_label = _best_numeric_row(label_path, key="score")
     if best_label:
@@ -509,6 +525,30 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="surface snapshot lacks realized-vol baseline, option execution costs, margin, and hedge rules",
         next_step="join IV/skew/term candidates to realized volatility and hedge-cost labels",
+    )
+
+
+def _best_options_volatility_paper_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(
+        row
+        for row in rows
+        if row.get("status") in {
+            "paper_short_put_spread_candidate",
+            "paper_calendar_spread_watch",
+        }
+    )
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda row: (
+            1.0 if row.get("status") == "paper_short_put_spread_candidate" else 0.5,
+            float(row.get("score") or "0"),
+        ),
     )
 
 
