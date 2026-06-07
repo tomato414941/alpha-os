@@ -1,0 +1,5 @@
+asset,venue,side,observations,touch_rate,mean_maker_edge_bps,min_maker_edge_bps,max_maker_edge_bps
+ZEC,HlPerp,sell,5,0.60000000,0.517803,0.12306329,1.11071345
+ZEC,OkxSwap,buy,5,0.40000000,0.12333502,0.12312087,0.12369961
+BTC,HlPerp,sell,5,0.80000000,0.08094089,0.08086101,0.08099199
+BTC,OkxSwap,buy,5,0.20000000,0.00809524,0.00808774,0.00809957
