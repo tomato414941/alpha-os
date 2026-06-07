@@ -58,17 +58,18 @@ def write_exploration_board(
 
 
 def _crypto_market_structure_row(root: Path) -> ExplorationRow:
-    carry_path = root / "crypto_market_structure" / "spot_perp_carry_cost_stress.csv"
-    best = _best_numeric_row(carry_path, key="sharpe")
+    ceiling_path = root / "crypto_market_structure" / "spot_perp_carry_fee_ceiling.csv"
+    best = _best_numeric_row(ceiling_path, key="max_paired_leg_cost_bps")
     signal = "spot/perp carry screen exists"
     if best:
         signal = (
-            f"{best.get('candidate', 'spot_perp_carry')}: "
-            f"total={best.get('total_return', '')}, sharpe={best.get('sharpe', '')}"
+            f"{best.get('candidate', 'spot_perp_carry')}: max_cost="
+            f"{best.get('max_paired_leg_cost_bps', '')}bps, "
+            f"default_sharpe={best.get('default_cost_sharpe', '')}"
         )
     return ExplorationRow(
         lane="crypto_market_structure",
-        status="implemented_probe",
+        status="fee_ceiling_candidate",
         strongest_current_signal=signal,
         main_gap="execution and borrow/margin feasibility remain shallow",
         next_step="stress fees, margin, and venue availability before treating carry as tradable",

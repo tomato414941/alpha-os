@@ -232,3 +232,37 @@ it becomes highly fee-sensitive: it needs low-cost execution and low turnover.
 Next useful work should validate whether this carry survives exchange-specific
 fees, maker/taker routing, order book depth, margin requirements, and actual
 spot/perp availability. More generic predictors are lower priority.
+
+## Spot/Perp Carry Fee Ceiling
+
+Run:
+
+```bash
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_fee_ceiling
+```
+
+This estimates the maximum paired-leg cost before each spot/perp carry candidate
+loses positive total return. It uses the same historical spot/perp approximation
+as `spot_perp_carry.py`.
+
+| candidate | max paired-leg cost bps | zero-cost total | zero-cost sharpe | default total | default sharpe | drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| spot_perp_positive_funding_top_3_14d | 12.475663 | 0.089058 | 8.298997 | 0.059689 | 4.967699 | -0.003341 | 0.077563 |
+| spot_perp_positive_funding_top_2_14d | 11.377382 | 0.089145 | 7.896105 | 0.056951 | 4.481852 | -0.003772 | 0.085131 |
+| spot_perp_positive_funding_top_1_14d | 10.146755 | 0.086829 | 6.272630 | 0.051752 | 3.406656 | -0.004388 | 0.093076 |
+| spot_perp_positive_funding_top_3_7d | 7.097393 | 0.090996 | 8.668619 | 0.038750 | 3.095506 | -0.010138 | 0.139236 |
+| spot_perp_positive_funding_top_2_7d | 6.439549 | 0.090858 | 8.226793 | 0.033505 | 2.497691 | -0.011141 | 0.153235 |
+| spot_perp_positive_funding_top_1_7d | 5.782354 | 0.089379 | 6.746282 | 0.026748 | 1.734848 | -0.013679 | 0.167991 |
+| spot_perp_positive_funding_top_3_3d | 3.173292 | 0.099654 | 9.065239 | -0.024451 | -1.689085 | -0.046676 | 0.339765 |
+| spot_perp_positive_funding_top_2_3d | 3.024226 | 0.102621 | 8.924331 | -0.031038 | -2.038645 | -0.050494 | 0.366629 |
+
+Interpretation:
+
+- The viable cluster is the low-turnover 14-day family.
+- `top_3_14d` survives until roughly `12.48 bps` paired-leg cost, which matches
+  the cost stress: it survives 10 bps but fails 20 bps.
+- 7-day variants have less room but remain plausible under low-cost execution.
+- 3-day and 1-day variants are not worth promoting under the default cost
+  because turnover consumes the edge.
+- The next hard gate is exchange-specific execution: actual spot/perp fees,
+  maker/taker routing, margin requirements, borrow constraints, and book depth.
