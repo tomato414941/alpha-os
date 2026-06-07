@@ -1,0 +1,12 @@
+family,observations,coverage_15m,mean_label_15m,hit_rate_15m,max_label_15m,min_label_15m,support_score,note
+okx_liquidation:short_liquidation_squeeze_watch,17,17,0.00354261,0.88235294,0.01977457,-0.00160643,1.15134844,supported by first labels
+okx_pressure:long_carry_discount_watch,32,32,0.00070986,0.71875000,0.00726392,-0.00552486,0.15528263,supported by first labels
+hl_candidate:okx_hl_current:paper_24h_monitor,22,22,0.00802331,0.45454545,0.01968198,-0.00169225,0.00000000,positive mean but weak hit rate
+hl_candidate:perp_carry_reversion:long_carry_reversion_watch,120,114,0.00049672,0.28070175,0.01783133,-0.00783716,0.00000000,positive mean but weak hit rate
+hl_candidate:perp_carry_reversion:short_carry_reversion_watch,30,30,0.00085843,0.43333333,0.01105937,-0.00592408,0.00000000,positive mean but weak hit rate
+okx_pressure:short_carry_watch,45,45,-0.00092521,0.26666667,0.00293004,-0.01134089,0.00000000,not supported by first labels
+okx_pressure:short_carry_premium_watch,13,13,-0.00321622,0.30769231,0.00403735,-0.03055976,0.00000000,not supported by first labels
+okx_pressure:long_carry_watch,6,6,0.00066264,0.50000000,0.00292969,-0.00268508,0.00000000,positive mean but weak hit rate
+okx_pressure:flat_watch,4,0,,,,,0.00000000,waiting for elapsed labels
+okx_liquidation:long_liquidation_cascade_watch,8,8,-0.00011890,0.37500000,0.00571537,-0.00387409,0.00000000,not supported by first labels
+okx_liquidation:mixed_liquidation_flow_watch,1,0,,,,,0.00000000,waiting for elapsed labels

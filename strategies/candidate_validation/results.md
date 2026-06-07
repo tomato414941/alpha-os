@@ -13,6 +13,7 @@ Run:
 uv run python -m strategies.candidate_validation.current_hl_candidate_return_context
 uv run python -m strategies.candidate_validation.current_hl_signal_forward_labels
 uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
+uv run python -m strategies.candidate_validation.current_signal_family_review
 ```
 
 This is not a causal alpha test. It keeps current candidates connected to
@@ -91,3 +92,27 @@ Interpretation:
   latest OKX pressure and liquidation labels are negative.
 - `HOME`, `EDEN`, and `ALLO` remain interesting, but they are source-specific
   and currently mixed.
+
+## Current Signal Family Review
+
+This aggregates short-horizon labels by signal family. It asks which kind of
+signal is currently showing support, not only which asset is on top.
+
+| family | obs | cov15 | mean15 | hit15 | max15 | min15 | score | note |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| okx_liquidation:short_liquidation_squeeze_watch | 17 | 17 | 0.003543 | 0.882353 | 0.019775 | -0.001606 | 1.151348 | supported by first labels |
+| okx_pressure:long_carry_discount_watch | 32 | 32 | 0.000710 | 0.718750 | 0.007264 | -0.005525 | 0.155283 | supported by first labels |
+| hl_candidate:okx_hl_current:paper_24h_monitor | 22 | 22 | 0.008023 | 0.454545 | 0.019682 | -0.001692 | 0.000000 | positive mean but weak hit rate |
+| hl_candidate:perp_carry_reversion:long_carry_reversion_watch | 120 | 114 | 0.000497 | 0.280702 | 0.017831 | -0.007837 | 0.000000 | positive mean but weak hit rate |
+| hl_candidate:perp_carry_reversion:short_carry_reversion_watch | 30 | 30 | 0.000858 | 0.433333 | 0.011059 | -0.005924 | 0.000000 | positive mean but weak hit rate |
+| okx_pressure:short_carry_watch | 45 | 45 | -0.000925 | 0.266667 | 0.002930 | -0.011341 | 0.000000 | not supported by first labels |
+| okx_pressure:short_carry_premium_watch | 13 | 13 | -0.003216 | 0.307692 | 0.004037 | -0.030560 | 0.000000 | not supported by first labels |
+| okx_liquidation:long_liquidation_cascade_watch | 8 | 8 | -0.000119 | 0.375000 | 0.005715 | -0.003874 | 0.000000 | not supported by first labels |
+
+Interpretation:
+
+- `short_liquidation_squeeze_watch` is the strongest current signal family:
+  17 covered labels, 0.88 hit rate, and positive mean 15m continuation.
+- `long_carry_discount_watch` also has initial support, but the average label
+  is much smaller.
+- The current short-side carry families are not supported by first labels.

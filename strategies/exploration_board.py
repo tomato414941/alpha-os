@@ -398,8 +398,17 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
     review_path = root / "candidate_validation" / "current_cross_lane_candidate_review.csv"
+    family_path = root / "candidate_validation" / "current_signal_family_review.csv"
     best_review = _best_numeric_row(review_path, key="lead_score")
     if best_review:
+        best_family = _best_numeric_row(family_path, key="support_score")
+        family_note = ""
+        if best_family:
+            family_note = (
+                f"; family={best_family.get('family', '')}, "
+                f"hit15={best_family.get('hit_rate_15m', '')}, "
+                f"mean15={best_family.get('mean_label_15m', '')}"
+            )
         return ExplorationRow(
             lane="candidate_validation",
             status="cross_lane_review",
@@ -408,9 +417,10 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
                 f"lanes={best_review.get('lanes', '')}, "
                 f"positive={best_review.get('positive_labels', '')}, "
                 f"negative={best_review.get('negative_labels', '')}"
+                f"{family_note}"
             ),
             main_gap="cross-lane score is still a triage heuristic, not a PnL model or execution test",
-            next_step="turn IP/WLD/HOME/EDEN follow-ups into repeated labels with fees, funding, and venue depth",
+            next_step="repeat IP and short-liquidation-squeeze labels with fees, funding, and venue depth",
         )
     label_path = root / "candidate_validation" / "current_hl_signal_forward_label_summary.csv"
     best_label = _best_forward_label_row(label_path)
