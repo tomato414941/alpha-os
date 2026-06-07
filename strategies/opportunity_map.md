@@ -16,7 +16,7 @@ current local data, daily bars, linear models, or low compute.
 | lane | possible edge | required data | current status |
 | --- | --- | --- | --- |
 | spot/perp carry | funding received after hedging spot and perp price moves | spot, perp, funding, fees, margin, depth | first Binance spot/perp approximation exists |
-| cross-exchange basis | basis or funding spread between venues | multi-exchange spot/perp, fees, transfer, borrow, margin | current predicted funding spread screen exists |
+| cross-exchange basis | basis or funding spread between venues | multi-exchange spot/perp, fees, transfer, borrow, margin | OKX-Hyperliquid promotion gate exists; ZEC/BTC are current paper candidates under fee/touch assumptions |
 | perp market map | carry, crowding, dislocation, and liquidity states | funding, open interest, volume, premium, impact prices | current Hyperliquid snapshot exists |
 | market making | spread capture and inventory control | L2 book, trades, fees, queue/fill model | first Hyperliquid L2 snapshot exists |
 | execution edge | better routing, maker/taker choice, order slicing | L2 book, trades, latency, fee tier | not implemented |

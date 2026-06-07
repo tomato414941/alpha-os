@@ -5,7 +5,7 @@ This board tracks broad profit-source exploration. It is not a ranking of deploy
 | lane | status | strongest current signal | main gap | next step |
 | --- | --- | --- | --- | --- |
 | crypto_market_structure | implemented_probe | spot_perp_positive_funding_top_3_14d: total=0.0596891489, sharpe=4.9676985675 | execution and borrow/margin feasibility remain shallow | stress fees, margin, and venue availability before treating carry as tradable |
-| cross_exchange_funding | current_snapshot | STABLE: BybitPerp->BinPerp, annualized=2.80085670 | snapshot only; external venue execution and transfer constraints unknown | collect repeated snapshots and add venue-specific execution constraints |
+| cross_exchange_funding | paper_gate_candidate | ZEC: paper_24h_candidate okx_cross_hl_maker 24h, fee=1bps, headroom=0.74465bps | actual account fees, longer event monitoring, and real maker-fill evidence are still missing | validate actual OKX/Hyperliquid fee tier, then paper-test ZEC/BTC execution gates |
 | perp_market_map | current_snapshot | MANTA: ann_funding=3.23186009, volume=652165.69526300 | no history yet, so no persistence or PnL evidence | collect snapshots over time and test carry/crowding persistence |
 | event_flow | implemented_probe | top_20 imbalance mean_next_return=-0.0000414307, hit_rate=0.500000 | tiny sample and naive label; no order book or liquidation context | extend sample window and add liquidation/funding-time labels |
 | defi_yield | current_snapshot | Flare/mystic-finance-lending COREUSDT0: apy=13.660140, tvl=19655935.00 | risk, custody, exit liquidity, and APY decay not modeled | separate real yield from incentive yield and add operational risk checklist |

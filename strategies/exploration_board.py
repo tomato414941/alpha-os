@@ -76,20 +76,22 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
 
 
 def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
-    path = root / "cross_exchange_funding" / "current_funding_feasibility.csv"
-    best = _best_numeric_row(path, key="annualized_spread")
+    sensitivity_path = root / "cross_exchange_funding" / "okx_hl_promotion_gate_sensitivity.csv"
+    best = _best_promotion_gate_row(sensitivity_path)
     signal = "current funding spread screen exists"
     if best:
         signal = (
-            f"{best.get('asset', '')}: {best.get('long_venue', '')}->"
-            f"{best.get('short_venue', '')}, annualized={best.get('annualized_spread', '')}"
+            f"{best.get('asset', '')}: {best.get('action', '')} "
+            f"{best.get('best_mode', '')} {best.get('horizon', '')}, "
+            f"fee={best.get('fee_bps_per_fill_per_venue', '')}bps, "
+            f"headroom={best.get('fee_headroom_bps', '')}bps"
         )
     return ExplorationRow(
         lane="cross_exchange_funding",
-        status="current_snapshot",
+        status="paper_gate_candidate",
         strongest_current_signal=signal,
-        main_gap="snapshot only; external venue execution and transfer constraints unknown",
-        next_step="collect repeated snapshots and add venue-specific execution constraints",
+        main_gap="actual account fees, longer event monitoring, and real maker-fill evidence are still missing",
+        next_step="validate actual OKX/Hyperliquid fee tier, then paper-test ZEC/BTC execution gates",
     )
 
 
@@ -230,6 +232,25 @@ def _row_by_value(path: Path, *, field: str, value: str) -> dict[str, str] | Non
             if row.get(field) == value:
                 return row
     return None
+
+
+def _best_promotion_gate_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    paper_rows = tuple(row for row in rows if row.get("action", "").startswith("paper_"))
+    if not paper_rows:
+        return None
+    return max(
+        paper_rows,
+        key=lambda row: (
+            float(row.get("fee_bps_per_fill_per_venue") or "0"),
+            row.get("horizon") == "8h",
+            float(row.get("fee_headroom_bps") or "0"),
+            float(row.get("capacity") or "0"),
+        ),
+    )
 
 
 def main() -> None:
