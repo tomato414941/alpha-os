@@ -47,10 +47,20 @@ def build_book_depth_check(
     asset: str = "BTC",
     okx_target_notional: Decimal = Decimal("995.58645"),
     hl_target_notional: Decimal = Decimal("999.969535"),
+    okx_side: str = "buy",
+    hl_side: str = "sell",
 ) -> OkxHlBookDepthCheck:
     generated_at = datetime.now(UTC).isoformat()
-    okx_check = _build_okx_check(asset=asset, target_notional=okx_target_notional)
-    hl_check = _build_hyperliquid_check(asset=asset, target_notional=hl_target_notional)
+    okx_check = _build_okx_check(
+        asset=asset,
+        target_notional=okx_target_notional,
+        side=okx_side,
+    )
+    hl_check = _build_hyperliquid_check(
+        asset=asset,
+        target_notional=hl_target_notional,
+        side=hl_side,
+    )
     combined_slippage = okx_check.slippage_bps + hl_check.slippage_bps
     return OkxHlBookDepthCheck(
         generated_at=generated_at,
@@ -152,7 +162,12 @@ def write_book_depth_md(
     return output_path
 
 
-def _build_okx_check(*, asset: str, target_notional: Decimal) -> BookFillCheck:
+def _build_okx_check(
+    *,
+    asset: str,
+    target_notional: Decimal,
+    side: str,
+) -> BookFillCheck:
     instrument = _fetch_okx_instrument(asset)
     levels = _fetch_okx_book(asset)
     contract_value = Decimal(str(instrument["ctVal"]))
@@ -167,14 +182,19 @@ def _build_okx_check(*, asset: str, target_notional: Decimal) -> BookFillCheck:
     return _build_fill_check(
         venue="OkxSwap",
         asset=asset,
-        side="buy",
+        side=side,
         target_notional=target_notional,
         bids=bids,
         asks=asks,
     )
 
 
-def _build_hyperliquid_check(*, asset: str, target_notional: Decimal) -> BookFillCheck:
+def _build_hyperliquid_check(
+    *,
+    asset: str,
+    target_notional: Decimal,
+    side: str,
+) -> BookFillCheck:
     levels = _fetch_hyperliquid_book(asset)
     bid_levels, ask_levels = levels["levels"]
     bids = tuple(
@@ -188,7 +208,7 @@ def _build_hyperliquid_check(*, asset: str, target_notional: Decimal) -> BookFil
     return _build_fill_check(
         venue="HlPerp",
         asset=asset,
-        side="sell",
+        side=side,
         target_notional=target_notional,
         bids=bids,
         asks=asks,
@@ -307,6 +327,8 @@ def main() -> None:
     parser.add_argument("--asset", default="BTC")
     parser.add_argument("--okx-target-notional", type=Decimal, default=Decimal("995.58645"))
     parser.add_argument("--hl-target-notional", type=Decimal, default=Decimal("999.969535"))
+    parser.add_argument("--okx-side", choices=("buy", "sell"), default="buy")
+    parser.add_argument("--hl-side", choices=("buy", "sell"), default="sell")
     parser.add_argument(
         "--csv-output-path",
         type=Path,
@@ -323,6 +345,8 @@ def main() -> None:
         asset=args.asset,
         okx_target_notional=args.okx_target_notional,
         hl_target_notional=args.hl_target_notional,
+        okx_side=args.okx_side,
+        hl_side=args.hl_side,
     )
     write_book_depth_csv(check, output_path=args.csv_output_path)
     write_book_depth_md(check, output_path=args.md_output_path)

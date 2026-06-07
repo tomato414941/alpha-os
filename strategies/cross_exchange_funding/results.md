@@ -447,3 +447,42 @@ Interpretation:
   does not survive one bps each and has less capacity.
 - BABY fell out of the focused sample. The earlier 1m screen was not enough to
   keep it in the active candidate set.
+
+## OKX-Hyperliquid Execution Cost Score
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_execution_cost_score --summary-path strategies/cross_exchange_funding/okx_hl_funding_persistence_focus_summary.csv --assets BTC JTO ZEC BABY
+```
+
+This score starts from gross funding edge and subtracts current public top-book
+taker slippage plus simple round-trip fee scenarios. It is a harder execution
+check than the raw funding spread, but it still does not prove maker fills,
+account fee tier, or persistence into the actual funding events.
+
+| asset | scenario | gross 8h | gross 24h | entry slippage bps | all-in cost | net 8h | net 24h | capacity |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BABY | very_low_fee | 0.00131017 | 0.00393051 | 12.94997144 | 0.00266999 | -0.00135982 | 0.00126052 | 18182.63949194 |
+| BABY | low_fee | 0.00131017 | 0.00393051 | 12.94997144 | 0.00278999 | -0.00147982 | 0.00114052 | 18182.63949194 |
+| BABY | one_bps_each | 0.00131017 | 0.00393051 | 12.94997144 | 0.00298999 | -0.00167982 | 0.00094052 | 18182.63949194 |
+| JTO | very_low_fee | 0.00069315 | 0.00207945 | 7.52849755 | 0.00158570 | -0.00089255 | 0.00049376 | 54543.56750198 |
+| JTO | low_fee | 0.00069315 | 0.00207945 | 7.52849755 | 0.00170570 | -0.00101255 | 0.00037376 | 54543.56750198 |
+| ZEC | very_low_fee | 0.00032955 | 0.00098864 | 3.14430447 | 0.00070886 | -0.00037931 | 0.00027978 | 106210.05564167 |
+| BTC | very_low_fee | 0.00011324 | 0.00033973 | 0.08887218 | 0.00009777 | 0.00001547 | 0.00024195 | 422448.80855333 |
+| JTO | one_bps_each | 0.00069315 | 0.00207945 | 7.52849755 | 0.00190570 | -0.00121255 | 0.00017376 | 54543.56750198 |
+| ZEC | low_fee | 0.00032955 | 0.00098864 | 3.14430447 | 0.00082886 | -0.00049931 | 0.00015978 | 106210.05564167 |
+| BTC | low_fee | 0.00011324 | 0.00033973 | 0.08887218 | 0.00021777 | -0.00010453 | 0.00012195 | 422448.80855333 |
+
+Interpretation:
+
+- BTC remains the cleanest small live candidate: tiny edge, but low current
+  slippage and the most capacity among this set.
+- JTO still has real 24h room after current taker-depth cost, but it is not a
+  scalable candidate yet because capacity is small and 8h is negative.
+- BABY reappears under the direct top-book execution-cost check, despite falling
+  out under the earlier rough impact proxy. That disagreement is not a buy
+  signal; it says execution-cost measurement is now a core part of the research.
+- No focused candidate except BTC under very-low-fee assumptions survives the
+  8h all-in check. The current alpha is therefore a longer-hold funding-carry
+  candidate, not an immediate 8h arbitrage.
