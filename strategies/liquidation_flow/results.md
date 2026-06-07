@@ -4,6 +4,7 @@ Run:
 
 ```bash
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_flow
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_forward_labels
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
@@ -34,3 +35,30 @@ Interpretation:
 - This still does not decide continuation vs reversal. The next step is
   post-liquidation return labels joined to funding, open interest, and book
   depth.
+
+## Current OKX Liquidation Forward Labels
+
+This labels liquidation-flow candidates with continuation returns. Positive
+continuation return means the forced-flow direction continued over that horizon.
+
+| asset | action | dir | raw 15m | continuation 15m | raw 1h | continuation 1h |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| ALLO | short_liquidation_squeeze_watch | 1 | 0.019775 | 0.019775 |  |  |
+| H | short_liquidation_squeeze_watch | 1 | 0.013053 | 0.013053 |  |  |
+| BEAT | short_liquidation_squeeze_watch | 1 | 0.006535 | 0.006535 |  |  |
+| EDEN | long_liquidation_cascade_watch | -1 | -0.005715 | 0.005715 |  |  |
+| PEPE | short_liquidation_squeeze_watch | 1 | 0.003269 | 0.003269 | 0.003269 | 0.003269 |
+| SOL | short_liquidation_squeeze_watch | 1 | 0.001699 | 0.001699 | 0.003707 | 0.003707 |
+| ZEC | short_liquidation_squeeze_watch | 1 | -0.000070 | -0.000070 |  |  |
+| WLD | short_liquidation_squeeze_watch | 1 | -0.001606 | -0.001606 |  |  |
+| HOME | long_liquidation_cascade_watch | -1 | 0.003196 | -0.003196 |  |  |
+| JTO | long_liquidation_cascade_watch | -1 | 0.003874 | -0.003874 |  |  |
+
+Interpretation:
+
+- `ALLO`, `H`, `BEAT`, `EDEN`, `PEPE`, and `SOL` had positive first 15m
+  continuation labels.
+- `ZEC` and `WLD` had the largest liquidation-flow scores, but their first 15m
+  continuation labels were slightly negative.
+- The current evidence suggests liquidation flow may be useful, but the best
+  continuation rows are not necessarily the largest raw liquidation bursts.

@@ -171,7 +171,8 @@ def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
 
 def _perp_market_map_row(root: Path) -> ExplorationRow:
     okx_signal = _okx_perp_pressure_signal(
-        root / "perp_market_map" / "current_okx_perp_pressure.csv"
+        root / "perp_market_map" / "current_okx_perp_pressure.csv",
+        root / "perp_market_map" / "current_okx_perp_pressure_forward_labels.csv",
     )
     crowding_monitor_path = (
         root / "perp_market_map" / "current_crowding_reversion_monitor_summary.csv"
@@ -246,21 +247,27 @@ def _event_flow_row(root: Path) -> ExplorationRow:
 
 def _liquidation_flow_row(root: Path) -> ExplorationRow:
     path = root / "liquidation_flow" / "current_okx_liquidation_flow.csv"
+    label_path = root / "liquidation_flow" / "current_okx_liquidation_forward_labels.csv"
     best = _best_numeric_row(path, key="cascade_score")
     signal = "not run yet"
     if best:
+        label = _label_row_for_asset(label_path, asset=best.get("asset", ""))
+        label_note = ""
+        if label and label.get("continuation_return_15m", "") != "":
+            label_note = f", cont15={label.get('continuation_return_15m', '')}"
         signal = (
             f"{best.get('asset', '')}: {best.get('action', '')}, "
             f"obs={best.get('observations', '')}, "
             f"total_liq={best.get('total_liquidation_notional', '')}, "
             f"imbalance={best.get('forced_buy_sell_imbalance', '')}"
+            f"{label_note}"
         )
     return ExplorationRow(
         lane="liquidation_flow",
-        status="current_okx_event_flow",
+        status="current_okx_event_flow_labeled",
         strongest_current_signal=signal,
-        main_gap="forced-flow screen is not yet joined to post-event returns, funding, OI, or book depth",
-        next_step="label ZEC/WLD/JTO liquidation events for continuation versus reversal",
+        main_gap="15m continuation labels exist, but 1h/regime/execution labels are still missing",
+        next_step="repeat liquidation snapshots and separate continuation candidates from reversal candidates",
     )
 
 
@@ -635,15 +642,30 @@ def _best_forward_label_row(path: Path) -> dict[str, str] | None:
     )
 
 
-def _okx_perp_pressure_signal(path: Path) -> str:
+def _okx_perp_pressure_signal(path: Path, label_path: Path) -> str:
     best = _best_numeric_row(path, key="pressure_score")
     if not best:
         return ""
+    label = _label_row_for_asset(label_path, asset=best.get("asset", ""))
+    label_note = ""
+    if label and label.get("directional_return_15m", "") != "":
+        label_note = f", dir15={label.get('directional_return_15m', '')}"
     return (
         f"; OKX {best.get('asset', '')}: {best.get('action', '')}, "
         f"ann_funding={best.get('annualized_funding', '')}, "
         f"premium={best.get('premium', '')}, score={best.get('pressure_score', '')}"
+        f"{label_note}"
     )
+
+
+def _label_row_for_asset(path: Path, *, asset: str) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("asset") == asset:
+                return row
+    return None
 
 
 def main() -> None:

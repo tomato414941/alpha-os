@@ -9,4 +9,5 @@ imbalance that may point to cascade continuation or squeeze/reversal setups.
 
 ```bash
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_flow
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_forward_labels
 ```
