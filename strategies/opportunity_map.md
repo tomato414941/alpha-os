@@ -17,6 +17,7 @@ current local data, daily bars, linear models, or low compute.
 | --- | --- | --- | --- |
 | spot/perp carry | funding received after hedging spot and perp price moves | spot, perp, funding, fees, margin, depth | first Binance spot/perp approximation exists |
 | cross-exchange basis | basis or funding spread between venues | multi-exchange spot/perp, fees, transfer, borrow, margin | current predicted funding spread screen exists |
+| perp market map | carry, crowding, dislocation, and liquidity states | funding, open interest, volume, premium, impact prices | current Hyperliquid snapshot exists |
 | market making | spread capture and inventory control | L2 book, trades, fees, queue/fill model | not implemented |
 | execution edge | better routing, maker/taker choice, order slicing | L2 book, trades, latency, fee tier | not implemented |
 | event-flow prediction | short-horizon flow imbalance or liquidation behavior | trades, aggTrades, order book, funding schedule | first Binance USD-M aggTrades 5m diagnostic exists |

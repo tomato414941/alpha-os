@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+import argparse
+import csv
+from dataclasses import dataclass
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+
+
+@dataclass(frozen=True)
+class ExplorationRow:
+    lane: str
+    status: str
+    strongest_current_signal: str
+    main_gap: str
+    next_step: str
+
+
+def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
+    return (
+        _crypto_market_structure_row(root),
+        _cross_exchange_funding_row(root),
+        _perp_market_map_row(root),
+        _event_flow_row(root),
+        _defi_yield_row(root),
+        ExplorationRow(
+            lane="market_making",
+            status="not_started",
+            strongest_current_signal="none",
+            main_gap="needs L2 book, queue/fill model, and fee tier assumptions",
+            next_step="probe reachable bookDepth/bookTicker history and define fill simulation",
+        ),
+        ExplorationRow(
+            lane="news_social",
+            status="not_started",
+            strongest_current_signal="none",
+            main_gap="needs timestamped event source and labels",
+            next_step="inventory public/paid event feeds and build one event-to-return label set",
+        ),
+        ExplorationRow(
+            lane="on_chain_flow",
+            status="not_started",
+            strongest_current_signal="none",
+            main_gap="needs wallet/exchange-flow source and leakage-safe timestamps",
+            next_step="inventory reachable on-chain/exchange-flow APIs",
+        ),
+    )
+
+
+def write_exploration_board(
+    rows: tuple[ExplorationRow, ...],
+    *,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as handle:
+        handle.write("# Strategy Exploration Board\n\n")
+        handle.write("This board tracks broad profit-source exploration. It is not a ranking of deployable strategies.\n\n")
+        handle.write("| lane | status | strongest current signal | main gap | next step |\n")
+        handle.write("| --- | --- | --- | --- | --- |\n")
+        for row in rows:
+            handle.write(
+                f"| {row.lane} | {row.status} | {row.strongest_current_signal} | "
+                f"{row.main_gap} | {row.next_step} |\n"
+            )
+    return output_path
+
+
+def _crypto_market_structure_row(root: Path) -> ExplorationRow:
+    carry_path = root / "crypto_market_structure" / "spot_perp_carry_cost_stress.csv"
+    best = _best_numeric_row(carry_path, key="sharpe")
+    signal = "spot/perp carry screen exists"
+    if best:
+        signal = (
+            f"{best.get('candidate', 'spot_perp_carry')}: "
+            f"total={best.get('total_return', '')}, sharpe={best.get('sharpe', '')}"
+        )
+    return ExplorationRow(
+        lane="crypto_market_structure",
+        status="implemented_probe",
+        strongest_current_signal=signal,
+        main_gap="execution and borrow/margin feasibility remain shallow",
+        next_step="stress fees, margin, and venue availability before treating carry as tradable",
+    )
+
+
+def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
+    path = root / "cross_exchange_funding" / "current_funding_feasibility.csv"
+    best = _best_numeric_row(path, key="annualized_spread")
+    signal = "current funding spread screen exists"
+    if best:
+        signal = (
+            f"{best.get('asset', '')}: {best.get('long_venue', '')}->"
+            f"{best.get('short_venue', '')}, annualized={best.get('annualized_spread', '')}"
+        )
+    return ExplorationRow(
+        lane="cross_exchange_funding",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="snapshot only; external venue execution and transfer constraints unknown",
+        next_step="collect repeated snapshots and add venue-specific execution constraints",
+    )
+
+
+def _perp_market_map_row(root: Path) -> ExplorationRow:
+    path = root / "perp_market_map" / "current_hyperliquid_snapshot.csv"
+    best = _best_numeric_row(path, key="attention_score")
+    signal = "not run yet"
+    if best:
+        signal = (
+            f"{best.get('asset', '')}: ann_funding={best.get('annualized_funding', '')}, "
+            f"volume={best.get('day_notional_volume', '')}"
+        )
+    return ExplorationRow(
+        lane="perp_market_map",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="no history yet, so no persistence or PnL evidence",
+        next_step="collect snapshots over time and test carry/crowding persistence",
+    )
+
+
+def _event_flow_row(root: Path) -> ExplorationRow:
+    path = root / "event_flow" / "flow_imbalance_screen.csv"
+    top = _row_by_value(path, field="bucket", value="top_20")
+    signal = "5m aggTrades path exists"
+    if top:
+        signal = (
+            f"top_20 imbalance mean_next_return={top.get('mean_next_return', '')}, "
+            f"hit_rate={top.get('hit_rate', '')}"
+        )
+    return ExplorationRow(
+        lane="event_flow",
+        status="implemented_probe",
+        strongest_current_signal=signal,
+        main_gap="tiny sample and naive label; no order book or liquidation context",
+        next_step="extend sample window and add liquidation/funding-time labels",
+    )
+
+
+def _defi_yield_row(root: Path) -> ExplorationRow:
+    path = root / "defi_yield" / "current_yield_screen.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "current stable-yield screen exists"
+    if best:
+        signal = (
+            f"{best.get('chain', '')}/{best.get('project', '')} "
+            f"{best.get('symbol', '')}: apy={best.get('apy', '')}, tvl={best.get('tvl_usd', '')}"
+        )
+    return ExplorationRow(
+        lane="defi_yield",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="risk, custody, exit liquidity, and APY decay not modeled",
+        next_step="separate real yield from incentive yield and add operational risk checklist",
+    )
+
+
+def _best_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get(key) or "-inf"))
+
+
+def _row_by_value(path: Path, *, field: str, value: str) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if row.get(field) == value:
+                return row
+    return None
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output-path",
+        type=Path,
+        default=ROOT / "exploration_board.md",
+    )
+    args = parser.parse_args()
+    path = write_exploration_board(build_exploration_rows(), output_path=args.output_path)
+    print(path)
+
+
+if __name__ == "__main__":
+    main()
+

@@ -36,6 +36,9 @@ Promote code to the library only after multiple strategies need the same shape.
   - crypto futures funding, premium, taker-flow, and volume diagnostics
 - `cross_exchange_funding/`
   - current predicted funding spread screens across venues
+- `perp_market_map/`
+  - Hyperliquid perp funding, open interest, volume, premium, and impact-spread
+    snapshot
 - `event_flow/`
   - Binance USD-M futures taker-flow data path and first 5-minute imbalance
     diagnostic
@@ -53,6 +56,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - cross-strategy comparison against same-window buy-and-hold benchmarks
 - `leaderboard.md`
   - latest broad comparison result
+- `exploration_board.py`
+  - broad lane status board generator
+- `exploration_board.md`
+  - latest lane status board
 
 ## Local Shared Strategy Code
 
