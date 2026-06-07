@@ -441,3 +441,35 @@ Interpretation:
   whose gross contribution comes mainly from basis luck.
 - `FILUSDT` and `SEIUSDT` are warning cases: the strategy selected them, but
   their net contribution was negative in the broad run.
+
+## Spot/Perp Carry Period Audit
+
+Run:
+
+```bash
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_period_audit
+```
+
+This checks whether the 14-day spot/perp carry candidate persists across
+calendar periods.
+
+| period | candidate | steps | total return | sharpe | max drawdown | turnover |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 2024 | spot_perp_positive_funding_top_3_14d | 365 | 0.067498 | 9.172604 | -0.001419 | 0.119635 |
+| 2024 | spot_perp_positive_funding_top_2_14d | 365 | 0.072672 | 8.473524 | -0.001532 | 0.126027 |
+| 2024 | spot_perp_positive_funding_top_1_14d | 365 | 0.073596 | 6.525581 | -0.002207 | 0.134247 |
+| 2025 | spot_perp_positive_funding_top_3_14d | 364 | -0.000091 | -0.014587 | -0.005839 | 0.119963 |
+| 2025 | spot_perp_positive_funding_top_2_14d | 364 | -0.005073 | -0.772013 | -0.009759 | 0.126374 |
+| 2025 | spot_perp_positive_funding_top_1_14d | 364 | -0.014489 | -1.462505 | -0.017585 | 0.134615 |
+| 2026_to_date | spot_perp_positive_funding_top_1_14d | 150 | -0.005269 | -0.931406 | -0.007119 | 0.126667 |
+| 2026_to_date | spot_perp_positive_funding_top_2_14d | 150 | -0.007008 | -1.737634 | -0.009312 | 0.120000 |
+| 2026_to_date | spot_perp_positive_funding_top_3_14d | 150 | -0.006695 | -1.744162 | -0.008462 | 0.111111 |
+
+Interpretation:
+
+- The broad full-period carry result is mostly a 2024 result.
+- It does not persist in 2025 or 2026-to-date under the current rule and cost.
+- This should not be promoted directly to paper trading as a stable strategy.
+- The better next step is to monitor current funding dislocations and search for
+  a fresher trigger or regime filter, rather than deploy the historical 14-day
+  rule as-is.

@@ -4,7 +4,7 @@ This board tracks broad profit-source exploration. It is not a ranking of deploy
 
 | lane | status | strongest current signal | main gap | next step |
 | --- | --- | --- | --- | --- |
-| crypto_market_structure | execution_gate_candidate | spot_perp_positive_funding_top_1_14d: low_slippage_maker_like headroom=3.918648bps, default_sharpe=2.5059113109; top_symbol=WIFUSDT gross=0.0331747402 | actual account fees, borrow/margin, and book-depth feasibility remain shallow | validate WIF/INJ/FET/APT venue fees, margin, and book depth before paper trading |
+| crypto_market_structure | historical_dislocation | 2024 spot_perp_positive_funding_top_3_14d sharpe=9.1726039299; 2026_to_date best_total=-0.0052691774 | spot/perp carry did not persist after 2024 under the current rule | search current funding dislocations or regime filters before paper trading |
 | cross_exchange_funding | paper_gate_candidate | ZEC: paper_24h_candidate okx_cross_hl_maker 24h, fee=1bps, headroom=0.74465bps | actual account fees, longer event monitoring, and real maker-fill evidence are still missing | validate actual OKX/Hyperliquid fee tier, then paper-test ZEC/BTC execution gates |
 | perp_market_map | current_snapshot | MANTA: ann_funding=3.23186009, volume=652165.69526300 | no history yet, so no persistence or PnL evidence | collect snapshots over time and test carry/crowding persistence |
 | event_flow | implemented_probe | top_20 imbalance mean_next_return=-0.0000414307, hit_rate=0.500000 | tiny sample and naive label; no order book or liquidation context | extend sample window and add liquidation/funding-time labels |

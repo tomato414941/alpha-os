@@ -60,8 +60,11 @@ def write_exploration_board(
 def _crypto_market_structure_row(root: Path) -> ExplorationRow:
     gate_path = root / "crypto_market_structure" / "spot_perp_carry_execution_gate.csv"
     symbol_audit_path = root / "crypto_market_structure" / "spot_perp_carry_symbol_audit.csv"
+    period_audit_path = root / "crypto_market_structure" / "spot_perp_carry_period_audit.csv"
     best = _best_numeric_row(gate_path, key="headroom_bps")
     best_symbol = _best_numeric_row(symbol_audit_path, key="gross_contribution")
+    best_2024 = _best_period_row(period_audit_path, period="2024")
+    best_current = _best_period_row(period_audit_path, period="2026_to_date")
     signal = "spot/perp carry screen exists"
     if best:
         signal = (
@@ -75,12 +78,23 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
             f"{signal}; top_symbol={best_symbol.get('symbol', '')} "
             f"gross={best_symbol.get('gross_contribution', '')}"
         )
+    status = "execution_gate_candidate"
+    main_gap = "actual account fees, borrow/margin, and book-depth feasibility remain shallow"
+    next_step = "validate WIF/INJ/FET/APT venue fees, margin, and book depth before paper trading"
+    if best_2024 and best_current and float(best_current.get("total_return") or "0") <= 0.0:
+        signal = (
+            f"2024 {best_2024.get('candidate', '')} sharpe={best_2024.get('sharpe', '')}; "
+            f"2026_to_date best_total={best_current.get('total_return', '')}"
+        )
+        status = "historical_dislocation"
+        main_gap = "spot/perp carry did not persist after 2024 under the current rule"
+        next_step = "search current funding dislocations or regime filters before paper trading"
     return ExplorationRow(
         lane="crypto_market_structure",
-        status="execution_gate_candidate",
+        status=status,
         strongest_current_signal=signal,
-        main_gap="actual account fees, borrow/margin, and book-depth feasibility remain shallow",
-        next_step="validate WIF/INJ/FET/APT venue fees, margin, and book depth before paper trading",
+        main_gap=main_gap,
+        next_step=next_step,
     )
 
 
@@ -241,6 +255,16 @@ def _row_by_value(path: Path, *, field: str, value: str) -> dict[str, str] | Non
             if row.get(field) == value:
                 return row
     return None
+
+
+def _best_period_row(path: Path, *, period: str) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(row for row in csv.DictReader(handle) if row.get("period") == period)
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("sharpe") or "-inf"))
 
 
 def _best_promotion_gate_row(path: Path) -> dict[str, str] | None:
