@@ -292,6 +292,22 @@ def _news_social_row(root: Path) -> ExplorationRow:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    depth_path = root / "prediction_markets" / "current_polymarket_clob_depth.csv"
+    best_depth = _best_numeric_row(depth_path, key="visible_depth_score")
+    if best_depth:
+        signal = (
+            f"{best_depth.get('question', '')} {best_depth.get('outcome', '')}: "
+            f"spread={best_depth.get('spread', '')}, "
+            f"bid_depth_5c={best_depth.get('bid_depth_to_5c', '')}, "
+            f"ask_depth_5c={best_depth.get('ask_depth_to_5c', '')}"
+        )
+        return ExplorationRow(
+            lane="prediction_markets",
+            status="clob_depth_check",
+            strongest_current_signal=signal,
+            main_gap="event probability, news flow, and adverse selection are not modeled",
+            next_step="build external event model for depth-positive markets before paper trading",
+        )
     monitor_path = (
         root / "prediction_markets" / "current_polymarket_microstructure_monitor_summary.csv"
     )

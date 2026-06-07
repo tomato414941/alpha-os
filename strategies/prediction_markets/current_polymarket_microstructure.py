@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+import json
 from math import log10
 from pathlib import Path
 
@@ -18,6 +19,8 @@ class PolymarketMicrostructureRow:
     market_id: str
     question: str
     slug: str
+    yes_token_id: str
+    no_token_id: str
     action: str
     best_bid: float
     best_ask: float
@@ -78,6 +81,8 @@ def write_polymarket_microstructure_csv(
                 "market_id",
                 "question",
                 "slug",
+                "yes_token_id",
+                "no_token_id",
                 "action",
                 "best_bid",
                 "best_ask",
@@ -102,6 +107,8 @@ def write_polymarket_microstructure_csv(
                     row.market_id,
                     row.question,
                     row.slug,
+                    row.yes_token_id,
+                    row.no_token_id,
                     row.action,
                     f"{row.best_bid:.6f}",
                     f"{row.best_ask:.6f}",
@@ -166,6 +173,7 @@ def write_polymarket_microstructure_md(
 
 
 def _build_row(market: dict[str, object]) -> PolymarketMicrostructureRow:
+    yes_token_id, no_token_id = _token_ids(market.get("clobTokenIds"))
     best_bid = _float(market.get("bestBid"))
     best_ask = _float(market.get("bestAsk"))
     spread = _float(market.get("spread"))
@@ -189,6 +197,8 @@ def _build_row(market: dict[str, object]) -> PolymarketMicrostructureRow:
         market_id=str(market.get("id") or ""),
         question=str(market.get("question") or ""),
         slug=str(market.get("slug") or ""),
+        yes_token_id=yes_token_id,
+        no_token_id=no_token_id,
         action=action,
         best_bid=best_bid,
         best_ask=best_ask,
@@ -269,6 +279,18 @@ def _float(value: object) -> float:
     if value is None or value == "":
         return 0.0
     return float(value)
+
+
+def _token_ids(value: object) -> tuple[str, str]:
+    if isinstance(value, str):
+        parsed = json.loads(value)
+    elif isinstance(value, list):
+        parsed = value
+    else:
+        parsed = []
+    yes_token_id = str(parsed[0]) if len(parsed) > 0 else ""
+    no_token_id = str(parsed[1]) if len(parsed) > 1 else ""
+    return yes_token_id, no_token_id
 
 
 def _escape(value: str) -> str:

@@ -16,6 +16,7 @@ Run:
 ```bash
 uv run python -m strategies.prediction_markets.current_polymarket_microstructure --limit 200
 uv run python -m strategies.prediction_markets.current_polymarket_microstructure_monitor --samples 5 --delay-seconds 10 --limit 200
+uv run python -m strategies.prediction_markets.current_polymarket_clob_depth --top-markets 10
 ```
 
 This is not a trade instruction. It ranks markets where event modeling,
@@ -61,3 +62,26 @@ Interpretation:
 - This still does not estimate the true probability of any event.
 - The next validation is CLOB depth, adverse selection, and external event
   signal quality.
+
+## Current Polymarket CLOB Depth
+
+This checks visible CLOB depth for the top current microstructure monitor
+markets.
+
+| question | outcome | bid | ask | spread | bid depth 5c | ask depth 5c | score | reason |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| US x Iran permanent peace deal by June 15, 2026? | Yes | 0.0500 | 0.0600 | 0.0100 | 2872223.69 | 634130.59 | 634.0306 | visible depth exists near both sides |
+| US x Iran permanent peace deal by June 15, 2026? | No | 0.9400 | 0.9500 | 0.0100 | 634130.59 | 2872223.69 | 634.0306 | visible depth exists near both sides |
+| US x Iran permanent peace deal by June 30, 2026? | Yes | 0.1400 | 0.1500 | 0.0100 | 311630.29 | 171204.83 | 171.1048 | visible depth exists near both sides |
+| US x Iran permanent peace deal by June 30, 2026? | No | 0.8500 | 0.8600 | 0.0100 | 171204.83 | 325036.45 | 171.1048 | visible depth exists near both sides |
+| Bitcoin Up or Down on June 7? | Yes | 0.9930 | 0.9950 | 0.0020 | 45703.00 | 19798.55 | 19.7786 | visible depth exists near both sides |
+| Bitcoin Up or Down on June 7? | No | 0.0050 | 0.0070 | 0.0020 | 19798.55 | 45703.00 | 19.7786 | visible depth exists near both sides |
+
+Interpretation:
+
+- Some top information-flow rows are near-certain event markets with a thin
+  opposite side. They are less useful for immediate execution research.
+- The current depth-positive prediction-market candidate is `US x Iran
+  permanent peace deal`, where public visible depth exists near both sides.
+- This still does not prove edge. The next step is an event probability model
+  or news-flow model for the same market.
