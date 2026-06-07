@@ -7,6 +7,7 @@ Run:
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
 uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
+uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ```
 
 Interpretation:
@@ -49,3 +50,20 @@ Interpretation:
 - This weakens stablecoin supply as a direct short-term trade direction and
   makes it more useful as a regime or divergence feature to combine with other
   sources.
+
+## Peg Stress
+
+Current depeg/repeg and premium mean-reversion watches:
+
+- `pmUSD`: large below-peg deviation.
+- `USYC`: large above-peg premium.
+- `USDY`: large above-peg premium.
+- `reUSD`: large above-peg premium.
+- `apxUSD`: large below-peg deviation.
+- `DOLA`: moderate below-peg deviation.
+
+Important caveat:
+
+- Stablecoin price data can be stale, thin, or not accessible on a usable venue.
+- These candidates require redemption route, exchange depth, custody, issuer
+  risk, and repeated peg snapshots before paper action.

@@ -9,11 +9,17 @@ The first probe uses DeFiLlama stablecoin data and records:
 - peg type and mechanism
 - current price when available
 
+The peg-stress screen turns the same source into depeg/repeg and premium
+mean-reversion watches. It does not assume the price is tradable; redemption
+route, venue depth, custody, and repeated snapshots are required before paper
+action.
+
 ## Commands
 
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
 uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
+uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ```
 
 ## Current Status

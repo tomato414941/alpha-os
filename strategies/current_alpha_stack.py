@@ -34,6 +34,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_attention_funding_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
+        *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_stacks(root),
         _liquidation_flow_stack(root),
         _l2_imbalance_stack(root),
@@ -455,6 +456,52 @@ def _on_chain_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "stablecoin_liquidity" / "current_peg_stress_screen.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_depeg_repeg_watch",
+                "paper_premium_mean_reversion_watch",
+                "peg_supply_stress_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_stablecoin_peg_stress",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="stablecoin_liquidity",
+                evidence=(
+                    f"{symbol}/{ticket.get('name', '')}: price={ticket.get('price', '')}, "
+                    f"peg_deviation={ticket.get('peg_deviation', '')}, "
+                    f"supply={ticket.get('current_supply_usd', '')}, "
+                    f"week_change={ticket.get('week_change_usd', '')}"
+                ),
+                conflict="stablecoin price can be stale or untradable; redemption path, venue depth, custody, and issuer risk must be checked first",
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {symbol} redemption route, exchange depth, and repeated peg snapshots",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")
     tickets = sorted(
@@ -597,6 +644,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_attention_funding_watch": 57.0,
         "paper_protocol_activity_watch": 47.0,
         "paper_chain_flow_watch": 55.0,
+        "paper_depeg_repeg_watch": 62.0,
+        "paper_premium_mean_reversion_watch": 62.0,
+        "peg_supply_stress_watch": 50.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
         "paper_value_growth_candidate": 67.0,

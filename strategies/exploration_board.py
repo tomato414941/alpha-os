@@ -1496,6 +1496,24 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
 
 
 def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
+    peg_path = root / "stablecoin_liquidity" / "current_peg_stress_screen.csv"
+    best_peg = _best_numeric_row(peg_path, key="score")
+    if best_peg:
+        return ExplorationRow(
+            lane="stablecoin_liquidity",
+            status=best_peg.get("status", "peg_stress_screen"),
+            strongest_current_signal=(
+                f"{best_peg.get('symbol', '')}/{best_peg.get('name', '')}: "
+                f"price={best_peg.get('price', '')}, "
+                f"peg_deviation={best_peg.get('peg_deviation', '')}, "
+                f"score={best_peg.get('score', '')}"
+            ),
+            main_gap="stablecoin peg stress still needs redemption route, venue depth, custody, and repeated price checks",
+            next_step=best_peg.get(
+                "next_step",
+                "check redemption path, tradable venues, and repeated peg snapshots before paper action",
+            ),
+        )
     forward_label_path = (
         root / "stablecoin_liquidity" / "current_supply_market_forward_labels.csv"
     )
