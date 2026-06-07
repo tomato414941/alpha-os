@@ -7,6 +7,8 @@ published_at,symbol,catalyst_kind,action,direction_hint,score,raw_return_15m,raw
 2026-04-28T08:00:03.344000+00:00,AI,spot_listing_watch,exchange_catalyst_low_context,1,5.00000000,,,,,pending_15m
 2026-04-30T09:33:15.547000+00:00,SOL,exchange_removal_watch,exchange_catalyst_watch,-1,4.84043288,-0.00133377,-0.00305204,0.00133377,0.00305204,labeled
 2026-04-30T09:07:29.704000+00:00,MEGA,spot_listing_watch,exchange_catalyst_low_context,1,4.83546934,-0.02810102,-0.08531938,-0.02810102,-0.08531938,labeled
+2026-05-22T07:30:00+00:00,AI,spot_listing_watch,exchange_catalyst_low_context,1,4.00000000,,,,,pending_15m
+2026-05-22T07:30:00+00:00,AI,spot_listing_watch,exchange_catalyst_low_context,1,4.00000000,,,,,pending_15m
 2026-05-19T03:00:08.915000+00:00,AI,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m
 2026-03-18T09:00:08.667000+00:00,NTRN,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m
 2026-03-18T09:00:08.667000+00:00,RDNT,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m

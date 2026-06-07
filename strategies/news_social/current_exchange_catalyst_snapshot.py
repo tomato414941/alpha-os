@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -13,21 +14,45 @@ import requests
 BINANCE_ANNOUNCEMENTS_URL = (
     "https://www.binance.com/bapi/composite/v1/public/cms/article/list/query"
 )
+OKX_ANNOUNCEMENTS_URL = "https://www.okx.com/help/section/announcements-latest-announcements"
+OKX_BASE_URL = "https://www.okx.com"
 SYMBOL_RE = re.compile(r"\b([A-Z][A-Z0-9]{1,14})(?:USDT|USDC|FDUSD|BTC|ETH|BNB)\b")
 TOKEN_LIST_RE = re.compile(r"\b[A-Z][A-Z0-9]{1,14}\b")
+OKX_LINK_RE = re.compile(r'href="(?P<href>/en-us/help/[^"#?]+)"')
+OKX_TITLE_RE = re.compile(r'"title":"(?P<title>[^"]+)"')
+DATE_PUBLISHED_RE = re.compile(r'"datePublished":"(?P<published_at>[^"]+)"')
 IGNORED_SYMBOLS = {
     "AED",
     "API",
     "BNB",
+    "ELP",
     "BTC",
+    "COIN",
     "ETF",
     "ETFS",
     "FDUSD",
+    "KZT",
     "OTC",
+    "OKX",
     "USD",
     "USDC",
+    "USDS",
     "USDT",
     "VIP",
+}
+TRADFI_SYMBOLS = {
+    "AAPL",
+    "AMD",
+    "AVGO",
+    "BABA",
+    "BTCUSD1",
+    "CL",
+    "MSFT",
+    "NATGAS",
+    "QQQ",
+    "QCOM",
+    "SPY",
+    "TSM",
 }
 ROOT = Path(__file__).resolve().parent
 
@@ -61,9 +86,31 @@ def fetch_binance_announcements(
     return response.json()
 
 
+def fetch_okx_announcements(
+    url: str = OKX_ANNOUNCEMENTS_URL,
+    *,
+    limit: int = 20,
+) -> tuple[dict[str, object], ...]:
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    response.raise_for_status()
+    articles: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for href, title in _okx_article_links(response.text):
+        if href in seen:
+            continue
+        seen.add(href)
+        article = _fetch_okx_article(href=href, title=title)
+        if article:
+            articles.append(article)
+        if len(articles) >= limit:
+            break
+    return tuple(articles)
+
+
 def build_exchange_catalyst_rows(
     *,
     binance_payload: dict[str, object],
+    okx_articles: tuple[dict[str, object], ...] = (),
     timestamp: str | None = None,
     max_age_days: int = 90,
 ) -> tuple[ExchangeCatalystRow, ...]:
@@ -102,6 +149,34 @@ def build_exchange_catalyst_rows(
                         reason=_reason(kind),
                     )
                 )
+    for article in okx_articles:
+        published_at = str(article.get("published_at") or "")
+        if not published_at or _parse_datetime(published_at) < cutoff:
+            continue
+        title = str(article.get("title") or "")
+        catalog_name = str(article.get("catalog") or "OKX Announcements")
+        kind = _catalyst_kind(title=title, catalog=catalog_name)
+        if kind == "ignore":
+            continue
+        for symbol in _symbols_from_title(title):
+            key = (symbol, title, kind)
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append(
+                ExchangeCatalystRow(
+                    timestamp=observed_at,
+                    source="okx_announcements",
+                    published_at=published_at,
+                    catalog=catalog_name,
+                    symbol=symbol,
+                    catalyst_kind=kind,
+                    direction_hint=_direction_hint(kind),
+                    score=_catalyst_score(kind=kind, catalog=catalog_name, title=title),
+                    title=title,
+                    reason=_reason(kind),
+                )
+            )
     return tuple(sorted(rows, key=lambda row: (row.score, row.published_at), reverse=True))
 
 
@@ -155,14 +230,16 @@ def write_exchange_catalyst_rows_md(
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# Current Exchange Catalyst Snapshot\n\n")
         handle.write(
-            "This extracts current exchange-announcement catalysts from Binance. "
+            "This extracts current exchange-announcement catalysts from public "
+            "exchange announcement pages. "
             "It is an external-event screen, not a trade instruction.\n\n"
         )
-        handle.write("| published | catalog | symbol | kind | dir | score | title |\n")
-        handle.write("| --- | --- | --- | --- | ---: | ---: | --- |\n")
+        handle.write("| source | published | catalog | symbol | kind | dir | score | title |\n")
+        handle.write("| --- | --- | --- | --- | --- | ---: | ---: | --- |\n")
         for row in rows[:top]:
             handle.write(
                 "| "
+                f"{row.source} | "
                 f"{row.published_at} | "
                 f"{row.catalog} | "
                 f"{row.symbol} | "
@@ -191,14 +268,28 @@ def _catalyst_kind(*, title: str, catalog: str) -> str:
     lowered = title.lower()
     if any(
         token in lowered
-        for token in ("tradfi", "stocks", "stock ", "etf", "equity", "pre-ipo")
+        for token in (
+            "tradfi",
+            "stocks",
+            "stock ",
+            "etf",
+            "equity",
+            "pre-ipo",
+            "fee discount",
+        )
     ):
         return "ignore"
     if "delist" in lowered or "remove" in lowered or "removal" in lowered:
         return "exchange_removal_watch"
     if "futures will launch" in lowered or "perpetual contract" in lowered:
         return "perp_listing_watch"
-    if "new cryptocurrency listing" in catalog.lower() or "will list" in lowered:
+    if (
+        "new cryptocurrency listing" in catalog.lower()
+        or "will list" in lowered
+        or "to list" in lowered
+        or ("will launch" in lowered and "spot trading" in lowered)
+        or "for spot trading" in lowered
+    ):
         return "spot_listing_watch"
     if "alpha trading competition" in lowered:
         return "attention_campaign_watch"
@@ -218,7 +309,12 @@ def _symbols_from_title(title: str) -> tuple[str, ...]:
         sorted(
             symbol
             for symbol in symbols
-            if symbol not in IGNORED_SYMBOLS and not symbol.isdigit()
+            if (
+                symbol not in IGNORED_SYMBOLS
+                and symbol not in TRADFI_SYMBOLS
+                and not symbol.endswith("USD")
+                and not symbol.isdigit()
+            )
         )
     )
 
@@ -275,6 +371,53 @@ def _parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
 
 
+def _okx_article_links(html_text: str) -> tuple[tuple[str, str], ...]:
+    links: list[tuple[str, str]] = []
+    for match in OKX_LINK_RE.finditer(html_text):
+        href = html.unescape(match.group("href")).strip()
+        links.append((href, ""))
+    if links:
+        return tuple(links)
+    fallback: list[tuple[str, str]] = []
+    for match in OKX_TITLE_RE.finditer(html_text):
+        title = html.unescape(match.group("title")).strip()
+        if _catalyst_kind(title=title, catalog="OKX Announcements") != "ignore":
+            fallback.append(("", title))
+    return tuple(fallback)
+
+
+def _fetch_okx_article(*, href: str, title: str) -> dict[str, object] | None:
+    if not href:
+        return None
+    response = requests.get(
+        f"{OKX_BASE_URL}{href}",
+        headers={"User-Agent": "Mozilla/5.0"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    published_match = DATE_PUBLISHED_RE.search(response.text)
+    if not published_match:
+        return None
+    title = title or _okx_article_title(response.text)
+    if not title or _catalyst_kind(title=title, catalog="OKX Announcements") == "ignore":
+        return None
+    return {
+        "title": title,
+        "published_at": published_match.group("published_at"),
+        "catalog": "OKX Announcements",
+    }
+
+
+def _okx_article_title(html_text: str) -> str:
+    json_title = OKX_TITLE_RE.search(html_text)
+    if json_title:
+        return html.unescape(json_title.group("title")).strip()
+    title_match = re.search(r"<title>(?P<title>.*?)</title>", html_text)
+    if not title_match:
+        return ""
+    return html.unescape(title_match.group("title")).split("|", maxsplit=1)[0].strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -293,6 +436,7 @@ def main() -> None:
 
     rows = build_exchange_catalyst_rows(
         binance_payload=fetch_binance_announcements(),
+        okx_articles=fetch_okx_announcements(),
         max_age_days=args.max_age_days,
     )
     write_exchange_catalyst_rows(rows, output_path=args.output_path)

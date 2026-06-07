@@ -15,6 +15,8 @@ This labels exchange-announcement catalysts with subsequent Hyperliquid returns.
 | 2026-04-21T12:00:32.132000+00:00 | CHIP | spot_listing_watch | 1 | 5.105426 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | labeled |
 | 2026-04-08T04:00:00+00:00 | POL | network_event_watch | 1 | 1.411454 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | labeled |
 | 2026-04-28T08:00:03.344000+00:00 | AI | spot_listing_watch | 1 | 5.000000 |  |  |  |  | pending_15m |
+| 2026-05-22T07:30:00+00:00 | AI | spot_listing_watch | 1 | 4.000000 |  |  |  |  | pending_15m |
+| 2026-05-22T07:30:00+00:00 | AI | spot_listing_watch | 1 | 4.000000 |  |  |  |  | pending_15m |
 | 2026-05-19T03:00:08.915000+00:00 | AI | exchange_removal_watch | -1 | 4.000000 |  |  |  |  | pending_15m |
 | 2026-03-18T09:00:08.667000+00:00 | NTRN | exchange_removal_watch | -1 | 4.000000 |  |  |  |  | pending_15m |
 | 2026-03-18T09:00:08.667000+00:00 | RDNT | exchange_removal_watch | -1 | 4.000000 |  |  |  |  | pending_15m |

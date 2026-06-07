@@ -17,8 +17,8 @@ Interpretation:
 
 - Fear & Greed is a market-level sentiment proxy
 - CoinGecko trending is an attention proxy, not an alpha signal by itself
-- Binance announcements add an exchange-catalyst input that is not derived from
-  prices
+- Binance and OKX announcements add exchange-catalyst inputs that are not
+  derived from prices
 - the next useful test is event-to-return labeling with no lookahead
 - paid or authenticated feeds may be needed for serious news/social work
 
@@ -67,8 +67,8 @@ Interpretation:
 
 ## Exchange Catalyst Snapshot
 
-This extracts recent Binance exchange-announcement catalysts such as perp
-launches, spot/listing support, removals, airdrops, campaigns, and network
+This extracts recent Binance and OKX exchange-announcement catalysts such as
+perp launches, spot/listing support, removals, airdrops, campaigns, and network
 events.
 
 Interpretation:
@@ -87,6 +87,8 @@ Current useful rows:
 
 - `CHIP`: Binance perp/listing catalyst overlaps a Hyperliquid market.
 - `MEGA`: Binance spot/support catalyst overlaps a Hyperliquid market.
+- `AI`: Binance and OKX listing/removal catalysts overlap a Hyperliquid market,
+  but current labels are still pending.
 - `SOL`: Binance removal catalyst is tradable and has a short direction hint.
 - `NEAR` and `POL`: network-event catalysts are tradable but lower score.
 
