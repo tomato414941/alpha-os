@@ -27,6 +27,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _defi_yield_row(root),
         _market_making_row(root),
         _news_social_row(root),
+        _prediction_markets_row(root),
         _stablecoin_liquidity_row(root),
         ExplorationRow(
             lane="on_chain_flow",
@@ -287,6 +288,26 @@ def _news_social_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="attention data is not yet joined to leakage-safe return labels",
         next_step="build event-to-return labels and add richer news/social sources",
+    )
+
+
+def _prediction_markets_row(root: Path) -> ExplorationRow:
+    path = root / "prediction_markets" / "current_polymarket_microstructure.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "not run yet"
+    if best:
+        signal = (
+            f"{best.get('action', '')}: {best.get('question', '')}, "
+            f"spread={best.get('spread', '')}, "
+            f"change={best.get('one_day_price_change', '')}, "
+            f"vol24={best.get('volume_24h', '')}"
+        )
+    return ExplorationRow(
+        lane="prediction_markets",
+        status="current_microstructure_screen",
+        strongest_current_signal=signal,
+        main_gap="event probability is not modeled; this only ranks active public market structure",
+        next_step="join top markets to external event models, order books, and adverse-selection checks",
     )
 
 
