@@ -469,26 +469,36 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv")
-    tickets = sorted(
-        rows,
-        key=lambda row: _float(row.get("score")),
-        reverse=True,
+    labels = _best_hyperliquid_dislocation_labels(
+        _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_forward_labels.csv")
     )
+    tickets = _selected_hyperliquid_dislocation_tickets(rows=rows, labels=labels)
     output: list[AlphaStackRow] = []
-    for ticket in tickets[:10]:
+    for ticket in tickets:
         asset = ticket.get("asset", "")
         status = ticket.get("status", "paper_hyperliquid_dislocation_candidate")
+        label = labels.get((asset, status, ticket.get("side", "")), {})
+        stack_status = _hyperliquid_dislocation_stack_status(status, label)
+        label_note = ""
+        if label:
+            label_note = (
+                f", out15={label.get('outcome_15m', '')}, "
+                f"net15_bps={label.get('net_15m_bps', '')}, "
+                f"out1h={label.get('outcome_1h', '')}, "
+                f"net1h_bps={label.get('net_1h_bps', '')}"
+            )
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_{_slug(status)}_{_slug(ticket.get('side', ''))}",
-                status=status,
+                status=stack_status,
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
-                    status,
-                    source_count=1,
+                    stack_status,
+                    source_count=2 if label else 1,
                     raw_score=_float(ticket.get("score")) * 10.0,
                 )
-                + (_float(ticket.get("score")) / 100.0),
+                + (_float(ticket.get("score")) / 100.0)
+                + _hyperliquid_dislocation_label_bonus(label),
                 sources="perp_market_map",
                 evidence=(
                     f"{asset}: ret24={ticket.get('return_24h', '')}, "
@@ -498,15 +508,13 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"oi_vol={ticket.get('oi_volume_ratio', '')}, "
                     f"impact={ticket.get('impact_spread', '')}, "
                     f"reason={ticket.get('reason', '')}"
+                    f"{label_note}"
                 ),
                 conflict=(
-                    "current dislocation screen is unlabeled and can produce both continuation "
-                    "and reversal hypotheses for the same move"
+                    "current dislocation screen can produce both continuation and reversal hypotheses "
+                    "for the same move; 15m labels are not enough to establish persistence"
                 ),
-                next_step=ticket.get(
-                    "next_step",
-                    f"label {asset} dislocation candidate over 15m/1h/4h with costs",
-                ),
+                next_step=_hyperliquid_dislocation_next_step(asset=asset, ticket=ticket, label=label),
             )
         )
     return tuple(output)
@@ -514,6 +522,100 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _slug(value: str) -> str:
     return value.removeprefix("paper_").removesuffix("_candidate")
+
+
+def _best_hyperliquid_dislocation_labels(
+    rows: tuple[dict[str, str], ...],
+) -> dict[tuple[str, str, str], dict[str, str]]:
+    output: dict[tuple[str, str, str], dict[str, str]] = {}
+    sorted_rows = sorted(rows, key=lambda row: row.get("timestamp", ""), reverse=True)
+    for row in sorted_rows:
+        key = (row.get("asset", ""), row.get("status", ""), row.get("side", ""))
+        if not key[0] or not key[1] or not key[2] or key in output:
+            continue
+        output[key] = row
+    return output
+
+
+def _selected_hyperliquid_dislocation_tickets(
+    *,
+    rows: tuple[dict[str, str], ...],
+    labels: dict[tuple[str, str, str], dict[str, str]],
+) -> tuple[dict[str, str], ...]:
+    candidates_by_key = {
+        (row.get("asset", ""), row.get("status", ""), row.get("side", "")): row
+        for row in rows
+    }
+    selected: list[dict[str, str]] = []
+    selected_keys: set[tuple[str, str, str]] = set()
+
+    def add(row: dict[str, str]) -> None:
+        key = (row.get("asset", ""), row.get("status", ""), row.get("side", ""))
+        if not key[0] or not key[1] or not key[2] or key in selected_keys:
+            return
+        selected.append(row)
+        selected_keys.add(key)
+
+    for row in sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)[:10]:
+        add(row)
+
+    supported_labels = sorted(
+        (
+            label
+            for label in labels.values()
+            if label.get("outcome_15m") == "paper_15m_win" or label.get("outcome_1h") == "paper_1h_win"
+        ),
+        key=lambda row: (
+            row.get("outcome_1h") == "paper_1h_win",
+            _float(row.get("net_15m_bps")),
+            _float(row.get("score")),
+        ),
+        reverse=True,
+    )
+    for label in supported_labels[:10]:
+        row = candidates_by_key.get((label.get("asset", ""), label.get("status", ""), label.get("side", "")))
+        if row:
+            add(row)
+
+    return tuple(selected[:18])
+
+
+def _hyperliquid_dislocation_stack_status(status: str, label: dict[str, str]) -> str:
+    if label.get("outcome_1h") == "paper_1h_win":
+        return "paper_dislocation_1h_supported_candidate"
+    if label.get("outcome_15m") == "paper_15m_win":
+        return "paper_dislocation_15m_supported_candidate"
+    if label.get("outcome_15m") == "paper_15m_loss":
+        return "paper_dislocation_15m_failed_candidate"
+    return status
+
+
+def _hyperliquid_dislocation_label_bonus(label: dict[str, str]) -> float:
+    net_1h = label.get("net_1h_bps")
+    if net_1h:
+        return max(min(_float(net_1h) / 100.0, 5.0), -15.0)
+    net_15m = label.get("net_15m_bps")
+    if net_15m:
+        return max(min(_float(net_15m) / 150.0, 3.0), -10.0)
+    return 0.0
+
+
+def _hyperliquid_dislocation_next_step(
+    *,
+    asset: str,
+    ticket: dict[str, str],
+    label: dict[str, str],
+) -> str:
+    if label.get("outcome_1h") == "paper_1h_win":
+        return f"repeat {asset} dislocation labels on fresh snapshots and add depth-gated paper probes"
+    if label.get("outcome_15m") == "paper_15m_win":
+        return f"wait for {asset} 1h/4h dislocation labels before promotion"
+    if label.get("outcome_15m") == "paper_15m_loss":
+        return f"deprioritize {asset} until a fresh dislocation snapshot appears"
+    return ticket.get(
+        "next_step",
+        f"label {asset} dislocation candidate over 15m/1h/4h with costs",
+    )
 
 
 def _perp_crowding_validated_stacks(
@@ -1523,6 +1625,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_crowded_momentum_continuation_candidate": 60.0,
         "paper_crowded_momentum_reversal_candidate": 57.0,
         "paper_mark_oracle_reversion_candidate": 56.0,
+        "paper_dislocation_1h_supported_candidate": 69.0,
+        "paper_dislocation_15m_supported_candidate": 64.0,
+        "paper_dislocation_15m_failed_candidate": 42.0,
         "paper_attention_funding_watch": 57.0,
         "attention_price_lag_candidate": 61.0,
         "attention_breakout_continuation_watch": 58.0,

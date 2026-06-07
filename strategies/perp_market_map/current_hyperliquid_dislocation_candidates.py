@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent
 
 @dataclass(frozen=True)
 class HyperliquidDislocationCandidate:
+    timestamp: str
     asset: str
     status: str
     side: str
@@ -49,6 +50,7 @@ def write_hyperliquid_dislocation_candidates_csv(
         writer.writerow(
             (
                 "asset",
+                "timestamp",
                 "status",
                 "side",
                 "score",
@@ -68,6 +70,7 @@ def write_hyperliquid_dislocation_candidates_csv(
             writer.writerow(
                 (
                     row.asset,
+                    row.timestamp,
                     row.status,
                     row.side,
                     f"{row.score:.8f}",
@@ -228,6 +231,7 @@ def _candidate(
     open_interest_notional = _float(row["open_interest_notional"])
     day_notional_volume = _float(row["day_notional_volume"])
     return HyperliquidDislocationCandidate(
+        timestamp=row.get("timestamp", ""),
         asset=asset,
         status=status,
         side=side,

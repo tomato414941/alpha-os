@@ -310,6 +310,8 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
     )
     dislocation_signal = _hyperliquid_dislocation_signal(
         root / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv"
+    ) + _hyperliquid_dislocation_label_signal(
+        root / "perp_market_map" / "current_hyperliquid_dislocation_forward_labels.csv"
     )
     outcome_path = root / "perp_market_map" / "current_crowding_reversion_paper_outcome.csv"
     best_outcome = _best_crowding_outcome_row(outcome_path)
@@ -2230,6 +2232,37 @@ def _hyperliquid_dislocation_signal(path: Path) -> str:
         f"{best.get('status', '')} "
         f"{best.get('side', '')} "
         f"score={best.get('score', '')}"
+    )
+
+
+def _hyperliquid_dislocation_label_signal(path: Path) -> str:
+    best = _best_dislocation_label_row(path)
+    if not best:
+        return ""
+    return (
+        f"; label {best.get('asset', '')} "
+        f"{best.get('status', '')} "
+        f"{best.get('side', '')} "
+        f"net15={best.get('net_15m_bps', '')} "
+        f"out15={best.get('outcome_15m', '')}"
+    )
+
+
+def _best_dislocation_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            row.get("outcome_1h") == "paper_1h_win",
+            row.get("outcome_15m") == "paper_15m_win",
+            float(row.get("net_15m_bps") or "-1000000"),
+            float(row.get("score") or "0"),
+        ),
     )
 
 
