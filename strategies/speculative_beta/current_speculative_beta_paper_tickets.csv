@@ -1,0 +1,5 @@
+name,status,side,score,reason
+vix_high_beta_air_pocket,watch,none,0.58969743,"risk-off shock is visible, but crypto may already have repriced"
+semis_crypto_divergence,watch,none,0.02483115,semiconductor/BTC divergence is not clean enough
+ai_beta_crypto_divergence,watch,none,-0.02482207,AI/BTC divergence is not actionable without repeated labels
+speculative_beta_lead,watch,none,0.01605580,speculative beta does not show a clean lead/lag trade

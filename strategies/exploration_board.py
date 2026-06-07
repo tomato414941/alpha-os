@@ -26,6 +26,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _derivatives_positioning_row(root),
         _macro_regime_row(root),
         _crypto_equity_proxy_row(root),
+        _speculative_beta_row(root),
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
@@ -330,6 +331,41 @@ def _crypto_equity_proxy_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="crypto-linked equity proxies have not been converted into repeated labels",
         next_step="build paper tickets for proxy lead/lag, MSTR/BTC dislocation, and miner stress",
+    )
+
+
+def _speculative_beta_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "speculative_beta" / "current_speculative_beta_paper_tickets.csv"
+    best_ticket = _best_speculative_beta_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="speculative_beta",
+            status=best_ticket.get("status", "watch"),
+            strongest_current_signal=(
+                f"{best_ticket.get('name', '')}: "
+                f"{best_ticket.get('side', '')}, "
+                f"score={best_ticket.get('score', '')}, "
+                f"{best_ticket.get('reason', '')}"
+            ),
+            main_gap="speculative beta screen is current-context only and lacks repeated labels, crypto venue costs, and regime splits",
+            next_step="label VIX/high-beta shocks, AI/BTC divergence, and semiconductor/BTC divergence against BTC/ETH returns and funding",
+        )
+    context_path = root / "speculative_beta" / "current_speculative_beta_context.csv"
+    best_context = _best_abs_numeric_row(context_path, key="risk_score_5d")
+    signal = "not run yet"
+    if best_context:
+        signal = (
+            f"{best_context.get('symbol', '')}: "
+            f"group={best_context.get('group', '')}, "
+            f"risk_score_5d={best_context.get('risk_score_5d', '')}, "
+            f"vs_btc_5d={best_context.get('vs_btc_5d', '')}"
+        )
+    return ExplorationRow(
+        lane="speculative_beta",
+        status="current_context",
+        strongest_current_signal=signal,
+        main_gap="speculative equity beta has not been converted into repeated crypto labels",
+        next_step="build paper tickets for high-beta lead/lag, AI divergence, semiconductor divergence, and VIX air pockets",
     )
 
 
@@ -981,6 +1017,22 @@ def _best_crypto_equity_proxy_ticket(path: Path) -> dict[str, str] | None:
                 "paper_risk_context",
             }
             else 0.0,
+            abs(float(row.get("score") or "0")),
+        ),
+    )
+
+
+def _best_speculative_beta_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            1.0 if row.get("status") in {"paper_long_candidate", "paper_short_candidate"} else 0.0,
             abs(float(row.get("score") or "0")),
         ),
     )
