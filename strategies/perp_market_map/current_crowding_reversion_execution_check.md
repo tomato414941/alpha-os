@@ -3,40 +3,40 @@
 This applies a rough taker-fee, spread, and visible-depth gate to validated Hyperliquid carry-reversion candidates. It is still not a fill model.
 
 - rows: `30`
-- paper execution probes: `11`
+- paper execution probes: `10`
 
 | asset | action | size | gate | net 1h bps | cost bps | conservative bps | spread | depth10 | usage | reason |
 | --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| DYDX | short_carry_reversion_watch | 250 | paper_execution_probe | 358.79 | 17.81 | 340.98 | 6.92 | 2783 | 0.0898 | public book does not obviously block a small paper probe |
-| ZRO | short_carry_reversion_watch | 250 | paper_execution_probe | 282.98 | 18.30 | 264.68 | 7.99 | 8143 | 0.0307 | public book does not obviously block a small paper probe |
-| ZRO | short_carry_reversion_watch | 1000 | paper_execution_probe | 282.98 | 19.22 | 263.76 | 7.99 | 8143 | 0.1228 | public book does not obviously block a small paper probe |
-| ETHFI | short_carry_reversion_watch | 250 | paper_execution_probe | 245.82 | 11.93 | 233.89 | 1.33 | 4154 | 0.0602 | public book does not obviously block a small paper probe |
-| XMR | short_carry_reversion_watch | 250 | paper_execution_probe | 244.79 | 12.17 | 232.62 | 1.97 | 12843 | 0.0195 | public book does not obviously block a small paper probe |
-| ETHFI | short_carry_reversion_watch | 1000 | paper_execution_probe | 245.82 | 13.74 | 232.08 | 1.33 | 4154 | 0.2407 | public book does not obviously block a small paper probe |
-| XMR | short_carry_reversion_watch | 1000 | paper_execution_probe | 244.79 | 12.75 | 232.04 | 1.97 | 12843 | 0.0779 | public book does not obviously block a small paper probe |
-| XMR | short_carry_reversion_watch | 2500 | paper_execution_probe | 244.79 | 13.92 | 230.87 | 1.97 | 12843 | 0.1947 | public book does not obviously block a small paper probe |
-| CFX | short_carry_reversion_watch | 250 | paper_execution_probe | 237.51 | 14.53 | 222.98 | 3.93 | 4181 | 0.0598 | public book does not obviously block a small paper probe |
-| CFX | short_carry_reversion_watch | 1000 | paper_execution_probe | 237.51 | 16.32 | 221.19 | 3.93 | 4181 | 0.2392 | public book does not obviously block a small paper probe |
-| HEMI | short_carry_reversion_watch | 250 | paper_execution_probe | 228.20 | 18.38 | 209.82 | 7.18 | 2082 | 0.1201 | public book does not obviously block a small paper probe |
-| DYDX | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 358.79 | 20.51 | 338.28 | 6.92 | 2783 | 0.3593 | candidate size uses too much visible near-touch depth |
-| DYDX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 358.79 | 25.90 | 332.90 | 6.92 | 2783 | 0.8982 | candidate size uses too much visible near-touch depth |
-| ZRO | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 282.98 | 21.06 | 261.92 | 7.99 | 8143 | 0.3070 | candidate size uses too much visible near-touch depth |
-| ETHFI | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 245.82 | 17.35 | 228.47 | 1.33 | 4154 | 0.6018 | candidate size uses too much visible near-touch depth |
-| APEX | short_carry_reversion_watch | 250 | too_large_for_visible_depth | 245.75 | 23.32 | 222.43 | 9.57 | 666 | 0.3753 | candidate size uses too much visible near-touch depth |
-| CFX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 237.51 | 19.91 | 217.60 | 3.93 | 4181 | 0.5979 | candidate size uses too much visible near-touch depth |
-| APEX | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 245.75 | 29.57 | 216.18 | 9.57 | 666 | 1.5013 | candidate size uses too much visible near-touch depth |
-| APEX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 245.75 | 29.57 | 216.18 | 9.57 | 666 | 3.7531 | candidate size uses too much visible near-touch depth |
-| GRIFFAIN | short_carry_reversion_watch | 250 | too_large_for_visible_depth | 243.96 | 35.54 | 208.43 | 19.50 | 414 | 0.6035 | candidate size uses too much visible near-touch depth |
-| HEMI | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 228.20 | 21.98 | 206.22 | 7.18 | 2082 | 0.4803 | candidate size uses too much visible near-touch depth |
-| GRIFFAIN | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 243.96 | 39.50 | 204.46 | 19.50 | 414 | 2.4141 | candidate size uses too much visible near-touch depth |
-| GRIFFAIN | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 243.96 | 39.50 | 204.46 | 19.50 | 414 | 6.0353 | candidate size uses too much visible near-touch depth |
-| HEMI | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 228.20 | 27.18 | 201.02 | 7.18 | 2082 | 1.2008 | candidate size uses too much visible near-touch depth |
-| PURR | short_carry_reversion_watch | 250 | no_visible_depth | 95.93 | 44.91 | 51.02 | 24.91 | 0 | inf | no visible near-touch depth on the execution side |
-| PURR | short_carry_reversion_watch | 1000 | no_visible_depth | 95.93 | 44.91 | 51.02 | 24.91 | 0 | inf | no visible near-touch depth on the execution side |
-| PURR | short_carry_reversion_watch | 2500 | no_visible_depth | 95.93 | 44.91 | 51.02 | 24.91 | 0 | inf | no visible near-touch depth on the execution side |
-| HMSTR | short_carry_reversion_watch | 250 | no_visible_depth | -54.52 | 73.33 | -127.85 | 53.33 | 0 | inf | no visible near-touch depth on the execution side |
-| HMSTR | short_carry_reversion_watch | 1000 | no_visible_depth | -54.52 | 73.33 | -127.85 | 53.33 | 0 | inf | no visible near-touch depth on the execution side |
-| HMSTR | short_carry_reversion_watch | 2500 | no_visible_depth | -54.52 | 73.33 | -127.85 | 53.33 | 0 | inf | no visible near-touch depth on the execution side |
+| DYDX | short_carry_reversion_watch | 250 | paper_execution_probe | 358.79 | 19.23 | 339.56 | 8.31 | 2713 | 0.0921 | public book does not obviously block a small paper probe |
+| ZRO | short_carry_reversion_watch | 250 | paper_execution_probe | 282.98 | 10.95 | 272.02 | 0.77 | 13754 | 0.0182 | public book does not obviously block a small paper probe |
+| ZRO | short_carry_reversion_watch | 1000 | paper_execution_probe | 282.98 | 11.50 | 271.48 | 0.77 | 13754 | 0.0727 | public book does not obviously block a small paper probe |
+| ZRO | short_carry_reversion_watch | 2500 | paper_execution_probe | 282.98 | 12.59 | 270.39 | 0.77 | 13754 | 0.1818 | public book does not obviously block a small paper probe |
+| XMR | short_carry_reversion_watch | 250 | paper_execution_probe | 244.79 | 14.41 | 230.38 | 4.26 | 16896 | 0.0148 | public book does not obviously block a small paper probe |
+| XMR | short_carry_reversion_watch | 1000 | paper_execution_probe | 244.79 | 14.85 | 229.94 | 4.26 | 16896 | 0.0592 | public book does not obviously block a small paper probe |
+| XMR | short_carry_reversion_watch | 2500 | paper_execution_probe | 244.79 | 15.74 | 229.05 | 4.26 | 16896 | 0.1480 | public book does not obviously block a small paper probe |
+| ETHFI | short_carry_reversion_watch | 250 | paper_execution_probe | 245.82 | 18.67 | 227.15 | 7.64 | 2407 | 0.1039 | public book does not obviously block a small paper probe |
+| GRIFFAIN | short_carry_reversion_watch | 250 | paper_execution_probe | 243.96 | 18.44 | 225.52 | 7.28 | 2151 | 0.1162 | public book does not obviously block a small paper probe |
+| APEX | short_carry_reversion_watch | 250 | paper_execution_probe | 245.75 | 22.78 | 222.96 | 11.47 | 1895 | 0.1319 | public book does not obviously block a small paper probe |
+| CFX | short_carry_reversion_watch | 250 | wide_spread_watch | 237.51 | 31.04 | 206.47 | 18.71 | 1073 | 0.2331 | edge survives rough cost but spread is wide |
+| DYDX | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 358.79 | 22.00 | 336.80 | 8.31 | 2713 | 0.3686 | candidate size uses too much visible near-touch depth |
+| DYDX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 358.79 | 27.52 | 331.27 | 8.31 | 2713 | 0.9215 | candidate size uses too much visible near-touch depth |
+| ETHFI | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 245.82 | 21.79 | 224.03 | 7.64 | 2407 | 0.4155 | candidate size uses too much visible near-touch depth |
+| GRIFFAIN | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 243.96 | 21.93 | 222.03 | 7.28 | 2151 | 0.4650 | candidate size uses too much visible near-touch depth |
+| APEX | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 245.75 | 26.74 | 219.00 | 11.47 | 1895 | 0.5277 | candidate size uses too much visible near-touch depth |
+| ETHFI | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 245.82 | 27.64 | 218.19 | 7.64 | 2407 | 1.0387 | candidate size uses too much visible near-touch depth |
+| GRIFFAIN | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 243.96 | 27.28 | 216.68 | 7.28 | 2151 | 1.1624 | candidate size uses too much visible near-touch depth |
+| APEX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 245.75 | 31.47 | 214.28 | 11.47 | 1895 | 1.3193 | candidate size uses too much visible near-touch depth |
+| HEMI | short_carry_reversion_watch | 250 | too_large_for_visible_depth | 228.20 | 22.34 | 205.87 | 8.97 | 742 | 0.3370 | candidate size uses too much visible near-touch depth |
+| CFX | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 237.51 | 38.03 | 199.48 | 18.71 | 1073 | 0.9324 | candidate size uses too much visible near-touch depth |
+| HEMI | short_carry_reversion_watch | 1000 | too_large_for_visible_depth | 228.20 | 28.97 | 199.24 | 8.97 | 742 | 1.3479 | candidate size uses too much visible near-touch depth |
+| HEMI | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 228.20 | 28.97 | 199.24 | 8.97 | 742 | 3.3697 | candidate size uses too much visible near-touch depth |
+| CFX | short_carry_reversion_watch | 2500 | too_large_for_visible_depth | 237.51 | 38.71 | 198.80 | 18.71 | 1073 | 2.3310 | candidate size uses too much visible near-touch depth |
+| PURR | short_carry_reversion_watch | 250 | no_visible_depth | 95.93 | 51.81 | 44.13 | 31.81 | 0 | inf | no visible near-touch depth on the execution side |
+| PURR | short_carry_reversion_watch | 1000 | no_visible_depth | 95.93 | 51.81 | 44.13 | 31.81 | 0 | inf | no visible near-touch depth on the execution side |
+| PURR | short_carry_reversion_watch | 2500 | no_visible_depth | 95.93 | 51.81 | 44.13 | 31.81 | 0 | inf | no visible near-touch depth on the execution side |
+| HMSTR | short_carry_reversion_watch | 250 | no_visible_depth | -54.52 | 73.62 | -128.14 | 53.62 | 0 | inf | no visible near-touch depth on the execution side |
+| HMSTR | short_carry_reversion_watch | 1000 | no_visible_depth | -54.52 | 73.62 | -128.14 | 53.62 | 0 | inf | no visible near-touch depth on the execution side |
+| HMSTR | short_carry_reversion_watch | 2500 | no_visible_depth | -54.52 | 73.62 | -128.14 | 53.62 | 0 | inf | no visible near-touch depth on the execution side |
 
 ## Interpretation
 

@@ -308,6 +308,9 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         root / "perp_market_map" / "current_okx_perp_pressure.csv",
         root / "perp_market_map" / "current_okx_perp_pressure_forward_labels.csv",
     )
+    dislocation_signal = _hyperliquid_dislocation_signal(
+        root / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv"
+    )
     outcome_path = root / "perp_market_map" / "current_crowding_reversion_paper_outcome.csv"
     best_outcome = _best_crowding_outcome_row(outcome_path)
     if best_outcome:
@@ -322,6 +325,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"out15={best_outcome.get('outcome_15m', '')}, "
                 f"net1h_bps={best_outcome.get('net_1h_bps', '')}, "
                 f"out1h={best_outcome.get('outcome_1h', '')}"
+                f"{dislocation_signal}"
                 f"{okx_signal}"
             ),
             main_gap=(
@@ -344,6 +348,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"conservative_net1h_bps={best_execution.get('conservative_net_1h_bps', '')}, "
                 f"spread_bps={best_execution.get('spread_bps', '')}, "
                 f"depth_usage={best_execution.get('visible_depth_usage_10bps', '')}"
+                f"{dislocation_signal}"
                 f"{okx_signal}"
             ),
             main_gap=(
@@ -366,6 +371,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"dir1h={best_validated.get('mean_directional_return_1h', '')}, "
                 f"net1h={best_validated.get('net_directional_return_1h_proxy', '')}, "
                 f"hit1h={best_validated.get('positive_directional_1h_rate', '')}"
+                f"{dislocation_signal}"
                 f"{okx_signal}"
             ),
             main_gap="validated carry-reversion labels are still tiny and do not include funding PnL, fees, spread, or stop behavior",
@@ -388,6 +394,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"obs={best_crowding_monitor.get('observations', '')}, "
                 f"mean_score={best_crowding_monitor.get('mean_score', '')}, "
                 f"mean_funding={best_crowding_monitor.get('mean_annualized_funding', '')}"
+                f"{dislocation_signal}"
                 f"{okx_signal}"
             ),
             main_gap="persistent crowding and OKX pressure proxies are not yet joined to future returns or execution costs",
@@ -404,6 +411,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"funding={best_crowding.get('annualized_funding', '')}, "
                 f"mark_oracle={best_crowding.get('mark_oracle_diff', '')}, "
                 f"score={best_crowding.get('carry_reversion_score', '')}"
+                f"{dislocation_signal}"
                 f"{okx_signal}"
             ),
             main_gap="current crowding and OKX pressure proxies are not yet joined to future returns or execution costs",
@@ -416,6 +424,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         signal = (
             f"{best.get('asset', '')}: ann_funding={best.get('annualized_funding', '')}, "
             f"volume={best.get('day_notional_volume', '')}"
+            f"{dislocation_signal}"
             f"{okx_signal}"
         )
     return ExplorationRow(
@@ -2210,6 +2219,18 @@ def _best_crowding_validated_row(path: Path) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("validation_score") or "0"))
+
+
+def _hyperliquid_dislocation_signal(path: Path) -> str:
+    best = _best_numeric_row(path, key="score")
+    if not best:
+        return ""
+    return (
+        f"; HL dislocation {best.get('asset', '')} "
+        f"{best.get('status', '')} "
+        f"{best.get('side', '')} "
+        f"score={best.get('score', '')}"
+    )
 
 
 def _best_crowding_execution_row(path: Path) -> dict[str, str] | None:

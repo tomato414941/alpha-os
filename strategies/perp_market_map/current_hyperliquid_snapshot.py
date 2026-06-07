@@ -19,6 +19,8 @@ class PerpMarketRow:
     asset: str
     max_leverage: float
     mark_price: float
+    prev_day_price: float
+    return_24h: float
     funding_rate: float
     annualized_funding: float
     open_interest: float
@@ -54,6 +56,7 @@ def build_perp_market_rows(
         mid_price = _float(context.get("midPx") or context.get("markPx"))
         oracle_price = _float(context.get("oraclePx"))
         mark_price = _float(context.get("markPx"))
+        prev_day_price = _float(context.get("prevDayPx"))
         impact_bid_price = _float(impact_prices[0])
         impact_ask_price = _float(impact_prices[1])
         funding_rate = _float(context.get("funding"))
@@ -67,12 +70,15 @@ def build_perp_market_rows(
         mark_oracle_diff = (
             (mark_price / oracle_price) - 1.0 if oracle_price > 0.0 else 0.0
         )
+        return_24h = (mark_price / prev_day_price) - 1.0 if prev_day_price > 0.0 else 0.0
         rows.append(
             PerpMarketRow(
                 timestamp=observed_at,
                 asset=str(asset_meta["name"]),
                 max_leverage=_float(asset_meta.get("maxLeverage")),
                 mark_price=mark_price,
+                prev_day_price=prev_day_price,
+                return_24h=return_24h,
                 funding_rate=funding_rate,
                 annualized_funding=annualized_funding,
                 open_interest=open_interest,
@@ -107,6 +113,8 @@ def write_perp_market_rows(
                 "asset",
                 "max_leverage",
                 "mark_price",
+                "prev_day_price",
+                "return_24h",
                 "funding_rate",
                 "annualized_funding",
                 "open_interest",
@@ -126,6 +134,8 @@ def write_perp_market_rows(
                     row.asset,
                     f"{row.max_leverage:.4f}",
                     f"{row.mark_price:.12f}",
+                    f"{row.prev_day_price:.12f}",
+                    f"{row.return_24h:.8f}",
                     f"{row.funding_rate:.12f}",
                     f"{row.annualized_funding:.8f}",
                     f"{row.open_interest:.8f}",

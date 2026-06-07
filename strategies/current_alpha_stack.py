@@ -31,6 +31,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
+        *_hyperliquid_dislocation_stacks(root),
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
         *_protocol_fee_price_context_stacks(root),
@@ -464,6 +465,55 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
             )
         )
     return tuple(output)
+
+
+def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv")
+    tickets = sorted(
+        rows,
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:10]:
+        asset = ticket.get("asset", "")
+        status = ticket.get("status", "paper_hyperliquid_dislocation_candidate")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_{_slug(status)}_{_slug(ticket.get('side', ''))}",
+                status=status,
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")) * 10.0,
+                )
+                + (_float(ticket.get("score")) / 100.0),
+                sources="perp_market_map",
+                evidence=(
+                    f"{asset}: ret24={ticket.get('return_24h', '')}, "
+                    f"funding={ticket.get('annualized_funding', '')}, "
+                    f"mark_oracle={ticket.get('mark_oracle_diff', '')}, "
+                    f"premium={ticket.get('premium', '')}, "
+                    f"oi_vol={ticket.get('oi_volume_ratio', '')}, "
+                    f"impact={ticket.get('impact_spread', '')}, "
+                    f"reason={ticket.get('reason', '')}"
+                ),
+                conflict=(
+                    "current dislocation screen is unlabeled and can produce both continuation "
+                    "and reversal hypotheses for the same move"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {asset} dislocation candidate over 15m/1h/4h with costs",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _slug(value: str) -> str:
+    return value.removeprefix("paper_").removesuffix("_candidate")
 
 
 def _perp_crowding_validated_stacks(
@@ -1469,6 +1519,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_delayed_carry_reversion_watch": 58.0,
         "paper_carry_reversion_needs_more_labels": 48.0,
         "paper_crowding_reversion_watch": 59.0,
+        "paper_extreme_funding_carry_candidate": 61.0,
+        "paper_crowded_momentum_continuation_candidate": 60.0,
+        "paper_crowded_momentum_reversal_candidate": 57.0,
+        "paper_mark_oracle_reversion_candidate": 56.0,
         "paper_attention_funding_watch": 57.0,
         "attention_price_lag_candidate": 61.0,
         "attention_breakout_continuation_watch": 58.0,

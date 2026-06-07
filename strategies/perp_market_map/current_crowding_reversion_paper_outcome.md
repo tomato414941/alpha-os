@@ -8,12 +8,12 @@ This labels depth-gated Hyperliquid carry-reversion probes after the same rough 
 
 | entry | asset | action | size | cost bps | net15 bps | out15 | net1h bps | out1h |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| 2026-06-07T23:16:59.958447+00:00 | DYDX | short_carry_reversion_watch | 250 | 17.81 |  | pending_15m |  | pending_1h |
-| 2026-06-07T23:16:59.958447+00:00 | ZRO | short_carry_reversion_watch | 250 | 18.30 |  | pending_15m |  | pending_1h |
-| 2026-06-07T23:16:59.958447+00:00 | ETHFI | short_carry_reversion_watch | 250 | 11.93 |  | pending_15m |  | pending_1h |
-| 2026-06-07T23:16:59.958447+00:00 | XMR | short_carry_reversion_watch | 250 | 12.17 |  | pending_15m |  | pending_1h |
-| 2026-06-07T23:16:59.958447+00:00 | CFX | short_carry_reversion_watch | 250 | 14.53 |  | pending_15m |  | pending_1h |
-| 2026-06-07T23:16:59.958447+00:00 | HEMI | short_carry_reversion_watch | 250 | 18.38 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | DYDX | short_carry_reversion_watch | 250 | 19.23 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | ZRO | short_carry_reversion_watch | 250 | 10.95 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | XMR | short_carry_reversion_watch | 250 | 14.41 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | ETHFI | short_carry_reversion_watch | 250 | 18.67 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | GRIFFAIN | short_carry_reversion_watch | 250 | 18.44 |  | pending_15m |  | pending_1h |
+| 2026-06-07T23:28:18.721031+00:00 | APEX | short_carry_reversion_watch | 250 | 22.78 |  | pending_15m |  | pending_1h |
 
 ## Interpretation
 
