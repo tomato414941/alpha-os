@@ -170,3 +170,31 @@ Interpretation:
 - The next real test should either collect this probe over a longer schedule or
   make a tiny paper-ticket with explicit OKX and Hyperliquid order assumptions
   for `BTC`.
+
+## OKX-Hyperliquid Paper Ticket
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_paper_ticket
+```
+
+Selected candidate:
+
+- asset: `BTC`
+- long venue: `OkxSwap`
+- short venue: `HlPerp`
+- persistence observations: `3`
+- positive 8h net rate: `1.0000`
+- mean 8h net proxy: `0.00009284`
+- min 8h net proxy: `0.00007061`
+- mean 24h net proxy: `0.00033603`
+- mean breakeven holding time: `1.8913` hours
+- mean capacity proxy notional: `764336.86`
+- paper notional cap: `1000.00` USDT
+
+This is the first OKX-Hyperliquid candidate that has moved from screen output
+to a venue-specific paper workflow. It is still not a trade instruction. The
+next falsification is order-level: exact instrument IDs, lot sizes, fee tier,
+funding timestamp alignment, taker-vs-maker assumption, collateral path, and
+kill switch.
