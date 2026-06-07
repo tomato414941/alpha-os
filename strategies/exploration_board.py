@@ -28,6 +28,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _defi_yield_row(root),
         _market_making_row(root),
         _options_volatility_row(root),
+        _sector_rotation_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
         _candidate_validation_row(root),
@@ -476,6 +477,26 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="surface snapshot lacks realized-vol baseline, option execution costs, margin, and hedge rules",
         next_step="join IV/skew/term candidates to realized volatility and hedge-cost labels",
+    )
+
+
+def _sector_rotation_row(root: Path) -> ExplorationRow:
+    path = root / "sector_rotation" / "current_coingecko_category_rotation.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "CoinGecko category rotation probe exists"
+    if best:
+        signal = (
+            f"{best.get('name', '')}: {best.get('action', '')}, "
+            f"change24={best.get('market_cap_change_24h', '')}, "
+            f"top={best.get('top_3_coins_id', '')}, "
+            f"score={best.get('score', '')}"
+        )
+    return ExplorationRow(
+        lane="sector_rotation",
+        status="current_category_rotation",
+        strongest_current_signal=signal,
+        main_gap="category move is not mapped to tradable constituents, forward labels, liquidity, or costs",
+        next_step="map top rotating categories to tradable coins and label category continuation/reversal",
     )
 
 
