@@ -120,6 +120,49 @@ selection of XRP, ADA, and LINK while also carrying negative BNB/BTC/AVAX/ETH
 episodes. This supports model-shape exploration, but it also shows that the
 current policy is still noisy and drawdown-prone.
 
+## Broad Model Screen
+
+This screen expands the search space without introducing heavy dependencies:
+
+- feature sets: all, momentum, structure, flow, funding/premium
+- model labels: return ridge, sign ridge, cross-sectional rank ridge, contrarian return ridge
+- portfolio rules: top 1/2/3 positive scores, rebalance every 1/3/7/14 days
+
+Top candidates by Sharpe:
+
+| candidate | predictions | mean daily rank IC | hit rate | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| funding_premium_contrarian_return_ridge_top_1_14d | 5499 | 0.040022 | 0.506 | 3.317314 | 1.488873 | -0.541209 | 0.096563 |
+| flow_return_ridge_top_1_7d | 5499 | -0.011401 | 0.485 | 3.839812 | 1.480969 | -0.593317 | 0.240589 |
+| flow_return_ridge_top_1_14d | 5499 | -0.011401 | 0.485 | 2.272810 | 1.237376 | -0.639185 | 0.130933 |
+| funding_premium_contrarian_return_ridge_top_2_14d | 5499 | 0.040022 | 0.506 | 1.743855 | 1.192705 | -0.502153 | 0.086743 |
+| flow_return_ridge_top_2_7d | 5499 | -0.011401 | 0.485 | 1.726964 | 1.157009 | -0.542114 | 0.207856 |
+| funding_premium_contrarian_return_ridge_top_3_14d | 5499 | 0.040022 | 0.506 | 1.413867 | 1.106731 | -0.501502 | 0.088380 |
+| flow_sign_ridge_top_1_7d | 5499 | -0.002904 | 0.471 | 1.421618 | 1.060776 | -0.540737 | 0.240589 |
+| all_sign_ridge_top_1_7d | 5499 | -0.001821 | 0.481 | 1.362449 | 1.028480 | -0.580269 | 0.227496 |
+| structure_sign_ridge_top_3_7d | 5499 | -0.020187 | 0.471 | 1.308083 | 1.027657 | -0.591124 | 0.175668 |
+| funding_premium_rank_ridge_top_2_14d | 5499 | 0.034844 | 0.487 | 1.179571 | 1.000151 | -0.583573 | 0.093290 |
+
+Same-window buy-and-hold from the broad-screen start:
+
+| symbol | total return | sharpe | max drawdown |
+| --- | ---: | ---: | ---: |
+| XRPUSDT | 1.264571 | 0.980934 | -0.658458 |
+| BNBUSDT | 0.170550 | 0.439633 | -0.553580 |
+| BTCUSDT | 0.120208 | 0.375440 | -0.495556 |
+| DOGEUSDT | -0.187075 | 0.324394 | -0.810576 |
+| LINKUSDT | -0.278203 | 0.236316 | -0.729774 |
+| ADAUSDT | -0.413742 | 0.165600 | -0.810547 |
+| ETHUSDT | -0.255137 | 0.107280 | -0.632503 |
+| SOLUSDT | -0.477191 | -0.088024 | -0.702673 |
+| AVAXUSDT | -0.704838 | -0.375462 | -0.846753 |
+
+This is the first broad screen where several candidates beat the strongest
+same-window single-asset benchmark. The strongest cluster is not "more complex
+ML"; it is a slower rebalance around funding/premium contrarian behavior and
+flow-based selection. The next step should stress-test this cluster across
+start dates, costs, refit cadence, and symbol subsets.
+
 Next useful work is not another small parameter tweak. It should move to a
 different model shape:
 
