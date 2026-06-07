@@ -27,6 +27,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _mstr_btc_relative_value_stack(root),
         _btc_options_volatility_stack(root),
         _prediction_market_event_model_stack(root),
+        *_futures_basis_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
         *_protocol_fundamental_stacks(root),
@@ -194,6 +195,51 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
         conflict="market depth is not edge; needs independent true-probability model and latency/adverse-selection checks",
         next_step="build external news/filing probability model before any paper event-market action",
     )
+
+
+def _futures_basis_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "basis_term_structure" / "current_deribit_futures_basis.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_short_basis_watch",
+                "paper_long_basis_watch",
+                "basis_term_structure_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        instrument = ticket.get("instrument_name", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{instrument.lower()}_basis",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="basis_term_structure",
+                evidence=(
+                    f"{instrument}: ann_basis={ticket.get('annualized_basis', '')}, "
+                    f"basis={ticket.get('basis', '')}, dte={ticket.get('days_to_expiry', '')}, "
+                    f"volume_usd={ticket.get('volume_usd', '')}, spread={ticket.get('bid_ask_spread_pct', '')}"
+                ),
+                conflict="basis trade still needs spot/perp hedge route, funding, margin, fees, and order-book depth checks",
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {instrument} hedge route, fees, margin, funding, and depth",
+                ),
+            )
+        )
+    return tuple(output)
 
 
 def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -647,6 +693,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_depeg_repeg_watch": 62.0,
         "paper_premium_mean_reversion_watch": 62.0,
         "peg_supply_stress_watch": 50.0,
+        "paper_short_basis_watch": 62.0,
+        "paper_long_basis_watch": 62.0,
+        "basis_term_structure_watch": 52.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
         "paper_value_growth_candidate": 67.0,

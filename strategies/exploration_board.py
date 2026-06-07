@@ -22,6 +22,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
         _crypto_market_structure_row(root),
+        _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
@@ -129,6 +130,45 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap=main_gap,
         next_step=next_step,
+    )
+
+
+def _basis_term_structure_row(root: Path) -> ExplorationRow:
+    path = root / "basis_term_structure" / "current_deribit_futures_basis.csv"
+    if not path.exists():
+        rows: tuple[dict[str, str], ...] = ()
+    else:
+        with path.open(newline="", encoding="utf-8") as handle:
+            rows = tuple(
+                row
+                for row in csv.DictReader(handle)
+                if row.get("status")
+                in {"paper_short_basis_watch", "paper_long_basis_watch", "basis_term_structure_watch"}
+            )
+    best = max(rows, key=lambda row: float(row.get("score") or "0")) if rows else None
+    if best:
+        return ExplorationRow(
+            lane="basis_term_structure",
+            status=best.get("status", "basis_screen"),
+            strongest_current_signal=(
+                f"{best.get('instrument_name', '')}: "
+                f"ann_basis={best.get('annualized_basis', '')}, "
+                f"dte={best.get('days_to_expiry', '')}, "
+                f"volume={best.get('volume_usd', '')}, "
+                f"spread={best.get('bid_ask_spread_pct', '')}"
+            ),
+            main_gap="dated-futures basis still lacks hedge route, funding, margin, fees, and order-book depth checks",
+            next_step=best.get(
+                "next_step",
+                "check hedge route, funding, margin, fees, and depth before paper action",
+            ),
+        )
+    return ExplorationRow(
+        lane="basis_term_structure",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="dated futures basis has not been screened",
+        next_step="run Deribit futures basis screen for BTC/ETH term structure",
     )
 
 
