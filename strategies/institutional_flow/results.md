@@ -42,10 +42,13 @@ rolling ETF outflow, treated as short BTC regime context, has the strongest
 
 Funding split:
 
-- `large_5d_outflow__funding_aligned`: observations 45, mean directional 5d
-  plus funding 0.03164254, mean funding support 0.00057130, hit rate 0.6889.
+- Funding alignment is based on the label-start funding rate, not future
+  funding.
+- `large_5d_outflow__funding_aligned`: observations 43, mean directional 5d
+  plus funding 0.03263416, mean start funding support 0.00014644, hit rate
+  0.6977.
 - `large_5d_outflow`: observations 51, mean directional 5d plus funding
-  0.03102419, mean funding support 0.00044689, hit rate 0.6863.
+  0.03102419, mean start funding support 0.00010456, hit rate 0.6863.
 - The useful current hypothesis is narrower: large rolling ETF outflow as a
   BTC short context is more interesting when BTCUSDT perp funding is positive,
   because the short direction also receives funding.

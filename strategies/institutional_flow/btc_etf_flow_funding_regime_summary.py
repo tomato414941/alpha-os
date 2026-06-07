@@ -23,6 +23,7 @@ class BtcEtfFlowFundingRegimeSummary:
     mean_flow_btc: float
     mean_rolling_5d_flow_btc: float
     mean_start_funding_rate: float
+    mean_start_funding_support: float
     mean_forward_5d_funding_rate: float
     mean_funding_support_5d: float
     mean_directional_5d: float
@@ -88,6 +89,7 @@ def write_summaries_csv(
                 "mean_flow_btc",
                 "mean_rolling_5d_flow_btc",
                 "mean_start_funding_rate",
+                "mean_start_funding_support",
                 "mean_forward_5d_funding_rate",
                 "mean_funding_support_5d",
                 "mean_directional_5d",
@@ -105,6 +107,7 @@ def write_summaries_csv(
                     f"{summary.mean_flow_btc:.8f}",
                     f"{summary.mean_rolling_5d_flow_btc:.8f}",
                     f"{summary.mean_start_funding_rate:.12f}",
+                    f"{summary.mean_start_funding_support:.12f}",
                     f"{summary.mean_forward_5d_funding_rate:.12f}",
                     f"{summary.mean_funding_support_5d:.12f}",
                     f"{summary.mean_directional_5d:.8f}",
@@ -128,7 +131,7 @@ def write_summaries_md(
         handle.write(
             "This joins leakage-safe BTC ETF flow labels to Binance BTCUSDT perp funding. "
             "Positive funding means BTC perp shorts receive funding; negative funding means longs receive funding. "
-            "Funding PnL is a rough daily notional proxy, not an execution-ready PnL.\n\n"
+            "Regime alignment is based on the label-start funding rate, while 5-day funding is only used as rough PnL.\n\n"
         )
         handle.write(
             "| group | obs | mean 5d flow BTC | start funding | 5d funding | "
@@ -170,16 +173,19 @@ def _enrich_row_with_funding(
     if any(day not in funding_by_day for day in funding_days):
         return None
     direction = int(row["direction_hint"])
+    start_funding = funding_by_day[label_start]
+    start_funding_support = -direction * start_funding
     forward_5d_funding = sum(funding_by_day[day] for day in funding_days)
     funding_support = -direction * forward_5d_funding
     directional_5d = float(row["directional_return_5d"])
     return {
         **row,
-        "start_funding_rate": f"{funding_by_day[label_start]:.12f}",
+        "start_funding_rate": f"{start_funding:.12f}",
+        "start_funding_support": f"{start_funding_support:.12f}",
         "forward_5d_funding_rate": f"{forward_5d_funding:.12f}",
         "funding_support_5d": f"{funding_support:.12f}",
         "directional_return_5d_with_funding": f"{directional_5d + funding_support:.12f}",
-        "funding_alignment": _funding_alignment(funding_support),
+        "funding_alignment": _funding_alignment(start_funding_support),
     }
 
 
@@ -272,6 +278,7 @@ def _summarize_group(
         mean_flow_btc=_mean(tuple(float(row["flow_btc"]) for row in rows)),
         mean_rolling_5d_flow_btc=_mean(tuple(float(row["rolling_5d_flow_btc"]) for row in rows)),
         mean_start_funding_rate=_mean(tuple(float(row["start_funding_rate"]) for row in rows)),
+        mean_start_funding_support=_mean(tuple(float(row["start_funding_support"]) for row in rows)),
         mean_forward_5d_funding_rate=_mean(tuple(float(row["forward_5d_funding_rate"]) for row in rows)),
         mean_funding_support_5d=_mean(tuple(float(row["funding_support_5d"]) for row in rows)),
         mean_directional_5d=_mean(tuple(float(row["directional_return_5d"]) for row in rows)),
@@ -297,13 +304,13 @@ def _action_for_summary(summary: BtcEtfFlowFundingRegimeSummary) -> str:
         summary.observations >= 20
         and summary.mean_directional_5d_with_funding >= 0.015
         and summary.hit_rate_5d_with_funding >= 0.60
-        and summary.mean_funding_support_5d > 0.0
+        and summary.mean_start_funding_support > 0.0
     ):
         return "funding_regime_candidate"
     if (
         summary.observations >= 20
         and summary.mean_directional_5d_with_funding > 0.0
-        and summary.mean_funding_support_5d > 0.0
+        and summary.mean_start_funding_support > 0.0
     ):
         return "funding_regime_watch"
     return "weak_or_insufficient"

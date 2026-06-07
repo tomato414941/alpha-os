@@ -816,7 +816,7 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
                 f"{best_funding_regime.get('group_key', '')}: "
                 f"obs={best_funding_regime.get('observations', '')}, "
                 f"dir5+funding={best_funding_regime.get('mean_directional_5d_with_funding', '')}, "
-                f"funding_support={best_funding_regime.get('mean_funding_support_5d', '')}, "
+                f"start_funding_support={best_funding_regime.get('mean_start_funding_support', '')}, "
                 f"hit={best_funding_regime.get('hit_rate_5d_with_funding', '')}"
             ),
             main_gap="ETF flow plus funding still excludes intraday timing, drawdown filters, liquidity, and OOS market-regime splits",
