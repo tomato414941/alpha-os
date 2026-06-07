@@ -819,8 +819,8 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
                 f"hist_total={current_candidate.get('historical_total_return', '')}, "
                 f"hist_hit={current_candidate.get('historical_hit_rate_5d', '')}"
             ),
-            main_gap="current watch still lacks intraday execution, liquidation buffer, and account-specific fee validation",
-            next_step="paper-check BTC short entry timing, venue choice, liquidation buffer, and stop criteria before any live action",
+            main_gap="current watch survived coarse 1h entry stress but still lacks liquidation buffer, stop logic, and venue-specific execution checks",
+            next_step="paper-check BTC short venue choice, margin buffer, stop criteria, and mark/index basis before any live action",
         )
     paper_rule_path = root / "institutional_flow" / "btc_etf_flow_funding_candidate_summary.csv"
     best_paper_rule = _btc_etf_flow_funding_candidate_summary(paper_rule_path)

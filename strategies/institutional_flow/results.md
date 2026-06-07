@@ -81,6 +81,17 @@ Robustness pass:
 - The main weakness is not fee sensitivity. It is sample size, drawdown under
   delayed entry, and execution realism.
 
+Intraday entry stress:
+
+- Retested the same rule with Binance BTCUSDT 1h closes and 120-hour holds.
+- Entry offsets 0h, 8h, 16h, 24h, 32h, and 48h all remained positive.
+- Best intraday offset in this grid: 16h, total return 0.75997374, hit rate
+  0.6667, max drawdown -0.06774742.
+- Worst positive offset in this grid: 48h, total return 0.25142354, hit rate
+  0.6500, max drawdown -0.15900411.
+- The candidate is not just a daily-close artifact, but drawdown worsens when
+  entry is delayed.
+
 Current watch:
 
 - Latest ETF flow row: 2026-06-05, rolling 5d flow -37984 BTC.
