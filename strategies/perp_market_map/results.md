@@ -7,6 +7,7 @@ Run:
 ```bash
 uv run python -m strategies.perp_market_map.current_hyperliquid_snapshot
 uv run python -m strategies.perp_market_map.current_crowding_reversion_screen
+uv run python -m strategies.perp_market_map.current_crowding_reversion_monitor --samples 6 --delay-seconds 10
 ```
 
 Interpretation:
@@ -57,3 +58,26 @@ Interpretation:
   volume. It is a crowding proxy, not proof of forced liquidations.
 - The next validation is repeated monitoring plus labels for subsequent return,
   funding decay, and execution cost.
+
+## Current Crowding Reversion Monitor
+
+This repeats the crowding/reversion screen over a short window.
+
+| asset | action | obs | mean score | min score | mean funding | min abs funding | mean mark/oracle | mean OI/volume | mean impact |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| MON | long_carry_reversion_watch | 6 | 14.780596 | 14.755183 | -0.737254 | 0.735363 | -0.001838 | 11.455053 | 0.001402 |
+| AERO | long_carry_reversion_watch | 6 | 11.427866 | 11.373155 | -0.259455 | 0.255132 | -0.001321 | 12.158566 | 0.001683 |
+| ZRO | short_carry_reversion_watch | 6 | 10.681220 | 10.648295 | 0.109500 | 0.109500 | 0.000314 | 10.266260 | 0.000549 |
+| HEMI | short_carry_reversion_watch | 6 | 10.466755 | 10.414978 | 0.109500 | 0.109500 | 0.001769 | 15.351004 | 0.002841 |
+| PURR | short_carry_reversion_watch | 6 | 8.606307 | 8.580319 | 0.109500 | 0.109500 | 0.001350 | 8.692386 | 0.008952 |
+| MORPHO | long_carry_reversion_watch | 6 | 8.568573 | 8.514109 | -0.704351 | 0.702762 | -0.002340 | 4.332427 | 0.001883 |
+| SNX | long_carry_reversion_watch | 6 | 7.470613 | 7.445775 | -0.806949 | 0.802528 | -0.002062 | 3.194100 | 0.003041 |
+| IP | long_carry_reversion_watch | 6 | 7.402554 | 7.346064 | -0.182005 | 0.180456 | -0.001531 | 6.347635 | 0.001287 |
+
+Interpretation:
+
+- `MON/AERO/ZRO/HEMI/PURR/MORPHO/SNX/IP` persisted in every sample.
+- This is broader than the STABLE cross-exchange funding candidate: it gives a
+  separate perp-market state watchlist.
+- The missing work is still large: future-return labels, liquidation/funding
+  event labels, execution costs, and whether these states decay before entry.

@@ -167,6 +167,24 @@ def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
 
 
 def _perp_market_map_row(root: Path) -> ExplorationRow:
+    crowding_monitor_path = (
+        root / "perp_market_map" / "current_crowding_reversion_monitor_summary.csv"
+    )
+    best_crowding_monitor = _best_crowding_monitor_row(crowding_monitor_path)
+    if best_crowding_monitor:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status="short_window_carry_reversion_monitor",
+            strongest_current_signal=(
+                f"{best_crowding_monitor.get('asset', '')}: "
+                f"{best_crowding_monitor.get('action', '')}, "
+                f"obs={best_crowding_monitor.get('observations', '')}, "
+                f"mean_score={best_crowding_monitor.get('mean_score', '')}, "
+                f"mean_funding={best_crowding_monitor.get('mean_annualized_funding', '')}"
+            ),
+            main_gap="persistent crowding proxy is not yet joined to future returns or execution costs",
+            next_step="label top carry/reversion rows for subsequent returns, funding decay, and liquidation risk",
+        )
     crowding_path = root / "perp_market_map" / "current_crowding_reversion_screen.csv"
     best_crowding = _best_numeric_row(crowding_path, key="carry_reversion_score")
     if best_crowding:
@@ -375,6 +393,24 @@ def _best_monitor_row(path: Path) -> dict[str, str] | None:
             float(row.get("positive_net_24h_rate") or "0"),
             float(row.get("mean_net_24h_proxy") or "0"),
             float(row.get("mean_annualized_edge") or "0"),
+        ),
+    )
+
+
+def _best_crowding_monitor_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            int(row.get("observations") or "0"),
+            float(row.get("mean_score") or "0"),
+            float(row.get("min_score") or "0"),
+            abs(float(row.get("mean_annualized_funding") or "0")),
         ),
     )
 
