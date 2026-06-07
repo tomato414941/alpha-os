@@ -17,6 +17,8 @@ uv run python -m strategies.candidate_validation.current_signal_family_review
 uv run python -m strategies.candidate_validation.current_source_conflict_review
 uv run python -m strategies.candidate_validation.current_followup_queue
 uv run python -m strategies.candidate_validation.current_followup_execution_context
+uv run python -m strategies.candidate_validation.current_followup_repeat_observations
+uv run python -m strategies.candidate_validation.current_followup_repeat_forward_labels
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -158,3 +160,35 @@ Interpretation:
   share of visible 10 bps depth.
 - Some queue names are not current Hyperliquid perp symbols, so venue-specific
   validation is required before treating them as executable candidates.
+
+## Current Follow-Up Repeat Observations
+
+| asset | source | source action | dir | priority | mark | funding ann | spread bps | depth 10bps USD | status |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| WLD | okx_pressure | long_carry_discount_watch | 1 | 10.0571 | 0.48648000 | -0.214318 | 5.3436 | 22766 | ready_for_label |
+| WLD | liquidation | short_liquidation_squeeze_watch | 1 | 10.0571 | 0.48648000 | -0.214318 | 5.3436 | 22766 | ready_for_label |
+| ETH | okx_pressure | long_carry_discount_watch | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
+| ETH | liquidation | short_liquidation_squeeze_watch | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
+| ETH | l2_imbalance | visible_book_imbalance | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
+| ONDO | liquidation | short_liquidation_squeeze_watch | 1 | 3.6106 | 0.34858000 | 0.109500 | 0.8600 | 35880 | ready_for_label |
+| ONDO | sector_rotation | sector_momentum_watch | 1 | 3.6106 | 0.34858000 | 0.109500 | 0.8600 | 35880 | ready_for_label |
+| XPL | l2_imbalance | visible_book_imbalance | 1 | 3.4493 | 0.06900700 | 0.109500 | 3.3322 | 5094 | ready_for_label |
+| XPL | sector_rotation | sector_momentum_watch | 1 | 3.4493 | 0.06900700 | 0.109500 | 3.3322 | 5094 | ready_for_label |
+
+Interpretation:
+
+- Fresh repeat observations are now source-specific. `ONDO/liquidation` and
+  `ONDO/sector_rotation` are separate observations, not one blended candidate.
+- 23 rows are ready for 15m/1h labels.
+- `WLD` has no reusable `hl_candidate` direction in the current label format, so
+  only OKX pressure and liquidation are ready for directional repeat labels.
+
+## Current Follow-Up Repeat Forward Labels
+
+The fresh repeat observations are currently `pending_15m`. Rerun:
+
+```bash
+uv run python -m strategies.candidate_validation.current_followup_repeat_forward_labels
+```
+
+after the 15m and 1h horizons mature.

@@ -621,6 +621,33 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    repeat_label_path = root / "candidate_validation" / "current_followup_repeat_forward_labels.csv"
+    best_repeat_label = _best_followup_repeat_label_row(repeat_label_path)
+    if best_repeat_label:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_label",
+            strongest_current_signal=(
+                f"{best_repeat_label.get('asset', '')}/{best_repeat_label.get('source', '')}: "
+                f"{best_repeat_label.get('source_action', '')}, "
+                f"dir15={best_repeat_label.get('directional_return_15m', '')}, "
+                f"status={best_repeat_label.get('label_status', '')}"
+            ),
+            main_gap="fresh repeat label still excludes fees, funding PnL, slippage, and neutral baseline",
+            next_step="compare source-specific repeat labels and promote only repeated winners",
+        )
+    repeat_observation_path = (
+        root / "candidate_validation" / "current_followup_repeat_observations.csv"
+    )
+    repeat_summary = _followup_repeat_observation_summary(repeat_observation_path)
+    if repeat_summary:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_pending",
+            strongest_current_signal=repeat_summary,
+            main_gap="fresh observations are recorded but not yet matured to 15m/1h labels",
+            next_step="rerun followup repeat forward labels after 15m and 1h",
+        )
     execution_context_path = (
         root / "candidate_validation" / "current_followup_execution_context.csv"
     )
@@ -1086,6 +1113,42 @@ def _best_followup_execution_context_row(path: Path) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("priority") or "-inf"))
+
+
+def _best_followup_repeat_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("priority") or "0"),
+        ),
+    )
+
+
+def _followup_repeat_observation_summary(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    ready_rows = tuple(row for row in rows if row.get("observation_status") == "ready_for_label")
+    if not ready_rows:
+        return None
+    top = max(ready_rows, key=lambda row: float(row.get("priority") or "0"))
+    return (
+        f"{len(ready_rows)} source-specific observations pending; "
+        f"top={top.get('asset', '')}/{top.get('source', '')}, "
+        f"dir={top.get('direction', '')}, priority={top.get('priority', '')}"
+    )
 
 
 def _okx_perp_pressure_signal(path: Path, label_path: Path) -> str:
