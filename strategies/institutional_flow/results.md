@@ -68,3 +68,13 @@ Paper rule pass:
 - This is the first institutional-flow candidate that survived non-overlap and
   a simple fee haircut. The next risk is whether intraday timing, mark/index
   basis, liquidation buffer, and actual account fees erase it.
+
+Robustness pass:
+
+- Fee sensitivity still survives from 1 bps/side through 50 bps/side.
+- At 50 bps/side, total return is 0.48684751, hit rate is 0.5714, and max
+  drawdown is -0.09600412.
+- Calendar-year split is positive in 2024, 2025, and 2026, but the sample is
+  still thin: 2024 has 3 trades, 2025 has 10 trades, and 2026 has 8 trades.
+- The main weakness is not fee sensitivity. It is sample size plus execution
+  realism.

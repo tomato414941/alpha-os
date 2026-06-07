@@ -38,6 +38,17 @@ class BtcEtfFlowFundingRuleSummary:
     action: str
 
 
+@dataclass(frozen=True)
+class BtcEtfFlowFundingRobustnessRow:
+    group_key: str
+    trades: int
+    total_return: float
+    mean_net_return_5d: float
+    hit_rate_5d: float
+    max_drawdown: float
+    action: str
+
+
 def build_candidate_trades(
     *,
     labels_path: Path,
@@ -52,6 +63,14 @@ def build_candidate_trades(
         )
         if _is_large_outflow_start_funding_signal(row)
     )
+    return build_candidate_trades_from_rows(rows, fee_bps_per_side=fee_bps_per_side)
+
+
+def build_candidate_trades_from_rows(
+    rows: tuple[dict[str, str], ...],
+    *,
+    fee_bps_per_side: float,
+) -> tuple[BtcEtfFlowFundingTrade, ...]:
     trades: list[BtcEtfFlowFundingTrade] = []
     equity = 1.0
     peak_equity = 1.0
@@ -88,6 +107,36 @@ def build_candidate_trades(
     return tuple(trades)
 
 
+def build_fee_sensitivity_rows(
+    *,
+    signal_rows: tuple[dict[str, str], ...],
+    fee_bps_values: tuple[float, ...],
+) -> tuple[BtcEtfFlowFundingRobustnessRow, ...]:
+    return tuple(
+        _robustness_row(
+            group_key=f"fee_bps_per_side_{fee_bps:.1f}",
+            trades=build_candidate_trades_from_rows(
+                signal_rows,
+                fee_bps_per_side=fee_bps,
+            ),
+        )
+        for fee_bps in fee_bps_values
+    )
+
+
+def build_year_split_rows(
+    trades: tuple[BtcEtfFlowFundingTrade, ...],
+) -> tuple[BtcEtfFlowFundingRobustnessRow, ...]:
+    years = tuple(sorted({trade.entry_date[:4] for trade in trades}))
+    return tuple(
+        _robustness_row(
+            group_key=f"entry_year_{year}",
+            trades=tuple(trade for trade in trades if trade.entry_date[:4] == year),
+        )
+        for year in years
+    )
+
+
 def summarize_candidate_rule(
     trades: tuple[BtcEtfFlowFundingTrade, ...],
     *,
@@ -114,6 +163,40 @@ def summarize_candidate_rule(
             "action": _action_for_summary(summary),
         }
     )
+
+
+def write_robustness_csv(
+    rows: tuple[BtcEtfFlowFundingRobustnessRow, ...],
+    *,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(
+            (
+                "group_key",
+                "trades",
+                "total_return",
+                "mean_net_return_5d",
+                "hit_rate_5d",
+                "max_drawdown",
+                "action",
+            )
+        )
+        for row in rows:
+            writer.writerow(
+                (
+                    row.group_key,
+                    row.trades,
+                    f"{row.total_return:.8f}",
+                    f"{row.mean_net_return_5d:.8f}",
+                    f"{row.hit_rate_5d:.8f}",
+                    f"{row.max_drawdown:.8f}",
+                    row.action,
+                )
+            )
+    return output_path
 
 
 def write_trades_csv(
@@ -200,6 +283,7 @@ def write_summary_csv(
 def write_summary_md(
     summary: BtcEtfFlowFundingRuleSummary,
     *,
+    robustness_rows: tuple[BtcEtfFlowFundingRobustnessRow, ...],
     output_path: Path,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -217,6 +301,16 @@ def write_summary_md(
             f"{summary.hit_rate_5d:.4f} | {summary.max_drawdown:.8f} | "
             f"{summary.fee_bps_per_side:.4f} | {summary.action} |\n\n"
         )
+        handle.write("## Robustness\n\n")
+        handle.write("| group | trades | total return | mean net 5d | hit 5d | max drawdown | action |\n")
+        handle.write("| --- | ---: | ---: | ---: | ---: | ---: | --- |\n")
+        for row in robustness_rows:
+            handle.write(
+                f"| {row.group_key} | {row.trades} | {row.total_return:.8f} | "
+                f"{row.mean_net_return_5d:.8f} | {row.hit_rate_5d:.4f} | "
+                f"{row.max_drawdown:.8f} | {row.action} |\n"
+            )
+        handle.write("\n")
         handle.write("## Caveat\n\n")
         handle.write(
             "This is not live-ready. It still ignores intraday fill timing, mark/index basis, liquidation buffer, and account-specific fees. "
@@ -241,12 +335,62 @@ def _action_for_summary(summary: BtcEtfFlowFundingRuleSummary) -> str:
     return "weak_or_insufficient"
 
 
+def _robustness_row(
+    *,
+    group_key: str,
+    trades: tuple[BtcEtfFlowFundingTrade, ...],
+) -> BtcEtfFlowFundingRobustnessRow:
+    net_returns = tuple(trade.net_return_5d for trade in trades)
+    total_return = _compounded_return(net_returns)
+    row = BtcEtfFlowFundingRobustnessRow(
+        group_key=group_key,
+        trades=len(trades),
+        total_return=total_return,
+        mean_net_return_5d=_mean(net_returns),
+        hit_rate_5d=_hit_rate(net_returns),
+        max_drawdown=_max_drawdown(net_returns),
+        action="",
+    )
+    return BtcEtfFlowFundingRobustnessRow(
+        **{
+            **row.__dict__,
+            "action": _action_for_robustness_row(row),
+        }
+    )
+
+
+def _action_for_robustness_row(row: BtcEtfFlowFundingRobustnessRow) -> str:
+    if row.trades >= 5 and row.total_return > 0.0 and row.hit_rate_5d >= 0.55:
+        return "survives"
+    if row.trades >= 3 and row.total_return > 0.0:
+        return "thin_positive"
+    return "fails_or_too_thin"
+
+
 def _mean(values: tuple[float, ...]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
 def _hit_rate(values: tuple[float, ...]) -> float:
     return sum(1.0 for value in values if value > 0.0) / len(values) if values else 0.0
+
+
+def _compounded_return(values: tuple[float, ...]) -> float:
+    equity = 1.0
+    for value in values:
+        equity *= 1.0 + value
+    return equity - 1.0
+
+
+def _max_drawdown(values: tuple[float, ...]) -> float:
+    equity = 1.0
+    peak = 1.0
+    max_drawdown = 0.0
+    for value in values:
+        equity *= 1.0 + value
+        peak = max(peak, equity)
+        max_drawdown = min(max_drawdown, (equity / peak) - 1.0 if peak > 0.0 else 0.0)
+    return max_drawdown
 
 
 def main() -> None:
@@ -271,6 +415,11 @@ def main() -> None:
         type=Path,
         default=ROOT / "btc_etf_flow_funding_candidate_summary.md",
     )
+    parser.add_argument(
+        "--robustness-output-path",
+        type=Path,
+        default=ROOT / "btc_etf_flow_funding_candidate_robustness.csv",
+    )
     parser.add_argument("--fee-bps-per-side", type=float, default=5.0)
     parser.add_argument("--max-workers", type=int, default=12)
     args = parser.parse_args()
@@ -279,20 +428,31 @@ def main() -> None:
         labels_path=args.labels_path,
         max_workers=args.max_workers,
     )
-    total_signal_count = sum(1 for row in enriched_rows if _is_large_outflow_start_funding_signal(row))
-    trades = build_candidate_trades(
-        labels_path=args.labels_path,
+    signal_rows = tuple(row for row in enriched_rows if _is_large_outflow_start_funding_signal(row))
+    trades = build_candidate_trades_from_rows(
+        signal_rows,
         fee_bps_per_side=args.fee_bps_per_side,
-        max_workers=args.max_workers,
     )
     summary = summarize_candidate_rule(
         trades,
-        total_signal_count=total_signal_count,
+        total_signal_count=len(signal_rows),
         fee_bps_per_side=args.fee_bps_per_side,
+    )
+    robustness_rows = (
+        *build_fee_sensitivity_rows(
+            signal_rows=signal_rows,
+            fee_bps_values=(1.0, 5.0, 10.0, 20.0, 50.0),
+        ),
+        *build_year_split_rows(trades),
     )
     write_trades_csv(trades, output_path=args.trades_output_path)
     write_summary_csv(summary, output_path=args.summary_output_path)
-    write_summary_md(summary, output_path=args.markdown_output_path)
+    write_robustness_csv(robustness_rows, output_path=args.robustness_output_path)
+    write_summary_md(
+        summary,
+        robustness_rows=robustness_rows,
+        output_path=args.markdown_output_path,
+    )
     print(
         summary.rule_key,
         f"trades={summary.trades}",
