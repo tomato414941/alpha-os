@@ -420,7 +420,7 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
                 f"{family_note}"
             ),
             main_gap="cross-lane score is still a triage heuristic, not a PnL model or execution test",
-            next_step="repeat IP and short-liquidation-squeeze labels with fees, funding, and venue depth",
+            next_step="repeat WLD and short-liquidation-squeeze labels with fees, funding, and venue depth",
         )
     label_path = root / "candidate_validation" / "current_hl_signal_forward_label_summary.csv"
     best_label = _best_forward_label_row(label_path)

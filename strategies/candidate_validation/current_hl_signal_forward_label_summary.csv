@@ -1,6 +1,6 @@
 source,action,asset,observations,coverage_15m,coverage_1h,mean_return_15m,mean_return_1h,positive_15m_rate,positive_1h_rate
-okx_hl_current,paper_24h_monitor,STABLE,12,12,0,-0.00169225,,0.00000000,
-okx_hl_current,paper_24h_monitor,WLD,10,10,0,0.01968198,,1.00000000,
+okx_hl_current,paper_24h_monitor,STABLE,12,12,12,-0.00169225,0.00011875,0.00000000,1.00000000
+okx_hl_current,paper_24h_monitor,WLD,10,10,10,0.01968198,0.07209024,1.00000000,1.00000000
 perp_carry_reversion,long_carry_reversion_watch,MEGA,6,6,0,0.01783133,,1.00000000,
 perp_carry_reversion,long_carry_reversion_watch,IP,6,6,0,0.01598981,,1.00000000,
 perp_carry_reversion,short_carry_reversion_watch,XMR,6,6,0,0.01105937,,1.00000000,
@@ -22,10 +22,10 @@ perp_carry_reversion,long_carry_reversion_watch,MON,6,6,0,-0.00290295,,0.0000000
 perp_carry_reversion,long_carry_reversion_watch,SEI,6,6,0,-0.00427989,,0.00000000,
 perp_carry_reversion,long_carry_reversion_watch,MORPHO,6,6,0,-0.00433052,,0.00000000,
 perp_carry_reversion,long_carry_reversion_watch,BIO,6,6,0,-0.00783716,,0.00000000,
+perp_carry_reversion,long_carry_reversion_watch,UMA,6,6,0,0.00000000,,0.00000000,
 perp_carry_reversion,long_carry_reversion_watch,OP,5,5,0,-0.00010414,,0.00000000,
 perp_carry_reversion,long_carry_reversion_watch,XAI,5,5,0,-0.00379747,,0.00000000,
 perp_carry_reversion,short_carry_reversion_watch,STBL,5,5,0,-0.00592408,,0.00000000,
 perp_carry_reversion,long_carry_reversion_watch,KAITO,1,1,0,0.00376445,,1.00000000,
 perp_carry_reversion,long_carry_reversion_watch,AIXBT,1,1,0,0.00320687,,1.00000000,
 perp_carry_reversion,short_carry_reversion_watch,APEX,1,1,0,0.00304842,,1.00000000,
-perp_carry_reversion,long_carry_reversion_watch,UMA,6,0,0,,,,

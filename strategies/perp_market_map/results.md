@@ -118,23 +118,23 @@ right over that horizon.
 
 | asset | action | score | dir | raw 15m | directional 15m | raw 1h | directional 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| HOME | long_carry_discount_watch | 1646.868988 | 1 | 0.003516 | 0.003516 |  |  |
-| EDEN | long_carry_discount_watch | 729.651254 | 1 | -0.005525 | -0.005525 |  |  |
-| MU | short_carry_watch | 271.103687 | -1 | 0.000267 | -0.000267 |  |  |
-| DRAM | short_carry_premium_watch | 169.551114 | -1 | 0.001196 | -0.001196 |  |  |
-| QQQ | short_carry_premium_watch | 113.748315 | -1 | 0.000184 | -0.000184 |  |  |
-| ZEC | long_carry_discount_watch | 71.416463 | 1 | -0.001768 | -0.001768 |  |  |
-| MON | long_carry_discount_watch | 37.373778 | 1 | -0.000449 | -0.000449 |  |  |
-| SOL | long_carry_discount_watch | 36.907196 | 1 | 0.001232 | 0.001232 |  |  |
-| WLD | long_carry_discount_watch | 36.508262 | 1 | -0.002811 | -0.002811 |  |  |
-| IP | long_carry_discount_watch | 31.810813 | 1 | 0.001550 | 0.001550 |  |  |
+| HOME | long_carry_discount_watch | 1646.868988 | 1 | 0.007031 | 0.007031 |  |  |
+| EDEN | long_carry_discount_watch | 729.651254 | 1 | 0.001715 | 0.001715 |  |  |
+| MU | short_carry_watch | 271.103687 | -1 | 0.010693 | -0.010693 |  |  |
+| DRAM | short_carry_premium_watch | 169.551114 | -1 | 0.003929 | -0.003929 |  |  |
+| QQQ | short_carry_premium_watch | 113.748315 | -1 | 0.001020 | -0.001020 |  |  |
+| ZEC | long_carry_discount_watch | 71.416463 | 1 | -0.005396 | -0.005396 |  |  |
+| MON | long_carry_discount_watch | 37.373778 | 1 | 0.002247 | 0.002247 |  |  |
+| SOL | long_carry_discount_watch | 36.907196 | 1 | 0.003081 | 0.003081 |  |  |
+| WLD | long_carry_discount_watch | 36.508262 | 1 | 0.024699 | 0.024699 |  |  |
+| IP | long_carry_discount_watch | 31.810813 | 1 | -0.000930 | -0.000930 |  |  |
 
 Interpretation:
 
-- `HOME` survived the first 15m price-direction label despite being an extreme
-  funding/premium row.
-- `EDEN`, `ZEC`, `MON`, and `WLD` did not support the same price-direction
-  hypothesis over the first 15m. This does not include funding PnL.
-- `SOL` and `IP` are smaller pressure rows but had positive first 15m
-  direction labels.
+- `HOME` and `WLD` have the strongest current positive 15m pressure-direction
+  labels among the shown rows.
+- `ZEC` and `IP` do not support the same price-direction hypothesis over the
+  first 15m. This does not include funding PnL.
+- The short carry rows shown here are mostly negative on first 15m directional
+  price labels.
 - 1h labels are not available yet for this snapshot.

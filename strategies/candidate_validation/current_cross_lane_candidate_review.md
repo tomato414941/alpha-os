@@ -4,31 +4,31 @@ This consolidates current candidate screens and first short-horizon labels. It i
 
 | asset | score | lanes | positive labels | negative labels | pending labels | note |
 | --- | ---: | --- | --- | --- | --- | --- |
-| IP | 3.0182 | hl_candidate_label; okx_pressure | hl15=0.0160; okx_pressure15=0.0016 |  |  | first labels support follow-up |
+| WLD | 7.0571 | hl_candidate_label; okx_pressure; okx_liquidation | hl15=0.0197; okx_pressure15=0.0247; liq_cont15=0.0273 |  |  | first labels support follow-up |
 | MEGA | 2.8916 | hl_candidate_label | hl15=0.0178 |  |  | first labels support follow-up |
-| WLD | 2.8362 | hl_candidate_label; okx_pressure; okx_liquidation | hl15=0.0197 | okx_pressure15=-0.0028; liq_cont15=-0.0016 |  | mixed evidence; isolate which source is real |
-| EDEN | 2.7546 | okx_pressure; okx_liquidation | liq_cont15=0.0057 | okx_pressure15=-0.0055 |  | mixed evidence; isolate which source is real |
-| ALLO | 2.7293 | okx_pressure; okx_liquidation | liq_cont15=0.0198 | okx_pressure15=-0.0052 |  | mixed evidence; isolate which source is real |
+| IP | 2.8166 | hl_candidate_label; okx_pressure | hl15=0.0160 | okx_pressure15=-0.0009 |  | mixed evidence; isolate which source is real |
+| ALLO | 2.5965 | okx_pressure; okx_liquidation | liq_cont15=0.0198 | okx_pressure15=-0.0078 |  | mixed evidence; isolate which source is real |
 | XMR | 2.5530 | hl_candidate_label | hl15=0.0111 |  |  | first labels support follow-up |
-| H | 2.3700 | okx_pressure; okx_liquidation | okx_pressure15=0.0006; liq_cont15=0.0131 |  |  | first labels support follow-up |
+| HOME | 2.3356 | okx_pressure; okx_liquidation | okx_pressure15=0.0070 | liq_cont15=-0.0074 |  | mixed evidence; isolate which source is real |
+| H | 2.2846 | okx_pressure; okx_liquidation | liq_cont15=0.0131 | okx_pressure15=-0.0005 |  | mixed evidence; isolate which source is real |
 | ZORA | 2.2743 | hl_candidate_label | hl15=0.0055 |  |  | first labels support follow-up |
-| HOME | 2.1918 | okx_pressure; okx_liquidation | okx_pressure15=0.0035 | liq_cont15=-0.0032 |  | mixed evidence; isolate which source is real |
 | KAITO | 2.1882 | hl_candidate_label | hl15=0.0038 |  |  | first labels support follow-up |
-| ZRO | 2.1842 | hl_candidate_label; okx_pressure | hl15=0.0013; okx_pressure15=0.0011 |  |  | first labels support follow-up |
 | AIXBT | 2.1603 | hl_candidate_label | hl15=0.0032 |  |  | first labels support follow-up |
 | APEX | 2.1524 | hl_candidate_label | hl15=0.0030 |  |  | first labels support follow-up |
 | BSV | 2.0874 | hl_candidate_label | hl15=0.0017 |  |  | first labels support follow-up |
 | SAGA | 2.0365 | hl_candidate_label | hl15=0.0007 |  |  | first labels support follow-up |
-| PEPE | 1.5093 | okx_pressure; okx_liquidation | okx_pressure15=0.0018; liq_cont15=0.0033 |  |  | first labels support follow-up |
-| BEAT | 1.4751 | okx_pressure; okx_liquidation | liq_cont15=0.0065 | okx_pressure15=-0.0048 |  | mixed evidence; isolate which source is real |
-| NEAR | 1.4397 | okx_pressure; okx_liquidation | okx_pressure15=0.0029; liq_cont15=0.0015 |  |  | first labels support follow-up |
-| SOL | 1.3670 | okx_pressure; okx_liquidation | okx_pressure15=0.0012; liq_cont15=0.0017 |  |  | first labels support follow-up |
+| ZRO | 2.0173 | hl_candidate_label; okx_pressure | hl15=0.0013 | okx_pressure15=-0.0011 |  | mixed evidence; isolate which source is real |
+| PEPE | 1.7269 | okx_pressure; okx_liquidation | okx_pressure15=0.0040; liq_cont15=0.0033 |  |  | first labels support follow-up |
+| SOL | 1.5518 | okx_pressure; okx_liquidation | okx_pressure15=0.0031; liq_cont15=0.0017 |  |  | first labels support follow-up |
+| EDEN | 1.4688 | okx_pressure; okx_liquidation | okx_pressure15=0.0017 | liq_cont15=-0.0032 |  | mixed evidence; isolate which source is real |
+| XRP | 1.4627 | okx_pressure; okx_liquidation | okx_pressure15=0.0026; liq_cont15=0.0018 |  |  | first labels support follow-up |
 | TON | 1.3579 | okx_pressure; okx_liquidation | okx_pressure15=0.0006; liq_cont15=0.0030 |  |  | first labels support follow-up |
-| LAB | 1.3554 | okx_pressure; okx_liquidation | liq_cont15=0.0046 | okx_pressure15=-0.0027 |  | mixed evidence; isolate which source is real |
-| HYPE | 1.3405 | okx_pressure; okx_liquidation | okx_pressure15=0.0010; liq_cont15=0.0024 |  |  | first labels support follow-up |
+| LAB | 1.3363 | okx_pressure; okx_liquidation | liq_cont15=0.0046 | okx_pressure15=-0.0031 |  | mixed evidence; isolate which source is real |
 | LTC | 1.2959 | okx_pressure; okx_liquidation | okx_pressure15=0.0002; liq_cont15=0.0026 |  |  | first labels support follow-up |
-| XRP | 1.2862 | okx_pressure; okx_liquidation | okx_pressure15=0.0009; liq_cont15=0.0018 |  |  | first labels support follow-up |
-| ETH | 1.2590 | okx_pressure; okx_liquidation | okx_pressure15=0.0013; liq_cont15=0.0010 |  |  | first labels support follow-up |
+| BEAT | 1.2502 | okx_pressure; okx_liquidation | liq_cont15=0.0040 | okx_pressure15=-0.0044 |  | mixed evidence; isolate which source is real |
+| ETH | 1.2087 | okx_pressure; okx_liquidation | okx_pressure15=0.0007; liq_cont15=0.0011 |  |  | first labels support follow-up |
+| HYPE | 1.2045 | okx_pressure; okx_liquidation | liq_cont15=0.0024 | okx_pressure15=-0.0007 |  | mixed evidence; isolate which source is real |
+| DOGE | 1.1503 | okx_pressure; okx_liquidation | liq_cont15=0.0020 | okx_pressure15=-0.0013 |  | mixed evidence; isolate which source is real |
 
 ## Interpretation
 

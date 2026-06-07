@@ -43,22 +43,22 @@ continuation return means the forced-flow direction continued over that horizon.
 
 | asset | action | dir | raw 15m | continuation 15m | raw 1h | continuation 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| WLD | short_liquidation_squeeze_watch | 1 | 0.027309 | 0.027309 |  |  |
 | ALLO | short_liquidation_squeeze_watch | 1 | 0.019775 | 0.019775 |  |  |
 | H | short_liquidation_squeeze_watch | 1 | 0.013053 | 0.013053 |  |  |
-| BEAT | short_liquidation_squeeze_watch | 1 | 0.006535 | 0.006535 |  |  |
-| EDEN | long_liquidation_cascade_watch | -1 | -0.005715 | 0.005715 |  |  |
-| PEPE | short_liquidation_squeeze_watch | 1 | 0.003269 | 0.003269 | 0.003269 | 0.003269 |
-| SOL | short_liquidation_squeeze_watch | 1 | 0.001699 | 0.001699 | 0.003707 | 0.003707 |
-| ZEC | short_liquidation_squeeze_watch | 1 | -0.000070 | -0.000070 |  |  |
-| WLD | short_liquidation_squeeze_watch | 1 | -0.001606 | -0.001606 |  |  |
-| HOME | long_liquidation_cascade_watch | -1 | 0.003196 | -0.003196 |  |  |
-| JTO | long_liquidation_cascade_watch | -1 | 0.003874 | -0.003874 |  |  |
+| LAB | short_liquidation_squeeze_watch | 1 | 0.004624 | 0.004624 |  |  |
+| BEAT | short_liquidation_squeeze_watch | 1 | 0.004041 | 0.004041 |  |  |
+| PEPE | short_liquidation_squeeze_watch | 1 | 0.003269 | 0.003269 | 0.005449 | 0.005449 |
+| SOL | short_liquidation_squeeze_watch | 1 | 0.001699 | 0.001699 | 0.005406 | 0.005406 |
+| ZEC | short_liquidation_squeeze_watch | 1 | -0.006303 | -0.006303 |  |  |
+| HOME | long_liquidation_cascade_watch | -1 | 0.007351 | -0.007351 |  |  |
+| NEAR | short_liquidation_squeeze_watch | 1 | -0.009277 | -0.009277 |  |  |
 
 Interpretation:
 
-- `ALLO`, `H`, `BEAT`, `EDEN`, `PEPE`, and `SOL` had positive first 15m
+- `WLD`, `ALLO`, `H`, `LAB`, `BEAT`, `PEPE`, and `SOL` had positive first 15m
   continuation labels.
-- `ZEC` and `WLD` had the largest liquidation-flow scores, but their first 15m
-  continuation labels were slightly negative.
+- `ZEC` had one of the largest liquidation-flow scores, but its first 15m
+  continuation label is negative.
 - The current evidence suggests liquidation flow may be useful, but the best
   continuation rows are not necessarily the largest raw liquidation bursts.

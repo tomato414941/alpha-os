@@ -4,8 +4,8 @@ This labels elapsed monitor samples with subsequent Hyperliquid candle returns. 
 
 | source | action | asset | obs | cov15 | cov1h | mean 15m | mean 1h | hit15 | hit1h |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| okx_hl_current | paper_24h_monitor | STABLE | 12 | 12 | 0 | -0.001692 |  | 0.000000 |  |
-| okx_hl_current | paper_24h_monitor | WLD | 10 | 10 | 0 | 0.019682 |  | 1.000000 |  |
+| okx_hl_current | paper_24h_monitor | STABLE | 12 | 12 | 12 | -0.001692 | 0.000119 | 0.000000 | 1.000000 |
+| okx_hl_current | paper_24h_monitor | WLD | 10 | 10 | 10 | 0.019682 | 0.072090 | 1.000000 | 1.000000 |
 | perp_carry_reversion | long_carry_reversion_watch | MEGA | 6 | 6 | 0 | 0.017831 |  | 1.000000 |  |
 | perp_carry_reversion | long_carry_reversion_watch | IP | 6 | 6 | 0 | 0.015990 |  | 1.000000 |  |
 | perp_carry_reversion | short_carry_reversion_watch | XMR | 6 | 6 | 0 | 0.011059 |  | 1.000000 |  |
@@ -27,8 +27,8 @@ This labels elapsed monitor samples with subsequent Hyperliquid candle returns. 
 | perp_carry_reversion | long_carry_reversion_watch | SEI | 6 | 6 | 0 | -0.004280 |  | 0.000000 |  |
 | perp_carry_reversion | long_carry_reversion_watch | MORPHO | 6 | 6 | 0 | -0.004331 |  | 0.000000 |  |
 | perp_carry_reversion | long_carry_reversion_watch | BIO | 6 | 6 | 0 | -0.007837 |  | 0.000000 |  |
+| perp_carry_reversion | long_carry_reversion_watch | UMA | 6 | 6 | 0 | 0.000000 |  | 0.000000 |  |
 | perp_carry_reversion | long_carry_reversion_watch | OP | 5 | 5 | 0 | -0.000104 |  | 0.000000 |  |
-| perp_carry_reversion | long_carry_reversion_watch | XAI | 5 | 5 | 0 | -0.003797 |  | 0.000000 |  |
 
 ## Interpretation
 
