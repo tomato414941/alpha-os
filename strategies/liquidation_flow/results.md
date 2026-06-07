@@ -7,6 +7,7 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_flow
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_forward_labels
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
@@ -112,3 +113,27 @@ Interpretation:
   quality is less clean than `WLD`/`BEAT`.
 - The immediate paper-trade question is now sizing and venue depth, not only
   whether the signal exists.
+
+## Current OKX Liquidation Actionability Review
+
+This joins liquidation persistence, first continuation labels, and visible
+near-touch depth. It is a triage view, not an order plan.
+
+| asset | action | obs | monitor score | cont15 | spread bps | near depth 5bps | score | note |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| LTC | long_liquidation_cascade_watch | 3 | 0.035068 | 0.002599 | 2.3824 | 26234 | 0.926541 | first checks support follow-up |
+| WLD | short_liquidation_squeeze_watch | 3 | 0.117841 | 0.027309 | 2.0728 | 2430 | 0.781267 | signal ok but visible depth thin |
+| ONDO | short_liquidation_squeeze_watch | 3 | 0.016723 | 0.002006 | 2.8806 | 13968 | 0.541753 | first checks support follow-up |
+| H | short_liquidation_squeeze_watch | 3 | 0.021281 | 0.013053 | 1.7710 | 767 | 0.325660 | signal ok but visible depth thin |
+| BEAT | short_liquidation_squeeze_watch | 3 | 0.127525 | 0.004041 | 2.1265 | 846 | 0.248129 | signal ok but visible depth thin |
+| JTO | long_liquidation_cascade_watch | 3 | 0.094599 | 0.000323 | 1.6149 | 2208 | 0.237773 | signal ok but visible depth thin |
+| ZEC | mixed_liquidation_flow_watch | 3 | 0.050522 |  | 0.2362 | 16507 | 0.075261 | waiting for matching forward label |
+
+Interpretation:
+
+- `LTC` and `ONDO` are more executable-looking liquidation follow-ups because
+  first labels are positive and visible near-touch depth is stronger.
+- `WLD` remains the strongest cross-lane alpha candidate, but OKX near-touch
+  depth is thin enough that it should be treated as a small-size or alternate
+  venue probe.
+- `BEAT` has persistent squeeze flow but weak visible near-touch depth.

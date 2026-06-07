@@ -247,6 +247,22 @@ def _event_flow_row(root: Path) -> ExplorationRow:
 
 def _liquidation_flow_row(root: Path) -> ExplorationRow:
     monitor_path = root / "liquidation_flow" / "current_okx_liquidation_monitor_summary.csv"
+    actionability_path = root / "liquidation_flow" / "current_okx_liquidation_actionability_review.csv"
+    best_actionable = _best_numeric_row(actionability_path, key="actionability_score")
+    if best_actionable:
+        return ExplorationRow(
+            lane="liquidation_flow",
+            status="current_okx_actionability_review",
+            strongest_current_signal=(
+                f"{best_actionable.get('asset', '')}: {best_actionable.get('action', '')}, "
+                f"score={best_actionable.get('actionability_score', '')}, "
+                f"cont15={best_actionable.get('continuation_return_15m', '')}, "
+                f"near_depth5={best_actionable.get('near_touch_depth_5bps', '')}, "
+                f"note={best_actionable.get('note', '')}"
+            ),
+            main_gap="actionability is still based on visible depth and first labels only",
+            next_step="repeat LTC/WLD/ONDO labels and add real fee/slippage assumptions before paper sizing",
+        )
     best_monitor = _best_numeric_row(monitor_path, key="mean_cascade_score")
     if best_monitor:
         depth_path = root / "liquidation_flow" / "current_okx_liquidation_depth_check.csv"
