@@ -639,12 +639,19 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
     repeat_observation_path = (
         root / "candidate_validation" / "current_followup_repeat_observations.csv"
     )
+    okx_repeat_observation_path = (
+        root / "candidate_validation" / "current_followup_okx_repeat_observations.csv"
+    )
     repeat_summary = _followup_repeat_observation_summary(repeat_observation_path)
-    if repeat_summary:
+    okx_repeat_summary = _followup_repeat_observation_summary(okx_repeat_observation_path)
+    if repeat_summary or okx_repeat_summary:
+        joined_summary = "; ".join(
+            summary for summary in (repeat_summary, okx_repeat_summary) if summary
+        )
         return ExplorationRow(
             lane="candidate_validation",
             status="followup_repeat_pending",
-            strongest_current_signal=repeat_summary,
+            strongest_current_signal=joined_summary,
             main_gap="fresh observations are recorded but not yet matured to 15m/1h labels",
             next_step="rerun followup repeat forward labels after 15m and 1h",
         )
@@ -1144,8 +1151,9 @@ def _followup_repeat_observation_summary(path: Path) -> str | None:
     if not ready_rows:
         return None
     top = max(ready_rows, key=lambda row: float(row.get("priority") or "0"))
+    venue = "OKX" if "okx" in path.name else "HL"
     return (
-        f"{len(ready_rows)} source-specific observations pending; "
+        f"{venue} {len(ready_rows)} source-specific observations pending; "
         f"top={top.get('asset', '')}/{top.get('source', '')}, "
         f"dir={top.get('direction', '')}, priority={top.get('priority', '')}"
     )

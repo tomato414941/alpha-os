@@ -21,6 +21,8 @@ uv run python -m strategies.candidate_validation.current_followup_repeat_observa
 uv run python -m strategies.candidate_validation.current_followup_repeat_forward_labels
 uv run python -m strategies.candidate_validation.current_followup_venue_coverage
 uv run python -m strategies.candidate_validation.current_followup_okx_execution_context
+uv run python -m strategies.candidate_validation.current_followup_okx_repeat_observations
+uv run python -m strategies.candidate_validation.current_followup_okx_repeat_forward_labels
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -240,3 +242,25 @@ Interpretation:
   snapshot, so it needs smaller sizing or a different venue/timing.
 - This is still public book context only; account fees and fill quality are not
   included.
+
+## Current Follow-Up OKX Repeat Observations
+
+| asset | source | source action | dir | priority | inst | last | funding ann | spread bps | depth 10bps USD | status |
+| --- | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |
+| WLD | okx_pressure | long_carry_discount_watch | 1 | 10.0571 | WLD-USDT-SWAP | 0.48710000 | -0.439141 | 2.0536 | 29416 | ready_for_label |
+| WLD | liquidation | short_liquidation_squeeze_watch | 1 | 10.0571 | WLD-USDT-SWAP | 0.48710000 | -0.439141 | 2.0536 | 29416 | ready_for_label |
+| ETH | okx_pressure | long_carry_discount_watch | 1 | 4.5510 | ETH-USDT-SWAP | 1632.19000000 | -1.143435 | 0.0613 | 1293112 | ready_for_label |
+| PEPE | okx_pressure | long_carry_watch | 1 | 3.7269 | PEPE-USDT-SWAP | 0.00000278 | 0.529954 | 3.5913 | 175358 | ready_for_label |
+| PEPE | liquidation | short_liquidation_squeeze_watch | 1 | 3.7269 | PEPE-USDT-SWAP | 0.00000278 | 0.529954 | 3.5913 | 175358 | ready_for_label |
+| ONDO | liquidation | short_liquidation_squeeze_watch | 1 | 3.6106 | ONDO-USDT-SWAP | 0.34550000 | -0.135784 | 2.8939 | 24572 | ready_for_label |
+| ONDO | sector_rotation | sector_momentum_watch | 1 | 3.6106 | ONDO-USDT-SWAP | 0.34550000 | -0.135784 | 2.8939 | 24572 | ready_for_label |
+| ALLO | liquidation | short_liquidation_squeeze_watch | 1 | 3.0965 | ALLO-USDT-SWAP | 0.31018000 | 0.239926 | 0.3224 | 5722 | ready_for_label |
+| H | liquidation | short_liquidation_squeeze_watch | 1 | 2.7846 | H-USDT-SWAP | 0.80359000 | 0.438000 | 0.1245 | 5428 | ready_for_label |
+
+Interpretation:
+
+- OKX repeat observations add `PEPE`, `ALLO`, and `H`, which Hyperliquid repeat
+  observations could not cover.
+- 28 OKX source-specific rows are ready for 15m/1h labels.
+- The OKX repeat labels are currently `pending_15m`; rerun
+  `current_followup_okx_repeat_forward_labels` after maturity.
