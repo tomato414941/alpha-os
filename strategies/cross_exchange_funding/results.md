@@ -750,3 +750,32 @@ Interpretation:
   small fee ceiling, and one-leg-cross modes are already negative.
 - The next hard gate is the real account fee tier. Without that, raw funding
   spread is not enough to promote a mode.
+
+## OKX-Hyperliquid Promotion Gate
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
+```
+
+This combines fee ceiling, maker-touch proxy, and capacity so maker-only false
+positives do not rank above executable candidates. The default fee is a research
+placeholder: `0.25 bps` per fill per venue. Replace it with the actual account
+fee before paper promotion.
+
+| asset | action | mode | horizon | fee bps/fill/venue | headroom bps | capacity | both touch | OKX touch | HL touch | reason |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| ZEC | paper_8h_candidate | okx_cross_hl_maker | 8h | 0.25 | 0.2905 | 106210.05564167 | 0 | 0.6 | 0.2 | one-leg-cross mode survives fees and maker-leg touch gate |
+| BTC | paper_8h_candidate | both_maker | 8h | 0.25 | 0.01455 | 422448.80855333 | 0.2 | 0.6 | 0.4 | maker-maker mode survives fees and same-window touch gate |
+| BABY | execution_watch | both_maker | 8h | 0.25 | 0.67155 | 18182.63949194 | 0 | 0.2 | 0.2 | edge survives fees but maker-touch gate blocks the best mode |
+| JTO | execution_watch | both_maker | 24h | 0.25 | 0.190775 | 54543.56750198 | 0 | 0.8 | 0.2 | edge survives fees but maker-touch gate blocks the best mode |
+
+Interpretation:
+
+- ZEC is the best current execution candidate under the 0.25 bps research fee:
+  one leg can cross and the remaining maker leg passes the touch gate.
+- BTC still qualifies, but 8h fee headroom is tiny at only 0.01455 bps.
+- BABY has raw edge, but it is blocked by maker execution evidence and low
+  capacity.
+- JTO is blocked by same-window maker execution evidence despite leg-level touch.

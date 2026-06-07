@@ -39,6 +39,7 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_monitor
 uv run python -m strategies.cross_exchange_funding.okx_hl_maker_touch_probe
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_fee_ceiling
+uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
 ```
 
 Focused OKX-Hyperliquid monitor:
@@ -54,4 +55,5 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_monitor -
 uv run python -m strategies.cross_exchange_funding.okx_hl_maker_touch_probe --assets BTC ZEC BABY JTO --samples 6 --delay-seconds 10
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_fee_ceiling
+uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
 ```
