@@ -98,6 +98,28 @@ buy-and-hold, but it still loses to XRP and has a large drawdown. The weak rank
 IC and hit rate mean this is not yet a robust edge. It is a better research
 direction than hand-written z-score sums, not a tradeable strategy.
 
+## Predictive Exposure Audit
+
+Audit target: `ridge_top_1_7d`.
+
+| symbol | mean weight | held days | gross contribution | mean return when held |
+| --- | ---: | ---: | ---: | ---: |
+| BNBUSDT | 0.185022 | 126 | -0.150899 | -0.001198 |
+| BTCUSDT | 0.164464 | 112 | -0.085470 | -0.000763 |
+| LINKUSDT | 0.133627 | 91 | 0.463938 | 0.005098 |
+| ADAUSDT | 0.123348 | 84 | 0.694624 | 0.008269 |
+| XRPUSDT | 0.092511 | 63 | 1.077518 | 0.017103 |
+| DOGEUSDT | 0.082232 | 56 | -0.013912 | -0.000248 |
+| SOLUSDT | 0.071953 | 49 | 0.142959 | 0.002918 |
+| AVAXUSDT | 0.071953 | 49 | -0.363769 | -0.007424 |
+| ETHUSDT | 0.064611 | 44 | -0.298622 | -0.006787 |
+
+The weekly ridge result is not just an XRP exposure artifact. XRP is only the
+fifth-largest average exposure. The result comes from intermittent correct
+selection of XRP, ADA, and LINK while also carrying negative BNB/BTC/AVAX/ETH
+episodes. This supports model-shape exploration, but it also shows that the
+current policy is still noisy and drawdown-prone.
+
 Next useful work is not another small parameter tweak. It should move to a
 different model shape:
 
