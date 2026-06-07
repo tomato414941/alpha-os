@@ -10,6 +10,7 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor_for
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_gate
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_ticket
 ```
 
 This lane looks for recent forced-liquidation bursts. It is not yet a final
@@ -196,3 +197,25 @@ Interpretation:
 - `ONDO` has cleaner size headroom than `JTO` under the same rough assumptions.
 - `LTC` has the best visible depth profile, but the short-window edge is much
   smaller after fees and spread.
+
+## Current OKX Liquidation Paper Ticket
+
+Selected paper observation:
+
+- Asset: `JTO`
+- Venue: `OKX USDT swap`
+- Action: `long_liquidation_cascade_watch`
+- Paper direction: `short`
+- Paper notional: `100.00` USDT
+- 15m gross continuation: `105.62` bps
+- Conservative cost proxy: `12.07` bps
+- Conservative net proxy: `93.55` bps
+- Visible depth usage: `0.0453`
+
+Interpretation:
+
+- This is the first liquidation candidate worth paper observation because it
+  survives the rough fee/spread/depth gate at small size.
+- It is still not deployable alpha: the next fresh event must reproduce the
+  action family, live spread/depth must remain usable, and the paper result must
+  be positive after the same conservative cost proxy.

@@ -15,4 +15,5 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_monitor_for
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_depth_check
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionability_review
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_gate
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_ticket
 ```
