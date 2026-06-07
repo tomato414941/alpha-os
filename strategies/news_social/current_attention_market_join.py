@@ -12,6 +12,7 @@ STRATEGIES_ROOT = ROOT.parent
 
 @dataclass(frozen=True)
 class AttentionMarketJoinRow:
+    timestamp: str
     symbol: str
     name: str
     attention_rank: int
@@ -61,6 +62,7 @@ def write_attention_market_join_csv(
         writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
+                "timestamp",
                 "symbol",
                 "name",
                 "attention_rank",
@@ -79,6 +81,7 @@ def write_attention_market_join_csv(
         for row in rows:
             writer.writerow(
                 (
+                    row.timestamp,
                     row.symbol,
                     row.name,
                     row.attention_rank,
@@ -175,6 +178,7 @@ def _build_row(
         annualized_funding=annualized_funding,
     )
     return AttentionMarketJoinRow(
+        timestamp=attention["timestamp"],
         symbol=symbol,
         name=attention["name"],
         attention_rank=attention_rank,

@@ -7,6 +7,7 @@ Run:
 ```bash
 uv run python -m strategies.news_social.current_attention_snapshot
 uv run python -m strategies.news_social.current_attention_market_join
+uv run python -m strategies.news_social.current_attention_forward_labels
 ```
 
 Interpretation:
@@ -42,3 +43,19 @@ Interpretation:
 
 - `AERO` currently overlaps attention and persistent perp carry/reversion state.
 - This is not yet a strategy. It needs future-return labels and execution checks.
+
+## Attention Forward Labels
+
+This labels attention/perp-overlap candidates with subsequent Hyperliquid
+returns. Positive directional return means the carry or funding direction was
+right over that horizon.
+
+| symbol | action | dir | score | raw 15m | dir 15m | raw 1h | dir 1h |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| AERO | attention_carry_reversion_watch | 1 | 20.605424 | 0.001880 | 0.001880 | -0.001152 | -0.001152 |
+
+Interpretation:
+
+- `AERO` was positive over 15m but negative over 1h.
+- This points to a possible short-lived attention/carry overlap, not a stable
+  deployable strategy.

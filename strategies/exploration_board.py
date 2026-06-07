@@ -384,6 +384,21 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    label_path = root / "news_social" / "current_attention_forward_labels.csv"
+    best_label = _best_attention_forward_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="news_social",
+            status="attention_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('symbol', '')}: {best_label.get('action', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_label.get('directional_return_1h', '')}, "
+                f"score={best_label.get('score', '')}"
+            ),
+            main_gap="attention label is one event and excludes fees, funding PnL, causality, and neutral baselines",
+            next_step="collect repeated attention/perp-overlap events and test 15m vs 1h decay",
+        )
     join_path = root / "news_social" / "current_attention_market_join.csv"
     best_join = _best_numeric_row(join_path, key="score")
     if best_join:
@@ -778,6 +793,27 @@ def _best_paper_outcome_row(path: Path) -> dict[str, str] | None:
             float(row.get("net_15m_bps") or "-inf"),
             row.get("outcome_1h") == "paper_1h_win",
             float(row.get("net_1h_bps") or "-inf"),
+        ),
+    )
+
+
+def _best_attention_forward_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("score") or "0"),
+            float(row.get("directional_return_1h") or "-inf"),
         ),
     )
 
