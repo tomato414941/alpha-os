@@ -110,3 +110,14 @@ Current watch:
   perp shorts receive funding.
 - The current state is `active_paper_watch` for the BTC short-perp version of
   this candidate, not a live trade instruction.
+
+Paper venue ticket:
+
+- OKX and Hyperliquid both currently pay the BTC short side funding.
+- OKX ranks higher on visible public venue context because 24h BTC swap volume
+  and spread are stronger in the current snapshot.
+- Hyperliquid ranks lower overall but has the larger current annualized
+  funding value.
+- The next test is not more label fitting. It is paper venue behavior: actual
+  fee tier, maker/taker fills, funding timestamp, mark/index basis, and stop
+  execution.

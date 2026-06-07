@@ -806,9 +806,17 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    paper_ticket_path = root / "institutional_flow" / "current_btc_etf_funding_paper_ticket.csv"
+    best_paper_ticket = _current_btc_etf_funding_paper_ticket(paper_ticket_path)
     current_candidate_path = root / "institutional_flow" / "current_btc_etf_funding_candidate.csv"
     current_candidate = _current_btc_etf_funding_candidate(current_candidate_path)
     if current_candidate:
+        ticket_note = ""
+        if best_paper_ticket:
+            ticket_note = (
+                f", top_venue={best_paper_ticket.get('venue', '')}"
+                f"/{best_paper_ticket.get('instrument', '')}"
+            )
         return ExplorationRow(
             lane="institutional_flow",
             status=current_candidate.get("status", "active_paper_watch"),
@@ -818,6 +826,7 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
                 f"funding={current_candidate.get('annualized_funding', '')}, "
                 f"hist_total={current_candidate.get('historical_total_return', '')}, "
                 f"hist_hit={current_candidate.get('historical_hit_rate_5d', '')}"
+                f"{ticket_note}"
             ),
             main_gap="current watch survived coarse 1h entry and adverse-excursion stress, but still lacks stop/fill and venue-specific mark/index checks",
             next_step="paper-check BTC short venue choice, stop criteria, mark/index basis, and actual account fee/fill assumptions before any live action",
@@ -999,6 +1008,17 @@ def _current_btc_etf_funding_candidate(path: Path) -> dict[str, str] | None:
     if row.get("status") != "active_paper_watch":
         return None
     return row
+
+
+def _current_btc_etf_funding_paper_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(row for row in rows if row.get("status") == "paper_venue_candidate")
+    if not candidates:
+        return None
+    return max(candidates, key=lambda row: float(row.get("score") or "0"))
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
