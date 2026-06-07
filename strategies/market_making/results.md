@@ -6,6 +6,7 @@ Run:
 
 ```bash
 uv run python -m strategies.market_making.hyperliquid_l2_snapshot
+uv run python -m strategies.market_making.hyperliquid_l2_snapshot --assets BTC ETH SOL HYPE WLD JTO ONDO AERO ZEC NEAR DOGE LTC --asset-source-path strategies/perp_market_map/current_hyperliquid_snapshot.csv --asset-source-top 20
 uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
 uv run python -m strategies.market_making.current_l2_imbalance_paper_gate
 ```
@@ -23,15 +24,21 @@ Interpretation:
 
 | asset | spread bps | bid depth 10 bps | ask depth 10 bps | imbalance 10 bps |
 | --- | ---: | ---: | ---: | ---: |
-| BTC | 0.1623 | 61.6031 | 59.5817 | 0.0167 |
-| ETH | 0.6291 | 6891.5645 | 7373.7756 | -0.0338 |
-| SOL | 0.1573 | 12025.7400 | 5032.0500 | 0.4100 |
-| HYPE | 0.1727 | 1674.6500 | 1046.1700 | 0.2310 |
+| WLD | 1.2468 | 10196.0000 | 80275.1000 | -0.7746 |
+| ZEC | 0.2400 | 74.0000 | 479.5200 | -0.7326 |
+| HYPE | 0.1711 | 881.8600 | 3617.3400 | -0.6080 |
+| SOL | 0.1537 | 3030.4700 | 12333.5100 | -0.6055 |
+| BTC | 0.1607 | 146.7210 | 55.3017 | 0.4525 |
+| LIT | 10.2078 | 1988.0000 | 4844.0000 | -0.4180 |
+| LTC | 6.8984 | 615.1800 | 1448.2700 | -0.4037 |
+| SUI | 1.7469 | 159108.5000 | 336703.4000 | -0.3582 |
+| AVAX | 0.1495 | 5658.4700 | 11284.3300 | -0.3321 |
+| JTO | 4.6830 | 12207.0000 | 6717.0000 | 0.2901 |
 
-The visible spread is small on liquid assets, so a real market-making strategy
-would need queue edge, rebates, or inventory alpha. SOL and HYPE show one-sided
-near-book depth in this snapshot, but that is only useful if it persists and can
-be connected to fills or short-horizon price movement.
+The broad snapshot now covers current candidates and volume-ranked perps, not
+only BTC/ETH/SOL/HYPE. `WLD`, `ZEC`, `HYPE`, `SOL`, and `BTC` show the largest
+absolute 10 bps imbalances in this snapshot. These are unlabeled until 15m/1h
+outcomes mature.
 
 ## L2 Imbalance Forward Labels
 
@@ -41,18 +48,21 @@ fill model.
 
 | asset | spread bps | imbalance10 | dir | raw 15m | dir 15m | raw 1h | dir 1h |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HYPE | 0.1727 | 0.2310 | 1 | 0.013274 | 0.013274 | 0.021014 | 0.021014 |
-| SOL | 0.1573 | 0.4100 | 1 | 0.008980 | 0.008980 | 0.012956 | 0.012956 |
-| BTC | 0.1623 | 0.0167 | 1 | 0.002958 | 0.002958 | 0.002909 | 0.002909 |
-| ETH | 0.6291 | -0.0338 | -1 | 0.005737 | -0.005737 | 0.010529 | -0.010529 |
+| BTC | 0.1607 | 0.4525 | 1 |  |  |  |  |
+| ETH | 0.6139 | 0.1352 | 1 |  |  |  |  |
+| SOL | 0.1537 | -0.6055 | -1 |  |  |  |  |
+| HYPE | 0.1711 | -0.6080 | -1 |  |  |  |  |
+| WLD | 1.2468 | -0.7746 | -1 |  |  |  |  |
+| JTO | 4.6830 | 0.2901 | 1 |  |  |  |  |
+| ZEC | 0.2400 | -0.7326 | -1 |  |  |  |  |
+| LTC | 6.8984 | -0.4037 | -1 |  |  |  |  |
 
 Interpretation:
 
-- `HYPE` and `SOL` had strong positive imbalance labels over both 15m and 1h.
-- `ETH` is a useful negative example: its visible imbalance pointed down, but
-  price moved up.
-- This suggests near-book imbalance may be an inventory alpha input, but it is
-  not yet a market-making strategy without fill and adverse-selection modeling.
+- The current broad snapshot is intentionally unlabeled because the 15m/1h
+  horizons have not elapsed yet.
+- `WLD`, `ZEC`, `HYPE`, `SOL`, and `BTC` are the immediate candidates to label
+  after the horizons mature.
 
 ## L2 Imbalance Paper Gate
 
@@ -62,19 +72,17 @@ gate, not a maker-fill model.
 
 | asset | size USD | imbalance10 | cost bps | net15 bps | net1h bps | depth USD | depth usage | gate |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| HYPE | 100 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0017 | small_paper_probe |
-| HYPE | 250 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0041 | small_paper_probe |
-| HYPE | 500 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0083 | small_paper_probe |
-| HYPE | 1000 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0165 | small_paper_probe |
-| SOL | 100 | 0.4100 | 10.16 | 79.64 | 119.41 | 319875 | 0.0003 | small_paper_probe |
-| SOL | 1000 | 0.4100 | 10.16 | 79.64 | 119.41 | 319875 | 0.0031 | small_paper_probe |
-| BTC | 100 | 0.0167 | 10.16 | 19.41 | 18.93 | 3670441 | 0.0000 | small_paper_probe |
-| ETH | 100 | -0.0338 | 10.63 | -68.00 | -115.92 | 10955176 | 0.0000 | blocked_by_cost |
+| ETH | 100 | 0.1352 | 10.61 |  |  | 11976159 | 0.0000 | wait_for_label |
+| BTC | 100 | 0.4525 | 10.16 |  |  | 3441674 | 0.0000 | wait_for_label |
+| SOL | 100 | -0.6055 | 10.15 |  |  | 197152 | 0.0005 | wait_for_label |
+| DOGE | 100 | -0.2872 | 12.95 |  |  | 175767 | 0.0006 | wait_for_label |
+| HYPE | 100 | -0.6080 | 10.17 |  |  | 51561 | 0.0019 | wait_for_label |
+| WLD | 100 | -0.7746 | 11.25 |  |  | 4906 | 0.0204 | wait_for_label |
 
 Interpretation:
 
-- `HYPE` is the strongest L2 imbalance paper candidate in this snapshot.
-- `SOL` is also positive and has deeper visible 10 bps notional.
-- `BTC` survives the rough gate, but its imbalance is tiny; it is less
-  informative as an alpha candidate.
-- This is still a directional paper gate, not proof of a maker strategy.
+- The broad paper gate is waiting for 15m labels.
+- `WLD` and `ZEC` have the strongest imbalance, but their visible depth and
+  spreads are materially weaker than BTC/ETH/SOL.
+- The next useful action is to rerun labels and the gate after 15m/1h outcomes
+  mature.

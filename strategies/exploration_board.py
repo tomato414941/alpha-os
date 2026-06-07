@@ -408,10 +408,10 @@ def _market_making_row(root: Path) -> ExplorationRow:
         )
     return ExplorationRow(
         lane="market_making",
-        status="current_snapshot",
+        status="current_broad_l2_snapshot",
         strongest_current_signal=signal,
-        main_gap="no queue position, fill probability, adverse selection, or fee model",
-        next_step="collect repeated L2 snapshots and estimate fill/adverse-selection risk",
+        main_gap="broad L2 imbalance snapshot is unlabeled until 15m/1h outcomes mature",
+        next_step="rerun L2 imbalance forward labels after 15m/1h and then gate WLD/ZEC/HYPE/SOL/BTC",
     )
 
 

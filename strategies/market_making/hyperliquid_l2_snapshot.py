@@ -70,10 +70,13 @@ def collect_order_book_metrics(
     assets: tuple[str, ...] = DEFAULT_ASSETS,
 ) -> tuple[OrderBookMetrics, ...]:
     observed_at = datetime.now(UTC).isoformat()
-    return tuple(
-        build_order_book_metrics(fetch_l2_book(asset), timestamp=observed_at)
-        for asset in assets
-    )
+    rows: list[OrderBookMetrics] = []
+    for asset in assets:
+        try:
+            rows.append(build_order_book_metrics(fetch_l2_book(asset), timestamp=observed_at))
+        except (KeyError, IndexError, requests.RequestException, ValueError):
+            continue
+    return tuple(rows)
 
 
 def write_order_book_metrics(
@@ -83,7 +86,7 @@ def write_order_book_metrics(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "timestamp",
@@ -145,13 +148,26 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--assets", nargs="+", default=list(DEFAULT_ASSETS))
     parser.add_argument(
+        "--asset-source-path",
+        type=Path,
+        default=None,
+        help="Optional Hyperliquid snapshot CSV used to add volume-ranked assets.",
+    )
+    parser.add_argument("--asset-source-top", type=int, default=0)
+    parser.add_argument(
         "--output-path",
         type=Path,
         default=Path(__file__).resolve().parent / "current_l2_snapshot.csv",
     )
     args = parser.parse_args()
 
-    rows = collect_order_book_metrics(tuple(args.assets))
+    assets = tuple(args.assets)
+    if args.asset_source_path is not None and args.asset_source_top > 0:
+        assets = _merge_assets(
+            explicit_assets=assets,
+            source_assets=_assets_from_snapshot(args.asset_source_path, top=args.asset_source_top),
+        )
+    rows = collect_order_book_metrics(assets)
     write_order_book_metrics(rows, output_path=args.output_path)
     for row in rows:
         print(
@@ -163,6 +179,35 @@ def main() -> None:
         )
 
 
+def _merge_assets(
+    *,
+    explicit_assets: tuple[str, ...],
+    source_assets: tuple[str, ...],
+) -> tuple[str, ...]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for asset in explicit_assets + source_assets:
+        normalized = asset.upper()
+        if normalized not in seen:
+            seen.add(normalized)
+            merged.append(normalized)
+    return tuple(merged)
+
+
+def _assets_from_snapshot(path: Path, *, top: int) -> tuple[str, ...]:
+    if not path.exists():
+        return ()
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    ranked = tuple(
+        sorted(
+            rows,
+            key=lambda row: float(row.get("day_notional_volume") or "0"),
+            reverse=True,
+        )
+    )
+    return tuple(row["asset"] for row in ranked[:top])
+
+
 if __name__ == "__main__":
     main()
-
