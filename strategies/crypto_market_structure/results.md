@@ -399,3 +399,45 @@ Current interpretation:
 - The candidate still needs live feasibility checks before paper trading:
   actual fees, spot/perp availability, margin, order-book depth, and execution
   failure handling.
+
+## Spot/Perp Carry Symbol Audit
+
+Run:
+
+```bash
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_symbol_audit
+```
+
+This decomposes 14-day spot/perp carry candidates by symbol. Gross contribution
+excludes transaction costs. Funding contribution and basis contribution split
+the return into funding received versus spot/perp price divergence.
+
+Top symbols for `top_1_14d`:
+
+| symbol | held steps | gross contribution | funding contribution | basis contribution | mean funding |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| WIFUSDT | 112 | 0.033175 | 0.032088 | 0.001087 | 0.000573 |
+| INJUSDT | 42 | 0.018149 | 0.017183 | 0.000967 | 0.000818 |
+| APTUSDT | 84 | 0.010762 | 0.012280 | -0.001518 | 0.000292 |
+| TRXUSDT | 56 | 0.008866 | 0.007530 | 0.001336 | 0.000269 |
+| OPUSDT | 41 | 0.007913 | 0.007408 | 0.000506 | 0.000361 |
+
+Top symbols for `top_3_14d`:
+
+| symbol | held steps | gross contribution | funding contribution | basis contribution | mean funding |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| WIFUSDT | 168 | 0.013639 | 0.012931 | 0.000708 | 0.000459 |
+| FETUSDT | 168 | 0.010539 | 0.011390 | -0.000851 | 0.000360 |
+| INJUSDT | 98 | 0.010354 | 0.009359 | 0.000995 | 0.000573 |
+| APTUSDT | 168 | 0.008838 | 0.009452 | -0.000614 | 0.000338 |
+| LINKUSDT | 84 | 0.005217 | 0.004858 | 0.000359 | 0.000339 |
+
+Interpretation:
+
+- `WIFUSDT` is the strongest single symbol in the current carry screen.
+- `INJUSDT`, `FETUSDT`, and `APTUSDT` are the next useful follow-up symbols.
+- The top contributors are mostly funding-driven, not merely favorable basis
+  movement. That makes them better live-feasibility candidates than symbols
+  whose gross contribution comes mainly from basis luck.
+- `FILUSDT` and `SEIUSDT` are warning cases: the strategy selected them, but
+  their net contribution was negative in the broad run.

@@ -59,7 +59,9 @@ def write_exploration_board(
 
 def _crypto_market_structure_row(root: Path) -> ExplorationRow:
     gate_path = root / "crypto_market_structure" / "spot_perp_carry_execution_gate.csv"
+    symbol_audit_path = root / "crypto_market_structure" / "spot_perp_carry_symbol_audit.csv"
     best = _best_numeric_row(gate_path, key="headroom_bps")
+    best_symbol = _best_numeric_row(symbol_audit_path, key="gross_contribution")
     signal = "spot/perp carry screen exists"
     if best:
         signal = (
@@ -68,12 +70,17 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
             f"{best.get('headroom_bps', '')}bps, "
             f"default_sharpe={best.get('default_cost_sharpe', '')}"
         )
+    if best_symbol:
+        signal = (
+            f"{signal}; top_symbol={best_symbol.get('symbol', '')} "
+            f"gross={best_symbol.get('gross_contribution', '')}"
+        )
     return ExplorationRow(
         lane="crypto_market_structure",
         status="execution_gate_candidate",
         strongest_current_signal=signal,
         main_gap="actual account fees, borrow/margin, and book-depth feasibility remain shallow",
-        next_step="validate venue-specific fees, margin, and symbol availability before paper trading",
+        next_step="validate WIF/INJ/FET/APT venue fees, margin, and book depth before paper trading",
     )
 
 
