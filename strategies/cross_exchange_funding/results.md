@@ -171,6 +171,52 @@ Interpretation:
   make a tiny paper-ticket with explicit OKX and Hyperliquid order assumptions
   for `BTC`.
 
+## OKX-Hyperliquid 1m Persistence Probe
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_probe \
+  --samples 6 \
+  --delay-seconds 10 \
+  --output-path strategies/cross_exchange_funding/okx_hl_funding_persistence_1m.csv \
+  --summary-output-path strategies/cross_exchange_funding/okx_hl_funding_persistence_1m_summary.csv
+```
+
+Sample:
+
+- snapshots: 6
+- delay: 10 seconds
+- raw rows: 720
+- summarized assets: 128
+
+Top summary rows:
+
+| asset | long venue | short venue | observations | positive 8h rate | mean net 8h | mean net 24h | breakeven hours | capacity proxy |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | OkxSwap | HlPerp | 6 | 0.5000 | 0.00000433 | 0.00023519 | 7.70 | 493421 |
+| SOL | HlPerp | OkxSwap | 6 | 0.0000 | -0.00017195 | 0.00005322 | 20.03 | 3123576 |
+| ZEC | OkxSwap | HlPerp | 6 | 0.0000 | -0.00023688 | 0.00039437 | 14.03 | 112828 |
+| HYPE | OkxSwap | HlPerp | 6 | 0.0000 | -0.00032010 | -0.00000988 | 24.50 | 3679499 |
+| DOGE | OkxSwap | HlPerp | 6 | 0.0000 | -0.00032755 | -0.00011635 | 32.72 | 98216 |
+| AI | HlPerp | OkxSwap | 6 | 0.0000 | -0.00033113 | -0.00013113 | 34.49 | 0 |
+| BNB | OkxSwap | HlPerp | 6 | 0.0000 | -0.00050133 | -0.00040289 | 90.30 | 66012 |
+| AVAX | HlPerp | OkxSwap | 6 | 0.0000 | -0.00052427 | -0.00051019 | 689.07 | 97000 |
+| LINK | OkxSwap | HlPerp | 6 | 0.0000 | -0.00057942 | -0.00039877 | 59.29 | 37261 |
+| MEW | HlPerp | OkxSwap | 6 | 0.0000 | -0.00064465 | -0.00044465 | 59.57 | 0 |
+
+Interpretation:
+
+- The longer short-window check weakens the BTC 8h case. BTC remains the top
+  candidate, but positive 8h rate falls from `1.0000` in the 3-snapshot probe
+  to `0.5000`.
+- BTC 24h proxy remains positive, but the 8h version is too thin to trust
+  without much stronger fee and maker assumptions.
+- `ZEC` appears interesting on 24h proxy, but it does not survive 8h and has
+  lower capacity than BTC. It should be monitored, not promoted yet.
+- This pushes the lane toward longer scheduled monitoring and fee/maker
+  validation, not immediate execution.
+
 ## OKX-Hyperliquid Paper Ticket
 
 Run:
