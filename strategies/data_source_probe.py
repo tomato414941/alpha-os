@@ -67,6 +67,12 @@ PROBE_TARGETS = (
         url="https://yields.llama.fi/pools",
     ),
     ProbeTarget(
+        category="dex_pool_flow",
+        name="geckoterminal_trending_pools",
+        method="GET",
+        url="https://api.geckoterminal.com/api/v2/networks/trending_pools",
+    ),
+    ProbeTarget(
         category="exchange",
         name="coinbase_products",
         method="GET",
@@ -138,6 +144,7 @@ def write_probe_rows(rows: tuple[dict[str, object], ...], *, output_path: Path) 
                 "content_length",
                 "notes",
             ),
+            lineterminator="\n",
         )
         writer.writeheader()
         for row in rows:
@@ -163,6 +170,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "historical event-flow data path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
+    if target.category == "dex_pool_flow":
+        return "current DEX pool-flow data path is available"
     if target.category == "perp_dex":
         return "perp DEX market metadata path is available"
     if target.category == "cross_exchange":

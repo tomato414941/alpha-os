@@ -32,6 +32,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
+        _dex_pool_flow_row(root),
         _market_making_row(root),
         _options_volatility_row(root),
         _sector_rotation_row(root),
@@ -595,6 +596,46 @@ def _defi_yield_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="risk, custody, exit liquidity, and APY decay not modeled",
         next_step="separate real yield from incentive yield and add operational risk checklist",
+    )
+
+
+def _dex_pool_flow_row(root: Path) -> ExplorationRow:
+    path = root / "dex_pool_flow" / "current_geckoterminal_pool_flow.csv"
+    rows = tuple(
+        row
+        for row in _csv_rows(path)
+        if row.get("status")
+        in {
+            "paper_dex_pool_momentum_watch",
+            "paper_dex_reversal_risk_watch",
+            "dex_liquidity_stress_watch",
+        }
+    )
+    best = max(rows, key=lambda row: float(row.get("score") or "0")) if rows else None
+    if best:
+        return ExplorationRow(
+            lane="dex_pool_flow",
+            status=best.get("status", "dex_pool_flow_screen"),
+            strongest_current_signal=(
+                f"{best.get('network', '')}/{best.get('dex', '')} {best.get('name', '')}: "
+                f"vol1h={best.get('volume_h1_usd', '')}, "
+                f"reserve={best.get('reserve_usd', '')}, "
+                f"vol_reserve={best.get('volume_reserve_ratio_h1', '')}, "
+                f"chg1h={best.get('price_change_h1', '')}, "
+                f"chg24h={best.get('price_change_h24', '')}"
+            ),
+            main_gap="DEX pool candidates need route simulation, slippage, gas, MEV, token-transfer, and repeated-flow checks",
+            next_step=best.get(
+                "next_step",
+                "check route depth, slippage, gas, MEV, token restrictions, and repeated pool flow",
+            ),
+        )
+    return ExplorationRow(
+        lane="dex_pool_flow",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="DEX pool flow has not been screened",
+        next_step="run GeckoTerminal pool-flow screen",
     )
 
 
@@ -1730,13 +1771,17 @@ def _protocol_fundamentals_row(root: Path) -> ExplorationRow:
 
 
 def _best_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
-    if not path.exists():
-        return None
-    with path.open(newline="", encoding="utf-8") as handle:
-        rows = tuple(csv.DictReader(handle))
+    rows = _csv_rows(path)
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get(key) or "-inf"))
+
+
+def _csv_rows(path: Path) -> tuple[dict[str, str], ...]:
+    if not path.exists():
+        return ()
+    with path.open(newline="", encoding="utf-8") as handle:
+        return tuple(csv.DictReader(handle))
 
 
 def _best_abs_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:

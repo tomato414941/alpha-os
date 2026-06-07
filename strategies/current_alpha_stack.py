@@ -33,6 +33,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
         *_defi_yield_stacks(root),
+        *_dex_pool_flow_stacks(root),
         *_attention_funding_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
@@ -450,6 +451,59 @@ def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _dex_pool_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "dex_pool_flow" / "current_geckoterminal_pool_flow.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_dex_pool_momentum_watch",
+                "paper_dex_reversal_risk_watch",
+                "dex_liquidity_stress_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[str] = set()
+    for ticket in tickets:
+        name = ticket.get("name", "")
+        pool_key = f"{ticket.get('network', '')}:{name.lower()}"
+        if pool_key in seen:
+            continue
+        seen.add(pool_key)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{ticket.get('network', '').lower()}_{name.lower().replace(' / ', '_')}_dex_pool",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="dex_pool_flow",
+                evidence=(
+                    f"{ticket.get('network', '')}/{ticket.get('dex', '')} {name}: "
+                    f"reserve={ticket.get('reserve_usd', '')}, vol1h={ticket.get('volume_h1_usd', '')}, "
+                    f"vol_reserve={ticket.get('volume_reserve_ratio_h1', '')}, "
+                    f"chg1h={ticket.get('price_change_h1', '')}, chg24h={ticket.get('price_change_h24', '')}"
+                ),
+                conflict="DEX pool flow can be thin, manipulated, or unexecutable; route depth, slippage, gas, MEV, and token restrictions are unvalidated",
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {name} route depth, slippage, gas, MEV, and repeated pool flow",
+                ),
+            )
+        )
+        if len(output) >= 5:
+            break
+    return tuple(output)
+
+
 def _attention_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "news_social" / "current_attention_market_join.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
@@ -741,6 +795,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "basis_term_structure_watch": 52.0,
         "paper_base_yield_watch": 60.0,
         "paper_incentive_yield_watch": 52.0,
+        "paper_dex_pool_momentum_watch": 58.0,
+        "paper_dex_reversal_risk_watch": 56.0,
+        "dex_liquidity_stress_watch": 50.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
         "paper_value_growth_candidate": 67.0,
