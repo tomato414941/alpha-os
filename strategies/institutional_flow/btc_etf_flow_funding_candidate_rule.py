@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
+from btc_etf_flow_forward_labels import _fetch_btc_daily_closes
 from btc_etf_flow_funding_regime_summary import ROOT, build_funding_enriched_label_rows
+from btc_etf_flow_funding_regime_summary import _fetch_btc_funding_by_day
 
 
 @dataclass(frozen=True)
@@ -134,6 +136,37 @@ def build_year_split_rows(
             trades=tuple(trade for trade in trades if trade.entry_date[:4] == year),
         )
         for year in years
+    )
+
+
+def build_entry_delay_rows(
+    *,
+    signal_rows: tuple[dict[str, str], ...],
+    fee_bps_per_side: float,
+    entry_delay_days: tuple[int, ...],
+    max_workers: int = 12,
+) -> tuple[BtcEtfFlowFundingRobustnessRow, ...]:
+    if not signal_rows:
+        return ()
+    min_entry = min(date.fromisoformat(row["label_start_date"]) for row in signal_rows)
+    max_exit = max(
+        date.fromisoformat(row["label_start_date"]) + timedelta(days=max(entry_delay_days) + 5)
+        for row in signal_rows
+    )
+    closes = _fetch_btc_daily_closes(start=min_entry, end=max_exit, max_workers=max_workers)
+    funding_by_day = _fetch_btc_funding_by_day(start=min_entry, end=max_exit, max_workers=max_workers)
+    return tuple(
+        _robustness_row(
+            group_key=f"entry_delay_days_{delay}",
+            trades=_delayed_entry_trades(
+                signal_rows=signal_rows,
+                delay_days=delay,
+                fee_bps_per_side=fee_bps_per_side,
+                closes=closes,
+                funding_by_day=funding_by_day,
+            ),
+        )
+        for delay in entry_delay_days
     )
 
 
@@ -327,6 +360,57 @@ def _is_large_outflow_start_funding_signal(row: dict[str, str]) -> bool:
     )
 
 
+def _delayed_entry_trades(
+    *,
+    signal_rows: tuple[dict[str, str], ...],
+    delay_days: int,
+    fee_bps_per_side: float,
+    closes: dict[date, float],
+    funding_by_day: dict[date, float],
+) -> tuple[BtcEtfFlowFundingTrade, ...]:
+    trades: list[BtcEtfFlowFundingTrade] = []
+    equity = 1.0
+    peak_equity = 1.0
+    next_available_entry = date.min
+    round_trip_fee = (fee_bps_per_side * 2.0) / 10_000.0
+    for row in sorted(signal_rows, key=lambda item: item["label_start_date"]):
+        entry_date = date.fromisoformat(row["label_start_date"]) + timedelta(days=delay_days)
+        if entry_date < next_available_entry:
+            continue
+        exit_date = entry_date + timedelta(days=5)
+        raw_return = _close_to_close_return(closes, entry_date=entry_date, exit_date=exit_date)
+        funding_support = _funding_support(
+            funding_by_day=funding_by_day,
+            entry_date=entry_date,
+            direction=int(row["direction_hint"]),
+        )
+        if raw_return is None or funding_support is None:
+            continue
+        directional_return = raw_return * int(row["direction_hint"])
+        net_return = directional_return + funding_support - round_trip_fee
+        equity *= 1.0 + net_return
+        peak_equity = max(peak_equity, equity)
+        drawdown = (equity / peak_equity) - 1.0 if peak_equity > 0.0 else 0.0
+        trades.append(
+            BtcEtfFlowFundingTrade(
+                entry_date=entry_date.isoformat(),
+                exit_date=exit_date.isoformat(),
+                flow_date=row["flow_date"],
+                flow_btc=float(row["flow_btc"]),
+                rolling_5d_flow_btc=float(row["rolling_5d_flow_btc"]),
+                start_funding_support=float(row["start_funding_support"]),
+                directional_return_5d=directional_return,
+                funding_support_5d=funding_support,
+                round_trip_fee=round_trip_fee,
+                net_return_5d=net_return,
+                equity_after=equity,
+                drawdown_after=drawdown,
+            )
+        )
+        next_available_entry = exit_date
+    return tuple(trades)
+
+
 def _action_for_summary(summary: BtcEtfFlowFundingRuleSummary) -> str:
     if summary.trades >= 10 and summary.total_return > 0.0 and summary.hit_rate_5d >= 0.55:
         return "paper_rule_candidate"
@@ -373,6 +457,31 @@ def _mean(values: tuple[float, ...]) -> float:
 
 def _hit_rate(values: tuple[float, ...]) -> float:
     return sum(1.0 for value in values if value > 0.0) / len(values) if values else 0.0
+
+
+def _close_to_close_return(
+    closes: dict[date, float],
+    *,
+    entry_date: date,
+    exit_date: date,
+) -> float | None:
+    entry_close = closes.get(entry_date)
+    exit_close = closes.get(exit_date)
+    if entry_close is None or exit_close is None or entry_close <= 0.0:
+        return None
+    return (exit_close / entry_close) - 1.0
+
+
+def _funding_support(
+    *,
+    funding_by_day: dict[date, float],
+    entry_date: date,
+    direction: int,
+) -> float | None:
+    days = tuple(entry_date + timedelta(days=offset) for offset in range(5))
+    if any(day not in funding_by_day for day in days):
+        return None
+    return -direction * sum(funding_by_day[day] for day in days)
 
 
 def _compounded_return(values: tuple[float, ...]) -> float:
@@ -444,6 +553,12 @@ def main() -> None:
             fee_bps_values=(1.0, 5.0, 10.0, 20.0, 50.0),
         ),
         *build_year_split_rows(trades),
+        *build_entry_delay_rows(
+            signal_rows=signal_rows,
+            fee_bps_per_side=args.fee_bps_per_side,
+            entry_delay_days=(0, 1, 2),
+            max_workers=args.max_workers,
+        ),
     )
     write_trades_csv(trades, output_path=args.trades_output_path)
     write_summary_csv(summary, output_path=args.summary_output_path)

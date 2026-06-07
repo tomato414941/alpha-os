@@ -18,6 +18,9 @@ This is a non-overlapping paper rule for the large rolling ETF outflow plus star
 | entry_year_2024 | 3 | 0.13644321 | 0.04722467 | 0.6667 | -0.04913098 | thin_positive |
 | entry_year_2025 | 10 | 0.21872627 | 0.02151472 | 0.5000 | -0.06087667 | thin_positive |
 | entry_year_2026 | 8 | 0.29158230 | 0.03313210 | 0.7500 | -0.00372759 | survives |
+| entry_delay_days_0 | 21 | 0.78885853 | 0.02961324 | 0.6190 | -0.07880819 | survives |
+| entry_delay_days_1 | 21 | 0.36179234 | 0.01671656 | 0.6667 | -0.14694286 | survives |
+| entry_delay_days_2 | 20 | 0.54650100 | 0.02306765 | 0.7500 | -0.09034538 | survives |
 
 ## Caveat
 

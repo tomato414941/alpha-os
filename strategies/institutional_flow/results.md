@@ -76,5 +76,7 @@ Robustness pass:
   drawdown is -0.09600412.
 - Calendar-year split is positive in 2024, 2025, and 2026, but the sample is
   still thin: 2024 has 3 trades, 2025 has 10 trades, and 2026 has 8 trades.
-- The main weakness is not fee sensitivity. It is sample size plus execution
-  realism.
+- Entry-delay sensitivity also remains positive: 1-day delay total return is
+  0.36179234, and 2-day delay total return is 0.54650100.
+- The main weakness is not fee sensitivity. It is sample size, drawdown under
+  delayed entry, and execution realism.
