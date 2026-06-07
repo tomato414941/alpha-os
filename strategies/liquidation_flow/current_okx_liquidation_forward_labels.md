@@ -4,31 +4,28 @@ This labels liquidation-flow candidates with continuation returns. Positive cont
 
 | asset | action | dir | raw 15m | continuation 15m | raw 1h | continuation 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| WLD | short_liquidation_squeeze_watch | 1 | 0.027309 | 0.027309 |  |  |
-| ALLO | short_liquidation_squeeze_watch | 1 | 0.019775 | 0.019775 |  |  |
-| H | short_liquidation_squeeze_watch | 1 | 0.013053 | 0.013053 |  |  |
-| LAB | short_liquidation_squeeze_watch | 1 | 0.004624 | 0.004624 |  |  |
-| BEAT | short_liquidation_squeeze_watch | 1 | 0.004041 | 0.004041 |  |  |
-| PEPE | short_liquidation_squeeze_watch | 1 | 0.003269 | 0.003269 | 0.005449 | 0.005449 |
-| TON | short_liquidation_squeeze_watch | 1 | 0.002957 | 0.002957 | 0.002365 | 0.002365 |
-| LTC | long_liquidation_cascade_watch | -1 | -0.002599 | 0.002599 |  |  |
-| HYPE | long_liquidation_cascade_watch | -1 | -0.002376 | 0.002376 |  |  |
-| BTC | short_liquidation_squeeze_watch | 1 | 0.002046 | 0.002046 |  |  |
-| DOGE | short_liquidation_squeeze_watch | 1 | 0.002012 | 0.002012 |  |  |
-| ONDO | short_liquidation_squeeze_watch | 1 | 0.002006 | 0.002006 |  |  |
-| PUMP | short_liquidation_squeeze_watch | 1 | 0.001991 | 0.001991 | 0.005309 | 0.005309 |
-| XRP | short_liquidation_squeeze_watch | 1 | 0.001770 | 0.001770 | 0.005310 | 0.005310 |
-| SOL | short_liquidation_squeeze_watch | 1 | 0.001699 | 0.001699 | 0.005406 | 0.005406 |
-| ETH | short_liquidation_squeeze_watch | 1 | 0.001110 | 0.001110 |  |  |
-| BNB | short_liquidation_squeeze_watch | 1 | 0.000508 | 0.000508 | 0.003047 | 0.003047 |
-| JTO | long_liquidation_cascade_watch | -1 | -0.000323 | 0.000323 |  |  |
-| SUI | long_liquidation_cascade_watch | -1 | 0.000803 | -0.000803 | 0.001071 | -0.001071 |
-| XLM | long_liquidation_cascade_watch | -1 | 0.001476 | -0.001476 |  |  |
-| OPN | long_liquidation_cascade_watch | -1 | 0.002292 | -0.002292 |  |  |
-| EDEN | long_liquidation_cascade_watch | -1 | 0.003239 | -0.003239 |  |  |
-| ZEC | short_liquidation_squeeze_watch | 1 | -0.006303 | -0.006303 |  |  |
-| HOME | long_liquidation_cascade_watch | -1 | 0.007351 | -0.007351 |  |  |
-| NEAR | short_liquidation_squeeze_watch | 1 | -0.009277 | -0.009277 |  |  |
+| HOME | short_liquidation_squeeze_watch | 1 | 0.020731 | 0.020731 |  |  |
+| TON | short_liquidation_squeeze_watch | 1 | 0.002904 | 0.002904 |  |  |
+| H | long_liquidation_cascade_watch | -1 | -0.002635 | 0.002635 |  |  |
+| BTC | short_liquidation_squeeze_watch | 1 | 0.000312 | 0.000312 |  |  |
+| MRVL | long_liquidation_cascade_watch | -1 | 0.000354 | -0.000354 |  |  |
+| SUI | short_liquidation_squeeze_watch | 1 | -0.000400 | -0.000400 |  |  |
+| ADA | short_liquidation_squeeze_watch | 1 | -0.000612 | -0.000612 |  |  |
+| ETH | short_liquidation_squeeze_watch | 1 | -0.001378 | -0.001378 |  |  |
+| FIL | long_liquidation_cascade_watch | -1 | 0.002504 | -0.002504 |  |  |
+| XLM | long_liquidation_cascade_watch | -1 | 0.003891 | -0.003891 |  |  |
+| NEAR | long_liquidation_cascade_watch | -1 | 0.004420 | -0.004420 |  |  |
+| ONDO | long_liquidation_cascade_watch | -1 | 0.008452 | -0.008452 |  |  |
+| ALLO | long_liquidation_cascade_watch | -1 | 0.011002 | -0.011002 |  |  |
+| BEAT | long_liquidation_cascade_watch | -1 | 0.014449 | -0.014449 |  |  |
+| OPN | long_liquidation_cascade_watch | -1 |  |  |  |  |
+| XRP | short_liquidation_squeeze_watch | 1 |  |  |  |  |
+| ZEC | mixed_liquidation_flow_watch | 0 |  |  |  |  |
+| JTO | mixed_liquidation_flow_watch | 0 | -0.001786 |  |  |  |
+| WLD | mixed_liquidation_flow_watch | 0 |  |  |  |  |
+| BSB | mixed_liquidation_flow_watch | 0 |  |  |  |  |
+| LAB | long_liquidation_cascade_watch | -1 |  |  |  |  |
+| HYPE | mixed_liquidation_flow_watch | 0 |  |  |  |  |
 
 ## Interpretation
 

@@ -7,6 +7,7 @@ uv run python -m strategies.on_chain_flow.current_chain_tvl_flow
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_venue_coverage
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_forward_labels
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_market_context
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_market_context_history
 ```
 
 This is not a deployable strategy. It searches for broad chain-level capital
@@ -65,24 +66,24 @@ Interpretation:
 
 | venue | chain | token | action | dir | week % | day % | raw 15m | dir 15m | status |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.004285 | 0.004285 | labeled_15m_pending_1h |
-| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.004070 | 0.004070 | labeled_15m_pending_1h |
-| OKX | Katana | KAT | chain_flow_reversal_watch | 1 | -0.3122 | 0.0369 | 0.003103 | 0.003103 | labeled_15m_pending_1h |
-| OKX | Polygon | POL | chain_flow_reversal_watch | 1 | -0.0754 | 0.0157 | 0.002530 | 0.002530 | labeled_15m_pending_1h |
-| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.002521 | 0.002521 | labeled_15m_pending_1h |
-| HL | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.2000 | 0.0019 | 0.002481 | 0.002481 | labeled_15m_pending_1h |
-| HL | Starknet | STRK | chain_outflow_stress_watch | -1 | -0.0621 | -0.0032 | -0.001801 | 0.001801 | labeled_15m_pending_1h |
-| OKX | Avalanche | AVAX | chain_outflow_stress_watch | -1 | -0.2054 | -0.0126 | 0.001946 | -0.001946 | labeled_15m_pending_1h |
-| OKX | Near | NEAR | chain_outflow_stress_watch | -1 | -0.1317 | -0.0212 | 0.003929 | -0.003929 | labeled_15m_pending_1h |
+| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.006783 | 0.006783 | labeled_15m_pending_1h |
+| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.006690 | 0.006690 | labeled_15m_pending_1h |
+| OKX | Monad | MON | chain_flow_reversal_watch | 1 | -0.0827 | 0.0079 | 0.006413 | 0.006413 | labeled_15m_pending_1h |
+| HL | Monad | MON | chain_flow_reversal_watch | 1 | -0.0827 | 0.0079 | 0.005571 | 0.005571 | labeled_15m_pending_1h |
+| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.004412 | 0.004412 | labeled_15m_pending_1h |
+| OKX | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.004206 | 0.004206 | labeled_15m_pending_1h |
+| OKX | Solana | SOL | chain_flow_reversal_watch | 1 | -0.1100 | 0.0184 | 0.003065 | 0.003065 | labeled_15m_pending_1h |
+| HL | Solana | SOL | chain_flow_reversal_watch | 1 | -0.1100 | 0.0184 | 0.002957 | 0.002957 | labeled_15m_pending_1h |
+| OKX | Near | NEAR | chain_outflow_stress_watch | -1 | -0.1317 | -0.0212 | 0.004420 | -0.004420 | labeled_15m_pending_1h |
 
 Interpretation:
 
 - The first 15m labels favor `chain_flow_reversal_watch`, not
   `chain_outflow_stress_watch`.
-- `HYPE`, `KAT`, `POL`, `OP`, and `MEGA` are the current tradable winners from
+- `HYPE`, `MON`, `OP`, and `SOL` are the current tradable winners from
   the TVL-flow reversal family.
-- `STRK` is the only outflow-stress short with a positive 15m directional label
-  in this refresh; `AVAX`, `NEAR`, and `XLM` failed.
+- Outflow-stress shorts are weak in this refresh; `AVAX`, `NEAR`, `XLM`, and
+  `STRK` are negative directionally.
 - This strengthens the broader divergence thesis: weekly TVL outflow plus daily
   rebound may be more useful than raw outflow-as-short.
 
@@ -90,16 +91,17 @@ Interpretation:
 
 | venue | token | action | dir15 | funding support | funding | liq action | liq score | score | note |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| OKX | SOL | chain_flow_reversal_watch | 0.00107280 | 0.38634890 | -0.38634890 |  |  | 0.417124 | price label positive; funding helps direction |
-| OKX | HYPE | chain_flow_reversal_watch | 0.00406987 | 0.06081031 | -0.06081031 | mixed_liquidation_flow_watch | 0.00082611 | 0.391720 | price label positive; funding helps direction |
-| OKX | ETH | chain_flow_reversal_watch | 0.00032510 | 0.15622280 | -0.15622280 | short_liquidation_squeeze_watch | 0.01962368 | 0.381906 | price label positive; funding helps direction; has recent liquidation context |
-| OKX | MEGA | chain_flow_reversal_watch | 0.00206697 | 0.26241290 | -0.26241290 |  |  | 0.366388 | price label positive; funding helps direction |
-| HL | HYPE | chain_flow_reversal_watch | 0.00428494 | -0.10950000 | 0.10950000 | mixed_liquidation_flow_watch | 0.00082611 | 0.318829 | price label positive |
+| OKX | MON | chain_flow_reversal_watch | 0.00641319 | 0.80572183 | -0.80572183 |  |  | 0.912643 | price label positive; funding helps direction |
+| OKX | HYPE | chain_flow_reversal_watch | 0.00678311 | 0.06081031 | -0.06081031 | mixed_liquidation_flow_watch | 0.00082611 | 0.663044 | price label positive; funding helps direction |
+| OKX | SOL | chain_flow_reversal_watch | 0.00306513 | 0.38634890 | -0.38634890 |  |  | 0.616357 | price label positive; funding helps direction |
+| HL | HYPE | chain_flow_reversal_watch | 0.00668993 | -0.10950000 | 0.10950000 | mixed_liquidation_flow_watch | 0.00082611 | 0.559328 | price label positive |
+| OKX | ETH | chain_flow_reversal_watch | 0.00191994 | 0.15622280 | -0.15622280 | short_liquidation_squeeze_watch | 0.01962368 | 0.541390 | price label positive; funding helps direction; has recent liquidation context |
 
 Interpretation:
 
-- `SOL`, `HYPE`, `ETH`, and `MEGA` currently combine positive chain-flow
+- `MON`, `HYPE`, `SOL`, and `ETH` currently combine positive chain-flow
   reversal labels with funding that helps a long direction on OKX.
 - `ETH` has the clearest recent liquidation context among the top rows.
-- `KAT` and `POL` still have positive price labels, but their OKX pressure
-  context is missing from the current top-volume pressure snapshot.
+- `MEGA` weakened after refresh; keep it visible but behind MON/HYPE/SOL.
+- The history summary intentionally marks these as `collect_repeat`, not
+  `repeat_priority`, because this is still one signal timestamp.

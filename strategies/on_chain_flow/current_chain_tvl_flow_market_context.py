@@ -12,6 +12,7 @@ STRATEGIES_ROOT = ROOT.parent
 
 @dataclass(frozen=True)
 class ChainTvlFlowMarketContextRow:
+    signal_timestamp: str
     venue: str
     token_symbol: str
     action: str
@@ -65,6 +66,7 @@ def write_chain_tvl_flow_market_context_csv(
         writer.writerow(
             (
                 "venue",
+                "signal_timestamp",
                 "token_symbol",
                 "action",
                 "direction",
@@ -86,6 +88,7 @@ def write_chain_tvl_flow_market_context_csv(
             writer.writerow(
                 (
                     row.venue,
+                    row.signal_timestamp,
                     row.token_symbol,
                     row.action,
                     row.direction,
@@ -168,6 +171,7 @@ def _build_row(
         friction_bps=_friction_bps(venue=venue, market_row=market_row),
     )
     return ChainTvlFlowMarketContextRow(
+        signal_timestamp=label["timestamp"],
         venue=venue,
         token_symbol=label["token_symbol"],
         action=label["action"],

@@ -828,7 +828,7 @@ def _on_chain_flow_row(root: Path) -> ExplorationRow:
                 f"score={best_context.get('context_score', '')}"
             ),
             main_gap="chain TVL flow market context still uses one short price label and incomplete venue context",
-            next_step="repeat SOL/HYPE/ETH/MEGA labels and fill missing KAT/POL OKX market context",
+            next_step="repeat MON/HYPE/SOL/ETH labels and fill missing KAT/POL OKX market context",
         )
     label_path = root / "on_chain_flow" / "current_chain_tvl_flow_forward_labels.csv"
     best_label = _best_chain_tvl_forward_label_row(label_path)
