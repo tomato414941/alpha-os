@@ -197,5 +197,38 @@ book depth, failed execution, and exchange-specific fee schedules. Still, it is
 more profit-adjacent than another directional predictor because it tests a
 specific trade construction rather than only predicting price direction.
 
-Next useful work should validate whether this carry survives real execution
-assumptions and richer basis data, not add more generic predictors.
+## Spot/Perp Carry
+
+This version uses separate spot and perpetual closes instead of premium-index
+change as the basis proxy:
+
+- pair PnL: spot return - perp return + funding received
+- capital assumption: `capital_per_notional = 2.0`
+- paired-leg cost: applied to both spot and perp legs on turnover
+
+Top default candidates:
+
+| candidate | steps | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| spot_perp_positive_funding_top_3_14d | 881 | 0.059689 | 4.967699 | -0.003341 | 0.077563 |
+| spot_perp_positive_funding_top_2_14d | 881 | 0.056951 | 4.481852 | -0.003772 | 0.085131 |
+| spot_perp_positive_funding_top_1_14d | 881 | 0.051752 | 3.406656 | -0.004388 | 0.093076 |
+| spot_perp_positive_funding_top_3_7d | 881 | 0.038750 | 3.095506 | -0.010138 | 0.139236 |
+| spot_perp_positive_funding_top_2_7d | 881 | 0.033505 | 2.497691 | -0.011141 | 0.153235 |
+
+Cost stress, best candidate by Sharpe:
+
+| paired-leg cost | candidate | total return | sharpe | max drawdown |
+| ---: | --- | ---: | ---: | ---: |
+| 0.04% | spot_perp_positive_funding_top_3_14d | 0.059689 | 4.967699 | -0.003341 |
+| 0.10% | spot_perp_positive_funding_top_3_14d | 0.017085 | 0.964521 | -0.019436 |
+| 0.20% | spot_perp_positive_funding_top_3_14d | -0.050220 | -1.669943 | -0.070876 |
+| 0.50% | spot_perp_positive_funding_top_3_14d | -0.227013 | -3.482183 | -0.229169 |
+
+This more realistic version is much less profitable than the premium-index
+approximation. That is a useful correction. The trade is still interesting, but
+it becomes highly fee-sensitive: it needs low-cost execution and low turnover.
+
+Next useful work should validate whether this carry survives exchange-specific
+fees, maker/taker routing, order book depth, margin requirements, and actual
+spot/perp availability. More generic predictors are lower priority.
