@@ -515,3 +515,39 @@ Interpretation:
 - ZEC is still useful as a fee-dependent 24h candidate.
 - BABY is not promoted despite high 24h score because capacity is low and
   slippage is high. Keep it as a watch item, not an active candidate.
+
+## OKX-Hyperliquid Event Window Score
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_score
+```
+
+This score uses the actual current funding event counts inside 8h and 24h
+windows. It should override the smooth hourly proxy when deciding which
+candidates deserve monitoring.
+
+| asset | action | scenario | long | short | OKX 8h | HL 8h | OKX 24h | HL 24h | gross 8h | gross 24h | cost | net 8h | net 24h | capacity |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BABY | thin_or_unstable_watch | very_low_fee | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00266999 | -0.00168952 | 0.00027142 | 18182.63949194 |
+| BTC | paper_8h_candidate | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00009777 | 0.00001276 | 0.00023382 | 422448.80855333 |
+| BABY | thin_or_unstable_watch | low_fee | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00278999 | -0.00180952 | 0.00015142 | 18182.63949194 |
+| ZEC | fee_dependent_24h_monitor | very_low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00027519 | 0.00082556 | 0.00070886 | -0.00043367 | 0.00011670 | 106210.05564167 |
+| BTC | paper_8h_candidate | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00021777 | -0.00010724 | 0.00011382 | 422448.80855333 |
+| ZEC | fee_dependent_24h_monitor | low_fee | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00027519 | 0.00082556 | 0.00082886 | -0.00055367 | -0.00000330 | 106210.05564167 |
+| BABY | thin_or_unstable_watch | one_bps_each | HlPerp | OkxSwap | 2 | 8 | 6 | 24 | 0.00098047 | 0.00294141 | 0.00298999 | -0.00200952 | -0.00004858 | 18182.63949194 |
+| BTC | paper_8h_candidate | one_bps_each | OkxSwap | HlPerp | 1 | 8 | 3 | 24 | 0.00011053 | 0.00033159 | 0.00041777 | -0.00030724 | -0.00008618 | 422448.80855333 |
+| JTO | active_24h_monitor | very_low_fee | OkxSwap | HlPerp | 2 | 8 | 6 | 24 | 0.00023813 | 0.00071440 | 0.00158570 | -0.00134757 | -0.00087130 | 54543.56750198 |
+
+Interpretation:
+
+- BTC remains the only current 8h paper candidate, and only under very-low-fee
+  assumptions.
+- JTO should be downgraded despite the earlier smooth proxy. Once actual event
+  counts are used, it is negative even under very-low-fee assumptions.
+- ZEC is barely positive only under very-low fees and 24h event counting.
+- BABY has positive 24h event-window score under low fees, but it remains a
+  thin watch item because capacity and slippage are weak.
+- The practical next step is no longer broad ranking. It is fee/maker-fill
+  evidence for BTC and longer event-window monitoring for BTC/ZEC/BABY.
