@@ -66,6 +66,9 @@ Promote code to the library only after multiple strategies need the same shape.
 - `news_social/`
   - crypto RSS news-event, Fear & Greed, and CoinGecko trending attention
     screens
+- `market_breadth/`
+  - broad CoinGecko volume-price dislocation screen for reversal,
+    continuation, and chase-risk candidates
 - `stablecoin_liquidity/`
   - DeFiLlama stablecoin supply, peg, supply-change, and chain migration
     snapshots

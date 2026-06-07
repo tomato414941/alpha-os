@@ -41,6 +41,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_news_event_stacks(root),
         *_attention_funding_stacks(root),
         *_attention_price_context_stacks(root),
+        *_market_breadth_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
         *_chain_stablecoin_migration_stacks(root),
@@ -852,6 +853,59 @@ def _attention_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "volume_reversal_candidate",
+                "capitulation_reversal_watch",
+                "breakout_continuation_watch",
+                "chase_risk",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:8]:
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_volume_price_dislocation",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="market_breadth + market_price_context",
+                evidence=(
+                    f"{symbol}: "
+                    f"name={ticket.get('name', '')}, "
+                    f"rank={ticket.get('market_cap_rank', '')}, "
+                    f"vol_mcap={ticket.get('volume_to_market_cap', '')}, "
+                    f"price24h={ticket.get('price_change_24h', '')}, "
+                    f"price7d={ticket.get('price_change_7d', '')}, "
+                    f"price30d={ticket.get('price_change_30d', '')}"
+                ),
+                conflict=(
+                    "volume/price dislocation can be a liquidation bounce, news reaction, or crowded trap; "
+                    "needs forward labels, venue depth, and execution cost checks"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"paper-label {symbol} market-breadth dislocation",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "news_social" / "current_news_event_screen.csv")
     tickets = sorted(
@@ -1225,6 +1279,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "attention_breakout_continuation_watch": 58.0,
         "attention_capitulation_reversal_watch": 56.0,
         "attention_chase_risk": 50.0,
+        "volume_reversal_candidate": 60.0,
+        "capitulation_reversal_watch": 55.0,
+        "breakout_continuation_watch": 58.0,
+        "chase_risk": 48.0,
         "paper_news_event_reaction_watch": 58.0,
         "paper_news_security_risk_watch": 56.0,
         "paper_news_regulatory_risk_watch": 55.0,

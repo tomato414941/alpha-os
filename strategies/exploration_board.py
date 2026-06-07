@@ -42,6 +42,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _exchange_catalyst_row(root),
         _token_unlocks_row(root),
         _news_social_row(root),
+        _market_breadth_row(root),
         _prediction_markets_row(root),
         _protocol_activity_row(root),
         _institutional_flow_row(root),
@@ -1046,6 +1047,36 @@ def _news_social_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="attention data is not yet joined to leakage-safe return labels",
         next_step="build event-to-return labels and add richer news/social sources",
+    )
+
+
+def _market_breadth_row(root: Path) -> ExplorationRow:
+    path = root / "market_breadth" / "current_volume_price_dislocation.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="market_breadth",
+            status=best.get("status", "volume_price_dislocation"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}/{best.get('name', '')}: "
+                f"{best.get('side', '')}, "
+                f"vol_mcap={best.get('volume_to_market_cap', '')}, "
+                f"price24h={best.get('price_change_24h', '')}, "
+                f"price7d={best.get('price_change_7d', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap="volume-price dislocation is not yet labeled against forward returns, venue depth, fees, and false-breakout risk",
+            next_step=best.get(
+                "next_step",
+                "label broad volume-price dislocation candidates over short horizons",
+            ),
+        )
+    return ExplorationRow(
+        lane="market_breadth",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="broad volume-price dislocations are not screened",
+        next_step="run market breadth volume-price dislocation screen",
     )
 
 
