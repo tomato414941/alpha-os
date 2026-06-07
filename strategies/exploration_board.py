@@ -806,6 +806,22 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    current_candidate_path = root / "institutional_flow" / "current_btc_etf_funding_candidate.csv"
+    current_candidate = _current_btc_etf_funding_candidate(current_candidate_path)
+    if current_candidate:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status=current_candidate.get("status", "active_paper_watch"),
+            strongest_current_signal=(
+                f"{current_candidate.get('asset', '')} {current_candidate.get('side', '')}: "
+                f"5d_flow={current_candidate.get('rolling_5d_flow_btc', '')}, "
+                f"funding={current_candidate.get('annualized_funding', '')}, "
+                f"hist_total={current_candidate.get('historical_total_return', '')}, "
+                f"hist_hit={current_candidate.get('historical_hit_rate_5d', '')}"
+            ),
+            main_gap="current watch still lacks intraday execution, liquidation buffer, and account-specific fee validation",
+            next_step="paper-check BTC short entry timing, venue choice, liquidation buffer, and stop criteria before any live action",
+        )
     paper_rule_path = root / "institutional_flow" / "btc_etf_flow_funding_candidate_summary.csv"
     best_paper_rule = _btc_etf_flow_funding_candidate_summary(paper_rule_path)
     if best_paper_rule:
@@ -968,6 +984,19 @@ def _btc_etf_flow_funding_candidate_summary(path: Path) -> dict[str, str] | None
         return None
     row = rows[0]
     if row.get("action") not in {"paper_rule_candidate", "paper_rule_watch"}:
+        return None
+    return row
+
+
+def _current_btc_etf_funding_candidate(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    row = rows[0]
+    if row.get("status") != "active_paper_watch":
         return None
     return row
 

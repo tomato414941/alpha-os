@@ -80,3 +80,11 @@ Robustness pass:
   0.36179234, and 2-day delay total return is 0.54650100.
 - The main weakness is not fee sensitivity. It is sample size, drawdown under
   delayed entry, and execution realism.
+
+Current watch:
+
+- Latest ETF flow row: 2026-06-05, rolling 5d flow -37984 BTC.
+- Current BTC perp funding context: annualized funding 0.10950000, so BTC
+  perp shorts receive funding.
+- The current state is `active_paper_watch` for the BTC short-perp version of
+  this candidate, not a live trade instruction.
