@@ -3,30 +3,30 @@
 This applies a current public-book gate to 15m-supported Hyperliquid dislocation labels. It is still not a fill model.
 
 - rows: `60`
-- paper execution probes: `52`
+- paper execution probes: `35`
 
 | asset | status | side | size | gate | gross15 | cost | conservative15 | spread | depth10 | usage | reason |
 | --- | --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 67.22 | 17.54 | 49.69 | 7.03 | 4892 | 0.0511 | public book does not obviously block a small paper probe |
-| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 67.22 | 19.07 | 48.15 | 7.03 | 4892 | 0.2044 | public book does not obviously block a small paper probe |
-| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 58.18 | 13.47 | 44.71 | 3.43 | 67026 | 0.0037 | public book does not obviously block a small paper probe |
-| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 58.18 | 13.58 | 44.59 | 3.43 | 67026 | 0.0149 | public book does not obviously block a small paper probe |
-| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 58.18 | 13.81 | 44.37 | 3.43 | 67026 | 0.0373 | public book does not obviously block a small paper probe |
-| SPX | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 51.87 | 11.13 | 40.74 | 0.95 | 13717 | 0.0182 | public book does not obviously block a small paper probe |
-| SPX | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 51.87 | 11.68 | 40.20 | 0.95 | 13717 | 0.0729 | public book does not obviously block a small paper probe |
-| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 51.23 | 11.53 | 39.70 | 1.50 | 70573 | 0.0035 | public book does not obviously block a small paper probe |
-| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 51.23 | 11.64 | 39.59 | 1.50 | 70573 | 0.0142 | public book does not obviously block a small paper probe |
-| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 51.23 | 11.85 | 39.38 | 1.50 | 70573 | 0.0354 | public book does not obviously block a small paper probe |
-| SPX | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 51.87 | 12.77 | 39.10 | 0.95 | 13717 | 0.1823 | public book does not obviously block a small paper probe |
-| SOL | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 47.76 | 10.15 | 37.61 | 0.15 | 923704 | 0.0003 | public book does not obviously block a small paper probe |
-| SOL | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 47.76 | 10.16 | 37.60 | 0.15 | 923704 | 0.0011 | public book does not obviously block a small paper probe |
-| SOL | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 47.76 | 10.18 | 37.59 | 0.15 | 923704 | 0.0027 | public book does not obviously block a small paper probe |
-| NEAR | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 46.99 | 11.51 | 35.48 | 1.47 | 59112 | 0.0042 | public book does not obviously block a small paper probe |
-| NEAR | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 46.99 | 11.64 | 35.35 | 1.47 | 59112 | 0.0169 | public book does not obviously block a small paper probe |
-| NEAR | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 46.99 | 11.89 | 35.10 | 1.47 | 59112 | 0.0423 | public book does not obviously block a small paper probe |
-| ZRO | paper_extreme_funding_carry_candidate | short_perp | 250 | paper_execution_probe | 46.84 | 14.23 | 32.60 | 4.09 | 17827 | 0.0140 | public book does not obviously block a small paper probe |
-| ZRO | paper_extreme_funding_carry_candidate | short_perp | 1000 | paper_execution_probe | 46.84 | 14.65 | 32.18 | 4.09 | 17827 | 0.0561 | public book does not obviously block a small paper probe |
-| ZRO | paper_extreme_funding_carry_candidate | short_perp | 2500 | paper_execution_probe | 46.84 | 15.49 | 31.34 | 4.09 | 17827 | 0.1402 | public book does not obviously block a small paper probe |
+| BRETT | paper_mark_oracle_reversion_candidate | long_perp | 250 | paper_execution_probe | 93.08 | 16.79 | 76.29 | 5.27 | 1652 | 0.1514 | public book does not obviously block a small paper probe |
+| ZRO | paper_extreme_funding_carry_candidate | short_perp | 250 | paper_execution_probe | 49.48 | 11.37 | 38.11 | 1.22 | 16784 | 0.0149 | public book does not obviously block a small paper probe |
+| MON | paper_crowded_momentum_continuation_candidate | long_perp | 250 | paper_execution_probe | 50.69 | 12.58 | 38.11 | 2.27 | 8096 | 0.0309 | public book does not obviously block a small paper probe |
+| ZRO | paper_extreme_funding_carry_candidate | short_perp | 1000 | paper_execution_probe | 49.48 | 11.82 | 37.67 | 1.22 | 16784 | 0.0596 | public book does not obviously block a small paper probe |
+| MON | paper_crowded_momentum_continuation_candidate | long_perp | 1000 | paper_execution_probe | 50.69 | 13.50 | 37.18 | 2.27 | 8096 | 0.1235 | public book does not obviously block a small paper probe |
+| MEGA | paper_crowded_momentum_continuation_candidate | long_perp | 250 | paper_execution_probe | 52.91 | 16.13 | 36.78 | 5.39 | 3358 | 0.0745 | public book does not obviously block a small paper probe |
+| ZRO | paper_extreme_funding_carry_candidate | short_perp | 2500 | paper_execution_probe | 49.48 | 12.71 | 36.77 | 1.22 | 16784 | 0.1489 | public book does not obviously block a small paper probe |
+| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 43.58 | 17.15 | 26.43 | 7.08 | 34338 | 0.0073 | public book does not obviously block a small paper probe |
+| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 43.58 | 17.37 | 26.21 | 7.08 | 34338 | 0.0291 | public book does not obviously block a small paper probe |
+| TIA | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 37.10 | 11.04 | 26.06 | 0.63 | 6060 | 0.0413 | public book does not obviously block a small paper probe |
+| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 2500 | paper_execution_probe | 43.58 | 17.81 | 25.77 | 7.08 | 34338 | 0.0728 | public book does not obviously block a small paper probe |
+| TIA | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 37.10 | 12.28 | 24.82 | 0.63 | 6060 | 0.1650 | public book does not obviously block a small paper probe |
+| AIXBT | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 40.70 | 16.34 | 24.36 | 5.45 | 2833 | 0.0882 | public book does not obviously block a small paper probe |
+| MANTA | paper_crowded_momentum_continuation_candidate | short_perp | 250 | paper_execution_probe | 39.27 | 15.91 | 23.36 | 5.27 | 3918 | 0.0638 | public book does not obviously block a small paper probe |
+| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 37.66 | 15.40 | 22.26 | 5.15 | 9964 | 0.0251 | public book does not obviously block a small paper probe |
+| JTO | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 40.53 | 18.75 | 21.78 | 6.50 | 1112 | 0.2248 | public book does not obviously block a small paper probe |
+| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 37.66 | 16.15 | 21.51 | 5.15 | 9964 | 0.1004 | public book does not obviously block a small paper probe |
+| ONDO | paper_crowded_momentum_continuation_candidate | long_perp | 250 | paper_execution_probe | 30.56 | 10.88 | 19.68 | 0.58 | 8302 | 0.0301 | public book does not obviously block a small paper probe |
+| ADA | paper_crowded_momentum_reversal_candidate | short_perp | 250 | paper_execution_probe | 31.97 | 13.05 | 18.92 | 3.03 | 106635 | 0.0023 | public book does not obviously block a small paper probe |
+| ADA | paper_crowded_momentum_reversal_candidate | short_perp | 1000 | paper_execution_probe | 31.97 | 13.12 | 18.85 | 3.03 | 106635 | 0.0094 | public book does not obviously block a small paper probe |
 
 ## Interpretation
 
