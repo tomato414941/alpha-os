@@ -55,6 +55,9 @@ Promote code to the library only after multiple strategies need the same shape.
 - `missing_work_inventory.md`
   - broad inventory of missing profit sources, data, evaluation, operations,
     and external tools
+- `candidate_matrix.md`
+  - prioritized broad candidate matrix with data needs, execution venues,
+    failure modes, and first falsification tests
 - `opportunity_map.md`
   - profit-source candidates and reachable public data routes
 - `data_source_probe.py`
