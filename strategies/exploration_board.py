@@ -815,6 +815,22 @@ def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
 
 
 def _on_chain_flow_row(root: Path) -> ExplorationRow:
+    summary_path = root / "on_chain_flow" / "chain_tvl_flow_market_context_summary.csv"
+    best_summary = _best_chain_tvl_market_context_summary_row(summary_path)
+    if best_summary:
+        return ExplorationRow(
+            lane="on_chain_flow",
+            status="chain_tvl_flow_market_context_summary",
+            strongest_current_signal=(
+                f"{best_summary.get('group_key', '')}: "
+                f"obs={best_summary.get('observations', '')}, "
+                f"labeled={best_summary.get('labeled_observations', '')}, "
+                f"mean_score={best_summary.get('mean_context_score', '')}, "
+                f"action={best_summary.get('action', '')}"
+            ),
+            main_gap="chain TVL flow repeat context still needs a second labeled timestamp before promotion",
+            next_step="wait for the pending MON/HYPE/SOL/ETH sample to mature and rerun labels",
+        )
     context_path = root / "on_chain_flow" / "current_chain_tvl_flow_market_context.csv"
     best_context = _best_chain_tvl_market_context_row(context_path)
     if best_context:
@@ -1369,6 +1385,29 @@ def _best_chain_tvl_market_context_row(path: Path) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("context_score") or "-inf"))
+
+
+def _best_chain_tvl_market_context_summary_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    action_rank = {
+        "repeat_priority": 3,
+        "keep_sampling": 2,
+        "collect_repeat": 1,
+        "deprioritize": -1,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            action_rank.get(row.get("action", ""), 0),
+            float(row.get("mean_context_score") or "-inf"),
+            int(row.get("labeled_observations") or "0"),
+        ),
+    )
 
 
 def _followup_repeat_observation_summary(path: Path) -> str | None:

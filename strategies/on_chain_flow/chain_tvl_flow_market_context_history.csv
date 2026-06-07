@@ -24,3 +24,28 @@ snapshot_timestamp,venue,token_symbol,action,direction,directional_return_15m,an
 2026-06-07T17:52:58.484701+00:00,HL,BNB,chain_flow_reversal_watch,1,0.00172830,0.10950000,-0.10950000,8150954.13080000,2.11028765,,,-0.04218438,price label positive
 2026-06-07T17:52:58.484701+00:00,OKX,OP,chain_flow_reversal_watch,1,0.00420610,-0.01300102,0.01300102,9814121.77150000,10.46572475,,,-0.06638898,price label positive; funding helps direction
 2026-06-07T17:52:58.484701+00:00,OKX,SUI,chain_flow_reversal_watch,1,0.00040021,0.06427009,-0.06427009,75841612.80560000,1.33413381,short_liquidation_squeeze_watch,0.00155074,-0.07544838,price label positive
+2026-06-07T18:20:55.974186+00:00,OKX,SOL,chain_flow_reversal_watch,1,,-0.38248296,0.38248296,703863000.42240000,1.53174542,,,0.30589569,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,MON,chain_flow_reversal_watch,1,,-0.79807481,0.79807481,7766150.04720000,4.55477112,,,0.27226144,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,ETH,chain_flow_reversal_watch,1,,-0.15704855,0.15704855,6915479767.85633945,0.06135628,short_liquidation_squeeze_watch,0.01030080,0.25698874,funding helps direction; has recent liquidation context
+2026-06-07T18:20:55.974186+00:00,HL,ETH,chain_flow_reversal_watch,1,,-0.18074245,0.18074245,654293613.56603932,0.61359104,short_liquidation_squeeze_watch,0.01030080,0.25307090,funding helps direction; has recent liquidation context
+2026-06-07T18:20:55.974186+00:00,HL,SOL,chain_flow_reversal_watch,1,,-0.17098206,0.17098206,303734387.71923000,0.15312411,,,0.16332585,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,MEGA,chain_flow_reversal_watch,1,,-0.23267659,0.23267659,7542695.46560000,2.06932230,,,0.12921047,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,KAT,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,MOVE,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,BERA,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,STX,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,SEI,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,POL,chain_flow_reversal_watch,1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,STRK,chain_outflow_stress_watch,-1,,,,,,,,0.00000000,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,HYPE,chain_flow_reversal_watch,1,,-0.06815595,0.06815595,401033018.49000001,1.68506193,mixed_liquidation_flow_watch,0.00146531,-0.00144405,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,BTC,chain_flow_reversal_watch,1,,0.00598260,-0.00598260,6477616970.73072052,0.01609118,short_liquidation_squeeze_watch,0.00047763,-0.00201086,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,ARB,chain_flow_reversal_watch,1,,-0.00848212,0.00848212,11973871.07281000,1.22256862,,,-0.05264631,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,APT,chain_flow_reversal_watch,1,,0.02741399,-0.02741399,10879875.89250000,1.49465660,,,-0.10214682,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,XLM,chain_flow_reversal_watch,1,,-0.13558706,0.13558706,67935572.19000000,4.83208504,long_liquidation_cascade_watch,0.00031521,-0.10286509,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,NEAR,chain_flow_reversal_watch,1,,-0.03880284,0.03880284,135808899.90000001,4.88878025,long_liquidation_cascade_watch,0.00983723,-0.10726387,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,SUI,chain_flow_reversal_watch,1,,0.06464509,-0.06464509,75677855.09989999,1.33680904,short_liquidation_squeeze_watch,0.00155231,-0.11596244,weak current context
+2026-06-07T18:20:55.974186+00:00,HL,AVAX,chain_outflow_stress_watch,-1,,0.00289868,0.00289868,10279983.12183500,2.83955045,,,-0.13907884,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,ADA,chain_flow_reversal_watch,1,,-0.16319057,0.16319057,65310653.28200001,6.14439324,short_liquidation_squeeze_watch,0.00044734,-0.13955569,funding helps direction
+2026-06-07T18:20:55.974186+00:00,OKX,AVAX,chain_outflow_stress_watch,-1,,-0.08609638,-0.08609638,25267193.81830000,1.49488004,,,-0.16084038,weak current context
+2026-06-07T18:20:55.974186+00:00,HL,HYPE,chain_flow_reversal_watch,1,,0.10950000,-0.10950000,603221747.12067962,1.32945156,mixed_liquidation_flow_watch,0.00146531,-0.16131948,weak current context
+2026-06-07T18:20:55.974186+00:00,OKX,BNB,chain_flow_reversal_watch,1,,0.08573098,-0.08573098,75975632.10600001,1.67714885,,,-0.16958842,weak current context

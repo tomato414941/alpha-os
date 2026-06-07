@@ -33,6 +33,7 @@ class ChainTvlFlowMarketContextSummaryRow:
     group_type: str
     group_key: str
     observations: int
+    labeled_observations: int
     hit_rate_15m: float | None
     mean_dir15: float | None
     mean_funding_support: float | None
@@ -172,6 +173,7 @@ def write_chain_tvl_flow_market_context_summary_csv(
                 "group_type",
                 "group_key",
                 "observations",
+                "labeled_observations",
                 "hit_rate_15m",
                 "mean_dir15",
                 "mean_funding_support",
@@ -186,6 +188,7 @@ def write_chain_tvl_flow_market_context_summary_csv(
                     row.group_type,
                     row.group_key,
                     row.observations,
+                    row.labeled_observations,
                     _format_float(row.hit_rate_15m),
                     _format_float(row.mean_dir15),
                     _format_float(row.mean_funding_support),
@@ -211,15 +214,16 @@ def write_chain_tvl_flow_market_context_summary_md(
             "single observation is not enough to promote a candidate.\n\n"
         )
         handle.write(
-            "| group type | group | obs | hit 15m | mean dir15 | mean funding support | mean score | action | evidence |\n"
+            "| group type | group | obs | labeled obs | hit 15m | mean dir15 | mean funding support | mean score | action | evidence |\n"
         )
-        handle.write("| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |\n")
+        handle.write("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n")
         for row in rows[:top]:
             handle.write(
                 "| "
                 f"{row.group_type} | "
                 f"{row.group_key} | "
                 f"{row.observations} | "
+                f"{row.labeled_observations} | "
                 f"{_format_float(row.hit_rate_15m)} | "
                 f"{_format_float(row.mean_dir15)} | "
                 f"{_format_float(row.mean_funding_support)} | "
@@ -238,6 +242,13 @@ def _summary_row(
 ) -> ChainTvlFlowMarketContextSummaryRow:
     dir15_values = tuple(
         row.directional_return_15m for row in rows if row.directional_return_15m is not None
+    )
+    labeled_observations = len(
+        {
+            row.snapshot_timestamp
+            for row in rows
+            if row.directional_return_15m is not None
+        }
     )
     funding_support_values = tuple(
         row.funding_support for row in rows if row.funding_support is not None
@@ -259,12 +270,14 @@ def _summary_row(
         group_type=group_type,
         group_key=group_key,
         observations=observations,
+        labeled_observations=labeled_observations,
         hit_rate_15m=hit_rate,
         mean_dir15=mean_dir15,
         mean_funding_support=mean_funding_support,
         mean_context_score=mean_context_score,
         action=_action(
             observations=observations,
+            labeled_observations=labeled_observations,
             hit_rate=hit_rate,
             mean_dir15=mean_dir15,
             mean_context_score=mean_context_score,
@@ -278,11 +291,12 @@ def _summary_row(
 def _action(
     *,
     observations: int,
+    labeled_observations: int,
     hit_rate: float | None,
     mean_dir15: float | None,
     mean_context_score: float,
 ) -> str:
-    if observations < 2:
+    if observations < 2 or labeled_observations < 2:
         return "collect_repeat"
     if (
         hit_rate is not None

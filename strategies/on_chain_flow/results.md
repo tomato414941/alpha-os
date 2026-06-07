@@ -62,7 +62,11 @@ Interpretation:
 - This screen still needs token forward labels and cost checks before any
   promotion.
 
-## Forward Labels
+## Last Labeled Forward Snapshot
+
+The current forward-label file has been refreshed to a newer signal timestamp
+and is pending 15m labels. The table below keeps the last labeled snapshot as
+evidence for what should be repeated, not as the current file contents.
 
 | venue | chain | token | action | dir | week % | day % | raw 15m | dir 15m | status |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
@@ -105,3 +109,15 @@ Interpretation:
 - `MEGA` weakened after refresh; keep it visible but behind MON/HYPE/SOL.
 - The history summary intentionally marks these as `collect_repeat`, not
   `repeat_priority`, because this is still one signal timestamp.
+
+## Repeat Context
+
+The next signal timestamp has been stored in
+`chain_tvl_flow_market_context_history.csv`, but its 15m labels are still
+pending. The summary therefore keeps top groups as `collect_repeat`:
+
+- `OKX/MON`: obs=2, labeled=1, mean_score=0.592452
+- `OKX/SOL`: obs=2, labeled=1, mean_score=0.461126
+- `MON`: obs=2, labeled=1, mean_score=0.407298
+- `OKX/ETH`: obs=2, labeled=1, mean_score=0.399190
+- `SOL`: obs=2, labeled=1, mean_score=0.382247
