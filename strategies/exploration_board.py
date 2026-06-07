@@ -21,6 +21,7 @@ class ExplorationRow:
 def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
+        _symbol_opportunity_map_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -72,6 +73,32 @@ def _alpha_stack_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="current paper candidates are not joined across lanes",
         next_step="run current alpha stack to identify cross-lane candidate priorities",
+    )
+
+
+def _symbol_opportunity_map_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_opportunity_map.csv"
+    best = _best_numeric_row(path, key="cluster_score")
+    if best:
+        return ExplorationRow(
+            lane="symbol_opportunity_map",
+            status=best.get("status", "symbol_cluster"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"score={best.get('cluster_score', '')}, "
+                f"sources={best.get('source_count', '')}, "
+                f"candidates={best.get('candidate_count', '')}, "
+                f"top={best.get('top_opportunities', '')}"
+            ),
+            main_gap="symbol clusters are prioritization only; they still need forward labels, costs, depth, and conflict checks",
+            next_step=best.get("next_step", "label top symbol cluster against forward returns and execution feasibility"),
+        )
+    return ExplorationRow(
+        lane="symbol_opportunity_map",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="current candidates are not grouped by symbol",
+        next_step="run current symbol opportunity map to find cross-lane symbol clusters",
     )
 
 

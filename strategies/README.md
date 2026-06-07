@@ -97,6 +97,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - cross-lane current paper candidate stack generator
 - `current_alpha_stack.md`
   - latest cross-lane paper candidate stack
+- `current_symbol_opportunity_map.py`
+  - symbol-level cluster generator from the current alpha stack
+- `current_symbol_opportunity_map.md`
+  - latest symbol-level cluster map for repeated labels and execution checks
 - `p0_parallel/`
   - parallel P0 data reachability, L2 burst, and operational paper-ticket
     probes
