@@ -18,9 +18,11 @@ class PerpMarketRow:
     timestamp: str
     asset: str
     max_leverage: float
+    mark_price: float
     funding_rate: float
     annualized_funding: float
     open_interest: float
+    open_interest_notional: float
     day_notional_volume: float
     premium: float
     mark_oracle_diff: float
@@ -70,9 +72,11 @@ def build_perp_market_rows(
                 timestamp=observed_at,
                 asset=str(asset_meta["name"]),
                 max_leverage=_float(asset_meta.get("maxLeverage")),
+                mark_price=mark_price,
                 funding_rate=funding_rate,
                 annualized_funding=annualized_funding,
                 open_interest=open_interest,
+                open_interest_notional=open_interest * mark_price,
                 day_notional_volume=day_notional_volume,
                 premium=premium,
                 mark_oracle_diff=mark_oracle_diff,
@@ -96,15 +100,17 @@ def write_perp_market_rows(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "timestamp",
                 "asset",
                 "max_leverage",
+                "mark_price",
                 "funding_rate",
                 "annualized_funding",
                 "open_interest",
+                "open_interest_notional",
                 "day_notional_volume",
                 "premium",
                 "mark_oracle_diff",
@@ -119,9 +125,11 @@ def write_perp_market_rows(
                     row.timestamp,
                     row.asset,
                     f"{row.max_leverage:.4f}",
+                    f"{row.mark_price:.12f}",
                     f"{row.funding_rate:.12f}",
                     f"{row.annualized_funding:.8f}",
                     f"{row.open_interest:.8f}",
+                    f"{row.open_interest_notional:.8f}",
                     f"{row.day_notional_volume:.8f}",
                     f"{row.premium:.12f}",
                     f"{row.mark_oracle_diff:.12f}",
@@ -182,4 +190,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

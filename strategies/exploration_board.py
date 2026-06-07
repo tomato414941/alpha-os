@@ -167,6 +167,21 @@ def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
 
 
 def _perp_market_map_row(root: Path) -> ExplorationRow:
+    crowding_path = root / "perp_market_map" / "current_crowding_reversion_screen.csv"
+    best_crowding = _best_numeric_row(crowding_path, key="carry_reversion_score")
+    if best_crowding:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status="current_carry_reversion_screen",
+            strongest_current_signal=(
+                f"{best_crowding.get('asset', '')}: {best_crowding.get('action', '')}, "
+                f"funding={best_crowding.get('annualized_funding', '')}, "
+                f"mark_oracle={best_crowding.get('mark_oracle_diff', '')}, "
+                f"score={best_crowding.get('carry_reversion_score', '')}"
+            ),
+            main_gap="current crowding proxy is not yet joined to future returns or execution costs",
+            next_step="monitor top carry/reversion rows and label subsequent returns, funding decay, and liquidation risk",
+        )
     path = root / "perp_market_map" / "current_hyperliquid_snapshot.csv"
     best = _best_numeric_row(path, key="attention_score")
     signal = "not run yet"
