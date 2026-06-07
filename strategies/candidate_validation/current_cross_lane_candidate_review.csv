@@ -1,8 +1,9 @@
 asset,lanes,positive_labels,negative_labels,pending_labels,lead_score,note
+MEGA,hl_candidate_label;okx_pressure;exchange_catalyst;on_chain_flow,hl15=0.0178;exchange15=0.0694:spot_listing_watch,exchange15=-0.0281:spot_listing_watch;chain15=-0.0015:OKX:chain_flow_reversal_watch;chain15=-0.0022:HL:chain_flow_reversal_watch,okx_pressure15,5.5905,mixed evidence; isolate which source is real
 BEAT,okx_pressure;okx_liquidation,liq_cont15=0.0240,,okx_pressure15,4.0603,first labels support follow-up
-MEGA,hl_candidate_label;okx_pressure;on_chain_flow,hl15=0.0178,chain15=-0.0015:OKX:chain_flow_reversal_watch;chain15=-0.0022:HL:chain_flow_reversal_watch,okx_pressure15,3.5234,mixed evidence; isolate which source is real
 BTC,okx_pressure;okx_liquidation;l2_imbalance_monitor;on_chain_flow,liq_cont15=0.0003;l2_imbalance15=0.0001,chain15=-0.0007:OKX:chain_flow_reversal_watch;chain15=-0.0008:HL:chain_flow_reversal_watch,okx_pressure15,3.0730,mixed evidence; isolate which source is real
 WLD,hl_candidate_label;okx_pressure;okx_liquidation,hl15=0.0197,,okx_pressure15;liq_cont15,2.9989,first labels support follow-up
+CHIP,exchange_catalyst,exchange15=0.0065:spot_listing_watch,,exchange15=0.0000:perp_listing_watch;exchange15=0.0000:spot_listing_watch;exchange15=0.0000:spot_listing_watch,2.9874,first labels support follow-up
 XMR,hl_candidate_label;sector_rotation,hl15=0.0111,sector15=-0.0022:Privacy,,2.9735,mixed evidence; isolate which source is real
 IP,hl_candidate_label;okx_pressure,hl15=0.0160,,okx_pressure15,2.8057,first labels support follow-up
 JTO,okx_pressure;okx_liquidation;l2_imbalance_monitor,liq_cont15=0.0023;l2_imbalance15=0.0125,,okx_pressure15,2.7076,first labels support follow-up
@@ -16,15 +17,17 @@ ZRO,hl_candidate_label,hl15=0.0013,,,2.0633,first labels support follow-up
 XPL,okx_pressure;l2_imbalance_monitor;sector_rotation;sector_perp_context,l2_imbalance15=0.0030,sector15=-0.0023:Echo Launchpad;sector_perp15=-0.0023:Echo Launchpad,okx_pressure15,2.0497,mixed evidence; isolate which source is real
 SAGA,hl_candidate_label,hl15=0.0007,,,2.0365,first labels support follow-up
 HOME,okx_pressure;okx_liquidation,,,okx_pressure15;liq_cont15,2.0000,waiting for elapsed labels
+POL,sector_rotation;exchange_catalyst;on_chain_flow,sector15=0.0035:Zero Knowledge (ZK);chain15=0.0035:HL:chain_flow_reversal_watch;chain15=0.0013:OKX:chain_flow_reversal_watch,exchange15=-0.0008:network_event_watch,exchange15=0.0000:network_event_watch,1.6638,mixed evidence; isolate which source is real
 ZEC,okx_pressure;okx_liquidation;sector_rotation;sector_perp_context,,sector15=-0.0019:Privacy;sector15=-0.0019:Zero Knowledge (ZK);sector_perp15=-0.0019:Privacy;sector_perp15=-0.0019:Zero Knowledge (ZK),okx_pressure15;liq_cont15,1.5609,current short labels are weak
 OPN,okx_pressure;okx_liquidation,liq_cont15=0.0047,,okx_pressure15,1.5173,first labels support follow-up
-POL,sector_rotation;on_chain_flow,sector15=0.0035:Zero Knowledge (ZK);chain15=0.0035:HL:chain_flow_reversal_watch;chain15=0.0013:OKX:chain_flow_reversal_watch,,,1.4238,first labels support follow-up
+SOL,okx_pressure;l2_imbalance_monitor;exchange_catalyst;on_chain_flow,exchange15=0.0013:exchange_removal_watch,l2_imbalance15=-0.0033;chain15=-0.0021:HL:chain_flow_reversal_watch;chain15=-0.0021:OKX:chain_flow_reversal_watch,okx_pressure15,1.4850,mixed evidence; isolate which source is real
 H,okx_pressure;okx_liquidation,liq_cont15=0.0026,,okx_pressure15,1.2848,first labels support follow-up
 ADA,okx_pressure;okx_liquidation;l2_imbalance_monitor;on_chain_flow,l2_imbalance15=0.0015,liq_cont15=-0.0006;chain15=-0.0012:HL:chain_flow_reversal_watch;chain15=-0.0012:OKX:chain_flow_reversal_watch,okx_pressure15,1.2549,mixed evidence; isolate which source is real
+NEAR,okx_pressure;okx_liquidation;exchange_catalyst;on_chain_flow,exchange15=0.0250:network_event_watch,liq_cont15=-0.0049;chain15=-0.0107:HL:chain_flow_reversal_watch;chain15=-0.0112:OKX:chain_flow_reversal_watch,okx_pressure15,1.1957,mixed evidence; isolate which source is real
 AVAX,okx_pressure;on_chain_flow,chain15=0.0010:OKX:chain_outflow_stress_watch;chain15=0.0010:HL:chain_outflow_stress_watch,,okx_pressure15,1.0343,first labels support follow-up
 ETH,okx_pressure;okx_liquidation;l2_imbalance_monitor;on_chain_flow,l2_imbalance15=0.0010;chain15=0.0009:HL:chain_flow_reversal_watch;chain15=0.0009:OKX:chain_flow_reversal_watch,liq_cont15=-0.0014,okx_pressure15,0.9723,mixed evidence; isolate which source is real
 SUI,okx_pressure;okx_liquidation;l2_imbalance_monitor;on_chain_flow,chain15=0.0003:HL:chain_flow_reversal_watch;chain15=0.0003:OKX:chain_flow_reversal_watch,liq_cont15=-0.0004;l2_imbalance15=-0.0019,okx_pressure15,0.9520,mixed evidence; isolate which source is real
-SOL,okx_pressure;l2_imbalance_monitor;on_chain_flow,,l2_imbalance15=-0.0033;chain15=-0.0021:HL:chain_flow_reversal_watch;chain15=-0.0021:OKX:chain_flow_reversal_watch,okx_pressure15,0.8676,current short labels are weak
+AI,okx_pressure;exchange_catalyst,,,okx_pressure15;exchange15=:spot_listing_watch;exchange15=:exchange_removal_watch,0.9045,waiting for elapsed labels
 MOVE,on_chain_flow,,chain15=-0.0001:HL:chain_flow_reversal_watch;chain15=-0.0009:OKX:chain_flow_reversal_watch,,0.6870,current short labels are weak
 JUP,hl_candidate_label;sector_rotation;sector_perp_context,,hl15=-0.0004;sector15=-0.0003:Launchpad;sector_perp15=-0.0003:Launchpad,,0.6587,current short labels are weak
 MRVL,okx_pressure;okx_liquidation,,liq_cont15=-0.0007,okx_pressure15,0.5820,current short labels are weak
@@ -34,6 +37,8 @@ ARB,okx_pressure;on_chain_flow,,chain15=-0.0011:OKX:chain_flow_reversal_watch;ch
 STX,on_chain_flow,,chain15=-0.0012:HL:chain_flow_reversal_watch;chain15=-0.0022:OKX:chain_flow_reversal_watch,,0.4948,current short labels are weak
 KAT,on_chain_flow,,chain15=-0.0031:OKX:chain_flow_reversal_watch,,0.4717,current short labels are weak
 ONDO,okx_pressure;okx_liquidation;l2_imbalance_monitor;sector_rotation,,liq_cont15=-0.0093;l2_imbalance15=-0.0046;sector15=-0.0037:Binance Alpha Spotlight,okx_pressure15,0.4556,current short labels are weak
+NTRN,exchange_catalyst,,,exchange15=:exchange_removal_watch,0.4000,waiting for elapsed labels
+RDNT,exchange_catalyst,,,exchange15=:exchange_removal_watch,0.4000,waiting for elapsed labels
 BERA,on_chain_flow,,chain15=-0.0029:OKX:chain_flow_reversal_watch;chain15=-0.0033:HL:chain_flow_reversal_watch,,0.3736,current short labels are weak
 PUMP,okx_pressure;sector_rotation,,sector15=-0.0026:Launchpad,okx_pressure15,0.3192,current short labels are weak
 LIT,okx_pressure;l2_imbalance_monitor,,l2_imbalance15=-0.0079,okx_pressure15,0.3047,current short labels are weak
@@ -89,7 +94,6 @@ ETHFI,okx_pressure,,,okx_pressure15,0.0046,waiting for elapsed labels
 UP,okx_pressure,,,okx_pressure15,0.0046,waiting for elapsed labels
 OFC,okx_pressure,,,okx_pressure15,0.0046,waiting for elapsed labels
 USELESS,okx_pressure,,,okx_pressure15,0.0046,waiting for elapsed labels
-AI,okx_pressure,,,okx_pressure15,0.0045,waiting for elapsed labels
 SLX,okx_pressure,,,okx_pressure15,0.0045,waiting for elapsed labels
 RESOLV,okx_pressure,,,okx_pressure15,0.0044,waiting for elapsed labels
 PARTI,okx_pressure,,,okx_pressure15,0.0043,waiting for elapsed labels
@@ -128,5 +132,4 @@ TON,okx_pressure;okx_liquidation;l2_imbalance_monitor,,l2_imbalance15=-0.0069,ok
 BIO,hl_candidate_label;okx_pressure,,hl15=-0.0078,okx_pressure15,-0.1922,current short labels are weak
 XRP,okx_pressure;okx_liquidation,,liq_cont15=-0.0043,okx_pressure15,-0.2091,current short labels are weak
 ALLO,okx_pressure;okx_liquidation,,liq_cont15=-0.0110,okx_pressure15,-0.5467,current short labels are weak
-NEAR,okx_pressure;okx_liquidation;on_chain_flow,,liq_cont15=-0.0049;chain15=-0.0107:HL:chain_flow_reversal_watch;chain15=-0.0112:OKX:chain_flow_reversal_watch,okx_pressure15,-0.9673,current short labels are weak
 MON,hl_candidate_label;okx_pressure;on_chain_flow,,hl15=-0.0029;chain15=-0.0140:HL:chain_flow_reversal_watch;chain15=-0.0145:OKX:chain_flow_reversal_watch,okx_pressure15,-1.0562,current short labels are weak

@@ -31,6 +31,7 @@ def build_cross_lane_candidates() -> tuple[CrossLaneCandidate, ...]:
     _add_l2_imbalance_monitor_labels(assets, scores)
     _add_sector_rotation_labels(assets, scores)
     _add_sector_perp_context(assets, scores)
+    _add_exchange_catalyst_labels(assets, scores)
     _add_on_chain_flow_labels(assets, scores)
 
     candidates = tuple(
@@ -264,6 +265,35 @@ def _add_on_chain_flow_labels(
         elif direction15 > 0.0:
             _add_positive(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)
+        else:
+            _add_negative(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)
+
+
+def _add_exchange_catalyst_labels(
+    assets: dict[str, dict[str, list[str]]],
+    scores: dict[str, float],
+) -> None:
+    path = STRATEGIES_ROOT / "news_social" / "current_exchange_catalyst_forward_labels.csv"
+    for row in _read_rows(path):
+        asset = row["symbol"]
+        if not asset:
+            continue
+        _add_lane(assets, asset, "exchange_catalyst")
+        direction15 = _float_or_none(row.get("directional_return_15m", ""))
+        catalyst_score = float(row.get("score") or "0")
+        scores[asset] = scores.get(asset, 0.0) + min(catalyst_score / 10.0, 1.5)
+        label_name = (
+            f"exchange15={'' if direction15 is None else f'{direction15:.4f}'}"
+            f":{row.get('catalyst_kind', '')}"
+        )
+        if direction15 is None:
+            _add_pending(assets, asset, label_name)
+        elif direction15 > 0.0:
+            _add_positive(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 2.0)
+        elif direction15 == 0.0:
+            _add_pending(assets, asset, label_name)
         else:
             _add_negative(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)

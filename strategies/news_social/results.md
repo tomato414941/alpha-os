@@ -8,12 +8,17 @@ Run:
 uv run python -m strategies.news_social.current_attention_snapshot
 uv run python -m strategies.news_social.current_attention_market_join
 uv run python -m strategies.news_social.current_attention_forward_labels
+uv run python -m strategies.news_social.current_exchange_catalyst_snapshot
+uv run python -m strategies.news_social.current_exchange_catalyst_market_join
+uv run python -m strategies.news_social.current_exchange_catalyst_forward_labels
 ```
 
 Interpretation:
 
 - Fear & Greed is a market-level sentiment proxy
 - CoinGecko trending is an attention proxy, not an alpha signal by itself
+- Binance announcements add an exchange-catalyst input that is not derived from
+  prices
 - the next useful test is event-to-return labeling with no lookahead
 - paid or authenticated feeds may be needed for serious news/social work
 
@@ -59,3 +64,56 @@ Interpretation:
 - `AERO` was positive over 15m but negative over 1h.
 - This points to a possible short-lived attention/carry overlap, not a stable
   deployable strategy.
+
+## Exchange Catalyst Snapshot
+
+This extracts recent Binance exchange-announcement catalysts such as perp
+launches, spot/listing support, removals, airdrops, campaigns, and network
+events.
+
+Interpretation:
+
+- This is a broader external-event lane than CoinGecko trending.
+- The raw Binance announcement feed includes some exchange product listings that
+  are not useful unless they overlap with a tradable venue.
+- The useful filter is the market join: keep only symbols that currently exist
+  on Hyperliquid or another executable venue.
+
+## Exchange Catalyst Market Join
+
+This joins exchange-announcement catalysts to current Hyperliquid perp state.
+
+Current useful rows:
+
+- `CHIP`: Binance perp/listing catalyst overlaps a Hyperliquid market.
+- `MEGA`: Binance spot/support catalyst overlaps a Hyperliquid market.
+- `SOL`: Binance removal catalyst is tradable and has a short direction hint.
+- `NEAR` and `POL`: network-event catalysts are tradable but lower score.
+
+Interpretation:
+
+- Exchange-catalyst candidates are event-reactive. They should not be treated as
+  normal momentum or mean-reversion signals.
+- The immediate opportunity is to test whether listing/removal/network events
+  create short-lived reactions that survive fees and latency.
+
+## Exchange Catalyst Forward Labels
+
+Current labeled reactions:
+
+| symbol | catalyst | dir 15m | dir 1h | read |
+| --- | --- | ---: | ---: | --- |
+| MEGA | spot_listing_watch | 0.069414 | -0.037918 | strong 15m pop, then reversal |
+| NEAR | network_event_watch | 0.024957 | 0.038601 | positive over both horizons |
+| CHIP | spot_listing_watch | 0.006453 | 0.012107 | small positive continuation |
+| SOL | exchange_removal_watch | 0.001334 | 0.003052 | small short-direction win |
+| POL | network_event_watch | -0.000846 | -0.002960 | failed direction |
+
+Interpretation:
+
+- `MEGA` is the strongest event reaction, but the 1h reversal means it is more
+  likely a fast event-reaction candidate than a hold candidate.
+- `NEAR` is the cleanest current network-event label because both 15m and 1h
+  are positive.
+- This lane needs repeated events, venue depth, fee/slippage assumptions, and
+  latency-aware execution checks before paper trading.

@@ -1,0 +1,15 @@
+published_at,symbol,catalyst_kind,action,direction_hint,score,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status
+2026-04-16T06:14:15.403000+00:00,CHIP,perp_listing_watch,exchange_catalyst_watch,1,7.10542632,0.00000000,0.00000000,0.00000000,0.00000000,labeled
+2026-04-21T13:00:07.020000+00:00,CHIP,spot_listing_watch,exchange_catalyst_low_context,1,6.10542632,0.00000000,0.00000000,0.00000000,0.00000000,labeled
+2026-04-30T10:47:58.718000+00:00,MEGA,spot_listing_watch,exchange_catalyst_low_context,1,5.83546934,0.06941420,-0.03791813,0.06941420,-0.03791813,labeled
+2026-04-28T08:00:03.344000+00:00,CHIP,spot_listing_watch,exchange_catalyst_low_context,1,5.10542632,0.00645253,0.01210740,0.00645253,0.01210740,labeled
+2026-04-21T12:00:32.132000+00:00,CHIP,spot_listing_watch,exchange_catalyst_low_context,1,5.10542632,0.00000000,0.00000000,0.00000000,0.00000000,labeled
+2026-04-28T08:00:03.344000+00:00,AI,spot_listing_watch,exchange_catalyst_low_context,1,5.00000000,,,,,pending_15m
+2026-04-30T09:33:15.547000+00:00,SOL,exchange_removal_watch,exchange_catalyst_watch,-1,4.84043288,-0.00133377,-0.00305204,0.00133377,0.00305204,labeled
+2026-04-30T09:07:29.704000+00:00,MEGA,spot_listing_watch,exchange_catalyst_low_context,1,4.83546934,-0.02810102,-0.08531938,-0.02810102,-0.08531938,labeled
+2026-05-19T03:00:08.915000+00:00,AI,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m
+2026-03-18T09:00:08.667000+00:00,NTRN,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m
+2026-03-18T09:00:08.667000+00:00,RDNT,exchange_removal_watch,exchange_catalyst_watch,-1,4.00000000,,,,,pending_15m
+2026-06-05T08:00:07.025000+00:00,NEAR,network_event_watch,exchange_catalyst_low_context,1,1.62954188,0.02495659,0.03860084,0.02495659,0.03860084,labeled
+2026-05-20T03:30:00+00:00,POL,network_event_watch,exchange_catalyst_low_context,1,1.41145377,-0.00084583,-0.00296039,-0.00084583,-0.00296039,labeled
+2026-04-08T04:00:00+00:00,POL,network_event_watch,exchange_catalyst_low_context,1,1.41145377,0.00000000,0.00000000,0.00000000,0.00000000,labeled

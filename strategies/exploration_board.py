@@ -29,6 +29,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _market_making_row(root),
         _options_volatility_row(root),
         _sector_rotation_row(root),
+        _exchange_catalyst_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
         _candidate_validation_row(root),
@@ -572,6 +573,54 @@ def _news_social_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="attention data is not yet joined to leakage-safe return labels",
         next_step="build event-to-return labels and add richer news/social sources",
+    )
+
+
+def _exchange_catalyst_row(root: Path) -> ExplorationRow:
+    label_path = root / "news_social" / "current_exchange_catalyst_forward_labels.csv"
+    best_label = _best_exchange_catalyst_forward_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="exchange_catalysts",
+            status="exchange_catalyst_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('symbol', '')}: {best_label.get('catalyst_kind', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_label.get('directional_return_1h', '')}, "
+                f"score={best_label.get('score', '')}"
+            ),
+            main_gap="exchange catalyst label is event-reactive and excludes costs, funding PnL, and latency",
+            next_step="repeat Binance listing/removal labels and join them to venue depth plus funding decay",
+        )
+    join_path = root / "news_social" / "current_exchange_catalyst_market_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        return ExplorationRow(
+            lane="exchange_catalysts",
+            status="exchange_catalyst_market_join",
+            strongest_current_signal=(
+                f"{best_join.get('symbol', '')}: {best_join.get('catalyst_kind', '')}, "
+                f"action={best_join.get('action', '')}, "
+                f"score={best_join.get('score', '')}"
+            ),
+            main_gap="exchange catalyst is not yet labeled against future returns",
+            next_step="label announcement reactions over 15m and 1h before promotion",
+        )
+    snapshot_path = root / "news_social" / "current_exchange_catalyst_snapshot.csv"
+    best_snapshot = _best_numeric_row(snapshot_path, key="score")
+    signal = "exchange catalyst snapshot is missing"
+    if best_snapshot:
+        signal = (
+            f"{best_snapshot.get('symbol', '')}: "
+            f"{best_snapshot.get('catalyst_kind', '')}, "
+            f"score={best_snapshot.get('score', '')}"
+        )
+    return ExplorationRow(
+        lane="exchange_catalysts",
+        status="exchange_catalyst_snapshot",
+        strongest_current_signal=signal,
+        main_gap="exchange announcements are not joined to tradable venues or labels",
+        next_step="join exchange catalysts to perp venue state and label event reactions",
     )
 
 
@@ -1153,6 +1202,27 @@ def _best_paper_outcome_row(path: Path) -> dict[str, str] | None:
 
 
 def _best_attention_forward_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("score") or "0"),
+            float(row.get("directional_return_1h") or "-inf"),
+        ),
+    )
+
+
+def _best_exchange_catalyst_forward_label_row(path: Path) -> dict[str, str] | None:
     if not path.exists():
         return None
     with path.open(newline="", encoding="utf-8") as handle:
