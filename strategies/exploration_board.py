@@ -99,6 +99,21 @@ def _crypto_market_structure_row(root: Path) -> ExplorationRow:
 
 
 def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
+    execution_check_path = root / "cross_exchange_funding" / "current_dislocation_execution_check.csv"
+    best_execution_check = _best_execution_check_row(execution_check_path)
+    if best_execution_check:
+        return ExplorationRow(
+            lane="cross_exchange_funding",
+            status="execution_assumption_gate",
+            strongest_current_signal=(
+                f"{best_execution_check.get('asset', '')}: "
+                f"{best_execution_check.get('action', '')}, "
+                f"fee={best_execution_check.get('fee_bps_per_fill_per_venue', '')}bps/fill/venue, "
+                f"conservative_net24={best_execution_check.get('conservative_taker_net_24h', '')}"
+            ),
+            main_gap="real account fees, fills, margin, collateral movement, and liquidation buffer are unvalidated",
+            next_step="run longer STABLE monitoring and validate real fee/fill/margin assumptions before paper trading",
+        )
     monitor_path = root / "cross_exchange_funding" / "current_dislocation_monitor_summary.csv"
     best_monitor = _best_monitor_row(monitor_path)
     if best_monitor:
@@ -342,6 +357,32 @@ def _best_monitor_row(path: Path) -> dict[str, str] | None:
             float(row.get("positive_net_24h_rate") or "0"),
             float(row.get("mean_net_24h_proxy") or "0"),
             float(row.get("mean_annualized_edge") or "0"),
+        ),
+    )
+
+
+def _best_execution_check_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    priority = {
+        "conservative_taker_monitor": 2,
+        "fee_only_monitor": 1,
+        "blocked": 0,
+    }
+    actionable_rows = tuple(row for row in rows if priority.get(row.get("action", ""), 0) > 0)
+    if not actionable_rows:
+        return None
+    return max(
+        actionable_rows,
+        key=lambda row: (
+            priority.get(row.get("action", ""), 0),
+            float(row.get("fee_bps_per_fill_per_venue") or "0"),
+            float(row.get("conservative_taker_net_24h") or "-inf"),
+            float(row.get("fee_only_net_24h") or "0"),
         ),
     )
 

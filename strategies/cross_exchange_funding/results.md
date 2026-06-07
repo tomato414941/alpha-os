@@ -86,6 +86,39 @@ Interpretation:
 - The next gate is not another ranking screen. It is fee/fill/margin validation
   for `STABLE`, plus longer scheduled monitoring.
 
+## Current Dislocation Execution Check
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints --asset STABLE --paper-notional 1000
+uv run python -m strategies.cross_exchange_funding.okx_hl_book_depth --asset STABLE --okx-target-notional 1000 --hl-target-notional 1000 --okx-side buy --hl-side sell
+uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check
+```
+
+This is an execution-assumption gate for the current `STABLE` monitor candidate.
+It is not a trade instruction and does not use account-specific fee tiers.
+
+Latest check:
+
+| asset | fee bps/fill/venue | mean net24 | taker slippage bps | fee-only net24 | conservative taker net24 | action |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| STABLE | 0.000000 | 0.002103 | 11.294032 | 0.002103 | 0.000974 | conservative_taker_monitor |
+| STABLE | 0.250000 | 0.002103 | 11.294032 | 0.002003 | 0.000874 | conservative_taker_monitor |
+| STABLE | 0.500000 | 0.002103 | 11.294032 | 0.001903 | 0.000774 | conservative_taker_monitor |
+| STABLE | 1.000000 | 0.002103 | 11.294032 | 0.001703 | 0.000574 | conservative_taker_monitor |
+| STABLE | 2.000000 | 0.002103 | 11.294032 | 0.001303 | 0.000174 | conservative_taker_monitor |
+
+Interpretation:
+
+- `STABLE` passes public instrument sizing for a 1000 USDT paper shape.
+- Visible taker depth fills both legs, but consumes multiple levels and about
+  11.29 bps combined.
+- The 24h proxy survives the conservative visible-taker check through
+  `2.0` bps per fill per venue in this snapshot.
+- The next unresolved gates are real account fees, real fill behavior, margin,
+  collateral movement, liquidation buffer, and longer scheduled persistence.
+
 ## Current Funding Spread Snapshot
 
 The spread is normalized to an hourly rate before annualization. The intended

@@ -1,16 +1,16 @@
 # OKX-Hyperliquid Book Depth
 
-Generated: `2026-06-07T12:11:18.145192+00:00`
+Generated: `2026-06-07T14:32:42.461077+00:00`
 
 This is not an order instruction. It checks taker depth for the paper size.
 
 | venue | side | target notional | top level notional | avg fill | slippage bps | levels | full |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| OkxSwap | buy | 995.58645 | 275099.24052 | 62279.1 | 0.00802838 | 1 | True |
-| HlPerp | sell | 999.969535 | 288224.46108 | 62292 | 0.08026713 | 1 | True |
+| OkxSwap | buy | 1000 | 104.935 | 0.03386587 | 6.16586322 | 3 | True |
+| HlPerp | sell | 1000 | 246.145465 | 0.03388013 | 5.12816838 | 3 | True |
 
-- Combined taker slippage bps: `0.08829551`
-- Notes: paper size fits inside the top visible level on both venues
+- Combined taker slippage bps: `11.2940316`
+- Notes: paper size fills, but consumes multiple visible levels
 
 ## Interpretation
 

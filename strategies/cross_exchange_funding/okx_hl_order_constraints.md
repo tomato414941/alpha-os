@@ -1,36 +1,36 @@
 # OKX-Hyperliquid Order Constraints
 
-Generated: `2026-06-07T12:00:03.921873+00:00`
+Generated: `2026-06-07T14:32:42.335984+00:00`
 
 This is not an order instruction. It is a paper order-shape check.
 
 ## Candidate
 
-- Asset: `BTC`
+- Asset: `STABLE`
 - Paper notional: `1000` USDT
 - Long venue: `OkxSwap`
 - Short venue: `HlPerp`
 
 ## OKX Leg
 
-- Instrument: `BTC-USDT-SWAP`
-- Raw contracts: `1.597048654087246767972786291`
-- Rounded contracts: `1.59`
-- Rounded notional: `995.58645` USDT
-- Min size: `0.01`
-- Lot size: `0.01`
-- Tick size: `0.1`
-- Max leverage: `100`
+- Instrument: `STABLE-USDT-SWAP`
+- Raw contracts: `295.0113579372805853025341476`
+- Rounded contracts: `295`
+- Rounded notional: `999.9615` USDT
+- Min size: `1`
+- Lot size: `1`
+- Tick size: `0.00001`
+- Max leverage: `20`
 - Size valid: `True`
 
 ## Hyperliquid Leg
 
-- Raw size: `0.01597048654087246767972786291` BTC
-- Rounded size: `0.01597` BTC
-- Rounded notional: `999.969535` USDT
-- Size decimals: `5`
-- Max leverage: `40`
-- Day notional volume: `2233407017.6160302162` USDT
+- Raw size: `29501.13579372805853025341476` STABLE
+- Rounded size: `29501` STABLE
+- Rounded notional: `999.995397` USDT
+- Size decimals: `0`
+- Max leverage: `3`
+- Day notional volume: `1183700.5671269991` USDT
 - Size valid: `True`
 
 ## Still Unknown

@@ -26,6 +26,7 @@ uv run python -m strategies.cross_exchange_funding.current_funding_feasibility
 uv run python -m strategies.cross_exchange_funding.current_okx_hl_funding_spread
 uv run python -m strategies.cross_exchange_funding.current_dislocation_watchlist
 uv run python -m strategies.cross_exchange_funding.current_dislocation_monitor
+uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check
 uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_probe
 uv run python -m strategies.cross_exchange_funding.okx_hl_paper_ticket
 uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints
@@ -43,6 +44,9 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_fee_ceiling
 uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
 uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate_sensitivity
+uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints --asset STABLE --paper-notional 1000
+uv run python -m strategies.cross_exchange_funding.okx_hl_book_depth --asset STABLE --okx-target-notional 1000 --hl-target-notional 1000 --okx-side buy --hl-side sell
+uv run python -m strategies.cross_exchange_funding.current_dislocation_execution_check
 ```
 
 Focused OKX-Hyperliquid monitor:

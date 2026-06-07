@@ -115,7 +115,7 @@ def write_order_constraints_csv(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "generated_at",
@@ -193,8 +193,8 @@ def write_order_constraints_md(
         handle.write(f"- Max leverage: `{_fmt(constraints.okx_max_leverage)}`\n")
         handle.write(f"- Size valid: `{constraints.okx_size_valid}`\n\n")
         handle.write("## Hyperliquid Leg\n\n")
-        handle.write(f"- Raw size: `{_fmt(constraints.hl_size)}` BTC\n")
-        handle.write(f"- Rounded size: `{_fmt(constraints.hl_size_rounded)}` BTC\n")
+        handle.write(f"- Raw size: `{_fmt(constraints.hl_size)}` {constraints.asset}\n")
+        handle.write(f"- Rounded size: `{_fmt(constraints.hl_size_rounded)}` {constraints.asset}\n")
         handle.write(f"- Rounded notional: `{_fmt(constraints.hl_notional_rounded)}` USDT\n")
         handle.write(f"- Size decimals: `{constraints.hl_size_decimals}`\n")
         handle.write(f"- Max leverage: `{_fmt(constraints.hl_max_leverage)}`\n")
