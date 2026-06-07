@@ -806,6 +806,21 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    regime_path = root / "institutional_flow" / "btc_etf_flow_regime_summary.csv"
+    best_regime = _best_btc_etf_flow_regime_row(regime_path)
+    if best_regime:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status="btc_etf_flow_regime_candidate",
+            strongest_current_signal=(
+                f"{best_regime.get('group_key', '')}: "
+                f"obs={best_regime.get('observations', '')}, "
+                f"mean_dir5={best_regime.get('mean_directional_5d', '')}, "
+                f"hit5={best_regime.get('hit_rate_5d', '')}"
+            ),
+            main_gap="ETF flow regime labels exclude funding PnL, intraday timing, and market-regime OOS splits",
+            next_step="test large 5d ETF outflow and ETF distribution regimes against perp funding alignment and drawdown filters",
+        )
     label_path = root / "institutional_flow" / "btc_etf_flow_forward_labels.csv"
     label_summary = _btc_etf_flow_label_summary(label_path)
     if label_summary:
@@ -876,6 +891,23 @@ def _btc_etf_flow_label_summary(path: Path) -> dict[str, float | str] | None:
         "hit_rate_5d": sum(1.0 for value in dir_5d if value > 0.0) / len(dir_5d),
         "latest_action": latest.get("action", ""),
     }
+
+
+def _best_btc_etf_flow_regime_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    candidates = tuple(row for row in rows if row.get("action") == "regime_candidate")
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda row: (
+            float(row.get("mean_directional_5d") or "0"),
+            float(row.get("hit_rate_5d") or "0"),
+        ),
+    )
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:

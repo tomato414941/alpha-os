@@ -24,3 +24,18 @@ Current read:
   transaction costs, and regime splits.
 - The next useful test is whether ETF flow improves after splitting by perp
   funding alignment/divergence and large-flow thresholds.
+
+Regime split:
+
+- `large_5d_outflow`: observations 53, mean directional 5d 0.03437137,
+  hit rate 0.7170.
+- `btc_etf_distribution_label`: observations 89, mean directional 5d
+  0.01862256, hit rate 0.5843.
+- `btc_etf_inflow_context_label`: observations 139, mean directional 5d
+  0.01637483, hit rate 0.6187.
+- `large_5d_inflow`: observations 226, mean directional 5d 0.01522096,
+  hit rate 0.5796.
+
+Current best candidate is not "ETF flow always works". It is that large
+rolling ETF outflow, treated as short BTC regime context, has the strongest
+5-day directional label in this first pass.
