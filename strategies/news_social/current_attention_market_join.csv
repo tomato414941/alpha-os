@@ -1,0 +1,2 @@
+symbol,name,attention_rank,attention_24h_change,annualized_funding,mark_oracle_diff,impact_spread,carry_reversion_action,carry_reversion_observations,carry_reversion_score,action,score,reason
+AERO,Aerodrome Finance,14,3.82589479,-0.28846768,-0.001182714177,0.001645565777,long_carry_reversion_watch,6,11.42786646,attention_carry_reversion_watch,20.60542420,trending asset overlaps with persistent carry/reversion perp state

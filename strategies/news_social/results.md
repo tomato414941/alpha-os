@@ -6,6 +6,7 @@ Run:
 
 ```bash
 uv run python -m strategies.news_social.current_attention_snapshot
+uv run python -m strategies.news_social.current_attention_market_join
 ```
 
 Interpretation:
@@ -29,3 +30,15 @@ This gives the project a non-price attention input. The next step is to label
 whether attention spikes lead, lag, or merely coincide with returns and funding
 states.
 
+## Attention Market Join
+
+This joins CoinGecko trending assets to current Hyperliquid perp market state.
+
+| symbol | name | rank | 24h change | funding | mark/oracle | carry action | obs | score | reason |
+| --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
+| AERO | Aerodrome Finance | 14 | 3.8259 | -0.288468 | -0.001183 | long_carry_reversion_watch | 6 | 20.605424 | trending asset overlaps with persistent carry/reversion perp state |
+
+Interpretation:
+
+- `AERO` currently overlaps attention and persistent perp carry/reversion state.
+- This is not yet a strategy. It needs future-return labels and execution checks.

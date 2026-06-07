@@ -11,6 +11,7 @@ The first probe is intentionally broad and simple:
 
 ```bash
 uv run python -m strategies.news_social.current_attention_snapshot
+uv run python -m strategies.news_social.current_attention_market_join
 ```
 
 ## Current Status
@@ -18,4 +19,3 @@ uv run python -m strategies.news_social.current_attention_snapshot
 This is not yet a news strategy. It does not read headlines or social posts.
 It only creates a timestamped attention snapshot that can later be joined to
 returns, funding, liquidity, and execution feasibility.
-

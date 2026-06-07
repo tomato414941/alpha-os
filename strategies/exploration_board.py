@@ -273,6 +273,22 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    join_path = root / "news_social" / "current_attention_market_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        signal = (
+            f"{best_join.get('symbol', '')}: {best_join.get('action', '')}, "
+            f"rank={best_join.get('attention_rank', '')}, "
+            f"change={best_join.get('attention_24h_change', '')}, "
+            f"carry_score={best_join.get('carry_reversion_score', '')}"
+        )
+        return ExplorationRow(
+            lane="news_social",
+            status="attention_market_join",
+            strongest_current_signal=signal,
+            main_gap="attention/perp overlap is not yet labeled against future returns",
+            next_step="label AERO and other overlap candidates for subsequent return and funding decay",
+        )
     path = root / "news_social" / "current_attention_snapshot.csv"
     fear = _row_by_value(path, field="source", value="alternative_me_fear_greed")
     trend = _row_by_value(path, field="source", value="coingecko_trending")
