@@ -1,0 +1,122 @@
+asset,lanes,positive_labels,negative_labels,pending_labels,lead_score,note
+IP,hl_candidate_label;okx_pressure,hl15=0.0160;okx_pressure15=0.0016,,,3.0182,first labels support follow-up
+MEGA,hl_candidate_label,hl15=0.0178,,,2.8916,first labels support follow-up
+WLD,hl_candidate_label;okx_pressure;okx_liquidation,hl15=0.0197,okx_pressure15=-0.0028;liq_cont15=-0.0016,,2.8362,mixed evidence; isolate which source is real
+EDEN,okx_pressure;okx_liquidation,liq_cont15=0.0057,okx_pressure15=-0.0055,,2.7546,mixed evidence; isolate which source is real
+ALLO,okx_pressure;okx_liquidation,liq_cont15=0.0198,okx_pressure15=-0.0052,,2.7293,mixed evidence; isolate which source is real
+XMR,hl_candidate_label,hl15=0.0111,,,2.5530,first labels support follow-up
+H,okx_pressure;okx_liquidation,okx_pressure15=0.0006;liq_cont15=0.0131,,,2.3700,first labels support follow-up
+ZORA,hl_candidate_label,hl15=0.0055,,,2.2743,first labels support follow-up
+HOME,okx_pressure;okx_liquidation,okx_pressure15=0.0035,liq_cont15=-0.0032,,2.1918,mixed evidence; isolate which source is real
+KAITO,hl_candidate_label,hl15=0.0038,,,2.1882,first labels support follow-up
+ZRO,hl_candidate_label;okx_pressure,hl15=0.0013;okx_pressure15=0.0011,,,2.1842,first labels support follow-up
+AIXBT,hl_candidate_label,hl15=0.0032,,,2.1603,first labels support follow-up
+APEX,hl_candidate_label,hl15=0.0030,,,2.1524,first labels support follow-up
+BSV,hl_candidate_label,hl15=0.0017,,,2.0874,first labels support follow-up
+SAGA,hl_candidate_label,hl15=0.0007,,,2.0365,first labels support follow-up
+PEPE,okx_pressure;okx_liquidation,okx_pressure15=0.0018;liq_cont15=0.0033,,,1.5093,first labels support follow-up
+BEAT,okx_pressure;okx_liquidation,liq_cont15=0.0065,okx_pressure15=-0.0048,,1.4751,mixed evidence; isolate which source is real
+NEAR,okx_pressure;okx_liquidation,okx_pressure15=0.0029;liq_cont15=0.0015,,,1.4397,first labels support follow-up
+SOL,okx_pressure;okx_liquidation,okx_pressure15=0.0012;liq_cont15=0.0017,,,1.3670,first labels support follow-up
+TON,okx_pressure;okx_liquidation,okx_pressure15=0.0006;liq_cont15=0.0030,,,1.3579,first labels support follow-up
+LAB,okx_pressure;okx_liquidation,liq_cont15=0.0046,okx_pressure15=-0.0027,,1.3554,mixed evidence; isolate which source is real
+HYPE,okx_pressure;okx_liquidation,okx_pressure15=0.0010;liq_cont15=0.0024,,,1.3405,first labels support follow-up
+LTC,okx_pressure;okx_liquidation,okx_pressure15=0.0002;liq_cont15=0.0026,,,1.2959,first labels support follow-up
+XRP,okx_pressure;okx_liquidation,okx_pressure15=0.0009;liq_cont15=0.0018,,,1.2862,first labels support follow-up
+ETH,okx_pressure;okx_liquidation,okx_pressure15=0.0013;liq_cont15=0.0010,,,1.2590,first labels support follow-up
+DOGE,okx_pressure;okx_liquidation,liq_cont15=0.0020,okx_pressure15=-0.0007,,1.1798,mixed evidence; isolate which source is real
+PUMP,okx_pressure;okx_liquidation,liq_cont15=0.0020,okx_pressure15=-0.0007,,1.1715,mixed evidence; isolate which source is real
+ONDO,okx_pressure;okx_liquidation,liq_cont15=0.0003,okx_pressure15=-0.0003,,1.0189,mixed evidence; isolate which source is real
+BTC,okx_pressure;okx_liquidation,liq_cont15=0.0009,okx_pressure15=-0.0017,,1.0105,mixed evidence; isolate which source is real
+BNB,okx_pressure;okx_liquidation,liq_cont15=0.0005,okx_pressure15=-0.0015,,0.9779,mixed evidence; isolate which source is real
+JTO,okx_pressure;okx_liquidation,okx_pressure15=0.0073,liq_cont15=-0.0039,,0.5327,mixed evidence; isolate which source is real
+MU,okx_pressure,,okx_pressure15=-0.0003,,0.5288,current short labels are weak
+BILL,okx_pressure,okx_pressure15=0.0040,,,0.4353,first labels support follow-up
+LIT,okx_pressure,okx_pressure15=0.0029,,,0.3006,first labels support follow-up
+OPG,okx_pressure,okx_pressure15=0.0028,,,0.2911,first labels support follow-up
+DRAM,okx_pressure,,okx_pressure15=-0.0012,,0.2793,current short labels are weak
+PENGU,okx_pressure,okx_pressure15=0.0025,,,0.2595,first labels support follow-up
+USELESS,okx_pressure,okx_pressure15=0.0025,,,0.2565,first labels support follow-up
+OPN,okx_pressure;okx_liquidation,okx_pressure15=0.0030,liq_cont15=-0.0023,,0.2460,mixed evidence; isolate which source is real
+BABY,hl_candidate_label;okx_pressure,okx_pressure15=0.0019,hl15=-0.0011,,0.2377,mixed evidence; isolate which source is real
+AVAX,okx_pressure,okx_pressure15=0.0021,,,0.2354,first labels support follow-up
+QQQ,okx_pressure,,okx_pressure15=-0.0002,,0.2183,current short labels are weak
+CHZ,okx_pressure,okx_pressure15=0.0016,,,0.1644,first labels support follow-up
+AAVE,okx_pressure,okx_pressure15=0.0014,,,0.1486,first labels support follow-up
+TAO,okx_pressure,okx_pressure15=0.0014,,,0.1435,first labels support follow-up
+SNDK,okx_pressure,,okx_pressure15=-0.0003,,0.1329,current short labels are weak
+DOT,okx_pressure,okx_pressure15=0.0010,,,0.1226,first labels support follow-up
+VIRTUAL,okx_pressure,okx_pressure15=0.0009,,,0.1139,first labels support follow-up
+SHIB,okx_pressure,okx_pressure15=0.0011,,,0.1087,first labels support follow-up
+MRVL,okx_pressure,okx_pressure15=0.0007,,,0.1017,first labels support follow-up
+ETC,okx_pressure,okx_pressure15=0.0009,,,0.0892,first labels support follow-up
+TRUMP,hl_candidate_label;okx_pressure,okx_pressure15=0.0012,hl15=-0.0017,,0.0890,mixed evidence; isolate which source is real
+TRX,okx_pressure,okx_pressure15=0.0003,,,0.0809,first labels support follow-up
+FIL,okx_pressure,okx_pressure15=0.0006,,,0.0798,first labels support follow-up
+WLFI,okx_pressure,okx_pressure15=0.0007,,,0.0773,first labels support follow-up
+UB,okx_pressure,okx_pressure15=0.0005,,,0.0710,first labels support follow-up
+NVDA,okx_pressure,okx_pressure15=0.0003,,,0.0662,first labels support follow-up
+CC,okx_pressure,okx_pressure15=0.0006,,,0.0643,first labels support follow-up
+SLX,okx_pressure,okx_pressure15=0.0006,,,0.0639,first labels support follow-up
+BCH,okx_pressure,okx_pressure15=0.0004,,,0.0563,first labels support follow-up
+ZEC,okx_pressure;okx_liquidation,,okx_pressure15=-0.0018;liq_cont15=-0.0001,,0.0510,current short labels are weak
+XLM,okx_pressure;okx_liquidation,okx_pressure15=0.0010,liq_cont15=-0.0015,,0.0418,mixed evidence; isolate which source is real
+NIGHT,okx_pressure,okx_pressure15=0.0003,,,0.0387,first labels support follow-up
+BIO,hl_candidate_label;okx_pressure,okx_pressure15=0.0021,hl15=-0.0078,,0.0373,mixed evidence; isolate which source is real
+TIA,okx_pressure,okx_pressure15=0.0003,,,0.0350,first labels support follow-up
+ADA,okx_pressure,,okx_pressure15=0.0000,,0.0313,current short labels are weak
+RAVE,okx_pressure,,okx_pressure15=-0.0003,,0.0282,current short labels are weak
+CL,okx_pressure,,okx_pressure15=-0.0005,,0.0146,current short labels are weak
+ICP,okx_pressure,,okx_pressure15=-0.0000,,0.0110,current short labels are weak
+AI,okx_pressure,,okx_pressure15=-0.0000,,0.0085,current short labels are weak
+OP,hl_candidate_label;okx_pressure,,hl15=-0.0001;okx_pressure15=0.0000,,0.0060,current short labels are weak
+FARTCOIN,okx_pressure,,okx_pressure15=-0.0000,,0.0045,current short labels are weak
+UMA,hl_candidate_label,,,hl15,0.0000,waiting for elapsed labels
+XAU,okx_pressure,,,okx_pressure15,-0.0000,waiting for elapsed labels
+BZ,okx_pressure,,,okx_pressure15,-0.0000,waiting for elapsed labels
+SPCX,okx_pressure,,,okx_pressure15,-0.0000,waiting for elapsed labels
+CRCL,okx_pressure,,,okx_pressure15,-0.0000,waiting for elapsed labels
+INJ,okx_pressure,,okx_pressure15=-0.0006,,-0.0019,current short labels are weak
+APE,okx_pressure,,okx_pressure15=-0.0002,,-0.0038,current short labels are weak
+UNI,okx_pressure,,okx_pressure15=-0.0004,,-0.0057,current short labels are weak
+JUP,hl_candidate_label,,hl15=-0.0004,,-0.0096,current short labels are weak
+ETHFI,okx_pressure,,okx_pressure15=-0.0003,,-0.0114,current short labels are weak
+GALA,okx_pressure,,okx_pressure15=-0.0004,,-0.0127,current short labels are weak
+XAG,okx_pressure,,okx_pressure15=-0.0004,,-0.0140,current short labels are weak
+SNX,hl_candidate_label,,hl15=-0.0006,,-0.0145,current short labels are weak
+ENA,okx_pressure,,okx_pressure15=-0.0003,,-0.0156,current short labels are weak
+PURR,hl_candidate_label,,hl15=-0.0007,,-0.0187,current short labels are weak
+MON,hl_candidate_label;okx_pressure,,hl15=-0.0029;okx_pressure15=-0.0004,,-0.0203,current short labels are weak
+RESOLV,okx_pressure,,okx_pressure15=-0.0006,,-0.0223,current short labels are weak
+WIF,okx_pressure,,okx_pressure15=-0.0006,,-0.0264,current short labels are weak
+ARB,okx_pressure,,okx_pressure15=-0.0006,,-0.0302,current short labels are weak
+PI,okx_pressure,,okx_pressure15=-0.0008,,-0.0341,current short labels are weak
+POPCAT,hl_candidate_label,,hl15=-0.0014,,-0.0343,current short labels are weak
+LINK,okx_pressure,,okx_pressure15=-0.0009,,-0.0358,current short labels are weak
+HBAR,okx_pressure,,okx_pressure15=-0.0007,,-0.0364,current short labels are weak
+OKB,okx_pressure,,okx_pressure15=-0.0008,,-0.0383,current short labels are weak
+BASED,okx_pressure,,okx_pressure15=-0.0010,,-0.0442,current short labels are weak
+AERO,hl_candidate_label,,hl15=-0.0018,,-0.0447,current short labels are weak
+MEME,okx_pressure,,okx_pressure15=-0.0011,,-0.0520,current short labels are weak
+ASTER,okx_pressure,,okx_pressure15=-0.0011,,-0.0523,current short labels are weak
+ATOM,hl_candidate_label,,hl15=-0.0022,,-0.0548,current short labels are weak
+RENDER,okx_pressure,,okx_pressure15=-0.0012,,-0.0573,current short labels are weak
+XPL,okx_pressure,,okx_pressure15=-0.0013,,-0.0614,current short labels are weak
+ORDI,okx_pressure,,okx_pressure15=-0.0013,,-0.0624,current short labels are weak
+APT,okx_pressure,,okx_pressure15=-0.0013,,-0.0632,current short labels are weak
+CRV,okx_pressure,,okx_pressure15=-0.0016,,-0.0692,current short labels are weak
+HEMI,hl_candidate_label,,hl15=-0.0029,,-0.0715,current short labels are weak
+SUI,okx_pressure;okx_liquidation,,okx_pressure15=-0.0011;liq_cont15=-0.0008,,-0.0809,current short labels are weak
+STABLE,hl_candidate_label,,hl15=-0.0017;hl15=-0.0018,,-0.0869,current short labels are weak
+XAI,hl_candidate_label,,hl15=-0.0038,,-0.0949,current short labels are weak
+SEI,hl_candidate_label,,hl15=-0.0043,,-0.1070,current short labels are weak
+MORPHO,hl_candidate_label,,hl15=-0.0043,,-0.1083,current short labels are weak
+SAHARA,okx_pressure,,okx_pressure15=-0.0040,,-0.1178,current short labels are weak
+STBL,hl_candidate_label,,hl15=-0.0059,,-0.1481,current short labels are weak
+DASH,okx_pressure,,okx_pressure15=-0.0032,,-0.1594,current short labels are weak
+UP,okx_pressure,,okx_pressure15=-0.0035,,-0.1682,current short labels are weak
+SOXL,okx_pressure,,okx_pressure15=-0.0054,,-0.1911,current short labels are weak
+OFC,okx_pressure,,okx_pressure15=-0.0059,,-0.2896,current short labels are weak
+PARTI,okx_pressure,,okx_pressure15=-0.0072,,-0.3548,current short labels are weak
+GIGGLE,okx_pressure,,okx_pressure15=-0.0113,,-0.5595,current short labels are weak
+BSB,okx_pressure;okx_liquidation,,okx_pressure15=-0.0306,liq_cont15,-0.9527,current short labels are weak

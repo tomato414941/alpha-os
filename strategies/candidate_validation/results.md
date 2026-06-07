@@ -12,6 +12,7 @@ Run:
 ```bash
 uv run python -m strategies.candidate_validation.current_hl_candidate_return_context
 uv run python -m strategies.candidate_validation.current_hl_signal_forward_labels
+uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
 ```
 
 This is not a causal alpha test. It keeps current candidates connected to
@@ -63,3 +64,30 @@ Interpretation:
   price label does not currently support them.
 - 1h labels have zero coverage because enough time had not elapsed for these
   sample timestamps when this was run.
+
+## Current Cross-Lane Candidate Review
+
+This consolidates current candidate screens and first short-horizon labels. It
+is a triage board, not a deployable strategy ranking.
+
+| asset | score | lanes | positive labels | negative labels | pending labels | note |
+| --- | ---: | --- | --- | --- | --- | --- |
+| IP | 3.0182 | hl_candidate_label; okx_pressure | hl15=0.0160; okx_pressure15=0.0016 |  |  | first labels support follow-up |
+| MEGA | 2.8916 | hl_candidate_label | hl15=0.0178 |  |  | first labels support follow-up |
+| WLD | 2.8362 | hl_candidate_label; okx_pressure; okx_liquidation | hl15=0.0197 | okx_pressure15=-0.0028; liq_cont15=-0.0016 |  | mixed evidence; isolate which source is real |
+| EDEN | 2.7546 | okx_pressure; okx_liquidation | liq_cont15=0.0057 | okx_pressure15=-0.0055 |  | mixed evidence; isolate which source is real |
+| ALLO | 2.7293 | okx_pressure; okx_liquidation | liq_cont15=0.0198 | okx_pressure15=-0.0052 |  | mixed evidence; isolate which source is real |
+| XMR | 2.5530 | hl_candidate_label | hl15=0.0111 |  |  | first labels support follow-up |
+| H | 2.3700 | okx_pressure; okx_liquidation | okx_pressure15=0.0006; liq_cont15=0.0131 |  |  | first labels support follow-up |
+| ZORA | 2.2743 | hl_candidate_label | hl15=0.0055 |  |  | first labels support follow-up |
+| HOME | 2.1918 | okx_pressure; okx_liquidation | okx_pressure15=0.0035 | liq_cont15=-0.0032 |  | mixed evidence; isolate which source is real |
+| ZRO | 2.1842 | hl_candidate_label; okx_pressure | hl15=0.0013; okx_pressure15=0.0011 |  |  | first labels support follow-up |
+
+Interpretation:
+
+- `IP` is the cleanest current follow-up because both HL forward label and OKX
+  pressure label support it.
+- `WLD` is important but mixed: it has the strongest HL candidate label while
+  latest OKX pressure and liquidation labels are negative.
+- `HOME`, `EDEN`, and `ALLO` remain interesting, but they are source-specific
+  and currently mixed.

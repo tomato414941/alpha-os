@@ -397,6 +397,21 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    review_path = root / "candidate_validation" / "current_cross_lane_candidate_review.csv"
+    best_review = _best_numeric_row(review_path, key="lead_score")
+    if best_review:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="cross_lane_review",
+            strongest_current_signal=(
+                f"{best_review.get('asset', '')}: score={best_review.get('lead_score', '')}, "
+                f"lanes={best_review.get('lanes', '')}, "
+                f"positive={best_review.get('positive_labels', '')}, "
+                f"negative={best_review.get('negative_labels', '')}"
+            ),
+            main_gap="cross-lane score is still a triage heuristic, not a PnL model or execution test",
+            next_step="turn IP/WLD/HOME/EDEN follow-ups into repeated labels with fees, funding, and venue depth",
+        )
     label_path = root / "candidate_validation" / "current_hl_signal_forward_label_summary.csv"
     best_label = _best_forward_label_row(label_path)
     if best_label:

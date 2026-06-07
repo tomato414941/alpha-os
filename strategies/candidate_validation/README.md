@@ -11,4 +11,5 @@ from realized market behavior.
 ```bash
 uv run python -m strategies.candidate_validation.current_hl_candidate_return_context
 uv run python -m strategies.candidate_validation.current_hl_signal_forward_labels
+uv run python -m strategies.candidate_validation.current_cross_lane_candidate_review
 ```
