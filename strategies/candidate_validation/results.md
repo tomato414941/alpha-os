@@ -84,23 +84,26 @@ is a triage board, not a deployable strategy ranking.
 | WLD | 7.0571 | hl_candidate_label; okx_pressure; okx_liquidation | hl15=0.0197; okx_pressure15=0.0247; liq_cont15=0.0273 |  |  | first labels support follow-up |
 | MEGA | 2.8916 | hl_candidate_label | hl15=0.0178 |  |  | first labels support follow-up |
 | IP | 2.8166 | hl_candidate_label; okx_pressure | hl15=0.0160 | okx_pressure15=-0.0009 |  | mixed evidence; isolate which source is real |
-| BTC | 2.6072 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020 | okx_pressure15=-0.0021 | l2_imbalance15 | mixed evidence; isolate which source is real |
+| BTC | 2.6217 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020; l2_imbalance15=0.0001 | okx_pressure15=-0.0021 |  | mixed evidence; isolate which source is real |
 | ALLO | 2.5965 | okx_pressure; okx_liquidation | liq_cont15=0.0198 | okx_pressure15=-0.0078 |  | mixed evidence; isolate which source is real |
 | XMR | 2.5530 | hl_candidate_label | hl15=0.0111 |  |  | first labels support follow-up |
+| JTO | 2.4579 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0003; l2_imbalance15=0.0125 | okx_pressure15=-0.0010 |  | mixed evidence; isolate which source is real |
 | HOME | 2.3356 | okx_pressure; okx_liquidation | okx_pressure15=0.0070 | liq_cont15=-0.0074 |  | mixed evidence; isolate which source is real |
 | H | 2.2846 | okx_pressure; okx_liquidation | liq_cont15=0.0131 | okx_pressure15=-0.0005 |  | mixed evidence; isolate which source is real |
-| SOL | 2.2834 | okx_pressure; okx_liquidation; l2_imbalance_monitor | okx_pressure15=0.0031; liq_cont15=0.0017 |  | l2_imbalance15 | first labels support follow-up |
 | ZORA | 2.2743 | hl_candidate_label | hl15=0.0055 |  |  | first labels support follow-up |
-| ONDO | 2.0986 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020 | okx_pressure15=-0.0029 | l2_imbalance15 | mixed evidence; isolate which source is real |
+| SOL | 2.1187 | okx_pressure; okx_liquidation; l2_imbalance_monitor | okx_pressure15=0.0031; liq_cont15=0.0017 | l2_imbalance15=-0.0033 |  | mixed evidence; isolate which source is real |
+| ONDO | 1.8698 | okx_pressure; okx_liquidation; l2_imbalance_monitor | liq_cont15=0.0020 | okx_pressure15=-0.0029; l2_imbalance15=-0.0046 |  | mixed evidence; isolate which source is real |
 
 Interpretation:
 
 - `WLD` is now the cleanest current follow-up because HL forward label, OKX
   pressure label, and OKX liquidation continuation label all support it.
-- `SOL` is the cleanest L2-added follow-up because existing OKX pressure and
-  liquidation labels are positive while the L2 label is still pending.
-- `BTC` and `ONDO` are important but mixed: L2 monitor is pending, while one of
-  the existing short labels is negative.
+- `JTO` is the strongest L2-added cross-lane follow-up, but it is mixed because
+  OKX pressure is negative.
+- `BTC` has a positive L2 label, but it is tiny; it should be a control rather
+  than a lead.
+- `SOL` and `ONDO` were promising from monitor/cross-lane context, but their
+  L2 direction-aware labels are negative.
 
 ## Current Signal Family Review
 
@@ -116,8 +119,8 @@ signal is currently showing support, not only which asset is on top.
 | hl_candidate:perp_carry_reversion:short_carry_reversion_watch | 30 | 30 | 0.000858 | 0.433333 | 0.011059 | -0.005924 | 0.000000 | positive mean but weak hit rate |
 | okx_pressure:short_carry_watch | 45 | 45 | -0.001622 | 0.200000 | 0.008225 | -0.010693 | 0.000000 | not supported by first labels |
 | okx_pressure:short_carry_premium_watch | 13 | 13 | -0.002705 | 0.230769 | 0.009967 | -0.013383 | 0.000000 | not supported by first labels |
-| l2_imbalance:visible_book_imbalance | 23 | 0 |  |  |  |  | 0.000000 | waiting for elapsed labels |
 | okx_liquidation:long_liquidation_cascade_watch | 8 | 8 | -0.001233 | 0.375000 | 0.002599 | -0.007351 | 0.000000 | not supported by first labels |
+| l2_imbalance:visible_book_imbalance | 23 | 23 | -0.001173 | 0.391304 | 0.012475 | -0.015156 | 0.000000 | not supported by first labels |
 
 Interpretation:
 
@@ -125,6 +128,6 @@ Interpretation:
   17 covered labels, 0.88 hit rate, and positive mean 15m continuation.
 - `long_carry_discount_watch` also has initial support, but the average label
   is much smaller.
-- `visible_book_imbalance` is now tracked as a signal family, but all current
-  labels are still pending.
+- `visible_book_imbalance` is now labeled and is not supported as a broad
+  family on this first snapshot: negative mean and 0.39 hit rate.
 - The current short-side carry families are not supported by first labels.

@@ -251,6 +251,11 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
     paper_outcome_path = root / "liquidation_flow" / "current_okx_liquidation_paper_outcome.csv"
     best_outcome = _best_paper_outcome_row(paper_outcome_path)
     if best_outcome:
+        next_step = (
+            "wait for 1h outcome and repeat JTO/ONDO/LTC gate on fresh liquidation events"
+        )
+        if best_outcome.get("outcome_1h") != "pending_1h":
+            next_step = "repeat ONDO/LTC/JTO on fresh liquidation events with live depth and fee checks"
         return ExplorationRow(
             lane="liquidation_flow",
             status="current_okx_paper_outcome",
@@ -263,7 +268,7 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
                 f"out1h={best_outcome.get('outcome_1h', '')}"
             ),
             main_gap="paper outcome is retrospective and has no live fill or repeated fresh-event sample yet",
-            next_step="wait for 1h outcome and repeat JTO/ONDO/LTC gate on fresh liquidation events",
+            next_step=next_step,
         )
     paper_gate_path = root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv"
     best_paper = _best_paper_gate_row(paper_gate_path)
@@ -369,6 +374,9 @@ def _market_making_row(root: Path) -> ExplorationRow:
     paper_gate_path = root / "market_making" / "current_l2_imbalance_paper_gate.csv"
     best_gate = _best_l2_imbalance_paper_gate_row(paper_gate_path)
     if best_gate:
+        net_1h_note = ""
+        if best_gate.get("net_1h_bps", ""):
+            net_1h_note = f"net1h={best_gate.get('net_1h_bps', '')}bps, "
         return ExplorationRow(
             lane="market_making",
             status="l2_imbalance_paper_gate",
@@ -376,11 +384,11 @@ def _market_making_row(root: Path) -> ExplorationRow:
                 f"{best_gate.get('asset', '')}: "
                 f"size={best_gate.get('candidate_size_usd', '')}, "
                 f"net15={best_gate.get('net_15m_bps', '')}bps, "
-                f"net1h={best_gate.get('net_1h_bps', '')}bps, "
+                f"{net_1h_note}"
                 f"depth_usage={best_gate.get('visible_depth_usage', '')}"
             ),
             main_gap="paper gate is directional and still excludes maker queue, fill probability, rebates, and repeated adverse-selection samples",
-            next_step="repeat HYPE/SOL L2 gates on fresh snapshots and then design a maker-fill observation log",
+            next_step="repeat JTO/XLM/NEAR/XPL L2 gates on fresh snapshots and then design a maker-fill observation log",
         )
     label_path = root / "market_making" / "current_l2_imbalance_forward_labels.csv"
     best_label = _best_l2_imbalance_label_row(label_path)

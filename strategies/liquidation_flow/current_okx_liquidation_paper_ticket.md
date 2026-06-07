@@ -1,21 +1,21 @@
 # OKX Liquidation Paper Ticket
 
-Generated: `2026-06-07T16:04:23.344668+00:00`
+Generated: `2026-06-07T16:41:53.881480+00:00`
 
 This is not a trade instruction. It is a paper observation ticket.
 
 ## Candidate
 
-- Asset: `JTO`
+- Asset: `ONDO`
 - Venue: `OKX USDT swap`
-- Action: `long_liquidation_cascade_watch`
-- Paper direction: `short`
+- Action: `short_liquidation_squeeze_watch`
+- Paper direction: `long`
 - Paper notional: `100.00` USDT
-- 15m gross continuation: `105.62` bps
-- Conservative cost proxy: `12.07` bps
-- Conservative net proxy: `93.55` bps
-- Near-touch depth 5bps: `2207.78` USDT
-- Visible depth usage: `0.0453`
+- 15m gross continuation: `74.52` bps
+- Conservative cost proxy: `12.95` bps
+- Conservative net proxy: `61.57` bps
+- Near-touch depth 5bps: `13968.14` USDT
+- Visible depth usage: `0.0072`
 
 ## Paper Observation Shape
 

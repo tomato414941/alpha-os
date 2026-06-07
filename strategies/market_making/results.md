@@ -78,21 +78,25 @@ fill model.
 
 | asset | spread bps | imbalance10 | dir | raw 15m | dir 15m | raw 1h | dir 1h |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| BTC | 0.1607 | 0.4525 | 1 |  |  |  |  |
-| ETH | 0.6139 | 0.1352 | 1 |  |  |  |  |
-| SOL | 0.1537 | -0.6055 | -1 |  |  |  |  |
-| HYPE | 0.1711 | -0.6080 | -1 |  |  |  |  |
-| WLD | 1.2468 | -0.7746 | -1 |  |  |  |  |
-| JTO | 4.6830 | 0.2901 | 1 |  |  |  |  |
-| ZEC | 0.2400 | -0.7326 | -1 |  |  |  |  |
-| LTC | 6.8984 | -0.4037 | -1 |  |  |  |  |
+| JTO | 4.6830 | 0.2901 | 1 | 0.012475 | 0.012475 |  |  |
+| XLM | 2.4802 | 0.1395 | 1 | 0.012187 | 0.012187 |  |  |
+| NEAR | 1.9243 | -0.2800 | -1 | -0.011584 | 0.011584 |  |  |
+| XPL | 2.1805 | 0.0082 | 1 | 0.003014 | 0.003014 |  |  |
+| BNB | 1.1832 | 0.0280 | 1 | 0.002262 | 0.002262 |  |  |
+| ADA | 3.0814 | 0.1401 | 1 | 0.001540 | 0.001540 |  |  |
+| ETH | 0.6139 | 0.1352 | 1 | 0.001045 | 0.001045 |  |  |
+| AERO | 7.8666 | 0.0632 | 1 | 0.000636 | 0.000636 |  |  |
+| BTC | 0.1607 | 0.4525 | 1 | 0.000145 | 0.000145 |  |  |
+| SOL | 0.1537 | -0.6055 | -1 | 0.003294 | -0.003294 |  |  |
 
 Interpretation:
 
-- The current broad snapshot is intentionally unlabeled because the 15m/1h
-  horizons have not elapsed yet.
-- `WLD`, `ZEC`, `HYPE`, `SOL`, and `BTC` are the immediate candidates to label
-  after the horizons mature.
+- `JTO`, `XLM`, and `NEAR` have the strongest 15m direction-aware labels from
+  this one broad L2 snapshot.
+- `BTC` had the cleanest short-window monitor persistence, but its 15m
+  directional label is tiny.
+- `SOL`, `HYPE`, `WLD`, `ZEC`, and `ONDO` had strong-looking snapshot imbalance
+  but failed this first 15m direction-aware label.
 
 ## L2 Imbalance Paper Gate
 
@@ -102,17 +106,21 @@ gate, not a maker-fill model.
 
 | asset | size USD | imbalance10 | cost bps | net15 bps | net1h bps | depth USD | depth usage | gate |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| ETH | 100 | 0.1352 | 10.61 |  |  | 11976159 | 0.0000 | wait_for_label |
-| BTC | 100 | 0.4525 | 10.16 |  |  | 3441674 | 0.0000 | wait_for_label |
-| SOL | 100 | -0.6055 | 10.15 |  |  | 197152 | 0.0005 | wait_for_label |
-| DOGE | 100 | -0.2872 | 12.95 |  |  | 175767 | 0.0006 | wait_for_label |
-| HYPE | 100 | -0.6080 | 10.17 |  |  | 51561 | 0.0019 | wait_for_label |
-| WLD | 100 | -0.7746 | 11.25 |  |  | 4906 | 0.0204 | wait_for_label |
+| JTO | 100 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.0240 | small_paper_probe |
+| JTO | 250 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.0601 | small_paper_probe |
+| JTO | 500 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.1202 | small_paper_probe |
+| JTO | 1000 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.2404 | small_paper_probe |
+| XLM | 100 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0047 | small_paper_probe |
+| XLM | 250 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0118 | small_paper_probe |
+| XLM | 500 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0235 | small_paper_probe |
+| XLM | 1000 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0471 | small_paper_probe |
+| NEAR | 100 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0046 | small_paper_probe |
+| NEAR | 250 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0116 | small_paper_probe |
 
 Interpretation:
 
-- The broad paper gate is waiting for 15m labels.
-- `WLD` and `ZEC` have the strongest imbalance, but their visible depth and
-  spreads are materially weaker than BTC/ETH/SOL.
-- The next useful action is to rerun labels and the gate after 15m/1h outcomes
-  mature.
+- `JTO`, `XLM`, and `NEAR` survive the first rough 15m fee/spread/depth gate.
+- This is still a directional gate, not a maker-fill model; queue position,
+  fill probability, rebates, and adverse selection are unmodeled.
+- The next useful action is to repeat the L2 snapshot/label/gate on fresh
+  samples and wait for the 1h labels.

@@ -103,25 +103,28 @@ horizon.
 
 | asset | action | obs | cov15 | hit15 | mean cont15 | cov1h | hit1h | mean cont1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| JTO | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.010562 | 0 |  |  |
-| ONDO | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.007452 | 0 |  |  |
-| H | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.006116 | 0 |  |  |
-| DOGE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.003185 | 0 |  |  |
-| LAB | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.002773 | 0 |  |  |
-| LTC | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002599 | 0 |  |  |
-| HYPE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002376 | 3 | 1.0000 | 0.012218 |
-| BEAT | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.000968 | 0 |  |  |
-| XLM | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.001476 | 0 |  |  |
-| EDEN | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.008764 | 0 |  |  |
+| ONDO | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.007452 | 3 | 1.0000 | 0.002006 |
+| JTO | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.005121 | 3 | 1.0000 | 0.001120 |
+| LTC | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002599 | 3 | 1.0000 | 0.008268 |
+| HYPE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.002376 | 3 | 1.0000 | 0.008485 |
+| LAB | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.002311 | 3 | 1.0000 | 0.017641 |
+| DOGE | long_liquidation_cascade_watch | 3 | 3 | 1.0000 | 0.001888 | 3 | 0.0000 | -0.000944 |
+| H | short_liquidation_squeeze_watch | 3 | 3 | 1.0000 | 0.000240 | 3 | 1.0000 | 0.073497 |
+| BEAT | short_liquidation_squeeze_watch | 3 | 3 | 0.0000 | -0.001452 | 3 | 1.0000 | 0.038382 |
+| XLM | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.001476 | 3 | 1.0000 | 0.007870 |
+| NEAR | short_liquidation_squeeze_watch | 3 | 3 | 0.0000 | -0.007367 | 3 | 1.0000 | 0.027996 |
+| EDEN | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.008764 | 3 | 1.0000 | 0.032578 |
+| ALLO | long_liquidation_cascade_watch | 3 | 3 | 0.0000 | -0.015074 | 3 | 0.0000 | -0.028189 |
+| WLD | short_liquidation_squeeze_watch | 3 | 3 | 0.0000 | -0.026448 | 0 |  |  |
 
 Interpretation:
 
-- `JTO` and `ONDO` now have the cleanest monitor-sample 15m continuation labels.
-- `LTC` remains executable-looking because its depth is better, even though its
-  monitor-sample continuation is smaller than `JTO`/`ONDO`.
-- `WLD` remains cross-lane interesting, but the latest monitor event is still
-  unlabeled in this run, so it should not be promoted from monitor evidence
-  alone.
+- `ONDO`, `JTO`, `LTC`, `HYPE`, and `LAB` now have positive 15m and 1h
+  monitor-sample continuation labels.
+- `LTC` remains executable-looking because its visible depth is better, even
+  though its 15m continuation is smaller than `ONDO`/`JTO`.
+- `WLD` is no longer supported by the latest monitor continuation label despite
+  being cross-lane interesting elsewhere.
 
 ## Current OKX Liquidation Depth Check
 
@@ -156,21 +159,24 @@ visible near-touch depth. It is a triage view, not an order plan.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | LTC | long_liquidation_cascade_watch | 3 | 0.035068 | 0.002599 | 2.3824 | 26234 | 0.926541 | first checks support follow-up |
 | ONDO | short_liquidation_squeeze_watch | 3 | 0.016723 | 0.007452 | 2.8806 | 13968 | 0.650667 | first checks support follow-up |
-| JTO | long_liquidation_cascade_watch | 3 | 0.094599 | 0.010562 | 1.6149 | 2208 | 0.442550 | signal ok but visible depth thin |
-| H | short_liquidation_squeeze_watch | 3 | 0.021281 | 0.006116 | 1.7710 | 767 | 0.186923 | signal ok but visible depth thin |
-| BEAT | short_liquidation_squeeze_watch | 3 | 0.127525 | 0.000968 | 2.1265 | 846 | 0.186678 | signal ok but visible depth thin |
-| DOGE | long_liquidation_cascade_watch | 3 | 0.015966 | 0.003185 |  |  | 0.079676 | first checks support follow-up |
+| JTO | long_liquidation_cascade_watch | 3 | 0.094599 | 0.005121 | 1.6149 | 2208 | 0.333732 | signal ok but visible depth thin |
 | ZEC | mixed_liquidation_flow_watch | 3 | 0.050522 |  | 0.2362 | 16507 | 0.075261 | waiting for matching forward label |
-| WLD | short_liquidation_squeeze_watch | 3 | 0.117841 |  | 2.0728 | 2430 | 0.071071 | waiting for matching forward label |
+| H | short_liquidation_squeeze_watch | 3 | 0.021281 | 0.000240 | 1.7710 | 767 | 0.069398 | signal ok but visible depth thin |
+| BSB | mixed_liquidation_flow_watch | 3 | 0.109096 |  | 2.7728 | 1230 | 0.060700 | waiting for matching forward label |
+| HYPE | long_liquidation_cascade_watch | 3 | 0.006522 | 0.002376 |  |  | 0.054036 | first checks support follow-up |
+| DOGE | long_liquidation_cascade_watch | 3 | 0.015966 | 0.001888 |  |  | 0.053720 | first checks support follow-up |
+| LAB | short_liquidation_squeeze_watch | 3 | 0.006273 | 0.002311 |  |  | 0.052494 | first checks support follow-up |
+| BEAT | short_liquidation_squeeze_watch | 3 | 0.127525 | -0.001452 | 2.1265 | 846 | 0.012753 | continuation label weak |
+| WLD | short_liquidation_squeeze_watch | 3 | 0.117841 | -0.026448 | 2.0728 | 2430 | 0.011784 | continuation label weak |
 
 Interpretation:
 
 - `LTC` remains the most actionable follow-up because it combines a positive
   monitor-sample label with stronger visible near-touch depth.
-- `ONDO` and `JTO` have stronger monitor-sample continuation than `LTC`, but
-  `JTO` is still visibly thin near touch.
-- `WLD` remains cross-lane interesting, but this monitor-label run did not yet
-  cover its latest event timestamp.
+- `ONDO` has the best short-window continuation among the more actionable names.
+- `JTO` still has a good signal but is visibly thin near touch.
+- `WLD` remains cross-lane interesting, but this monitor-label run argues
+  against promoting it from liquidation-flow evidence alone.
 
 ## Current OKX Liquidation Paper Gate
 
@@ -180,22 +186,22 @@ is a sizing gate, not a trade instruction.
 
 | asset | action | size USD | gross bps | cost bps | net bps | near depth 5bps | depth usage | gate | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| JTO | long_liquidation_cascade_watch | 100 | 105.62 | 12.07 | 93.55 | 2208 | 0.0453 | small_paper_probe | survives rough fee, spread, and visible-depth check |
-| JTO | long_liquidation_cascade_watch | 250 | 105.62 | 12.75 | 92.87 | 2208 | 0.1132 | small_paper_probe | survives rough fee, spread, and visible-depth check |
-| JTO | long_liquidation_cascade_watch | 500 | 105.62 | 13.88 | 91.74 | 2208 | 0.2265 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | ONDO | short_liquidation_squeeze_watch | 100 | 74.52 | 12.95 | 61.57 | 13968 | 0.0072 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | ONDO | short_liquidation_squeeze_watch | 250 | 74.52 | 13.06 | 61.46 | 13968 | 0.0179 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | ONDO | short_liquidation_squeeze_watch | 500 | 74.52 | 13.24 | 61.28 | 13968 | 0.0358 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | ONDO | short_liquidation_squeeze_watch | 1000 | 74.52 | 13.60 | 60.92 | 13968 | 0.0716 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | ONDO | short_liquidation_squeeze_watch | 2500 | 74.52 | 14.67 | 59.85 | 13968 | 0.1790 | small_paper_probe | survives rough fee, spread, and visible-depth check |
-| H | short_liquidation_squeeze_watch | 100 | 61.16 | 13.07 | 48.09 | 767 | 0.1304 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | long_liquidation_cascade_watch | 100 | 51.21 | 12.07 | 39.14 | 2208 | 0.0453 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | long_liquidation_cascade_watch | 250 | 51.21 | 12.75 | 38.46 | 2208 | 0.1132 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | long_liquidation_cascade_watch | 500 | 51.21 | 13.88 | 37.33 | 2208 | 0.2265 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 | LTC | long_liquidation_cascade_watch | 100 | 25.99 | 12.42 | 13.57 | 26234 | 0.0038 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 
 Interpretation:
 
-- `JTO` has the largest short-window net after rough costs, but only at small
-  size because visible near-touch depth is thin.
-- `ONDO` has cleaner size headroom than `JTO` under the same rough assumptions.
+- `ONDO` now has the largest short-window net after rough costs and cleaner
+  size headroom than `JTO`.
+- `JTO` remains a valid small-size paper candidate but is visibly thin near
+  touch.
 - `LTC` has the best visible depth profile, but the short-window edge is much
   smaller after fees and spread.
 
@@ -203,20 +209,20 @@ Interpretation:
 
 Selected paper observation:
 
-- Asset: `JTO`
+- Asset: `ONDO`
 - Venue: `OKX USDT swap`
-- Action: `long_liquidation_cascade_watch`
-- Paper direction: `short`
+- Action: `short_liquidation_squeeze_watch`
+- Paper direction: `long`
 - Paper notional: `100.00` USDT
-- 15m gross continuation: `105.62` bps
-- Conservative cost proxy: `12.07` bps
-- Conservative net proxy: `93.55` bps
-- Visible depth usage: `0.0453`
+- 15m gross continuation: `74.52` bps
+- Conservative cost proxy: `12.95` bps
+- Conservative net proxy: `61.57` bps
+- Visible depth usage: `0.0072`
 
 Interpretation:
 
-- This is the first liquidation candidate worth paper observation because it
-  survives the rough fee/spread/depth gate at small size.
+- `ONDO` is now the leading liquidation paper observation because it survives
+  the rough fee/spread/depth gate with better visible-depth headroom than `JTO`.
 - It is still not deployable alpha: the next fresh event must reproduce the
   action family, live spread/depth must remain usable, and the paper result must
   be positive after the same conservative cost proxy.
@@ -228,10 +234,11 @@ result after the same conservative cost proxy used by the gate.
 
 | event | asset | action | dir | size USD | cost bps | net15 bps | out15 | net1h bps | out1h |
 | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| 2026-06-07T15:44:30.934000+00:00 | JTO | long_liquidation_cascade_watch | short | 100 | 12.07 | 93.55 | paper_15m_win |  | pending_1h |
+| 2026-06-07T15:26:20.101000+00:00 | ONDO | short_liquidation_squeeze_watch | long | 100 | 12.95 | 61.57 | paper_15m_win | 7.11 | paper_1h_win |
 
 Interpretation:
 
-- The first JTO paper observation is a 15m win after the rough cost proxy.
-- This is still only one retrospective event. The 1h outcome is pending, and
-  the lane needs repeated fresh-event paper observations before promotion.
+- The first ONDO paper observation is a 15m and 1h win after the rough cost
+  proxy.
+- This is still only one retrospective event. The lane needs repeated
+  fresh-event paper observations before promotion.

@@ -4,26 +4,26 @@ This subtracts taker round-trip fees and current spread from the book-imbalance 
 
 | asset | size USD | imbalance10 | cost bps | net15 bps | net1h bps | depth USD | depth usage | gate | reason |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| ETH | 100 | 0.1352 | 10.61 |  |  | 11976159 | 0.0000 | wait_for_label | no 15m imbalance label yet |
-| ETH | 250 | 0.1352 | 10.61 |  |  | 11976159 | 0.0000 | wait_for_label | no 15m imbalance label yet |
-| BTC | 100 | 0.4525 | 10.16 |  |  | 3441674 | 0.0000 | wait_for_label | no 15m imbalance label yet |
-| ETH | 500 | 0.1352 | 10.61 |  |  | 11976159 | 0.0000 | wait_for_label | no 15m imbalance label yet |
-| BTC | 250 | 0.4525 | 10.16 |  |  | 3441674 | 0.0001 | wait_for_label | no 15m imbalance label yet |
-| ETH | 1000 | 0.1352 | 10.61 |  |  | 11976159 | 0.0001 | wait_for_label | no 15m imbalance label yet |
-| BTC | 500 | 0.4525 | 10.16 |  |  | 3441674 | 0.0001 | wait_for_label | no 15m imbalance label yet |
-| XRP | 100 | -0.0966 | 10.88 |  |  | 589072 | 0.0002 | wait_for_label | no 15m imbalance label yet |
-| ETH | 2500 | 0.1352 | 10.61 |  |  | 11976159 | 0.0002 | wait_for_label | no 15m imbalance label yet |
-| BTC | 1000 | 0.4525 | 10.16 |  |  | 3441674 | 0.0003 | wait_for_label | no 15m imbalance label yet |
-| ETH | 5000 | 0.1352 | 10.61 |  |  | 11976159 | 0.0004 | wait_for_label | no 15m imbalance label yet |
-| XRP | 250 | -0.0966 | 10.88 |  |  | 589072 | 0.0004 | wait_for_label | no 15m imbalance label yet |
-| SOL | 100 | -0.6055 | 10.15 |  |  | 197152 | 0.0005 | wait_for_label | no 15m imbalance label yet |
-| DOGE | 100 | -0.2872 | 12.95 |  |  | 175767 | 0.0006 | wait_for_label | no 15m imbalance label yet |
-| BTC | 2500 | 0.4525 | 10.16 |  |  | 3441674 | 0.0007 | wait_for_label | no 15m imbalance label yet |
-| SUI | 100 | -0.3582 | 11.75 |  |  | 118401 | 0.0008 | wait_for_label | no 15m imbalance label yet |
-| XRP | 500 | -0.0966 | 10.88 |  |  | 589072 | 0.0008 | wait_for_label | no 15m imbalance label yet |
-| BNB | 100 | 0.0280 | 11.18 |  |  | 114603 | 0.0009 | wait_for_label | no 15m imbalance label yet |
-| ADA | 100 | 0.1401 | 13.08 |  |  | 86993 | 0.0011 | wait_for_label | no 15m imbalance label yet |
-| SOL | 250 | -0.6055 | 10.15 |  |  | 197152 | 0.0013 | wait_for_label | no 15m imbalance label yet |
+| JTO | 100 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.0240 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | 250 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.0601 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | 500 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.1202 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| JTO | 1000 | 0.2901 | 14.68 | 110.06 |  | 4160 | 0.2404 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 100 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0047 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 250 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0118 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 500 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0235 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 1000 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.0471 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 2500 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.1177 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XLM | 5000 | 0.1395 | 12.48 | 109.39 |  | 21244 | 0.2354 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 100 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0046 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 250 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0116 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 500 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0231 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 1000 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.0463 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 2500 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.1157 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| NEAR | 5000 | -0.2800 | 11.92 | 103.92 |  | 21602 | 0.2315 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XPL | 100 | 0.0082 | 12.18 | 17.96 |  | 10261 | 0.0097 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XPL | 250 | 0.0082 | 12.18 | 17.96 |  | 10261 | 0.0244 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XPL | 500 | 0.0082 | 12.18 | 17.96 |  | 10261 | 0.0487 | small_paper_probe | survives rough fee, spread, and visible-depth check |
+| XPL | 1000 | 0.0082 | 12.18 | 17.96 |  | 10261 | 0.0975 | small_paper_probe | survives rough fee, spread, and visible-depth check |
 
 ## Interpretation
 

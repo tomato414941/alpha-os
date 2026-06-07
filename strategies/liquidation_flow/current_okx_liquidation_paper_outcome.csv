@@ -1,2 +1,2 @@
 event_timestamp,asset,action,paper_direction,candidate_size_usd,conservative_cost_bps,continuation_return_15m,continuation_return_1h,net_15m_bps,net_1h_bps,outcome_15m,outcome_1h
-2026-06-07T15:44:30.934000+00:00,JTO,long_liquidation_cascade_watch,short,100.00,12.06779970,0.01056169,,93.54910030,,paper_15m_win,pending_1h
+2026-06-07T15:26:20.101000+00:00,ONDO,short_liquidation_squeeze_watch,long,100.00,12.95219065,0.00745199,0.00200631,61.56770935,7.11090935,paper_15m_win,paper_1h_win
