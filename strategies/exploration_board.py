@@ -481,6 +481,22 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
 
 
 def _sector_rotation_row(root: Path) -> ExplorationRow:
+    label_path = root / "sector_rotation" / "current_category_tradable_forward_labels.csv"
+    best_label = _best_sector_tradable_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="sector_rotation",
+            status="category_tradable_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('category_name', '')}/{best_label.get('symbol', '')}: "
+                f"{best_label.get('category_action', '')}, "
+                f"change24={best_label.get('category_change_24h', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_label.get('directional_return_1h', '')}"
+            ),
+            main_gap="single category-to-symbol label; no repeated evidence, constituent weighting, liquidity, or costs",
+            next_step="repeat top category-to-symbol labels and test continuation vs reversal by category family",
+        )
     path = root / "sector_rotation" / "current_coingecko_category_rotation.csv"
     best = _best_numeric_row(path, key="score")
     signal = "CoinGecko category rotation probe exists"
@@ -931,6 +947,28 @@ def _best_attention_forward_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("score") or "0"),
             float(row.get("directional_return_1h") or "-inf"),
+        ),
+    )
+
+
+def _best_sector_tradable_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("label_status") == "tradable_labeled"
+            and row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            float(row.get("score") or "0"),
+            float(row.get("coin_volume_24h") or "0"),
         ),
     )
 
