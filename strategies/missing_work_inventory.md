@@ -35,7 +35,7 @@ These are convenience constraints, not trading constraints.
 | maker rebate capture | fee tiers, rebates, fill probability, adverse selection | spread alone is not market-making profit |
 | queue-position edge | order-book diffs, queue estimation, cancels, fills | L2 snapshots are not enough |
 | latency edge | timestamps, feed delay, venue-specific order path | impossible to assess with current daily/snapshot data |
-| borrow/lending arb | borrow rates, collateral rates, lending supply, utilization | funding-like edge can exist outside perps |
+| borrow/lending arb | Morpho current rates are connected; history, collateral risk, and execution checks are still missing | funding-like edge can exist outside perps |
 | stablecoin depeg/repeg | peg deviation, liquidity, redemption route, issuer risk | depeg stress can be a distinct trade |
 | DeFi yield decay | APY persistence, reward emissions, TVL inflow, exit liquidity | high APY alone is not edge |
 | bridge/liquidity migration | bridge flows, chain TVL, stablecoin distribution | capital movement can precede price movement |
@@ -64,7 +64,7 @@ These are convenience constraints, not trading constraints.
 | OI history | only current Hyperliquid context | no persistence or crowding labels |
 | funding history across venues | partial Binance/HL snapshots | no multi-venue historical carry test |
 | options IV/skew | absent | no vol strategy possible |
-| borrow/lending rates | absent | no collateral/borrow arb |
+| borrow/lending rates | current Morpho snapshot connected | no history, collateral drawdown, oracle, liquidation, withdrawal, or gas model |
 | exchange fee tiers | absent | execution economics are fake |
 | maker rebates | absent | market making cannot be evaluated |
 | min order size/lot size | absent | trade feasibility unknown |
@@ -171,4 +171,3 @@ Then pick multiple lanes for parallel data collection:
 - DeFi yield persistence and exit liquidity
 - options/volatility if data is reachable
 - paper-trading workflow for the most executable candidate
-

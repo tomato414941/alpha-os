@@ -67,6 +67,18 @@ PROBE_TARGETS = (
         url="https://yields.llama.fi/pools",
     ),
     ProbeTarget(
+        category="defi_lending",
+        name="morpho_graphql",
+        method="POST",
+        url="https://api.morpho.org/graphql",
+        json_body={
+            "query": (
+                "query { markets(first: 1, orderBy: SupplyAssetsUsd, orderDirection: Desc) "
+                "{ items { marketId state { supplyAssetsUsd borrowAssetsUsd utilization } } } }"
+            )
+        },
+    ),
+    ProbeTarget(
         category="dex_pool_flow",
         name="geckoterminal_trending_pools",
         method="GET",
@@ -194,6 +206,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "historical event-flow data path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
+    if target.category == "defi_lending":
+        return "current DeFi lending market data path is available"
     if target.category == "dex_pool_flow":
         return "current DEX pool-flow data path is available"
     if target.category == "derivatives_positioning":

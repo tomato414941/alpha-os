@@ -32,6 +32,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
+        _defi_lending_row(root),
         _dex_pool_flow_row(root),
         _market_making_row(root),
         _options_volatility_row(root),
@@ -685,6 +686,37 @@ def _dex_pool_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="DEX pool flow has not been screened",
         next_step="run GeckoTerminal pool-flow screen",
+    )
+
+
+def _defi_lending_row(root: Path) -> ExplorationRow:
+    path = root / "defi_lending" / "current_morpho_lending_rates.csv"
+    rows = tuple(row for row in _csv_rows(path) if row.get("status") != "lending_context_watch")
+    best = max(rows, key=lambda row: float(row.get("score") or "-inf")) if rows else None
+    if best:
+        return ExplorationRow(
+            lane="defi_lending",
+            status=best.get("status", "morpho_lending_rates"),
+            strongest_current_signal=(
+                f"{best.get('chain', '')} {best.get('loan_asset', '')}/{best.get('collateral_asset', '')}: "
+                f"util={best.get('utilization', '')}, "
+                f"liquidity={best.get('liquidity_usd', '')}, "
+                f"avg_supply={best.get('avg_net_supply_apy', '')}, "
+                f"avg_borrow={best.get('avg_net_borrow_apy', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap="lending pressure still needs rate persistence, collateral drawdown, oracle, liquidation, withdrawal, gas, and smart-contract checks",
+            next_step=best.get(
+                "next_step",
+                "check Morpho rate persistence and collateral liquidation risk",
+            ),
+        )
+    return ExplorationRow(
+        lane="defi_lending",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="borrow and lending rates are not connected",
+        next_step="run Morpho lending-rate screen",
     )
 
 
