@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from io import BytesIO, TextIOWrapper
@@ -13,7 +14,15 @@ import requests
 
 
 BINANCE_UM_DAILY_URL = "https://data.binance.vision/data/futures/um/daily"
-DEFAULT_SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT")
+DEFAULT_SYMBOLS = (
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "XRPUSDT",
+    "DOGEUSDT",
+    "AVAXUSDT",
+    "LINKUSDT",
+)
 
 
 @dataclass(frozen=True)
@@ -48,6 +57,9 @@ class DerivativesDaySummary:
     oi_value_change: float
     next_return: float
     mean_open_interest_value: float
+    mean_count_top_long_short_ratio: float
+    mean_sum_top_long_short_ratio: float
+    mean_count_long_short_ratio: float
     mean_sum_taker_long_short_vol_ratio: float
     mean_premium_close: float
     max_abs_premium_close: float
@@ -69,33 +81,15 @@ def inspect_binance_derivatives_history(
     symbols: tuple[str, ...] = DEFAULT_SYMBOLS,
     start_date: date,
     days: int,
+    max_workers: int = 12,
 ) -> tuple[DerivativesDaySummary, ...]:
-    partial_rows: list[dict[str, object]] = []
-    for day_offset in range(days):
-        day = start_date + timedelta(days=day_offset)
-        for symbol in symbols:
-            metrics_rows = _fetch_metrics_rows(symbol, day)
-            premium_rows = _fetch_premium_rows(symbol, day)
-            partial_rows.append(
-                {
-                    "date": day.isoformat(),
-                    "symbol": symbol,
-                    "metrics_rows": len(metrics_rows),
-                    "premium_rows": len(premium_rows),
-                    "close": _fetch_daily_close(symbol, day),
-                    "mean_open_interest_value": _mean(
-                        row.sum_open_interest_value for row in metrics_rows
-                    ),
-                    "mean_sum_taker_long_short_vol_ratio": _mean(
-                        row.sum_taker_long_short_vol_ratio for row in metrics_rows
-                    ),
-                    "mean_premium_close": _mean(row.close for row in premium_rows),
-                    "max_abs_premium_close": max(
-                        (abs(row.close) for row in premium_rows),
-                        default=0.0,
-                    ),
-                }
-            )
+    tasks = tuple(
+        (symbol, start_date + timedelta(days=day_offset))
+        for day_offset in range(days)
+        for symbol in symbols
+    )
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        partial_rows = tuple(executor.map(lambda task: _fetch_partial_row(*task), tasks))
     return _build_labeled_summaries(tuple(partial_rows))
 
 
@@ -117,6 +111,9 @@ def write_derivatives_history_summaries(
                 "oi_value_change",
                 "next_return",
                 "mean_open_interest_value",
+                "mean_count_top_long_short_ratio",
+                "mean_sum_top_long_short_ratio",
+                "mean_count_long_short_ratio",
                 "mean_sum_taker_long_short_vol_ratio",
                 "mean_premium_close",
                 "max_abs_premium_close",
@@ -133,6 +130,9 @@ def write_derivatives_history_summaries(
                     f"{summary.oi_value_change:.8f}",
                     f"{summary.next_return:.12f}",
                     f"{summary.mean_open_interest_value:.8f}",
+                    f"{summary.mean_count_top_long_short_ratio:.8f}",
+                    f"{summary.mean_sum_top_long_short_ratio:.8f}",
+                    f"{summary.mean_count_long_short_ratio:.8f}",
                     f"{summary.mean_sum_taker_long_short_vol_ratio:.8f}",
                     f"{summary.mean_premium_close:.12f}",
                     f"{summary.max_abs_premium_close:.12f}",
@@ -151,6 +151,9 @@ def summarize_derivatives_signals(
             "mean_premium_close",
             "max_abs_premium_close",
             "oi_value_change",
+            "mean_count_top_long_short_ratio",
+            "mean_sum_top_long_short_ratio",
+            "mean_count_long_short_ratio",
             "mean_sum_taker_long_short_vol_ratio",
         )
     )
@@ -261,6 +264,38 @@ def _fetch_daily_close(symbol: str, day: date) -> float:
     return 0.0
 
 
+def _fetch_partial_row(symbol: str, day: date) -> dict[str, object]:
+    metrics_rows = _fetch_metrics_rows(symbol, day)
+    premium_rows = _fetch_premium_rows(symbol, day)
+    return {
+        "date": day.isoformat(),
+        "symbol": symbol,
+        "metrics_rows": len(metrics_rows),
+        "premium_rows": len(premium_rows),
+        "close": _fetch_daily_close(symbol, day),
+        "mean_open_interest_value": _mean(
+            row.sum_open_interest_value for row in metrics_rows
+        ),
+        "mean_count_top_long_short_ratio": _mean(
+            row.count_top_long_short_ratio for row in metrics_rows
+        ),
+        "mean_sum_top_long_short_ratio": _mean(
+            row.sum_top_long_short_ratio for row in metrics_rows
+        ),
+        "mean_count_long_short_ratio": _mean(
+            row.count_long_short_ratio for row in metrics_rows
+        ),
+        "mean_sum_taker_long_short_vol_ratio": _mean(
+            row.sum_taker_long_short_vol_ratio for row in metrics_rows
+        ),
+        "mean_premium_close": _mean(row.close for row in premium_rows),
+        "max_abs_premium_close": max(
+            (abs(row.close) for row in premium_rows),
+            default=0.0,
+        ),
+    }
+
+
 def _build_labeled_summaries(
     partial_rows: tuple[dict[str, object], ...],
 ) -> tuple[DerivativesDaySummary, ...]:
@@ -298,6 +333,15 @@ def _build_labeled_summaries(
                         else 0.0
                     ),
                     mean_open_interest_value=mean_oi_value,
+                    mean_count_top_long_short_ratio=float(
+                        row["mean_count_top_long_short_ratio"]
+                    ),
+                    mean_sum_top_long_short_ratio=float(
+                        row["mean_sum_top_long_short_ratio"]
+                    ),
+                    mean_count_long_short_ratio=float(
+                        row["mean_count_long_short_ratio"]
+                    ),
                     mean_sum_taker_long_short_vol_ratio=float(
                         row["mean_sum_taker_long_short_vol_ratio"]
                     ),
@@ -411,7 +455,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
     parser.add_argument("--start-date", type=_parse_date, default=date(2024, 1, 1))
-    parser.add_argument("--days", type=int, default=14)
+    parser.add_argument("--days", type=int, default=30)
+    parser.add_argument("--max-workers", type=int, default=12)
     parser.add_argument(
         "--output-path",
         type=Path,
@@ -434,6 +479,7 @@ def main() -> None:
         symbols=symbols,
         start_date=args.start_date,
         days=args.days,
+        max_workers=args.max_workers,
     )
     write_derivatives_history_summaries(summaries, output_path=args.output_path)
     signal_summaries = summarize_derivatives_signals(summaries)
