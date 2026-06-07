@@ -621,6 +621,24 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    repeat_summary_path = (
+        root / "candidate_validation" / "current_followup_repeat_history_summary.csv"
+    )
+    best_repeat_summary = _best_followup_repeat_summary_row(repeat_summary_path)
+    if best_repeat_summary:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_summary",
+            strongest_current_signal=(
+                f"{best_repeat_summary.get('group_key', '')}: "
+                f"hit15={best_repeat_summary.get('hit_rate_15m', '')}, "
+                f"mean15={best_repeat_summary.get('mean_dir15', '')}, "
+                f"pending={best_repeat_summary.get('pending_rows', '')}, "
+                f"action={best_repeat_summary.get('action', '')}"
+            ),
+            main_gap="repeat summary is still short-horizon and excludes costs, funding PnL, slippage, and neutral baselines",
+            next_step="rerun labels after pending observations mature and promote only repeated source-specific winners",
+        )
     repeat_history_label_path = (
         root / "candidate_validation" / "current_followup_repeat_history_labels.csv"
     )
@@ -1157,6 +1175,27 @@ def _best_followup_repeat_label_row(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("priority") or "0"),
+        ),
+    )
+
+
+def _best_followup_repeat_summary_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("group_type") == "asset_source" and row.get("action") == "repeat_priority"
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("mean_dir15") or "-inf"),
+            float(row.get("hit_rate_15m") or "0"),
+            int(row.get("labeled_rows") or "0"),
         ),
     )
 

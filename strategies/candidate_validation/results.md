@@ -25,6 +25,7 @@ uv run python -m strategies.candidate_validation.current_followup_okx_repeat_obs
 uv run python -m strategies.candidate_validation.current_followup_okx_repeat_forward_labels
 uv run python -m strategies.candidate_validation.current_followup_repeat_history
 uv run python -m strategies.candidate_validation.current_followup_repeat_history_labels
+uv run python -m strategies.candidate_validation.current_followup_repeat_history_summary
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -271,10 +272,10 @@ Interpretation:
 
 The repeat history preserves source-specific observations across runs.
 
-- total rows: `53`
-- ready rows: `51`
-- by venue: `HL=23; OKX=28`
-- by source: `hl_candidate=1; l2_imbalance=8; liquidation=21; okx_pressure=15; sector_rotation=6`
+- total rows: `106`
+- ready rows: `102`
+- by venue: `HL=46; OKX=56`
+- by source: `hl_candidate=2; l2_imbalance=16; liquidation=42; okx_pressure=30; sector_rotation=12`
 
 Interpretation:
 
@@ -287,27 +288,49 @@ Interpretation:
 
 | venue | asset | source | action | dir | priority | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| OKX | JTO | liquidation | long_liquidation_cascade_watch | -1 | 3.4579 | -0.015546 | 0.015546 |  |  | labeled_15m_pending_1h |
-| OKX | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
-| OKX | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
-| HL | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
-| HL | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.005350 | 0.005350 |  |  | labeled_15m_pending_1h |
-| OKX | H | liquidation | short_liquidation_squeeze_watch | 1 | 2.7846 | 0.005002 | 0.005002 |  |  | labeled_15m_pending_1h |
-| OKX | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.002658 | 0.002658 |  |  | labeled_15m_pending_1h |
-| OKX | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.002658 | 0.002658 |  |  | labeled_15m_pending_1h |
-| HL | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.002656 | 0.002656 |  |  | labeled_15m_pending_1h |
-| HL | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.002656 | 0.002656 |  |  | labeled_15m_pending_1h |
-| OKX | XPL | l2_imbalance | visible_book_imbalance | 1 | 3.4493 | 0.002474 | 0.002474 |  |  | labeled_15m_pending_1h |
-| OKX | XPL | sector_rotation | sector_momentum_watch | 1 | 3.4493 | 0.002474 | 0.002474 |  |  | labeled_15m_pending_1h |
+| OKX | JTO | liquidation | long_liquidation_cascade_watch | -1 | 3.4579 | -0.017745 | 0.017745 |  |  | labeled_15m_pending_1h |
+| OKX | H | liquidation | short_liquidation_squeeze_watch | 1 | 2.7846 | 0.013110 | 0.013110 |  |  | labeled_15m_pending_1h |
+| HL | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.005009 | 0.005009 |  |  | labeled_15m_pending_1h |
+| HL | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.005009 | 0.005009 |  |  | labeled_15m_pending_1h |
+| OKX | XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.004377 | 0.004377 |  |  | labeled_15m_pending_1h |
+| OKX | XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.004377 | 0.004377 |  |  | labeled_15m_pending_1h |
+| OKX | ALLO | liquidation | short_liquidation_squeeze_watch | 1 | 3.0965 | 0.002598 | 0.002598 |  |  | labeled_15m_pending_1h |
+| OKX | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.001993 | 0.001993 |  |  | labeled_15m_pending_1h |
+| OKX | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.001993 | 0.001993 |  |  | labeled_15m_pending_1h |
+| HL | PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.001992 | 0.001992 |  |  | labeled_15m_pending_1h |
+| HL | PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.001992 | 0.001992 |  |  | labeled_15m_pending_1h |
+| OKX | XRP | okx_pressure | long_carry_discount_watch | 1 | 3.4627 | 0.001751 | 0.001751 |  |  | labeled_15m_pending_1h |
 
 Interpretation:
 
-- The first repeat batch is now labeled at 15m for 51 source-specific rows.
+- Two repeat batches are stored. The first batch is labeled at 15m for 51
+  source-specific rows, and the second batch is pending 15m.
 - `JTO/liquidation` is the strongest current repeat label.
 - `XLM` is positive on both HL and OKX for pressure and L2 sources in this
   fresh 15m window.
-- `XPL` and `PUMP` show positive 15m labels on both HL and OKX for the same
+- `PUMP` and `XRP` show positive 15m labels on both HL and OKX for the same
   source directions, which is more interesting than a single-venue blip.
 - `WLD` was the highest-priority clean candidate, but this fresh 15m repeat is
   negative on both HL and OKX. It should not be promoted without more repeats or
   a different horizon.
+
+## Current Follow-Up Repeat History Summary
+
+| group type | group | labeled | pending | hit 15m | mean dir15 | action |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| asset_source | XLM/okx_pressure | 2 | 2 | 1.000 | 0.004693 | repeat_priority |
+| asset_source | XLM/l2_imbalance | 2 | 2 | 1.000 | 0.004693 | repeat_priority |
+| asset_source | PUMP/liquidation | 2 | 2 | 1.000 | 0.001993 | repeat_priority |
+| asset_source | PUMP/sector_rotation | 2 | 2 | 1.000 | 0.001993 | repeat_priority |
+| asset_source | XRP/okx_pressure | 2 | 2 | 1.000 | 0.001488 | repeat_priority |
+| asset_source | XRP/liquidation | 2 | 2 | 1.000 | 0.001488 | repeat_priority |
+
+Interpretation:
+
+- `JTO/liquidation` and `H/liquidation` remain important, but they have only one
+  labeled venue-specific row each; wait for the second label before promotion.
+- `XLM`, `PUMP`, and `XRP` are the current repeat-priority groups because the
+  same asset/source direction was positive across HL and OKX in the labeled
+  batch.
+- `WLD` is no longer clean in repeat history despite the earlier cross-lane
+  score.
