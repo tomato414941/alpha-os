@@ -815,6 +815,21 @@ def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
 
 
 def _on_chain_flow_row(root: Path) -> ExplorationRow:
+    context_path = root / "on_chain_flow" / "current_chain_tvl_flow_market_context.csv"
+    best_context = _best_chain_tvl_market_context_row(context_path)
+    if best_context:
+        return ExplorationRow(
+            lane="on_chain_flow",
+            status="chain_tvl_flow_market_context",
+            strongest_current_signal=(
+                f"{best_context.get('venue', '')}/{best_context.get('token_symbol', '')}: "
+                f"dir15={best_context.get('directional_return_15m', '')}, "
+                f"funding_support={best_context.get('funding_support', '')}, "
+                f"score={best_context.get('context_score', '')}"
+            ),
+            main_gap="chain TVL flow market context still uses one short price label and incomplete venue context",
+            next_step="repeat SOL/HYPE/ETH/MEGA labels and fill missing KAT/POL OKX market context",
+        )
     label_path = root / "on_chain_flow" / "current_chain_tvl_flow_forward_labels.csv"
     best_label = _best_chain_tvl_forward_label_row(label_path)
     if best_label:
@@ -1340,6 +1355,20 @@ def _best_chain_tvl_forward_label_row(path: Path) -> dict[str, str] | None:
             abs(float(row.get("week_change_pct") or "0")),
         ),
     )
+
+
+def _best_chain_tvl_market_context_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("context_score", "") != ""
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("context_score") or "-inf"))
 
 
 def _followup_repeat_observation_summary(path: Path) -> str | None:

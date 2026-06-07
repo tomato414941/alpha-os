@@ -6,6 +6,7 @@ Run:
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_venue_coverage
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_forward_labels
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_market_context
 ```
 
 This is not a deployable strategy. It searches for broad chain-level capital
@@ -84,3 +85,21 @@ Interpretation:
   in this refresh; `AVAX`, `NEAR`, and `XLM` failed.
 - This strengthens the broader divergence thesis: weekly TVL outflow plus daily
   rebound may be more useful than raw outflow-as-short.
+
+## Market Context
+
+| venue | token | action | dir15 | funding support | funding | liq action | liq score | score | note |
+| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
+| OKX | SOL | chain_flow_reversal_watch | 0.00107280 | 0.38634890 | -0.38634890 |  |  | 0.417124 | price label positive; funding helps direction |
+| OKX | HYPE | chain_flow_reversal_watch | 0.00406987 | 0.06081031 | -0.06081031 | mixed_liquidation_flow_watch | 0.00082611 | 0.391720 | price label positive; funding helps direction |
+| OKX | ETH | chain_flow_reversal_watch | 0.00032510 | 0.15622280 | -0.15622280 | short_liquidation_squeeze_watch | 0.01962368 | 0.381906 | price label positive; funding helps direction; has recent liquidation context |
+| OKX | MEGA | chain_flow_reversal_watch | 0.00206697 | 0.26241290 | -0.26241290 |  |  | 0.366388 | price label positive; funding helps direction |
+| HL | HYPE | chain_flow_reversal_watch | 0.00428494 | -0.10950000 | 0.10950000 | mixed_liquidation_flow_watch | 0.00082611 | 0.318829 | price label positive |
+
+Interpretation:
+
+- `SOL`, `HYPE`, `ETH`, and `MEGA` currently combine positive chain-flow
+  reversal labels with funding that helps a long direction on OKX.
+- `ETH` has the clearest recent liquidation context among the top rows.
+- `KAT` and `POL` still have positive price labels, but their OKX pressure
+  context is missing from the current top-volume pressure snapshot.
