@@ -40,6 +40,7 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_maker_touch_probe
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_fee_ceiling
 uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
+uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate_sensitivity
 ```
 
 Focused OKX-Hyperliquid monitor:
@@ -56,4 +57,5 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_maker_touch_probe --as
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_mode_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_fee_ceiling
 uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate
+uv run python -m strategies.cross_exchange_funding.okx_hl_promotion_gate_sensitivity
 ```
