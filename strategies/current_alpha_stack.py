@@ -33,6 +33,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_perp_crowding_stacks(root),
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
+        *_yield_peg_risk_stacks(root),
         *_defi_yield_stacks(root),
         *_dex_pool_flow_stacks(root),
         *_attention_funding_stacks(root),
@@ -465,11 +466,22 @@ def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "defi_yield" / "current_yield_quality_screen.csv")
+    conflict_symbols = {
+        row.get("symbol", "")
+        for row in _read_rows(root / "defi_yield" / "current_yield_peg_risk_join.csv")
+        if row.get("status")
+        in {
+            "paper_yield_depeg_conflict_watch",
+            "paper_yield_premium_conflict_watch",
+            "yield_supply_stress_watch",
+        }
+    }
     tickets = sorted(
         (
             row
             for row in rows
             if row.get("status") in {"paper_base_yield_watch", "paper_incentive_yield_watch"}
+            and row.get("symbol", "") not in conflict_symbols
         ),
         key=lambda row: _float(row.get("score")),
         reverse=True,
@@ -499,6 +511,59 @@ def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 next_step=ticket.get(
                     "next_step",
                     f"check {chain}/{project} custody, APY source, capacity, and exit liquidity",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _yield_peg_risk_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "defi_yield" / "current_yield_peg_risk_join.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_yield_depeg_conflict_watch",
+                "paper_yield_premium_conflict_watch",
+                "yield_supply_stress_watch",
+                "paper_yield_without_peg_stress_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        chain = ticket.get("chain", "")
+        project = ticket.get("project", "")
+        symbol = ticket.get("symbol", "")
+        peg_symbol = ticket.get("peg_symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{chain.lower().replace(' ', '_')}_{project}_{symbol.lower()}_yield_peg",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=2 if peg_symbol else 1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="defi_yield + stablecoin_liquidity",
+                evidence=(
+                    f"{chain}/{project} {symbol}: apy={ticket.get('apy', '')}, "
+                    f"base={ticket.get('apy_base', '')}, tvl={ticket.get('tvl_usd', '')}, "
+                    f"peg={peg_symbol or 'unmatched'}, price={ticket.get('peg_price', '')}, "
+                    f"peg_deviation={ticket.get('peg_deviation', '')}"
+                ),
+                conflict=(
+                    "yield can be real carry, but peg, redemption, issuer, custody, "
+                    "and exit-liquidity risk can fully explain the APY"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {symbol} peg source, redemption path, custody, and exit liquidity",
                 ),
             )
         )
@@ -850,6 +915,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_oi_funding_crowding_watch": 61.0,
         "paper_basis_funding_dislocation_watch": 59.0,
         "paper_derivatives_momentum_risk_watch": 56.0,
+        "paper_yield_depeg_conflict_watch": 60.0,
+        "paper_yield_premium_conflict_watch": 58.0,
+        "yield_supply_stress_watch": 55.0,
+        "paper_yield_without_peg_stress_watch": 54.0,
         "paper_base_yield_watch": 60.0,
         "paper_incentive_yield_watch": 52.0,
         "paper_dex_pool_momentum_watch": 58.0,

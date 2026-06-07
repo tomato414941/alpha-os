@@ -593,6 +593,25 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
 
 
 def _defi_yield_row(root: Path) -> ExplorationRow:
+    join_path = root / "defi_yield" / "current_yield_peg_risk_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        return ExplorationRow(
+            lane="defi_yield",
+            status=best_join.get("status", "yield_peg_risk_join"),
+            strongest_current_signal=(
+                f"{best_join.get('chain', '')}/{best_join.get('project', '')} "
+                f"{best_join.get('symbol', '')}: apy={best_join.get('apy', '')}, "
+                f"base={best_join.get('apy_base', '')}, "
+                f"peg={best_join.get('peg_symbol', '') or 'unmatched'}, "
+                f"peg_deviation={best_join.get('peg_deviation', '')}"
+            ),
+            main_gap="yield candidates need peg, redemption, issuer, custody, APY-decay, and exit-liquidity separation",
+            next_step=best_join.get(
+                "next_step",
+                "check whether peg or redemption risk explains the apparent yield edge",
+            ),
+        )
     quality_path = root / "defi_yield" / "current_yield_quality_screen.csv"
     best_quality = _best_numeric_row(quality_path, key="score")
     if best_quality:

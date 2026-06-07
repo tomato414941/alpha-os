@@ -56,7 +56,7 @@ Promote code to the library only after multiple strategies need the same shape.
 - `liquidation_flow/`
   - OKX forced-liquidation flow screen for cascade and squeeze candidates
 - `defi_yield/`
-  - DeFiLlama stable-yield pool screen
+  - DeFiLlama stable-yield pool screen and peg-risk join
 - `dex_pool_flow/`
   - GeckoTerminal DEX pool liquidity, volume, turnover, and price-flow screen
 - `protocol_fundamentals/`

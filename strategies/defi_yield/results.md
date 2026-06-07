@@ -38,3 +38,19 @@ Important caveat:
 - Base yield is still not free alpha. Custody, smart-contract risk, issuer risk,
   withdrawal route, APY decay, capacity, gas, bridge cost, and exit liquidity
   must be checked before paper allocation.
+
+## Yield Peg Risk Join
+
+The peg-risk join connects stable-yield candidates to the stablecoin peg-stress
+screen. This avoids treating high APY as carry alpha when peg, redemption, or
+issuer risk may explain the yield.
+
+Current conflicts:
+
+- `Ethereum/apyx-protocol APXUSD`: high base APY overlaps with below-peg
+  `apxUSD`, so it is an avoid-or-repeg research candidate rather than a clean
+  allocation candidate.
+- `Ethereum/ondo-yield-assets USDY`: yield overlaps with above-peg `USDY`, so
+  premium reversion can erase carry.
+- `Ethereum/mainstreet MSUSD`: high base APY overlaps with supply-stress watch,
+  so redemption and issuer context come before allocation.
