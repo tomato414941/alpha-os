@@ -621,6 +621,24 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    execution_context_path = (
+        root / "candidate_validation" / "current_followup_execution_context.csv"
+    )
+    best_execution_context = _best_followup_execution_context_row(execution_context_path)
+    if best_execution_context:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_execution_context",
+            strongest_current_signal=(
+                f"{best_execution_context.get('asset', '')}: "
+                f"{best_execution_context.get('action', '')}, "
+                f"priority={best_execution_context.get('priority', '')}, "
+                f"spread={best_execution_context.get('spread_bps', '')}bps, "
+                f"depth10={best_execution_context.get('near_depth_10bps_notional', '')}"
+            ),
+            main_gap="current public venue context is rough and still excludes account fees, fills, queue position, and neutral baselines",
+            next_step="repeat WLD/ONDO/XPL/PUMP labels with source-specific costs and venue checks",
+        )
     queue_path = root / "candidate_validation" / "current_followup_queue.csv"
     best_queue = _best_followup_queue_row(queue_path)
     if best_queue:
@@ -1053,6 +1071,18 @@ def _best_followup_queue_row(path: Path) -> dict[str, str] | None:
         return None
     with path.open(newline="", encoding="utf-8") as handle:
         rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("priority") or "-inf"))
+
+
+def _best_followup_execution_context_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row for row in csv.DictReader(handle) if row.get("action") == "tradable_context_ok"
+        )
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("priority") or "-inf"))

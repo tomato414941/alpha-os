@@ -16,6 +16,7 @@ uv run python -m strategies.candidate_validation.current_cross_lane_candidate_re
 uv run python -m strategies.candidate_validation.current_signal_family_review
 uv run python -m strategies.candidate_validation.current_source_conflict_review
 uv run python -m strategies.candidate_validation.current_followup_queue
+uv run python -m strategies.candidate_validation.current_followup_execution_context
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -137,3 +138,23 @@ Interpretation:
 - `WLD` is the highest-priority clean repeat.
 - `ONDO`, `XPL`, and `PUMP` should be tested source-by-source instead of being
   averaged into one generic candidate.
+
+## Current Follow-Up Execution Context
+
+| asset | source | priority | funding ann | volume 24h | spread bps | depth 10bps USD | 1k usage | action | reason |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| WLD | hl_candidate;okx_pressure;liquidation | 10.0571 | 0.109500 | 64954774 | 5.3436 | 22766 | 0.043925 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| ETH | okx_pressure;liquidation;l2_imbalance | 4.5510 | 0.083950 | 422095068 | 0.6123 | 12184113 | 0.000082 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| BTC | liquidation;l2_imbalance | 3.6217 | 0.029200 | 240430043 | 0.1607 | 2835549 | 0.000353 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| ONDO | liquidation;sector_rotation | 3.6106 | 0.237250 | 13424904 | 0.8600 | 35880 | 0.027870 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| XPL | l2_imbalance;sector_rotation | 3.4493 | 0.116800 | 42106313 | 3.3322 | 5094 | 0.196324 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| PUMP | liquidation;sector_rotation | 2.9792 | 0.032850 | 151044657 | 6.6203 | 37064 | 0.026981 | tradable_context_ok | public venue context does not obviously block a small repeat |
+
+Interpretation:
+
+- `WLD`, `ETH`, `BTC`, `ONDO`, `XPL`, and `PUMP` are not obviously blocked for
+  small repeat observations on public Hyperliquid context.
+- `XPL` is tradable but shallow enough that even a 1k repeat uses a noticeable
+  share of visible 10 bps depth.
+- Some queue names are not current Hyperliquid perp symbols, so venue-specific
+  validation is required before treating them as executable candidates.
