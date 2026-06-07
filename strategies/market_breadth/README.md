@@ -9,4 +9,6 @@ reversal, continuation, and chase-risk setups across many liquid crypto assets.
 
 ```bash
 uv run python -m strategies.market_breadth.current_volume_price_dislocation
+uv run python -m strategies.market_breadth.current_volume_price_dislocation_history
+uv run python -m strategies.market_breadth.current_volume_price_dislocation_labels
 ```
