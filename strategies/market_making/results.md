@@ -7,6 +7,7 @@ Run:
 ```bash
 uv run python -m strategies.market_making.hyperliquid_l2_snapshot
 uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
+uv run python -m strategies.market_making.current_l2_imbalance_paper_gate
 ```
 
 Interpretation:
@@ -52,3 +53,28 @@ Interpretation:
   price moved up.
 - This suggests near-book imbalance may be an inventory alpha input, but it is
   not yet a market-making strategy without fill and adverse-selection modeling.
+
+## L2 Imbalance Paper Gate
+
+This subtracts taker round-trip fees and current spread from the book-imbalance
+directional label, then checks visible 10 bps depth. It is a directional paper
+gate, not a maker-fill model.
+
+| asset | size USD | imbalance10 | cost bps | net15 bps | net1h bps | depth USD | depth usage | gate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| HYPE | 100 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0017 | small_paper_probe |
+| HYPE | 250 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0041 | small_paper_probe |
+| HYPE | 500 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0083 | small_paper_probe |
+| HYPE | 1000 | 0.2310 | 10.17 | 122.57 | 199.97 | 60570 | 0.0165 | small_paper_probe |
+| SOL | 100 | 0.4100 | 10.16 | 79.64 | 119.41 | 319875 | 0.0003 | small_paper_probe |
+| SOL | 1000 | 0.4100 | 10.16 | 79.64 | 119.41 | 319875 | 0.0031 | small_paper_probe |
+| BTC | 100 | 0.0167 | 10.16 | 19.41 | 18.93 | 3670441 | 0.0000 | small_paper_probe |
+| ETH | 100 | -0.0338 | 10.63 | -68.00 | -115.92 | 10955176 | 0.0000 | blocked_by_cost |
+
+Interpretation:
+
+- `HYPE` is the strongest L2 imbalance paper candidate in this snapshot.
+- `SOL` is also positive and has deeper visible 10 bps notional.
+- `BTC` survives the rough gate, but its imbalance is tiny; it is less
+  informative as an alpha candidate.
+- This is still a directional paper gate, not proof of a maker strategy.

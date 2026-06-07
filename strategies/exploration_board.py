@@ -366,6 +366,22 @@ def _defi_yield_row(root: Path) -> ExplorationRow:
 
 
 def _market_making_row(root: Path) -> ExplorationRow:
+    paper_gate_path = root / "market_making" / "current_l2_imbalance_paper_gate.csv"
+    best_gate = _best_l2_imbalance_paper_gate_row(paper_gate_path)
+    if best_gate:
+        return ExplorationRow(
+            lane="market_making",
+            status="l2_imbalance_paper_gate",
+            strongest_current_signal=(
+                f"{best_gate.get('asset', '')}: "
+                f"size={best_gate.get('candidate_size_usd', '')}, "
+                f"net15={best_gate.get('net_15m_bps', '')}bps, "
+                f"net1h={best_gate.get('net_1h_bps', '')}bps, "
+                f"depth_usage={best_gate.get('visible_depth_usage', '')}"
+            ),
+            main_gap="paper gate is directional and still excludes maker queue, fill probability, rebates, and repeated adverse-selection samples",
+            next_step="repeat HYPE/SOL L2 gates on fresh snapshots and then design a maker-fill observation log",
+        )
     label_path = root / "market_making" / "current_l2_imbalance_forward_labels.csv"
     best_label = _best_l2_imbalance_label_row(label_path)
     if best_label:
@@ -851,6 +867,27 @@ def _best_l2_imbalance_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("directional_return_1h") or "-inf"),
             abs(float(row.get("imbalance_10_bps") or "0")),
+        ),
+    )
+
+
+def _best_l2_imbalance_paper_gate_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("gate_action") == "small_paper_probe"
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("net_15m_bps") or "-inf"),
+            float(row.get("net_1h_bps") or "-inf"),
+            -float(row.get("visible_depth_usage") or "inf"),
         ),
     )
 
