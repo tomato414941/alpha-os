@@ -7,6 +7,7 @@ Run:
 ```bash
 uv run python -m strategies.market_making.hyperliquid_l2_snapshot
 uv run python -m strategies.market_making.hyperliquid_l2_snapshot --assets BTC ETH SOL HYPE WLD JTO ONDO AERO ZEC NEAR DOGE LTC --asset-source-path strategies/perp_market_map/current_hyperliquid_snapshot.csv --asset-source-top 20
+uv run python -m strategies.market_making.current_l2_imbalance_monitor
 uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
 uv run python -m strategies.market_making.current_l2_imbalance_paper_gate
 ```
@@ -39,6 +40,35 @@ The broad snapshot now covers current candidates and volume-ranked perps, not
 only BTC/ETH/SOL/HYPE. `WLD`, `ZEC`, `HYPE`, `SOL`, and `BTC` show the largest
 absolute 10 bps imbalances in this snapshot. These are unlabeled until 15m/1h
 outcomes mature.
+
+## L2 Imbalance Monitor
+
+This repeats the broad Hyperliquid L2 imbalance snapshot over a short window.
+It is a persistence check, not a fill model or trade instruction.
+
+| asset | obs | dir | persistence | mean imbalance | mean abs imbalance | min abs imbalance | spread bps | near depth USD |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | 3 | 1 | 1.0000 | 0.7881 | 0.7881 | 0.6984 | 0.1609 | 1522952 |
+| ONDO | 3 | 1 | 1.0000 | 0.5184 | 0.5184 | 0.3427 | 1.8113 | 4925 |
+| XPL | 3 | 1 | 1.0000 | 0.4912 | 0.4912 | 0.2641 | 2.2276 | 6832 |
+| VVV | 3 | -1 | 1.0000 | -0.4567 | 0.4567 | 0.3465 | 2.9777 | 2741 |
+| SOL | 3 | -1 | 1.0000 | -0.3658 | 0.3658 | 0.2138 | 0.1539 | 357804 |
+| LIT | 3 | 1 | 1.0000 | 0.3474 | 0.3474 | 0.2705 | 0.9622 | 4244 |
+| XLM | 3 | 1 | 1.0000 | 0.3286 | 0.3286 | 0.1045 | 4.2616 | 12707 |
+| SUI | 3 | 1 | 1.0000 | 0.1746 | 0.1746 | 0.0782 | 0.8057 | 69152 |
+| DOGE | 3 | 1 | 1.0000 | 0.1317 | 0.1317 | 0.0065 | 0.1181 | 174884 |
+| ETH | 3 | -1 | 1.0000 | -0.1189 | 0.1189 | 0.0809 | 0.6143 | 10114140 |
+
+Interpretation:
+
+- `BTC` is the cleanest persistent L2 imbalance candidate because persistence,
+  imbalance magnitude, spread, and visible depth are all usable.
+- `ONDO`, `XPL`, and `VVV` have strong persistent imbalance but shallow visible
+  near-depth.
+- `SOL` is a useful follow-up because it has persistent imbalance and materially
+  better visible depth than the smaller names.
+- `DOGE` and `ETH` are lower-imbalance controls with better depth, useful for
+  checking whether the signal only appears in thin books.
 
 ## L2 Imbalance Forward Labels
 

@@ -398,6 +398,22 @@ def _market_making_row(root: Path) -> ExplorationRow:
             main_gap="one L2 snapshot label excludes queue position, fill probability, fees, and repeated adverse-selection samples",
             next_step="collect repeated L2 imbalance labels and estimate maker fill/adverse-selection risk",
         )
+    monitor_path = root / "market_making" / "current_l2_imbalance_monitor_summary.csv"
+    best_monitor = _best_l2_imbalance_monitor_row(monitor_path)
+    if best_monitor:
+        return ExplorationRow(
+            lane="market_making",
+            status="l2_imbalance_monitor",
+            strongest_current_signal=(
+                f"{best_monitor.get('asset', '')}: "
+                f"dir={best_monitor.get('dominant_direction', '')}, "
+                f"persist={best_monitor.get('direction_persistence_rate', '')}, "
+                f"mean_abs={best_monitor.get('mean_abs_imbalance_10_bps', '')}, "
+                f"near_depth={best_monitor.get('mean_near_depth_10bps_notional', '')}"
+            ),
+            main_gap="persistent L2 imbalance candidates are still unlabeled against 15m/1h returns",
+            next_step="rerun forward labels after 15m/1h and gate BTC/SOL/ONDO/XPL with costs",
+        )
     path = root / "market_making" / "current_l2_snapshot.csv"
     best = _best_abs_numeric_row(path, key="imbalance_10_bps")
     signal = "Hyperliquid L2 snapshot exists"
@@ -888,6 +904,24 @@ def _best_l2_imbalance_paper_gate_row(path: Path) -> dict[str, str] | None:
             float(row.get("net_15m_bps") or "-inf"),
             float(row.get("net_1h_bps") or "-inf"),
             -float(row.get("visible_depth_usage") or "inf"),
+        ),
+    )
+
+
+def _best_l2_imbalance_monitor_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            int(row.get("observations") or "0"),
+            float(row.get("direction_persistence_rate") or "0"),
+            float(row.get("mean_abs_imbalance_10_bps") or "0"),
+            float(row.get("mean_near_depth_10bps_notional") or "0"),
         ),
     )
 
