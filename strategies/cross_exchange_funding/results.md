@@ -95,29 +95,36 @@ This screen directly joins:
 - OKX top-50 order book
 - Hyperliquid predicted funding
 - Hyperliquid day volume and impact spread
+- rough round-trip cost proxy: OKX spread plus Hyperliquid impact spread
+- break-even holding hours and 8h/24h net funding proxy
 
-Top snapshot rows:
+Rows are ranked by `net_8h_proxy`, not raw annualized spread. This intentionally
+penalizes thin books and wide impact before a candidate reaches the top.
 
-| asset | long venue | short venue | annualized spread | OKX spread | OKX bid notional | OKX ask notional | HL day volume | notes |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| BABY | HlPerp | OkxSwap | 1.8987 | 0.000634 | 99528 | 85897 | 1827968 | OKX and Hyperliquid context available |
-| AIXBT | HlPerp | OkxSwap | 0.7980 | 0.000459 | 67123 | 45576 | 237820 | OKX and Hyperliquid context available |
-| SNX | HlPerp | OkxSwap | 0.7168 | 0.000412 | 70358 | 63387 | 258632 | OKX and Hyperliquid context available |
-| JTO | HlPerp | OkxSwap | 0.5815 | 0.000156 | 80267 | 112713 | 4714457 | OKX and Hyperliquid context available |
-| MERL | HlPerp | OkxSwap | 0.5483 | 0.000484 | 76976 | 70714 | 239431 | OKX and Hyperliquid context available |
-| MON | OkxSwap | HlPerp | 0.5392 | 0.000435 | 246046 | 200044 | 2427384 | OKX and Hyperliquid context available |
-| MEME | HlPerp | OkxSwap | 0.4963 | 0.000158 | 48657 | 35064 | 594655 | OKX and Hyperliquid context available |
-| AZTEC | OkxSwap | HlPerp | 0.4807 | 0.001235 | 100262 | 91263 | 235695 | OKX and Hyperliquid context available |
-| TURBO | HlPerp | OkxSwap | 0.4436 | 0.000346 | 47965 | 23804 | 90325 | low Hyperliquid day volume |
-| IOTA | OkxSwap | HlPerp | 0.4143 | 0.000432 | 45074 | 43388 | 92683 | low Hyperliquid day volume; wide Hyperliquid impact spread |
+Top cost-aware rows:
+
+| asset | long venue | short venue | annualized spread | rough cost | breakeven hours | net 8h | net 24h | capacity proxy | notes |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BTC | OkxSwap | HlPerp | 0.1333 | 0.00001754 | 1.15 | 0.00010420 | 0.00034767 | 1018953 | OKX and Hyperliquid context available |
+| SOL | HlPerp | OkxSwap | 0.1434 | 0.00017073 | 10.43 | -0.00003977 | 0.00022213 | 3031408 | OKX and Hyperliquid context available |
+| HYPE | OkxSwap | HlPerp | 0.1891 | 0.00026750 | 12.39 | -0.00009484 | 0.00025048 | 3077060 | OKX and Hyperliquid context available |
+| BNB | HlPerp | OkxSwap | 0.0409 | 0.00027963 | 59.83 | -0.00024224 | -0.00016746 | 65544 | OKX and Hyperliquid context available |
+| DOGE | OkxSwap | HlPerp | 0.0545 | 0.00031905 | 51.31 | -0.00026931 | -0.00016981 | 93457 | OKX and Hyperliquid context available |
+| AI | HlPerp | OkxSwap | 0.1095 | 0.00042909 | 34.33 | -0.00032909 | -0.00012909 | 0 | missing Hyperliquid context |
+| TRX | OkxSwap | HlPerp | 0.1548 | 0.00049615 | 28.07 | -0.00035477 | -0.00007200 | 47141 | OKX and Hyperliquid context available |
+| LINK | OkxSwap | HlPerp | 0.0998 | 0.00048028 | 42.16 | -0.00038914 | -0.00020687 | 36479 | OKX and Hyperliquid context available |
+| SUI | OkxSwap | HlPerp | 0.0377 | 0.00043781 | 101.72 | -0.00040338 | -0.00033451 | 315086 | OKX and Hyperliquid context available |
+| AVAX | OkxSwap | HlPerp | 0.0116 | 0.00041535 | 313.81 | -0.00040476 | -0.00038358 | 97783 | OKX and Hyperliquid context available |
 
 Interpretation:
 
 - This is more actionable than the previous venue-agnostic spread table because
   both public APIs are reachable from the current environment.
-- The top rows are mostly small/mid-cap perps, not majors.
-- The largest spread, `BABY`, still has only about 1.8M Hyperliquid day volume
-  and sub-100k top-50 OKX book notional, so size must be small until execution
-  is measured.
-- `TURBO` and `IOTA` show why this cannot be spread-only: funding can be large
-  while one venue is too thin or impact-sensitive.
+- Raw annualized spread is misleading. After rough spread/impact cost, the
+  small-cap high-spread rows drop below majors.
+- `BTC` is the only current top-row candidate with positive 8h net proxy.
+- `SOL` and `HYPE` become plausible only if the position can be held long enough
+  for the funding spread to amortize entry and exit cost.
+- The next test should measure persistence across repeated snapshots. A
+  one-shot spread is not enough; the edge must survive time, fees, and actual
+  order placement constraints.

@@ -57,6 +57,11 @@ class OkxHlFundingSpread:
     okx_top_ask_notional: float
     hl_day_notional_volume: float
     hl_impact_spread: float
+    rough_round_trip_cost: float
+    breakeven_hold_hours: float
+    net_8h_proxy: float
+    net_24h_proxy: float
+    capacity_proxy_notional: float
     notes: str
 
 
@@ -109,7 +114,7 @@ def build_okx_hl_funding_spreads(
     return tuple(
         sorted(
             (row for row in rows if row is not None),
-            key=lambda row: row.annualized_spread,
+            key=lambda row: row.net_8h_proxy,
             reverse=True,
         )
     )
@@ -138,6 +143,11 @@ def write_okx_hl_funding_spreads(
                 "okx_top_ask_notional",
                 "hl_day_notional_volume",
                 "hl_impact_spread",
+                "rough_round_trip_cost",
+                "breakeven_hold_hours",
+                "net_8h_proxy",
+                "net_24h_proxy",
+                "capacity_proxy_notional",
                 "notes",
             )
         )
@@ -157,6 +167,11 @@ def write_okx_hl_funding_spreads(
                     f"{row.okx_top_ask_notional:.8f}",
                     f"{row.hl_day_notional_volume:.8f}",
                     f"{row.hl_impact_spread:.8f}",
+                    f"{row.rough_round_trip_cost:.8f}",
+                    f"{row.breakeven_hold_hours:.4f}",
+                    f"{row.net_8h_proxy:.8f}",
+                    f"{row.net_24h_proxy:.8f}",
+                    f"{row.capacity_proxy_notional:.8f}",
                     row.notes,
                 )
             )
@@ -183,6 +198,15 @@ def _build_asset_row(
     hourly_spread = abs(hl_funding.hourly_rate - okx_funding.hourly_rate)
     hl_day_volume = hl_context.day_notional_volume if hl_context is not None else 0.0
     hl_impact_spread = hl_context.impact_spread if hl_context is not None else 0.0
+    rough_round_trip_cost = okx_book.spread + hl_impact_spread
+    breakeven_hold_hours = (
+        rough_round_trip_cost / hourly_spread if hourly_spread > 0.0 else 0.0
+    )
+    capacity_proxy_notional = min(
+        okx_book.top_bid_notional,
+        okx_book.top_ask_notional,
+        hl_day_volume * 0.01,
+    )
     return OkxHlFundingSpread(
         timestamp=observed_at,
         asset=asset,
@@ -197,6 +221,11 @@ def _build_asset_row(
         okx_top_ask_notional=okx_book.top_ask_notional,
         hl_day_notional_volume=hl_day_volume,
         hl_impact_spread=hl_impact_spread,
+        rough_round_trip_cost=rough_round_trip_cost,
+        breakeven_hold_hours=breakeven_hold_hours,
+        net_8h_proxy=(hourly_spread * 8.0) - rough_round_trip_cost,
+        net_24h_proxy=(hourly_spread * 24.0) - rough_round_trip_cost,
+        capacity_proxy_notional=capacity_proxy_notional,
         notes=_notes(okx_book=okx_book, hl_context=hl_context),
     )
 
@@ -321,6 +350,9 @@ def main() -> None:
             f"okx_bid_notional={row.okx_top_bid_notional:.0f}",
             f"okx_ask_notional={row.okx_top_ask_notional:.0f}",
             f"hl_volume={row.hl_day_notional_volume:.0f}",
+            f"breakeven_hours={row.breakeven_hold_hours:.2f}",
+            f"net_8h={row.net_8h_proxy:.6f}",
+            f"capacity={row.capacity_proxy_notional:.0f}",
             row.notes,
         )
 
