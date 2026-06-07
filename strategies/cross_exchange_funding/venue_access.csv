@@ -1,0 +1,5 @@
+timestamp,venue,endpoint,method,url,status_code,available,notes
+2026-06-07T11:45:43.646735+00:00,Binance USD-M,exchangeInfo,GET,https://fapi.binance.com/fapi/v1/exchangeInfo,451,False,location restricted
+2026-06-07T11:45:43.646735+00:00,Bybit linear,instruments,GET,https://api.bybit.com/v5/market/instruments-info?category=linear&symbol=BTCUSDT,403,False,blocked or permission required
+2026-06-07T11:45:43.646735+00:00,OKX swap,instruments,GET,https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=BTC-USDT-SWAP,200,True,reachable
+2026-06-07T11:45:43.646735+00:00,Hyperliquid,metaAndAssetCtxs,POST,https://api.hyperliquid.xyz/info,200,True,reachable

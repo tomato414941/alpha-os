@@ -20,6 +20,8 @@ The screen is not a trade recommendation. It does not yet verify:
 ## Commands
 
 ```bash
+uv run python -m strategies.cross_exchange_funding.venue_access_probe
 uv run python -m strategies.cross_exchange_funding.current_funding_spread
 uv run python -m strategies.cross_exchange_funding.current_funding_feasibility
+uv run python -m strategies.cross_exchange_funding.current_okx_hl_funding_spread
 ```
