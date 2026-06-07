@@ -12,6 +12,7 @@ The first probe is intentionally broad and simple:
 ```bash
 uv run python -m strategies.news_social.current_attention_snapshot
 uv run python -m strategies.news_social.current_attention_market_join
+uv run python -m strategies.news_social.current_attention_price_context
 uv run python -m strategies.news_social.current_attention_forward_labels
 uv run python -m strategies.news_social.current_news_event_screen
 ```
