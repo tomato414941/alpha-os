@@ -229,3 +229,37 @@ Interpretation:
 - Fee tier, actual account access, margin mode, collateral movement, maker/taker
   feasibility, and funding timestamp alignment remain unresolved. These are now
   the main blockers before any real order workflow.
+
+## OKX-Hyperliquid Funding Alignment
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_funding_alignment
+```
+
+Current BTC alignment:
+
+- OKX instrument: `BTC-USDT-SWAP`
+- OKX funding rate: `-0.000017878722904`
+- OKX long expected rate per event: `0.000017878722904`
+- OKX first funding time: `2026-06-07T16:00:00+00:00`
+- OKX interval: `8h`
+- Hyperliquid funding rate: `0.0000125`
+- Hyperliquid short expected rate per event: `0.0000125`
+- Hyperliquid first funding time: `2026-06-07T13:00:00+00:00`
+- Hyperliquid interval: `1h`
+- first event gap: `3h`
+- events within 8h: OKX `1`, Hyperliquid `8`
+- events within 24h: OKX `3`, Hyperliquid `24`
+
+Interpretation:
+
+- The current funding signs match the paper direction: long OKX and short
+  Hyperliquid both expect funding income.
+- Hyperliquid funds hourly while OKX funds every 8h, so this is not a
+  one-for-one event match. The paper workflow must track accumulated funding by
+  event schedule, not only a single spread number.
+- The remaining uncertainty is persistence: current signs can flip before each
+  funding event, so this still needs a longer scheduled monitor before real
+  execution is considered.
