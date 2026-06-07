@@ -23,6 +23,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_stack_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
+        _symbol_cluster_label_queue_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -133,6 +134,34 @@ def _symbol_cluster_conflicts_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="symbol clusters have not been checked for directional conflicts",
         next_step="run current symbol cluster conflict screen after the symbol opportunity map",
+    )
+
+
+def _symbol_cluster_label_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_cluster_label_queue.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="symbol_cluster_label_queue",
+            status=best.get("queue_action", "symbol_label_queue"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"priority={best.get('priority_score', '')}, "
+                f"cluster={best.get('cluster_status', '')}, "
+                f"bias={best.get('dominant_bias', '')}, "
+                f"sources={best.get('source_count', '')}, "
+                f"candidates={best.get('candidate_count', '')}, "
+                f"top={best.get('top_opportunities', '')}"
+            ),
+            main_gap=best.get("reason", "symbol-level labels are not yet separated by lane"),
+            next_step=best.get("next_step", "run the top symbol-level label task"),
+        )
+    return ExplorationRow(
+        lane="symbol_cluster_label_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="symbol conflict output has not been turned into label tasks",
+        next_step="run current symbol cluster label queue after conflict review",
     )
 
 
