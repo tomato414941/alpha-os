@@ -28,6 +28,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _btc_options_volatility_stack(root),
         _prediction_market_event_model_stack(root),
         *_protocol_fundamental_stacks(root),
+        *_protocol_fee_valuation_stacks(root),
         *_token_unlock_stacks(root),
         _liquidation_flow_stack(root),
         _l2_imbalance_stack(root),
@@ -247,6 +248,48 @@ def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_valuation.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status") in {"paper_value_growth_candidate", "paper_value_watch"}
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:5]:
+        token = ticket.get("token_symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{token.lower()}_fee_yield_valuation",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="protocol_fundamentals",
+                evidence=(
+                    f"{token}/{ticket.get('protocol', '')}: "
+                    f"fee_to_mcap={ticket.get('fee_to_market_cap', '')}, "
+                    f"fee_to_fdv={ticket.get('fee_to_fdv', '')}, "
+                    f"growth7d={ticket.get('change_7d_over_7d', '')}, "
+                    f"funding={ticket.get('funding', '')}"
+                ),
+                conflict="DeFiLlama fees are not strict token-holder revenue; token capture, emissions, FDV, and unlocks can break the valuation link",
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {token} fee-yield valuation snapshots against forward returns",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")
     tickets = sorted(
@@ -386,6 +429,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "small_paper_probe": 60.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
+        "paper_value_growth_candidate": 67.0,
+        "paper_value_watch": 54.0,
         "funding_crowded_watch": 46.0,
         "crowded_short_risk": 48.0,
         "paper_risk_context": 45.0,

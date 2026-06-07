@@ -38,3 +38,22 @@ Interpretation:
   funding is not expensive.
 - `HYPE` should not be averaged into one signal. The protocol-growth thesis and
   unlock-short thesis must be labeled separately.
+
+## Fee Valuation
+
+Current fee-yield candidates:
+
+- `JUP`: high annualized fees versus market cap and FDV, with strong 7d fee
+  growth.
+- `AAVE`: high fee-to-market-cap and fee-to-FDV context, with strong 7d fee
+  growth.
+- `UNI`: material fee yield plus fee growth on Uniswap V3.
+- `CRV`: fee yield and growth are both strong, but fee base is smaller.
+- `MORPHO`: fee yield and growth are both strong.
+
+Important caveat:
+
+- This screen uses DeFiLlama fees, not a strict token-holder revenue model.
+  Fee yield is valuation context, not proof that the token captures those fees.
+- `HYPE` has strong protocol fees and growth, but its FDV makes fee-to-FDV weak
+  in the current snapshot.
