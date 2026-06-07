@@ -486,3 +486,32 @@ Interpretation:
 - No focused candidate except BTC under very-low-fee assumptions survives the
   8h all-in check. The current alpha is therefore a longer-hold funding-carry
   candidate, not an immediate 8h arbitrage.
+
+## OKX-Hyperliquid Candidate Triage
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_triage
+```
+
+This turns the execution-cost score into research actions. It is not a trade
+instruction.
+
+| asset | action | long | short | obs | capacity | very-low 8h | low-fee 24h | one-bps 24h | max slippage bps |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | paper_8h_candidate | OkxSwap | HlPerp | 12 | 422448.80855333 | 0.00001547 | 0.00012195 | -0.00007805 | 0.08887218 |
+| JTO | active_24h_monitor | OkxSwap | HlPerp | 12 | 54543.56750198 | -0.00089255 | 0.00037376 | 0.00017376 | 7.52849755 |
+| ZEC | fee_dependent_24h_monitor | OkxSwap | HlPerp | 12 | 106210.05564167 | -0.00037931 | 0.00015978 | -0.00004022 | 3.14430447 |
+| BABY | thin_or_unstable_watch | HlPerp | OkxSwap | 12 | 18182.63949194 | -0.00135982 | 0.00114052 | 0.00094052 | 12.94997144 |
+
+Interpretation:
+
+- BTC is the only current 8h paper candidate, and only under very-low-fee
+  assumptions. The next proof needed is account-specific fee and maker-fill
+  evidence, not another spread table.
+- JTO deserves active 24h monitoring because it survives the one-bps-each
+  all-in check, but it is capacity-limited.
+- ZEC is still useful as a fee-dependent 24h candidate.
+- BABY is not promoted despite high 24h score because capacity is low and
+  slippage is high. Keep it as a watch item, not an active candidate.
