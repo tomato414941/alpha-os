@@ -246,6 +246,33 @@ def _event_flow_row(root: Path) -> ExplorationRow:
 
 
 def _liquidation_flow_row(root: Path) -> ExplorationRow:
+    monitor_path = root / "liquidation_flow" / "current_okx_liquidation_monitor_summary.csv"
+    best_monitor = _best_numeric_row(monitor_path, key="mean_cascade_score")
+    if best_monitor:
+        depth_path = root / "liquidation_flow" / "current_okx_liquidation_depth_check.csv"
+        best_depth = _best_numeric_row(depth_path, key="depth_score")
+        depth_note = ""
+        if best_depth:
+            depth_note = (
+                f"; depth {best_depth.get('asset', '')}: "
+                f"spread={best_depth.get('spread_bps', '')}, "
+                f"bid5={best_depth.get('bid_depth_5bps', '')}, "
+                f"ask5={best_depth.get('ask_depth_5bps', '')}"
+            )
+        return ExplorationRow(
+            lane="liquidation_flow",
+            status="current_okx_event_flow_monitor",
+            strongest_current_signal=(
+                f"{best_monitor.get('asset', '')}: {best_monitor.get('action', '')}, "
+                f"obs={best_monitor.get('observations', '')}, "
+                f"mean_score={best_monitor.get('mean_cascade_score', '')}, "
+                f"mean_liq={best_monitor.get('mean_total_liquidation_notional', '')}, "
+                f"mean_imbalance={best_monitor.get('mean_forced_buy_sell_imbalance', '')}"
+                f"{depth_note}"
+            ),
+            main_gap="monitor persistence exists, but strongest signals have thin visible near-touch depth",
+            next_step="label BEAT/WLD monitor timestamps and test smaller paper sizes or alternate venues",
+        )
     path = root / "liquidation_flow" / "current_okx_liquidation_flow.csv"
     label_path = root / "liquidation_flow" / "current_okx_liquidation_forward_labels.csv"
     best = _best_numeric_row(path, key="cascade_score")
