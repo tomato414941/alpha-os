@@ -28,8 +28,11 @@ class ForwardLabel:
     source: str
     action: str
     asset: str
-    return_15m: float | None
-    return_1h: float | None
+    direction: int
+    raw_return_15m: float | None
+    raw_return_1h: float | None
+    directional_return_15m: float | None
+    directional_return_1h: float | None
 
 
 @dataclass(frozen=True)
@@ -40,10 +43,10 @@ class ForwardLabelSummary:
     observations: int
     coverage_15m: int
     coverage_1h: int
-    mean_return_15m: float | None
-    mean_return_1h: float | None
-    positive_15m_rate: float | None
-    positive_1h_rate: float | None
+    mean_directional_return_15m: float | None
+    mean_directional_return_1h: float | None
+    positive_directional_15m_rate: float | None
+    positive_directional_1h_rate: float | None
 
 
 def build_forward_labels() -> tuple[ForwardLabel, ...]:
@@ -71,9 +74,9 @@ def summarize_forward_labels(labels: tuple[ForwardLabel, ...]) -> tuple[ForwardL
             summaries,
             key=lambda row: (
                 row.coverage_15m,
-                row.mean_return_15m or -1.0,
+                row.mean_directional_return_15m or -1.0,
                 row.coverage_1h,
-                row.mean_return_1h or -1.0,
+                row.mean_directional_return_1h or -1.0,
             ),
             reverse=True,
         )
@@ -84,7 +87,19 @@ def write_forward_labels_csv(labels: tuple[ForwardLabel, ...], *, output_path: P
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle, lineterminator="\n")
-        writer.writerow(("timestamp", "source", "action", "asset", "return_15m", "return_1h"))
+        writer.writerow(
+            (
+                "timestamp",
+                "source",
+                "action",
+                "asset",
+                "direction",
+                "raw_return_15m",
+                "raw_return_1h",
+                "directional_return_15m",
+                "directional_return_1h",
+            )
+        )
         for label in labels:
             writer.writerow(
                 (
@@ -92,8 +107,19 @@ def write_forward_labels_csv(labels: tuple[ForwardLabel, ...], *, output_path: P
                     label.source,
                     label.action,
                     label.asset,
-                    "" if label.return_15m is None else f"{label.return_15m:.8f}",
-                    "" if label.return_1h is None else f"{label.return_1h:.8f}",
+                    label.direction,
+                    "" if label.raw_return_15m is None else f"{label.raw_return_15m:.8f}",
+                    "" if label.raw_return_1h is None else f"{label.raw_return_1h:.8f}",
+                    (
+                        ""
+                        if label.directional_return_15m is None
+                        else f"{label.directional_return_15m:.8f}"
+                    ),
+                    (
+                        ""
+                        if label.directional_return_1h is None
+                        else f"{label.directional_return_1h:.8f}"
+                    ),
                 )
             )
     return output_path
@@ -115,10 +141,10 @@ def write_forward_label_summary_csv(
                 "observations",
                 "coverage_15m",
                 "coverage_1h",
-                "mean_return_15m",
-                "mean_return_1h",
-                "positive_15m_rate",
-                "positive_1h_rate",
+                "mean_directional_return_15m",
+                "mean_directional_return_1h",
+                "positive_directional_15m_rate",
+                "positive_directional_1h_rate",
             )
         )
         for row in summaries:
@@ -130,10 +156,26 @@ def write_forward_label_summary_csv(
                     row.observations,
                     row.coverage_15m,
                     row.coverage_1h,
-                    "" if row.mean_return_15m is None else f"{row.mean_return_15m:.8f}",
-                    "" if row.mean_return_1h is None else f"{row.mean_return_1h:.8f}",
-                    "" if row.positive_15m_rate is None else f"{row.positive_15m_rate:.8f}",
-                    "" if row.positive_1h_rate is None else f"{row.positive_1h_rate:.8f}",
+                    (
+                        ""
+                        if row.mean_directional_return_15m is None
+                        else f"{row.mean_directional_return_15m:.8f}"
+                    ),
+                    (
+                        ""
+                        if row.mean_directional_return_1h is None
+                        else f"{row.mean_directional_return_1h:.8f}"
+                    ),
+                    (
+                        ""
+                        if row.positive_directional_15m_rate is None
+                        else f"{row.positive_directional_15m_rate:.8f}"
+                    ),
+                    (
+                        ""
+                        if row.positive_directional_1h_rate is None
+                        else f"{row.positive_directional_1h_rate:.8f}"
+                    ),
                 )
             )
     return output_path
@@ -150,10 +192,10 @@ def write_forward_label_summary_md(
         handle.write("# Current HL Signal Forward Labels\n\n")
         handle.write(
             "This labels elapsed monitor samples with subsequent Hyperliquid candle "
-            "returns. It is a small forward-label check, not a final alpha test.\n\n"
+            "directional returns. It is a small forward-label check, not a final alpha test.\n\n"
         )
         handle.write(
-            "| source | action | asset | obs | cov15 | cov1h | mean 15m | mean 1h | hit15 | hit1h |\n"
+            "| source | action | asset | obs | cov15 | cov1h | mean dir 15m | mean dir 1h | hit15 | hit1h |\n"
         )
         handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n")
         for row in summaries[:top]:
@@ -165,14 +207,14 @@ def write_forward_label_summary_md(
                 f"{row.observations} | "
                 f"{row.coverage_15m} | "
                 f"{row.coverage_1h} | "
-                f"{'' if row.mean_return_15m is None else f'{row.mean_return_15m:.6f}'} | "
-                f"{'' if row.mean_return_1h is None else f'{row.mean_return_1h:.6f}'} | "
-                f"{'' if row.positive_15m_rate is None else f'{row.positive_15m_rate:.6f}'} | "
-                f"{'' if row.positive_1h_rate is None else f'{row.positive_1h_rate:.6f}'} |\n"
+                f"{'' if row.mean_directional_return_15m is None else f'{row.mean_directional_return_15m:.6f}'} | "
+                f"{'' if row.mean_directional_return_1h is None else f'{row.mean_directional_return_1h:.6f}'} | "
+                f"{'' if row.positive_directional_15m_rate is None else f'{row.positive_directional_15m_rate:.6f}'} | "
+                f"{'' if row.positive_directional_1h_rate is None else f'{row.positive_directional_1h_rate:.6f}'} |\n"
             )
         handle.write("\n## Interpretation\n\n")
         handle.write(
-            "This labels price movement after signal timestamps only. It does not yet "
+            "Positive directional return means the signal direction was right. It does not yet "
             "include funding PnL, hedge PnL, fees, adverse selection, or neutral baselines.\n"
         )
     return output_path
@@ -221,21 +263,27 @@ def _build_forward_label(
     candles: tuple[dict[str, float], ...],
 ) -> ForwardLabel:
     start_close = _close_at_or_after(candles, sample.timestamp)
+    direction = _direction_for_action(sample.action)
+    raw_return_15m = _forward_return(
+        candles=candles,
+        start_close=start_close,
+        target=sample.timestamp + timedelta(minutes=15),
+    )
+    raw_return_1h = _forward_return(
+        candles=candles,
+        start_close=start_close,
+        target=sample.timestamp + timedelta(hours=1),
+    )
     return ForwardLabel(
         timestamp=sample.timestamp.isoformat(),
         source=sample.source,
         action=sample.action,
         asset=sample.asset,
-        return_15m=_forward_return(
-            candles=candles,
-            start_close=start_close,
-            target=sample.timestamp + timedelta(minutes=15),
-        ),
-        return_1h=_forward_return(
-            candles=candles,
-            start_close=start_close,
-            target=sample.timestamp + timedelta(hours=1),
-        ),
+        direction=direction,
+        raw_return_15m=raw_return_15m,
+        raw_return_1h=raw_return_1h,
+        directional_return_15m=_directional(raw_return_15m, direction),
+        directional_return_1h=_directional(raw_return_1h, direction),
     )
 
 
@@ -251,6 +299,20 @@ def _forward_return(
     if end_close is None:
         return None
     return (end_close / start_close) - 1.0 if start_close > 0.0 else None
+
+
+def _direction_for_action(action: str) -> int:
+    if action.startswith("long_"):
+        return 1
+    if action.startswith("short_"):
+        return -1
+    return 0
+
+
+def _directional(raw_return: float | None, direction: int) -> float | None:
+    if raw_return is None or direction == 0:
+        return None
+    return raw_return * direction
 
 
 def _close_at_or_after(candles: tuple[dict[str, float], ...], target: datetime) -> float | None:
@@ -295,8 +357,12 @@ def _summarize_group(
     key: tuple[str, str, str],
     labels: tuple[ForwardLabel, ...],
 ) -> ForwardLabelSummary:
-    returns_15m = tuple(row.return_15m for row in labels if row.return_15m is not None)
-    returns_1h = tuple(row.return_1h for row in labels if row.return_1h is not None)
+    returns_15m = tuple(
+        row.directional_return_15m for row in labels if row.directional_return_15m is not None
+    )
+    returns_1h = tuple(
+        row.directional_return_1h for row in labels if row.directional_return_1h is not None
+    )
     return ForwardLabelSummary(
         source=key[0],
         action=key[1],
@@ -304,10 +370,10 @@ def _summarize_group(
         observations=len(labels),
         coverage_15m=len(returns_15m),
         coverage_1h=len(returns_1h),
-        mean_return_15m=_mean_or_none(returns_15m),
-        mean_return_1h=_mean_or_none(returns_1h),
-        positive_15m_rate=_positive_rate_or_none(returns_15m),
-        positive_1h_rate=_positive_rate_or_none(returns_1h),
+        mean_directional_return_15m=_mean_or_none(returns_15m),
+        mean_directional_return_1h=_mean_or_none(returns_1h),
+        positive_directional_15m_rate=_positive_rate_or_none(returns_15m),
+        positive_directional_1h_rate=_positive_rate_or_none(returns_1h),
     )
 
 
@@ -354,7 +420,10 @@ def main() -> None:
             row.action,
             row.asset,
             f"cov15={row.coverage_15m}",
-            f"mean15={'' if row.mean_return_15m is None else f'{row.mean_return_15m:.4f}'}",
+            (
+                "mean_dir15="
+                f"{'' if row.mean_directional_return_15m is None else f'{row.mean_directional_return_15m:.4f}'}"
+            ),
             f"cov1h={row.coverage_1h}",
         )
 
