@@ -38,48 +38,30 @@ Interpretation:
 
 ## Current Category Tradable Forward Labels
 
-| category | coin | action | change24 | dir | raw 15m | dir 15m | raw 1h | dir 1h | status |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Arcade Games | HMSTR | sector_momentum_watch | 73.9737 | 1 |  |  |  |  | tradable_pending_label |
-| Telegram Apps | CATI | sector_momentum_watch | 49.1236 | 1 |  |  |  |  | tradable_pending_label |
-| Echo Launchpad | XPL | sector_momentum_watch | 33.9457 | 1 |  |  |  |  | tradable_pending_label |
-| Privacy | ZEC | sector_momentum_watch | 19.2678 | 1 |  |  |  |  | tradable_pending_label |
-| Launchpad | JUP | sector_momentum_watch | 20.6313 | 1 |  |  |  |  | tradable_pending_label |
-| Binance Alpha Spotlight | ONDO | sector_momentum_watch | 13.7373 | 1 |  |  |  |  | tradable_pending_label |
-| Analytics | PYTH | sector_momentum_watch | 25.3886 | 1 |  |  |  |  | tradable_pending_label |
-| Privacy | LINK | sector_momentum_watch | 19.2678 | 1 |  |  |  |  | tradable_pending_label |
-| AI Meme | FARTCOIN | sector_momentum_watch | 9.5359 | 1 |  |  |  |  | tradable_pending_label |
-| Four.meme Ecosystem (BNB Memes) | SIREN | sector_momentum_watch | 35.2284 | 1 |  |  |  |  | not_hyperliquid |
+The latest tradable category labels are now partly mature. The sector momentum
+direction mostly failed over the current short horizon.
 
 Interpretation:
 
-- Category leaders are often not directly tradable on Hyperliquid, so category
-  rotation needs a tradability map before it can become useful.
-- The current tradable category labels are mostly pending because this is a fresh
-  refresh.
-- `HMSTR`, `CATI`, `XPL`, `ZEC`, `JUP`, and `ONDO` are the immediate label queue.
-- The previous positive labeled snapshot is no longer treated as current
-  evidence; it should only be used as historical context until repeated.
+- `POL` is the only clear positive labeled row in the current sample.
+- `ZEC`, `XPL`, `JUP`, `ONDO`, `TURBO`, and `PYTH` failed the current 15m
+  sector-momentum direction.
+- `HMSTR`, `CATI`, `LAB`, `H`, `ORBS`, `SAHARA`, and `HOME` are still pending
+  or not directly usable as current promotion evidence.
+- Category rotation remains useful as a broad context lane, but this refresh
+  does not produce a deployable sector-continuation candidate.
 
 ## Current Category Perp Context
 
-| category | symbol | dir | dir15 | funding support | HL funding | OKX funding | score | action | reason |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Privacy | ZEC | 1 |  | 0.75674928 | -0.33144949 | -0.75674928 | 1.135357 | wait_for_label | sector label is not mature yet |
-| Zero Knowledge (ZK) | ZEC | 1 |  | 0.75674928 | -0.33144949 | -0.75674928 | 0.926691 | wait_for_label | sector label is not mature yet |
-| Echo Launchpad | XPL | 1 |  | 0.02772491 | 0.10950000 | -0.02772491 | 0.706639 | wait_for_label | sector label is not mature yet |
-| Launchpad | JUP | 1 |  | 0.03652307 | -0.03652307 |  | 0.449150 | wait_for_label | sector label is not mature yet |
-| Arcade Games | HMSTR | 1 |  | -0.10950000 | 0.10950000 |  | 0.369973 | wait_for_label | sector label is not mature yet |
-| Binance Alpha Spotlight | ONDO | 1 |  | 0.06860749 | 0.10950000 | -0.06860749 | 0.343415 | wait_for_label | sector label is not mature yet |
-| Echo Launchpad | LAB | 1 |  | -0.05475000 |  | 0.05475000 | 0.124164 | wait_for_label | sector label is not mature yet |
-| AI Meme | TURBO | 1 |  | 0.39823748 | -0.39823748 |  | 0.116261 | wait_for_label | sector label is not mature yet |
+The perp context now deprioritizes most mature rows. `POL` worked directionally,
+but funding support was weak, so it is not promoted.
 
 Interpretation:
 
-- This refresh created a sector-perp waiting queue, not deployable candidates.
-- Non-perp category constituents are excluded from this context screen.
-- `ZEC`, `XPL`, `JUP`, `ONDO`, and `TURBO` have some funding support for the
-  sector direction; `HMSTR` is tradable but funding is against the long
-  direction, so it is no longer the top sector-perp context candidate.
-- The next useful step is to rerun labels after the 15m horizon matures and
-  separate category momentum from perp-carry support.
+- `ZEC` has funding support but failed the sector direction label.
+- `XPL`, `JUP`, `ONDO`, `TURBO`, `PYTH`, `XMR`, and `LINK` also failed the
+  current sector direction label.
+- `POL` is positive on price, but weak funding support keeps it as
+  `deprioritize`.
+- The lane should stay in exploration until repeated category labels beat
+  costs and show a clearer link between category momentum and tradable perps.

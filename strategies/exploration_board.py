@@ -487,8 +487,8 @@ def _sector_rotation_row(root: Path) -> ExplorationRow:
                 f"funding_support={best_context.get('best_funding_support', '')}, "
                 f"score={best_context.get('context_score', '')}"
             ),
-            main_gap="category-perp context is current and mostly pending short labels",
-            next_step="wait for HMSTR/XPL/ZEC/JUP/ONDO category labels and rerun sector-perp context",
+            main_gap="category-perp context has mostly failed short labels; remaining pending rows are not promotion evidence",
+            next_step="deprioritize sector-perp continuation until repeated labels beat costs and funding support",
         )
     label_path = root / "sector_rotation" / "current_category_tradable_forward_labels.csv"
     best_label = _best_sector_tradable_label_row(label_path)
@@ -843,8 +843,8 @@ def _on_chain_flow_row(root: Path) -> ExplorationRow:
                 f"mean_score={best_summary.get('mean_context_score', '')}, "
                 f"action={best_summary.get('action', '')}"
             ),
-            main_gap="chain TVL flow repeat context still needs a second labeled timestamp before promotion",
-            next_step="wait for the pending MON/HYPE/SOL/ETH sample to mature and rerun labels",
+            main_gap="chain TVL flow has only two labeled timestamps and still excludes costs, slippage, and 1h confirmation",
+            next_step="repeat the ETH context and isolate second-sample POL/XLM/AVAX winners before promotion",
         )
     context_path = root / "on_chain_flow" / "current_chain_tvl_flow_market_context.csv"
     best_context = _best_chain_tvl_market_context_row(context_path)

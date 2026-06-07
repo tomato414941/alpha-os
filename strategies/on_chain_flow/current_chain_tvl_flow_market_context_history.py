@@ -58,7 +58,13 @@ def build_chain_tvl_flow_market_context_history_rows(
     )
     rows_by_key = {_key(row): row for row in existing}
     for row in current:
-        rows_by_key.setdefault(_key(row), row)
+        key = _key(row)
+        existing_row = rows_by_key.get(key)
+        if existing_row is None or (
+            existing_row.directional_return_15m is None
+            and row.directional_return_15m is not None
+        ):
+            rows_by_key[key] = row
     return tuple(sorted(rows_by_key.values(), key=lambda row: row.snapshot_timestamp))
 
 

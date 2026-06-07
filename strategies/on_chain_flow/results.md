@@ -62,62 +62,31 @@ Interpretation:
 - This screen still needs token forward labels and cost checks before any
   promotion.
 
-## Last Labeled Forward Snapshot
+## Current Forward Label Read
 
-The current forward-label file has been refreshed to a newer signal timestamp
-and is pending 15m labels. The table below keeps the last labeled snapshot as
-evidence for what should be repeated, not as the current file contents.
-
-| venue | chain | token | action | dir | week % | day % | raw 15m | dir 15m | status |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.006783 | 0.006783 | labeled_15m_pending_1h |
-| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.006690 | 0.006690 | labeled_15m_pending_1h |
-| OKX | Monad | MON | chain_flow_reversal_watch | 1 | -0.0827 | 0.0079 | 0.006413 | 0.006413 | labeled_15m_pending_1h |
-| HL | Monad | MON | chain_flow_reversal_watch | 1 | -0.0827 | 0.0079 | 0.005571 | 0.005571 | labeled_15m_pending_1h |
-| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.004412 | 0.004412 | labeled_15m_pending_1h |
-| OKX | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.004206 | 0.004206 | labeled_15m_pending_1h |
-| OKX | Solana | SOL | chain_flow_reversal_watch | 1 | -0.1100 | 0.0184 | 0.003065 | 0.003065 | labeled_15m_pending_1h |
-| HL | Solana | SOL | chain_flow_reversal_watch | 1 | -0.1100 | 0.0184 | 0.002957 | 0.002957 | labeled_15m_pending_1h |
-| OKX | Near | NEAR | chain_outflow_stress_watch | -1 | -0.1317 | -0.0212 | 0.004420 | -0.004420 | labeled_15m_pending_1h |
+The latest 15m labels are now mature. The second sample did not confirm the
+first-sample `MON`/`HYPE`/`SOL` winners. Current second-sample winners are
+`POL`, `XLM`, `AVAX`, and `ETH`, but only `ETH` has repeated context that is
+strong enough to become `repeat_priority` in the history summary.
 
 Interpretation:
 
-- The first 15m labels favor `chain_flow_reversal_watch`, not
-  `chain_outflow_stress_watch`.
-- `HYPE`, `MON`, `OP`, and `SOL` are the current tradable winners from
-  the TVL-flow reversal family.
-- Outflow-stress shorts are weak in this refresh; `AVAX`, `NEAR`, `XLM`, and
-  `STRK` are negative directionally.
-- This strengthens the broader divergence thesis: weekly TVL outflow plus daily
-  rebound may be more useful than raw outflow-as-short.
-
-## Market Context
-
-| venue | token | action | dir15 | funding support | funding | liq action | liq score | score | note |
-| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| OKX | MON | chain_flow_reversal_watch | 0.00641319 | 0.80572183 | -0.80572183 |  |  | 0.912643 | price label positive; funding helps direction |
-| OKX | HYPE | chain_flow_reversal_watch | 0.00678311 | 0.06081031 | -0.06081031 | mixed_liquidation_flow_watch | 0.00082611 | 0.663044 | price label positive; funding helps direction |
-| OKX | SOL | chain_flow_reversal_watch | 0.00306513 | 0.38634890 | -0.38634890 |  |  | 0.616357 | price label positive; funding helps direction |
-| HL | HYPE | chain_flow_reversal_watch | 0.00668993 | -0.10950000 | 0.10950000 | mixed_liquidation_flow_watch | 0.00082611 | 0.559328 | price label positive |
-| OKX | ETH | chain_flow_reversal_watch | 0.00191994 | 0.15622280 | -0.15622280 | short_liquidation_squeeze_watch | 0.01962368 | 0.541390 | price label positive; funding helps direction; has recent liquidation context |
-
-Interpretation:
-
-- `MON`, `HYPE`, `SOL`, and `ETH` currently combine positive chain-flow
-  reversal labels with funding that helps a long direction on OKX.
-- `ETH` has the clearest recent liquidation context among the top rows.
-- `MEGA` weakened after refresh; keep it visible but behind MON/HYPE/SOL.
-- The history summary intentionally marks these as `collect_repeat`, not
-  `repeat_priority`, because this is still one signal timestamp.
+- `OKX/ETH`, `ETH`, and `HL/ETH` are the only current repeat-priority groups.
+- `POL` and `XLM` worked in the second sample, but still need another repeat
+  before promotion.
+- `AVAX` worked as an outflow-stress short in the second sample, but the
+  current market-context score is still weak.
+- `MON`, `HYPE`, and `SOL` should be demoted from first-sample winners to
+  keep-sampling rows until they repeat under fresh context.
 
 ## Repeat Context
 
-The next signal timestamp has been stored in
-`chain_tvl_flow_market_context_history.csv`, but its 15m labels are still
-pending. The summary therefore keeps top groups as `collect_repeat`:
+`chain_tvl_flow_market_context_history.csv` now has two labeled timestamps.
+The summary promotes only ETH-related groups:
 
-- `OKX/MON`: obs=2, labeled=1, mean_score=0.592452
-- `OKX/SOL`: obs=2, labeled=1, mean_score=0.461126
-- `MON`: obs=2, labeled=1, mean_score=0.407298
-- `OKX/ETH`: obs=2, labeled=1, mean_score=0.399190
-- `SOL`: obs=2, labeled=1, mean_score=0.382247
+- `OKX/ETH`: obs=2, labeled=2, hit15=1.0, mean_score=0.443610
+- `ETH`: obs=2, labeled=2, hit15=1.0, mean_score=0.420235
+- `HL/ETH`: obs=2, labeled=2, hit15=1.0, mean_score=0.396860
+
+This is still not deployable. It lacks costs, slippage, 1h confirmation, and a
+neutral baseline.
