@@ -308,6 +308,28 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         root / "perp_market_map" / "current_okx_perp_pressure.csv",
         root / "perp_market_map" / "current_okx_perp_pressure_forward_labels.csv",
     )
+    outcome_path = root / "perp_market_map" / "current_crowding_reversion_paper_outcome.csv"
+    best_outcome = _best_crowding_outcome_row(outcome_path)
+    if best_outcome:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status=_crowding_outcome_status(best_outcome),
+            strongest_current_signal=(
+                f"{best_outcome.get('asset', '')}: "
+                f"{best_outcome.get('action', '')}, "
+                f"size={best_outcome.get('candidate_size_usd', '')}, "
+                f"net15_bps={best_outcome.get('net_15m_bps', '')}, "
+                f"out15={best_outcome.get('outcome_15m', '')}, "
+                f"net1h_bps={best_outcome.get('net_1h_bps', '')}, "
+                f"out1h={best_outcome.get('outcome_1h', '')}"
+                f"{okx_signal}"
+            ),
+            main_gap=(
+                "paper outcome is still not a live fill; queue position, partial fills, "
+                "funding timing, stop behavior, and repeated samples are missing"
+            ),
+            next_step="wait for elapsed horizons, then repeat the gated probes on fresh HL crowding snapshots",
+        )
     execution_path = root / "perp_market_map" / "current_crowding_reversion_execution_check.csv"
     best_execution = _best_crowding_execution_row(execution_path)
     if best_execution:
@@ -2205,6 +2227,44 @@ def _best_crowding_execution_row(path: Path) -> dict[str, str] | None:
             -float(row.get("candidate_size_usd") or "0"),
         ),
     )
+
+
+def _best_crowding_outcome_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            _crowding_outcome_rank(row),
+            float(row.get("net_15m_bps") or "-1000000"),
+            float(row.get("net_1h_bps") or "-1000000"),
+            -float(row.get("candidate_size_usd") or "0"),
+        ),
+    )
+
+
+def _crowding_outcome_rank(row: dict[str, str]) -> int:
+    if row.get("outcome_1h") == "paper_1h_win":
+        return 4
+    if row.get("outcome_15m") == "paper_15m_win":
+        return 3
+    if row.get("outcome_15m") == "pending_15m" or row.get("outcome_1h") == "pending_1h":
+        return 2
+    return 1
+
+
+def _crowding_outcome_status(row: dict[str, str]) -> str:
+    if row.get("outcome_1h") == "paper_1h_win":
+        return "paper_outcome_supported_carry_reversion_probe"
+    if row.get("outcome_15m") == "paper_15m_win":
+        return "paper_short_horizon_supported_carry_reversion_probe"
+    if row.get("outcome_15m") == "pending_15m" or row.get("outcome_1h") == "pending_1h":
+        return "paper_outcome_pending"
+    return "paper_outcome_failed_carry_reversion_probe"
 
 
 def _best_polymarket_monitor_row(path: Path) -> dict[str, str] | None:

@@ -1,0 +1,7 @@
+entry_timestamp,asset,action,direction,candidate_size_usd,entry_mid_price,conservative_cost_bps,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,net_15m_bps,net_1h_bps,outcome_15m,outcome_1h
+2026-06-07T23:16:59.958447+00:00,DYDX,short_carry_reversion_watch,-1,250.00,0.144610000000,17.81331052,,,,,,,pending_15m,pending_1h
+2026-06-07T23:16:59.958447+00:00,ZRO,short_carry_reversion_watch,-1,250.00,0.901060000000,18.29759110,,,,,,,pending_15m,pending_1h
+2026-06-07T23:16:59.958447+00:00,ETHFI,short_carry_reversion_watch,-1,250.00,0.300410000000,11.93327629,,,,,,,pending_15m,pending_1h
+2026-06-07T23:16:59.958447+00:00,XMR,short_carry_reversion_watch,-1,250.00,303.990000000000,12.16840888,,,,,,,pending_15m,pending_1h
+2026-06-07T23:16:59.958447+00:00,CFX,short_carry_reversion_watch,-1,250.00,0.045805000000,14.52762808,,,,,,,pending_15m,pending_1h
+2026-06-07T23:16:59.958447+00:00,HEMI,short_carry_reversion_watch,-1,250.00,0.005570000000,18.38211197,,,,,,,pending_15m,pending_1h
