@@ -579,3 +579,30 @@ Interpretation:
   slippage.
 - JTO is dropped for now. The smooth proxy promoted it, but actual funding
   events make the current window negative.
+
+## OKX-Hyperliquid Event Window Monitor
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_monitor --samples 6 --delay-seconds 10
+```
+
+This repeats event-window triage to check whether the current candidate
+classification is stable. It is not a trade instruction.
+
+| asset | obs | dominant action | paper 8h rate | active 24h rate | watch rate | drop rate | mean very-low 8h | mean low-fee 24h | mean one-bps 24h | capacity |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | 6 | paper_8h_candidate | 1.00000000 | 0.00000000 | 0.00000000 | 0.00000000 | 0.00001140 | 0.00010974 | -0.00009026 | 422448.80855333 |
+| ZEC | 6 | fee_dependent_24h_monitor | 0.00000000 | 0.00000000 | 1.00000000 | 0.00000000 | -0.00041023 | 0.00006702 | -0.00013298 | 106210.05564167 |
+| BABY | 6 | drop_for_now | 0.00000000 | 0.00000000 | 0.00000000 | 1.00000000 | -0.00187223 | -0.00039670 | -0.00059670 | 18182.63949194 |
+| JTO | 6 | drop_for_now | 0.00000000 | 0.00000000 | 0.00000000 | 1.00000000 | -0.00149631 | -0.00143752 | -0.00163752 | 54543.56750198 |
+
+Interpretation:
+
+- BTC is stable as the only 8h paper candidate across this short monitor.
+- ZEC improved from the one-shot very-low-fee watch into a stable low-fee 24h
+  watch during the monitor, but it still does not survive one-bps-each.
+- BABY and JTO are both stable drops in this run.
+- The next actionable proof remains account-specific: BTC fee/maker-fill
+  evidence first, then longer scheduled monitoring for BTC and ZEC.

@@ -34,6 +34,19 @@ def build_event_window_triage(
 ) -> tuple[EventWindowTriage, ...]:
     with score_path.open(newline="", encoding="utf-8") as handle:
         rows = tuple(csv.DictReader(handle))
+    return build_event_window_triage_from_rows(
+        rows=rows,
+        min_capacity_for_active_monitor=min_capacity_for_active_monitor,
+        min_capacity_for_paper_8h=min_capacity_for_paper_8h,
+    )
+
+
+def build_event_window_triage_from_rows(
+    *,
+    rows: tuple[dict[str, str], ...],
+    min_capacity_for_active_monitor: Decimal = Decimal("50000"),
+    min_capacity_for_paper_8h: Decimal = Decimal("100000"),
+) -> tuple[EventWindowTriage, ...]:
     by_asset: dict[str, list[dict[str, str]]] = {}
     for row in rows:
         by_asset.setdefault(row["asset"], []).append(row)
