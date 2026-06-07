@@ -101,6 +101,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - symbol-level cluster generator from the current alpha stack
 - `current_symbol_opportunity_map.md`
   - latest symbol-level cluster map for repeated labels and execution checks
+- `current_symbol_cluster_conflicts.py`
+  - symbol-level confirmation and conflict screen from the current alpha stack
+- `current_symbol_cluster_conflicts.md`
+  - latest symbol-level direction and structure conflict screen
 - `p0_parallel/`
   - parallel P0 data reachability, L2 burst, and operational paper-ticket
     probes

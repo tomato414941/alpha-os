@@ -22,6 +22,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
         _symbol_opportunity_map_row(root),
+        _symbol_cluster_conflicts_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -99,6 +100,38 @@ def _symbol_opportunity_map_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="current candidates are not grouped by symbol",
         next_step="run current symbol opportunity map to find cross-lane symbol clusters",
+    )
+
+
+def _symbol_cluster_conflicts_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_cluster_conflicts.csv"
+    best = _best_numeric_row(path, key="cluster_score")
+    if best:
+        return ExplorationRow(
+            lane="symbol_cluster_conflicts",
+            status=best.get("status", "symbol_conflict"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"bias={best.get('dominant_bias', '')}, "
+                f"L={best.get('long_count', '')}, "
+                f"S={best.get('short_count', '')}, "
+                f"RV={best.get('relative_value_count', '')}, "
+                f"Y={best.get('yield_count', '')}, "
+                f"R={best.get('risk_or_avoid_count', '')}, "
+                f"score={best.get('cluster_score', '')}"
+            ),
+            main_gap=best.get(
+                "conflicts",
+                "symbol cluster direction is not resolved into a single action",
+            ),
+            next_step=best.get("next_step", "split symbol labels by lane before trading"),
+        )
+    return ExplorationRow(
+        lane="symbol_cluster_conflicts",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="symbol clusters have not been checked for directional conflicts",
+        next_step="run current symbol cluster conflict screen after the symbol opportunity map",
     )
 
 
