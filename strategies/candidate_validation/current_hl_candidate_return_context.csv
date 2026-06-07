@@ -1,0 +1,17 @@
+symbol,sources,latest_close,return_1h,return_4h,return_24h,volume_24h,candle_count,action,score,reason
+WLD,cross_exchange_funding,0.491850000000,0.10535542,0.17126664,0.17794276,121923655.90000001,121,single_source_momentum_context,34.09887371,candidate has a single source and a recent 4h move
+MEGA,perp_carry_reversion,0.046276000000,0.03511833,0.04026076,0.06379164,24245736.00000000,121,single_source_momentum_context,20.52487097,candidate has a single source and a recent 4h move
+STABLE,cross_exchange_funding;perp_carry_reversion,0.033669000000,-0.00346297,0.00184485,0.03625619,35488188.00000000,121,multi_source_watch,20.43853997,candidate has multiple sources but no large recent move
+MON,perp_carry_reversion,0.022261000000,-0.00282207,-0.02342619,0.06181731,111443620.00000000,121,single_source_context,16.45351699,candidate remains visible but needs stronger labels
+BABY,perp_carry_reversion,0.015566000000,0.01169895,-0.00166752,0.04525920,107875950.00000000,121,single_source_context,16.25327080,candidate remains visible but needs stronger labels
+SAGA,perp_carry_reversion,0.013700000000,0.00661278,0.00292826,0.02621723,13674116.60000000,121,single_source_context,15.80769136,candidate remains visible but needs stronger labels
+HEMI,perp_carry_reversion,0.005590000000,0.00467290,0.00035791,0.02549991,18646015.00000000,121,single_source_context,15.48518521,candidate remains visible but needs stronger labels
+PURR,perp_carry_reversion,0.089615000000,0.00015625,0.00246099,0.00774802,9037720.00000000,121,single_source_context,14.17639421,candidate remains visible but needs stronger labels
+IP,perp_carry_reversion,0.317100000000,0.04288627,0.02861035,0.02568249,1227854.30000000,121,single_source_context,11.94699926,candidate remains visible but needs stronger labels
+AERO,attention_market_join;perp_carry_reversion,0.329530000000,0.00684408,-0.00087927,0.04054438,1217829.00000000,121,multi_source_watch,11.94620070,candidate has multiple sources but no large recent move
+ZRO,perp_carry_reversion,0.899820000000,0.00438670,-0.00754417,-0.00406203,2539049.20000000,121,single_source_context,8.35492778,candidate remains visible but needs stronger labels
+XMR,perp_carry_reversion,312.070000000000,0.01407032,0.03098880,0.04812924,26059.54300000,121,single_source_momentum_context,7.98253147,candidate has a single source and a recent 4h move
+SNX,perp_carry_reversion,0.241610000000,0.00754796,0.00265593,0.03575256,1025509.60000000,121,single_source_context,6.91310188,candidate remains visible but needs stronger labels
+ATOM,perp_carry_reversion,1.686300000000,0.01018391,0.00166320,0.04434260,250636.50000000,121,single_source_context,6.35218753,candidate remains visible but needs stronger labels
+MORPHO,perp_carry_reversion,1.698400000000,0.00396051,-0.00921713,0.04241085,472379.80000000,121,single_source_context,6.32928749,candidate remains visible but needs stronger labels
+UMA,perp_carry_reversion,0.381540000000,0.00640975,-0.00300504,0.02760645,192036.40000000,120,single_source_context,5.98326348,candidate remains visible but needs stronger labels

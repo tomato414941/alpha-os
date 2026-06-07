@@ -50,6 +50,8 @@ Promote code to the library only after multiple strategies need the same shape.
   - Fear & Greed and CoinGecko trending attention snapshot
 - `stablecoin_liquidity/`
   - DeFiLlama stablecoin supply, peg, and supply-change snapshot
+- `candidate_validation/`
+  - current candidate aggregation and Hyperliquid return/volume context
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
 - `missing_work_inventory.md`

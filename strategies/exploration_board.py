@@ -28,6 +28,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _market_making_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
+        _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
         ExplorationRow(
             lane="on_chain_flow",
@@ -358,6 +359,26 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="event probability is not modeled; this only ranks active public market structure",
         next_step="join top markets to external event models, order books, and adverse-selection checks",
+    )
+
+
+def _candidate_validation_row(root: Path) -> ExplorationRow:
+    path = root / "candidate_validation" / "current_hl_candidate_return_context.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "not run yet"
+    if best:
+        signal = (
+            f"{best.get('symbol', '')}: {best.get('action', '')}, "
+            f"sources={best.get('sources', '')}, "
+            f"1h={best.get('return_1h', '')}, "
+            f"4h={best.get('return_4h', '')}"
+        )
+    return ExplorationRow(
+        lane="candidate_validation",
+        status="current_return_context",
+        strongest_current_signal=signal,
+        main_gap="recent return context is not forward-labeled alpha evidence",
+        next_step="label candidate signals from their timestamps and compare against neutral baselines",
     )
 
 
