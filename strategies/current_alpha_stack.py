@@ -27,8 +27,13 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _mstr_btc_relative_value_stack(root),
         _btc_options_volatility_stack(root),
         _prediction_market_event_model_stack(root),
+        *_cross_exchange_funding_stacks(root),
+        *_perp_crowding_stacks(root),
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
+        *_attention_funding_stacks(root),
+        *_protocol_activity_stacks(root),
+        *_on_chain_flow_stacks(root),
         *_token_unlock_stacks(root),
         _liquidation_flow_stack(root),
         _l2_imbalance_stack(root),
@@ -248,6 +253,71 @@ def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _cross_exchange_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "cross_exchange_funding" / "current_dislocation_watchlist.csv")
+    tickets = sorted(
+        (row for row in rows if row.get("action") != "blocked_by_cost_or_capacity"),
+        key=lambda row: _float(row.get("annualized_edge")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:5]:
+        asset = ticket.get("asset", "")
+        action = ticket.get("action", "")
+        long_venue = ticket.get("long_venue", "")
+        short_venue = ticket.get("short_venue", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_{long_venue.lower()}_{short_venue.lower()}_funding",
+                status="paper_funding_dislocation_watch",
+                side=f"{long_venue}_vs_{short_venue}",
+                priority_score=_priority_score(
+                    "paper_funding_dislocation_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("annualized_edge")) * 10.0,
+                ),
+                sources="cross_exchange_funding",
+                evidence=(
+                    f"{asset}: action={action}, annualized_edge={ticket.get('annualized_edge', '')}, "
+                    f"liquidity={ticket.get('liquidity_proxy', '')}, friction={ticket.get('friction_proxy', '')}"
+                ),
+                conflict="funding dislocation can disappear before execution; borrow, margin, transfer, and venue failure risks are still unvalidated",
+                next_step=f"paper-check {asset} cross-venue funding persistence with real fee, margin, and venue constraints",
+            )
+        )
+    return tuple(output)
+
+
+def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_screen.csv")
+    tickets = sorted(rows, key=lambda row: _float(row.get("carry_reversion_score")), reverse=True)
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:5]:
+        asset = ticket.get("asset", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_perp_crowding_reversion",
+                status="paper_crowding_reversion_watch",
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    "paper_crowding_reversion_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("carry_reversion_score")),
+                ),
+                sources="perp_market_map",
+                evidence=(
+                    f"{asset}: funding={ticket.get('annualized_funding', '')}, "
+                    f"mark_oracle_diff={ticket.get('mark_oracle_diff', '')}, "
+                    f"oi_volume_ratio={ticket.get('oi_volume_ratio', '')}, "
+                    f"impact_spread={ticket.get('impact_spread', '')}"
+                ),
+                conflict="crowding can persist or squeeze; this needs forward labels, funding PnL, and stop logic before paper promotion",
+                next_step=f"label {asset} crowding-reversion returns against funding decay, OI/volume, and spread costs",
+            )
+        )
+    return tuple(output)
+
+
 def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_valuation.csv")
     tickets = sorted(
@@ -285,6 +355,101 @@ def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     "next_step",
                     f"label {token} fee-yield valuation snapshots against forward returns",
                 ),
+            )
+        )
+    return tuple(output)
+
+
+def _attention_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "news_social" / "current_attention_market_join.csv")
+    tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:3]:
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_attention_funding_overlap",
+                status="paper_attention_funding_watch",
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    "paper_attention_funding_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="news_social",
+                evidence=(
+                    f"{symbol}/{ticket.get('name', '')}: attention_rank={ticket.get('attention_rank', '')}, "
+                    f"attention_change={ticket.get('attention_24h_change', '')}, "
+                    f"funding={ticket.get('annualized_funding', '')}, "
+                    f"impact_spread={ticket.get('impact_spread', '')}"
+                ),
+                conflict="attention is not causal edge; social/narrative signals need repeat labels and latency checks",
+                next_step=f"collect repeated {symbol} attention/funding overlaps and compare 15m/1h decay after costs",
+            )
+        )
+    return tuple(output)
+
+
+def _protocol_activity_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "protocol_activity" / "current_protocol_activity_market_join.csv")
+    tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_protocol_activity_context",
+                status="paper_protocol_activity_watch",
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    "paper_protocol_activity_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="protocol_activity",
+                evidence=(
+                    f"{symbol}/{ticket.get('name', '')}: commits4w={ticket.get('commit_count_4_weeks', '')}, "
+                    f"telegram={ticket.get('telegram_users', '')}, "
+                    f"funding={ticket.get('annualized_funding', '')}, "
+                    f"spread={ticket.get('impact_spread', '')}"
+                ),
+                conflict="developer and community activity are slow context, not immediate execution edge",
+                next_step=f"label {symbol} protocol-activity context over longer horizons and join to funding/events",
+            )
+        )
+    return tuple(output)
+
+
+def _on_chain_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "on_chain_flow" / "chain_tvl_flow_market_context_summary.csv")
+    tickets = sorted(
+        (row for row in rows if row.get("group_type") in {"token", "venue_token"}),
+        key=lambda row: _float(row.get("mean_context_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        group = ticket.get("group_key", "")
+        token = group.split("/")[-1]
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{group.lower().replace('/', '_')}_chain_flow_context",
+                status="paper_chain_flow_watch",
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    "paper_chain_flow_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("mean_context_score")) * 100.0,
+                ),
+                sources="on_chain_flow",
+                evidence=(
+                    f"{group}: observations={ticket.get('observations', '')}, "
+                    f"hit15={ticket.get('hit_rate_15m', '')}, "
+                    f"mean_dir15={ticket.get('mean_dir15', '')}, "
+                    f"funding_support={ticket.get('mean_funding_support', '')}"
+                ),
+                conflict="sample is tiny and chain TVL flow may be slow or indirect relative to tradable venue returns",
+                next_step=f"repeat {token} chain-flow labels and isolate venue-specific execution costs",
             )
         )
     return tuple(output)
@@ -427,6 +592,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_short_put_spread_candidate": 68.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
+        "paper_funding_dislocation_watch": 63.0,
+        "paper_crowding_reversion_watch": 59.0,
+        "paper_attention_funding_watch": 57.0,
+        "paper_protocol_activity_watch": 47.0,
+        "paper_chain_flow_watch": 55.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
         "paper_value_growth_candidate": 67.0,
