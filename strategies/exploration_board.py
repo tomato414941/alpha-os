@@ -363,6 +363,22 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    label_path = root / "candidate_validation" / "current_hl_signal_forward_label_summary.csv"
+    best_label = _best_forward_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="forward_label_probe",
+            strongest_current_signal=(
+                f"{best_label.get('asset', '')}: {best_label.get('action', '')}, "
+                f"source={best_label.get('source', '')}, "
+                f"cov15={best_label.get('coverage_15m', '')}, "
+                f"mean15={best_label.get('mean_return_15m', '')}, "
+                f"hit15={best_label.get('positive_15m_rate', '')}"
+            ),
+            main_gap="15m price label excludes funding PnL, hedge PnL, fees, adverse selection, and neutral baselines",
+            next_step="wait for 1h labels and compare direction-aware PnL against neutral baselines",
+        )
     path = root / "candidate_validation" / "current_hl_candidate_return_context.csv"
     best = _best_numeric_row(path, key="score")
     signal = "not run yet"
@@ -566,6 +582,28 @@ def _best_promotion_gate_row(path: Path) -> dict[str, str] | None:
             row.get("horizon") == "8h",
             float(row.get("fee_headroom_bps") or "0"),
             float(row.get("capacity") or "0"),
+        ),
+    )
+
+
+def _best_forward_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if int(row.get("coverage_15m") or "0") > 0
+            and row.get("mean_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("mean_return_15m") or "-inf"),
+            float(row.get("positive_15m_rate") or "0"),
+            int(row.get("coverage_15m") or "0"),
         ),
     )
 
