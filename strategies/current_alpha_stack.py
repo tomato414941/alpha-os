@@ -44,7 +44,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_chain_stablecoin_migration_stacks(root),
         *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_stacks(root),
-        _liquidation_flow_stack(root),
+        *_liquidation_flow_stacks(root),
         _l2_imbalance_stack(root),
     ]
     return tuple(
@@ -990,33 +990,47 @@ def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
-def _liquidation_flow_stack(root: Path) -> AlphaStackRow | None:
-    ticket = _best_by_score(
-        root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv",
-        score_key="conservative_net_bps",
-        status_values={"small_paper_probe"},
-        status_key="gate_action",
-    )
-    if not ticket:
-        return None
-    asset = ticket.get("asset", "")
-    return AlphaStackRow(
-        opportunity=f"{asset.lower()}_liquidation_continuation",
-        status=ticket.get("gate_action", "small_paper_probe"),
-        side=ticket.get("action", ""),
-        priority_score=_priority_score(
-            ticket.get("gate_action", ""),
-            source_count=1,
-            raw_score=_float(ticket.get("conservative_net_bps")),
+def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv")
+            if row.get("gate_action") == "small_paper_probe"
         ),
-        sources="liquidation_flow",
-        evidence=(
-            f"{asset}: net15={ticket.get('conservative_net_bps', '')}bps, "
-            f"size={ticket.get('candidate_size_usd', '')}, depth_usage={ticket.get('visible_depth_usage', '')}"
-        ),
-        conflict="retrospective paper outcome can overstate edge; needs fresh-event repeats and live depth/fill checks",
-        next_step=f"repeat {asset} liquidation event on fresh observations with fees, spread, fill, and funding included",
+        key=lambda row: _float(row.get("conservative_net_bps")),
+        reverse=True,
     )
+    output: list[AlphaStackRow] = []
+    seen_assets: set[str] = set()
+    for ticket in rows:
+        asset = ticket.get("asset", "")
+        if not asset or asset in seen_assets:
+            continue
+        seen_assets.add(asset)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_okx_liquidation_continuation",
+                status=ticket.get("gate_action", "small_paper_probe"),
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    ticket.get("gate_action", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("conservative_net_bps")),
+                ),
+                sources="liquidation_flow",
+                evidence=(
+                    f"{asset}: net15={ticket.get('conservative_net_bps', '')}bps, "
+                    f"size={ticket.get('candidate_size_usd', '')}, "
+                    f"depth_usage={ticket.get('visible_depth_usage', '')}, "
+                    f"gross_continuation={ticket.get('gross_continuation_bps', '')}bps"
+                ),
+                conflict="retrospective paper outcome can overstate edge; needs fresh-event repeats and live depth/fill checks",
+                next_step=f"repeat {asset} liquidation event on fresh observations with fees, spread, fill, and funding included",
+            )
+        )
+        if len(output) >= 8:
+            break
+    return tuple(output)
 
 
 def _l2_imbalance_stack(root: Path) -> AlphaStackRow | None:

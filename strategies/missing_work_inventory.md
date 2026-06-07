@@ -26,7 +26,7 @@ These are convenience constraints, not trading constraints.
 
 | area | missing work | why it matters |
 | --- | --- | --- |
-| liquidation cascades | liquidation prints, forced-order streams, cascade continuation/reversal labels | forced flow can create short-horizon dislocations |
+| liquidation cascades | OKX forced-liquidation feed, monitor samples, short-window labels, and rough paper gates are connected | forced flow can create short-horizon dislocations; cross-venue coverage, durable history, and fill reality are still missing |
 | open-interest regimes | OI history, OI change, funding + OI interaction | crowded positions can unwind violently |
 | volatility trading | Deribit BTC/ETH IV, skew, term structure, and recent realized-vol comparison are connected | price direction is not the only tradable edge; execution, hedge PnL, margin, tail risk, and forecasts are still missing |
 | basis term structure | dated futures vs perps vs spot | carry can be cleaner than directional prediction |
@@ -60,7 +60,7 @@ These are convenience constraints, not trading constraints.
 | --- | --- | --- |
 | historical L2 order books | only current Hyperliquid snapshot | no depth history, no queue, no diffs |
 | order-book diffs | absent | cannot model queue/fill/adverse selection |
-| liquidation feed/history | absent | no forced-flow strategy possible |
+| liquidation feed/history | current OKX liquidation feed, monitor, short-window labels, and paper gates connected | no durable cross-venue liquidation history, no Binance access from this environment, and no actual fill reconciliation |
 | OI history | only current Hyperliquid context | no persistence or crowding labels |
 | funding history across venues | partial Binance/HL snapshots | no multi-venue historical carry test |
 | options IV/skew | Deribit BTC/ETH surface and current paper tickets connected | no full option chain strategy, hedge PnL, margin, execution costs, or realized-vol forecast |

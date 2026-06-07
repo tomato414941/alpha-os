@@ -55,6 +55,12 @@ PROBE_TARGETS = (
         url="https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2024-01.zip",
     ),
     ProbeTarget(
+        category="liquidation_flow",
+        name="okx_liquidation_orders",
+        method="GET",
+        url="https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&uly=BTC-USDT&state=filled",
+    ),
+    ProbeTarget(
         category="lob",
         name="binance_um_book_depth_monthly_probe",
         method="HEAD",
@@ -216,6 +222,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "not available from this probe"
     if target.category == "event_flow":
         return "historical event-flow data path is available"
+    if target.category == "liquidation_flow":
+        return "current forced-liquidation order path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
     if target.category == "stablecoin_liquidity":
