@@ -25,6 +25,7 @@ class ProtocolFeePriceContextRow:
     fee_to_fdv: float
     fee_growth_7d: float
     funding: float
+    current_price: float
     price_change_1h: float
     price_change_24h: float
     price_change_7d: float
@@ -70,6 +71,7 @@ def write_protocol_fee_price_context_csv(
                 "fee_to_fdv",
                 "fee_growth_7d",
                 "funding",
+                "current_price",
                 "price_change_1h",
                 "price_change_24h",
                 "price_change_7d",
@@ -92,6 +94,7 @@ def write_protocol_fee_price_context_csv(
                     f"{row.fee_to_fdv:.8f}",
                     f"{row.fee_growth_7d:.8f}",
                     f"{row.funding:.8f}",
+                    f"{row.current_price:.12f}",
                     f"{row.price_change_1h:.8f}",
                     f"{row.price_change_24h:.8f}",
                     f"{row.price_change_7d:.8f}",
@@ -173,6 +176,7 @@ def _build_row(
     fee_to_fdv = _float(valuation.get("fee_to_fdv"))
     fee_growth = _float(valuation.get("change_7d_over_7d"))
     funding = _float(valuation.get("funding"))
+    current_price = _float(market.get("current_price"))
     price_1h = _float(market.get("price_change_percentage_1h_in_currency"))
     price_24h = _float(market.get("price_change_percentage_24h_in_currency"))
     price_7d = _float(market.get("price_change_percentage_7d_in_currency"))
@@ -204,6 +208,7 @@ def _build_row(
         fee_to_fdv=fee_to_fdv,
         fee_growth_7d=fee_growth,
         funding=funding,
+        current_price=current_price,
         price_change_1h=price_1h,
         price_change_24h=price_24h,
         price_change_7d=price_7d,

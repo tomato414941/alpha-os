@@ -13,4 +13,6 @@ uv run python -m strategies.protocol_fundamentals.current_protocol_fee_screen
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_valuation
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_candidate_review
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_price_context
+uv run python -m strategies.protocol_fundamentals.current_protocol_fee_price_lag_history
+uv run python -m strategies.protocol_fundamentals.current_protocol_fee_price_lag_labels
 ```

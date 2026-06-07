@@ -1,0 +1,9 @@
+observed_at,token_symbol,protocol,status,side,direction,priority,start_price,raw_return_4h,raw_return_12h,raw_return_24h,raw_return_7d,directional_return_4h,directional_return_12h,directional_return_24h,directional_return_7d,label_status
+2026-06-07T22:36:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,94.34534900,0.157118000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.89500000,63.980000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.91078445,2.560000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,60.86016500,1.720000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.17533476,0.196330000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,39.23893939,1.260000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,32.19028300,2.560000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.76355000,66.160000000000,,,,,,,,,pending_4h
