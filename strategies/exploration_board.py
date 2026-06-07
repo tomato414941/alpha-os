@@ -25,26 +25,15 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _event_flow_row(root),
         _defi_yield_row(root),
-        ExplorationRow(
-            lane="market_making",
-            status="not_started",
-            strongest_current_signal="none",
-            main_gap="needs L2 book, queue/fill model, and fee tier assumptions",
-            next_step="probe reachable bookDepth/bookTicker history and define fill simulation",
-        ),
-        ExplorationRow(
-            lane="news_social",
-            status="not_started",
-            strongest_current_signal="none",
-            main_gap="needs timestamped event source and labels",
-            next_step="inventory public/paid event feeds and build one event-to-return label set",
-        ),
+        _market_making_row(root),
+        _news_social_row(root),
+        _stablecoin_liquidity_row(root),
         ExplorationRow(
             lane="on_chain_flow",
-            status="not_started",
-            strongest_current_signal="none",
-            main_gap="needs wallet/exchange-flow source and leakage-safe timestamps",
-            next_step="inventory reachable on-chain/exchange-flow APIs",
+            status="partial_proxy",
+            strongest_current_signal="stablecoin supply proxy exists",
+            main_gap="wallet, bridge, and exchange inflow/outflow data not connected",
+            next_step="add direct flow source instead of only stablecoin supply proxy",
         ),
     )
 
@@ -158,6 +147,61 @@ def _defi_yield_row(root: Path) -> ExplorationRow:
     )
 
 
+def _market_making_row(root: Path) -> ExplorationRow:
+    path = root / "market_making" / "current_l2_snapshot.csv"
+    best = _best_abs_numeric_row(path, key="imbalance_10_bps")
+    signal = "Hyperliquid L2 snapshot exists"
+    if best:
+        signal = (
+            f"{best.get('asset', '')}: spread_bps={best.get('spread_bps', '')}, "
+            f"imbalance10={best.get('imbalance_10_bps', '')}"
+        )
+    return ExplorationRow(
+        lane="market_making",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="no queue position, fill probability, adverse selection, or fee model",
+        next_step="collect repeated L2 snapshots and estimate fill/adverse-selection risk",
+    )
+
+
+def _news_social_row(root: Path) -> ExplorationRow:
+    path = root / "news_social" / "current_attention_snapshot.csv"
+    fear = _row_by_value(path, field="source", value="alternative_me_fear_greed")
+    trend = _row_by_value(path, field="source", value="coingecko_trending")
+    signal = "attention snapshot exists"
+    if fear and trend:
+        signal = (
+            f"fear_greed={fear.get('score', '')} {fear.get('label', '')}; "
+            f"top_trending={trend.get('symbol', '')}"
+        )
+    return ExplorationRow(
+        lane="news_social",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="attention data is not yet joined to leakage-safe return labels",
+        next_step="build event-to-return labels and add richer news/social sources",
+    )
+
+
+def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_supply_snapshot.csv"
+    best = _best_abs_numeric_row(path, key="week_change_usd")
+    signal = "stablecoin supply snapshot exists"
+    if best:
+        signal = (
+            f"{best.get('symbol', '')}: week_change_usd="
+            f"{best.get('week_change_usd', '')}"
+        )
+    return ExplorationRow(
+        lane="stablecoin_liquidity",
+        status="current_snapshot",
+        strongest_current_signal=signal,
+        main_gap="supply changes are not yet joined to returns, funding, or regimes",
+        next_step="test stablecoin supply change as market liquidity context",
+    )
+
+
 def _best_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
     if not path.exists():
         return None
@@ -166,6 +210,16 @@ def _best_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get(key) or "-inf"))
+
+
+def _best_abs_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(rows, key=lambda row: abs(float(row.get(key) or "0")))
 
 
 def _row_by_value(path: Path, *, field: str, value: str) -> dict[str, str] | None:
@@ -192,4 +246,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

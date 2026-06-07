@@ -1,0 +1,26 @@
+timestamp,source,rank,asset_id,symbol,name,score,label,value
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,1,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780790400
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,2,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780704000
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,3,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780617600
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,4,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780531200
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,5,crypto_market,MARKET,Crypto Fear and Greed Index,11.00000000,Extreme Fear,1780444800
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,6,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780358400
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,7,crypto_market,MARKET,Crypto Fear and Greed Index,29.00000000,Fear,1780272000
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,8,crypto_market,MARKET,Crypto Fear and Greed Index,28.00000000,Fear,1780185600
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,9,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780099200
+2026-06-07T04:19:49.924324+00:00,alternative_me_fear_greed,10,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780012800
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,1,pudgy-penguins,PENGU,Pudgy Penguins,1.00000000,113,7.3789738568681305
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,2,bitcoin,BTC,Bitcoin,1.00000000,1,1.933439827300315
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,3,lab,LAB,LAB,2.00000000,27,36.8998111153065
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,4,near,NEAR,NEAR Protocol,3.00000000,40,-2.3952053808928966
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,5,hyperliquid,HYPE,Hyperliquid,4.00000000,11,-1.259282023992221
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,6,aave,AAVE,Aave,5.00000000,72,4.377410597010817
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,7,worldcoin-wld,WLD,Worldcoin,6.00000000,52,4.5126422409690035
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,8,pi-network,PI,Pi Network,7.00000000,56,5.117681041715173
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,9,solana,SOL,Solana,8.00000000,7,1.2429538081690874
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,10,zcash,ZEC,Zcash,9.00000000,17,5.798044279686943
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,11,ripple,XRP,XRP,10.00000000,6,3.714476226155386
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,12,monad,MON,Monad,11.00000000,146,8.506337849056006
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,13,skyai,SKYAI,SkyAI,12.00000000,136,45.92294759240049
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,14,ethereum,ETH,Ethereum,13.00000000,2,2.8480836316119698
+2026-06-07T04:19:49.924324+00:00,coingecko_trending,15,bittensor,TAO,Bittensor,14.00000000,43,7.4189160584859595

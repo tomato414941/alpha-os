@@ -9,6 +9,7 @@ This board tracks broad profit-source exploration. It is not a ranking of deploy
 | perp_market_map | current_snapshot | MANTA: ann_funding=3.23186009, volume=652165.69526300 | no history yet, so no persistence or PnL evidence | collect snapshots over time and test carry/crowding persistence |
 | event_flow | implemented_probe | top_20 imbalance mean_next_return=-0.0000414307, hit_rate=0.500000 | tiny sample and naive label; no order book or liquidation context | extend sample window and add liquidation/funding-time labels |
 | defi_yield | current_snapshot | Flare/mystic-finance-lending COREUSDT0: apy=13.660140, tvl=19655935.00 | risk, custody, exit liquidity, and APY decay not modeled | separate real yield from incentive yield and add operational risk checklist |
-| market_making | not_started | none | needs L2 book, queue/fill model, and fee tier assumptions | probe reachable bookDepth/bookTicker history and define fill simulation |
-| news_social | not_started | none | needs timestamped event source and labels | inventory public/paid event feeds and build one event-to-return label set |
-| on_chain_flow | not_started | none | needs wallet/exchange-flow source and leakage-safe timestamps | inventory reachable on-chain/exchange-flow APIs |
+| market_making | current_snapshot | SOL: spread_bps=0.15731309, imbalance10=0.40999977 | no queue position, fill probability, adverse selection, or fee model | collect repeated L2 snapshots and estimate fill/adverse-selection risk |
+| news_social | current_snapshot | fear_greed=12.00000000 Extreme Fear; top_trending=PENGU | attention data is not yet joined to leakage-safe return labels | build event-to-return labels and add richer news/social sources |
+| stablecoin_liquidity | current_snapshot | USDT: week_change_usd=-1515562339.74 | supply changes are not yet joined to returns, funding, or regimes | test stablecoin supply change as market liquidity context |
+| on_chain_flow | partial_proxy | stablecoin supply proxy exists | wallet, bridge, and exchange inflow/outflow data not connected | add direct flow source instead of only stablecoin supply proxy |

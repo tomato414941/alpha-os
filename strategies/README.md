@@ -39,11 +39,17 @@ Promote code to the library only after multiple strategies need the same shape.
 - `perp_market_map/`
   - Hyperliquid perp funding, open interest, volume, premium, and impact-spread
     snapshot
+- `market_making/`
+  - Hyperliquid L2 order-book snapshot and near-book depth diagnostics
 - `event_flow/`
   - Binance USD-M futures taker-flow data path and first 5-minute imbalance
     diagnostic
 - `defi_yield/`
   - DeFiLlama stable-yield pool screen
+- `news_social/`
+  - Fear & Greed and CoinGecko trending attention snapshot
+- `stablecoin_liquidity/`
+  - DeFiLlama stablecoin supply, peg, and supply-change snapshot
 - `research_map.md`
   - broad research lanes, profit-source priorities, and anti-constraints
 - `opportunity_map.md`
