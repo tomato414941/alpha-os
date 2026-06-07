@@ -10,4 +10,6 @@ and chain-token follow-up.
 
 ```bash
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_venue_coverage
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_forward_labels
 ```

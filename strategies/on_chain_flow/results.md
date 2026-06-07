@@ -4,6 +4,8 @@ Run:
 
 ```bash
 uv run python -m strategies.on_chain_flow.current_chain_tvl_flow
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_venue_coverage
+uv run python -m strategies.on_chain_flow.current_chain_tvl_flow_forward_labels
 ```
 
 This is not a deployable strategy. It searches for broad chain-level capital
@@ -34,3 +36,51 @@ Interpretation:
 - `XLM` is especially important because candidate repeat labels were positive
   while chain TVL flow is negative. That conflict should be isolated before
   promoting XLM.
+
+## Venue Coverage
+
+| chain | token | action | week % | day % | HL | OKX | venues | followup |
+| --- | --- | --- | ---: | ---: | --- | --- | ---: | --- |
+| Avalanche | AVAX | chain_outflow_stress_watch | -0.2054 | -0.0126 | True | True | 2 | label AVAX short stress on covered venues |
+| Near | NEAR | chain_outflow_stress_watch | -0.1317 | -0.0212 | True | True | 2 | label NEAR short stress on covered venues |
+| Stellar | XLM | chain_outflow_stress_watch | -0.0772 | -0.0040 | True | True | 2 | label XLM short stress on covered venues |
+| Starknet | STRK | chain_outflow_stress_watch | -0.0621 | -0.0032 | True | True | 2 | label STRK short stress on covered venues |
+| Cardano | ADA | chain_flow_reversal_watch | -0.2861 | 0.0065 | True | True | 2 | label ADA rebound continuation on covered venues |
+| MegaETH | MEGA | chain_flow_reversal_watch | -0.2000 | 0.0019 | True | True | 2 | label MEGA rebound continuation on covered venues |
+| Hyperliquid L1 | HYPE | chain_flow_reversal_watch | -0.1097 | 0.0129 | True | True | 2 | label HYPE rebound continuation on covered venues |
+| ENI | ENI | chain_inflow_momentum_watch | 0.2403 | 0.0302 | False | False | 0 | keep as context until a perp venue exists |
+
+Interpretation:
+
+- `ENI` is the strongest TVL inflow row, but it is not currently covered by HL
+  or OKX USDT perps in this check.
+- `AVAX`, `NEAR`, `XLM`, and `STRK` are the tradable outflow-stress candidates.
+- `ADA`, `MEGA`, and `HYPE` are tradable weekly-outflow/daily-rebound reversal
+  candidates.
+- This screen still needs token forward labels and cost checks before any
+  promotion.
+
+## Forward Labels
+
+| venue | chain | token | action | dir | week % | day % | raw 15m | dir 15m | status |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.004285 | 0.004285 | labeled_15m_pending_1h |
+| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1097 | 0.0129 | 0.004070 | 0.004070 | labeled_15m_pending_1h |
+| OKX | Katana | KAT | chain_flow_reversal_watch | 1 | -0.3122 | 0.0369 | 0.003103 | 0.003103 | labeled_15m_pending_1h |
+| OKX | Polygon | POL | chain_flow_reversal_watch | 1 | -0.0754 | 0.0157 | 0.002530 | 0.002530 | labeled_15m_pending_1h |
+| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.1227 | 0.0005 | 0.002521 | 0.002521 | labeled_15m_pending_1h |
+| HL | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.2000 | 0.0019 | 0.002481 | 0.002481 | labeled_15m_pending_1h |
+| HL | Starknet | STRK | chain_outflow_stress_watch | -1 | -0.0621 | -0.0032 | -0.001801 | 0.001801 | labeled_15m_pending_1h |
+| OKX | Avalanche | AVAX | chain_outflow_stress_watch | -1 | -0.2054 | -0.0126 | 0.001946 | -0.001946 | labeled_15m_pending_1h |
+| OKX | Near | NEAR | chain_outflow_stress_watch | -1 | -0.1317 | -0.0212 | 0.003929 | -0.003929 | labeled_15m_pending_1h |
+
+Interpretation:
+
+- The first 15m labels favor `chain_flow_reversal_watch`, not
+  `chain_outflow_stress_watch`.
+- `HYPE`, `KAT`, `POL`, `OP`, and `MEGA` are the current tradable winners from
+  the TVL-flow reversal family.
+- `STRK` is the only outflow-stress short with a positive 15m directional label
+  in this refresh; `AVAX`, `NEAR`, and `XLM` failed.
+- This strengthens the broader divergence thesis: weekly TVL outflow plus daily
+  rebound may be more useful than raw outflow-as-short.

@@ -815,6 +815,39 @@ def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
 
 
 def _on_chain_flow_row(root: Path) -> ExplorationRow:
+    label_path = root / "on_chain_flow" / "current_chain_tvl_flow_forward_labels.csv"
+    best_label = _best_chain_tvl_forward_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="on_chain_flow",
+            status="chain_tvl_flow_forward_label",
+            strongest_current_signal=(
+                f"{best_label.get('venue', '')}/{best_label.get('token_symbol', '')}: "
+                f"{best_label.get('action', '')}, "
+                f"dir15={best_label.get('directional_return_15m', '')}, "
+                f"week={best_label.get('week_change_pct', '')}"
+            ),
+            main_gap="chain TVL flow forward label is one short horizon and excludes costs, funding PnL, slippage, and stale-accounting checks",
+            next_step="repeat HYPE/MEGA/STX/APT reversal labels and compare against liquidation plus funding context",
+        )
+    coverage_path = root / "on_chain_flow" / "current_chain_tvl_flow_venue_coverage.csv"
+    best_coverage = _best_chain_tvl_venue_coverage_row(coverage_path)
+    if best_coverage:
+        return ExplorationRow(
+            lane="on_chain_flow",
+            status=best_coverage.get("action", "chain_tvl_flow_venue_coverage"),
+            strongest_current_signal=(
+                f"{best_coverage.get('chain', '')}/{best_coverage.get('token_symbol', '')}: "
+                f"week={best_coverage.get('week_change_pct', '')}, "
+                f"day={best_coverage.get('day_change_pct', '')}, "
+                f"venues={best_coverage.get('venue_count', '')}"
+            ),
+            main_gap="chain TVL flow venue coverage is not yet joined to token forward returns, costs, or stale-accounting checks",
+            next_step=best_coverage.get(
+                "followup",
+                "label covered chain-token behavior against market structure sources",
+            ),
+        )
     path = root / "on_chain_flow" / "current_chain_tvl_flow.csv"
     best = _best_chain_tvl_flow_row(path)
     if best:
@@ -1258,6 +1291,53 @@ def _best_chain_tvl_flow_row(path: Path) -> dict[str, str] | None:
             priority.get(row.get("action", ""), 0),
             abs(float(row.get("week_change_pct") or "0")),
             float(row.get("current_tvl_usd") or "0"),
+        ),
+    )
+
+
+def _best_chain_tvl_venue_coverage_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if int(row.get("venue_count") or "0") > 0
+        )
+    if not rows:
+        return None
+    priority = {
+        "chain_inflow_momentum_watch": 3,
+        "chain_outflow_stress_watch": 2,
+        "chain_flow_reversal_watch": 1,
+        "chain_flow_context": 0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            int(row.get("venue_count") or "0"),
+            priority.get(row.get("action", ""), 0),
+            abs(float(row.get("week_change_pct") or "0")),
+        ),
+    )
+
+
+def _best_chain_tvl_forward_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_15m", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_15m") or "-inf"),
+            abs(float(row.get("week_change_pct") or "0")),
         ),
     )
 
