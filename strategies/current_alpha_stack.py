@@ -198,7 +198,7 @@ def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         reverse=True,
     )
     output: list[AlphaStackRow] = []
-    for ticket in tickets[:3]:
+    for ticket in tickets[:6]:
         token = ticket.get("token_symbol", "")
         unlock = unlocks.get(token)
         conflict = (
