@@ -18,6 +18,7 @@ The first probe uses Hyperliquid public market contexts:
 uv run python -m strategies.perp_market_map.current_hyperliquid_snapshot
 uv run python -m strategies.perp_market_map.current_crowding_reversion_screen
 uv run python -m strategies.perp_market_map.current_crowding_reversion_monitor
+uv run python -m strategies.perp_market_map.current_okx_perp_pressure
 ```
 
 ## Current Status

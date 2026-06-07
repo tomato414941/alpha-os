@@ -8,6 +8,7 @@ Run:
 uv run python -m strategies.perp_market_map.current_hyperliquid_snapshot
 uv run python -m strategies.perp_market_map.current_crowding_reversion_screen
 uv run python -m strategies.perp_market_map.current_crowding_reversion_monitor --samples 6 --delay-seconds 10
+uv run python -m strategies.perp_market_map.current_okx_perp_pressure
 ```
 
 Interpretation:
@@ -81,3 +82,29 @@ Interpretation:
   separate perp-market state watchlist.
 - The missing work is still large: future-return labels, liquidation/funding
   event labels, execution costs, and whether these states decay before entry.
+
+## Current OKX Perp Pressure
+
+This maps current OKX USDT swap funding, premium, open interest, volume, and
+near-touch spread. It is a separate venue screen from Hyperliquid.
+
+| asset | action | ann funding | settled ann funding | premium | OI USD | volume USD | OI/vol | spread bps | score |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| HOME | long_carry_discount_watch | -10.950000 | -10.950000 | -0.078950 | 2926534 | 56649695 | 0.0517 | 6.3032 | 1646.868988 |
+| EDEN | long_carry_discount_watch | -5.114332 | -5.775057 | -0.007826 | 1679073 | 43635151 | 0.0385 | 3.8767 | 729.651254 |
+| MU | short_carry_watch | 1.598865 | 0.248700 | -0.003762 | 32729725 | 67917339 | 0.4819 | 0.4443 | 271.103687 |
+| DRAM | short_carry_premium_watch | 2.039144 | 0.285458 | 0.001569 | 5140502 | 8773923 | 0.5859 | 1.7052 | 169.551114 |
+| QQQ | short_carry_premium_watch | 1.321647 | 0.419271 | 0.001674 | 7829009 | 6260009 | 1.2506 | 0.1416 | 113.748315 |
+| ZEC | long_carry_discount_watch | -0.672485 | -0.230588 | -0.001023 | 59977408 | 1080594206 | 0.0555 | 0.2320 | 71.416463 |
+| MON | long_carry_discount_watch | -0.532534 | -0.496308 | -0.001211 | 2574319 | 6708290 | 0.3838 | 4.5239 | 37.373778 |
+| WLD | long_carry_discount_watch | -0.545352 | -0.501797 | -0.000039 | 37991265 | 466161398 | 0.0815 | 2.0490 | 36.508262 |
+| IP | long_carry_discount_watch | -0.315960 | -0.103836 | -0.002279 | 3981302 | 13717867 | 0.2902 | 3.1392 | 31.810813 |
+
+Interpretation:
+
+- `HOME` and `EDEN` are extreme current funding/premium pressure rows, but
+  they need fast validation because extreme funding can decay before entry.
+- `WLD`, `MON`, and `IP` overlap with existing Hyperliquid/candidate-validation
+  work, which makes them useful cross-venue follow-up candidates.
+- This screen still lacks forward labels, funding decay labels, actual fees,
+  maker/taker fill probability, and liquidation data.

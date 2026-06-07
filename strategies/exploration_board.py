@@ -169,6 +169,9 @@ def _cross_exchange_funding_row(root: Path) -> ExplorationRow:
 
 
 def _perp_market_map_row(root: Path) -> ExplorationRow:
+    okx_signal = _okx_perp_pressure_signal(
+        root / "perp_market_map" / "current_okx_perp_pressure.csv"
+    )
     crowding_monitor_path = (
         root / "perp_market_map" / "current_crowding_reversion_monitor_summary.csv"
     )
@@ -183,9 +186,10 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"obs={best_crowding_monitor.get('observations', '')}, "
                 f"mean_score={best_crowding_monitor.get('mean_score', '')}, "
                 f"mean_funding={best_crowding_monitor.get('mean_annualized_funding', '')}"
+                f"{okx_signal}"
             ),
-            main_gap="persistent crowding proxy is not yet joined to future returns or execution costs",
-            next_step="label top carry/reversion rows for subsequent returns, funding decay, and liquidation risk",
+            main_gap="persistent crowding and OKX pressure proxies are not yet joined to future returns or execution costs",
+            next_step="label top HL/OKX pressure rows for subsequent returns, funding decay, and liquidation risk",
         )
     crowding_path = root / "perp_market_map" / "current_crowding_reversion_screen.csv"
     best_crowding = _best_numeric_row(crowding_path, key="carry_reversion_score")
@@ -198,9 +202,10 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"funding={best_crowding.get('annualized_funding', '')}, "
                 f"mark_oracle={best_crowding.get('mark_oracle_diff', '')}, "
                 f"score={best_crowding.get('carry_reversion_score', '')}"
+                f"{okx_signal}"
             ),
-            main_gap="current crowding proxy is not yet joined to future returns or execution costs",
-            next_step="monitor top carry/reversion rows and label subsequent returns, funding decay, and liquidation risk",
+            main_gap="current crowding and OKX pressure proxies are not yet joined to future returns or execution costs",
+            next_step="monitor top HL/OKX pressure rows and label subsequent returns, funding decay, and liquidation risk",
         )
     path = root / "perp_market_map" / "current_hyperliquid_snapshot.csv"
     best = _best_numeric_row(path, key="attention_score")
@@ -209,6 +214,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
         signal = (
             f"{best.get('asset', '')}: ann_funding={best.get('annualized_funding', '')}, "
             f"volume={best.get('day_notional_volume', '')}"
+            f"{okx_signal}"
         )
     return ExplorationRow(
         lane="perp_market_map",
@@ -605,6 +611,17 @@ def _best_forward_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("positive_15m_rate") or "0"),
             int(row.get("coverage_15m") or "0"),
         ),
+    )
+
+
+def _okx_perp_pressure_signal(path: Path) -> str:
+    best = _best_numeric_row(path, key="pressure_score")
+    if not best:
+        return ""
+    return (
+        f"; OKX {best.get('asset', '')}: {best.get('action', '')}, "
+        f"ann_funding={best.get('annualized_funding', '')}, "
+        f"premium={best.get('premium', '')}, score={best.get('pressure_score', '')}"
     )
 
 
