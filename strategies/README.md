@@ -52,6 +52,8 @@ Promote code to the library only after multiple strategies need the same shape.
   - OKX forced-liquidation flow screen for cascade and squeeze candidates
 - `defi_yield/`
   - DeFiLlama stable-yield pool screen
+- `protocol_fundamentals/`
+  - DeFiLlama protocol fee-growth screen mapped to tradable token candidates
 - `news_social/`
   - Fear & Greed and CoinGecko trending attention snapshot
 - `stablecoin_liquidity/`

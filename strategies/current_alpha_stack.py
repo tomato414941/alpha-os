@@ -27,6 +27,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _mstr_btc_relative_value_stack(root),
         _btc_options_volatility_stack(root),
         _prediction_market_event_model_stack(root),
+        *_protocol_fundamental_stacks(root),
         *_token_unlock_stacks(root),
         _liquidation_flow_stack(root),
         _l2_imbalance_stack(root),
@@ -188,6 +189,54 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     )
 
 
+def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_screen.csv")
+    unlocks = {row.get("symbol", ""): row for row in _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")}
+    tickets = sorted(
+        (row for row in rows if row.get("status") in {"paper_long_context", "funding_crowded_watch"}),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:3]:
+        token = ticket.get("token_symbol", "")
+        unlock = unlocks.get(token)
+        conflict = (
+            "protocol fees are not a direct token valuation model; fee growth can be lagging, crowded, or disconnected from token value"
+        )
+        if unlock:
+            conflict = (
+                f"{conflict}; token unlock lane has {unlock.get('status', '')} "
+                f"with side={unlock.get('side', '')}"
+            )
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{token.lower()}_protocol_fee_growth",
+                status=ticket.get("status", "paper_long_context"),
+                side=ticket.get("side", "long_token_or_relative_value"),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="protocol_fundamentals",
+                evidence=(
+                    f"{token}/{ticket.get('name', '')}: "
+                    f"fees7d={ticket.get('total_7d', '')}, "
+                    f"fees30d={ticket.get('total_30d', '')}, "
+                    f"growth7d={ticket.get('change_7d_over_7d', '')}, "
+                    f"funding={ticket.get('funding', '')}"
+                ),
+                conflict=conflict,
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {token} returns after protocol fee-growth snapshots",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")
     tickets = sorted(
@@ -326,6 +375,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "paper_watch": 52.0,
+        "paper_long_context": 50.0,
+        "funding_crowded_watch": 46.0,
         "crowded_short_risk": 48.0,
         "paper_risk_context": 45.0,
         "watch": 35.0,

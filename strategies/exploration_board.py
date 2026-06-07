@@ -43,6 +43,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
         _on_chain_flow_row(root),
+        _protocol_fundamentals_row(root),
     )
 
 
@@ -1621,6 +1622,36 @@ def _on_chain_flow_row(root: Path) -> ExplorationRow:
     )
 
 
+def _protocol_fundamentals_row(root: Path) -> ExplorationRow:
+    path = root / "protocol_fundamentals" / "current_protocol_fee_screen.csv"
+    best = _best_protocol_fee_row(path)
+    if best:
+        return ExplorationRow(
+            lane="protocol_fundamentals",
+            status=best.get("status", "watch"),
+            strongest_current_signal=(
+                f"{best.get('token_symbol', '')}/{best.get('name', '')}: "
+                f"{best.get('side', '')}, "
+                f"fees7d={best.get('total_7d', '')}, "
+                f"growth7d={best.get('change_7d_over_7d', '')}, "
+                f"funding={best.get('funding', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap="protocol fee growth is not yet forward-labeled against token returns, funding, unlocks, and attention context",
+            next_step=best.get(
+                "next_step",
+                "label token returns after protocol fee-growth snapshots",
+            ),
+        )
+    return ExplorationRow(
+        lane="protocol_fundamentals",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="protocol fee/revenue data is not connected to tradable token candidates",
+        next_step="run protocol fee screen and label fee-growth token follow-ups",
+    )
+
+
 def _best_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
     if not path.exists():
         return None
@@ -1639,6 +1670,22 @@ def _best_abs_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: abs(float(row.get(key) or "0")))
+
+
+def _best_protocol_fee_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            1.0 if row.get("status") == "paper_long_context" else 0.0,
+            float(row.get("score") or "0"),
+        ),
+    )
 
 
 def _row_by_value(path: Path, *, field: str, value: str) -> dict[str, str] | None:
