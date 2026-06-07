@@ -806,6 +806,21 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 
 
 def _institutional_flow_row(root: Path) -> ExplorationRow:
+    label_path = root / "institutional_flow" / "btc_etf_flow_forward_labels.csv"
+    label_summary = _btc_etf_flow_label_summary(label_path)
+    if label_summary:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status="btc_etf_flow_forward_label",
+            strongest_current_signal=(
+                f"obs={label_summary['observations']:.0f}, "
+                f"mean_dir5={label_summary['mean_directional_5d']:.8f}, "
+                f"hit5={label_summary['hit_rate_5d']:.4f}, "
+                f"latest={label_summary['latest_action']}"
+            ),
+            main_gap="BTC ETF flow is a coarse daily regime label and excludes funding PnL, intraday timing, and regime splits",
+            next_step="split ETF flow labels by BTC regime, perp funding alignment, and large-flow thresholds",
+        )
     join_path = root / "institutional_flow" / "current_btc_etf_market_join.csv"
     best_join = _best_numeric_row(join_path, key="score")
     if best_join:
@@ -843,6 +858,24 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
         main_gap="ETF and institutional flow context is not connected",
         next_step="fetch BTC ETF flow history and join it to BTC market state",
     )
+
+
+def _btc_etf_flow_label_summary(path: Path) -> dict[str, float | str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    labeled = tuple(row for row in rows if row.get("directional_return_5d"))
+    if not labeled:
+        return None
+    dir_5d = tuple(float(row["directional_return_5d"]) for row in labeled)
+    latest = rows[-1]
+    return {
+        "observations": float(len(labeled)),
+        "mean_directional_5d": sum(dir_5d) / len(dir_5d),
+        "hit_rate_5d": sum(1.0 for value in dir_5d if value > 0.0) / len(dir_5d),
+        "latest_action": latest.get("action", ""),
+    }
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:

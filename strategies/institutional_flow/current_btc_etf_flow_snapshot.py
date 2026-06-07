@@ -165,20 +165,24 @@ def _parse_bitbo_history_usd(html: str, *, timestamp: str) -> tuple[BtcEtfFlowDa
     pattern = re.compile(
         r"getPreviousBusinessDay\((\d+)\),\s*truncate\(([+-]?\d+(?:\.\d+)?)\s*\*\s*([0-9.]+),\s*2\)"
     )
-    rows = []
+    flow_by_date: dict[str, float] = {}
+    usd_by_date: dict[str, float] = {}
     for match in pattern.finditer(block_match.group(1)):
         ms_timestamp = int(match.group(1))
         flow_btc = float(match.group(2))
         row_price = float(match.group(3)) if match.group(3) else price
-        rows.append(
-            BtcEtfFlowDay(
-                timestamp=timestamp,
-                flow_date=_previous_business_day(ms_timestamp).isoformat(),
-                flow_btc=flow_btc,
-                flow_usd=flow_btc * row_price,
-            )
+        flow_date = _previous_business_day(ms_timestamp).isoformat()
+        flow_by_date[flow_date] = flow_by_date.get(flow_date, 0.0) + flow_btc
+        usd_by_date[flow_date] = usd_by_date.get(flow_date, 0.0) + (flow_btc * row_price)
+    return tuple(
+        BtcEtfFlowDay(
+            timestamp=timestamp,
+            flow_date=flow_date,
+            flow_btc=flow_by_date[flow_date],
+            flow_usd=usd_by_date[flow_date],
         )
-    return tuple(sorted(rows, key=lambda row: row.flow_date))
+        for flow_date in sorted(flow_by_date)
+    )
 
 
 def _previous_business_day(ms_timestamp: int) -> date:
