@@ -27,6 +27,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _liquidation_flow_row(root),
         _defi_yield_row(root),
         _market_making_row(root),
+        _options_volatility_row(root),
         _news_social_row(root),
         _prediction_markets_row(root),
         _candidate_validation_row(root),
@@ -436,6 +437,28 @@ def _market_making_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="broad L2 imbalance snapshot is unlabeled until 15m/1h outcomes mature",
         next_step="rerun L2 imbalance forward labels after 15m/1h and then gate WLD/ZEC/HYPE/SOL/BTC",
+    )
+
+
+def _options_volatility_row(root: Path) -> ExplorationRow:
+    path = root / "options_volatility" / "current_deribit_options_surface.csv"
+    best = _best_numeric_row(path, key="score")
+    signal = "Deribit BTC/ETH option surface probe exists"
+    if best:
+        signal = (
+            f"{best.get('currency', '')} {best.get('expiry', '')}: "
+            f"{best.get('action', '')}, "
+            f"atm_iv={best.get('atm_iv', '')}, "
+            f"skew={best.get('skew_iv', '')}, "
+            f"term={best.get('term_iv_spread_to_next', '')}, "
+            f"score={best.get('score', '')}"
+        )
+    return ExplorationRow(
+        lane="options_volatility",
+        status="current_deribit_surface",
+        strongest_current_signal=signal,
+        main_gap="surface snapshot lacks realized-vol baseline, option execution costs, margin, and hedge rules",
+        next_step="join IV/skew/term candidates to realized volatility and hedge-cost labels",
     )
 
 

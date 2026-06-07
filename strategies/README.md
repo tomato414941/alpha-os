@@ -41,6 +41,8 @@ Promote code to the library only after multiple strategies need the same shape.
     snapshot
 - `market_making/`
   - Hyperliquid L2 order-book snapshot and near-book depth diagnostics
+- `options_volatility/`
+  - Deribit BTC/ETH option IV, skew, and term-structure surface diagnostics
 - `event_flow/`
   - Binance USD-M futures taker-flow data path and first 5-minute imbalance
     diagnostic
