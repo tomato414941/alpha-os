@@ -292,3 +292,29 @@ Interpretation:
   fill on each venue.
 - The next highest-value work is not another raw spread screen. It is maker
   feasibility, real fee tier confirmation, and longer scheduled persistence.
+
+## OKX-Hyperliquid Book Depth
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_book_depth
+```
+
+Paper taker-depth check:
+
+| venue | side | target notional | top level notional | average fill | slippage bps | levels | full |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| OkxSwap | buy | 995.58645 | 275099.24052 | 62279.1 | 0.00802838 | 1 | True |
+| HlPerp | sell | 999.969535 | 288224.46108 | 62292 | 0.08026713 | 1 | True |
+
+- combined visible taker slippage: `0.08829551` bps
+- both legs fit inside the top visible level at the 1000 USDT paper size
+
+Interpretation:
+
+- Paper size is not blocked by visible book depth.
+- This does not solve fee sensitivity. Even if visible slippage is small, the
+  edge can still disappear under normal taker fees.
+- The current bottleneck remains effective execution cost and persistence, not
+  visible BTC depth at 1000 USDT.
