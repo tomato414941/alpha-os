@@ -135,7 +135,7 @@ def write_candidate_scores_md(
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# OKX-Hyperliquid Candidate Score\n\n")
         handle.write(
-            "This ranks all assets from the 1m persistence summary after simple fee assumptions.\n\n"
+            "This ranks assets from a persistence summary after simple fee assumptions.\n\n"
         )
         handle.write(
             "| asset | scenario | long | short | obs | net 8h after fee | net 24h after fee | capacity | survives 8h | survives 24h |\n"

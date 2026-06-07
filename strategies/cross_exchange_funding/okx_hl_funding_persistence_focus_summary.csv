@@ -1,0 +1,5 @@
+asset,observations,dominant_long_venue,dominant_short_venue,mean_annualized_spread,mean_net_8h_proxy,min_net_8h_proxy,max_net_8h_proxy,positive_net_8h_rate,mean_net_24h_proxy,mean_breakeven_hold_hours,mean_capacity_proxy_notional
+BTC,12,OkxSwap,HlPerp,0.12399972,0.00003362,-0.00018515,0.00009561,0.83333333,0.00026010,5.6232,422448.80855333
+ZEC,12,OkxSwap,HlPerp,0.36085431,-0.00031009,-0.00081851,-0.00006175,0.00000000,0.00034900,15.5275,106210.05564167
+JTO,12,OkxSwap,HlPerp,0.75900096,-0.00070625,-0.00103076,-0.00017218,0.00000000,0.00068005,16.1661,54543.56750198
+BABY,12,HlPerp,OkxSwap,1.43463730,-0.00380683,-0.00474506,-0.00276550,0.00000000,-0.00118648,31.2663,18182.63949194

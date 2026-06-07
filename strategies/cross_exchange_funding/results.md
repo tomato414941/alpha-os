@@ -404,3 +404,46 @@ Interpretation:
   edge can still disappear under normal taker fees.
 - The current bottleneck remains effective execution cost and persistence, not
   visible BTC depth at 1000 USDT.
+
+## OKX-Hyperliquid Focused Candidate Monitor
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_probe --samples 12 --delay-seconds 10 --assets BTC JTO BABY ZEC --output-path strategies/cross_exchange_funding/okx_hl_funding_persistence_focus.csv --summary-output-path strategies/cross_exchange_funding/okx_hl_funding_persistence_focus_summary.csv
+uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_score --summary-path strategies/cross_exchange_funding/okx_hl_funding_persistence_focus_summary.csv --output-path strategies/cross_exchange_funding/okx_hl_candidate_score_focus.csv --md-output-path strategies/cross_exchange_funding/okx_hl_candidate_score_focus.md
+```
+
+Focused persistence summary:
+
+| asset | long | short | obs | positive 8h rate | mean net 8h | mean net 24h | breakeven hours | capacity |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | OkxSwap | HlPerp | 12 | 0.83333333 | 0.00003362 | 0.00026010 | 5.6232 | 422448.80855333 |
+| ZEC | OkxSwap | HlPerp | 12 | 0 | -0.00031009 | 0.00034900 | 15.5275 | 106210.05564167 |
+| JTO | OkxSwap | HlPerp | 12 | 0 | -0.00070625 | 0.00068005 | 16.1661 | 54543.56750198 |
+| BABY | HlPerp | OkxSwap | 12 | 0 | -0.00380683 | -0.00118648 | 31.2663 | 18182.63949194 |
+
+Fee-adjusted focused score:
+
+| asset | scenario | net 8h after fee | net 24h after fee | capacity | survives 24h |
+| --- | --- | ---: | ---: | ---: | --- |
+| JTO | very_low_fee | -0.00078625 | 0.00060005 | 54543.56750198 | True |
+| JTO | low_fee | -0.00090625 | 0.00048005 | 54543.56750198 | True |
+| JTO | one_bps_each | -0.00110625 | 0.00028005 | 54543.56750198 | True |
+| ZEC | very_low_fee | -0.00039009 | 0.000269 | 106210.05564167 | True |
+| BTC | very_low_fee | -0.00004638 | 0.0001801 | 422448.80855333 | True |
+| ZEC | low_fee | -0.00051009 | 0.000149 | 106210.05564167 | True |
+| BTC | low_fee | -0.00016638 | 0.0000601 | 422448.80855333 | True |
+
+Interpretation:
+
+- BTC is the cleanest operational candidate: deeper capacity and 8h proxy mostly
+  positive in this short focused sample. It is still too fee-sensitive to trade
+  without real fee-tier and maker-fill evidence.
+- JTO has the strongest 24h fee-adjusted proxy, even under the one-bps-each
+  scenario, but capacity is small. It is a monitoring candidate, not yet a
+  scalable baseline.
+- ZEC is between BTC and JTO: stronger 24h room than BTC under low fees, but it
+  does not survive one bps each and has less capacity.
+- BABY fell out of the focused sample. The earlier 1m screen was not enough to
+  keep it in the active candidate set.

@@ -34,10 +34,13 @@ def collect_okx_hl_persistence(
     samples: int,
     delay_seconds: float,
     max_workers: int,
+    assets: tuple[str, ...] | None = None,
 ) -> tuple[OkxHlFundingSpread, ...]:
     rows: list[OkxHlFundingSpread] = []
     for sample_index in range(samples):
-        rows.extend(build_okx_hl_funding_spreads(max_workers=max_workers))
+        rows.extend(
+            build_okx_hl_funding_spreads(max_workers=max_workers, assets=assets)
+        )
         if sample_index + 1 < samples:
             time.sleep(delay_seconds)
     return tuple(rows)
@@ -195,12 +198,15 @@ def main() -> None:
         default=Path(__file__).resolve().parent / "okx_hl_funding_persistence_summary.csv",
     )
     parser.add_argument("--top", type=int, default=20)
+    parser.add_argument("--assets", nargs="+")
     args = parser.parse_args()
 
+    assets = tuple(asset.upper() for asset in args.assets) if args.assets else None
     rows = collect_okx_hl_persistence(
         samples=args.samples,
         delay_seconds=args.delay_seconds,
         max_workers=args.max_workers,
+        assets=assets,
     )
     summaries = summarize_persistence(rows)
     write_persistence_rows(rows, output_path=args.output_path)

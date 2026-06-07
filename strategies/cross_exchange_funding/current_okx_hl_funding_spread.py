@@ -92,12 +92,16 @@ def build_okx_hl_funding_spreads(
     *,
     timestamp: str | None = None,
     max_workers: int = 16,
+    assets: tuple[str, ...] | None = None,
 ) -> tuple[OkxHlFundingSpread, ...]:
     observed_at = timestamp or datetime.now(UTC).isoformat()
     okx_instruments = fetch_okx_usdt_swap_instruments()
     hl_fundings = _hl_fundings_by_asset(fetch_predicted_fundings())
     hl_contexts = fetch_hyperliquid_market_contexts()
-    common_assets = tuple(sorted(set(okx_instruments) & set(hl_fundings)))
+    common_asset_set = set(okx_instruments) & set(hl_fundings)
+    if assets is not None:
+        common_asset_set &= set(assets)
+    common_assets = tuple(sorted(common_asset_set))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         rows = tuple(
             executor.map(
@@ -336,9 +340,11 @@ def main() -> None:
     )
     parser.add_argument("--top", type=int, default=20)
     parser.add_argument("--max-workers", type=int, default=16)
+    parser.add_argument("--assets", nargs="+")
     args = parser.parse_args()
 
-    rows = build_okx_hl_funding_spreads(max_workers=args.max_workers)
+    assets = tuple(asset.upper() for asset in args.assets) if args.assets else None
+    rows = build_okx_hl_funding_spreads(max_workers=args.max_workers, assets=assets)
     write_okx_hl_funding_spreads(rows, output_path=args.output_path)
     for row in rows[: args.top]:
         print(
