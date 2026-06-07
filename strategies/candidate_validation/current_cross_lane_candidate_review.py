@@ -30,6 +30,7 @@ def build_cross_lane_candidates() -> tuple[CrossLaneCandidate, ...]:
     _add_okx_liquidation_labels(assets, scores)
     _add_l2_imbalance_monitor_labels(assets, scores)
     _add_sector_rotation_labels(assets, scores)
+    _add_on_chain_flow_labels(assets, scores)
 
     candidates = tuple(
         _build_candidate(asset=asset, fields=fields, lead_score=scores.get(asset, 0.0))
@@ -234,6 +235,31 @@ def _add_sector_rotation_labels(
         )
         if direction15 is None:
             _add_pending(assets, asset, "sector15")
+        elif direction15 > 0.0:
+            _add_positive(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)
+        else:
+            _add_negative(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)
+
+
+def _add_on_chain_flow_labels(
+    assets: dict[str, dict[str, list[str]]],
+    scores: dict[str, float],
+) -> None:
+    path = STRATEGIES_ROOT / "on_chain_flow" / "current_chain_tvl_flow_forward_labels.csv"
+    for row in _read_rows(path):
+        asset = row["token_symbol"]
+        _add_lane(assets, asset, "on_chain_flow")
+        direction15 = _float_or_none(row.get("directional_return_15m", ""))
+        week_change = abs(float(row.get("week_change_pct") or "0"))
+        scores[asset] = scores.get(asset, 0.0) + min(week_change * 2.0, 1.0)
+        label_name = (
+            f"chain15={'' if direction15 is None else f'{direction15:.4f}'}"
+            f":{row.get('venue', '')}:{row.get('action', '')}"
+        )
+        if direction15 is None:
+            _add_pending(assets, asset, "chain15")
         elif direction15 > 0.0:
             _add_positive(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)
