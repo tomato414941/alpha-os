@@ -19,6 +19,7 @@ uv run python -m strategies.candidate_validation.current_followup_queue
 uv run python -m strategies.candidate_validation.current_followup_execution_context
 uv run python -m strategies.candidate_validation.current_followup_repeat_observations
 uv run python -m strategies.candidate_validation.current_followup_repeat_forward_labels
+uv run python -m strategies.candidate_validation.current_followup_venue_coverage
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -192,3 +193,26 @@ uv run python -m strategies.candidate_validation.current_followup_repeat_forward
 ```
 
 after the 15m and 1h horizons mature.
+
+## Current Follow-Up Venue Coverage
+
+| asset | priority | source | HL | OKX | Binance | venues | action | reason |
+| --- | ---: | --- | --- | --- | --- | ---: | --- | --- |
+| WLD | 10.0571 | hl_candidate;okx_pressure;liquidation | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| ETH | 4.5510 | okx_pressure;liquidation;l2_imbalance | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| MEGA | 3.8916 | hl_candidate | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| BTC | 3.6217 | liquidation;l2_imbalance | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| ONDO | 3.6106 | liquidation;sector_rotation | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| XPL | 3.4493 | l2_imbalance;sector_rotation | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| PUMP | 2.9792 | liquidation;sector_rotation | True | True | False | 2 | multi_venue_followup | candidate can be observed or routed on multiple perp venues |
+| PEPE | 3.7269 | okx_pressure;liquidation | False | True | False | 1 | okx_only_followup | candidate is missing from Hyperliquid but exists on OKX USDT swap |
+| ALLO | 3.0965 | liquidation | False | True | False | 1 | okx_only_followup | candidate is missing from Hyperliquid but exists on OKX USDT swap |
+| HOME | 2.8356 | okx_pressure | False | True | False | 1 | okx_only_followup | candidate is missing from Hyperliquid but exists on OKX USDT swap |
+
+Interpretation:
+
+- Hyperliquid-only execution context was too narrow.
+- `PEPE`, `ALLO`, `HOME`, `H`, `LAB`, and `BEAT` are not HL candidates, but
+  they are OKX USDT swap candidates.
+- Binance futures metadata returned `451` from this environment, so Binance
+  coverage is currently unavailable rather than proven absent.
