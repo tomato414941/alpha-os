@@ -1,0 +1,28 @@
+timestamp,category_name,symbol,category_action,direction,category_change_24h,directional_return_15m,hl_annualized_funding,okx_annualized_funding,best_funding_support,hl_liquidity_usd,okx_liquidity_usd,context_score,action,reason
+2026-06-07T18:28:52.395358+00:00,Privacy,ZEC,sector_momentum_watch,1,19.26784933,,-0.33144949,-0.75674928,0.75674928,407673761.55489957,1050896062.79560006,1.13535699,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Zero Knowledge (ZK),ZEC,sector_momentum_watch,1,8.83329804,,-0.33144949,-0.75674928,0.75674928,407673761.55489957,1050896062.79560006,0.92666596,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Echo Launchpad,XPL,sector_momentum_watch,1,33.94570751,,0.10950000,-0.02772491,0.02772491,7219289.74019400,26241037.52610000,0.70663906,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Launchpad,JUP,sector_momentum_watch,1,20.63132240,,-0.03652307,,0.03652307,1041311.53607000,,0.44914952,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Arcade Games,HMSTR,sector_momentum_watch,1,73.97365656,,0.10950000,,-0.10950000,79706.54774300,,0.36997313,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Binance Alpha Spotlight,ONDO,sector_momentum_watch,1,13.73734986,,0.10950000,-0.06860749,0.06860749,16189578.79669000,39940992.74400000,0.34335449,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Echo Launchpad,LAB,sector_momentum_watch,1,33.94570751,,,0.05475000,-0.05475000,,395456152.77999997,0.12416415,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,AI Meme,TURBO,sector_momentum_watch,1,10.90474000,,-0.39823748,,0.39823748,67155.11291700,,0.11633228,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Telegram Apps,CATI,sector_momentum_watch,1,49.12356695,,0.00000000,,-0.00000000,0.00000000,,-0.01752866,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Analytics,LAB,sector_momentum_watch,1,25.38861186,,,0.05475000,-0.05475000,,395456152.77999997,-0.04697776,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Privacy,LINK,sector_momentum_watch,1,19.26784933,,0.10950000,0.01010361,-0.01010361,3898732.27643000,36487485.81540000,-0.12474662,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Launchpad,LAB,sector_momentum_watch,1,20.63132240,,,0.05475000,-0.05475000,,395456152.77999997,-0.14212355,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Launchpad,PUMP,sector_momentum_watch,1,20.63132240,,0.10950000,0.05475000,-0.05475000,3307334.37249600,36069704.21600000,-0.14212355,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Binance Alpha Spotlight,LAB,sector_momentum_watch,1,13.73734986,,,0.05475000,-0.05475000,,395456152.77999997,-0.28000300,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Privacy Blockchain,CC,sector_momentum_watch,1,10.93277547,,0.10950000,0.05475000,-0.05475000,3473527.40008000,6974202.60000000,-0.33609449,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,AI Meme,FARTCOIN,sector_momentum_watch,1,10.90474000,,0.10950000,0.05475000,-0.05475000,4951071.01082900,5107495.00170000,-0.33665520,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Privacy Blockchain,H,sector_momentum_watch,1,10.93277547,,,0.10941299,-0.10941299,,113165724.37800001,-0.39075748,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Zero Knowledge (ZK),H,sector_momentum_watch,1,8.83329804,,,0.10941299,-0.10941299,,113165724.37800001,-0.43274703,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Analytics,PYTH,sector_momentum_watch,1,25.38861186,,0.10950000,,-0.10950000,509799.47536200,,-0.60172776,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Privacy,XMR,sector_momentum_watch,1,19.26784933,,0.52743697,,-0.52743697,8810115.11592000,,-0.64207998,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Layer 3 (L3),ORBS,sector_momentum_watch,1,13.96790983,,0.00000000,,-0.00000000,0.00000000,,-0.72064180,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Buidlpad Launchpad,SAHARA,sector_momentum_watch,1,15.74274045,,,0.60201474,-0.60201474,,10201904.83440000,-0.78715993,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Zero Knowledge (ZK),POL,sector_momentum_watch,1,8.83329804,,0.01133018,,-0.01133018,489966.32003500,,-0.83466422,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Arcade Games,BEAT,sector_momentum_watch,1,73.97365656,,,2.76908887,-2.76908887,,344162988.42299998,-1.78961574,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Telegram Apps,BEAT,sector_momentum_watch,1,49.12356695,,,2.76908887,-2.76908887,,344162988.42299998,-2.28661753,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Gaming (GameFi),BEAT,sector_momentum_watch,1,10.60069087,,,2.76908887,-2.76908887,,344162988.42299998,-3.05707505,wait_for_label,sector label is not mature yet
+2026-06-07T18:28:52.395358+00:00,Account Abstraction,HOME,sector_stress_watch,-1,-14.32088053,,,-7.01906958,-7.01906958,,60249031.19000000,-7.23265197,wait_for_label,sector label is not mature yet

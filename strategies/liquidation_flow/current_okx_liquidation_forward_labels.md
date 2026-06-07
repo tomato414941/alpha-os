@@ -4,13 +4,13 @@ This labels liquidation-flow candidates with continuation returns. Positive cont
 
 | asset | action | dir | raw 15m | continuation 15m | raw 1h | continuation 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| BEAT | long_liquidation_cascade_watch | -1 | -0.008860 | 0.008860 |  |  |
-| OPN | long_liquidation_cascade_watch | -1 | -0.007042 | 0.007042 |  |  |
-| JTO | long_liquidation_cascade_watch | -1 | -0.003740 | 0.003740 |  |  |
-| H | long_liquidation_cascade_watch | -1 | -0.002635 | 0.002635 | 0.023496 | -0.023496 |
-| BTC | short_liquidation_squeeze_watch | 1 | 0.000312 | 0.000312 | -0.001032 | -0.001032 |
+| BEAT | long_liquidation_cascade_watch | -1 | -0.023958 | 0.023958 |  |  |
+| OPN | long_liquidation_cascade_watch | -1 | -0.004695 | 0.004695 |  |  |
+| H | long_liquidation_cascade_watch | -1 | -0.002635 | 0.002635 | 0.030853 | -0.030853 |
+| JTO | long_liquidation_cascade_watch | -1 | -0.002276 | 0.002276 |  |  |
+| BTC | short_liquidation_squeeze_watch | 1 | 0.000312 | 0.000312 | -0.000653 | -0.000653 |
 | SUI | short_liquidation_squeeze_watch | 1 | -0.000400 | -0.000400 |  |  |
-| ADA | short_liquidation_squeeze_watch | 1 | -0.000612 | -0.000612 | -0.005505 | -0.005505 |
+| ADA | short_liquidation_squeeze_watch | 1 | -0.000612 | -0.000612 | -0.007339 | -0.007339 |
 | MRVL | long_liquidation_cascade_watch | -1 | 0.000708 | -0.000708 |  |  |
 | ETH | short_liquidation_squeeze_watch | 1 | -0.001378 | -0.001378 |  |  |
 | FIL | long_liquidation_cascade_watch | -1 | 0.002636 | -0.002636 |  |  |
@@ -21,11 +21,11 @@ This labels liquidation-flow candidates with continuation returns. Positive cont
 | ALLO | long_liquidation_cascade_watch | -1 | 0.011002 | -0.011002 |  |  |
 | TON | short_liquidation_squeeze_watch | 1 |  |  |  |  |
 | BSB | mixed_liquidation_flow_watch | 0 |  |  |  |  |
-| ZEC | mixed_liquidation_flow_watch | 0 | -0.000285 |  |  |  |
+| ZEC | mixed_liquidation_flow_watch | 0 | -0.002418 |  |  |  |
 | HOME | short_liquidation_squeeze_watch | 1 |  |  |  |  |
 | WLD | mixed_liquidation_flow_watch | 0 |  |  |  |  |
 | LAB | long_liquidation_cascade_watch | -1 |  |  |  |  |
-| HYPE | mixed_liquidation_flow_watch | 0 | -0.002020 |  |  |  |
+| HYPE | mixed_liquidation_flow_watch | 0 | -0.000842 |  |  |  |
 
 ## Interpretation
 

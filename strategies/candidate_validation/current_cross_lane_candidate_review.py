@@ -30,6 +30,7 @@ def build_cross_lane_candidates() -> tuple[CrossLaneCandidate, ...]:
     _add_okx_liquidation_labels(assets, scores)
     _add_l2_imbalance_monitor_labels(assets, scores)
     _add_sector_rotation_labels(assets, scores)
+    _add_sector_perp_context(assets, scores)
     _add_on_chain_flow_labels(assets, scores)
 
     candidates = tuple(
@@ -260,6 +261,35 @@ def _add_on_chain_flow_labels(
         )
         if direction15 is None:
             _add_pending(assets, asset, "chain15")
+        elif direction15 > 0.0:
+            _add_positive(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)
+        else:
+            _add_negative(assets, asset, label_name)
+            scores[asset] = scores.get(asset, 0.0) - min(abs(direction15) * 50.0, 1.0)
+
+
+def _add_sector_perp_context(
+    assets: dict[str, dict[str, list[str]]],
+    scores: dict[str, float],
+) -> None:
+    path = STRATEGIES_ROOT / "sector_rotation" / "current_category_perp_context.csv"
+    for row in _read_rows(path):
+        asset = row["symbol"]
+        if not asset:
+            continue
+        context_score = float(row.get("context_score") or "0")
+        if context_score <= 0.0:
+            continue
+        _add_lane(assets, asset, "sector_perp_context")
+        scores[asset] = scores.get(asset, 0.0) + min(context_score / 2.0, 1.5)
+        direction15 = _float_or_none(row.get("directional_return_15m", ""))
+        label_name = (
+            f"sector_perp15={'' if direction15 is None else f'{direction15:.4f}'}"
+            f":{row.get('category_name', '')}"
+        )
+        if direction15 is None:
+            _add_pending(assets, asset, label_name)
         elif direction15 > 0.0:
             _add_positive(assets, asset, label_name)
             scores[asset] = scores.get(asset, 0.0) + min(direction15 * 100.0, 1.0)

@@ -475,6 +475,21 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
 
 
 def _sector_rotation_row(root: Path) -> ExplorationRow:
+    context_path = root / "sector_rotation" / "current_category_perp_context.csv"
+    best_context = _best_category_perp_context_row(context_path)
+    if best_context:
+        return ExplorationRow(
+            lane="sector_rotation",
+            status="category_perp_context",
+            strongest_current_signal=(
+                f"{best_context.get('category_name', '')}/{best_context.get('symbol', '')}: "
+                f"action={best_context.get('action', '')}, "
+                f"funding_support={best_context.get('best_funding_support', '')}, "
+                f"score={best_context.get('context_score', '')}"
+            ),
+            main_gap="category-perp context is current and mostly pending short labels",
+            next_step="wait for HMSTR/XPL/ZEC/JUP/ONDO category labels and rerun sector-perp context",
+        )
     label_path = root / "sector_rotation" / "current_category_tradable_forward_labels.csv"
     best_label = _best_sector_tradable_label_row(label_path)
     if best_label:
@@ -1406,6 +1421,28 @@ def _best_chain_tvl_market_context_summary_row(path: Path) -> dict[str, str] | N
             action_rank.get(row.get("action", ""), 0),
             float(row.get("mean_context_score") or "-inf"),
             int(row.get("labeled_observations") or "0"),
+        ),
+    )
+
+
+def _best_category_perp_context_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    action_rank = {
+        "sector_perp_repeat_candidate": 3,
+        "keep_sampling": 2,
+        "wait_for_label": 1,
+        "deprioritize": -1,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            action_rank.get(row.get("action", ""), 0),
+            float(row.get("context_score") or "-inf"),
         ),
     )
 

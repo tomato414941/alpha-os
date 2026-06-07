@@ -4,26 +4,26 @@ This ranks public CoinGecko crypto categories by 24h market-cap change, scale, a
 
 | category | 24h change | market cap | volume 24h | top coins | action | score |
 | --- | ---: | ---: | ---: | --- | --- | ---: |
-| Arcade Games | 67.7407 | 890977441 | 54949085 | audiera;hamster-kombat;pepecoin-2 | sector_momentum_watch | 1130.5802 |
-| Telegram Apps | 46.3304 | 1269976123 | 107247578 | audiera;floki;catizen | sector_momentum_watch | 793.8335 |
-| Four.meme Ecosystem (BNB Memes) | 41.3405 | 1904783518 | 646269097 | siren-2;bianrensheng;hakimi | sector_momentum_watch | 747.8612 |
-| Echo Launchpad | 38.9820 | 4445890370 | 166637511 | lab;plasma | sector_momentum_watch | 696.5972 |
-| DRC-20 | -65.7620 | 2371121 | 49 | dogi;fiwb-doginals;dall-doginals | sector_stress_watch | 530.8842 |
-| Analytics | 29.0012 | 5652481061 | 240650068 | lab;pyth-network;the-graph | sector_momentum_watch | 525.8977 |
-| Sticker-Themed Coins | 34.1750 | 21372376 | 592375 | utya;paper-plane;cubigator | sector_momentum_watch | 447.7757 |
-| Launchpad | 22.9892 | 6966601414 | 360253113 | lab;pump-fun;jupiter-exchange-solana | sector_momentum_watch | 422.9936 |
-| Farcaster Ecosystem | 25.8666 | 73004819 | 13034841 | degen-base;doginme;the-doge-nft | sector_momentum_watch | 387.4418 |
-| Privacy | 19.2986 | 29239306134 | 3219053958 | zcash;monero;chainlink | sector_momentum_watch | 385.4650 |
-| OpenServ Ecosystem | 32.4015 | 1811293 | 105065 | solrouter;better;cobot | sector_momentum_watch | 365.4711 |
-| Fighting Games | -31.2483 | 1610771 | 204768 | katana-inu;galaxy-fight-club;cryowar-token | sector_stress_watch | 359.9276 |
-| Chinese Meme | 19.3988 | 973639123 | 108109154 | bianrensheng;meme-horse;jixiangma | sector_momentum_watch | 330.2113 |
-| Binance Alpha Spotlight | 15.0026 | 26718340011 | 2661003716 | lab;memecore;ondo-finance | sector_momentum_watch | 297.8301 |
-| Groypad Ecosystem | 29.1423 | 394666 | 4330 | gotta-go-fast;long-capital;durovs-dog | sector_momentum_watch | 269.0654 |
-| Account Abstraction | -15.8055 | 385469872 | 133297215 | trust-wallet-token;home;iotex | sector_stress_watch | 264.1220 |
-| NFT Lending/Borrowing | 17.4476 | 11913307 | 10102881 | alpha-quark-token | sector_momentum_watch | 245.6711 |
-| Buidlpad Launchpad | 14.2087 | 455496320 | 62602700 | falcon-finance-ff;sahara-ai;lombard-protocol | sector_momentum_watch | 233.8047 |
-| Layer 3 (L3) | 14.5726 | 143899245 | 37350745 | degen-base;orbs;cartesi | sector_momentum_watch | 229.2329 |
-| Privacy Blockchain | 12.2610 | 10355529047 | 450015090 | canton-network;humanity;beldex | sector_momentum_watch | 228.8928 |
+| Arcade Games | 73.9737 | 924084749 | 57617816 | audiera;hamster-kombat;pepecoin-2 | sector_momentum_watch | 1237.3032 |
+| Telegram Apps | 49.1236 | 1294217562 | 108897985 | audiera;floki;catizen | sector_momentum_watch | 842.4214 |
+| Four.meme Ecosystem (BNB Memes) | 35.2284 | 1822413266 | 638149487 | siren-2;bianrensheng;hakimi | sector_momentum_watch | 636.4216 |
+| Echo Launchpad | 33.9457 | 4284785715 | 161673893 | lab;plasma | sector_momentum_watch | 605.6107 |
+| DRC-20 | -65.3981 | 2396322 | 49 | dogi;fiwb-doginals;dall-doginals | sector_stress_watch | 528.1544 |
+| Sticker-Themed Coins | 36.1115 | 21680848 | 602888 | utya;paper-plane;cubigator | sector_momentum_watch | 473.6502 |
+| Analytics | 25.3886 | 5494185444 | 236924014 | lab;pyth-network;the-graph | sector_momentum_watch | 459.9023 |
+| Farcaster Ecosystem | 26.7476 | 73515807 | 13014510 | degen-base;doginme;the-doge-nft | sector_momentum_watch | 400.7005 |
+| Privacy | 19.2678 | 29231761053 | 3157200050 | zcash;monero;chainlink | sector_momentum_watch | 384.6856 |
+| Launchpad | 20.6313 | 6833039111 | 357259361 | lab;pump-fun;jupiter-exchange-solana | sector_momentum_watch | 379.3605 |
+| OpenServ Ecosystem | 33.4096 | 1825085 | 120837 | solrouter;better;cobot | sector_momentum_watch | 378.9817 |
+| Fighting Games | -30.7670 | 1622048 | 203901 | katana-inu;galaxy-fight-club;cryowar-token | sector_stress_watch | 354.4199 |
+| Chinese Meme | 17.5040 | 958187674 | 105977221 | bianrensheng;meme-horse;jixiangma | sector_momentum_watch | 297.6839 |
+| Groypad Ecosystem | 29.9891 | 397254 | 4721 | gotta-go-fast;long-capital;durovs-dog | sector_momentum_watch | 278.0943 |
+| Binance Alpha Spotlight | 13.7373 | 26424378617 | 2535770048 | lab;memecore;ondo-finance | sector_momentum_watch | 272.3583 |
+| Buidlpad Launchpad | 15.7427 | 461614635 | 67840015 | falcon-finance-ff;sahara-ai;lombard-protocol | sector_momentum_watch | 259.6886 |
+| Account Abstraction | -14.3209 | 392266749 | 137638640 | trust-wallet-token;home;iotex | sector_stress_watch | 239.6216 |
+| Layer 3 (L3) | 13.9679 | 143139719 | 36226008 | degen-base;orbs;cartesi | sector_momentum_watch | 219.5026 |
+| Market-Making Solution | 18.8828 | 2192033 | 176936 | milk-money;human-protocol;gamma-strategies | sector_momentum_watch | 218.8264 |
+| NFT Lending/Borrowing | 14.6462 | 11629139 | 9874586 | alpha-quark-token | sector_momentum_watch | 205.9262 |
 
 ## Interpretation
 
