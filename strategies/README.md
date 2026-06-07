@@ -80,6 +80,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - broad lane status board generator
 - `exploration_board.md`
   - latest lane status board
+- `current_alpha_stack.py`
+  - cross-lane current paper candidate stack generator
+- `current_alpha_stack.md`
+  - latest cross-lane paper candidate stack
 - `p0_parallel/`
   - parallel P0 data reachability, L2 burst, and operational paper-ticket
     probes

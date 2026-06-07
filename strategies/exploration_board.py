@@ -20,6 +20,7 @@ class ExplorationRow:
 
 def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
+        _alpha_stack_row(root),
         _crypto_market_structure_row(root),
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
@@ -42,6 +43,31 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
         _on_chain_flow_row(root),
+    )
+
+
+def _alpha_stack_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_stack.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="alpha_stack",
+            status=best.get("status", "candidate_generation"),
+            strongest_current_signal=(
+                f"{best.get('opportunity', '')}: "
+                f"{best.get('side', '')}, "
+                f"priority={best.get('priority_score', '')}, "
+                f"sources={best.get('sources', '')}"
+            ),
+            main_gap=best.get("conflict", "cross-lane stack still needs validation"),
+            next_step=best.get("next_step", "validate top cross-lane paper candidate"),
+        )
+    return ExplorationRow(
+        lane="alpha_stack",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="current paper candidates are not joined across lanes",
+        next_step="run current alpha stack to identify cross-lane candidate priorities",
     )
 
 
