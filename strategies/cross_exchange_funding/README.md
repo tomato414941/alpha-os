@@ -28,4 +28,5 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_funding_persistence_pr
 uv run python -m strategies.cross_exchange_funding.okx_hl_paper_ticket
 uv run python -m strategies.cross_exchange_funding.okx_hl_order_constraints
 uv run python -m strategies.cross_exchange_funding.okx_hl_funding_alignment
+uv run python -m strategies.cross_exchange_funding.okx_hl_fee_sensitivity
 ```
