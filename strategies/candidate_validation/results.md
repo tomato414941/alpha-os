@@ -20,6 +20,7 @@ uv run python -m strategies.candidate_validation.current_followup_execution_cont
 uv run python -m strategies.candidate_validation.current_followup_repeat_observations
 uv run python -m strategies.candidate_validation.current_followup_repeat_forward_labels
 uv run python -m strategies.candidate_validation.current_followup_venue_coverage
+uv run python -m strategies.candidate_validation.current_followup_okx_execution_context
 ```
 
 This is not a causal alpha test. It keeps candidates connected to realized
@@ -216,3 +217,26 @@ Interpretation:
   they are OKX USDT swap candidates.
 - Binance futures metadata returned `451` from this environment, so Binance
   coverage is currently unavailable rather than proven absent.
+
+## Current Follow-Up OKX Execution Context
+
+| asset | inst | source | priority | funding ann | volume 24h | spread bps | depth 10bps USD | 1k usage | action |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| WLD | WLD-USDT-SWAP | hl_candidate;okx_pressure;liquidation | 10.0571 | -0.439141 | 1062380848 | 2.0536 | 29416 | 0.033995 | okx_context_ok |
+| ETH | ETH-USDT-SWAP | okx_pressure;liquidation;l2_imbalance | 4.5510 | -1.143435 | 4294945 | 0.0613 | 1293112 | 0.000773 | okx_context_ok |
+| PEPE | PEPE-USDT-SWAP | okx_pressure;liquidation | 3.7269 | 0.529954 | 43756031000000 | 3.5913 | 175358 | 0.005703 | okx_context_ok |
+| ONDO | ONDO-USDT-SWAP | liquidation;sector_rotation | 3.6106 | -0.135784 | 115289430 | 2.8939 | 24572 | 0.040696 | okx_context_ok |
+| JTO | JTO-USDT-SWAP | liquidation;l2_imbalance | 3.4579 | 0.438000 | 97435983 | 1.5769 | 7434 | 0.134518 | okx_context_ok |
+| XPL | XPL-USDT-SWAP | l2_imbalance;sector_rotation | 3.4493 | -0.224184 | 387997670 | 1.4475 | 12698 | 0.078752 | okx_context_ok |
+| ALLO | ALLO-USDT-SWAP | liquidation | 3.0965 | 0.239926 | 969418890 | 0.3224 | 5722 | 0.174754 | okx_context_ok |
+| PUMP | PUMP-USDT-SWAP | liquidation;sector_rotation | 2.9792 | 0.438000 | 24647151000 | 6.6203 | 22979 | 0.043518 | okx_context_ok |
+| H | H-USDT-SWAP | liquidation | 2.7846 | 0.438000 | 144645250 | 0.1245 | 5428 | 0.184221 | okx_context_ok |
+
+Interpretation:
+
+- OKX keeps several HL-missing candidates alive: `PEPE`, `ALLO`, and `H` are
+  not dead simply because Hyperliquid lacks them.
+- `HOME` exists on OKX but fails the rough 1k visible-depth check in this
+  snapshot, so it needs smaller sizing or a different venue/timing.
+- This is still public book context only; account fees and fill quality are not
+  included.
