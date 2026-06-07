@@ -35,6 +35,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _news_social_row(root),
         _prediction_markets_row(root),
         _protocol_activity_row(root),
+        _institutional_flow_row(root),
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
         _on_chain_flow_row(root),
@@ -801,6 +802,46 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="protocol activity is not joined to tradable venues or labels",
         next_step="join protocol activity to perp state and label forward returns",
+    )
+
+
+def _institutional_flow_row(root: Path) -> ExplorationRow:
+    join_path = root / "institutional_flow" / "current_btc_etf_market_join.csv"
+    best_join = _best_numeric_row(join_path, key="score")
+    if best_join:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status="btc_etf_market_context",
+            strongest_current_signal=(
+                f"{best_join.get('asset', '')}: {best_join.get('action', '')}, "
+                f"latest={best_join.get('latest_flow_btc', '')} BTC, "
+                f"5d={best_join.get('rolling_5d_flow_btc', '')} BTC, "
+                f"funding={best_join.get('annualized_funding', '')}, "
+                f"score={best_join.get('score', '')}"
+            ),
+            main_gap="ETF flow context is joined to BTC perp state but not labeled by regime or execution costs",
+            next_step="label ETF inflow/outflow plus funding alignment against BTC forward returns and drawdown",
+        )
+    path = root / "institutional_flow" / "current_btc_etf_flow_snapshot.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status="btc_etf_flow_snapshot",
+            strongest_current_signal=(
+                f"{best.get('action', '')}: latest={best.get('latest_flow_btc', '')} BTC, "
+                f"5d={best.get('rolling_5d_flow_btc', '')} BTC, "
+                f"10d={best.get('rolling_10d_flow_btc', '')} BTC"
+            ),
+            main_gap="ETF flow context is not joined to perp state or forward labels",
+            next_step="join BTC ETF flow to BTC perp funding/OI and label forward returns",
+        )
+    return ExplorationRow(
+        lane="institutional_flow",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="ETF and institutional flow context is not connected",
+        next_step="fetch BTC ETF flow history and join it to BTC market state",
     )
 
 
