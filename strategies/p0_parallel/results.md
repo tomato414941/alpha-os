@@ -10,6 +10,7 @@ first derivatives-history screen:
 - data reachability checks across derivatives, funding, L2, and attention/liquidity
 - 30-day, seven-symbol Binance derivatives history screen
 - funding-rate history added to the same labeled derivatives table
+- funding carry proxy with premium-change and rough round-trip cost
 - short Hyperliquid L2 burst for a first adverse-selection label
 - paper/manual ticket for the most feasible current funding-spread candidate
 
@@ -98,6 +99,47 @@ change is also weakly negative, and the initial taker long/short signal mostly
 disappears. Funding here is a crowding/reversal feature against next-day return,
 not yet a venue-specific carry PnL test.
 
+## Funding Carry Proxy
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.funding_carry_proxy
+```
+
+Assumption:
+
+- if daily funding is positive, short the perp and hedge the delta elsewhere
+- if daily funding is negative, long the perp and hedge the delta elsewhere
+- proxy PnL = absolute funding earned + perp-direction premium change - rough
+  round-trip cost
+- default rough round-trip cost: 10 bps
+
+Summary:
+
+- observations: 203
+- mean net proxy PnL: -0.00058363
+- hit rate: 0.0542
+- best net proxy PnL: 0.00187816
+- worst net proxy PnL: -0.00108804
+
+Top candidates:
+
+| date | symbol | perp direction | funding pnl | basis pnl | net proxy pnl |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 2024-01-02 | SOLUSDT | -1 | 0.00201112 | 0.00086704 | 0.00187816 |
+| 2024-01-02 | AVAXUSDT | -1 | 0.00182860 | 0.00085159 | 0.00168019 |
+| 2024-01-02 | DOGEUSDT | -1 | 0.00177105 | 0.00088015 | 0.00165120 |
+| 2024-01-02 | XRPUSDT | -1 | 0.00180261 | 0.00075676 | 0.00155937 |
+| 2024-01-02 | ETHUSDT | -1 | 0.00168546 | 0.00057824 | 0.00126370 |
+
+This does not yet prove a tradable carry edge. It shows the current one-month
+funding carry proxy is mostly cost-sensitive: with a conservative 10 bps rough
+cost, only a brief high-funding event survives. With 1 bps, the same proxy is
+mostly positive, so the next real question is executable cost, hedge venue,
+borrow/spot availability, and holding-period design rather than another
+directional next-day return label.
+
 ## Paper Ticket
 
 The current ticket candidate is:
@@ -116,8 +158,7 @@ margin, and risk limits, then the lane is not operational yet.
 ## Next Parallel Step
 
 - Extend the Binance derivatives screen beyond one month and add more symbols.
-- Convert funding into a venue-specific carry PnL test instead of only a
-  next-day return feature.
+- Convert funding carry from proxy PnL into venue-specific execution assumptions.
 - Extend L2 burst from seconds to repeated scheduled snapshots.
 - Pair Hyperliquid recent trades with each L2 snapshot.
 - Convert the MANTA ticket into explicit fee and notional assumptions, then
