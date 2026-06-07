@@ -17,6 +17,7 @@ The first probe uses Hyperliquid public market contexts:
 ```bash
 uv run python -m strategies.perp_market_map.current_hyperliquid_snapshot
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_candidates
+uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_monitor
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_forward_labels
 uv run python -m strategies.perp_market_map.current_hyperliquid_dislocation_execution_check
 uv run python -m strategies.perp_market_map.current_crowding_reversion_screen

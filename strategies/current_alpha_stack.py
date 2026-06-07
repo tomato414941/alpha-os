@@ -472,6 +472,9 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     labels = _best_hyperliquid_dislocation_labels(
         _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_forward_labels.csv")
     )
+    monitor_rows = _best_hyperliquid_dislocation_monitor_rows(
+        _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_monitor_summary.csv")
+    )
     execution_checks = _best_hyperliquid_dislocation_execution_checks(
         _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_execution_check.csv")
     )
@@ -481,8 +484,15 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         asset = ticket.get("asset", "")
         status = ticket.get("status", "paper_hyperliquid_dislocation_candidate")
         label = labels.get((asset, status, ticket.get("side", "")), {})
+        monitor = monitor_rows.get((asset, status, ticket.get("side", "")), {})
         execution = execution_checks.get((asset, status, ticket.get("side", "")), {})
-        stack_status = _hyperliquid_dislocation_stack_status(status, label, execution)
+        stack_status = _hyperliquid_dislocation_stack_status(status, label, monitor, execution)
+        monitor_note = ""
+        if monitor:
+            monitor_note = (
+                f", monitor_obs={monitor.get('observations', '')}, "
+                f"monitor_mean_score={monitor.get('mean_score', '')}"
+            )
         label_note = ""
         if label:
             label_note = (
@@ -507,10 +517,16 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     stack_status,
-                    source_count=3 if execution else 2 if label else 1,
+                    source_count=(
+                        1
+                        + (1 if monitor else 0)
+                        + (1 if label else 0)
+                        + (1 if execution else 0)
+                    ),
                     raw_score=_float(ticket.get("score")) * 10.0,
                 )
                 + (_float(ticket.get("score")) / 100.0)
+                + min(_float(monitor.get("observations")) / 2.0, 2.0)
                 + _hyperliquid_dislocation_label_bonus(label),
                 sources="perp_market_map",
                 evidence=(
@@ -521,6 +537,7 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"oi_vol={ticket.get('oi_volume_ratio', '')}, "
                     f"impact={ticket.get('impact_spread', '')}, "
                     f"reason={ticket.get('reason', '')}"
+                    f"{monitor_note}"
                     f"{label_note}"
                     f"{execution_note}"
                 ),
@@ -548,6 +565,27 @@ def _best_hyperliquid_dislocation_labels(
 ) -> dict[tuple[str, str, str], dict[str, str]]:
     output: dict[tuple[str, str, str], dict[str, str]] = {}
     sorted_rows = sorted(rows, key=lambda row: row.get("timestamp", ""), reverse=True)
+    for row in sorted_rows:
+        key = (row.get("asset", ""), row.get("status", ""), row.get("side", ""))
+        if not key[0] or not key[1] or not key[2] or key in output:
+            continue
+        output[key] = row
+    return output
+
+
+def _best_hyperliquid_dislocation_monitor_rows(
+    rows: tuple[dict[str, str], ...],
+) -> dict[tuple[str, str, str], dict[str, str]]:
+    output: dict[tuple[str, str, str], dict[str, str]] = {}
+    sorted_rows = sorted(
+        rows,
+        key=lambda row: (
+            row.get("monitor_action") == "repeat_label_priority",
+            _float(row.get("observations")),
+            _float(row.get("mean_score")),
+        ),
+        reverse=True,
+    )
     for row in sorted_rows:
         key = (row.get("asset", ""), row.get("status", ""), row.get("side", ""))
         if not key[0] or not key[1] or not key[2] or key in output:
@@ -630,6 +668,7 @@ def _selected_hyperliquid_dislocation_tickets(
 def _hyperliquid_dislocation_stack_status(
     status: str,
     label: dict[str, str],
+    monitor: dict[str, str],
     execution: dict[str, str],
 ) -> str:
     if execution.get("gate_action") == "paper_execution_probe":
@@ -640,6 +679,8 @@ def _hyperliquid_dislocation_stack_status(
         return "paper_dislocation_15m_supported_candidate"
     if label.get("outcome_15m") == "paper_15m_loss":
         return "paper_dislocation_15m_failed_candidate"
+    if monitor.get("monitor_action") == "repeat_label_priority":
+        return "paper_dislocation_repeat_monitor_candidate"
     return status
 
 
