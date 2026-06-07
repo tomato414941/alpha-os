@@ -10,12 +10,13 @@ exposure pools without impermanent-loss risk flags.
 
 ```bash
 uv run python -m strategies.defi_yield.current_yield_screen
+uv run python -m strategies.defi_yield.current_yield_quality_screen
 ```
 
 ## Current Status
 
 This is a yield-source inventory, not a trading recommendation. The screen does
-not yet model:
+now separates base APY from reward-heavy APY, but it does not yet model:
 
 - smart-contract risk
 - stablecoin depeg risk
@@ -23,4 +24,3 @@ not yet model:
 - gas and bridge costs
 - custody and operational risk
 - APY decay after capital enters the pool
-

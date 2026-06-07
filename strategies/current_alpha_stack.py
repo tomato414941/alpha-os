@@ -32,6 +32,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_perp_crowding_stacks(root),
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
+        *_defi_yield_stacks(root),
         *_attention_funding_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
@@ -407,6 +408,48 @@ def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "defi_yield" / "current_yield_quality_screen.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status") in {"paper_base_yield_watch", "paper_incentive_yield_watch"}
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:5]:
+        chain = ticket.get("chain", "")
+        project = ticket.get("project", "")
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{chain.lower().replace(' ', '_')}_{project}_{symbol.lower()}_yield",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="defi_yield",
+                evidence=(
+                    f"{chain}/{project} {symbol}: apy={ticket.get('apy', '')}, "
+                    f"base={ticket.get('apy_base', '')}, reward={ticket.get('apy_reward', '')}, "
+                    f"tvl={ticket.get('tvl_usd', '')}, dev30={ticket.get('apy_deviation_30d', '')}"
+                ),
+                conflict="DeFi yield requires custody, withdrawal, smart-contract, issuer, APY-decay, and exit-liquidity checks",
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {chain}/{project} custody, APY source, capacity, and exit liquidity",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _attention_funding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "news_social" / "current_attention_market_join.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
@@ -696,6 +739,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_short_basis_watch": 62.0,
         "paper_long_basis_watch": 62.0,
         "basis_term_structure_watch": 52.0,
+        "paper_base_yield_watch": 60.0,
+        "paper_incentive_yield_watch": 52.0,
         "paper_watch": 52.0,
         "paper_long_context": 50.0,
         "paper_value_growth_candidate": 67.0,

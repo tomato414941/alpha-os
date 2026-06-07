@@ -562,6 +562,25 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
 
 
 def _defi_yield_row(root: Path) -> ExplorationRow:
+    quality_path = root / "defi_yield" / "current_yield_quality_screen.csv"
+    best_quality = _best_numeric_row(quality_path, key="score")
+    if best_quality:
+        return ExplorationRow(
+            lane="defi_yield",
+            status=best_quality.get("status", "yield_quality_screen"),
+            strongest_current_signal=(
+                f"{best_quality.get('chain', '')}/{best_quality.get('project', '')} "
+                f"{best_quality.get('symbol', '')}: apy={best_quality.get('apy', '')}, "
+                f"base={best_quality.get('apy_base', '')}, "
+                f"reward_share={best_quality.get('reward_share', '')}, "
+                f"tvl={best_quality.get('tvl_usd', '')}"
+            ),
+            main_gap="yield candidates still need custody, smart-contract, issuer, APY-decay, and exit-liquidity checks",
+            next_step=best_quality.get(
+                "next_step",
+                "check custody, APY source, capacity, and exit liquidity before paper allocation",
+            ),
+        )
     path = root / "defi_yield" / "current_yield_screen.csv"
     best = _best_numeric_row(path, key="score")
     signal = "current stable-yield screen exists"

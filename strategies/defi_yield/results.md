@@ -22,3 +22,19 @@ Generated on 2026-06-07 UTC.
 This lane is promising only if the next layer can explain why the yield exists
 and whether the operational risks are acceptable. APY alone is not an edge.
 
+## Yield Quality
+
+The quality screen separates base APY from reward-heavy APY and penalizes large
+30d APY deviation.
+
+Current base-yield watches:
+
+- `Ethereum/apyx-protocol APXUSD`: material base APY with large TVL.
+- `Ethereum/mainstreet MSUSD`: material base APY with stable 30d context.
+- `Arbitrum/usd-ai SUSDAI`: material base APY candidate.
+
+Important caveat:
+
+- Base yield is still not free alpha. Custody, smart-contract risk, issuer risk,
+  withdrawal route, APY decay, capacity, gas, bridge cost, and exit liquidity
+  must be checked before paper allocation.
