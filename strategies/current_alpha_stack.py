@@ -500,6 +500,7 @@ def _perp_crowding_validated_stacks(rows: tuple[dict[str, str], ...]) -> tuple[A
                     f"label_obs={ticket.get('label_observations', '')}, "
                     f"dir15={ticket.get('mean_directional_return_15m', '')}, "
                     f"dir1h={ticket.get('mean_directional_return_1h', '')}, "
+                    f"net1h_proxy={ticket.get('net_directional_return_1h_proxy', '')}, "
                     f"hit1h={ticket.get('positive_directional_1h_rate', '')}, "
                     f"funding={ticket.get('mean_annualized_funding', '')}, "
                     f"impact={ticket.get('mean_impact_spread', '')}"

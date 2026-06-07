@@ -18,8 +18,8 @@ This separates symbol clusters that confirm one direction from clusters that mix
 | JTO | confirmed_long_cluster | 115.0063 | 4 | 3 | L=2, S=0, RV=0, Y=0, R=0, N=1 | long | jto_l2_imbalance_probe, jto_volume_price_dislocation, jto_okx_liquidation_continuation | paper-label JTO long setup against forward return, costs, depth, and failure regime |
 | CRV | confirmed_long_cluster | 112.9175 | 2 | 2 | L=2, S=0, RV=0, Y=0, R=0, N=0 | long | crv_fee_growth_price_context, crv_fee_yield_valuation | paper-label CRV long setup against forward return, costs, depth, and failure regime |
 | DYDX | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | dydx_validated_perp_crowding_reversion | collect more DYDX snapshots before treating this as a cluster |
-| GRIFFAIN | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | griffain_validated_perp_crowding_reversion | collect more GRIFFAIN snapshots before treating this as a cluster |
 | XMR | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | xmr_validated_perp_crowding_reversion | collect more XMR snapshots before treating this as a cluster |
+| GRIFFAIN | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | griffain_validated_perp_crowding_reversion | collect more GRIFFAIN snapshots before treating this as a cluster |
 | HEMI | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | hemi_validated_perp_crowding_reversion | collect more HEMI snapshots before treating this as a cluster |
 | APEX | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | apex_validated_perp_crowding_reversion | collect more APEX snapshots before treating this as a cluster |
 | CFX | multi_source_watch | 110.5000 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | cfx_validated_perp_crowding_reversion | collect more CFX snapshots before treating this as a cluster |

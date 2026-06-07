@@ -320,6 +320,7 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
                 f"score={best_validated.get('validation_score', '')}, "
                 f"dir15={best_validated.get('mean_directional_return_15m', '')}, "
                 f"dir1h={best_validated.get('mean_directional_return_1h', '')}, "
+                f"net1h={best_validated.get('net_directional_return_1h_proxy', '')}, "
                 f"hit1h={best_validated.get('positive_directional_1h_rate', '')}"
                 f"{okx_signal}"
             ),

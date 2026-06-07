@@ -28,6 +28,9 @@ class ValidatedCrowdingReversionRow:
     coverage_1h: int
     mean_directional_return_15m: float
     mean_directional_return_1h: float
+    funding_return_1h: float
+    impact_cost_proxy: float
+    net_directional_return_1h_proxy: float
     positive_directional_15m_rate: float
     positive_directional_1h_rate: float
     next_step: str
@@ -80,6 +83,9 @@ def write_validated_crowding_reversion_csv(
                 "coverage_1h",
                 "mean_directional_return_15m",
                 "mean_directional_return_1h",
+                "funding_return_1h",
+                "impact_cost_proxy",
+                "net_directional_return_1h_proxy",
                 "positive_directional_15m_rate",
                 "positive_directional_1h_rate",
                 "next_step",
@@ -104,6 +110,9 @@ def write_validated_crowding_reversion_csv(
                     row.coverage_1h,
                     f"{row.mean_directional_return_15m:.8f}",
                     f"{row.mean_directional_return_1h:.8f}",
+                    f"{row.funding_return_1h:.8f}",
+                    f"{row.impact_cost_proxy:.8f}",
+                    f"{row.net_directional_return_1h_proxy:.8f}",
                     f"{row.positive_directional_15m_rate:.8f}",
                     f"{row.positive_directional_1h_rate:.8f}",
                     row.next_step,
@@ -126,16 +135,17 @@ def write_validated_crowding_reversion_md(
             "It is a candidate-ranking view, not a trade instruction.\n\n"
         )
         handle.write(
-            "| asset | action | status | score | monitor obs | label obs | mean dir 15m | mean dir 1h | hit15 | hit1h | funding | impact | next step |\n"
+            "| asset | action | status | score | obs | mean dir 15m | mean dir 1h | funding 1h | net 1h proxy | hit1h | impact | next step |\n"
         )
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n")
+        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n")
         for row in rows[:top]:
             handle.write(
                 f"| {row.asset} | {row.action} | {row.status} | {row.validation_score:.4f} | "
-                f"{row.monitor_observations} | {row.label_observations} | "
+                f"{row.monitor_observations}/{row.label_observations} | "
                 f"{row.mean_directional_return_15m:.6f} | {row.mean_directional_return_1h:.6f} | "
-                f"{row.positive_directional_15m_rate:.4f} | {row.positive_directional_1h_rate:.4f} | "
-                f"{row.mean_annualized_funding:.4f} | {row.mean_impact_spread:.6f} | {_escape(row.next_step)} |\n"
+                f"{row.funding_return_1h:.6f} | {row.net_directional_return_1h_proxy:.6f} | "
+                f"{row.positive_directional_1h_rate:.4f} | {row.mean_impact_spread:.6f} | "
+                f"{_escape(row.next_step)} |\n"
             )
         handle.write("\n## Interpretation\n\n")
         handle.write(
@@ -154,6 +164,11 @@ def _build_row(
     action = label.get("action", "")
     mean_15m = _float(label.get("mean_directional_return_15m"))
     mean_1h = _float(label.get("mean_directional_return_1h"))
+    mean_annualized_funding = _float(monitor.get("mean_annualized_funding"))
+    mean_impact_spread = _float(monitor.get("mean_impact_spread"))
+    funding_return_1h = _funding_return_1h(action=action, annualized_funding=mean_annualized_funding)
+    impact_cost_proxy = mean_impact_spread
+    net_directional_return_1h_proxy = mean_1h + funding_return_1h - impact_cost_proxy
     hit_15m = _float(label.get("positive_directional_15m_rate"))
     hit_1h = _float(label.get("positive_directional_1h_rate"))
     coverage_15m = _int(label.get("coverage_15m"))
@@ -182,20 +197,23 @@ def _build_row(
             monitor_score=_float(monitor.get("mean_score")),
             monitor_observations=monitor_observations,
             coverage_1h=coverage_1h,
-            impact_spread=_float(monitor.get("mean_impact_spread")),
+            net_directional_return_1h_proxy=net_directional_return_1h_proxy,
         ),
         monitor_observations=monitor_observations,
         mean_crowding_score=_float(monitor.get("mean_score")),
         min_crowding_score=_float(monitor.get("min_score")),
-        mean_annualized_funding=_float(monitor.get("mean_annualized_funding")),
+        mean_annualized_funding=mean_annualized_funding,
         mean_mark_oracle_diff=_float(monitor.get("mean_mark_oracle_diff")),
         mean_oi_volume_ratio=_float(monitor.get("mean_oi_volume_ratio")),
-        mean_impact_spread=_float(monitor.get("mean_impact_spread")),
+        mean_impact_spread=mean_impact_spread,
         label_observations=_int(label.get("observations")),
         coverage_15m=coverage_15m,
         coverage_1h=coverage_1h,
         mean_directional_return_15m=mean_15m,
         mean_directional_return_1h=mean_1h,
+        funding_return_1h=funding_return_1h,
+        impact_cost_proxy=impact_cost_proxy,
+        net_directional_return_1h_proxy=net_directional_return_1h_proxy,
         positive_directional_15m_rate=hit_15m,
         positive_directional_1h_rate=hit_1h,
         next_step=_next_step(asset=asset, action=action, status=status),
@@ -232,7 +250,7 @@ def _validation_score(
     monitor_score: float,
     monitor_observations: int,
     coverage_1h: int,
-    impact_spread: float,
+    net_directional_return_1h_proxy: float,
 ) -> float:
     status_bonus = {
         "paper_validated_carry_reversion_candidate": 100.0,
@@ -246,10 +264,25 @@ def _validation_score(
         + min(monitor_observations, 6) * 1.5
         + min(coverage_1h, 6) * 1.5
         + (mean_15m * 1000.0)
-        + (mean_1h * 1000.0)
+        + (mean_1h * 500.0)
+        + (net_directional_return_1h_proxy * 500.0)
         + (hit_15m + hit_1h) * 5.0
-        - impact_spread * 100.0
     )
+
+
+def _funding_return_1h(*, action: str, annualized_funding: float) -> float:
+    direction = _direction(action)
+    if direction == 0:
+        return 0.0
+    return -direction * annualized_funding / (24.0 * 365.0)
+
+
+def _direction(action: str) -> int:
+    if action.startswith("long_"):
+        return 1
+    if action.startswith("short_"):
+        return -1
+    return 0
 
 
 def _next_step(*, asset: str, action: str, status: str) -> str:
