@@ -28,6 +28,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _btc_options_volatility_stack(root),
         _prediction_market_event_model_stack(root),
         *_futures_basis_stacks(root),
+        *_derivatives_positioning_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
         *_protocol_fundamental_stacks(root),
@@ -241,6 +242,59 @@ def _futures_basis_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
             )
         )
+    return tuple(output)
+
+
+def _derivatives_positioning_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "derivatives_positioning" / "current_coingecko_derivatives_positioning.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_oi_funding_crowding_watch",
+                "paper_basis_funding_dislocation_watch",
+                "paper_derivatives_momentum_risk_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[str] = set()
+    for ticket in tickets:
+        market = ticket.get("market", "")
+        symbol = ticket.get("symbol", "")
+        key = f"{market}:{symbol}"
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{market.lower().replace(' ', '_')}_{symbol.lower()}_positioning",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="derivatives_positioning",
+                evidence=(
+                    f"{market} {symbol}: oi={ticket.get('open_interest', '')}, "
+                    f"vol24={ticket.get('volume_24h', '')}, oi_vol={ticket.get('oi_volume_ratio', '')}, "
+                    f"funding={ticket.get('funding_rate', '')}, basis={ticket.get('basis', '')}"
+                ),
+                conflict="aggregated derivatives data still needs venue-specific depth, funding timing, fees, margin, and forward labels",
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {market} {symbol} forward returns, funding PnL, depth, fees, and margin constraints",
+                ),
+            )
+        )
+        if len(output) >= 6:
+            break
     return tuple(output)
 
 
@@ -793,6 +847,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_short_basis_watch": 62.0,
         "paper_long_basis_watch": 62.0,
         "basis_term_structure_watch": 52.0,
+        "paper_oi_funding_crowding_watch": 61.0,
+        "paper_basis_funding_dislocation_watch": 59.0,
+        "paper_derivatives_momentum_risk_watch": 56.0,
         "paper_base_yield_watch": 60.0,
         "paper_incentive_yield_watch": 52.0,
         "paper_dex_pool_momentum_watch": 58.0,

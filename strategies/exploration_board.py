@@ -300,6 +300,36 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
 
 
 def _derivatives_positioning_row(root: Path) -> ExplorationRow:
+    current_path = root / "derivatives_positioning" / "current_coingecko_derivatives_positioning.csv"
+    current_rows = tuple(
+        row
+        for row in _csv_rows(current_path)
+        if row.get("status")
+        in {
+            "paper_oi_funding_crowding_watch",
+            "paper_basis_funding_dislocation_watch",
+            "paper_derivatives_momentum_risk_watch",
+        }
+    )
+    best_current = max(current_rows, key=lambda row: float(row.get("score") or "0")) if current_rows else None
+    if best_current:
+        return ExplorationRow(
+            lane="derivatives_positioning",
+            status=best_current.get("status", "current_positioning_screen"),
+            strongest_current_signal=(
+                f"{best_current.get('market', '')} {best_current.get('symbol', '')}: "
+                f"oi={best_current.get('open_interest', '')}, "
+                f"vol24={best_current.get('volume_24h', '')}, "
+                f"funding={best_current.get('funding_rate', '')}, "
+                f"basis={best_current.get('basis', '')}, "
+                f"score={best_current.get('score', '')}"
+            ),
+            main_gap="current derivatives positioning still lacks venue-specific depth, funding timing, fees, margin, and forward labels",
+            next_step=best_current.get(
+                "next_step",
+                "label forward returns, funding PnL, depth, fees, and margin constraints",
+            ),
+        )
     path = root / "p0_parallel" / "binance_derivatives_signal_summary.csv"
     best_corr = _best_abs_numeric_row(path, key="correlation_to_next_return")
     best_hit = _best_numeric_row(path, key="high_bucket_hit_rate")

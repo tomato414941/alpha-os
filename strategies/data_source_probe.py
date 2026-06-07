@@ -73,6 +73,12 @@ PROBE_TARGETS = (
         url="https://api.geckoterminal.com/api/v2/networks/trending_pools",
     ),
     ProbeTarget(
+        category="derivatives_positioning",
+        name="coingecko_derivatives",
+        method="GET",
+        url="https://api.coingecko.com/api/v3/derivatives",
+    ),
+    ProbeTarget(
         category="exchange",
         name="coinbase_products",
         method="GET",
@@ -172,6 +178,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current DeFi yield pool data path is available"
     if target.category == "dex_pool_flow":
         return "current DEX pool-flow data path is available"
+    if target.category == "derivatives_positioning":
+        return "current derivatives positioning data path is available"
     if target.category == "perp_dex":
         return "perp DEX market metadata path is available"
     if target.category == "cross_exchange":

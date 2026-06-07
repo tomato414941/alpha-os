@@ -41,6 +41,9 @@ Promote code to the library only after multiple strategies need the same shape.
 - `perp_market_map/`
   - Hyperliquid perp funding, open interest, volume, premium, and impact-spread
     snapshot
+- `derivatives_positioning/`
+  - CoinGecko multi-venue derivatives OI, volume, funding, basis, and spread
+    screen
 - `market_making/`
   - Hyperliquid L2 order-book snapshot and near-book depth diagnostics
 - `options_volatility/`
