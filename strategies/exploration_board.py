@@ -25,6 +25,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
         _macro_regime_row(root),
+        _crypto_equity_proxy_row(root),
         _event_flow_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
@@ -294,6 +295,41 @@ def _macro_regime_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="macro/crypto context has not been turned into repeated labels",
         next_step="build forward labels for risk-on catch-up, risk-off lagged short, and ETH/BTC beta rotation",
+    )
+
+
+def _crypto_equity_proxy_row(root: Path) -> ExplorationRow:
+    ticket_path = root / "crypto_equity_proxy" / "current_crypto_equity_proxy_paper_tickets.csv"
+    best_ticket = _best_crypto_equity_proxy_ticket(ticket_path)
+    if best_ticket:
+        return ExplorationRow(
+            lane="crypto_equity_proxy",
+            status=best_ticket.get("status", "watch"),
+            strongest_current_signal=(
+                f"{best_ticket.get('name', '')}: "
+                f"{best_ticket.get('side', '')}, "
+                f"score={best_ticket.get('score', '')}, "
+                f"{best_ticket.get('reason', '')}"
+            ),
+            main_gap="crypto equity proxy signal is current-context only and lacks repeated forward labels, borrow/funding costs, and execution mapping",
+            next_step="label MSTR/BTC, COIN/HOOD beta, and miner stress against BTC/ETH returns and funding context",
+        )
+    context_path = root / "crypto_equity_proxy" / "current_crypto_equity_proxy_context.csv"
+    best_context = _best_abs_numeric_row(context_path, key="vs_btc_5d")
+    signal = "not run yet"
+    if best_context:
+        signal = (
+            f"{best_context.get('symbol', '')}: "
+            f"group={best_context.get('group', '')}, "
+            f"vs_btc_5d={best_context.get('vs_btc_5d', '')}, "
+            f"ret5d={best_context.get('return_5d', '')}"
+        )
+    return ExplorationRow(
+        lane="crypto_equity_proxy",
+        status="current_context",
+        strongest_current_signal=signal,
+        main_gap="crypto-linked equity proxies have not been converted into repeated labels",
+        next_step="build paper tickets for proxy lead/lag, MSTR/BTC dislocation, and miner stress",
     )
 
 
@@ -921,6 +957,30 @@ def _best_macro_regime_ticket(path: Path) -> dict[str, str] | None:
         rows,
         key=lambda row: (
             1.0 if row.get("status", "").endswith("_candidate") else 0.0,
+            abs(float(row.get("score") or "0")),
+        ),
+    )
+
+
+def _best_crypto_equity_proxy_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            1.0
+            if row.get("status")
+            in {
+                "paper_long_candidate",
+                "paper_short_candidate",
+                "paper_relative_value_watch",
+                "paper_risk_context",
+            }
+            else 0.0,
             abs(float(row.get("score") or "0")),
         ),
     )
