@@ -56,6 +56,34 @@ class MakerTouchSummary:
     max_maker_edge_bps: Decimal
 
 
+@dataclass(frozen=True)
+class MakerTouchPairObservation:
+    placed_at: str
+    checked_at: str
+    asset: str
+    okx_side: str
+    hl_side: str
+    okx_touched: bool
+    hl_touched: bool
+    both_touched: bool
+    either_touched: bool
+    okx_maker_edge_bps: Decimal
+    hl_maker_edge_bps: Decimal
+
+
+@dataclass(frozen=True)
+class MakerTouchPairSummary:
+    asset: str
+    observations: int
+    both_touch_rate: float
+    either_touch_rate: float
+    okx_only_touch_rate: float
+    hl_only_touch_rate: float
+    no_touch_rate: float
+    mean_okx_maker_edge_bps: Decimal
+    mean_hl_maker_edge_bps: Decimal
+
+
 def collect_maker_touch_probe(
     *,
     assets: tuple[str, ...],
@@ -93,6 +121,35 @@ def collect_maker_touch_probe(
             for current_snapshot in current
         )
     return tuple(observations)
+
+
+def build_pair_observations(
+    observations: tuple[MakerTouchObservation, ...],
+) -> tuple[MakerTouchPairObservation, ...]:
+    by_window: dict[tuple[str, str, str], list[MakerTouchObservation]] = {}
+    for observation in observations:
+        by_window.setdefault(
+            (observation.asset, observation.placed_at, observation.checked_at),
+            [],
+        ).append(observation)
+    pair_observations = tuple(
+        _pair_observation(observations=tuple(window_observations))
+        for window_observations in by_window.values()
+    )
+    return tuple(sorted(pair_observations, key=lambda item: (item.asset, item.placed_at)))
+
+
+def summarize_pair_touch(
+    pair_observations: tuple[MakerTouchPairObservation, ...],
+) -> tuple[MakerTouchPairSummary, ...]:
+    by_asset: dict[str, list[MakerTouchPairObservation]] = {}
+    for observation in pair_observations:
+        by_asset.setdefault(observation.asset, []).append(observation)
+    summaries = tuple(
+        _summarize_pair(asset=asset, observations=tuple(asset_observations))
+        for asset, asset_observations in by_asset.items()
+    )
+    return tuple(sorted(summaries, key=lambda item: item.both_touch_rate, reverse=True))
 
 
 def summarize_maker_touch(
@@ -163,6 +220,125 @@ def write_maker_touch_observations_csv(
                     _fmt(observation.maker_edge_bps),
                 )
             )
+    return output_path
+
+
+def write_pair_observations_csv(
+    observations: tuple[MakerTouchPairObservation, ...],
+    *,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(
+            (
+                "placed_at",
+                "checked_at",
+                "asset",
+                "okx_side",
+                "hl_side",
+                "okx_touched",
+                "hl_touched",
+                "both_touched",
+                "either_touched",
+                "okx_maker_edge_bps",
+                "hl_maker_edge_bps",
+            )
+        )
+        for observation in observations:
+            writer.writerow(
+                (
+                    observation.placed_at,
+                    observation.checked_at,
+                    observation.asset,
+                    observation.okx_side,
+                    observation.hl_side,
+                    observation.okx_touched,
+                    observation.hl_touched,
+                    observation.both_touched,
+                    observation.either_touched,
+                    _fmt(observation.okx_maker_edge_bps),
+                    _fmt(observation.hl_maker_edge_bps),
+                )
+            )
+    return output_path
+
+
+def write_pair_summary_csv(
+    summaries: tuple[MakerTouchPairSummary, ...],
+    *,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(
+            (
+                "asset",
+                "observations",
+                "both_touch_rate",
+                "either_touch_rate",
+                "okx_only_touch_rate",
+                "hl_only_touch_rate",
+                "no_touch_rate",
+                "mean_okx_maker_edge_bps",
+                "mean_hl_maker_edge_bps",
+            )
+        )
+        for summary in summaries:
+            writer.writerow(
+                (
+                    summary.asset,
+                    summary.observations,
+                    f"{summary.both_touch_rate:.8f}",
+                    f"{summary.either_touch_rate:.8f}",
+                    f"{summary.okx_only_touch_rate:.8f}",
+                    f"{summary.hl_only_touch_rate:.8f}",
+                    f"{summary.no_touch_rate:.8f}",
+                    _fmt(summary.mean_okx_maker_edge_bps),
+                    _fmt(summary.mean_hl_maker_edge_bps),
+                )
+            )
+    return output_path
+
+
+def write_pair_summary_md(
+    summaries: tuple[MakerTouchPairSummary, ...],
+    *,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as handle:
+        handle.write("# OKX-Hyperliquid Maker Touch Pair Summary\n\n")
+        handle.write(
+            "This pairs OKX and Hyperliquid maker-touch observations by asset and "
+            "sample window. Both legs must touch in the same window for a clean "
+            "maker-maker entry proxy.\n\n"
+        )
+        handle.write(
+            "| asset | obs | both touch rate | either touch rate | OKX only | HL only | no touch | mean OKX edge bps | mean HL edge bps |\n"
+        )
+        handle.write("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n")
+        for summary in summaries:
+            handle.write(
+                "| "
+                f"{summary.asset} | "
+                f"{summary.observations} | "
+                f"{summary.both_touch_rate:.8f} | "
+                f"{summary.either_touch_rate:.8f} | "
+                f"{summary.okx_only_touch_rate:.8f} | "
+                f"{summary.hl_only_touch_rate:.8f} | "
+                f"{summary.no_touch_rate:.8f} | "
+                f"{_fmt(summary.mean_okx_maker_edge_bps)} | "
+                f"{_fmt(summary.mean_hl_maker_edge_bps)} |\n"
+            )
+        handle.write("\n## Interpretation\n\n")
+        handle.write(
+            "A low both-touch rate means a maker-maker entry is unlikely to complete "
+            "quickly without waiting, repricing, or crossing one leg. This still does "
+            "not prove real fills because queue priority is unknown.\n"
+        )
     return output_path
 
 
@@ -310,6 +486,28 @@ def _touch_observation(
     )
 
 
+def _pair_observation(
+    *,
+    observations: tuple[MakerTouchObservation, ...],
+) -> MakerTouchPairObservation:
+    by_venue = {observation.venue: observation for observation in observations}
+    okx = by_venue["OkxSwap"]
+    hl = by_venue["HlPerp"]
+    return MakerTouchPairObservation(
+        placed_at=okx.placed_at,
+        checked_at=okx.checked_at,
+        asset=okx.asset,
+        okx_side=okx.side,
+        hl_side=hl.side,
+        okx_touched=okx.touched,
+        hl_touched=hl.touched,
+        both_touched=okx.touched and hl.touched,
+        either_touched=okx.touched or hl.touched,
+        okx_maker_edge_bps=okx.maker_edge_bps,
+        hl_maker_edge_bps=hl.maker_edge_bps,
+    )
+
+
 def _summarize_leg(
     *,
     asset: str,
@@ -327,6 +525,40 @@ def _summarize_leg(
         mean_maker_edge_bps=Decimal(str(mean(edge_values))),
         min_maker_edge_bps=min(edge_values),
         max_maker_edge_bps=max(edge_values),
+    )
+
+
+def _summarize_pair(
+    *,
+    asset: str,
+    observations: tuple[MakerTouchPairObservation, ...],
+) -> MakerTouchPairSummary:
+    return MakerTouchPairSummary(
+        asset=asset,
+        observations=len(observations),
+        both_touch_rate=mean(
+            1.0 if observation.both_touched else 0.0 for observation in observations
+        ),
+        either_touch_rate=mean(
+            1.0 if observation.either_touched else 0.0 for observation in observations
+        ),
+        okx_only_touch_rate=mean(
+            1.0 if observation.okx_touched and not observation.hl_touched else 0.0
+            for observation in observations
+        ),
+        hl_only_touch_rate=mean(
+            1.0 if observation.hl_touched and not observation.okx_touched else 0.0
+            for observation in observations
+        ),
+        no_touch_rate=mean(
+            1.0 if not observation.either_touched else 0.0 for observation in observations
+        ),
+        mean_okx_maker_edge_bps=Decimal(
+            str(mean(observation.okx_maker_edge_bps for observation in observations))
+        ),
+        mean_hl_maker_edge_bps=Decimal(
+            str(mean(observation.hl_maker_edge_bps for observation in observations))
+        ),
     )
 
 
@@ -378,6 +610,21 @@ def main() -> None:
         type=Path,
         default=ROOT / "okx_hl_maker_touch_probe_summary.md",
     )
+    parser.add_argument(
+        "--pair-output-path",
+        type=Path,
+        default=ROOT / "okx_hl_maker_touch_pair.csv",
+    )
+    parser.add_argument(
+        "--pair-summary-output-path",
+        type=Path,
+        default=ROOT / "okx_hl_maker_touch_pair_summary.csv",
+    )
+    parser.add_argument(
+        "--pair-summary-md-output-path",
+        type=Path,
+        default=ROOT / "okx_hl_maker_touch_pair_summary.md",
+    )
     args = parser.parse_args()
 
     assets = tuple(asset.upper() for asset in args.assets)
@@ -389,9 +636,17 @@ def main() -> None:
         direction_path=args.direction_path,
     )
     summaries = summarize_maker_touch(observations)
+    pair_observations = build_pair_observations(observations)
+    pair_summaries = summarize_pair_touch(pair_observations)
     write_maker_touch_observations_csv(observations, output_path=args.output_path)
     write_maker_touch_summary_csv(summaries, output_path=args.summary_output_path)
     write_maker_touch_summary_md(summaries, output_path=args.summary_md_output_path)
+    write_pair_observations_csv(pair_observations, output_path=args.pair_output_path)
+    write_pair_summary_csv(pair_summaries, output_path=args.pair_summary_output_path)
+    write_pair_summary_md(
+        pair_summaries,
+        output_path=args.pair_summary_md_output_path,
+    )
     for summary in summaries:
         print(
             summary.asset,
@@ -399,6 +654,13 @@ def main() -> None:
             summary.side,
             f"touch={summary.touch_rate:.4f}",
             f"edge_bps={_fmt(summary.mean_maker_edge_bps)}",
+        )
+    for summary in pair_summaries:
+        print(
+            summary.asset,
+            "pair",
+            f"both_touch={summary.both_touch_rate:.4f}",
+            f"either_touch={summary.either_touch_rate:.4f}",
         )
 
 

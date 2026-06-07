@@ -4,10 +4,10 @@ This is a public-book proxy for maker feasibility. It places a virtual quote at 
 
 | asset | venue | side | obs | touch rate | mean maker edge bps | min edge bps | max edge bps |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ZEC | HlPerp | sell | 5 | 0.60000000 | 0.517803 | 0.12306329 | 1.11071345 |
-| ZEC | OkxSwap | buy | 5 | 0.40000000 | 0.12333502 | 0.12312087 | 0.12369961 |
-| BTC | HlPerp | sell | 5 | 0.80000000 | 0.08094089 | 0.08086101 | 0.08099199 |
-| BTC | OkxSwap | buy | 5 | 0.20000000 | 0.00809524 | 0.00808774 | 0.00809957 |
+| ZEC | OkxSwap | buy | 5 | 0.80000000 | 0.12224977 | 0.12205988 | 0.12232865 |
+| ZEC | HlPerp | sell | 5 | 0.40000000 | 0.65889862 | 0.12219113 | 2.56125672 |
+| BTC | OkxSwap | buy | 5 | 0.60000000 | 0.00807768 | 0.00807012 | 0.00808302 |
+| BTC | HlPerp | sell | 5 | 0.20000000 | 0.1452995 | 0.08073175 | 0.32266391 |
 
 ## Interpretation
 

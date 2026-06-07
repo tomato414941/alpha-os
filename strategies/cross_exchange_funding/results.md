@@ -622,18 +622,36 @@ or real fills.
 
 | asset | venue | side | obs | touch rate | mean maker edge bps | min edge bps | max edge bps |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ZEC | HlPerp | sell | 5 | 0.60000000 | 0.51780300 | 0.12306329 | 1.11071345 |
-| ZEC | OkxSwap | buy | 5 | 0.40000000 | 0.12333502 | 0.12312087 | 0.12369961 |
-| BTC | HlPerp | sell | 5 | 0.80000000 | 0.08094089 | 0.08086101 | 0.08099199 |
-| BTC | OkxSwap | buy | 5 | 0.20000000 | 0.00809524 | 0.00808774 | 0.00809957 |
+| ZEC | OkxSwap | buy | 5 | 0.80000000 | 0.12224977 | 0.12205988 | 0.12232865 |
+| ZEC | HlPerp | sell | 5 | 0.40000000 | 0.65889862 | 0.12219113 | 2.56125672 |
+| BTC | OkxSwap | buy | 5 | 0.60000000 | 0.00807768 | 0.00807012 | 0.00808302 |
+| BTC | HlPerp | sell | 5 | 0.20000000 | 0.14529950 | 0.08073175 | 0.32266391 |
 
 Interpretation:
 
-- Hyperliquid sell legs are touched often in this short sample: BTC 80%, ZEC
-  60%.
-- OKX buy legs are weaker: BTC 20%, ZEC 40%. For BTC, the current practical
-  blocker is likely the OKX maker-buy leg, not the Hyperliquid sell leg.
-- The maker edge is tiny on BTC, especially OKX buy at roughly 0.008 bps. If
-  real account fees are not very low, waiting as maker may not be enough.
+- In this sample, OKX buy touched more often than Hyperliquid sell on both BTC
+  and ZEC.
+- The maker edge is still tiny on BTC, especially OKX buy at roughly 0.008 bps.
+  If real account fees are not very low, waiting as maker may not be enough.
 - This is still not fill evidence. Queue position, post-only behavior, and
   account-specific fees remain unresolved.
+
+## OKX-Hyperliquid Maker Touch Pair Summary
+
+This pairs OKX and Hyperliquid maker-touch observations by asset and sample
+window. Both legs must touch in the same window for a clean maker-maker entry
+proxy.
+
+| asset | obs | both touch rate | either touch rate | OKX only | HL only | no touch | mean OKX edge bps | mean HL edge bps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ZEC | 5 | 0.20000000 | 1.00000000 | 0.60000000 | 0.20000000 | 0.00000000 | 0.12224977 | 0.65889862 |
+| BTC | 5 | 0.00000000 | 0.80000000 | 0.60000000 | 0.20000000 | 0.20000000 | 0.00807768 | 0.14529950 |
+
+Interpretation:
+
+- BTC had zero same-window maker-maker touches in this short sample. Even though
+  one leg often touched, clean two-leg maker entry did not appear.
+- ZEC had a 20% both-touch rate, but its event-window edge is weaker and
+  fee-dependent.
+- The next execution proof should test longer windows and one-leg-cross /
+  one-leg-maker variants, not only pure maker-maker entry.

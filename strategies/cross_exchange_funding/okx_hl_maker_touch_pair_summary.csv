@@ -1,0 +1,3 @@
+asset,observations,both_touch_rate,either_touch_rate,okx_only_touch_rate,hl_only_touch_rate,no_touch_rate,mean_okx_maker_edge_bps,mean_hl_maker_edge_bps
+ZEC,5,0.20000000,1.00000000,0.60000000,0.20000000,0.00000000,0.12224977,0.65889862
+BTC,5,0.00000000,0.80000000,0.60000000,0.20000000,0.20000000,0.00807768,0.1452995
