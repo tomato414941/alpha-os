@@ -1,0 +1,10 @@
+# OKX-Hyperliquid Event Window Triage
+
+This turns event-window scores into research actions. It should override the smooth execution-cost triage when the two disagree.
+
+| asset | event action | previous action | long | short | capacity | very-low 8h | very-low 24h | low-fee 24h | one-bps 24h | max slippage bps | reason |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BTC | paper_8h_candidate | paper_8h_candidate | OkxSwap | HlPerp | 422448.80855333 | 0.00001276 | 0.00023382 | 0.00011382 | -0.00008618 | 0.08887218 | 8h event-window survives only under very low fee assumptions |
+| ZEC | very_low_fee_24h_watch | fee_dependent_24h_monitor | OkxSwap | HlPerp | 106210.05564167 | -0.00043367 | 0.0001167 | -0.0000033 | -0.0002033 | 3.14430447 | 24h event-window only survives the very-low-fee assumption |
+| BABY | thin_or_unstable_watch | thin_or_unstable_watch | HlPerp | OkxSwap | 18182.63949194 | -0.00168952 | 0.00027142 | 0.00015142 | -0.00004858 | 12.94997144 | 24h event-window can be positive, but capacity or cost assumptions are weak |
+| JTO | drop_for_now | active_24h_monitor | OkxSwap | HlPerp | 54543.56750198 | -0.00134757 | -0.0008713 | -0.0009913 | -0.0011913 | 7.52849755 | no current event-window scenario survives |

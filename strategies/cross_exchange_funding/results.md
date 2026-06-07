@@ -496,7 +496,8 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_triage
 ```
 
 This turns the execution-cost score into research actions. It is not a trade
-instruction.
+instruction. This is a smooth-cost triage; use the event-window triage below
+when the two disagree.
 
 | asset | action | long | short | obs | capacity | very-low 8h | low-fee 24h | one-bps 24h | max slippage bps |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -551,3 +552,30 @@ Interpretation:
   thin watch item because capacity and slippage are weak.
 - The practical next step is no longer broad ranking. It is fee/maker-fill
   evidence for BTC and longer event-window monitoring for BTC/ZEC/BABY.
+
+## OKX-Hyperliquid Event Window Triage
+
+Run:
+
+```bash
+uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_triage
+```
+
+This turns event-window scores into research actions. It should override the
+smooth execution-cost triage when the two disagree.
+
+| asset | event action | previous action | long | short | capacity | very-low 8h | very-low 24h | low-fee 24h | one-bps 24h | max slippage bps |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | paper_8h_candidate | paper_8h_candidate | OkxSwap | HlPerp | 422448.80855333 | 0.00001276 | 0.00023382 | 0.00011382 | -0.00008618 | 0.08887218 |
+| ZEC | very_low_fee_24h_watch | fee_dependent_24h_monitor | OkxSwap | HlPerp | 106210.05564167 | -0.00043367 | 0.00011670 | -0.00000330 | -0.00020330 | 3.14430447 |
+| BABY | thin_or_unstable_watch | thin_or_unstable_watch | HlPerp | OkxSwap | 18182.63949194 | -0.00168952 | 0.00027142 | 0.00015142 | -0.00004858 | 12.94997144 |
+| JTO | drop_for_now | active_24h_monitor | OkxSwap | HlPerp | 54543.56750198 | -0.00134757 | -0.00087130 | -0.00099130 | -0.00119130 | 7.52849755 |
+
+Interpretation:
+
+- BTC is still the only 8h paper candidate, but it remains fee-sensitive.
+- ZEC is downgraded from fee-dependent 24h monitor to very-low-fee watch.
+- BABY stays watch-only because the edge is paired with weak capacity and high
+  slippage.
+- JTO is dropped for now. The smooth proxy promoted it, but actual funding
+  events make the current window negative.

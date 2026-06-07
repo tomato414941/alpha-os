@@ -34,6 +34,7 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_cost_score
 uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_triage
 uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_score
+uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_triage
 ```
 
 Focused OKX-Hyperliquid monitor:
@@ -44,4 +45,5 @@ uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_score --summ
 uv run python -m strategies.cross_exchange_funding.okx_hl_execution_cost_score --summary-path strategies/cross_exchange_funding/okx_hl_funding_persistence_focus_summary.csv --assets BTC JTO ZEC BABY
 uv run python -m strategies.cross_exchange_funding.okx_hl_candidate_triage
 uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_score
+uv run python -m strategies.cross_exchange_funding.okx_hl_event_window_triage
 ```
