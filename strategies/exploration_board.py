@@ -441,6 +441,23 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _options_volatility_row(root: Path) -> ExplorationRow:
+    label_path = root / "options_volatility" / "current_deribit_options_realized_vol_labels.csv"
+    best_label = _best_numeric_row(label_path, key="score")
+    if best_label:
+        return ExplorationRow(
+            lane="options_volatility",
+            status="current_iv_realized_context",
+            strongest_current_signal=(
+                f"{best_label.get('currency', '')} {best_label.get('expiry', '')}: "
+                f"{best_label.get('action', '')}, "
+                f"iv={best_label.get('atm_iv', '')}, "
+                f"rv24={best_label.get('realized_vol_24h', '')}, "
+                f"prem24={best_label.get('iv_premium_24h', '')}, "
+                f"skew={best_label.get('skew_iv', '')}"
+            ),
+            main_gap="IV-vs-realized label lacks realized-vol forecast, option execution costs, margin, hedge PnL, and tail-risk controls",
+            next_step="repeat BTC/ETH IV premium labels and add hedge-cost plus realized-vol forecast checks",
+        )
     path = root / "options_volatility" / "current_deribit_options_surface.csv"
     best = _best_numeric_row(path, key="score")
     signal = "Deribit BTC/ETH option surface probe exists"

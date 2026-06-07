@@ -1,0 +1,25 @@
+timestamp,currency,expiry,days_to_expiry,action,atm_iv,realized_vol_4h,realized_vol_24h,iv_premium_4h,iv_premium_24h,skew_iv,term_iv_spread_to_next,score,reason
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-09,1.6326,rich_put_skew_vol_premium_watch,73.9400,33.8930,44.3905,40.0470,29.5495,20.3200,4.4200,54.289476,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-08,0.6326,rich_put_skew_vol_premium_watch,64.6800,33.8930,44.3905,30.7870,20.2895,20.4200,-9.2600,49.969476,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-10,2.6326,rich_put_skew_vol_premium_watch,69.5200,33.8930,44.3905,35.6270,25.1295,19.0600,2.9600,47.149476,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-08,0.6326,rich_put_skew_vol_premium_watch,84.7200,43.2029,63.9373,41.5171,20.7827,23.4400,-2.7100,46.932724,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-12,4.6326,term_structure_watch,64.1500,33.8930,44.3905,30.2570,19.7595,15.4600,10.3900,45.609476,term structure is the dominant options-surface feature
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-09,1.6326,rich_put_skew_vol_premium_watch,87.4300,43.2029,63.9373,44.2271,23.4927,14.7700,3.7200,41.982724,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-11,3.6326,rich_put_skew_vol_premium_watch,66.5600,33.8930,44.3905,32.6670,22.1695,15.1300,2.4100,39.709476,ATM IV is rich to 24h realized and puts are richer than calls
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-12,4.6326,term_structure_watch,80.8400,43.2029,63.9373,37.6371,16.9027,10.3300,10.9100,38.142724,term structure is the dominant options-surface feature
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-10,2.6326,realized_vol_context,83.7100,43.2029,63.9373,40.5071,19.7727,11.6400,1.5900,33.002724,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-11,3.6326,realized_vol_context,82.1200,43.2029,63.9373,38.9171,18.1827,10.1900,1.2800,29.652724,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-19,11.6326,realized_vol_context,53.7600,33.8930,44.3905,19.8670,9.3695,8.9600,4.0600,22.389476,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-06-26,18.6326,realized_vol_context,49.7000,33.8930,44.3905,15.8070,5.3095,6.6900,4.5000,16.499476,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-19,11.6326,realized_vol_context,69.9300,43.2029,63.9373,26.7271,5.9927,6.3700,3.8500,16.212724,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-06-26,18.6326,term_structure_watch,66.0800,43.2029,63.9373,22.8771,2.1427,4.7200,5.6000,12.462724,term structure is the dominant options-surface feature
+2026-06-07T16:49:04.123826+00:00,ETH,2026-07-31,53.6326,realized_vol_context,60.4800,43.2029,63.9373,17.2771,-3.4573,2.3300,1.0300,6.817276,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-08-28,81.6326,realized_vol_context,59.4500,43.2029,63.9373,16.2471,-4.4873,1.7000,-0.0600,6.247276,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-12-25,200.6326,realized_vol_context,59.9200,43.2029,63.9373,16.7171,-4.0173,0.5800,-1.3000,5.897276,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-07-31,53.6326,realized_vol_context,45.2000,33.8930,44.3905,11.3070,0.8095,3.7400,1.2500,5.799476,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2026-09-25,109.6326,realized_vol_context,59.5100,43.2029,63.9373,16.3071,-4.4273,0.7100,-0.4100,5.547276,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-08-28,81.6326,realized_vol_context,43.9500,33.8930,44.3905,10.0570,-0.4405,2.8700,-0.4400,3.750524,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,ETH,2027-03-26,291.6326,realized_vol_context,61.2200,43.2029,63.9373,18.0171,-2.7173,0.8700,,3.587276,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-12-25,200.6326,realized_vol_context,44.9600,33.8930,44.3905,11.0670,0.5695,1.3400,-0.7000,2.609476,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2027-03-26,291.6326,realized_vol_context,45.6600,33.8930,44.3905,11.7670,1.2695,1.2600,,2.529476,IV-realized context exists but no strong premium selected yet
+2026-06-07T16:49:04.123826+00:00,BTC,2026-09-25,109.6326,realized_vol_context,44.3900,33.8930,44.3905,10.4970,-0.0005,1.8800,-0.5700,2.450524,IV-realized context exists but no strong premium selected yet

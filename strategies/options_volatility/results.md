@@ -4,6 +4,7 @@ Run:
 
 ```bash
 uv run python -m strategies.options_volatility.current_deribit_options_surface
+uv run python -m strategies.options_volatility.current_deribit_options_realized_vol_labels
 ```
 
 This lane compresses public Deribit BTC/ETH option summaries into ATM IV,
@@ -32,3 +33,29 @@ Interpretation:
 - ETH 2026-06-12 and 2026-06-26 show front-vol premium against the next expiry.
 - This is not yet alpha evidence. The next step is realized-vol labeling,
   option execution-cost checks, margin, and hedge-cost modeling.
+
+## Current Deribit Options Realized Vol Labels
+
+This joins Deribit ATM IV to recent Hyperliquid 15m realized volatility. It is a
+fast IV-vs-realized context label, not an options backtest.
+
+| currency | expiry | dte | action | atm iv | rv 4h | rv 24h | prem 4h | prem 24h | skew | term | score |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BTC | 2026-06-09 | 1.63 | rich_put_skew_vol_premium_watch | 73.94 | 33.89 | 44.39 | 40.05 | 29.55 | 20.32 | 4.42 | 54.29 |
+| BTC | 2026-06-08 | 0.63 | rich_put_skew_vol_premium_watch | 64.68 | 33.89 | 44.39 | 30.79 | 20.29 | 20.42 | -9.26 | 49.97 |
+| BTC | 2026-06-10 | 2.63 | rich_put_skew_vol_premium_watch | 69.52 | 33.89 | 44.39 | 35.63 | 25.13 | 19.06 | 2.96 | 47.15 |
+| ETH | 2026-06-08 | 0.63 | rich_put_skew_vol_premium_watch | 84.72 | 43.20 | 63.94 | 41.52 | 20.78 | 23.44 | -2.71 | 46.93 |
+| BTC | 2026-06-12 | 4.63 | term_structure_watch | 64.15 | 33.89 | 44.39 | 30.26 | 19.76 | 15.46 | 10.39 | 45.61 |
+| ETH | 2026-06-09 | 1.63 | rich_put_skew_vol_premium_watch | 87.43 | 43.20 | 63.94 | 44.23 | 23.49 | 14.77 | 3.72 | 41.98 |
+| BTC | 2026-06-11 | 3.63 | rich_put_skew_vol_premium_watch | 66.56 | 33.89 | 44.39 | 32.67 | 22.17 | 15.13 | 2.41 | 39.71 |
+| ETH | 2026-06-12 | 4.63 | term_structure_watch | 80.84 | 43.20 | 63.94 | 37.64 | 16.90 | 10.33 | 10.91 | 38.14 |
+
+Interpretation:
+
+- Short-dated BTC options show the clearest IV premium versus recent 24h
+  realized volatility while also carrying put skew.
+- ETH short-dated options also show rich IV versus recent realized volatility,
+  but the strongest ETH surface feature is split between put skew and term
+  structure.
+- This still needs a realized-vol forecast, delta-hedge PnL, option spread
+  costs, margin, and tail-risk controls before it can become a trade candidate.
