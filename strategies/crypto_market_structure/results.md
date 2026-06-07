@@ -7,6 +7,10 @@ Data:
 - symbols: BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT, XRPUSDT, ADAUSDT, DOGEUSDT, LINKUSDT, AVAXUSDT
 - period: 2024-01-01 to 2026-06-06, excluding unavailable current-month rows
 
+Note: the latest broad-universe rerun uses the expanded spot/perp common
+universe summarized at the end of this file. Earlier diagnostic sections are
+kept as historical screens.
+
 ## Feature Diagnostics
 
 Pooled next-day returns by cross-sectional feature bucket:
@@ -210,24 +214,24 @@ Top default candidates:
 
 | candidate | steps | total return | sharpe | max drawdown | turnover |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| spot_perp_positive_funding_top_3_14d | 881 | 0.059689 | 4.967699 | -0.003341 | 0.077563 |
-| spot_perp_positive_funding_top_2_14d | 881 | 0.056951 | 4.481852 | -0.003772 | 0.085131 |
-| spot_perp_positive_funding_top_1_14d | 881 | 0.051752 | 3.406656 | -0.004388 | 0.093076 |
-| spot_perp_positive_funding_top_3_7d | 881 | 0.038750 | 3.095506 | -0.010138 | 0.139236 |
-| spot_perp_positive_funding_top_2_7d | 881 | 0.033505 | 2.497691 | -0.011141 | 0.153235 |
+| spot_perp_positive_funding_top_3_14d | 881 | 0.057046 | 3.038431 | -0.015078 | 0.115399 |
+| spot_perp_positive_funding_top_2_14d | 881 | 0.060508 | 2.922381 | -0.016324 | 0.119183 |
+| spot_perp_positive_funding_top_1_14d | 881 | 0.065458 | 2.505911 | -0.012568 | 0.121453 |
+| spot_perp_positive_funding_top_2_7d | 881 | 0.028031 | 1.318138 | -0.028262 | 0.239501 |
+| spot_perp_positive_funding_top_3_7d | 881 | 0.025169 | 1.279093 | -0.027635 | 0.236095 |
 
 Cost stress, best candidate by Sharpe:
 
 | paired-leg cost | candidate | total return | sharpe | max drawdown |
 | ---: | --- | ---: | ---: | ---: |
-| 0.04% | spot_perp_positive_funding_top_3_14d | 0.059689 | 4.967699 | -0.003341 |
-| 0.10% | spot_perp_positive_funding_top_3_14d | 0.017085 | 0.964521 | -0.019436 |
-| 0.20% | spot_perp_positive_funding_top_3_14d | -0.050220 | -1.669943 | -0.070876 |
-| 0.50% | spot_perp_positive_funding_top_3_14d | -0.227013 | -3.482183 | -0.229169 |
+| 0.04% | spot_perp_positive_funding_top_3_14d | 0.057046 | 3.038431 | -0.015078 |
+| 0.10% | spot_perp_positive_funding_top_1_14d | -0.000872 | -0.020601 | -0.045647 |
+| 0.20% | spot_perp_positive_funding_top_1_14d | -0.102520 | -2.196145 | -0.130495 |
+| 0.50% | spot_perp_positive_funding_top_1_14d | -0.350327 | -3.897055 | -0.349762 |
 
-This more realistic version is much less profitable than the premium-index
-approximation. That is a useful correction. The trade is still interesting, but
-it becomes highly fee-sensitive: it needs low-cost execution and low turnover.
+The broader 30-symbol universe is a useful correction against the earlier
+9-symbol result. The edge still exists, but it is weaker: Sharpe falls, drawdown
+increases, and the trade becomes more sensitive to execution cost.
 
 Next useful work should validate whether this carry survives exchange-specific
 fees, maker/taker routing, order book depth, margin requirements, and actual
@@ -247,21 +251,23 @@ as `spot_perp_carry.py`.
 
 | candidate | max paired-leg cost bps | zero-cost total | zero-cost sharpe | default total | default sharpe | drawdown | turnover |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| spot_perp_positive_funding_top_3_14d | 12.475663 | 0.089058 | 8.298997 | 0.059689 | 4.967699 | -0.003341 | 0.077563 |
-| spot_perp_positive_funding_top_2_14d | 11.377382 | 0.089145 | 7.896105 | 0.056951 | 4.481852 | -0.003772 | 0.085131 |
-| spot_perp_positive_funding_top_1_14d | 10.146755 | 0.086829 | 6.272630 | 0.051752 | 3.406656 | -0.004388 | 0.093076 |
-| spot_perp_positive_funding_top_3_7d | 7.097393 | 0.090996 | 8.668619 | 0.038750 | 3.095506 | -0.010138 | 0.139236 |
-| spot_perp_positive_funding_top_2_7d | 6.439549 | 0.090858 | 8.226793 | 0.033505 | 2.497691 | -0.011141 | 0.153235 |
-| spot_perp_positive_funding_top_1_7d | 5.782354 | 0.089379 | 6.746282 | 0.026748 | 1.734848 | -0.013679 | 0.167991 |
-| spot_perp_positive_funding_top_3_3d | 3.173292 | 0.099654 | 9.065239 | -0.024451 | -1.689085 | -0.046676 | 0.339765 |
-| spot_perp_positive_funding_top_2_3d | 3.024226 | 0.102621 | 8.924331 | -0.031038 | -2.038645 | -0.050494 | 0.366629 |
+| spot_perp_positive_funding_top_1_14d | 9.918648 | 0.112061 | 4.439976 | 0.065458 | 2.505911 | -0.012568 | 0.121453 |
+| spot_perp_positive_funding_top_2_14d | 9.589022 | 0.106008 | 5.419287 | 0.060508 | 2.922381 | -0.016324 | 0.119183 |
+| spot_perp_positive_funding_top_3_14d | 9.451312 | 0.100927 | 5.746814 | 0.057046 | 3.038431 | -0.015078 | 0.115399 |
+| spot_perp_positive_funding_top_1_7d | 5.324513 | 0.127317 | 5.068643 | 0.030272 | 1.146710 | -0.029210 | 0.255392 |
+| spot_perp_positive_funding_top_2_7d | 5.309325 | 0.118583 | 6.170666 | 0.028031 | 1.318138 | -0.028262 | 0.239501 |
+| spot_perp_positive_funding_top_3_7d | 5.194306 | 0.114128 | 6.476165 | 0.025169 | 1.279093 | -0.027635 | 0.236095 |
+| spot_perp_positive_funding_top_1_3d | 2.708906 | 0.145363 | 6.212902 | -0.062662 | -2.483362 | -0.095473 | 0.568672 |
+| spot_perp_positive_funding_top_2_3d | 2.520025 | 0.128019 | 6.688512 | -0.068325 | -3.097790 | -0.095937 | 0.542565 |
 
 Interpretation:
 
 - The viable cluster is the low-turnover 14-day family.
-- `top_3_14d` survives until roughly `12.48 bps` paired-leg cost, which matches
-  the cost stress: it survives 10 bps but fails 20 bps.
-- 7-day variants have less room but remain plausible under low-cost execution.
+- `top_1_14d`, `top_2_14d`, and `top_3_14d` survive only to roughly
+  `9.45-9.92 bps` paired-leg cost. This is materially lower than the earlier
+  9-symbol screen.
+- 7-day variants have little room and only remain plausible under very low-cost
+  execution.
 - 3-day and 1-day variants are not worth promoting under the default cost
   because turnover consumes the edge.
 - The next hard gate is exchange-specific execution: actual spot/perp fees,
@@ -280,22 +286,116 @@ The scenarios are assumptions, not exchange fee schedules.
 
 | candidate | scenario | ceiling bps | scenario bps | headroom bps | pass | default sharpe | turnover |
 | --- | --- | ---: | ---: | ---: | --- | ---: | ---: |
-| spot_perp_positive_funding_top_3_14d | low_slippage_maker_like | 12.475663 | 6.000000 | 6.475663 | True | 4.967699 | 0.077563 |
-| spot_perp_positive_funding_top_2_14d | low_slippage_maker_like | 11.377382 | 6.000000 | 5.377382 | True | 4.481852 | 0.085131 |
-| spot_perp_positive_funding_top_3_14d | low_slippage_taker_like | 12.475663 | 7.500000 | 4.975663 | True | 4.967699 | 0.077563 |
-| spot_perp_positive_funding_top_1_14d | low_slippage_maker_like | 10.146755 | 6.000000 | 4.146755 | True | 3.406656 | 0.093076 |
-| spot_perp_positive_funding_top_2_14d | low_slippage_taker_like | 11.377382 | 7.500000 | 3.877382 | True | 4.481852 | 0.085131 |
-| spot_perp_positive_funding_top_1_14d | low_slippage_taker_like | 10.146755 | 7.500000 | 2.646755 | True | 3.406656 | 0.093076 |
-| spot_perp_positive_funding_top_3_14d | retail_taker_with_slippage | 12.475663 | 11.250000 | 1.225663 | True | 4.967699 | 0.077563 |
-| spot_perp_positive_funding_top_3_7d | low_slippage_maker_like | 7.097393 | 6.000000 | 1.097393 | True | 3.095506 | 0.139236 |
+| spot_perp_positive_funding_top_1_14d | low_slippage_maker_like | 9.918648 | 6.000000 | 3.918648 | True | 2.505911 | 0.121453 |
+| spot_perp_positive_funding_top_2_14d | low_slippage_maker_like | 9.589022 | 6.000000 | 3.589022 | True | 2.922381 | 0.119183 |
+| spot_perp_positive_funding_top_3_14d | low_slippage_maker_like | 9.451312 | 6.000000 | 3.451312 | True | 3.038431 | 0.115399 |
+| spot_perp_positive_funding_top_1_14d | low_slippage_taker_like | 9.918648 | 7.500000 | 2.418648 | True | 2.505911 | 0.121453 |
+| spot_perp_positive_funding_top_2_14d | low_slippage_taker_like | 9.589022 | 7.500000 | 2.089022 | True | 2.922381 | 0.119183 |
+| spot_perp_positive_funding_top_3_14d | low_slippage_taker_like | 9.451312 | 7.500000 | 1.951312 | True | 3.038431 | 0.115399 |
+| spot_perp_positive_funding_top_1_7d | low_slippage_maker_like | 5.324513 | 6.000000 | -0.675487 | False | 1.146710 | 0.255392 |
+| spot_perp_positive_funding_top_2_7d | low_slippage_maker_like | 5.309325 | 6.000000 | -0.690675 | False | 1.318138 | 0.239501 |
 
 Interpretation:
 
-- `top_3_14d` is the strongest current spot/perp carry candidate because it
-  passes maker-like, taker-like, and moderate slippage scenarios.
-- The remaining headroom is still small under retail taker plus slippage, so this
-  is not yet a deployable strategy.
-- 7-day variants only pass under low-cost execution. 3-day and 1-day variants do
-  not deserve promotion.
+- The 14-day cluster passes only the low-slippage maker-like and taker-like
+  scenarios.
+- It no longer passes the retail taker plus slippage scenario after broadening
+  the universe.
+- 7-day variants no longer pass even the low-slippage maker-like scenario. 3-day
+  and 1-day variants do not deserve promotion.
 - The next hard evidence should be venue-specific: actual account fees, symbol
   availability, margin requirements, and book depth at the intended order size.
+
+## Broad Universe Rerun
+
+Run:
+
+```bash
+uv run python -m strategies.crypto.fetch_market_data --start-date 2024-01-01 --end-date 2026-06-07
+uv run python -m strategies.crypto_market_structure.fetch_market_data --start-date 2024-01-01 --end-date 2026-06-07
+uv run python -m strategies.crypto_market_structure.diagnostics
+uv run python -m strategies.crypto_market_structure.backtest
+uv run python -m strategies.crypto_market_structure.predictive_screen
+uv run python -m strategies.crypto_market_structure.broad_model_screen
+uv run python -m strategies.crypto_market_structure.funding_carry
+uv run python -m strategies.crypto_market_structure.spot_perp_carry
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_fee_ceiling
+uv run python -m strategies.crypto_market_structure.spot_perp_carry_execution_gate
+```
+
+Expanded universe:
+
+- spot archive wrote 30 symbols
+- USD-M futures archive wrote 29 symbols
+- `PEPEUSDT` spot exists but was not present in the futures output for this run
+- spot/perp backtest now uses each day's available symbols instead of requiring
+  every symbol to have every date
+
+Important changes versus the 9-symbol screen:
+
+- Directional market-structure ranking is still not a tradable candidate.
+- Broad ML screens find some high-return candidates, but drawdowns remain large
+  and hit rates are weak.
+- Premium-index funding carry remains strong, but it is an optimistic proxy.
+- Spot/perp carry survives as the best current profit-adjacent lane, but its
+  execution headroom is materially smaller in the broader universe.
+
+Broad feature diagnostics:
+
+| feature | bucket | count | mean next return | hit rate |
+| --- | ---: | ---: | ---: | ---: |
+| funding_rate_sum | bottom_20 | 5107 | 0.002070 | 0.491 |
+| funding_rate_sum | middle_60 | 12787 | -0.000457 | 0.476 |
+| funding_rate_sum | top_20 | 7638 | 0.000052 | 0.477 |
+| premium_close | bottom_20 | 5107 | 0.000281 | 0.491 |
+| premium_close | middle_60 | 13380 | -0.000776 | 0.473 |
+| premium_close | top_20 | 7045 | 0.001997 | 0.483 |
+| taker_buy_imbalance | bottom_20 | 5107 | -0.003772 | 0.464 |
+| taker_buy_imbalance | top_20 | 5107 | 0.001486 | 0.478 |
+| volume_ratio_20d | bottom_20 | 5107 | -0.001791 | 0.478 |
+| volume_ratio_20d | top_20 | 5107 | 0.002349 | 0.478 |
+
+Broad hand-written directional candidates:
+
+| candidate | steps | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| flow_top_3_weekly | 844 | 0.294361 | 0.525310 | -0.641738 | 0.233412 |
+| premium_funding_top_2 | 844 | -0.408981 | 0.245358 | -0.948070 | 1.444313 |
+| premium_funding_top_2_weekly | 844 | -0.189686 | 0.375176 | -0.873991 | 0.226303 |
+
+Broad predictive screen:
+
+| candidate | predictions | mean daily rank IC | hit rate | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ridge_top_1_7d | 19749 | -0.010632 | 0.469 | 1.159903 | 0.894820 | -0.741394 | 0.256975 |
+| ridge_top_2_7d | 19749 | -0.010632 | 0.469 | -0.143790 | 0.279005 | -0.730647 | 0.264317 |
+| ridge_top_3_7d | 19749 | -0.010632 | 0.469 | -0.184596 | 0.221029 | -0.729474 | 0.252080 |
+
+Broad model screen top candidates:
+
+| candidate | predictions | mean daily rank IC | hit rate | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| momentum_contrarian_return_ridge_top_1_1d | 17719 | 0.003080 | 0.476 | 3.012048 | 1.292496 | -0.499313 | 0.878887 |
+| structure_contrarian_return_ridge_top_1_3d | 17719 | 0.005023 | 0.472 | 1.963273 | 1.114887 | -0.663075 | 0.587561 |
+| all_rank_ridge_top_1_3d | 17719 | 0.054126 | 0.484 | 1.159405 | 1.106520 | -0.427930 | 0.446809 |
+| flow_return_ridge_top_2_14d | 17719 | 0.004186 | 0.474 | 1.440758 | 1.038248 | -0.651314 | 0.122750 |
+
+Broad funding-carry proxy:
+
+| candidate | steps | total return | sharpe | max drawdown | turnover |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| positive_funding_carry_top_3_14d | 864 | 0.218605 | 5.542733 | -0.015285 | 0.115741 |
+| positive_funding_carry_top_2_14d | 864 | 0.251779 | 5.189345 | -0.020496 | 0.120370 |
+| positive_funding_carry_top_3_7d | 864 | 0.203238 | 5.160595 | -0.013892 | 0.226080 |
+| positive_funding_carry_top_1_14d | 864 | 0.301011 | 4.780717 | -0.021675 | 0.126157 |
+
+Current interpretation:
+
+- The strongest actionable lane remains spot/perp funding carry, not directional
+  return prediction.
+- Broadening the universe made the carry result less pretty, which is good
+  evidence discipline: it reduces the chance that the candidate is a narrow
+  universe artifact.
+- The candidate still needs live feasibility checks before paper trading:
+  actual fees, spot/perp availability, margin, order-book depth, and execution
+  failure handling.

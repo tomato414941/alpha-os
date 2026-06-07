@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import argparse
 import csv
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from io import BytesIO, TextIOWrapper
 from pathlib import Path
+from zipfile import ZipFile
 
 import requests
 
 from strategies.crypto.data import EXPANDED_SYMBOLS, LOCAL_DATASET_DIR
 
 
-BINANCE_KLINES_URL = "https://data-api.binance.vision/api/v3/klines"
-ONE_DAY_MS = 24 * 60 * 60 * 1000
+BINANCE_PUBLIC_DATA_URL = "https://data.binance.vision/data/spot/monthly"
 
 
 @dataclass(frozen=True)
@@ -27,32 +29,22 @@ def fetch_binance_spot_daily_rows(
     *,
     start_date: date,
     end_date: date,
-    url: str = BINANCE_KLINES_URL,
 ) -> tuple[BinanceDailyRow, ...]:
     rows: list[BinanceDailyRow] = []
-    start_ms = _date_to_ms(start_date)
-    end_ms = _date_to_ms(end_date)
-
-    while start_ms < end_ms:
-        response = requests.get(
-            url,
-            params={
-                "symbol": symbol,
-                "interval": "1d",
-                "startTime": start_ms,
-                "endTime": end_ms,
-                "limit": 1000,
-            },
-            timeout=30,
+    for month in _months(start_date, end_date):
+        payload = _download_zip_csv(
+            _archive_url(
+                symbol,
+                month,
+                filename=f"{symbol}-1d-{month:%Y-%m}.zip",
+            )
         )
-        response.raise_for_status()
-        payload = response.json()
-        if not payload:
-            break
-
         for item in payload:
-            open_time_ms = int(item[0])
-            if open_time_ms >= end_ms:
+            if item and item[0] == "open_time":
+                continue
+            open_time_ms = _timestamp_to_ms(int(item[0]))
+            row_date = _timestamp_to_date(_ms_to_timestamp(open_time_ms))
+            if not start_date <= row_date < end_date:
                 continue
             rows.append(
                 BinanceDailyRow(
@@ -61,11 +53,6 @@ def fetch_binance_spot_daily_rows(
                     volume=float(item[5]),
                 )
             )
-
-        next_start_ms = int(payload[-1][0]) + ONE_DAY_MS
-        if next_start_ms <= start_ms:
-            break
-        start_ms = next_start_ms
 
     return tuple(rows)
 
@@ -93,23 +80,74 @@ def fetch_market_data(
     end_date: date,
     output_dir: Path = LOCAL_DATASET_DIR,
 ) -> tuple[Path, ...]:
-    written_paths = []
-    for symbol in symbols:
-        rows = fetch_binance_spot_daily_rows(
-            symbol,
-            start_date=start_date,
-            end_date=end_date,
+    with ThreadPoolExecutor(max_workers=min(len(symbols), 8)) as executor:
+        paths = executor.map(
+            lambda symbol: _fetch_and_write_symbol(
+                symbol,
+                start_date=start_date,
+                end_date=end_date,
+                output_dir=output_dir,
+            ),
+            symbols,
         )
-        written_paths.append(write_daily_rows(symbol, rows, output_dir=output_dir))
-    return tuple(written_paths)
+    return tuple(path for path in paths if path is not None)
 
 
-def _date_to_ms(value: date) -> int:
-    return int(datetime(value.year, value.month, value.day, tzinfo=UTC).timestamp() * 1000)
+def _fetch_and_write_symbol(
+    symbol: str,
+    *,
+    start_date: date,
+    end_date: date,
+    output_dir: Path,
+) -> Path | None:
+    rows = fetch_binance_spot_daily_rows(
+        symbol,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    if not rows:
+        return None
+    return write_daily_rows(symbol, rows, output_dir=output_dir)
 
 
 def _ms_to_timestamp(value: int) -> str:
     return datetime.fromtimestamp(value / 1000, tz=UTC).isoformat()
+
+
+def _timestamp_to_ms(value: int) -> int:
+    if value > 10_000_000_000_000:
+        return value // 1000
+    return value
+
+
+def _timestamp_to_date(value: str) -> date:
+    return datetime.fromisoformat(value).date()
+
+
+def _months(start_date: date, end_date: date):
+    cursor = date(start_date.year, start_date.month, 1)
+    while cursor < end_date:
+        yield cursor
+        if cursor.month == 12:
+            cursor = date(cursor.year + 1, 1, 1)
+        else:
+            cursor = date(cursor.year, cursor.month + 1, 1)
+
+
+def _archive_url(symbol: str, month: date, *, filename: str) -> str:
+    return f"{BINANCE_PUBLIC_DATA_URL}/klines/{symbol}/1d/{filename}"
+
+
+def _download_zip_csv(url: str) -> tuple[list[str], ...]:
+    response = requests.get(url, timeout=30)
+    if response.status_code == 404:
+        return ()
+    response.raise_for_status()
+    with ZipFile(BytesIO(response.content)) as archive:
+        name = archive.namelist()[0]
+        with archive.open(name) as raw_handle:
+            reader = csv.reader(TextIOWrapper(raw_handle, encoding="utf-8"))
+            return tuple(reader)
 
 
 def _default_end_date() -> date:

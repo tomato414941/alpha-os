@@ -22,6 +22,7 @@ expansion explain next-day crypto returns better than close-only indicators?
 ## Commands
 
 ```bash
+uv run python -m strategies.crypto.fetch_market_data --start-date 2024-01-01
 uv run python -m strategies.crypto_market_structure.fetch_market_data --start-date 2024-01-01
 uv run python -m strategies.crypto_market_structure.diagnostics
 uv run python -m strategies.crypto_market_structure.predictive_screen

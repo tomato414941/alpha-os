@@ -66,12 +66,12 @@ def run_spot_perp_carry_screen(
     }
     symbols = tuple(sorted(set(spot_by_symbol_and_timestamp) & set(perp_by_symbol_and_timestamp)))
     timestamps = sorted(
-        set.intersection(
+        set.union(
             *(
                 set(spot_by_symbol_and_timestamp[symbol])
-                & set(perp_by_symbol_and_timestamp[symbol])
+                | set(perp_by_symbol_and_timestamp[symbol])
                 for symbol in symbols
-            )
+            ),
         )
     )
     results = []
@@ -150,17 +150,34 @@ def _run_candidate(
         top_n=top_n,
     )
     for index, timestamp in enumerate(timestamps[:-1]):
+        next_timestamp = timestamps[index + 1]
+        available_symbols = tuple(
+            symbol
+            for symbol in symbols
+            if timestamp in spot_by_symbol_and_timestamp[symbol]
+            and next_timestamp in spot_by_symbol_and_timestamp[symbol]
+            and timestamp in perp_by_symbol_and_timestamp[symbol]
+            and next_timestamp in perp_by_symbol_and_timestamp[symbol]
+        )
         if index % rebalance_days == 0:
             target = strategy.decide(
                 FundingCarryDecisionInput(
                     rows_by_symbol={
                         symbol: perp_by_symbol_and_timestamp[symbol][timestamp]
-                        for symbol in symbols
+                        for symbol in available_symbols
                     },
-                    current_weights=dict(current_weights),
+                    current_weights={
+                        symbol: weight
+                        for symbol, weight in current_weights.items()
+                        if symbol in available_symbols
+                    },
                 )
             )
-        next_timestamp = timestamps[index + 1]
+        target_weights = {
+            symbol: weight
+            for symbol, weight in target.target_weights.items()
+            if symbol in available_symbols
+        }
         gross_reward = sum(
             weight
             * _spot_perp_pair_return(
@@ -170,16 +187,16 @@ def _run_candidate(
                 next_perp=perp_by_symbol_and_timestamp[symbol][next_timestamp],
                 capital_per_notional=capital_per_notional,
             )
-            for symbol, weight in target.target_weights.items()
+            for symbol, weight in target_weights.items()
         )
-        turnover = _turnover(current_weights, target.target_weights)
+        turnover = _turnover(current_weights, target_weights)
         transaction_cost = turnover * paired_leg_cost_rate * 2.0 / capital_per_notional
         reward = gross_reward - transaction_cost
         equity *= 1.0 + reward
         rewards.append(reward)
         equities.append(equity)
         transaction_costs.append(transaction_cost)
-        current_weights = dict(target.target_weights)
+        current_weights = dict(target_weights)
     summary = summarize_backtest(
         rewards=tuple(rewards),
         equities=tuple(equities),

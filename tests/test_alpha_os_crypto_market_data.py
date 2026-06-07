@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import sys
 from datetime import date
+from io import BytesIO
 from pathlib import Path
+from zipfile import ZipFile
 
 
 def test_fetch_binance_spot_daily_rows_parses_klines(monkeypatch):
@@ -10,21 +12,24 @@ def test_fetch_binance_spot_daily_rows_parses_klines(monkeypatch):
     sys.path.insert(0, str(root))
     from strategies.crypto import fetch_market_data
 
+    payload = BytesIO()
+    with ZipFile(payload, "w") as archive:
+        archive.writestr(
+            "BTCUSDT-1d-2024-01.csv",
+            "\n".join(
+                (
+                    "open_time,open,high,low,close,volume",
+                    "1704067200000000,0,0,0,44167.33203125,18426978443.0",
+                )
+            ),
+        )
+
     class Response:
+        status_code = 200
+        content = payload.getvalue()
+
         def raise_for_status(self) -> None:
             return None
-
-        def json(self) -> list[list[str | int]]:
-            return [
-                [
-                    1704067200000,
-                    "0",
-                    "0",
-                    "0",
-                    "44167.33203125",
-                    "18426978443.0",
-                ]
-            ]
 
     def fake_get(*args, **kwargs):
         return Response()
