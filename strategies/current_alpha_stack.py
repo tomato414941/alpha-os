@@ -472,13 +472,17 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     labels = _best_hyperliquid_dislocation_labels(
         _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_forward_labels.csv")
     )
+    execution_checks = _best_hyperliquid_dislocation_execution_checks(
+        _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_execution_check.csv")
+    )
     tickets = _selected_hyperliquid_dislocation_tickets(rows=rows, labels=labels)
     output: list[AlphaStackRow] = []
     for ticket in tickets:
         asset = ticket.get("asset", "")
         status = ticket.get("status", "paper_hyperliquid_dislocation_candidate")
         label = labels.get((asset, status, ticket.get("side", "")), {})
-        stack_status = _hyperliquid_dislocation_stack_status(status, label)
+        execution = execution_checks.get((asset, status, ticket.get("side", "")), {})
+        stack_status = _hyperliquid_dislocation_stack_status(status, label, execution)
         label_note = ""
         if label:
             label_note = (
@@ -487,6 +491,15 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 f"out1h={label.get('outcome_1h', '')}, "
                 f"net1h_bps={label.get('net_1h_bps', '')}"
             )
+        execution_note = ""
+        if execution:
+            execution_note = (
+                f", gate={execution.get('gate_action', '')}, "
+                f"size={execution.get('candidate_size_usd', '')}, "
+                f"conservative_net15_bps={execution.get('conservative_net_15m_bps', '')}, "
+                f"spread_bps={execution.get('spread_bps', '')}, "
+                f"depth_usage={execution.get('visible_depth_usage_10bps', '')}"
+            )
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_{_slug(status)}_{_slug(ticket.get('side', ''))}",
@@ -494,7 +507,7 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     stack_status,
-                    source_count=2 if label else 1,
+                    source_count=3 if execution else 2 if label else 1,
                     raw_score=_float(ticket.get("score")) * 10.0,
                 )
                 + (_float(ticket.get("score")) / 100.0)
@@ -509,12 +522,18 @@ def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"impact={ticket.get('impact_spread', '')}, "
                     f"reason={ticket.get('reason', '')}"
                     f"{label_note}"
+                    f"{execution_note}"
                 ),
                 conflict=(
                     "current dislocation screen can produce both continuation and reversal hypotheses "
                     "for the same move; 15m labels are not enough to establish persistence"
                 ),
-                next_step=_hyperliquid_dislocation_next_step(asset=asset, ticket=ticket, label=label),
+                next_step=_hyperliquid_dislocation_next_step(
+                    asset=asset,
+                    ticket=ticket,
+                    label=label,
+                    execution=execution,
+                ),
             )
         )
     return tuple(output)
@@ -535,6 +554,34 @@ def _best_hyperliquid_dislocation_labels(
             continue
         output[key] = row
     return output
+
+
+def _best_hyperliquid_dislocation_execution_checks(
+    rows: tuple[dict[str, str], ...],
+) -> dict[tuple[str, str, str], dict[str, str]]:
+    output: dict[tuple[str, str, str], dict[str, str]] = {}
+    sorted_rows = sorted(rows, key=_hyperliquid_dislocation_execution_sort_key, reverse=True)
+    for row in sorted_rows:
+        key = (row.get("asset", ""), row.get("status", ""), row.get("side", ""))
+        if not key[0] or not key[1] or not key[2] or key in output:
+            continue
+        output[key] = row
+    return output
+
+
+def _hyperliquid_dislocation_execution_sort_key(row: dict[str, str]) -> tuple[int, float, float]:
+    gate_rank = {
+        "paper_execution_probe": 4,
+        "wide_spread_watch": 3,
+        "no_edge_after_rough_cost": 2,
+        "too_large_for_visible_depth": 1,
+        "no_visible_depth": 0,
+    }.get(row.get("gate_action", ""), 0)
+    return (
+        gate_rank,
+        _float(row.get("conservative_net_15m_bps")),
+        -_float(row.get("candidate_size_usd")),
+    )
 
 
 def _selected_hyperliquid_dislocation_tickets(
@@ -580,7 +627,13 @@ def _selected_hyperliquid_dislocation_tickets(
     return tuple(selected[:18])
 
 
-def _hyperliquid_dislocation_stack_status(status: str, label: dict[str, str]) -> str:
+def _hyperliquid_dislocation_stack_status(
+    status: str,
+    label: dict[str, str],
+    execution: dict[str, str],
+) -> str:
+    if execution.get("gate_action") == "paper_execution_probe":
+        return "paper_dislocation_executable_probe"
     if label.get("outcome_1h") == "paper_1h_win":
         return "paper_dislocation_1h_supported_candidate"
     if label.get("outcome_15m") == "paper_15m_win":
@@ -605,7 +658,10 @@ def _hyperliquid_dislocation_next_step(
     asset: str,
     ticket: dict[str, str],
     label: dict[str, str],
+    execution: dict[str, str],
 ) -> str:
+    if execution.get("gate_action") == "paper_execution_probe":
+        return f"paper probe {asset} dislocation at the gated size and wait for 1h/4h confirmation"
     if label.get("outcome_1h") == "paper_1h_win":
         return f"repeat {asset} dislocation labels on fresh snapshots and add depth-gated paper probes"
     if label.get("outcome_15m") == "paper_15m_win":
@@ -1625,6 +1681,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_crowded_momentum_continuation_candidate": 60.0,
         "paper_crowded_momentum_reversal_candidate": 57.0,
         "paper_mark_oracle_reversion_candidate": 56.0,
+        "paper_dislocation_executable_probe": 67.0,
         "paper_dislocation_1h_supported_candidate": 69.0,
         "paper_dislocation_15m_supported_candidate": 64.0,
         "paper_dislocation_15m_failed_candidate": 42.0,
