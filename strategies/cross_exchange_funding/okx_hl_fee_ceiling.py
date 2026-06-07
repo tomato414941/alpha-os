@@ -129,8 +129,8 @@ def write_fee_ceilings_md(
         )
         handle.write(
             "- BABY has the largest maker-only ceiling in this snapshot, but it has "
-            "no maker-touch evidence here, low capacity, and loses most of the edge "
-            "when one leg crosses.\n"
+            "no same-window two-leg maker touch in this sample, low capacity, and "
+            "loses most of the edge when one leg crosses.\n"
         )
         handle.write(
             "- ZEC has the best current one-leg-cross 24h headroom, especially "

@@ -203,8 +203,8 @@ def write_execution_mode_scores_md(
         handle.write(
             "If only both_maker survives, the candidate depends on maker availability. "
             "If a one-leg-cross mode survives, execution may be easier, but real fees "
-            "and adverse selection still need account-level validation. Missing touch "
-            "rates mean the maker-touch probe has not been run for that asset yet.\n"
+            "and adverse selection still need account-level validation. Touch rates "
+            "are short-sample public-book proxies, not real fill probabilities.\n"
         )
     return output_path
 
