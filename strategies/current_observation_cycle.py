@@ -5,17 +5,19 @@ import subprocess
 import sys
 
 
-DEFAULT_MODULES = (
-    "strategies.current_alpha_stack",
-    "strategies.current_paper_probe_plan",
-    "strategies.current_paper_ticket_outcomes",
-    "strategies.current_paper_ticket_action_queue",
-    "strategies.current_paper_ticket_fill_risk_check",
-    "strategies.current_symbol_opportunity_map",
-    "strategies.current_symbol_cluster_conflicts",
-    "strategies.current_symbol_cluster_label_queue",
-    "strategies.current_symbol_lane_split_review",
-    "strategies.exploration_board",
+DEFAULT_COMMANDS = (
+    ("strategies.current_alpha_stack",),
+    ("strategies.current_paper_probe_plan",),
+    ("strategies.current_paper_ticket_outcomes",),
+    ("strategies.current_paper_ticket_action_queue",),
+    ("strategies.current_paper_ticket_fill_risk_check",),
+    ("strategies.current_promoted_ticket_repeat_tickets", "--preserve-opened-at"),
+    ("strategies.current_promoted_ticket_repeat_outcomes",),
+    ("strategies.current_symbol_opportunity_map",),
+    ("strategies.current_symbol_cluster_conflicts",),
+    ("strategies.current_symbol_cluster_label_queue",),
+    ("strategies.current_symbol_lane_split_review",),
+    ("strategies.exploration_board",),
 )
 
 PUBLIC_MARK_MODULES = (
@@ -26,19 +28,23 @@ PUBLIC_MARK_MODULES = (
     "strategies.prediction_markets.current_event_probability_refresh",
 )
 
+PUBLIC_MARK_COMMANDS = tuple((module,) for module in PUBLIC_MARK_MODULES)
+
 OPEN_TICKET_MODULE = "strategies.current_paper_tickets"
+OPEN_TICKET_COMMAND = (OPEN_TICKET_MODULE,)
 
 
 def run_observation_cycle(*, open_new_tickets: bool = False, refresh_public_marks: bool = False) -> None:
-    modules: list[str] = []
+    commands: list[tuple[str, ...]] = []
     if refresh_public_marks:
-        modules.extend(PUBLIC_MARK_MODULES)
+        commands.extend(PUBLIC_MARK_COMMANDS)
     if open_new_tickets:
-        modules.append(OPEN_TICKET_MODULE)
-    modules.extend(DEFAULT_MODULES)
-    for module in modules:
+        commands.append(OPEN_TICKET_COMMAND)
+    commands.extend(DEFAULT_COMMANDS)
+    for command in commands:
+        module, *args = command
         print(f"== {module}")
-        subprocess.run((sys.executable, "-m", module), check=True)
+        subprocess.run((sys.executable, "-m", module, *args), check=True)
 
 
 def main() -> None:

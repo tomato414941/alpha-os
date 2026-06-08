@@ -1,0 +1,2 @@
+ticket_id,opened_at,previous_ticket_id,asset,opportunity,decision,candidate_size_usd,checkpoints,entry_mark,entry_source,estimated_net_after_cost_bps,required_record,next_step
+repeat-paper-09-sol-volume-dislocation,2026-06-08T08:12:56+00:00,paper-09-sol-volume-dislocation,SOL,sol_volume_price_dislocation,paper_long,250,"15m,1h",65.893000000000,hl_execution_context,15.73737175,"repeat mark move, spread/fill assumption, funding, stop, adverse excursion",repeat this cost-adjusted paper probe and compare 15m/1h behavior against the first ticket

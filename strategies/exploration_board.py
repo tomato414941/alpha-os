@@ -26,6 +26,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _paper_ticket_outcomes_row(root),
         _paper_ticket_action_queue_row(root),
         _paper_ticket_fill_risk_check_row(root),
+        _promoted_ticket_repeat_tickets_row(root),
+        _promoted_ticket_repeat_outcomes_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -222,6 +224,59 @@ def _paper_ticket_fill_risk_check_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="promoted paper-ticket wins have not been checked against cost and depth",
         next_step="run current paper ticket fill risk check after action queue",
+    )
+
+
+def _promoted_ticket_repeat_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_promoted_ticket_repeat_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="promoted_ticket_repeat_tickets",
+            status="repeat_ticket_open",
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"net_after_cost={best.get('estimated_net_after_cost_bps', '')}"
+            ),
+            main_gap=best.get("required_record", "repeat ticket still needs outcome evidence"),
+            next_step=best.get("next_step", "check repeat ticket outcome"),
+        )
+    return ExplorationRow(
+        lane="promoted_ticket_repeat_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted paper probes have not been reopened as repeat tickets",
+        next_step="open repeat tickets for cost-adjusted paper probes",
+    )
+
+
+def _promoted_ticket_repeat_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_promoted_ticket_repeat_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="promoted_ticket_repeat_outcomes",
+            status=best.get("outcome", "repeat_ticket_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "repeat ticket still needs outcome evidence"),
+            next_step=best.get("next_step", "refresh promoted repeat ticket outcomes"),
+        )
+    return ExplorationRow(
+        lane="promoted_ticket_repeat_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="promoted repeat tickets have not been checked against current marks",
+        next_step="run promoted repeat ticket outcomes after checkpoint maturation",
     )
 
 

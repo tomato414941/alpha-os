@@ -123,6 +123,14 @@ Promote code to the library only after multiple strategies need the same shape.
   - checks promoted paper-ticket wins against rough spread, fee, funding, and depth
 - `current_paper_ticket_fill_risk_check.md`
   - latest cost-adjusted fill/risk check for promoted paper tickets
+- `current_promoted_ticket_repeat_tickets.py`
+  - opens repeat tickets for paper tickets that survive the fill/risk check
+- `current_promoted_ticket_repeat_tickets.md`
+  - latest repeat tickets for cost-adjusted paper probes
+- `current_promoted_ticket_repeat_outcomes.py`
+  - checks promoted repeat tickets against latest public marks
+- `current_promoted_ticket_repeat_outcomes.md`
+  - latest promoted repeat-ticket outcomes
 - `current_observation_cycle.py`
   - refreshes current stack, plan, ticket outcomes, symbol queues, and board
     without reopening paper tickets unless `--open-new-tickets` is passed;
