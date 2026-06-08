@@ -101,6 +101,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _prediction_market_crypto_hedge_row(root),
         _prediction_markets_row(root),
         _anomaly_stress_row(root),
+        _tail_connectedness_regime_row(root),
         _protocol_activity_row(root),
         _institutional_flow_row(root),
         _candidate_validation_row(root),
@@ -3915,6 +3916,38 @@ def _anomaly_stress_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="cross-market anomaly states are not joined across lanes",
         next_step="run current cross-market stress anomaly screen",
+    )
+
+
+def _tail_connectedness_regime_row(root: Path) -> ExplorationRow:
+    path = root / "anomaly_stress" / "current_tail_connectedness_regime.csv"
+    best = _best_numeric_row(path, key="connectedness_score")
+    if best:
+        return ExplorationRow(
+            lane="tail_connectedness_regime",
+            status=best.get("status", "tail_connectedness_regime"),
+            strongest_current_signal=(
+                f"{best.get('regime_id', '')}: "
+                f"role={best.get('regime_role', '')}, "
+                f"sources={best.get('source_count', '')}, "
+                f"severity={best.get('severity_score', '')}, "
+                f"connectedness={best.get('connectedness_score', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "tail regime still needs rolling connectedness, timestamps, and cross-asset labels",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "condition downstream alpha labels on the strongest tail regime",
+            ),
+        )
+    return ExplorationRow(
+        lane="tail_connectedness_regime",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="tail and connectedness regimes are not separated from directional alpha candidates",
+        next_step="run current tail connectedness regime after anomaly stress and event pressure",
     )
 
 

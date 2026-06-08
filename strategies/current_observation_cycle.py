@@ -104,6 +104,7 @@ DEFAULT_COMMANDS = (
     ("strategies.prediction_markets.current_event_crypto_hedge_candidates",),
     ("strategies.anomaly_stress.current_cross_market_stress_anomaly",),
     ("strategies.anomaly_stress.current_peg_anomaly_tradeability",),
+    ("strategies.anomaly_stress.current_tail_connectedness_regime",),
     ("strategies.execution_edge.current_execution_mode_candidates",),
     ("strategies.event_flow.current_lob_execution_world_replay",),
     ("strategies.event_flow.current_lob_sequence_state_probe",),
