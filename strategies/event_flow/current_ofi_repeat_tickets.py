@@ -19,6 +19,7 @@ def build_ofi_repeat_tickets(
     outcomes_path: Path = EVENT_FLOW_ROOT / "current_ofi_fill_audit_outcomes.csv",
     audit_tickets_path: Path = EVENT_FLOW_ROOT / "current_ofi_fill_audit_tickets.csv",
     existing_tickets_path: Path | None = None,
+    ticket_prefix: str = "ofi-repeat",
     top: int = DEFAULT_TOP,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
@@ -37,6 +38,7 @@ def build_ofi_repeat_tickets(
             audit_ticket=audit_tickets.get(outcome.get("ticket_id", ""), {}),
             opened_at=opened_at,
             marks=marks,
+            ticket_prefix=ticket_prefix,
         )
         for rank, outcome in enumerate(winners, start=1)
     )
@@ -68,12 +70,13 @@ def _repeat_ticket(
     audit_ticket: dict[str, str],
     opened_at: str,
     marks: dict[tuple[str, str], tuple[str, str]],
+    ticket_prefix: str,
 ) -> PaperTicket:
     asset = outcome.get("asset", "")
     decision = outcome.get("decision", "")
     entry_mark, entry_source = _entry_mark(asset=asset, marks=marks)
     source_ticket_id = audit_ticket.get("source_ticket_id", "")
-    ticket_id = f"ofi-repeat-{rank:02d}-{_slug(asset)}-{_side(decision)}"
+    ticket_id = f"{ticket_prefix}-{rank:02d}-{_slug(asset)}-{_side(decision)}"
     return PaperTicket(
         ticket_id=ticket_id,
         opened_at=opened_at,
@@ -170,6 +173,7 @@ def main() -> None:
     parser.add_argument("--output-path", type=Path, default=EVENT_FLOW_ROOT / "current_ofi_repeat_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=EVENT_FLOW_ROOT / "current_ofi_repeat_tickets.md")
     parser.add_argument("--preserve-opened-at", action="store_true")
+    parser.add_argument("--ticket-prefix", default="ofi-repeat")
     parser.add_argument("--top", type=int, default=DEFAULT_TOP)
     args = parser.parse_args()
 
@@ -177,6 +181,7 @@ def main() -> None:
         outcomes_path=args.outcomes_path,
         audit_tickets_path=args.audit_tickets_path,
         existing_tickets_path=args.output_path if args.preserve_opened_at else None,
+        ticket_prefix=args.ticket_prefix,
         top=args.top,
     )
     write_paper_tickets_csv(rows, output_path=args.output_path)
