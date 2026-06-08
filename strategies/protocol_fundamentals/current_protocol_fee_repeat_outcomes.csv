@@ -1,0 +1,2 @@
+ticket_id,opened_at,checked_at,elapsed_minutes,checkpoint_status,opportunity,decision,asset,venue,entry_mark,current_mark,current_source,raw_return_bps,directional_return_bps,outcome,missing_evidence,next_step
+protocol-fee-repeat-crv-curve-dex,2026-06-08T23:44:49+00:00,2026-06-08T23:44:49+00:00,0.00,pending,protocol_fee_repeat:CRV/Curve DEX,paper_long,CRV,HL,0.198190000000,0.200540000000,hyperliquid_snapshot,,,pending,checkpoint has not matured,wait for the first checkpoint and refresh marks
