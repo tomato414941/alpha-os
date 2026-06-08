@@ -201,7 +201,7 @@ def _structure_status_reason(
     min_depth = min(bid_depth_to_5c, ask_depth_to_5c)
     if min_depth < 5_000.0:
         return "none", "too_thin", "visible near-top depth is too thin"
-    if midpoint <= 0.02 or midpoint >= 0.98:
+    if midpoint <= 0.05 or midpoint >= 0.95:
         return "none", "near_certain_event", "market is too close to expiry/certainty for clean research"
     if spread > 0.05:
         return "wide_spread_making", "market_making_watch", "visible spread is wide enough for market-making research"
@@ -234,6 +234,10 @@ def _score(
         "market_making_watch": 5.0,
         "sports_market_making_watch": 2.0,
     }.get(status, 0.0)
+    status_penalty = {
+        "near_certain_event": 120.0,
+        "too_thin": 60.0,
+    }.get(status, 0.0)
     probability_penalty = 10.0 if midpoint <= 0.05 or midpoint >= 0.95 else 0.0
     return (
         min(visible_depth_score, 100.0)
@@ -243,6 +247,7 @@ def _score(
         + status_bonus
         - (spread * 100.0)
         - probability_penalty
+        - status_penalty
     )
 
 
