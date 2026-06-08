@@ -25,6 +25,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
         _btc_risk_off_short_stack(root),
         _mstr_btc_relative_value_stack(root),
+        *_volatility_hedge_candidate_stacks(root),
         *_volatility_actionability_stacks(root),
         *_options_volatility_stacks(root),
         *_event_probability_actionability_stacks(root),
@@ -233,6 +234,58 @@ def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
                 conflict=_options_volatility_conflict(ticket),
                 next_step=_options_volatility_next_step(ticket),
+            )
+        )
+    return tuple(output)
+
+
+def _volatility_hedge_candidate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "options_volatility" / "current_volatility_hedge_candidates.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("decision")
+            in {
+                "paper_delta_hedge_candidate",
+                "expiry_gamma_hedge_watch",
+                "quote_only_hedge_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        output.append(
+            AlphaStackRow(
+                opportunity=ticket.get("candidate_id", ""),
+                status=ticket.get("decision", ""),
+                side=f"{ticket.get('currency', '')}_{ticket.get('hedge_profile', '')}",
+                priority_score=_priority_score(
+                    ticket.get("decision", ""),
+                    source_count=2,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="options_volatility + hedge_plan",
+                evidence=(
+                    f"{ticket.get('currency', '')} {ticket.get('expiry', '')}: "
+                    f"hedge={ticket.get('hedge_profile', '')}, "
+                    f"interval={ticket.get('hedge_interval', '')}, "
+                    f"iv_premium_24h={ticket.get('iv_premium_24h', '')}, "
+                    f"max_loss_pct={ticket.get('max_loss_pct', '')}, "
+                    f"premium_to_rv={ticket.get('premium_to_realized_move', '')}, "
+                    f"spread={ticket.get('quote_spread_pct', '')}, "
+                    f"depth={ticket.get('top_ask_premium_depth_usd', '')}"
+                ),
+                conflict=(
+                    "long-vol hedge candidate still lacks multi-level sweep execution, "
+                    "delta-hedge realized PnL, margin, stop, and exit-bid behavior"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    "paper-check option sweep depth, delta hedge marks, exit bid, margin, and stop",
+                ),
             )
         )
     return tuple(output)
@@ -3837,6 +3890,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "volatility_structure_mechanics_watch": 50.0,
         "volatility_premium_or_depth_blocked": 38.0,
         "volatility_quote_blocked": 34.0,
+        "paper_delta_hedge_candidate": 66.0,
+        "expiry_gamma_hedge_watch": 50.0,
+        "quote_only_hedge_watch": 42.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "small_paper_probe_pending_1h": 45.0,

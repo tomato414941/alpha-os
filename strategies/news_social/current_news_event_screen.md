@@ -4,15 +4,15 @@ This classifies current crypto RSS headlines into event candidates and joins the
 
 | source | published | symbol | kind | status | side | score | funding | perp action | title |
 | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- |
-| coindesk | 2026-06-08T05:08:06+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 46.4042 | 0.000000 | - | Bitcoin spikes, then dumps, from $63,700 as analysts assess Strategy's next BTC moves |
-| coindesk | 2026-06-08T04:21:53+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 41.6339 | 0.000000 | - | Bitcoin falls back below $63,000 as Iran-Israel trade strikes and Korean stocks crash |
+| coindesk | 2026-06-08T05:08:06+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 46.1761 | 0.000000 | - | Bitcoin spikes, then dumps, from $63,700 as analysts assess Strategy's next BTC moves |
 | decrypt | 2026-06-05T12:49:04+00:00 | ZEC | security_risk | paper_news_security_risk_watch | short_or_avoid | 41.4061 | -0.725048 | long_carry_reversion_watch | Morning Minute: Massive ZCash Exploit Found by Claude, Extent Unknown |
+| coindesk | 2026-06-08T04:21:53+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 41.4059 | 0.000000 | - | Bitcoin falls back below $63,000 as Iran-Israel trade strikes and Korean stocks crash |
 | decrypt | 2026-06-05T15:49:08+00:00 | ZEC | institutional_flow | paper_news_event_reaction_watch | long_event_follow | 37.4061 | -0.725048 | long_carry_reversion_watch | Winklevoss-Backed Zcash Treasury Plunges Nearly 40% on ZEC Privacy Bug Concerns |
-| cointelegraph | 2026-06-07T19:45:17+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 37.0239 | 0.000000 | - | Strategy’s Saylor signals BTC buy as preferred dividend pay date vote looms |
-| coindesk | 2026-06-07T17:41:57+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 34.9683 | 0.000000 | - | Michael Saylor revives bitcoin-buy speculation as scrutiny over Strategy grows |
-| cointelegraph | 2026-06-07T20:52:36+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 34.1458 | 0.000000 | - | What happens to Bitcoin if Nasdaq falls further? |
-| coindesk | 2026-06-07T16:14:08+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 33.5047 | 0.000000 | - | Bitcoin near $60,000 today vs February: Institutional sentiment has flipped |
-| coindesk | 2026-06-07T16:00:00+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 33.2692 | 0.000000 | - | Bitcoin's slide has no single cause. AI, tech IPOs, quantum, Strategy sale all play a role, NYDIG says |
+| cointelegraph | 2026-06-07T19:45:17+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 36.7959 | 0.000000 | - | Strategy’s Saylor signals BTC buy as preferred dividend pay date vote looms |
+| coindesk | 2026-06-07T17:41:57+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 34.7403 | 0.000000 | - | Michael Saylor revives bitcoin-buy speculation as scrutiny over Strategy grows |
+| cointelegraph | 2026-06-07T20:52:36+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 33.9178 | 0.000000 | - | What happens to Bitcoin if Nasdaq falls further? |
+| coindesk | 2026-06-07T16:14:08+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 33.2767 | 0.000000 | - | Bitcoin near $60,000 today vs February: Institutional sentiment has flipped |
+| coindesk | 2026-06-07T16:00:00+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 33.0411 | 0.000000 | - | Bitcoin's slide has no single cause. AI, tech IPOs, quantum, Strategy sale all play a role, NYDIG says |
 | coindesk | 2026-06-06T13:30:00+00:00 | BTC | regulatory_risk | paper_news_regulatory_risk_watch | short_or_avoid | 30.0000 | 0.000000 | - | Satoshi-era bitcoin at center of $285 billion lawsuit moves after 14 years |
 | decrypt | 2026-06-05T20:02:53+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 28.0000 | 0.000000 | - | Strategy Shares Fall to 4-Month Low as STRC Dips and Bitcoin Sinks Under $60K |
 | decrypt | 2026-06-05T17:57:29+00:00 | ETH | institutional_flow | paper_news_context_watch | collect_label | 28.0000 | 0.000000 | - | Tom Lee's Ethereum Treasury BitMine Prices Preferred Shares With 9.5% Dividend |

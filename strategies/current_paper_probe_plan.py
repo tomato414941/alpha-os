@@ -209,6 +209,9 @@ def _probe_type(row: dict[str, str]) -> str:
         "volatility_candidate_needs_sweep_hedge",
         "volatility_quote_mechanics_watch",
         "volatility_short_expiry_hedge_watch",
+        "paper_delta_hedge_candidate",
+        "expiry_gamma_hedge_watch",
+        "quote_only_hedge_watch",
     }:
         return "options_volatility_probe"
     if status in {"unlock_event_label_pending", "unlock_event_crowded_squeeze_watch"}:

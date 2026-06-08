@@ -2148,6 +2148,29 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _options_volatility_row(root: Path) -> ExplorationRow:
+    hedge_path = root / "options_volatility" / "current_volatility_hedge_candidates.csv"
+    hedge = _best_numeric_row(hedge_path, key="score")
+    if hedge:
+        return ExplorationRow(
+            lane="options_volatility",
+            status=hedge.get("decision", "volatility_hedge_candidate"),
+            strongest_current_signal=(
+                f"{hedge.get('currency', '')} {hedge.get('expiry', '')}: "
+                f"{hedge.get('hedge_profile', '')}, "
+                f"score={hedge.get('score', '')}, "
+                f"max_loss_pct={hedge.get('max_loss_pct', '')}, "
+                f"premium_to_rv={hedge.get('premium_to_realized_move', '')}, "
+                f"depth={hedge.get('top_ask_premium_depth_usd', '')}"
+            ),
+            main_gap=hedge.get(
+                "reason",
+                "volatility hedge candidate still needs sweep, hedge PnL, margin, and exit checks",
+            ),
+            next_step=hedge.get(
+                "next_step",
+                "paper-check option sweep depth, delta hedge marks, exit bid, margin, and stop",
+            ),
+        )
     actionability_path = root / "options_volatility" / "current_volatility_actionability.csv"
     actionability = _best_numeric_row(actionability_path, key="score")
     if actionability:
