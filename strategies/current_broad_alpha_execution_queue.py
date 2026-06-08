@@ -199,22 +199,51 @@ def _options_volatility_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem,
 def _stablecoin_flow_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "stablecoin_liquidity/current_stablecoin_flow_proxy_tickets.csv"
     outcome_path = root / "stablecoin_liquidity/current_stablecoin_flow_proxy_outcomes.csv"
+    risk_path = root / "stablecoin_liquidity/current_stablecoin_flow_proxy_fill_risk_check.csv"
     outcomes = {row.get("ticket_id", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("ticket_id", ""): row for row in _read_rows(risk_path)}
     return tuple(
         BroadAlphaExecutionQueueItem(
             queue_id=row.get("ticket_id", ""),
             lane="stablecoin_chain_liquidity_proxy",
             subject=row.get("asset", "") or row.get("opportunity", ""),
             side=row.get("side", ""),
-            action=_stablecoin_action(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
-            status=_stablecoin_status(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
-            score=_stablecoin_score(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
-            size_or_risk=f"entry_mark={row.get('entry_mark', '')}; venue={row.get('venue', '')}",
-            evidence=_stablecoin_evidence(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
+            action=_stablecoin_action(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            status=_stablecoin_status(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            score=_stablecoin_score(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            size_or_risk=_stablecoin_size_or_risk(
+                row=row,
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            evidence=_stablecoin_evidence(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
             checkpoints=row.get("checkpoints", ""),
-            source_path=_relative(path),
-            required_record=outcomes.get(row.get("ticket_id", ""), {}).get("missing_evidence") or row.get("required_record", ""),
-            next_step=outcomes.get(row.get("ticket_id", ""), {}).get("next_step") or row.get("next_step", ""),
+            source_path=_relative(risk_path if risks.get(row.get("ticket_id", "")) else path),
+            required_record=_stablecoin_required_record(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            next_step=_stablecoin_next_step(
+                row=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
         )
         for row in _read_rows(path)
     )
@@ -324,25 +353,50 @@ def _best_by_subject(
     return tuple(best.values())
 
 
-def _stablecoin_action(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _stablecoin_action(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("risk_action", "")
     if outcome.get("checkpoint_status") == "ready":
         return outcome.get("outcome", "")
     return row.get("decision", "")
 
 
-def _stablecoin_status(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _stablecoin_status(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return f"{row.get('status', '')}:{outcome.get('outcome', '')}:{risk.get('risk_action', '')}"
     if outcome.get("checkpoint_status") == "ready":
         return f"{row.get('status', '')}:{outcome.get('outcome', '')}"
     return row.get("status", "")
 
 
-def _stablecoin_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _stablecoin_score(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return _fmt(risk.get("estimated_net_bps"))
     if outcome.get("checkpoint_status") == "ready":
         return _fmt(outcome.get("directional_return_bps"))
     return str(max(0.0, 100.0 - _float(row.get("rank"))))
 
 
-def _stablecoin_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _stablecoin_size_or_risk(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"notional={risk.get('notional_usd', '')}; "
+            f"depth10={risk.get('near_depth_10bps_notional', '')}; "
+            f"usage={risk.get('visible_depth_usage', '')}; "
+            f"stop50={risk.get('stop_50bps_survived', '')}"
+        )
+    return f"entry_mark={row.get('entry_mark', '')}; venue={row.get('venue', '')}"
+
+
+def _stablecoin_evidence(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"{row.get('opportunity', '')}; "
+            f"dir_bps={risk.get('directional_return_bps', '')}; "
+            f"net_bps={risk.get('estimated_net_bps', '')}; "
+            f"MAE={risk.get('max_adverse_excursion_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
     if outcome.get("checkpoint_status") == "ready":
         return (
             f"{row.get('opportunity', '')}; "
@@ -350,6 +404,28 @@ def _stablecoin_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> str
             f"current={outcome.get('current_mark', '')}"
         )
     return row.get("opportunity", "")
+
+
+def _stablecoin_required_record(
+    *,
+    row: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return "fresh chain-flow evidence, updated execution context, and repeated cost-adjusted outcome"
+    return outcome.get("missing_evidence") or row.get("required_record", "")
+
+
+def _stablecoin_next_step(
+    *,
+    row: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return risk.get("next_step", "")
+    return outcome.get("next_step") or row.get("next_step", "")
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

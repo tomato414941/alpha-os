@@ -44,6 +44,7 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/stablecoin_liquidity/current_stablecoin_flow_proxy_outcomes.md",
     ),
+    ("strategies.stablecoin_liquidity.current_stablecoin_flow_proxy_fill_risk_check",),
     ("strategies.defi_yield.current_yield_screen",),
     ("strategies.defi_yield.current_yield_quality_screen",),
     ("strategies.defi_yield.current_yield_peg_risk_join",),
