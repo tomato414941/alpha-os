@@ -4,13 +4,12 @@ This labels high liquidation/OI events from the current intensity screen. It is 
 
 | asset | action | status | dir | intensity | cont 5m | cont 15m | cont 1h | rev 5m | rev 15m | rev 1h | label | next step |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| BEAT | long_liquidation_cascade_watch | liquidation_oi_pressure_watch | -1 | 12.8974 | -0.000046 | -0.015777 |  | 0.000046 | 0.015777 |  | reversal_15m_supported_pending_1h | wait for BEAT long_liquidation_cascade_watch 1h label, then add depth, fees, funding, and adverse-excursion checks |
-| ALLO | long_liquidation_cascade_watch | forced_flow_oi_shock_watch | -1 | 86.8724 | -0.010963 | -0.012570 |  | 0.010963 | 0.012570 |  | reversal_15m_supported_pending_1h | wait for ALLO long_liquidation_cascade_watch 1h label, then add depth, fees, funding, and adverse-excursion checks |
-| H | long_liquidation_cascade_watch | forced_flow_oi_shock_watch | -1 | 217.2056 | 0.024534 |  |  | -0.024534 |  |  | label_pending | repeat H long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
-| PIPPIN | long_liquidation_cascade_watch | forced_flow_oi_shock_watch | -1 | 157.0726 | 0.001838 |  |  | -0.001838 |  |  | label_pending | repeat PIPPIN long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
-| ZEC | short_liquidation_squeeze_watch | forced_flow_oi_shock_watch | 1 | 31.3056 | -0.006087 |  |  | 0.006087 |  |  | label_pending | repeat ZEC short_liquidation_squeeze_watch on a fresh liquidation/OI event before promotion |
-| MRVL | long_liquidation_cascade_watch | forced_flow_oi_shock_watch | -1 | 29.3188 | -0.000685 |  |  | 0.000685 |  |  | label_pending | repeat MRVL long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
-| WLD | mixed_liquidation_flow_watch | liquidation_oi_pressure_watch | 0 | 120.8562 |  |  |  |  |  |  | mixed_direction_unlabeled | do not promote WLD until mixed liquidation direction is separated |
+| H | long_liquidation_cascade_watch | liquidation_oi_pressure_watch | -1 | 289.2080 |  |  |  |  |  |  | label_pending | repeat H long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
+| LAB | long_liquidation_cascade_watch | liquidation_oi_pressure_watch | -1 | 23.1292 |  |  |  |  |  |  | label_pending | repeat LAB long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
+| SPCX | long_liquidation_cascade_watch | liquidation_oi_pressure_watch | -1 | 18.2951 | -0.004036 |  |  | 0.004036 |  |  | label_pending | repeat SPCX long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
+| BEAT | long_liquidation_cascade_watch | liquidation_oi_pressure_watch | -1 | 15.2104 | 0.024413 |  |  | -0.024413 |  |  | label_pending | repeat BEAT long_liquidation_cascade_watch on a fresh liquidation/OI event before promotion |
+| WLD | mixed_liquidation_flow_watch | liquidation_oi_pressure_watch | 0 | 40.5367 |  |  |  |  |  |  | mixed_direction_unlabeled | do not promote WLD until mixed liquidation direction is separated |
+| ZEC | mixed_liquidation_flow_watch | liquidation_oi_pressure_watch | 0 | 11.6897 |  |  |  |  |  |  | mixed_direction_unlabeled | do not promote ZEC until mixed liquidation direction is separated |
 
 ## Interpretation
 
