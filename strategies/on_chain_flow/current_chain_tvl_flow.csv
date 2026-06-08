@@ -1,40 +1,40 @@
 timestamp,chain,token_symbol,current_tvl_usd,day_change_usd,week_change_usd,month_change_usd,day_change_pct,week_change_pct,month_change_pct,action,followup
-2026-06-08T15:01:46.798410+00:00,Provenance,HASH,1581610312.00,7039377.00,81720736.00,298333966.00,0.00447066,0.05448450,0.23247835,chain_inflow_momentum_watch,label HASH continuation against perp funding and liquidity
-2026-06-08T15:01:46.798410+00:00,X Layer,,72945705.00,-899223.00,-18851136.00,-7848280.00,-0.01217718,-0.20535713,-0.09713941,chain_outflow_stress_watch,use as broad on-chain regime context
-2026-06-08T15:01:46.798410+00:00,Stellar,XLM,202374038.00,-5437821.00,-37747224.00,12487651.00,-0.02616704,-0.15720067,0.06576380,chain_outflow_stress_watch,label XLM downside or rotation-away behavior
-2026-06-08T15:01:46.798410+00:00,Polygon,POL,1046101072.00,-5132990.00,-111195390.00,-182905377.00,-0.00488282,-0.09608203,-0.14882377,chain_outflow_stress_watch,label POL downside or rotation-away behavior
-2026-06-08T15:01:46.798410+00:00,Mantle,MNT,158293482.00,1922775.00,-72162700.00,-58880475.00,0.01229626,-0.31312981,-0.27112125,chain_flow_reversal_watch,separate MNT reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Cardano,ADA,94686966.00,3282762.00,-34387766.00,-42735938.00,0.03591478,-0.26641749,-0.31098119,chain_flow_reversal_watch,separate ADA reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Katana,KAT,104538259.00,4527612.00,-37497702.00,-116048500.00,0.04527130,-0.26400147,-0.52609005,chain_flow_reversal_watch,separate KAT reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Mezo,MEZO,50001424.00,1604636.00,-17804980.00,40103229.00,0.03315584,-0.26258552,4.05156991,chain_flow_reversal_watch,separate MEZO reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Ink,,200848741.00,5141691.00,-57457735.00,-116490582.00,0.02627239,-0.22244016,-0.36708524,chain_flow_reversal_watch,use as broad on-chain regime context
-2026-06-08T15:01:46.798410+00:00,Avalanche,AVAX,484186390.00,10230860.00,-120095930.00,-171225139.00,0.02158612,-0.19874143,-0.26124829,chain_flow_reversal_watch,separate AVAX reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,MegaETH,MEGA,122937563.00,3796249.00,-26874453.00,-84488534.00,0.03186341,-0.17938783,-0.40731873,chain_flow_reversal_watch,separate MEGA reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Hydration,HDX,55604209.00,1194850.00,-11607141.00,-20622116.00,0.02196038,-0.17269614,-0.27053798,chain_flow_reversal_watch,separate HDX reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,ENI,ENI,301211238.00,-17199228.00,42069122.00,172523602.00,-0.05401590,0.16233996,1.34063852,chain_flow_reversal_watch,separate ENI reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Berachain,BERA,56034098.00,933662.00,-10754917.00,-16460889.00,0.01694473,-0.16102823,-0.22706245,chain_flow_reversal_watch,separate BERA reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Flare,FLR,124215066.00,7470097.00,-23834672.00,-36745763.00,0.06398646,-0.16099098,-0.22829010,chain_flow_reversal_watch,separate FLR reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Stacks,STX,98627250.00,2937495.00,-17677387.00,-25227287.00,0.03069811,-0.15199211,-0.20368480,chain_flow_reversal_watch,separate STX reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Sui,SUI,445623106.00,6021306.00,-75842757.00,-130136208.00,0.01369718,-0.14544146,-0.22602536,chain_flow_reversal_watch,separate SUI reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Arbitrum,ARB,1282470123.00,54001008.00,-206034051.00,-285495493.00,0.04395797,-0.13841684,-0.18208020,chain_flow_reversal_watch,separate ARB reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Bitcoin,BTC,4202270581.00,187210645.00,-624076083.00,-1068811476.00,0.04662711,-0.12930610,-0.20276889,chain_flow_reversal_watch,separate BTC reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Movement,MOVE,129301347.00,6938760.00,-18795591.00,-40944532.00,0.05670655,-0.12691411,-0.24050234,chain_flow_reversal_watch,separate MOVE reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Mixin,XIN,18691816.00,572043.00,-2395037.00,-5129458.00,0.03157010,-0.11357963,-0.21533097,chain_flow_reversal_watch,separate XIN reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Sei,SEI,57710825.00,1263567.00,-7346212.00,-8254424.00,0.02238491,-0.11291956,-0.12513292,chain_flow_reversal_watch,separate SEI reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Rootstock,RBTC,96223737.00,3900028.00,-11984534.00,-22411091.00,0.04224297,-0.11075432,-0.18890819,chain_flow_reversal_watch,separate RBTC reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Aptos,APT,193865289.00,3897160.00,-24054402.00,-69566618.00,0.02051481,-0.11038196,-0.26407818,chain_flow_reversal_watch,separate APT reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Ethereum,ETH,37914314718.00,1735133929.00,-3941904565.00,-7473025559.00,0.04795946,-0.09417727,-0.16465000,chain_flow_reversal_watch,separate ETH reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,BSC,BNB,5205201429.00,144231647.00,-537625177.00,-401551308.00,0.02849882,-0.09361682,-0.07161923,chain_flow_reversal_watch,separate BNB reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Tron,TRON,4419087765.00,70478899.00,-448961269.00,-714469901.00,0.01620723,-0.09222612,-0.13917637,chain_flow_reversal_watch,separate TRON reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Base,,3995357194.00,177094422.00,-403959687.00,-538560650.00,0.04638089,-0.09182328,-0.11878483,chain_flow_reversal_watch,use as broad on-chain regime context
-2026-06-08T15:01:46.798410+00:00,Solana,SOL,4920064842.00,219006657.00,-461697867.00,-814383511.00,0.04658667,-0.08578934,-0.14201602,chain_flow_reversal_watch,separate SOL reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,OP Mainnet,OP,298939414.00,14602801.00,-27560385.00,-55087332.00,0.05135744,-0.08441164,-0.15560218,chain_flow_reversal_watch,separate OP reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Hyperliquid L1,HYPE,1592400566.00,127270745.00,-144041017.00,56781931.00,0.08686653,-0.08295184,0.03697658,chain_flow_reversal_watch,separate HYPE reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Monad,MON,360807164.00,10753827.00,-32466626.00,-25106909.00,0.03072054,-0.08255477,-0.06505829,chain_flow_reversal_watch,separate MON reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Near,NEAR,155097291.00,18412700.00,-10767424.00,10606850.00,0.13470941,-0.06491691,0.07340866,chain_flow_reversal_watch,separate NEAR reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,TON,TON,70172334.00,1006176.00,-4586219.00,-22195600.00,0.01454723,-0.06134708,-0.24029551,chain_flow_reversal_watch,separate TON reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Starknet,STRK,186165683.00,1871956.00,-11275636.00,-19212012.00,0.01015746,-0.05710880,-0.09354478,chain_flow_reversal_watch,separate STRK reversal from stale TVL accounting
-2026-06-08T15:01:46.798410+00:00,Cronos,CRO,272704218.00,6565736.00,-11575207.00,-26390058.00,0.02467037,-0.04071771,-0.08823324,chain_flow_context,keep as context until flow strengthens
-2026-06-08T15:01:46.798410+00:00,Gnosis,GNO,68459656.00,2920738.00,-2107370.00,-14143189.00,0.04456494,-0.02986338,-0.17121915,chain_flow_context,keep as context until flow strengthens
-2026-06-08T15:01:46.798410+00:00,Plasma,XPL,771355009.00,-2366111.00,-23666980.00,195969909.00,-0.00305809,-0.02976896,0.34058913,chain_flow_context,keep as context until flow strengthens
-2026-06-08T15:01:46.798410+00:00,dYdX,dYdX,97847586.00,32250.00,948278.00,-2060856.00,0.00032970,0.00978622,-0.02062745,chain_flow_context,keep as context until flow strengthens
+2026-06-08T15:11:56.390158+00:00,Provenance,HASH,1587436662.00,12865727.00,87547086.00,304160316.00,0.00817094,0.05836902,0.23701856,chain_inflow_momentum_watch,label HASH continuation against perp funding and liquidity
+2026-06-08T15:11:56.390158+00:00,X Layer,,72951573.00,-893355.00,-18845268.00,-7842412.00,-0.01209772,-0.20529321,-0.09706678,chain_outflow_stress_watch,use as broad on-chain regime context
+2026-06-08T15:11:56.390158+00:00,Stellar,XLM,202374038.00,-5437821.00,-37747224.00,12487651.00,-0.02616704,-0.15720067,0.06576380,chain_outflow_stress_watch,label XLM downside or rotation-away behavior
+2026-06-08T15:11:56.390158+00:00,Polygon,POL,1046101072.00,-5132990.00,-111195390.00,-182905377.00,-0.00488282,-0.09608203,-0.14882377,chain_outflow_stress_watch,label POL downside or rotation-away behavior
+2026-06-08T15:11:56.390158+00:00,Mantle,MNT,158300111.00,1929404.00,-72156071.00,-58873846.00,0.01233865,-0.31310104,-0.27109073,chain_flow_reversal_watch,separate MNT reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Cardano,ADA,94686966.00,3282762.00,-34387766.00,-42735938.00,0.03591478,-0.26641749,-0.31098119,chain_flow_reversal_watch,separate ADA reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Katana,KAT,104442102.00,4431455.00,-37593859.00,-116144657.00,0.04430983,-0.26467846,-0.52652597,chain_flow_reversal_watch,separate KAT reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Mezo,MEZO,50053428.00,1656640.00,-17752976.00,40155233.00,0.03423037,-0.26181857,4.05682379,chain_flow_reversal_watch,separate MEZO reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Ink,,201069167.00,5362117.00,-57237309.00,-116270156.00,0.02739869,-0.22158681,-0.36639063,chain_flow_reversal_watch,use as broad on-chain regime context
+2026-06-08T15:11:56.390158+00:00,Avalanche,AVAX,484186390.00,10230860.00,-120095930.00,-171225139.00,0.02158612,-0.19874143,-0.26124829,chain_flow_reversal_watch,separate AVAX reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,MegaETH,MEGA,122936923.00,3795609.00,-26875093.00,-84489174.00,0.03185804,-0.17939211,-0.40732181,chain_flow_reversal_watch,separate MEGA reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Hydration,HDX,55604209.00,1194850.00,-11607141.00,-20622116.00,0.02196038,-0.17269614,-0.27053798,chain_flow_reversal_watch,separate HDX reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,ENI,ENI,301021662.00,-17388804.00,41879546.00,172334026.00,-0.05461128,0.16160841,1.33916537,chain_flow_reversal_watch,separate ENI reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Flare,FLR,124248330.00,7503361.00,-23801408.00,-36712499.00,0.06427139,-0.16076630,-0.22808344,chain_flow_reversal_watch,separate FLR reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Stacks,STX,98650645.00,3043095.00,-17653992.00,-25203892.00,0.03182902,-0.15179096,-0.20349591,chain_flow_reversal_watch,separate STX reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Berachain,BERA,56864788.00,1764352.00,-9924227.00,-15630199.00,0.03202065,-0.14859071,-0.21560386,chain_flow_reversal_watch,separate BERA reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Sui,SUI,445623106.00,6021306.00,-75842757.00,-130136208.00,0.01369718,-0.14544146,-0.22602536,chain_flow_reversal_watch,separate SUI reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Arbitrum,ARB,1280531238.00,52062123.00,-207972936.00,-287434378.00,0.04237968,-0.13971942,-0.18331676,chain_flow_reversal_watch,separate ARB reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Bitcoin,BTC,4202270581.00,187210645.00,-624076083.00,-1068811476.00,0.04662711,-0.12930610,-0.20276889,chain_flow_reversal_watch,separate BTC reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Movement,MOVE,129298153.00,6935566.00,-18798785.00,-40947726.00,0.05668045,-0.12693568,-0.24052110,chain_flow_reversal_watch,separate MOVE reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Mixin,XIN,18691640.00,571867.00,-2395213.00,-5129634.00,0.03156038,-0.11358798,-0.21533836,chain_flow_reversal_watch,separate XIN reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Sei,SEI,57702979.00,1255721.00,-7354058.00,-8262270.00,0.02224592,-0.11304016,-0.12525186,chain_flow_reversal_watch,separate SEI reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Rootstock,RBTC,96223737.00,3900028.00,-11984534.00,-22411091.00,0.04224297,-0.11075432,-0.18890819,chain_flow_reversal_watch,separate RBTC reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Aptos,APT,194000488.00,4032359.00,-23919203.00,-69431419.00,0.02122650,-0.10976155,-0.26356496,chain_flow_reversal_watch,separate APT reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Ethereum,ETH,37914314718.00,1735133929.00,-3941904565.00,-7473025559.00,0.04795946,-0.09417727,-0.16465000,chain_flow_reversal_watch,separate ETH reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,BSC,BNB,5205201429.00,144231647.00,-537625177.00,-401551308.00,0.02849882,-0.09361682,-0.07161923,chain_flow_reversal_watch,separate BNB reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Tron,TRON,4419087765.00,70478899.00,-448961269.00,-714469901.00,0.01620723,-0.09222612,-0.13917637,chain_flow_reversal_watch,separate TRON reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Base,,3995357194.00,177094422.00,-403959687.00,-538560650.00,0.04638089,-0.09182328,-0.11878483,chain_flow_reversal_watch,use as broad on-chain regime context
+2026-06-08T15:11:56.390158+00:00,Solana,SOL,4920064842.00,219006657.00,-461697867.00,-814383511.00,0.04658667,-0.08578934,-0.14201602,chain_flow_reversal_watch,separate SOL reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,OP Mainnet,OP,298885306.00,14548693.00,-27614493.00,-55141440.00,0.05116715,-0.08457737,-0.15575501,chain_flow_reversal_watch,separate OP reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Hyperliquid L1,HYPE,1592400566.00,127270745.00,-144041017.00,56781931.00,0.08686653,-0.08295184,0.03697658,chain_flow_reversal_watch,separate HYPE reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Monad,MON,361165052.00,11111715.00,-32108738.00,-24749021.00,0.03174292,-0.08164474,-0.06413091,chain_flow_reversal_watch,separate MON reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,TON,TON,70172334.00,1006176.00,-4586219.00,-22195600.00,0.01454723,-0.06134708,-0.24029551,chain_flow_reversal_watch,separate TON reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Starknet,STRK,186182175.00,1888448.00,-11259144.00,-19195520.00,0.01024695,-0.05702527,-0.09346448,chain_flow_reversal_watch,separate STRK reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Near,NEAR,156732171.00,20047580.00,-9132544.00,12241730.00,0.14667037,-0.05506020,0.08472346,chain_flow_reversal_watch,separate NEAR reversal from stale TVL accounting
+2026-06-08T15:11:56.390158+00:00,Cronos,CRO,272666218.00,6527736.00,-11613207.00,-26428058.00,0.02452759,-0.04085138,-0.08836029,chain_flow_context,keep as context until flow strengthens
+2026-06-08T15:11:56.390158+00:00,Plasma,XPL,771190053.00,-2531067.00,-23831936.00,195804953.00,-0.00327129,-0.02997645,0.34030244,chain_flow_context,keep as context until flow strengthens
+2026-06-08T15:11:56.390158+00:00,Gnosis,GNO,68459656.00,2920738.00,-2107370.00,-14143189.00,0.04456494,-0.02986338,-0.17121915,chain_flow_context,keep as context until flow strengthens
+2026-06-08T15:11:56.390158+00:00,dYdX,dYdX,97847586.00,32250.00,948278.00,-2060856.00,0.00032970,0.00978622,-0.02062745,chain_flow_context,keep as context until flow strengthens

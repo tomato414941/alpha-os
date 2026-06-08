@@ -4,8 +4,8 @@ This compares current venues for the active BTC ETF-flow/funding paper watch. It
 
 | venue | instrument | side | ann funding | carry side | volume USD | OI USD | spread/impact | basis/premium | score | status | reason |
 | --- | --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| OKX | BTC-USDT-SWAP | short | -0.05241027 | long_perp_receives_funding | 9125792364 | 1814074265 | 0.00000158 | -0.00065179 | 4.946780 | reject | short side does not receive funding |
-| Hyperliquid | BTC-USD perpetual | short | 0.10950000 | short_perp_receives_funding | 3352209749 | 1919199226 | 0.00018810 | -0.00047004 | 3.442430 | paper_venue_candidate | short carry, liquidity, and visible friction are acceptable for paper watch |
+| OKX | BTC-USDT-SWAP | short | -0.08956514 | long_perp_receives_funding | 9501643525 | 1863677996 | 0.00000781 | -0.00053716 | 4.909117 | reject | short side does not receive funding |
+| Hyperliquid | BTC-USD perpetual | short | 0.10950000 | short_perp_receives_funding | 3327338377 | 1930148299 | 0.00013585 | -0.00042147 | 3.422832 | paper_venue_candidate | short carry, liquidity, and visible friction are acceptable for paper watch |
 
 ## Caveat
 

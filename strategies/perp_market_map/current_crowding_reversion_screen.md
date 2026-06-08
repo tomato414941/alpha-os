@@ -4,31 +4,31 @@ This screen looks for perp states where funding carry and mark/oracle reversion 
 
 | asset | action | annualized funding | mark/oracle | premium | OI/volume | impact spread | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| STABLE | long_carry_reversion_watch | -4.075735 | -0.005876 | -0.005054 | 2.852504 | 0.002298 | 27.308448 | long perp receives funding and mark is below oracle |
-| MOVE | long_carry_reversion_watch | -2.877765 | -0.003109 | -0.001727 | 0.432102 | 0.002703 | 18.037914 | long perp receives funding and mark is below oracle |
-| HEMI | short_carry_reversion_watch | 0.530788 | 0.001971 | 0.000358 | 19.508585 | 0.002505 | 12.564524 | short perp receives funding and mark is above oracle |
-| CC | short_carry_reversion_watch | 0.481704 | 0.001708 | 0.000474 | 8.169580 | 0.002349 | 10.947415 | short perp receives funding and mark is above oracle |
-| TRX | long_carry_reversion_watch | -0.254626 | -0.000888 | -0.000714 | 8.433910 | 0.000340 | 10.101472 | long perp receives funding and mark is below oracle |
-| APEX | short_carry_reversion_watch | 0.109500 | 0.000464 | 0.000000 | 15.741726 | 0.005288 | 10.053361 | short perp receives funding and mark is above oracle |
-| PURR | short_carry_reversion_watch | 0.109500 | 0.002041 | 0.001726 | 9.143000 | 0.003422 | 9.695175 | short perp receives funding and mark is above oracle |
-| STBL | short_carry_reversion_watch | 0.364361 | 0.002616 | 0.000742 | 7.299858 | 0.003194 | 9.265368 | short perp receives funding and mark is above oracle |
-| GRASS | short_carry_reversion_watch | 0.109500 | 0.000499 | 0.000000 | 7.220479 | 0.003796 | 7.532466 | short perp receives funding and mark is above oracle |
-| ZEC | long_carry_reversion_watch | -0.778720 | -0.001493 | -0.000781 | 0.509608 | 0.000492 | 7.335110 | long perp receives funding and mark is below oracle |
-| OP | long_carry_reversion_watch | -0.561795 | -0.001732 | -0.001732 | 3.724941 | 0.001123 | 7.161544 | long perp receives funding and mark is below oracle |
-| TRUMP | long_carry_reversion_watch | -0.535037 | -0.001426 | -0.001075 | 3.220719 | 0.000637 | 6.670309 | long perp receives funding and mark is below oracle |
-| UMA | long_carry_reversion_watch | -0.558313 | -0.002258 | -0.000924 | 4.135599 | 0.002932 | 6.668792 | long perp receives funding and mark is below oracle |
-| COMP | long_carry_reversion_watch | -0.320252 | -0.002116 | -0.000829 | 4.891120 | 0.002215 | 6.580224 | long perp receives funding and mark is below oracle |
-| REZ | short_carry_reversion_watch | 0.109500 | 0.000303 | 0.000000 | 6.273825 | 0.003939 | 6.458083 | short perp receives funding and mark is above oracle |
-| PROVE | long_carry_reversion_watch | -0.976362 | -0.002135 | -0.001345 | 0.619940 | 0.001690 | 6.258000 | long perp receives funding and mark is below oracle |
-| ME | long_carry_reversion_watch | -0.953190 | -0.003040 | -0.001920 | 0.686744 | 0.002408 | 6.016973 | long perp receives funding and mark is below oracle |
-| TAO | long_carry_reversion_watch | -0.413561 | -0.001306 | -0.001017 | 2.904368 | 0.000729 | 5.832444 | long perp receives funding and mark is below oracle |
-| XMR | short_carry_reversion_watch | 0.139179 | 0.000538 | 0.000114 | 4.784664 | 0.000842 | 5.721994 | short perp receives funding and mark is above oracle |
-| W | long_carry_reversion_watch | -0.407464 | -0.002086 | -0.001043 | 3.465003 | 0.003135 | 5.560319 | long perp receives funding and mark is below oracle |
-| CHIP | long_carry_reversion_watch | -0.006166 | -0.000798 | -0.000276 | 5.447229 | 0.001105 | 5.458586 | long perp receives funding and mark is below oracle |
-| CFX | short_carry_reversion_watch | 0.109500 | 0.000495 | 0.000000 | 4.641092 | 0.002132 | 5.118662 | short perp receives funding and mark is above oracle |
-| POL | long_carry_reversion_watch | -0.242313 | -0.001314 | -0.000880 | 3.635528 | 0.001130 | 5.072864 | long perp receives funding and mark is below oracle |
-| MINA | long_carry_reversion_watch | -0.253655 | -0.001988 | -0.001234 | 3.017609 | 0.002703 | 4.277666 | long perp receives funding and mark is below oracle |
-| GRIFFAIN | short_carry_reversion_watch | 0.109500 | 0.000941 | 0.000000 | 3.871791 | 0.003410 | 4.189690 | short perp receives funding and mark is above oracle |
+| STABLE | long_carry_reversion_watch | -5.717735 | -0.006950 | -0.005858 | 2.782264 | 0.002415 | 37.107633 | long perp receives funding and mark is below oracle |
+| LAYER | long_carry_reversion_watch | -5.169090 | -0.005402 | -0.003423 | 2.263612 | 0.003907 | 30.741807 | long perp receives funding and mark is below oracle |
+| MOVE | long_carry_reversion_watch | -1.735768 | -0.003479 | -0.001491 | 0.406375 | 0.003206 | 11.084848 | long perp receives funding and mark is below oracle |
+| HEMI | short_carry_reversion_watch | 0.195030 | 0.002321 | 0.000536 | 19.534814 | 0.003919 | 10.812404 | short perp receives funding and mark is above oracle |
+| APEX | short_carry_reversion_watch | 0.109500 | 0.001740 | 0.000155 | 16.063808 | 0.003656 | 10.347214 | short perp receives funding and mark is above oracle |
+| ZRO | short_carry_reversion_watch | 0.109500 | 0.000091 | 0.000080 | 9.407878 | 0.000456 | 10.076349 | short perp receives funding and mark is above oracle |
+| STBL | short_carry_reversion_watch | 0.305599 | 0.001570 | 0.000157 | 8.002896 | 0.002313 | 9.601176 | short perp receives funding and mark is above oracle |
+| TRX | long_carry_reversion_watch | -0.160896 | -0.000704 | -0.000450 | 8.499026 | 0.000386 | 9.549385 | long perp receives funding and mark is below oracle |
+| ATOM | long_carry_reversion_watch | -0.143536 | -0.001860 | -0.000958 | 8.188473 | 0.002034 | 8.984306 | long perp receives funding and mark is below oracle |
+| ETC | long_carry_reversion_watch | -0.254855 | -0.001127 | -0.000793 | 7.578181 | 0.001267 | 8.920581 | long perp receives funding and mark is below oracle |
+| CC | short_carry_reversion_watch | 0.109500 | 0.000641 | 0.000000 | 7.994982 | 0.003588 | 8.343841 | short perp receives funding and mark is above oracle |
+| VINE | short_carry_reversion_watch | 0.109500 | 0.000181 | 0.000000 | 7.910171 | 0.004520 | 7.991332 | short perp receives funding and mark is above oracle |
+| GRASS | short_carry_reversion_watch | 0.109500 | 0.000496 | 0.000000 | 7.456545 | 0.003882 | 7.758382 | short perp receives funding and mark is above oracle |
+| BIO | long_carry_reversion_watch | -0.970757 | -0.002088 | -0.000280 | 1.603186 | 0.001716 | 7.608759 | long perp receives funding and mark is below oracle |
+| TRUMP | long_carry_reversion_watch | -0.651636 | -0.001645 | -0.001140 | 3.226568 | 0.000559 | 7.437857 | long perp receives funding and mark is below oracle |
+| S | long_carry_reversion_watch | -0.795462 | -0.002607 | -0.001551 | 2.756154 | 0.001720 | 7.091106 | long perp receives funding and mark is below oracle |
+| PURR | short_carry_reversion_watch | 0.109500 | 0.001380 | 0.000000 | 7.979818 | 0.018111 | 6.961853 | short perp receives funding and mark is above oracle |
+| XMR | short_carry_reversion_watch | 0.123733 | 0.001042 | 0.000256 | 5.098442 | 0.000984 | 5.965970 | short perp receives funding and mark is above oracle |
+| PROVE | long_carry_reversion_watch | -0.917752 | -0.001379 | -0.000944 | 0.628974 | 0.002147 | 5.799003 | long perp receives funding and mark is below oracle |
+| VIRTUAL | long_carry_reversion_watch | -0.381341 | -0.001316 | -0.000894 | 3.110605 | 0.000844 | 5.572181 | long perp receives funding and mark is below oracle |
+| CFX | short_carry_reversion_watch | 0.109500 | 0.000129 | 0.000000 | 4.979655 | 0.003480 | 5.282538 | short perp receives funding and mark is above oracle |
+| MINA | long_carry_reversion_watch | -0.437652 | -0.001740 | -0.000723 | 3.032541 | 0.002490 | 5.222508 | long perp receives funding and mark is below oracle |
+| HYPER | long_carry_reversion_watch | -0.843245 | -0.002191 | -0.001555 | 0.558779 | 0.001941 | 5.149935 | long perp receives funding and mark is below oracle |
+| INJ | long_carry_reversion_watch | -0.537202 | -0.001319 | -0.000891 | 1.292574 | 0.000984 | 4.898057 | long perp receives funding and mark is below oracle |
+| NXPC | long_carry_reversion_watch | -0.361729 | -0.001910 | -0.000890 | 2.623945 | 0.001699 | 4.644201 | long perp receives funding and mark is below oracle |
 
 ## Interpretation
 

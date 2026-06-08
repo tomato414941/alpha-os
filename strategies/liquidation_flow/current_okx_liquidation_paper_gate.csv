@@ -1,64 +1,64 @@
 asset,action,candidate_size_usd,gross_continuation_bps,fee_bps_per_fill,round_trip_fee_bps,spread_cost_bps,visible_depth_impact_bps,conservative_cost_bps,conservative_net_bps,near_touch_depth_5bps,visible_depth_usage,gate_action,reason
-XAU,short_liquidation_squeeze_watch,100.00,1.60990000,5.00000000,10.00000000,0.23055552,0.00094104,10.23149656,-8.62159656,1062652.64570000,0.00009410,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-XAU,short_liquidation_squeeze_watch,250.00,1.60990000,5.00000000,10.00000000,0.23055552,0.00235260,10.23290812,-8.62300812,1062652.64570000,0.00023526,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-XAU,short_liquidation_squeeze_watch,500.00,1.60990000,5.00000000,10.00000000,0.23055552,0.00470521,10.23526073,-8.62536073,1062652.64570000,0.00047052,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-XAU,short_liquidation_squeeze_watch,1000.00,1.60990000,5.00000000,10.00000000,0.23055552,0.00941041,10.23996593,-8.63006593,1062652.64570000,0.00094104,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-XAU,short_liquidation_squeeze_watch,2500.00,1.60990000,5.00000000,10.00000000,0.23055552,0.02352603,10.25408155,-8.64418155,1062652.64570000,0.00235260,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-XAU,short_liquidation_squeeze_watch,5000.00,1.60990000,5.00000000,10.00000000,0.23055552,0.04705206,10.27760758,-8.66770758,1062652.64570000,0.00470521,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
-BTC,short_liquidation_squeeze_watch,100.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.00183472,10.01747271,-34.88007271,545042.85523000,0.00018347,blocked_by_label,monitor label is not positive
-BTC,short_liquidation_squeeze_watch,250.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.00458680,10.02022479,-34.88282479,545042.85523000,0.00045868,blocked_by_label,monitor label is not positive
-BTC,short_liquidation_squeeze_watch,500.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.00917359,10.02481158,-34.88741158,545042.85523000,0.00091736,blocked_by_label,monitor label is not positive
-BTC,short_liquidation_squeeze_watch,1000.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.01834718,10.03398517,-34.89658517,545042.85523000,0.00183472,blocked_by_label,monitor label is not positive
-BTC,short_liquidation_squeeze_watch,2500.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.04586795,10.06150594,-34.92410594,545042.85523000,0.00458680,blocked_by_label,monitor label is not positive
-BTC,short_liquidation_squeeze_watch,5000.00,-24.86260000,5.00000000,10.00000000,0.01563799,0.09173591,10.10737390,-34.96997390,545042.85523000,0.00917359,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,100.00,-80.25460000,5.00000000,10.00000000,0.22601679,0.07412668,10.30014347,-90.55474347,13490.41940000,0.00741267,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,250.00,-80.25460000,5.00000000,10.00000000,0.22601679,0.18531670,10.41133349,-90.66593349,13490.41940000,0.01853167,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,500.00,-80.25460000,5.00000000,10.00000000,0.22601679,0.37063340,10.59665019,-90.85125019,13490.41940000,0.03706334,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,1000.00,-80.25460000,5.00000000,10.00000000,0.22601679,0.74126680,10.96728359,-91.22188359,13490.41940000,0.07412668,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,2500.00,-80.25460000,5.00000000,10.00000000,0.22601679,1.85316700,12.07918379,-92.33378379,13490.41940000,0.18531670,blocked_by_label,monitor label is not positive
-ZEC,short_liquidation_squeeze_watch,5000.00,-80.25460000,5.00000000,10.00000000,0.22601679,3.70633399,13.93235078,-94.18695078,13490.41940000,0.37063340,blocked_by_label,monitor label is not positive
-ETH,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,0.05900175,0.00083605,10.05983780,,1196106.79451000,0.00008360,wait_for_label,no positive-direction monitor label yet
-ETH,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,0.05900175,0.00209011,10.06109186,,1196106.79451000,0.00020901,wait_for_label,no positive-direction monitor label yet
-ETH,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,0.05900175,0.00418023,10.06318198,,1196106.79451000,0.00041802,wait_for_label,no positive-direction monitor label yet
-ETH,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,0.05900175,0.00836046,10.06736221,,1196106.79451000,0.00083605,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,100.00,,5.00000000,10.00000000,0.10566413,0.01746531,10.12312944,,57256.34220000,0.00174653,wait_for_label,no positive-direction monitor label yet
-ETH,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,0.05900175,0.02090114,10.07990289,,1196106.79451000,0.00209011,wait_for_label,no positive-direction monitor label yet
-ETH,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,0.05900175,0.04180229,10.10080404,,1196106.79451000,0.00418023,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,250.00,,5.00000000,10.00000000,0.10566413,0.04366329,10.14932742,,57256.34220000,0.00436633,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,100.00,,5.00000000,10.00000000,2.08659364,0.07836589,12.16495953,,12760.65340000,0.00783659,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,500.00,,5.00000000,10.00000000,0.10566413,0.08732657,10.19299070,,57256.34220000,0.00873266,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,1000.00,,5.00000000,10.00000000,0.10566413,0.17465314,10.28031727,,57256.34220000,0.01746531,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,250.00,,5.00000000,10.00000000,2.08659364,0.19591473,12.28250837,,12760.65340000,0.01959147,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,100.00,,5.00000000,10.00000000,0.22846438,0.27851437,10.50697875,,3590.47900000,0.02785144,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,500.00,,5.00000000,10.00000000,2.08659364,0.39182947,12.47842311,,12760.65340000,0.03918295,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,2.99535720,0.40242113,13.39777833,,2484.95900000,0.04024211,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,2500.00,,5.00000000,10.00000000,0.10566413,0.43663285,10.54229698,,57256.34220000,0.04366329,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,250.00,,5.00000000,10.00000000,0.22846438,0.69628593,10.92475031,,3590.47900000,0.06962859,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,100.00,,5.00000000,10.00000000,0.22303257,0.76881484,10.99184741,,1300.70330000,0.07688148,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,1000.00,,5.00000000,10.00000000,2.08659364,0.78365893,12.87025257,,12760.65340000,0.07836589,wait_for_label,no positive-direction monitor label yet
-MU,long_liquidation_cascade_watch,5000.00,,5.00000000,10.00000000,0.10566413,0.87326570,10.97892983,,57256.34220000,0.08732657,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,2.99535720,1.00605282,14.00141002,,2484.95900000,0.10060528,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,500.00,,5.00000000,10.00000000,0.22846438,1.39257185,11.62103623,,3590.47900000,0.13925719,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,3.22216852,1.76958264,14.99175116,,565.10500000,0.17695826,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,250.00,,5.00000000,10.00000000,0.22303257,1.92203710,12.14506967,,1300.70330000,0.19220371,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,2500.00,,5.00000000,10.00000000,2.08659364,1.95914733,14.04574097,,12760.65340000,0.19591473,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,2.99535720,2.01210563,15.00746283,,2484.95900000,0.20121056,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,1000.00,,5.00000000,10.00000000,0.22846438,2.78514371,13.01360809,,3590.47900000,0.27851437,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,500.00,,5.00000000,10.00000000,0.22303257,3.84407420,14.06710677,,1300.70330000,0.38440742,wait_for_label,no positive-direction monitor label yet
-WLD,mixed_liquidation_flow_watch,5000.00,,5.00000000,10.00000000,2.08659364,3.91829465,16.00488829,,12760.65340000,0.39182947,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,2.99535720,4.02421126,17.01956846,,2484.95900000,0.40242113,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,3.22216852,4.42395661,17.64612513,,565.10500000,0.44239566,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,2500.00,,5.00000000,10.00000000,0.22846438,6.96285927,17.19132365,,3590.47900000,0.69628593,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,1000.00,,5.00000000,10.00000000,0.22303257,7.68814840,17.91118097,,1300.70330000,0.76881484,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,3.22216852,8.84791322,22.07008174,,565.10500000,0.88479132,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,2.99535720,10.00000000,22.99535720,,2484.95900000,1.00605282,wait_for_label,no positive-direction monitor label yet
-BEAT,long_liquidation_cascade_watch,5000.00,,5.00000000,10.00000000,0.22846438,10.00000000,20.22846438,,3590.47900000,1.39257185,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,3.22216852,10.00000000,23.22216852,,565.10500000,1.76958264,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,2500.00,,5.00000000,10.00000000,0.22303257,10.00000000,20.22303257,,1300.70330000,1.92203710,wait_for_label,no positive-direction monitor label yet
-BSB,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,2.99535720,10.00000000,22.99535720,,2484.95900000,2.01210563,wait_for_label,no positive-direction monitor label yet
-ALLO,mixed_liquidation_flow_watch,5000.00,,5.00000000,10.00000000,0.22303257,10.00000000,20.22303257,,1300.70330000,3.84407420,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,3.22216852,10.00000000,23.22216852,,565.10500000,4.42395661,wait_for_label,no positive-direction monitor label yet
-HOME,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,3.22216852,10.00000000,23.22216852,,565.10500000,8.84791322,wait_for_label,no positive-direction monitor label yet
+XAU,short_liquidation_squeeze_watch,100.00,1.60990000,5.00000000,10.00000000,0.23084825,0.00082396,10.23167221,-8.62177221,1213655.43100000,0.00008240,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+XAU,short_liquidation_squeeze_watch,250.00,1.60990000,5.00000000,10.00000000,0.23084825,0.00205989,10.23290814,-8.62300814,1213655.43100000,0.00020599,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+XAU,short_liquidation_squeeze_watch,500.00,1.60990000,5.00000000,10.00000000,0.23084825,0.00411979,10.23496804,-8.62506804,1213655.43100000,0.00041198,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+XAU,short_liquidation_squeeze_watch,1000.00,1.60990000,5.00000000,10.00000000,0.23084825,0.00823957,10.23908782,-8.62918782,1213655.43100000,0.00082396,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+XAU,short_liquidation_squeeze_watch,2500.00,1.60990000,5.00000000,10.00000000,0.23084825,0.02059893,10.25144718,-8.64154718,1213655.43100000,0.00205989,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+XAU,short_liquidation_squeeze_watch,5000.00,1.60990000,5.00000000,10.00000000,0.23084825,0.04119785,10.27204610,-8.66214610,1213655.43100000,0.00411979,blocked_by_cost,"fee, spread, and impact proxy consume the short-window edge"
+BTC,short_liquidation_squeeze_watch,100.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.00243965,10.01802366,-34.88062366,409894.41937000,0.00024397,blocked_by_label,monitor label is not positive
+BTC,short_liquidation_squeeze_watch,250.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.00609913,10.02168314,-34.88428314,409894.41937000,0.00060991,blocked_by_label,monitor label is not positive
+BTC,short_liquidation_squeeze_watch,500.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.01219826,10.02778227,-34.89038227,409894.41937000,0.00121983,blocked_by_label,monitor label is not positive
+BTC,short_liquidation_squeeze_watch,1000.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.02439653,10.03998054,-34.90258054,409894.41937000,0.00243965,blocked_by_label,monitor label is not positive
+BTC,short_liquidation_squeeze_watch,2500.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.06099132,10.07657533,-34.93917533,409894.41937000,0.00609913,blocked_by_label,monitor label is not positive
+BTC,short_liquidation_squeeze_watch,5000.00,-24.86260000,5.00000000,10.00000000,0.01558401,0.12198263,10.13756664,-35.00016664,409894.41937000,0.01219826,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,100.00,-80.25460000,5.00000000,10.00000000,0.22528865,0.03907895,10.26436760,-90.51896760,25589.22420000,0.00390789,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,250.00,-80.25460000,5.00000000,10.00000000,0.22528865,0.09769737,10.32298602,-90.57758602,25589.22420000,0.00976974,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,500.00,-80.25460000,5.00000000,10.00000000,0.22528865,0.19539475,10.42068340,-90.67528340,25589.22420000,0.01953947,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,1000.00,-80.25460000,5.00000000,10.00000000,0.22528865,0.39078949,10.61607814,-90.87067814,25589.22420000,0.03907895,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,2500.00,-80.25460000,5.00000000,10.00000000,0.22528865,0.97697374,11.20226239,-91.45686239,25589.22420000,0.09769737,blocked_by_label,monitor label is not positive
+ZEC,short_liquidation_squeeze_watch,5000.00,-80.25460000,5.00000000,10.00000000,0.22528865,1.95394747,12.17923612,-92.43383612,25589.22420000,0.19539475,blocked_by_label,monitor label is not positive
+ETH,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,0.05873939,0.00098042,10.05971981,,1019967.68334000,0.00009804,wait_for_label,no positive-direction monitor label yet
+ETH,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,0.05873939,0.00245106,10.06119045,,1019967.68334000,0.00024511,wait_for_label,no positive-direction monitor label yet
+ETH,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,0.05873939,0.00490212,10.06364151,,1019967.68334000,0.00049021,wait_for_label,no positive-direction monitor label yet
+ETH,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,0.05873939,0.00980423,10.06854362,,1019967.68334000,0.00098042,wait_for_label,no positive-direction monitor label yet
+ETH,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,0.05873939,0.02451058,10.08324997,,1019967.68334000,0.00245106,wait_for_label,no positive-direction monitor label yet
+ETH,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,0.05873939,0.04902116,10.10776055,,1019967.68334000,0.00490212,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,100.00,,5.00000000,10.00000000,0.10460415,0.04996632,10.15457047,,20013.48040000,0.00499663,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,100.00,,5.00000000,10.00000000,2.05486489,0.08866347,12.14352836,,11278.60150000,0.00886635,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,250.00,,5.00000000,10.00000000,0.10460415,0.12491580,10.22951995,,20013.48040000,0.01249158,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,250.00,,5.00000000,10.00000000,2.05486489,0.22165869,12.27652358,,11278.60150000,0.02216587,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,500.00,,5.00000000,10.00000000,0.10460415,0.24983161,10.35443576,,20013.48040000,0.02498316,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,100.00,,5.00000000,10.00000000,0.22816204,0.28177936,10.50994140,,3548.87600000,0.02817794,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,2.94854784,0.40571589,13.35426373,,2464.77900000,0.04057159,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,500.00,,5.00000000,10.00000000,2.05486489,0.44331737,12.49818226,,11278.60150000,0.04433174,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,1000.00,,5.00000000,10.00000000,0.10460415,0.49966322,10.60426737,,20013.48040000,0.04996632,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,100.00,,5.00000000,10.00000000,2.66631116,0.52509128,13.19140244,,1904.43080000,0.05250913,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,250.00,,5.00000000,10.00000000,0.22816204,0.70444839,10.93261043,,3548.87600000,0.07044484,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,100.00,,5.00000000,10.00000000,3.21181950,0.76808160,13.97990110,,1301.94500000,0.07680816,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,1000.00,,5.00000000,10.00000000,2.05486489,0.88663475,12.94149964,,11278.60150000,0.08866347,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,2.94854784,1.01428972,13.96283756,,2464.77900000,0.10142897,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,2500.00,,5.00000000,10.00000000,0.10460415,1.24915804,11.35376219,,20013.48040000,0.12491580,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,250.00,,5.00000000,10.00000000,2.66631116,1.31272819,13.97903935,,1904.43080000,0.13127282,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,500.00,,5.00000000,10.00000000,0.22816204,1.40889679,11.63705883,,3548.87600000,0.14088968,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,250.00,,5.00000000,10.00000000,3.21181950,1.92020400,15.13202350,,1301.94500000,0.19202040,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,2.94854784,2.02857944,14.97712728,,2464.77900000,0.20285794,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,2500.00,,5.00000000,10.00000000,2.05486489,2.21658687,14.27145176,,11278.60150000,0.22165869,wait_for_label,no positive-direction monitor label yet
+MU,long_liquidation_cascade_watch,5000.00,,5.00000000,10.00000000,0.10460415,2.49831608,12.60292023,,20013.48040000,0.24983161,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,500.00,,5.00000000,10.00000000,2.66631116,2.62545638,15.29176754,,1904.43080000,0.26254564,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,1000.00,,5.00000000,10.00000000,0.22816204,2.81779358,13.04595562,,3548.87600000,0.28177936,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,500.00,,5.00000000,10.00000000,3.21181950,3.84040800,17.05222750,,1301.94500000,0.38404080,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,2.94854784,4.05715888,17.00570672,,2464.77900000,0.40571589,wait_for_label,no positive-direction monitor label yet
+WLD,mixed_liquidation_flow_watch,5000.00,,5.00000000,10.00000000,2.05486489,4.43317374,16.48803863,,11278.60150000,0.44331737,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,1000.00,,5.00000000,10.00000000,2.66631116,5.25091277,17.91722393,,1904.43080000,0.52509128,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,2500.00,,5.00000000,10.00000000,0.22816204,7.04448394,17.27264598,,3548.87600000,0.70444839,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,1000.00,,5.00000000,10.00000000,3.21181950,7.68081601,20.89263551,,1301.94500000,0.76808160,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,2.94854784,10.00000000,22.94854784,,2464.77900000,1.01428972,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,2500.00,,5.00000000,10.00000000,2.66631116,10.00000000,22.66631116,,1904.43080000,1.31272819,wait_for_label,no positive-direction monitor label yet
+BEAT,long_liquidation_cascade_watch,5000.00,,5.00000000,10.00000000,0.22816204,10.00000000,20.22816204,,3548.87600000,1.40889679,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,2500.00,,5.00000000,10.00000000,3.21181950,10.00000000,23.21181950,,1301.94500000,1.92020400,wait_for_label,no positive-direction monitor label yet
+BSB,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,2.94854784,10.00000000,22.94854784,,2464.77900000,2.02857944,wait_for_label,no positive-direction monitor label yet
+ALLO,mixed_liquidation_flow_watch,5000.00,,5.00000000,10.00000000,2.66631116,10.00000000,22.66631116,,1904.43080000,2.62545638,wait_for_label,no positive-direction monitor label yet
+HOME,short_liquidation_squeeze_watch,5000.00,,5.00000000,10.00000000,3.21181950,10.00000000,23.21181950,,1301.94500000,3.84040800,wait_for_label,no positive-direction monitor label yet
 PEPE,long_liquidation_cascade_watch,100.00,17.78090000,5.00000000,10.00000000,,,,,,,wait_for_depth,visible near-touch depth is missing
 PEPE,long_liquidation_cascade_watch,250.00,17.78090000,5.00000000,10.00000000,,,,,,,wait_for_depth,visible near-touch depth is missing
 PEPE,long_liquidation_cascade_watch,500.00,17.78090000,5.00000000,10.00000000,,,,,,,wait_for_depth,visible near-touch depth is missing

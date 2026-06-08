@@ -1,2 +1,2 @@
 timestamp,latest_date,latest_flow_btc,latest_flow_usd,rolling_5d_flow_btc,rolling_10d_flow_btc,inflow_streak_days,outflow_streak_days,action,score
-2026-06-08T15:01:30.372138+00:00,2026-06-05,-220.00000000,-14052299.80,-37984.00000000,-71685.00000000,0,1,btc_etf_outflow_context,27.46833333
+2026-06-08T15:11:38.089256+00:00,2026-06-05,-220.00000000,-14079058.40,-37984.00000000,-71685.00000000,0,1,btc_etf_outflow_context,27.46833333

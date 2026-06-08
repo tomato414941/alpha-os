@@ -9,6 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 MIN_DIVERSE_PRIORITY_SCORE = 50.0
+TARGET_CANDIDATES_PER_PROBE_TYPE = 4
+DEFAULT_TOP = 80
 
 
 @dataclass(frozen=True)
@@ -270,9 +272,9 @@ def _probe_type(row: dict[str, str]) -> str:
 
 
 def _select_diverse_candidates(candidates: list[dict[str, str]], *, top: int) -> tuple[dict[str, str], ...]:
-    selected = list(candidates[:top])
-    selected_ids = {_candidate_id(row) for row in selected}
-    selected_types = {_probe_type(row) for row in selected}
+    selected: list[dict[str, str]] = []
+    selected_ids: set[tuple[str, str, str]] = set()
+    type_counts: dict[str, int] = {}
     best_by_type: dict[str, dict[str, str]] = {}
     for row in candidates:
         probe_type = _probe_type(row)
@@ -280,38 +282,33 @@ def _select_diverse_candidates(candidates: list[dict[str, str]], *, top: int) ->
             continue
         best_by_type.setdefault(probe_type, row)
 
-    for probe_type, row in sorted(
-        best_by_type.items(),
-        key=lambda item: _float(item[1].get("priority_score")),
-        reverse=True,
-    ):
-        if probe_type in selected_types or _candidate_id(row) in selected_ids:
-            continue
-        replace_index = _lowest_duplicate_probe_type_index(selected)
-        if replace_index is None:
-            break
-        removed = selected[replace_index]
-        selected[replace_index] = row
-        selected_ids.discard(_candidate_id(removed))
+    def add(row: dict[str, str]) -> None:
+        selected.append(row)
         selected_ids.add(_candidate_id(row))
-        selected_types = {_probe_type(candidate) for candidate in selected}
-
-    return tuple(sorted(selected, key=lambda row: _float(row.get("priority_score")), reverse=True))
-
-
-def _lowest_duplicate_probe_type_index(rows: list[dict[str, str]]) -> int | None:
-    counts: dict[str, int] = {}
-    for row in rows:
         probe_type = _probe_type(row)
-        counts[probe_type] = counts.get(probe_type, 0) + 1
-    replacement_indexes = [
-        index
-        for index, row in enumerate(rows)
-        if counts.get(_probe_type(row), 0) > 1
-    ]
-    if not replacement_indexes:
-        return None
-    return min(replacement_indexes, key=lambda index: _float(rows[index].get("priority_score")))
+        type_counts[probe_type] = type_counts.get(probe_type, 0) + 1
+
+    for row in sorted(best_by_type.values(), key=lambda item: _float(item.get("priority_score")), reverse=True):
+        if len(selected) >= top:
+            break
+        if _candidate_id(row) not in selected_ids:
+            add(row)
+
+    for row in candidates:
+        if len(selected) >= top:
+            break
+        candidate_id = _candidate_id(row)
+        probe_type = _probe_type(row)
+        if candidate_id in selected_ids or type_counts.get(probe_type, 0) >= TARGET_CANDIDATES_PER_PROBE_TYPE:
+            continue
+        add(row)
+
+    for row in candidates:
+        if len(selected) >= top:
+            break
+        if _candidate_id(row) not in selected_ids:
+            add(row)
+    return tuple(sorted(selected, key=lambda row: _float(row.get("priority_score")), reverse=True))
 
 
 def _candidate_id(row: dict[str, str]) -> tuple[str, str, str]:
@@ -490,7 +487,7 @@ def main() -> None:
     )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_probe_plan.md")
-    parser.add_argument("--top", type=int, default=50)
+    parser.add_argument("--top", type=int, default=DEFAULT_TOP)
     args = parser.parse_args()
 
     rows = build_paper_probe_plan(

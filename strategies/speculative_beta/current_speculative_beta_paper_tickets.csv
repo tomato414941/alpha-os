@@ -1,5 +1,5 @@
 name,status,side,score,reason
-vix_high_beta_air_pocket,watch,none,0.22840989,"risk-off shock is visible, but crypto may already have repriced"
-ai_beta_crypto_warning,paper_short_candidate,short_crypto_beta,-0.11672713,AI equities strongly underperform BTC while BTC has not repriced much
-speculative_beta_air_pocket_short,paper_short_candidate,short_btc_eth,-0.03046758,AI/high-beta equities are risk-off while BTC has not repriced much
-semis_crypto_divergence,watch,none,0.00135011,semiconductor/BTC divergence is not clean enough
+vix_high_beta_air_pocket,watch,none,0.21486930,"risk-off shock is visible, but crypto may already have repriced"
+ai_beta_crypto_warning,paper_short_candidate,short_crypto_beta,-0.11867929,AI equities strongly underperform BTC while BTC has not repriced much
+speculative_beta_air_pocket_short,paper_short_candidate,short_btc_eth,-0.03268006,AI/high-beta equities are risk-off while BTC has not repriced much
+semis_crypto_divergence,watch,none,0.00229398,semiconductor/BTC divergence is not clean enough

@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+DEFAULT_TOP = 80
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ def build_paper_tickets(
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
     intraday_live_gate_path: Path = ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
-    top: int = 50,
+    top: int = DEFAULT_TOP,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
     existing_tickets = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
@@ -434,7 +435,7 @@ def main() -> None:
         default=None,
         help="Use prior ticket rows to preserve opened_at and entry marks for matching ticket identities.",
     )
-    parser.add_argument("--top", type=int, default=50)
+    parser.add_argument("--top", type=int, default=DEFAULT_TOP)
     parser.add_argument(
         "--preserve-opened-at",
         action="store_true",

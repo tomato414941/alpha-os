@@ -1,6 +1,6 @@
 observed_at,chain,token_symbol,migration_status,side,expected_direction,week_change_usd,week_change_pct,start_price,raw_return_1h,raw_return_4h,raw_return_12h,directional_return_1h,directional_return_4h,directional_return_12h,label_status,next_step
-2026-06-08T15:01:35.021179+00:00,Ethereum,ETH,chain_stablecoin_flow_reversal_watch,collect_label,-1,-2549343868.46000004,-0.01701757,1693.200000000000,,,,,,,pending_4h,wait for ETH 4h label
-2026-06-08T15:01:35.021179+00:00,Solana,SOL,paper_chain_stablecoin_inflow_watch,long_chain_beta_or_activity,1,930837276.44000006,0.07649276,67.450000000000,,,,,,,pending_4h,wait for SOL 4h label
-2026-06-08T15:01:35.021179+00:00,Tron,TRX,chain_stablecoin_flow_reversal_watch,collect_label,-1,-455311942.58999997,-0.00507003,0.326260000000,,,,,,,pending_4h,wait for TRX 4h label
-2026-06-08T15:01:35.021179+00:00,Polygon,POL,paper_chain_stablecoin_outflow_watch,short_chain_beta_or_reduce_exposure,-1,-212411978.06999999,-0.05823015,0.080854000000,,,,,,,pending_4h,wait for POL 4h label
-2026-06-08T15:01:35.021179+00:00,Arbitrum,ARB,chain_stablecoin_context_watch,collect_label,-1,-97793289.20999999,-0.02594405,0.084170000000,,,,,,,pending_4h,wait for ARB 4h label
+2026-06-08T15:11:42.876567+00:00,Ethereum,ETH,chain_stablecoin_flow_reversal_watch,collect_label,-1,-2549343868.46000004,-0.01701757,1697.500000000000,,,,,,,pending_4h,wait for ETH 4h label
+2026-06-08T15:11:42.876567+00:00,Solana,SOL,paper_chain_stablecoin_inflow_watch,long_chain_beta_or_activity,1,930837276.44000006,0.07649276,67.544000000000,,,,,,,pending_4h,wait for SOL 4h label
+2026-06-08T15:11:42.876567+00:00,Tron,TRX,chain_stablecoin_flow_reversal_watch,collect_label,-1,-455311942.58999997,-0.00507003,0.326770000000,,,,,,,pending_4h,wait for TRX 4h label
+2026-06-08T15:11:42.876567+00:00,Polygon,POL,paper_chain_stablecoin_outflow_watch,short_chain_beta_or_reduce_exposure,-1,-212411978.06999999,-0.05823015,0.080920000000,,,,,,,pending_4h,wait for POL 4h label
+2026-06-08T15:11:42.876567+00:00,Arbitrum,ARB,chain_stablecoin_context_watch,collect_label,-1,-97793289.20999999,-0.02594405,0.084280000000,,,,,,,pending_4h,wait for ARB 4h label

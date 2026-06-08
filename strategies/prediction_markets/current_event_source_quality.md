@@ -4,9 +4,9 @@ This checks whether event-probability paper tickets have enough fresh, source-di
 
 | question | side | sources 72h | articles 24h | newest h | unique titles | relevance | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Israel closes its airspace by June 15? | buy_yes | 19 | 30 | 0.71 | 3/3 | 20.00 | 82.0000 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
-| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 27 | 26 | 0.06 | 3/3 | 6.67 | 68.6667 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
-| US x Iran permanent peace deal by June 30, 2026? | buy_yes | 27 | 21 | 0.13 | 3/3 | 6.67 | 68.6667 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| Israel closes its airspace by June 15? | buy_yes | 19 | 30 | 0.89 | 3/3 | 20.00 | 82.0000 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 27 | 26 | 0.24 | 3/3 | 13.33 | 75.3333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| US x Iran permanent peace deal by June 30, 2026? | buy_yes | 27 | 23 | 0.21 | 3/3 | 6.67 | 68.6667 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
 
 ## Caveat
 

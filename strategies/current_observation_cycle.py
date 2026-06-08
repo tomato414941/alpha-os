@@ -258,7 +258,7 @@ PUBLIC_MARK_MODULES = (
 PUBLIC_MARK_COMMANDS = tuple((module,) for module in PUBLIC_MARK_MODULES)
 
 OPEN_TICKET_MODULE = "strategies.current_paper_tickets"
-OPEN_TICKET_COMMAND = (OPEN_TICKET_MODULE, "--preserve-opened-at", "--top", "50")
+OPEN_TICKET_COMMAND = (OPEN_TICKET_MODULE, "--preserve-opened-at", "--top", "80")
 
 
 def run_observation_cycle(*, open_new_tickets: bool = False, refresh_public_marks: bool = False) -> None:

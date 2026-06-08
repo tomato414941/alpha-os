@@ -4,12 +4,12 @@ This joins protocol fee-growth lag candidates to current perp venue coverage and
 
 | token | protocol | score | price7d | venues | HL funding | HL volume 24h | spread bps | depth 10bps USD | action | next step |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| AAVE | Aave V3 | 87.9820 | -19.45 | 2 | 0.0664 | 5130762 | 4.7969 | 34036 | paper_observation_ready | paper-label AAVE fee-growth lag with 4h/12h/24h return, funding, spread, and depth costs |
-| CRV | Curve DEX | 57.0025 | -4.77 | 2 | 0.1095 | 2250768 | 3.9744 | 21208 | paper_observation_ready | paper-label CRV fee-growth lag with 4h/12h/24h return, funding, spread, and depth costs |
-| JUP | Jupiter Perpetual Exchange | 94.7857 | -13.46 | 2 | -0.2622 | 1728507 | 4.3265 | 6281 | thin_volume_watch | keep JUP as a low-liquidity paper label, not an execution candidate |
-| UNI | Uniswap V3 | 77.9671 | -12.33 | 2 | 0.1095 | 1534329 | 4.2851 | 19929 | thin_volume_watch | keep UNI as a low-liquidity paper label, not an execution candidate |
-| MORPHO | Morpho Blue | 44.0323 | -3.19 | 2 | 0.1095 | 1898682 | 8.3238 | 2912 | thin_volume_watch | keep MORPHO as a low-liquidity paper label, not an execution candidate |
-| PENDLE | Pendle | 38.0414 | -3.71 | 2 | 0.1095 | 1178467 | 3.8719 | 3724 | thin_volume_watch | keep PENDLE as a low-liquidity paper label, not an execution candidate |
+| AAVE | Aave V3 | 87.9820 | -18.98 | 2 | 0.0643 | 5126004 | 2.9267 | 47586 | paper_observation_ready | paper-label AAVE fee-growth lag with 4h/12h/24h return, funding, spread, and depth costs |
+| CRV | Curve DEX | 56.5404 | -4.39 | 2 | 0.1095 | 2249135 | 2.9729 | 21315 | paper_observation_ready | paper-label CRV fee-growth lag with 4h/12h/24h return, funding, spread, and depth costs |
+| JUP | Jupiter Perpetual Exchange | 94.6419 | -13.34 | 2 | -0.1792 | 1743194 | 3.1076 | 3592 | thin_volume_watch | keep JUP as a low-liquidity paper label, not an execution candidate |
+| UNI | Uniswap V3 | 77.7421 | -12.13 | 2 | 0.1095 | 1530905 | 2.3329 | 11637 | thin_volume_watch | keep UNI as a low-liquidity paper label, not an execution candidate |
+| MORPHO | Morpho Blue | 44.6764 | -3.75 | 2 | 0.1095 | 1982741 | 10.1201 | 3698 | thin_volume_watch | keep MORPHO as a low-liquidity paper label, not an execution candidate |
+| PENDLE | Pendle | 37.6100 | -3.32 | 2 | 0.1095 | 1178565 | 6.9587 | 4096 | thin_volume_watch | keep PENDLE as a low-liquidity paper label, not an execution candidate |
 
 ## Interpretation
 

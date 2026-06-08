@@ -4,22 +4,22 @@ This joins exchange-announcement catalysts to current Hyperliquid perp state. It
 
 | published | symbol | kind | dir | funding | carry action | obs | score | reason |
 | --- | --- | --- | ---: | ---: | --- | ---: | ---: | --- |
-| 2026-04-16T06:14:15.403000+00:00 | CHIP | perp_listing_watch | 1 | -0.006166 |  | 0 | 6.901791 | exchange catalyst is directly tradable on Hyperliquid |
-| 2026-04-30T10:47:58.718000+00:00 | MEGA | spot_listing_watch | 1 | 0.109500 |  | 0 | 6.053638 | exchange catalyst has low current perp context |
-| 2026-04-21T13:00:07.020000+00:00 | CHIP | spot_listing_watch | 1 | -0.006166 |  | 0 | 5.901791 | exchange catalyst has low current perp context |
-| 2026-04-30T09:07:29.704000+00:00 | MEGA | spot_listing_watch | 1 | 0.109500 |  | 0 | 5.053638 | exchange catalyst has low current perp context |
+| 2026-04-16T06:14:15.403000+00:00 | CHIP | perp_listing_watch | 1 | 0.109500 |  | 0 | 7.071810 | exchange catalyst is directly tradable on Hyperliquid |
+| 2026-04-21T13:00:07.020000+00:00 | CHIP | spot_listing_watch | 1 | 0.109500 |  | 0 | 6.071810 | exchange catalyst has low current perp context |
+| 2026-04-30T10:47:58.718000+00:00 | MEGA | spot_listing_watch | 1 | 0.051810 |  | 0 | 5.845071 | exchange catalyst has low current perp context |
+| 2026-04-28T08:00:03.344000+00:00 | CHIP | spot_listing_watch | 1 | 0.109500 |  | 0 | 5.071810 | exchange catalyst has low current perp context |
+| 2026-04-21T12:00:32.132000+00:00 | CHIP | spot_listing_watch | 1 | 0.109500 |  | 0 | 5.071810 | exchange catalyst has low current perp context |
 | 2026-04-28T08:00:03.344000+00:00 | AI | spot_listing_watch | 1 | 0.000000 |  | 0 | 5.000000 | exchange catalyst has low current perp context |
-| 2026-04-28T08:00:03.344000+00:00 | CHIP | spot_listing_watch | 1 | -0.006166 |  | 0 | 4.901791 | exchange catalyst has low current perp context |
-| 2026-04-21T12:00:32.132000+00:00 | CHIP | spot_listing_watch | 1 | -0.006166 |  | 0 | 4.901791 | exchange catalyst has low current perp context |
-| 2026-04-30T09:33:15.547000+00:00 | SOL | exchange_removal_watch | -1 | -0.104828 |  | 0 | 4.688223 | exchange catalyst is directly tradable on Hyperliquid |
+| 2026-04-30T09:07:29.704000+00:00 | MEGA | spot_listing_watch | 1 | 0.051810 |  | 0 | 4.845071 | exchange catalyst has low current perp context |
+| 2026-04-30T09:33:15.547000+00:00 | SOL | exchange_removal_watch | -1 | 0.109500 |  | 0 | 4.714704 | exchange catalyst is directly tradable on Hyperliquid |
 | 2026-05-22T07:30:00.000Z | AI | spot_listing_watch | 1 | 0.000000 |  | 0 | 4.000000 | exchange catalyst has low current perp context |
 | 2026-05-22T07:30:00.000Z | AI | spot_listing_watch | 1 | 0.000000 |  | 0 | 4.000000 | exchange catalyst has low current perp context |
 | 2026-05-19T03:00:08.915000+00:00 | AI | exchange_removal_watch | -1 | 0.000000 |  | 0 | 4.000000 | exchange catalyst is directly tradable on Hyperliquid |
 | 2026-03-18T09:00:08.667000+00:00 | NTRN | exchange_removal_watch | -1 | 0.000000 |  | 0 | 4.000000 | exchange catalyst is directly tradable on Hyperliquid |
 | 2026-03-18T09:00:08.667000+00:00 | RDNT | exchange_removal_watch | -1 | 0.000000 |  | 0 | 4.000000 | exchange catalyst is directly tradable on Hyperliquid |
-| 2026-05-20T03:30:00+00:00 | POL | network_event_watch | 1 | -0.242313 |  | 0 | 1.871665 | exchange catalyst overlaps material current funding state |
-| 2026-04-08T04:00:00+00:00 | POL | network_event_watch | 1 | -0.242313 |  | 0 | 1.871665 | exchange catalyst overlaps material current funding state |
-| 2026-06-05T08:00:07.025000+00:00 | NEAR | network_event_watch | 1 | 0.109500 |  | 0 | 1.660189 | exchange catalyst has low current perp context |
+| 2026-06-05T08:00:07.025000+00:00 | NEAR | network_event_watch | 1 | 0.109500 |  | 0 | 1.653076 | exchange catalyst has low current perp context |
+| 2026-05-20T03:30:00+00:00 | POL | network_event_watch | 1 | -0.029271 |  | 0 | 1.447341 | exchange catalyst has low current perp context |
+| 2026-04-08T04:00:00+00:00 | POL | network_event_watch | 1 | -0.029271 |  | 0 | 1.447341 | exchange catalyst has low current perp context |
 
 ## Interpretation
 
