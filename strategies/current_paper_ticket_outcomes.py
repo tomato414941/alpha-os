@@ -341,6 +341,8 @@ def _checkpoint_status(checkpoints: str, elapsed_minutes: float) -> str:
 
 def _checkpoint_minutes(value: str) -> int:
     value = value.strip()
+    if value == "5m":
+        return 5
     if value == "15m":
         return 15
     if value == "1h":

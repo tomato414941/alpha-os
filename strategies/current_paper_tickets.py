@@ -328,7 +328,7 @@ def _checkpoints(horizon: str) -> str:
     checkpoints: list[str] = []
     for token in horizon.split("/"):
         token = token.strip()
-        if token in {"15m", "1h", "4h", "12h", "24h"}:
+        if token in {"5m", "15m", "1h", "4h", "12h", "24h"}:
             checkpoints.append(token)
     if not checkpoints:
         checkpoints = ["fresh"]
