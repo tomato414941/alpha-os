@@ -37,10 +37,10 @@ GAP_RULES = (
     GapRule(
         gap_id="lob_ofi_hierarchical_model",
         lane="LOB / order-flow representation learning",
-        probe_categories=("lob", "event_flow"),
-        required_probe_names=("binance_um_book_depth_monthly_probe",),
+        probe_categories=("lob",),
+        required_probe_names=("binance_um_book_depth_daily_probe",),
         missing_work="limit-order-book or OFI history, queue/adverse-selection labels, purged walk-forward split",
-        next_probe="find an accessible LOB/OFI data path, then build OFI and liquidity-state labels before any model",
+        next_probe="download one daily bookDepth sample, then build OFI and liquidity-state labels before any model",
         research_reference="https://www.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2026.1811716/full",
         base_priority=100.0,
     ),

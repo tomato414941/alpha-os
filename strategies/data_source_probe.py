@@ -62,9 +62,15 @@ PROBE_TARGETS = (
     ),
     ProbeTarget(
         category="lob",
-        name="binance_um_book_depth_monthly_probe",
+        name="binance_um_book_depth_daily_probe",
         method="HEAD",
-        url="https://data.binance.vision/data/futures/um/monthly/bookDepth/BTCUSDT/BTCUSDT-bookDepth-2024-01.zip",
+        url="https://data.binance.vision/data/futures/um/daily/bookDepth/BTCUSDT/BTCUSDT-bookDepth-2024-01-01.zip",
+    ),
+    ProbeTarget(
+        category="lob",
+        name="binance_um_book_ticker_daily_probe",
+        method="HEAD",
+        url="https://data.binance.vision/data/futures/um/daily/bookTicker/BTCUSDT/BTCUSDT-bookTicker-2024-01-01.zip",
     ),
     ProbeTarget(
         category="defi",
@@ -224,6 +230,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "historical event-flow data path is available"
     if target.category == "liquidation_flow":
         return "current forced-liquidation order path is available"
+    if target.category == "lob":
+        return "historical futures order-book data path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
     if target.category == "stablecoin_liquidity":

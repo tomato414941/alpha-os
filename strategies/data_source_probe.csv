@@ -6,16 +6,17 @@ event_flow,binance_um_aggtrades_monthly,HEAD,https://data.binance.vision/data/fu
 event_flow,binance_um_trades_monthly,HEAD,https://data.binance.vision/data/futures/um/monthly/trades/BTCUSDT/BTCUSDT-trades-2024-01.zip,200,True,1021286908,historical event-flow data path is available
 event_flow,binance_um_1m_klines_monthly,HEAD,https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2024-01.zip,200,True,1898532,historical event-flow data path is available
 liquidation_flow,okx_liquidation_orders,GET,https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&uly=BTC-USDT&state=filled,200,True,,current forced-liquidation order path is available
-lob,binance_um_book_depth_monthly_probe,HEAD,https://data.binance.vision/data/futures/um/monthly/bookDepth/BTCUSDT/BTCUSDT-bookDepth-2024-01.zip,404,False,,not available from this probe
+lob,binance_um_book_depth_daily_probe,HEAD,https://data.binance.vision/data/futures/um/daily/bookDepth/BTCUSDT/BTCUSDT-bookDepth-2024-01-01.zip,200,True,476762,historical futures order-book data path is available
+lob,binance_um_book_ticker_daily_probe,HEAD,https://data.binance.vision/data/futures/um/daily/bookTicker/BTCUSDT/BTCUSDT-bookTicker-2024-01-01.zip,200,True,128284409,historical futures order-book data path is available
 defi,defillama_yield_pools,GET,https://yields.llama.fi/pools,200,True,,current DeFi yield pool data path is available
 stablecoin_liquidity,defillama_stablecoins,GET,https://stablecoins.llama.fi/stablecoins?includePrices=true,200,True,,current stablecoin supply and chain-circulating data path is available
 defi_lending,morpho_graphql,POST,https://api.morpho.org/graphql,200,True,272,current DeFi lending market data path is available
 dex_pool_flow,geckoterminal_trending_pools,GET,https://api.geckoterminal.com/api/v2/networks/trending_pools,200,True,,current DEX pool-flow data path is available
 derivatives_positioning,coingecko_derivatives,GET,https://api.coingecko.com/api/v3/derivatives,200,True,,current derivatives positioning data path is available
-options_volatility,deribit_btc_options_summary,GET,https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option,200,True,45941,current crypto options surface data path is available
+options_volatility,deribit_btc_options_summary,GET,https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option,200,True,44536,current crypto options surface data path is available
 news,cointelegraph_rss,GET,https://cointelegraph.com/rss,200,True,,current crypto RSS news data path is available
 news,coindesk_rss,GET,https://www.coindesk.com/arc/outboundfeeds/rss,200,True,,current crypto RSS news data path is available
-news,decrypt_rss,GET,https://decrypt.co/feed,200,True,7292,current crypto RSS news data path is available
+news,decrypt_rss,GET,https://decrypt.co/feed,200,True,7322,current crypto RSS news data path is available
 exchange,coinbase_products,GET,https://api.exchange.coinbase.com/products,200,True,,exchange product discovery path is available
 perp_dex,hyperliquid_meta,POST,https://api.hyperliquid.xyz/info,200,True,17272,perp DEX market metadata path is available
-cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63930,cross-exchange predicted funding path is available
+cross_exchange,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63849,cross-exchange predicted funding path is available
