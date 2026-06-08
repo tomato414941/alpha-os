@@ -65,6 +65,7 @@ STOP_TOKENS = {
     "CRYPTO_EVENT",
     "CURRENT",
     "CURVE",
+    "COUNT",
     "COVER",
     "DEPTH",
     "DECRYPT",
@@ -72,6 +73,7 @@ STOP_TOKENS = {
     "DIRECTIONAL",
     "DISLOCATION",
     "DOLLAR",
+    "DERIVATIVES",
     "EDGE",
     "ENTRY",
     "EVENT",
@@ -85,6 +87,8 @@ STOP_TOKENS = {
     "FAILED",
     "FEE",
     "FEES",
+    "FEATURE",
+    "FEATURES",
     "FLUID",
     "FOLLOW",
     "FOLLOWUP",
@@ -121,6 +125,7 @@ STOP_TOKENS = {
     "MARK",
     "MARKET",
     "MECHANICS",
+    "MEAN",
     "MIGRATION",
     "MODEL",
     "MOMENTUM",
@@ -163,6 +168,7 @@ STOP_TOKENS = {
     "REPEAT",
     "RE",
     "RELATED",
+    "RATIO",
     "RESEARCH",
     "RELATIVE",
     "REPEG",
@@ -186,9 +192,11 @@ STOP_TOKENS = {
     "STRADDLE",
     "STRONGLY",
     "SUPPORTED",
+    "SUM",
     "SWAP",
     "SUPPLY",
     "TERM",
+    "TOP",
     "TOKEN",
     "TRADE",
     "TRADEABILITY",
@@ -388,6 +396,12 @@ def _cluster_next_step(*, symbol: str, status: str, rows: list[dict[str, str]]) 
 def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
     if row.get("status") == "historical_derivatives_feature_prior":
         return ()
+    if row.get("status") in {
+        "persistent_derivatives_symbol_feature_prior",
+        "recent_derivatives_symbol_feature_prior",
+        "derivatives_symbol_feature_regime_shift",
+    }:
+        return _symbols_from_evidence_head(row.get("evidence", ""))
     symbols: set[str] = set()
     symbols.update(_symbols_from_evidence_head(row.get("evidence", "")))
     symbols.update(_symbols_from_free_text(row.get("opportunity", "")))

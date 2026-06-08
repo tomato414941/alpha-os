@@ -591,6 +591,26 @@ def _derivatives_positioning_row(root: Path) -> ExplorationRow:
 
 
 def _binance_derivatives_history_row(root: Path) -> ExplorationRow:
+    compare_path = root / "p0_parallel" / "binance_derivatives_feature_regime_compare.csv"
+    best_compare = _best_numeric_row(compare_path, key="combined_score")
+    if best_compare:
+        return ExplorationRow(
+            lane="binance_derivatives_history",
+            status=best_compare.get("status", "feature_regime_compare"),
+            strongest_current_signal=(
+                f"{best_compare.get('symbol', '')} "
+                f"{best_compare.get('feature', '')}: "
+                f"historical={best_compare.get('historical_score', '')}, "
+                f"recent={best_compare.get('recent_score', '')}, "
+                f"combined={best_compare.get('combined_score', '')}, "
+                f"buckets={best_compare.get('historical_bucket', '')}/{best_compare.get('recent_bucket', '')}"
+            ),
+            main_gap="regime comparison is still daily and needs recent intraday labels plus execution costs",
+            next_step=best_compare.get(
+                "next_step",
+                "rerun top Binance derivatives regime candidate with recent intraday labels",
+            ),
+        )
     symbol_feature_path = root / "p0_parallel" / "binance_derivatives_symbol_feature_candidates.csv"
     best_symbol_feature = _best_numeric_row(symbol_feature_path, key="edge_score")
     if best_symbol_feature:

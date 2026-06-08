@@ -34,6 +34,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_futures_basis_stacks(root),
         *_derivatives_positioning_stacks(root),
         *_binance_derivatives_feature_prior_stacks(root),
+        *_binance_derivatives_regime_feature_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
         *_hyperliquid_dislocation_actionability_stacks(root),
@@ -741,6 +742,74 @@ def _binance_feature_direction(row: dict[str, str]) -> str:
     if high_mean > low_mean:
         return f"mean_prefers_high_{feature}"
     return f"mean_prefers_low_{feature}"
+
+
+def _binance_derivatives_regime_feature_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "p0_parallel" / "binance_derivatives_feature_regime_compare.csv")
+            if row.get("status")
+            in {
+                "persistent_symbol_feature",
+                "recent_symbol_feature_priority",
+                "bucket_regime_shift",
+            }
+        ),
+        key=lambda row: _float(row.get("combined_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        status = _binance_regime_feature_status(row.get("status", ""))
+        symbol = row.get("symbol", "")
+        feature = row.get("feature", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_symbol_slug(symbol)}_{_slug(feature)}_binance_derivatives_symbol_feature",
+                status=status,
+                side=f"{row.get('recent_bucket', '')}_{feature}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(row.get("combined_score")),
+                ),
+                sources="p0_parallel + binance_derivatives_history + recent_window",
+                evidence=(
+                    f"{symbol}: feature={feature}, "
+                    f"historical_bucket={row.get('historical_bucket', '')}, "
+                    f"recent_bucket={row.get('recent_bucket', '')}, "
+                    f"historical_score={row.get('historical_score', '')}, "
+                    f"recent_score={row.get('recent_score', '')}, "
+                    f"combined={row.get('combined_score', '')}"
+                ),
+                conflict=(
+                    "symbol-feature prior is historical/recent research evidence, not a current trade; "
+                    "it still needs recent intraday labels, costs, and execution gates"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"rerun {symbol} {feature} with recent intraday labels and execution costs",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_regime_feature_status(status: str) -> str:
+    if status == "persistent_symbol_feature":
+        return "persistent_derivatives_symbol_feature_prior"
+    if status == "bucket_regime_shift":
+        return "derivatives_symbol_feature_regime_shift"
+    return "recent_derivatives_symbol_feature_prior"
+
+
+def _symbol_slug(symbol: str) -> str:
+    value = symbol.lower()
+    for suffix in ("usdt", "usd"):
+        if value.endswith(suffix):
+            return value[: -len(suffix)]
+    return value
 
 
 def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -2668,6 +2737,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_basis_funding_dislocation_watch": 59.0,
         "paper_derivatives_momentum_risk_watch": 56.0,
         "historical_derivatives_feature_prior": 44.0,
+        "persistent_derivatives_symbol_feature_prior": 48.0,
+        "recent_derivatives_symbol_feature_prior": 44.0,
+        "derivatives_symbol_feature_regime_shift": 38.0,
         "paper_yield_depeg_conflict_watch": 42.0,
         "paper_yield_premium_conflict_watch": 40.0,
         "yield_supply_stress_watch": 55.0,

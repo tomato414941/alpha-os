@@ -124,6 +124,57 @@ Top current queue rows:
 
 The next useful step is to rerun these on recent windows and split by regime.
 
+## Recent Binance Derivatives Window
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_history_probe \
+  --start-date 2026-04-01 \
+  --days 67 \
+  --max-workers 16 \
+  --output-path strategies/p0_parallel/binance_derivatives_recent_history.csv \
+  --signal-output-path strategies/p0_parallel/binance_derivatives_recent_signal_summary.csv \
+  --schema-output-path strategies/p0_parallel/binance_derivatives_recent_schema.md
+
+uv run python -m strategies.p0_parallel.binance_derivatives_symbol_feature_candidates \
+  --history-path strategies/p0_parallel/binance_derivatives_recent_history.csv \
+  --output-path strategies/p0_parallel/binance_derivatives_recent_symbol_feature_candidates.csv \
+  --markdown-output-path strategies/p0_parallel/binance_derivatives_recent_symbol_feature_candidates.md
+```
+
+Recent aggregate feature signals:
+
+| feature | observations | corr | low mean | high mean | high hit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| oi_value_change | 1313 | 0.18805816 | -0.01078456 | 0.00570641 | 0.54711246 |
+| mean_sum_taker_long_short_vol_ratio | 1313 | 0.08087944 | -0.01053962 | 0.00195517 | 0.47416413 |
+| mean_premium_close | 1313 | 0.03739382 | -0.00027887 | 0.00425150 | 0.51671733 |
+
+The recent panel points more toward OI expansion and taker-flow context than
+the older 2024Q1 aggregate view.
+
+## Historical vs Recent Feature Regime Compare
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_feature_regime_compare
+```
+
+Top current regime comparison rows:
+
+| symbol | feature | status | historical score | recent score | combined score |
+| --- | --- | --- | ---: | ---: | ---: |
+| ARBUSDT | mean_sum_top_long_short_ratio | persistent_symbol_feature | 268.2077 | 428.4488 | 472.3644 |
+| ARBUSDT | oi_value_change | recent_symbol_feature_priority | 15.2622 | 546.0359 | 425.2651 |
+| NEARUSDT | mean_funding_rate | persistent_symbol_feature | 340.6412 | 305.4067 | 417.7388 |
+| BCHUSDT | mean_sum_top_long_short_ratio | persistent_symbol_feature | 283.1930 | 305.4253 | 397.6440 |
+| OPUSDT | oi_value_change | recent_symbol_feature_priority | 95.7761 | 426.6602 | 375.8508 |
+
+These rows are now surfaced into the current alpha stack as derivatives
+symbol-feature priors, not as trade instructions.
+
 ## Funding Carry Proxy
 
 Run:
