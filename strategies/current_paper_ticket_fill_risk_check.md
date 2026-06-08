@@ -4,7 +4,7 @@ This checks promoted paper-ticket mark wins against rough spread, taker fee, fun
 
 | ticket | asset | decision | size USD | dir bps | spread | depth 10bps | usage | funding 1h | cost | net | risk action | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| paper-05-mega-microstructure-flow | MEGA | paper_long | 100.00 | 373.7275 | 11.32945267 | 2314.63432200 | 0.04320337 | 0.75779900 | 19.32945267 | 355.15588820 | cost_adjusted_paper_probe | paper mark win survives rough spread, taker-fee, funding, and visible-depth checks |
-| paper-16-chip-repeat-execution | CHIP | paper_long | 1000 | 210.6286 | 3.17208565 | 5220.51300000 | 0.19155206 | -0.49348296 | 11.17208565 | 198.96307689 | depth_too_thin_for_probe | candidate size consumes too much visible 10bps depth |
-| paper-10-arbusdt-intraday-derivatives | ARBUSDT | paper_short |  | 27.0055 |  |  |  | 0.00000000 | 8.00000000 | 19.00546247 | missing_execution_context | no current public execution context for the promoted paper ticket |
-| paper-11-arbusdt-intraday-derivatives | ARBUSDT | paper_short |  | 27.0055 |  |  |  | 0.00000000 | 8.00000000 | 19.00546247 | missing_execution_context | no current public execution context for the promoted paper ticket |
+| paper-05-mega-microstructure-flow | MEGA | paper_long | 100.00 | 461.7350 | 4.26662529 | 2468.83644000 | 0.04050491 | 0.61253200 | 12.26662529 | 450.08091097 | cost_adjusted_paper_probe | paper mark win survives rough spread, taker-fee, funding, and visible-depth checks |
+| paper-16-chip-repeat-execution | CHIP | paper_long | 1000 | 184.7051 | 3.17914481 | 4517.15500000 | 0.22137828 | -0.25093027 | 11.17914481 | 173.27504482 | depth_too_thin_for_probe | candidate size consumes too much visible 10bps depth |
+| paper-10-arbusdt-intraday-derivatives | ARBUSDT | paper_short |  | 9.8202 |  |  |  | 0.00000000 | 8.00000000 | 1.82016817 | missing_execution_context | no current public execution context for the promoted paper ticket |
+| paper-11-arbusdt-intraday-derivatives | ARBUSDT | paper_short |  | 9.8202 |  |  |  | 0.00000000 | 8.00000000 | 1.82016817 | missing_execution_context | no current public execution context for the promoted paper ticket |
