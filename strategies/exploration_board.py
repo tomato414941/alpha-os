@@ -1011,6 +1011,30 @@ def _market_making_row(root: Path) -> ExplorationRow:
 
 
 def _options_volatility_row(root: Path) -> ExplorationRow:
+    actionability_path = root / "options_volatility" / "current_volatility_actionability.csv"
+    actionability = _best_numeric_row(actionability_path, key="score")
+    if actionability:
+        return ExplorationRow(
+            lane="options_volatility",
+            status=actionability.get("status", "volatility_actionability"),
+            strongest_current_signal=(
+                f"{actionability.get('currency', '')} {actionability.get('expiry', '')}: "
+                f"{actionability.get('structure', '')}, "
+                f"prem24={actionability.get('iv_premium_24h', '')}, "
+                f"spread={actionability.get('quote_spread_pct', '')}, "
+                f"max_loss_pct={actionability.get('max_loss_pct', '')}, "
+                f"prem_to_rv_move={actionability.get('premium_to_realized_move', '')}, "
+                f"top_depth_usd={actionability.get('top_ask_premium_depth_usd', '')}"
+            ),
+            main_gap=actionability.get(
+                "reason",
+                "options candidate still needs multi-level sweep, hedge, margin, and exit checks",
+            ),
+            next_step=actionability.get(
+                "next_step",
+                "paper-check option sweep depth, delta hedge plan, max loss, margin, and exit bid",
+            ),
+        )
     ticket_path = root / "options_volatility" / "current_options_volatility_paper_tickets.csv"
     best_ticket = _best_options_volatility_paper_ticket(ticket_path)
     if best_ticket:

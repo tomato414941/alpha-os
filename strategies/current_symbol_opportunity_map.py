@@ -198,6 +198,7 @@ STOP_TOKENS = {
     "VALUATION",
     "VENUE",
     "VOL",
+    "VOLATILITY",
     "VOLUME",
     "V3",
     "VS",

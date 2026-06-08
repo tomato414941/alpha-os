@@ -1,0 +1,24 @@
+# Current Volatility Actionability
+
+This separates cheap-vol surface anomalies from option structures that are ready for a paper hedge/fill check. It still uses public Deribit quotes and top-of-book depth, not a multi-level sweep or live hedge model.
+
+| currency | expiry | structure | status | side | score | dte | iv premium 24h | quote spread | max loss % | prem/rv move | top depth USD | reason |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| ETH | 2026-06-26 | long_atm_straddle | volatility_candidate_after_hedge_check | paper_long_vol_after_hedge_check | 85.2921 | 18.28 | -46.25 | 0.0258 | 11.80 | 0.47 | 139303 | cheap IV has visible top depth and capped premium before hedge and sweep checks |
+| BTC | 2026-06-19 | long_atm_straddle | volatility_candidate_after_hedge_check | paper_long_vol_after_hedge_check | 83.3457 | 11.28 | -29.67 | 0.0274 | 7.40 | 0.52 | 116644 | cheap IV has visible top depth and capped premium before hedge and sweep checks |
+| BTC | 2026-06-26 | long_atm_straddle | volatility_candidate_after_hedge_check | paper_long_vol_after_hedge_check | 82.2719 | 18.28 | -33.43 | 0.0233 | 8.70 | 0.48 | 49394 | cheap IV has visible top depth and capped premium before hedge and sweep checks |
+| ETH | 2026-06-12 | long_atm_straddle | volatility_candidate_after_hedge_check | paper_long_vol_after_hedge_check | 80.7606 | 4.28 | -32.16 | 0.0369 | 6.90 | 0.57 | 52638 | cheap IV has visible top depth and capped premium before hedge and sweep checks |
+| ETH | 2026-07-31 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 34.0000 | 53.28 | -51.67 | 0.0138 | 18.30 | 0.43 | 18488 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| ETH | 2026-09-25 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 34.0000 | 109.28 | -52.56 | 0.0157 | 25.70 | 0.42 | 35646 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| ETH | 2027-03-26 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 34.0000 | 291.28 | -50.09 | 0.0152 | 42.95 | 0.43 | 13348 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| BTC | 2026-09-25 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 31.5745 | 109.28 | -37.87 | 0.0157 | 19.25 | 0.43 | 44096 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| BTC | 2026-08-28 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 31.5305 | 81.28 | -37.65 | 0.0182 | 16.60 | 0.43 | 194788 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| BTC | 2026-07-31 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 31.4465 | 53.28 | -37.23 | 0.0148 | 13.60 | 0.44 | 7743 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| BTC | 2026-12-25 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 31.3545 | 200.28 | -36.77 | 0.0190 | 26.55 | 0.44 | 44387 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| BTC | 2027-03-26 | long_atm_straddle | volatility_premium_or_depth_blocked | no_trade_until_structure | 31.2505 | 291.28 | -36.25 | 0.0202 | 32.45 | 0.44 | 105415 | cheap IV is blocked by premium size, quote quality, depth, or structure constraints |
+| ETH | 2026-06-09 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 1.28 | -22.05 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |
+| ETH | 2026-06-10 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 2.28 | -25.80 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |
+| ETH | 2026-06-11 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 3.28 | -29.27 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |
+| ETH | 2026-06-19 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 11.28 | -42.79 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |
+| ETH | 2026-12-25 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 200.28 | -51.25 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |
+| ETH | 2026-08-28 | long_atm_straddle | volatility_deprioritize | none | 20.0000 | 81.28 | -52.41 | 0.0000 | 0.00 | 0.00 | 0 | volatility row is not actionable after quote and structure checks |

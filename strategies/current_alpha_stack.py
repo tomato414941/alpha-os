@@ -25,6 +25,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
         _btc_risk_off_short_stack(root),
         _mstr_btc_relative_value_stack(root),
+        *_volatility_actionability_stacks(root),
         *_options_volatility_stacks(root),
         _prediction_market_event_model_stack(root),
         _cross_market_stress_anomaly_stack(root),
@@ -166,6 +167,8 @@ def _mstr_btc_relative_value_stack(root: Path) -> AlphaStackRow | None:
 
 
 def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "options_volatility" / "current_volatility_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "options_volatility" / "current_options_volatility_paper_tickets.csv")
     tickets = sorted(
         (
@@ -210,6 +213,60 @@ def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
                 conflict=_options_volatility_conflict(ticket),
                 next_step=_options_volatility_next_step(ticket),
+            )
+        )
+    return tuple(output)
+
+
+def _volatility_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "options_volatility" / "current_volatility_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "volatility_candidate_after_hedge_check",
+                "volatility_quote_mechanics_watch",
+                "volatility_short_expiry_hedge_watch",
+                "volatility_structure_mechanics_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        currency = ticket.get("currency", "")
+        structure = ticket.get("structure", "")
+        expiry = ticket.get("expiry", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{currency.lower()}_{structure}_{expiry.replace('-', '')}_volatility_actionability",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="options_volatility",
+                evidence=(
+                    f"{currency} {expiry}: "
+                    f"iv_premium_24h={ticket.get('iv_premium_24h', '')}, "
+                    f"quote_spread={ticket.get('quote_spread_pct', '')}, "
+                    f"max_loss_pct={ticket.get('max_loss_pct', '')}, "
+                    f"premium_to_realized_move={ticket.get('premium_to_realized_move', '')}, "
+                    f"top_ask_depth_usd={ticket.get('top_ask_premium_depth_usd', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "options candidate still needs multi-level depth, hedge, margin, and exit checks",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    "paper-check option sweep depth, delta hedge plan, max loss, margin, and exit bid",
+                ),
             )
         )
     return tuple(output)
@@ -419,6 +476,12 @@ def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
         status_values = status_values - {"cross_market_peg_stress_anomaly"}
     if (root / "defi_lending" / "current_lending_stress_actionability.csv").exists():
         status_values = status_values - {"cross_market_lending_stress_anomaly"}
+    if (root / "defi_yield" / "current_yield_peg_risk_join.csv").exists():
+        status_values = status_values - {"cross_market_yield_peg_anomaly"}
+    if (root / "options_volatility" / "current_volatility_actionability.csv").exists():
+        status_values = status_values - {"cross_market_volatility_mispricing_watch"}
+    if (root / "prediction_markets" / "current_event_probability_paper_outcome.csv").exists():
+        status_values = status_values - {"cross_market_event_probability_anomaly"}
     anomaly = _best_by_score(
         root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv",
         score_key="score",
@@ -2137,6 +2200,12 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_long_vol_candidate": 66.0,
         "paper_long_vol_quote_candidate": 70.0,
         "paper_calendar_spread_watch": 58.0,
+        "volatility_candidate_after_hedge_check": 70.0,
+        "volatility_quote_mechanics_watch": 56.0,
+        "volatility_short_expiry_hedge_watch": 52.0,
+        "volatility_structure_mechanics_watch": 50.0,
+        "volatility_premium_or_depth_blocked": 38.0,
+        "volatility_quote_blocked": 34.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "paper_funding_dislocation_watch": 63.0,
