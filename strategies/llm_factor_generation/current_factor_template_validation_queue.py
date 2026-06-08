@@ -46,10 +46,10 @@ ROUTE_RULES = {
     "crowded_positioning_unwind_factor": RouteRule(
         template_id="crowded_positioning_unwind_factor",
         validation_route="perp positioning repeat labels plus cross-venue OI/funding context",
-        artifact_path=ROOT / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv",
+        artifact_path=ROOT / "perp_market_map" / "current_crowding_cross_venue_confirmation.csv",
         status_columns=("decision", "status"),
-        score_columns=("score", "net_1h_proxy", "directional_1h_return"),
-        evidence_columns=("symbol", "action", "monitor_obs", "label_obs", "net_1h_proxy"),
+        score_columns=("score", "net_directional_return_1h_proxy", "max_derivatives_score"),
+        evidence_columns=("asset", "action", "venue_count", "actionable_venue_count", "net_directional_return_1h_proxy"),
         next_step="split crowded continuation and unwind labels, then require cross-venue OI confirmation",
     ),
     "source_diverse_news_shock_factor": RouteRule(
