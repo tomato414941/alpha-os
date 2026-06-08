@@ -21,8 +21,10 @@ class HyperliquidDislocationExecutionCheckRow:
     status: str
     side: str
     label_outcome_15m: str
+    label_outcome_1h: str
     candidate_size_usd: float
     gross_15m_bps: float
+    gross_1h_bps: float
     best_bid: float
     best_ask: float
     mid_price: float
@@ -34,6 +36,7 @@ class HyperliquidDislocationExecutionCheckRow:
     round_trip_fee_bps: float
     conservative_cost_bps: float
     conservative_net_15m_bps: float
+    conservative_net_1h_bps: float
     gate_action: str
     reason: str
 
@@ -47,9 +50,15 @@ def build_hyperliquid_dislocation_execution_check_rows(
 ) -> tuple[HyperliquidDislocationExecutionCheckRow, ...]:
     timestamp = datetime.now(UTC).isoformat()
     labels = tuple(
-        row
-        for row in _read_rows(label_path)
-        if row.get("outcome_15m") == "paper_15m_win" and row.get("net_15m_bps")
+        sorted(
+            (
+                row
+                for row in _read_rows(label_path)
+                if row.get("outcome_15m") == "paper_15m_win" and row.get("net_15m_bps")
+            ),
+            key=_label_gate_sort_key,
+            reverse=True,
+        )
     )[:top]
     books = {row.get("asset", ""): _fetch_l2_book(row.get("asset", "")) for row in labels}
     output: list[HyperliquidDislocationExecutionCheckRow] = []
@@ -86,8 +95,10 @@ def write_hyperliquid_dislocation_execution_check_csv(
                 "status",
                 "side",
                 "label_outcome_15m",
+                "label_outcome_1h",
                 "candidate_size_usd",
                 "gross_15m_bps",
+                "gross_1h_bps",
                 "best_bid",
                 "best_ask",
                 "mid_price",
@@ -99,6 +110,7 @@ def write_hyperliquid_dislocation_execution_check_csv(
                 "round_trip_fee_bps",
                 "conservative_cost_bps",
                 "conservative_net_15m_bps",
+                "conservative_net_1h_bps",
                 "gate_action",
                 "reason",
             )
@@ -112,8 +124,10 @@ def write_hyperliquid_dislocation_execution_check_csv(
                     row.status,
                     row.side,
                     row.label_outcome_15m,
+                    row.label_outcome_1h,
                     f"{row.candidate_size_usd:.2f}",
                     f"{row.gross_15m_bps:.8f}",
+                    f"{row.gross_1h_bps:.8f}",
                     f"{row.best_bid:.12f}",
                     f"{row.best_ask:.12f}",
                     f"{row.mid_price:.12f}",
@@ -125,6 +139,7 @@ def write_hyperliquid_dislocation_execution_check_csv(
                     f"{row.round_trip_fee_bps:.8f}",
                     f"{row.conservative_cost_bps:.8f}",
                     f"{row.conservative_net_15m_bps:.8f}",
+                    f"{row.conservative_net_1h_bps:.8f}",
                     row.gate_action,
                     row.reason,
                 )
@@ -149,9 +164,9 @@ def write_hyperliquid_dislocation_execution_check_md(
         handle.write(f"- rows: `{len(rows)}`\n")
         handle.write(f"- paper execution probes: `{len(probes)}`\n\n")
         handle.write(
-            "| asset | status | side | size | gate | gross15 | cost | conservative15 | spread | depth10 | usage | reason |\n"
+            "| asset | status | side | size | gate | gross15 | net15 | out1h | net1h | spread | depth10 | usage | reason |\n"
         )
-        handle.write("| --- | --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n")
+        handle.write("| --- | --- | --- | ---: | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |\n")
         for row in rows[:top]:
             handle.write(
                 f"| {row.asset} | "
@@ -160,8 +175,9 @@ def write_hyperliquid_dislocation_execution_check_md(
                 f"{row.candidate_size_usd:.0f} | "
                 f"{row.gate_action} | "
                 f"{row.gross_15m_bps:.2f} | "
-                f"{row.conservative_cost_bps:.2f} | "
                 f"{row.conservative_net_15m_bps:.2f} | "
+                f"{row.label_outcome_1h} | "
+                f"{row.conservative_net_1h_bps:.2f} | "
                 f"{row.spread_bps:.2f} | "
                 f"{row.side_depth_10bps_notional:.0f} | "
                 f"{row.visible_depth_usage_10bps:.4f} | "
@@ -211,9 +227,15 @@ def _build_row(
     gross_15m_bps = (
         (_float(label.get("directional_return_15m")) + _float(label.get("funding_return_15m"))) * 10_000.0
     )
+    gross_1h_bps = (
+        (_float(label.get("directional_return_1h")) + _float(label.get("funding_return_1h"))) * 10_000.0
+    )
     conservative_net_15m_bps = gross_15m_bps - conservative_cost_bps
+    conservative_net_1h_bps = gross_1h_bps - conservative_cost_bps
     gate_action, reason = _gate_action(
+        outcome_1h=label.get("outcome_1h", ""),
         conservative_net_15m_bps=conservative_net_15m_bps,
+        conservative_net_1h_bps=conservative_net_1h_bps,
         spread_bps=spread_bps,
         usage=usage,
         side_depth_10bps_notional=side_depth_10bps_notional,
@@ -225,8 +247,10 @@ def _build_row(
         status=label.get("status", ""),
         side=label.get("side", ""),
         label_outcome_15m=label.get("outcome_15m", ""),
+        label_outcome_1h=label.get("outcome_1h", ""),
         candidate_size_usd=size_usd,
         gross_15m_bps=gross_15m_bps,
+        gross_1h_bps=gross_1h_bps,
         best_bid=best_bid,
         best_ask=best_ask,
         mid_price=mid_price,
@@ -238,6 +262,7 @@ def _build_row(
         round_trip_fee_bps=round_trip_fee_bps,
         conservative_cost_bps=conservative_cost_bps,
         conservative_net_15m_bps=conservative_net_15m_bps,
+        conservative_net_1h_bps=conservative_net_1h_bps,
         gate_action=gate_action,
         reason=reason,
     )
@@ -271,11 +296,15 @@ def _notional_depth_within_bps(
 
 def _gate_action(
     *,
+    outcome_1h: str,
     conservative_net_15m_bps: float,
+    conservative_net_1h_bps: float,
     spread_bps: float,
     usage: float,
     side_depth_10bps_notional: float,
 ) -> tuple[str, str]:
+    if outcome_1h == "paper_1h_loss":
+        return "failed_1h_confirmation", "15m edge reversed by the matured 1h label"
     if side_depth_10bps_notional <= 0.0:
         return "no_visible_depth", "no visible near-touch depth on the execution side"
     if usage > 0.25:
@@ -284,7 +313,18 @@ def _gate_action(
         return "no_edge_after_rough_cost", "rough fees, spread, and impact consume the 15m label edge"
     if spread_bps > 15.0:
         return "wide_spread_watch", "edge survives rough cost but spread is wide"
+    if outcome_1h == "paper_1h_win" and conservative_net_1h_bps <= 0.0:
+        return "no_edge_after_rough_cost", "rough costs consume the matured 1h label edge"
     return "paper_execution_probe", "public book does not obviously block a small paper probe"
+
+
+def _label_gate_sort_key(row: dict[str, str]) -> tuple[bool, bool, float, float]:
+    return (
+        row.get("outcome_1h") == "paper_1h_win",
+        row.get("outcome_1h") != "paper_1h_loss",
+        _float(row.get("net_1h_bps")),
+        _float(row.get("net_15m_bps")),
+    )
 
 
 def _sort_key(row: HyperliquidDislocationExecutionCheckRow) -> tuple[int, float, float]:
@@ -294,6 +334,7 @@ def _sort_key(row: HyperliquidDislocationExecutionCheckRow) -> tuple[int, float,
         "no_edge_after_rough_cost": 2,
         "too_large_for_visible_depth": 1,
         "no_visible_depth": 0,
+        "failed_1h_confirmation": -1,
     }.get(row.gate_action, 0)
     return (gate_rank, row.conservative_net_15m_bps, -row.candidate_size_usd)
 
@@ -365,6 +406,7 @@ def main() -> None:
             row.gate_action,
             f"size={row.candidate_size_usd:.0f}",
             f"net={row.conservative_net_15m_bps:.2f}bps",
+            f"out1h={row.label_outcome_1h}",
             f"usage={row.visible_depth_usage_10bps:.4f}",
         )
 
