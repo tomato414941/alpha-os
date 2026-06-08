@@ -279,6 +279,10 @@ def _protocol_fee_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
 
 def _token_unlock_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "token_unlocks/current_token_unlock_actionability.csv"
+    ticket_path = root / "token_unlocks/current_token_unlock_event_window_tickets.csv"
+    outcome_path = root / "token_unlocks/current_token_unlock_event_window_outcomes.csv"
+    tickets = {row.get("asset", ""): row for row in _read_rows(ticket_path)}
+    outcomes = {row.get("asset", ""): row for row in _read_rows(outcome_path)}
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -290,15 +294,18 @@ def _token_unlock_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
             lane="token_unlock_event_window",
             subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
             side=row.get("side", ""),
-            action=row.get("action", ""),
-            status=row.get("status", ""),
-            score=_fmt(row.get("score")),
-            size_or_risk=f"days={row.get('days_until', '')}; unlock_usd={row.get('unlock_value_usd', '')}; pct_supply={row.get('percent_supply', '')}",
-            evidence=row.get("reason", ""),
-            checkpoints="pre_event,event_window,post_event",
-            source_path=_relative(path),
+            action=_token_unlock_action(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            status=_token_unlock_status(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            score=_token_unlock_score(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            size_or_risk=_token_unlock_size_or_risk(
+                row=row,
+                ticket=tickets.get(row.get("symbol", ""), {}),
+            ),
+            evidence=_token_unlock_evidence(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            checkpoints="15m,1h,4h,pre_event,event_window,post_event",
+            source_path=_relative(outcome_path if outcomes.get(row.get("symbol", "")) else path),
             required_record="event-window label, funding, crowding, liquidity, and squeeze-vs-pressure split",
-            next_step=row.get("next_step", ""),
+            next_step=_token_unlock_next_step(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
         )
         for row in selected
     )
@@ -478,6 +485,59 @@ def _defi_lending_evidence(*, row: dict[str, str], risk: dict[str, str]) -> str:
 def _defi_lending_next_step(*, row: dict[str, str], risk: dict[str, str]) -> str:
     if risk:
         return risk.get("next_step", "")
+    return row.get("next_step", "")
+
+
+def _token_unlock_action(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    if outcome:
+        return "event_window_label_opened"
+    return row.get("action", "")
+
+
+def _token_unlock_status(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome:
+        return f"{row.get('status', '')}:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
+    return row.get("status", "")
+
+
+def _token_unlock_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return _fmt(row.get("score"))
+
+
+def _token_unlock_size_or_risk(*, row: dict[str, str], ticket: dict[str, str]) -> str:
+    if ticket:
+        return (
+            f"days={ticket.get('days_until', '')}; "
+            f"unlock_usd={ticket.get('unlock_value_usd', '')}; "
+            f"pct_supply={ticket.get('percent_supply', '')}; "
+            f"entry={ticket.get('entry_mark', '')}"
+        )
+    return (
+        f"days={row.get('days_until', '')}; "
+        f"unlock_usd={row.get('unlock_value_usd', '')}; "
+        f"pct_supply={row.get('percent_supply', '')}"
+    )
+
+
+def _token_unlock_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome:
+        return (
+            f"{row.get('reason', '')}; "
+            f"entry={outcome.get('entry_mark', '')}; "
+            f"current={outcome.get('current_mark', '')}; "
+            f"dir_bps={outcome.get('directional_return_bps', '')}; "
+            f"outcome={outcome.get('outcome', '')}"
+        )
+    return row.get("reason", "")
+
+
+def _token_unlock_next_step(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome:
+        return outcome.get("next_step", "")
     return row.get("next_step", "")
 
 
