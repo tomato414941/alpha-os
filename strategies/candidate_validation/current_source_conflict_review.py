@@ -4,6 +4,7 @@ import argparse
 import csv
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 
 ROOT = Path(__file__).resolve().parent
@@ -115,8 +116,8 @@ def write_source_conflict_md(
 def _build_row(row: dict[str, str]) -> SourceConflictRow:
     positives = _split(row.get("positive_labels", ""))
     negatives = _split(row.get("negative_labels", ""))
-    positive_sources = tuple(_source_for_label(label) for label in positives)
-    negative_sources = tuple(_source_for_label(label) for label in negatives)
+    positive_sources = _unique(_source_for_label(label) for label in positives)
+    negative_sources = _unique(_source_for_label(label) for label in negatives)
     return SourceConflictRow(
         asset=row.get("asset", ""),
         score=float(row.get("lead_score") or "0"),
@@ -173,11 +174,27 @@ def _source_for_label(label: str) -> str:
         return "l2_imbalance"
     if label.startswith("sector15="):
         return "sector_rotation"
+    if label.startswith("sector_perp15="):
+        return "sector_perp_context"
+    if label.startswith("exchange15="):
+        return "exchange_catalyst"
+    if label.startswith("protocol15="):
+        return "protocol_activity"
+    if label.startswith("chain15="):
+        return "on_chain_flow"
     return "unknown"
 
 
 def _split(value: str) -> tuple[str, ...]:
     return tuple(part for part in value.split(";") if part)
+
+
+def _unique(values: Iterable[str]) -> tuple[str, ...]:
+    output: list[str] = []
+    for value in values:
+        if value not in output:
+            output.append(value)
+    return tuple(output)
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

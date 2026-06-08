@@ -1,14 +1,13 @@
 family,observations,coverage_15m,mean_label_15m,hit_rate_15m,max_label_15m,min_label_15m,support_score,note
-okx_liquidation:short_liquidation_squeeze_watch,17,17,0.00426992,0.88235294,0.02730924,-0.00927734,1.38772553,supported by first labels
-okx_pressure:long_carry_discount_watch,32,32,0.00160763,0.75000000,0.02469880,-0.00858139,0.40190742,supported by first labels
-sector_rotation:sector_momentum_watch,13,13,0.00108181,0.69230769,0.00354672,-0.00291901,0.13522663,supported by first labels
-hl_candidate:okx_hl_current:paper_24h_monitor,22,22,0.00802331,0.45454545,0.01968198,-0.00169225,0.00000000,positive mean but weak hit rate
-hl_candidate:perp_carry_reversion:long_carry_reversion_watch,120,120,0.00047189,0.26666667,0.01783133,-0.00783716,0.00000000,positive mean but weak hit rate
-hl_candidate:perp_carry_reversion:short_carry_reversion_watch,30,30,0.00085843,0.43333333,0.01105937,-0.00592408,0.00000000,positive mean but weak hit rate
-okx_pressure:short_carry_watch,45,45,-0.00162232,0.20000000,0.00822511,-0.01069328,0.00000000,not supported by first labels
-okx_pressure:short_carry_premium_watch,13,13,-0.00270549,0.23076923,0.00996720,-0.01338330,0.00000000,not supported by first labels
-okx_pressure:long_carry_watch,6,6,-0.00090506,0.50000000,0.00482774,-0.01025391,0.00000000,not supported by first labels
-okx_pressure:flat_watch,4,0,,,,,0.00000000,waiting for elapsed labels
-okx_liquidation:long_liquidation_cascade_watch,8,8,-0.00123288,0.37500000,0.00259863,-0.00735059,0.00000000,not supported by first labels
-okx_liquidation:mixed_liquidation_flow_watch,1,0,,,,,0.00000000,waiting for elapsed labels
-l2_imbalance:visible_book_imbalance,23,23,-0.00117282,0.39130435,0.01247455,-0.01515590,0.00000000,not supported by first labels
+hl_candidate:perp_carry_reversion:short_carry_reversion_watch,71,0,,,,,0.00000000,waiting for elapsed labels
+hl_candidate:perp_carry_reversion:long_carry_reversion_watch,79,0,,,,,0.00000000,waiting for elapsed labels
+hl_candidate:okx_hl_current:paper_24h_monitor,22,0,,,,,0.00000000,waiting for elapsed labels
+okx_pressure:long_carry_discount_watch,30,0,,,,,0.00000000,waiting for elapsed labels
+okx_pressure:short_carry_premium_watch,15,0,,,,,0.00000000,waiting for elapsed labels
+okx_pressure:short_carry_watch,46,0,,,,,0.00000000,waiting for elapsed labels
+okx_pressure:long_carry_watch,6,0,,,,,0.00000000,waiting for elapsed labels
+okx_pressure:flat_watch,3,0,,,,,0.00000000,waiting for elapsed labels
+okx_liquidation:long_liquidation_cascade_watch,6,4,-0.00242153,0.25000000,0.00177809,-0.00623004,0.00000000,not supported by first labels
+okx_liquidation:short_liquidation_squeeze_watch,6,3,-0.00370668,0.00000000,0.00000000,-0.00895760,0.00000000,not supported by first labels
+okx_liquidation:mixed_liquidation_flow_watch,4,0,,,,,0.00000000,waiting for elapsed labels
+l2_imbalance:visible_book_imbalance,22,22,-0.00294273,0.40909091,0.00723778,-0.02432653,0.00000000,not supported by first labels

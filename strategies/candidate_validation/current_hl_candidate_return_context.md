@@ -4,31 +4,31 @@ This joins current candidate screens to recent Hyperliquid candle returns. It is
 
 | symbol | sources | close | 1h | 4h | 24h | vol24h | action | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
-| MEGA | perp_carry_reversion | 0.05009800 | 0.051728 | 0.132056 | 0.148115 | 30330096.00 | single_source_momentum_context | 26.775569 | candidate has a single source and a recent 4h move |
-| ONDO | l2_imbalance_monitor;sector_rotation | 0.34636000 | -0.005770 | 0.027165 | 0.053567 | 42640728.00 | multi_source_watch | 21.935217 | candidate has multiple sources but no large recent move |
-| STABLE | cross_exchange_funding;perp_carry_reversion | 0.03408100 | -0.005979 | 0.016281 | 0.047003 | 35589034.00 | multi_source_watch | 21.411987 | candidate has multiple sources but no large recent move |
-| XPL | l2_imbalance_monitor;sector_rotation | 0.06888800 | 0.003730 | 0.008299 | 0.058187 | 105753973.00 | multi_source_watch | 20.787957 | candidate has multiple sources but no large recent move |
-| WLD | cross_exchange_funding | 0.48503000 | -0.001421 | 0.095618 | 0.204984 | 145067881.20 | single_source_momentum_context | 19.922947 | candidate has a single source and a recent 4h move |
-| XLM | l2_imbalance_monitor | 0.20810000 | 0.032140 | 0.025376 | -0.021903 | 35361984.00 | single_source_context | 19.482752 | candidate remains visible but needs stronger labels |
-| BABY | perp_carry_reversion | 0.01589700 | 0.022776 | 0.026408 | 0.031938 | 104663601.00 | single_source_context | 18.597930 | candidate remains visible but needs stronger labels |
-| FARTCOIN | sector_rotation | 0.11285000 | 0.007589 | 0.020067 | 0.071700 | 43444823.60 | single_source_context | 16.762273 | candidate remains visible but needs stronger labels |
-| MON | perp_carry_reversion | 0.02199300 | -0.008431 | -0.016017 | 0.047685 | 130856273.00 | single_source_context | 16.643961 | candidate remains visible but needs stronger labels |
-| CC | sector_rotation | 0.16650000 | -0.002875 | -0.020646 | 0.052000 | 20864629.00 | single_source_context | 16.319752 | candidate remains visible but needs stronger labels |
-| PUMP | sector_rotation | 0.00150700 | -0.002647 | 0.016869 | 0.077198 | 2213776252.00 | single_source_context | 16.108180 | candidate remains visible but needs stronger labels |
-| DOGE | l2_imbalance_monitor | 0.08497200 | 0.003602 | 0.014082 | 0.048933 | 110257146.00 | single_source_context | 16.064359 | candidate remains visible but needs stronger labels |
-| LIT | l2_imbalance_monitor | 1.37790000 | -0.003832 | -0.012329 | -0.053770 | 11336752.00 | single_source_context | 15.999613 | candidate remains visible but needs stronger labels |
-| TURBO | sector_rotation | 0.00086500 | 0.004646 | 0.010514 | 0.035928 | 81599339.00 | single_source_context | 15.990277 | candidate remains visible but needs stronger labels |
-| SUI | l2_imbalance_monitor | 0.74846000 | 0.005197 | 0.008271 | 0.051459 | 44060414.90 | single_source_context | 15.933317 | candidate remains visible but needs stronger labels |
-| SAGA | perp_carry_reversion | 0.01364000 | 0.002204 | 0.006642 | 0.016393 | 12867600.70 | single_source_context | 15.552529 | candidate remains visible but needs stronger labels |
-| HEMI | perp_carry_reversion | 0.00557300 | 0.002699 | -0.001075 | 0.018830 | 14767534.00 | single_source_context | 15.323654 | candidate remains visible but needs stronger labels |
-| PYTH | sector_rotation | 0.03156800 | 0.000888 | 0.002254 | 0.006504 | 16190201.00 | single_source_context | 15.201485 | candidate remains visible but needs stronger labels |
-| PURR | perp_carry_reversion | 0.08960400 | -0.000346 | 0.012349 | 0.028808 | 8979676.00 | single_source_context | 14.631698 | candidate remains visible but needs stronger labels |
-| POL | sector_rotation | 0.07926700 | 0.004944 | 0.006105 | 0.041384 | 8011545.00 | single_source_context | 13.811243 | candidate remains visible but needs stronger labels |
-| XMR | perp_carry_reversion;sector_rotation | 314.40000000 | 0.017081 | 0.039545 | 0.039889 | 27221.48 | multi_source_momentum_context | 13.712548 | candidate has multiple sources and a recent 1h move |
-| JUP | sector_rotation | 0.15505000 | 0.003885 | 0.007014 | 0.013863 | 6913273.00 | single_source_context | 12.652466 | candidate remains visible but needs stronger labels |
-| AERO | attention_market_join;perp_carry_reversion | 0.33085000 | 0.001180 | 0.013261 | 0.040016 | 1086594.00 | multi_source_watch | 11.867664 | candidate has multiple sources but no large recent move |
-| SOL | l2_imbalance_monitor | 65.26400000 | 0.004494 | 0.015466 | 0.054295 | 4930852.62 | single_source_context | 11.153577 | candidate remains visible but needs stronger labels |
-| ZEC | sector_rotation | 418.06000000 | -0.010275 | 0.031508 | 0.164772 | 980515.54 | single_source_momentum_context | 8.583393 | candidate has a single source and a recent 4h move |
+| WLD | cross_exchange_funding;l2_imbalance_monitor | 0.46974000 | -0.015117 | -0.014063 | 0.040399 | 160001030.30 | multi_source_momentum_context | 22.214820 | candidate has multiple sources and a recent 1h move |
+| HMSTR | perp_carry_reversion | 0.00017800 | -0.011111 | -0.058201 | -0.016575 | 304650815.00 | single_source_momentum_context | 19.021164 | candidate has a single source and a recent 4h move |
+| JTO | l2_imbalance_monitor | 0.58973000 | -0.018523 | -0.039246 | 0.087842 | 15845323.00 | single_source_momentum_context | 18.814647 | candidate has a single source and a recent 4h move |
+| AZTEC | perp_carry_reversion | 0.01545900 | -0.011194 | -0.037422 | -0.031330 | 11534942.00 | single_source_momentum_context | 17.990464 | candidate has a single source and a recent 4h move |
+| STBL | perp_carry_reversion | 0.02447000 | -0.012032 | -0.032615 | 0.043363 | 14032304.00 | single_source_momentum_context | 17.833922 | candidate has a single source and a recent 4h move |
+| ENA | l2_imbalance_monitor | 0.08606100 | -0.008674 | -0.032946 | -0.076341 | 86213761.00 | single_source_momentum_context | 17.514692 | candidate has a single source and a recent 4h move |
+| ADA | l2_imbalance_monitor | 0.16016000 | -0.007498 | -0.015006 | -0.008972 | 73743558.00 | single_source_context | 16.500137 | candidate remains visible but needs stronger labels |
+| CFX | perp_carry_reversion | 0.04520000 | -0.007858 | -0.012626 | 0.007063 | 19802232.00 | single_source_context | 16.417119 | candidate remains visible but needs stronger labels |
+| STABLE | cross_exchange_funding | 0.03287200 | 0.005814 | -0.010416 | -0.012141 | 23709674.00 | single_source_context | 16.102162 | candidate remains visible but needs stronger labels |
+| PENGU | attention_market_join | 0.00667500 | -0.001197 | -0.018094 | -0.017371 | 487102198.00 | single_source_context | 16.024385 | candidate remains visible but needs stronger labels |
+| HEMI | perp_carry_reversion | 0.00546400 | -0.001097 | -0.015318 | -0.017620 | 13591805.00 | single_source_context | 15.875593 | candidate remains visible but needs stronger labels |
+| PURR | perp_carry_reversion | 0.09341600 | 0.006660 | 0.010613 | 0.031173 | 8436261.00 | single_source_context | 14.632867 | candidate remains visible but needs stronger labels |
+| DYDX | perp_carry_reversion | 0.14210000 | 0.004453 | -0.004274 | 0.026882 | 6238563.90 | single_source_context | 11.897608 | candidate remains visible but needs stronger labels |
+| XMR | l2_imbalance_monitor;perp_carry_reversion | 301.57000000 | -0.014058 | -0.003799 | 0.013749 | 28156.22 | multi_source_momentum_context | 11.623927 | candidate has multiple sources and a recent 1h move |
+| ZRO | perp_carry_reversion | 0.88881000 | -0.011742 | -0.013737 | -0.040576 | 3290484.10 | single_source_context | 10.151509 | candidate remains visible but needs stronger labels |
+| VIRTUAL | perp_carry_reversion | 0.56648000 | -0.005268 | -0.016920 | -0.007481 | 3224773.30 | single_source_context | 9.597586 | candidate remains visible but needs stronger labels |
+| AVAX | l2_imbalance_monitor | 6.55450000 | -0.005432 | -0.019903 | -0.034882 | 1804171.54 | single_source_context | 8.342519 | candidate remains visible but needs stronger labels |
+| APEX | perp_carry_reversion | 0.25574000 | -0.011824 | -0.015173 | 0.018884 | 334735.00 | single_source_context | 7.275741 | candidate remains visible but needs stronger labels |
+| SNX | perp_carry_reversion | 0.24163000 | -0.005965 | -0.013393 | 0.002281 | 900296.00 | single_source_context | 7.166441 | candidate remains visible but needs stronger labels |
+| TRUMP | perp_carry_reversion | 1.62730000 | -0.006411 | -0.013279 | 0.007117 | 713200.90 | single_source_context | 7.018263 | candidate remains visible but needs stronger labels |
+| ZEC | attention_market_join | 426.90000000 | 0.003314 | -0.004431 | 0.073800 | 1233690.74 | single_source_context | 6.786622 | candidate remains visible but needs stronger labels |
+| BNB | l2_imbalance_monitor | 591.90000000 | -0.008543 | -0.017724 | 0.009586 | 17473.46 | single_source_context | 6.757934 | candidate remains visible but needs stronger labels |
+| AAVE | perp_carry_reversion | 61.96000000 | -0.006558 | -0.015070 | -0.012291 | 89996.36 | single_source_context | 6.499252 | candidate remains visible but needs stronger labels |
+| ATOM | perp_carry_reversion | 1.69950000 | -0.008055 | -0.003985 | 0.004789 | 206724.54 | single_source_context | 6.211449 | candidate remains visible but needs stronger labels |
+| LTC | l2_imbalance_monitor | 42.13900000 | 0.000261 | -0.004159 | 0.009197 | 104177.50 | single_source_context | 5.338252 | candidate remains visible but needs stronger labels |
 
 ## Interpretation
 

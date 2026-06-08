@@ -4,29 +4,21 @@ This labels source-specific follow-up observations against subsequent Hyperliqui
 
 | asset | source | action | dir | priority | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| WLD | okx_pressure | long_carry_discount_watch | 1 | 10.0571 |  |  |  |  | pending_15m |
-| WLD | liquidation | short_liquidation_squeeze_watch | 1 | 10.0571 |  |  |  |  | pending_15m |
-| ETH | okx_pressure | long_carry_discount_watch | 1 | 4.5510 |  |  |  |  | pending_15m |
-| ETH | liquidation | short_liquidation_squeeze_watch | 1 | 4.5510 |  |  |  |  | pending_15m |
-| ETH | l2_imbalance | visible_book_imbalance | 1 | 4.5510 |  |  |  |  | pending_15m |
-| BTC | liquidation | short_liquidation_squeeze_watch | 1 | 3.6217 |  |  |  |  | pending_15m |
-| BTC | l2_imbalance | visible_book_imbalance | 1 | 3.6217 |  |  |  |  | pending_15m |
-| ONDO | liquidation | short_liquidation_squeeze_watch | 1 | 3.6106 |  |  |  |  | pending_15m |
-| ONDO | sector_rotation | sector_momentum_watch | 1 | 3.6106 |  |  |  |  | pending_15m |
-| XRP | okx_pressure | long_carry_discount_watch | 1 | 3.4627 |  |  |  |  | pending_15m |
-| XRP | liquidation | short_liquidation_squeeze_watch | 1 | 3.4627 |  |  |  |  | pending_15m |
-| XPL | l2_imbalance | visible_book_imbalance | 1 | 3.4493 |  |  |  |  | pending_15m |
-| XPL | sector_rotation | sector_momentum_watch | 1 | 3.4493 |  |  |  |  | pending_15m |
-| LTC | okx_pressure | long_carry_discount_watch | 1 | 3.2959 |  |  |  |  | pending_15m |
-| LTC | liquidation | long_liquidation_cascade_watch | -1 | 3.2959 |  |  |  |  | pending_15m |
-| SOL | okx_pressure | long_carry_discount_watch | 1 | 3.1187 |  |  |  |  | pending_15m |
-| SOL | liquidation | short_liquidation_squeeze_watch | 1 | 3.1187 |  |  |  |  | pending_15m |
-| PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 |  |  |  |  | pending_15m |
-| PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 |  |  |  |  | pending_15m |
-| XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 |  |  |  |  | pending_15m |
-| XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 |  |  |  |  | pending_15m |
-| TON | okx_pressure | short_carry_watch | -1 | 2.1872 |  |  |  |  | pending_15m |
-| TON | liquidation | short_liquidation_squeeze_watch | 1 | 2.1872 |  |  |  |  | pending_15m |
+| NEAR | exchange_catalyst | network_event_watch | 1 | 8.3498 |  |  |  |  | pending_15m |
+| NEAR | on_chain_flow | chain_flow_reversal_watch | 1 | 8.3498 |  |  |  |  | pending_15m |
+| SOL | exchange_catalyst | exchange_removal_watch | -1 | 5.2019 |  |  |  |  | pending_15m |
+| SOL | on_chain_flow | chain_flow_reversal_watch | 1 | 5.2019 |  |  |  |  | pending_15m |
+| BNB | l2_imbalance | visible_book_imbalance | 1 | 4.8127 |  |  |  |  | pending_15m |
+| BNB | on_chain_flow | chain_flow_reversal_watch | 1 | 4.8127 |  |  |  |  | pending_15m |
+| ETH | on_chain_flow | chain_flow_reversal_watch | 1 | 3.9347 |  |  |  |  | pending_15m |
+| MON | on_chain_flow | chain_flow_reversal_watch | 1 | 3.8131 |  |  |  |  | pending_15m |
+| ARB | on_chain_flow | chain_flow_reversal_watch | 1 | 3.7070 |  |  |  |  | pending_15m |
+| SUI | on_chain_flow | chain_flow_reversal_watch | 1 | 3.6307 |  |  |  |  | pending_15m |
+| ADA | on_chain_flow | chain_flow_reversal_watch | 1 | 3.4842 |  |  |  |  | pending_15m |
+| APT | on_chain_flow | chain_flow_reversal_watch | 1 | 3.3984 |  |  |  |  | pending_15m |
+| BTC | on_chain_flow | chain_flow_reversal_watch | 1 | 3.0455 |  |  |  |  | pending_15m |
+| HYPE | on_chain_flow | chain_flow_reversal_watch | 1 | 2.6935 |  |  |  |  | pending_15m |
+| XMR | l2_imbalance | visible_book_imbalance | 1 | 2.3874 |  |  |  |  | pending_15m |
 
 ## Interpretation
 

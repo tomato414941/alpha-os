@@ -196,6 +196,38 @@ def _source_lookup() -> dict[tuple[str, str], dict[str, str]]:
         action_field="category_action",
         direction_field="direction",
     )
+    _add_direction_lookup(
+        lookup,
+        source="sector_perp_context",
+        path=STRATEGIES_ROOT / "sector_rotation" / "current_category_perp_context.csv",
+        asset_field="symbol",
+        action_field="category_action",
+        direction_field="direction",
+    )
+    _add_direction_lookup(
+        lookup,
+        source="exchange_catalyst",
+        path=STRATEGIES_ROOT / "news_social" / "current_exchange_catalyst_forward_labels.csv",
+        asset_field="symbol",
+        action_field="catalyst_kind",
+        direction_field="direction_hint",
+    )
+    _add_direction_lookup(
+        lookup,
+        source="protocol_activity",
+        path=STRATEGIES_ROOT / "protocol_activity" / "current_protocol_activity_forward_labels.csv",
+        asset_field="symbol",
+        action_field="action",
+        direction_field="direction_hint",
+    )
+    _add_direction_lookup(
+        lookup,
+        source="on_chain_flow",
+        path=STRATEGIES_ROOT / "on_chain_flow" / "current_chain_tvl_flow_forward_labels.csv",
+        asset_field="token_symbol",
+        action_field="action",
+        direction_field="direction",
+    )
     return lookup
 
 

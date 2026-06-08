@@ -2383,6 +2383,40 @@ def _current_btc_etf_funding_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    repeat_label_path = root / "candidate_validation" / "current_followup_repeat_forward_labels.csv"
+    best_repeat_label = _best_followup_repeat_label_row(repeat_label_path)
+    if best_repeat_label:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_label",
+            strongest_current_signal=(
+                f"{best_repeat_label.get('asset', '')}/{best_repeat_label.get('source', '')}: "
+                f"{best_repeat_label.get('source_action', '')}, "
+                f"dir15={best_repeat_label.get('directional_return_15m', '')}, "
+                f"status={best_repeat_label.get('label_status', '')}"
+            ),
+            main_gap="fresh repeat label still excludes fees, funding PnL, slippage, and neutral baseline",
+            next_step="compare source-specific repeat labels and promote only repeated winners",
+        )
+    repeat_observation_path = (
+        root / "candidate_validation" / "current_followup_repeat_observations.csv"
+    )
+    okx_repeat_observation_path = (
+        root / "candidate_validation" / "current_followup_okx_repeat_observations.csv"
+    )
+    repeat_summary = _followup_repeat_observation_summary(repeat_observation_path)
+    okx_repeat_summary = _followup_repeat_observation_summary(okx_repeat_observation_path)
+    if repeat_summary or okx_repeat_summary:
+        joined_summary = "; ".join(
+            summary for summary in (repeat_summary, okx_repeat_summary) if summary
+        )
+        return ExplorationRow(
+            lane="candidate_validation",
+            status="followup_repeat_pending",
+            strongest_current_signal=joined_summary,
+            main_gap="fresh observations are recorded but not yet matured to 15m/1h labels",
+            next_step="rerun followup repeat forward labels after 15m and 1h",
+        )
     repeat_summary_path = (
         root / "candidate_validation" / "current_followup_repeat_history_summary.csv"
     )
@@ -2419,40 +2453,6 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
             ),
             main_gap="history label is still one repeat batch and excludes costs, funding PnL, slippage, and neutral baseline",
             next_step="collect more source-specific repeat batches and compare 15m/1h by source and venue",
-        )
-    repeat_label_path = root / "candidate_validation" / "current_followup_repeat_forward_labels.csv"
-    best_repeat_label = _best_followup_repeat_label_row(repeat_label_path)
-    if best_repeat_label:
-        return ExplorationRow(
-            lane="candidate_validation",
-            status="followup_repeat_label",
-            strongest_current_signal=(
-                f"{best_repeat_label.get('asset', '')}/{best_repeat_label.get('source', '')}: "
-                f"{best_repeat_label.get('source_action', '')}, "
-                f"dir15={best_repeat_label.get('directional_return_15m', '')}, "
-                f"status={best_repeat_label.get('label_status', '')}"
-            ),
-            main_gap="fresh repeat label still excludes fees, funding PnL, slippage, and neutral baseline",
-            next_step="compare source-specific repeat labels and promote only repeated winners",
-        )
-    repeat_observation_path = (
-        root / "candidate_validation" / "current_followup_repeat_observations.csv"
-    )
-    okx_repeat_observation_path = (
-        root / "candidate_validation" / "current_followup_okx_repeat_observations.csv"
-    )
-    repeat_summary = _followup_repeat_observation_summary(repeat_observation_path)
-    okx_repeat_summary = _followup_repeat_observation_summary(okx_repeat_observation_path)
-    if repeat_summary or okx_repeat_summary:
-        joined_summary = "; ".join(
-            summary for summary in (repeat_summary, okx_repeat_summary) if summary
-        )
-        return ExplorationRow(
-            lane="candidate_validation",
-            status="followup_repeat_pending",
-            strongest_current_signal=joined_summary,
-            main_gap="fresh observations are recorded but not yet matured to 15m/1h labels",
-            next_step="rerun followup repeat forward labels after 15m and 1h",
         )
     execution_context_path = (
         root / "candidate_validation" / "current_followup_execution_context.csv"

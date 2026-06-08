@@ -4,30 +4,21 @@ This records fresh source-specific observations from the follow-up queue. Each r
 
 | asset | source | source action | dir | priority | mark | funding ann | spread bps | depth 10bps USD | status |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| WLD | hl_candidate |  | 0 | 10.0571 | 0.48648000 | -0.214318 | 5.3436 | 22766 | missing_source_direction |
-| WLD | okx_pressure | long_carry_discount_watch | 1 | 10.0571 | 0.48648000 | -0.214318 | 5.3436 | 22766 | ready_for_label |
-| WLD | liquidation | short_liquidation_squeeze_watch | 1 | 10.0571 | 0.48648000 | -0.214318 | 5.3436 | 22766 | ready_for_label |
-| ETH | okx_pressure | long_carry_discount_watch | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
-| ETH | liquidation | short_liquidation_squeeze_watch | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
-| ETH | l2_imbalance | visible_book_imbalance | 1 | 4.5510 | 1633.00000000 | 0.065543 | 0.6123 | 12184113 | ready_for_label |
-| BTC | liquidation | short_liquidation_squeeze_watch | 1 | 3.6217 | 62244.00000000 | 0.109500 | 0.1607 | 2835549 | ready_for_label |
-| BTC | l2_imbalance | visible_book_imbalance | 1 | 3.6217 | 62244.00000000 | 0.109500 | 0.1607 | 2835549 | ready_for_label |
-| ONDO | liquidation | short_liquidation_squeeze_watch | 1 | 3.6106 | 0.34858000 | 0.109500 | 0.8600 | 35880 | ready_for_label |
-| ONDO | sector_rotation | sector_momentum_watch | 1 | 3.6106 | 0.34858000 | 0.109500 | 0.8600 | 35880 | ready_for_label |
-| XRP | okx_pressure | long_carry_discount_watch | 1 | 3.4627 | 1.14390000 | 0.026255 | 0.8741 | 525602 | ready_for_label |
-| XRP | liquidation | short_liquidation_squeeze_watch | 1 | 3.4627 | 1.14390000 | 0.026255 | 0.8741 | 525602 | ready_for_label |
-| XPL | l2_imbalance | visible_book_imbalance | 1 | 3.4493 | 0.06900700 | 0.109500 | 3.3322 | 5094 | ready_for_label |
-| XPL | sector_rotation | sector_momentum_watch | 1 | 3.4493 | 0.06900700 | 0.109500 | 3.3322 | 5094 | ready_for_label |
-| LTC | okx_pressure | long_carry_discount_watch | 1 | 3.2959 | 42.01600000 | 0.109500 | 0.9519 | 55182 | ready_for_label |
-| LTC | liquidation | long_liquidation_cascade_watch | -1 | 3.2959 | 42.01600000 | 0.109500 | 0.9519 | 55182 | ready_for_label |
-| SOL | okx_pressure | long_carry_discount_watch | 1 | 3.1187 | 65.40200000 | -0.193780 | 0.1529 | 411839 | ready_for_label |
-| SOL | liquidation | short_liquidation_squeeze_watch | 1 | 3.1187 | 65.40200000 | -0.193780 | 0.1529 | 411839 | ready_for_label |
-| PUMP | liquidation | short_liquidation_squeeze_watch | 1 | 2.9792 | 0.00151000 | 0.109500 | 6.6203 | 37064 | ready_for_label |
-| PUMP | sector_rotation | sector_momentum_watch | 1 | 2.9792 | 0.00151000 | 0.109500 | 6.6203 | 37064 | ready_for_label |
-| XLM | okx_pressure | long_carry_discount_watch | 1 | 2.9178 | 0.20878000 | 0.109500 | 6.2268 | 8613 | ready_for_label |
-| XLM | l2_imbalance | visible_book_imbalance | 1 | 2.9178 | 0.20878000 | 0.109500 | 6.2268 | 8613 | ready_for_label |
-| TON | okx_pressure | short_carry_watch | -1 | 2.1872 | 1.71670000 | 0.109500 | 2.3301 | 16181 | ready_for_label |
-| TON | liquidation | short_liquidation_squeeze_watch | 1 | 2.1872 | 1.71670000 | 0.109500 | 2.3301 | 16181 | ready_for_label |
+| NEAR | exchange_catalyst | network_event_watch | 1 | 8.3498 | 2.02970000 | 0.109500 | 1.9692 | 41222 | ready_for_label |
+| NEAR | on_chain_flow | chain_flow_reversal_watch | 1 | 8.3498 | 2.02970000 | 0.109500 | 1.9692 | 41222 | ready_for_label |
+| SOL | exchange_catalyst | exchange_removal_watch | -1 | 5.2019 | 65.14800000 | -0.273009 | 0.3069 | 540694 | ready_for_label |
+| SOL | on_chain_flow | chain_flow_reversal_watch | 1 | 5.2019 | 65.14800000 | -0.273009 | 0.3069 | 540694 | ready_for_label |
+| BNB | l2_imbalance | visible_book_imbalance | 1 | 4.8127 | 592.65000000 | 0.109500 | 2.0236 | 142635 | ready_for_label |
+| BNB | on_chain_flow | chain_flow_reversal_watch | 1 | 4.8127 | 592.65000000 | 0.109500 | 2.0236 | 142635 | ready_for_label |
+| ETH | on_chain_flow | chain_flow_reversal_watch | 1 | 3.9347 | 1648.70000000 | -0.107213 | 0.6063 | 10872720 | ready_for_label |
+| MON | on_chain_flow | chain_flow_reversal_watch | 1 | 3.8131 | 0.02147400 | -0.168836 | 5.5863 | 5503 | ready_for_label |
+| ARB | on_chain_flow | chain_flow_reversal_watch | 1 | 3.7070 | 0.08100000 | 0.091928 | 2.4679 | 18293 | ready_for_label |
+| SUI | on_chain_flow | chain_flow_reversal_watch | 1 | 3.6307 | 0.73167000 | 0.002876 | 2.3229 | 88623 | ready_for_label |
+| ADA | on_chain_flow | chain_flow_reversal_watch | 1 | 3.4842 | 0.16010000 | -0.188968 | 0.6240 | 38037 | ready_for_label |
+| APT | on_chain_flow | chain_flow_reversal_watch | 1 | 3.3984 | 0.65570000 | -0.104895 | 4.5728 | 12039 | ready_for_label |
+| BTC | on_chain_flow | chain_flow_reversal_watch | 1 | 3.0455 | 62517.00000000 | 0.031727 | 0.1599 | 4131924 | ready_for_label |
+| HYPE | on_chain_flow | chain_flow_reversal_watch | 1 | 2.6935 | 60.91000000 | 0.109500 | 3.4447 | 145397 | ready_for_label |
+| XMR | l2_imbalance | visible_book_imbalance | 1 | 2.3874 | 301.34000000 | 0.417327 | 1.3267 | 7390 | ready_for_label |
 
 ## Interpretation
 

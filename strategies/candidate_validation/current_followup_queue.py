@@ -182,6 +182,14 @@ def _source_for_label(label: str) -> str:
         return "l2_imbalance"
     if label.startswith("sector15="):
         return "sector_rotation"
+    if label.startswith("sector_perp15="):
+        return "sector_perp_context"
+    if label.startswith("exchange15="):
+        return "exchange_catalyst"
+    if label.startswith("protocol15="):
+        return "protocol_activity"
+    if label.startswith("chain15="):
+        return "on_chain_flow"
     return "unknown"
 
 
