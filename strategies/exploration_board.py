@@ -26,6 +26,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _factor_hypothesis_templates_row(root),
         _factor_template_validation_queue_row(root),
         _ofi_execution_survival_row(root),
+        _crowded_positioning_survival_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _fundamental_sentiment_cross_section_row(root),
@@ -275,6 +276,34 @@ def _ofi_execution_survival_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="book-depth cost sweep is not joined to current L2 imbalance states",
         next_step="run current OFI execution survival after L2 paper gate and book-depth cost sweep",
+    )
+
+
+def _crowded_positioning_survival_row(root: Path) -> ExplorationRow:
+    path = root / "perp_market_map" / "current_crowded_positioning_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="crowded_positioning_survival",
+            status=best.get("status", "crowded_positioning_survival"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"{best.get('side', '')}, "
+                f"action={best.get('action', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"gate={best.get('label_gate_score', '')}, "
+                f"net1h={best.get('net_directional_return_1h_proxy', '')}, "
+                f"hit1h={best.get('positive_directional_1h_rate', '')}"
+            ),
+            main_gap=best.get("missing_work", "crowded positioning still needs unwind labels"),
+            next_step=best.get("next_probe", "label crowded positioning continuation versus unwind"),
+        )
+    return ExplorationRow(
+        lane="crowded_positioning_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="derivatives positioning rows are not joined to crowding-unwind labels",
+        next_step="run current crowded positioning survival after crowding unwind label gate",
     )
 
 

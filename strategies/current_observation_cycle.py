@@ -69,6 +69,8 @@ DEFAULT_COMMANDS = (
     ("strategies.perp_market_map.current_crowding_reversion_screen",),
     ("strategies.perp_market_map.current_crowding_reversion_execution_check",),
     ("strategies.perp_market_map.current_crowding_reversion_validated_candidates",),
+    ("strategies.perp_market_map.current_crowding_unwind_label_gate",),
+    ("strategies.perp_market_map.current_crowded_positioning_survival",),
     ("strategies.liquidation_flow.current_okx_liquidation_flow",),
     ("strategies.liquidation_flow.current_okx_liquidation_forward_labels",),
     ("strategies.liquidation_flow.current_okx_liquidation_depth_check",),
