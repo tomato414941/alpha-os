@@ -42,6 +42,9 @@ def build_paper_ticket_outcomes(
     event_probability_tickets_path: Path = ROOT
     / "prediction_markets"
     / "current_event_probability_paper_tickets.csv",
+    prediction_market_tickets_path: Path = ROOT
+    / "prediction_markets"
+    / "current_prediction_market_paper_tickets.csv",
 ) -> tuple[PaperTicketOutcome, ...]:
     checked_at = datetime.now(UTC)
     marks = _load_marks(
@@ -49,7 +52,10 @@ def build_paper_ticket_outcomes(
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
     )
-    event_marks = _load_event_probability_marks(event_probability_tickets_path)
+    event_marks = _load_event_probability_marks(
+        event_probability_tickets_path=event_probability_tickets_path,
+        prediction_market_tickets_path=prediction_market_tickets_path,
+    )
     return tuple(
         _build_outcome(checked_at=checked_at, row=row, marks=marks, event_marks=event_marks)
         for row in _read_rows(tickets_path)
@@ -141,6 +147,8 @@ def write_paper_ticket_outcomes_md(
                 f"{_escape(row.missing_evidence)} | "
                 f"{_escape(row.next_step)} |\n"
             )
+        handle.write("\n## Summary\n\n")
+        handle.write(_summary_text(rows))
     return output_path
 
 
@@ -203,14 +211,25 @@ def _current_mark(
     return _entry_mark(asset=row.get("asset", ""), venue=row.get("venue", ""), marks=marks)
 
 
-def _load_event_probability_marks(path: Path) -> dict[str, tuple[str, str]]:
+def _load_event_probability_marks(
+    *,
+    event_probability_tickets_path: Path,
+    prediction_market_tickets_path: Path,
+) -> dict[str, tuple[str, str]]:
     marks: dict[str, tuple[str, str]] = {}
-    for row in _read_rows(path):
+    for row in _read_rows(event_probability_tickets_path):
         question = row.get("question", "")
         side = row.get("suggested_side", "")
         ask = row.get("entry_ask", "")
         if question and side and ask:
             marks[f"{side}: {question}"] = (ask, "event_probability_current_ask")
+    for row in _read_rows(prediction_market_tickets_path):
+        question = row.get("question", "")
+        outcome = row.get("outcome", "")
+        ask = row.get("best_ask", "")
+        if question and outcome and ask:
+            side = "buy_yes" if outcome == "Yes" else "buy_no"
+            marks.setdefault(f"{side}: {question}", (ask, "prediction_market_current_ask"))
     return marks
 
 
@@ -279,6 +298,48 @@ def _next_step(*, checkpoint_status: str, outcome: str) -> str:
     if outcome == "paper_mark_flat":
         return "keep observing until the ticket has a non-flat mark move or stronger quote evidence"
     return "fill missing current mark before judging the ticket"
+
+
+def _summary_text(rows: tuple[PaperTicketOutcome, ...]) -> str:
+    ready_rows = tuple(row for row in rows if row.checkpoint_status == "ready")
+    wins = tuple(row for row in ready_rows if row.outcome == "paper_mark_win")
+    losses = tuple(row for row in ready_rows if row.outcome == "paper_mark_loss")
+    flats = tuple(row for row in ready_rows if row.outcome == "paper_mark_flat")
+    pending = tuple(row for row in rows if row.checkpoint_status == "pending")
+    lines = [
+        f"- ready: {len(ready_rows)}",
+        f"- wins: {len(wins)}",
+        f"- losses: {len(losses)}",
+        f"- flat: {len(flats)}",
+        f"- pending: {len(pending)}",
+    ]
+    best = _best_directional_row(ready_rows)
+    worst = _worst_directional_row(ready_rows)
+    if best:
+        lines.append(
+            "- best ready mark: "
+            f"{best.ticket_id} {best.asset} {best.directional_return_bps}bps {best.outcome}"
+        )
+    if worst:
+        lines.append(
+            "- worst ready mark: "
+            f"{worst.ticket_id} {worst.asset} {worst.directional_return_bps}bps {worst.outcome}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _best_directional_row(rows: tuple[PaperTicketOutcome, ...]) -> PaperTicketOutcome | None:
+    numeric = tuple(row for row in rows if row.directional_return_bps)
+    if not numeric:
+        return None
+    return max(numeric, key=lambda row: _float(row.directional_return_bps))
+
+
+def _worst_directional_row(rows: tuple[PaperTicketOutcome, ...]) -> PaperTicketOutcome | None:
+    numeric = tuple(row for row in rows if row.directional_return_bps)
+    if not numeric:
+        return None
+    return min(numeric, key=lambda row: _float(row.directional_return_bps))
 
 
 def _parse_time(value: str) -> datetime | None:

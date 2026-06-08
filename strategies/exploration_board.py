@@ -147,7 +147,7 @@ def _paper_tickets_row(root: Path) -> ExplorationRow:
 def _paper_ticket_outcomes_row(root: Path) -> ExplorationRow:
     path = root / "current_paper_ticket_outcomes.csv"
     rows = _csv_rows(path)
-    best = _first_ready_or_first(rows)
+    best = _best_paper_ticket_outcome(rows)
     if best:
         return ExplorationRow(
             lane="paper_ticket_outcomes",
@@ -3043,10 +3043,10 @@ def _csv_rows(path: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
-def _first_ready_or_first(rows: tuple[dict[str, str], ...]) -> dict[str, str] | None:
-    for row in rows:
-        if row.get("outcome") in {"paper_mark_win", "paper_mark_loss"}:
-            return row
+def _best_paper_ticket_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str] | None:
+    numeric_rows = tuple(row for row in rows if row.get("directional_return_bps"))
+    if numeric_rows:
+        return max(numeric_rows, key=lambda row: float(row.get("directional_return_bps") or "-inf"))
     return rows[0] if rows else None
 
 

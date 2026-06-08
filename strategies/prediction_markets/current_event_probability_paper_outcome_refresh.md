@@ -5,7 +5,9 @@ This re-marks prior event-probability paper outcomes after refreshing Polymarket
 | question | side | entry | current bid | current ask | bid pnl | edge now | edge change | source quality | score | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
 | Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.0900 | 0.1000 | -0.0100 | 0.2600 | 0.0000 | source_quality_pass | 55.0000 | paper_outcome_survived_refresh |
-| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2900 | 0.2800 | 0.2900 | -0.0100 | 0.1300 | 0.0000 | source_quality_pass | 42.0000 | paper_outcome_survived_refresh |
+| Israel closes its airspace by June 30? | buy_no | 0.4000 | 0.3900 | 0.4000 | -0.0100 | 0.1500 | 0.0000 | source_quality_pass | 44.0000 | paper_outcome_survived_refresh |
+| US x Iran permanent peace deal by July 31, 2026? | buy_yes | 0.2900 | 0.2800 | 0.2900 | -0.0100 | 0.1300 | 0.0000 | source_quality_pass | 42.0000 | paper_outcome_survived_refresh |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2900 | 0.2800 | 0.2900 | -0.0100 | 0.1300 | 0.0000 |  | 27.0000 | paper_outcome_quote_survived_refresh |
 
 ## Caveat
 
