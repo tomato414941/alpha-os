@@ -12,7 +12,7 @@ from strategies.current_paper_tickets import PaperTicket, _load_marks, write_pap
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_TOP_PER_SOURCE = 8
+DEFAULT_TOP_PER_SOURCE = 12
 OKX_BASE_URL = "https://www.okx.com"
 
 
