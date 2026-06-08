@@ -25,6 +25,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_source_gaps_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
+        _fundamental_sentiment_cross_section_row(root),
         _cross_modal_alpha_context_row(root),
         _cross_modal_source_split_row(root),
         _paper_probe_plan_row(root),
@@ -238,6 +239,41 @@ def _research_backed_alpha_expansion_plan_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="external research directions have not been mapped to current alpha-os coverage",
         next_step="run current research backed alpha expansion plan after method frontier",
+    )
+
+
+def _fundamental_sentiment_cross_section_row(root: Path) -> ExplorationRow:
+    path = root / "current_fundamental_sentiment_cross_section.csv"
+    best = _best_numeric_row(path, key="total_score")
+    if best:
+        return ExplorationRow(
+            lane="fundamental_sentiment_cross_section",
+            status=best.get("decision", "cross_section_feature_table"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"{best.get('side_hint', '')}, "
+                f"score={best.get('total_score', '')}, "
+                f"sources={best.get('source_count', '')}, "
+                f"fund={best.get('fundamental_score', '')}, "
+                f"sent={best.get('sentiment_score', '')}, "
+                f"sector={best.get('sector_score', '')}, "
+                f"funding={best.get('funding_score', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "cross-section feature table still needs neutral universe, timestamps, labels, and costs",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "label the top cross-section row with leakage-safe rebalance timestamp",
+            ),
+        )
+    return ExplorationRow(
+        lane="fundamental_sentiment_cross_section",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="fundamental, sentiment, sector, and funding features are not joined cross-sectionally",
+        next_step="build one cross-sectional rank table from current feature probes",
     )
 
 
