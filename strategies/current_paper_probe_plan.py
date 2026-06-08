@@ -223,6 +223,13 @@ def _probe_type(row: dict[str, str]) -> str:
     if status.startswith("execution_"):
         return "execution_edge_probe"
     if status in {
+        "event_crypto_hedge_after_refresh_candidate",
+        "event_crypto_hedge_current_quote_candidate",
+        "event_crypto_hedge_news_gap_candidate",
+        "event_crypto_hedge_watch",
+    }:
+        return "event_crypto_hedge_probe"
+    if status in {
         "paper_oi_funding_crowding_watch",
         "paper_oi_unwind_watch",
         "paper_funding_dislocation_watch",

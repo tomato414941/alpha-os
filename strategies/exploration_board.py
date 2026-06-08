@@ -80,6 +80,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _event_pressure_cluster_row(root),
         _news_social_row(root),
         _market_breadth_row(root),
+        _prediction_market_crypto_hedge_row(root),
         _prediction_markets_row(root),
         _anomaly_stress_row(root),
         _protocol_activity_row(root),
@@ -2841,6 +2842,40 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="event probability is not modeled; this only ranks active public market structure",
         next_step="join top markets to external event models, order books, and adverse-selection checks",
+    )
+
+
+def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
+    path = root / "prediction_markets" / "current_event_crypto_hedge_candidates.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="prediction_market_crypto_hedge",
+            status=best.get("status", "event_crypto_hedge_candidates"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')} {best.get('hedge_action', '')}: "
+                f"{best.get('event_bias', '')}, "
+                f"score={best.get('score', '')}, "
+                f"gap={best.get('probability_gap', '')}, "
+                f"edge_after_ask={best.get('current_edge_after_ask', '')}, "
+                f"depth={best.get('ask_depth_to_5c', '')}, "
+                f"market={best.get('market_id', '')}"
+            ),
+            main_gap=(
+                "event probability is only event-state evidence; hedge still needs timestamp alignment, "
+                "funding, spread/depth, beta attribution, and failure-regime labels"
+            ),
+            next_step=best.get(
+                "next_step",
+                "paper-label the crypto hedge around the event market before promotion",
+            ),
+        )
+    return ExplorationRow(
+        lane="prediction_market_crypto_hedge",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="prediction-market event states have not been mapped into crypto hedge candidates",
+        next_step="run current_event_crypto_hedge_candidates after probability refresh/actionability",
     )
 
 

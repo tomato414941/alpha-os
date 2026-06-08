@@ -4,9 +4,7 @@ This checks promoted paper-ticket mark wins against rough spread, taker fee, fun
 
 | ticket | asset | decision | size USD | dir bps | spread | depth 10bps | usage | funding 1h | cost | net | risk action | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| paper-05-mega-microstructure-flow | MEGA | paper_long | 100.00 | 182.9095 | 14.15146049 | 890.04241000 | 0.11235420 | -0.12500000 | 22.15146049 | 160.63305811 | depth_too_thin_for_probe | candidate size consumes too much visible 10bps depth |
 | paper-03-inj-volume-dislocation | INJ | paper_long | 250 | 161.6753 |  |  |  | -0.00000000 | 8.00000000 | 153.67534722 | missing_execution_context | no current public execution context for the promoted paper ticket |
 | paper-01-sui-repeat-execution | SUI | paper_long | 1000 | 66.6069 | 1.32927461 | 80606.36892000 | 0.01240597 | -0.12500000 | 9.32927461 | 57.15265091 | cost_adjusted_paper_probe | paper mark win survives rough spread, taker-fee, funding, and visible-depth checks |
 | paper-02-sui-repeat-execution | SUI | paper_long | 1000 | 65.5518 | 1.32899196 | 101153.63830000 | 0.00988595 | 0.25854524 | 9.32899196 | 56.48139274 | cost_adjusted_paper_probe | paper mark win survives rough spread, taker-fee, funding, and visible-depth checks |
-| paper-07-fartcoin-volume-dislocation | FARTCOIN | paper_long | 250 | 34.7373 |  |  |  | -0.00000000 | 8.00000000 | 26.73729917 | missing_execution_context | no current public execution context for the promoted paper ticket |
 | paper-50-hype-token-unlock | HYPE | paper_short |  | 5.3649 | 0.81386169 | 45066.62538000 |  | 0.12500000 | 8.81386169 | -3.32396761 | cost_adjusted_edge_failed | paper mark win does not survive rough spread, taker-fee, and funding haircut |

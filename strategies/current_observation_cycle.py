@@ -20,6 +20,9 @@ DEFAULT_COMMANDS = (
     ("strategies.options_volatility.current_options_volatility_paper_tickets",),
     ("strategies.options_volatility.current_volatility_actionability",),
     ("strategies.options_volatility.current_volatility_hedge_candidates",),
+    ("strategies.prediction_markets.current_event_probability_refresh",),
+    ("strategies.prediction_markets.current_event_probability_actionability",),
+    ("strategies.prediction_markets.current_event_crypto_hedge_candidates",),
     ("strategies.execution_edge.current_execution_mode_candidates",),
     ("strategies.current_alpha_stack",),
     ("strategies.current_paper_probe_plan",),
@@ -168,7 +171,6 @@ PUBLIC_MARK_MODULES = (
     "strategies.candidate_validation.current_followup_execution_context",
     "strategies.candidate_validation.current_followup_okx_execution_context",
     "strategies.p0_parallel.binance_derivatives_intraday_live_execution_gate",
-    "strategies.prediction_markets.current_event_probability_refresh",
 )
 
 PUBLIC_MARK_COMMANDS = tuple((module,) for module in PUBLIC_MARK_MODULES)

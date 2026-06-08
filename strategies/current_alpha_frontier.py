@@ -97,7 +97,14 @@ LANE_RULES = (
     ),
     LaneRule(
         lane="prediction-market signal",
-        tokens=("prediction_market", "probability", "polymarket", "kalshi"),
+        tokens=(
+            "prediction_market",
+            "prediction_markets",
+            "event_crypto_hedge",
+            "probability",
+            "polymarket",
+            "kalshi",
+        ),
         missing_work="resolution risk, fill/queue risk, market manipulation, and event-to-trade mapping",
         next_probe="separate pure prediction-market trades from crypto hedges informed by event odds",
         base_priority=89.0,

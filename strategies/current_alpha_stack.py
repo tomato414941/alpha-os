@@ -28,6 +28,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_volatility_hedge_candidate_stacks(root),
         *_volatility_actionability_stacks(root),
         *_options_volatility_stacks(root),
+        *_event_crypto_hedge_stacks(root),
         *_event_probability_actionability_stacks(root),
         _prediction_market_event_model_stack(root),
         _cross_market_stress_anomaly_stack(root),
@@ -2274,6 +2275,59 @@ def _event_probability_actionability_stacks(root: Path) -> tuple[AlphaStackRow, 
     return tuple(output)
 
 
+def _event_crypto_hedge_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "prediction_markets" / "current_event_crypto_hedge_candidates.csv")
+    candidates = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "event_crypto_hedge_after_refresh_candidate",
+                "event_crypto_hedge_current_quote_candidate",
+                "event_crypto_hedge_news_gap_candidate",
+                "event_crypto_hedge_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for candidate in candidates[:8]:
+        status = candidate.get("status", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=candidate.get("candidate_id", ""),
+                status=status,
+                side=f"{candidate.get('hedge_action', '')}_{candidate.get('event_bias', '')}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=4 if status == "event_crypto_hedge_after_refresh_candidate" else 2,
+                    raw_score=_float(candidate.get("score")),
+                ),
+                sources="prediction_markets + external_news + crypto_hedge",
+                evidence=(
+                    f"{candidate.get('asset', '')}: event_market={candidate.get('market_id', '')}, "
+                    f"action={candidate.get('hedge_action', '')}, "
+                    f"bias={candidate.get('event_bias', '')}, "
+                    f"gap={candidate.get('probability_gap', '')}, "
+                    f"edge_after_ask={candidate.get('current_edge_after_ask', '')}, "
+                    f"depth_5c={candidate.get('ask_depth_to_5c', '')}, "
+                    f"question={candidate.get('question', '')}"
+                ),
+                conflict=(
+                    "event-market probability can be stale, manipulated, or non-causal for crypto beta; "
+                    "hedge needs event timestamp, funding, spread/depth, beta attribution, and failure regime"
+                ),
+                next_step=candidate.get(
+                    "next_step",
+                    "paper-label event crypto hedge with funding, spread/depth, beta, and failure regime",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _lending_stress_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "defi_lending" / "current_lending_stress_actionability.csv")
     tickets = sorted(
@@ -3864,6 +3918,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "event_probability_source_quality_blocked": 38.0,
         "event_probability_quote_blocked": 30.0,
         "event_probability_deprioritize": 28.0,
+        "event_crypto_hedge_after_refresh_candidate": 68.0,
+        "event_crypto_hedge_current_quote_candidate": 62.0,
+        "event_crypto_hedge_news_gap_candidate": 58.0,
+        "event_crypto_hedge_watch": 44.0,
         "cross_market_peg_stress_anomaly": 86.0,
         "cross_market_lending_stress_anomaly": 82.0,
         "cross_market_yield_peg_anomaly": 74.0,

@@ -9,7 +9,6 @@ This turns paper-ticket fill-risk checks into execution-mode candidates. It is n
 | paper-03-inj-volume-dislocation | INJ | context_required | refresh_execution_context | 181.8429 | 153.6753 | 161.6753 | 0.0000 | 0.0000 | 250 | paper edge cannot be evaluated because spread, funding, or visible depth is missing |
 | lane-near-near-microstructure-flow-paper-probe | NEAR | taker_small | repeat_taker_probe | 180.5648 | 148.6992 | 148.6992 | 1.8321 | 0.0033 | 100.00 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | lane-near-near-microstructure-flow-probe | NEAR | taker_small | repeat_taker_probe | 180.5648 | 148.6992 | 148.6992 | 1.8321 | 0.0033 | 100 | paper edge survives rough taker spread, fee, funding, and depth checks |
-| paper-05-mega-microstructure-flow | MEGA | reduced_size_taker | retry_with_depth_capped_size | 176.7087 | 160.6331 | 160.6331 | 14.1515 | 0.1124 | 44.50 | paper edge survives directionally but current size consumes too much visible depth |
 | repeat-lane-near-near-microstructure-flow-paper-probe | NEAR | maker_or_low_fee_small | compare_taker_vs_low_fee | 168.3500 | 133.1257 | 140.0417 | 1.8321 | 0.0033 | 100.00 | low-fee or maker-like execution may improve the already surviving paper edge |
 | repeat-lane-near-near-microstructure-flow-paper-probe | NEAR | taker_small | repeat_taker_probe | 163.4340 | 133.1257 | 133.1257 | 1.8321 | 0.0033 | 100.00 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | repeat-lane-near-near-microstructure-flow-probe | NEAR | maker_or_low_fee_small | compare_taker_vs_low_fee | 143.5259 | 110.5583 | 117.4744 | 1.8321 | 0.0033 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
@@ -28,12 +27,13 @@ This turns paper-ticket fill-risk checks into execution-mode candidates. It is n
 | repeat-paper-26-sui-liquidation-intensity | SUI | maker_or_low_fee_small | compare_taker_vs_low_fee | 50.0770 | 25.8791 | 32.5437 | 1.3293 | 0.0012 | 100.00 | low-fee or maker-like execution may improve the already surviving paper edge |
 | repeat-paper-02-sui-repeat-execution | SUI | taker_small | repeat_taker_probe | 45.4124 | 25.8791 | 25.8791 | 1.3293 | 0.0124 | 1000 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | repeat-paper-26-sui-liquidation-intensity | SUI | taker_small | repeat_taker_probe | 45.4124 | 25.8791 | 25.8791 | 1.3293 | 0.0012 | 100.00 | paper edge survives rough taker spread, fee, funding, and depth checks |
-| paper-07-fartcoin-volume-dislocation | FARTCOIN | context_required | refresh_execution_context | 42.2110 | 26.7373 | 34.7373 | 0.0000 | 0.0000 | 250 | paper edge cannot be evaluated because spread, funding, or visible depth is missing |
 | repeat-paper-01-sui-repeat-execution | SUI | maker_or_low_fee_small | compare_taker_vs_low_fee | 41.2530 | 17.8572 | 24.5218 | 1.3293 | 0.0124 | 1000 | low-fee or maker-like execution may improve the already surviving paper edge |
 | repeat-paper-19-sui-microstructure-flow | SUI | maker_or_low_fee_small | compare_taker_vs_low_fee | 41.2530 | 17.8572 | 24.5218 | 1.3293 | 0.0012 | 100.00 | low-fee or maker-like execution may improve the already surviving paper edge |
 | repeat-paper-01-sui-repeat-execution | SUI | taker_small | repeat_taker_probe | 36.5884 | 17.8572 | 17.8572 | 1.3293 | 0.0124 | 1000 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | repeat-paper-19-sui-microstructure-flow | SUI | taker_small | repeat_taker_probe | 36.5884 | 17.8572 | 17.8572 | 1.3293 | 0.0012 | 100.00 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | lane-hype-hype-protocol-fee-growth | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 34.3948 | 11.9263 | 18.3333 | 0.8139 | 0.0022 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
+| lane-hype-hype-unlock-actionability | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 34.3948 | 11.9263 | 18.3333 | 0.8139 | 0.0022 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
+| lane-hype-hype-protocol-fee-growth | HYPE | taker_small | repeat_taker_probe | 29.9879 | 11.9263 | 11.9263 | 0.8139 | 0.0022 | 100 | paper edge survives rough taker spread, fee, funding, and depth checks |
 
 ## Interpretation
 

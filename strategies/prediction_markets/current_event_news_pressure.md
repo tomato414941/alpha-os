@@ -4,16 +4,16 @@ This joins depth-positive prediction-market candidates to Google News RSS activi
 
 | question | category | midpoint | market score | articles 24h | articles 72h | sources | newest h | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| US x Iran permanent peace deal by June 30, 2026? | geopolitical_event | 0.1450 | 154.9571 | 22 | 30 | 25 | 3.15 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| Strait of Hormuz traffic returns to normal by end of June? | geopolitical_event | 0.0950 | 153.0594 | 23 | 30 | 26 | 1.00 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| US x Iran permanent peace deal by July 31, 2026? | geopolitical_event | 0.7150 | 146.4687 | 22 | 30 | 25 | 3.15 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| Strait of Hormuz traffic returns to normal by July 31? | geopolitical_event | 0.7250 | 117.6450 | 23 | 30 | 26 | 1.00 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| US-Iran nuclear deal by June 30? | geopolitical_event | 0.1850 | 96.0953 | 23 | 30 | 24 | 0.15 | 144.2191 | external_news_active | recent multi-source news flow exists for this event market |
-| Israel closes its airspace by June 15? | geopolitical_event | 0.5150 | 77.7066 | 30 | 30 | 22 | 1.09 | 140.5413 | external_news_active | recent multi-source news flow exists for this event market |
-| Israel closes its airspace by June 30? | geopolitical_event | 0.6050 | 67.7337 | 30 | 30 | 22 | 1.09 | 138.5467 | external_news_active | recent multi-source news flow exists for this event market |
-| US announces new Iran agreement/ceasefire extension by June 12? | geopolitical_event | 0.1700 | 67.3868 | 9 | 15 | 14 | 2.04 | 101.4774 | external_news_active | recent multi-source news flow exists for this event market |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | political_event | 0.7800 | 66.2038 | 2 | 6 | 6 | 14.85 | 54.2408 | external_news_watch | some external news flow exists, but it is not yet strong enough |
-| Will the U.S. invade Iran before 2027? | geopolitical_event | 0.8250 | 148.1375 | 0 | 0 | 0 | 999.00 | 20.0000 | external_news_thin | little current external news flow was found for this event market |
+| US x Iran permanent peace deal by June 30, 2026? | geopolitical_event | 0.1450 | 154.9862 | 22 | 30 | 25 | 0.71 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
+| Strait of Hormuz traffic returns to normal by end of June? | geopolitical_event | 0.1050 | 154.5760 | 26 | 30 | 28 | 0.38 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
+| US x Iran permanent peace deal by July 31, 2026? | geopolitical_event | 0.7150 | 146.2280 | 22 | 30 | 25 | 0.71 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
+| Strait of Hormuz traffic returns to normal by July 31? | geopolitical_event | 0.7150 | 112.5195 | 26 | 30 | 28 | 0.38 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
+| US-Iran nuclear deal by June 30? | geopolitical_event | 0.7950 | 85.7355 | 23 | 30 | 23 | 1.23 | 142.1471 | external_news_active | recent multi-source news flow exists for this event market |
+| Israel closes its airspace by June 15? | geopolitical_event | 0.3050 | 67.4684 | 30 | 30 | 22 | 2.18 | 138.4937 | external_news_active | recent multi-source news flow exists for this event market |
+| Israel closes its airspace by June 8? | geopolitical_event | 0.1300 | 57.1147 | 30 | 30 | 22 | 2.18 | 136.4229 | external_news_active | recent multi-source news flow exists for this event market |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | political_event | 0.7850 | 81.6420 | 3 | 7 | 7 | 2.23 | 72.3284 | external_news_active | recent multi-source news flow exists for this event market |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | political_event | 0.2215 | 76.6471 | 1 | 2 | 1 | 22.12 | 30.3294 | external_news_watch | some external news flow exists, but it is not yet strong enough |
+| Will the U.S. invade Iran before 2027? | geopolitical_event | 0.8250 | 148.2001 | 0 | 0 | 0 | 999.00 | 20.0000 | external_news_thin | little current external news flow was found for this event market |
 
 ## Caveat
 

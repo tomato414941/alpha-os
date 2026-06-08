@@ -284,6 +284,8 @@ def _required_record(row: dict[str, str]) -> str:
         return "source overlap, duplicate-source check, forward label, spread/depth, funding, crowding"
     if probe_type == "execution_edge_probe":
         return "execution mode, fee tier, fill assumption, queue/adverse selection, stop, funding"
+    if probe_type == "event_crypto_hedge_probe":
+        return "event timestamp, mark move, funding, spread/depth, beta attribution, failure regime"
     if probe_type == "stablecoin_migration_probe":
         return "flow snapshot, mapped token mark, funding, venue cost, forward label"
     if probe_type == "stablecoin_peg_probe":
