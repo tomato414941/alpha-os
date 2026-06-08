@@ -20,9 +20,22 @@ DEFAULT_SYMBOLS = (
     "ETHUSDT",
     "SOLUSDT",
     "XRPUSDT",
+    "BNBUSDT",
     "DOGEUSDT",
+    "ADAUSDT",
     "AVAXUSDT",
     "LINKUSDT",
+    "LTCUSDT",
+    "BCHUSDT",
+    "DOTUSDT",
+    "UNIUSDT",
+    "ETCUSDT",
+    "FILUSDT",
+    "NEARUSDT",
+    "APTUSDT",
+    "OPUSDT",
+    "ARBUSDT",
+    "INJUSDT",
 )
 
 
@@ -549,7 +562,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
     parser.add_argument("--start-date", type=_parse_date, default=date(2024, 1, 1))
-    parser.add_argument("--days", type=int, default=30)
+    parser.add_argument("--days", type=int, default=90)
     parser.add_argument("--max-workers", type=int, default=12)
     parser.add_argument(
         "--output-path",
