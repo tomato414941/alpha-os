@@ -1,10 +1,10 @@
 lane,source,method,url,status_code,available,response_bytes,history_kind,access,expected_use,notes
-liquidation_oi_funding,hyperliquid_meta_and_asset_contexts,POST,https://api.hyperliquid.xyz/info,200,True,71666,current_snapshot,free_public,"current OI, funding, volume, premium, and impact context",reachable but not historical
+liquidation_oi_funding,hyperliquid_meta_and_asset_contexts,POST,https://api.hyperliquid.xyz/info,200,True,71512,current_snapshot,free_public,"current OI, funding, volume, premium, and impact context",reachable but not historical
 liquidation_oi_funding,binance_um_daily_metrics,HEAD,https://data.binance.vision/data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2024-01-01.zip,200,True,11521,daily_historical_file,free_public,historical OI and derivatives metrics if schema is usable,reachable
 funding_basis,binance_um_daily_premium_index_klines,HEAD,https://data.binance.vision/data/futures/um/daily/premiumIndexKlines/BTCUSDT/1m/BTCUSDT-1m-2024-01-01.zip,200,True,28606,minute_historical_file,free_public,premium/index/funding-adjacent history for basis tests,reachable
-funding_basis,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,64001,current_snapshot,free_public,current multi-venue predicted funding spread,reachable but not historical
-l2_fill,hyperliquid_l2_book,POST,https://api.hyperliquid.xyz/info,200,True,1582,current_snapshot,free_public,top 20 L2 levels per side for fill/adverse-selection probes,reachable but not historical
-l2_fill,hyperliquid_recent_trades,POST,https://api.hyperliquid.xyz/info,200,True,2750,recent_snapshot,free_public,recent trades to pair with L2 snapshots,reachable
-attention_liquidity,defillama_stablecoins,GET,https://stablecoins.llama.fi/stablecoins?includePrices=true,200,True,505219,current_with_prev_period_fields,free_public,stablecoin supply and peg context,reachable
-attention_liquidity,alternative_me_fear_greed,GET,https://api.alternative.me/fng/?limit=30,200,True,2952,short_history,free_public,market-level sentiment context,reachable
-attention_liquidity,coingecko_trending,GET,https://api.coingecko.com/api/v3/search/trending,200,True,56952,current_snapshot,free_public,attention proxy for trending assets,reachable but not historical
+funding_basis,hyperliquid_predicted_fundings,POST,https://api.hyperliquid.xyz/info,200,True,63958,current_snapshot,free_public,current multi-venue predicted funding spread,reachable but not historical
+l2_fill,hyperliquid_l2_book,POST,https://api.hyperliquid.xyz/info,200,True,1568,current_snapshot,free_public,top 20 L2 levels per side for fill/adverse-selection probes,reachable but not historical
+l2_fill,hyperliquid_recent_trades,POST,https://api.hyperliquid.xyz/info,200,True,2748,recent_snapshot,free_public,recent trades to pair with L2 snapshots,reachable
+attention_liquidity,defillama_stablecoins,GET,https://stablecoins.llama.fi/stablecoins?includePrices=true,200,True,505272,current_with_prev_period_fields,free_public,stablecoin supply and peg context,reachable
+attention_liquidity,alternative_me_fear_greed,GET,https://api.alternative.me/fng/?limit=30,200,True,2959,short_history,free_public,market-level sentiment context,reachable
+attention_liquidity,coingecko_trending,GET,https://api.coingecko.com/api/v3/search/trending,200,True,57176,current_snapshot,free_public,attention proxy for trending assets,reachable but not historical

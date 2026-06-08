@@ -1,18 +1,18 @@
 # Paper Trade Ticket
 
-Generated: 2026-06-07T05:00:19.976697+00:00
+Generated: 2026-06-08T00:08:09.999526+00:00
 
 This is not a trade instruction. It is an operational feasibility ticket.
 
 ## Candidate
 
-- Asset: `MANTA`
-- Long venue: `BinPerp`
+- Asset: `STABLE`
+- Long venue: `BybitPerp`
 - Short venue: `HlPerp`
-- Annualized spread snapshot: `2.18652228`
-- Hyperliquid 24h notional volume: `651345.71`
-- Hyperliquid impact spread: `0.00228467`
-- Source timestamp: `2026-06-07T02:42:59.076377+00:00`
+- Annualized spread snapshot: `2.51400524`
+- Hyperliquid 24h notional volume: `1176450.45`
+- Hyperliquid impact spread: `0.00298578`
+- Source timestamp: `2026-06-07T14:17:54.065127+00:00`
 - Notes: Hyperliquid context available
 
 ## Required Checks Before Any Real Order
