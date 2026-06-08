@@ -27,6 +27,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _research_backed_alpha_expansion_plan_row(root),
         _fundamental_sentiment_cross_section_row(root),
         _multimodal_btc_eth_feature_alignment_row(root),
+        _sentiment_contagion_negative_control_row(root),
         _cross_modal_alpha_context_row(root),
         _cross_modal_source_split_row(root),
         _paper_probe_plan_row(root),
@@ -313,6 +314,38 @@ def _multimodal_btc_eth_feature_alignment_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="BTC/ETH multimodal features are not aligned into a single timestamp-aware row",
         next_step="join NLP/news, attention, stablecoin, wallet, funding, and equity-factor rows for BTC/ETH",
+    )
+
+
+def _sentiment_contagion_negative_control_row(root: Path) -> ExplorationRow:
+    path = root / "current_sentiment_contagion_negative_control.csv"
+    best = _best_numeric_row(path, key="control_gap")
+    if best:
+        return ExplorationRow(
+            lane="sentiment_contagion_negative_control",
+            status=best.get("status", "sentiment_contagion_control"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"belief={best.get('belief_proxy_score', '')}, "
+                f"return={best.get('return_support_score', '')}, "
+                f"gap={best.get('control_gap', '')}, "
+                f"source={best.get('strongest_belief_source', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "sentiment control still needs social graph, belief outcome, beta attribution, and clean labels",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "use social/event signal as a negative control before promotion",
+            ),
+        )
+    return ExplorationRow(
+        lane="sentiment_contagion_negative_control",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="social/event belief proxies are not separated from return-predictive alpha",
+        next_step="build sentiment contagion negative controls for BTC/ETH/HYPE",
     )
 
 
