@@ -19,6 +19,7 @@ uv run python -m strategies.news_social.current_attention_forward_labels
 uv run python -m strategies.news_social.current_news_event_screen
 uv run python -m strategies.news_social.current_news_event_forward_labels
 uv run python -m strategies.news_social.current_news_event_quality_gate
+uv run python -m strategies.news_social.current_news_event_source_independence
 ```
 
 ## Current Status
@@ -33,6 +34,8 @@ This is not yet a news strategy. It now has:
   returns where historical archives are available
 - a news-event quality gate that groups labels by symbol/event/side and checks
   source diversity, repeat support, rejected labels, and pending archives
+- a source-independence gate that separates independent stories from multiple
+  outlets repeating the same story
 
 These outputs are candidate-generation inputs only. They still need duplicate
 source review, stricter leakage controls, longer OOS windows, and execution

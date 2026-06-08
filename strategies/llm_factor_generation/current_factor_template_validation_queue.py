@@ -61,11 +61,18 @@ ROUTE_RULES = {
     ),
     "source_diverse_news_shock_factor": RouteRule(
         template_id="source_diverse_news_shock_factor",
-        validation_route="news event quality gate",
-        artifact_path=ROOT / "news_social" / "current_news_event_quality_gate.csv",
-        status_columns=("decision",),
+        validation_route="news event source-independence gate",
+        artifact_path=ROOT / "news_social" / "current_news_event_source_independence.csv",
+        status_columns=("independence_status",),
         score_columns=("score", "mean_directional_4h_bps", "mean_directional_1h_bps"),
-        evidence_columns=("symbol", "event_kind", "side", "source_count", "supported_count", "rejected_count"),
+        evidence_columns=(
+            "symbol",
+            "event_kind",
+            "side",
+            "source_count",
+            "unique_story_count",
+            "dominant_story_terms",
+        ),
         next_step="wait for fresh archives, dedupe sources, and rerun 15m/1h/4h labels after costs",
     ),
     "prediction_market_crypto_beta_factor": RouteRule(

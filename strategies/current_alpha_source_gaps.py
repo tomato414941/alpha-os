@@ -106,6 +106,7 @@ def build_alpha_source_gaps(
     book_depth_execution_cost_sweep_path: Path = ROOT / "event_flow" / "book_depth_execution_cost_sweep.csv",
     news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
     news_event_quality_gate_path: Path = ROOT / "news_social" / "current_news_event_quality_gate.csv",
+    news_event_source_independence_path: Path = ROOT / "news_social" / "current_news_event_source_independence.csv",
     factor_hypothesis_templates_path: Path = (
         ROOT / "llm_factor_generation" / "current_factor_hypothesis_templates.csv"
     ),
@@ -120,6 +121,7 @@ def build_alpha_source_gaps(
     book_depth_execution_cost_sweep_rows = _read_rows(book_depth_execution_cost_sweep_path)
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
+    news_event_source_independence_rows = _read_rows(news_event_source_independence_path)
     factor_hypothesis_template_rows = _read_rows(factor_hypothesis_templates_path)
     factor_template_validation_queue_rows = _read_rows(factor_template_validation_queue_path)
     rows = tuple(
@@ -132,6 +134,7 @@ def build_alpha_source_gaps(
             book_depth_execution_cost_sweep_rows=book_depth_execution_cost_sweep_rows,
             news_event_forward_label_rows=news_event_forward_label_rows,
             news_event_quality_gate_rows=news_event_quality_gate_rows,
+            news_event_source_independence_rows=news_event_source_independence_rows,
             factor_hypothesis_template_rows=factor_hypothesis_template_rows,
             factor_template_validation_queue_rows=factor_template_validation_queue_rows,
         )
@@ -208,6 +211,7 @@ def _build_gap(
     book_depth_execution_cost_sweep_rows: tuple[dict[str, str], ...],
     news_event_forward_label_rows: tuple[dict[str, str], ...],
     news_event_quality_gate_rows: tuple[dict[str, str], ...],
+    news_event_source_independence_rows: tuple[dict[str, str], ...],
     factor_hypothesis_template_rows: tuple[dict[str, str], ...],
     factor_template_validation_queue_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
@@ -232,6 +236,28 @@ def _build_gap(
         )
         priority = rule.base_priority + 16.0
         next_probe = "extend LOB/basis/positioning walk-forward and add liquidation/event timestamps"
+    elif rule.gap_id == "social_sentiment_contagion" and news_event_source_independence_rows:
+        actionable = tuple(
+            row
+            for row in news_event_source_independence_rows
+            if row.get("independence_status")
+            in {
+                "independent_multi_source_story",
+                "same_story_multi_source_repeat",
+                "pending_archive_before_independence",
+                "single_source_supported_story",
+            }
+        )
+        best_pool = actionable or news_event_source_independence_rows
+        best = max(best_pool, key=lambda row: _float(row.get("score")))
+        status = best.get("independence_status", "source_independence_ready")
+        coverage = (
+            f"{best.get('symbol', '')}/{best.get('event_kind', '')}/{best.get('side', '')} "
+            f"sources={best.get('source_count', '')} stories={best.get('unique_story_count', '')} "
+            f"dominant={best.get('dominant_story_terms', '')}"
+        )
+        priority = rule.base_priority + 14.0
+        next_probe = "repeat source-independent news labels with execution-cost, beta, and duplicate-story controls"
     elif rule.gap_id == "social_sentiment_contagion" and news_event_quality_gate_rows:
         actionable = tuple(
             row

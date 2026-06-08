@@ -2506,6 +2506,46 @@ def _sector_rotation_context_next_step(row: dict[str, str]) -> str:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    source_independence_path = root / "news_social" / "current_news_event_source_independence.csv"
+    source_independence_rows = tuple(
+        row
+        for row in _csv_rows(source_independence_path)
+        if row.get("independence_status")
+        in {
+            "independent_multi_source_story",
+            "same_story_multi_source_repeat",
+            "pending_archive_before_independence",
+            "single_source_supported_story",
+            "weak_forward_story",
+        }
+    )
+    best_independence = (
+        max(source_independence_rows, key=lambda row: float(row.get("score") or "-inf"))
+        if source_independence_rows
+        else None
+    )
+    if best_independence:
+        return ExplorationRow(
+            lane="news_social",
+            status=best_independence.get("independence_status", "news_event_source_independence"),
+            strongest_current_signal=(
+                f"{best_independence.get('symbol', '')}: {best_independence.get('event_kind', '')}, "
+                f"side={best_independence.get('side', '')}, "
+                f"sources={best_independence.get('source_count', '')}, "
+                f"stories={best_independence.get('unique_story_count', '')}, "
+                f"dominant={best_independence.get('dominant_story_terms', '')}, "
+                f"mean1h={best_independence.get('mean_directional_1h_bps', '')}, "
+                f"mean4h={best_independence.get('mean_directional_4h_bps', '')}"
+            ),
+            main_gap=best_independence.get(
+                "reason",
+                "news-event source-independence gate still needs execution costs and beta controls",
+            ),
+            next_step=best_independence.get(
+                "next_step",
+                "repeat news-event labels with story-level dedupe and execution-cost checks",
+            ),
+        )
     quality_gate_path = root / "news_social" / "current_news_event_quality_gate.csv"
     quality_rows = tuple(
         row
