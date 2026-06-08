@@ -102,6 +102,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _institutional_flow_row(root),
         _candidate_validation_row(root),
         _stablecoin_liquidity_row(root),
+        _stablecoin_exchange_inflow_proxy_row(root),
         _on_chain_flow_row(root),
         _protocol_fundamentals_row(root),
     )
@@ -4577,6 +4578,37 @@ def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="supply changes are not yet joined to returns, funding, or regimes",
         next_step="test stablecoin supply change as market liquidity context",
+    )
+
+
+def _stablecoin_exchange_inflow_proxy_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_stablecoin_exchange_inflow_proxy.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="stablecoin_exchange_inflow_proxy",
+            status=best.get("status", "stablecoin_exchange_inflow_proxy"),
+            strongest_current_signal=(
+                f"{best.get('chain', '')}/{best.get('token_symbol', '') or '-'}: "
+                f"{best.get('stablecoin_flow_direction', '')}, "
+                f"week_change={best.get('week_change_usd', '')}, "
+                f"priority={best.get('priority', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "exchange-inflow proxy still needs exchange wallet map and tagged stablecoin deposits",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "separate exchange-inflow alpha from chain-level stablecoin liquidity proxy",
+            ),
+        )
+    return ExplorationRow(
+        lane="stablecoin_exchange_inflow_proxy",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="chain stablecoin migration has not been separated from direct exchange-inflow alpha",
+        next_step="run current stablecoin exchange inflow proxy after chain migration labels",
     )
 
 
