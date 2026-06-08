@@ -34,10 +34,12 @@ def build_cluster_repeat_plan(
     *,
     clusters_path: Path = ROOT / "current_cost_adjusted_alpha_clusters.csv",
     candidates_path: Path = ROOT / "current_cost_adjusted_alpha_candidates.csv",
+    cost_survival_path: Path = ROOT / "current_cost_survival_cross_section.csv",
     conflicts_path: Path = ROOT / "current_symbol_cluster_conflicts.csv",
     top: int = DEFAULT_TOP,
 ) -> tuple[ClusterRepeatPlan, ...]:
     candidates_by_cluster = _candidates_by_cluster(candidates_path)
+    cost_survival = {row.get("cluster_id", ""): row for row in _read_rows(cost_survival_path)}
     conflicts = {row.get("symbol", ""): row for row in _read_rows(conflicts_path)}
     rows: list[ClusterRepeatPlan] = []
     for rank, cluster in enumerate(_read_rows(clusters_path)[:top], start=1):
@@ -47,6 +49,7 @@ def build_cluster_repeat_plan(
                 rank=rank,
                 cluster=cluster,
                 representative=representative,
+                cost_survival=cost_survival.get(cluster.get("cluster_id", ""), {}),
                 conflict=conflicts.get(cluster.get("asset", ""), {}),
             )
         )
@@ -136,9 +139,10 @@ def _plan_row(
     rank: int,
     cluster: dict[str, str],
     representative: dict[str, str],
+    cost_survival: dict[str, str],
     conflict: dict[str, str],
 ) -> ClusterRepeatPlan:
-    action = _action(cluster=cluster, conflict=conflict)
+    action = _action(cluster=cluster, cost_survival=cost_survival, conflict=conflict)
     asset = cluster.get("asset", "")
     decision = cluster.get("decision", "")
     return ClusterRepeatPlan(
@@ -149,7 +153,7 @@ def _plan_row(
         action=action,
         representative_ticket_id=representative.get("ticket_id", ""),
         representative_opportunity=representative.get("opportunity", ""),
-        candidate_size_usd=_candidate_size(cluster=cluster, representative=representative),
+        candidate_size_usd=_candidate_size(action=action, cluster=cluster, representative=representative),
         source_lanes=cluster.get("source_lanes", ""),
         conflict_status=conflict.get("status", ""),
         dominant_bias=conflict.get("dominant_bias", ""),
@@ -179,7 +183,9 @@ def _representative_candidate(
     return rows[0] if rows else {}
 
 
-def _action(*, cluster: dict[str, str], conflict: dict[str, str]) -> str:
+def _action(*, cluster: dict[str, str], cost_survival: dict[str, str], conflict: dict[str, str]) -> str:
+    if cost_survival.get("status") == "duplicate_pressure_control_required":
+        return "dedupe_before_repeat_probe"
     if conflict.get("status", "").startswith("mixed_"):
         return "split_lanes_before_repeat_probe"
     if cluster.get("status") == "capacity_gated_alpha_cluster":
@@ -187,13 +193,17 @@ def _action(*, cluster: dict[str, str], conflict: dict[str, str]) -> str:
     return "open_consolidated_repeat_probe"
 
 
-def _candidate_size(*, cluster: dict[str, str], representative: dict[str, str]) -> str:
+def _candidate_size(*, action: str, cluster: dict[str, str], representative: dict[str, str]) -> str:
+    if action == "dedupe_before_repeat_probe":
+        return "dedupe_only"
     if cluster.get("status") == "capacity_gated_alpha_cluster":
         return "smaller_than_representative"
     return representative.get("candidate_size_usd", "")
 
 
 def _required_record(action: str) -> str:
+    if action == "dedupe_before_repeat_probe":
+        return "unique opportunity, independent timestamp, source separation, reused-price-move reason"
     if action == "split_lanes_before_repeat_probe":
         return "lane-specific direction, source independence, conflict reason, entry mark, costs, stop"
     if action == "resize_before_repeat_probe":
@@ -202,6 +212,8 @@ def _required_record(action: str) -> str:
 
 
 def _next_step(*, action: str, asset: str, decision: str) -> str:
+    if action == "dedupe_before_repeat_probe":
+        return f"dedupe {asset} {decision} opportunities before any consolidated repeat; do not reuse the same price move"
     if action == "split_lanes_before_repeat_probe":
         return f"split {asset} lanes before any {decision} repeat; do not collapse conflicting sources into one action"
     if action == "resize_before_repeat_probe":
