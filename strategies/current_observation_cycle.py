@@ -106,6 +106,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_paper_ticket_outcomes",),
     ("strategies.prediction_markets.current_event_crypto_hedge_reaction_labels",),
     ("strategies.prediction_markets.current_event_crypto_hedge_beta_attribution",),
+    ("strategies.prediction_markets.current_event_crypto_hedge_event_alignment",),
     ("strategies.current_paper_ticket_action_queue",),
     ("strategies.current_paper_ticket_fill_risk_check",),
     ("strategies.current_promoted_ticket_repeat_tickets", "--preserve-opened-at"),

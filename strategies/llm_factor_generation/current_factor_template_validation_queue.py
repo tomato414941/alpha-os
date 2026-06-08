@@ -64,14 +64,15 @@ ROUTE_RULES = {
     "prediction_market_crypto_beta_factor": RouteRule(
         template_id="prediction_market_crypto_beta_factor",
         validation_route="prediction-market refresh plus crypto hedge labels",
-        artifact_path=ROOT / "prediction_markets" / "current_event_crypto_hedge_beta_attribution.csv",
-        status_columns=("attribution_status",),
-        score_columns=("asset_directional_return_bps", "basket_directional_return_bps"),
+        artifact_path=ROOT / "prediction_markets" / "current_event_crypto_hedge_event_alignment.csv",
+        status_columns=("alignment_status",),
+        score_columns=("asset_directional_return_bps", "basket_directional_return_bps", "event_mark_return_bps"),
         evidence_columns=(
             "asset",
             "market_id",
             "asset_directional_return_bps",
             "basket_directional_return_bps",
+            "event_mark_return_bps",
             "residual_vs_basket_bps",
         ),
         next_step="label refreshed event-probability crypto hedges with beta attribution and resolution risk",

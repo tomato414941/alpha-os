@@ -3067,6 +3067,30 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
+    alignment_path = root / "prediction_markets" / "current_event_crypto_hedge_event_alignment.csv"
+    alignment = _best_event_crypto_hedge_event_alignment(alignment_path)
+    if alignment:
+        return ExplorationRow(
+            lane="prediction_market_crypto_hedge",
+            status=alignment.get("alignment_status", "event_crypto_hedge_event_alignment"),
+            strongest_current_signal=(
+                f"{alignment.get('asset', '')} {alignment.get('hedge_action', '')}: "
+                f"{alignment.get('event_bias', '')}, "
+                f"asset_bps={alignment.get('asset_directional_return_bps', '')}, "
+                f"event_bps={alignment.get('event_mark_return_bps', '')}, "
+                f"control_count={alignment.get('same_asset_control_count', '')}, "
+                f"control_gap={alignment.get('same_asset_control_gap_bps', '')}, "
+                f"market={alignment.get('market_id', '')}"
+            ),
+            main_gap=(
+                "event-market probability did not move with the crypto hedge; this is currently a crypto beta "
+                "or same-asset control move, not proven event alpha"
+            ),
+            next_step=alignment.get(
+                "next_step",
+                "require event-market movement and same-asset controls before promotion",
+            ),
+        )
     attribution_path = root / "prediction_markets" / "current_event_crypto_hedge_beta_attribution.csv"
     attribution = _best_event_crypto_hedge_beta_attribution(attribution_path)
     if attribution:
@@ -3144,6 +3168,29 @@ def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="prediction-market event states have not been mapped into crypto hedge candidates",
         next_step="run current_event_crypto_hedge_candidates after probability refresh/actionability",
+    )
+
+
+def _best_event_crypto_hedge_event_alignment(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    status_rank = {
+        "event_probability_and_crypto_aligned": 4.0,
+        "same_asset_control_explains_return": 3.0,
+        "event_alignment_inconclusive": 2.0,
+        "event_probability_flat_crypto_moved": 1.0,
+        "event_probability_contradicts_crypto": 0.0,
+    }
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("alignment_status", ""), 0.0),
+            _safe_float(row.get("asset_directional_return_bps")),
+        ),
     )
 
 
