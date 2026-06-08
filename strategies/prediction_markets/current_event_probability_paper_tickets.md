@@ -4,9 +4,11 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.3600 | 0.2600 | 0.1000 | 291239.63 | 83.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Israel closes its airspace by June 15? | buy_no | 0.4700 | 0.5900 | 0.1200 | 0.4700 | 33289.22 | 70.2400 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2800 | 0.4200 | 0.1400 | 0.2800 | 71389.26 | 69.7600 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.3600 | 0.2600 | 0.1000 | 287971.81 | 83.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Israel closes its airspace by June 30? | buy_no | 0.4000 | 0.5500 | 0.1500 | 0.4000 | 53364.30 | 73.8000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2800 | 0.4200 | 0.1400 | 0.2800 | 71701.32 | 69.7600 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Israel closes its airspace by June 15? | buy_no | 0.4900 | 0.5900 | 0.1000 | 0.4900 | 13845.17 | 61.9252 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.2300 | 0.3400 | 0.1100 | 0.2300 | 23663.67 | 47.9600 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
 
 ## Caveat
 
