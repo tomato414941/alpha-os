@@ -401,6 +401,12 @@ def _candidate_size(row: dict[str, str]) -> str:
 def _observation_horizon(row: dict[str, str]) -> str:
     if row.get("status", "").startswith("event_crypto_hedge_"):
         return "15m/1h/4h"
+    if row.get("status") in {
+        "expand_supported_preference_now",
+        "collect_expansion_labels",
+        "repeat_seed_before_expansion",
+    }:
+        return "15m/1h"
     text = " ".join((row.get("evidence", ""), row.get("next_step", ""))).lower()
     horizons = tuple(horizon for horizon in ("15m", "1h", "4h", "12h", "24h") if horizon in text)
     return "/".join(horizons) if horizons else "fresh"

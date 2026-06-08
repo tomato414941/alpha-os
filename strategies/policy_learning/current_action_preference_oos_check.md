@@ -5,6 +5,7 @@ This checks whether action preferences found in initial paper samples survive re
 | candidate | context | asset | action | train n | train mean | test n | test mean | test hit | score | decision |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | near_microstructure_flow_paper_long | microstructure_flow | NEAR | paper_long | 2 | 148.70 | 3 | 81.23 | 0.667 | 130.10 | oos_supported_action_preference |
+| volume_price_dislocation_paper_long | volume_price_dislocation |  | paper_long | 3 | 20.24 | 4 | 22.21 | 0.500 | 55.58 | oos_supported_action_preference |
 | sol_volume_price_dislocation_paper_long | volume_price_dislocation | SOL | paper_long | 1 | 73.78 | 3 | 30.30 | 0.667 | 67.99 | needs_repeat_oos |
 | repeat_execution_paper_long | repeat_execution |  | paper_long | 0 | 0.00 | 4 | 10.40 | 0.500 | 37.40 | needs_repeat_oos |
 | sui_repeat_execution_paper_long | repeat_execution | SUI | paper_long | 0 | 0.00 | 4 | 10.40 | 0.500 | 37.40 | needs_repeat_oos |

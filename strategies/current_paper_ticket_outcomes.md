@@ -4,7 +4,7 @@ This checks opened paper tickets against the latest available public marks. It i
 
 | ticket | status | decision | asset | venue | entry | current | dir bps | outcome | missing evidence | next step |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
-| paper-01-hype-policy-expansion | ready | paper_long | HYPE |  | 61.478000000000 | 61.478000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-01-hype-policy-expansion | pending | paper_long | HYPE |  | 61.478000000000 | 61.478000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-02-sui-repeat-execution | pending | paper_long | SUI | HL | 0.752650000000 | 0.752650000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-03-sui-repeat-execution | pending | paper_long | SUI | OKX | 0.752400000000 | 0.752400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-04-inj-volume-dislocation | pending | paper_long | INJ | HL | 5.619000000000 | 5.619000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -30,15 +30,15 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-24-apt-wallet-entity-flow | pending | paper_long | APT | HL | 0.671100000000 | 0.671100000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-25-btc-options-volatility | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-26-eth-options-volatility | pending | paper_observe | ETH |  | 1668.900000000000 | 1668.900000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-27-inj-policy-expansion | ready | paper_long | INJ |  | 5.619000000000 | 5.619000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-28-eth-options-volatility | pending | paper_observe | ETH |  | 1668.900000000000 | 1668.900000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-29-hype-policy-expansion | ready | paper_long | HYPE |  | 61.478000000000 | 61.478000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-30-btc-options-volatility | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-31-near-execution-edge | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-32-eth-policy-expansion | ready | paper_long | ETH |  | 1668.900000000000 | 1668.900000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-33-near-execution-edge | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-34-zec-event-pressure | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-35-sol-stablecoin-migration | pending | paper_long | SOL |  | 66.248000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-27-eth-options-volatility | pending | paper_observe | ETH |  | 1668.900000000000 | 1668.900000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-28-btc-options-volatility | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-29-near-execution-edge | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-30-near-execution-edge | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-31-zec-event-pressure | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-32-sol-stablecoin-migration | pending | paper_long | SOL |  | 66.248000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-33-aave-event-pressure | pending | paper_long | AAVE |  | 63.356000000000 | 63.356000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-34-sol-execution-edge | ready | paper_long | SOL |  | 66.248000000000 | 66.248000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-35-sol-event-pressure | pending | paper_observe | SOL |  | 66.248000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-36-crypto-crypto-equity-proxy | ready | paper_short | CRYPTO |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-37-move-derivatives-positioning | ready | paper_observe | MOVE |  | 0.013179000000 | 0.013179000000 |  | observe_mark_flat | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-38-usdc-defi-lending | ready | paper_observe | USDC |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
@@ -57,11 +57,11 @@ This checks opened paper tickets against the latest available public marks. It i
 
 ## Summary
 
-- ready: 20
+- ready: 17
 - wins: 1
 - losses: 1
-- flat: 10
+- flat: 7
 - observations: 4
-- pending: 30
+- pending: 33
 - best ready mark: paper-50-hype-token-unlock HYPE 5.36489408bps paper_mark_win
 - worst ready mark: paper-48-crv-protocol-fee CRV -66.96651674bps paper_mark_loss

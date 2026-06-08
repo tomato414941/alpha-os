@@ -213,6 +213,10 @@ def _ticket_matches_plan(ticket: PaperTicket, row: dict[str, str]) -> bool:
         ticket.opportunity == row.get("opportunity", "")
         and ticket.probe_type == row.get("probe_type", "")
         and ticket.asset == row.get("asset", "")
+        and ticket.status == row.get("status", "")
+        and ticket.side == row.get("side", "")
+        and ticket.candidate_size_usd == row.get("candidate_size_usd", "")
+        and ticket.observation_horizon == row.get("observation_horizon", "")
     )
 
 
