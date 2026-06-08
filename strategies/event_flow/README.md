@@ -37,6 +37,7 @@ uv run python -m strategies.event_flow.book_depth_imbalance_screen
 uv run python -m strategies.event_flow.book_depth_walk_forward_check
 uv run python -m strategies.event_flow.book_depth_execution_cost_sweep
 uv run python -m strategies.event_flow.current_lob_execution_world_replay
+uv run python -m strategies.event_flow.current_lob_sequence_state_probe
 ```
 
 ## Current Status
@@ -53,3 +54,5 @@ The walk-forward check chooses direction from the train side, skips a purge
 window, and checks whether the test side survives explicit round-trip costs.
 The LOB execution-world replay then compares hold, market, low-fee, and
 maker/internalized actions against the same train/test split.
+The sequence-state probe adds rolling persistence, delta, and liquidity-thinning
+features before applying the same execution-cost checks.

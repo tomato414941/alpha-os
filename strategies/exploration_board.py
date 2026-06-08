@@ -1877,6 +1877,32 @@ def _speculative_beta_row(root: Path) -> ExplorationRow:
 
 
 def _event_flow_row(root: Path) -> ExplorationRow:
+    sequence_path = root / "event_flow" / "current_lob_sequence_state_probe.csv"
+    sequence_rows = tuple(
+        row
+        for row in _csv_rows(sequence_path)
+        if row.get("decision") not in {"reject_after_cost", "no_test_samples", "representation_only"}
+    )
+    if sequence_rows:
+        best = max(sequence_rows, key=_lob_sequence_state_sort_key)
+        return ExplorationRow(
+            lane="event_flow",
+            status=best.get("decision", "lob_sequence_state_probe"),
+            strongest_current_signal=(
+                f"{best.get('feature', '')} {best.get('bucket', '')} "
+                f"{best.get('signal_action', '')}/{best.get('execution_mode', '')}, "
+                f"net={best.get('test_net_bps', '')}bps, "
+                f"hit={best.get('test_hit_rate', '')}"
+            ),
+            main_gap=(
+                "LOB sequence-state probe is still a rolling-feature diagnostic; it needs queue/fill, "
+                "adverse-selection, cancellation, and longer OOS evidence before execution"
+            ),
+            next_step=best.get(
+                "next_step",
+                "turn the strongest sequence state into a queue/fill-aware execution probe",
+            ),
+        )
     replay_path = root / "event_flow" / "current_lob_execution_world_replay.csv"
     replay_rows = tuple(
         row
@@ -1970,6 +1996,22 @@ def _event_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="tiny sample and naive label; no order book or liquidation context",
         next_step="extend sample window and add liquidation/funding-time labels",
+    )
+
+
+def _lob_sequence_state_sort_key(row: dict[str, str]) -> tuple[int, float, float]:
+    decision_rank = {
+        "market_sequence_candidate": 900,
+        "low_fee_sequence_candidate": 800,
+        "maker_sequence_candidate": 700,
+        "market_sequence_tail_candidate": 600,
+        "low_fee_sequence_tail_candidate": 500,
+        "maker_sequence_tail_candidate": 400,
+    }.get(row.get("decision", ""), 0)
+    return (
+        decision_rank,
+        float(row.get("test_net_bps") or "-inf"),
+        float(row.get("test_hit_rate") or "-inf"),
     )
 
 
