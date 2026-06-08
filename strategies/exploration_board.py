@@ -31,6 +31,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
         _binance_derivatives_history_row(root),
+        _binance_derivatives_intraday_row(root),
         _macro_regime_row(root),
         _crypto_equity_proxy_row(root),
         _speculative_beta_row(root),
@@ -652,6 +653,37 @@ def _binance_derivatives_history_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="Binance derivatives history is not summarized into symbol-feature candidates",
         next_step="run Binance derivatives history and symbol-feature candidate queue",
+    )
+
+
+def _binance_derivatives_intraday_row(root: Path) -> ExplorationRow:
+    path = root / "p0_parallel" / "binance_derivatives_intraday_feature_candidates.csv"
+    best = _best_numeric_row(path, key="edge_score")
+    if best:
+        return ExplorationRow(
+            lane="binance_derivatives_intraday",
+            status=best.get("status", "intraday_feature_label"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')} "
+                f"{best.get('feature', '')}: "
+                f"bucket={best.get('preferred_bucket', '')}, "
+                f"obs={best.get('observations', '')}, "
+                f"low_1h={best.get('low_bucket_mean_next_1h_return', '')}, "
+                f"high_1h={best.get('high_bucket_mean_next_1h_return', '')}, "
+                f"score={best.get('edge_score', '')}"
+            ),
+            main_gap="5m-to-1h label screen still excludes fees, spread, fill probability, funding PnL, and repeat-window checks",
+            next_step=best.get(
+                "next_step",
+                "repeat top intraday derivatives feature label on a fresh window with costs and fills",
+            ),
+        )
+    return ExplorationRow(
+        lane="binance_derivatives_intraday",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="daily derivatives candidates have not been checked on 5m-to-1h labels",
+        next_step="run Binance derivatives intraday feature label screen for top recent symbol-feature candidates",
     )
 
 

@@ -13,6 +13,7 @@ uv run python -m strategies.p0_parallel.data_reachability_probe
 uv run python -m strategies.p0_parallel.binance_derivatives_history_probe
 uv run python -m strategies.p0_parallel.binance_derivatives_symbol_feature_candidates
 uv run python -m strategies.p0_parallel.binance_derivatives_feature_regime_compare
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_feature_labels
 uv run python -m strategies.p0_parallel.funding_carry_proxy
 uv run python -m strategies.p0_parallel.l2_burst_probe
 uv run python -m strategies.p0_parallel.paper_trade_ticket
@@ -25,6 +26,7 @@ uv run python -m strategies.p0_parallel.paper_trade_ticket
 - Binance USD-M metrics, premium-index, and funding-rate history first label
 - Binance USD-M symbol-feature candidate queue for recent-window reruns
 - historical-vs-recent derivatives feature regime comparison
+- Binance USD-M 5m derivatives features against next-1h labels
 - Binance funding carry proxy with premium-change and rough cost
 - L2 fill/adverse-selection first burst
 - paper/manual trade-ticket feasibility

@@ -400,6 +400,8 @@ def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
         "persistent_derivatives_symbol_feature_prior",
         "recent_derivatives_symbol_feature_prior",
         "derivatives_symbol_feature_regime_shift",
+        "intraday_derivatives_feature_priority",
+        "intraday_derivatives_feature_watch",
     }:
         return _symbols_from_evidence_head(row.get("evidence", ""))
     symbols: set[str] = set()

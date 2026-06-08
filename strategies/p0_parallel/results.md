@@ -175,6 +175,32 @@ Top current regime comparison rows:
 These rows are now surfaced into the current alpha stack as derivatives
 symbol-feature priors, not as trade instructions.
 
+## Binance Intraday Feature Labels
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_feature_labels
+```
+
+This joins Binance USD-M 5m metrics, 5m price klines, and 5m premium-index
+klines for ARB, NEAR, BCH, OP, UNI, DOGE, SOL, and ADA. It tests whether each
+current derivatives feature separates the next 1h return.
+
+Top current rows:
+
+| symbol | feature | bucket | observations | low mean 1h | high mean 1h | score |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| NEARUSDT | sum_top_long_short_ratio | high | 4885 | -0.002278 | 0.001529 | 399.6268 |
+| OPUSDT | count_long_short_ratio | low | 4728 | 0.000868 | -0.002618 | 367.0815 |
+| ARBUSDT | count_long_short_ratio | low | 4676 | 0.000322 | -0.003111 | 363.7439 |
+| NEARUSDT | count_long_short_ratio | high | 4885 | -0.001067 | 0.001734 | 298.4522 |
+| OPUSDT | count_top_long_short_ratio | low | 4728 | 0.000723 | -0.001973 | 287.4978 |
+
+These are intraday research labels, not trade instructions. The next check is
+fresh-window repetition plus fees, spread, fill probability, funding PnL, and
+position-sizing assumptions.
+
 ## Funding Carry Proxy
 
 Run:

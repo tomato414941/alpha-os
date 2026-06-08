@@ -35,6 +35,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_binance_derivatives_feature_prior_stacks(root),
         *_binance_derivatives_regime_feature_stacks(root),
+        *_binance_derivatives_intraday_feature_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
         *_hyperliquid_dislocation_actionability_stacks(root),
@@ -794,6 +795,60 @@ def _binance_derivatives_regime_feature_stacks(root: Path) -> tuple[AlphaStackRo
             )
         )
     return tuple(output)
+
+
+def _binance_derivatives_intraday_feature_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "p0_parallel" / "binance_derivatives_intraday_feature_candidates.csv")
+            if row.get("status") in {"intraday_feature_priority", "intraday_feature_watch"}
+        ),
+        key=lambda row: _float(row.get("edge_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        symbol = row.get("symbol", "")
+        feature = row.get("feature", "")
+        status = _binance_intraday_feature_status(row.get("status", ""))
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_symbol_slug(symbol)}_{_slug(feature)}_intraday_derivatives_feature",
+                status=status,
+                side=f"{row.get('preferred_bucket', '')}_{feature}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(row.get("edge_score")),
+                ),
+                sources="p0_parallel + binance_derivatives_intraday_labels",
+                evidence=(
+                    f"{symbol}: feature={feature}, obs={row.get('observations', '')}, "
+                    f"bucket={row.get('preferred_bucket', '')}, "
+                    f"low_1h={row.get('low_bucket_mean_next_1h_return', '')}, "
+                    f"high_1h={row.get('high_bucket_mean_next_1h_return', '')}, "
+                    f"low_hit={row.get('low_bucket_hit_rate', '')}, "
+                    f"high_hit={row.get('high_bucket_hit_rate', '')}, "
+                    f"score={row.get('edge_score', '')}"
+                ),
+                conflict=(
+                    "intraday feature label excludes fees, spread, fill probability, "
+                    "funding PnL, stop behavior, and fresh-window repeat checks"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"repeat {symbol} {feature} 5m-to-1h label on a fresh window",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_intraday_feature_status(status: str) -> str:
+    if status == "intraday_feature_priority":
+        return "intraday_derivatives_feature_priority"
+    return "intraday_derivatives_feature_watch"
 
 
 def _binance_regime_feature_status(status: str) -> str:
@@ -2740,6 +2795,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "persistent_derivatives_symbol_feature_prior": 48.0,
         "recent_derivatives_symbol_feature_prior": 44.0,
         "derivatives_symbol_feature_regime_shift": 38.0,
+        "intraday_derivatives_feature_priority": 54.0,
+        "intraday_derivatives_feature_watch": 46.0,
         "paper_yield_depeg_conflict_watch": 42.0,
         "paper_yield_premium_conflict_watch": 40.0,
         "yield_supply_stress_watch": 55.0,
