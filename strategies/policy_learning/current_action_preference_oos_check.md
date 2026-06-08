@@ -36,6 +36,9 @@ This checks whether action preferences found in initial paper samples survive re
 | basis_term_structure_paper_short | basis_term_structure |  | paper_short | 2 | 63.25 | 0 | 0.00 | 0.000 | 11.32 | needs_repeat_oos |
 | near_execution_edge_paper_long | execution_edge | NEAR | paper_long | 2 | 38.60 | 0 | 0.00 | 0.000 | 8.86 | needs_repeat_oos |
 | ofi_execution_survival_paper_short | ofi_execution_survival |  | paper_short | 0 | 0.00 | 0 | 0.00 | 0.000 | 0.00 | needs_repeat_oos |
+| sui_ofi_execution_survival_paper_short | ofi_execution_survival | SUI | paper_short | 0 | 0.00 | 0 | 0.00 | 0.000 | 0.00 | needs_repeat_oos |
+| eth_ofi_execution_survival_paper_short | ofi_execution_survival | ETH | paper_short | 0 | 0.00 | 0 | 0.00 | 0.000 | 0.00 | needs_repeat_oos |
+| bnb_ofi_execution_survival_paper_short | ofi_execution_survival | BNB | paper_short | 0 | 0.00 | 0 | 0.00 | 0.000 | 0.00 | needs_repeat_oos |
 | microstructure_flow_paper_long | microstructure_flow |  | paper_long | 5 | 222.96 | 40 | -10.61 | 0.450 | 53.33 | oos_failed_action_preference |
 | eth_event_crypto_hedge_paper_long | event_crypto_hedge | ETH | paper_long | 4 | 62.23 | 8 | -20.10 | 0.625 | 23.73 | oos_failed_action_preference |
 

@@ -22,9 +22,9 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | protocol_fee_paper_long | family_action | protocol_fee |  | paper_long | 3 | 1.000 | 75.96 | 75.96 | 75.96 | 128.46 | promote_action_preference_candidate |
 | uni_protocol_fee_paper_long | asset_family_action | protocol_fee | UNI | paper_long | 3 | 1.000 | 75.96 | 75.96 | 75.96 | 128.46 | promote_action_preference_candidate |
 | inj_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | INJ | paper_long | 5 | 1.000 | 63.88 | 63.88 | 63.88 | 121.38 | promote_action_preference_candidate |
-| ofi_execution_survival_paper_short | family_action | ofi_execution_survival |  | paper_short | 3 | 1.000 | 67.98 | 74.68 | 41.57 | 120.48 | promote_action_preference_candidate |
 | liquidation_intensity_paper_long | family_action | liquidation_intensity |  | paper_long | 4 | 0.750 | 67.32 | 68.75 | -0.42 | 116.07 | promote_action_preference_candidate |
 | sui_repeat_execution_paper_long | asset_family_action | repeat_execution | SUI | paper_long | 6 | 0.667 | 53.89 | 95.39 | -120.91 | 105.56 | promote_action_preference_candidate |
+| ofi_execution_survival_paper_short | family_action | ofi_execution_survival |  | paper_short | 6 | 1.000 | 40.92 | 32.68 | 6.61 | 100.92 | promote_action_preference_candidate |
 | apt_wallet_entity_flow_paper_long | asset_family_action | wallet_entity_flow | APT | paper_long | 4 | 1.000 | 36.37 | 17.05 | 17.05 | 88.42 | promote_action_preference_candidate |
 | zec_unclassified_paper_long | asset_family_action | unclassified | ZEC | paper_long | 2 | 1.000 | 346.35 | 346.35 | 333.21 | 264.23 | watch_action_preference_candidate |
 | zec_event_pressure_paper_long | asset_family_action | event_pressure | ZEC | paper_long | 2 | 1.000 | 333.21 | 333.21 | 333.21 | 255.48 | watch_action_preference_candidate |
@@ -34,16 +34,16 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | sui_liquidation_intensity_paper_long | asset_family_action | liquidation_intensity | SUI | paper_long | 2 | 1.000 | 113.78 | 113.78 | 95.39 | 109.19 | watch_action_preference_candidate |
 | sui_microstructure_flow_paper_long | asset_family_action | microstructure_flow | SUI | paper_long | 2 | 1.000 | 109.73 | 109.73 | 95.39 | 106.48 | watch_action_preference_candidate |
 | basis_term_structure_paper_short | family_action | basis_term_structure |  | paper_short | 2 | 1.000 | 63.25 | 63.25 | 49.58 | 75.50 | watch_action_preference_candidate |
+| sui_ofi_execution_survival_paper_short | asset_family_action | ofi_execution_survival | SUI | paper_short | 2 | 1.000 | 49.23 | 49.23 | 23.78 | 66.15 | watch_action_preference_candidate |
+| eth_ofi_execution_survival_paper_short | asset_family_action | ofi_execution_survival | ETH | paper_short | 2 | 1.000 | 47.14 | 47.14 | 6.61 | 64.76 | watch_action_preference_candidate |
 | near_execution_edge_paper_long | asset_family_action | execution_edge | NEAR | paper_long | 2 | 1.000 | 38.60 | 38.60 | 38.60 | 59.07 | watch_action_preference_candidate |
 | near_unclassified_paper_long | asset_family_action | unclassified | NEAR | paper_long | 4 | 0.750 | 5.71 | 39.06 | -94.80 | 54.46 | watch_action_preference_candidate |
+| bnb_ofi_execution_survival_paper_short | asset_family_action | ofi_execution_survival | BNB | paper_short | 2 | 1.000 | 26.38 | 26.38 | 11.20 | 50.92 | watch_action_preference_candidate |
 | microstructure_flow_paper_long | family_action | microstructure_flow |  | paper_long | 47 | 0.511 | 17.42 | 2.84 | -314.55 | 48.03 | watch_action_preference_candidate |
 | eth_event_crypto_hedge_paper_long | asset_family_action | event_crypto_hedge | ETH | paper_long | 12 | 0.667 | 7.34 | 2.84 | -58.33 | 41.85 | watch_action_preference_candidate |
 | chip_event_pressure_paper_long | asset_family_action | event_pressure | CHIP | paper_long | 1 | 1.000 | 283.91 | 283.91 | 283.91 | 110.47 | collect_more_labels |
 | stablecoin_migration_paper_short | family_action | stablecoin_migration |  | paper_short | 1 | 1.000 | 281.13 | 281.13 | 281.13 | 109.54 | collect_more_labels |
 | pol_stablecoin_migration_paper_short | asset_family_action | stablecoin_migration | POL | paper_short | 1 | 1.000 | 281.13 | 281.13 | 281.13 | 109.54 | collect_more_labels |
-| sol_news_event_paper_long | asset_family_action | news_event | SOL | paper_long | 5 | 0.400 | 84.79 | -3.85 | -3.85 | 103.43 | collect_more_labels |
-| pump_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | PUMP | paper_long | 1 | 1.000 | 221.97 | 221.97 | 221.97 | 89.82 | collect_more_labels |
-| pol_unclassified_paper_short | asset_family_action | unclassified | POL | paper_short | 1 | 1.000 | 187.70 | 187.70 | 187.70 | 78.40 | collect_more_labels |
 
 ## Interpretation
 

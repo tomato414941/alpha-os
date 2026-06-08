@@ -4,10 +4,10 @@ This is a dataset-shaped view over paper outcomes for policy research. It is not
 
 ## Coverage
 
-- records: 339
+- records: 342
 - initial split: 133
 - repeat split: 149
-- cost-known records: 154
+- cost-known records: 157
 - contexts: 18
 
 ## Top Records

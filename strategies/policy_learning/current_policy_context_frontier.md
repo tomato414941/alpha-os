@@ -10,7 +10,7 @@ This summarizes observation/action/reward records by context. It is a prioritiza
 | wallet_entity_flow | expand_with_failure_split | 26 | 11 | 0.615 | 80.72 | 104.71 | -329.55 | 703.22 | 95.86 | open more wallet_entity_flow labels, but split the failure regime before increasing size or confidence |
 | liquidation_intensity | expand_context_now | 4 | 2 | 0.750 | 67.32 | 113.78 | -0.42 | 132.17 | 88.08 | open more liquidation_intensity paper labels across fresh assets, venues, and failure regimes |
 | execution_edge | expand_with_failure_split | 11 | 2 | 0.818 | 86.71 | 104.08 | -329.55 | 283.91 | 60.75 | open more execution_edge labels, but split the failure regime before increasing size or confidence |
-| ofi_execution_survival | collect_repeat_samples | 3 | 0 | 1.000 | 67.98 | 0.00 | 41.57 | 87.68 | 46.49 | collect repeat ofi_execution_survival samples before treating the context as durable |
+| ofi_execution_survival | collect_repeat_samples | 6 | 0 | 1.000 | 40.92 | 0.00 | 6.61 | 87.68 | 41.23 | collect repeat ofi_execution_survival samples before treating the context as durable |
 | stablecoin_migration | watch_context | 7 | 4 | 0.571 | 115.59 | 68.13 | -3.85 | 281.13 | 100.48 | keep stablecoin_migration on watch until repeat sample count exceeds 4 |
 | volume_price_dislocation | shrink_or_rework_context | 44 | 32 | 0.455 | 0.47 | -2.87 | -206.05 | 299.97 | 17.66 | stop blind volume_price_dislocation expansion; isolate why repeat_mean=-2.87 and worst=-206.05 |
 | event_crypto_hedge | shrink_or_rework_context | 39 | 23 | 0.436 | -3.18 | -10.87 | -184.31 | 176.13 | 10.74 | stop blind event_crypto_hedge expansion; isolate why repeat_mean=-10.87 and worst=-184.31 |
