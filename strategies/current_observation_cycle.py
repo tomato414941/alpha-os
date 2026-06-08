@@ -250,6 +250,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_paper_probe_plan",),
     ("strategies.current_alpha_source_gaps",),
     ("strategies.current_alpha_frontier",),
+    ("strategies.current_alpha_method_frontier",),
     ("strategies.exploration_board",),
 )
 

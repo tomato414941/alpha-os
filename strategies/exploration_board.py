@@ -23,6 +23,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_stack_row(root),
         _alpha_frontier_row(root),
         _alpha_source_gaps_row(root),
+        _alpha_method_frontier_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
@@ -175,6 +176,31 @@ def _alpha_source_gaps_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="modern external alpha-source gaps are not summarized",
         next_step="run current alpha source gaps after data source probe",
+    )
+
+
+def _alpha_method_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_method_frontier.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="alpha_method_frontier",
+            status=best.get("decision", "method_frontier"),
+            strongest_current_signal=(
+                f"{best.get('method_id', '')}: "
+                f"{best.get('family', '')}, "
+                f"score={best.get('score', '')}, "
+                f"data={best.get('data_evidence', '')}"
+            ),
+            main_gap=best.get("missing_link", "method frontier still needs a concrete probe"),
+            next_step=best.get("first_probe", "turn the strongest method into a concrete alpha probe"),
+        )
+    return ExplorationRow(
+        lane="alpha_method_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="modern alpha methods have not been mapped to current sources and candidates",
+        next_step="run current alpha method frontier after source gaps and alpha frontier",
     )
 
 
