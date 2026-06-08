@@ -2514,6 +2514,25 @@ def _candidate_validation_row(root: Path) -> ExplorationRow:
 
 
 def _stablecoin_liquidity_row(root: Path) -> ExplorationRow:
+    chain_label_path = root / "stablecoin_liquidity" / "current_chain_stablecoin_migration_forward_labels.csv"
+    best_chain_label = _best_chain_stablecoin_migration_label_row(chain_label_path)
+    if best_chain_label:
+        return ExplorationRow(
+            lane="stablecoin_liquidity",
+            status=best_chain_label.get("label_status", "chain_stablecoin_migration_forward_label"),
+            strongest_current_signal=(
+                f"{best_chain_label.get('chain', '')}/{best_chain_label.get('token_symbol', '')}: "
+                f"migration={best_chain_label.get('migration_status', '')}, "
+                f"week_change={best_chain_label.get('week_change_usd', '')}, "
+                f"dir4h={best_chain_label.get('directional_return_4h', '')}, "
+                f"dir12h={best_chain_label.get('directional_return_12h', '')}"
+            ),
+            main_gap="chain stablecoin migration has only short-horizon token labels and still excludes bridge route, venue depth, funding, and execution costs",
+            next_step=best_chain_label.get(
+                "next_step",
+                "repeat chain-migration labels and add venue plus execution context",
+            ),
+        )
     migration_path = root / "stablecoin_liquidity" / "current_chain_stablecoin_migration.csv"
     migration_rows = tuple(row for row in _csv_rows(migration_path) if row.get("status") != "chain_stablecoin_context")
     best_migration = max(migration_rows, key=lambda row: float(row.get("score") or "-inf")) if migration_rows else None
@@ -3475,6 +3494,36 @@ def _best_chain_tvl_forward_label_row(path: Path) -> dict[str, str] | None:
             abs(float(row.get("week_change_pct") or "0")),
         ),
     )
+
+
+def _best_chain_stablecoin_migration_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_4h", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            _chain_stablecoin_label_rank(row.get("label_status", "")),
+            float(row.get("directional_return_4h") or "-inf"),
+            abs(float(row.get("week_change_usd") or "0")),
+        ),
+    )
+
+
+def _chain_stablecoin_label_rank(status: str) -> int:
+    return {
+        "chain_migration_direction_supported": 4,
+        "labeled_4h_pending_12h": 3,
+        "mixed_chain_migration_direction": 2,
+        "chain_migration_direction_contradicted": 1,
+    }.get(status, 0)
 
 
 def _best_chain_tvl_market_context_row(path: Path) -> dict[str, str] | None:

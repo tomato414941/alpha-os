@@ -20,6 +20,8 @@ Run:
 
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
+uv run python -m strategies.stablecoin_liquidity.current_chain_stablecoin_migration
+uv run python -m strategies.stablecoin_liquidity.current_chain_stablecoin_migration_forward_labels
 uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
 uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ```
@@ -30,6 +32,29 @@ Interpretation:
 - supply contraction can proxy liquidity withdrawal or capital rotation
 - peg price deviations can indicate stress
 - this is a current snapshot, not a causal model
+
+## Chain Migration Forward Labels
+
+Current 4h chain-migration labels from the 2026-06-08T00:43 UTC observation:
+
+- `Ethereum/ETH`: weekly stablecoin outflow / reversal context aligned with a
+  4h ETH decline (`directional_return_4h=0.02702544`).
+- `Arbitrum/ARB`: weekly stablecoin outflow context aligned with a 4h ARB
+  decline (`directional_return_4h=0.02647341`).
+- `Hyperliquid L1/HYPE`: weekly stablecoin outflow / reversal context aligned
+  with a 4h HYPE decline (`directional_return_4h=0.02111262`).
+- `Polygon/POL`: stablecoin outflow short context aligned with a 4h POL decline
+  (`directional_return_4h=0.01461835`).
+- `Solana/SOL`: the large stablecoin inflow long context was contradicted over
+  4h (`directional_return_4h=-0.02024000`).
+
+Interpretation:
+
+- Chain-level stablecoin migration is more useful than the broad stablecoin
+  supply aggregate for short-horizon labels in this sample.
+- The SOL inflow candidate should not be promoted from the current observation.
+- ETH, ARB, HYPE, and POL have only 4h support. They still need 12h labels,
+  repeat snapshots, venue depth, funding, and execution costs.
 
 ## Snapshot
 

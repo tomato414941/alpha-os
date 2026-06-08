@@ -2571,6 +2571,11 @@ def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _chain_stablecoin_migration_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "stablecoin_liquidity" / "current_chain_stablecoin_migration.csv")
+    labels_by_chain = {
+        row.get("chain", ""): row
+        for row in _read_rows(root / "stablecoin_liquidity" / "current_chain_stablecoin_migration_forward_labels.csv")
+        if row.get("chain")
+    }
     tickets = sorted(
         (
             row
@@ -2590,14 +2595,18 @@ def _chain_stablecoin_migration_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         chain = ticket.get("chain", "")
         token = ticket.get("token_symbol", "") or chain
         display_token = ticket.get("token_symbol", "") or "-"
+        label = labels_by_chain.get(chain, {})
+        status = _chain_stablecoin_migration_status(ticket.get("status", ""), label)
+        source_count = 2 if label else 1
+        label_evidence = _chain_stablecoin_migration_label_evidence(label)
         output.append(
             AlphaStackRow(
                 opportunity=f"{chain.lower().replace(' ', '_')}_stablecoin_migration",
-                status=ticket.get("status", ""),
+                status=status,
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
-                    ticket.get("status", ""),
-                    source_count=1,
+                    status,
+                    source_count=source_count,
                     raw_score=_float(ticket.get("score")),
                 ),
                 sources="stablecoin_liquidity",
@@ -2607,15 +2616,56 @@ def _chain_stablecoin_migration_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"week_change={ticket.get('week_change_usd', '')}, "
                     f"week_pct={ticket.get('week_change_pct', '')}, "
                     f"top_asset={ticket.get('top_asset', '')}"
+                    f"{label_evidence}"
                 ),
-                conflict="stablecoin migration is a capital-flow proxy, not a bridge-fill; chain-token mapping, venues, and forward labels are still required",
-                next_step=ticket.get(
+                conflict=_chain_stablecoin_migration_conflict(label),
+                next_step=label.get("next_step") or ticket.get(
                     "next_step",
                     f"label {token} returns after {chain} stablecoin migration",
                 ),
             )
         )
     return tuple(output)
+
+
+def _chain_stablecoin_migration_status(status: str, label: dict[str, str]) -> str:
+    label_status = label.get("label_status", "")
+    if label_status == "chain_migration_direction_supported":
+        return "chain_stablecoin_label_supported_watch"
+    if label_status == "chain_migration_direction_contradicted":
+        return "chain_stablecoin_label_contradicted"
+    if label_status == "mixed_chain_migration_direction":
+        return "chain_stablecoin_mixed_label_watch"
+    if label_status == "labeled_4h_pending_12h":
+        directional_4h = _float(label.get("directional_return_4h"))
+        if directional_4h > 0.0:
+            return "chain_stablecoin_4h_supported_pending_12h"
+        if directional_4h < 0.0:
+            return "chain_stablecoin_4h_contradicted_pending_12h"
+    return status
+
+
+def _chain_stablecoin_migration_label_evidence(label: dict[str, str]) -> str:
+    if not label:
+        return ""
+    return (
+        f"; label={label.get('label_status', '')}, "
+        f"dir1h={label.get('directional_return_1h', '')}, "
+        f"dir4h={label.get('directional_return_4h', '')}, "
+        f"dir12h={label.get('directional_return_12h', '')}"
+    )
+
+
+def _chain_stablecoin_migration_conflict(label: dict[str, str]) -> str:
+    base = "stablecoin migration is a capital-flow proxy, not a bridge-fill; chain-token mapping, venues, and execution costs are still required"
+    label_status = label.get("label_status", "")
+    if label_status == "labeled_4h_pending_12h":
+        return f"{base}; 4h label is available but 12h confirmation is still pending"
+    if label_status == "chain_migration_direction_contradicted":
+        return f"{base}; current forward labels contradict the migration direction"
+    if label_status == "mixed_chain_migration_direction":
+        return f"{base}; current forward labels are mixed"
+    return base
 
 
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -2979,6 +3029,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_chain_stablecoin_inflow_watch": 58.0,
         "paper_chain_stablecoin_outflow_watch": 56.0,
         "chain_stablecoin_flow_reversal_watch": 50.0,
+        "chain_stablecoin_label_supported_watch": 64.0,
+        "chain_stablecoin_4h_supported_pending_12h": 54.0,
+        "chain_stablecoin_mixed_label_watch": 42.0,
+        "chain_stablecoin_4h_contradicted_pending_12h": 24.0,
+        "chain_stablecoin_label_contradicted": 18.0,
         "paper_short_basis_watch": 62.0,
         "paper_long_basis_watch": 62.0,
         "basis_term_structure_watch": 52.0,

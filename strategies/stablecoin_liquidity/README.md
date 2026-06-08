@@ -19,6 +19,7 @@ action.
 ```bash
 uv run python -m strategies.stablecoin_liquidity.current_supply_snapshot
 uv run python -m strategies.stablecoin_liquidity.current_chain_stablecoin_migration
+uv run python -m strategies.stablecoin_liquidity.current_chain_stablecoin_migration_forward_labels
 uv run python -m strategies.stablecoin_liquidity.current_supply_market_forward_labels
 uv run python -m strategies.stablecoin_liquidity.current_peg_stress_screen
 ```

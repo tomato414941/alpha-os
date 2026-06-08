@@ -201,7 +201,7 @@ def _support_state(row: dict[str, str]) -> str:
     text = " ".join((row.get("status", ""), row.get("evidence", ""), row.get("next_step", ""))).lower()
     if "out1h=paper_1h_win" in text or "paper_1h_win" in text:
         return "paper_1h_supported"
-    if "protocol_fee_label_supported_watch" in text:
+    if "protocol_fee_label_supported_watch" in text or "chain_stablecoin_4h_supported_pending_12h" in text:
         return "paper_4h_supported"
     if "low_cost_intraday_paper_supported" in text or "paper_intraday_cost_supported" in text:
         return "paper_cost_supported"
@@ -213,7 +213,7 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_15m_supported"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
         return "paper_execution_gated"
-    if "protocol_fee_label_failed" in text:
+    if "protocol_fee_label_failed" in text or "chain_stablecoin_4h_contradicted_pending_12h" in text:
         return "failed_label"
     if "pending" in text:
         return "pending_label"
