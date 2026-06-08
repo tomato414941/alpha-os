@@ -64,6 +64,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_intensity_stacks(root),
+        *_liquidation_intensity_forward_label_stacks(root),
         *_liquidation_flow_stacks(root),
         *_candidate_validation_repeat_execution_gate_stacks(root),
         *_candidate_validation_repeat_stacks(root),
@@ -3042,6 +3043,81 @@ def _liquidation_intensity_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _liquidation_intensity_forward_label_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "liquidation_flow" / "current_okx_liquidation_intensity_forward_labels.csv")
+            if row.get("label_status")
+            in {
+                "continuation_15m_1h_supported",
+                "reversal_15m_1h_supported",
+                "continuation_15m_supported_pending_1h",
+                "reversal_15m_supported_pending_1h",
+            }
+        ),
+        key=lambda row: (
+            _liquidation_label_rank(row.get("label_status", "")),
+            max(
+                _float(row.get("continuation_return_15m")),
+                _float(row.get("reversal_return_15m")),
+            ),
+            _float(row.get("intensity_score")),
+        ),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        asset = row.get("asset", "")
+        status = row.get("label_status", "")
+        label_side = "liquidation_reversal" if status.startswith("reversal") else "liquidation_continuation"
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_okx_intensity_{label_side}",
+                status=status,
+                side=f"{label_side}_{row.get('action', '')}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=max(
+                        _float(row.get("continuation_return_15m")),
+                        _float(row.get("reversal_return_15m")),
+                    )
+                    * 10_000.0,
+                ),
+                sources="liquidation_flow + okx_open_interest + forward_label",
+                evidence=(
+                    f"{asset}: action={row.get('action', '')}, "
+                    f"intensity={row.get('intensity_score', '')}, "
+                    f"cont5={row.get('continuation_return_5m', '')}, "
+                    f"cont15={row.get('continuation_return_15m', '')}, "
+                    f"cont1h={row.get('continuation_return_1h', '')}, "
+                    f"rev5={row.get('reversal_return_5m', '')}, "
+                    f"rev15={row.get('reversal_return_15m', '')}, "
+                    f"rev1h={row.get('reversal_return_1h', '')}"
+                ),
+                conflict=(
+                    "liquidation intensity label is price-only; it still excludes spread, fees, "
+                    "funding PnL, fill probability, stop behavior, and repeat-event evidence"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"gate {asset} liquidation intensity label with OKX depth, fees, funding, fill, and stop assumptions",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _liquidation_label_rank(status: str) -> int:
+    return {
+        "continuation_15m_1h_supported": 4,
+        "reversal_15m_1h_supported": 4,
+        "continuation_15m_supported_pending_1h": 3,
+        "reversal_15m_supported_pending_1h": 3,
+    }.get(status, 0)
+
+
 def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = sorted(
         (
@@ -3573,6 +3649,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "protocol_fee_unlabeled_watch": 28.0,
         "protocol_fee_label_failed": 18.0,
         "liquidation_followup_watch": 47.0,
+        "continuation_15m_1h_supported": 74.0,
+        "reversal_15m_1h_supported": 74.0,
+        "continuation_15m_supported_pending_1h": 59.0,
+        "reversal_15m_supported_pending_1h": 59.0,
         "liquidation_label_needed_watch": 40.0,
         "funding_crowded_watch": 46.0,
         "crowded_short_risk": 48.0,

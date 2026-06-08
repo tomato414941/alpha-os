@@ -17,4 +17,6 @@ uv run python -m strategies.liquidation_flow.current_okx_liquidation_actionabili
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_gate
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_ticket
 uv run python -m strategies.liquidation_flow.current_okx_liquidation_paper_outcome
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_intensity
+uv run python -m strategies.liquidation_flow.current_okx_liquidation_intensity_forward_labels
 ```

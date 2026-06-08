@@ -1033,6 +1033,23 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
 
 
 def _liquidation_intensity_row(root: Path) -> ExplorationRow:
+    label_path = root / "liquidation_flow" / "current_okx_liquidation_intensity_forward_labels.csv"
+    best_label = _best_liquidation_intensity_label_row(label_path)
+    if best_label:
+        return ExplorationRow(
+            lane="liquidation_intensity",
+            status=best_label.get("label_status", "liquidation_intensity_forward_label"),
+            strongest_current_signal=(
+                f"{best_label.get('asset', '')}: {best_label.get('action', '')}, "
+                f"intensity={best_label.get('intensity_score', '')}, "
+                f"cont15={best_label.get('continuation_return_15m', '')}, "
+                f"rev15={best_label.get('reversal_return_15m', '')}, "
+                f"cont1h={best_label.get('continuation_return_1h', '')}, "
+                f"rev1h={best_label.get('reversal_return_1h', '')}"
+            ),
+            main_gap="liquidation intensity label still excludes spread, fees, funding PnL, fill probability, stop behavior, and repeat-event evidence",
+            next_step=best_label.get("next_step", "gate the best liquidation intensity label with execution assumptions"),
+        )
     path = root / "liquidation_flow" / "current_okx_liquidation_intensity.csv"
     best = _best_numeric_row(path, key="intensity_score")
     if best:
@@ -3529,6 +3546,41 @@ def _best_followup_repeat_label_row(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("priority") or "0"),
+        ),
+    )
+
+
+def _best_liquidation_intensity_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("label_status")
+            in {
+                "continuation_15m_1h_supported",
+                "reversal_15m_1h_supported",
+                "continuation_15m_supported_pending_1h",
+                "reversal_15m_supported_pending_1h",
+            }
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            {
+                "continuation_15m_1h_supported": 4,
+                "reversal_15m_1h_supported": 4,
+                "continuation_15m_supported_pending_1h": 3,
+                "reversal_15m_supported_pending_1h": 3,
+            }.get(row.get("label_status", ""), 0),
+            max(
+                float(row.get("continuation_return_15m") or "0"),
+                float(row.get("reversal_return_15m") or "0"),
+            ),
+            float(row.get("intensity_score") or "0"),
         ),
     )
 
