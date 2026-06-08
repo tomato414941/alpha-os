@@ -48,6 +48,7 @@ STOP_TOKENS = {
     "CARRY",
     "CASH",
     "CASCADE",
+    "CATALYST",
     "CEX",
     "CHAIN",
     "CHECK",

@@ -64,6 +64,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_flow_stacks(root),
+        *_candidate_validation_repeat_stacks(root),
         *_microstructure_flow_stacks(root),
         *_l2_imbalance_stacks(root),
     ]
@@ -3043,13 +3044,20 @@ def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _microstructure_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    labels = {
+        row.get("asset", ""): row
+        for row in _read_rows(root / "market_making" / "current_microstructure_flow_forward_labels.csv")
+        if row.get("asset")
+    }
     rows = sorted(
         (
             row
             for row in _read_rows(root / "market_making" / "current_microstructure_flow_snapshot.csv")
             if row.get("action") in {"aligned_pressure_watch", "book_trade_divergence_watch"}
+            and _microstructure_label_is_stackable(labels.get(row.get("asset", "")))
         ),
         key=lambda row: (
+            _float(labels.get(row.get("asset", ""), {}).get("directional_return_15m")),
             row.get("action") == "aligned_pressure_watch",
             _abs_float(row.get("pressure_score")),
             _intish(row.get("trade_count")),
@@ -3062,15 +3070,17 @@ def _microstructure_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         asset = ticket.get("asset", "")
         action = ticket.get("action", "")
         direction = _intish(ticket.get("direction"))
+        label = labels.get(asset, {})
+        status = _microstructure_status(action, label)
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_microstructure_flow_probe",
-                status=action,
+                status=status,
                 side=_microstructure_side(direction),
                 priority_score=_priority_score(
-                    action,
+                    status,
                     source_count=2,
-                    raw_score=_abs_float(ticket.get("pressure_score")) * 100.0,
+                    raw_score=_microstructure_score(ticket, label),
                 ),
                 sources="market_making",
                 evidence=(
@@ -3080,15 +3090,135 @@ def _microstructure_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"trade={ticket.get('trade_imbalance', '')}, "
                     f"trades={ticket.get('trade_count', '')}, "
                     f"spread={ticket.get('spread_bps', '')}bps"
+                    f"{_microstructure_label_evidence(label)}"
                 ),
-                conflict=(
-                    "book-plus-trade pressure is still one public microstructure snapshot; "
-                    "it needs 15m/1h labels, fees, queue position, and adverse-selection checks"
-                ),
-                next_step=f"rerun {asset} microstructure flow forward labels after 15m/1h and compare aligned pressure vs divergence",
+                conflict=_microstructure_conflict(label),
+                next_step=_microstructure_next_step(asset, label),
             )
         )
     return tuple(output)
+
+
+def _microstructure_label_is_stackable(label: dict[str, str] | None) -> bool:
+    if not label:
+        return True
+    return _float(label.get("directional_return_15m")) > 0.0
+
+
+def _microstructure_status(action: str, label: dict[str, str]) -> str:
+    if not label:
+        return action
+    if _float(label.get("directional_return_1h")) > 0.0:
+        return "microstructure_15m_1h_supported"
+    return "microstructure_15m_supported_pending_1h"
+
+
+def _microstructure_score(ticket: dict[str, str], label: dict[str, str]) -> float:
+    if label:
+        return _float(label.get("directional_return_15m")) * 10_000.0
+    return _abs_float(ticket.get("pressure_score")) * 100.0
+
+
+def _microstructure_label_evidence(label: dict[str, str]) -> str:
+    if not label:
+        return ""
+    return (
+        f", dir15={label.get('directional_return_15m', '')}, "
+        f"dir1h={label.get('directional_return_1h', '')}, "
+        f"label={label.get('label_status', '')}"
+    )
+
+
+def _microstructure_conflict(label: dict[str, str]) -> str:
+    if not label:
+        return (
+            "book-plus-trade pressure is still one public microstructure snapshot; "
+            "it needs 15m/1h labels, fees, queue position, and adverse-selection checks"
+        )
+    return (
+        "book-plus-trade pressure has only short-horizon mark labels; "
+        "costs, queue position, fill probability, adverse selection, and repeat snapshots are still missing"
+    )
+
+
+def _microstructure_next_step(asset: str, label: dict[str, str]) -> str:
+    if not label:
+        return f"rerun {asset} microstructure flow forward labels after 15m/1h and compare aligned pressure vs divergence"
+    if not label.get("directional_return_1h"):
+        return f"wait for {asset} 1h microstructure label, then compare against fees, spread, queue, and adverse selection"
+    return f"repeat {asset} microstructure flow on fresh snapshots with explicit fees, spread, queue, and adverse-selection checks"
+
+
+def _candidate_validation_repeat_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "candidate_validation" / "current_followup_repeat_history_summary.csv")
+            if row.get("action") == "repeat_priority"
+            and row.get("group_type") == "asset_source"
+            and _intish(row.get("labeled_rows")) >= 2
+            and _float(row.get("hit_rate_15m")) >= 0.9
+            and _float(row.get("mean_dir15")) > 0.0
+        ),
+        key=lambda row: (
+            row.get("group_type") == "asset_source",
+            _float(row.get("mean_dir15")),
+            _float(row.get("hit_rate_15m")),
+            _intish(row.get("labeled_rows")),
+        ),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:10]:
+        group_key = row.get("group_key", "")
+        group_type = row.get("group_type", "")
+        status = "cross_venue_repeat_15m_supported"
+        evidence_head = group_key.split("/", 1)[0]
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_repeat_summary_opportunity(group_key)}_repeat_15m",
+                status=status,
+                side=_repeat_summary_side(group_key),
+                priority_score=_priority_score(
+                    status,
+                    source_count=_intish(row.get("labeled_rows")),
+                    raw_score=_float(row.get("mean_dir15")) * 10_000.0,
+                ),
+                sources="candidate_validation",
+                evidence=(
+                    f"{evidence_head}: group={group_type}, "
+                    f"n={row.get('labeled_rows', '')}, "
+                    f"hit15={row.get('hit_rate_15m', '')}, "
+                    f"mean15={row.get('mean_dir15', '')}, "
+                    f"min15={row.get('min_dir15', '')}, "
+                    f"max15={row.get('max_dir15', '')}, "
+                    f"{row.get('evidence', '')}"
+                ),
+                conflict=(
+                    "repeat label is still 15m-only and before costs; "
+                    "1h confirmation, venue fees, slippage, funding PnL, and neutral baselines are missing"
+                ),
+                next_step=f"repeat {group_key} on a fresh batch and require 1h plus cost-adjusted confirmation",
+            )
+        )
+    return tuple(output)
+
+
+def _repeat_summary_opportunity(group_key: str) -> str:
+    return "_".join(_safe_fragment(part) for part in group_key.split("/") if part)
+
+
+def _safe_fragment(value: str) -> str:
+    fragment = "".join(ch.lower() if ch.isalnum() else "_" for ch in value)
+    while "__" in fragment:
+        fragment = fragment.replace("__", "_")
+    return fragment.strip("_")
+
+
+def _repeat_summary_side(group_key: str) -> str:
+    if "/" in group_key:
+        return f"{group_key.split('/', 1)[1]}_repeat"
+    return f"{group_key}_repeat"
 
 
 def _microstructure_side(direction: int) -> str:
@@ -3218,6 +3348,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "small_paper_probe": 60.0,
         "aligned_pressure_watch": 64.0,
         "book_trade_divergence_watch": 58.0,
+        "microstructure_15m_1h_supported": 70.0,
+        "microstructure_15m_supported_pending_1h": 62.0,
+        "cross_venue_repeat_15m_supported": 69.0,
         "l2_imbalance_15m_1h_supported_probe": 68.0,
         "l2_imbalance_15m_only_probe": 56.0,
         "paper_funding_dislocation_watch": 63.0,
