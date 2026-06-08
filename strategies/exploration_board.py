@@ -48,6 +48,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_cluster_label_queue_row(root),
         _symbol_lane_split_review_row(root),
         _policy_learning_row(root),
+        _policy_action_preference_row(root),
         _wallet_entity_flow_row(root),
         _hyperliquid_seed_wallet_flow_row(root),
         _execution_edge_mode_row(root),
@@ -169,6 +170,38 @@ def _policy_learning_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="paper outcomes are not converted into observation/action/reward samples",
         next_step="run policy-learning sample builder after paper outcomes and fill-risk checks",
+    )
+
+
+def _policy_action_preference_row(root: Path) -> ExplorationRow:
+    path = root / "policy_learning" / "current_action_preference_candidates.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="policy_action_preferences",
+            status=best.get("decision", "action_preference_candidate"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"samples={best.get('samples', '')}, "
+                f"hit={best.get('hit_rate', '')}, "
+                f"mean={best.get('mean_reward_bps', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap=(
+                "action preferences are offline paper-sample aggregates; leakage-safe split, "
+                "fill model, and policy evaluation are still missing"
+            ),
+            next_step=best.get(
+                "next_step",
+                "turn the strongest action preference into a leakage-safe policy-evaluation split",
+            ),
+        )
+    return ExplorationRow(
+        lane="policy_action_preferences",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="policy samples have not been aggregated into context/action preferences",
+        next_step="run current action preference candidates after policy-learning samples",
     )
 
 

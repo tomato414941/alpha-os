@@ -152,6 +152,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_symbol_cluster_label_queue",),
     ("strategies.current_symbol_lane_split_review",),
     ("strategies.policy_learning.current_policy_learning_samples",),
+    ("strategies.policy_learning.current_action_preference_candidates",),
     ("strategies.current_alpha_frontier",),
     ("strategies.exploration_board",),
 )

@@ -239,6 +239,23 @@ def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> Fr
                 next_probe=rule.next_probe,
             )
     if rule.lane == "directional ML / RL policy learning":
+        preference_rows = _read_rows(ROOT / "policy_learning" / "current_action_preference_candidates.csv")
+        if preference_rows:
+            best = max(preference_rows, key=lambda row: _float(row.get("score")))
+            active = tuple(row for row in preference_rows if row.get("decision") != "collect_more_labels")
+            active_candidates = len(active) or len(preference_rows)
+            best_score = _float(best.get("score"))
+            return FrontierLane(
+                lane=rule.lane,
+                current_status=best.get("decision", "action_preferences_ready"),
+                frontier_score=rule.base_priority + min(active_candidates * 0.5, 12.0) + min(best_score / 10.0, 12.0),
+                active_candidates=active_candidates,
+                best_score=best_score,
+                best_opportunity=best.get("candidate_id", ""),
+                evidence_sources="policy_learning/current_action_preference_candidates",
+                missing_work=rule.missing_work,
+                next_probe="turn the strongest action preference into a leakage-safe split before training",
+            )
         policy_rows = _read_rows(ROOT / "policy_learning" / "current_policy_learning_samples.csv")
         if policy_rows:
             best = max(policy_rows, key=_policy_sample_sort_key)
