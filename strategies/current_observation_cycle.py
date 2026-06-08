@@ -173,7 +173,7 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/current_second_promoted_ticket_repeat_fill_risk_check.md",
     ),
-    ("strategies.current_symbol_lane_paper_tickets", "--preserve-opened-at", "--top-symbols", "5"),
+    ("strategies.current_symbol_lane_paper_tickets", "--preserve-opened-at", "--top-symbols", "20"),
     ("strategies.current_symbol_lane_paper_outcomes",),
     (
         "strategies.current_paper_ticket_action_queue",

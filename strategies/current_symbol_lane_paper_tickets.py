@@ -11,6 +11,7 @@ from strategies.current_paper_tickets import _load_marks
 
 
 ROOT = Path(__file__).resolve().parent
+DEFAULT_TOP_SYMBOLS = 20
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,7 @@ def build_symbol_lane_paper_tickets(
     *,
     lane_review_path: Path = ROOT / "current_symbol_lane_split_review.csv",
     existing_tickets_path: Path | None = None,
-    top_symbols: int = 5,
+    top_symbols: int = DEFAULT_TOP_SYMBOLS,
     top_lanes_per_symbol: int = 8,
 ) -> tuple[SymbolLanePaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
@@ -304,7 +305,7 @@ def main() -> None:
     parser.add_argument("--lane-review-path", type=Path, default=ROOT / "current_symbol_lane_split_review.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_symbol_lane_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_symbol_lane_paper_tickets.md")
-    parser.add_argument("--top-symbols", type=int, default=5)
+    parser.add_argument("--top-symbols", type=int, default=DEFAULT_TOP_SYMBOLS)
     parser.add_argument("--top-lanes-per-symbol", type=int, default=8)
     parser.add_argument("--preserve-opened-at", action="store_true")
     args = parser.parse_args()
