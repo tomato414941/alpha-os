@@ -53,6 +53,7 @@ STOP_TOKENS = {
     "CHAIN",
     "CHECK",
     "CIRCLE",
+    "CLUSTER",
     "COINDESK",
     "COLLECT",
     "COINW",
@@ -418,6 +419,9 @@ def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
         "repeat_intraday_derivatives_feature_watch",
         "intraday_derivatives_feature_priority",
         "intraday_derivatives_feature_watch",
+        "multi_source_event_pressure",
+        "two_source_event_pressure",
+        "repeated_event_context",
     }:
         return _symbols_from_evidence_head(row.get("evidence", ""))
     symbols: set[str] = set()

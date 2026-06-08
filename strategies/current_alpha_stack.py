@@ -53,6 +53,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_lending_stress_actionability_stacks(root),
         *_defi_lending_stacks(root),
         *_dex_pool_flow_stacks(root),
+        *_event_pressure_cluster_stacks(root),
         *_news_event_stacks(root),
         *_attention_funding_stacks(root),
         *_attention_price_context_stacks(root),
@@ -2615,6 +2616,55 @@ def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _event_pressure_cluster_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "news_social" / "current_event_pressure_cluster.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "multi_source_event_pressure",
+                "two_source_event_pressure",
+                "repeated_event_context",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        symbol = ticket.get("symbol", "")
+        status = ticket.get("status", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_event_pressure_cluster",
+                status=status,
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=_int(ticket.get("source_count")),
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="news_social + exchange_catalysts + attention_context",
+                evidence=(
+                    f"{symbol}: sources={ticket.get('top_sources', '')}, "
+                    f"events={ticket.get('event_count', '')}, newest_age_h={ticket.get('newest_age_hours', '')}, "
+                    f"top={ticket.get('top_events', '')}"
+                ),
+                conflict=(
+                    "event pressure can be duplicated, stale, already priced, bot-amplified, or non-causal; "
+                    "clusters still need leakage-safe forward labels"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {symbol} event-pressure cluster over 15m/1h/4h",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _protocol_activity_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "protocol_activity" / "current_protocol_activity_market_join.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
@@ -3763,6 +3813,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "capitulation_reversal_watch": 55.0,
         "breakout_continuation_watch": 58.0,
         "chase_risk": 48.0,
+        "multi_source_event_pressure": 66.0,
+        "two_source_event_pressure": 60.0,
+        "repeated_event_context": 52.0,
         "paper_news_event_reaction_watch": 58.0,
         "paper_news_security_risk_watch": 56.0,
         "paper_news_regulatory_risk_watch": 55.0,
@@ -3850,6 +3903,13 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
 
 def _escape(value: str) -> str:
     return value.replace("|", "\\|")
+
+
+def _int(value: object) -> int:
+    try:
+        return int(value) if value not in {"", None} else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 def main() -> None:

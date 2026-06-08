@@ -74,6 +74,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _sector_rotation_row(root),
         _exchange_catalyst_row(root),
         _token_unlocks_row(root),
+        _event_pressure_cluster_row(root),
         _news_social_row(root),
         _market_breadth_row(root),
         _prediction_markets_row(root),
@@ -2390,6 +2391,34 @@ def _exchange_catalyst_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="exchange announcements are not joined to tradable venues or labels",
         next_step="join exchange catalysts to perp venue state and label event reactions",
+    )
+
+
+def _event_pressure_cluster_row(root: Path) -> ExplorationRow:
+    path = root / "news_social" / "current_event_pressure_cluster.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="event_pressure_cluster",
+            status=best.get("status", ""),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: {best.get('side', '')}, "
+                f"sources={best.get('source_count', '')}, "
+                f"events={best.get('event_count', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap=(
+                "event clusters can be stale, duplicated, already priced, or non-causal; "
+                "they need leakage-safe forward labels and execution checks"
+            ),
+            next_step=best.get("next_step", "label top event-pressure cluster over short horizons"),
+        )
+    return ExplorationRow(
+        lane="event_pressure_cluster",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="news, exchange catalysts, and attention are not grouped by symbol",
+        next_step="run current event pressure cluster",
     )
 
 
