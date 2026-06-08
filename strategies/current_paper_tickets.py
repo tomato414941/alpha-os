@@ -53,13 +53,33 @@ def build_paper_tickets(
     )
     rows = tuple(_read_rows(plan_path))[:top]
     return tuple(
-        existing_tickets.get(_ticket_id(row))
-        or _build_ticket(
-            opened_at=existing_opened_at.get(_ticket_id(row), opened_at),
+        _ticket_for_plan_row(
             row=row,
+            opened_at=opened_at,
+            existing_opened_at=existing_opened_at,
+            existing_tickets=existing_tickets,
             marks=marks,
         )
         for row in rows
+    )
+
+
+def _ticket_for_plan_row(
+    *,
+    row: dict[str, str],
+    opened_at: str,
+    existing_opened_at: dict[str, str],
+    existing_tickets: dict[str, PaperTicket],
+    marks: dict[tuple[str, str], tuple[str, str]],
+) -> PaperTicket:
+    ticket_id = _ticket_id(row)
+    existing = existing_tickets.get(ticket_id)
+    if existing and row.get("probe_type") != "event_crypto_hedge_probe":
+        return existing
+    return _build_ticket(
+        opened_at=existing_opened_at.get(ticket_id, opened_at),
+        row=row,
+        marks=marks,
     )
 
 

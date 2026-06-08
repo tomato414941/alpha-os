@@ -2846,6 +2846,30 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
+    reaction_path = root / "prediction_markets" / "current_event_crypto_hedge_reaction_labels.csv"
+    reaction = _best_event_crypto_hedge_reaction_label(reaction_path)
+    if reaction:
+        return ExplorationRow(
+            lane="prediction_market_crypto_hedge",
+            status=reaction.get("reaction_status", "event_crypto_hedge_reaction_labels"),
+            strongest_current_signal=(
+                f"{reaction.get('asset', '')} {reaction.get('hedge_action', '')}: "
+                f"{reaction.get('event_bias', '')}, "
+                f"dir_bps={reaction.get('directional_return_bps', '')}, "
+                f"elapsed_min={reaction.get('elapsed_minutes', '')}, "
+                f"gap={reaction.get('probability_gap', '')}, "
+                f"edge={reaction.get('current_edge_after_ask', '')}, "
+                f"market={reaction.get('market_id', '')}"
+            ),
+            main_gap=(
+                "event-crypto hedge reaction label still needs funding, spread/depth, beta attribution, "
+                "and event-timestamp controls before promotion"
+            ),
+            next_step=reaction.get(
+                "next_step",
+                "repeat event crypto hedge labels with explicit costs and failure regimes",
+            ),
+        )
     path = root / "prediction_markets" / "current_event_crypto_hedge_candidates.csv"
     best = _best_numeric_row(path, key="score")
     if best:
@@ -2877,6 +2901,36 @@ def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
         main_gap="prediction-market event states have not been mapped into crypto hedge candidates",
         next_step="run current_event_crypto_hedge_candidates after probability refresh/actionability",
     )
+
+
+def _best_event_crypto_hedge_reaction_label(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    status_rank = {
+        "event_crypto_hedge_reaction_win": 4.0,
+        "event_crypto_hedge_reaction_pending": 3.0,
+        "event_crypto_hedge_reaction_flat": 2.0,
+        "event_crypto_hedge_reaction_loss": 1.0,
+        "event_crypto_hedge_reaction_missing_mark": 0.0,
+    }
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("reaction_status", ""), 0.0),
+            _safe_float(row.get("directional_return_bps")),
+        ),
+    )
+
+
+def _safe_float(value: str | None) -> float:
+    try:
+        return float(value) if value else 0.0
+    except ValueError:
+        return 0.0
 
 
 def _anomaly_stress_row(root: Path) -> ExplorationRow:

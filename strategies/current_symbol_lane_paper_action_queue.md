@@ -15,24 +15,25 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 50.0000 | lane-btc-btc-2176262-event-crypto-hedge | wait_for_checkpoint | BTC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-btc-btc-event-pressure-cluster | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-btc-btc-20260612-short-dated-delta-hedge-check | wait_for_checkpoint | BTC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-btc-btc-2241674-event-crypto-hedge | wait_for_checkpoint | BTC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-btc-btc-2466411-event-crypto-hedge | wait_for_checkpoint | BTC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-btc-btc-risk-off-short-stack | wait_for_checkpoint | BTC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-eth-1971905-event-crypto-hedge | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-eth-2176262-event-crypto-hedge | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-eth-20260619-short-dated-delta-hedge-check | wait_for_checkpoint | ETH | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-eth-20260626-medium-dated-delta-hedge-check | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-eth-eth-2241674-event-crypto-hedge | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-eth-eth-2466411-event-crypto-hedge | wait_for_checkpoint | ETH | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-zec-zec-event-pressure-cluster | wait_for_checkpoint | ZEC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-zec-zec-crowded-momentum-reversal-actionability | wait_for_checkpoint | ZEC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-zec-zec-oi-unwind-watch | wait_for_checkpoint | ZEC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-zec-zec-attention-price-context | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-zec-zec-attention-funding-overlap | wait_for_checkpoint | ZEC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-sol-sol-1971905-event-crypto-hedge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-sol-sol-2176262-event-crypto-hedge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-sol-sol-event-pressure-cluster | wait_for_checkpoint | SOL | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-sol-sol-maker-or-low-fee-small-execution-edge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-sol-solana-stablecoin-migration | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | lane-sol-sol-taker-small-execution-edge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-sol-sol-event-pressure-cluster | wait_for_checkpoint | SOL | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-sol-sol-2466411-event-crypto-hedge | wait_for_checkpoint | SOL | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-btc-btc-2241674-event-crypto-hedge | wait_for_checkpoint | BTC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-eth-eth-2241674-event-crypto-hedge | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | lane-sol-sol-2176262-event-crypto-hedge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-btc-btc-l2-imbalance-probe | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-ethereum-stablecoin-migration | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | lane-eth-eth-l2-imbalance-probe | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -43,6 +44,8 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 50.0000 | lane-sol-sol-attention-price-context | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 40.0000 | lane-zec-zec-institutional-flow-news-event | keep_observing_quote | ZEC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | lane-zec-zec-narrative-event-news-event | keep_observing_quote | ZEC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | lane-sol-sol-maker-or-low-fee-small-execution-edge | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | lane-sol-sol-taker-small-execution-edge | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | lane-btc-btc-long-atm-straddle-20260626-volatility-actionability | keep_observing_quote | BTC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 35.0000 | lane-btc-mstr-btc-relative-value | record_observation_only | BTC | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
 | 35.0000 | lane-btc-btc-26mar27-basis | record_observation_only | BTC | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
