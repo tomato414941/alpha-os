@@ -1,6 +1,5 @@
 market_id,question,suggested_side,source_count_72h,article_count_24h,newest_age_hours,top_title_count,unique_top_title_count,relevance_score,quality_score,status,reason
-2296152,Israel closes its airspace by June 15?,buy_yes,18,22,4.925248,3,3,20.000000,82.00000000,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
-2270330,"US x Iran permanent peace deal by June 15, 2026?",buy_yes,28,22,0.491081,3,3,13.333333,75.33333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
-1962237,"US x Iran permanent peace deal by June 30, 2026?",buy_yes,28,22,0.491081,3,3,13.333333,75.33333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
-1971905,Strait of Hormuz traffic returns to normal by end of June?,buy_yes,26,28,0.947748,3,3,13.333333,75.33333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
-947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,buy_no,7,3,1.547470,3,3,13.333333,51.73333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
+2296152,Israel closes its airspace by June 15?,buy_yes,18,22,5.409856,3,3,20.000000,82.00000000,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
+2270330,"US x Iran permanent peace deal by June 15, 2026?",buy_yes,28,22,0.975689,3,3,13.333333,75.33333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
+1971905,Strait of Hormuz traffic returns to normal by end of June?,buy_yes,25,29,1.432356,3,3,13.333333,75.33333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
+947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,buy_no,7,3,2.032078,3,3,13.333333,51.73333333,source_quality_pass,fresh multi-source news context is present and not obviously duplicated
