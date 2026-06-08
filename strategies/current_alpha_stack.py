@@ -64,6 +64,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_flow_stacks(root),
+        *_microstructure_flow_stacks(root),
         *_l2_imbalance_stacks(root),
     ]
     return tuple(
@@ -3041,6 +3042,63 @@ def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _microstructure_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "market_making" / "current_microstructure_flow_snapshot.csv")
+            if row.get("action") in {"aligned_pressure_watch", "book_trade_divergence_watch"}
+        ),
+        key=lambda row: (
+            row.get("action") == "aligned_pressure_watch",
+            _abs_float(row.get("pressure_score")),
+            _intish(row.get("trade_count")),
+            -_float(row.get("spread_bps")),
+        ),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in rows[:10]:
+        asset = ticket.get("asset", "")
+        action = ticket.get("action", "")
+        direction = _intish(ticket.get("direction"))
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_microstructure_flow_probe",
+                status=action,
+                side=_microstructure_side(direction),
+                priority_score=_priority_score(
+                    action,
+                    source_count=2,
+                    raw_score=_abs_float(ticket.get("pressure_score")) * 100.0,
+                ),
+                sources="market_making",
+                evidence=(
+                    f"{asset}: dir={ticket.get('direction', '')}, "
+                    f"pressure={ticket.get('pressure_score', '')}, "
+                    f"book={ticket.get('book_imbalance_10bps', '')}, "
+                    f"trade={ticket.get('trade_imbalance', '')}, "
+                    f"trades={ticket.get('trade_count', '')}, "
+                    f"spread={ticket.get('spread_bps', '')}bps"
+                ),
+                conflict=(
+                    "book-plus-trade pressure is still one public microstructure snapshot; "
+                    "it needs 15m/1h labels, fees, queue position, and adverse-selection checks"
+                ),
+                next_step=f"rerun {asset} microstructure flow forward labels after 15m/1h and compare aligned pressure vs divergence",
+            )
+        )
+    return tuple(output)
+
+
+def _microstructure_side(direction: int) -> str:
+    if direction > 0:
+        return "long_microstructure_pressure"
+    if direction < 0:
+        return "short_microstructure_pressure"
+    return "neutral_microstructure_pressure"
+
+
 def _l2_imbalance_status(ticket: dict[str, str]) -> str:
     if _float(ticket.get("net_1h_bps")) > 0.0:
         return "l2_imbalance_15m_1h_supported_probe"
@@ -3158,6 +3216,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "volatility_quote_blocked": 34.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
+        "aligned_pressure_watch": 64.0,
+        "book_trade_divergence_watch": 58.0,
         "l2_imbalance_15m_1h_supported_probe": 68.0,
         "l2_imbalance_15m_only_probe": 56.0,
         "paper_funding_dislocation_watch": 63.0,

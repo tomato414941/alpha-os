@@ -221,6 +221,8 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_15m_supported"
     if "l2_imbalance_15m_1h_supported_probe" in text:
         return "paper_1h_supported"
+    if "aligned_pressure_watch" in text or "book_trade_divergence_watch" in text:
+        return "microstructure_label_pending"
     if "volume_dislocation_execution_probe" in text:
         return "paper_execution_gated"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
