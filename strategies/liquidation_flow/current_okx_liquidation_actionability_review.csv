@@ -1,16 +1,16 @@
 asset,action,monitor_observations,monitor_mean_score,continuation_return_15m,spread_bps,bid_depth_5bps,ask_depth_5bps,near_touch_depth_5bps,actionability_score,note
-XAU,short_liquidation_squeeze_watch,3,0.11336835,0.00016099,0.22997229,1043633.36110000,1271560.37810000,1043633.36110000,4.11658815,first checks support follow-up
-MU,long_liquidation_cascade_watch,3,0.26199090,,2.35284891,16524.58460000,18303.33130000,16524.58460000,0.18099545,waiting for matching forward label
-ETH,short_liquidation_squeeze_watch,3,0.02755346,,0.05940059,590417.12322000,1002205.08294000,590417.12322000,0.06377673,waiting for matching forward label
-WLD,mixed_liquidation_flow_watch,3,0.01778494,,2.12607633,11044.00560000,8017.39430000,8017.39430000,0.04897944,waiting for matching forward label
-BEAT,long_liquidation_cascade_watch,3,0.06998681,,2.03763809,1613.98400000,1993.12800000,1613.98400000,0.04306332,waiting for matching forward label
+XAU,short_liquidation_squeeze_watch,3,0.11336835,0.00016099,0.23193515,1066747.16070000,1019893.71820000,1019893.71820000,4.11658815,first checks support follow-up
+MU,long_liquidation_cascade_watch,3,0.26199090,,0.11440535,29132.96160000,11068.27690000,11068.27690000,0.18099545,waiting for matching forward label
+ETH,short_liquidation_squeeze_watch,3,0.02755346,,0.06004185,1748062.83952000,1176931.70729000,1176931.70729000,0.06377673,waiting for matching forward label
+WLD,mixed_liquidation_flow_watch,3,0.01778494,,2.09183140,13994.49260000,13728.79630000,13728.79630000,0.05889247,waiting for matching forward label
+BEAT,long_liquidation_cascade_watch,3,0.06998681,,5.04838031,4574.12400000,4286.16600000,4286.16600000,0.05642424,waiting for matching forward label
 PEPE,long_liquidation_cascade_watch,3,0.00005989,0.00177809,,,,,0.03562169,first checks support follow-up
-HOME,short_liquidation_squeeze_watch,3,0.04764173,,3.41938793,494.15600000,17.55000000,17.55000000,0.02390862,waiting for matching forward label
-ALLO,mixed_liquidation_flow_watch,3,0.02234686,,0.30610527,1149.76650000,1617.55070000,1149.76650000,0.01692226,waiting for matching forward label
-BSB,short_liquidation_squeeze_watch,3,0.01527014,,3.01613633,927.95800000,1409.62800000,927.95800000,0.01227486,waiting for matching forward label
-BTC,short_liquidation_squeeze_watch,3,0.02457851,-0.00248626,0.01583465,537295.53968000,182428.81006000,182428.81006000,0.00245785,continuation label weak
+HOME,short_liquidation_squeeze_watch,3,0.04764173,,6.08642727,725.98500000,190.64600000,190.64600000,0.02477409,waiting for matching forward label
+ALLO,mixed_liquidation_flow_watch,3,0.02234686,,0.26121596,3585.90080000,980.37060000,980.37060000,0.01607528,waiting for matching forward label
+BSB,short_liquidation_squeeze_watch,3,0.01527014,,3.33277787,4282.80800000,984.60200000,984.60200000,0.01255808,waiting for matching forward label
+BTC,short_liquidation_squeeze_watch,3,0.02457851,-0.00248626,0.01588117,769774.58040000,143490.02103000,143490.02103000,0.00245785,continuation label weak
 OPN,mixed_liquidation_flow_watch,3,0.00445348,,,,,,0.00222674,waiting for matching forward label
-ZEC,short_liquidation_squeeze_watch,3,0.01539813,-0.00802546,0.22920797,14793.89730000,40879.27850000,14793.89730000,0.00153981,continuation label weak
+ZEC,short_liquidation_squeeze_watch,3,0.01539813,-0.00802546,0.23458484,22369.50200000,23494.97180000,22369.50200000,0.00153981,continuation label weak
 SUI,mixed_liquidation_flow_watch,3,0.00284125,,,,,,0.00142063,waiting for matching forward label
 CL,long_liquidation_cascade_watch,3,0.01059244,-0.00065090,,,,,0.00105924,continuation label weak
 LAB,long_liquidation_cascade_watch,3,0.00542134,-0.00654155,,,,,0.00054213,continuation label weak
