@@ -71,6 +71,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
         _split_first_lane_label_progress_row(root),
+        _split_first_lane_label_tickets_row(root),
+        _split_first_lane_label_outcomes_row(root),
         _split_first_lane_repeat_tickets_row(root),
         _split_first_lane_repeat_outcomes_row(root),
         _symbol_opportunity_map_row(root),
@@ -1754,6 +1756,59 @@ def _split_first_lane_label_progress_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="open lane-label rows are not tracked separately from repeat tickets",
         next_step="run current split first lane label progress after the split-first queue",
+    )
+
+
+def _split_first_lane_label_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_split_first_lane_label_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="split_first_lane_label_tickets",
+            status="lane_label_ticket_open",
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('opportunity', '')}, "
+                f"entry={best.get('entry_mark', '')}"
+            ),
+            main_gap=best.get("required_record", "lane label ticket still needs a forward outcome"),
+            next_step=best.get("next_step", "refresh split-first lane label outcomes"),
+        )
+    return ExplorationRow(
+        lane="split_first_lane_label_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="split-first lane label rows have not been opened as observation tickets",
+        next_step="open lane-label tickets from split-first label progress",
+    )
+
+
+def _split_first_lane_label_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_split_first_lane_label_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="split_first_lane_label_outcomes",
+            status=best.get("outcome", "split_first_lane_label_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "lane label still needs mature forward evidence"),
+            next_step=best.get("next_step", "refresh split-first lane label outcomes"),
+        )
+    return ExplorationRow(
+        lane="split_first_lane_label_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="lane-label tickets have not been checked against current marks",
+        next_step="run split-first lane label outcomes after ticket opening",
     )
 
 
