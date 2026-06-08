@@ -3337,6 +3337,27 @@ def _sector_rotation_context_next_step(row: dict[str, str]) -> str:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    survival_path = root / "news_social" / "current_news_event_survival.csv"
+    best_survival = _best_numeric_row(survival_path, key="survival_score")
+    if best_survival:
+        return ExplorationRow(
+            lane="news_social",
+            status=best_survival.get("survival_status", "news_event_survival"),
+            strongest_current_signal=(
+                f"{best_survival.get('symbol', '')}: {best_survival.get('event_kind', '')}, "
+                f"side={best_survival.get('side', '')}, "
+                f"sources={best_survival.get('source_count', '')}, "
+                f"labels={best_survival.get('label_count', '')}, "
+                f"stories={best_survival.get('unique_story_count', '')}, "
+                f"mean1h={best_survival.get('mean_directional_1h_bps', '')}, "
+                f"mean4h={best_survival.get('mean_directional_4h_bps', '')}"
+            ),
+            main_gap=best_survival.get("reason", "news-event survival still needs source independence"),
+            next_step=best_survival.get(
+                "next_step",
+                "repeat news-event labels with story-level dedupe and execution-cost checks",
+            ),
+        )
     source_independence_path = root / "news_social" / "current_news_event_source_independence.csv"
     source_independence_rows = tuple(
         row
