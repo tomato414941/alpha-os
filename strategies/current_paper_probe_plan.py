@@ -409,7 +409,22 @@ def _observation_horizon(row: dict[str, str]) -> str:
         return "15m/1h"
     text = " ".join((row.get("evidence", ""), row.get("next_step", ""))).lower()
     horizons = tuple(horizon for horizon in ("15m", "1h", "4h", "12h", "24h") if horizon in text)
-    return "/".join(horizons) if horizons else "fresh"
+    if horizons:
+        return "/".join(horizons)
+    if _has_directional_side(row.get("side", "")):
+        return "15m/1h"
+    return "fresh"
+
+
+def _has_directional_side(side: str) -> bool:
+    value = side.lower()
+    return (
+        value.startswith("long")
+        or value.startswith("short")
+        or value.startswith("paper_long")
+        or value.startswith("paper_short")
+        or "buy_yes" in value
+    )
 
 
 def _missing_evidence(conflict: str) -> str:

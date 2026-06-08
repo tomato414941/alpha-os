@@ -17,18 +17,16 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | sol_stablecoin_migration_paper_long | asset_family_action | stablecoin_migration | SOL | paper_long | 1 | 1.000 | 73.78 | 73.78 | 73.78 | 40.43 | collect_more_labels |
 | microstructure_flow_paper_long | family_action | microstructure_flow |  | paper_long | 17 | 0.353 | 2.33 | 0.00 | -266.52 | 26.15 | collect_more_labels |
 | hype_protocol_fee_paper_short | asset_family_action | protocol_fee | HYPE | paper_short | 4 | 0.500 | -3.42 | 5.96 | -37.55 | 25.04 | collect_more_labels |
-| unclassified_paper_long | family_action | unclassified |  | paper_long | 17 | 0.059 | 3.13 | 0.00 | -20.62 | 19.60 | collect_more_labels |
+| unclassified_paper_long | family_action | unclassified |  | paper_long | 15 | 0.067 | 3.54 | 0.00 | -20.62 | 20.21 | collect_more_labels |
 | eth_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | ETH | paper_long | 2 | 0.500 | 2.74 | 2.74 | -2.06 | 15.32 | collect_more_labels |
 | eth_microstructure_flow_paper_long | asset_family_action | microstructure_flow | ETH | paper_long | 2 | 0.500 | 2.74 | 2.74 | -2.06 | 15.32 | collect_more_labels |
-| execution_edge_paper_long | family_action | execution_edge |  | paper_long | 5 | 0.000 | 0.00 | 0.00 | 0.00 | 12.50 | collect_more_labels |
-| zec_unclassified_paper_long | asset_family_action | unclassified | ZEC | paper_long | 4 | 0.000 | 0.00 | 0.00 | 0.00 | 10.00 | collect_more_labels |
 | btc_unclassified_paper_long | asset_family_action | unclassified | BTC | paper_long | 4 | 0.000 | 0.00 | 0.00 | 0.00 | 10.00 | collect_more_labels |
-| sol_execution_edge_paper_long | asset_family_action | execution_edge | SOL | paper_long | 3 | 0.000 | 0.00 | 0.00 | 0.00 | 7.50 | collect_more_labels |
-| btc_unclassified_paper_short | asset_family_action | unclassified | BTC | paper_short | 3 | 0.000 | 0.00 | -0.00 | -0.00 | 7.50 | collect_more_labels |
+| zec_unclassified_paper_long | asset_family_action | unclassified | ZEC | paper_long | 3 | 0.000 | 0.00 | 0.00 | 0.00 | 7.50 | collect_more_labels |
 | eth_unclassified_paper_long | asset_family_action | unclassified | ETH | paper_long | 3 | 0.000 | 0.00 | 0.00 | 0.00 | 7.50 | collect_more_labels |
-| near_execution_edge_paper_long | asset_family_action | execution_edge | NEAR | paper_long | 2 | 0.000 | 0.00 | 0.00 | 0.00 | 3.33 | collect_more_labels |
+| execution_edge_paper_long | family_action | execution_edge |  | paper_long | 2 | 0.000 | 0.00 | 0.00 | 0.00 | 3.33 | collect_more_labels |
+| sol_execution_edge_paper_long | asset_family_action | execution_edge | SOL | paper_long | 2 | 0.000 | 0.00 | 0.00 | 0.00 | 3.33 | collect_more_labels |
 | eth_unclassified_paper_short | asset_family_action | unclassified | ETH | paper_short | 2 | 0.000 | 0.00 | -0.00 | -0.00 | 3.33 | collect_more_labels |
-| event_unclassified_paper_long | asset_family_action | unclassified | EVENT | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
+| btc_unclassified_paper_short | asset_family_action | unclassified | BTC | paper_short | 2 | 0.000 | 0.00 | -0.00 | -0.00 | 3.33 | collect_more_labels |
 | bera_microstructure_flow_paper_long | asset_family_action | microstructure_flow | BERA | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | sei_microstructure_flow_paper_long | asset_family_action | microstructure_flow | SEI | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | near_unclassified_paper_long | asset_family_action | unclassified | NEAR | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
@@ -44,6 +42,8 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | crv_protocol_fee_paper_long | asset_family_action | protocol_fee | CRV | paper_long | 1 | 0.000 | -66.97 | -66.97 | -66.97 | -43.81 | collect_more_labels |
 | sol_protocol_fee_paper_short | asset_family_action | protocol_fee | SOL | paper_short | 1 | 0.000 | -81.72 | -81.72 | -81.72 | -53.65 | collect_more_labels |
 | protocol_fee_paper_short | family_action | protocol_fee |  | paper_short | 5 | 0.400 | -19.08 | -0.00 | -81.72 | 3.42 | reject_action_preference_candidate |
+| token_unlock_paper_short | family_action | token_unlock |  | paper_short | 4 | 0.250 | -9.39 | -5.98 | -37.55 | 0.88 | reject_action_preference_candidate |
+| hype_token_unlock_paper_short | asset_family_action | token_unlock | HYPE | paper_short | 4 | 0.250 | -9.39 | -5.98 | -37.55 | 0.88 | reject_action_preference_candidate |
 
 ## Interpretation
 

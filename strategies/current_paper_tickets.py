@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -74,15 +74,24 @@ def _ticket_for_plan_row(
 ) -> PaperTicket:
     ticket_id = _ticket_id(row)
     existing = existing_tickets.get(ticket_id)
-    existing_matches = existing is not None and _ticket_matches_plan(existing, row)
-    if existing_matches and row.get("probe_type") != "event_crypto_hedge_probe":
+    full_match = existing is not None and _ticket_matches_plan(existing, row)
+    identity_match = existing is not None and _ticket_identity_matches_plan(existing, row)
+    if full_match and row.get("probe_type") != "event_crypto_hedge_probe":
         assert existing is not None
         return existing
-    return _build_ticket(
-        opened_at=existing_opened_at.get(ticket_id, opened_at) if existing_matches else opened_at,
+    ticket = _build_ticket(
+        opened_at=existing_opened_at.get(ticket_id, opened_at) if identity_match else opened_at,
         row=row,
         marks=marks,
     )
+    if identity_match:
+        assert existing is not None
+        return replace(
+            ticket,
+            entry_mark=existing.entry_mark or ticket.entry_mark,
+            entry_source=existing.entry_source or ticket.entry_source,
+        )
+    return ticket
 
 
 def write_paper_tickets_csv(rows: tuple[PaperTicket, ...], *, output_path: Path) -> Path:
@@ -210,13 +219,19 @@ def _ticket_id(row: dict[str, str]) -> str:
 
 def _ticket_matches_plan(ticket: PaperTicket, row: dict[str, str]) -> bool:
     return (
+        _ticket_identity_matches_plan(ticket, row)
+        and ticket.candidate_size_usd == row.get("candidate_size_usd", "")
+        and ticket.observation_horizon == row.get("observation_horizon", "")
+    )
+
+
+def _ticket_identity_matches_plan(ticket: PaperTicket, row: dict[str, str]) -> bool:
+    return (
         ticket.opportunity == row.get("opportunity", "")
         and ticket.probe_type == row.get("probe_type", "")
         and ticket.asset == row.get("asset", "")
         and ticket.status == row.get("status", "")
         and ticket.side == row.get("side", "")
-        and ticket.candidate_size_usd == row.get("candidate_size_usd", "")
-        and ticket.observation_horizon == row.get("observation_horizon", "")
     )
 
 
@@ -395,17 +410,29 @@ def main() -> None:
     parser.add_argument("--plan-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_tickets.md")
+    parser.add_argument(
+        "--existing-tickets-path",
+        type=Path,
+        default=None,
+        help="Use prior ticket rows to preserve opened_at and entry marks for matching ticket identities.",
+    )
     parser.add_argument("--top", type=int, default=50)
     parser.add_argument(
         "--preserve-opened-at",
         action="store_true",
-        help="Keep existing ticket opened_at values when ticket ids already exist.",
+        help="Keep existing ticket opened_at and entry marks when ticket identities already exist.",
     )
     args = parser.parse_args()
 
     rows = build_paper_tickets(
         plan_path=args.plan_path,
-        existing_tickets_path=args.output_path if args.preserve_opened_at else None,
+        existing_tickets_path=(
+            args.existing_tickets_path
+            if args.existing_tickets_path is not None
+            else args.output_path
+            if args.preserve_opened_at
+            else None
+        ),
         top=args.top,
     )
     write_paper_tickets_csv(rows, output_path=args.output_path)
