@@ -35,6 +35,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_binance_derivatives_feature_prior_stacks(root),
         *_binance_derivatives_regime_feature_stacks(root),
+        *_binance_derivatives_intraday_paper_stacks(root),
         *_binance_derivatives_intraday_repeat_stacks(root),
         *_binance_derivatives_intraday_feature_stacks(root),
         *_cross_exchange_funding_stacks(root),
@@ -891,6 +892,89 @@ def _binance_derivatives_intraday_repeat_stacks(root: Path) -> tuple[AlphaStackR
             )
         )
     return tuple(output)
+
+
+def _binance_derivatives_intraday_paper_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = [
+        *_read_rows(root / "p0_parallel" / "binance_derivatives_intraday_paper_labels.csv"),
+        *_read_rows(root / "p0_parallel" / "binance_derivatives_intraday_paper_labels_2bps.csv"),
+    ]
+    rows = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "paper_intraday_cost_supported",
+                "paper_intraday_recent_only",
+                "paper_intraday_positive_mean_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for row in rows:
+        key = (
+            row.get("symbol", ""),
+            row.get("feature", ""),
+            row.get("action", ""),
+            row.get("round_trip_cost_bps", ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        if len(output) >= 8:
+            break
+        symbol = row.get("symbol", "")
+        feature = row.get("feature", "")
+        action = row.get("action", "")
+        cost_bps = row.get("round_trip_cost_bps", "")
+        status = _binance_intraday_paper_status(row.get("status", ""), cost_bps=cost_bps)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_symbol_slug(symbol)}_{_slug(feature)}_{_slug(action)}_intraday_paper_label",
+                status=status,
+                side=action,
+                priority_score=_priority_score(
+                    status,
+                    source_count=3,
+                    raw_score=_float(row.get("score")),
+                ),
+                sources="p0_parallel + binance_derivatives_intraday_paper_labels",
+                evidence=(
+                    f"{symbol}: feature={feature}, action={action}, cost_bps={cost_bps}, "
+                    f"prior_net1h={row.get('prior_net_mean_1h', '')}, "
+                    f"recent_net1h={row.get('recent_net_mean_1h', '')}, "
+                    f"combined_net1h={row.get('combined_net_mean_1h', '')}, "
+                    f"combined_hit={row.get('combined_hit_rate', '')}, "
+                    f"trades={row.get('combined_trades', '')}, score={row.get('score', '')}"
+                ),
+                conflict=(
+                    "intraday paper label uses rough cost only; it still needs live spread, "
+                    "funding timestamp, fill delay, stop rules, and sizing assumptions"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"paper-check {symbol} {feature} {action} with live spread and funding timing",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_intraday_paper_status(status: str, *, cost_bps: str) -> str:
+    cost = _float(cost_bps)
+    if status == "paper_intraday_cost_supported" and cost <= 2.0:
+        return "low_cost_intraday_paper_supported"
+    if status == "paper_intraday_cost_supported":
+        return "intraday_paper_supported"
+    if status == "paper_intraday_recent_only" and cost <= 2.0:
+        return "low_cost_intraday_paper_recent_only"
+    if status == "paper_intraday_positive_mean_watch":
+        return "intraday_paper_positive_mean_watch"
+    return "intraday_paper_watch"
 
 
 def _binance_intraday_repeat_status(status: str) -> str:
@@ -2849,6 +2933,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "persistent_derivatives_symbol_feature_prior": 48.0,
         "recent_derivatives_symbol_feature_prior": 44.0,
         "derivatives_symbol_feature_regime_shift": 38.0,
+        "low_cost_intraday_paper_supported": 62.0,
+        "intraday_paper_supported": 60.0,
+        "low_cost_intraday_paper_recent_only": 48.0,
+        "intraday_paper_positive_mean_watch": 36.0,
+        "intraday_paper_watch": 34.0,
         "repeat_intraday_derivatives_feature_priority": 58.0,
         "repeat_intraday_derivatives_feature_watch": 50.0,
         "intraday_derivatives_feature_priority": 54.0,

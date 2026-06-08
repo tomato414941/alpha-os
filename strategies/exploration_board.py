@@ -31,6 +31,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
         _binance_derivatives_history_row(root),
+        _binance_derivatives_intraday_paper_row(root),
         _binance_derivatives_intraday_repeat_row(root),
         _binance_derivatives_intraday_row(root),
         _macro_regime_row(root),
@@ -714,6 +715,54 @@ def _binance_derivatives_intraday_repeat_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="recent 5m-to-1h labels have not been repeated on a non-overlapping window",
         next_step="run Binance derivatives intraday repeat compare before promoting any intraday feature",
+    )
+
+
+def _binance_derivatives_intraday_paper_row(root: Path) -> ExplorationRow:
+    best_low_cost = _best_numeric_row(
+        root / "p0_parallel" / "binance_derivatives_intraday_paper_labels_2bps.csv",
+        key="score",
+    )
+    best_conservative = _best_numeric_row(
+        root / "p0_parallel" / "binance_derivatives_intraday_paper_labels.csv",
+        key="score",
+    )
+    best = best_low_cost or best_conservative
+    if best:
+        conservative_note = ""
+        if best_conservative:
+            conservative_note = (
+                f"; 8bps_best={best_conservative.get('symbol', '')} "
+                f"{best_conservative.get('feature', '')} "
+                f"{best_conservative.get('status', '')} "
+                f"net={best_conservative.get('combined_net_mean_1h', '')}"
+            )
+        return ExplorationRow(
+            lane="binance_derivatives_intraday_paper",
+            status=best.get("status", "intraday_paper_label"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')} "
+                f"{best.get('feature', '')} "
+                f"{best.get('action', '')}: "
+                f"cost={best.get('round_trip_cost_bps', '')}bps, "
+                f"prior_net={best.get('prior_net_mean_1h', '')}, "
+                f"recent_net={best.get('recent_net_mean_1h', '')}, "
+                f"combined_net={best.get('combined_net_mean_1h', '')}, "
+                f"hit={best.get('combined_hit_rate', '')}"
+                f"{conservative_note}"
+            ),
+            main_gap="paper label uses rough costs only and still lacks live spread, funding timestamp, fill delay, stop, and sizing",
+            next_step=best.get(
+                "next_step",
+                "paper-check the top intraday feature with live spread, funding timing, fill delay, and stops",
+            ),
+        )
+    return ExplorationRow(
+        lane="binance_derivatives_intraday_paper",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="repeat intraday features have not been evaluated after rough costs",
+        next_step="run Binance derivatives intraday paper labels with conservative and low-cost assumptions",
     )
 
 

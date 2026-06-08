@@ -238,6 +238,41 @@ ARB, ADA, UNI, and DOGE produce the cleanest repeated buckets in this two-window
 check. OP and NEAR remain interesting but show bucket shifts, so they need a
 regime explanation before any promotion.
 
+## Binance Intraday Paper Labels
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_paper_labels
+
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_paper_labels \
+  --round-trip-cost-bps 2 \
+  --output-path strategies/p0_parallel/binance_derivatives_intraday_paper_labels_2bps.csv \
+  --markdown-output-path strategies/p0_parallel/binance_derivatives_intraday_paper_labels_2bps.md
+```
+
+This applies rough round-trip cost to repeated intraday feature buckets and
+tests three actions: long the preferred bucket, short the opposite bucket, or
+trade both sides.
+
+At 8 bps round-trip cost, the repeat candidates mostly fail. The best row is
+only a weak positive-mean watch:
+
+| symbol | feature | action | status | cost bps | prior net 1h | recent net 1h | combined net 1h | combined hit |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| ADAUSDT | count_long_short_ratio | short_opposite | paper_intraday_positive_mean_watch | 8.00 | -0.000662 | 0.000720 | 0.000029 | 0.4585 |
+
+At 2 bps round-trip cost, ARB has the cleanest cost-supported rows:
+
+| symbol | feature | action | status | cost bps | prior net 1h | recent net 1h | combined net 1h | combined hit |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| ARBUSDT | count_long_short_ratio | short_opposite | paper_intraday_cost_supported | 2.00 | 0.000124 | 0.001049 | 0.000587 | 0.5106 |
+| ARBUSDT | count_top_long_short_ratio | short_opposite | paper_intraday_cost_supported | 2.00 | 0.000086 | 0.000799 | 0.000443 | 0.5067 |
+
+This makes ARB a low-cost execution candidate, not a generic signal. The next
+step is live spread/fill/funding timing and stop behavior; if realized cost is
+closer to 8 bps, this alpha should not be promoted.
+
 ## Funding Carry Proxy
 
 Run:

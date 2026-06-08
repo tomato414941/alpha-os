@@ -201,6 +201,10 @@ def _support_state(row: dict[str, str]) -> str:
     text = " ".join((row.get("status", ""), row.get("evidence", ""), row.get("next_step", ""))).lower()
     if "out1h=paper_1h_win" in text or "paper_1h_win" in text:
         return "paper_1h_supported"
+    if "low_cost_intraday_paper_supported" in text or "paper_intraday_cost_supported" in text:
+        return "paper_cost_supported"
+    if "low_cost_intraday_paper_recent_only" in text or "paper_intraday_recent_only" in text:
+        return "paper_recent_only"
     if "out15=paper_15m_win" in text or "paper_15m_win" in text:
         return "paper_15m_supported"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
@@ -230,6 +234,10 @@ def _lane_next_step(*, symbol: str, stack_row: dict[str, str], support_state: st
         return f"wait for {symbol} 1h/4h label or repeat this lane on a fresh snapshot"
     if support_state == "paper_execution_gated":
         return f"paper-probe {symbol} lane at the gated size and log outcome"
+    if support_state == "paper_cost_supported":
+        return f"check {symbol} live spread, funding timing, fill delay, stop rules, and realized cost"
+    if support_state == "paper_recent_only":
+        return f"extend {symbol} lane to another non-overlapping window before promotion"
     if support_state == "mechanics_unvalidated":
         return f"validate {symbol} mechanics, venue access, unwind path, and stale-price risk"
     return stack_row.get("next_step", f"collect more {symbol} lane observations")
