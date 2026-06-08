@@ -1002,8 +1002,8 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
                 f"skew={best_ticket.get('skew_iv', '')}, "
                 f"volume={best_ticket.get('volume_usd', '')}"
             ),
-            main_gap="options paper ticket still lacks spread quotes, delta hedge PnL, margin, and realized-vol forecast",
-            next_step="paper-check BTC short put spread quotes, delta hedge cost, tail loss, and expiry handling before any live action",
+            main_gap="options paper ticket uses only an ATM quote proxy; it still lacks full spread construction, delta hedge PnL, margin, and realized-vol forecast",
+            next_step="paper-check the selected option structure, max premium or tail loss, delta hedge cost, margin, and expiry handling before any live action",
         )
     label_path = root / "options_volatility" / "current_deribit_options_realized_vol_labels.csv"
     best_label = _best_numeric_row(label_path, key="score")
@@ -1053,6 +1053,7 @@ def _best_options_volatility_paper_ticket(path: Path) -> dict[str, str] | None:
         for row in rows
         if row.get("status") in {
             "paper_short_put_spread_candidate",
+            "paper_long_vol_quote_candidate",
             "paper_calendar_spread_watch",
         }
     )
@@ -1061,7 +1062,11 @@ def _best_options_volatility_paper_ticket(path: Path) -> dict[str, str] | None:
     return max(
         candidates,
         key=lambda row: (
-            1.0 if row.get("status") == "paper_short_put_spread_candidate" else 0.5,
+            {
+                "paper_long_vol_quote_candidate": 1.0,
+                "paper_short_put_spread_candidate": 0.9,
+                "paper_calendar_spread_watch": 0.5,
+            }.get(row.get("status"), 0.0),
             float(row.get("score") or "0"),
         ),
     )

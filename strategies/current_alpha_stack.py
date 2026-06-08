@@ -172,6 +172,7 @@ def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
             in {
                 "paper_short_put_spread_candidate",
                 "paper_long_vol_candidate",
+                "paper_long_vol_quote_candidate",
                 "paper_calendar_spread_watch",
             }
         ),
@@ -213,6 +214,8 @@ def _options_volatility_conflict(ticket: dict[str, str]) -> str:
         return "macro/speculative-beta risk-off pressure can turn rich put premium into real tail loss"
     if ticket.get("status") == "paper_long_vol_candidate":
         return "cheap IV can stay cheap or realized volatility can collapse; needs actual option quotes, premium-at-risk, and delta-hedge plan"
+    if ticket.get("status") == "paper_long_vol_quote_candidate":
+        return "cheap IV can stay cheap or realized volatility can collapse; quote proxy still needs full spread construction and delta-hedge plan"
     return "calendar spread depends on expiry curve, event timing, bid/ask, margin, and hedge PnL rather than direction alone"
 
 
@@ -221,6 +224,8 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
         return "paper-check bid/ask spread, margin, max loss, delta hedge cost, and behavior during the current risk-off shock"
     if ticket.get("status") == "paper_long_vol_candidate":
         return "paper-check long-vol spread quotes, max premium loss, delta hedge plan, and realized-vol persistence"
+    if ticket.get("status") == "paper_long_vol_quote_candidate":
+        return "paper-check full long-vol spread construction, max premium loss, delta hedge plan, and realized-vol persistence"
     return "paper-check calendar spread quotes, event timing, vega/theta exposure, margin, and delta hedge cost"
 
 
@@ -1792,6 +1797,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,
         "paper_long_vol_candidate": 66.0,
+        "paper_long_vol_quote_candidate": 70.0,
         "paper_calendar_spread_watch": 58.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
