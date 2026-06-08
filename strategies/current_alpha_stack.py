@@ -1061,17 +1061,29 @@ def _hyperliquid_dislocation_actionability_stacks(root: Path) -> tuple[AlphaStac
         key=lambda row: _float(row.get("score")),
         reverse=True,
     )
+    selected_tickets: list[dict[str, str]] = []
+    seen_asset_sides: set[tuple[str, str]] = set()
+    for ticket in tickets:
+        asset_side = (ticket.get("asset", ""), ticket.get("side", ""))
+        if asset_side in seen_asset_sides:
+            continue
+        seen_asset_sides.add(asset_side)
+        selected_tickets.append(ticket)
+        if len(selected_tickets) >= 8:
+            break
     output: list[AlphaStackRow] = []
-    for ticket in tickets[:8]:
+    for ticket in selected_tickets:
         asset = ticket.get("asset", "")
+        status = ticket.get("status", "")
+        source_count = 3 if status == "dislocation_repeat_execution_candidate" else 1
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_{_slug(ticket.get('source_status', ''))}_actionability",
-                status=ticket.get("status", ""),
+                status=status,
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
-                    ticket.get("status", ""),
-                    source_count=4,
+                    status,
+                    source_count=source_count,
                     raw_score=_float(ticket.get("score")),
                 ),
                 sources="perp_market_map",
@@ -2471,7 +2483,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_dislocation_15m_supported_candidate": 64.0,
         "paper_dislocation_15m_failed_candidate": 42.0,
         "dislocation_repeat_execution_candidate": 61.0,
-        "dislocation_repeat_needs_execution_check": 54.0,
+        "dislocation_repeat_needs_execution_check": 40.0,
         "dislocation_single_snapshot_1h_watch": 45.0,
         "dislocation_15m_only_watch": 38.0,
         "dislocation_monitor_conflict_relabel": 34.0,

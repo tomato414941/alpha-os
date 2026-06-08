@@ -279,7 +279,16 @@ def _score(
             - max(visible_depth_usage_10bps - 0.05, 0.0) * 20.0,
         )
     if status == "dislocation_repeat_needs_execution_check":
-        return min(72.0, 48.0 + min(history_win_1h * 4.0, 10.0) + min(history_mean_net_1h_bps / 30.0, 8.0))
+        depth_penalty = 0.0
+        if visible_depth_usage_10bps > 0.0:
+            depth_penalty = max(visible_depth_usage_10bps - 0.05, 0.0) * 30.0
+        return min(
+            54.0,
+            40.0
+            + min(history_win_1h * 3.0, 6.0)
+            + min(history_mean_net_1h_bps / 60.0, 5.0)
+            - depth_penalty,
+        )
     if status == "dislocation_single_snapshot_1h_watch":
         return min(58.0, 40.0 + min(current_net_1h_bps / 40.0, 8.0) + min(candidate_score / 8.0, 4.0))
     if status == "dislocation_15m_only_watch":
