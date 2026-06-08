@@ -169,6 +169,8 @@ def _build_queue_row(
 
 
 def _queue_action(*, label: dict[str, str], execution: dict[str, str]) -> str:
+    if label.get("outcome_15m") == "pending_15m":
+        return "fresh_forward_label_candidate"
     if execution.get("gate_action") == "paper_execution_probe":
         return "repeat_paper_probe_candidate"
     if label.get("outcome_15m") == "paper_15m_win" or label.get("outcome_1h") == "paper_1h_win":
@@ -179,6 +181,8 @@ def _queue_action(*, label: dict[str, str], execution: dict[str, str]) -> str:
 
 
 def _queue_reason(*, label: dict[str, str], execution: dict[str, str]) -> str:
+    if label.get("outcome_15m") == "pending_15m":
+        return "repeated monitor candidate still needs a fresh covered 15m label"
     if execution.get("gate_action") == "paper_execution_probe":
         return "repeated monitor candidate already passed the public-book paper gate"
     if label.get("outcome_15m") == "paper_15m_win" or label.get("outcome_1h") == "paper_1h_win":
@@ -196,6 +200,8 @@ def _queue_next_step(
 ) -> str:
     if execution.get("gate_action") == "paper_execution_probe":
         return f"repeat {asset} paper probe on a fresh snapshot and record fill/outcome evidence"
+    if label.get("outcome_15m") == "pending_15m":
+        return f"start a fresh {asset} forward label window from the latest repeated monitor snapshot"
     if label.get("outcome_1h") == "pending_1h":
         return f"wait for {asset} 1h label, then rerun execution check if still visible"
     return f"rerun {asset} forward label on a fresh repeated monitor window"
