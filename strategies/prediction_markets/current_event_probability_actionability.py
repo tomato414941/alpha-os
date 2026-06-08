@@ -213,6 +213,12 @@ def _status_side_reason(
                 "paper_event_probability_after_refresh_check",
                 "rough edge, source quality, quote, depth, and refreshed mark all pass before fill checks",
             )
+        if refresh_status == "paper_outcome_failed_refresh":
+            return (
+                "event_probability_restart_after_failed_refresh",
+                "paper_event_probability_restart_watch",
+                "current quote passes, but the prior paper entry failed a refreshed mark check",
+            )
         return (
             "event_probability_candidate_after_current_quote_check",
             "paper_event_probability_current_quote_check",
@@ -247,6 +253,15 @@ def _score(
             + min(max(mark_to_bid_pnl, -0.05) * 80.0, 4.0)
             - max(spread - 0.01, 0.0) * 120.0,
         )
+    if status == "event_probability_restart_after_failed_refresh":
+        return min(
+            56.0,
+            36.0
+            + min(current_edge_after_ask * 36.0, 12.0)
+            + min(ask_depth_to_5c / 20_000.0, 4.0)
+            + min(max(mark_to_bid_pnl, -0.05) * 40.0, 2.0)
+            - max(spread - 0.01, 0.0) * 120.0,
+        )
     if status == "event_probability_edge_watch":
         return min(62.0, 42.0 + min(current_edge_after_ask * 40.0, 12.0) + min(ask_depth_to_5c / 20_000.0, 4.0))
     if status == "event_probability_quote_mechanics_watch":
@@ -263,6 +278,8 @@ def _next_step(*, question: str, status: str) -> str:
         return f"paper-check {question} with explicit fee, queue, fill, resolution-risk, and adverse-selection assumptions"
     if status == "event_probability_candidate_after_current_quote_check":
         return f"restart paper ticket for {question} at current quote, then require another quote/news refresh before promotion"
+    if status == "event_probability_restart_after_failed_refresh":
+        return f"restart {question} only as a new paper watch; require a survived quote/news refresh before stack promotion"
     if status == "event_probability_edge_watch":
         return f"refresh news, quotes, and CLOB depth for {question}; do not promote from rough edge alone"
     if status == "event_probability_quote_mechanics_watch":

@@ -1748,6 +1748,7 @@ def _event_probability_actionability_stacks(root: Path) -> tuple[AlphaStackRow, 
             in {
                 "event_probability_candidate_after_refresh_check",
                 "event_probability_candidate_after_current_quote_check",
+                "event_probability_restart_after_failed_refresh",
                 "event_probability_edge_watch",
             }
         ),
@@ -2414,6 +2415,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_outcome_edge_watch": 68.0,
         "event_probability_candidate_after_refresh_check": 66.0,
         "event_probability_candidate_after_current_quote_check": 63.0,
+        "event_probability_restart_after_failed_refresh": 42.0,
         "event_probability_edge_watch": 52.0,
         "event_probability_quote_mechanics_watch": 44.0,
         "event_probability_source_quality_blocked": 38.0,
