@@ -2845,6 +2845,56 @@ def _market_breadth_next_step(label: dict[str, str], *, execution: dict[str, str
 
 
 def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    forward_rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "news_social" / "current_news_event_forward_labels.csv")
+            if row.get("label_status") in {"direction_supported_1h_4h", "direction_supported_1h_only"}
+        ),
+        key=lambda row: _float(row.get("directional_4h_bps") or row.get("directional_1h_bps")),
+        reverse=True,
+    )
+    if forward_rows:
+        output: list[AlphaStackRow] = []
+        seen: set[tuple[str, str]] = set()
+        for label in forward_rows:
+            symbol = label.get("symbol", "")
+            event_kind = label.get("event_kind", "")
+            key = (symbol, event_kind)
+            if key in seen:
+                continue
+            seen.add(key)
+            output.append(
+                AlphaStackRow(
+                    opportunity=f"{symbol.lower()}_{event_kind}_news_event_forward_label",
+                    status=label.get("label_status", ""),
+                    side=label.get("side", ""),
+                    priority_score=_priority_score(
+                        label.get("label_status", ""),
+                        source_count=2,
+                        raw_score=abs(_float(label.get("directional_4h_bps") or label.get("directional_1h_bps"))),
+                    ),
+                    sources="news_social + forward_label",
+                    evidence=(
+                        f"{label.get('source', '')} {symbol}: kind={event_kind}, "
+                        f"dir15={label.get('directional_15m_bps', '')}, "
+                        f"dir1h={label.get('directional_1h_bps', '')}, "
+                        f"dir4h={label.get('directional_4h_bps', '')}, "
+                        f"title={label.get('title', '')}"
+                    ),
+                    conflict=(
+                        "news-event forward label still needs duplicate-source checks, "
+                        "execution costs, and repeated non-overlapping events"
+                    ),
+                    next_step=label.get(
+                        "next_step",
+                        f"repeat {symbol} news-event forward label with duplicate-source checks",
+                    ),
+                )
+            )
+            if len(output) >= 5:
+                break
+        return tuple(output)
     rows = _read_rows(root / "news_social" / "current_news_event_screen.csv")
     tickets = sorted(
         (

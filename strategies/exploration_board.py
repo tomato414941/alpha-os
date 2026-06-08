@@ -2484,6 +2484,29 @@ def _sector_rotation_context_next_step(row: dict[str, str]) -> str:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    forward_label_path = root / "news_social" / "current_news_event_forward_labels.csv"
+    forward_labels = tuple(
+        row
+        for row in _csv_rows(forward_label_path)
+        if row.get("label_status") in {"direction_supported_1h_4h", "direction_supported_1h_only"}
+    )
+    best_forward = _best_news_event_forward_label(forward_labels)
+    if best_forward:
+        return ExplorationRow(
+            lane="news_social",
+            status=best_forward.get("label_status", "news_event_forward_label"),
+            strongest_current_signal=(
+                f"{best_forward.get('symbol', '')}: {best_forward.get('event_kind', '')}, "
+                f"side={best_forward.get('side', '')}, "
+                f"dir1h={best_forward.get('directional_1h_bps', '')}, "
+                f"dir4h={best_forward.get('directional_4h_bps', '')}"
+            ),
+            main_gap="news-event label is timestamped but still needs duplicate-source checks, costs, and repeated OOS events",
+            next_step=best_forward.get(
+                "next_step",
+                "repeat news-event forward labels with duplicate-source and execution-cost checks",
+            ),
+        )
     news_path = root / "news_social" / "current_news_event_screen.csv"
     news_rows = tuple(row for row in _csv_rows(news_path) if row.get("status") != "paper_news_context_watch")
     best_news = max(news_rows, key=lambda row: float(row.get("score") or "-inf")) if news_rows else None
@@ -2550,6 +2573,18 @@ def _news_social_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="attention data is not yet joined to leakage-safe return labels",
         next_step="build event-to-return labels and add richer news/social sources",
+    )
+
+
+def _best_news_event_forward_label(rows: tuple[dict[str, str], ...]) -> dict[str, str] | None:
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_4h_bps") or "-inf"),
+            float(row.get("directional_1h_bps") or "-inf"),
+        ),
     )
 
 

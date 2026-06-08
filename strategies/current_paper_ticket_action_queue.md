@@ -5,52 +5,52 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | priority | ticket | action | asset | decision | dir bps | outcome | reason | next step |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
 | 105.3649 | paper-50-hype-token-unlock | promote_to_fill_and_risk_check | HYPE | paper_short | 5.36489408 | paper_mark_win | paper mark moved in the ticket direction | check fill assumption, funding, stop, adverse excursion, then repeat the label |
-| 50.0000 | paper-01-hype-policy-expansion | wait_for_checkpoint | HYPE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-02-sui-repeat-execution | wait_for_checkpoint | SUI | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-03-sui-repeat-execution | wait_for_checkpoint | SUI | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-04-inj-volume-dislocation | wait_for_checkpoint | INJ | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-05-hype-volume-dislocation | wait_for_checkpoint | HYPE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-06-btc-event-crypto-hedge | wait_for_checkpoint | BTC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-07-eth-event-crypto-hedge | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-08-btc-event-pressure | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-09-fartcoin-volume-dislocation | wait_for_checkpoint | FARTCOIN | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-10-xpl-volume-dislocation | wait_for_checkpoint | XPL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-11-pump-volume-dislocation | wait_for_checkpoint | PUMP | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-12-sol-event-crypto-hedge | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-13-sol-volume-dislocation | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-14-arb-intraday-derivatives | wait_for_checkpoint | ARB | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-15-arb-intraday-derivatives | wait_for_checkpoint | ARB | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-16-eth-volume-dislocation | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-17-hype-policy-expansion | wait_for_checkpoint | HYPE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-18-eth-policy-expansion | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-19-event-event-probability | wait_for_checkpoint | EVENT | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-20-link-volume-dislocation | wait_for_checkpoint | LINK | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-21-chip-repeat-execution | wait_for_checkpoint | CHIP | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-22-eth-wallet-entity-flow | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-23-zec-wallet-entity-flow | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-24-apt-wallet-entity-flow | wait_for_checkpoint | APT | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-25-btc-options-volatility | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-26-eth-options-volatility | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-27-eth-options-volatility | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-28-btc-options-volatility | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-29-near-execution-edge | wait_for_checkpoint | NEAR | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-30-near-execution-edge | wait_for_checkpoint | NEAR | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-31-inj-policy-expansion | wait_for_checkpoint | INJ | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-32-hype-policy-expansion | wait_for_checkpoint | HYPE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-33-zec-event-pressure | wait_for_checkpoint | ZEC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-34-sol-stablecoin-migration | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-35-aave-event-pressure | wait_for_checkpoint | AAVE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-41-btc-basis-term-structure | wait_for_checkpoint | BTC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-43-zec-attention-event | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-46-worldcup-dex-pool-flow | wait_for_checkpoint | WORLDCUP | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-47-zec-news-event | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 40.0000 | paper-45-zec-sector-rotation | keep_observing_quote | ZEC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
-| 35.0000 | paper-37-move-derivatives-positioning | record_observation_only | MOVE | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
-| 35.0000 | paper-39-eth-public-treasury | record_observation_only | ETH | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
-| 35.0000 | paper-42-eth-eth-treasury-proxy | record_observation_only | ETH | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
+| 50.0000 | paper-27-inj-policy-expansion | wait_for_checkpoint | INJ | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-28-eth-options-volatility | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-29-hype-policy-expansion | wait_for_checkpoint | HYPE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-30-btc-options-volatility | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-31-near-execution-edge | wait_for_checkpoint | NEAR | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-32-eth-policy-expansion | wait_for_checkpoint | ETH | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-33-near-execution-edge | wait_for_checkpoint | NEAR | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-34-zec-event-pressure | wait_for_checkpoint | ZEC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-35-sol-stablecoin-migration | wait_for_checkpoint | SOL | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-36-aave-event-pressure | wait_for_checkpoint | AAVE | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-37-crypto-crypto-equity-proxy | wait_for_checkpoint | CRYPTO | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-42-btc-basis-term-structure | wait_for_checkpoint | BTC | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-44-zec-attention-event | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-46-zec-sector-rotation | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | paper-47-worldcup-dex-pool-flow | wait_for_checkpoint | WORLDCUP | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 40.0000 | paper-01-hype-policy-expansion | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-04-inj-volume-dislocation | keep_observing_quote | INJ | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-05-hype-volume-dislocation | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-06-btc-event-crypto-hedge | keep_observing_quote | BTC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-07-eth-event-crypto-hedge | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-09-fartcoin-volume-dislocation | keep_observing_quote | FARTCOIN | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-10-xpl-volume-dislocation | keep_observing_quote | XPL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-11-pump-volume-dislocation | keep_observing_quote | PUMP | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-12-sol-event-crypto-hedge | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-13-sol-volume-dislocation | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-16-eth-volume-dislocation | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-17-hype-policy-expansion | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-18-eth-policy-expansion | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-19-event-event-probability | keep_observing_quote | EVENT | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-20-link-volume-dislocation | keep_observing_quote | LINK | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-22-eth-wallet-entity-flow | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-23-zec-wallet-entity-flow | keep_observing_quote | ZEC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-24-apt-wallet-entity-flow | keep_observing_quote | APT | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 35.0000 | paper-08-btc-event-pressure | record_observation_only | BTC | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
+| 35.0000 | paper-38-move-derivatives-positioning | record_observation_only | MOVE | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
+| 35.0000 | paper-40-eth-public-treasury | record_observation_only | ETH | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
+| 35.0000 | paper-43-eth-eth-treasury-proxy | record_observation_only | ETH | paper_observe |  | observe_mark_flat | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
 | 35.0000 | paper-49-zec-protocol-activity | record_observation_only | ZEC | paper_observe |  | observe_mark_moved | observation-only ticket is not a directional promotion candidate | keep the context record; open a directional ticket only if the thesis becomes explicit |
-| 30.0000 | paper-36-crypto-crypto-equity-proxy | fill_missing_observation | CRYPTO | paper_short |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| 30.0000 | paper-38-usdc-defi-lending | fill_missing_observation | USDC | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| 30.0000 | paper-40-satusd-stablecoin-peg | fill_missing_observation | SATUSD | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| 30.0000 | paper-44-ethereum-defi-yield | fill_missing_observation | ETHEREUM | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| 30.0000 | paper-39-usdc-defi-lending | fill_missing_observation | USDC | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| 30.0000 | paper-41-satusd-stablecoin-peg | fill_missing_observation | SATUSD | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| 30.0000 | paper-45-ethereum-defi-yield | fill_missing_observation | ETHEREUM | paper_observe |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | -41.9665 | paper-48-crv-protocol-fee | deprioritize_or_repeat_once | CRV | paper_long | -66.96651674 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |

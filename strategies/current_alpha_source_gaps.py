@@ -103,11 +103,13 @@ def build_alpha_source_gaps(
     policy_samples_path: Path = ROOT / "policy_learning" / "current_policy_learning_samples.csv",
     book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
+    news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
     book_depth_screen_rows = _read_rows(book_depth_screen_path)
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
+    news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     rows = tuple(
         _build_gap(
             rule,
@@ -115,6 +117,7 @@ def build_alpha_source_gaps(
             policy_sample_count=policy_sample_count,
             book_depth_screen_rows=book_depth_screen_rows,
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
+            news_event_forward_label_rows=news_event_forward_label_rows,
         )
         for rule in GAP_RULES
     )
@@ -186,6 +189,7 @@ def _build_gap(
     policy_sample_count: int,
     book_depth_screen_rows: tuple[dict[str, str], ...],
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
+    news_event_forward_label_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
@@ -198,6 +202,21 @@ def _build_gap(
         )
         priority = rule.base_priority + 16.0
         next_probe = "extend LOB/basis/positioning walk-forward and add liquidation/event timestamps"
+    elif rule.gap_id == "social_sentiment_contagion" and news_event_forward_label_rows:
+        supported = tuple(
+            row
+            for row in news_event_forward_label_rows
+            if row.get("label_status") in {"direction_supported_1h_4h", "direction_supported_1h_only"}
+        )
+        best_pool = supported or news_event_forward_label_rows
+        best = max(best_pool, key=lambda row: _float(row.get("directional_4h_bps") or row.get("directional_1h_bps")))
+        status = best.get("label_status", "forward_label_ready")
+        coverage = (
+            f"{best.get('symbol', '')}/{best.get('event_kind', '')}/{best.get('side', '')} "
+            f"dir1h={best.get('directional_1h_bps', '')} dir4h={best.get('directional_4h_bps', '')}"
+        )
+        priority = rule.base_priority + 12.0
+        next_probe = "repeat news-event labels with duplicate-source, stale-headline, and execution-cost checks"
     elif rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_screen_rows:
         best = max(book_depth_screen_rows, key=lambda row: _float(row.get("mean_next_return")))
         status = "feature_screen_ready"
