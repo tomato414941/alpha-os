@@ -10,6 +10,7 @@ DEFAULT_MODULES = (
     "strategies.current_paper_probe_plan",
     "strategies.current_paper_ticket_outcomes",
     "strategies.current_paper_ticket_action_queue",
+    "strategies.current_paper_ticket_fill_risk_check",
     "strategies.current_symbol_opportunity_map",
     "strategies.current_symbol_cluster_conflicts",
     "strategies.current_symbol_cluster_label_queue",

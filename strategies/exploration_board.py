@@ -25,6 +25,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
         _paper_ticket_action_queue_row(root),
+        _paper_ticket_fill_risk_check_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -195,6 +196,32 @@ def _paper_ticket_action_queue_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="paper-ticket outcomes have not been converted into next actions",
         next_step="run current paper ticket action queue after outcomes",
+    )
+
+
+def _paper_ticket_fill_risk_check_row(root: Path) -> ExplorationRow:
+    path = root / "current_paper_ticket_fill_risk_check.csv"
+    best = _best_numeric_row(path, key="estimated_net_after_cost_bps")
+    if best:
+        return ExplorationRow(
+            lane="paper_ticket_fill_risk_check",
+            status=best.get("risk_action", "fill_risk_check"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}bps, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"usage={best.get('visible_depth_usage', '')}"
+            ),
+            main_gap=best.get("reason", "promoted paper ticket still needs fill and risk evidence"),
+            next_step=best.get("next_step", "repeat cost-adjusted paper ticket and record risk evidence"),
+        )
+    return ExplorationRow(
+        lane="paper_ticket_fill_risk_check",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="promoted paper-ticket wins have not been checked against cost and depth",
+        next_step="run current paper ticket fill risk check after action queue",
     )
 
 

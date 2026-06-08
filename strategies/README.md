@@ -119,6 +119,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - turns paper-ticket outcomes into promotion, repeat, deprioritization, or wait actions
 - `current_paper_ticket_action_queue.md`
   - latest action queue from paper-ticket outcomes
+- `current_paper_ticket_fill_risk_check.py`
+  - checks promoted paper-ticket wins against rough spread, fee, funding, and depth
+- `current_paper_ticket_fill_risk_check.md`
+  - latest cost-adjusted fill/risk check for promoted paper tickets
 - `current_observation_cycle.py`
   - refreshes current stack, plan, ticket outcomes, symbol queues, and board
     without reopening paper tickets unless `--open-new-tickets` is passed;
