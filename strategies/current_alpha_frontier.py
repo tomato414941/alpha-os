@@ -150,9 +150,11 @@ LANE_RULES = (
 def build_alpha_frontier(
     *,
     alpha_stack_path: Path = ROOT / "current_alpha_stack.csv",
+    context_frontier_path: Path = ROOT / "policy_learning" / "current_policy_context_frontier.csv",
 ) -> tuple[FrontierLane, ...]:
     alpha_rows = _read_rows(alpha_stack_path)
-    lanes = tuple(_build_lane(rule, alpha_rows=alpha_rows) for rule in LANE_RULES)
+    context_frontier = _context_frontier(context_frontier_path)
+    lanes = tuple(_build_lane(rule, alpha_rows=alpha_rows, context_frontier=context_frontier) for rule in LANE_RULES)
     return tuple(sorted(lanes, key=lambda row: row.frontier_score, reverse=True))
 
 
@@ -218,7 +220,26 @@ def write_alpha_frontier_md(rows: tuple[FrontierLane, ...], *, output_path: Path
     return output_path
 
 
-def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> FrontierLane:
+def _build_lane(
+    rule: LaneRule,
+    *,
+    alpha_rows: tuple[dict[str, str], ...],
+    context_frontier: dict[str, dict[str, str]],
+) -> FrontierLane:
+    lane_context = _frontier_context_for_lane(rule.lane)
+    frontier_row = context_frontier.get(lane_context, {})
+    if frontier_row.get("decision", "") == "shrink_or_rework_context":
+        return FrontierLane(
+            lane=rule.lane,
+            current_status="shrink_or_rework_context",
+            frontier_score=rule.base_priority - 25.0,
+            active_candidates=0,
+            best_score=_float(frontier_row.get("frontier_score")),
+            best_opportunity=lane_context,
+            evidence_sources="policy_learning/current_policy_context_frontier",
+            missing_work=frontier_row.get("evidence", "current OAR evidence is negative"),
+            next_probe=frontier_row.get("next_step", "rework this context before opening more paper probes"),
+        )
     if rule.lane == "wallet / entity on-chain flow":
         access_rows = _read_rows(ROOT / "wallet_entity_flow" / "current_wallet_entity_flow_access.csv")
         actionability_rows = _read_rows(ROOT / "wallet_entity_flow" / "current_seed_wallet_flow_actionability.csv")
@@ -408,6 +429,19 @@ def _current_status(active_candidates: int) -> str:
     return "crowded_probe"
 
 
+def _context_frontier(path: Path) -> dict[str, dict[str, str]]:
+    return {row.get("context", ""): row for row in _read_rows(path) if row.get("context", "")}
+
+
+def _frontier_context_for_lane(lane: str) -> str:
+    return {
+        "execution edge": "execution_edge",
+        "options volatility": "options_volatility",
+        "protocol economics": "protocol_fee",
+        "token unlock / supply event": "token_unlock",
+    }.get(lane, "")
+
+
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
     if not path.exists():
         return ()
@@ -441,10 +475,18 @@ def _escape(value: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--alpha-stack-path", type=Path, default=ROOT / "current_alpha_stack.csv")
+    parser.add_argument(
+        "--context-frontier-path",
+        type=Path,
+        default=ROOT / "policy_learning" / "current_policy_context_frontier.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_alpha_frontier.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_alpha_frontier.md")
     args = parser.parse_args()
-    rows = build_alpha_frontier(alpha_stack_path=args.alpha_stack_path)
+    rows = build_alpha_frontier(
+        alpha_stack_path=args.alpha_stack_path,
+        context_frontier_path=args.context_frontier_path,
+    )
     write_alpha_frontier_csv(rows, output_path=args.output_path)
     write_alpha_frontier_md(rows, output_path=args.md_output_path)
     for row in rows[:10]:

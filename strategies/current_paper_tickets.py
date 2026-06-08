@@ -37,6 +37,7 @@ def build_paper_tickets(
     *,
     plan_path: Path = ROOT / "current_paper_probe_plan.csv",
     existing_tickets_path: Path | None = None,
+    context_frontier_path: Path = ROOT / "policy_learning" / "current_policy_context_frontier.csv",
     hyperliquid_snapshot_path: Path = ROOT / "perp_market_map" / "current_hyperliquid_snapshot.csv",
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
@@ -44,6 +45,7 @@ def build_paper_tickets(
     top: int = DEFAULT_TOP,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
+    suppressed_contexts = _suppressed_contexts(context_frontier_path)
     existing_tickets = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
     existing_by_identity = {_ticket_identity_key(ticket): ticket for ticket in existing_tickets.values()}
     marks = _load_marks(
@@ -71,6 +73,8 @@ def build_paper_tickets(
         if _ticket_identity_key(ticket) not in generated_identities
         and ticket.ticket_id not in generated_ticket_ids
         and ticket.decision != "paper_observe"
+        and ticket.probe_type != "policy_expansion_probe"
+        and _ticket_context(ticket) not in suppressed_contexts
     )
     return generated + backlog
 
@@ -384,6 +388,24 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
+def _suppressed_contexts(path: Path) -> frozenset[str]:
+    return frozenset(
+        row.get("context", "")
+        for row in _read_rows(path)
+        if row.get("decision", "") == "shrink_or_rework_context"
+    )
+
+
+def _ticket_context(ticket: PaperTicket) -> str:
+    return {
+        "execution_edge_probe": "execution_edge",
+        "intraday_derivatives_probe": "intraday_derivatives",
+        "options_volatility_probe": "options_volatility",
+        "protocol_fee_probe": "protocol_fee",
+        "token_unlock_probe": "token_unlock",
+    }.get(ticket.probe_type, "")
+
+
 def _existing_tickets(path: Path | None) -> tuple[PaperTicket, ...]:
     if path is None:
         return ()
@@ -430,6 +452,11 @@ def main() -> None:
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_tickets.md")
     parser.add_argument(
+        "--context-frontier-path",
+        type=Path,
+        default=ROOT / "policy_learning" / "current_policy_context_frontier.csv",
+    )
+    parser.add_argument(
         "--existing-tickets-path",
         type=Path,
         default=None,
@@ -452,6 +479,7 @@ def main() -> None:
             if args.preserve_opened_at
             else None
         ),
+        context_frontier_path=args.context_frontier_path,
         top=args.top,
     )
     write_paper_tickets_csv(rows, output_path=args.output_path)

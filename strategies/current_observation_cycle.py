@@ -246,6 +246,7 @@ DEFAULT_COMMANDS = (
     ("strategies.policy_learning.current_action_preference_candidates",),
     ("strategies.policy_learning.current_action_preference_oos_check",),
     ("strategies.policy_learning.current_policy_expansion_targets",),
+    ("strategies.current_paper_probe_plan",),
     ("strategies.current_alpha_source_gaps",),
     ("strategies.current_alpha_frontier",),
     ("strategies.exploration_board",),

@@ -11,6 +11,12 @@ ROOT = Path(__file__).resolve().parent
 MIN_DIVERSE_PRIORITY_SCORE = 50.0
 TARGET_CANDIDATES_PER_PROBE_TYPE = 4
 DEFAULT_TOP = 80
+POLICY_EXPANSION_STATUSES = {
+    "expand_supported_preference_now",
+    "collect_expansion_labels",
+    "repeat_seed_before_expansion",
+    "split_failure_before_expansion",
+}
 
 
 @dataclass(frozen=True)
@@ -34,13 +40,16 @@ def build_paper_probe_plan(
     *,
     stack_path: Path = ROOT / "current_alpha_stack.csv",
     policy_expansion_path: Path = ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
+    context_frontier_path: Path = ROOT / "policy_learning" / "current_policy_context_frontier.csv",
     top: int = 50,
 ) -> tuple[PaperProbePlanRow, ...]:
+    suppressed_contexts = _suppressed_contexts(context_frontier_path)
     candidates = tuple(
         row
         for row in _read_rows(stack_path)
         if _probe_type(row) != ""
     ) + _policy_expansion_candidates(policy_expansion_path)
+    candidates = tuple(row for row in candidates if _context_for_row(row) not in suppressed_contexts)
     sorted_candidates = sorted(candidates, key=lambda row: _float(row.get("priority_score")), reverse=True)
     selected_candidates = _select_diverse_candidates(sorted_candidates, top=top)
     return tuple(
@@ -248,11 +257,7 @@ def _probe_type(row: dict[str, str]) -> str:
         return "derivatives_positioning_probe"
     if status in {"paper_short_basis_watch", "paper_long_basis_watch", "basis_term_structure_watch"}:
         return "basis_term_structure_probe"
-    if status in {
-        "expand_supported_preference_now",
-        "collect_expansion_labels",
-        "repeat_seed_before_expansion",
-    }:
+    if status in POLICY_EXPANSION_STATUSES:
         return "policy_expansion_probe"
     if status in {
         "paper_dex_pool_momentum_watch",
@@ -386,11 +391,7 @@ def _candidate_size(row: dict[str, str]) -> str:
         return match.group(1)
     if row.get("status") == "small_repeat_paper_check":
         return "1000"
-    if row.get("status") in {
-        "expand_supported_preference_now",
-        "collect_expansion_labels",
-        "repeat_seed_before_expansion",
-    }:
+    if row.get("status") in POLICY_EXPANSION_STATUSES:
         return "100"
     return ""
 
@@ -398,11 +399,7 @@ def _candidate_size(row: dict[str, str]) -> str:
 def _observation_horizon(row: dict[str, str]) -> str:
     if row.get("status", "").startswith("event_crypto_hedge_"):
         return "15m/1h/4h"
-    if row.get("status") in {
-        "expand_supported_preference_now",
-        "collect_expansion_labels",
-        "repeat_seed_before_expansion",
-    }:
+    if row.get("status") in POLICY_EXPANSION_STATUSES:
         return "15m/1h"
     text = " ".join((row.get("evidence", ""), row.get("next_step", ""))).lower()
     horizons = tuple(horizon for horizon in ("15m", "1h", "4h", "12h", "24h") if horizon in text)
@@ -440,11 +437,7 @@ def _policy_expansion_candidates(path: Path) -> tuple[dict[str, str], ...]:
     rows: list[dict[str, str]] = []
     for row in _read_rows(path):
         decision = row.get("decision", "")
-        if decision not in {
-            "expand_supported_preference_now",
-            "collect_expansion_labels",
-            "repeat_seed_before_expansion",
-        }:
+        if decision not in POLICY_EXPANSION_STATUSES:
             continue
         rows.append(
             {
@@ -466,6 +459,26 @@ def _policy_expansion_candidates(path: Path) -> tuple[dict[str, str], ...]:
     return tuple(rows)
 
 
+def _suppressed_contexts(path: Path) -> frozenset[str]:
+    return frozenset(
+        row.get("context", "")
+        for row in _read_rows(path)
+        if row.get("decision", "") == "shrink_or_rework_context"
+    )
+
+
+def _context_for_row(row: dict[str, str]) -> str:
+    if row.get("context", ""):
+        return row.get("context", "")
+    return {
+        "execution_edge_probe": "execution_edge",
+        "intraday_derivatives_probe": "intraday_derivatives",
+        "options_volatility_probe": "options_volatility",
+        "protocol_fee_probe": "protocol_fee",
+        "token_unlock_probe": "token_unlock",
+    }.get(_probe_type(row), "")
+
+
 def _float(value: object) -> float:
     try:
         return float(value or 0.0)
@@ -485,6 +498,11 @@ def main() -> None:
         type=Path,
         default=ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
     )
+    parser.add_argument(
+        "--context-frontier-path",
+        type=Path,
+        default=ROOT / "policy_learning" / "current_policy_context_frontier.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_probe_plan.md")
     parser.add_argument("--top", type=int, default=DEFAULT_TOP)
@@ -493,6 +511,7 @@ def main() -> None:
     rows = build_paper_probe_plan(
         stack_path=args.stack_path,
         policy_expansion_path=args.policy_expansion_path,
+        context_frontier_path=args.context_frontier_path,
         top=args.top,
     )
     write_paper_probe_plan_csv(rows, output_path=args.output_path)
