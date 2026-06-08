@@ -4,15 +4,15 @@ This compares a rough headline-derived Yes-probability proxy against prediction-
 
 | question | market yes | estimated yes | gap | side | confidence | score | status | evidence |
 | --- | ---: | ---: | ---: | --- | ---: | ---: | --- | --- |
-| Strait of Hormuz traffic returns to normal by end of June? | 0.0950 | 0.2800 | 0.1850 | buy_yes | 40.00 | 58.5000 | paper_probability_gap_candidate | +returns to normal, +open, -around the strait |
-| Israel closes its airspace by June 30? | 0.6050 | 0.4500 | -0.1550 | buy_no | 42.00 | 57.5000 | paper_probability_gap_candidate | +close airspace, +missile fire, -remaining open, -flights continuing |
+| Strait of Hormuz traffic returns to normal by end of June? | 0.0950 | 0.3600 | 0.2650 | buy_yes | 38.00 | 64.5000 | paper_probability_gap_candidate | +returns to normal, +open |
+| Israel closes its airspace by June 30? | 0.6500 | 0.4500 | -0.2000 | buy_no | 42.00 | 62.0000 | paper_probability_gap_candidate | +close airspace, +missile fire, -remaining open, -flights continuing |
+| Israel closes its airspace by June 15? | 0.5450 | 0.4100 | -0.1350 | buy_no | 42.00 | 55.5000 | probability_gap_watch | +close airspace, +missile fire, -remaining open, -flights continuing |
 | US x Iran permanent peace deal by July 31, 2026? | 0.2850 | 0.4200 | 0.1350 | buy_yes | 40.00 | 53.5000 | probability_gap_watch | +deal, +ceasefire, -stalemate |
+| Strait of Hormuz traffic returns to normal by July 31? | 0.2850 | 0.4200 | 0.1350 | buy_yes | 38.00 | 51.5000 | probability_gap_watch | +returns to normal, +open |
 | US x Iran permanent peace deal by June 30, 2026? | 0.1450 | 0.2600 | 0.1150 | buy_yes | 40.00 | 51.5000 | probability_gap_watch | +deal, +ceasefire, -stalemate |
-| Israel closes its airspace by June 15? | 0.4550 | 0.4100 | -0.0450 | buy_no | 42.00 | 46.5000 | no_clear_probability_gap | +close airspace, +missile fire, -remaining open, -flights continuing |
-| Strait of Hormuz traffic returns to normal by July 31? | 0.2850 | 0.3400 | 0.0550 | buy_yes | 40.00 | 45.5000 | no_clear_probability_gap | +returns to normal, +open, -around the strait |
 | US-Iran nuclear deal by June 30? | 0.1750 | 0.1750 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| Iran leadership change by June 30? | 0.0685 | 0.0685 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| US announces new Iran agreement/ceasefire extension by June 12? | 0.1550 | 0.1550 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| Iran leadership change by June 30? | 0.0755 | 0.0755 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| US announces new Iran agreement/ceasefire extension by June 12? | 0.1650 | 0.1650 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
 | Will the U.S. invade Iran before 2027? | 0.1750 | 0.1750 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
 
 ## Caveat

@@ -73,6 +73,12 @@ def build_symbol_lane_paper_tickets(
                 next_step=row.get("next_step", ""),
             )
         )
+    known_ticket_ids = {ticket.ticket_id for ticket in tickets}
+    tickets.extend(
+        ticket
+        for ticket in _existing_tickets(existing_tickets_path)
+        if ticket.ticket_id not in known_ticket_ids
+    )
     return tuple(tickets)
 
 
@@ -248,6 +254,34 @@ def _existing_opened_at(path: Path | None) -> dict[str, str]:
         for row in _read_rows(path)
         if row.get("ticket_id") and row.get("opened_at")
     }
+
+
+def _existing_tickets(path: Path | None) -> tuple[SymbolLanePaperTicket, ...]:
+    if path is None:
+        return ()
+    rows = []
+    for row in _read_rows(path):
+        if not row.get("ticket_id"):
+            continue
+        rows.append(
+            SymbolLanePaperTicket(
+                ticket_id=row.get("ticket_id", ""),
+                opened_at=row.get("opened_at", ""),
+                symbol=row.get("symbol", "") or row.get("asset", ""),
+                lane_bias=row.get("lane_bias", ""),
+                opportunity=row.get("opportunity", ""),
+                status=row.get("status", ""),
+                decision=row.get("decision", ""),
+                candidate_size_usd=row.get("candidate_size_usd", ""),
+                checkpoints=row.get("checkpoints", ""),
+                entry_mark=row.get("entry_mark", ""),
+                entry_source=row.get("entry_source", ""),
+                support_state=row.get("support_state", ""),
+                required_record=row.get("required_record", ""),
+                next_step=row.get("next_step", ""),
+            )
+        )
+    return tuple(rows)
 
 
 def _float(value: str | None) -> float:
