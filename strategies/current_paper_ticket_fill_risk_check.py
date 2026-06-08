@@ -36,12 +36,14 @@ def build_fill_risk_checks(
     tickets_path: Path = ROOT / "current_paper_tickets.csv",
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
+    market_breadth_context_path: Path = ROOT / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv",
     taker_fee_bps_per_fill: float = 4.0,
 ) -> tuple[FillRiskCheck, ...]:
     tickets = {row.get("ticket_id", ""): row for row in _read_rows(tickets_path)}
     market_context = _market_context(
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
+        market_breadth_context_path=market_breadth_context_path,
     )
     rows = []
     for row in _read_rows(action_queue_path):
@@ -192,6 +194,7 @@ def _market_context(
     *,
     hl_context_path: Path,
     okx_context_path: Path,
+    market_breadth_context_path: Path,
 ) -> dict[tuple[str, str], dict[str, str]]:
     contexts: dict[tuple[str, str], dict[str, str]] = {}
     for row in _read_rows(hl_context_path):
@@ -202,6 +205,10 @@ def _market_context(
         asset = row.get("asset", "")
         if asset:
             contexts[("OKX", asset)] = row
+    for row in _read_rows(market_breadth_context_path):
+        symbol = row.get("symbol", "")
+        if symbol:
+            contexts.setdefault(("HL", symbol), row)
     return contexts
 
 
@@ -278,11 +285,20 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--action-queue-path", type=Path, default=ROOT / "current_paper_ticket_action_queue.csv")
     parser.add_argument("--tickets-path", type=Path, default=ROOT / "current_paper_tickets.csv")
+    parser.add_argument(
+        "--market-breadth-context-path",
+        type=Path,
+        default=ROOT / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.md")
     args = parser.parse_args()
 
-    rows = build_fill_risk_checks(action_queue_path=args.action_queue_path, tickets_path=args.tickets_path)
+    rows = build_fill_risk_checks(
+        action_queue_path=args.action_queue_path,
+        tickets_path=args.tickets_path,
+        market_breadth_context_path=args.market_breadth_context_path,
+    )
     write_fill_risk_checks_csv(rows, output_path=args.output_path)
     write_fill_risk_checks_md(rows, output_path=args.md_output_path)
     for row in rows[:10]:

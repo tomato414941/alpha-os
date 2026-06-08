@@ -3090,6 +3090,10 @@ def _paper_checked_status(
         return "paper_repeat_cost_adjusted_probe"
     if risk_action == "cost_adjusted_edge_failed":
         return "paper_repeat_cost_adjusted_failed"
+    if risk_action == "depth_too_thin_for_probe":
+        return "paper_repeat_depth_too_thin"
+    if risk_action == "missing_execution_context":
+        return "paper_repeat_missing_execution_context"
     action_value = action.get("action", "")
     if action_value == "promote_to_fill_and_risk_check":
         return "paper_mark_win_needs_fill_risk"
@@ -3137,6 +3141,10 @@ def _paper_checked_conflict(
         return "repeat paper mark survives rough spread, taker-fee, funding, and visible-depth checks; stop behavior, adverse excursion, and realized fills are still missing"
     if fill_risk.get("risk_action") == "cost_adjusted_edge_failed":
         return "latest repeat paper mark does not survive rough spread, taker-fee, and funding haircut"
+    if fill_risk.get("risk_action") == "depth_too_thin_for_probe":
+        return "paper mark win is not enough because the candidate size consumes too much visible depth"
+    if fill_risk.get("risk_action") == "missing_execution_context":
+        return "paper mark win is not enough because current execution context is missing"
     if action.get("action") == "promote_to_fill_and_risk_check":
         return "paper mark moved in the candidate direction, but fill, funding, stop, and adverse-excursion checks are still missing"
     if action.get("action") == "deprioritize_or_repeat_once":
@@ -4639,6 +4647,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_repeat_cost_adjusted_probe": 78.0,
         "paper_mark_win_needs_fill_risk": 64.0,
         "paper_repeat_cost_adjusted_failed": 34.0,
+        "paper_repeat_depth_too_thin": 32.0,
+        "paper_repeat_missing_execution_context": 30.0,
         "paper_mark_loss_deprioritize": 24.0,
         "microstructure_small_paper_probe": 72.0,
         "aligned_pressure_watch": 64.0,
