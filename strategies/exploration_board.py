@@ -22,6 +22,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
         _alpha_frontier_row(root),
+        _alpha_source_gaps_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
@@ -147,6 +148,31 @@ def _alpha_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="broad alpha-source coverage is not summarized",
         next_step="run current alpha frontier after the alpha stack",
+    )
+
+
+def _alpha_source_gaps_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_source_gaps.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="alpha_source_gaps",
+            status=best.get("status", "source_gap"),
+            strongest_current_signal=(
+                f"{best.get('gap_id', '')}: "
+                f"{best.get('lane', '')}, "
+                f"priority={best.get('priority', '')}, "
+                f"coverage={best.get('current_coverage', '')}"
+            ),
+            main_gap=best.get("missing_work", "external alpha-source gap needs concrete probe"),
+            next_step=best.get("next_probe", "turn the top source gap into a concrete probe"),
+        )
+    return ExplorationRow(
+        lane="alpha_source_gaps",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="modern external alpha-source gaps are not summarized",
+        next_step="run current alpha source gaps after data source probe",
     )
 
 

@@ -1,0 +1,240 @@
+from __future__ import annotations
+
+import argparse
+import csv
+from dataclasses import dataclass
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+
+
+@dataclass(frozen=True)
+class AlphaSourceGap:
+    gap_id: str
+    lane: str
+    status: str
+    priority: float
+    current_coverage: str
+    missing_work: str
+    next_probe: str
+    research_reference: str
+
+
+@dataclass(frozen=True)
+class GapRule:
+    gap_id: str
+    lane: str
+    probe_categories: tuple[str, ...]
+    required_probe_names: tuple[str, ...]
+    missing_work: str
+    next_probe: str
+    research_reference: str
+    base_priority: float
+
+
+GAP_RULES = (
+    GapRule(
+        gap_id="lob_ofi_hierarchical_model",
+        lane="LOB / order-flow representation learning",
+        probe_categories=("lob", "event_flow"),
+        required_probe_names=("binance_um_book_depth_monthly_probe",),
+        missing_work="limit-order-book or OFI history, queue/adverse-selection labels, purged walk-forward split",
+        next_probe="find an accessible LOB/OFI data path, then build OFI and liquidity-state labels before any model",
+        research_reference="https://www.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2026.1811716/full",
+        base_priority=100.0,
+    ),
+    GapRule(
+        gap_id="social_sentiment_contagion",
+        lane="social / sentiment contagion",
+        probe_categories=("news",),
+        required_probe_names=(),
+        missing_work="source-account graph, timestamped sentiment, duplicate-source filtering, market-impact labels",
+        next_probe="turn RSS/news into timestamped event labels, then add explicit social account sources if accessible",
+        research_reference="https://www.dallasfed.org/research/papers/2026/wp2605",
+        base_priority=96.0,
+    ),
+    GapRule(
+        gap_id="llm_factor_generation",
+        lane="LLM-assisted factor generation",
+        probe_categories=(),
+        required_probe_names=(),
+        missing_work="hypothesis journal, generated factor templates, leakage-safe validation, failure-regime log",
+        next_probe="generate candidate factor templates from current lanes and route only validated ones into paper labels",
+        research_reference="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6461691",
+        base_priority=94.0,
+    ),
+    GapRule(
+        gap_id="on_chain_transaction_pressure",
+        lane="on-chain transaction pressure",
+        probe_categories=("stablecoin_liquidity", "wallet_entity_flow", "defi", "dex_pool_flow"),
+        required_probe_names=("defillama_stablecoins", "geckoterminal_trending_pools"),
+        missing_work="exchange-supply pressure, usage-vs-trading intent, entity quality, tradable venue mapping",
+        next_probe="separate chain/user activity from exchange-supply pressure and label each against token returns",
+        research_reference="https://www.sciencedirect.com/science/article/abs/pii/S0261560625001433",
+        base_priority=92.0,
+    ),
+    GapRule(
+        gap_id="rl_observation_action_reward_dataset",
+        lane="RL-shaped policy dataset",
+        probe_categories=(),
+        required_probe_names=(),
+        missing_work="world state, action space, reward definition, cost/fill model, train/test split",
+        next_probe="convert paper samples into an observation/action/reward table before training any policy",
+        research_reference="https://arxiv.org/abs/2307.01599",
+        base_priority=90.0,
+    ),
+    GapRule(
+        gap_id="cross_modal_event_graph",
+        lane="multi-source event graph",
+        probe_categories=("news", "wallet_entity_flow", "dex_pool_flow", "stablecoin_liquidity"),
+        required_probe_names=(),
+        missing_work="event graph linking news, on-chain flow, liquidity, and tradable assets with timestamp controls",
+        next_probe="join one news/event source with one on-chain/liquidity source and label per asset, not per headline",
+        research_reference="https://link.springer.com/article/10.1007/s41109-026-00778-3",
+        base_priority=88.0,
+    ),
+)
+
+
+def build_alpha_source_gaps(
+    *,
+    data_source_probe_path: Path = ROOT / "data_source_probe.csv",
+    policy_samples_path: Path = ROOT / "policy_learning" / "current_policy_learning_samples.csv",
+) -> tuple[AlphaSourceGap, ...]:
+    probe_rows = _read_rows(data_source_probe_path)
+    policy_sample_count = len(_read_rows(policy_samples_path))
+    rows = tuple(_build_gap(rule, probe_rows=probe_rows, policy_sample_count=policy_sample_count) for rule in GAP_RULES)
+    return tuple(sorted(rows, key=lambda row: row.priority, reverse=True))
+
+
+def write_alpha_source_gaps_csv(rows: tuple[AlphaSourceGap, ...], *, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(
+            (
+                "gap_id",
+                "lane",
+                "status",
+                "priority",
+                "current_coverage",
+                "missing_work",
+                "next_probe",
+                "research_reference",
+            )
+        )
+        for row in rows:
+            writer.writerow(
+                (
+                    row.gap_id,
+                    row.lane,
+                    row.status,
+                    f"{row.priority:.8f}",
+                    row.current_coverage,
+                    row.missing_work,
+                    row.next_probe,
+                    row.research_reference,
+                )
+            )
+    return output_path
+
+
+def write_alpha_source_gaps_md(rows: tuple[AlphaSourceGap, ...], *, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as handle:
+        handle.write("# Current Alpha Source Gaps\n\n")
+        handle.write(
+            "This board tracks broad external alpha-source gaps. "
+            "It is a research queue, not a trade list or a strategy abstraction.\n\n"
+        )
+        handle.write(
+            "| gap | lane | status | priority | coverage | missing work | next probe | reference |\n"
+        )
+        handle.write("| --- | --- | --- | ---: | --- | --- | --- | --- |\n")
+        for row in rows:
+            handle.write(
+                f"| {row.gap_id} | "
+                f"{row.lane} | "
+                f"{row.status} | "
+                f"{row.priority:.4f} | "
+                f"{_escape(row.current_coverage)} | "
+                f"{_escape(row.missing_work)} | "
+                f"{_escape(row.next_probe)} | "
+                f"{row.research_reference} |\n"
+            )
+    return output_path
+
+
+def _build_gap(
+    rule: GapRule,
+    *,
+    probe_rows: tuple[dict[str, str], ...],
+    policy_sample_count: int,
+) -> AlphaSourceGap:
+    available = _available_probe_rows(probe_rows, rule)
+    missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
+    if rule.gap_id == "rl_observation_action_reward_dataset" and policy_sample_count > 0:
+        status = "sample_records_exist"
+        coverage = f"policy_samples={policy_sample_count}"
+        priority = rule.base_priority + min(policy_sample_count * 0.1, 10.0)
+    elif missing_required:
+        status = "data_path_missing"
+        coverage = "missing_required=" + ",".join(missing_required)
+        priority = rule.base_priority + 12.0
+    elif available:
+        status = "data_path_available"
+        coverage = ", ".join(row.get("name", "") for row in available[:4])
+        priority = rule.base_priority + min(len(available) * 1.5, 8.0)
+    else:
+        status = "not_started"
+        coverage = "no current probe"
+        priority = rule.base_priority + 6.0
+    return AlphaSourceGap(
+        gap_id=rule.gap_id,
+        lane=rule.lane,
+        status=status,
+        priority=priority,
+        current_coverage=coverage,
+        missing_work=rule.missing_work,
+        next_probe=rule.next_probe,
+        research_reference=rule.research_reference,
+    )
+
+
+def _available_probe_rows(probe_rows: tuple[dict[str, str], ...], rule: GapRule) -> tuple[dict[str, str], ...]:
+    categories = set(rule.probe_categories)
+    return tuple(row for row in probe_rows if row.get("category") in categories and row.get("available") == "True")
+
+
+def _probe_available(probe_rows: tuple[dict[str, str], ...], *, name: str) -> bool:
+    return any(row.get("name") == name and row.get("available") == "True" for row in probe_rows)
+
+
+def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
+    if not path.exists():
+        return ()
+    with path.open(newline="", encoding="utf-8") as handle:
+        return tuple(csv.DictReader(handle))
+
+
+def _escape(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-source-probe-path", type=Path, default=ROOT / "data_source_probe.csv")
+    parser.add_argument("--output-path", type=Path, default=ROOT / "current_alpha_source_gaps.csv")
+    parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_alpha_source_gaps.md")
+    args = parser.parse_args()
+
+    rows = build_alpha_source_gaps(data_source_probe_path=args.data_source_probe_path)
+    write_alpha_source_gaps_csv(rows, output_path=args.output_path)
+    write_alpha_source_gaps_md(rows, output_path=args.md_output_path)
+    for row in rows[:10]:
+        print(row.gap_id, row.status, f"{row.priority:.4f}", row.next_probe)
+
+
+if __name__ == "__main__":
+    main()
