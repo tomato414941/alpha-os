@@ -50,6 +50,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_promoted_repeat_fill_risk_check_row(root),
         _cost_adjusted_alpha_candidates_row(root),
         _cost_adjusted_alpha_clusters_row(root),
+        _cost_adjusted_cluster_repeat_plan_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -1150,6 +1151,31 @@ def _cost_adjusted_alpha_clusters_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="cost-adjusted candidates have not been grouped by asset and direction",
         next_step="run current cost adjusted alpha clusters after candidate aggregation",
+    )
+
+
+def _cost_adjusted_cluster_repeat_plan_row(root: Path) -> ExplorationRow:
+    path = root / "current_cost_adjusted_cluster_repeat_plan.csv"
+    best = _best_numeric_row(path, key="cluster_score")
+    if best:
+        return ExplorationRow(
+            lane="cost_adjusted_cluster_repeat_plan",
+            status=best.get("action", "cluster_repeat_plan"),
+            strongest_current_signal=(
+                f"{best.get('cluster_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('decision', '')}, "
+                f"net={best.get('best_net_after_cost_bps', '')}bps"
+            ),
+            main_gap=best.get("required_record", "cluster-level repeat still needs fill and risk notes"),
+            next_step=best.get("next_step", "open the top consolidated cluster repeat probe"),
+        )
+    return ExplorationRow(
+        lane="cost_adjusted_cluster_repeat_plan",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted clusters have not been converted into consolidated repeat actions",
+        next_step="run current cost adjusted cluster repeat plan after clustering",
     )
 
 

@@ -1,0 +1,16 @@
+# Current Cost Adjusted Cluster Repeat Plan
+
+This converts cost-adjusted alpha clusters into one consolidated repeat action per asset and direction. It avoids multiplying paper tickets for duplicate opportunities inside the same symbol cluster.
+
+| action | cluster | decision | size USD | candidates | best net | score | representative | next step |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| open_consolidated_repeat_probe | hype_paper_long | paper_long | 250 | 12 | 516.64565989 | 1005.39028009 | hype_volume_price_dislocation | repeat HYPE paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | sol_paper_long | paper_long | 250 | 20 | 263.21870816 | 947.53033678 | sol_volume_price_dislocation | repeat SOL paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | eth_paper_long | paper_long | 250 | 17 | 177.93817836 | 789.78143152 | eth_volume_price_dislocation | repeat ETH paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | zec_paper_long | paper_long | 100 | 9 | 346.42311700 | 762.74240011 | zec_attention_price_context | repeat ZEC paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | sui_paper_long | paper_long | 1000 | 9 | 258.41179570 | 741.70604327 | sui_okx_on_chain_flow_repeat_execution_gate | repeat SUI paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| resize_before_repeat_probe | bera_paper_long | paper_long | smaller_than_representative | 2 | 659.11065794 | 691.44474211 | bera_microstructure_flow_paper_probe | only repeat BERA paper_long after choosing a smaller size that fits current visible depth |
+| open_consolidated_repeat_probe | chip_paper_long | paper_long | 100.00 | 2 | 346.94750309 | 537.90907193 | chip_microstructure_flow_paper_probe | repeat CHIP paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | btc_paper_long | paper_long | 100 | 10 | 88.69299051 | 432.23836540 | btc_1971905_event_crypto_hedge | repeat BTC paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | mon_paper_long | paper_long | 100.00 | 1 | 197.92001690 | 337.19202281 | mon_microstructure_flow_paper_probe | repeat MON paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
+| open_consolidated_repeat_probe | near_paper_long | paper_long | 100.00 | 4 | 146.85402150 | 333.55335002 | near_microstructure_flow_paper_probe | repeat NEAR paper_long once as a cluster-level paper probe instead of duplicating all source tickets |
