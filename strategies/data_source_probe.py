@@ -73,6 +73,12 @@ PROBE_TARGETS = (
         url="https://data.binance.vision/data/futures/um/daily/bookTicker/BTCUSDT/BTCUSDT-bookTicker-2024-01-01.zip",
     ),
     ProbeTarget(
+        category="derivatives_positioning",
+        name="binance_um_metrics_daily_probe",
+        method="HEAD",
+        url="https://data.binance.vision/data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-06-01.zip",
+    ),
+    ProbeTarget(
         category="defi",
         name="defillama_yield_pools",
         method="GET",
@@ -232,6 +238,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current forced-liquidation order path is available"
     if target.category == "lob":
         return "historical futures order-book data path is available"
+    if target.category == "derivatives_positioning":
+        return "current derivatives positioning data path is available"
     if target.category == "defi":
         return "current DeFi yield pool data path is available"
     if target.category == "stablecoin_liquidity":

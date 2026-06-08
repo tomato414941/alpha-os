@@ -17,6 +17,10 @@ class BookDepthSample:
     imbalance_5pct: float
     premium_index_1m: float
     mark_index_basis_1m: float
+    open_interest_value_5m: float
+    top_trader_long_short_ratio_5m: float
+    account_long_short_ratio_5m: float
+    taker_long_short_volume_ratio_5m: float
     next_1m_return: float
 
 
@@ -42,6 +46,10 @@ def load_book_depth_samples(dataset_dir: Path = DEFAULT_OUTPUT_DIR) -> tuple[Boo
                     imbalance_5pct=float(row["imbalance_5pct"]),
                     premium_index_1m=float(row.get("premium_index_1m") or 0.0),
                     mark_index_basis_1m=float(row.get("mark_index_basis_1m") or 0.0),
+                    open_interest_value_5m=float(row.get("open_interest_value_5m") or 0.0),
+                    top_trader_long_short_ratio_5m=float(row.get("top_trader_long_short_ratio_5m") or 0.0),
+                    account_long_short_ratio_5m=float(row.get("account_long_short_ratio_5m") or 0.0),
+                    taker_long_short_volume_ratio_5m=float(row.get("taker_long_short_volume_ratio_5m") or 0.0),
                     next_1m_return=float(row["next_1m_return"]),
                 )
                 for row in reader
@@ -51,7 +59,16 @@ def load_book_depth_samples(dataset_dir: Path = DEFAULT_OUTPUT_DIR) -> tuple[Boo
 
 def screen_book_depth_imbalance(samples: tuple[BookDepthSample, ...]) -> tuple[BucketResult, ...]:
     rows = []
-    for feature in ("imbalance_1pct", "imbalance_5pct", "premium_index_1m", "mark_index_basis_1m"):
+    for feature in (
+        "imbalance_1pct",
+        "imbalance_5pct",
+        "premium_index_1m",
+        "mark_index_basis_1m",
+        "open_interest_value_5m",
+        "top_trader_long_short_ratio_5m",
+        "account_long_short_ratio_5m",
+        "taker_long_short_volume_ratio_5m",
+    ):
         feature_samples = tuple((getattr(sample, feature), sample.next_1m_return) for sample in samples)
         rows.extend(_bucket_results(feature, feature_samples))
     return tuple(rows)

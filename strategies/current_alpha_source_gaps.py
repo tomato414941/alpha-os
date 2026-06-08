@@ -101,10 +101,23 @@ def build_alpha_source_gaps(
     *,
     data_source_probe_path: Path = ROOT / "data_source_probe.csv",
     policy_samples_path: Path = ROOT / "policy_learning" / "current_policy_learning_samples.csv",
+    book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
+    book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
-    rows = tuple(_build_gap(rule, probe_rows=probe_rows, policy_sample_count=policy_sample_count) for rule in GAP_RULES)
+    book_depth_screen_rows = _read_rows(book_depth_screen_path)
+    book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
+    rows = tuple(
+        _build_gap(
+            rule,
+            probe_rows=probe_rows,
+            policy_sample_count=policy_sample_count,
+            book_depth_screen_rows=book_depth_screen_rows,
+            book_depth_walk_forward_rows=book_depth_walk_forward_rows,
+        )
+        for rule in GAP_RULES
+    )
     return tuple(sorted(rows, key=lambda row: row.priority, reverse=True))
 
 
@@ -171,25 +184,49 @@ def _build_gap(
     *,
     probe_rows: tuple[dict[str, str], ...],
     policy_sample_count: int,
+    book_depth_screen_rows: tuple[dict[str, str], ...],
+    book_depth_walk_forward_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
-    if rule.gap_id == "rl_observation_action_reward_dataset" and policy_sample_count > 0:
+    if rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_walk_forward_rows:
+        best = max(book_depth_walk_forward_rows, key=lambda row: _float(row.get("test_net_bps")))
+        status = best.get("decision", "walk_forward_checked")
+        coverage = (
+            f"{best.get('feature', '')}/{best.get('bucket', '')}/{best.get('action', '')} "
+            f"gross={best.get('test_gross_bps', '')} net={best.get('test_net_bps', '')}"
+        )
+        priority = rule.base_priority + 16.0
+        next_probe = "extend LOB/basis/positioning walk-forward and add liquidation/event timestamps"
+    elif rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_screen_rows:
+        best = max(book_depth_screen_rows, key=lambda row: _float(row.get("mean_next_return")))
+        status = "feature_screen_ready"
+        coverage = (
+            f"{best.get('feature', '')}/{best.get('bucket', '')} "
+            f"mean={best.get('mean_next_return', '')} hit={best.get('hit_rate', '')}"
+        )
+        priority = rule.base_priority + 14.0
+        next_probe = "run purged walk-forward on LOB/basis/positioning features with explicit costs"
+    elif rule.gap_id == "rl_observation_action_reward_dataset" and policy_sample_count > 0:
         status = "sample_records_exist"
         coverage = f"policy_samples={policy_sample_count}"
         priority = rule.base_priority + min(policy_sample_count * 0.1, 10.0)
+        next_probe = rule.next_probe
     elif missing_required:
         status = "data_path_missing"
         coverage = "missing_required=" + ",".join(missing_required)
         priority = rule.base_priority + 12.0
+        next_probe = rule.next_probe
     elif available:
         status = "data_path_available"
         coverage = ", ".join(row.get("name", "") for row in available[:4])
         priority = rule.base_priority + min(len(available) * 1.5, 8.0)
+        next_probe = rule.next_probe
     else:
         status = "not_started"
         coverage = "no current probe"
         priority = rule.base_priority + 6.0
+        next_probe = rule.next_probe
     return AlphaSourceGap(
         gap_id=rule.gap_id,
         lane=rule.lane,
@@ -197,7 +234,7 @@ def _build_gap(
         priority=priority,
         current_coverage=coverage,
         missing_work=rule.missing_work,
-        next_probe=rule.next_probe,
+        next_probe=next_probe,
         research_reference=rule.research_reference,
     )
 
@@ -209,6 +246,13 @@ def _available_probe_rows(probe_rows: tuple[dict[str, str], ...], rule: GapRule)
 
 def _probe_available(probe_rows: tuple[dict[str, str], ...], *, name: str) -> bool:
     return any(row.get("name") == name and row.get("available") == "True" for row in probe_rows)
+
+
+def _float(value: object) -> float:
+    try:
+        return float(value or 0.0)
+    except ValueError:
+        return 0.0
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

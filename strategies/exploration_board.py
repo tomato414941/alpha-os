@@ -1792,6 +1792,22 @@ def _speculative_beta_row(root: Path) -> ExplorationRow:
 
 
 def _event_flow_row(root: Path) -> ExplorationRow:
+    walk_forward_path = root / "event_flow" / "book_depth_walk_forward_check.csv"
+    walk_forward_rows = _csv_rows(walk_forward_path)
+    if walk_forward_rows:
+        best = max(walk_forward_rows, key=lambda row: float(row.get("test_net_bps") or "-inf"))
+        return ExplorationRow(
+            lane="event_flow",
+            status=best.get("decision", "book_depth_walk_forward"),
+            strongest_current_signal=(
+                f"{best.get('feature', '')} {best.get('bucket', '')} "
+                f"{best.get('action', '')}, "
+                f"gross={best.get('test_gross_bps', '')}bps, "
+                f"net={best.get('test_net_bps', '')}bps"
+            ),
+            main_gap="walk-forward is only recent-week and next-1m; liquidation timestamps, execution model, and longer OOS windows are missing",
+            next_step="extend the walk-forward window and add liquidation/event timestamps before any paper action",
+        )
     book_depth_path = root / "event_flow" / "book_depth_imbalance_screen.csv"
     book_depth_rows = _csv_rows(book_depth_path)
     if book_depth_rows:
@@ -1804,7 +1820,7 @@ def _event_flow_row(root: Path) -> ExplorationRow:
                 f"mean_next_return={best.get('mean_next_return', '')}, "
                 f"hit_rate={best.get('hit_rate', '')}"
             ),
-            main_gap="recent-week LOB/basis sample only; no costs, liquidation context, or purged walk-forward split",
+            main_gap="recent-week LOB/basis/positioning sample only; no costs, liquidation context, or purged walk-forward split",
             next_step="join liquidation timestamps and execution costs, then run a purged walk-forward check before any policy",
         )
     flow_path = root / "event_flow" / "flow_imbalance_screen.csv"
