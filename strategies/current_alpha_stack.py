@@ -233,6 +233,11 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
+    paper_outcome = _best_by_score(
+        root / "prediction_markets" / "current_event_probability_paper_outcome.csv",
+        score_key="score",
+        status_values={"paper_outcome_active_watch", "paper_outcome_edge_watch"},
+    )
     paper_ticket = _best_by_score(
         root / "prediction_markets" / "current_event_probability_paper_tickets.csv",
         score_key="score",
@@ -250,6 +255,29 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     )
     if not ticket:
         return None
+    if paper_outcome:
+        return AlphaStackRow(
+            opportunity="prediction_market_event_model",
+            status=paper_outcome.get("status", "paper_outcome_active_watch"),
+            side=f"{paper_outcome.get('suggested_side', '')}: {paper_outcome.get('question', '')}",
+            priority_score=_priority_score(
+                paper_outcome.get("status", ""),
+                source_count=5,
+                raw_score=_float(paper_outcome.get("score")),
+            ),
+            sources="prediction_markets + external_news + probability_gap + clob_depth + source_quality",
+            evidence=(
+                f"entry_ask={paper_outcome.get('entry_ask', '')}, "
+                f"bid={paper_outcome.get('current_bid', '')}, "
+                f"ask={paper_outcome.get('current_ask', '')}, "
+                f"bid_pnl={paper_outcome.get('mark_to_bid_pnl', '')}, "
+                f"mid_pnl={paper_outcome.get('mark_to_mid_pnl', '')}, "
+                f"edge_after_ask={paper_outcome.get('current_edge_after_ask', '')}, "
+                f"source_quality={paper_outcome.get('source_quality_status', '')}"
+            ),
+            conflict="paper outcome is still based on public quotes and rough headline probability; fill, queue, fees, and adverse selection are unresolved",
+            next_step="refresh market/news snapshots and require the edge to survive quote movement before any live action",
+        )
     if paper_ticket:
         source_quality = _row_by_market_id(
             root / "prediction_markets" / "current_event_source_quality.csv",
@@ -1896,6 +1924,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "probability_gap_watch": 62.0,
         "paper_event_probability_ticket": 82.0,
         "event_probability_watch": 65.0,
+        "paper_outcome_active_watch": 84.0,
+        "paper_outcome_edge_watch": 68.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,
