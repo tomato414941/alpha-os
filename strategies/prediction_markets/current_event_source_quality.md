@@ -4,10 +4,10 @@ This checks whether event-probability paper tickets have enough fresh, source-di
 
 | question | side | sources 72h | articles 24h | newest h | unique titles | relevance | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Israel closes its airspace by June 15? | buy_yes | 18 | 22 | 5.41 | 3/3 | 20.00 | 82.0000 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
-| US x Iran permanent peace deal by June 15, 2026? | buy_yes | 28 | 22 | 0.98 | 3/3 | 13.33 | 75.3333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
-| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 25 | 29 | 1.43 | 3/3 | 13.33 | 75.3333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 7 | 3 | 2.03 | 3/3 | 13.33 | 51.7333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| Israel closes its airspace by June 15? | buy_yes | 18 | 22 | 5.72 | 3/3 | 20.00 | 82.0000 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| US x Iran permanent peace deal by June 15, 2026? | buy_yes | 28 | 22 | 1.28 | 3/3 | 13.33 | 75.3333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 23 | 29 | 0.51 | 3/3 | 13.33 | 75.3333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 6 | 3 | 2.34 | 3/3 | 13.33 | 49.7333 | source_quality_pass | fresh multi-source news context is present and not obviously duplicated |
 
 ## Caveat
 
