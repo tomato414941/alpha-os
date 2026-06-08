@@ -4,6 +4,22 @@ This checks opened paper tickets against the latest available public marks. It i
 
 | ticket | status | decision | asset | venue | entry | current | dir bps | outcome | missing evidence | next step |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| lane-zec-zec-event-pressure-cluster | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-crowded-momentum-reversal-actionability | pending | paper_short | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-oi-unwind-watch | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-attention-price-context | pending | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-institutional-flow-news-event | pending | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-narrative-event-news-event | pending | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-security-risk-news-event | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-zec-zec-attention-funding-overlap | pending | paper_observe | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-event-pressure-cluster | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-mstr-btc-relative-value | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-risk-off-short-stack | pending | paper_short | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-26mar27-basis | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-long-atm-straddle-20260626-volatility-actionability | pending | paper_long | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-l2-imbalance-probe | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-long-atm-straddle-20260612-volatility-actionability | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| lane-btc-btc-macro-crypto-news-event | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | lane-arb-arb-count-long-short-ratio-short-opposite-intraday-paper-label | ready | paper_short | ARB |  | 0.081820000000 | 0.082550000000 | -89.22023955 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | lane-arb-arb-count-top-long-short-ratio-short-opposite-intraday-paper-label | ready | paper_short | ARB |  | 0.081820000000 | 0.082550000000 | -89.22023955 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | lane-arb-arb-count-long-short-ratio-repeat-intraday-derivatives-feature | ready | paper_short | ARB |  | 0.081820000000 | 0.082550000000 | -89.22023955 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
@@ -21,6 +37,7 @@ This checks opened paper tickets against the latest available public marks. It i
 | lane-eth-okx-eth-chain-flow-context | ready | paper_observe | ETH |  | 1666.200000000000 | 1668.900000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | lane-eth-eth-long-atm-straddle-20260619-volatility-actionability | ready | paper_observe | ETH |  | 1667.800000000000 | 1668.900000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | lane-sol-sol-volume-price-dislocation | ready | paper_long | SOL |  | 65.711000000000 | 66.248000000000 | 81.72147738 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| lane-sol-sol-event-pressure-cluster | pending | paper_observe | SOL |  | 66.248000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | lane-sol-solana-stablecoin-migration | pending | paper_long | SOL |  | 65.711000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | lane-sol-sol-usdt-coinup.io-(futures)-positioning | ready | paper_short | SOL |  | 65.711000000000 | 66.248000000000 | -81.72147738 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | lane-sol-solana-bountywork-sol-dex-pool | ready | paper_observe | SOL |  | 65.711000000000 | 66.248000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
@@ -54,6 +71,6 @@ This checks opened paper tickets against the latest available public marks. It i
 - losses: 16
 - flat: 0
 - observations: 11
-- pending: 8
+- pending: 25
 - best ready mark: lane-near-near-microstructure-flow-paper-probe NEAR 158.65630670bps paper_mark_win
 - worst ready mark: lane-near-near-sum-top-long-short-ratio-intraday-derivatives-feature NEAR -158.65630670bps paper_mark_loss

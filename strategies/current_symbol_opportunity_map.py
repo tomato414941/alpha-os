@@ -422,6 +422,11 @@ def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
         "multi_source_event_pressure",
         "two_source_event_pressure",
         "repeated_event_context",
+        "execution_low_fee_comparison_candidate",
+        "execution_taker_repeat_candidate",
+        "execution_depth_capped_size_candidate",
+        "execution_low_fee_rescue_watch",
+        "execution_context_required",
     }:
         return _symbols_from_evidence_head(row.get("evidence", ""))
     symbols: set[str] = set()

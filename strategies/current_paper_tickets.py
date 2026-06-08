@@ -282,6 +282,8 @@ def _required_record(row: dict[str, str]) -> str:
         return "seed wallet flow, forward label, market-wide flow baseline, spread/depth, copycat risk"
     if probe_type == "event_pressure_probe":
         return "source overlap, duplicate-source check, forward label, spread/depth, funding, crowding"
+    if probe_type == "execution_edge_probe":
+        return "execution mode, fee tier, fill assumption, queue/adverse selection, stop, funding"
     if probe_type == "stablecoin_migration_probe":
         return "flow snapshot, mapped token mark, funding, venue cost, forward label"
     if probe_type == "stablecoin_peg_probe":

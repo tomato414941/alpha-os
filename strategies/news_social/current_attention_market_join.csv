@@ -1,2 +1,2 @@
 timestamp,symbol,name,attention_rank,attention_24h_change,annualized_funding,mark_oracle_diff,impact_spread,carry_reversion_action,carry_reversion_observations,carry_reversion_score,action,score,reason
-2026-06-08T10:36:35.191534+00:00,ZEC,Zcash,1,8.53381896,-0.74153488,-0.001401836406,0.000208079768,,0,0.00000000,attention_funding_watch,18.16902557,trending asset has material price move and large funding state
+2026-06-08T10:44:02.227204+00:00,ZEC,Zcash,1,7.67399235,-0.74153488,-0.001401836406,0.000208079768,,0,0.00000000,attention_funding_watch,17.99706025,trending asset has material price move and large funding state

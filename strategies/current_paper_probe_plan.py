@@ -217,6 +217,8 @@ def _probe_type(row: dict[str, str]) -> str:
         return "protocol_activity_probe"
     if status == "seed_wallet_flow_watch":
         return "wallet_entity_flow_probe"
+    if status.startswith("execution_"):
+        return "execution_edge_probe"
     if status in {
         "paper_oi_funding_crowding_watch",
         "paper_oi_unwind_watch",

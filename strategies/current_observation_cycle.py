@@ -15,6 +15,7 @@ DEFAULT_COMMANDS = (
     ("strategies.news_social.current_attention_market_join",),
     ("strategies.news_social.current_attention_price_context",),
     ("strategies.news_social.current_event_pressure_cluster",),
+    ("strategies.execution_edge.current_execution_mode_candidates",),
     ("strategies.current_alpha_stack",),
     ("strategies.current_paper_probe_plan",),
     ("strategies.current_paper_ticket_outcomes",),

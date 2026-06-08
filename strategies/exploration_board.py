@@ -50,6 +50,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _policy_learning_row(root),
         _wallet_entity_flow_row(root),
         _hyperliquid_seed_wallet_flow_row(root),
+        _execution_edge_mode_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -220,6 +221,35 @@ def _hyperliquid_seed_wallet_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="seed wallets have not been converted into flow observations",
         next_step="run Hyperliquid seed wallet flow probe",
+    )
+
+
+def _execution_edge_mode_row(root: Path) -> ExplorationRow:
+    path = root / "execution_edge" / "current_execution_mode_candidates.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="execution_edge_modes",
+            status=best.get("action", ""),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: {best.get('execution_mode', '')}, "
+                f"mode_net={best.get('estimated_mode_net_bps', '')}, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"usage={best.get('visible_depth_usage', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap=(
+                "execution-mode candidates are paper-only and still need fill probability, "
+                "queue position, latency, partial-fill, and adverse-selection evidence"
+            ),
+            next_step=best.get("next_step", "paper-repeat top candidate with explicit execution mode"),
+        )
+    return ExplorationRow(
+        lane="execution_edge_modes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="paper wins are not compared across execution modes",
+        next_step="run current execution mode candidates after fill-risk checks",
     )
 
 

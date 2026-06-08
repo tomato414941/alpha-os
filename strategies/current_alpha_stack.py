@@ -61,6 +61,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
         *_wallet_entity_flow_stacks(root),
+        *_execution_edge_mode_stacks(root),
         *_chain_stablecoin_migration_stacks(root),
         *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_actionability_stacks(root),
@@ -2791,6 +2792,93 @@ def _wallet_flow_side(action: str) -> str:
     return "wallet_flow_context"
 
 
+def _execution_edge_mode_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "execution_edge" / "current_execution_mode_candidates.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("action")
+            in {
+                "repeat_taker_probe",
+                "compare_taker_vs_low_fee",
+                "retry_with_depth_capped_size",
+                "only_retest_if_low_fee_net_positive",
+                "refresh_execution_context",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[tuple[str, str, str]] = set()
+    for ticket in tickets:
+        asset = ticket.get("asset", "")
+        mode = ticket.get("execution_mode", "")
+        action = ticket.get("action", "")
+        key = (asset, mode, action)
+        if key in seen:
+            continue
+        seen.add(key)
+        status = _execution_edge_status(action)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_{_slug(mode)}_execution_edge",
+                status=status,
+                side=_execution_edge_side(ticket.get("decision", ""), action),
+                priority_score=_priority_score(
+                    status,
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="execution_edge + fill_risk",
+                evidence=(
+                    f"{asset}: mode={mode}, action={action}, size={ticket.get('suggested_size_usd', '')}, "
+                    f"current_net_bps={ticket.get('current_net_bps', '')}, "
+                    f"mode_net_bps={ticket.get('estimated_mode_net_bps', '')}, "
+                    f"spread_bps={ticket.get('spread_bps', '')}, "
+                    f"depth_usage={ticket.get('visible_depth_usage', '')}, "
+                    f"source={ticket.get('source_file', '')}"
+                ),
+                conflict=(
+                    "execution-mode candidate is still paper-only; maker fill probability, queue position, "
+                    "partial fills, latency, and adverse selection are not measured"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"paper-repeat {asset} with explicit execution mode and fill assumption",
+                ),
+            )
+        )
+        if len(output) >= 8:
+            break
+    return tuple(output)
+
+
+def _execution_edge_status(action: str) -> str:
+    if action == "compare_taker_vs_low_fee":
+        return "execution_low_fee_comparison_candidate"
+    if action == "repeat_taker_probe":
+        return "execution_taker_repeat_candidate"
+    if action == "retry_with_depth_capped_size":
+        return "execution_depth_capped_size_candidate"
+    if action == "only_retest_if_low_fee_net_positive":
+        return "execution_low_fee_rescue_watch"
+    if action == "refresh_execution_context":
+        return "execution_context_required"
+    return "execution_edge_watch"
+
+
+def _execution_edge_side(decision: str, action: str) -> str:
+    if action == "refresh_execution_context":
+        return "execution_context"
+    if decision == "paper_short":
+        return "short_execution_mode"
+    if decision == "paper_long":
+        return "long_execution_mode"
+    return "execution_mode_context"
+
+
 def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "stablecoin_liquidity" / "current_peg_stress_screen.csv")
     tradeability_symbols = {
@@ -3823,6 +3911,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_protocol_activity_watch": 47.0,
         "paper_chain_flow_watch": 55.0,
         "seed_wallet_flow_watch": 52.0,
+        "execution_low_fee_comparison_candidate": 64.0,
+        "execution_taker_repeat_candidate": 62.0,
+        "execution_depth_capped_size_candidate": 58.0,
+        "execution_low_fee_rescue_watch": 44.0,
+        "execution_context_required": 38.0,
         "paper_depeg_repeg_watch": 62.0,
         "paper_premium_mean_reversion_watch": 62.0,
         "peg_supply_stress_watch": 50.0,
