@@ -2,43 +2,43 @@
 
 This labels Hyperliquid dislocation candidates after rough taker fees, impact spread, and funding carry. It is still paper labeling, not a live fill or deployable strategy.
 
-- rows: `151`
-- covered 15m: `133`
+- rows: `131`
+- covered 15m: `131`
 - covered 1h: `0`
 - covered 4h: `0`
 
 | asset | status | side | score | cost bps | net15 | out15 | net1h | out1h | net4h | out4h |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | --- |
-| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 25.4635 | 16.75 | 25.67 | paper_15m_win |  | pending_1h |  | pending_4h |
-| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 20.2026 | 22.34 | 16.53 | paper_15m_win |  | pending_1h |  | pending_4h |
-| PENGU | paper_crowded_momentum_reversal_candidate | short_perp | 15.0072 | 15.73 | 16.03 | paper_15m_win |  | pending_1h |  | pending_4h |
-| FET | paper_crowded_momentum_reversal_candidate | short_perp | 11.3057 | 20.71 | 5.74 | paper_15m_win |  | pending_1h |  | pending_4h |
-| SUI | paper_crowded_momentum_reversal_candidate | short_perp | 9.8298 | 14.35 | 2.20 | paper_15m_win |  | pending_1h |  | pending_4h |
-| SOL | paper_crowded_momentum_reversal_candidate | short_perp | 11.2100 | 11.66 | -0.16 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| ETH | paper_crowded_momentum_reversal_candidate | short_perp | 12.6833 | 10.83 | -2.49 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| DOGE | paper_crowded_momentum_reversal_candidate | short_perp | 10.0791 | 12.78 | -5.30 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| BNB | paper_crowded_momentum_reversal_candidate | short_perp | 11.4155 | 11.49 | -6.49 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| VIRTUAL | paper_crowded_momentum_reversal_candidate | short_perp | 11.8675 | 19.32 | -8.10 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| TAO | paper_crowded_momentum_reversal_candidate | short_perp | 16.1050 | 20.47 | -8.70 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| XRP | paper_crowded_momentum_reversal_candidate | short_perp | 10.3947 | 12.55 | -9.06 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| LINK | paper_crowded_momentum_reversal_candidate | short_perp | 15.9666 | 15.33 | -9.73 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| HYPE | paper_crowded_momentum_reversal_candidate | short_perp | 11.3094 | 13.63 | -9.78 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| MEME | paper_crowded_momentum_continuation_candidate | long_perp | 11.8477 | 26.95 | -10.00 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| PUMP | paper_crowded_momentum_reversal_candidate | short_perp | 13.8941 | 23.11 | -10.04 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| ADA | paper_crowded_momentum_reversal_candidate | short_perp | 9.4061 | 12.91 | -10.45 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| BCH | paper_crowded_momentum_continuation_candidate | long_perp | 13.3209 | 17.56 | -11.49 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| NEAR | paper_crowded_momentum_reversal_candidate | short_perp | 15.0553 | 18.81 | -12.41 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| kPEPE | paper_crowded_momentum_reversal_candidate | short_perp | 10.1428 | 13.55 | -13.52 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| kPEPE | paper_crowded_momentum_continuation_candidate | long_perp | 11.9327 | 13.55 | -13.58 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| XPL | paper_crowded_momentum_continuation_candidate | long_perp | 12.2519 | 22.26 | -13.60 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| INJ | paper_crowded_momentum_continuation_candidate | long_perp | 11.7081 | 25.91 | -14.35 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| ADA | paper_crowded_momentum_continuation_candidate | long_perp | 11.0660 | 12.91 | -15.37 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| XMR | paper_extreme_funding_carry_candidate | short_perp | 11.9810 | 23.71 | -15.48 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| XMR | paper_mark_oracle_reversion_candidate | short_perp | 9.6139 | 23.71 | -15.48 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| TRUMP | paper_crowded_momentum_reversal_candidate | short_perp | 12.4271 | 17.45 | -15.81 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| SEI | paper_crowded_momentum_reversal_candidate | short_perp | 10.6212 | 20.10 | -15.86 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| STRK | paper_crowded_momentum_continuation_candidate | long_perp | 14.3422 | 21.86 | -15.94 | paper_15m_loss |  | pending_1h |  | pending_4h |
-| XRP | paper_crowded_momentum_continuation_candidate | long_perp | 12.2290 | 12.55 | -16.04 | paper_15m_loss |  | pending_1h |  | pending_4h |
+| BABY | paper_mark_oracle_reversion_candidate | long_perp | 5.0602 | 41.24 | 378.74 | paper_15m_win |  | pending_1h |  | pending_4h |
+| BABY | paper_extreme_funding_carry_candidate | long_perp | 4.4180 | 41.24 | 378.74 | paper_15m_win |  | pending_1h |  | pending_4h |
+| AERO | paper_crowded_momentum_continuation_candidate | long_perp | 17.6455 | 29.72 | 134.93 | paper_15m_win |  | pending_1h |  | pending_4h |
+| AERO | paper_mark_oracle_reversion_candidate | long_perp | 13.0405 | 29.72 | 134.93 | paper_15m_win |  | pending_1h |  | pending_4h |
+| AERO | paper_extreme_funding_carry_candidate | long_perp | 11.8885 | 29.72 | 134.93 | paper_15m_win |  | pending_1h |  | pending_4h |
+| EIGEN | paper_crowded_momentum_continuation_candidate | long_perp | 19.5575 | 32.27 | 122.14 | paper_15m_win |  | pending_1h |  | pending_4h |
+| EIGEN | paper_mark_oracle_reversion_candidate | long_perp | 7.9068 | 32.27 | 122.14 | paper_15m_win |  | pending_1h |  | pending_4h |
+| HYPER | paper_mark_oracle_reversion_candidate | long_perp | 4.6025 | 40.29 | 103.13 | paper_15m_win |  | pending_1h |  | pending_4h |
+| JTO | paper_crowded_momentum_continuation_candidate | long_perp | 32.1545 | 21.24 | 101.32 | paper_15m_win |  | pending_1h |  | pending_4h |
+| JTO | paper_extreme_funding_carry_candidate | long_perp | 3.5951 | 21.24 | 101.32 | paper_15m_win |  | pending_1h |  | pending_4h |
+| NEAR | paper_crowded_momentum_continuation_candidate | long_perp | 17.0863 | 19.17 | 87.57 | paper_15m_win |  | pending_1h |  | pending_4h |
+| ONDO | paper_crowded_momentum_continuation_candidate | long_perp | 11.9795 | 19.63 | 85.65 | paper_15m_win |  | pending_1h |  | pending_4h |
+| VVV | paper_crowded_momentum_continuation_candidate | long_perp | 12.4392 | 20.36 | 85.03 | paper_15m_win |  | pending_1h |  | pending_4h |
+| PENGU | paper_crowded_momentum_continuation_candidate | long_perp | 15.6806 | 15.81 | 72.36 | paper_15m_win |  | pending_1h |  | pending_4h |
+| INIT | paper_mark_oracle_reversion_candidate | long_perp | 5.5218 | 37.98 | 69.34 | paper_15m_win |  | pending_1h |  | pending_4h |
+| VIRTUAL | paper_crowded_momentum_continuation_candidate | long_perp | 13.3440 | 16.57 | 68.41 | paper_15m_win |  | pending_1h |  | pending_4h |
+| PUMP | paper_crowded_momentum_continuation_candidate | long_perp | 16.1234 | 16.56 | 68.28 | paper_15m_win |  | pending_1h |  | pending_4h |
+| TRUMP | paper_mark_oracle_reversion_candidate | long_perp | 9.0503 | 18.89 | 65.76 | paper_15m_win |  | pending_1h |  | pending_4h |
+| TRUMP | paper_extreme_funding_carry_candidate | long_perp | 7.7528 | 18.89 | 65.76 | paper_15m_win |  | pending_1h |  | pending_4h |
+| PYTH | paper_mark_oracle_reversion_candidate | long_perp | 5.0218 | 31.70 | 60.95 | paper_15m_win |  | pending_1h |  | pending_4h |
+| IMX | paper_crowded_momentum_continuation_candidate | long_perp | 13.7733 | 43.07 | 58.69 | paper_15m_win |  | pending_1h |  | pending_4h |
+| LDO | paper_crowded_momentum_continuation_candidate | long_perp | 17.5058 | 19.94 | 57.05 | paper_15m_win |  | pending_1h |  | pending_4h |
+| ZORA | paper_mark_oracle_reversion_candidate | long_perp | 8.7764 | 39.44 | 55.80 | paper_15m_win |  | pending_1h |  | pending_4h |
+| ZORA | paper_extreme_funding_carry_candidate | long_perp | 6.1731 | 39.44 | 55.80 | paper_15m_win |  | pending_1h |  | pending_4h |
+| FIL | paper_crowded_momentum_continuation_candidate | long_perp | 11.7939 | 24.95 | 54.64 | paper_15m_win |  | pending_1h |  | pending_4h |
+| POPCAT | paper_mark_oracle_reversion_candidate | long_perp | 7.1246 | 21.63 | 53.41 | paper_15m_win |  | pending_1h |  | pending_4h |
+| TAO | paper_crowded_momentum_continuation_candidate | long_perp | 18.4357 | 18.92 | 52.82 | paper_15m_win |  | pending_1h |  | pending_4h |
+| SUSHI | paper_mark_oracle_reversion_candidate | long_perp | 5.5481 | 30.36 | 52.59 | paper_15m_win |  | pending_1h |  | pending_4h |
+| WLD | paper_crowded_momentum_continuation_candidate | long_perp | 17.5478 | 16.98 | 48.67 | paper_15m_win |  | pending_1h |  | pending_4h |
+| SPX | paper_crowded_momentum_continuation_candidate | long_perp | 11.4227 | 30.31 | 46.96 | paper_15m_win |  | pending_1h |  | pending_4h |
 
 ## Interpretation
 
