@@ -26,6 +26,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _factor_hypothesis_templates_row(root),
         _factor_template_validation_queue_row(root),
         _ofi_execution_survival_row(root),
+        _lob_policy_candidate_survival_row(root),
         _crowded_positioning_survival_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
@@ -279,6 +280,34 @@ def _ofi_execution_survival_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="book-depth cost sweep is not joined to current L2 imbalance states",
         next_step="run current OFI execution survival after L2 paper gate and book-depth cost sweep",
+    )
+
+
+def _lob_policy_candidate_survival_row(root: Path) -> ExplorationRow:
+    path = root / "event_flow" / "current_lob_policy_candidate_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="lob_policy_candidate_survival",
+            status=best.get("survival_status", "lob_policy_candidate_survival"),
+            strongest_current_signal=(
+                f"{best.get('state_family', '')}: "
+                f"{best.get('signal_action', '')}, "
+                f"mode={best.get('execution_mode', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"world_net={best.get('world_net_bps', '')}, "
+                f"seq_net={best.get('sequence_net_bps', '')}, "
+                f"zero_seq={best.get('sequence_zero_cost_net_bps', '')}"
+            ),
+            main_gap=best.get("reason", "LOB policy candidate still needs execution survival"),
+            next_step=best.get("next_step", "rerun LOB policy candidate survival after fresh snapshots"),
+        )
+    return ExplorationRow(
+        lane="lob_policy_candidate_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="LOB world replay and rolling sequence probes have not been compared as policy candidates",
+        next_step="run current LOB policy candidate survival after world replay and sequence state probes",
     )
 
 

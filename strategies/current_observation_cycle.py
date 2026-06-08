@@ -114,6 +114,7 @@ DEFAULT_COMMANDS = (
     ("strategies.execution_edge.current_execution_mode_candidates",),
     ("strategies.event_flow.current_lob_execution_world_replay",),
     ("strategies.event_flow.current_lob_sequence_state_probe",),
+    ("strategies.event_flow.current_lob_policy_candidate_survival",),
     ("strategies.current_cross_modal_alpha_context",),
     ("strategies.current_cross_modal_source_split",),
     ("strategies.llm_factor_generation.current_factor_hypothesis_templates",),
