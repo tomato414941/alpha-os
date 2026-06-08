@@ -73,6 +73,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_promotion_frontier_row(root),
         _alpha_promotion_worklist_row(root),
         _alpha_repeat_fill_survival_row(root),
+        _surviving_alpha_path_risk_row(root),
+        _surviving_alpha_exit_regime_candidates_row(root),
         _alpha_conflict_resolution_progress_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
@@ -1822,6 +1824,59 @@ def _alpha_repeat_fill_survival_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="repeat/fill worklist rows have not been checked against repeat evidence",
         next_step="run current alpha repeat fill survival after promotion worklist",
+    )
+
+
+def _surviving_alpha_path_risk_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_path_risk.csv"
+    best = _best_numeric_row(path, key="second_net_after_cost_bps")
+    if best:
+        return ExplorationRow(
+            lane="surviving_alpha_path_risk",
+            status=best.get("path_action", "surviving_alpha_path_risk"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"{best.get('decision', '')}, "
+                f"net={best.get('second_net_after_cost_bps', '')}, "
+                f"close={best.get('close_return_bps', '')}, "
+                f"adverse={best.get('max_adverse_bps', '')}, "
+                f"stop50={best.get('stop_50bps_status', '')}"
+            ),
+            main_gap=best.get("evidence", "surviving alpha still needs path-risk evidence"),
+            next_step=best.get("next_step", "check public candle path risk before promotion"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_path_risk",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="second-repeat survivors have not been checked against candle path risk",
+        next_step="run surviving alpha path risk after repeat fill survival",
+    )
+
+
+def _surviving_alpha_exit_regime_candidates_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_exit_regime_candidates.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="surviving_alpha_exit_regime_candidates",
+            status=best.get("status", "surviving_alpha_exit_regime_candidate"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"close={best.get('close_return_bps', '')}, "
+                f"adverse={best.get('max_adverse_bps', '')}, "
+                f"stop50={best.get('stop_50bps_status', '')}, "
+                f"stop100={best.get('stop_100bps_status', '')}"
+            ),
+            main_gap=best.get("required_record", "exit regime still needs a fresh-trigger repeat"),
+            next_step=best.get("next_step", "repeat the strongest exit regime candidate"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_exit_regime_candidates",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="path-risk blocked survivors have not been split by exit horizon",
+        next_step="run exit-regime candidates after surviving alpha path risk",
     )
 
 
