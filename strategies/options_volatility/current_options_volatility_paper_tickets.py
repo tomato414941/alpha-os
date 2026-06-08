@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from math import sqrt
 from pathlib import Path
 
+import requests
+
 from strategies.options_volatility.current_deribit_options_surface import (
     OptionQuote,
     fetch_deribit_option_summaries,
@@ -15,6 +17,7 @@ from strategies.options_volatility.current_deribit_options_surface import (
 
 
 ROOT = Path(__file__).resolve().parent
+DERIBIT_ORDER_BOOK_URL = "https://www.deribit.com/api/v2/public/get_order_book"
 
 
 @dataclass(frozen=True)
@@ -41,6 +44,10 @@ class OptionsVolatilityPaperTicket:
     breakeven_move_pct: float
     realized_move_pct: float
     premium_to_realized_move: float
+    call_top_ask_amount: float
+    put_top_ask_amount: float
+    top_ask_straddle_amount: float
+    top_ask_premium_depth_usd: float
     quote_status: str
     quote_reason: str
     score: float
@@ -110,6 +117,10 @@ def build_paper_tickets(
                 breakeven_move_pct=quote_metrics.breakeven_move_pct,
                 realized_move_pct=quote_metrics.realized_move_pct,
                 premium_to_realized_move=quote_metrics.premium_to_realized_move,
+                call_top_ask_amount=quote_metrics.call_top_ask_amount,
+                put_top_ask_amount=quote_metrics.put_top_ask_amount,
+                top_ask_straddle_amount=quote_metrics.top_ask_straddle_amount,
+                top_ask_premium_depth_usd=quote_metrics.top_ask_premium_depth_usd,
                 quote_status=quote_status,
                 quote_reason=quote_reason,
                 score=_score(
@@ -119,6 +130,7 @@ def build_paper_tickets(
                     term_iv_spread_to_next=term,
                     volume_usd=volume,
                     status=final_status,
+                    top_ask_premium_depth_usd=quote_metrics.top_ask_premium_depth_usd,
                 ),
                 status=final_status,
                 reason=reason,
@@ -159,6 +171,10 @@ def write_tickets_csv(
                 "breakeven_move_pct",
                 "realized_move_pct",
                 "premium_to_realized_move",
+                "call_top_ask_amount",
+                "put_top_ask_amount",
+                "top_ask_straddle_amount",
+                "top_ask_premium_depth_usd",
                 "quote_status",
                 "quote_reason",
                 "score",
@@ -191,6 +207,10 @@ def write_tickets_csv(
                     f"{ticket.breakeven_move_pct:.6f}",
                     f"{ticket.realized_move_pct:.6f}",
                     f"{ticket.premium_to_realized_move:.6f}",
+                    f"{ticket.call_top_ask_amount:.6f}",
+                    f"{ticket.put_top_ask_amount:.6f}",
+                    f"{ticket.top_ask_straddle_amount:.6f}",
+                    f"{ticket.top_ask_premium_depth_usd:.2f}",
                     ticket.quote_status,
                     ticket.quote_reason,
                     f"{ticket.score:.8f}",
@@ -215,9 +235,9 @@ def write_tickets_md(
             "It is not a live options trade instruction.\n\n"
         )
         handle.write(
-            "| currency | expiry | structure | dte | atm iv | rv24 | prem24 | quote spread | max loss % | realized move % | prem/rv move | score | status | quote status | reason |\n"
+            "| currency | expiry | structure | dte | atm iv | rv24 | prem24 | quote spread | max loss % | realized move % | prem/rv move | top depth USD | score | status | quote status | reason |\n"
         )
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n")
+        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n")
         for ticket in tickets[:top]:
             handle.write(
                 f"| {ticket.currency} | {ticket.expiry} | {ticket.structure} | "
@@ -225,12 +245,13 @@ def write_tickets_md(
                 f"{ticket.realized_vol_24h:.2f} | {ticket.iv_premium_24h:.2f} | "
                 f"{ticket.quote_spread_pct:.4f} | {ticket.max_loss_pct:.2f} | "
                 f"{ticket.realized_move_pct:.2f} | {ticket.premium_to_realized_move:.2f} | "
+                f"{ticket.top_ask_premium_depth_usd:.0f} | "
                 f"{ticket.score:.6f} | "
                 f"{ticket.status} | {ticket.quote_status} | {ticket.reason}; {ticket.quote_reason} |\n"
             )
         handle.write("\n## Caveat\n\n")
         handle.write(
-            "Long-vol tickets use a simple ATM straddle proxy from public Deribit summary quotes. They still lack order-book depth, delta hedge PnL, margin, assignment/expiry handling, and realized-vol forecasts. "
+            "Long-vol tickets use a simple ATM straddle proxy from public Deribit quotes and top-of-book depth. They still lack multi-level sweep simulation, delta hedge PnL, margin, assignment/expiry handling, and realized-vol forecasts. "
             "Short premium candidates must be treated as capped-risk structures, not naked short options.\n"
         )
     return output_path
@@ -276,6 +297,10 @@ class QuoteMetrics:
     breakeven_move_pct: float = 0.0
     realized_move_pct: float = 0.0
     premium_to_realized_move: float = 0.0
+    call_top_ask_amount: float = 0.0
+    put_top_ask_amount: float = 0.0
+    top_ask_straddle_amount: float = 0.0
+    top_ask_premium_depth_usd: float = 0.0
 
 
 def _build_quote_checks(currencies: tuple[str, ...]) -> dict[tuple[str, str], QuoteCheck]:
@@ -305,6 +330,8 @@ def _quote_status_reason(
 ) -> tuple[str, str, QuoteMetrics]:
     if not status.startswith("paper_"):
         return "quote_not_needed", "no paper structure selected", QuoteMetrics()
+    if structure != "long_atm_straddle":
+        return "quote_not_modeled", "quote gate is only implemented for ATM straddles", QuoteMetrics()
     if quote_check is None:
         return "quote_missing", "ATM option pair was not found in Deribit summary", QuoteMetrics()
     bid_total = (quote_check.atm_call.bid_price or 0.0) + (quote_check.atm_put.bid_price or 0.0)
@@ -319,23 +346,44 @@ def _quote_status_reason(
         annualized_realized_vol=realized_vol_24h,
         days_to_expiry=days_to_expiry,
     )
+    call_top_ask_amount = _top_ask_amount(quote_check.atm_call.instrument_name)
+    put_top_ask_amount = _top_ask_amount(quote_check.atm_put.instrument_name)
+    top_ask_straddle_amount = min(call_top_ask_amount, put_top_ask_amount)
+    max_loss_usd = ask_total * underlying
     metrics = QuoteMetrics(
         call_ask_pct=(quote_check.atm_call.ask_price or 0.0) * 100.0,
         put_ask_pct=(quote_check.atm_put.ask_price or 0.0) * 100.0,
         quote_spread_pct=spread_pct,
         max_loss_pct=max_loss_pct,
-        max_loss_usd=ask_total * underlying,
+        max_loss_usd=max_loss_usd,
         breakeven_move_pct=max_loss_pct,
         realized_move_pct=realized_move_pct,
         premium_to_realized_move=(
             max_loss_pct / realized_move_pct if realized_move_pct > 0.0 else 0.0
         ),
+        call_top_ask_amount=call_top_ask_amount,
+        put_top_ask_amount=put_top_ask_amount,
+        top_ask_straddle_amount=top_ask_straddle_amount,
+        top_ask_premium_depth_usd=top_ask_straddle_amount * max_loss_usd,
     )
     if spread_pct > 0.12:
         return "quote_too_wide", "ATM option pair spread is too wide for a clean paper ticket", metrics
     if structure == "long_atm_straddle" and max_loss_pct > 12.0:
         return "premium_too_large", "ATM straddle premium is too large relative to notional", metrics
+    if metrics.top_ask_premium_depth_usd < 500.0:
+        return "top_depth_too_thin", "ATM straddle top ask depth is too thin for a clean paper ticket", metrics
     return "quote_executable_watch", "ATM option pair quote is present with acceptable spread", metrics
+
+
+def _top_ask_amount(instrument_name: str) -> float:
+    response = requests.get(
+        DERIBIT_ORDER_BOOK_URL,
+        params={"instrument_name": instrument_name, "depth": 5},
+        timeout=30,
+    )
+    response.raise_for_status()
+    result = response.json().get("result") or {}
+    return _object_float(result.get("best_ask_amount"))
 
 
 def _realized_move_pct(*, annualized_realized_vol: float, days_to_expiry: float) -> float:
@@ -360,6 +408,7 @@ def _score(
     term_iv_spread_to_next: float,
     volume_usd: float,
     status: str,
+    top_ask_premium_depth_usd: float,
 ) -> float:
     liquidity = min(volume_usd / 1_000_000.0, 3.0)
     dte_penalty = 5.0 if days_to_expiry < 1.0 else 0.0
@@ -371,6 +420,11 @@ def _score(
         "too_thin": 2.0,
     }.get(status, 0.0)
     premium_component = abs(iv_premium_24h) if status.startswith("paper_long_vol") else iv_premium_24h
+    depth_penalty = (
+        8.0
+        if status == "paper_long_vol_quote_candidate" and top_ask_premium_depth_usd < 2_500.0
+        else 0.0
+    )
     return (
         premium_component
         + skew_iv
@@ -378,6 +432,7 @@ def _score(
         + liquidity
         + status_bonus
         - dte_penalty
+        - depth_penalty
     )
 
 
@@ -390,6 +445,13 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
 
 def _float(value: str) -> float:
     return float(value) if value else 0.0
+
+
+def _object_float(value: object) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def main() -> None:

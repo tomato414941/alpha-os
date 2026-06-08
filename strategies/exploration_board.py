@@ -1000,10 +1000,11 @@ def _options_volatility_row(root: Path) -> ExplorationRow:
                 f"{best_ticket.get('structure', '')}, "
                 f"prem24={best_ticket.get('iv_premium_24h', '')}, "
                 f"max_loss_pct={best_ticket.get('max_loss_pct', '')}, "
-                f"prem_to_rv_move={best_ticket.get('premium_to_realized_move', '')}"
+                f"prem_to_rv_move={best_ticket.get('premium_to_realized_move', '')}, "
+                f"top_depth_usd={best_ticket.get('top_ask_premium_depth_usd', '')}"
             ),
-            main_gap="options paper ticket uses only an ATM straddle quote proxy; it still lacks order-book depth, delta hedge PnL, margin, and realized-vol forecast",
-            next_step="paper-check ATM straddle depth, max premium loss, delta hedge cost, margin, and expiry handling before any live action",
+            main_gap="options paper ticket uses only top-of-book ATM straddle depth; it still lacks multi-level sweep, delta hedge PnL, margin, and realized-vol forecast",
+            next_step="paper-check ATM straddle multi-level depth, max premium loss, delta hedge cost, margin, and expiry handling before any live action",
         )
     label_path = root / "options_volatility" / "current_deribit_options_realized_vol_labels.csv"
     best_label = _best_numeric_row(label_path, key="score")

@@ -202,7 +202,8 @@ def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"term={ticket.get('term_iv_spread_to_next', '')}, "
                     f"max_loss_pct={ticket.get('max_loss_pct', '')}, "
                     f"realized_move_pct={ticket.get('realized_move_pct', '')}, "
-                    f"premium_to_realized_move={ticket.get('premium_to_realized_move', '')}"
+                    f"premium_to_realized_move={ticket.get('premium_to_realized_move', '')}, "
+                    f"top_ask_depth_usd={ticket.get('top_ask_premium_depth_usd', '')}"
                 ),
                 conflict=_options_volatility_conflict(ticket),
                 next_step=_options_volatility_next_step(ticket),
@@ -217,7 +218,7 @@ def _options_volatility_conflict(ticket: dict[str, str]) -> str:
     if ticket.get("status") == "paper_long_vol_candidate":
         return "cheap IV can stay cheap or realized volatility can collapse; needs actual option quotes, premium-at-risk, and delta-hedge plan"
     if ticket.get("status") == "paper_long_vol_quote_candidate":
-        return "cheap IV can stay cheap or realized volatility can collapse; ATM straddle proxy still needs depth, hedge, and exit checks"
+        return "cheap IV can stay cheap or realized volatility can collapse; top ask depth still excludes sweep, hedge, and exit checks"
     return "calendar spread depends on expiry curve, event timing, bid/ask, margin, and hedge PnL rather than direction alone"
 
 
@@ -227,7 +228,7 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
     if ticket.get("status") == "paper_long_vol_candidate":
         return "paper-check long-vol spread quotes, max premium loss, delta hedge plan, and realized-vol persistence"
     if ticket.get("status") == "paper_long_vol_quote_candidate":
-        return "paper-check ATM straddle order depth, max premium loss, delta hedge plan, and realized-vol persistence"
+        return "paper-check ATM straddle multi-level depth, max premium loss, delta hedge plan, and realized-vol persistence"
     return "paper-check calendar spread quotes, event timing, vega/theta exposure, margin, and delta hedge cost"
 
 
