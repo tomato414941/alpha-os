@@ -92,6 +92,7 @@ DEFAULT_COMMANDS = (
     ("strategies.crypto_equity_proxy.current_crypto_equity_proxy_context",),
     ("strategies.news_social.current_event_pressure_cluster",),
     ("strategies.news_social.current_news_event_source_independence",),
+    ("strategies.news_social.current_ticker_attention_source_split",),
     ("strategies.options_volatility.current_deribit_options_surface",),
     ("strategies.options_volatility.current_deribit_options_realized_vol_labels",),
     ("strategies.options_volatility.current_options_volatility_paper_tickets",),

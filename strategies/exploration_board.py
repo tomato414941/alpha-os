@@ -93,6 +93,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _exchange_catalyst_row(root),
         _token_unlocks_row(root),
         _event_pressure_cluster_row(root),
+        _ticker_attention_source_split_row(root),
         _news_social_row(root),
         _market_breadth_row(root),
         _prediction_market_crypto_hedge_row(root),
@@ -3259,6 +3260,38 @@ def _event_pressure_cluster_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="news, exchange catalysts, and attention are not grouped by symbol",
         next_step="run current event pressure cluster",
+    )
+
+
+def _ticker_attention_source_split_row(root: Path) -> ExplorationRow:
+    path = root / "news_social" / "current_ticker_attention_source_split.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="ticker_attention_source_split",
+            status=best.get("decision", "ticker_attention_source_split"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"{best.get('source_specificity', '')}, "
+                f"source={best.get('source', '')}, "
+                f"priority={best.get('priority', '')}, "
+                f"context={best.get('joined_context', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "ticker attention still needs source identity, dedupe controls, and forward labels",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "split ticker-specific attention from broad sentiment before paper labels",
+            ),
+        )
+    return ExplorationRow(
+        lane="ticker_attention_source_split",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="ticker-specific attention is still mixed with broad sentiment and duplicated event clusters",
+        next_step="run current ticker attention source split after event pressure source independence",
     )
 
 
