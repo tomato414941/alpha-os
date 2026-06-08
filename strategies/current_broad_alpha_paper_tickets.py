@@ -46,6 +46,15 @@ def build_broad_alpha_paper_tickets(
         + _token_unlock_candidates(top_per_source)
         + _protocol_fee_candidates(top_per_source)
         + _event_probability_candidates(top_per_source)
+        + _crypto_equity_proxy_candidates(top_per_source)
+        + _speculative_beta_candidates(top_per_source)
+        + _hyperliquid_dislocation_candidates(top_per_source)
+        + _hyperliquid_dislocation_paper_candidates(top_per_source)
+        + _crowding_reversion_candidates(top_per_source)
+        + _oi_shift_candidates(top_per_source)
+        + _policy_preference_candidates(top_per_source)
+        + _event_crypto_hedge_candidates(top_per_source)
+        + _stablecoin_flow_probe_candidates(top_per_source)
     )
     marks.update(_okx_marks_for_candidates(candidates))
     tickets: list[PaperTicket] = []
@@ -435,6 +444,205 @@ def _event_probability_candidates(top: int) -> tuple[dict[str, str], ...]:
     )
 
 
+def _crypto_equity_proxy_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "crypto_equity_proxy" / "current_crypto_equity_proxy_paper_tickets.csv", "score", top)
+        if row.get("status") == "paper_short_candidate"
+    )
+    return tuple(
+        candidate
+        for row in rows
+        for candidate in _proxy_short_candidates(
+            source=f"crypto_equity_proxy:{row.get('name', '')}",
+            side=row.get("side", ""),
+            status=row.get("status", ""),
+            required_record="equity-market timestamp, BTC/ETH mark, funding, spread/depth, beta-control failure regime",
+            next_step=row.get("reason", ""),
+            score=row.get("score", ""),
+        )
+    )
+
+
+def _speculative_beta_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "speculative_beta" / "current_speculative_beta_paper_tickets.csv", "score", top)
+        if row.get("status") == "paper_short_candidate"
+    )
+    return tuple(
+        candidate
+        for row in rows
+        for candidate in _proxy_short_candidates(
+            source=f"speculative_beta:{row.get('name', '')}",
+            side=row.get("side", ""),
+            status=row.get("status", ""),
+            required_record="macro/equity beta timestamp, BTC/ETH mark, funding, spread/depth, beta-control failure regime",
+            next_step=row.get("reason", ""),
+            score=row.get("score", ""),
+        )
+    )
+
+
+def _hyperliquid_dislocation_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(
+            ROOT / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv",
+            "score",
+            top,
+        )
+        if row.get("status", "").startswith("paper_")
+        and _perp_side_decision(row.get("side", "")) != "paper_observe"
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"hl_dislocation:{row.get('asset', '')}:{row.get('status', '')}",
+            asset=row.get("asset", ""),
+            decision=_perp_side_decision(row.get("side", "")),
+            status=row.get("status", ""),
+            required_record="fresh dislocation snapshot, funding, spread/depth, adverse excursion, stop, failure regime",
+            next_step=row.get("next_step", ""),
+            score=row.get("score", ""),
+        )
+        for row in rows
+    )
+
+
+def _hyperliquid_dislocation_paper_candidates(top: int) -> tuple[dict[str, str], ...]:
+    return tuple(
+        _directional_candidate(
+            source=f"hl_dislocation_paper:{row.get('asset', '')}:{row.get('status', '')}",
+            asset=row.get("asset", ""),
+            decision=_perp_side_decision(row.get("side", "")),
+            status=row.get("status", ""),
+            required_record=row.get("required_observations", ""),
+            next_step=row.get("reject_if", ""),
+            score=row.get("conservative_net_15m_bps", ""),
+            size_usd=row.get("paper_notional_usd", "100"),
+            horizon="15m,1h",
+            checkpoints="15m,1h",
+        )
+        for row in _top_rows(
+            ROOT / "perp_market_map" / "current_hyperliquid_dislocation_paper_tickets.csv",
+            "conservative_net_15m_bps",
+            top,
+        )
+    )
+
+
+def _crowding_reversion_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(
+            ROOT / "perp_market_map" / "current_crowding_reversion_validated_candidates.csv",
+            "validation_score",
+            top,
+        )
+        if row.get("status", "").startswith("paper_")
+        and _perp_side_decision(row.get("action", "")) != "paper_observe"
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"crowding_reversion:{row.get('asset', '')}:{row.get('action', '')}",
+            asset=row.get("asset", ""),
+            decision=_perp_side_decision(row.get("action", "")),
+            status=row.get("status", ""),
+            required_record="fresh crowding snapshot, label coverage, funding, impact spread, depth, failure regime",
+            next_step=row.get("next_step", ""),
+            score=row.get("validation_score", ""),
+        )
+        for row in rows
+    )
+
+
+def _oi_shift_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "perp_market_map" / "current_hyperliquid_oi_shift_candidates.csv", "score", top)
+        if row.get("status", "").startswith("paper_")
+        and _perp_side_decision(row.get("side", "")) != "paper_observe"
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"oi_shift:{row.get('asset', '')}:{row.get('status', '')}",
+            asset=row.get("asset", ""),
+            decision=_perp_side_decision(row.get("side", "")),
+            status=row.get("status", ""),
+            required_record="fresh OI shift, return context, funding, spread/depth, stop, crowded-failure regime",
+            next_step=row.get("next_step", ""),
+            score=row.get("score", ""),
+        )
+        for row in rows
+    )
+
+
+def _policy_preference_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "policy_learning" / "current_action_preference_candidates.csv", "score", top)
+        if row.get("decision") == "promote_action_preference_candidate" and row.get("asset")
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"policy_preference:{row.get('candidate_id', '')}",
+            asset=row.get("asset", ""),
+            decision=row.get("action", ""),
+            status=row.get("decision", ""),
+            required_record="leakage-safe split, explicit costs, fills, stop, and failure regimes",
+            next_step=row.get("next_step", ""),
+            score=row.get("score", ""),
+        )
+        for row in rows
+    )
+
+
+def _event_crypto_hedge_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "prediction_markets" / "current_event_crypto_hedge_candidates.csv", "score", top)
+        if row.get("status") == "event_crypto_hedge_current_quote_candidate"
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"event_crypto_hedge:{row.get('candidate_id', '')}",
+            asset=row.get("asset", ""),
+            decision=row.get("hedge_action", ""),
+            status=row.get("status", ""),
+            required_record="event timestamp, current quote, source quality, beta attribution, funding, spread/depth",
+            next_step=row.get("next_step", ""),
+            score=row.get("score", ""),
+        )
+        for row in rows
+    )
+
+
+def _stablecoin_flow_probe_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(
+            ROOT / "stablecoin_liquidity" / "current_stablecoin_flow_probe_candidates.csv",
+            "priority",
+            top,
+        )
+        if row.get("status") == "proxy_label_candidate_not_exchange_inflow"
+    )
+    return tuple(
+        _directional_candidate(
+            source=f"stablecoin_flow_probe:{row.get('candidate_id', '')}",
+            asset=row.get("token_symbol", ""),
+            decision=_stablecoin_flow_decision(row.get("flow_direction", "")),
+            status=row.get("status", ""),
+            required_record=row.get("required_record", ""),
+            next_step=row.get("next_step", ""),
+            score=row.get("priority", ""),
+            horizon="1h,4h",
+            checkpoints="1h,4h",
+        )
+        for row in rows
+    )
+
+
 def _directional_candidate(
     *,
     source: str,
@@ -464,6 +672,34 @@ def _directional_candidate(
         "horizon": horizon,
         "checkpoints": checkpoints,
     }
+
+
+def _proxy_short_candidates(
+    *,
+    source: str,
+    side: str,
+    status: str,
+    required_record: str,
+    next_step: str,
+    score: str,
+) -> tuple[dict[str, str], ...]:
+    assets = []
+    if "btc" in side:
+        assets.append("BTC")
+    if "eth" in side:
+        assets.append("ETH")
+    return tuple(
+        _directional_candidate(
+            source=source,
+            asset=asset,
+            decision="paper_short",
+            status=status,
+            required_record=required_record,
+            next_step=next_step,
+            score=score,
+        )
+        for asset in assets
+    )
 
 
 def _dedupe_key(candidate: dict[str, str]) -> tuple[str, str, str]:
@@ -496,6 +732,20 @@ def _wallet_decision(side: str) -> str:
 
 def _intraday_derivatives_decision(action: str) -> str:
     if action == "short_opposite":
+        return "paper_short"
+    return "paper_long"
+
+
+def _perp_side_decision(side: str) -> str:
+    if "short" in side:
+        return "paper_short"
+    if "long" in side:
+        return "paper_long"
+    return "paper_observe"
+
+
+def _stablecoin_flow_decision(flow_direction: str) -> str:
+    if "outflow" in flow_direction:
         return "paper_short"
     return "paper_long"
 
