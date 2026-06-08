@@ -92,6 +92,7 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/token_unlocks/current_token_unlock_event_window_outcomes.md",
     ),
+    ("strategies.token_unlocks.current_token_unlock_event_window_risk_check",),
     ("strategies.market_breadth.current_volume_price_dislocation",),
     ("strategies.market_breadth.current_volume_price_dislocation_labels",),
     ("strategies.market_breadth.current_volume_price_dislocation_execution_gate",),

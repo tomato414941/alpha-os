@@ -326,8 +326,10 @@ def _token_unlock_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "token_unlocks/current_token_unlock_actionability.csv"
     ticket_path = root / "token_unlocks/current_token_unlock_event_window_tickets.csv"
     outcome_path = root / "token_unlocks/current_token_unlock_event_window_outcomes.csv"
+    risk_path = root / "token_unlocks/current_token_unlock_event_window_risk_check.csv"
     tickets = {row.get("asset", ""): row for row in _read_rows(ticket_path)}
     outcomes = {row.get("asset", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("asset", ""): row for row in _read_rows(risk_path)}
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -339,18 +341,44 @@ def _token_unlock_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
             lane="token_unlock_event_window",
             subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
             side=row.get("side", ""),
-            action=_token_unlock_action(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
-            status=_token_unlock_status(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
-            score=_token_unlock_score(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            action=_token_unlock_action(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            status=_token_unlock_status(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            score=_token_unlock_score(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
             size_or_risk=_token_unlock_size_or_risk(
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
             ),
-            evidence=_token_unlock_evidence(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            evidence=_token_unlock_evidence(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
             checkpoints="15m,1h,4h,pre_event,event_window,post_event",
-            source_path=_relative(outcome_path if outcomes.get(row.get("symbol", "")) else path),
+            source_path=_relative(
+                risk_path
+                if risks.get(row.get("symbol", ""))
+                else outcome_path
+                if outcomes.get(row.get("symbol", ""))
+                else path
+            ),
             required_record="event-window label, funding, crowding, liquidity, and squeeze-vs-pressure split",
-            next_step=_token_unlock_next_step(row=row, outcome=outcomes.get(row.get("symbol", ""), {})),
+            next_step=_token_unlock_next_step(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
         )
         for row in selected
     )
@@ -533,7 +561,9 @@ def _defi_lending_next_step(*, row: dict[str, str], risk: dict[str, str]) -> str
     return row.get("next_step", "")
 
 
-def _token_unlock_action(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _token_unlock_action(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("risk_action", "")
     if outcome.get("checkpoint_status") == "ready":
         return outcome.get("outcome", "")
     if outcome:
@@ -541,13 +571,17 @@ def _token_unlock_action(*, row: dict[str, str], outcome: dict[str, str]) -> str
     return row.get("action", "")
 
 
-def _token_unlock_status(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _token_unlock_status(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return f"{row.get('status', '')}:{outcome.get('outcome', '')}:{risk.get('risk_action', '')}"
     if outcome:
         return f"{row.get('status', '')}:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
     return row.get("status", "")
 
 
-def _token_unlock_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _token_unlock_score(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return _fmt(risk.get("net_directional_bps"))
     if outcome.get("checkpoint_status") == "ready":
         return _fmt(outcome.get("directional_return_bps"))
     return _fmt(row.get("score"))
@@ -568,7 +602,15 @@ def _token_unlock_size_or_risk(*, row: dict[str, str], ticket: dict[str, str]) -
     )
 
 
-def _token_unlock_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _token_unlock_evidence(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"{row.get('reason', '')}; "
+            f"dir_bps={risk.get('directional_return_bps', '')}; "
+            f"net_bps={risk.get('net_directional_bps', '')}; "
+            f"cost={risk.get('round_trip_cost_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
     if outcome:
         return (
             f"{row.get('reason', '')}; "
@@ -580,7 +622,9 @@ def _token_unlock_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> s
     return row.get("reason", "")
 
 
-def _token_unlock_next_step(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _token_unlock_next_step(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("next_step", "")
     if outcome:
         return outcome.get("next_step", "")
     return row.get("next_step", "")
@@ -695,10 +739,14 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "repeat_probe_opened": 75.0,
         "repeat_paper_probe": 70.0,
         "paper_check_pure_probability": 35.0,
+        "cost_adjusted_event_window_probe": 30.0,
+        "thin_event_window_support": 5.0,
         "event_window_label_opened": 12.0,
         "refresh_execution_gate": 10.0,
         "refresh_before_repeat": -40.0,
         "wait_for_forward_label": 0.0,
+        "event_window_label_not_supported": -80.0,
+        "cost_adjusted_event_window_failed": -120.0,
         "collateral_review_required": -50.0,
         "exit_liquidity_watch": -50.0,
         "depth_too_thin_for_1k_probe": -250.0,
