@@ -80,6 +80,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _broad_alpha_paper_outcomes_row(root),
         _broad_alpha_paper_action_queue_row(root),
         _broad_alpha_paper_fill_risk_check_row(root),
+        _broad_alpha_fill_audit_tickets_row(root),
+        _broad_alpha_fill_audit_outcomes_row(root),
         _surviving_alpha_exit_regime_candidates_row(root),
         _surviving_alpha_exit_regime_tickets_row(root),
         _surviving_alpha_exit_regime_outcomes_row(root),
@@ -2019,6 +2021,60 @@ def _broad_alpha_paper_fill_risk_check_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="broad paper winners have not been checked against cost and depth",
         next_step="run broad alpha paper fill risk check after action queue",
+    )
+
+
+def _broad_alpha_fill_audit_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_fill_audit_tickets.csv"
+    rows = _csv_rows(path)
+    if rows:
+        row = rows[0]
+        return ExplorationRow(
+            lane="broad_alpha_fill_audit_tickets",
+            status="paper_fill_audit_ticket_open",
+            strongest_current_signal=(
+                f"{row.get('ticket_id', '')}: "
+                f"{row.get('asset', '')} {row.get('venue', '')} {row.get('side', '')}, "
+                f"entry={row.get('entry_mark', '')}, "
+                f"prior_net={row.get('prior_net_after_cost_bps', '')}, "
+                f"horizons={row.get('audit_horizons', '')}"
+            ),
+            main_gap=row.get("required_record", "broad winner still needs fresh fill-audit path evidence"),
+            next_step=row.get("next_step", "wait for broad fill-audit outcome checkpoint"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_fill_audit_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted broad paper winners have not been opened as fresh fill-audit tickets",
+        next_step="run broad alpha fill-audit tickets after broad fill risk check",
+    )
+
+
+def _broad_alpha_fill_audit_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_fill_audit_outcomes.csv"
+    rows = _csv_rows(path)
+    if rows:
+        best = _best_fill_audit_outcome(rows)
+        return ExplorationRow(
+            lane="broad_alpha_fill_audit_outcomes",
+            status=best.get("outcome", "paper_fill_audit_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}/{best.get('horizon', '')}: "
+                f"{best.get('checkpoint_status', '')}, "
+                f"close={best.get('close_return_bps', '')}, "
+                f"adverse={best.get('max_adverse_bps', '')}, "
+                f"stop={best.get('stop_status', '')}"
+            ),
+            main_gap=best.get("evidence", "broad fill audit still needs path evidence"),
+            next_step=best.get("next_step", "wait for or review broad fill-audit outcome"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_fill_audit_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="fresh broad fill-audit tickets have not been checked",
+        next_step="run broad alpha fill-audit outcomes after opening tickets",
     )
 
 

@@ -37,6 +37,9 @@ def build_fill_risk_checks(
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
     market_breadth_context_path: Path = ROOT / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv",
+    liquidation_intensity_context_path: Path = ROOT
+    / "liquidation_flow"
+    / "current_okx_liquidation_intensity_paper_gate.csv",
     taker_fee_bps_per_fill: float = 4.0,
 ) -> tuple[FillRiskCheck, ...]:
     tickets = {row.get("ticket_id", ""): row for row in _read_rows(tickets_path)}
@@ -44,6 +47,7 @@ def build_fill_risk_checks(
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
         market_breadth_context_path=market_breadth_context_path,
+        liquidation_intensity_context_path=liquidation_intensity_context_path,
     )
     rows = []
     for row in _read_rows(action_queue_path):
@@ -195,6 +199,7 @@ def _market_context(
     hl_context_path: Path,
     okx_context_path: Path,
     market_breadth_context_path: Path,
+    liquidation_intensity_context_path: Path,
 ) -> dict[tuple[str, str], dict[str, str]]:
     contexts: dict[tuple[str, str], dict[str, str]] = {}
     for row in _read_rows(hl_context_path):
@@ -209,6 +214,17 @@ def _market_context(
         symbol = row.get("symbol", "")
         if symbol:
             contexts.setdefault(("HL", symbol), row)
+    for row in _read_rows(liquidation_intensity_context_path):
+        asset = row.get("asset", "")
+        if asset and row.get("candidate_size_usd") == "100.00":
+            contexts.setdefault(
+                ("OKX", asset),
+                {
+                    "spread_bps": row.get("spread_bps", ""),
+                    "near_depth_10bps_notional": row.get("depth_10bps_notional", ""),
+                    "annualized_funding": "",
+                },
+            )
     return contexts
 
 
@@ -290,6 +306,11 @@ def main() -> None:
         type=Path,
         default=ROOT / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv",
     )
+    parser.add_argument(
+        "--liquidation-intensity-context-path",
+        type=Path,
+        default=ROOT / "liquidation_flow" / "current_okx_liquidation_intensity_paper_gate.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.md")
     args = parser.parse_args()
@@ -298,6 +319,7 @@ def main() -> None:
         action_queue_path=args.action_queue_path,
         tickets_path=args.tickets_path,
         market_breadth_context_path=args.market_breadth_context_path,
+        liquidation_intensity_context_path=args.liquidation_intensity_context_path,
     )
     write_fill_risk_checks_csv(rows, output_path=args.output_path)
     write_fill_risk_checks_md(rows, output_path=args.md_output_path)

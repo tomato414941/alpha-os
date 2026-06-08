@@ -299,6 +299,8 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/current_broad_alpha_paper_fill_risk_check.md",
     ),
+    ("strategies.current_broad_alpha_fill_audit_tickets", "--preserve-opened-at"),
+    ("strategies.current_broad_alpha_fill_audit_outcomes",),
     ("strategies.current_surviving_alpha_exit_regime_candidates",),
     ("strategies.current_surviving_alpha_exit_regime_tickets", "--preserve-opened-at"),
     ("strategies.current_surviving_alpha_exit_regime_outcomes",),
