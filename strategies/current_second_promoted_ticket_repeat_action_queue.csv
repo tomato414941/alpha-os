@@ -1,0 +1,2 @@
+priority,ticket_id,action,asset,opportunity,decision,directional_return_bps,outcome,reason,next_step
+50.00000000,repeat-repeat-paper-05-mega-microstructure-flow,wait_for_checkpoint,MEGA,mega_microstructure_flow_paper_probe,paper_long,,pending,ticket checkpoint has not matured,wait for the first checkpoint and refresh marks

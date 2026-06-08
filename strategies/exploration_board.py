@@ -30,6 +30,10 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _promoted_ticket_repeat_outcomes_row(root),
         _promoted_ticket_repeat_action_queue_row(root),
         _promoted_ticket_repeat_fill_risk_check_row(root),
+        _second_promoted_ticket_repeat_tickets_row(root),
+        _second_promoted_ticket_repeat_outcomes_row(root),
+        _second_promoted_ticket_repeat_action_queue_row(root),
+        _second_promoted_ticket_repeat_fill_risk_check_row(root),
         _symbol_lane_paper_tickets_row(root),
         _symbol_lane_paper_outcomes_row(root),
         _symbol_lane_paper_action_queue_row(root),
@@ -338,6 +342,110 @@ def _promoted_ticket_repeat_fill_risk_check_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="promoted repeat wins have not been checked against cost and depth",
         next_step="run repeat-ticket fill risk check after action queue",
+    )
+
+
+def _second_promoted_ticket_repeat_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_second_promoted_ticket_repeat_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="second_promoted_ticket_repeat_tickets",
+            status="repeat_ticket_open",
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"net_after_cost={best.get('estimated_net_after_cost_bps', '')}"
+            ),
+            main_gap=best.get("required_record", "second repeat ticket still needs outcome evidence"),
+            next_step=best.get("next_step", "check second repeat ticket outcome"),
+        )
+    return ExplorationRow(
+        lane="second_promoted_ticket_repeat_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="repeat winners have not been reopened as second repeat tickets",
+        next_step="open second repeat tickets for repeat winners that survive costs",
+    )
+
+
+def _second_promoted_ticket_repeat_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_second_promoted_ticket_repeat_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="second_promoted_ticket_repeat_outcomes",
+            status=best.get("outcome", "second_repeat_ticket_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "second repeat ticket still needs outcome evidence"),
+            next_step=best.get("next_step", "refresh second repeat ticket outcomes"),
+        )
+    return ExplorationRow(
+        lane="second_promoted_ticket_repeat_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="second repeat tickets have not been checked against current marks",
+        next_step="run second repeat ticket outcomes after checkpoint maturation",
+    )
+
+
+def _second_promoted_ticket_repeat_action_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_second_promoted_ticket_repeat_action_queue.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="second_promoted_ticket_repeat_action_queue",
+            status=best.get("action", "second_repeat_ticket_action"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}, "
+                f"outcome={best.get('outcome', '')}"
+            ),
+            main_gap=best.get("reason", "second repeat-ticket action still needs follow-up evidence"),
+            next_step=best.get("next_step", "run the top second repeat-ticket action"),
+        )
+    return ExplorationRow(
+        lane="second_promoted_ticket_repeat_action_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="second repeat outcomes have not been converted into next actions",
+        next_step="run second repeat action queue after outcomes",
+    )
+
+
+def _second_promoted_ticket_repeat_fill_risk_check_row(root: Path) -> ExplorationRow:
+    path = root / "current_second_promoted_ticket_repeat_fill_risk_check.csv"
+    best = _best_numeric_row(path, key="estimated_net_after_cost_bps")
+    if best:
+        return ExplorationRow(
+            lane="second_promoted_ticket_repeat_fill_risk_check",
+            status=best.get("risk_action", "second_repeat_ticket_fill_risk_check"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}bps, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"usage={best.get('visible_depth_usage', '')}"
+            ),
+            main_gap=best.get("reason", "second repeat ticket still needs fill and risk evidence"),
+            next_step=best.get("next_step", "repeat cost-adjusted second repeat ticket"),
+        )
+    return ExplorationRow(
+        lane="second_promoted_ticket_repeat_fill_risk_check",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="second repeat wins have not been checked against cost and depth",
+        next_step="run second repeat fill risk check after action queue",
     )
 
 

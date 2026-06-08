@@ -43,6 +43,7 @@ def build_paper_tickets(
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
     existing_opened_at = _existing_opened_at(existing_tickets_path)
+    existing_tickets = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
     marks = _load_marks(
         hyperliquid_snapshot_path=hyperliquid_snapshot_path,
         hl_context_path=hl_context_path,
@@ -51,7 +52,8 @@ def build_paper_tickets(
     )
     rows = tuple(_read_rows(plan_path))[:top]
     return tuple(
-        _build_ticket(
+        existing_tickets.get(_ticket_id(row))
+        or _build_ticket(
             opened_at=existing_opened_at.get(_ticket_id(row), opened_at),
             row=row,
             marks=marks,
@@ -285,6 +287,37 @@ def _existing_opened_at(path: Path | None) -> dict[str, str]:
         for row in _read_rows(path)
         if row.get("ticket_id") and row.get("opened_at")
     }
+
+
+def _existing_tickets(path: Path | None) -> tuple[PaperTicket, ...]:
+    if path is None:
+        return ()
+    rows = []
+    for row in _read_rows(path):
+        if not row.get("ticket_id"):
+            continue
+        rows.append(
+            PaperTicket(
+                ticket_id=row.get("ticket_id", ""),
+                opened_at=row.get("opened_at", ""),
+                rank=int(float(row.get("rank") or 0)),
+                opportunity=row.get("opportunity", ""),
+                probe_type=row.get("probe_type", ""),
+                status=row.get("status", ""),
+                side=row.get("side", ""),
+                asset=row.get("asset", ""),
+                venue=row.get("venue", ""),
+                candidate_size_usd=row.get("candidate_size_usd", ""),
+                observation_horizon=row.get("observation_horizon", ""),
+                checkpoints=row.get("checkpoints", ""),
+                entry_mark=row.get("entry_mark", ""),
+                entry_source=row.get("entry_source", ""),
+                decision=row.get("decision", ""),
+                required_record=row.get("required_record", ""),
+                next_step=row.get("next_step", ""),
+            )
+        )
+    return tuple(rows)
 
 
 def _escape(value: str) -> str:

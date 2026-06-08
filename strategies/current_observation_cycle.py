@@ -33,6 +33,47 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/current_promoted_ticket_repeat_fill_risk_check.md",
     ),
+    (
+        "strategies.current_promoted_ticket_repeat_tickets",
+        "--fill-risk-path",
+        "strategies/current_promoted_ticket_repeat_fill_risk_check.csv",
+        "--outcomes-path",
+        "strategies/current_promoted_ticket_repeat_outcomes.csv",
+        "--output-path",
+        "strategies/current_second_promoted_ticket_repeat_tickets.csv",
+        "--md-output-path",
+        "strategies/current_second_promoted_ticket_repeat_tickets.md",
+        "--preserve-opened-at",
+    ),
+    (
+        "strategies.current_promoted_ticket_repeat_outcomes",
+        "--tickets-path",
+        "strategies/current_second_promoted_ticket_repeat_tickets.csv",
+        "--output-path",
+        "strategies/current_second_promoted_ticket_repeat_outcomes.csv",
+        "--md-output-path",
+        "strategies/current_second_promoted_ticket_repeat_outcomes.md",
+    ),
+    (
+        "strategies.current_paper_ticket_action_queue",
+        "--outcomes-path",
+        "strategies/current_second_promoted_ticket_repeat_outcomes.csv",
+        "--output-path",
+        "strategies/current_second_promoted_ticket_repeat_action_queue.csv",
+        "--md-output-path",
+        "strategies/current_second_promoted_ticket_repeat_action_queue.md",
+    ),
+    (
+        "strategies.current_paper_ticket_fill_risk_check",
+        "--action-queue-path",
+        "strategies/current_second_promoted_ticket_repeat_action_queue.csv",
+        "--tickets-path",
+        "strategies/current_second_promoted_ticket_repeat_tickets.csv",
+        "--output-path",
+        "strategies/current_second_promoted_ticket_repeat_fill_risk_check.csv",
+        "--md-output-path",
+        "strategies/current_second_promoted_ticket_repeat_fill_risk_check.md",
+    ),
     ("strategies.current_symbol_lane_paper_tickets", "--preserve-opened-at", "--top-symbols", "5"),
     ("strategies.current_symbol_lane_paper_outcomes",),
     (
@@ -114,7 +155,7 @@ PUBLIC_MARK_MODULES = (
 PUBLIC_MARK_COMMANDS = tuple((module,) for module in PUBLIC_MARK_MODULES)
 
 OPEN_TICKET_MODULE = "strategies.current_paper_tickets"
-OPEN_TICKET_COMMAND = (OPEN_TICKET_MODULE,)
+OPEN_TICKET_COMMAND = (OPEN_TICKET_MODULE, "--preserve-opened-at", "--top", "28")
 
 
 def run_observation_cycle(*, open_new_tickets: bool = False, refresh_public_marks: bool = False) -> None:
@@ -135,7 +176,7 @@ def main() -> None:
     parser.add_argument(
         "--open-new-tickets",
         action="store_true",
-        help="Recreate current paper tickets. Omit this when preserving opened-at timestamps.",
+        help="Open more current paper tickets while preserving existing ticket entries.",
     )
     parser.add_argument(
         "--refresh-public-marks",

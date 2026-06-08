@@ -24,6 +24,14 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-18-near-microstructure-flow | ready | paper_long | NEAR |  | 2.176400000000 | 2.133100000000 | -198.95239846 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | paper-19-sui-microstructure-flow | ready | paper_long | SUI |  | 0.747670000000 | 0.747310000000 | -4.81495847 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | paper-20-mon-microstructure-flow | ready | paper_long | MON |  | 0.021816000000 | 0.021727000000 | -40.79574624 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
+| paper-21-chip-microstructure-flow | pending | paper_long | CHIP |  | 0.031399000000 | 0.031399000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-22-bera-microstructure-flow | pending | paper_long | BERA |  | 0.239250000000 | 0.239250000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-23-sei-microstructure-flow | pending | paper_long | SEI |  | 0.049185000000 | 0.049185000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-24-zec-dislocation-repeat | pending | paper_short | ZEC |  | 427.870000000000 | 427.870000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-25-mu-liquidation-intensity | pending | paper_long | MU | OKX |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-26-sui-liquidation-intensity | pending | paper_long | SUI | OKX | 0.746700000000 | 0.746700000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-27-pepe-liquidation-intensity | pending | paper_long | PEPE | OKX | 0.000002771000 | 0.000002771000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-28-doge-liquidation-intensity | pending | paper_long | DOGE | OKX | 0.085123000000 | 0.085123000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 
 ## Summary
 
@@ -31,6 +39,6 @@ This checks opened paper tickets against the latest available public marks. It i
 - wins: 4
 - losses: 15
 - flat: 1
-- pending: 0
+- pending: 8
 - best ready mark: paper-05-mega-microstructure-flow MEGA 461.73500426bps paper_mark_win
 - worst ready mark: paper-17-event-event-probability EVENT -344.82758621bps paper_mark_loss

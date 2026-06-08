@@ -24,6 +24,14 @@ These are current paper-observation tickets opened from the cross-lane probe pla
 | paper-18-near-microstructure-flow | 18 | near_microstructure_flow_paper_probe | long_microstructure_pressure | NEAR |  | 100.00 | 2.176400000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
 | paper-19-sui-microstructure-flow | 19 | sui_microstructure_flow_paper_probe | long_microstructure_pressure | SUI |  | 100.00 | 0.747670000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
 | paper-20-mon-microstructure-flow | 20 | mon_microstructure_flow_paper_probe | long_microstructure_pressure | MON |  | 100.00 | 0.021816000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
+| paper-21-chip-microstructure-flow | 21 | chip_microstructure_flow_paper_probe | long_microstructure_pressure | CHIP |  | 100.00 | 0.031399000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
+| paper-22-bera-microstructure-flow | 22 | bera_microstructure_flow_paper_probe | long_microstructure_pressure | BERA |  | 100.00 | 0.239250000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
+| paper-23-sei-microstructure-flow | 23 | sei_microstructure_flow_paper_probe | long_microstructure_pressure | SEI |  | 100.00 | 0.049185000000 | 1h | paper_long | mark move, spread, queue/fill assumption, funding, adverse selection |
+| paper-24-zec-dislocation-repeat | 24 | zec_crowded_momentum_reversal_actionability | short_perp | ZEC |  |  | 427.870000000000 | 15m,1h,4h | paper_short | mark move, spread/fill assumption, cost, funding where relevant, stop |
+| paper-25-mu-liquidation-intensity | 25 | mu_okx_liquidation_intensity_paper_gate | long_liquidation_intensity_long_liquidation_cascade_watch | MU | OKX | 100.00 |  | 15m,1h | paper_long | mark move, spread/fill assumption, funding, stop, adverse excursion |
+| paper-26-sui-liquidation-intensity | 26 | sui_okx_liquidation_intensity_paper_gate | long_liquidation_intensity_long_liquidation_cascade_watch | SUI | OKX | 100.00 | 0.746700000000 | 15m,1h | paper_long | mark move, spread/fill assumption, funding, stop, adverse excursion |
+| paper-27-pepe-liquidation-intensity | 27 | pepe_okx_liquidation_intensity_paper_gate | long_liquidation_intensity_long_liquidation_cascade_watch | PEPE | OKX | 100.00 | 0.000002771000 | 15m,1h | paper_long | mark move, spread/fill assumption, funding, stop, adverse excursion |
+| paper-28-doge-liquidation-intensity | 28 | doge_okx_liquidation_intensity_paper_gate | long_liquidation_intensity_long_liquidation_cascade_watch | DOGE | OKX | 100.00 | 0.085123000000 | 15m,1h | paper_long | mark move, spread/fill assumption, funding, stop, adverse excursion |
 
 ## Rule
 

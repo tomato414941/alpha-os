@@ -1,0 +1,2 @@
+ticket_id,opened_at,checked_at,elapsed_minutes,checkpoint_status,opportunity,decision,asset,venue,entry_mark,current_mark,current_source,raw_return_bps,directional_return_bps,outcome,missing_evidence,next_step
+repeat-repeat-paper-05-mega-microstructure-flow,2026-06-08T09:14:18+00:00,2026-06-08T09:14:18+00:00,0.02,pending,mega_microstructure_flow_paper_probe,paper_long,MEGA,,0.051591000000,0.051591000000,hl_execution_context,,,pending,checkpoint has not matured,wait for the first checkpoint and refresh marks
