@@ -21,6 +21,8 @@ class ClusterRepeatPlan:
     representative_opportunity: str
     candidate_size_usd: str
     source_lanes: str
+    conflict_status: str
+    dominant_bias: str
     candidate_count: str
     best_net_after_cost_bps: str
     cluster_score: str
@@ -32,13 +34,22 @@ def build_cluster_repeat_plan(
     *,
     clusters_path: Path = ROOT / "current_cost_adjusted_alpha_clusters.csv",
     candidates_path: Path = ROOT / "current_cost_adjusted_alpha_candidates.csv",
+    conflicts_path: Path = ROOT / "current_symbol_cluster_conflicts.csv",
     top: int = DEFAULT_TOP,
 ) -> tuple[ClusterRepeatPlan, ...]:
     candidates_by_cluster = _candidates_by_cluster(candidates_path)
+    conflicts = {row.get("symbol", ""): row for row in _read_rows(conflicts_path)}
     rows: list[ClusterRepeatPlan] = []
     for rank, cluster in enumerate(_read_rows(clusters_path)[:top], start=1):
         representative = _representative_candidate(cluster, candidates_by_cluster)
-        rows.append(_plan_row(rank=rank, cluster=cluster, representative=representative))
+        rows.append(
+            _plan_row(
+                rank=rank,
+                cluster=cluster,
+                representative=representative,
+                conflict=conflicts.get(cluster.get("asset", ""), {}),
+            )
+        )
     return tuple(rows)
 
 
@@ -57,6 +68,8 @@ def write_cluster_repeat_plan_csv(rows: tuple[ClusterRepeatPlan, ...], *, output
                 "representative_opportunity",
                 "candidate_size_usd",
                 "source_lanes",
+                "conflict_status",
+                "dominant_bias",
                 "candidate_count",
                 "best_net_after_cost_bps",
                 "cluster_score",
@@ -76,6 +89,8 @@ def write_cluster_repeat_plan_csv(rows: tuple[ClusterRepeatPlan, ...], *, output
                     row.representative_opportunity,
                     row.candidate_size_usd,
                     row.source_lanes,
+                    row.conflict_status,
+                    row.dominant_bias,
                     row.candidate_count,
                     row.best_net_after_cost_bps,
                     row.cluster_score,
@@ -95,14 +110,16 @@ def write_cluster_repeat_plan_md(rows: tuple[ClusterRepeatPlan, ...], *, output_
             "It avoids multiplying paper tickets for duplicate opportunities inside the same symbol cluster.\n\n"
         )
         handle.write(
-            "| action | cluster | decision | size USD | candidates | best net | score | representative | next step |\n"
+            "| action | cluster | conflict | bias | decision | size USD | candidates | best net | score | representative | next step |\n"
         )
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |\n")
+        handle.write("| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |\n")
         for row in rows:
             handle.write(
                 "| "
                 f"{row.action} | "
                 f"{row.cluster_id} | "
+                f"{row.conflict_status} | "
+                f"{row.dominant_bias} | "
                 f"{row.decision} | "
                 f"{row.candidate_size_usd} | "
                 f"{row.candidate_count} | "
@@ -119,8 +136,9 @@ def _plan_row(
     rank: int,
     cluster: dict[str, str],
     representative: dict[str, str],
+    conflict: dict[str, str],
 ) -> ClusterRepeatPlan:
-    action = _action(cluster)
+    action = _action(cluster=cluster, conflict=conflict)
     asset = cluster.get("asset", "")
     decision = cluster.get("decision", "")
     return ClusterRepeatPlan(
@@ -133,6 +151,8 @@ def _plan_row(
         representative_opportunity=representative.get("opportunity", ""),
         candidate_size_usd=_candidate_size(cluster=cluster, representative=representative),
         source_lanes=cluster.get("source_lanes", ""),
+        conflict_status=conflict.get("status", ""),
+        dominant_bias=conflict.get("dominant_bias", ""),
         candidate_count=cluster.get("candidate_count", ""),
         best_net_after_cost_bps=cluster.get("best_net_after_cost_bps", ""),
         cluster_score=cluster.get("cluster_score", ""),
@@ -159,7 +179,9 @@ def _representative_candidate(
     return rows[0] if rows else {}
 
 
-def _action(cluster: dict[str, str]) -> str:
+def _action(*, cluster: dict[str, str], conflict: dict[str, str]) -> str:
+    if conflict.get("status", "").startswith("mixed_"):
+        return "split_lanes_before_repeat_probe"
     if cluster.get("status") == "capacity_gated_alpha_cluster":
         return "resize_before_repeat_probe"
     return "open_consolidated_repeat_probe"
@@ -172,12 +194,16 @@ def _candidate_size(*, cluster: dict[str, str], representative: dict[str, str]) 
 
 
 def _required_record(action: str) -> str:
+    if action == "split_lanes_before_repeat_probe":
+        return "lane-specific direction, source independence, conflict reason, entry mark, costs, stop"
     if action == "resize_before_repeat_probe":
         return "smaller size, current depth, spread, funding, entry mark, stop, adverse excursion"
     return "entry mark, realized fill assumption, spread, funding, stop, adverse excursion, 15m/1h mark"
 
 
 def _next_step(*, action: str, asset: str, decision: str) -> str:
+    if action == "split_lanes_before_repeat_probe":
+        return f"split {asset} lanes before any {decision} repeat; do not collapse conflicting sources into one action"
     if action == "resize_before_repeat_probe":
         return f"only repeat {asset} {decision} after choosing a smaller size that fits current visible depth"
     return f"repeat {asset} {decision} once as a cluster-level paper probe instead of duplicating all source tickets"
