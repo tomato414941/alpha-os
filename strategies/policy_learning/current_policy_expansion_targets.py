@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCAL_ROOT = Path(__file__).resolve().parent
 OOS_PATH = LOCAL_ROOT / "current_action_preference_oos_check.csv"
 CANDIDATES_PATH = LOCAL_ROOT / "current_action_preference_candidates.csv"
+FRONTIER_PATH = LOCAL_ROOT / "current_policy_context_frontier.csv"
 LANE_REVIEW_PATH = ROOT / "current_symbol_lane_split_review.csv"
 LANE_TICKETS_PATH = ROOT / "current_symbol_lane_paper_tickets.csv"
 
@@ -27,6 +28,9 @@ class PolicyExpansionTarget:
     target_opportunity: str
     action: str
     support_state: str
+    context_decision: str
+    context_frontier_score: float
+    context_worst_reward_bps: float
     lane_priority: float
     expansion_score: float
     decision: str
@@ -38,14 +42,19 @@ def build_policy_expansion_targets(
     *,
     oos_path: Path = OOS_PATH,
     candidates_path: Path = CANDIDATES_PATH,
+    frontier_path: Path = FRONTIER_PATH,
     lane_review_path: Path = LANE_REVIEW_PATH,
     lane_tickets_path: Path = LANE_TICKETS_PATH,
 ) -> tuple[PolicyExpansionTarget, ...]:
     seeds = _seed_rows(oos_path=oos_path, candidates_path=candidates_path)
+    frontier = _frontier_rows(frontier_path)
     lane_rows = tuple(row for row in _lane_rows(lane_review_path, lane_tickets_path) if _action_from_lane(row))
     output: list[PolicyExpansionTarget] = []
     seen: set[tuple[str, str, str]] = set()
     for seed in seeds:
+        context_frontier = frontier.get(seed.get("context", ""))
+        if context_frontier and context_frontier.get("decision") == "shrink_or_rework_context":
+            continue
         for lane in lane_rows:
             if not _matches_seed(seed, lane):
                 continue
@@ -53,7 +62,7 @@ def build_policy_expansion_targets(
             if key in seen:
                 continue
             seen.add(key)
-            output.append(_target_from_seed_lane(seed=seed, lane=lane))
+            output.append(_target_from_seed_lane(seed=seed, lane=lane, context_frontier=context_frontier))
     return tuple(sorted(output, key=lambda row: row.expansion_score, reverse=True))
 
 
@@ -76,6 +85,9 @@ def write_policy_expansion_targets_csv(
                 "target_opportunity",
                 "action",
                 "support_state",
+                "context_decision",
+                "context_frontier_score",
+                "context_worst_reward_bps",
                 "lane_priority",
                 "expansion_score",
                 "decision",
@@ -95,6 +107,9 @@ def write_policy_expansion_targets_csv(
                     row.target_opportunity,
                     row.action,
                     row.support_state,
+                    row.context_decision,
+                    f"{row.context_frontier_score:.8f}",
+                    f"{row.context_worst_reward_bps:.8f}",
                     f"{row.lane_priority:.8f}",
                     f"{row.expansion_score:.8f}",
                     row.decision,
@@ -119,9 +134,9 @@ def write_policy_expansion_targets_md(
             "It is not a model, not a strategy implementation, and not a trade list.\n\n"
         )
         handle.write(
-            "| target | seed | context | source | target | action | support | score | decision | next step |\n"
+            "| target | seed | context | source | target | action | support | frontier | score | decision | next step |\n"
         )
-        handle.write("| --- | --- | --- | --- | --- | --- | --- | ---: | --- | --- |\n")
+        handle.write("| --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- |\n")
         for row in rows[:top]:
             handle.write(
                 f"| {row.target_id} | "
@@ -131,14 +146,16 @@ def write_policy_expansion_targets_md(
                 f"{row.target_asset}/{row.target_opportunity} | "
                 f"{row.action} | "
                 f"{row.support_state} | "
+                f"{row.context_frontier_score:.2f} | "
                 f"{row.expansion_score:.2f} | "
                 f"{row.decision} | "
                 f"{_escape(row.next_step)} |\n"
             )
         handle.write("\n## Interpretation\n\n")
         handle.write(
-            "A row means a currently observed lane resembles a paper-supported action preference. "
-            "The next work is to collect new labels and execution evidence, not to hard-code the preference.\n"
+            "A row means a currently observed lane resembles a paper-supported action preference and passes the "
+            "context frontier. Shrink/rework contexts are excluded. Failure-split contexts must isolate the loss "
+            "regime before more confidence or size is assigned.\n"
         )
     return output_path
 
@@ -195,15 +212,27 @@ def _matches_seed(seed: dict[str, str], lane: dict[str, str]) -> bool:
     return True
 
 
-def _target_from_seed_lane(*, seed: dict[str, str], lane: dict[str, str]) -> PolicyExpansionTarget:
+def _target_from_seed_lane(
+    *,
+    seed: dict[str, str],
+    lane: dict[str, str],
+    context_frontier: dict[str, str] | None,
+) -> PolicyExpansionTarget:
     lane_priority = _lane_priority(lane)
     seed_score = _float(seed.get("score"))
+    context_score = _float(context_frontier.get("frontier_score")) if context_frontier else 0.0
+    context_decision = context_frontier.get("decision", "frontier_missing") if context_frontier else "frontier_missing"
+    context_worst = _float(context_frontier.get("worst_reward_bps")) if context_frontier else 0.0
     support_bonus = _support_bonus(lane.get("support_state", ""))
-    expansion_score = lane_priority * 0.45 + seed_score * 0.45 + support_bonus
+    expansion_score = lane_priority * 0.35 + seed_score * 0.35 + context_score * 0.20 + support_bonus
     symbol = lane.get("symbol", "")
     opportunity = lane.get("opportunity", "")
     target_id = f"{symbol.lower()}_{opportunity}_from_{seed.get('seed_id', '')}"
-    decision = _decision(expansion_score=expansion_score, seed_type=seed.get("seed_type", ""))
+    decision = _decision(
+        expansion_score=expansion_score,
+        seed_type=seed.get("seed_type", ""),
+        context_decision=context_decision,
+    )
     return PolicyExpansionTarget(
         target_id=target_id,
         seed_id=seed.get("seed_id", ""),
@@ -214,6 +243,9 @@ def _target_from_seed_lane(*, seed: dict[str, str], lane: dict[str, str]) -> Pol
         target_opportunity=opportunity,
         action=seed.get("action", ""),
         support_state=lane.get("support_state", ""),
+        context_decision=context_decision,
+        context_frontier_score=context_score,
+        context_worst_reward_bps=context_worst,
         lane_priority=lane_priority,
         expansion_score=expansion_score,
         decision=decision,
@@ -227,6 +259,7 @@ def _target_from_seed_lane(*, seed: dict[str, str], lane: dict[str, str]) -> Pol
             opportunity=opportunity,
             context=seed.get("context", ""),
             action=seed.get("action", ""),
+            context_worst=context_worst,
         ),
     )
 
@@ -260,6 +293,10 @@ def _lane_rows(lane_review_path: Path, lane_tickets_path: Path) -> tuple[dict[st
     return tuple(rows)
 
 
+def _frontier_rows(frontier_path: Path) -> dict[str, dict[str, str]]:
+    return {row.get("context", ""): row for row in _read_rows(frontier_path) if row.get("context", "")}
+
+
 def _ticket_priority(row: dict[str, str]) -> str:
     support_state = row.get("support_state", "")
     base = {
@@ -278,7 +315,11 @@ def _lane_priority(row: dict[str, str]) -> float:
     return _float(row.get("priority_score"))
 
 
-def _decision(*, expansion_score: float, seed_type: str) -> str:
+def _decision(*, expansion_score: float, seed_type: str, context_decision: str) -> str:
+    if context_decision == "expand_with_failure_split":
+        return "split_failure_before_expansion"
+    if context_decision == "watch_context":
+        return "collect_context_repeats"
     if seed_type == "high_reward_seed_needs_repeat":
         return "repeat_seed_before_expansion"
     if expansion_score >= 95.0:
@@ -288,12 +329,27 @@ def _decision(*, expansion_score: float, seed_type: str) -> str:
     return "watch_expansion_target"
 
 
-def _next_step(*, decision: str, symbol: str, opportunity: str, context: str, action: str) -> str:
+def _next_step(
+    *,
+    decision: str,
+    symbol: str,
+    opportunity: str,
+    context: str,
+    action: str,
+    context_worst: float,
+) -> str:
     if decision == "expand_supported_preference_now":
         return (
             f"open a small paper label for {symbol}/{opportunity} as {action}, then compare reward to "
             f"the existing {context} preference"
         )
+    if decision == "split_failure_before_expansion":
+        return (
+            f"open {symbol}/{opportunity} only with a failure-regime tag; current {context} worst="
+            f"{context_worst:.2f} bps"
+        )
+    if decision == "collect_context_repeats":
+        return f"collect repeat {context} labels before expanding {symbol}/{opportunity} as a policy target"
     if decision == "repeat_seed_before_expansion":
         return (
             f"repeat-label {symbol}/{opportunity} before using this high-reward seed as a broader policy preference"
@@ -325,6 +381,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--oos-path", type=Path, default=OOS_PATH)
     parser.add_argument("--candidates-path", type=Path, default=CANDIDATES_PATH)
+    parser.add_argument("--frontier-path", type=Path, default=FRONTIER_PATH)
     parser.add_argument("--lane-review-path", type=Path, default=LANE_REVIEW_PATH)
     parser.add_argument("--lane-tickets-path", type=Path, default=LANE_TICKETS_PATH)
     parser.add_argument("--output-path", type=Path, default=LOCAL_ROOT / "current_policy_expansion_targets.csv")
@@ -333,6 +390,7 @@ def main() -> None:
     rows = build_policy_expansion_targets(
         oos_path=args.oos_path,
         candidates_path=args.candidates_path,
+        frontier_path=args.frontier_path,
         lane_review_path=args.lane_review_path,
         lane_tickets_path=args.lane_tickets_path,
     )
