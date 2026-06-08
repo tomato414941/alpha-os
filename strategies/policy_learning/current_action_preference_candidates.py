@@ -246,6 +246,12 @@ def _context_family(opportunity: str) -> str:
         ("protocol_fee", ("protocol_fee", "fee_growth")),
         ("token_unlock", ("unlock",)),
         ("event_pressure", ("event_pressure",)),
+        ("event_crypto_hedge", ("event_crypto_hedge",)),
+        ("news_event", ("news_event", "attention_price", "narrative_event", "institutional_flow")),
+        ("wallet_entity_flow", ("wallet_flow", "wallet-entity-flow")),
+        ("sector_rotation", ("sector_rotation", "sector-rotation")),
+        ("options_volatility", ("volatility", "delta_hedge", "straddle")),
+        ("basis_term_structure", ("basis",)),
         ("stablecoin_migration", ("stablecoin_migration",)),
         ("execution_edge", ("execution_edge", "maker_or_low_fee", "taker_small")),
     )

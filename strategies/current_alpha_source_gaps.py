@@ -131,6 +131,9 @@ def build_alpha_source_gaps(
     *,
     data_source_probe_path: Path = ROOT / "data_source_probe.csv",
     policy_samples_path: Path = ROOT / "policy_learning" / "current_policy_learning_samples.csv",
+    policy_oar_dataset_path: Path = (
+        ROOT / "policy_learning" / "current_observation_action_reward_dataset.csv"
+    ),
     book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
     book_depth_execution_cost_sweep_path: Path = ROOT / "event_flow" / "book_depth_execution_cost_sweep.csv",
@@ -146,6 +149,7 @@ def build_alpha_source_gaps(
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
+    policy_oar_count = len(_read_rows(policy_oar_dataset_path))
     book_depth_screen_rows = _read_rows(book_depth_screen_path)
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
     book_depth_execution_cost_sweep_rows = _read_rows(book_depth_execution_cost_sweep_path)
@@ -159,6 +163,7 @@ def build_alpha_source_gaps(
             rule,
             probe_rows=probe_rows,
             policy_sample_count=policy_sample_count,
+            policy_oar_count=policy_oar_count,
             book_depth_screen_rows=book_depth_screen_rows,
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
             book_depth_execution_cost_sweep_rows=book_depth_execution_cost_sweep_rows,
@@ -236,6 +241,7 @@ def _build_gap(
     *,
     probe_rows: tuple[dict[str, str], ...],
     policy_sample_count: int,
+    policy_oar_count: int,
     book_depth_screen_rows: tuple[dict[str, str], ...],
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
     book_depth_execution_cost_sweep_rows: tuple[dict[str, str], ...],
@@ -352,6 +358,11 @@ def _build_gap(
         )
         priority = rule.base_priority + 14.0
         next_probe = "run purged walk-forward on LOB/basis/positioning features with explicit costs"
+    elif rule.gap_id == "rl_observation_action_reward_dataset" and policy_oar_count > 0:
+        status = "observation_action_reward_dataset_ready"
+        coverage = f"oar_records={policy_oar_count}; policy_samples={policy_sample_count}"
+        priority = rule.base_priority + min(policy_oar_count * 0.05, 12.0)
+        next_probe = "audit observation state, action constraints, cost/fill fields, and repeat split before training"
     elif rule.gap_id == "rl_observation_action_reward_dataset" and policy_sample_count > 0:
         status = "sample_records_exist"
         coverage = f"policy_samples={policy_sample_count}"
