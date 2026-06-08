@@ -4,9 +4,11 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| US x Iran permanent peace deal by June 30, 2026? | buy_yes | 0.1700 | 0.3400 | 0.1700 | 0.1700 | 117880.53 | 73.6400 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Israel closes its airspace by June 15? | buy_yes | 0.1600 | 0.2500 | 0.0900 | 0.1600 | 24058.15 | 65.7200 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1700 | 0.2600 | 0.0900 | 0.1700 | 74363.52 | 53.6400 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| US x Iran permanent peace deal by June 15, 2026? | buy_yes | 0.0600 | 0.2400 | 0.1800 | 0.0600 | 273946.71 | 75.5200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| US x Iran permanent peace deal by June 30, 2026? | buy_yes | 0.1700 | 0.3400 | 0.1700 | 0.1700 | 74427.62 | 73.6400 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.2800 | 0.1800 | 0.1000 | 181416.57 | 73.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Israel closes its airspace by June 15? | buy_yes | 0.1700 | 0.2500 | 0.0800 | 0.1700 | 32323.60 | 64.6400 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1200 | 0.2600 | 0.1400 | 0.1200 | 208484.05 | 59.8400 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
 
 ## Caveat
 
