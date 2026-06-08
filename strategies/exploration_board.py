@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_frontier_row(root),
         _alpha_source_gaps_row(root),
         _alpha_method_frontier_row(root),
+        _cross_modal_alpha_context_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
@@ -201,6 +202,34 @@ def _alpha_method_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="modern alpha methods have not been mapped to current sources and candidates",
         next_step="run current alpha method frontier after source gaps and alpha frontier",
+    )
+
+
+def _cross_modal_alpha_context_row(root: Path) -> ExplorationRow:
+    path = root / "current_cross_modal_alpha_context.csv"
+    best = _best_numeric_row(path, key="total_score")
+    if best:
+        return ExplorationRow(
+            lane="cross_modal_alpha_context",
+            status=best.get("decision", "cross_modal_context"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"{best.get('aligned_direction', '')}, "
+                f"score={best.get('total_score', '')}, "
+                f"sources={best.get('aligned_sources', '')}"
+            ),
+            main_gap=best.get(
+                "missing_work",
+                "cross-modal context still needs timestamp, beta, execution, and source-quality controls",
+            ),
+            next_step=best.get("next_step", "label the strongest cross-modal context before paper probing"),
+        )
+    return ExplorationRow(
+        lane="cross_modal_alpha_context",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="event, stablecoin, wallet, chain, and DEX contexts are not joined by tradable asset",
+        next_step="run current cross-modal alpha context after source-specific probes",
     )
 
 
