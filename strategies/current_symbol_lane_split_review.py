@@ -201,6 +201,8 @@ def _support_state(row: dict[str, str]) -> str:
     text = " ".join((row.get("status", ""), row.get("evidence", ""), row.get("next_step", ""))).lower()
     if "out1h=paper_1h_win" in text or "paper_1h_win" in text:
         return "paper_1h_supported"
+    if "protocol_fee_label_supported_watch" in text:
+        return "paper_4h_supported"
     if "low_cost_intraday_paper_supported" in text or "paper_intraday_cost_supported" in text:
         return "paper_cost_supported"
     if "low_cost_intraday_paper_recent_only" in text or "paper_intraday_recent_only" in text:
@@ -211,6 +213,8 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_15m_supported"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
         return "paper_execution_gated"
+    if "protocol_fee_label_failed" in text:
+        return "failed_label"
     if "pending" in text:
         return "pending_label"
     if "premium" in text or "redemption" in text or "custody" in text:
@@ -232,6 +236,8 @@ def _conflict_role(*, queue_row: dict[str, str], lane_bias: str) -> str:
 def _lane_next_step(*, symbol: str, stack_row: dict[str, str], support_state: str) -> str:
     if support_state == "paper_1h_supported":
         return f"rerun {symbol} lane on a fresh window and add execution/fill evidence"
+    if support_state == "paper_4h_supported":
+        return f"repeat {symbol} lane on another 4h window and refresh execution evidence"
     if support_state == "paper_15m_supported":
         return f"wait for {symbol} 1h/4h label or repeat this lane on a fresh snapshot"
     if support_state == "paper_execution_gated":
@@ -244,6 +250,8 @@ def _lane_next_step(*, symbol: str, stack_row: dict[str, str], support_state: st
         return f"obtain a live feature source for {symbol} before treating this lane as active"
     if support_state == "mechanics_unvalidated":
         return f"validate {symbol} mechanics, venue access, unwind path, and stale-price risk"
+    if support_state == "failed_label":
+        return f"deprioritize {symbol} lane until a fresh independent snapshot appears"
     return stack_row.get("next_step", f"collect more {symbol} lane observations")
 
 

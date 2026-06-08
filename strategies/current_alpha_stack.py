@@ -1847,9 +1847,9 @@ def _protocol_fee_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
             for row in rows
             if row.get("status")
             in {
-                "fee_growth_repeat_execution_candidate",
-                "fee_growth_label_supported_watch",
-                "fee_growth_pending_forward_label",
+                "protocol_fee_repeat_execution_candidate",
+                "protocol_fee_label_supported_watch",
+                "protocol_fee_pending_forward_label",
             }
         ),
         key=lambda row: _float(row.get("score")),
@@ -1865,7 +1865,7 @@ def _protocol_fee_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     ticket.get("status", ""),
-                    source_count=4 if ticket.get("status") == "fee_growth_repeat_execution_candidate" else 3,
+                    source_count=4 if ticket.get("status") == "protocol_fee_repeat_execution_candidate" else 3,
                     raw_score=_float(ticket.get("score")),
                 ),
                 sources="protocol_fundamentals + market_price_context + forward_label + execution_context",
@@ -3027,11 +3027,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "fee_growth_price_confirmation": 64.0,
         "fee_growth_price_chase_risk": 52.0,
         "fee_decay_price_weakness_context": 55.0,
-        "fee_growth_repeat_execution_candidate": 66.0,
-        "fee_growth_label_supported_watch": 56.0,
-        "fee_growth_pending_forward_label": 34.0,
-        "fee_growth_unlabeled_watch": 28.0,
-        "fee_growth_label_failed": 18.0,
+        "protocol_fee_repeat_execution_candidate": 66.0,
+        "protocol_fee_label_supported_watch": 56.0,
+        "protocol_fee_pending_forward_label": 34.0,
+        "protocol_fee_unlabeled_watch": 28.0,
+        "protocol_fee_label_failed": 18.0,
         "liquidation_followup_watch": 47.0,
         "liquidation_label_needed_watch": 40.0,
         "funding_crowded_watch": 46.0,

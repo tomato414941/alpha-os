@@ -2679,6 +2679,30 @@ def _on_chain_flow_row(root: Path) -> ExplorationRow:
 
 
 def _protocol_fundamentals_row(root: Path) -> ExplorationRow:
+    actionability_path = root / "protocol_fundamentals" / "current_protocol_fee_actionability.csv"
+    best_actionability = _best_numeric_row(actionability_path, key="score")
+    if best_actionability:
+        return ExplorationRow(
+            lane="protocol_fundamentals",
+            status=best_actionability.get("status", "protocol_fee_actionability"),
+            strongest_current_signal=(
+                f"{best_actionability.get('token_symbol', '')}/{best_actionability.get('protocol', '')}: "
+                f"{best_actionability.get('side', '')}, "
+                f"thesis={best_actionability.get('thesis_status', '')}, "
+                f"labels={best_actionability.get('label_observations', '')}, "
+                f"wins4h={best_actionability.get('wins_4h', '')}, "
+                f"mean4h={best_actionability.get('mean_directional_4h', '')}, "
+                f"score={best_actionability.get('score', '')}"
+            ),
+            main_gap=best_actionability.get(
+                "reason",
+                "protocol fee context needs repeated labels and execution checks",
+            ),
+            next_step=best_actionability.get(
+                "next_step",
+                "repeat protocol-fee labels and refresh execution context",
+            ),
+        )
     price_context_path = root / "protocol_fundamentals" / "current_protocol_fee_price_context.csv"
     best_price_context = _best_numeric_row(price_context_path, key="score")
     if best_price_context:

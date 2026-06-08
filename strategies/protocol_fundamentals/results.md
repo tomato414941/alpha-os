@@ -57,3 +57,26 @@ Important caveat:
   Fee yield is valuation context, not proof that the token captures those fees.
 - `HYPE` has strong protocol fees and growth, but its FDV makes fee-to-FDV weak
   in the current snapshot.
+
+## Forward Labels
+
+Current 4h protocol-fee thesis labels:
+
+- `HYPE`: the fee-decay / weak-price short thesis has one supporting 4h label
+  (`mean_directional_4h=0.01234720`). It is only a watch until another 4h
+  repeat and execution context pass.
+- `AAVE`, `JUP`, and `MORPHO`: the fee-growth / price-lag long thesis failed
+  the current 4h labels and should be deprioritized until a fresh independent
+  snapshot appears.
+- `CRV`: one of three 4h labels was positive, but the mean label is still
+  slightly negative and the current spread gate is weak.
+- `UNI`, `PENDLE`, and `SOL`: labels are still pending because CoinGecko did not
+  provide a usable 4h target in the current run.
+
+Interpretation:
+
+- Protocol fees are useful as a non-price input, but the current broad pass does
+  not support blindly buying fee-growth lag candidates.
+- The next useful work is to repeat the HYPE short thesis and refresh execution
+  evidence, while keeping the failed long fee-growth candidates out of the
+  promotion path until new data appears.

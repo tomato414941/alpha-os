@@ -217,32 +217,32 @@ def _status_action_reason(
 ) -> tuple[str, str, str]:
     if labeled_4h >= 2 and wins_4h >= 2 and mean_directional_4h > 0.0 and execution_action == "paper_observation_ready":
         return (
-            "fee_growth_repeat_execution_candidate",
+            "protocol_fee_repeat_execution_candidate",
             "repeat_paper_probe",
             "repeated 4h labels and current public-book context both pass",
         )
     if labeled_4h >= 1 and wins_4h >= 1 and mean_directional_4h > 0.0:
         return (
-            "fee_growth_label_supported_watch",
+            "protocol_fee_label_supported_watch",
             "refresh_execution_gate",
-            "at least one 4h label supports the fee-growth direction but execution or repetition is not enough",
+            "at least one 4h label supports the protocol-fee thesis direction but execution or repetition is not enough",
         )
     if labeled_4h >= 1:
         return (
-            "fee_growth_label_failed",
+            "protocol_fee_label_failed",
             "deprioritize_until_fresh_snapshot",
-            "mature 4h labels do not support the fee-growth direction",
+            "mature 4h labels do not support the protocol-fee thesis direction",
         )
     if label_observations > 0:
         return (
-            "fee_growth_pending_forward_label",
+            "protocol_fee_pending_forward_label",
             "wait_for_forward_label",
             f"forward label is not mature yet: {latest_label_status}",
         )
     return (
-        "fee_growth_unlabeled_watch",
+        "protocol_fee_unlabeled_watch",
         "create_forward_label",
-        "fee-growth screen has no stored forward-label observation",
+        "protocol-fee screen has no stored forward-label observation",
     )
 
 
@@ -257,11 +257,11 @@ def _score(
     spread_bps: float,
 ) -> float:
     status_base = {
-        "fee_growth_repeat_execution_candidate": 80.0,
-        "fee_growth_label_supported_watch": 62.0,
-        "fee_growth_pending_forward_label": 46.0,
-        "fee_growth_unlabeled_watch": 36.0,
-        "fee_growth_label_failed": 20.0,
+        "protocol_fee_repeat_execution_candidate": 80.0,
+        "protocol_fee_label_supported_watch": 62.0,
+        "protocol_fee_pending_forward_label": 46.0,
+        "protocol_fee_unlabeled_watch": 36.0,
+        "protocol_fee_label_failed": 20.0,
     }.get(status, 0.0)
     execution_bonus = {
         "paper_observation_ready": 6.0,
@@ -277,13 +277,13 @@ def _score(
 
 
 def _next_step(*, token: str, status: str) -> str:
-    if status == "fee_growth_repeat_execution_candidate":
-        return f"repeat {token} fee-growth paper probe with 4h/12h/24h labels and execution costs"
-    if status == "fee_growth_label_supported_watch":
+    if status == "protocol_fee_repeat_execution_candidate":
+        return f"repeat {token} protocol-fee paper probe with 4h/12h/24h labels and execution costs"
+    if status == "protocol_fee_label_supported_watch":
         return f"refresh {token} execution gate and require another positive 4h label before promotion"
-    if status == "fee_growth_pending_forward_label":
+    if status == "protocol_fee_pending_forward_label":
         return f"wait for {token} 4h forward label before treating this as an alpha candidate"
-    if status == "fee_growth_label_failed":
+    if status == "protocol_fee_label_failed":
         return f"deprioritize {token} until a fresh fee-growth snapshot appears"
     return f"store a forward-label observation for {token}"
 
