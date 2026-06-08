@@ -217,6 +217,10 @@ def _support_state(row: dict[str, str]) -> str:
         return "feature_source_blocked"
     if "out15=paper_15m_win" in text or "paper_15m_win" in text:
         return "paper_15m_supported"
+    if "l2_imbalance_15m_only_probe" in text:
+        return "paper_15m_supported"
+    if "l2_imbalance_15m_1h_supported_probe" in text:
+        return "paper_1h_supported"
     if "volume_dislocation_execution_probe" in text:
         return "paper_execution_gated"
     if "paper_execution_probe" in text or "small_paper_probe" in text:

@@ -64,7 +64,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_flow_stacks(root),
-        _l2_imbalance_stack(root),
+        *_l2_imbalance_stacks(root),
     ]
     return tuple(
         sorted((row for row in rows if row is not None), key=lambda row: row.priority_score, reverse=True)
@@ -2993,34 +2993,58 @@ def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
-def _l2_imbalance_stack(root: Path) -> AlphaStackRow | None:
-    ticket = _best_by_score(
-        root / "market_making" / "current_l2_imbalance_paper_gate.csv",
-        score_key="net_15m_bps",
-        status_values={"small_paper_probe"},
-        status_key="gate_action",
-    )
-    if not ticket:
-        return None
-    asset = ticket.get("asset", "")
-    return AlphaStackRow(
-        opportunity=f"{asset.lower()}_l2_imbalance_probe",
-        status=ticket.get("gate_action", "small_paper_probe"),
-        side="directional_l2_probe",
-        priority_score=_priority_score(
-            ticket.get("gate_action", ""),
-            source_count=1,
-            raw_score=_float(ticket.get("net_15m_bps")),
+def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "market_making" / "current_l2_imbalance_paper_gate.csv")
+            if row.get("gate_action") == "small_paper_probe"
         ),
-        sources="market_making",
-        evidence=(
-            f"{asset}: net15={ticket.get('net_15m_bps', '')}bps, "
-            f"imbalance_10bps={ticket.get('imbalance_10_bps', '')}, "
-            f"depth_usage={ticket.get('visible_depth_usage', '')}"
-        ),
-        conflict="directional L2 probe is not maker edge; queue position, fill probability, and adverse selection are still missing",
-        next_step=f"collect repeated {asset} L2 snapshots with trade prints and estimate fill-side next return",
+        key=lambda row: _float(row.get("net_15m_bps")),
+        reverse=True,
     )
+    output: list[AlphaStackRow] = []
+    seen_assets: set[str] = set()
+    for ticket in rows:
+        asset = ticket.get("asset", "")
+        if not asset or asset in seen_assets:
+            continue
+        seen_assets.add(asset)
+        status = _l2_imbalance_status(ticket)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_l2_imbalance_probe",
+                status=status,
+                side="directional_l2_probe",
+                priority_score=_priority_score(
+                    status,
+                    source_count=1,
+                    raw_score=_float(ticket.get("net_15m_bps")),
+                ),
+                sources="market_making",
+                evidence=(
+                    f"{asset}: size={ticket.get('candidate_size_usd', '')}, "
+                    f"net15={ticket.get('net_15m_bps', '')}bps, "
+                    f"net1h={ticket.get('net_1h_bps', '')}bps, "
+                    f"imbalance_10bps={ticket.get('imbalance_10_bps', '')}, "
+                    f"depth_usage={ticket.get('visible_depth_usage', '')}"
+                ),
+                conflict=(
+                    "directional L2 probe is not maker edge; queue position, fill probability, "
+                    "rebates, and adverse selection are still missing"
+                ),
+                next_step=f"repeat {asset} L2 imbalance on fresh snapshots and log trade prints plus fill-side next return",
+            )
+        )
+        if len(output) >= 8:
+            break
+    return tuple(output)
+
+
+def _l2_imbalance_status(ticket: dict[str, str]) -> str:
+    if _float(ticket.get("net_1h_bps")) > 0.0:
+        return "l2_imbalance_15m_1h_supported_probe"
+    return "l2_imbalance_15m_only_probe"
 
 
 def _best_by_score(
@@ -3134,6 +3158,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "volatility_quote_blocked": 34.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
+        "l2_imbalance_15m_1h_supported_probe": 68.0,
+        "l2_imbalance_15m_only_probe": 56.0,
         "paper_funding_dislocation_watch": 63.0,
         "paper_outcome_supported_carry_reversion_probe": 74.0,
         "paper_short_horizon_supported_carry_reversion_probe": 72.0,

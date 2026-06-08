@@ -1188,7 +1188,7 @@ def _market_making_row(root: Path) -> ExplorationRow:
             net_1h_note = f"net1h={best_gate.get('net_1h_bps', '')}bps, "
         return ExplorationRow(
             lane="market_making",
-            status="l2_imbalance_paper_gate",
+            status=_l2_imbalance_gate_status(best_gate),
             strongest_current_signal=(
                 f"{best_gate.get('asset', '')}: "
                 f"size={best_gate.get('candidate_size_usd', '')}, "
@@ -1197,7 +1197,7 @@ def _market_making_row(root: Path) -> ExplorationRow:
                 f"depth_usage={best_gate.get('visible_depth_usage', '')}"
             ),
             main_gap="paper gate is directional and still excludes maker queue, fill probability, rebates, and repeated adverse-selection samples",
-            next_step="repeat JTO/XLM/NEAR/XPL L2 gates on fresh snapshots and then design a maker-fill observation log",
+            next_step=f"repeat {best_gate.get('asset', '')} L2 imbalance on fresh snapshots and then design a maker-fill observation log",
         )
     label_path = root / "market_making" / "current_l2_imbalance_forward_labels.csv"
     best_label = _best_l2_imbalance_label_row(label_path)
@@ -3377,6 +3377,12 @@ def _best_l2_imbalance_paper_gate_row(path: Path) -> dict[str, str] | None:
             -float(row.get("visible_depth_usage") or "inf"),
         ),
     )
+
+
+def _l2_imbalance_gate_status(row: dict[str, str]) -> str:
+    if float(row.get("net_1h_bps") or "0") > 0.0:
+        return "l2_imbalance_15m_1h_supported_probe"
+    return "l2_imbalance_15m_only_probe"
 
 
 def _best_l2_imbalance_monitor_row(path: Path) -> dict[str, str] | None:
