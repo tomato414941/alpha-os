@@ -28,6 +28,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _paper_ticket_outcomes_row(root),
         _paper_ticket_action_queue_row(root),
         _paper_ticket_fill_risk_check_row(root),
+        _policy_expansion_outcome_frontier_row(root),
         _promoted_ticket_repeat_tickets_row(root),
         _promoted_ticket_repeat_outcomes_row(root),
         _promoted_ticket_repeat_action_queue_row(root),
@@ -569,6 +570,33 @@ def _paper_ticket_fill_risk_check_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="promoted paper-ticket wins have not been checked against cost and depth",
         next_step="run current paper ticket fill risk check after action queue",
+    )
+
+
+def _policy_expansion_outcome_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "policy_learning" / "current_policy_expansion_outcome_frontier.csv"
+    best = _best_numeric_row(path, key="frontier_score")
+    if best:
+        return ExplorationRow(
+            lane="policy_expansion_outcome_frontier",
+            status=best.get("decision", "policy_expansion_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"context={best.get('context', '')}, "
+                f"dir={best.get('directional_return_bps', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}, "
+                f"score={best.get('frontier_score', '')}"
+            ),
+            main_gap=best.get("evidence", "policy expansion outcome needs checkpoint and cost evidence"),
+            next_step=best.get("next_step", "repeat or rework the strongest policy expansion outcome"),
+        )
+    return ExplorationRow(
+        lane="policy_expansion_outcome_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="policy-expansion paper tickets have not been isolated from the broader paper queue",
+        next_step="run policy expansion outcome frontier after paper-ticket fill risk check",
     )
 
 
