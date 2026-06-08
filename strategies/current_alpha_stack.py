@@ -64,6 +64,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_intensity_stacks(root),
+        *_liquidation_intensity_paper_gate_stacks(root),
         *_liquidation_intensity_forward_label_stacks(root),
         *_liquidation_flow_stacks(root),
         *_candidate_validation_repeat_execution_gate_stacks(root),
@@ -3109,6 +3110,66 @@ def _liquidation_intensity_forward_label_stacks(root: Path) -> tuple[AlphaStackR
     return tuple(output)
 
 
+def _liquidation_intensity_paper_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "liquidation_flow" / "current_okx_liquidation_intensity_paper_gate.csv")
+            if row.get("gate_action") in {"small_paper_probe", "small_paper_probe_pending_1h"}
+        ),
+        key=lambda row: (
+            row.get("gate_action") == "small_paper_probe",
+            _float(row.get("conservative_net_bps")),
+            -_float(row.get("visible_depth_usage")),
+        ),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen: set[tuple[str, str, str]] = set()
+    for row in rows:
+        asset = row.get("asset", "")
+        action = row.get("action", "")
+        trade_direction = row.get("trade_direction", "")
+        key = (asset, action, trade_direction)
+        if key in seen:
+            continue
+        seen.add(key)
+        status = row.get("gate_action", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_okx_liquidation_intensity_paper_gate",
+                status=status,
+                side=f"{trade_direction}_liquidation_intensity_{action}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=3,
+                    raw_score=_float(row.get("conservative_net_bps")),
+                ),
+                sources="liquidation_flow + okx_open_interest + forward_label + execution_context",
+                evidence=(
+                    f"{asset}: action={action}, label={row.get('label_status', '')}, "
+                    f"side={trade_direction}, size={row.get('candidate_size_usd', '')}, "
+                    f"label15_bps={row.get('label_bps_15m', '')}, "
+                    f"cost_bps={row.get('conservative_cost_bps', '')}, "
+                    f"net_bps={row.get('conservative_net_bps', '')}, "
+                    f"depth10={row.get('depth_10bps_notional', '')}, "
+                    f"usage={row.get('visible_depth_usage', '')}"
+                ),
+                conflict=(
+                    "paper gate uses current public book only; it still excludes real fills, funding PnL, "
+                    "stop behavior, event replay, and adverse-selection during liquidation bursts"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"paper-check {asset} liquidation intensity with fill, funding, stop, and repeat-event logs",
+                ),
+            )
+        )
+        if len(output) >= 8:
+            break
+    return tuple(output)
+
+
 def _liquidation_label_rank(status: str) -> int:
     return {
         "continuation_15m_1h_supported": 4,
@@ -3518,6 +3579,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "volatility_quote_blocked": 34.0,
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
+        "small_paper_probe_pending_1h": 45.0,
         "aligned_pressure_watch": 64.0,
         "book_trade_divergence_watch": 58.0,
         "microstructure_15m_1h_supported": 70.0,

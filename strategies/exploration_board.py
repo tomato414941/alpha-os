@@ -1033,6 +1033,22 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
 
 
 def _liquidation_intensity_row(root: Path) -> ExplorationRow:
+    gate_path = root / "liquidation_flow" / "current_okx_liquidation_intensity_paper_gate.csv"
+    best_gate = _best_liquidation_intensity_paper_gate_row(gate_path)
+    if best_gate:
+        return ExplorationRow(
+            lane="liquidation_intensity",
+            status=best_gate.get("gate_action", "liquidation_intensity_paper_gate"),
+            strongest_current_signal=(
+                f"{best_gate.get('asset', '')}: {best_gate.get('trade_direction', '')} "
+                f"{best_gate.get('action', '')}, label={best_gate.get('label_status', '')}, "
+                f"size={best_gate.get('candidate_size_usd', '')}, "
+                f"net_bps={best_gate.get('conservative_net_bps', '')}, "
+                f"depth10={best_gate.get('depth_10bps_notional', '')}"
+            ),
+            main_gap="liquidation intensity paper gate still excludes real fills, funding PnL, stop behavior, repeat-event evidence, and adverse selection during bursts",
+            next_step=best_gate.get("next_step", "paper-check the best liquidation intensity gate candidate"),
+        )
     label_path = root / "liquidation_flow" / "current_okx_liquidation_intensity_forward_labels.csv"
     best_label = _best_liquidation_intensity_label_row(label_path)
     if best_label:
@@ -3581,6 +3597,27 @@ def _best_liquidation_intensity_label_row(path: Path) -> dict[str, str] | None:
                 float(row.get("reversal_return_15m") or "0"),
             ),
             float(row.get("intensity_score") or "0"),
+        ),
+    )
+
+
+def _best_liquidation_intensity_paper_gate_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("gate_action") in {"small_paper_probe", "small_paper_probe_pending_1h"}
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            row.get("gate_action") == "small_paper_probe",
+            float(row.get("conservative_net_bps") or "0"),
+            -float(row.get("visible_depth_usage") or "0"),
         ),
     )
 
