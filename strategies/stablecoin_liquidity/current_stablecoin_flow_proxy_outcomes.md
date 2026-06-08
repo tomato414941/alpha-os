@@ -4,8 +4,8 @@ This checks opened paper tickets against the latest available public marks. It i
 
 | ticket | status | decision | asset | venue | entry | current | dir bps | outcome | missing evidence | next step |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
-| stablecoin-flow-solana-sol | pending | paper_long | SOL | OKX | 67.550000000000 | 67.550000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| stablecoin-flow-polygon-pol | pending | paper_short | POL | OKX | 0.080970000000 | 0.080970000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| stablecoin-flow-solana-sol | pending | paper_long | SOL | OKX | 67.550000000000 | 67.450000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| stablecoin-flow-polygon-pol | pending | paper_short | POL | OKX | 0.080970000000 | 0.078550000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 
 ## Summary
 
