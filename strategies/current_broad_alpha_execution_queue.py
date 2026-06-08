@@ -559,7 +559,19 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "protocol_fee_growth_lag": 8.0,
         "token_unlock_event_window": 5.0,
     }.get(row.lane, 0.0)
-    return (lane_bonus + _float(row.score), _float(row.score))
+    action_bonus = {
+        "repeat_paper_probe": 70.0,
+        "paper_check_pure_probability": 35.0,
+        "event_window_label_opened": 12.0,
+        "refresh_execution_gate": 10.0,
+        "wait_for_forward_label": 0.0,
+        "collateral_review_required": -50.0,
+        "exit_liquidity_watch": -50.0,
+        "depth_too_thin_for_1k_probe": -250.0,
+        "stop_risk_blocks_probe": -250.0,
+        "cost_adjusted_edge_failed": -300.0,
+    }.get(row.action, 0.0)
+    return (lane_bonus + action_bonus + _float(row.score), _float(row.score))
 
 
 def _direction_to_side(value: str) -> str:
