@@ -247,6 +247,8 @@ def _probe_type(row: dict[str, str]) -> str:
         if row.get("status") == "eth_treasury_proxy_watch":
             return "eth_treasury_proxy_probe"
         return "crypto_equity_proxy_probe"
+    if row.get("sources") == "institutional_flow + public_treasury":
+        return "public_treasury_probe"
     if "paper-check" in text and "candidate_after_refresh_check" in status:
         return "event_probability_probe"
     return ""

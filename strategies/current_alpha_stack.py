@@ -24,6 +24,7 @@ class AlphaStackRow:
 def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
         _btc_risk_off_short_stack(root),
+        *_public_treasury_stacks(root),
         _mstr_btc_relative_value_stack(root),
         *_crypto_equity_proxy_stacks(root),
         *_volatility_hedge_candidate_stacks(root),
@@ -160,6 +161,52 @@ def _btc_risk_off_short_stack(root: Path) -> AlphaStackRow | None:
         conflict="BTC and ETH may already have repriced lower; Deribit put-skew screen points to rich downside vol rather than clean directional short",
         next_step="label 4h/12h/24h BTC outcomes when ETF/funding short watch overlaps macro and speculative-beta risk-off pressure",
     )
+
+
+def _public_treasury_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "institutional_flow" / "current_public_treasury_context.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("action")
+            in {
+                "public_treasury_accumulation_vs_short_perp_watch",
+                "public_treasury_crowded_long_watch",
+                "public_treasury_concentration_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:3]:
+        asset = ticket.get("asset", "")
+        action = ticket.get("action", "")
+        evidence = (
+            f"{asset}: dominance={ticket.get('market_cap_dominance', '')}, "
+            f"total_holdings={ticket.get('total_holdings', '')}, "
+            f"top={ticket.get('top_holder_name', '')}/{ticket.get('top_holder_symbol', '')}, "
+            f"top_supply_pct={ticket.get('top_holder_supply_pct', '')}, "
+            f"funding={ticket.get('annualized_funding', '')}, "
+            f"oi_notional={ticket.get('open_interest_notional', '')}"
+        )
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_public_treasury_flow",
+                status=action,
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(action, source_count=2, raw_score=_float(ticket.get("score"))),
+                sources="institutional_flow + public_treasury",
+                evidence=evidence,
+                conflict=(
+                    "public treasury holdings update slowly, can be stale, and can reflect balance-sheet concentration "
+                    "rather than fresh spot demand"
+                ),
+                next_step=ticket.get("next_step", ""),
+            )
+        )
+    return tuple(output)
 
 
 def _mstr_btc_relative_value_stack(root: Path) -> AlphaStackRow | None:
@@ -4135,6 +4182,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "quote_only_hedge_watch": 42.0,
         "paper_relative_value_watch": 64.0,
         "eth_treasury_proxy_watch": 66.0,
+        "public_treasury_accumulation_vs_short_perp_watch": 68.0,
+        "public_treasury_crowded_long_watch": 60.0,
+        "public_treasury_concentration_watch": 54.0,
         "small_paper_probe": 60.0,
         "small_paper_probe_pending_1h": 45.0,
         "microstructure_small_paper_probe": 72.0,

@@ -18,6 +18,7 @@ DEFAULT_COMMANDS = (
     ("strategies.sector_rotation.current_coingecko_category_rotation",),
     ("strategies.sector_rotation.current_category_tradable_forward_labels",),
     ("strategies.sector_rotation.current_category_perp_context",),
+    ("strategies.institutional_flow.current_public_treasury_context",),
     ("strategies.crypto_equity_proxy.current_crypto_equity_proxy_context",),
     ("strategies.news_social.current_event_pressure_cluster",),
     ("strategies.options_volatility.current_deribit_options_surface",),

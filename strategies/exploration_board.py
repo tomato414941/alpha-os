@@ -3327,6 +3327,7 @@ def _protocol_activity_row(root: Path) -> ExplorationRow:
 def _institutional_flow_row(root: Path) -> ExplorationRow:
     paper_ticket_path = root / "institutional_flow" / "current_btc_etf_funding_paper_ticket.csv"
     best_paper_ticket = _current_btc_etf_funding_paper_ticket(paper_ticket_path)
+    best_treasury = _current_public_treasury_context(root / "institutional_flow" / "current_public_treasury_context.csv")
     current_candidate_path = root / "institutional_flow" / "current_btc_etf_funding_candidate.csv"
     current_candidate = _current_btc_etf_funding_candidate(current_candidate_path)
     if current_candidate:
@@ -3346,9 +3347,26 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
                 f"hist_total={current_candidate.get('historical_total_return', '')}, "
                 f"hist_hit={current_candidate.get('historical_hit_rate_5d', '')}"
                 f"{ticket_note}"
+                f"{_public_treasury_note(best_treasury)}"
             ),
             main_gap="current watch survived coarse 1h entry and adverse-excursion stress, but still lacks stop/fill and venue-specific mark/index checks",
             next_step="paper-check BTC short venue choice, stop criteria, mark/index basis, and actual account fee/fill assumptions before any live action",
+        )
+    if best_treasury:
+        return ExplorationRow(
+            lane="institutional_flow",
+            status=best_treasury.get("action", "public_treasury_context"),
+            strongest_current_signal=(
+                f"{best_treasury.get('asset', '')}: dominance={best_treasury.get('market_cap_dominance', '')}, "
+                f"top={best_treasury.get('top_holder_name', '')}/{best_treasury.get('top_holder_symbol', '')}, "
+                f"top_supply_pct={best_treasury.get('top_holder_supply_pct', '')}, "
+                f"funding={best_treasury.get('annualized_funding', '')}"
+            ),
+            main_gap="public treasury holdings are slow structural context and are not yet separated from equity issuance, corporate news, or perp positioning",
+            next_step=best_treasury.get(
+                "next_step",
+                "join public treasury context to equity proxies, funding, and forward labels",
+            ),
         )
     paper_rule_path = root / "institutional_flow" / "btc_etf_flow_funding_candidate_summary.csv"
     best_paper_rule = _btc_etf_flow_funding_candidate_summary(paper_rule_path)
@@ -3448,6 +3466,36 @@ def _institutional_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="ETF and institutional flow context is not connected",
         next_step="fetch BTC ETF flow history and join it to BTC market state",
+    )
+
+
+def _current_public_treasury_context(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        source_rows = tuple(csv.DictReader(handle))
+    rows = tuple(
+        row
+        for row in source_rows
+        if row.get("action")
+        in {
+            "public_treasury_accumulation_vs_short_perp_watch",
+            "public_treasury_crowded_long_watch",
+            "public_treasury_concentration_watch",
+        }
+    )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: _safe_float(row.get("score")))
+
+
+def _public_treasury_note(row: dict[str, str] | None) -> str:
+    if not row:
+        return ""
+    return (
+        f"; treasury={row.get('asset', '')}/{row.get('action', '')}, "
+        f"dominance={row.get('market_cap_dominance', '')}, "
+        f"top={row.get('top_holder_symbol', '')}"
     )
 
 
