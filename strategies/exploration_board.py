@@ -2051,10 +2051,10 @@ def _surviving_alpha_exit_regime_outcomes_row(root: Path) -> ExplorationRow:
 
 def _best_fill_audit_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str]:
     outcome_rank = {
-        "paper_fill_audit_win": 4,
-        "pending": 3,
-        "paper_fill_audit_loss": 2,
-        "paper_fill_audit_stop_loss": 1,
+        "paper_fill_audit_win": 5,
+        "paper_fill_audit_stop_loss": 4,
+        "paper_fill_audit_loss": 3,
+        "pending": 2,
         "missing_path": 0,
     }
     return max(
