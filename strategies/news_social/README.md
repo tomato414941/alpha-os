@@ -18,6 +18,7 @@ uv run python -m strategies.news_social.current_attention_price_labels
 uv run python -m strategies.news_social.current_attention_forward_labels
 uv run python -m strategies.news_social.current_news_event_screen
 uv run python -m strategies.news_social.current_news_event_forward_labels
+uv run python -m strategies.news_social.current_news_event_quality_gate
 ```
 
 ## Current Status
@@ -30,7 +31,9 @@ This is not yet a news strategy. It now has:
   joins tradable symbols to current perp state
 - a current RSS headline forward-label check against Binance USD-M 1-minute
   returns where historical archives are available
+- a news-event quality gate that groups labels by symbol/event/side and checks
+  source diversity, repeat support, rejected labels, and pending archives
 
 These outputs are candidate-generation inputs only. They still need duplicate
-source checks, stricter leakage controls, repeated labels, and execution
+source review, stricter leakage controls, longer OOS windows, and execution
 feasibility checks.

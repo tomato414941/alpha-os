@@ -2845,6 +2845,56 @@ def _market_breadth_next_step(label: dict[str, str], *, execution: dict[str, str
 
 
 def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    gate_rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "news_social" / "current_news_event_quality_gate.csv")
+            if row.get("decision")
+            in {
+                "repeat_supported_multi_source_label",
+                "repeat_after_pending_archive",
+                "repeat_single_source_label",
+                "watch_1h_only_news_label",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    if gate_rows:
+        output: list[AlphaStackRow] = []
+        for gate in gate_rows[:5]:
+            symbol = gate.get("symbol", "")
+            event_kind = gate.get("event_kind", "")
+            output.append(
+                AlphaStackRow(
+                    opportunity=f"{symbol.lower()}_{event_kind}_news_event_quality_gate",
+                    status=gate.get("decision", ""),
+                    side=gate.get("side", ""),
+                    priority_score=_priority_score(
+                        gate.get("decision", ""),
+                        source_count=_intish(gate.get("source_count")),
+                        raw_score=_float(gate.get("score")),
+                    ),
+                    sources="news_social + forward_label + quality_gate",
+                    evidence=(
+                        f"{symbol}: kind={event_kind}, side={gate.get('side', '')}, "
+                        f"sources={gate.get('source_count', '')}, labels={gate.get('label_count', '')}, "
+                        f"support={gate.get('supported_count', '')}, reject={gate.get('rejected_count', '')}, "
+                        f"mean1h={gate.get('mean_directional_1h_bps', '')}, "
+                        f"mean4h={gate.get('mean_directional_4h_bps', '')}, "
+                        f"title={gate.get('strongest_title', '')}"
+                    ),
+                    conflict=(
+                        "news-event quality gate still needs manual duplicate-source review, "
+                        "execution costs, and longer non-overlapping OOS events"
+                    ),
+                    next_step=gate.get(
+                        "next_step",
+                        f"repeat {symbol} news-event quality gate with execution checks",
+                    ),
+                )
+            )
+        return tuple(output)
     forward_rows = sorted(
         (
             row

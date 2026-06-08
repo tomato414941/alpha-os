@@ -5,11 +5,6 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | priority | ticket | action | asset | decision | dir bps | outcome | reason | next step |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
 | 105.3649 | paper-50-hype-token-unlock | promote_to_fill_and_risk_check | HYPE | paper_short | 5.36489408 | paper_mark_win | paper mark moved in the ticket direction | check fill assumption, funding, stop, adverse excursion, then repeat the label |
-| 50.0000 | paper-02-sui-repeat-execution | wait_for_checkpoint | SUI | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-03-sui-repeat-execution | wait_for_checkpoint | SUI | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-14-arb-intraday-derivatives | wait_for_checkpoint | ARB | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-15-arb-intraday-derivatives | wait_for_checkpoint | ARB | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| 50.0000 | paper-21-chip-repeat-execution | wait_for_checkpoint | CHIP | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-25-btc-options-volatility | wait_for_checkpoint | BTC | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-26-eth-options-volatility | wait_for_checkpoint | ETH | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-27-inj-policy-expansion | wait_for_checkpoint | INJ | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -28,6 +23,8 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 50.0000 | paper-46-zec-sector-rotation | wait_for_checkpoint | ZEC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | paper-47-worldcup-dex-pool-flow | wait_for_checkpoint | WORLDCUP | paper_observe |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 40.0000 | paper-01-hype-policy-expansion | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-02-sui-repeat-execution | keep_observing_quote | SUI | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-03-sui-repeat-execution | keep_observing_quote | SUI | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-04-inj-volume-dislocation | keep_observing_quote | INJ | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-05-hype-volume-dislocation | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-06-btc-event-crypto-hedge | keep_observing_quote | BTC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
@@ -37,11 +34,14 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 40.0000 | paper-11-pump-volume-dislocation | keep_observing_quote | PUMP | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-12-sol-event-crypto-hedge | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-13-sol-volume-dislocation | keep_observing_quote | SOL | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-14-arb-intraday-derivatives | keep_observing_quote | ARB | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-15-arb-intraday-derivatives | keep_observing_quote | ARB | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-16-eth-volume-dislocation | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-17-hype-policy-expansion | keep_observing_quote | HYPE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-18-eth-policy-expansion | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-19-event-event-probability | keep_observing_quote | EVENT | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-20-link-volume-dislocation | keep_observing_quote | LINK | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
+| 40.0000 | paper-21-chip-repeat-execution | keep_observing_quote | CHIP | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-22-eth-wallet-entity-flow | keep_observing_quote | ETH | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-23-zec-wallet-entity-flow | keep_observing_quote | ZEC | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | paper-24-apt-wallet-entity-flow | keep_observing_quote | APT | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |

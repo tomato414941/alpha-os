@@ -2484,6 +2484,40 @@ def _sector_rotation_context_next_step(row: dict[str, str]) -> str:
 
 
 def _news_social_row(root: Path) -> ExplorationRow:
+    quality_gate_path = root / "news_social" / "current_news_event_quality_gate.csv"
+    quality_rows = tuple(
+        row
+        for row in _csv_rows(quality_gate_path)
+        if row.get("decision")
+        in {
+            "repeat_supported_multi_source_label",
+            "repeat_after_pending_archive",
+            "repeat_single_source_label",
+            "watch_1h_only_news_label",
+        }
+    )
+    best_quality = max(quality_rows, key=lambda row: float(row.get("score") or "-inf")) if quality_rows else None
+    if best_quality:
+        return ExplorationRow(
+            lane="news_social",
+            status=best_quality.get("decision", "news_event_quality_gate"),
+            strongest_current_signal=(
+                f"{best_quality.get('symbol', '')}: {best_quality.get('event_kind', '')}, "
+                f"side={best_quality.get('side', '')}, "
+                f"sources={best_quality.get('source_count', '')}, "
+                f"support/reject={best_quality.get('supported_count', '')}/{best_quality.get('rejected_count', '')}, "
+                f"mean1h={best_quality.get('mean_directional_1h_bps', '')}, "
+                f"mean4h={best_quality.get('mean_directional_4h_bps', '')}"
+            ),
+            main_gap=best_quality.get(
+                "reason",
+                "news-event quality gate still needs manual duplicate-source review and execution costs",
+            ),
+            next_step=best_quality.get(
+                "next_step",
+                "repeat news-event quality gate with duplicate-source and execution-cost checks",
+            ),
+        )
     forward_label_path = root / "news_social" / "current_news_event_forward_labels.csv"
     forward_labels = tuple(
         row

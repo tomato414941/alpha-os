@@ -104,12 +104,14 @@ def build_alpha_source_gaps(
     book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
     news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
+    news_event_quality_gate_path: Path = ROOT / "news_social" / "current_news_event_quality_gate.csv",
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
     book_depth_screen_rows = _read_rows(book_depth_screen_path)
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
+    news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
     rows = tuple(
         _build_gap(
             rule,
@@ -118,6 +120,7 @@ def build_alpha_source_gaps(
             book_depth_screen_rows=book_depth_screen_rows,
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
             news_event_forward_label_rows=news_event_forward_label_rows,
+            news_event_quality_gate_rows=news_event_quality_gate_rows,
         )
         for rule in GAP_RULES
     )
@@ -190,6 +193,7 @@ def _build_gap(
     book_depth_screen_rows: tuple[dict[str, str], ...],
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
     news_event_forward_label_rows: tuple[dict[str, str], ...],
+    news_event_quality_gate_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
@@ -202,6 +206,28 @@ def _build_gap(
         )
         priority = rule.base_priority + 16.0
         next_probe = "extend LOB/basis/positioning walk-forward and add liquidation/event timestamps"
+    elif rule.gap_id == "social_sentiment_contagion" and news_event_quality_gate_rows:
+        actionable = tuple(
+            row
+            for row in news_event_quality_gate_rows
+            if row.get("decision")
+            in {
+                "repeat_supported_multi_source_label",
+                "repeat_after_pending_archive",
+                "repeat_single_source_label",
+                "watch_1h_only_news_label",
+            }
+        )
+        best_pool = actionable or news_event_quality_gate_rows
+        best = max(best_pool, key=lambda row: _float(row.get("score")))
+        status = best.get("decision", "quality_gate_ready")
+        coverage = (
+            f"{best.get('symbol', '')}/{best.get('event_kind', '')}/{best.get('side', '')} "
+            f"sources={best.get('source_count', '')} support={best.get('supported_count', '')} "
+            f"reject={best.get('rejected_count', '')}"
+        )
+        priority = rule.base_priority + 14.0
+        next_probe = "repeat the strongest gated news-event label with execution-cost and duplicate-source review"
     elif rule.gap_id == "social_sentiment_contagion" and news_event_forward_label_rows:
         supported = tuple(
             row

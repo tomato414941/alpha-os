@@ -6,8 +6,6 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | near_microstructure_flow_paper_long | asset_family_action | microstructure_flow | NEAR | paper_long | 5 | 0.800 | 108.22 | 133.13 | 0.00 | 160.72 | promote_action_preference_candidate |
 | sol_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | SOL | paper_long | 5 | 0.600 | 32.94 | 45.94 | -2.95 | 80.44 | promote_action_preference_candidate |
-| repeat_execution_paper_long | family_action | repeat_execution |  | paper_long | 4 | 0.500 | 10.40 | 8.40 | -1.06 | 41.30 | watch_action_preference_candidate |
-| sui_repeat_execution_paper_long | asset_family_action | repeat_execution | SUI | paper_long | 4 | 0.500 | 10.40 | 8.40 | -1.06 | 41.30 | watch_action_preference_candidate |
 | liquidation_intensity_paper_long | family_action | liquidation_intensity |  | paper_long | 2 | 0.500 | 12.41 | 12.41 | -1.06 | 28.21 | watch_action_preference_candidate |
 | sui_liquidation_intensity_paper_long | asset_family_action | liquidation_intensity | SUI | paper_long | 2 | 0.500 | 12.41 | 12.41 | -1.06 | 28.21 | watch_action_preference_candidate |
 | sui_microstructure_flow_paper_long | asset_family_action | microstructure_flow | SUI | paper_long | 2 | 0.500 | 8.40 | 8.40 | -1.06 | 22.86 | watch_action_preference_candidate |
@@ -15,6 +13,8 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | sol_stablecoin_migration_paper_long | asset_family_action | stablecoin_migration | SOL | paper_long | 1 | 1.000 | 73.78 | 73.78 | 73.78 | 40.43 | collect_more_labels |
 | sol_unclassified_paper_long | asset_family_action | unclassified | SOL | paper_long | 4 | 0.250 | 18.45 | 0.00 | 0.00 | 34.70 | collect_more_labels |
 | volume_price_dislocation_paper_long | family_action | volume_price_dislocation |  | paper_long | 15 | 0.267 | 9.97 | 0.00 | -20.62 | 31.64 | collect_more_labels |
+| sui_repeat_execution_paper_long | asset_family_action | repeat_execution | SUI | paper_long | 6 | 0.333 | 6.94 | 0.00 | -1.06 | 30.27 | collect_more_labels |
+| repeat_execution_paper_long | family_action | repeat_execution |  | paper_long | 7 | 0.286 | 5.94 | 0.00 | -1.06 | 28.09 | collect_more_labels |
 | hype_protocol_fee_paper_short | asset_family_action | protocol_fee | HYPE | paper_short | 4 | 0.500 | -3.42 | 5.96 | -37.55 | 25.04 | collect_more_labels |
 | microstructure_flow_paper_long | family_action | microstructure_flow |  | paper_long | 20 | 0.300 | 1.98 | 0.00 | -266.52 | 24.48 | collect_more_labels |
 | unclassified_paper_long | family_action | unclassified |  | paper_long | 21 | 0.048 | 2.53 | 0.00 | -20.62 | 18.72 | collect_more_labels |
@@ -33,6 +33,7 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | pump_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | PUMP | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | event_unclassified_paper_long | asset_family_action | unclassified | EVENT | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | link_volume_price_dislocation_paper_long | asset_family_action | volume_price_dislocation | LINK | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
+| chip_repeat_execution_paper_long | asset_family_action | repeat_execution | CHIP | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | apt_unclassified_paper_long | asset_family_action | unclassified | APT | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | bera_microstructure_flow_paper_long | asset_family_action | microstructure_flow | BERA | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
 | sei_microstructure_flow_paper_long | asset_family_action | microstructure_flow | SEI | paper_long | 1 | 0.000 | 0.00 | 0.00 | 0.00 | 0.83 | collect_more_labels |
@@ -43,7 +44,6 @@ This aggregates RL-shaped paper samples into context/action preferences. It is n
 | hype_unclassified_paper_short | asset_family_action | unclassified | HYPE | paper_short | 1 | 0.000 | 0.00 | -0.00 | -0.00 | 0.83 | collect_more_labels |
 | zec_unclassified_paper_short | asset_family_action | unclassified | ZEC | paper_short | 1 | 0.000 | 0.00 | -0.00 | -0.00 | 0.83 | collect_more_labels |
 | hype_unclassified_paper_long | asset_family_action | unclassified | HYPE | paper_long | 1 | 0.000 | -20.62 | -20.62 | -20.62 | -12.91 | collect_more_labels |
-| mon_microstructure_flow_paper_long | asset_family_action | microstructure_flow | MON | paper_long | 1 | 0.000 | -32.04 | -32.04 | -32.04 | -20.52 | collect_more_labels |
 
 ## Interpretation
 
