@@ -44,11 +44,8 @@ def build_broad_alpha_repeat_tickets(
 
 
 def _winning_outcomes(path: Path) -> tuple[dict[str, str], ...]:
-    rows = [
-        row
-        for row in _read_rows(path)
-        if row.get("checkpoint_status") == "ready" and row.get("outcome") == "paper_fill_audit_win"
-    ]
+    ready_rows = [row for row in _read_rows(path) if row.get("checkpoint_status") == "ready"]
+    rows = [row for row in ready_rows if row.get("outcome") == "paper_fill_audit_win" and _longer_ready_path_did_not_fail(row, ready_rows)]
     rows.sort(
         key=lambda row: (
             _horizon_priority(row.get("horizon", "")),
@@ -66,6 +63,19 @@ def _winning_outcomes(path: Path) -> tuple[dict[str, str], ...]:
         seen.add(source)
         winners.append(row)
     return tuple(winners)
+
+
+def _longer_ready_path_did_not_fail(row: dict[str, str], ready_rows: list[dict[str, str]]) -> bool:
+    source = row.get("ticket_id", "")
+    horizon_priority = _horizon_priority(row.get("horizon", ""))
+    for peer in ready_rows:
+        if peer.get("ticket_id", "") != source:
+            continue
+        if _horizon_priority(peer.get("horizon", "")) <= horizon_priority:
+            continue
+        if peer.get("outcome") != "paper_fill_audit_win":
+            return False
+    return True
 
 
 def _repeat_ticket(

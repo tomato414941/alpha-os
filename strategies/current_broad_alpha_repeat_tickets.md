@@ -6,7 +6,6 @@ These are current paper-observation tickets opened from the cross-lane probe pla
 | --- | ---: | --- | --- | --- | --- | ---: | ---: | --- | --- | --- |
 | broad-repeat-chip-long-broad-paper-chip-paper-long | 1 | broad_fill_audit_repeat:broad-fill-audit-chip-long-50bps-stop:1h | long | CHIP |  | 100 | 0.034275000000 | 15m,1h | paper_long | fresh repeat mark move, spread/depth, funding, stop status, adverse excursion, and comparison against the prior fill-audit path |
 | broad-repeat-hype-long-broad-paper-hype-paper-long | 2 | broad_fill_audit_repeat:broad-fill-audit-hype-long-50bps-stop:1h | long | HYPE |  | 100 | 64.059000000000 | 15m,1h | paper_long | fresh repeat mark move, spread/depth, funding, stop status, adverse excursion, and comparison against the prior fill-audit path |
-| broad-repeat-inj-long-broad-paper-inj-paper-long | 3 | broad_fill_audit_repeat:broad-fill-audit-inj-long-50bps-stop:15m | long | INJ |  | 100 | 5.796000000000 | 15m,1h | paper_long | fresh repeat mark move, spread/depth, funding, stop status, adverse excursion, and comparison against the prior fill-audit path |
 
 ## Rule
 

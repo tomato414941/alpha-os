@@ -6,13 +6,12 @@ This checks opened paper tickets against the latest available public marks. It i
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
 | broad-repeat-chip-long-broad-paper-chip-paper-long | ready | paper_long | CHIP |  | 0.034275000000 | 0.033912000000 | -105.90809628 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | broad-repeat-hype-long-broad-paper-hype-paper-long | ready | paper_long | HYPE |  | 64.059000000000 | 63.650000000000 | -63.84739069 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
-| broad-repeat-inj-long-broad-paper-inj-paper-long | ready | paper_long | INJ |  | 5.796000000000 | 5.755200000000 | -70.39337474 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 
 ## Summary
 
-- ready: 3
+- ready: 2
 - wins: 0
-- losses: 3
+- losses: 2
 - flat: 0
 - observations: 0
 - pending: 0
