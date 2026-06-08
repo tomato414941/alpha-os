@@ -1240,6 +1240,25 @@ def _defi_lending_row(root: Path) -> ExplorationRow:
 
 
 def _market_making_row(root: Path) -> ExplorationRow:
+    microstructure_label_path = root / "market_making" / "current_microstructure_flow_forward_labels.csv"
+    best_microstructure_label = _best_microstructure_flow_label_row(microstructure_label_path)
+    if best_microstructure_label:
+        return ExplorationRow(
+            lane="market_making",
+            status="microstructure_15m_1h_supported",
+            strongest_current_signal=(
+                f"{best_microstructure_label.get('asset', '')}: "
+                f"action={best_microstructure_label.get('action', '')}, "
+                f"pressure={best_microstructure_label.get('pressure_score', '')}, "
+                f"dir15={best_microstructure_label.get('directional_return_15m', '')}, "
+                f"dir1h={best_microstructure_label.get('directional_return_1h', '')}"
+            ),
+            main_gap="microstructure label is price-only and still lacks spread, taker/maker fee, queue position, fill probability, and repeated adverse-selection checks",
+            next_step=(
+                f"gate {best_microstructure_label.get('asset', '')} microstructure flow with fees, "
+                "spread, queue, fill probability, and repeat snapshots"
+            ),
+        )
     microstructure_path = root / "market_making" / "current_microstructure_flow_snapshot.csv"
     best_microstructure = _best_microstructure_flow_row(microstructure_path)
     if best_microstructure:
@@ -3496,6 +3515,25 @@ def _best_microstructure_flow_row(path: Path) -> dict[str, str] | None:
             abs(float(row.get("pressure_score") or "0")),
             int(row.get("trade_count") or "0"),
             -float(row.get("spread_bps") or "0"),
+        ),
+    )
+
+
+def _best_microstructure_flow_label_row(path: Path) -> dict[str, str] | None:
+    rows = tuple(
+        row
+        for row in _csv_rows(path)
+        if float(row.get("directional_return_15m") or "0") > 0.0
+        and float(row.get("directional_return_1h") or "0") > 0.0
+    )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("directional_return_1h") or "0"),
+            float(row.get("directional_return_15m") or "0"),
+            abs(float(row.get("pressure_score") or "0")),
         ),
     )
 

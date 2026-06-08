@@ -209,6 +209,10 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_4h_supported"
     if "volume_dislocation_1h_only_watch" in text:
         return "paper_1h_supported"
+    if "microstructure_15m_1h_supported" in text:
+        return "paper_1h_supported"
+    if "continuation_15m_1h_supported" in text or "reversal_15m_1h_supported" in text:
+        return "paper_1h_supported"
     if "low_cost_intraday_paper_supported" in text or "paper_intraday_cost_supported" in text:
         return "paper_cost_supported"
     if "low_cost_intraday_paper_recent_only" in text or "paper_intraday_recent_only" in text:
