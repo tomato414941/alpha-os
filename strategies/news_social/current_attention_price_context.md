@@ -4,16 +4,15 @@ This joins CoinGecko trending attention to current price movement. It looks for 
 
 | symbol | name | status | side | score | rank | price 24h | price 7d | price 30d | vol/mcap | next step |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| ZEC | Zcash | attention_price_lag_candidate | long_attention_lag | 53.1177 | 2 | 18.31 | -23.14 | -28.53 | 0.1824 | paper-label ZEC attention-price lag over 1h, 4h, 12h, and 24h |
-| PENGU | Pudgy Penguins | attention_price_lag_candidate | long_attention_lag | 47.1727 | 1 | 10.47 | -12.17 | -33.47 | 0.3595 | paper-label PENGU attention-price lag over 1h, 4h, 12h, and 24h |
-| SOL | Solana | attention_price_lag_candidate | long_attention_lag | 41.1694 | 5 | 7.07 | -18.84 | -27.39 | 0.0852 | paper-label SOL attention-price lag over 1h, 4h, 12h, and 24h |
-| NEAR | NEAR Protocol | attention_price_lag_candidate | long_attention_lag | 38.9488 | 7 | 10.44 | -9.95 | 30.52 | 0.2458 | paper-label NEAR attention-price lag over 1h, 4h, 12h, and 24h |
-| PEPE | Pepe | attention_price_lag_candidate | long_attention_lag | 37.9157 | 10 | 5.26 | -17.51 | -34.41 | 0.1829 | paper-label PEPE attention-price lag over 1h, 4h, 12h, and 24h |
-| HYPE | Hyperliquid | attention_price_lag_candidate | long_attention_lag | 37.3062 | 4 | 7.65 | -15.02 | 42.34 | 0.0526 | paper-label HYPE attention-price lag over 1h, 4h, 12h, and 24h |
-| BTC | Bitcoin | attention_price_lag_candidate | long_attention_lag | 33.0597 | 3 | 4.85 | -13.71 | -20.50 | 0.0301 | paper-label BTC attention-price lag over 1h, 4h, 12h, and 24h |
-| LINK | Chainlink | attention_price_lag_candidate | long_attention_lag | 29.9711 | 9 | 7.65 | -12.57 | -22.78 | 0.0550 | paper-label LINK attention-price lag over 1h, 4h, 12h, and 24h |
-| VVV | Venice Token | attention_price_lag_candidate | long_attention_lag | 29.6628 | 6 | 5.98 | -9.32 | 21.61 | 0.0872 | paper-label VVV attention-price lag over 1h, 4h, 12h, and 24h |
-| LAB | LAB | attention_chase_risk | wait_or_fade_watch | 28.6716 | 8 | -4.75 | 26.85 | 209.03 | 0.0134 | avoid chasing LAB; label pullback or fade setups instead |
+| ZEC | Zcash | attention_price_lag_candidate | long_attention_lag | 49.7407 | 2 | 7.92 | -22.58 | -29.65 | 0.1563 | paper-label ZEC attention-price lag over 1h, 4h, 12h, and 24h |
+| BEAT | Audiera | attention_chase_risk | wait_or_fade_watch | 38.4684 | 1 | 77.92 | 281.50 | 751.83 | 0.0694 | avoid chasing BEAT; label pullback or fade setups instead |
+| ALLO | Allora | attention_chase_risk | wait_or_fade_watch | 38.0000 | 8 | 62.75 | 159.95 | 354.70 | 1.9854 | avoid chasing ALLO; label pullback or fade setups instead |
+| NEAR | NEAR Protocol | attention_price_lag_candidate | long_attention_lag | 35.6674 | 7 | 13.19 | -6.67 | 36.05 | 0.2301 | paper-label NEAR attention-price lag over 1h, 4h, 12h, and 24h |
+| PENGU | Pudgy Penguins | attention_price_lag_candidate | long_attention_lag | 33.6425 | 3 | 0.68 | -9.96 | -35.68 | 0.2813 | paper-label PENGU attention-price lag over 1h, 4h, 12h, and 24h |
+| BONK | Bonk | attention_price_lag_candidate | long_attention_lag | 33.2238 | 5 | 0.42 | -18.31 | -39.10 | 0.0698 | paper-label BONK attention-price lag over 1h, 4h, 12h, and 24h |
+| HYPE | Hyperliquid | attention_price_lag_candidate | long_attention_lag | 31.7926 | 6 | 3.76 | -15.18 | 40.19 | 0.0569 | paper-label HYPE attention-price lag over 1h, 4h, 12h, and 24h |
+| SOL | Solana | attention_price_lag_candidate | long_attention_lag | 29.7200 | 10 | 1.70 | -18.05 | -29.38 | 0.0794 | paper-label SOL attention-price lag over 1h, 4h, 12h, and 24h |
+| BTC | Bitcoin | attention_price_lag_candidate | long_attention_lag | 27.4696 | 4 | 1.32 | -12.80 | -21.12 | 0.0269 | paper-label BTC attention-price lag over 1h, 4h, 12h, and 24h |
 
 ## Interpretation
 

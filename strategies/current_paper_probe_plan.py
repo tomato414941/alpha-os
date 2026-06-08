@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+MIN_DIVERSE_PRIORITY_SCORE = 50.0
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ class PaperProbePlanRow:
 def build_paper_probe_plan(
     *,
     stack_path: Path = ROOT / "current_alpha_stack.csv",
-    top: int = 30,
+    top: int = 50,
 ) -> tuple[PaperProbePlanRow, ...]:
     candidates = tuple(
         row
@@ -38,9 +39,10 @@ def build_paper_probe_plan(
         if _probe_type(row) != ""
     )
     sorted_candidates = sorted(candidates, key=lambda row: _float(row.get("priority_score")), reverse=True)
+    selected_candidates = _select_diverse_candidates(sorted_candidates, top=top)
     return tuple(
         _build_plan_row(rank=index + 1, row=row)
-        for index, row in enumerate(sorted_candidates[:top])
+        for index, row in enumerate(selected_candidates)
     )
 
 
@@ -173,14 +175,123 @@ def _probe_type(row: dict[str, str]) -> str:
         return "intraday_derivatives_probe"
     if status == "dislocation_repeat_execution_candidate":
         return "dislocation_repeat_probe"
+    if status in {"attention_price_lag_candidate", "attention_chase_risk", "paper_attention_funding_watch"}:
+        return "attention_event_probe"
+    if status.startswith("paper_news_"):
+        return "news_event_probe"
+    if status in {
+        "protocol_fee_pending_forward_label",
+        "paper_long_context",
+        "fee_growth_unconfirmed",
+        "fee_growth_unlock_conflict",
+    }:
+        return "protocol_fee_probe"
+    if status in {
+        "paper_chain_stablecoin_inflow_watch",
+        "paper_chain_stablecoin_outflow_watch",
+        "chain_stablecoin_flow_reversal_watch",
+    }:
+        return "stablecoin_migration_probe"
+    if status in {"peg_anomaly_mechanics_watch", "paper_premium_mean_reversion_watch", "paper_depeg_repeg_watch"}:
+        return "stablecoin_peg_probe"
+    if status in {"lending_rate_candidate_after_risk_check"}:
+        return "defi_lending_probe"
+    if status in {
+        "paper_yield_without_peg_stress_watch",
+        "paper_base_yield_watch",
+        "paper_incentive_yield_watch",
+        "yield_supply_stress_watch",
+    }:
+        return "defi_yield_probe"
+    if status in {
+        "volatility_candidate_needs_sweep_hedge",
+        "volatility_quote_mechanics_watch",
+        "volatility_short_expiry_hedge_watch",
+    }:
+        return "options_volatility_probe"
+    if status in {"unlock_event_label_pending", "unlock_event_crowded_squeeze_watch"}:
+        return "token_unlock_probe"
+    if status == "paper_protocol_activity_watch":
+        return "protocol_activity_probe"
+    if status in {
+        "paper_oi_funding_crowding_watch",
+        "paper_oi_unwind_watch",
+        "paper_funding_dislocation_watch",
+        "paper_basis_funding_dislocation_watch",
+    }:
+        return "derivatives_positioning_probe"
     if "paper-check" in text and "candidate_after_refresh_check" in status:
         return "event_probability_probe"
     return ""
 
 
+def _select_diverse_candidates(candidates: list[dict[str, str]], *, top: int) -> tuple[dict[str, str], ...]:
+    selected = list(candidates[:top])
+    selected_ids = {_candidate_id(row) for row in selected}
+    selected_types = {_probe_type(row) for row in selected}
+    best_by_type: dict[str, dict[str, str]] = {}
+    for row in candidates:
+        probe_type = _probe_type(row)
+        if not probe_type or _float(row.get("priority_score")) < MIN_DIVERSE_PRIORITY_SCORE:
+            continue
+        best_by_type.setdefault(probe_type, row)
+
+    for probe_type, row in sorted(
+        best_by_type.items(),
+        key=lambda item: _float(item[1].get("priority_score")),
+        reverse=True,
+    ):
+        if probe_type in selected_types or _candidate_id(row) in selected_ids:
+            continue
+        replace_index = _lowest_duplicate_probe_type_index(selected)
+        if replace_index is None:
+            break
+        removed = selected[replace_index]
+        selected[replace_index] = row
+        selected_ids.discard(_candidate_id(removed))
+        selected_ids.add(_candidate_id(row))
+        selected_types = {_probe_type(candidate) for candidate in selected}
+
+    return tuple(sorted(selected, key=lambda row: _float(row.get("priority_score")), reverse=True))
+
+
+def _lowest_duplicate_probe_type_index(rows: list[dict[str, str]]) -> int | None:
+    counts: dict[str, int] = {}
+    for row in rows:
+        probe_type = _probe_type(row)
+        counts[probe_type] = counts.get(probe_type, 0) + 1
+    replacement_indexes = [
+        index
+        for index, row in enumerate(rows)
+        if counts.get(_probe_type(row), 0) > 1
+    ]
+    if not replacement_indexes:
+        return None
+    return min(replacement_indexes, key=lambda index: _float(rows[index].get("priority_score")))
+
+
+def _candidate_id(row: dict[str, str]) -> tuple[str, str, str]:
+    return (row.get("opportunity", ""), row.get("status", ""), row.get("side", ""))
+
+
 def _asset(*, evidence: str, opportunity: str) -> str:
     if ":" in evidence:
-        return evidence.split(":", 1)[0].strip()
+        subject = evidence.split(":", 1)[0].strip()
+        if "/" in subject:
+            left, right = subject.split("/", 1)
+            right_symbol = re.sub(r"[^A-Za-z0-9]", "", right.split()[0])
+            if right_symbol.isupper() and 2 <= len(right_symbol) <= 12:
+                return right_symbol
+            left_symbol = re.sub(r"[^A-Za-z0-9]", "", left.split()[-1])
+            if left_symbol:
+                return left_symbol.upper()
+        option_match = re.match(r"^((?:BTC|ETH))\s+\d{4}-\d{2}-\d{2}\b", subject)
+        if option_match:
+            return option_match.group(1)
+        source_symbol_match = re.search(r"\b([A-Z0-9]{2,12})(?:/|$)", subject)
+        if source_symbol_match:
+            return source_symbol_match.group(1)
+        return subject
     return opportunity.split("_", 1)[0].upper()
 
 
@@ -244,7 +355,7 @@ def main() -> None:
     parser.add_argument("--stack-path", type=Path, default=ROOT / "current_alpha_stack.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_probe_plan.md")
-    parser.add_argument("--top", type=int, default=30)
+    parser.add_argument("--top", type=int, default=50)
     args = parser.parse_args()
 
     rows = build_paper_probe_plan(stack_path=args.stack_path, top=args.top)

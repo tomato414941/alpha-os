@@ -4,8 +4,7 @@ This joins CoinGecko trending attention to current Hyperliquid perp market state
 
 | symbol | name | rank | 24h change | funding | mark/oracle | carry action | obs | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| ZEC | Zcash | 1 | 18.5463 | -0.347298 | -0.001015 |  | 0 | 19.345501 | trending asset has material price move and large funding state |
-| PENGU | Pudgy Penguins | 2 | 10.5859 | -0.259271 | -0.001016 |  | 0 | 16.577600 | trending asset has material price move and large funding state |
+| ZEC | Zcash | 2 | 6.2953 | -0.479335 | -0.000931 |  | 0 | 16.169687 | trending asset has material price move and large funding state |
 
 ## Interpretation
 

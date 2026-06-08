@@ -2,11 +2,20 @@
 
 This stores attention-price observations so later runs can attach 1h, 4h, 12h, and 24h forward labels. It is a sample store, not a trade log.
 
-- total rows: `20`
-- ready rows: `20`
+- total rows: `29`
+- ready rows: `29`
 
 | observed at | symbol | status | dir | rank | price | price 7d | score | next step |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 2026-06-08T09:52:00+00:00 | ALLO | attention_chase_risk | -1 | 8 | 0.48191600 | 159.95 | 38.0000 | avoid chasing ALLO; label pullback or fade setups instead |
+| 2026-06-08T09:52:00+00:00 | BEAT | attention_chase_risk | -1 | 1 | 4.31000000 | 281.50 | 38.4684 | avoid chasing BEAT; label pullback or fade setups instead |
+| 2026-06-08T09:52:00+00:00 | BONK | attention_price_lag_candidate | 1 | 5 | 0.00000441 | -18.31 | 33.2238 | paper-label BONK attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | BTC | attention_price_lag_candidate | 1 | 4 | 63411.00000000 | -12.80 | 27.4696 | paper-label BTC attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | HYPE | attention_price_lag_candidate | 1 | 6 | 61.45000000 | -15.18 | 31.7926 | paper-label HYPE attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | NEAR | attention_price_lag_candidate | 1 | 7 | 2.16000000 | -6.67 | 35.6674 | paper-label NEAR attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | PENGU | attention_price_lag_candidate | 1 | 3 | 0.00683794 | -9.96 | 33.6425 | paper-label PENGU attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | SOL | attention_price_lag_candidate | 1 | 10 | 66.17000000 | -18.05 | 29.7200 | paper-label SOL attention-price lag over 1h, 4h, 12h, and 24h |
+| 2026-06-08T09:52:00+00:00 | ZEC | attention_price_lag_candidate | 1 | 2 | 428.67000000 | -22.58 | 49.7407 | paper-label ZEC attention-price lag over 1h, 4h, 12h, and 24h |
 | 2026-06-08T00:40:00+00:00 | BTC | attention_price_lag_candidate | 1 | 3 | 63750.00000000 | -13.71 | 33.0597 | paper-label BTC attention-price lag over 1h, 4h, 12h, and 24h |
 | 2026-06-08T00:40:00+00:00 | HYPE | attention_price_lag_candidate | 1 | 4 | 61.65000000 | -15.02 | 37.3062 | paper-label HYPE attention-price lag over 1h, 4h, 12h, and 24h |
 | 2026-06-08T00:40:00+00:00 | LAB | attention_chase_risk | -1 | 8 | 12.37000000 | 26.85 | 28.6716 | avoid chasing LAB; label pullback or fade setups instead |

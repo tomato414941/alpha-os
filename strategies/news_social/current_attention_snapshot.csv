@@ -1,26 +1,26 @@
 timestamp,source,rank,asset_id,symbol,name,score,label,value
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,1,crypto_market,MARKET,Crypto Fear and Greed Index,8.00000000,Extreme Fear,1780876800
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,2,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780790400
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,3,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780704000
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,4,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780617600
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,5,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780531200
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,6,crypto_market,MARKET,Crypto Fear and Greed Index,11.00000000,Extreme Fear,1780444800
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,7,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780358400
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,8,crypto_market,MARKET,Crypto Fear and Greed Index,29.00000000,Fear,1780272000
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,9,crypto_market,MARKET,Crypto Fear and Greed Index,28.00000000,Fear,1780185600
-2026-06-08T01:07:03.625671+00:00,alternative_me_fear_greed,10,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780099200
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,1,zcash,ZEC,Zcash,1.00000000,15,18.546289746883446
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,2,pudgy-penguins,PENGU,Pudgy Penguins,1.00000000,112,10.585939886829012
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,3,bitcoin,BTC,Bitcoin,2.00000000,1,4.8749292020283415
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,4,hyperliquid,HYPE,Hyperliquid,3.00000000,10,7.934037588070746
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,5,near,NEAR,NEAR Protocol,4.00000000,37,10.98137527317813
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,6,venice-token,VVV,Venice Token,5.00000000,86,6.1388406750175335
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,7,chainlink,LINK,Chainlink,6.00000000,19,8.056368627049023
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,8,solana,SOL,Solana,7.00000000,7,7.3946463490804994
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,9,ethereum,ETH,Ethereum,8.00000000,2,8.893615021827971
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,10,sui,SUI,Sui,9.00000000,31,6.203700557772847
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,11,lab,LAB,LAB,10.00000000,28,-5.305475341266231
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,12,ripple,XRP,XRP,11.00000000,6,6.615563986859381
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,13,bittensor,TAO,Bittensor,12.00000000,42,11.744099818633725
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,14,stellar,XLM,Stellar,13.00000000,16,-1.553912849167333
-2026-06-08T01:07:03.625671+00:00,coingecko_trending,15,avalanche-2,AVAX,Avalanche,14.00000000,32,2.5451378128814337
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,1,crypto_market,MARKET,Crypto Fear and Greed Index,8.00000000,Extreme Fear,1780876800
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,2,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780790400
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,3,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780704000
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,4,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780617600
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,5,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780531200
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,6,crypto_market,MARKET,Crypto Fear and Greed Index,11.00000000,Extreme Fear,1780444800
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,7,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780358400
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,8,crypto_market,MARKET,Crypto Fear and Greed Index,29.00000000,Fear,1780272000
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,9,crypto_market,MARKET,Crypto Fear and Greed Index,28.00000000,Fear,1780185600
+2026-06-08T09:52:30.227594+00:00,alternative_me_fear_greed,10,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780099200
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,1,audiera,BEAT,Audiera,1.00000000,62,80.9292513827186
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,2,zcash,ZEC,Zcash,1.00000000,15,6.295299920526277
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,3,pudgy-penguins,PENGU,Pudgy Penguins,2.00000000,114,0.5572077483658469
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,4,bitcoin,BTC,Bitcoin,3.00000000,1,1.1136211110315362
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,5,bonk,BONK,Bonk,4.00000000,119,0.013160058336502146
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,6,hyperliquid,HYPE,Hyperliquid,5.00000000,10,3.0495642101064773
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,7,near,NEAR,NEAR Protocol,6.00000000,35,12.35037545398192
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,8,allora,ALLO,Allora,7.00000000,252,58.326742236429176
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,9,sui,SUI,Sui,8.00000000,31,-1.0701047956326588
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,10,solana,SOL,Solana,9.00000000,7,1.2791350731197626
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,11,the-open-network,TON,Toncoin,10.00000000,23,-0.4961619051020469
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,12,floki,FLOKI,FLOKI,11.00000000,157,-1.439377465149416
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,13,ethereum,ETH,Ethereum,12.00000000,2,1.509011348841107
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,14,ondo-finance,ONDO,Ondo,13.00000000,46,4.226052093788642
+2026-06-08T09:52:30.227594+00:00,coingecko_trending,15,bittensor,TAO,Bittensor,14.00000000,42,-0.1381826277349633

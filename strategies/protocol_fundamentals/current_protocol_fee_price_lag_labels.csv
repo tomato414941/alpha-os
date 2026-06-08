@@ -1,26 +1,35 @@
 observed_at,token_symbol,protocol,status,side,direction,priority,start_price,raw_return_4h,raw_return_12h,raw_return_24h,raw_return_7d,directional_return_4h,directional_return_12h,directional_return_24h,directional_return_7d,label_status
-2026-06-08T00:46:00+00:00,HYPE,Hyper Foundation HYPE Staking,fee_decay_price_weakness_context,watch_or_short,-1,11.28817900,61.680000000000,-0.01234720,,,,0.01234720,,,,labeled_4h_pending_12h
-2026-06-07T22:36:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.17533476,0.196330000000,0.00396679,,,,0.00396679,,,,labeled_4h_pending_12h
-2026-06-08T00:41:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.17533476,0.196330000000,-0.00023355,,,,-0.00023355,,,,labeled_4h_pending_12h
-2026-06-07T22:36:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,60.86016500,1.720000000000,-0.00048924,,,,-0.00048924,,,,labeled_4h_pending_12h
-2026-06-07T22:36:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,94.34534900,0.157118000000,-0.00369332,,,,-0.00369332,,,,labeled_4h_pending_12h
-2026-06-08T00:46:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.94737347,0.197663000000,-0.00697578,,,,-0.00697578,,,,labeled_4h_pending_12h
-2026-06-08T00:41:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,60.86016500,1.720000000000,-0.01139318,,,,-0.01139318,,,,labeled_4h_pending_12h
-2026-06-08T00:41:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,94.34534900,0.157118000000,-0.01405048,,,,-0.01405048,,,,labeled_4h_pending_12h
-2026-06-07T22:36:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.89500000,63.980000000000,-0.01479578,,,,-0.01479578,,,,labeled_4h_pending_12h
-2026-06-08T00:41:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.89500000,63.980000000000,-0.02321015,,,,-0.02321015,,,,labeled_4h_pending_12h
-2026-06-08T00:46:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.98000000,64.130000000000,-0.02549486,,,,-0.02549486,,,,labeled_4h_pending_12h
-2026-06-08T00:46:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,93.92628500,0.158975000000,-0.02556743,,,,-0.02556743,,,,labeled_4h_pending_12h
-2026-06-08T00:46:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,58.56163400,1.750000000000,-0.02834072,,,,-0.02834072,,,,labeled_4h_pending_12h
+2026-06-07T22:36:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,94.34534900,0.157118000000,,,,,,,,,pending_4h
+2026-06-08T00:41:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,94.34534900,0.157118000000,,,,,,,,,pending_4h
+2026-06-08T00:46:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,93.92628500,0.158975000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,93.92628500,0.158975000000,,,,,,,,,pending_4h
+2026-06-08T00:46:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.98000000,64.130000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.98000000,64.130000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.89500000,63.980000000000,,,,,,,,,pending_4h
+2026-06-08T00:41:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.89500000,63.980000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.91078445,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.91078445,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.82327195,2.580000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.82327195,2.580000000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,60.86016500,1.720000000000,,,,,,,,,pending_4h
+2026-06-08T00:41:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,60.86016500,1.720000000000,,,,,,,,,pending_4h
+2026-06-08T00:46:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.94737347,0.197663000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.94737347,0.197663000000,,,,,,,,,pending_4h
+2026-06-07T22:36:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.17533476,0.196330000000,,,,,,,,,pending_4h
+2026-06-08T00:41:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.17533476,0.196330000000,,,,,,,,,pending_4h
+2026-06-08T00:46:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,58.56163400,1.750000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,58.56163400,1.750000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,40.21415840,1.280000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,40.21415840,1.280000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,39.23893939,1.260000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,39.23893939,1.260000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,32.19028300,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,32.19028300,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,31.97719700,2.580000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,31.97719700,2.580000000000,,,,,,,,,pending_4h
+2026-06-08T00:46:00+00:00,HYPE,Hyper Foundation HYPE Staking,fee_decay_price_weakness_context,watch_or_short,-1,11.28817900,61.680000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,HYPE,Hyper Foundation HYPE Staking,fee_decay_price_weakness_context,watch_or_short,-1,11.28817900,61.680000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.76355000,66.160000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.76355000,66.160000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,9.69898600,66.810000000000,,,,,,,,,pending_4h
+2026-06-08T09:52:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,9.69898600,66.810000000000,,,,,,,,,pending_4h

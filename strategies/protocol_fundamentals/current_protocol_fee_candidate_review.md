@@ -4,8 +4,10 @@ This reviews protocol fee-growth candidates against sector labels, protocol acti
 
 | token | protocol | status | score | evidence | next step |
 | --- | --- | --- | ---: | --- | --- |
-| JUP | Jupiter Perpetual Exchange | fee_growth_unconfirmed | 57.3054 | fee_growth_7d=204.43; funding=0.0143 | collect another JUP fee-growth snapshot and label forward returns |
-| MORPHO | Morpho Blue | fee_growth_unconfirmed | 48.9854 | fee_growth_7d=140.56; funding=0.0839 | collect another MORPHO fee-growth snapshot and label forward returns |
-| AAVE | Aave V3 | fee_growth_unconfirmed | 46.8502 | fee_growth_7d=129.80; funding=-0.0844; perp_pressure=long_carry_discount_watch | collect another AAVE fee-growth snapshot and label forward returns |
-| UNI | Uniswap V3 | fee_growth_unconfirmed | 44.8352 | fee_growth_7d=105.16; funding=0.1095; perp_pressure=short_carry_watch | collect another UNI fee-growth snapshot and label forward returns |
-| HYPE | Hyperliquid Perps | fee_growth_unlock_conflict | 34.7491 | fee_growth_7d=93.34; funding=-0.0682; perp_pressure=long_carry_discount_watch; unlock=paper_short_candidate/short | separate HYPE protocol growth thesis from unlock short pressure and label both windows |
+| CRV | Curve DEX | fee_growth_unconfirmed | 63.0434 | fee_growth_7d=222.41; funding=0.1095; perp_pressure=short_carry_watch | collect another CRV fee-growth snapshot and label forward returns |
+| JUP | Jupiter Perpetual Exchange | fee_growth_unconfirmed | 61.8576 | fee_growth_7d=232.55; funding=-0.3132 | collect another JUP fee-growth snapshot and label forward returns |
+| MORPHO | Morpho Blue | fee_growth_unconfirmed | 48.9475 | fee_growth_7d=140.49; funding=0.0499 | collect another MORPHO fee-growth snapshot and label forward returns |
+| UNI | Uniswap V3 | fee_growth_unconfirmed | 48.3482 | fee_growth_7d=126.91; funding=0.1095; perp_pressure=short_carry_watch | collect another UNI fee-growth snapshot and label forward returns |
+| AAVE | Aave V3 | fee_growth_unconfirmed | 46.8532 | fee_growth_7d=129.82; funding=-0.0844; perp_pressure=long_carry_discount_watch | collect another AAVE fee-growth snapshot and label forward returns |
+| ETH | Ethereum | fee_growth_unconfirmed | 41.6355 | fee_growth_7d=78.11; funding=-0.1570; perp_pressure=long_carry_discount_watch | collect another ETH fee-growth snapshot and label forward returns |
+| HYPE | Hyperliquid Perps | fee_growth_unlock_conflict | 37.6839 | fee_growth_7d=111.41; funding=-0.0682; perp_pressure=long_carry_discount_watch; unlock=paper_short_candidate/short | separate HYPE protocol growth thesis from unlock short pressure and label both windows |

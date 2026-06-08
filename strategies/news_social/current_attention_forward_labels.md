@@ -4,8 +4,7 @@ This labels attention/perp-overlap candidates with subsequent Hyperliquid return
 
 | symbol | action | dir | score | raw 15m | dir 15m | raw 1h | dir 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| ZEC | attention_funding_watch | 1 | 19.345501 |  |  |  |  |
-| PENGU | attention_funding_watch | 1 | 16.577600 |  |  |  |  |
+| ZEC | attention_funding_watch | 1 | 16.169687 |  |  |  |  |
 
 ## Interpretation
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,7 +40,7 @@ def build_paper_tickets(
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
     intraday_live_gate_path: Path = ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
-    top: int = 20,
+    top: int = 50,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
     existing_opened_at = _existing_opened_at(existing_tickets_path)
@@ -180,7 +181,7 @@ def _build_ticket(*, opened_at: str, row: dict[str, str], marks: dict[tuple[str,
 
 def _ticket_id(row: dict[str, str]) -> str:
     rank = int(float(row.get("rank") or 0))
-    asset = (row.get("asset") or "na").lower()
+    asset = _slug(row.get("asset") or "na")
     probe = (row.get("probe_type") or "probe").replace("_probe", "").replace("_", "-")
     return f"paper-{rank:02d}-{asset}-{probe}"
 
@@ -253,10 +254,12 @@ def _checkpoints(horizon: str) -> str:
 
 
 def _decision(row: dict[str, str]) -> str:
-    side = row.get("side", "")
-    if side.startswith("long") or "buy_yes" in side:
+    side = row.get("side", "").lower()
+    if side.startswith("watch") or side.startswith("context") or side == "none":
+        return "paper_observe"
+    if side.startswith("long") or side.startswith("paper_long") or "buy_yes" in side:
         return "paper_long"
-    if side.startswith("short"):
+    if side.startswith("short") or side.startswith("paper_short"):
         return "paper_short"
     return "paper_observe"
 
@@ -269,6 +272,20 @@ def _required_record(row: dict[str, str]) -> str:
         return "mark move, spread, queue/fill assumption, funding, adverse selection"
     if probe_type in {"repeat_execution_probe", "liquidation_intensity_probe"}:
         return "mark move, spread/fill assumption, funding, stop, adverse excursion"
+    if probe_type == "options_volatility_probe":
+        return "option quote, spread, depth, premium at risk, hedge schedule, exit bid"
+    if probe_type == "token_unlock_probe":
+        return "event window, mark move, funding, depth, crowding, stop"
+    if probe_type == "protocol_fee_probe":
+        return "fee snapshot, forward label, spread/depth, funding, valuation caveat"
+    if probe_type == "stablecoin_migration_probe":
+        return "flow snapshot, mapped token mark, funding, venue cost, forward label"
+    if probe_type == "stablecoin_peg_probe":
+        return "quote freshness, redemption route, venue depth, custody, repeated peg"
+    if probe_type in {"attention_event_probe", "news_event_probe"}:
+        return "timestamp, source freshness, forward label, spread/depth, crowding"
+    if probe_type in {"defi_lending_probe", "defi_yield_probe"}:
+        return "APY source, custody, withdrawal path, capacity, peg, exit liquidity"
     return "mark move, spread/fill assumption, cost, funding where relevant, stop"
 
 
@@ -324,12 +341,17 @@ def _escape(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "na"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_tickets.md")
-    parser.add_argument("--top", type=int, default=20)
+    parser.add_argument("--top", type=int, default=50)
     parser.add_argument(
         "--preserve-opened-at",
         action="store_true",

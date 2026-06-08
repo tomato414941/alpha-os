@@ -1,26 +1,26 @@
 symbol,name,side,days_until,unlock_value_usd,percent_supply,annualized_funding,day_notional_volume,open_interest_notional,impact_spread,max_leverage,score,status,reason
-HYPE,Hyperliquid,short,28,594900000.00,4.5000,0.10950000,638826720.43345916,1282179531.54768014,0.000514176946,10.0000,32.62474897,paper_short_candidate,supply shock and short carry align on a tradable perp venue
-ME,Magic Eden,short,2,10430000.00,30.8000,0.02297573,157904.78708400,174576.14542200,0.003679545074,3.0000,31.50844503,wide_impact_watch,"short carry aligns, but visible impact spread is wide"
-ZRO,LayerZero,short,12,34450000.00,10.2000,0.11050828,2972259.10553400,25476502.82920800,0.000850537385,5.0000,31.46718045,paper_short_candidate,supply shock and short carry align on a tradable perp venue
-KAITO,KAITO,short,12,7950000.00,7.3000,0.10950000,154062.70690000,858081.74256000,0.002042395173,5.0000,27.90016675,paper_short_candidate,supply shock and short carry align on a tradable perp venue
-EIGEN,EigenCloud (prev. EigenLayer),short,23,7750000.00,5.0000,0.10950000,1036762.71283300,3926495.97371000,0.002227171492,5.0000,25.30129246,paper_short_candidate,supply shock and short carry align on a tradable perp venue
-PYTH,Pyth Network,none,346,93650000.00,37.0000,-0.02150317,523645.49744100,610308.61992800,0.002169743090,5.0000,17.79339341,context_only,unlock is not large enough for a direct supply-shock ticket
+HYPE,Hyperliquid,short,28,594900000.00,4.5000,0.10950000,766770426.01630890,1290410922.27075744,0.000328404555,10.0000,32.64332621,paper_short_candidate,supply shock and short carry align on a tradable perp venue
+ZRO,LayerZero,short,12,34450000.00,10.2000,0.10950000,2902449.26837300,24808721.11069200,0.000895833806,5.0000,31.45466155,paper_short_candidate,supply shock and short carry align on a tradable perp venue
+ME,Magic Eden,watch_squeeze,2,10360000.00,30.9000,-0.70236716,187445.23945800,179188.53120000,0.002353732347,3.0000,29.42267178,crowded_short_risk,"supply shock overlaps negative funding, so new shorts may be crowded"
+KAITO,KAITO,short,12,7950000.00,7.3000,0.10950000,184035.77145000,864525.33750000,0.001664186918,5.0000,27.94098489,paper_short_candidate,supply shock and short carry align on a tradable perp venue
+EIGEN,EigenCloud (prev. EigenLayer),short,23,7750000.00,5.0000,0.10950000,1010223.15561000,3991720.23445800,0.002721829069,5.0000,25.24917274,paper_short_candidate,supply shock and short carry align on a tradable perp venue
+PYTH,Pyth Network,none,346,93650000.00,37.0000,0.00343567,542916.72703900,582794.50260000,0.002156197482,5.0000,17.77860759,context_only,unlock is not large enough for a direct supply-shock ticket
 AI,Sleepless AI,short,23,444360.00,12.7000,0.00000000,0.00000000,0.00000000,0.000000000000,3.0000,12.93777693,too_illiquid,perp venue volume is too low for paper priority
 PIXEL,Pixels,short,11,630970.00,11.8000,0.00000000,0.00000000,0.00000000,0.000000000000,3.0000,12.43964303,too_illiquid,perp venue volume is too low for paper priority
-CYBER,CYBER,short,7,2780000.00,5.9000,0.00000000,0.00000000,0.00000000,0.000000000000,3.0000,6.69446667,too_illiquid,perp venue volume is too low for paper priority
-SOPH,Sophon,short,21,1210000.00,5.2000,0.10950000,27253.18361600,85236.11776000,0.002940095553,3.0000,5.33031576,too_illiquid,perp venue volume is too low for paper priority
-MOVE,Movement,none,1,1950000.00,4.3000,-0.23322186,77657.40377200,260117.63870400,0.003477228395,3.0000,-14.82056857,context_only,unlock is not large enough for a direct supply-shock ticket
-BABY,Babylon,none,2,2140000.00,3.7000,-0.73286861,857533.12698200,551325.66494000,0.003124425657,3.0000,-14.83908731,context_only,unlock is not large enough for a direct supply-shock ticket
-NIL,Nillion,none,17,1250000.00,4.3000,-0.23278912,535457.31482200,810174.82958800,0.003293084523,3.0000,-15.29714027,context_only,unlock is not large enough for a direct supply-shock ticket
-IO,io.net,none,3,1830000.00,3.8000,-0.12661967,489337.10059100,425425.33813000,0.002114627388,3.0000,-15.31760936,context_only,unlock is not large enough for a direct supply-shock ticket
-XPL,Plasma,none,18,7310000.00,3.4000,0.10950000,7811258.66887200,14726867.04981600,0.001123773574,10.0000,-15.34865149,context_only,unlock is not large enough for a direct supply-shock ticket
-LINEA,Linea,none,2,2690000.00,3.6000,0.10950000,212367.72409000,1511432.05958400,0.002374356945,3.0000,-15.54646559,context_only,unlock is not large enough for a direct supply-shock ticket
-ALT,AltLayer,none,17,1820000.00,3.9000,-0.14872115,154215.59258600,225508.99240000,0.002476561118,3.0000,-15.73198007,context_only,unlock is not large enough for a direct supply-shock ticket
-ZORA,Zora,none,22,1660000.00,3.7000,-0.40688098,128936.93012600,593947.91053000,0.002943947244,3.0000,-15.89135338,context_only,unlock is not large enough for a direct supply-shock ticket
-ZETA,ZetaChain,none,23,2210000.00,3.1000,0.10950000,56870.77869600,379079.25566400,0.003875968992,3.0000,-16.91697649,context_only,unlock is not large enough for a direct supply-shock ticket
-ZK,ZKsync,none,11,2750000.00,1.8000,-0.64933325,323597.80812900,774419.21775000,0.002701138337,5.0000,-17.12758747,context_only,unlock is not large enough for a direct supply-shock ticket
-APT,Aptos,none,4,7610000.00,1.4000,0.10950000,1746049.07753100,4156184.08889200,0.001048375019,10.0000,-17.47796593,context_only,unlock is not large enough for a direct supply-shock ticket
-ACE,Fusionist,none,10,161390.00,1.8000,0.10950000,49726.45885500,159113.11831200,0.003359462486,3.0000,-17.75319304,context_only,unlock is not large enough for a direct supply-shock ticket
-OP,Optimism,none,22,3780000.00,1.5000,0.10950000,798638.54984700,3053886.45870000,0.002072109407,5.0000,-18.21338042,context_only,unlock is not large enough for a direct supply-shock ticket
-W,Wormhole,none,4,483600.00,0.8000,0.08740991,236016.34205700,736313.61764800,0.003154574132,5.0000,-18.53294320,context_only,unlock is not large enough for a direct supply-shock ticket
-IOTA,IOTA,none,2,559600.00,0.3000,0.10950000,62671.40678200,238956.31880000,0.005024262464,3.0000,-19.14772977,context_only,unlock is not large enough for a direct supply-shock ticket
+SOPH,Sophon,short,20,1210000.00,5.2000,0.10950000,23223.44959400,86661.07735200,0.007723427731,3.0000,4.88491291,too_illiquid,perp venue volume is too low for paper priority
+MOVE,Movement,none,1,1930000.00,4.3000,-10.92133728,350074.44041600,255923.64028000,0.003370356185,3.0000,-4.09472423,context_only,unlock is not large enough for a direct supply-shock ticket
+IO,io.net,none,3,1830000.00,3.8000,-1.00520825,510138.71281400,416202.53180800,0.002322543185,3.0000,-14.45773220,context_only,unlock is not large enough for a direct supply-shock ticket
+NIL,Nillion,none,16,1250000.00,4.3000,-0.10277670,552452.40205700,867134.64768000,0.002468770059,3.0000,-15.30968840,context_only,unlock is not large enough for a direct supply-shock ticket
+BABY,Babylon,none,2,2270000.00,3.7000,-0.18438924,1049861.92075600,482277.88742000,0.002887332596,3.0000,-15.34332449,context_only,unlock is not large enough for a direct supply-shock ticket
+XPL,Plasma,none,17,7310000.00,3.4000,0.06033800,7344909.57226000,14154079.52774400,0.001209973640,10.0000,-15.41973507,context_only,unlock is not large enough for a direct supply-shock ticket
+LINEA,Linea,none,2,2740000.00,3.6000,0.10950000,224246.64435300,1503646.99203200,0.003982477101,3.0000,-15.70558971,context_only,unlock is not large enough for a direct supply-shock ticket
+ALT,AltLayer,none,17,1820000.00,3.9000,0.04427479,162666.38293200,222482.95254000,0.001583113456,3.0000,-15.74623658,context_only,unlock is not large enough for a direct supply-shock ticket
+ZORA,Zora,none,22,1660000.00,3.7000,-0.23181413,115723.69833200,569673.00976000,0.003883023905,3.0000,-16.16164922,context_only,unlock is not large enough for a direct supply-shock ticket
+ZETA,ZetaChain,none,23,2210000.00,3.1000,0.10950000,52396.33867900,372180.18240000,0.003056404557,3.0000,-16.83546749,context_only,unlock is not large enough for a direct supply-shock ticket
+ZK,ZKsync,none,11,2750000.00,1.8000,-0.56762522,496548.39098100,788842.52148000,0.002324005035,5.0000,-17.15428711,context_only,unlock is not large enough for a direct supply-shock ticket
+APT,Aptos,none,4,7580000.00,1.4000,-0.38630636,1976439.12059200,4290075.35093200,0.000899685110,10.0000,-17.16355157,context_only,unlock is not large enough for a direct supply-shock ticket
+CYBER,CYBER,none,6,737670.00,1.6000,0.00000000,0.00000000,0.00000000,0.000000000000,3.0000,-17.59262330,context_only,unlock is not large enough for a direct supply-shock ticket
+W,Wormhole,none,4,480330.00,0.8000,-0.59310631,219893.24471400,749596.64551200,0.004179728318,5.0000,-18.13140723,context_only,unlock is not large enough for a direct supply-shock ticket
+ACE,Fusionist,none,10,161850.00,1.8000,0.10950000,48483.62436700,158072.83251200,0.007812500000,3.0000,-18.19861647,context_only,unlock is not large enough for a direct supply-shock ticket
+OP,Optimism,none,22,3780000.00,1.5000,-0.06147593,829286.50107300,3099145.30070400,0.002676273803,5.0000,-18.31875613,context_only,unlock is not large enough for a direct supply-shock ticket
+IOTA,IOTA,none,2,577720.00,0.3000,0.10950000,66408.71035500,238415.37956000,0.006621675940,3.0000,-19.30691619,context_only,unlock is not large enough for a direct supply-shock ticket
