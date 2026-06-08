@@ -40,6 +40,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_hyperliquid_oi_shift_stacks(root),
         *_protocol_fundamental_stacks(root),
         *_protocol_fee_valuation_stacks(root),
+        *_protocol_fee_actionability_stacks(root),
         *_protocol_fee_price_context_stacks(root),
         *_yield_peg_risk_stacks(root),
         *_defi_yield_stacks(root),
@@ -1365,6 +1366,8 @@ def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "protocol_fundamentals" / "current_protocol_fee_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_price_context.csv")
     execution_by_token = {
         row.get("token_symbol", ""): row
@@ -1416,6 +1419,62 @@ def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 or ticket.get(
                     "next_step",
                     f"paper-label {token} fee-growth price context over multiple horizons",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _protocol_fee_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "fee_growth_repeat_execution_candidate",
+                "fee_growth_label_supported_watch",
+                "fee_growth_pending_forward_label",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:8]:
+        token = ticket.get("token_symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{token.lower()}_protocol_fee_actionability",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=4 if ticket.get("status") == "fee_growth_repeat_execution_candidate" else 3,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="protocol_fundamentals + market_price_context + forward_label + execution_context",
+                evidence=(
+                    f"{token}/{ticket.get('protocol', '')}: "
+                    f"thesis={ticket.get('thesis_status', '')} {ticket.get('thesis_score', '')}, "
+                    f"fee_to_mcap={ticket.get('fee_to_market_cap', '')}, "
+                    f"growth7d={ticket.get('fee_growth_7d', '')}, "
+                    f"price7d={ticket.get('price_change_7d', '')}, "
+                    f"exec={ticket.get('execution_action', '')}, "
+                    f"labels={ticket.get('label_observations', '')}, "
+                    f"labeled4h={ticket.get('labeled_4h', '')}, "
+                    f"wins4h={ticket.get('wins_4h', '')}, "
+                    f"mean4h={ticket.get('mean_directional_4h', '')}, "
+                    f"latest_label={ticket.get('latest_label_status', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "protocol fees are not strict token-holder revenue and the forward-label evidence may be immature",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"wait for {token} forward label before promotion",
                 ),
             )
         )
@@ -2408,6 +2467,11 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "fee_growth_price_confirmation": 64.0,
         "fee_growth_price_chase_risk": 52.0,
         "fee_decay_price_weakness_context": 55.0,
+        "fee_growth_repeat_execution_candidate": 66.0,
+        "fee_growth_label_supported_watch": 56.0,
+        "fee_growth_pending_forward_label": 34.0,
+        "fee_growth_unlabeled_watch": 28.0,
+        "fee_growth_label_failed": 18.0,
         "funding_crowded_watch": 46.0,
         "crowded_short_risk": 48.0,
         "paper_risk_context": 45.0,

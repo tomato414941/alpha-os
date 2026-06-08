@@ -17,4 +17,5 @@ uv run python -m strategies.protocol_fundamentals.current_protocol_fee_execution
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_paper_tickets
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_price_lag_history
 uv run python -m strategies.protocol_fundamentals.current_protocol_fee_price_lag_labels
+uv run python -m strategies.protocol_fundamentals.current_protocol_fee_actionability
 ```
