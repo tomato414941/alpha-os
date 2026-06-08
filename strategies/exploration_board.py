@@ -54,6 +54,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_promoted_repeat_fill_risk_check_row(root),
         _cost_adjusted_alpha_candidates_row(root),
         _cost_adjusted_alpha_clusters_row(root),
+        _cost_survival_cross_section_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
@@ -1291,6 +1292,33 @@ def _cost_adjusted_alpha_clusters_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="cost-adjusted candidates have not been grouped by asset and direction",
         next_step="run current cost adjusted alpha clusters after candidate aggregation",
+    )
+
+
+def _cost_survival_cross_section_row(root: Path) -> ExplorationRow:
+    path = root / "current_cost_survival_cross_section.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="cost_survival_cross_section",
+            status=best.get("status", "cost_survival_cross_section"),
+            strongest_current_signal=(
+                f"{best.get('cluster_id', '')}: "
+                f"score={best.get('survival_score', '')}, "
+                f"net={best.get('mean_net_after_cost_bps', '')}bps, "
+                f"wins={best.get('repeat_win_count', '')}, "
+                f"lanes={best.get('source_lane_count', '')}, "
+                f"dup={best.get('duplicate_pressure', '')}"
+            ),
+            main_gap=best.get("missing_work", "cost-survival row still needs fill and repeat evidence"),
+            next_step=best.get("next_probe", "paper-check the top cost-surviving cluster"),
+        )
+    return ExplorationRow(
+        lane="cost_survival_cross_section",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted clusters are not ranked by repeat, depth, and duplicate survival",
+        next_step="run current cost survival cross section after cost-adjusted clustering",
     )
 
 
