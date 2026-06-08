@@ -69,6 +69,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_liquidation_flow_stacks(root),
         *_candidate_validation_repeat_execution_gate_stacks(root),
         *_candidate_validation_repeat_stacks(root),
+        *_microstructure_flow_paper_gate_stacks(root),
         *_microstructure_flow_stacks(root),
         *_l2_imbalance_stacks(root),
     ]
@@ -3227,6 +3228,63 @@ def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _microstructure_flow_paper_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "market_making" / "current_microstructure_flow_paper_gate.csv")
+            if row.get("gate_action") == "microstructure_small_paper_probe"
+        ),
+        key=lambda row: (
+            _float(row.get("conservative_net_15m_bps")),
+            _float(row.get("conservative_net_1h_bps")),
+            -_float(row.get("visible_depth_usage")),
+        ),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    seen_assets: set[str] = set()
+    for ticket in rows:
+        asset = ticket.get("asset", "")
+        if not asset or asset in seen_assets:
+            continue
+        seen_assets.add(asset)
+        status = ticket.get("gate_action", "microstructure_small_paper_probe")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_microstructure_flow_paper_probe",
+                status=status,
+                side=_microstructure_side(_intish(ticket.get("direction"))),
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(ticket.get("conservative_net_15m_bps")),
+                ),
+                sources="market_making",
+                evidence=(
+                    f"{asset}: action={ticket.get('action', '')}, "
+                    f"size={ticket.get('candidate_size_usd', '')}, "
+                    f"net15={ticket.get('conservative_net_15m_bps', '')}bps, "
+                    f"net1h={ticket.get('conservative_net_1h_bps', '')}bps, "
+                    f"spread={ticket.get('spread_bps', '')}bps, "
+                    f"depth={ticket.get('depth_10bps_usd', '')}, "
+                    f"usage={ticket.get('visible_depth_usage', '')}"
+                ),
+                conflict=(
+                    "microstructure paper gate still excludes real fill, queue position, "
+                    "funding, maker/taker choice, and repeated adverse-selection samples"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"paper-check {asset} microstructure flow with fill and adverse-selection logs",
+                ),
+            )
+        )
+        if len(output) >= 8:
+            break
+    return tuple(output)
+
+
 def _microstructure_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     labels = {
         row.get("asset", ""): row
@@ -3580,6 +3638,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_relative_value_watch": 64.0,
         "small_paper_probe": 60.0,
         "small_paper_probe_pending_1h": 45.0,
+        "microstructure_small_paper_probe": 72.0,
         "aligned_pressure_watch": 64.0,
         "book_trade_divergence_watch": 58.0,
         "microstructure_15m_1h_supported": 70.0,

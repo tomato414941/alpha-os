@@ -1240,6 +1240,26 @@ def _defi_lending_row(root: Path) -> ExplorationRow:
 
 
 def _market_making_row(root: Path) -> ExplorationRow:
+    microstructure_gate_path = root / "market_making" / "current_microstructure_flow_paper_gate.csv"
+    best_microstructure_gate = _best_microstructure_flow_paper_gate_row(microstructure_gate_path)
+    if best_microstructure_gate:
+        return ExplorationRow(
+            lane="market_making",
+            status=best_microstructure_gate.get("gate_action", "microstructure_small_paper_probe"),
+            strongest_current_signal=(
+                f"{best_microstructure_gate.get('asset', '')}: "
+                f"action={best_microstructure_gate.get('action', '')}, "
+                f"size={best_microstructure_gate.get('candidate_size_usd', '')}, "
+                f"net15={best_microstructure_gate.get('conservative_net_15m_bps', '')}bps, "
+                f"net1h={best_microstructure_gate.get('conservative_net_1h_bps', '')}bps, "
+                f"depth_usage={best_microstructure_gate.get('visible_depth_usage', '')}"
+            ),
+            main_gap="microstructure paper gate still excludes real fill, queue position, funding, maker/taker choice, and repeated adverse-selection samples",
+            next_step=best_microstructure_gate.get(
+                "next_step",
+                "paper-check top microstructure flow with fill and adverse-selection logs",
+            ),
+        )
     microstructure_label_path = root / "market_making" / "current_microstructure_flow_forward_labels.csv"
     best_microstructure_label = _best_microstructure_flow_label_row(microstructure_label_path)
     if best_microstructure_label:
@@ -3490,6 +3510,24 @@ def _best_l2_imbalance_paper_gate_row(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             float(row.get("net_15m_bps") or "-inf"),
             float(row.get("net_1h_bps") or "-inf"),
+            -float(row.get("visible_depth_usage") or "inf"),
+        ),
+    )
+
+
+def _best_microstructure_flow_paper_gate_row(path: Path) -> dict[str, str] | None:
+    rows = tuple(
+        row
+        for row in _csv_rows(path)
+        if row.get("gate_action") == "microstructure_small_paper_probe"
+    )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("conservative_net_15m_bps") or "-inf"),
+            float(row.get("conservative_net_1h_bps") or "-inf"),
             -float(row.get("visible_depth_usage") or "inf"),
         ),
     )

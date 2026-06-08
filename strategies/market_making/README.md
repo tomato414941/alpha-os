@@ -20,6 +20,7 @@ uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
 uv run python -m strategies.market_making.current_l2_imbalance_paper_gate
 uv run python -m strategies.market_making.current_microstructure_flow_snapshot
 uv run python -m strategies.market_making.current_microstructure_flow_forward_labels
+uv run python -m strategies.market_making.current_microstructure_flow_paper_gate
 ```
 
 ## Current Status
