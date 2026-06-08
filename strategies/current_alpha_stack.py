@@ -641,7 +641,7 @@ def _derivatives_positioning_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         seen.add(key)
         output.append(
             AlphaStackRow(
-                opportunity=f"{market.lower().replace(' ', '_')}_{symbol.lower()}_positioning",
+                opportunity=f"{symbol.lower()}_{market.lower().replace(' ', '_')}_positioning",
                 status=ticket.get("status", ""),
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
@@ -1168,6 +1168,8 @@ def _perp_crowding_validated_stacks(
         execution = best_execution.get((asset, ticket.get("action", "")), {})
         outcome = best_outcome.get((asset, ticket.get("action", "")), {})
         stack_status = _perp_crowding_stack_status(status, execution, outcome)
+        if stack_status == "paper_outcome_failed_carry_reversion_probe":
+            continue
         execution_note = ""
         if execution:
             execution_note = (
@@ -1310,6 +1312,8 @@ def _perp_crowding_next_step(
     execution: dict[str, str],
     outcome: dict[str, str],
 ) -> str:
+    if outcome.get("outcome_1h") == "paper_1h_loss":
+        return f"do not promote {asset}; repeat only if a fresh crowding snapshot passes the execution gate"
     if outcome.get("outcome_1h") == "paper_1h_win" or outcome.get("outcome_15m") == "paper_15m_win":
         return f"repeat {asset} gated paper probes on fresh snapshots and record live fill evidence"
     if outcome.get("outcome_15m") == "pending_15m" or outcome.get("outcome_1h") == "pending_1h":

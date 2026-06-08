@@ -54,6 +54,7 @@ STOP_TOKENS = {
     "CIRCLE",
     "COINDESK",
     "COLLECT",
+    "COINW",
     "COINUP",
     "CONTEXT",
     "CONTINUATION",
